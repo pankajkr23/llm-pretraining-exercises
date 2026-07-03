@@ -1,0 +1,35 @@
+[project]
+name = "llm-pretraining-exercises"
+version = "0.1.0"
+description = "LLM Pretraining exercises/examples and toy projects"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv.workspace]
+members = ["src/exercises/[0-9][0-9]-*"]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.pytest.ini_options]
+testpaths = ["src"]
+markers = ["integration: slower end-to-end tests (tiny train runs)"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "B", "SIM", "C4", "D"]
+ignore = ["D203", "D213"]  # pick one of each conflicting docstring-style pair
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/*" = ["D"]  # tests don't need docstrings
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+docstring-code-format = true

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Why Neural Nets Work — Four Live Proofs</title>
+    <meta
+      name="description"
+      content="Four in-browser experiments that prove why activations, depth, embeddings, and data matter — trained live with TensorFlow.js."
+    />
+    <link rel="stylesheet" href="./css/styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="hero">
+        <span class="eyebrow">ERA V5 · Session 1</span>
+        <h1>Four things every neural net secretly knows</h1>
+        <p>
+          No slides, no hand-waving — each claim below is trained live in your browser with
+          TensorFlow.js. Hit <b>Train</b> and watch the proof form.
+        </p>
+      </header>
+
+      <div id="tf-error" class="error-banner">
+        Couldn't load TensorFlow.js from the CDN. Check your connection and reload.
+      </div>
+
+      <!-- S1-1 -->
+      <section class="card" id="demo1">
+        <div class="card-head">
+          <span class="badge">1</span>
+          <h2>Activations exist for a reason</h2>
+        </div>
+        <p class="claim">
+          A model with no nonlinearity can only draw a straight boundary — so it cannot separate two
+          concentric rings. Add a single ReLU hidden layer and it can. Only the activation changes.
+        </p>
+        <div class="canvas-row">
+          <figure>
+            <canvas id="d1-linear" width="340" height="340"></canvas>
+            <figcaption>Linear + sigmoid</figcaption>
+            <div class="stat" id="d1-linear-stat">untrained</div>
+          </figure>
+          <figure>
+            <canvas id="d1-relu" width="340" height="340"></canvas>
+            <figcaption>One ReLU hidden layer</figcaption>
+            <div class="stat" id="d1-relu-stat">untrained</div>
+          </figure>
+        </div>
+        <div class="controls"><button class="train-btn" id="d1-train">Train both</button></div>
+        <p class="verdict" id="d1-verdict"></p>
+      </section>
+
+      <!-- S1-2 -->
+      <section class="card" id="demo2">
+        <div class="card-head">
+          <span class="badge">2</span>
+          <h2>Depth without nonlinearity is a lie</h2>
+        </div>
+        <p class="claim">
+          Five stacked linear layers collapse to a single linear map — so they're no stronger than one
+          layer, and fail the ring identically. Drop ReLUs between the same five and it's solved.
+        </p>
+        <div class="canvas-row">
+          <figure>
+            <canvas id="d2-lin1" width="340" height="340"></canvas>
+            <figcaption>1 linear layer</figcaption>
+            <div class="stat" id="d2-lin1-stat">untrained</div>
+          </figure>
+          <figure>
+            <canvas id="d2-lin5" width="340" height="340"></canvas>
+            <figcaption>5 linear layers</figcaption>
+            <div class="stat" id="d2-lin5-stat">untrained</div>
+          </figure>
+          <figure>
+            <canvas id="d2-relu5" width="340" height="340"></canvas>
+            <figcaption>5 layers + ReLU</figcaption>
+            <div class="stat" id="d2-relu5-stat">untrained</div>
+          </figure>
+        </div>
+        <div class="controls"><button class="train-btn" id="d2-train">Train all three</button></div>
+        <p class="matrix" id="d2-matrix"></p>
+        <p class="verdict" id="d2-verdict"></p>
+      </section>
+
+      <!-- S1-3 -->
+      <section class="card" id="demo3">
+        <div class="card-head">
+          <span class="badge">3</span>
+          <h2>Embeddings learn similarity from nothing but next-token</h2>
+        </div>
+        <p class="claim">
+          Trained only to predict the next token in a tiny grammar, the embedding table clusters related
+          words — even though similarity was never supplied. Watch animals, fruits, and verbs separate.
+        </p>
+        <div class="canvas-row">
+          <figure>
+            <canvas id="d3-embed" class="wide-canvas" width="640" height="380"></canvas>
+            <figcaption>Learned 2D token embeddings</figcaption>
+            <div class="stat" id="d3-stat">untrained (random init)</div>
+          </figure>
+        </div>
+        <div class="controls"><button class="train-btn" id="d3-train">Train next-token model</button></div>
+        <p class="verdict" id="d3-verdict"></p>
+      </section>
+
+      <!-- S1-4 -->
+      <section class="card" id="demo4">
+        <div class="card-head">
+          <span class="badge">4</span>
+          <h2>Memorization vs generalization — data closes the gap</h2>
+        </div>
+        <p class="claim">
+          A high-capacity net on tiny data drives train accuracy to ~100% while test accuracy lags — it
+          memorizes. Grow the dataset and the train→test gap collapses.
+        </p>
+        <div class="canvas-row">
+          <figure>
+            <canvas id="d4-chart" class="wide-canvas" width="640" height="380"></canvas>
+            <figcaption>Train vs test accuracy across dataset sizes</figcaption>
+            <div class="stat" id="d4-stat">untrained</div>
+          </figure>
+        </div>
+        <div class="controls"><button class="train-btn" id="d4-train">Train at n = 20 / 200 / 2000</button></div>
+        <p class="verdict" id="d4-verdict"></p>
+      </section>
+
+      <footer>
+        Built for <b>ERA V5</b> · The School of AI — trained live with
+        <a href="https://www.tensorflow.org/js" target="_blank" rel="noopener">TensorFlow.js</a>.
+      </footer>
+    </div>
+
+    <script src="./js/utils.js"></script>
+    <script src="./js/demo1.js"></script>
+    <script src="./js/demo2.js"></script>
+    <script src="./js/demo3.js"></script>
+    <script src="./js/demo4.js"></script>
+    <script src="./js/main.js"></script>
+  </body>
+</html>

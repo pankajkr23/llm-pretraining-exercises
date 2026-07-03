@@ -1,0 +1,6 @@
+# Static site — no build step. `web/` is published as-is.
+# For Netlify Git integration, set the site's "Base directory" to
+# src/exercises/01-introductions in the Netlify UI; `publish` is then relative to it.
+[build]
+  publish = "web"
+  command = ""

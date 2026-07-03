@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sync workspace (incl. dev group)
+        run: uv sync
+
+      - name: Lint (ruff)
+        run: uv run ruff check .
+
+      - name: Format check (ruff)
+        run: uv run ruff format --check .
+
+      - name: Unit tests
+        run: uv run pytest -m "not integration"
+
+      - name: Integration tests
+        run: |
+          uv run pytest -m integration || code=$?
+          # exit 5 = "no tests collected" — fine until the first integration test lands
+          if [ "${code:-0}" = "5" ]; then echo "no integration tests yet"; exit 0; fi
+          exit "${code:-0}"
+
+      - name: Web bundle syntax (node --check)
+        run: |
+          shopt -s nullglob
+          for f in src/exercises/*/web/js/*.js; do
+            echo "checking $f"
+            node --check "$f"
+          done

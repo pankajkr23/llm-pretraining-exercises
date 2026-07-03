@@ -1,0 +1,9 @@
+[project]
+name = "exercise-01-introductions"
+version = "0.1.0"
+description = "Session 1 — Introductions: why activations, depth, embeddings, and data matter"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv]
+package = false

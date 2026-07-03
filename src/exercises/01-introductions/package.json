@@ -1,0 +1,14 @@
+{
+  "name": "exercise-01-introductions-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Session 1 webapp — four live TensorFlow.js proofs (activations, depth, embeddings, data)",
+  "scripts": {
+    "deploy": "netlify deploy --dir=web",
+    "deploy:prod": "netlify deploy --prod --dir=web"
+  },
+  "devDependencies": {
+    "@netlify/sdk": "^3",
+    "netlify-cli": "^17"
+  }
+}

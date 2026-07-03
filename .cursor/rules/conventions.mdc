@@ -1,0 +1,8 @@
+---
+description: Repo conventions (single source of truth)
+alwaysApply: true
+---
+
+All conventions for this repo — layout, zero-padded exercise folders, the three-way data
+split, Python/PEP style enforced by ruff, tests, and CI/CD — live in `AGENTS.md` at the repo
+root. Read and follow `AGENTS.md`.

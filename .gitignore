@@ -216,3 +216,20 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ---- repo-specific ----
+# Node deps (Netlify CLI etc.)
+node_modules/
+# Datasets: big & regenerable — keep out of git (track manifests/download scripts instead)
+data/
+# Per-exercise outputs: plots, checkpoints, logs
+artifacts/
+**/artifacts/
+# Personal, machine-local agent instructions (never shared)
+CLAUDE.local.md
+# Local planning scratchpad — not tracked
+TODO.md
+# macOS finder metadata
+.DS_Store
+# Netlify local state
+.netlify/
