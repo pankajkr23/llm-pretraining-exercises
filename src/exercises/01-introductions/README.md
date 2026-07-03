@@ -1,45 +1,40 @@
 # 01 · Introductions — Four Live Proofs
 
-Session 1 assignment (see [`BRIEF.md`](./BRIEF.md)). A single static webapp that *proves* four
-foundational ML claims by training tiny models **live in the browser** with TensorFlow.js —
-no server, no pre-baked figures. Hit **Train** on each and watch the proof form.
+Session 1 assignment (see [`BRIEF.md`](./BRIEF.md)). A small site that *proves* four foundational
+ML claims by training tiny models **live in the browser** — no server, no pre-baked figures, and
+**no dependencies at all** (every page inlines its own CSS + JS; the neural nets are hand-written).
 
-| # | Claim | What you see |
+| Page | Claim | The interactive |
 | --- | --- | --- |
-| 1 | **Activations exist for a reason** | Linear+sigmoid is stuck at a straight cut (~55% on two rings); one ReLU layer wraps the ring (~99%). Only the activation changed. |
-| 2 | **Depth without nonlinearity is a lie** | 1 linear layer ≈ 5 stacked linear layers (identical straight cut); ReLU between the same 5 solves it. Bonus: the 5 weight matrices are multiplied to show they collapse to one 2×1 map. |
-| 3 | **Embeddings learn similarity from next-token alone** | A tiny grammar trains an embedding→softmax next-token model; the 2D embeddings cluster into animals / fruits / verbs though similarity was never supplied. |
-| 4 | **Data closes the generalization gap** | An over-parameterized net at n = 20 / 200 / 2000; the train→test accuracy gap is huge at 20 and shrinks as data grows. |
+| `index.html` | — | Landing page linking the four proofs. |
+| `s1.html` — **The bend** | Activations exist for a reason | Rotate a 3-D neuron surface as you switch none/ReLU/tanh/GELU; then train a linear model vs a ReLU layer on two rings (~55% vs ~99%). |
+| `s2.html` — **Five maps, one matrix** | Depth without nonlinearity is a lie | Watch N linear layers collapse into one matrix (gap ≈ 1e-16); flip on ReLU and it breaks. Then train 1-linear ≈ 5-linear vs 5+ReLU on the rings. |
+| `s3.html` — **Meaning from company** | Embeddings learn similarity from next-token alone | A next-token model on a toy grammar; tokens migrate into animal/fruit/verb clusters. Click a token to see why (its next-token distribution). |
+| `s4.html` — **Memorise, or generalise** | Data closes the generalization gap | Drag the dataset-size slider (20→2000) and watch the memorised boundary smooth out and the train→test gap close. |
 
 ## Layout
 
-```
+```text
 web/
-  index.html          # the page (loads TF.js from a pinned CDN)
-  css/styles.css      # light/dark, responsive
-  js/utils.js         # seeded RNG, data generators, Plotter, training loop
-  js/demo1..4.js      # one file per proof
-  js/main.js          # wires up the Train buttons
-tests/                # bundle-integrity smoke test (see repo-root pytest)
+  index.html          # landing page (hero + four cards)
+  s1.html … s4.html   # one self-contained proof each (inline CSS + JS, no deps)
+tests/                # bundle-integrity smoke test (run via repo-root pytest)
 ```
 
 ## Preview locally
 
 ```bash
 cd web
-python -m http.server 8000
-# open http://localhost:8000
+python3 -m http.server 8000    # then open http://localhost:8000
 ```
 
 ## Deploy (Netlify)
 
-The publish directory is `web/` (`netlify.toml`).
+Publish directory is `web/` (`netlify.toml`).
 
-- **One-off / manual:** from this folder, `npm install` then
-  `npm run deploy` (draft URL) or `npm run deploy:prod`. Run `netlify login` and link the
-  site first.
-- **Continuous (recommended):** connect the repo in the Netlify UI and set the site's
-  **Base directory** to `src/exercises/01-introductions` — you then get preview deploys per
-  PR and prod on `main`, no config needed.
+- **Manual:** from this folder, `npm install` then `npm run deploy` (draft) or `npm run deploy:prod`.
+  Run `netlify login` and link the site first.
+- **Continuous (recommended):** connect the repo in the Netlify UI, set the site's **Base directory**
+  to `src/exercises/01-introductions` — preview deploys per PR, prod on `main`.
 
-Then submit the public URL as the assignment deliverable (test it in an incognito window).
+Submit the public URL as the deliverable (test it in an incognito window first).

@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Five Maps, One Matrix · Depth</title>
+    <style>
+      :root {
+        --bg: #f4f2ee; --panel: #fbfaf7; --ink: #1c1a16; --muted: #74716a; --faint: #9b978e;
+        --line: #e5e1d8; --accent: #2f6f6a; --warm: #cf8a42; --cool: #4d76a8;
+        --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+        --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root { --bg: #14130f; --panel: #1b1a15; --ink: #ece8df; --muted: #9c988e; --faint: #726e64;
+          --line: #2a281f; --accent: #6bb3ac; --warm: #d99a5a; --cool: #7f9cbd; }
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+      .wrap { max-width: 1080px; margin: 0 auto; padding: 56px 24px 96px; }
+      .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
+      h1 { font-family: var(--serif); font-weight: 500; font-size: clamp(2.2rem, 5vw, 3.4rem); line-height: 1.05; letter-spacing: -0.015em; margin: 0 0 18px; }
+      .lede { max-width: 62ch; color: var(--muted); font-size: 1.08rem; margin: 0; }
+      .lede b { color: var(--ink); font-weight: 600; }
+      .lede .chip { font-family: var(--mono); font-size: 0.86em; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 1px 7px; color: var(--ink); }
+
+      .controls { display: flex; flex-wrap: wrap; gap: 22px; align-items: center; margin: 30px 0 8px; }
+      .seg { display: inline-flex; gap: 2px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
+      .seg button { appearance: none; border: 0; background: transparent; cursor: pointer; font-family: var(--mono); font-size: 13px; color: var(--muted); padding: 8px 16px; border-radius: 9px; transition: color 0.15s, background 0.15s; }
+      .seg button[aria-selected="true"] { background: var(--bg); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+      .seg button:hover { color: var(--ink); }
+      .depth { display: flex; align-items: center; gap: 12px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+      .depth input[type="range"] { -webkit-appearance: none; appearance: none; width: 160px; height: 3px; background: var(--line); border-radius: 3px; outline: none; }
+      .depth input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--panel); border: 2px solid var(--accent); cursor: pointer; }
+      .depth input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--panel); border: 2px solid var(--accent); cursor: pointer; }
+      .depth b { color: var(--accent); }
+      .btn { appearance: none; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-family: var(--mono); font-size: 13px; padding: 8px 16px; border-radius: 9px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+      .btn:hover { border-color: var(--accent); color: var(--accent); }
+
+      .stages { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 20px; }
+      @media (max-width: 760px) { .stages { grid-template-columns: 1fr; } }
+      .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+      .panel h3 { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); margin: 0 0 14px; }
+      canvas { width: 100%; height: auto; display: block; border-radius: 12px; background: var(--bg); }
+
+      .algebra { margin-top: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 20px 26px; }
+      .mat { position: relative; display: inline-grid; grid-auto-rows: 1.7em; grid-template-columns: repeat(2, minmax(58px, auto)); gap: 0 18px; padding: 6px 16px; font-family: var(--mono); font-size: 14px; font-variant-numeric: tabular-nums; }
+      .mat span { text-align: right; }
+      .mat::before, .mat::after { content: ""; position: absolute; top: 4px; bottom: 4px; width: 7px; border: 2px solid var(--muted); }
+      .mat::before { left: 0; border-right: 0; border-radius: 3px 0 0 3px; }
+      .mat::after { right: 0; border-left: 0; border-radius: 0 3px 3px 0; }
+      .algebra .eq { font-family: var(--serif); font-size: 1.5rem; color: var(--faint); }
+      .algebra .label { font-family: var(--mono); font-size: 11px; color: var(--faint); letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-bottom: 6px; }
+      .mprod .mat::before, .mprod .mat::after { border-color: var(--accent); }
+      .mprod .mat span { color: var(--accent); font-weight: 600; }
+
+      .verdict { margin-top: 20px; font-size: 1rem; color: var(--muted); }
+      .verdict b { color: var(--ink); font-weight: 600; }
+      .gap { font-family: var(--mono); }
+      .gap.zero { color: var(--accent); }
+      .gap.big { color: var(--warm); }
+      .caption { margin-top: 10px; font-size: 0.95rem; color: var(--muted); min-height: 2.6em; }
+      .caption b { color: var(--ink); font-weight: 600; }
+      .rings { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+      .rings figure { flex: 1 1 200px; max-width: 300px; margin: 0; text-align: center; }
+      .rings canvas { width: 100%; max-width: 300px; height: auto; border-radius: 12px; background: var(--bg); }
+      .rings figcaption { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 8px; }
+      .acc { color: var(--accent); font-weight: 700; margin-left: 4px; }
+      .stage-controls { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+      .btn.ghost { background: transparent; }
+      .btn:disabled { opacity: 0.5; cursor: progress; }
+      .step { font-family: var(--mono); font-size: 12px; color: var(--faint); margin-left: auto; }
+
+      footer { margin-top: 40px; color: var(--faint); font-size: 0.85rem; font-family: var(--mono); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <a href="./index.html" style="font-family: var(--mono); font-size: 12px; color: var(--accent); text-decoration: none; display: inline-block; margin-bottom: 20px">← the four proofs</a>
+      <p class="eyebrow">02 · Depth</p>
+      <h1>Five maps, one matrix</h1>
+      <p class="lede">
+        Stacking layers feels like adding power. But a chain of <b>linear</b> maps
+        <span class="chip">x → W₁x → W₂(W₁x) → …</span> is just one linear map. Add depth: the transform gets no
+        richer, and the whole stack collapses into a single matrix <b>M</b>. Only a nonlinearity in between can
+        make depth mean anything — flip to <b>ReLU</b> and the collapse breaks.
+      </p>
+
+      <div class="controls">
+        <div class="seg" id="acts" role="tablist">
+          <button role="tab" data-act="linear" aria-selected="true">linear</button>
+          <button role="tab" data-act="relu" aria-selected="false">ReLU</button>
+        </div>
+        <div class="depth">
+          depth <input type="range" id="depth" min="1" max="6" step="1" value="5" /> <b id="depthv">5</b> layers
+        </div>
+        <button class="btn" id="rand">Randomize weights</button>
+      </div>
+
+      <div class="stages">
+        <div class="panel">
+          <h3 id="stackTitle">The 5-layer stack</h3>
+          <canvas id="stack" width="720" height="720"></canvas>
+        </div>
+        <div class="panel">
+          <h3>One matrix · M = Wₙ ⋯ W₁</h3>
+          <canvas id="single" width="720" height="720"></canvas>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top: 18px">
+        <h3>The algebra — multiply the weight matrices</h3>
+        <div class="algebra">
+          <div id="factors"></div>
+          <div class="eq">=</div>
+          <div class="mprod"><span class="label">the single matrix M</span><div class="mat" id="prod"></div></div>
+        </div>
+        <p class="verdict" id="verdict"></p>
+        <p class="caption" id="caption"></p>
+      </div>
+
+      <div class="panel" style="margin-top: 26px">
+        <h3>The consequence — the same rings, three networks</h3>
+        <p class="lede" style="margin: 0 0 18px; font-size: 0.98rem">
+          If one linear layer and five stacked linear layers are the <b>same function</b>, they must train to the
+          same stuck accuracy and the same straight boundary. Drop ReLUs between those same five layers and it
+          finally wraps the ring. Press <b>Train</b>.
+        </p>
+        <div class="rings">
+          <figure><canvas id="r1" width="600" height="600"></canvas><figcaption>1 linear layer <span class="acc" id="a1">—</span></figcaption></figure>
+          <figure><canvas id="r5" width="600" height="600"></canvas><figcaption>5 linear layers <span class="acc" id="a5">—</span></figcaption></figure>
+          <figure><canvas id="rr" width="600" height="600"></canvas><figcaption>5 layers + ReLU <span class="acc" id="ar">—</span></figcaption></figure>
+        </div>
+        <div class="stage-controls">
+          <button class="btn" id="ringTrain">Train</button>
+          <button class="btn ghost" id="ringReset">Reset</button>
+          <span class="step" id="ringStep">step 0</span>
+        </div>
+        <p class="verdict" id="collapse"></p>
+        <p class="caption" id="ringCaption"></p>
+      </div>
+
+      <footer>ERA V5 · Session 1 — no dependencies. Each layer is an area-preserving 2×2 map.</footer>
+    </div>
+
+    <script>
+      'use strict';
+      const S = { act: 'linear', depth: 5, seed: 3 };
+      const MAXD = 6, G = 1.6, LINES = 11, SAMP = 44;
+
+      function mulberry32(seed) {
+        let a = seed >>> 0;
+        return function () { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+      }
+
+      // area-preserving 2x2 maps (rotation * diag(s, 1/s)) => det = 1
+      function genMatrices(seed) {
+        const rng = mulberry32(seed), M = [];
+        for (let l = 0; l < MAXD; l++) {
+          const ang = (rng() - 0.5) * 1.15;
+          const s = 0.82 + rng() * 0.5;
+          const ca = Math.cos(ang), sa = Math.sin(ang);
+          M.push([[ca * s, -sa / s], [sa * s, ca / s]]);
+        }
+        return M;
+      }
+      let MATS = genMatrices(S.seed);
+
+      const applyVec = (A, x) => [A[0][0] * x[0] + A[0][1] * x[1], A[1][0] * x[0] + A[1][1] * x[1]];
+      const matmul = (A, B) => [
+        [A[0][0] * B[0][0] + A[0][1] * B[1][0], A[0][0] * B[0][1] + A[0][1] * B[1][1]],
+        [A[1][0] * B[0][0] + A[1][1] * B[1][0], A[1][0] * B[0][1] + A[1][1] * B[1][1]],
+      ];
+      function product(depth) { let M = [[1, 0], [0, 1]]; for (let l = 0; l < depth; l++) M = matmul(MATS[l], M); return M; }
+      function forwardStack(x, depth, act) {
+        let v = x;
+        for (let l = 0; l < depth; l++) { v = applyVec(MATS[l], v); if (act === 'relu') v = [Math.max(0, v[0]), Math.max(0, v[1])]; }
+        return v;
+      }
+
+      function fit(canvas) {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const cssW = canvas.clientWidth, cssH = cssW; // square
+        canvas.style.height = cssH + 'px';
+        canvas.width = Math.round(cssW * dpr); canvas.height = Math.round(cssH * dpr);
+        const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return { ctx, w: cssW, h: cssH };
+      }
+
+      // gridlines as arrays of sampled input points
+      function gridLines() {
+        const lines = [];
+        for (let i = 0; i < LINES; i++) {
+          const c = -G + (2 * G * i) / (LINES - 1);
+          const vert = [], horiz = [];
+          for (let j = 0; j < SAMP; j++) { const t = -G + (2 * G * j) / (SAMP - 1); vert.push([c, t]); horiz.push([t, c]); }
+          lines.push({ pts: vert, fam: 0 }); lines.push({ pts: horiz, fam: 1 });
+        }
+        return lines;
+      }
+      const GRID = gridLines();
+
+      function transformLines(fn) {
+        let minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
+        const out = GRID.map((ln) => {
+          const p = ln.pts.map((x) => { const q = fn(x); if (q[0] < minx) minx = q[0]; if (q[0] > maxx) maxx = q[0]; if (q[1] < miny) miny = q[1]; if (q[1] > maxy) maxy = q[1]; return q; });
+          return { p, fam: ln.fam };
+        });
+        return { out, box: { minx, maxx, miny, maxy } };
+      }
+
+      function draw(canvasId, lines, scale, cx, cy) {
+        const { ctx, w, h } = fit(document.getElementById(canvasId));
+        ctx.clearRect(0, 0, w, h);
+        const sx = (x) => w / 2 + (x - cx) * scale, sy = (y) => h / 2 - (y - cy) * scale;
+        const cool = getComputedStyle(document.body).getPropertyValue('--cool').trim();
+        const warm = getComputedStyle(document.body).getPropertyValue('--warm').trim();
+        for (const ln of lines) {
+          ctx.beginPath();
+          ln.p.forEach((q, i) => { const X = sx(q[0]), Y = sy(q[1]); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
+          ctx.strokeStyle = ln.fam === 0 ? cool : warm; ctx.globalAlpha = 0.7; ctx.lineWidth = 1.3; ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      function fmt(v) { const s = v.toFixed(2); return (v >= 0 ? ' ' : '') + s; }
+      function matHTML(A) { return `<span>${fmt(A[0][0])}</span><span>${fmt(A[0][1])}</span><span>${fmt(A[1][0])}</span><span>${fmt(A[1][1])}</span>`; }
+
+      function render() {
+        const d = S.depth, act = S.act;
+        const M = product(d);
+        // stack output defines the shared scale
+        const st = transformLines((x) => forwardStack(x, d, act));
+        const sg = transformLines((x) => applyVec(M, x));
+        const b = st.box, b2 = sg.box;
+        const minx = Math.min(b.minx, b2.minx), maxx = Math.max(b.maxx, b2.maxx);
+        const miny = Math.min(b.miny, b2.miny), maxy = Math.max(b.maxy, b2.maxy);
+        const cx = (minx + maxx) / 2, cy = (miny + maxy) / 2;
+        const ext = Math.max(maxx - minx, maxy - miny, 0.5);
+        const cw = document.getElementById('stack').clientWidth;
+        const scale = (cw * 0.82) / ext;
+        draw('stack', st.out, scale, cx, cy);
+        draw('single', sg.out, scale, cx, cy);
+
+        // max gap between the stack and the single matrix M over the grid
+        let gap = 0;
+        for (const ln of GRID) for (const x of ln.pts) {
+          const a = forwardStack(x, d, act), c = applyVec(M, x);
+          gap = Math.max(gap, Math.hypot(a[0] - c[0], a[1] - c[1]));
+        }
+
+        // algebra panel
+        const factors = document.getElementById('factors');
+        factors.innerHTML = '<span class="label">the ' + d + ' weight matrices</span>' +
+          Array.from({ length: d }, (_, i) => `<div class="mat" style="margin-right:10px">${matHTML(MATS[i])}</div>`).join('<span style="color:var(--faint)">·</span>');
+        document.getElementById('prod').innerHTML = matHTML(M);
+        document.getElementById('depthv').textContent = d;
+        document.getElementById('stackTitle').textContent = `The ${d}-layer stack` + (act === 'relu' ? ' + ReLU' : '');
+
+        const gapEl = act === 'linear'
+          ? `<span class="gap zero">${gap.toExponential(1)}</span>`
+          : `<span class="gap big">${gap.toFixed(2)}</span>`;
+        document.getElementById('verdict').innerHTML =
+          `Largest gap between the ${d}-layer stack and the single matrix M, measured across the whole grid: ${gapEl}.`;
+        document.getElementById('caption').innerHTML = act === 'linear'
+          ? '<b>Identical.</b> Both panels are the same warped grid — straight lines stay straight, parallels stay parallel. The stack <em>is</em> M; depth bought nothing. That near-zero gap is floating-point dust.'
+          : '<b>They diverge.</b> ReLU folds the plane after every layer — the left panel creases where the right one cannot. No single matrix can reproduce those folds, so the collapse is broken and depth finally counts.';
+      }
+
+      document.querySelectorAll('#acts button').forEach((btn) => btn.addEventListener('click', () => {
+        S.act = btn.dataset.act;
+        document.querySelectorAll('#acts button').forEach((b) => b.setAttribute('aria-selected', b === btn));
+        render();
+      }));
+      document.getElementById('depth').addEventListener('input', (e) => { S.depth = parseInt(e.target.value, 10); render(); });
+      document.getElementById('rand').addEventListener('click', () => { S.seed = (S.seed * 1664525 + 1013904223) >>> 0; MATS = genMatrices(S.seed); render(); });
+      window.addEventListener('resize', render);
+      render();
+
+      // ---------- the consequence: three networks on the rings (generic MLP, no deps) ----------
+      function initRings2() {
+        const rng = mulberry32(7);
+        const randn = () => { let u = 0, v = 0; while (!u) u = rng(); while (!v) v = rng(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+        const NP = 300, X = [], Y = [];
+        for (let i = 0; i < NP; i++) { const c = i < NP / 2 ? 0 : 1; const base = c ? 2.15 : 0.9; const r = base + randn() * 0.16; const th = rng() * 2 * Math.PI; X.push([r * Math.cos(th), r * Math.sin(th)]); Y.push(c); }
+
+        const sig = (z) => 1 / (1 + Math.exp(-z));
+        function makeMLP(sizes, act) {
+          const L = sizes.length - 1, W = [], b = [], mW = [], vW = [], mb = [], vb = [];
+          for (let l = 0; l < L; l++) {
+            const nin = sizes[l], nout = sizes[l + 1], sc = Math.sqrt(2 / nin);
+            W[l] = Array.from({ length: nout }, () => Array.from({ length: nin }, () => randn() * sc));
+            b[l] = Array(nout).fill(0);
+            mW[l] = W[l].map((r) => r.map(() => 0)); vW[l] = W[l].map((r) => r.map(() => 0));
+            mb[l] = Array(nout).fill(0); vb[l] = Array(nout).fill(0);
+          }
+          return { sizes, act, L, W, b, mW, vW, mb, vb, t: 0 };
+        }
+        function forward(m, x) {
+          const acts = [x], pres = []; let a = x;
+          for (let l = 0; l < m.L; l++) {
+            const nout = m.sizes[l + 1], z = new Array(nout);
+            for (let o = 0; o < nout; o++) { let s = m.b[l][o]; const wl = m.W[l][o]; for (let i = 0; i < a.length; i++) s += wl[i] * a[i]; z[o] = s; }
+            pres[l] = z;
+            a = l < m.L - 1 ? (m.act === 'relu' ? z.map((v) => Math.max(0, v)) : z.slice()) : [sig(z[0])];
+            acts[l + 1] = a;
+          }
+          return { p: acts[m.L][0], acts, pres };
+        }
+        const predict = (m, x) => forward(m, x).p;
+        const zeroGrad = (m) => ({ gW: m.W.map((l) => l.map((r) => r.map(() => 0))), gb: m.b.map((l) => l.map(() => 0)) });
+        function backprop(m, x, y, g) {
+          const { p, acts, pres } = forward(m, x); let delta = [p - y];
+          for (let l = m.L - 1; l >= 0; l--) {
+            const nout = m.sizes[l + 1], nin = m.sizes[l];
+            for (let o = 0; o < nout; o++) { g.gb[l][o] += delta[o]; const wg = g.gW[l][o], ain = acts[l]; for (let i = 0; i < nin; i++) wg[i] += delta[o] * ain[i]; }
+            if (l > 0) {
+              const dprev = new Array(nin).fill(0);
+              for (let i = 0; i < nin; i++) { let s = 0; for (let o = 0; o < nout; o++) s += delta[o] * m.W[l][o][i]; const z = pres[l - 1][i]; dprev[i] = s * (m.act === 'relu' ? (z > 0 ? 1 : 0) : 1); }
+              delta = dprev;
+            }
+          }
+        }
+        function stepModel(m, g, N) {
+          m.t++; const LR = 0.05, B1 = 0.9, B2 = 0.999, EPS = 1e-8;
+          for (let l = 0; l < m.L; l++) for (let o = 0; o < m.sizes[l + 1]; o++) {
+            let gg = g.gb[l][o] / N; m.mb[l][o] = B1 * m.mb[l][o] + (1 - B1) * gg; m.vb[l][o] = B2 * m.vb[l][o] + (1 - B2) * gg * gg;
+            m.b[l][o] -= (LR * (m.mb[l][o] / (1 - B1 ** m.t))) / (Math.sqrt(m.vb[l][o] / (1 - B2 ** m.t)) + EPS);
+            for (let i = 0; i < m.sizes[l]; i++) {
+              gg = g.gW[l][o][i] / N; m.mW[l][o][i] = B1 * m.mW[l][o][i] + (1 - B1) * gg; m.vW[l][o][i] = B2 * m.vW[l][o][i] + (1 - B2) * gg * gg;
+              m.W[l][o][i] -= (LR * (m.mW[l][o][i] / (1 - B1 ** m.t))) / (Math.sqrt(m.vW[l][o][i] / (1 - B2 ** m.t)) + EPS);
+            }
+          }
+        }
+        function trainOne(m) { const g = zeroGrad(m); for (let i = 0; i < NP; i++) backprop(m, X[i], Y[i], g); stepModel(m, g, NP); }
+
+        function matmulGen(A, B) {
+          const r = A.length, k = A[0].length, c = B[0].length, out = Array.from({ length: r }, () => Array(c).fill(0));
+          for (let i = 0; i < r; i++) for (let j = 0; j < c; j++) { let s = 0; for (let t = 0; t < k; t++) s += A[i][t] * B[t][j]; out[i][j] = s; }
+          return out;
+        }
+        const collapse = (m) => { let M = m.W[m.L - 1]; for (let l = m.L - 2; l >= 0; l--) M = matmulGen(M, m.W[l]); return M; }; // -> [1x2]
+
+        let m1, m5, mr, step;
+        function initAll() { m1 = makeMLP([2, 1], 'linear'); m5 = makeMLP([2, 8, 8, 8, 8, 1], 'linear'); mr = makeMLP([2, 8, 8, 8, 8, 1], 'relu'); step = 0; }
+        initAll();
+        const accuracy = (m) => { let c = 0; for (let i = 0; i < NP; i++) if ((predict(m, X[i]) > 0.5 ? 1 : 0) === Y[i]) c++; return c / NP; };
+
+        const RR = 3.2, GN = 52;
+        function drawRing(cid, m, aid) {
+          const { ctx, w, h } = fit(document.getElementById(cid)); ctx.clearRect(0, 0, w, h);
+          const off = document.createElement('canvas'); off.width = GN; off.height = GN; const octx = off.getContext('2d'), img = octx.createImageData(GN, GN);
+          for (let j = 0; j < GN; j++) for (let i = 0; i < GN; i++) {
+            const x1 = -RR + (2 * RR * i) / (GN - 1), x2 = -RR + (2 * RR * j) / (GN - 1); const p = predict(m, [x1, x2]); const row = GN - 1 - j, o = (row * GN + i) * 4;
+            const lo = [77, 118, 168], hi = [178, 88, 46];
+            img.data[o] = (lo[0] + (hi[0] - lo[0]) * p) | 0; img.data[o + 1] = (lo[1] + (hi[1] - lo[1]) * p) | 0; img.data[o + 2] = (lo[2] + (hi[2] - lo[2]) * p) | 0; img.data[o + 3] = 95;
+          }
+          octx.putImageData(img, 0, 0); ctx.imageSmoothingEnabled = true; ctx.drawImage(off, 0, 0, w, h);
+          const px = (x) => ((x + RR) / (2 * RR)) * w, py = (y) => h - ((y + RR) / (2 * RR)) * h;
+          for (let i = 0; i < NP; i++) { const c = Y[i] ? [178, 88, 46] : [77, 118, 168]; ctx.beginPath(); ctx.arc(px(X[i][0]), py(X[i][1]), 2.6, 0, 7); ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`; ctx.fill(); ctx.lineWidth = 0.8; ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.stroke(); }
+          document.getElementById(aid).textContent = (accuracy(m) * 100).toFixed(0) + '%';
+        }
+        function redraw() { drawRing('r1', m1, 'a1'); drawRing('r5', m5, 'a5'); drawRing('rr', mr, 'ar'); document.getElementById('ringStep').textContent = 'step ' + step; }
+
+        let training = false;
+        async function train() {
+          if (training) return; training = true;
+          const btn = document.getElementById('ringTrain'); btn.disabled = true; btn.textContent = 'training…';
+          for (let e = 0; e < 700; e++) { trainOne(m1); trainOne(m5); trainOne(mr); step++; if (e % 8 === 0) { redraw(); await new Promise((r) => requestAnimationFrame(r)); } }
+          redraw(); btn.disabled = false; btn.textContent = 'Train';
+          const M = collapse(m5);
+          document.getElementById('collapse').innerHTML =
+            `The five linear layers collapse to one effective map: ` +
+            `<span class="gap zero">y ≈ σ( ${M[0][0].toFixed(3)}·x₁ ${M[0][1] < 0 ? '−' : '+'} ${Math.abs(M[0][1]).toFixed(3)}·x₂ + b )</span> — literally a single linear layer.`;
+          document.getElementById('ringCaption').innerHTML =
+            '<b>1 linear ≈ 5 linear.</b> Same stuck accuracy, same straight cut — because they are the same function. Only the ReLU version bends its boundary around the ring.';
+          training = false;
+        }
+        function reset() {
+          if (training) return; initAll(); redraw();
+          document.getElementById('collapse').innerHTML = '';
+          document.getElementById('ringCaption').innerHTML = 'Untrained. Press <b>Train</b> — the two linear networks land on the identical straight boundary while ReLU pulls ahead.';
+        }
+        document.getElementById('ringTrain').addEventListener('click', train);
+        document.getElementById('ringReset').addEventListener('click', reset);
+        window.addEventListener('resize', redraw);
+        reset();
+      }
+      initRings2();
+    </script>
+  </body>
+</html>

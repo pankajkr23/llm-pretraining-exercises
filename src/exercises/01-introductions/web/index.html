@@ -3,140 +3,115 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Why Neural Nets Work — Four Live Proofs</title>
-    <meta
-      name="description"
-      content="Four in-browser experiments that prove why activations, depth, embeddings, and data matter — trained live with TensorFlow.js."
-    />
-    <link rel="stylesheet" href="./css/styles.css" />
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+    <title>Four Things Every Neural Net Secretly Knows · ERA V5</title>
+    <meta name="description" content="Four live, interactive proofs of why neural networks work — activations, depth, embeddings, and data. Trained in your browser, no dependencies." />
+    <style>
+      :root {
+        --bg: #f4f2ee; --panel: #fbfaf7; --ink: #1c1a16; --muted: #74716a; --faint: #9b978e;
+        --line: #e5e1d8; --accent: #2f6f6a; --c1: #c78a42; --c2: #4d76a8; --c3: #4c8d4f; --c4: #9367a6;
+        --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+        --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root { --bg: #14130f; --panel: #1b1a15; --ink: #ece8df; --muted: #9c988e; --faint: #726e64;
+          --line: #2a281f; --accent: #6bb3ac; --c1: #d99a5a; --c2: #7f9cbd; --c3: #77b07a; --c4: #b08fc0; }
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+      .wrap { max-width: 1000px; margin: 0 auto; padding: 88px 24px 96px; }
+
+      .hero { text-align: center; margin-bottom: 64px; }
+      .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin: 0 0 20px; }
+      h1 { font-family: var(--serif); font-weight: 500; font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1.04; letter-spacing: -0.02em; margin: 0 auto 22px; max-width: 16ch; }
+      .sub { max-width: 56ch; margin: 0 auto; color: var(--muted); font-size: 1.14rem; }
+      .sub b { color: var(--ink); font-weight: 600; }
+
+      .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+      @media (max-width: 720px) { .cards { grid-template-columns: 1fr; } }
+      .card {
+        display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line);
+        border-radius: 18px; padding: 28px; text-decoration: none; color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+      }
+      .card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--ac) 45%, var(--line)); box-shadow: 0 12px 30px rgba(28, 26, 22, 0.07); }
+      .card .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+      .num { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ac); letter-spacing: 0.05em; }
+      .motif { color: var(--ac); }
+      .card h2 { font-family: var(--serif); font-weight: 500; font-size: 1.5rem; letter-spacing: -0.01em; margin: 0 0 8px; }
+      .card .claim { color: var(--muted); font-size: 0.98rem; margin: 0 0 22px; flex: 1; }
+      .go { font-family: var(--mono); font-size: 13px; color: var(--ac); display: inline-flex; align-items: center; gap: 7px; }
+      .card:hover .go .arr { transform: translateX(4px); }
+      .arr { transition: transform 0.16s ease; }
+
+      footer { text-align: center; margin-top: 64px; color: var(--faint); font-size: 0.86rem; font-family: var(--mono); }
+      footer b { color: var(--muted); font-weight: 600; }
+    </style>
   </head>
   <body>
     <div class="wrap">
       <header class="hero">
-        <span class="eyebrow">ERA V5 · Session 1</span>
+        <p class="eyebrow">ERA V5 · Session 1</p>
         <h1>Four things every neural net secretly knows</h1>
-        <p>
-          No slides, no hand-waving — each claim below is trained live in your browser with
-          TensorFlow.js. Hit <b>Train</b> and watch the proof form.
+        <p class="sub">
+          No slides, no hand-waving. Each idea below is <b>trained live in your browser</b> — drag it, break it,
+          watch the proof form. Four reasons neural networks work, one interactive at a time.
         </p>
       </header>
 
-      <div id="tf-error" class="error-banner">
-        Couldn't load TensorFlow.js from the CDN. Check your connection and reload.
+      <div class="cards">
+        <a class="card" href="./s1.html" style="--ac: var(--c1)">
+          <div class="top">
+            <span class="num">01 · Activations</span>
+            <svg class="motif" width="46" height="30" viewBox="0 0 46 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M3 27 L43 3" opacity="0.35" /><path d="M3 27 L23 27 L43 3" />
+            </svg>
+          </div>
+          <h2>The bend</h2>
+          <p class="claim">A weighted sum can only draw a flat plane. The activation is the one thing that bends it into a curve — and that bend is why a network can separate two rings.</p>
+          <span class="go">Explore <span class="arr">→</span></span>
+        </a>
+
+        <a class="card" href="./s2.html" style="--ac: var(--c2)">
+          <div class="top">
+            <span class="num">02 · Depth</span>
+            <svg class="motif" width="46" height="30" viewBox="0 0 46 30" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="6" width="16" height="18" rx="2" opacity="0.4" /><rect x="12" y="6" width="16" height="18" rx="2" opacity="0.6" /><rect x="21" y="6" width="16" height="18" rx="2" /><path d="M40 15 h4" stroke-linecap="round" />
+            </svg>
+          </div>
+          <h2>Five maps, one matrix</h2>
+          <p class="claim">Stack five linear layers and they collapse into a single matrix — depth buys nothing. Watch the collapse, then flip on ReLU and watch it break.</p>
+          <span class="go">Explore <span class="arr">→</span></span>
+        </a>
+
+        <a class="card" href="./s3.html" style="--ac: var(--c3)">
+          <div class="top">
+            <span class="num">03 · Embeddings</span>
+            <svg class="motif" width="46" height="30" viewBox="0 0 46 30" fill="currentColor">
+              <circle cx="8" cy="9" r="2.4" /><circle cx="13" cy="14" r="2.4" /><circle cx="7" cy="18" r="2.4" opacity="0.85" />
+              <circle cx="24" cy="20" r="2.4" /><circle cx="29" cy="24" r="2.4" opacity="0.85" />
+              <circle cx="38" cy="6" r="2.4" /><circle cx="40" cy="12" r="2.4" opacity="0.85" />
+            </svg>
+          </div>
+          <h2>Meaning from company</h2>
+          <p class="claim">Trained only to predict the next token, the model pulls related words into clusters. Similarity is never supplied — it emerges from pure statistics.</p>
+          <span class="go">Explore <span class="arr">→</span></span>
+        </a>
+
+        <a class="card" href="./s4.html" style="--ac: var(--c4)">
+          <div class="top">
+            <span class="num">04 · Data</span>
+            <svg class="motif" width="46" height="30" viewBox="0 0 46 30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M3 5 C 18 5, 30 14, 43 15" /><path d="M3 25 C 18 25, 30 16, 43 15" opacity="0.5" />
+            </svg>
+          </div>
+          <h2>Memorise, or generalise</h2>
+          <p class="claim">On tiny data the net memorises noise and the test set lags. Drag the dataset size up and watch the train→test gap close. Data is the regulariser.</p>
+          <span class="go">Explore <span class="arr">→</span></span>
+        </a>
       </div>
 
-      <!-- S1-1 -->
-      <section class="card" id="demo1">
-        <div class="card-head">
-          <span class="badge">1</span>
-          <h2>Activations exist for a reason</h2>
-        </div>
-        <p class="claim">
-          A model with no nonlinearity can only draw a straight boundary — so it cannot separate two
-          concentric rings. Add a single ReLU hidden layer and it can. Only the activation changes.
-        </p>
-        <div class="canvas-row">
-          <figure>
-            <canvas id="d1-linear" width="340" height="340"></canvas>
-            <figcaption>Linear + sigmoid</figcaption>
-            <div class="stat" id="d1-linear-stat">untrained</div>
-          </figure>
-          <figure>
-            <canvas id="d1-relu" width="340" height="340"></canvas>
-            <figcaption>One ReLU hidden layer</figcaption>
-            <div class="stat" id="d1-relu-stat">untrained</div>
-          </figure>
-        </div>
-        <div class="controls"><button class="train-btn" id="d1-train">Train both</button></div>
-        <p class="verdict" id="d1-verdict"></p>
-      </section>
-
-      <!-- S1-2 -->
-      <section class="card" id="demo2">
-        <div class="card-head">
-          <span class="badge">2</span>
-          <h2>Depth without nonlinearity is a lie</h2>
-        </div>
-        <p class="claim">
-          Five stacked linear layers collapse to a single linear map — so they're no stronger than one
-          layer, and fail the ring identically. Drop ReLUs between the same five and it's solved.
-        </p>
-        <div class="canvas-row">
-          <figure>
-            <canvas id="d2-lin1" width="340" height="340"></canvas>
-            <figcaption>1 linear layer</figcaption>
-            <div class="stat" id="d2-lin1-stat">untrained</div>
-          </figure>
-          <figure>
-            <canvas id="d2-lin5" width="340" height="340"></canvas>
-            <figcaption>5 linear layers</figcaption>
-            <div class="stat" id="d2-lin5-stat">untrained</div>
-          </figure>
-          <figure>
-            <canvas id="d2-relu5" width="340" height="340"></canvas>
-            <figcaption>5 layers + ReLU</figcaption>
-            <div class="stat" id="d2-relu5-stat">untrained</div>
-          </figure>
-        </div>
-        <div class="controls"><button class="train-btn" id="d2-train">Train all three</button></div>
-        <p class="matrix" id="d2-matrix"></p>
-        <p class="verdict" id="d2-verdict"></p>
-      </section>
-
-      <!-- S1-3 -->
-      <section class="card" id="demo3">
-        <div class="card-head">
-          <span class="badge">3</span>
-          <h2>Embeddings learn similarity from nothing but next-token</h2>
-        </div>
-        <p class="claim">
-          Trained only to predict the next token in a tiny grammar, the embedding table clusters related
-          words — even though similarity was never supplied. Watch animals, fruits, and verbs separate.
-        </p>
-        <div class="canvas-row">
-          <figure>
-            <canvas id="d3-embed" class="wide-canvas" width="640" height="380"></canvas>
-            <figcaption>Learned 2D token embeddings</figcaption>
-            <div class="stat" id="d3-stat">untrained (random init)</div>
-          </figure>
-        </div>
-        <div class="controls"><button class="train-btn" id="d3-train">Train next-token model</button></div>
-        <p class="verdict" id="d3-verdict"></p>
-      </section>
-
-      <!-- S1-4 -->
-      <section class="card" id="demo4">
-        <div class="card-head">
-          <span class="badge">4</span>
-          <h2>Memorization vs generalization — data closes the gap</h2>
-        </div>
-        <p class="claim">
-          A high-capacity net on tiny data drives train accuracy to ~100% while test accuracy lags — it
-          memorizes. Grow the dataset and the train→test gap collapses.
-        </p>
-        <div class="canvas-row">
-          <figure>
-            <canvas id="d4-chart" class="wide-canvas" width="640" height="380"></canvas>
-            <figcaption>Train vs test accuracy across dataset sizes</figcaption>
-            <div class="stat" id="d4-stat">untrained</div>
-          </figure>
-        </div>
-        <div class="controls"><button class="train-btn" id="d4-train">Train at n = 20 / 200 / 2000</button></div>
-        <p class="verdict" id="d4-verdict"></p>
-      </section>
-
-      <footer>
-        Built for <b>ERA V5</b> · The School of AI — trained live with
-        <a href="https://www.tensorflow.org/js" target="_blank" rel="noopener">TensorFlow.js</a>.
-      </footer>
+      <footer>Built for <b>ERA V5</b> · The School of AI — four interactive proofs, hand-written, zero dependencies.</footer>
     </div>
-
-    <script src="./js/utils.js"></script>
-    <script src="./js/demo1.js"></script>
-    <script src="./js/demo2.js"></script>
-    <script src="./js/demo3.js"></script>
-    <script src="./js/demo4.js"></script>
-    <script src="./js/main.js"></script>
   </body>
 </html>
