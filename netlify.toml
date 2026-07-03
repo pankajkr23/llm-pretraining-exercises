@@ -1,0 +1,4 @@
+# This monorepo's deployable site is exercise 01's web bundle — a static site
+# (no build step). Netlify serves it as the site root from the repo root.
+[build]
+  publish = "src/exercises/01-introductions/web"
