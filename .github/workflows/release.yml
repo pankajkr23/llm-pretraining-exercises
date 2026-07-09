@@ -1,0 +1,55 @@
+name: Release
+
+# Cuts a release when a semver tag is pushed:
+#   1. Creates a GitHub Release, using the matching CHANGELOG.md section as the notes.
+#   2. Deploys the tagged commit to Vercel production (approval-gated, via deploy-production.yml).
+#
+# Release flow: move CHANGELOG's [Unreleased] -> [X.Y.Z] (dated) and merge, then:
+#   git tag vX.Y.Z && git push origin vX.Y.Z
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  github-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Extract release notes from CHANGELOG
+        id: notes
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="$version" '
+            $0 ~ "^## \\[" v "\\]" { flag=1; next }
+            flag && /^## \[/ { exit }
+            flag { print }
+          ' CHANGELOG.md > notes.md
+          if [ -s notes.md ]; then
+            echo "have_notes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "have_notes=false" >> "$GITHUB_OUTPUT"
+            echo "No CHANGELOG.md section for $version — falling back to auto-generated notes."
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ steps.notes.outputs.have_notes }}" = "true" ]; then
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md
+          else
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
+          fi
+
+  deploy:
+    needs: github-release
+    uses: ./.github/workflows/deploy-production.yml
+    secrets: inherit
