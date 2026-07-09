@@ -23,6 +23,93 @@ Fetched articles are cached in `data/` and outputs land in `artifacts/` — both
 recreated by a run. A run writes `tokenizer.json` (the HuggingFace byte-BPE baseline),
 `tokenizer_scratch.json` (the hand-written char-level BPE), and `report.json` (the baseline scores).
 
+## How it fits together
+
+Three entry points share the same corpus-fetch + score core, and write to three separate concerns
+(cached `data/`, gitignored `artifacts/`, tracked `web/`). GitHub renders the Mermaid below inline.
+
+### Pipeline flow — the three runnable modules
+
+```mermaid
+flowchart LR
+    WP[("Wikipedia API")] -->|fetch once| COR["corpus.fetch_article"]
+    COR <-->|cache| DATA[/"data/*.txt"/]
+
+    COR --> MAIN["__main__ · pipeline"]
+    COR --> ABL["ablate · sweep"]
+    COR --> WID["widget · build_payload"]
+
+    subgraph engines["tokenizer engines"]
+      HF["tokenizer.train_bpe<br/>(HF byte BPE)"]
+      SB["bpe_scratch.ScratchBPE<br/>(char + NFKC, by hand)"]
+    end
+
+    MAIN --> HF & SB
+    ABL --> HF & SB
+    WID --> HF & SB
+    HF & SB --> MET["metrics · ratio / spread / score"]
+
+    MAIN --> TJ[/"artifacts/tokenizer.json"/]
+    MAIN --> TS[/"artifacts/tokenizer_scratch.json"/]
+    MET --> RJ[/"artifacts/report.json"/]
+    ABL --> AJ[/"artifacts/ablations.json"/]
+    WID --> WJ[/"web/data.json"/]
+    WJ --> IDX["web/index.html<br/>reviewer widget"]
+```
+
+### Component & data map — who reads/writes what
+
+```mermaid
+flowchart TB
+    subgraph code["src/tokenization/"]
+      config["config.py<br/>languages · vocab · weights"]
+      corpus["corpus.py"]
+      tok["tokenizer.py"]
+      scratch["bpe_scratch.py"]
+      metrics["metrics.py"]
+      ablate["ablate.py"]
+      widget["widget.py"]
+      main["__main__.py"]
+    end
+
+    config -.->|Config| main & ablate & widget
+    main & ablate & widget --> corpus
+    corpus <-->|read/write| dataDir[/"data/ (gitignored)"/]
+    main --> tok & scratch --> artDir[/"artifacts/ (gitignored)"/]
+    ablate & widget --> metrics
+    ablate --> artDir
+    widget --> webDir[/"web/ (tracked)"/]
+```
+
+### Sequence — a single `uv run python -m tokenization`
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant CLI
+    participant Main as __main__.main
+    participant Cor as corpus
+    participant Met as metrics
+    participant HF as tokenizer (HF)
+    participant SB as bpe_scratch
+    participant Art as artifacts/
+
+    CLI->>Main: uv run python -m tokenization
+    loop each language (en, hi, te, ta)
+        Main->>Cor: fetch_article(lang)
+        Cor-->>Main: text (cached under data/*.txt)
+    end
+    Main->>Met: count_words(text) per language
+    Main->>HF: train_bpe(corpora, 10k, weights)
+    Main->>Art: save tokenizer.json
+    Main->>Met: score(encode each corpus)
+    Main->>Art: write report.json
+    Main-->>CLI: print report
+    Main->>SB: ScratchBPE(NFKC).train(corpora, 10k, flat)
+    Main->>Art: save tokenizer_scratch.json
+    Main-->>CLI: print from-scratch score
+```
+
 ## Run it
 
 ```bash
