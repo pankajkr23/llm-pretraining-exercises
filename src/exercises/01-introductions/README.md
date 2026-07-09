@@ -28,13 +28,15 @@ cd web
 python3 -m http.server 8000    # then open http://localhost:8000
 ```
 
-## Deploy (Netlify)
+## Deploy (Vercel)
 
-Publish directory is `web/` (`netlify.toml`).
+Served by the repo-wide Vercel project at **`/01-introductions/`** — `deploy/vercel/build.sh` copies
+this `web/` into the assembled `public/`. Preview-per-PR, prod on `main`; no per-exercise config here.
+See [`deploy/`](../../../deploy/) for the setup.
 
-- **Manual:** from this folder, `npm install` then `npm run deploy` (draft) or `npm run deploy:prod`.
-  Run `netlify login` and link the site first.
-- **Continuous (recommended):** connect the repo in the Netlify UI, set the site's **Base directory**
-  to `src/exercises/01-introductions` — preview deploys per PR, prod on `main`.
+- **Continuous (default):** the repo's Vercel Git integration deploys automatically on PR/merge.
+- **Manual (rare):** `npx vercel` (preview) / `npx vercel --prod` from the repo root.
 
 Submit the public URL as the deliverable (test it in an incognito window first).
+
+> Netlify was the prior host; its config is deactivated in `deploy/netlify/` (pending decommission).

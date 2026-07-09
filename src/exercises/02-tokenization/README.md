@@ -196,8 +196,10 @@ cd web
 python3 -m http.server 8000   # open http://localhost:8000
 ```
 
-> **Netlify:** not yet wired to a live URL — the root `netlify.toml` publishes exercise 01 only.
-> Multi-exercise publishing is a pending task.
+> **Hosting:** deploys via the repo-wide **Vercel** project at `/02-tokenization/` (see
+> [`deploy/`](../../../deploy/)); the single-project + routing setup serves every exercise. Connecting
+> the Vercel project to the repo is the remaining one-time step. Netlify (the prior host) is
+> deactivated in `deploy/netlify/`, pending decommission.
 
 ## Tests
 

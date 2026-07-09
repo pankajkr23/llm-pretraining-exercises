@@ -231,5 +231,8 @@ CLAUDE.local.md
 TODO.md
 # macOS finder metadata
 .DS_Store
-# Netlify local state
+# Vercel: assembled static output (deploy/vercel/build.sh) + local state
+public/
+.vercel/
+# Netlify local state (deactivated host; see deploy/netlify/)
 .netlify/
