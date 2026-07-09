@@ -12,7 +12,7 @@ lives in a numbered exercise folder under `src/exercises/`.
 ## Environment
 
 - **uv workspace**, Python **3.12**. One shared root `.venv`, one `uv.lock`.
-- `uv sync` — install/resolve. `uv run <cmd>` — run inside the env. `uv add <pkg>` — add a dep (never hand-edit `uv.lock`).
+- `uv sync --all-packages` — install every workspace member + its deps into the shared `.venv` (plain `uv sync` installs only the root). `uv run <cmd>` — run inside the env. `uv add <pkg>` — add a dep (never hand-edit `uv.lock`).
 - Each exercise is a workspace member matched by `members = ["src/exercises/[0-9][0-9]-*"]`.
 
 ## Repo layout & naming
@@ -44,7 +44,7 @@ lives in a numbered exercise folder under `src/exercises/`.
 
 ## CI/CD
 
-- CI (`.github/workflows/ci.yml`): `uv sync` → `ruff check` → `ruff format --check` → unit → integration → `node --check` on any `web/js/*.js`.
+- CI (`.github/workflows/ci.yml`): `uv sync --all-packages` → `ruff check` → `ruff format --check` → unit → integration → `node --check` on any `web/js/*.js`.
 - CD: **Netlify Git integration** (preview-per-PR, prod-on-main). Deployable web exercises publish their `web/` dir.
 
 ## Instruction files (this system)
