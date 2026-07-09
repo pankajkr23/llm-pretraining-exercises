@@ -4,8 +4,9 @@
   "private": true,
   "description": "Session 1 webapp — four live TensorFlow.js proofs (activations, depth, embeddings, data)",
   "scripts": {
-    "deploy": "netlify deploy --dir=web",
-    "deploy:prod": "netlify deploy --prod --dir=web"
+    "_comment": "Hosting moved to Vercel (see deploy/README.md). These Netlify scripts + devDeps are retained but deactivated; deploy is now via Vercel Git integration or `npx vercel`.",
+    "deploy:netlify": "netlify deploy --dir=web",
+    "deploy:netlify:prod": "netlify deploy --prod --dir=web"
   },
   "devDependencies": {
     "@netlify/sdk": "^3",

@@ -40,6 +40,8 @@
 
 You are working with your agents to design a beautiful webapp which proves these 4 points, and then uploading on [Netlify](https://app.netlify.com/drop) and then sharing the link. Make an account on Netlify to keep it permanent.
 
+> **Hosting note:** we're moving these demos to **Vercel**; the submitted link will be a Vercel URL. Netlify will be **decommissioned** (not archived).
+
 ## Submission
 
 | Item | Detail | Points |

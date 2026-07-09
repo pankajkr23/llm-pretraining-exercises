@@ -54,7 +54,7 @@ in a top-level `data/` (git-ignored, with a tracked manifest); per-exercise outp
 - **Python 3.12**, managed by **uv** (workspace, shared lockfile).
 - **[ruff](https://docs.astral.sh/ruff/)** for lint + format, **pytest** for tests (unit / integration split).
 - **GitHub Actions** CI (ruff, pytest, `node --check`, gitleaks secret scan).
-- Web exercises are **plain HTML/CSS/JS — zero runtime dependencies** — deployed to **Netlify**. What they render is either hand-written (exercise 01 trains tiny nets live in-browser) or precomputed by a Python pipeline (exercise 02 trains its BPE with HuggingFace `tokenizers`, then the widget renders the exported vocabulary and scores).
+- Web exercises are **plain HTML/CSS/JS — zero runtime dependencies** — deployed to **Vercel** (one project routes each exercise under `/NN-slug/`; see [`deploy/`](deploy/)). What they render is either hand-written (exercise 01 trains tiny nets live in-browser) or precomputed by a Python pipeline (exercise 02 trains its BPE with HuggingFace `tokenizers`, then the widget renders the exported vocabulary and scores).
 
 ## Getting started
 
@@ -70,7 +70,7 @@ uv run pytest            # run every exercise's tests from the root
 
 | # | Exercise | Summary |
 | --- | --- | --- |
-| 01 | [Introductions](src/exercises/01-introductions/) | Four live, in-browser interactive proofs of *why neural nets work*. Static site, zero dependencies, deployed to Netlify. |
+| 01 | [Introductions](src/exercises/01-introductions/) | Four live, in-browser interactive proofs of *why neural nets work*. Static site, zero dependencies, deployed to Vercel. |
 | 02 | [Tokenization](src/exercises/02-tokenization/) | A single 10k BPE vocabulary balanced across India's Wikipedia article in four languages, with an ablation harness that sweeps algorithm × representation × normalization × vocab × weighting. |
 
 More exercises are added each week.
@@ -95,9 +95,9 @@ cd src/exercises/01-introductions/web
 python3 -m http.server 8000   # open http://localhost:8000
 ```
 
-Deploy: publish directory is `web/` (`netlify.toml`). Either `npm run deploy:prod` from the exercise
-folder (after `netlify login`), or connect the repo in the Netlify UI with **Base directory** set to
-`src/exercises/01-introductions` for preview-per-PR and prod-on-`main`.
+Deploy: handled by the repo-wide **Vercel** project — `deploy/vercel/build.sh` serves this exercise's
+`web/` at `/01-introductions/`, preview-per-PR and prod-on-`main`. See [`deploy/`](../../../deploy/).
+(The prior Netlify config is deactivated in `deploy/netlify/`, pending decommission.)
 
 ### 02 · Tokenization — one vocabulary, four languages
 
@@ -126,8 +126,10 @@ cd src/exercises/02-tokenization/web
 python3 -m http.server 8000   # open http://localhost:8000
 ```
 
-> **Netlify:** the widget is not yet wired to a live URL — the root `netlify.toml` currently publishes
-> exercise 01 only. Multi-exercise publishing is a pending task.
+> **Hosting:** the widget deploys via the repo-wide **Vercel** project at `/02-tokenization/` (see
+> [`deploy/`](deploy/)) — the single-project + routing setup serves every exercise, so this is no
+> longer blocked on multi-exercise publishing. Connecting the Vercel project to the repo is the
+> remaining one-time step.
 
 ## Development
 

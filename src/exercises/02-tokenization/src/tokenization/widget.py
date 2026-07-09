@@ -1,4 +1,4 @@
-"""Export the data the Netlify widget renders: ratios, score, and the full token list.
+"""Export the data the web widget renders: ratios, score, and the full token list.
 
 Trains a handful of featured tokenizers and writes ``web/data.json`` — the widget
 (``web/index.html``) is a static page that loads this file. Regenerate with::

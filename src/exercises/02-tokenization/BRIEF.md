@@ -46,5 +46,8 @@ The brief is loosely worded, so we pin the terms down (see `src/tokenization/met
 2. The widget must let a reviewer **see your tokenizer** — the full list of all tokens in the vocab.
 3. A **Netlify URL** for that widget.
 
+> **Hosting note:** we're moving these demos to **Vercel**; the submitted link will be a Vercel URL.
+> Netlify will be **decommissioned** (not archived).
+
 The Python pipeline here (fetch → train → score, plus the ablation harness) is the *engine*; it
 exports the numbers and the full vocabulary that the widget renders.
