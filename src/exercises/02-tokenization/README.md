@@ -19,8 +19,9 @@ web/             # zero-dependency reviewer widget (index.html + exported data.j
 tests/           # metrics unit tests + a tiny offline BPE integration test
 ```
 
-Fetched articles are cached in `data/` and outputs (`tokenizer.json`, `report.json`) land in
-`artifacts/` — both git-ignored and recreated by a run.
+Fetched articles are cached in `data/` and outputs land in `artifacts/` — both git-ignored and
+recreated by a run. A run writes `tokenizer.json` (the HuggingFace byte-BPE baseline),
+`tokenizer_scratch.json` (the hand-written char-level BPE), and `report.json` (the baseline scores).
 
 ## Run it
 

@@ -9,7 +9,8 @@ Component notes. Repo-wide conventions: root `AGENTS.md`.
   `bpe_scratch.py`; it duck-types the HF surface the pipeline uses (`encode().ids`, `get_vocab`,
   `get_vocab_size`), so it slots into `ablate`/`widget` via `algo="bpe-scratch"` with no other changes.
 - **Data** (fetched Wikipedia articles) is cached to `data/` and **git-ignored**; outputs
-  (`tokenizer.json`, `report.json`) go to `artifacts/`, also git-ignored. Both are recreated by a run.
+  (`tokenizer.json` = HF baseline, `tokenizer_scratch.json` = hand-written BPE, `report.json`) go to
+  `artifacts/`, also git-ignored. All are recreated by a run.
 - Modules: `config.py` (languages, vocab size, weights) · `corpus.py` (fetch + cache) ·
   `tokenizer.py` (train/save/count) · `bpe_scratch.py` (hand-written char-level BPE) ·
   `metrics.py` (words, ratio, spread, score) · `__main__.py` (pipeline) ·
