@@ -42,10 +42,15 @@ lives in a numbered exercise folder under `src/exercises/`.
 - Split fast **unit** vs slower **integration** (`@pytest.mark.integration`). Run fast only: `uv run pytest -m "not integration"`.
 - The ML-native integration test: **overfit a single batch for a few steps and assert loss collapses** (+ shape/checkpoint round-trip tests).
 
+## Git workflow
+
+- **Every change lands on `main` via a pull request.** Branch → push → open a PR → merge. **Never push, merge, or force-push directly to `main`** — it's the protected prod/deploy branch (Netlify ships it), so unreviewed commits go straight to production.
+- Keep PRs scoped to one concern; unrelated edits get their own branch/PR.
+
 ## CI/CD
 
 - CI (`.github/workflows/ci.yml`): `uv sync --all-packages` → `ruff check` → `ruff format --check` → unit → integration → `node --check` on any `web/js/*.js`.
-- CD: **Netlify Git integration** (preview-per-PR, prod-on-main). Deployable web exercises publish their `web/` dir.
+- CD: **Netlify Git integration** (preview-per-PR, prod-on-main). Deployable web exercises publish their `web/` dir. Because `main` auto-deploys, the PR-only rule above is a hard requirement, not a preference.
 
 ## Instruction files (this system)
 
