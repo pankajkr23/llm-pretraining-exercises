@@ -28,8 +28,25 @@ The deploy scripts and dev-dependencies also remain, deactivated, in
    **Base directory** = `src/exercises/01-introductions` (its `netlify.toml` publishes `web/`).
 3. To avoid double-deploys, pause or disconnect the Vercel project (see [`../README.md`](../README.md)).
 
-## To finish decommissioning
+## Decommission checklist
 
-Once Vercel is confirmed: delete this directory, drop the `deploy:netlify*` scripts and
-`@netlify/sdk` / `netlify-cli` devDependencies from the exercise-01 `package.json`, and delete the
-Netlify site in the dashboard.
+The connected Netlify site is **`lovely-profiterole-3afece`** (app.netlify.com). Work top to bottom;
+the first step is reversible, the last ones are not.
+
+1. **Pause builds now (reversible).** Site → *Site configuration → Build & deploy → Continuous
+   deployment → Build settings* → **Stop builds**. This halts PR deploy-previews and the Netlify bot
+   PR comments immediately. (Reverse with *Start builds* if you ever need to.)
+2. **Verify Vercel in production.** Ship via the `Deploy to production` workflow and confirm
+   `llm-pretraining-demos.vercel.app` + the `/01-introductions/` and `/02-tokenization/` routes serve
+   correctly. Let it run for a few days.
+3. **Disconnect Git (harder).** Same *Continuous deployment* page → *Manage repository* → **Unlink**.
+   Netlify stops watching the repo entirely; the last deploy stays served.
+4. **Delete the site (final).** *Site configuration* → bottom → **Delete site**.
+5. **Remove the retained repo config** (once the site is gone):
+   - delete this `deploy/netlify/` directory,
+   - drop the `deploy:netlify` / `deploy:netlify:prod` scripts and the `@netlify/sdk` /
+     `netlify-cli` devDependencies from `src/exercises/01-introductions/package.json`,
+   - regenerate `package-lock.json`.
+
+Until step 1 is done, Netlify and Vercel both build on every PR (harmless, just noisy — two preview
+comments). Step 1 alone is enough to stop that.
