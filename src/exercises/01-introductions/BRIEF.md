@@ -1,5 +1,7 @@
 # Session 1 — Assignment QnA
 
+> **In one line:** Four interactive, in-browser proofs — built from scratch with zero dependencies — showing *why* neural nets work: activations bend straight lines into curves, stacked linear layers collapse into one, embeddings cluster meaning from next-token prediction alone, and more data closes the memorization gap.
+
 ## Brief
 
 ### S1-1 · Activations exist for a reason.

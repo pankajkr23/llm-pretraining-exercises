@@ -54,16 +54,16 @@ in a top-level `data/` (git-ignored, with a tracked manifest); per-exercise outp
 - **Python 3.12**, managed by **uv** (workspace, shared lockfile).
 - **[ruff](https://docs.astral.sh/ruff/)** for lint + format, **pytest** for tests (unit / integration split).
 - **GitHub Actions** CI (ruff, pytest, `node --check`, gitleaks secret scan).
-- Web exercises are **plain HTML/CSS/JS with hand-written models — zero dependencies** — deployed to **Netlify**.
+- Web exercises are **plain HTML/CSS/JS — zero runtime dependencies** — deployed to **Netlify**. What they render is either hand-written (exercise 01 trains tiny nets live in-browser) or precomputed by a Python pipeline (exercise 02 trains its BPE with HuggingFace `tokenizers`, then the widget renders the exported vocabulary and scores).
 
 ## Getting started
 
 Prerequisites: [uv](https://docs.astral.sh/uv/getting-started/installation/) (installs/manages Python 3.12 for you).
 
 ```bash
-uv sync              # create the shared .venv and install dependencies (incl. dev tools)
-uv run main.py       # sanity check
-uv run pytest        # run every exercise's tests from the root
+uv sync --all-packages   # create the shared .venv and install every exercise + dev tools
+uv run main.py           # sanity check
+uv run pytest            # run every exercise's tests from the root
 ```
 
 ## Exercises
@@ -71,6 +71,7 @@ uv run pytest        # run every exercise's tests from the root
 | # | Exercise | Summary |
 | --- | --- | --- |
 | 01 | [Introductions](src/exercises/01-introductions/) | Four live, in-browser interactive proofs of *why neural nets work*. Static site, zero dependencies, deployed to Netlify. |
+| 02 | [Tokenization](src/exercises/02-tokenization/) | A single 10k BPE vocabulary balanced across India's Wikipedia article in four languages, with an ablation harness that sweeps algorithm × representation × normalization × vocab × weighting. |
 
 More exercises are added each week.
 
@@ -98,20 +99,50 @@ Deploy: publish directory is `web/` (`netlify.toml`). Either `npm run deploy:pro
 folder (after `netlify login`), or connect the repo in the Netlify UI with **Base directory** set to
 `src/exercises/01-introductions` for preview-per-PR and prod-on-`main`.
 
+### 02 · Tokenization — one vocabulary, four languages
+
+A Python pipeline (`src/exercises/02-tokenization/src/tokenization/`) builds **one 10,000-token BPE
+vocabulary** shared across India's Wikipedia article in **English, Hindi, Telugu, and Tamil** (the 4th
+language is swappable in `config.py`), tuned so all four are tokenized about equally efficiently. The
+graded quantity is the **spread** between the best- and worst-served language; the self-score is
+`1000 / (max ratio − min ratio)`.
+
+```bash
+uv run python -m tokenization          # fetch → train the shared 10k BPE → print + save the report
+uv run python -m tokenization.ablate   # sweep algorithm × representation × normalization × vocab × weighting
+```
+
+Headline finding from the ablation harness: **representation is the dominant lever**, not corpus
+weighting. Byte-level BPE explodes each Indic character into 3 UTF-8 bytes (Tamil ≈ 6.5 tokens/word);
+switching to char-level + Unigram + NFKC drops every language to ~1.7–2.2 tokens/word, cutting the
+spread ~11× (score 190 → 2078).
+
+A zero-dependency **widget** (`web/index.html`, rendering the exported `web/data.json`) shows the four
+ratios, token stats, the score calculation, and the full searchable token list — the reviewer
+deliverable. Preview it locally:
+
+```bash
+cd src/exercises/02-tokenization/web
+python3 -m http.server 8000   # open http://localhost:8000
+```
+
+> **Netlify:** the widget is not yet wired to a live URL — the root `netlify.toml` currently publishes
+> exercise 01 only. Multi-exercise publishing is a pending task.
+
 ## Development
 
 - **Tests:** `uv run pytest` (fast unit) · `uv run pytest -m integration` (slower end-to-end). Each exercise owns its `tests/`.
 - **Lint / format:** `uv run ruff check --fix .` and `uv run ruff format .`. The enforceable style spec (PEP 8/257, modern typing, line length 100) lives in `pyproject.toml`.
-- **CI** (`.github/workflows/ci.yml`, on every push & PR): `uv sync` → `ruff check` → `ruff format --check` → unit tests → integration tests → `node --check` on web JS, plus a parallel **gitleaks** secret scan.
+- **CI** (`.github/workflows/ci.yml`, on every push & PR): `uv sync --all-packages` → `ruff check` → `ruff format --check` → unit tests → integration tests → `node --check` on web JS, plus a parallel **gitleaks** secret scan.
 
 ## Adding a new exercise
 
 Every exercise follows the same skeleton, so the repo stays predictable:
 
 ```bash
-mkdir -p src/exercises/02-slug/{src,tests}
+mkdir -p src/exercises/03-slug/{src,tests}
 # add pyproject.toml (workspace member), BRIEF.md, README.md
-uv sync    # the members = ["src/exercises/[0-9][0-9]-*"] glob picks it up automatically
+uv sync --all-packages   # the members = ["src/exercises/[0-9][0-9]-*"] glob picks it up automatically
 ```
 
 Match the conventions in [`AGENTS.md`](AGENTS.md): zero-padded `NN-slug` folders, code in one place
