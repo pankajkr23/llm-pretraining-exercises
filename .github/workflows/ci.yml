@@ -15,8 +15,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Sync workspace (incl. dev group)
-        run: uv sync
+      - name: Sync workspace (all members + dev group)
+        run: uv sync --all-packages
 
       - name: Lint (ruff)
         run: uv run ruff check .
