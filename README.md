@@ -4,11 +4,11 @@
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 ![uv](https://img.shields.io/badge/packaged%20with-uv-6340ac)
 
-Weekly exercises and capstone work for **ERA V5** (The School of AI) — a ~6-month program that
-builds a large language model from scratch, from a minimal transformer block all the way to
-launching and operating a real training run.
+Hands-on exercises and capstone work for **LLM pre-training** — building a large language model
+from scratch, from a minimal transformer block all the way to launching and operating a real
+training run.
 
-- **Program overview & full 20-class syllabus:** [`docs/BRIEF.md`](docs/BRIEF.md)
+- **Overview & full syllabus:** [`docs/BRIEF.md`](docs/BRIEF.md)
 - **Repo conventions (single source of truth for humans & coding agents):** [`AGENTS.md`](AGENTS.md)
 
 ## About the program
