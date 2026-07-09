@@ -31,11 +31,12 @@ python3 -m http.server 8000    # then open http://localhost:8000
 ## Deploy (Vercel)
 
 Served by the repo-wide Vercel project at **`/01-introductions/`** — `deploy/vercel/build.sh` copies
-this `web/` into the assembled `public/`. Preview-per-PR, prod on `main`; no per-exercise config here.
+this `web/` into the assembled `public/`. Previews auto-deploy per PR; production is on-demand. No per-exercise config here.
 See [`deploy/`](../../../deploy/) for the setup.
 
-- **Continuous (default):** the repo's Vercel Git integration deploys automatically on PR/merge.
-- **Manual (rare):** `npx vercel` (preview) / `npx vercel --prod` from the repo root.
+- **Previews (automatic):** Vercel's Git integration deploys a preview URL for every PR.
+- **Production (on-demand):** run the `Deploy to production` GitHub Action (Actions tab → Run workflow,
+  or `gh workflow run deploy.yml`). `main` does not auto-deploy. See [`deploy/`](../../../deploy/).
 
 Submit the public URL as the deliverable (test it in an incognito window first).
 

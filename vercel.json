@@ -4,5 +4,10 @@
   "outputDirectory": "public",
   "framework": null,
   "trailingSlash": true,
-  "cleanUrls": false
+  "cleanUrls": false,
+  "git": {
+    "deploymentEnabled": {
+      "main": false
+    }
+  }
 }

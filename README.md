@@ -96,7 +96,7 @@ python3 -m http.server 8000   # open http://localhost:8000
 ```
 
 Deploy: handled by the repo-wide **Vercel** project — `deploy/vercel/build.sh` serves this exercise's
-`web/` at `/01-introductions/`, preview-per-PR and prod-on-`main`. See [`deploy/`](../../../deploy/).
+`web/` at `/01-introductions/`; previews auto-deploy per PR, production is on-demand. See [`deploy/`](deploy/).
 (The prior Netlify config is deactivated in `deploy/netlify/`, pending decommission.)
 
 ### 02 · Tokenization — one vocabulary, four languages
