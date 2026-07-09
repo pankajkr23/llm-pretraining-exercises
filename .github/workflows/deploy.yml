@@ -1,0 +1,47 @@
+name: Deploy to production (on demand)
+
+# Production is gated: it never deploys on push. Trigger it manually from the Actions tab
+# ("Run workflow") or with `gh workflow run deploy.yml` once you're confident in `main`.
+# PR previews stay automatic via Vercel's Git integration; `main` itself does not auto-deploy
+# (vercel.json → git.deploymentEnabled.main: false).
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Optional approval gate: add required reviewers to the `production` environment in
+    # repo Settings → Environments and this job will pause for approval before deploying.
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel project settings
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - name: Build (production)
+        # Runs vercel.json's buildCommand (deploy/vercel/build.sh) — static, no framework.
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy prebuilt to production
+        id: deploy
+        run: |
+          url="$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed to production: $url"
+
+      - name: Summary
+        run: echo "### Production deploy → ${{ steps.deploy.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"

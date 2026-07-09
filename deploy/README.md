@@ -19,8 +19,25 @@ Config is code:
   page plus every `src/exercises/*/web/` into `public/<slug>/`. Any exercise with a `web/` dir is picked
   up automatically; only the landing page's cards are hand-maintained.
 
-**Deploy model:** Git integration — preview-per-PR, prod-on-`main` (same as the old Netlify setup).
-Manual deploy if ever needed: `npx vercel` (preview) / `npx vercel --prod`. `public/` and `.vercel/` are gitignored.
+**Deploy model — gated:**
+
+- **Previews: automatic.** Vercel's Git integration deploys a preview URL for every PR branch.
+- **Production: on-demand.** `main` does **not** auto-deploy (`vercel.json` → `git.deploymentEnabled.main: false`).
+  Production ships only when you run the **`Deploy to production`** workflow
+  ([`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)) — Actions tab → *Run workflow*, or
+  `gh workflow run deploy.yml`. It runs `vercel build/deploy --prod` and is gated by the `production`
+  GitHub environment (add required reviewers there for an approval step).
+
+**Required GitHub secrets** (for the deploy workflow) — set under repo *Settings → Secrets and variables → Actions*:
+
+| Secret | Where to get it |
+| --- | --- |
+| `VERCEL_TOKEN` | Vercel → Account Settings → Tokens |
+| `VERCEL_ORG_ID` | `.vercel/project.json` after `vercel link` (or Vercel project settings) |
+| `VERCEL_PROJECT_ID` | same as above |
+
+Manual deploy from a laptop if ever needed: `npx vercel` (preview) / `npx vercel --prod`.
+`public/` and `.vercel/` are gitignored.
 
 **Adding an exercise:** nothing required for it to be served (the build script globs `src/exercises/*/web`).
 Add a card to `vercel/index.html` so it shows on the landing page.
