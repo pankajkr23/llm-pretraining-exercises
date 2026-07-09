@@ -1,10 +1,10 @@
-# ERA V5 — Pretraining an LLM from Scratch (Program Brief)
+# Pre-training an LLM from Scratch (Program Brief)
 
-A ~6-month, cohort-based program (The School of AI · ERA V5) that builds a large language
-model end to end — from a minimal transformer block all the way to launching and operating
-a real flagship training run. This repo holds the weekly exercises and capstone work.
+A program that builds a large language model end to end — from a minimal transformer block all
+the way to launching and operating a real flagship training run. This repo holds the exercises
+and capstone work.
 
-## How ERA V5 is different
+## What makes it different
 
 The objective is not enrollment or revenue — it's actual research: publishing something,
 building something India can be proud of. Every session moves the cohort toward a real,

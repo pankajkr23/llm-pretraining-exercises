@@ -7,7 +7,7 @@ import requests
 from .config import Language
 
 _API = "https://{code}.wikipedia.org/w/api.php"
-_HEADERS = {"User-Agent": "era-v5-tokenization-exercise/0.1 (learning project)"}
+_HEADERS = {"User-Agent": "llm-pretraining-tokenization-exercise/0.1 (learning project)"}
 
 
 def fetch_article(lang: Language, cache_dir: Path) -> str:

@@ -5,8 +5,8 @@ via `CLAUDE.md`'s `@AGENTS.md` import; Cursor/Copilot via the pointer files). Ke
 
 ## What this repo is
 
-ERA V5 (The School of AI): a ~6-month program to pretrain an LLM from scratch. Weekly
-exercises + a capstone training run. Program overview: `docs/BRIEF.md`. Each class's work
+An **LLM pre-training** project: building a language model from scratch, one topic at a time —
+hands-on experiments plus a flagship training run. Overview: `docs/BRIEF.md`. Each topic's work
 lives in a numbered exercise folder under `src/exercises/`.
 
 ## Environment
