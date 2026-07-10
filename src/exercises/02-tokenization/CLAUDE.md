@@ -18,7 +18,7 @@ Component notes. Repo-wide conventions: root `AGENTS.md`.
 - **Widget** (`web/index.html`, renders the exported `web/data.json`): reviewer-facing deliverable —
   the four ratios, score calc, and full searchable token list. Follows the repo-wide design system
   (`docs/DESIGN.md`): Apple-style palette, `← Back` pill to the site root, light + dark. The footer is
-  a plain blog caption — **no** "Session N" / course framing (`docs/DESIGN.md` › Copy & tone). Edit its
+  a short, blog-style caption written for a general reader (`docs/DESIGN.md` › Copy & tone). Edit its
   non-ASCII glyphs (`—`, `▁`, `Ġ`, subscripts) with Edit/Write, never byte-mode `perl`/`sed`.
 - **Ablation findings so far** (see `SUITE` + `artifacts/ablations.json`): representation is the
   dominant lever — byte-level BPE explodes Indic chars into 3 UTF-8 bytes; char-level + Unigram +

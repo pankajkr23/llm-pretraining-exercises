@@ -16,8 +16,8 @@ Component-specific notes for this exercise. Repo-wide conventions: root `AGENTS.
   `prefers-color-scheme`). Each page reuses those exact token names in its inlined `:root`. Data
   plots use the `docs/DESIGN.md` data-viz hues (blue/orange/green/purple), not UI chrome colours.
 - **Navigation & voice:** `index.html` has a `← Back` pill to the site root; each proof links
-  `← the four proofs` back to the index. Footers are plain blog captions — **no** "Session N" or
-  course framing (see `docs/DESIGN.md` › Copy & tone).
+  `← the four proofs` back to the index. Footers are short, blog-style captions written for a
+  general reader (see `docs/DESIGN.md` › Copy & tone).
 - **Motion:** canvas state changes animate. `s2.html`'s linear↔ReLU toggle morphs the grid with an
   eased transition (framing held constant so panels don't resize); `render()` draws instantly,
   `transition()` animates — mirror that split if you add another toggle.

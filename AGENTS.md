@@ -47,6 +47,7 @@ lives in a numbered exercise folder under `src/exercises/`.
 - **Every change lands on `main` via a pull request.** Branch → push → open a PR → merge. **Never push, merge, or force-push directly to `main`** — it's the protected branch that production is promoted from, and the base every PR previews against.
 - Keep PRs scoped to one concern; unrelated edits get their own branch/PR.
 - **Changelog:** record every user-facing change under `CHANGELOG.md`'s `[Unreleased]` section **in the same PR** (Keep a Changelog + SemVer).
+- **Commit & PR messages** carry no AI co-author or session-link trailers — keep the public history clean.
 
 ## CI/CD
 
@@ -60,7 +61,8 @@ lives in a numbered exercise folder under `src/exercises/`.
 Every deployable exercise's static `web/` bundle shares **one design system** — full reference in `docs/DESIGN.md`. The rules that matter across exercises:
 
 - **One Apple-style design language** on every page: cool-gray/black surfaces, a single bright-blue accent (`#0071e3` light / `#2997ff` dark), system sans (no serif), soft-shadow rounded panels, and a `← Back` pill to the site root. Style light **and** dark via `prefers-color-scheme`. Reuse the token names in `docs/DESIGN.md` — don't invent a per-exercise palette.
-- **Voice is a blog, not a course.** Public pages read as standalone demos of an idea. **Never** surface cohort/course framing on a web page — no "Session N", "assignment", or "class". Keep the numbered topic eyebrow (`NN · Topic`); write footers/copy for a general reader. (Repo docs may still reference the program — e.g. the README Credits section.)
+- **Write for a general audience.** The public pages are standalone, blog-style demos of an idea — a first-time visitor should be able to enjoy them without any course context. Favor plain, explanatory copy; the numbered topic eyebrow (`NN · Topic`) makes a nice light section label.
+- **Credit the source course in one place.** A single **Credits** section at the bottom of the root `README.md` gives clear, warm credit to the course, instructor, and platform. Keeping it in one prominent spot — rather than repeating it across pages — keeps both the credit and the demos easy to read.
 - **Canvas state changes animate** — morph with a short eased transition (≈550ms), not an instant redraw, keeping the framing stable so panels don't resize mid-toggle.
 - **Editing non-ASCII HTML** (`—`, `→`, `·`, math glyphs): use the Edit/Write tools. **Never** `perl -0pi`/`sed` with wide-char escapes — byte-mode rewrites double-encode UTF-8 into mojibake.
 
