@@ -227,6 +227,8 @@ artifacts/
 **/artifacts/
 # Personal, machine-local agent instructions (never shared)
 CLAUDE.local.md
+# Claude Code local session state (worktrees, jobs, memory, scratch) — never shared
+.claude/
 # Local planning scratchpad — not tracked
 TODO.md
 # macOS finder metadata
