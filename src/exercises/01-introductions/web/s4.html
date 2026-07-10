@@ -6,15 +6,15 @@
     <title>Memorise, or Generalise · Data</title>
     <style>
       :root {
-        --bg: #f4f2ee; --panel: #fbfaf7; --ink: #1c1a16; --muted: #74716a; --faint: #9b978e;
-        --line: #e5e1d8; --accent: #2f6f6a; --cool: #4d76a8; --warm: #c78a42;
-        --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+        --bg: #f5f5f7; --panel: #ffffff; --ink: #1d1d1f; --muted: #6e6e73; --faint: #86868b;
+        --line: #d2d2d7; --accent: #0071e3; --cool: #0071e3; --warm: #d1730a;
+        --serif: -apple-system, system-ui, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
         --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
         --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
       }
       @media (prefers-color-scheme: dark) {
-        :root { --bg: #14130f; --panel: #1b1a15; --ink: #ece8df; --muted: #9c988e; --faint: #726e64;
-          --line: #2a281f; --accent: #6bb3ac; --cool: #7f9cbd; --warm: #d99a5a; }
+        :root { --bg: #000000; --panel: #1c1c1e; --ink: #f5f5f7; --muted: #a1a1a6; --faint: #6e6e73;
+          --line: #2f2f31; --accent: #2997ff; --cool: #2997ff; --warm: #ff9f0a; }
       }
       * { box-sizing: border-box; }
       body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
@@ -99,7 +99,7 @@
         </div>
       </div>
 
-      <footer>Session 1 — one over-parameterized net (2·64·1 ReLU), trained at every size. No dependencies.</footer>
+      <footer>One over-parameterized net (2·64·1 ReLU), trained at every size. No dependencies.</footer>
     </div>
 
     <script>
@@ -174,7 +174,7 @@
         const line = (key, col) => { ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); results.forEach((r, i) => { const X = cx(i), Y = cy(r[key]); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }); ctx.stroke(); results.forEach((r, i) => { ctx.beginPath(); ctx.arc(cx(i), cy(r[key]), 3.5, 0, 7); ctx.fillStyle = col; ctx.fill(); }); };
         line('trainAcc', warm); line('testAcc', cool);
         // current highlight
-        ctx.strokeStyle = 'rgba(47,111,106,0.5)'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(cx(cur), 20); ctx.lineTo(cx(cur), h - 28); ctx.stroke(); ctx.setLineDash([]);
+        ctx.strokeStyle = 'rgba(0,113,227,0.5)'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(cx(cur), 20); ctx.lineTo(cx(cur), h - 28); ctx.stroke(); ctx.setLineDash([]);
         ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--faint'); ctx.textAlign = 'center';
         results.forEach((r, i) => ctx.fillText(String(r.N), cx(i), h - 10)); ctx.textAlign = 'left';
       }
