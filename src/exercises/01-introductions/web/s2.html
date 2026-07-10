@@ -6,15 +6,15 @@
     <title>Five Maps, One Matrix · Depth</title>
     <style>
       :root {
-        --bg: #f4f2ee; --panel: #fbfaf7; --ink: #1c1a16; --muted: #74716a; --faint: #9b978e;
-        --line: #e5e1d8; --accent: #2f6f6a; --warm: #cf8a42; --cool: #4d76a8;
-        --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+        --bg: #f5f5f7; --panel: #ffffff; --ink: #1d1d1f; --muted: #6e6e73; --faint: #86868b;
+        --line: #d2d2d7; --accent: #0071e3; --warm: #d1730a; --cool: #0071e3;
+        --serif: -apple-system, system-ui, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
         --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
         --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
       }
       @media (prefers-color-scheme: dark) {
-        :root { --bg: #14130f; --panel: #1b1a15; --ink: #ece8df; --muted: #9c988e; --faint: #726e64;
-          --line: #2a281f; --accent: #6bb3ac; --warm: #d99a5a; --cool: #7f9cbd; }
+        :root { --bg: #000000; --panel: #1c1c1e; --ink: #f5f5f7; --muted: #a1a1a6; --faint: #6e6e73;
+          --line: #2f2f31; --accent: #2997ff; --warm: #ff9f0a; --cool: #2997ff; }
       }
       * { box-sizing: border-box; }
       body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
@@ -141,7 +141,7 @@
         <p class="caption" id="ringCaption"></p>
       </div>
 
-      <footer>Session 1 — no dependencies. Each layer is an area-preserving 2×2 map.</footer>
+      <footer>No dependencies. Each layer is an area-preserving 2×2 map.</footer>
     </div>
 
     <script>
@@ -227,30 +227,38 @@
       function fmt(v) { const s = v.toFixed(2); return (v >= 0 ? ' ' : '') + s; }
       function matHTML(A) { return `<span>${fmt(A[0][0])}</span><span>${fmt(A[0][1])}</span><span>${fmt(A[1][0])}</span><span>${fmt(A[1][1])}</span>`; }
 
-      function render() {
-        const d = S.depth, act = S.act;
-        const M = product(d);
-        // stack output defines the shared scale
-        const st = transformLines((x) => forwardStack(x, d, act));
-        const sg = transformLines((x) => applyVec(M, x));
-        const b = st.box, b2 = sg.box;
-        const minx = Math.min(b.minx, b2.minx), maxx = Math.max(b.maxx, b2.maxx);
-        const miny = Math.min(b.miny, b2.miny), maxy = Math.max(b.maxy, b2.maxy);
+      let animRAF = 0;
+
+      function unionFraming(boxes) {
+        const minx = Math.min(...boxes.map((b) => b.minx)), maxx = Math.max(...boxes.map((b) => b.maxx));
+        const miny = Math.min(...boxes.map((b) => b.miny)), maxy = Math.max(...boxes.map((b) => b.maxy));
         const cx = (minx + maxx) / 2, cy = (miny + maxy) / 2;
         const ext = Math.max(maxx - minx, maxy - miny, 0.5);
         const cw = document.getElementById('stack').clientWidth;
-        const scale = (cw * 0.82) / ext;
-        draw('stack', st.out, scale, cx, cy);
-        draw('single', sg.out, scale, cx, cy);
+        return { scale: (cw * 0.82) / ext, cx, cy };
+      }
 
-        // max gap between the stack and the single matrix M over the grid
+      // Frame linear and ReLU identically so the panels never resize when toggling —
+      // only the left grid morphs. Union of both stack states + the single matrix.
+      function framingFor(d, M) {
+        return unionFraming([
+          transformLines((x) => forwardStack(x, d, 'linear')).box,
+          transformLines((x) => forwardStack(x, d, 'relu')).box,
+          transformLines((x) => applyVec(M, x)).box,
+        ]);
+      }
+
+      function stackGap(d, act, M) {
         let gap = 0;
         for (const ln of GRID) for (const x of ln.pts) {
           const a = forwardStack(x, d, act), c = applyVec(M, x);
           gap = Math.max(gap, Math.hypot(a[0] - c[0], a[1] - c[1]));
         }
+        return gap;
+      }
 
-        // algebra panel
+      function updateText(d, act, M) {
+        const gap = stackGap(d, act, M);
         const factors = document.getElementById('factors');
         factors.innerHTML = '<span class="label">the ' + d + ' weight matrices</span>' +
           Array.from({ length: d }, (_, i) => `<div class="mat" style="margin-right:10px">${matHTML(MATS[i])}</div>`).join('<span style="color:var(--faint)">·</span>');
@@ -268,10 +276,47 @@
           : '<b>They diverge.</b> ReLU folds the plane after every layer — the left panel creases where the right one cannot. No single matrix can reproduce those folds, so the collapse is broken and depth finally counts.';
       }
 
+      function render() {
+        cancelAnimationFrame(animRAF);
+        const d = S.depth, act = S.act, M = product(d);
+        const st = transformLines((x) => forwardStack(x, d, act));
+        const sg = transformLines((x) => applyVec(M, x));
+        const { scale, cx, cy } = framingFor(d, M);
+        draw('stack', st.out, scale, cx, cy);
+        draw('single', sg.out, scale, cx, cy);
+        updateText(d, act, M);
+      }
+
+      // easeInOutCubic — the left grid folds/unfolds smoothly between linear and ReLU
+      const easeInOut = (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
+
+      function transition(toAct) {
+        const fromAct = S.act;
+        if (fromAct === toAct) return;
+        cancelAnimationFrame(animRAF);
+        const d = S.depth, M = product(d);
+        const stFrom = transformLines((x) => forwardStack(x, d, fromAct));
+        const stTo = transformLines((x) => forwardStack(x, d, toAct));
+        const sg = transformLines((x) => applyVec(M, x));
+        const { scale, cx, cy } = framingFor(d, M);
+        S.act = toAct;
+        updateText(d, toAct, M);
+        draw('single', sg.out, scale, cx, cy); // right panel is constant across acts
+        const DUR = 560, t0 = performance.now();
+        (function frame(now) {
+          const u = Math.min(1, (now - t0) / DUR), e = easeInOut(u);
+          const lines = stFrom.out.map((ln, i) => ({
+            fam: ln.fam,
+            p: ln.p.map((q, k) => { const r = stTo.out[i].p[k]; return [q[0] + (r[0] - q[0]) * e, q[1] + (r[1] - q[1]) * e]; }),
+          }));
+          draw('stack', lines, scale, cx, cy);
+          if (u < 1) animRAF = requestAnimationFrame(frame);
+        })(performance.now());
+      }
+
       document.querySelectorAll('#acts button').forEach((btn) => btn.addEventListener('click', () => {
-        S.act = btn.dataset.act;
         document.querySelectorAll('#acts button').forEach((b) => b.setAttribute('aria-selected', b === btn));
-        render();
+        transition(btn.dataset.act);
       }));
       document.getElementById('depth').addEventListener('input', (e) => { S.depth = parseInt(e.target.value, 10); render(); });
       document.getElementById('rand').addEventListener('click', () => { S.seed = (S.seed * 1664525 + 1013904223) >>> 0; MATS = genMatrices(S.seed); render(); });

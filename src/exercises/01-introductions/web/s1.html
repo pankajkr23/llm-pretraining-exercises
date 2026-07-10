@@ -6,33 +6,36 @@
     <title>The Bend · Activations</title>
     <style>
       :root {
-        --bg: #f4f2ee;
-        --panel: #fbfaf7;
-        --ink: #1c1a16;
-        --muted: #74716a;
-        --faint: #9b978e;
-        --line: #e5e1d8;
-        --accent: #2f6f6a;
-        --plane: #6f8fb2;
-        --bend: #cf8a42;
-        --pos: #b2582e;
-        --neg: #4d76a8;
-        --probe: #2f6f6a;
-        --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-        --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        --bg: #f5f5f7;
+        --panel: #ffffff;
+        --ink: #1d1d1f;
+        --muted: #6e6e73;
+        --faint: #86868b;
+        --line: #d2d2d7;
+        --accent: #0071e3;
+        --plane: #8e99b3;
+        --bend: #d1730a;
+        --pos: #d1730a;
+        --neg: #0071e3;
+        --probe: #0071e3;
+        --serif: -apple-system, system-ui, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+        --sans: -apple-system, system-ui, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
         --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
       }
       @media (prefers-color-scheme: dark) {
         :root {
-          --bg: #14130f;
-          --panel: #1b1a15;
-          --ink: #ece8df;
-          --muted: #9c988e;
-          --faint: #726e64;
-          --line: #2a281f;
-          --accent: #6bb3ac;
-          --plane: #7f9cbd;
-          --bend: #d99a5a;
+          --bg: #000000;
+          --panel: #1c1c1e;
+          --ink: #f5f5f7;
+          --muted: #a1a1a6;
+          --faint: #6e6e73;
+          --line: #2f2f31;
+          --accent: #2997ff;
+          --plane: #9aa6c0;
+          --bend: #ff9f0a;
+          --pos: #ff9f0a;
+          --neg: #2997ff;
+          --probe: #2997ff;
         }
       }
       * { box-sizing: border-box; }
@@ -257,7 +260,7 @@
         <p class="caption" id="ringCaption"></p>
       </div>
 
-      <footer>Session 1 — one neuron, no dependencies.</footer>
+      <footer>One neuron, hand-written, no dependencies.</footer>
     </div>
 
     <script>
@@ -386,7 +389,7 @@
           ctx.globalAlpha = 0.55;
           ctx.fill();
           ctx.globalAlpha = 1;
-          ctx.strokeStyle = 'rgba(28,26,22,0.10)';
+          ctx.strokeStyle = 'rgba(60,60,67,0.12)';
           ctx.lineWidth = 0.6;
           ctx.stroke();
         }
@@ -396,10 +399,10 @@
         const yp = f(zp);
         const base = project(S.x1, H(ymin), S.x2, w, h);
         const top = project(S.x1, H(yp), S.x2, w, h);
-        ctx.strokeStyle = 'rgba(47,111,106,0.5)';
+        ctx.strokeStyle = 'rgba(0,113,227,0.5)';
         ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.moveTo(base.sx, base.sy); ctx.lineTo(top.sx, top.sy); ctx.stroke();
-        ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--probe').trim() || '#2f6f6a';
+        ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--probe').trim() || '#0071e3';
         ctx.beginPath(); ctx.arc(top.sx, top.sy, 5, 0, 7); ctx.fill();
         ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
       }
@@ -413,11 +416,11 @@
         const px = (z) => 8 + ((z - zmin) / (zmax - zmin)) * (w - 16);
         const py = (y) => h - 8 - ((y - ymin) / (ymax - ymin)) * (h - 16);
         // axes
-        ctx.strokeStyle = 'rgba(120,116,108,0.25)'; ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(127,127,127,0.22)'; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(px(zmin), py(0)); ctx.lineTo(px(zmax), py(0)); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(px(0), py(ymin)); ctx.lineTo(px(0), py(ymax)); ctx.stroke();
         // f(z)
-        ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--bend').trim() || '#cf8a42';
+        ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--bend').trim() || '#d1730a';
         ctx.lineWidth = 2.2; ctx.beginPath();
         for (let i = 0; i <= 200; i++) {
           const z = zmin + ((zmax - zmin) * i) / 200;
@@ -428,10 +431,10 @@
         // current z marker
         const zc = S.w1 * S.x1 + S.w2 * S.x2 + S.b;
         const zClamped = Math.max(zmin, Math.min(zmax, zc));
-        ctx.strokeStyle = 'rgba(47,111,106,0.35)'; ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = 'rgba(0,113,227,0.35)'; ctx.setLineDash([3, 3]);
         ctx.beginPath(); ctx.moveTo(px(zClamped), py(ymin)); ctx.lineTo(px(zClamped), py(ymax)); ctx.stroke();
         ctx.setLineDash([]);
-        ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--probe').trim() || '#2f6f6a';
+        ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--probe').trim() || '#0071e3';
         ctx.beginPath(); ctx.arc(px(zClamped), py(f(zc)), 4.5, 0, 7); ctx.fill();
       }
 

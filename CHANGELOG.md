@@ -10,6 +10,23 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Web design system** (`docs/DESIGN.md`): a shared Apple-style visual language — palette tokens,
+  typography, components, interaction, and copy/tone rules — that every exercise's `web/` bundle
+  follows.
+
+### Changed
+
+- **Unified the site's look.** The landing page and both exercises now share one design language
+  (cool-gray/blue, system sans, soft-shadow panels), replacing exercise 01's prior warm-paper/serif
+  theme. Added a consistent `← Back` link across pages.
+- **Reframed public pages as standalone blog demos.** Removed course/"Session N" framing from every
+  web page footer; page copy now reads for a general audience. (Repo docs still reference the
+  program.)
+- **Depth demo (`s2.html`):** the linear↔ReLU toggle now animates as a smooth grid morph with stable
+  framing, instead of an instant redraw that also resized the panels.
+
 ## [0.1.0] - 2026-07-10
 
 First tagged release: two interactive exercises live on Vercel with a gated deploy pipeline.
