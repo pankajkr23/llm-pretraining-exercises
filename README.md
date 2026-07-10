@@ -33,6 +33,7 @@ under `src/exercises/NN-slug/` (numeric, zero-padded so folders sort correctly),
 
 ```text
 docs/BRIEF.md                     # the program: structure + 20-class syllabus
+docs/DESIGN.md                    # the shared web design system (palette, type, tone)
 src/exercises/NN-slug/            # one self-contained exercise per class (workspace member)
   ├─ BRIEF.md                     # the assignment
   ├─ README.md                    # what it is + how to run
@@ -54,7 +55,7 @@ in a top-level `data/` (git-ignored, with a tracked manifest); per-exercise outp
 - **Python 3.12**, managed by **uv** (workspace, shared lockfile).
 - **[ruff](https://docs.astral.sh/ruff/)** for lint + format, **pytest** for tests (unit / integration split).
 - **GitHub Actions** CI (ruff, pytest, `node --check`, gitleaks secret scan).
-- Web exercises are **plain HTML/CSS/JS — zero runtime dependencies** — deployed to **Vercel** (one project routes each exercise under `/NN-slug/`; see [`deploy/`](deploy/)). What they render is either hand-written (exercise 01 trains tiny nets live in-browser) or precomputed by a Python pipeline (exercise 02 trains its BPE with HuggingFace `tokenizers`, then the widget renders the exported vocabulary and scores).
+- Web exercises are **plain HTML/CSS/JS — zero runtime dependencies** — deployed to **Vercel** (one project routes each exercise under `/NN-slug/`; see [`deploy/`](deploy/)). What they render is either hand-written (exercise 01 trains tiny nets live in-browser) or precomputed by a Python pipeline (exercise 02 trains its BPE with HuggingFace `tokenizers`, then the widget renders the exported vocabulary and scores). All web pages share one Apple-style **design system** — see [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## Getting started
 
