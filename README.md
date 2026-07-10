@@ -155,7 +155,7 @@ package only once a second exercise needs to reuse something.
 ## 💳 Credits
 
 The blog posts and mini-projects here are my own implementations and summaries based on the
-curriculum below. Full credit for the assignments, capstone project prompts, and dataset structures
+curriculum below. Full credit for the assignments, capstone projects, and dataset structures
 goes to the course and its instructor.
 
 - **Course:** ERA V5
