@@ -151,3 +151,18 @@ uv sync --all-packages   # the members = ["src/exercises/[0-9][0-9]-*"] glob pic
 Match the conventions in [`AGENTS.md`](AGENTS.md): zero-padded `NN-slug` folders, code in one place
 (`src/` or `web/`), `artifacts/` for outputs, tests in `tests/`. Introduce a shared `src/common/`
 package only once a second exercise needs to reuse something.
+
+## 💳 Credits
+
+The assignments, capstone project prompts, and dataset structures used in this repository belong to:
+
+- **Course:** ERA V5
+- **Instructor:** Rohan Shravan
+- **Platform:** The School of AI — <https://registrations.theschoolofai.in/courses/era-v5>
+
+## 💡 Inspired by
+
+The blog posts and mini-projects documented here are my own implementations and summaries based on
+the curriculum of **ERA V5**, taught by **Rohan Shravan** on
+[**The School of AI**](https://registrations.theschoolofai.in/courses/era-v5). Full credit for the
+assignments, capstone prompts, and dataset structures goes to the course and its instructor.
