@@ -21,9 +21,8 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 - **Unified the site's look.** The landing page and both exercises now share one design language
   (cool-gray/blue, system sans, soft-shadow panels), replacing exercise 01's prior warm-paper/serif
   theme. Added a consistent `← Back` link across pages.
-- **Reframed public pages as standalone blog demos.** Removed course/"Session N" framing from every
-  web page footer; page copy now reads for a general audience. (Repo docs still reference the
-  program.)
+- **Rewrote public-page copy for a general audience.** Page footers and copy now read as standalone,
+  blog-style demos, so first-time visitors can follow them without any course context.
 - **Depth demo (`s2.html`):** the linear↔ReLU toggle now animates as a smooth grid morph with stable
   framing, instead of an instant redraw that also resized the panels.
 

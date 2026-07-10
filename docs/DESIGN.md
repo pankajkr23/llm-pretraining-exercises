@@ -10,7 +10,7 @@ This is the canonical reference; `AGENTS.md` carries the short version.
   system sans, soft shadows. No decorative colour, no flashy motion.
 - **One consistent shell across pages.** Same header structure, back navigation, type scale,
   accent, panel/card treatment, and footer voice on every page (landing, each exercise).
-- **Voice is a blog, not a course** (see [Copy & tone](#copy--tone)).
+- **Written for a general audience** — blog-style and self-contained (see [Copy & tone](#copy--tone)).
 - **Theme-aware.** Style light and dark via `prefers-color-scheme`; every token has both values.
 
 ## Palette tokens
@@ -79,17 +79,18 @@ colours, distinct in both themes (light / dark):
 
 ## Copy & tone
 
-Public pages are **standalone blog demos of an idea**, discovered by a general reader — not
-course deliverables.
+Public pages are **standalone, blog-style demos of an idea** — written so a first-time visitor can
+enjoy them without any course context.
 
-- **Never** surface cohort/course framing: no "Session N", "assignment", "class", "exercise
-  number as a lesson", "training session", etc.
-- Keep the numbered topic eyebrow (`NN · Topic`) — that reads as a section label, which is fine.
-- Footers are plain descriptive captions (e.g. "No dependencies. Each layer is an
-  area-preserving 2×2 map."), not session sign-offs.
+- Favor plain, explanatory copy aimed at a general reader over internal labels like "Session N"
+  or "assignment".
+- Keep the numbered topic eyebrow (`NN · Topic`) — it reads as a friendly section label.
+- Footers are short, descriptive captions (e.g. "No dependencies. Each layer is an
+  area-preserving 2×2 map.").
 
-> This tone rule applies to the **web pages only**. Repo docs (`BRIEF.md`, `README.md`,
-> `CHANGELOG.md`) may still reference the program and its sessions.
+> These are style notes for the **web pages**. The source course, instructor, and platform are
+> credited warmly in a single **Credits** section at the bottom of the root `README.md` — that's the
+> home for attribution, which keeps the demo pages themselves focused on the ideas.
 
 ## Editing caution (non-ASCII)
 
