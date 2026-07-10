@@ -158,7 +158,7 @@ The assignments, capstone project prompts, and dataset structures used in this r
 
 - **Course:** ERA V5
 - **Instructor:** Rohan Shravan
-- **Platform:** The School of AI — <https://registrations.theschoolofai.in/courses/era-v5>
+- **Platform:** [The School of AI](https://registrations.theschoolofai.in/courses/era-v5)
 
 ## 💡 Inspired by
 

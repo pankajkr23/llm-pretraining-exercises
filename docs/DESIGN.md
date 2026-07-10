@@ -83,7 +83,7 @@ Public pages are **standalone blog demos of an idea**, discovered by a general r
 course deliverables.
 
 - **Never** surface cohort/course framing: no "Session N", "assignment", "class", "exercise
-  number as a lesson", "ERA V5", "School of AI", "training session", etc.
+  number as a lesson", "training session", etc.
 - Keep the numbered topic eyebrow (`NN · Topic`) — that reads as a section label, which is fine.
 - Footers are plain descriptive captions (e.g. "No dependencies. Each layer is an
   area-preserving 2×2 map."), not session sign-offs.
