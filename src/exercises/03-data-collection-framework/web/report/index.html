@@ -70,6 +70,80 @@
       .dial input { width: 100%; }
       .chainout { margin-top: 16px; font-size: 14px; }
       .err { color: var(--grade-x); font-family: var(--mono); }
+
+      /* ------------------------------------------------------------------ print
+       *
+       * Ctrl+P → Save as PDF *is* the submission, so the printed page is a first-class output
+       * rather than a degraded screenshot. Three things make that work:
+       *
+       *   1. Widgets animate on scroll, so anything the reader never reached would print empty.
+       *      A beforeprint handler plays every widget to its end state first (see playAll below).
+       *   2. Controls disappear. A slider is meaningless on paper, and its end state is what the
+       *      argument rests on anyway.
+       *   3. Nothing splits mid-widget. The spec asks for forced breaks between sections, but
+       *      twelve forced breaks is twelve pages against a four-page budget — so breaks are
+       *      *avoided inside* figures instead, and sections flow.
+       *
+       * The length budget is enforced here rather than by editing discipline: when it runs long,
+       * prose tightens and the widget stays.
+       */
+      @media print {
+        @page { size: A4; margin: 12mm 14mm; }
+
+        :root {
+          --bg: #fff; --panel: #fff; --ink: #000; --muted: #333; --faint: #555;
+          --line: #bbb; --accent: #0043a8; --track: #e8e8e8; --shadow: none;
+        }
+        body { background: #fff; color: #000; font-size: 8.6pt; line-height: 1.42; }
+        .wrap { max-width: none; margin: 0; padding: 0; }
+
+        /* Interaction has no meaning on paper. */
+        .back, .controls, .replay, button, input[type="range"], nav { display: none !important; }
+
+        h1 { font-size: 17pt; margin: 0 0 4pt; letter-spacing: -0.02em; }
+        .eyebrow { font-size: 7pt; margin: 0 0 2pt; color: #444; }
+        .lede { font-size: 9pt; max-width: none; margin: 0 0 8pt; }
+
+        section {
+          border-bottom: 0.5pt solid var(--line);
+          padding: 0 0 5pt; margin: 0 0 6pt;
+          break-inside: avoid; page-break-inside: avoid;
+        }
+        section h2 { font-size: 10.5pt; margin: 0 0 2pt; }
+        section h2 .n { font-size: 7.5pt; }
+        .claim { font-size: 8.4pt; margin: 0 0 4pt; max-width: none; }
+        figure { break-inside: avoid; page-break-inside: avoid; }
+        figcaption { font-size: 7.2pt; margin-top: 3pt; max-width: none; }
+
+        .widget { border: 0.5pt solid var(--line); border-radius: 4pt; padding: 5pt 7pt; box-shadow: none; }
+        .barrow { grid-template-columns: 110pt 1fr 52pt; gap: 5pt; font-size: 7.6pt; }
+        .barrow .track { height: 7pt; }
+        .bars { gap: 2.5pt; }
+        .gatebox { font-size: 7.4pt; padding: 5pt 6pt; line-height: 1.45; }
+        .stage { padding: 2pt 5pt; font-size: 7.6pt; opacity: 1 !important; }
+        .task { font-size: 7.2pt; }
+        .task .lane { height: 9pt; }
+        .weeks { gap: 2pt; }
+        .axis { height: 34pt; }
+        .dials { gap: 5pt; }
+        .verdictline { font-size: 7.8pt; margin-top: 4pt; }
+        .chainout { font-size: 8pt; }
+
+        /* Cross-references become endnotes: a printed page cannot be clicked. */
+        a.ref { color: #000; border-bottom: 0; font-weight: 600; }
+        a.ref::after { content: " [" attr(data-note) "]"; font-size: 6.6pt; vertical-align: super; font-weight: 400; }
+
+        /* Provenance must survive the loss of colour — the marks are already shape, not hue. */
+        .num[data-provenance="measured"] { border-bottom: 0.6pt solid #000; }
+        .num[data-provenance="estimated"] { border-bottom: 0.6pt dotted #000; }
+        .num[data-provenance="unknown"] { opacity: 1; font-style: italic; color: #555; }
+
+        #endnotes { display: block !important; break-inside: avoid; font-size: 7pt; color: #333; }
+        #endnotes h2 { font-size: 9pt; }
+        #endnotes li { margin-bottom: 1pt; }
+      }
+
+      #endnotes { display: none; }
     </style>
   </head>
   <body>
@@ -90,7 +164,19 @@
       import { animateOnce, countUp, prefersReducedMotion } from '../_shared/anim.js';
 
       const $ = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x !== undefined) e.textContent = x; return e; };
-      const ref = (text, anchor) => { const a = $('a', 'ref', text); a.href = `../reasoning#${anchor}`; return a; };
+
+      /* Every widget registers how to reach its end state, so printing can force them all. */
+      const playAll = [];
+
+      /* Cross-references are numbered once, then reused, so the endnote list has no duplicates. */
+      const refNotes = new Map();
+      const ref = (text, anchor) => {
+        const a = $('a', 'ref', text);
+        a.href = `../reasoning#${anchor}`;
+        if (!refNotes.has(anchor)) refNotes.set(anchor, refNotes.size + 1);
+        a.dataset.note = String(refNotes.get(anchor));
+        return a;
+      };
       const fmt = (v, u) => formatValue(v, u);
 
       /* prose · widget · italic caption — the shape every section takes. */
@@ -151,6 +237,7 @@
           };
           const w = widget(box);
           animateOnce(w, play);
+          playAll.push(play);
           main.append(sect(1, 'The gate that comes first',
             [document.createTextNode('Everything else here is an argument about proportions. This one is a hard stop: if training text overlaps the evaluation set, every score afterwards is fiction. So the contamination check is built before any of it — plant a known benchmark item in an ordinary shard and the build fails and '),
              $('b', '', 'names the benchmark'),
@@ -266,6 +353,7 @@
           const w = widget(ctr, host);
           draw();
           animateOnce(w, draw);
+          playAll.push(draw);
           main.append(sect(4, 'How many tokens, and where from',
             [document.createTextNode('The budget is not "collect 15 trillion tokens". It is a unique pool read on a schedule: repetition up to about four passes is nearly as good as fresh data, so a small Indic pool read four times contributes far more than its size suggests. That single reframing lifts the natural-Indic share several times over without collecting one new document — see '),
              ref('the priors', 'priors'), document.createTextNode('. 15T is the recommended rung.')],
@@ -330,7 +418,9 @@
           gapNote.style.cssText = 'font-size:12.5px;color:var(--muted);margin:12px 0 0';
           gapNote.append(document.createTextNode('Hatched bars are tiers no benchmark would notice the removal of. That is not an argument to cut them — it is an argument you have to make out loud. See '), ref('the gaps', 'gaps'), document.createTextNode('.'));
           const w = widget(bars, gapNote);
+          const grow6 = () => [...bars.children].forEach((r) => { if (r._grow) r._grow(); });
           animateOnce(w, () => [...bars.children].forEach((r, i) => { if (r._grow) setTimeout(r._grow, prefersReducedMotion() ? 0 : i * 45); }));
+          playAll.push(grow6);
           main.append(sect(6, 'The mix, and what it cannot see',
             [document.createTextNode('The recommended shape, and an honest note attached to it: some tiers are paid for and unmeasurable. Delete them and every instrument reports the same score.')],
             w, 'Widths are share of seen tokens in the recommended budget.'));
@@ -356,10 +446,12 @@
             return row;
           });
           const w = widget(list);
+          const litAll = () => rows.forEach((r) => r.classList.add('on'));
           animateOnce(w, () => {
             rows.forEach((r) => r.classList.remove('on'));
             rows.forEach((r, i) => setTimeout(() => r.classList.add('on'), prefersReducedMotion() ? 0 : i * 260));
           });
+          playAll.push(litAll);
           main.append(sect(7, 'The pipeline you have to build',
             [document.createTextNode('Nine stages between a URL and a training shard. Most have a tool worth adopting; one has a tool worth avoiding, and the struck-through entry is a recommendation this research reversed on itself after measuring it. Full verdicts in '),
              ref('the tools', 'tools'), document.createTextNode('.')],
@@ -374,7 +466,9 @@
             bars.append(barRow(c.capability, (c.count / max) * 100, String(c.count), c.count <= 1 ? 'gap' : ''));
           });
           const w = widget(bars);
+          const grow8 = () => [...bars.children].forEach((r) => { if (r._grow) r._grow(); });
           animateOnce(w, () => [...bars.children].forEach((r, i) => { if (r._grow) setTimeout(r._grow, prefersReducedMotion() ? 0 : i * 40); }));
+          playAll.push(grow8);
           main.append(sect(8, 'Whether you could tell if it worked',
             [document.createTextNode('Every capability the model is built for, against the number of benchmarks that can detect it. A capability with one instrument is a coverage risk; with none, it is a goal you cannot grade. Trust bands and split policies in '),
              ref('the instruments', 'benchmarks'), document.createTextNode('.')],
@@ -519,6 +613,27 @@
         const counts = data.record_counts;
         document.getElementById('foot').textContent =
           `Built from ${counts.catalog} datasets, ${counts.benchmarks} benchmarks and ${counts.legal} legal records. Pipeline ${data.pipeline_version}.`;
+
+        /* ---------------------------------------------------- endnotes + print
+         *
+         * A printed cross-reference is useless as a link, so each one is numbered in the text and
+         * resolved here. And because widgets animate on scroll, printing without playing them
+         * first would emit blank charts for every section the reader never reached.
+         */
+        const notes = $('section');
+        notes.id = 'endnotes';
+        notes.append($('h2', '', 'References'));
+        const ol = document.createElement('ol');
+        [...refNotes.entries()]
+          .sort((a, b) => a[1] - b[1])
+          .forEach(([anchor]) => ol.append($('li', '', `The reasoning · ${anchor}`)));
+        notes.append(ol);
+        main.append(notes);
+
+        const forceEndStates = () => playAll.forEach((play) => { try { play(); } catch { /* a widget that cannot replay still prints its current state */ } });
+        window.addEventListener('beforeprint', forceEndStates);
+        // Safari and some PDF engines never fire beforeprint; the media query is the reliable hook.
+        window.matchMedia('print').addEventListener?.('change', (e) => { if (e.matches) forceEndStates(); });
       }
     </script>
   </body>
