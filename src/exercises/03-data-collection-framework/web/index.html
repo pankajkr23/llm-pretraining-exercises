@@ -39,6 +39,9 @@
         transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
       }
       .door:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.1); }
+      .door-pending { opacity: 0.62; }
+      .door-pending:hover { transform: none; border-color: var(--line); box-shadow: var(--shadow); }
+      .door-pending .go { color: var(--muted); font-style: italic; }
       .door h2 { margin-bottom: 6px; }
       .door p { color: var(--muted); font-size: 0.97rem; margin: 0 0 18px; flex: 1; }
       .door .go { font-family: var(--mono); font-size: 13px; color: var(--accent); }
@@ -80,14 +83,15 @@
       </section>
 
       <div class="doors">
-        <a class="door" href="./report/">
+        <!-- The report is built in phase 6; until it exists this door says so rather than 404ing. -->
+        <div class="door door-pending" aria-disabled="true">
           <h2>The decision</h2>
           <p>
             The argument end to end: what to train on, in what proportion, at what cost, and the
             verdict. Four pages, and every number links to the working behind it.
           </p>
-          <span class="go">Read the decision →</span>
-        </a>
+          <span class="go">Not written yet — the evidence came first</span>
+        </div>
         <a class="door" href="./reasoning/">
           <h2>The reasoning</h2>
           <p>
