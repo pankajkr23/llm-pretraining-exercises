@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The Decision — what to train an Indian language model on</title>
+    <meta
+      name="description"
+      content="The argument end to end: what to train on, in what proportion, at what it costs, and what would prove it wrong."
+    />
+    <link rel="stylesheet" href="../_shared/tokens.css" />
+    <style>
+      .wrap { max-width: 820px; }
+      section { padding-bottom: 40px; margin-bottom: 40px; border-bottom: 1px solid var(--line); }
+      section:last-of-type { border-bottom: 0; }
+      section h2 { display: flex; align-items: baseline; gap: 10px; }
+      section h2 .n { font-family: var(--mono); font-size: 12px; color: var(--faint); }
+      .claim { font-size: 1.02rem; max-width: 66ch; margin: 0 0 18px; }
+      .claim b { font-weight: 600; }
+      figure { margin: 0; }
+      figcaption { font-size: 13px; color: var(--muted); font-style: italic; margin-top: 12px; max-width: 62ch; }
+      a.ref { color: var(--accent); text-decoration: none; border-bottom: 1px dotted currentColor; }
+
+      .widget { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); }
+      .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+      button.seg, .replay {
+        font-family: var(--mono); font-size: 12.5px; padding: 6px 13px; border-radius: 8px;
+        border: 1px solid var(--line); background: var(--bg); color: var(--muted); cursor: pointer;
+      }
+      button.seg[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+      .replay { margin-top: 12px; }
+      input[type="range"] { accent-color: var(--accent); }
+
+      .bars { display: grid; gap: 7px; }
+      .barrow { display: grid; grid-template-columns: 150px minmax(0, 1fr) 96px; gap: 10px; align-items: center; font-size: 13px; }
+      .barrow .track { background: var(--track); border-radius: 5px; height: 15px; overflow: hidden; }
+      .barrow .fill { height: 100%; background: var(--accent); border-radius: 5px; width: 0; transition: none; }
+      .barrow .val { text-align: right; font-family: var(--mono); font-size: 12px; }
+      .fill.indic { background: var(--lang-tier-1); }
+      .fill.synth { background: var(--gotcha-composition); }
+      .fill.gap { background: repeating-linear-gradient(45deg, var(--track), var(--track) 5px, var(--faint) 5px, var(--faint) 6px); }
+
+      .gatebox { font-family: var(--mono); font-size: 13px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; white-space: pre-wrap; line-height: 1.65; }
+      .gatebox .fail { color: var(--grade-x); font-weight: 700; }
+      .gatebox .pass { color: var(--grade-a); font-weight: 700; }
+
+      .verdictline { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; font-family: var(--mono); font-size: 13px; margin-top: 12px; }
+      .chip { border: 1px solid currentColor; border-radius: 5px; padding: 1px 8px; font-size: 11.5px; font-weight: 700; }
+      .chip.win { color: var(--grade-a); } .chip.parity { color: var(--grade-b); } .chip.lose { color: var(--grade-x); }
+
+      .stages { display: grid; gap: 6px; }
+      .stage { display: grid; grid-template-columns: 26px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px; font-size: 13px; opacity: 0.45; }
+      .stage.on { opacity: 1; border-color: var(--accent); background: var(--accent-soft); }
+      .stage .idx { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+
+      .weeks { position: relative; display: grid; gap: 5px; }
+      .task { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 10px; align-items: center; font-size: 12.5px; }
+      .task .lane { position: relative; height: 20px; background: var(--track); border-radius: 4px; }
+      .task .span { position: absolute; height: 100%; border-radius: 4px; background: var(--accent); }
+      .task .span.gate { background: var(--grade-x); }
+      .task .span.free { background: var(--grade-a); }
+
+      .axis { position: relative; height: 46px; margin-top: 8px; }
+      .axis .tick { position: absolute; font-family: var(--mono); font-size: 11px; color: var(--faint); transform: translateX(-50%); }
+      .axis .dot { position: absolute; width: 11px; height: 11px; border-radius: 50%; background: var(--muted); transform: translate(-50%, -50%); top: 12px; }
+      .axis .dot.mine { background: var(--accent); width: 15px; height: 15px; }
+
+      .dials { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+      .dial label { display: block; font-size: 12px; color: var(--muted); font-family: var(--mono); margin-bottom: 4px; }
+      .dial input { width: 100%; }
+      .chainout { margin-top: 16px; font-size: 14px; }
+      .err { color: var(--grade-x); font-family: var(--mono); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <a class="back" href="../"><span aria-hidden="true">←</span> Back</a>
+      <p class="eyebrow">03 · Data collection</p>
+      <h1>The decision</h1>
+      <p class="lede">
+        What to train an India-first model on, in what proportion, at what cost — and what would
+        show it was the wrong call. Every number here links to the evidence behind it.
+      </p>
+      <main id="main"><p class="lede">Loading…</p></main>
+      <footer id="foot"></footer>
+    </div>
+
+    <script type="module">
+      import { renderNumber, formatValue } from '../_shared/num.js';
+      import { animateOnce, countUp, prefersReducedMotion } from '../_shared/anim.js';
+
+      const $ = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x !== undefined) e.textContent = x; return e; };
+      const ref = (text, anchor) => { const a = $('a', 'ref', text); a.href = `../reasoning#${anchor}`; return a; };
+      const fmt = (v, u) => formatValue(v, u);
+
+      /* prose · widget · italic caption — the shape every section takes. */
+      const sect = (n, title, claimNodes, widget, caption) => {
+        const s = $('section');
+        s.id = `s${n}`;
+        const h = $('h2');
+        h.append($('span', 'n', String(n)), document.createTextNode(title));
+        s.append(h);
+        const p = $('p', 'claim');
+        claimNodes.forEach((c) => p.append(c));
+        s.append(p);
+        const fig = $('figure');
+        fig.append(widget);
+        if (caption) fig.append($('figcaption', '', caption));
+        s.append(fig);
+        return s;
+      };
+
+      const widget = (...kids) => { const w = $('div', 'widget'); w.append(...kids); return w; };
+
+      /* A labelled bar row that animates its width from zero. */
+      const barRow = (label, pct, valueNode, cls = '') => {
+        const row = $('div', 'barrow');
+        const track = $('div', 'track');
+        const fill = $('div', `fill ${cls}`);
+        track.append(fill);
+        const val = $('div', 'val');
+        if (valueNode instanceof Node) val.append(valueNode); else val.textContent = valueNode;
+        row.append($('div', '', label), track, val);
+        row._grow = () => countUp({ from: 0, to: pct, duration: 700, write: (v) => { fill.style.width = `${v}%`; } });
+        return row;
+      };
+
+      const load = (p) => fetch(p).then((r) => { if (!r.ok) throw new Error(`${p}: ${r.status}`); return r.json(); });
+
+      Promise.all([load('../data.json'), load('../records.json')])
+        .then(([data, records]) => build(data, records))
+        .catch((e) => { document.getElementById('main').innerHTML = `<p class="err">Could not load data — ${e.message}. Serve over http, not file://.</p>`; });
+
+      function build(data, records) {
+        const main = document.getElementById('main');
+        main.replaceChildren();
+        const rec = data.milestones.presets.find((p) => p.recommended) || data.milestones.presets[2];
+
+        /* ---------------------------------------------------- 1 · The Gate */
+        {
+          const box = $('div', 'gatebox');
+          const play = () => {
+            box.replaceChildren();
+            const fail = $('span', 'fail', 'CONTAMINATION GATE — FAILED\n');
+            box.append(fail);
+            box.append(
+              `  a training shard collides with MILU on 12 of its 13-gram shingles\n` +
+              `  action: drop the shard, or drop the benchmark from the eval set\n\n`);
+            box.append($('span', 'pass', 'CLEAN SHARD — PASSED\n'));
+            box.append('  no collisions against any registered benchmark');
+          };
+          const w = widget(box);
+          animateOnce(w, play);
+          main.append(sect(1, 'The gate that comes first',
+            [document.createTextNode('Everything else here is an argument about proportions. This one is a hard stop: if training text overlaps the evaluation set, every score afterwards is fiction. So the contamination check is built before any of it — plant a known benchmark item in an ordinary shard and the build fails and '),
+             $('b', '', 'names the benchmark'),
+             document.createTextNode('. It runs in CI, so it cannot be forgotten. Coverage today is limited by what eval items we hold — see '),
+             ref('the instruments', 'benchmarks'), document.createTextNode('.')],
+            w,
+            'Reproduced from the test suite. A gate that has never been watched to fail is not a gate.'));
+        }
+
+        /* ---------------------------------------------------- 2 · Vocab crossing */
+        {
+          const sw = data.vocab_sweep;
+          const curve = sw.curve;
+          const W = 640, H = 200, pad = 34;
+          const xs = (i) => pad + (i / (curve.length - 1)) * (W - pad * 2);
+          const maxNet = Math.max(...curve.map((c) => c.net_benefit));
+          const minNet = Math.min(...curve.map((c) => c.net_benefit));
+          const ys = (v) => H - pad - ((v - minNet) / (maxNet - minNet || 1)) * (H - pad * 2);
+          const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+          svg.setAttribute('width', '100%');
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('fill', 'none');
+          path.setAttribute('stroke', 'var(--accent)');
+          path.setAttribute('stroke-width', '2');
+          path.setAttribute('d', curve.map((c, i) => `${i ? 'L' : 'M'}${xs(i)},${ys(c.net_benefit)}`).join(' '));
+          const peakI = curve.findIndex((c) => c.vocab_size === sw.peak.vocab_size);
+          const mark = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          mark.setAttribute('cx', xs(peakI)); mark.setAttribute('cy', ys(sw.peak.net_benefit));
+          mark.setAttribute('r', '5'); mark.setAttribute('fill', 'var(--accent)');
+          const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          lbl.setAttribute('x', xs(peakI)); lbl.setAttribute('y', ys(sw.peak.net_benefit) - 12);
+          lbl.setAttribute('text-anchor', 'middle'); lbl.setAttribute('font-size', '12');
+          lbl.setAttribute('fill', 'var(--ink)'); lbl.setAttribute('font-family', 'var(--mono)');
+          lbl.textContent = `peak ${fmt(sw.peak.vocab_size, 'count')}`;
+          svg.append(path, mark, lbl);
+
+          const note = $('p', 'val');
+          note.style.cssText = 'font-family:var(--mono);font-size:12px;color:var(--muted);margin:10px 0 0';
+          note.textContent = sw.note;
+          const w = widget(svg, note);
+          main.append(sect(2, 'How big the vocabulary should be',
+            [document.createTextNode('Two costs pull against each other. A bigger vocabulary means fewer tokens per word — every Indic sentence gets cheaper for the whole run — but the output projection grows with it, taxing every forward pass. The answer is where the net is deepest. It is a shallow optimum, which is the useful part: being 40,000 slots out costs almost nothing, so this is not a decision to agonise over. The curve is '),
+             $('b', '', 'not yet anchored on a measurement'),
+             document.createTextNode(' — see '), ref('the tokenizer tax', 'fertility'), document.createTextNode('.')],
+            w,
+            'Net benefit against vocabulary size. Flat around the peak — the precise number matters less than being in the region.'));
+        }
+
+        /* ---------------------------------------------------- 3 · The Tax */
+        {
+          const f = data.fertility.by_language;
+          const unknownCount = Object.values(f).filter((v) => v.value === null).length;
+          const rows = $('div', 'bars');
+          const empty = $('p');
+          empty.style.cssText = 'font-size:13.5px;color:var(--muted);margin:0';
+          empty.append(document.createTextNode(`All ${Object.keys(f).length} languages report `));
+          empty.append(renderNumber(Object.values(f)[0], { unit: false }));
+          empty.append(document.createTextNode(' — the measurement run has not happened. The honest version of this chart is an empty one.'));
+          rows.append(empty);
+          const target = $('p');
+          target.style.cssText = 'font-family:var(--mono);font-size:12.5px;color:var(--muted);margin:14px 0 0';
+          target.append(document.createTextNode('target: worst Indic language ≤ '));
+          target.append(renderNumber(data.fertility.parity_target));
+          target.append(document.createTextNode(' × English'));
+          main.append(sect(3, 'What the tokenizer costs',
+            [document.createTextNode('An English-centric vocabulary charges Indic scripts several tokens where English pays one. That multiplier applies to every token of the entire run, so it outweighs almost any decision about corpus size — and unlike data, you cannot fix it later. This is the one table on the site that is deliberately '),
+             $('b', '', 'empty'),
+             document.createTextNode(': the rule is that fertility is measured, never estimated, and the run has not happened.')],
+            widget(rows, target),
+            `${unknownCount} of ${Object.keys(f).length} languages unmeasured. Publishing a plausible number here would be the exact failure this framework exists to prevent.`));
+        }
+
+        /* ---------------------------------------------------- 4 · The Budget */
+        {
+          const host = $('div');
+          const ctr = $('div', 'controls');
+          let current = rec;
+          const draw = () => {
+            const bars = $('div', 'bars');
+            const total = current.mix.total_seen_tokens;
+            current.mix.tiers.forEach((t) => {
+              const cls = t.is_synthetic ? 'synth' : t.is_indic ? 'indic' : '';
+              const row = barRow(t.name, (t.seen_tokens / total) * 100,
+                renderNumber({ value: t.seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' }, { unit: false }), cls);
+              bars.append(row);
+            });
+            const sum = $('p');
+            sum.style.cssText = 'font-family:var(--mono);font-size:12.5px;color:var(--muted);margin:14px 0 0';
+            sum.append(document.createTextNode('seen '), renderNumber({ value: total, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' }, { unit: false }),
+              document.createTextNode(` · unique `), renderNumber({ value: current.mix.total_unique_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' }, { unit: false }),
+              document.createTextNode(` · Indic ${(current.mix.indic_share * 100).toFixed(1)}% of which ${(current.mix.natural_indic_share * 100).toFixed(1)}% natural`));
+            host.replaceChildren(bars, sum);
+            current.findings.forEach((fnd) => {
+              const p = $('p');
+              p.style.cssText = 'font-size:12.5px;color:var(--muted);margin:8px 0 0';
+              p.textContent = `${fnd.level}: ${fnd.message}`;
+              host.append(p);
+            });
+            [...bars.children].forEach((r, i) => { if (r._grow) setTimeout(r._grow, prefersReducedMotion() ? 0 : i * 45); });
+          };
+          data.milestones.presets.forEach((p) => {
+            const b = $('button', 'seg', p.id);
+            b.type = 'button';
+            b.setAttribute('aria-pressed', String(p === rec));
+            b.addEventListener('click', () => {
+              current = p;
+              [...ctr.children].forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
+              draw();
+            });
+            ctr.append(b);
+          });
+          const w = widget(ctr, host);
+          draw();
+          animateOnce(w, draw);
+          main.append(sect(4, 'How many tokens, and where from',
+            [document.createTextNode('The budget is not "collect 15 trillion tokens". It is a unique pool read on a schedule: repetition up to about four passes is nearly as good as fresh data, so a small Indic pool read four times contributes far more than its size suggests. That single reframing lifts the natural-Indic share several times over without collecting one new document — see '),
+             ref('the priors', 'priors'), document.createTextNode('. 15T is the recommended rung.')],
+            w,
+            'Switch rungs to see the same tier shape scaled. Orange is manufactured text; blue is natural Indic.'));
+        }
+
+        /* ---------------------------------------------------- 5 · The Filter */
+        {
+          const langs = records.languages || [];
+          const host = $('div');
+          const slider = document.createElement('input');
+          slider.type = 'range'; slider.min = '0'; slider.max = '3'; slider.value = '0'; slider.step = '1';
+          const label = $('div');
+          label.style.cssText = 'font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-bottom:10px';
+          const draw = () => {
+            const th = Number(slider.value);
+            const kept = langs.filter((l) => (l.tier || 3) <= Math.max(1, 4 - th) || th === 0);
+            const survivors = th === 0 ? langs : langs.filter((l) => (l.tier || 3) <= (4 - th));
+            label.textContent = th === 0
+              ? `no quality threshold — all ${langs.length} languages present`
+              : `threshold ${th} — ${survivors.length} of ${langs.length} languages survive`;
+            const grid = $('div');
+            grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px';
+            langs.forEach((l) => {
+              const chip = $('span', '', l.name || l.code);
+              const alive = survivors.includes(l);
+              chip.style.cssText =
+                `font-family:var(--mono);font-size:11.5px;padding:3px 8px;border-radius:5px;border:1px solid var(--line);` +
+                `color:${alive ? `var(--lang-tier-${l.tier || 3})` : 'var(--faint)'};opacity:${alive ? 1 : 0.32};` +
+                `text-decoration:${alive ? 'none' : 'line-through'}`;
+              grid.append(chip);
+            });
+            host.replaceChildren(grid);
+            void kept;
+          };
+          slider.addEventListener('input', draw);
+          draw();
+          const w = widget(label, slider, host);
+          main.append(sect(5, 'What a quality filter quietly deletes',
+            [document.createTextNode('Quality classifiers are trained on English proxies, so they score thin-resource languages as noise. Raise the threshold and the languages with least data disappear first — the ones the model exists to serve. One language in this set collapses to '),
+             $('b', '', '77 words'),
+             document.createTextNode(' after standard filtering. The fix is a reserved share of every batch that no selector may touch; details in '),
+             ref('the languages', 'languages'), document.createTextNode('.')],
+            w,
+            'Drag the threshold. Nothing here is a bug in the filter — it is the filter working as designed, on the wrong objective.'));
+        }
+
+        /* ---------------------------------------------------- 6 · The Mix + orphans */
+        {
+          const bars = $('div', 'bars');
+          const total = rec.mix.total_seen_tokens;
+          const covered = new Set(data.coverage.capabilities.filter((c) => c.count > 0).map((c) => c.capability));
+          rec.mix.tiers.forEach((t) => {
+            const caps = t.capabilities || [];
+            const orphan = caps.length > 0 && !caps.some((c) => covered.has(c));
+            const row = barRow(t.name + (orphan ? '  (no instrument)' : ''), (t.seen_tokens / total) * 100,
+              `${((t.seen_tokens / total) * 100).toFixed(1)}%`, orphan ? 'gap' : t.is_indic ? 'indic' : '');
+            bars.append(row);
+          });
+          const gapNote = $('p');
+          gapNote.style.cssText = 'font-size:12.5px;color:var(--muted);margin:12px 0 0';
+          gapNote.append(document.createTextNode('Hatched bars are tiers no benchmark would notice the removal of. That is not an argument to cut them — it is an argument you have to make out loud. See '), ref('the gaps', 'gaps'), document.createTextNode('.'));
+          const w = widget(bars, gapNote);
+          animateOnce(w, () => [...bars.children].forEach((r, i) => { if (r._grow) setTimeout(r._grow, prefersReducedMotion() ? 0 : i * 45); }));
+          main.append(sect(6, 'The mix, and what it cannot see',
+            [document.createTextNode('The recommended shape, and an honest note attached to it: some tiers are paid for and unmeasurable. Delete them and every instrument reports the same score.')],
+            w, 'Widths are share of seen tokens in the recommended budget.'));
+        }
+
+        /* ---------------------------------------------------- 7 · The Pipeline */
+        {
+          const tools = records.tools || [];
+          const stages = [...new Set(tools.map((t) => t.stage))];
+          const list = $('div', 'stages');
+          const rows = stages.map((st, i) => {
+            const row = $('div', 'stage');
+            const picks = tools.filter((t) => t.stage === st);
+            const verdicts = $('span');
+            picks.slice(0, 3).forEach((t) => {
+              const c = $('span', `verdict ${t.verdict}`, t.name);
+              c.style.cssText = `font-family:var(--mono);font-size:11px;margin-left:6px;padding:1px 6px;border-radius:4px;border:1px solid currentColor;color:var(${t.verdict === 'avoid' ? '--grade-x' : t.verdict === 'build' ? '--accent' : '--grade-a'})`;
+              if (t.verdict === 'avoid') c.style.textDecoration = 'line-through';
+              verdicts.append(c);
+            });
+            row.append($('span', 'idx', String(i + 1)), $('span', '', st), verdicts);
+            list.append(row);
+            return row;
+          });
+          const w = widget(list);
+          animateOnce(w, () => {
+            rows.forEach((r) => r.classList.remove('on'));
+            rows.forEach((r, i) => setTimeout(() => r.classList.add('on'), prefersReducedMotion() ? 0 : i * 260));
+          });
+          main.append(sect(7, 'The pipeline you have to build',
+            [document.createTextNode('Nine stages between a URL and a training shard. Most have a tool worth adopting; one has a tool worth avoiding, and the struck-through entry is a recommendation this research reversed on itself after measuring it. Full verdicts in '),
+             ref('the tools', 'tools'), document.createTextNode('.')],
+            w, 'Stages light in order. Struck-through tools are ones to avoid, not adopt.'));
+        }
+
+        /* ---------------------------------------------------- 8 · The Instruments */
+        {
+          const bars = $('div', 'bars');
+          const max = Math.max(...data.coverage.capabilities.map((c) => c.count), 1);
+          data.coverage.capabilities.forEach((c) => {
+            bars.append(barRow(c.capability, (c.count / max) * 100, String(c.count), c.count <= 1 ? 'gap' : ''));
+          });
+          const w = widget(bars);
+          animateOnce(w, () => [...bars.children].forEach((r, i) => { if (r._grow) setTimeout(r._grow, prefersReducedMotion() ? 0 : i * 40); }));
+          main.append(sect(8, 'Whether you could tell if it worked',
+            [document.createTextNode('Every capability the model is built for, against the number of benchmarks that can detect it. A capability with one instrument is a coverage risk; with none, it is a goal you cannot grade. Trust bands and split policies in '),
+             ref('the instruments', 'benchmarks'), document.createTextNode('.')],
+            w, 'Hatched rows have one instrument or none.'));
+        }
+
+        /* ---------------------------------------------------- 9 · Competitive frame */
+        {
+          const arch = (records.architectures || []).filter((a) => a.params_total);
+          const mine = { model: 'this model', params_total: 40e9, params_active: 40e9, mine: true };
+          const all = [...arch, mine];
+          let mode = 'total';
+          const host = $('div', 'axis');
+          const ctr = $('div', 'controls');
+          const draw = () => {
+            host.replaceChildren();
+            const vals = all.map((a) => (mode === 'active' ? a.params_active || a.params_total : a.params_total));
+            const max = Math.max(...vals), min = Math.min(...vals);
+            const pos = (v) => ((Math.log10(v) - Math.log10(min)) / (Math.log10(max) - Math.log10(min) || 1)) * 92 + 4;
+            all.forEach((a, i) => {
+              const v = vals[i];
+              const dot = $('div', `dot${a.mine ? ' mine' : ''}`);
+              dot.style.left = `${pos(v)}%`;
+              dot.title = `${a.model} — ${fmt(v, 'count')}`;
+              const t = $('div', 'tick', `${a.model.split(' ')[0]} ${fmt(v, 'count')}`);
+              t.style.left = `${pos(v)}%`;
+              t.style.top = i % 2 ? '26px' : '0px';
+              host.append(dot, t);
+            });
+          };
+          ['total', 'active'].forEach((m) => {
+            const b = $('button', 'seg', `${m} params`);
+            b.type = 'button'; b.setAttribute('aria-pressed', String(m === mode));
+            b.addEventListener('click', () => { mode = m; [...ctr.children].forEach((c) => c.setAttribute('aria-pressed', String(c === b))); draw(); });
+            ctr.append(b);
+          });
+          draw();
+          main.append(sect(9, 'What you are up against',
+            [document.createTextNode('The comparison that matters is not the biggest model but the free one. A capable open-licensed model in this class means a from-scratch run has to justify itself against something anyone can download today — which is why the plan puts a head-to-head before any capital commitment. Architectures in '),
+             ref('the evidence', 'papers'), document.createTextNode('.')],
+            widget(ctr, host),
+            'Log scale. Toggle to active parameters — sparse models move a long way left.'));
+        }
+
+        /* ---------------------------------------------------- 10 · Critical path */
+        {
+          const plan = records.plan || [];
+          const maxWeek = Math.max(...plan.map((p) => p.week_end || p.week_start || 0), 12);
+          const list = $('div', 'weeks');
+          plan.forEach((p) => {
+            const row = $('div', 'task');
+            const lane = $('div', 'lane');
+            const span = $('div', `span${p.is_gate ? ' gate' : ''}${(p.cost_inr === 0) ? ' free' : ''}`);
+            const s = ((p.week_start || 1) - 1) / maxWeek * 100;
+            const e = ((p.week_end || p.week_start || 1)) / maxWeek * 100;
+            span.style.left = `${s}%`;
+            span.style.width = `${Math.max(3, e - s)}%`;
+            span.title = `${p.action}${p.is_gate ? ' — GATE' : ''}`;
+            lane.append(span);
+            row.append($('span', '', p.id), lane);
+            list.append(row);
+          });
+          const key = $('p');
+          key.style.cssText = 'font-family:var(--mono);font-size:12px;color:var(--muted);margin:12px 0 0';
+          key.textContent = `${plan.filter((p) => p.is_gate).length} gates (red) — nothing downstream should start until they clear`;
+          main.append(sect(10, 'The order to do it in',
+            [document.createTextNode('Twelve actions. Two are gates rather than tasks: until the tokenizer is validated and the from-scratch question is settled at small scale, committing capital is guessing. The three highest-value items are letters, not engineering — see '),
+             ref('the acquisitions', 'acquisition'), document.createTextNode('.')],
+            widget(list, key),
+            'Bars are week spans. Hover any bar for the action.'));
+        }
+
+        /* ---------------------------------------------------- 11 · The Chain */
+        {
+          const out = $('div', 'chainout');
+          const dials = $('div', 'dials');
+          const state = { pool: 300, epochs: 4, english: 3000, synth: 200 };
+          const mk = (key, label, min, max, step) => {
+            const d = $('div', 'dial');
+            const inp = document.createElement('input');
+            inp.type = 'range'; inp.min = min; inp.max = max; inp.step = step; inp.value = state[key];
+            const l = $('label', '', label);
+            inp.addEventListener('input', () => { state[key] = Number(inp.value); draw(); });
+            d.append(l, inp);
+            dials.append(d);
+          };
+          const draw = () => {
+            const indicSeen = state.pool * 1e9 * state.epochs;
+            const synthSeen = state.synth * 1e9;
+            const engSeen = state.english * 1e9;
+            const total = indicSeen + synthSeen + engSeen;
+            const share = indicSeen / total;
+            out.replaceChildren();
+            out.append(document.createTextNode('Seen tokens '), renderNumber({ value: total, unit: 'tokens', provenance: 'estimated', source: 'computed:chain' }, { unit: false }),
+              document.createTextNode(` · natural Indic ${(share * 100).toFixed(1)}% of the batch`));
+            const verdict = $('div', 'verdictline');
+            const ok = state.epochs <= 4 && share >= 0.05;
+            verdict.append($('span', `chip ${ok ? 'win' : state.epochs > 16 ? 'lose' : 'parity'}`,
+              state.epochs > 16 ? 'OVER THE CEILING' : ok ? 'WORKABLE' : 'THIN'),
+              $('span', '', state.epochs > 16
+                ? 'past ~16 passes repetition stops buying anything'
+                : state.epochs > 4
+                ? 'past ~4 passes returns decay — still useful, no longer free'
+                : share < 0.05
+                ? 'natural Indic is a rounding error in the batch'
+                : 'repetition is doing the work here, not new collection'));
+            out.append(verdict);
+          };
+          mk('pool', 'unique Indic pool (B tokens)', 50, 800, 10);
+          mk('epochs', 'epochs over that pool', 1, 20, 1);
+          mk('english', 'English + code (B tokens)', 500, 8000, 100);
+          mk('synth', 'synthetic Indic (B tokens)', 0, 1500, 50);
+          draw();
+          main.append(sect(11, 'Move one thing, watch the rest',
+            [document.createTextNode('The whole argument in four dials. The one worth playing with is epochs: it is the only lever that buys Indic share without collecting anything, and it runs out. Everything above composes into this.')],
+            widget(dials, out),
+            'Live arithmetic — the only computation on the site that runs in the browser, because it responds to you.'));
+        }
+
+        /* ---------------------------------------------------- 12 · The Verdict */
+        {
+          const box = $('div');
+          const line = (chip, cls, text) => {
+            const v = $('div', 'verdictline');
+            v.append($('span', `chip ${cls}`, chip), $('span', '', text));
+            return v;
+          };
+          box.append(
+            line('WIN', 'win', 'Indic breadth and India-context knowledge — nothing open covers 22 languages with this weighting.'),
+            line('PARITY', 'parity', 'English reasoning and code — the corpus is the same public corpus everyone else uses.'),
+            line('LOSE', 'lose', 'Anything gated behind licensed data nobody will sell you, and any claim that needs a benchmark that does not exist.'),
+          );
+          const scope = $('p');
+          scope.style.cssText = 'font-size:13px;color:var(--muted);margin:16px 0 0;max-width:62ch';
+          scope.append(document.createTextNode('The honest scope line: the single number this all rests on — how much deduplicated natural Indic text exists — has never been measured by anyone, and the fertility figures are still unrun. Both are in '),
+            ref('the unknowns', 'risks'), document.createTextNode('. This is a plan with its uncertainty attached, not a result.'));
+          main.append(sect(12, 'The verdict',
+            [document.createTextNode('Where this model would beat the open alternatives, where it would only match them, and where it would lose.')],
+            widget(box, scope), null));
+        }
+
+        const counts = data.record_counts;
+        document.getElementById('foot').textContent =
+          `Built from ${counts.catalog} datasets, ${counts.benchmarks} benchmarks and ${counts.legal} legal records. Pipeline ${data.pipeline_version}.`;
+      }
+    </script>
+  </body>
+</html>
