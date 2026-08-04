@@ -71,6 +71,49 @@
       .chainout { margin-top: 16px; font-size: 14px; }
       .err { color: var(--grade-x); font-family: var(--mono); }
 
+      /* ---------------------------------------------------------------- explainer cards
+       * A widget that only draws a shape makes the reader do the interpreting. These carry the
+       * interpretation with them: a framing line, prose with the numbers that matter, live tiles,
+       * an annotated chart, and a callout that says what the current state *means*.
+       */
+      .frame { font-size: 13.5px; color: var(--muted); margin: 0 0 10px; max-width: 66ch; }
+      .explainer { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px; box-shadow: var(--shadow); }
+      .explainer > h3 { font-family: var(--display); font-size: 1.25rem; letter-spacing: -0.015em; margin: 0 0 8px; }
+      .explainer .intro { font-size: 13.6px; color: var(--muted); margin: 0 0 16px; max-width: 72ch; }
+      .explainer .intro b { color: var(--ink); font-weight: 600; }
+
+      .subpanel { background: var(--bg); border: 1px solid var(--line); border-radius: 11px; padding: 14px 16px; margin-bottom: 12px; }
+      .subpanel > .lbl { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--faint); font-weight: 700; margin-bottom: 8px; }
+
+      .dialrow { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 12px; }
+      .dialrow .name { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--faint); font-weight: 700; }
+      .dialrow .read { font-family: var(--display); font-size: 1.5rem; font-weight: 600; color: var(--accent); letter-spacing: -0.02em; }
+      .dialrow .read .u { font-size: 0.75rem; color: var(--muted); margin-left: 3px; }
+      .ticks { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--faint); margin-top: 2px; }
+
+      .presets { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+      .presets .plabel { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--faint); font-weight: 700; margin-right: 4px; }
+
+      .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 10px; margin-bottom: 12px; }
+      .tile { background: var(--bg); border: 1px solid var(--line); border-radius: 11px; padding: 12px 14px; }
+      .tile .lbl { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); font-weight: 700; }
+      .tile .big { font-family: var(--display); font-size: 1.7rem; font-weight: 600; letter-spacing: -0.02em; margin: 3px 0 2px; }
+      .tile .sub { font-size: 11.5px; color: var(--muted); }
+      .tile.good .big { color: var(--grade-a); }
+      .tile.warn .big { color: var(--grade-b); }
+      .tile.bad .big { color: var(--grade-x); }
+
+      .callout { border-radius: 11px; padding: 13px 15px; font-size: 13px; border-left: 3px solid var(--accent); background: var(--accent-soft); }
+      .callout .lbl { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.09em; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; display: block; }
+      .callout.warn { border-left-color: var(--grade-b); background: color-mix(in srgb, var(--grade-b) 12%, transparent); }
+      .callout.bad { border-left-color: var(--grade-x); background: color-mix(in srgb, var(--grade-x) 12%, transparent); }
+      .callout.good { border-left-color: var(--grade-a); background: color-mix(in srgb, var(--grade-a) 12%, transparent); }
+      .callout b { font-weight: 600; }
+
+      .footnote { font-size: 11.5px; color: var(--faint); margin: 10px 0 0; max-width: 72ch; }
+      .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted); margin-top: 8px; }
+      .legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; font-style: normal; }
+
       /* ------------------------------------------------------------------ print
        *
        * Ctrl+P → Save as PDF *is* the submission, so the printed page is a first-class output
@@ -220,6 +263,9 @@
       function build(data, records) {
         const main = document.getElementById('main');
         main.replaceChildren();
+        // Start at the rung you can actually build today. 15T stays flagged as the target the
+        // atlas recommends, but opening on it invites reading an aspiration as a plan.
+        const START = data.milestones.presets.find((p) => p.id === '5T') || data.milestones.presets[0];
         const rec = data.milestones.presets.find((p) => p.recommended) || data.milestones.presets[2];
 
         /* ---------------------------------------------------- 1 · The Gate */
@@ -315,7 +361,7 @@
         {
           const host = $('div');
           const ctr = $('div', 'controls');
-          let current = rec;
+          let current = START;
           const draw = () => {
             const bars = $('div', 'bars');
             const total = current.mix.total_seen_tokens;
@@ -342,7 +388,7 @@
           data.milestones.presets.forEach((p) => {
             const b = $('button', 'seg', p.id);
             b.type = 'button';
-            b.setAttribute('aria-pressed', String(p === rec));
+            b.setAttribute('aria-pressed', String(p === START));
             b.addEventListener('click', () => {
               current = p;
               [...ctr.children].forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
@@ -356,7 +402,7 @@
           playAll.push(draw);
           main.append(sect(4, 'How many tokens, and where from',
             [document.createTextNode('The budget is not "collect 15 trillion tokens". It is a unique pool read on a schedule: repetition up to about four passes is nearly as good as fresh data, so a small Indic pool read four times contributes far more than its size suggests. That single reframing lifts the natural-Indic share several times over without collecting one new document — see '),
-             ref('the priors', 'priors'), document.createTextNode('. 15T is the recommended rung.')],
+             ref('the priors', 'priors'), document.createTextNode('. It opens on 5T — the rung buildable from open sources today; 15T is the target the research recommends, not a starting position.')],
             w,
             'Switch rungs to see the same tier shape scaled. Orange is manufactured text; blue is natural Indic.'));
         }
@@ -541,51 +587,209 @@
             'Bars are week spans. Hover any bar for the action.'));
         }
 
-        /* ---------------------------------------------------- 11 · The Chain */
+        /* ---------------------------------------------------- 11 · The repetition explorer
+         *
+         * The exemplar for how a widget on this site should teach: the chart shows the decay, the
+         * tiles show what the current setting costs, and the callout says in words what that
+         * means — so a reader who never touches a control still leaves with the idea.
+         */
         {
-          const out = $('div', 'chainout');
-          const dials = $('div', 'dials');
-          const state = { pool: 300, epochs: 4, english: 3000, synth: 200 };
-          const mk = (key, label, min, max, step) => {
-            const d = $('div', 'dial');
+          // Defaults are the atlas's own proposal: a ~300B natural-Indic pool read four times.
+          const state = { pool: 300, target: 1200 };
+          const KNEE = 4, CEILING = 16;
+
+          const card = $('div', 'explainer');
+          card.append($('h3', '', 'When the text runs out, how many times can you re-read it?'));
+          const intro = $('p', 'intro');
+          intro.append(
+            document.createTextNode('Only so much natural Indian-language text exists, so to reach a token budget you '),
+            $('b', '', 'repeat'), document.createTextNode(' the corpus across epochs. The useful finding is that the first few passes are nearly '),
+            $('b', '', 'free'), document.createTextNode(' — a token seen a second, third or fourth time is worth almost as much as a fresh one. Past roughly '),
+            $('b', '', '4 epochs'), document.createTextNode(' the value decays, and by about '),
+            $('b', '', '16'), document.createTextNode(' extra passes buy almost nothing. Set the pool you actually have and how many tokens you want to draw from it, and watch where the run lands.'));
+          card.append(intro);
+
+          // --- dials
+          const dialWrap = $('div', 'subpanel');
+          const mkDial = (key, name, unitLabel, min, max, step, ticks, fmtRead) => {
+            const row = $('div', 'dialrow');
+            const read = $('div', 'read');
+            row.append($('div', 'name', name), read);
             const inp = document.createElement('input');
             inp.type = 'range'; inp.min = min; inp.max = max; inp.step = step; inp.value = state[key];
-            const l = $('label', '', label);
+            inp.style.width = '100%';
+            inp.setAttribute('aria-label', name);
+            const tickRow = $('div', 'ticks');
+            ticks.forEach((t) => tickRow.append($('span', '', t)));
             inp.addEventListener('input', () => { state[key] = Number(inp.value); draw(); });
-            d.append(l, inp);
-            dials.append(d);
+            const box = $('div');
+            box.style.marginBottom = '12px';
+            box.append(row, inp, tickRow);
+            dialWrap.append(box);
+            return { inp, read, fmtRead, unitLabel };
           };
+          const poolDial = mkDial('pool', 'unique Indic pool', 'unique', 50, 2000, 25,
+            ['50B', '300B', '1T', '2T'], (v) => fmt(v * 1e9, 'tokens'));
+          const targetDial = mkDial('target', 'tokens wanted from this pool', 'drawn', 100, 4000, 50,
+            ['100B', '1T', '2T', '4T'], (v) => fmt(v * 1e9, 'tokens'));
+
+          // --- presets tied to the real milestone ladder
+          const presetRow = $('div', 'presets');
+          presetRow.append($('span', 'plabel', 'natural-Indic slice of'));
+          data.milestones.presets.forEach((p) => {
+            // How much of that rung the mix actually asks the natural-Indic tier to supply.
+            const tier = p.mix.tiers.find((x) => x.name === 'indic-natural');
+            const drawn = tier ? tier.seen_tokens / 1e9 : p.target_seen_tokens * 0.08 / 1e9;
+            const b = $('button', 'seg', `${p.id} → ${fmt(drawn * 1e9, 'tokens')}`);
+            b.type = 'button';
+            b.addEventListener('click', () => {
+              state.target = Math.round(drawn);
+              targetDial.inp.value = String(state.target);
+              draw();
+            });
+            presetRow.append(b);
+          });
+          dialWrap.append(presetRow);
+          card.append(dialWrap);
+
+          const tiles = $('div', 'tiles');
+          const chartBox = $('div', 'subpanel');
+          chartBox.append($('div', 'lbl', 'value of each repeated pass, as it flattens and then dies'));
+          const chartHost = $('div');
+          chartBox.append(chartHost);
+          const callout = $('div', 'callout');
+          card.append(tiles, chartBox, callout);
+
+          /* Value of the Nth pass, decaying toward zero — the shape Muennighoff et al. report. */
+          const passValue = (n) => (n <= 1 ? 1 : Math.exp(-(n - 1) / (CEILING / 2.2)));
+
+          const drawChart = (epochs) => {
+            const W = 640, H = 210, L = 42, B = 30;
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+            svg.setAttribute('width', '100%');
+            const maxN = 20;
+            const x = (n) => L + (n / maxN) * (W - L - 12);
+            const y = (v) => H - B - v * (H - B - 14);
+            const zone = (a, b, fill) => {
+              const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+              r.setAttribute('x', x(a)); r.setAttribute('y', 10);
+              r.setAttribute('width', x(b) - x(a)); r.setAttribute('height', H - B - 10);
+              r.setAttribute('fill', fill); svg.append(r);
+            };
+            zone(0, KNEE, 'color-mix(in srgb, var(--grade-a) 13%, transparent)');
+            zone(KNEE, CEILING, 'color-mix(in srgb, var(--grade-b) 13%, transparent)');
+            zone(CEILING, maxN, 'color-mix(in srgb, var(--grade-x) 13%, transparent)');
+            [['free', KNEE / 2, 'var(--grade-a)'], ['diminishing', (KNEE + CEILING) / 2, 'var(--grade-b)'], ['wasted', (CEILING + maxN) / 2, 'var(--grade-x)']]
+              .forEach(([label, at, col]) => {
+                const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                t.setAttribute('x', x(at)); t.setAttribute('y', 22); t.setAttribute('text-anchor', 'middle');
+                t.setAttribute('font-size', '10'); t.setAttribute('font-family', 'var(--mono)');
+                t.setAttribute('fill', col); t.textContent = label.toUpperCase();
+                svg.append(t);
+              });
+            const pts = [];
+            for (let n = 1; n <= maxN; n += 0.5) pts.push(`${n === 1 ? 'M' : 'L'}${x(n)},${y(passValue(n))}`);
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', pts.join(' '));
+            path.setAttribute('fill', 'none'); path.setAttribute('stroke', 'var(--accent)'); path.setAttribute('stroke-width', '2');
+            svg.append(path);
+            // where this run actually sits
+            const here = Math.min(epochs, maxN);
+            const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            dot.setAttribute('cx', x(here)); dot.setAttribute('cy', y(passValue(here)));
+            dot.setAttribute('r', '6'); dot.setAttribute('fill', 'var(--accent)');
+            const lab = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            lab.setAttribute('x', x(here)); lab.setAttribute('y', y(passValue(here)) - 12);
+            lab.setAttribute('text-anchor', 'middle'); lab.setAttribute('font-size', '11');
+            lab.setAttribute('font-family', 'var(--mono)'); lab.setAttribute('fill', 'var(--ink)');
+            lab.textContent = `${epochs.toFixed(1)}×`;
+            svg.append(dot, lab);
+            [0, 4, 8, 12, 16, 20].forEach((n) => {
+              const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+              t.setAttribute('x', x(n)); t.setAttribute('y', H - 10); t.setAttribute('text-anchor', 'middle');
+              t.setAttribute('font-size', '10'); t.setAttribute('fill', 'var(--faint)'); t.setAttribute('font-family', 'var(--mono)');
+              t.textContent = String(n); svg.append(t);
+            });
+            const ax = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            ax.setAttribute('x', W / 2); ax.setAttribute('y', H - 1); ax.setAttribute('text-anchor', 'middle');
+            ax.setAttribute('font-size', '9.5'); ax.setAttribute('fill', 'var(--faint)');
+            ax.textContent = 'number of epochs (times the pool is repeated)';
+            svg.append(ax);
+            return svg;
+          };
+
+          const tile = (lbl, big, sub, cls = '') => {
+            const t = $('div', `tile ${cls}`);
+            const b = $('div', 'big');
+            if (big instanceof Node) b.append(big); else b.textContent = big;
+            t.append($('div', 'lbl', lbl), b, $('div', 'sub', sub));
+            return t;
+          };
+
           const draw = () => {
-            const indicSeen = state.pool * 1e9 * state.epochs;
-            const synthSeen = state.synth * 1e9;
-            const engSeen = state.english * 1e9;
-            const total = indicSeen + synthSeen + engSeen;
-            const share = indicSeen / total;
-            out.replaceChildren();
-            out.append(document.createTextNode('Seen tokens '), renderNumber({ value: total, unit: 'tokens', provenance: 'estimated', source: 'computed:chain' }, { unit: false }),
-              document.createTextNode(` · natural Indic ${(share * 100).toFixed(1)}% of the batch`));
-            const verdict = $('div', 'verdictline');
-            const ok = state.epochs <= 4 && share >= 0.05;
-            verdict.append($('span', `chip ${ok ? 'win' : state.epochs > 16 ? 'lose' : 'parity'}`,
-              state.epochs > 16 ? 'OVER THE CEILING' : ok ? 'WORKABLE' : 'THIN'),
-              $('span', '', state.epochs > 16
-                ? 'past ~16 passes repetition stops buying anything'
-                : state.epochs > 4
-                ? 'past ~4 passes returns decay — still useful, no longer free'
-                : share < 0.05
-                ? 'natural Indic is a rounding error in the batch'
-                : 'repetition is doing the work here, not new collection'));
-            out.append(verdict);
+            const poolTokens = state.pool * 1e9;
+            const target = state.target * 1e9;
+            const epochs = target / poolTokens;
+            const lastWorth = passValue(Math.max(1, epochs));
+            // Effective tokens: sum the decaying value of each pass actually run.
+            let effective = 0;
+            for (let n = 1; n <= Math.floor(epochs); n += 1) effective += poolTokens * passValue(n);
+            effective += poolTokens * (epochs % 1) * passValue(Math.ceil(epochs));
+
+            poolDial.read.replaceChildren(document.createTextNode(poolDial.fmtRead(state.pool)),
+              $('span', 'u', poolDial.unitLabel));
+            targetDial.read.replaceChildren(document.createTextNode(targetDial.fmtRead(state.target)),
+              $('span', 'u', targetDial.unitLabel));
+
+            const band = epochs <= KNEE ? 'good' : epochs <= CEILING ? 'warn' : 'bad';
+            tiles.replaceChildren(
+              tile('required epochs', `${epochs.toFixed(1)}×`,
+                `${fmt(target, 'tokens')} drawn ÷ ${fmt(poolTokens, 'tokens')} unique`, band),
+              tile('effective tokens gained',
+                renderNumber({ value: effective, unit: 'tokens', provenance: 'estimated', source: 'computed:repetition' }, { unit: false }),
+                `${((effective / target) * 100).toFixed(0)}% of what you draw does real work`, band),
+              tile('the last pass is worth', `${(lastWorth * 100).toFixed(0)}%`,
+                'of a fresh token', band));
+
+            chartHost.replaceChildren(drawChart(epochs));
+
+            callout.className = `callout ${band}`;
+            callout.replaceChildren();
+            const label = epochs <= KNEE ? 'Repetition is doing this for free'
+              : epochs <= CEILING ? 'Diminishing returns' : 'Past the ceiling';
+            callout.append($('span', 'lbl', label));
+            const msg = $('span');
+            if (epochs <= KNEE) {
+              msg.append(document.createTextNode(`At ${epochs.toFixed(1)} passes you are inside the free zone: the pool carries the budget without a meaningful quality penalty. This is the lever that lifts the Indic share `),
+                $('b', '', 'without collecting a single new document'), document.createTextNode('.'));
+            } else if (epochs <= CEILING) {
+              msg.append(document.createTextNode(`${epochs.toFixed(1)} passes carries you past the ~4-epoch knee, so each extra pass is worth less than the last and the budget delivers only `),
+                $('b', '', fmt(effective, 'tokens')), document.createTextNode(' of effective data. What helps here is more unique text, not more compute — see '),
+                ref('what exists', 'data'), document.createTextNode('.'));
+            } else {
+              msg.append(document.createTextNode(`${epochs.toFixed(1)} passes is past the point where repetition buys anything. `),
+                $('b', '', 'Raising the budget from here mostly burns compute'),
+                document.createTextNode(' — the pool has to grow, or the target has to come down.'));
+            }
+            callout.append(msg);
           };
-          mk('pool', 'unique Indic pool (B tokens)', 50, 800, 10);
-          mk('epochs', 'epochs over that pool', 1, 20, 1);
-          mk('english', 'English + code (B tokens)', 500, 8000, 100);
-          mk('synth', 'synthetic Indic (B tokens)', 0, 1500, 50);
+
+          const legend = $('div', 'legend');
+          [['var(--grade-a)', `free zone · ≤${KNEE} epochs`], ['var(--grade-b)', 'diminishing'], ['var(--grade-x)', `wasted · >${CEILING}`]]
+            .forEach(([c, t]) => { const l = $('span'); const i = $('i'); i.style.background = c; l.append(i, t); legend.append(l); });
+          card.append(legend);
+          card.append($('p', 'footnote',
+            'The decay shape follows the data-constrained scaling result in the priors; the knee and ceiling are that paper\'s, measured on English web text at small scale. Nobody has measured them for Indic, translated or synthetic text — which is one of the four unknowns.'));
+
           draw();
-          main.append(sect(11, 'Move one thing, watch the rest',
-            [document.createTextNode('The whole argument in four dials. The one worth playing with is epochs: it is the only lever that buys Indic share without collecting anything, and it runs out. Everything above composes into this.')],
-            widget(dials, out),
-            'Live arithmetic — the only computation on the site that runs in the browser, because it responds to you.'));
+          playAll.push(draw);
+
+          const frame = $('p', 'frame');
+          frame.textContent = 'A large token target immediately creates a supply problem. The first option is to read the same text more than once.';
+          const s = sect(11, 'Reading it twice', [], card, null);
+          s.insertBefore(frame, s.children[1]);
+          main.append(s);
         }
 
         /* ---------------------------------------------------- 12 · The Verdict */

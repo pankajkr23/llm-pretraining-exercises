@@ -379,30 +379,63 @@
             `${catalog.length} datasets, each with the licence, the size, and the trap. Filter by anything.`);
           const controls = $('div', 'controls');
           const search = $('input'); search.type = 'search'; search.placeholder = 'search datasets…';
-          const tierSel = $('select'); const stageSel = $('select'); const gotchaSel = $('select');
+          const catSel = $('select'); const tierSel = $('select'); const stageSel = $('select');
+          const licSel = $('select'); const gotchaSel = $('select');
           const opt = (sel, values, all) => {
             sel.append(new Option(all, ''));
             values.forEach((v) => sel.append(new Option(v, v)));
           };
+          // Category is the facet that answers "what kind of data is this" — web, code, speech,
+          // multimodal, legal. Without it the catalogue reads as one undifferentiated pile.
+          opt(catSel, [...new Set(catalog.map((d) => d.category).filter(Boolean))].sort(), 'any kind');
           opt(tierSel, ['GREEN', 'AMBER', 'RED'], 'any tier');
           opt(stageSel, [...new Set(catalog.flatMap((d) => d.stage || []))].sort(), 'any stage');
+          opt(licSel, ['commercial use permitted', 'forbidden', 'unclear'], 'any licence');
           opt(gotchaSel, [...new Set(catalog.flatMap((d) => (d.gotchas || []).map((g) => g.type)))].sort(), 'any caveat');
           const count = $('span', 'count');
-          controls.append(search, tierSel, stageSel, gotchaSel, count);
-          s.append(controls);
+          controls.append(search, catSel, tierSel, stageSel, licSel, gotchaSel, count);
+
+          // What kinds of data the catalogue actually holds — clicking a kind filters to it.
+          const kinds = {};
+          catalog.forEach((d) => { if (d.category) kinds[d.category] = (kinds[d.category] || 0) + 1; });
+          const kindBar = $('div');
+          kindBar.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px';
+          Object.entries(kinds).sort((a, b) => b[1] - a[1]).forEach(([kind, n]) => {
+            const chip = $('button', '', `${kind} ${n}`);
+            chip.type = 'button';
+            chip.style.cssText =
+              'font-family:var(--mono);font-size:11.5px;padding:3px 9px;border-radius:6px;cursor:pointer;' +
+              'border:1px solid var(--line);background:var(--panel);color:var(--muted)';
+            chip.addEventListener('click', () => {
+              catSel.value = catSel.value === kind ? '' : kind;
+              catSel.dispatchEvent(new Event('input'));
+            });
+            kindBar.append(chip);
+          });
+
+          s.append(kindBar, controls);
           const host = $('div');
           s.append(host);
 
+          const licMatches = (d) => {
+            const c = d.licence?.commercial;
+            if (licSel.value === 'commercial use permitted') return c === true;
+            if (licSel.value === 'forbidden') return c === false;
+            if (licSel.value === 'unclear') return c === null || c === undefined;
+            return true;
+          };
           const draw = () => {
             const q = search.value.toLowerCase();
             const rows = catalog.filter((d) =>
-              (!q || `${d.name} ${d.owner || ''} ${d.category}`.toLowerCase().includes(q)) &&
+              (!q || `${d.name} ${d.owner || ''} ${d.category} ${d.languages || ''}`.toLowerCase().includes(q)) &&
+              (!catSel.value || d.category === catSel.value) &&
               (!tierSel.value || d.tier === tierSel.value) &&
               (!stageSel.value || (d.stage || []).includes(stageSel.value)) &&
+              licMatches(d) &&
               (!gotchaSel.value || (d.gotchas || []).some((g) => g.type === gotchaSel.value)));
             count.textContent = `${rows.length} of ${catalog.length} — open any row for the full card`;
             host.replaceChildren(table(
-              ['id', 'dataset', 'tier', 'grade', 'size', 'caveats'],
+              ['id', 'dataset', 'kind', 'tier', 'grade', 'size', 'caveats'],
               rows.map((d) => {
                 const idx = data.datasets.find((x) => x.id === d.id) || {};
                 const caveats = $('span');
@@ -410,17 +443,19 @@
                   caveats.append(badge('gotcha', { 'data-type': g.type, 'data-severity': g.severity }, g.type), ' ');
                 });
                 const size = d.size?.tokens ? renderNumber(d.size.tokens, { unit: false }) : '—';
-                return [d.id, d.name, d.tier || 'does not exist yet',
+                const kind = $('span', '', d.category || '—');
+                kind.style.cssText = 'font-family:var(--mono);font-size:11.5px;color:var(--muted)';
+                return [d.id, d.name, kind, d.tier || 'does not exist yet',
                   badge('grade', { 'data-grade': idx.grade || 'C' }, idx.grade || '—'), size, caveats];
               }),
-              [4],
+              [5],
               (i) => {
                 const record = rows[i];
                 const idx = data.datasets.find((x) => x.id === record.id) || {};
                 renderCard(record, idx.grade);
               }));
           };
-          [search, tierSel, stageSel, gotchaSel].forEach((el) => el.addEventListener('input', draw));
+          [search, catSel, tierSel, stageSel, licSel, gotchaSel].forEach((el) => el.addEventListener('input', draw));
           draw();
           add(s, 'The catalogue', 'Datasets');
         }
@@ -507,7 +542,37 @@
           const s = section('benchmarks', 'The instruments',
             `${data.benchmarks.length} benchmarks, and — more importantly — what none of them measures.`);
           const cov = data.coverage;
-          s.append($('h3', '', 'Coverage: which capabilities have an instrument'));
+
+          // The register itself comes first — it is the thing people come here to look up.
+          s.append($('h3', '', `The register — all ${data.benchmarks.length}`));
+          const bctl = $('div', 'controls');
+          const bsearch = $('input'); bsearch.type = 'search'; bsearch.placeholder = 'search benchmarks…';
+          const bband = $('select');
+          bband.append(new Option('any trust band', ''));
+          [...new Set(data.benchmarks.map((b) => b.trust_band).filter(Boolean))].sort()
+            .forEach((v) => bband.append(new Option(v, v)));
+          const bcount = $('span', 'count');
+          bctl.append(bsearch, bband, bcount);
+          const bhost = $('div');
+          const bdraw = () => {
+            const q = bsearch.value.toLowerCase();
+            const rows = data.benchmarks.filter((b) =>
+              (!q || `${b.name} ${b.type} ${b.coverage || ''}`.toLowerCase().includes(q)) &&
+              (!bband.value || b.trust_band === bband.value));
+            bcount.textContent = `${rows.length} of ${data.benchmarks.length}`;
+            bhost.replaceChildren(table(
+              ['benchmark', 'measures', 'coverage', 'split policy', 'trust'],
+              rows.map((b) => {
+                const held = $('span', '', b.split_policy || '—');
+                if (b.held_out) held.style.cssText = 'color:var(--grade-a);font-weight:600';
+                return [b.name, b.type, b.coverage || '—', held, b.trust_band];
+              })));
+          };
+          [bsearch, bband].forEach((el) => el.addEventListener('input', bdraw));
+          bdraw();
+          s.append(bctl, bhost);
+
+          s.append($('h3', '', 'And what none of them measures'));
           s.append(table(['capability', 'instruments', 'trust bands'],
             cov.capabilities.map((c) => {
               const label = $('span', c.is_hole ? 'hole' : c.is_thin ? 'thin' : '', c.capability);
@@ -521,9 +586,6 @@
               (cov.thin.length ? `Only one instrument: ${cov.thin.join(', ')} — a single benchmark is a coverage risk, not coverage.` : '');
             s.append(p);
           }
-          s.append($('h3', '', 'Split policy: what may be trained on'));
-          s.append(table(['benchmark', 'type', 'split policy', 'trust band'],
-            data.benchmarks.map((b) => [b.name, b.type, b.split_policy, b.trust_band])));
           add(s, 'The instruments', 'Evidence');
         }
 
@@ -717,6 +779,18 @@
           const a = $('a', '', b.label);
           a.href = `#${b.id}`;
           toc.append(a);
+        });
+
+        // Sections are built after load, so the browser's own hash jump has already failed by now
+        // — every deep link from the report would land on the page title. Re-run it once the
+        // targets exist.
+        if (location.hash) {
+          const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+          if (target) requestAnimationFrame(() => target.scrollIntoView({ block: 'start' }));
+        }
+        window.addEventListener('hashchange', () => {
+          const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+          if (target) target.scrollIntoView({ block: 'start', behavior: 'smooth' });
         });
 
         const links = [...toc.querySelectorAll('a')];

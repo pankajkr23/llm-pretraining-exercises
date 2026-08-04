@@ -143,8 +143,9 @@
         })
         .then((data) => {
           const counts = data.record_counts;
-          const recommended =
-            (data.milestones.presets || []).find((p) => p.recommended) ||
+          // The headline is the rung you can build now, not the one being aimed at.
+          const start =
+            (data.milestones.presets || []).find((p) => p.id === '5T') ||
             data.milestones.presets?.[0];
 
           // Every figure goes through renderNumber; none is printed as a bare float.
@@ -152,12 +153,12 @@
           stats.append(
             statCard(
               renderNumber({
-                value: recommended ? recommended.target_seen_tokens : null,
+                value: start ? start.target_seen_tokens : null,
                 unit: 'tokens',
-                provenance: recommended ? 'estimated' : 'unknown',
+                provenance: start ? 'estimated' : 'unknown',
                 source: 'computed:milestones',
               }, { unit: false }),
-              'seen tokens in the recommended budget',
+              'seen tokens buildable from open sources today',
             ),
             statCard(textFigure(String(counts.catalog)), 'datasets catalogued, with their licence traps'),
             statCard(textFigure(String(counts.languages)), 'scheduled languages, 10 of them web-viable'),
