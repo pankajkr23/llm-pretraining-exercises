@@ -1457,14 +1457,33 @@
             row.append($('span', '', p.id), lane);
             list.append(row);
           });
-          const key = $('p');
-          key.style.cssText = 'font-family:var(--mono);font-size:12px;color:var(--muted);margin:12px 0 0';
-          key.textContent = `${plan.filter((p) => p.is_gate).length} gates (red) — nothing downstream should start until they clear`;
-          main.append(sect(10, 'The order to do it in',
-            [document.createTextNode('Twelve actions. Two are gates rather than tasks: until the tokenizer is validated and the from-scratch question is settled at small scale, committing capital is guessing. The three highest-value items are letters, not engineering — see '),
-             ref('the acquisitions', 'acquisition'), document.createTextNode('.')],
-            widget(list, key),
-            'Bars are week spans. Hover any bar for the action.'));
+          /* Margin-driven topology (EXPLAINER_PROMPT §17): the visual keeps the text column and its
+           * labels move to a gutter. A chart, not an explainer — nothing the reader could do to
+           * this changes the argument, and §9 covers "when not to build one". */
+          const gates = plan.filter((p) => p.is_gate);
+          const free = plan.filter((p) => p.cost_inr === 0);
+          const gutter = $('div', 'gutter');
+          const gateNames = $('p');
+          gateNames.style.cssText = 'margin:0 0 10px';
+          gateNames.append($('b', '', `${gates.length} gates`),
+            document.createTextNode(` — ${gates.map((p) => p.id).join(', ')}. Nothing downstream should start until these clear, because until the tokenizer is validated and the from-scratch question is settled at small scale, committing capital is guessing.`));
+          const freeNote = $('p');
+          freeNote.style.cssText = 'margin:0';
+          freeNote.append(document.createTextNode(`${free.length} of the ${plan.length} actions cost nothing — they are letters, not engineering. Full costings in `),
+            ref('the acquisitions', 'acquisition'), document.createTextNode('.'));
+          gutter.append(gateNames, freeNote);
+
+          const grid = $('div', 'marginal');
+          const left = $('div', 'chartblock');
+          left.append(list);
+          grid.append(left, gutter);
+
+          main.append(sect(10, 'Two of the twelve are gates, not tasks',
+            [document.createTextNode('Twelve actions across the first quarter. The two in red are not work items — they are '),
+             $('b', '', 'permission to spend'),
+             document.createTextNode(', and everything after them is provisional until they clear.')],
+            grid,
+            'Fig. 10 — Week spans per action; red marks a gate. A chart, not an explainer: the ordering is the argument and there is nothing here for a reader to change.'));
         }
 
         /* ---------------------------------------------------- 11 · The repetition explorer
