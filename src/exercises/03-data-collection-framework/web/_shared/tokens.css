@@ -1,0 +1,274 @@
+/* Design tokens for the data-collection framework.
+ *
+ * Inherits the repo-wide system in docs/DESIGN.md unchanged — cool neutral surfaces, one bright
+ * accent, system sans, soft shadows, light and dark via prefers-color-scheme — and adds only what
+ * this exercise needs: grades, language tiers, gotcha types, and provenance.
+ *
+ * The provenance rules at the bottom are the most important lines here. Every number on the site
+ * carries a visible mark of how well it is known: solid underline for measured, dotted for
+ * estimated, faded italic for unknown. It is a running admission of what we do and don't know,
+ * and it costs zero words of prose.
+ *
+ * Semantic colour is earned, never decorative, and never carries meaning alone — a grade always
+ * shows its letter beside the colour, so the site survives a colour-blind reader and a mono print.
+ */
+
+:root {
+  /* --- repo design system (docs/DESIGN.md) --- */
+  --bg: #f5f5f7;
+  --panel: #ffffff;
+  --track: #e8e8ed;
+  --ink: #1d1d1f;
+  --muted: #6e6e73;
+  --faint: #86868b;
+  --line: #d2d2d7;
+  --accent: #0071e3;
+  --accent-soft: rgba(0, 113, 227, 0.1);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.03);
+
+  --sans: -apple-system, system-ui, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  --display: -apple-system, system-ui, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+
+  /* --- grades: A usable, B usable with care, C thin evidence, X excluded --- */
+  --grade-a: #248a3d;
+  --grade-b: #b8860b;
+  --grade-c: #6e6e73;
+  --grade-x: #c1121f; /* the only red on the site. Reserve it. */
+
+  /* --- language triage: sequential, not categorical. Tier 3 is nearly out of data. --- */
+  --lang-tier-1: #0071e3;
+  --lang-tier-2: #5b8def;
+  --lang-tier-3: #a5b4d4;
+
+  /* --- gotcha types: distinguishable, but none shout except SAFETY --- */
+  --gotcha-licence: #7d5ba6;
+  --gotcha-dedup: #0071e3;
+  --gotcha-composition: #d1730a;
+  --gotcha-provenance: #b8860b;
+  --gotcha-safety: #c1121f;
+  --gotcha-attribution: #248a3d;
+  --gotcha-availability: #6e6e73;
+  --gotcha-sourcing: #0f766e;
+  --gotcha-heterogeneity: #a03fce;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --panel: #1c1c1e;
+    --track: #2a2a2c;
+    --ink: #f5f5f7;
+    --muted: #a1a1a6;
+    --faint: #6e6e73;
+    --line: #2f2f31;
+    --accent: #2997ff;
+    --accent-soft: rgba(41, 151, 255, 0.14);
+    --shadow: none;
+
+    --grade-a: #30d158;
+    --grade-b: #ffd60a;
+    --grade-c: #a1a1a6;
+    --grade-x: #ff453a;
+
+    --lang-tier-1: #2997ff;
+    --lang-tier-2: #6ba6ff;
+    --lang-tier-3: #9fb4d0;
+
+    --gotcha-licence: #bf5af2;
+    --gotcha-dedup: #2997ff;
+    --gotcha-composition: #ff9f0a;
+    --gotcha-provenance: #ffd60a;
+    --gotcha-safety: #ff453a;
+    --gotcha-attribution: #30d158;
+    --gotcha-availability: #a1a1a6;
+    --gotcha-sourcing: #2dd4bf;
+    --gotcha-heterogeneity: #d68bf5;
+  }
+}
+
+/* ---------------------------------------------------------------- base */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 56px 24px 96px;
+}
+
+h1 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(2.2rem, 5.2vw, 3.4rem);
+  line-height: 1.06;
+  letter-spacing: -0.025em;
+  margin: 0 0 18px;
+}
+
+h2 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.5rem;
+  letter-spacing: -0.015em;
+  margin: 0 0 12px;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 12px;
+}
+
+.lede {
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: 1.06rem;
+  margin: 0;
+}
+
+.lede b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--accent);
+  text-decoration: none;
+  margin: 0 0 28px;
+  padding: 7px 15px 7px 12px;
+  border-radius: 980px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  transition: background 0.18s, color 0.18s;
+}
+
+.back:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+footer {
+  margin-top: 48px;
+  color: var(--faint);
+  font-size: 0.86rem;
+  font-family: var(--mono);
+}
+
+/* ---------------------------------------------------------------- grades */
+
+.grade {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid currentColor;
+}
+
+.grade[data-grade="A"] { color: var(--grade-a); }
+.grade[data-grade="B"] { color: var(--grade-b); }
+.grade[data-grade="C"] { color: var(--grade-c); }
+.grade[data-grade="X"] { color: var(--grade-x); }
+
+/* ---------------------------------------------------------------- gotchas */
+
+.gotcha {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+}
+
+.gotcha[data-type="LICENCE"] { color: var(--gotcha-licence); }
+.gotcha[data-type="DEDUP"] { color: var(--gotcha-dedup); }
+.gotcha[data-type="COMPOSITION"] { color: var(--gotcha-composition); }
+.gotcha[data-type="PROVENANCE"] { color: var(--gotcha-provenance); }
+.gotcha[data-type="SAFETY"] { color: var(--gotcha-safety); }
+.gotcha[data-type="ATTRIBUTION"] { color: var(--gotcha-attribution); }
+.gotcha[data-type="AVAILABILITY"] { color: var(--gotcha-availability); }
+.gotcha[data-type="SOURCING"] { color: var(--gotcha-sourcing); }
+.gotcha[data-type="HETEROGENEITY"] { color: var(--gotcha-heterogeneity); }
+
+/* A blocking caveat is not a shade of advisory — it bars the door. */
+.gotcha[data-severity="blocking"] {
+  background: var(--gotcha-safety);
+  border-color: var(--gotcha-safety);
+  color: #fff;
+}
+
+/* ---------------------------------------------------------------- provenance */
+
+.num {
+  font-variant-numeric: tabular-nums;
+  cursor: help;
+}
+
+.num[data-provenance="measured"] {
+  border-bottom: 1px solid currentColor;
+}
+
+.num[data-provenance="estimated"] {
+  border-bottom: 1px dotted currentColor;
+}
+
+.num[data-provenance="unknown"] {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.provenance-key {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+/* ---------------------------------------------------------------- motion */
+
+/* Every animation holds its end state, so honouring this preference costs nothing but the motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Deciding What an Indian Language Model Should Read</title>
+    <meta
+      name="description"
+      content="There is not enough Indian-language text on the internet to train a frontier model on it alone. A framework for deciding what to train on anyway — and for showing which numbers are measured and which are guesses."
+    />
+    <link rel="stylesheet" href="./_shared/tokens.css" />
+    <style>
+      .hero { margin-bottom: 44px; }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 16px;
+        margin: 36px 0;
+      }
+      .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); }
+      .stat .figure { font-family: var(--display); font-size: 2rem; font-weight: 600; letter-spacing: -0.02em; color: var(--accent); line-height: 1.1; }
+      .stat .label { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+      /* The tier ribbon: 145 datasets, sorted by whether you may actually use them. */
+      .ribbon { display: flex; height: 34px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+      .ribbon span { display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 12px; font-weight: 600; color: #fff; }
+      .ribbon .green { background: var(--grade-a); }
+      .ribbon .amber { background: var(--grade-b); }
+      .ribbon .red { background: var(--grade-x); }
+      .ribbon .gap { background: var(--faint); }
+      .ribbon-key { display: flex; gap: 20px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin-top: 10px; font-family: var(--mono); }
+
+      .doors { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 36px 0 28px; }
+      @media (max-width: 720px) { .doors { grid-template-columns: 1fr; } }
+      .door {
+        display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line);
+        border-radius: 18px; padding: 26px; text-decoration: none; color: inherit; box-shadow: var(--shadow);
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+      }
+      .door:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.1); }
+      .door h2 { margin-bottom: 6px; }
+      .door p { color: var(--muted); font-size: 0.97rem; margin: 0 0 18px; flex: 1; }
+      .door .go { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+
+      .honesty { border-left: 3px solid var(--accent); padding: 4px 0 4px 16px; color: var(--muted); font-size: 0.95rem; }
+      .honesty b { color: var(--ink); }
+      .chain-slot { min-height: 0; }
+      .err { color: var(--grade-x); font-family: var(--mono); font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <a class="back" href="/"><span aria-hidden="true">←</span> Back</a>
+
+      <header class="hero">
+        <p class="eyebrow">03 · Data collection</p>
+        <h1>Deciding what an Indian language model should read</h1>
+        <p class="lede">
+          There is <b>not enough Indian-language text on the internet</b> to train a frontier model
+          on it alone — perhaps 250–500 billion words across all 22 scheduled languages, against
+          15 trillion for English. So the interesting question isn't which datasets are good. It's
+          what you train on <em>instead</em>, what that costs, and how you'd know if you were wrong.
+        </p>
+      </header>
+
+      <!-- The Chain lands here in task 6.11; until then the page makes its case without it. -->
+      <div class="chain-slot" id="chain"></div>
+
+      <section class="stats" id="stats" aria-label="Headline figures"></section>
+
+      <section aria-labelledby="ribbon-h">
+        <h2 id="ribbon-h">What you may actually use</h2>
+        <p class="lede" style="margin-bottom: 16px">
+          Every dataset in the catalogue, sorted by whether its licence and provenance survive
+          contact with a commercial training run.
+        </p>
+        <div class="ribbon" id="ribbon" role="img" aria-label="Dataset licence tiers"></div>
+        <div class="ribbon-key" id="ribbon-key"></div>
+      </section>
+
+      <div class="doors">
+        <a class="door" href="./report/">
+          <h2>The decision</h2>
+          <p>
+            The argument end to end: what to train on, in what proportion, at what cost, and the
+            verdict. Four pages, and every number links to the working behind it.
+          </p>
+          <span class="go">Read the decision →</span>
+        </a>
+        <a class="door" href="./reasoning/">
+          <h2>The reasoning</h2>
+          <p>
+            The evidence underneath: 145 datasets with their licence traps, 31 benchmarks with what
+            they cannot measure, and the things nobody has measured at all.
+          </p>
+          <span class="go">Explore the reasoning →</span>
+        </a>
+      </div>
+
+      <p class="honesty" id="honesty">Loading…</p>
+
+      <footer>
+        Built from a research atlas by a pipeline that refuses to print a number without saying
+        where it came from.
+      </footer>
+    </div>
+
+    <script type="module">
+      import { renderNumber, tallyProvenance } from './_shared/num.js';
+
+      const fail = (message) => {
+        document.getElementById('honesty').innerHTML =
+          `<span class="err">Could not load data.json — ${message}. Serve over http, not file://.</span>`;
+      };
+
+      const statCard = (figure, label) => {
+        const card = document.createElement('div');
+        card.className = 'stat';
+        const value = document.createElement('div');
+        value.className = 'figure';
+        value.append(figure);
+        const text = document.createElement('div');
+        text.className = 'label';
+        text.textContent = label;
+        card.append(value, text);
+        return card;
+      };
+
+      const textFigure = (s) => {
+        const span = document.createElement('span');
+        span.textContent = s;
+        return span;
+      };
+
+      fetch('./data.json')
+        .then((r) => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
+        .then((data) => {
+          const counts = data.record_counts;
+          const recommended =
+            (data.milestones.presets || []).find((p) => p.recommended) ||
+            data.milestones.presets?.[0];
+
+          // Every figure goes through renderNumber; none is printed as a bare float.
+          const stats = document.getElementById('stats');
+          stats.append(
+            statCard(
+              renderNumber({
+                value: recommended ? recommended.target_seen_tokens : null,
+                unit: 'tokens',
+                provenance: recommended ? 'estimated' : 'unknown',
+                source: 'computed:milestones',
+              }, { unit: false }),
+              'seen tokens in the recommended budget',
+            ),
+            statCard(textFigure(String(counts.catalog)), 'datasets catalogued, with their licence traps'),
+            statCard(textFigure(String(counts.languages)), 'scheduled languages, 10 of them web-viable'),
+            statCard(textFigure(String(counts.benchmarks)), 'benchmarks — and the capabilities none of them measure'),
+          );
+
+          // Tier ribbon, proportional to the real counts.
+          const tiers = { GREEN: 0, AMBER: 0, RED: 0, untiered: 0 };
+          data.datasets.forEach((d) => {
+            tiers[d.tier || 'untiered'] += 1;
+          });
+          const total = data.datasets.length;
+          const ribbon = document.getElementById('ribbon');
+          [
+            ['green', 'GREEN', 'usable'],
+            ['amber', 'AMBER', 'conditions apply'],
+            ['red', 'RED', 'excluded'],
+            ['gap', 'untiered', 'does not exist yet'],
+          ].forEach(([cls, key, _label]) => {
+            const n = tiers[key];
+            if (!n) return;
+            const seg = document.createElement('span');
+            seg.className = cls;
+            seg.style.width = `${(n / total) * 100}%`;
+            seg.textContent = n >= 10 ? String(n) : '';
+            ribbon.append(seg);
+          });
+          document.getElementById('ribbon-key').textContent =
+            `${tiers.GREEN} usable · ${tiers.AMBER} conditions apply · ${tiers.RED} excluded outright` +
+            (tiers.untiered ? ` · ${tiers.untiered} does not exist yet` : '');
+
+          // The honesty line: count what is known versus guessed, and say so.
+          const tally = tallyProvenance(data);
+          document.getElementById('honesty').innerHTML =
+            `<b>Which numbers to trust.</b> This page reports ${tally.measured} measured figures, ` +
+            `${tally.estimated} estimates and ${tally.unknown} quantities nobody has measured — ` +
+            'including the size of the Indian-language web itself. A solid underline means measured, ' +
+            'a dotted one means estimated, faded italics mean unknown. Hover any number for its source.';
+        })
+        .catch((e) => fail(e.message));
+    </script>
+  </body>
+</html>

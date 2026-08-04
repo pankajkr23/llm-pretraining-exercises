@@ -34,13 +34,18 @@ jobs:
           if [ "${code:-0}" = "5" ]; then echo "no integration tests yet"; exit 0; fi
           exit "${code:-0}"
 
+      # `find` rather than a glob: the previous pattern was web/js/*.js, which matched nothing —
+      # exercise 01 inlines its JS and exercise 03 keeps shared modules in web/_shared/, so the
+      # step silently checked zero files.
       - name: Web bundle syntax (node --check)
         run: |
-          shopt -s nullglob
-          for f in src/exercises/*/web/js/*.js; do
+          found=0
+          while IFS= read -r f; do
             echo "checking $f"
             node --check "$f"
-          done
+            found=$((found + 1))
+          done < <(find src/exercises -path '*/web/*' -name '*.js' -type f | sort)
+          echo "checked $found file(s)"
 
   security:
     runs-on: ubuntu-latest
