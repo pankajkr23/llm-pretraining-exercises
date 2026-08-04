@@ -836,56 +836,49 @@
           const unknownCount = Object.values(f).filter((v) => v.value === null).length;
           const tax = (data.priors || []).find((p) => /tokenization tax/i.test(p.claim || ''));
 
-          const card = $('div', 'explainer');
-          card.append($('h3', '', 'What every Indic sentence costs before training starts'));
-          const intro = $('p', 'intro');
-          intro.append(
-            document.createTextNode('A tokenizer built for English splits Indian scripts into far more pieces than it splits English. Every one of those pieces is paid for on '),
-            $('b', '', 'every step of the entire run'), document.createTextNode(', so the multiplier outweighs almost any decision about corpus size — and unlike data, you cannot fix it afterwards. It is also not a property of the scripts: it is a design failure, and other tokenizers already do much better.'));
-          card.append(intro);
+          /* A chart, not an explainer, and deliberately (EXPLAINER_PROMPT §9). The interaction that
+           * would prove this claim is switching tokenizer and watching 22 languages move — and we
+           * hold no per-language fertility for any tokenizer. Building the control anyway would
+           * mean inventing the numbers it moved. It becomes the flagship explainer when 2.2b runs;
+           * until then the honest form is two columns, one of which is empty. */
+          const row = (k, v, cls) => {
+            const r = $('div', 'figrow');
+            const val = $('div', `v ${cls || ''}`);
+            if (v instanceof Node) val.append(v); else val.textContent = v;
+            r.append($('div', 'k', k), val);
+            return r;
+          };
 
-          if (tax) {
-            const measured = $('div', 'subpanel');
-            measured.append($('div', 'lbl', 'measured — by someone else, and published'));
-            const tiles3 = $('div', 'tiles');
-            tiles3.append(
-              tileOf('average Indic tax', '8.0×', 'vs English, under cl100k_base', 'bad'),
-              tileOf('worst language', '13.0×', 'Malayalam', 'bad'),
-              tileOf('context left', '12%', 'of what an English user gets', 'bad'),
-              tileOf('better tokenizers cut it by', '73%', 'XLM-R and o200k_base', 'good'));
-            measured.append(tiles3);
-            const src = $('p', 'footnote');
-            src.append(document.createTextNode('FLORES-200, six tokenizers, fourteen Indian languages. Failed byte-pair merges are the mechanism — merge failure correlates with the tax at r = 0.89. Source: '),
-              $('b', '', tax.source || 'the priors'), document.createTextNode('.'));
-            measured.append(src);
-            card.append(measured);
-          }
+          const cmp = $('div', 'compare');
 
-          const ours = $('div', 'subpanel');
+          const theirs = $('div');
+          theirs.append($('div', 'lbl', 'measured — by someone else, published'));
+          theirs.append(
+            row('average Indic tax vs English', '8.0×', 'bad'),
+            row('worst language · Malayalam', '13.0×', 'bad'),
+            row('context left vs an English user', '12%', 'bad'),
+            row('a better tokenizer cuts it by', '73%'));
+          const src = $('p', 'fig-note');
+          src.append(document.createTextNode('FLORES-200, six tokenizers, fourteen Indian languages. Failed byte-pair merges are the mechanism — merge failure tracks the tax at r = 0.89. Source: '),
+            $('b', '', (tax && tax.source) || 'the priors'), document.createTextNode('.'));
+          theirs.append(src);
+
+          const ours = $('div', 'empty');
           ours.append($('div', 'lbl', 'measured — by us'));
-          const nothing = $('p');
-          nothing.style.cssText = 'font-size:13.4px;color:var(--muted);margin:0';
-          nothing.append(document.createTextNode(`Nothing yet. All ${Object.keys(f).length} languages report `),
-            renderNumber(Object.values(f)[0], { unit: false }),
-            document.createTextNode('. The six-tokenizer run against our own candidate vocabulary has not happened, and the rule is that a fertility figure is measured or it is not shown.'));
-          ours.append(nothing);
-          card.append(ours);
-
-          const co = $('div', 'callout warn');
-          co.append($('span', 'lbl', 'why the empty column matters'));
-          const msg = $('span');
-          msg.append(document.createTextNode('The published tax tells us the problem is real and roughly how large. It does not tell us what '),
-            $('b', '', 'our'), document.createTextNode(' vocabulary achieves, and that is the number the whole vocabulary argument in section 2 rests on. Until the run happens, section 2\'s curve is a shape without an anchor — which is why the plan makes this a gate rather than a task. Target: worst Tier-A language within '),
+          ours.append(row(`all ${Object.keys(f).length} scheduled languages`, renderNumber(Object.values(f)[0], { unit: false })));
+          const why = $('p', 'fig-note');
+          why.append(document.createTextNode('The published tax says the problem is real and roughly how large. It does not say what '),
+            $('b', '', 'our'), document.createTextNode(' vocabulary achieves, and that is the number section 2’s curve hangs from. Until the six-tokenizer run happens this column stays empty, because a fertility figure is measured or it is not shown. Target: worst Tier-A language within '),
             renderNumber(data.fertility.parity_target), document.createTextNode(' × English.'));
-          co.append(msg);
-          card.append(co);
+          ours.append(why);
 
-          const frame = $('p', 'frame');
-          frame.textContent = 'Before any argument about how much data to collect, there is a cheaper question: how much does each sentence cost to represent at all?';
-          const s = sect(3, 'The tokenizer tax', [], card,
-            `${unknownCount} of ${Object.keys(f).length} languages unmeasured by us. Publishing a plausible-looking number in that column would be the exact failure this framework exists to prevent.`);
-          s.insertBefore(frame, s.children[1]);
-          main.append(s);
+          cmp.append(theirs, ours);
+          main.append(sect(3, 'The tax is charged before the first training step',
+            [document.createTextNode('A tokenizer built for English splits Indian scripts into far more pieces than it splits English, and every extra piece is paid for on '),
+             $('b', '', 'every step of the entire run'),
+             document.createTextNode('. The multiplier outweighs almost any decision about corpus size, and unlike data you cannot fix it afterwards. It is not a property of the scripts — other tokenizers already do far better on the same sentences — which is why it is worth measuring rather than accepting.')],
+            cmp,
+            `Fig. 3 — ${unknownCount} of ${Object.keys(f).length} languages unmeasured by us. This is a chart, not an explainer: the interaction that would prove the claim needs per-language fertility for six tokenizers, and inventing it is the exact failure this framework exists to prevent.`));
         }
 
         /* ---------------------------------------------------- 4 · The Budget */
