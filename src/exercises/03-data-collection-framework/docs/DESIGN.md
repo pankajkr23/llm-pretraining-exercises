@@ -53,9 +53,26 @@ Inherit `docs/DESIGN.md` (Apple-style) unchanged. Additions specific to this exe
 | `--grade-b` / `--grade-c` | Amber tiers | |
 | `--grade-x` | Blocklist | The only red on the site. Reserve it |
 | `--lang-tier-1/2/3` | Language triage | Sequential, not categorical |
-| `--measured` / `--estimated` | **Provenance of a number** | ★ Every displayed figure carries one. A solid underline = measured; a dotted underline = estimated. Hover reveals the source |
+| `--measured` / `--estimated` | **Provenance of a number** | ★ Every figure carries one in the data. On the page it is marked **by exception only** — see below. Hover reveals the source |
 
-That last token is the most important design decision on the site. A dotted underline under a number, everywhere, is a running admission of what you do and don't know — and it costs zero words.
+That last token is the most important design decision on the site, and the first version of it was
+wrong. It underlined every figure by provenance: solid for measured, dotted for estimated, faded for
+unknown. On paper that reads as a running admission of what you do and don't know, costing zero
+words. In practice the bundle is **80% unknown, 17% estimated and 2% measured**, so a mark fired on
+*every number on every page* — and a signal that is always on is not a signal. Worse, a screen of
+dotted underlines reads as broken links or spell-check squiggles, so it actively miscommunicated.
+
+**Mark by exception instead:**
+
+- **estimated** — the working default. **No mark.** Labelling the ordinary case tells the reader nothing.
+- **measured** — a rule in `--grade-a`. It can afford to be loud because there are four of them.
+- **unknown** — faded italics. These mostly render as an em dash anyway, so they read as the absence they are.
+
+Where provenance genuinely changes how a figure should be read — a headline number, a stat tile —
+say it **in words** underneath (`renderProvenance` in `web/_shared/num.js`), which cannot be mistaken
+for a hyperlink. The invariant is unaffected: every figure still carries
+`{value, unit, provenance, source}` through the pipeline and through `renderNumber`. This governs
+how provenance is *shown*, not whether it is *recorded*.
 
 **Typography:** one display face for claims, one mono for numbers and code. Numbers in tabular figures (`font-variant-numeric: tabular-nums`) so they don't jitter during count-up animations.
 
