@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 members = [
     "exercise-01-introductions",
     "exercise-02-tokenization",
+    "exercise-03-data-collection-framework",
     "llm-pretraining-exercises",
 ]
 
@@ -132,6 +133,11 @@ requires-dist = [
     { name = "requests", specifier = ">=2.32" },
     { name = "tokenizers", specifier = ">=0.20" },
 ]
+
+[[package]]
+name = "exercise-03-data-collection-framework"
+version = "0.1.0"
+source = { editable = "src/exercises/03-data-collection-framework" }
 
 [[package]]
 name = "filelock"
