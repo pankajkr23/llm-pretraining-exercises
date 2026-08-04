@@ -25,10 +25,21 @@ cp "$ROOT/deploy/vercel/index.html" "$OUT/index.html"
 # Each deployable exercise's web/ bundle, served under /<slug>/.
 shopt -s nullglob
 for web in "$ROOT"/src/exercises/*/web; do
-  slug="$(basename "$(dirname "$web")")"
+  exercise="$(dirname "$web")"
+  slug="$(basename "$exercise")"
   mkdir -p "$OUT/$slug"
   cp -R "$web/." "$OUT/$slug/"
   echo "  + $slug/ <- ${web#"$ROOT"/}"
+
+  # Some exercises lazy-fetch their per-record JSON at runtime. Those records are already tracked
+  # as the reviewable source of truth, so they are served directly rather than duplicated into
+  # web/ by the pipeline.
+  for served in catalog.json benchmarks.json; do
+    if [ -f "$exercise/$served" ]; then
+      cp "$exercise/$served" "$OUT/$slug/$served"
+      echo "  + $slug/$served <- ${exercise#"$ROOT"/}/$served"
+    fi
+  done
 done
 
 echo "Assembled $(find "$OUT" -type f | wc -l | tr -d ' ') files into public/"

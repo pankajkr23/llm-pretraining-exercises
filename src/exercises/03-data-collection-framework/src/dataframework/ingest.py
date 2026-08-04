@@ -329,15 +329,15 @@ def _read_csv(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
-def _write(path: Path, record: dict[str, Any]) -> None:
-    """Write one record as pretty JSON, so diffs are line-oriented and reviewable.
+def _write(path: Path, records: list[dict[str, Any]]) -> None:
+    """Write a register as pretty JSON, so diffs stay line-oriented and reviewable.
 
     Args:
         path: Destination file.
-        record: The record.
+        records: The records.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(records, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def ingest(cfg: Config | None = None) -> dict[str, int]:
@@ -353,12 +353,8 @@ def ingest(cfg: Config | None = None) -> dict[str, int]:
     datasets = _read_csv(cfg.seed_dir / "master_dataset_catalog.csv")
     benchmarks = _read_csv(cfg.seed_dir / "benchmarks.csv")
 
-    for row in datasets:
-        record = build_dataset_record(row)
-        _write(cfg.catalog_dir / f"{record['id']}.{record['slug']}.json", record)
-    for row in benchmarks:
-        record = build_benchmark_record(row)
-        _write(cfg.benchmarks_dir / f"{record['slug']}.json", record)
+    _write(cfg.catalog_file, [build_dataset_record(row) for row in datasets])
+    _write(cfg.benchmarks_file, [build_benchmark_record(row) for row in benchmarks])
 
     return {"catalog": len(datasets), "benchmarks": len(benchmarks)}
 

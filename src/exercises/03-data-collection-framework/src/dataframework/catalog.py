@@ -214,23 +214,22 @@ def validate(cfg: Config | None = None) -> tuple[dict[str, int], list[str]]:
     counts: dict[str, int] = {}
 
     seen_ids: set[str] = set()
-    catalog_files = sorted(cfg.catalog_dir.glob("*.json"))
-    counts["catalog"] = len(catalog_files)
-    for path in catalog_files:
-        record = load_json(path)
+    catalog = load_json(cfg.catalog_file)
+    counts["catalog"] = len(catalog)
+    for i, record in enumerate(catalog):
         rid = record.get("id")
         if not rid:
-            errors.append(f"{path.name}: record has no id")
+            errors.append(f"catalog[{i}]: record has no id")
         elif rid in seen_ids:
-            errors.append(f"{path.name}: duplicate id {rid!r}")
+            errors.append(f"catalog[{i}]: duplicate id {rid!r}")
         else:
             seen_ids.add(rid)
         validate_dataset(record, errors)
 
-    benchmark_files = sorted(cfg.benchmarks_dir.glob("*.json"))
-    counts["benchmarks"] = len(benchmark_files)
-    for path in benchmark_files:
-        validate_benchmark(load_json(path), errors)
+    benchmarks = load_json(cfg.benchmarks_file)
+    counts["benchmarks"] = len(benchmarks)
+    for record in benchmarks:
+        validate_benchmark(record, errors)
 
     for name in EXPECTED_COUNTS:
         if name in ("catalog", "benchmarks"):

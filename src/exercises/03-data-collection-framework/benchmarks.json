@@ -1,0 +1,531 @@
+[
+  {
+    "name": "MILU",
+    "slug": "milu",
+    "owner": "AI4Bharat / IBM Research",
+    "type": "Indic knowledge (MCQ)",
+    "coverage": "11 Indic languages, 8 domains, 41 subjects",
+    "size": "~85K MCQs + 8,933-sample VALIDATION set",
+    "split_policy": "TEST (locked) + dedicated VAL set",
+    "held_out": true,
+    "trust_band": "harness-dependent",
+    "access": {
+      "raw": "https://github.com/AI4Bharat/MILU ; arXiv:2411.02538 - GATED, request access on HF",
+      "links": [
+        "https://github.com/AI4Bharat/MILU",
+        "arXiv:2411.02538"
+      ]
+    },
+    "notes": "Sourced from 1,500+ INDIAN COMPETITIVE EXAMS. GPT-4o topped it at ~74% across 42-45 evaluated LLMs. lm-evaluation-harness config ships with it. THE PRIMARY INDIC KNOWLEDGE BENCHMARK"
+  },
+  {
+    "name": "IndicXTREME",
+    "slug": "indicxtreme",
+    "owner": "AI4Bharat",
+    "type": "Indic NLU",
+    "coverage": "20-22 languages, 9 NLU tasks",
+    "size": "105 evaluation sets (52 new)",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "https://huggingface.co/ai4bharat",
+      "links": [
+        "https://huggingface.co/ai4bharat"
+      ]
+    },
+    "notes": "BROADEST Indic NLU benchmark"
+  },
+  {
+    "name": "IndicGLUE",
+    "slug": "indicglue",
+    "owner": "AI4Bharat",
+    "type": "Indic NLU",
+    "coverage": "11 languages",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "https://huggingface.co/ai4bharat",
+      "links": [
+        "https://huggingface.co/ai4bharat"
+      ]
+    },
+    "notes": "The original; now a baseline"
+  },
+  {
+    "name": "IndicNLG Benchmark",
+    "slug": "indicnlg-benchmark",
+    "owner": "AI4Bharat",
+    "type": "Indic generation",
+    "coverage": "11 languages, 5 tasks",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "https://huggingface.co/ai4bharat",
+      "links": [
+        "https://huggingface.co/ai4bharat"
+      ]
+    },
+    "notes": "Biography/headline/summary/paraphrase/question generation"
+  },
+  {
+    "name": "IndicGenBench",
+    "slug": "indicgenbench",
+    "owner": "Google Research",
+    "type": "Indic generation",
+    "coverage": "29 Indic languages",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "translation-derived",
+    "access": {
+      "raw": "ACL 2024",
+      "links": []
+    },
+    "notes": "Summarisation, translation, QA"
+  },
+  {
+    "name": "IndicMMLU-Pro",
+    "slug": "indicmmlu-pro",
+    "owner": "Sankalp KJ et al.",
+    "type": "Indic knowledge (translated)",
+    "coverage": "9 languages (hi,bn,gu,mr,kn,pa,ta,te,ur)",
+    "size": "MMLU-Pro derived",
+    "split_policy": "TEST - REPORT SEPARATELY",
+    "held_out": false,
+    "trust_band": "translation-derived",
+    "access": {
+      "raw": "arXiv:2501.15747",
+      "links": [
+        "arXiv:2501.15747"
+      ]
+    },
+    "notes": "Translated via IndicTrans2 + back-translation QA + 13 human reviewers. TRANSLATION-DERIVED - measures translated-English competence, carries English-benchmark cultural bias. WEIGHT LOWER THAN NATIVELY-SOURCED BENCHMARKS"
+  },
+  {
+    "name": "BhashaBench V1",
+    "slug": "bhashabench-v1",
+    "owner": "BharatGen",
+    "type": "Indic domain knowledge",
+    "coverage": "English + Hindi",
+    "size": "74,166 QA pairs (52,494 en / 21,672 hi)",
+    "split_policy": "TEST - RECOMMENDED FULLY HELD-OUT",
+    "held_out": true,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "arXiv:2510.25409",
+      "links": [
+        "arXiv:2510.25409"
+      ]
+    },
+    "notes": "4 DOMAINS: Agriculture, Legal, Finance, Ayurveda; 90+ subdomains, 500+ topics. GPT-4o: 76.49% Legal vs 59.74% Ayurveda. RECOMMENDED AS YOUR HONEST-BROKER HELD-OUT BENCHMARK - domain-specific and unlikely to appear in web text"
+  },
+  {
+    "name": "ParamBench",
+    "slug": "parambench",
+    "owner": "BharatGen",
+    "type": "Hindi graduate-level",
+    "coverage": "Hindi",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "arXiv:2508.16185",
+      "links": [
+        "arXiv:2508.16185"
+      ]
+    },
+    "notes": "UGC-NET + UPSC, expert-verified"
+  },
+  {
+    "name": "IndicParam",
+    "slug": "indicparam",
+    "owner": "BharatGen",
+    "type": "Low-resource Indic graduate-level",
+    "coverage": "Low-resource Indic",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "HF: bharatgenai/IndicParam ; arXiv:2512.00333",
+      "links": [
+        "arXiv:2512.00333"
+      ]
+    },
+    "notes": "-"
+  },
+  {
+    "name": "Indic QA Benchmark",
+    "slug": "indic-qa-benchmark",
+    "owner": "IBM Research + IIT Bombay",
+    "type": "Indic QA",
+    "coverage": "11 Indic languages",
+    "size": "Large-scale",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "NAACL 2025 Findings",
+      "links": []
+    },
+    "notes": "-"
+  },
+  {
+    "name": "IndicIFEval",
+    "slug": "indicifeval",
+    "owner": "Research (2026)",
+    "type": "Instruction following",
+    "coverage": "14 Indic languages",
+    "size": "Verifiable instruction-following",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "arXiv:2602.22125",
+      "links": [
+        "arXiv:2602.22125"
+      ]
+    },
+    "notes": "DIRECTLY RELEVANT TO AGENTIC GOALS"
+  },
+  {
+    "name": "BharatBench",
+    "slug": "bharatbench",
+    "owner": "Krutrim (Ola)",
+    "type": "Multimodal Indic",
+    "coverage": "8-10 Indian languages; text + vision + speech",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "https://ai-labs.olakrutrim.com/",
+      "links": [
+        "https://ai-labs.olakrutrim.com/"
+      ]
+    },
+    "notes": "THE ONLY MAJOR MULTIMODAL INDIC BENCHMARK SUITE"
+  },
+  {
+    "name": "IndicVisionBench",
+    "slug": "indicvisionbench",
+    "owner": "Research (2025)",
+    "type": "Indic VLM",
+    "coverage": "Indic; cultural + OCR + MMT",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "arXiv:2511.04727",
+      "links": [
+        "arXiv:2511.04727"
+      ]
+    },
+    "notes": "-"
+  },
+  {
+    "name": "Drishtikon",
+    "slug": "drishtikon",
+    "owner": "Maji et al.",
+    "type": "Multimodal cultural",
+    "coverage": "15 Indic languages",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "Research release",
+      "links": []
+    },
+    "notes": "-"
+  },
+  {
+    "name": "Sanskriti / Pariksha",
+    "slug": "sanskriti-pariksha",
+    "owner": "Research",
+    "type": "Socio-cultural alignment",
+    "coverage": "English, India-focused",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "Research release",
+      "links": []
+    },
+    "notes": "CULTURAL CORRECTNESS != SAFETY. Budget for both"
+  },
+  {
+    "name": "IN-22",
+    "slug": "in-22",
+    "owner": "AI4Bharat",
+    "type": "Indic MT",
+    "coverage": "22 languages, n-way parallel",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "translation-derived",
+    "access": {
+      "raw": "https://huggingface.co/ai4bharat",
+      "links": [
+        "https://huggingface.co/ai4bharat"
+      ]
+    },
+    "notes": "GOLD STANDARD - SOURCE-ORIGINAL test sets, not translated-from-English"
+  },
+  {
+    "name": "Indic DiarBench",
+    "slug": "indic-diarbench",
+    "owner": "Research (announced 28 Jul 2026)",
+    "type": "Joint diarization + ASR",
+    "coverage": "ALL 22 SCHEDULED LANGUAGES",
+    "size": "~108 hours",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "arXiv:2607.23808",
+      "links": [
+        "arXiv:2607.23808"
+      ]
+    },
+    "notes": "NEW. Human-corrected time-aligned SPEAKER-ATTRIBUTED transcriptions. Near-field meetings, far-field, in-the-wild. Captures code-mixing, dialectal variation, frequent speaker overlap. Open access. Baselines evaluated against commercial speech APIs and multimodal LLMs"
+  },
+  {
+    "name": "IndicSUPERB / Svarah / LAHAJA / Vistaar",
+    "slug": "indicsuperb-svarah-lahaja-vistaar",
+    "owner": "AI4Bharat",
+    "type": "Speech",
+    "coverage": "Indic",
+    "size": "Svarah: 9.6h, 117 speakers, 65 districts, 19 states",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "https://huggingface.co/ai4bharat",
+      "links": [
+        "https://huggingface.co/ai4bharat"
+      ]
+    },
+    "notes": "Svarah = Indian-accented English ASR; LAHAJA = Indic accent/dialect robustness"
+  },
+  {
+    "name": "XIH-Bench",
+    "slug": "xih-bench",
+    "owner": "Research (announced 28 Jul 2026)",
+    "type": "Instruction-hierarchy compliance",
+    "coverage": "6 languages",
+    "size": "Same- and cross-language conflicts, 4 domains, 3 IH settings",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "arXiv:2607.23545",
+      "links": [
+        "arXiv:2607.23545"
+      ]
+    },
+    "notes": "NEW. Identifies the LANGUAGE BOUNDARY EFFECT - cross-language conflicts yield HIGHER compliance than same-language; language specialization makes lower-priority instructions in model-favored languages HARDER to override. AN INDIC-SPECIALIZED MODEL ACQUIRES A NEW JAILBREAK SURFACE"
+  },
+  {
+    "name": "IndicKLAR",
+    "slug": "indicklar",
+    "owner": "Mazumder et al.",
+    "type": "Cross-lingual knowledge consistency",
+    "coverage": "Indic + code-mixed",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "arXiv:2605.29637",
+      "links": [
+        "arXiv:2605.29637"
+      ]
+    },
+    "notes": "STRATEGICALLY IMPORTANT: across nine open-weight models, native-language accuracy gap to English reaches ~0.50, but CODE-MIXED INPUTS CLOSE MOST OF IT - to within ~0.05 of English with NO model-level intervention. Should influence your data mixture"
+  },
+  {
+    "name": "Global-MMLU",
+    "slug": "global-mmlu",
+    "owner": "Cohere For AI + collaborators",
+    "type": "Knowledge",
+    "coverage": "42 languages",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "Search HF 'CohereForAI/Global-MMLU'",
+      "links": []
+    },
+    "notes": "Culturally-annotated MMLU; separates culture-sensitive from culture-agnostic items"
+  },
+  {
+    "name": "INCLUDE",
+    "slug": "include",
+    "owner": "Research",
+    "type": "Regional exams",
+    "coverage": "44 languages",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "translation-derived",
+    "access": {
+      "raw": "Search HF",
+      "links": []
+    },
+    "notes": "NATIVE, not translated"
+  },
+  {
+    "name": "Indic LLM Leaderboard",
+    "slug": "indic-llm-leaderboard",
+    "owner": "CognitiveLab (Aditya S Kolavi)",
+    "type": "Leaderboard",
+    "coverage": "Indic",
+    "size": "-",
+    "split_policy": "Leaderboard",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "CognitiveLab",
+      "links": []
+    },
+    "notes": "Community-run"
+  },
+  {
+    "name": "MMLU / MMLU-Pro / GPQA-Diamond / BBH / ARC-C / HellaSwag / WinoGrande",
+    "slug": "mmlu-mmlu-pro-gpqa-diamond-bbh-arc-c-hellaswag-winogrande",
+    "owner": "Various",
+    "type": "Knowledge & reasoning",
+    "coverage": "English",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "Standard",
+      "links": []
+    },
+    "notes": "Global knowledge/reasoning suite"
+  },
+  {
+    "name": "GSM8K / MATH / AIME 2024-2025 / HMMT / MathArena",
+    "slug": "gsm8k-math-aime-2024-2025-hmmt-matharena",
+    "owner": "Various",
+    "type": "Math",
+    "coverage": "English",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "Standard",
+      "links": []
+    },
+    "notes": "Global math suite"
+  },
+  {
+    "name": "HumanEval(+) / MBPP(+) / LiveCodeBench / BigCodeBench / CRUXEval / Aider Polyglot",
+    "slug": "humaneval-mbpp-livecodebench-bigcodebench-cruxeval-aider-polyglot",
+    "owner": "Various",
+    "type": "Code",
+    "coverage": "Code",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "Standard",
+      "links": []
+    },
+    "notes": "Global code suite"
+  },
+  {
+    "name": "SWE-bench Verified / SWE-bench Multilingual / Terminal-Bench 2.0 / SWE-Lancer",
+    "slug": "swe-bench-verified-swe-bench-multilingual-terminal-bench-2-0-swe-lancer",
+    "owner": "Various",
+    "type": "Agentic coding",
+    "coverage": "Code",
+    "size": "SWE-bench Verified: 500 tasks",
+    "split_policy": "TEST - REPORT MODEL + HARNESS",
+    "held_out": false,
+    "trust_band": "harness-dependent",
+    "access": {
+      "raw": "Standard",
+      "links": []
+    },
+    "notes": "MEASURES A MODEL+HARNESS PAIR, NOT A MODEL. Leaderboard entries are literally 'harness + model'. Never publish a number without naming harness, scaffold version, turn limit, context window"
+  },
+  {
+    "name": "BFCL / tau-bench / GAIA / WebArena / OSWorld / AgentBench",
+    "slug": "bfcl-tau-bench-gaia-webarena-osworld-agentbench",
+    "owner": "Various",
+    "type": "Tool use & agents",
+    "coverage": "English",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "Standard",
+      "links": []
+    },
+    "notes": "BFCL data is Apache-2.0 but the TEST SPLIT MUST NOT BE TRAINED ON"
+  },
+  {
+    "name": "RULER / LongBench v2 / InfiniteBench",
+    "slug": "ruler-longbench-v2-infinitebench",
+    "owner": "Various",
+    "type": "Long context",
+    "coverage": "English",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "Standard",
+      "links": []
+    },
+    "notes": "-"
+  },
+  {
+    "name": "HarmBench / JailbreakBench / AgentHarm / XSTest",
+    "slug": "harmbench-jailbreakbench-agentharm-xstest",
+    "owner": "Various",
+    "type": "Safety",
+    "coverage": "English",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "Standard",
+      "links": []
+    },
+    "notes": "XSTest covers OVER-REFUSAL. Plus your own 22-language red-team set"
+  },
+  {
+    "name": "IFEval / MultiChallenge",
+    "slug": "ifeval-multichallenge",
+    "owner": "Various",
+    "type": "Instruction following",
+    "coverage": "English",
+    "size": "-",
+    "split_policy": "TEST",
+    "held_out": false,
+    "trust_band": "native-sourced",
+    "access": {
+      "raw": "Standard",
+      "links": []
+    },
+    "notes": "-"
+  }
+]

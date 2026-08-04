@@ -290,10 +290,27 @@ Python pipeline → `web/data.json`, exactly the exercise-02 pattern.
 ```
 web/
 ├── data.json              index: 145 datasets (core fields), 31 benchmarks,
-│                          fertility table, priors, gaps, gates   (~80KB)
-├── shingles.json          pre-hashed benchmark 13-gram shingles — HASHES ONLY
-└── detail/<id>.json       full reasoning per dataset, lazy-fetched on click
+│                          fertility table, priors, gaps, gates   (~98KB)
+├── records.json           the reference arrays, fetched by /reasoning on demand
+└── shingles.json          pre-hashed benchmark 13-gram shingles — HASHES ONLY
+
+catalog.json               all 145 full dataset records — the reviewable register
+benchmarks.json            all 31 full benchmark records
 ```
+
+**Two registers, not 176 files.** This contract originally specified one JSON file per record — a
+file per dataset and per benchmark — so that a licence downgrade would arrive as its own diff. In
+practice that produced 176 files whose only reader was the build, and a pull request nobody could
+review. A two-space-indented array gives the same line-level diff: change Sangraha's licence and the
+diff shows those lines, with the record's `id` right above them.
+
+**Nothing is duplicated into `web/`.** An intermediate draft had the pipeline write
+`web/detail/<id>.json` for every dataset; those were byte-for-byte copies of the catalogue records.
+`deploy/vercel/build.sh` now serves `catalog.json` and `benchmarks.json` alongside `web/`, and the
+Reasoning surface reads them directly — the index already carries each `id`, `slug` and `grade`.
+
+Pretty-printing is deliberate. It costs bytes on the wire and buys a readable diff; HTTP compression
+recovers most of the difference, and an unreviewable register would defeat the point of tracking it.
 
 Three hard rules:
 
