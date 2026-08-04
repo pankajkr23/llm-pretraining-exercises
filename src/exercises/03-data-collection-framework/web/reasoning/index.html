@@ -68,6 +68,64 @@
 
       .err { color: var(--grade-x); font-family: var(--mono); }
       .pending { color: var(--muted); font-size: 13px; font-style: italic; }
+
+      /* ---- the Dataset Card ---- */
+      tr.clickable { cursor: pointer; }
+      tr.clickable:hover { background: var(--accent-soft); }
+      tr.clickable:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+      dialog.card-dialog {
+        width: min(680px, 92vw); max-height: 86vh; padding: 0; border: 1px solid var(--line);
+        border-radius: 18px; background: var(--panel); color: var(--ink); box-shadow: 0 18px 50px rgba(0,0,0,.28);
+      }
+      dialog.card-dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
+      .card-body { padding: 24px 26px 26px; overflow-y: auto; max-height: 86vh; }
+      .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+      .card-head h3 { margin: 0; font-family: var(--display); font-size: 1.35rem; letter-spacing: -0.015em; }
+      .card-head .id { font-family: var(--mono); font-size: 12px; color: var(--faint); }
+      .card-owner { color: var(--muted); font-size: 13.5px; margin: 6px 0 0; }
+      .card-close { border: 0; background: none; color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer; padding: 0 4px; }
+      .card-close:hover { color: var(--ink); }
+
+      .row-block { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 16px; }
+      .row-block h4 {
+        margin: 0 0 10px; font-family: var(--mono); font-size: 11px; text-transform: uppercase;
+        letter-spacing: 0.1em; color: var(--faint); font-weight: 700;
+      }
+      .kv { display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 6px 14px; font-size: 13.5px; }
+      .kv dt { font-family: var(--mono); font-size: 11.5px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.05em; padding-top: 2px; }
+      .kv dd { margin: 0; }
+
+      /* Permission flags: the mark is never the only signal — the word is always there too. */
+      .flags { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; }
+      .flag { display: inline-flex; align-items: center; gap: 6px; }
+      .flag .mark { font-weight: 700; }
+      .flag.yes .mark { color: var(--grade-a); }
+      .flag.no .mark { color: var(--grade-x); }
+      .flag.unknown { color: var(--muted); font-style: italic; }
+
+      .split { display: flex; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); margin: 8px 0 6px; }
+      .split span { display: block; }
+      .split .verified { background: var(--grade-a); }
+      .split .unverified { background: var(--grade-b); }
+      .split .synthetic { background: var(--gotcha-composition); }
+      .split-key { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+
+      .gotcha-line { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; font-size: 13.5px; }
+      .gotcha-line .text { color: var(--muted); }
+      .opportunity { border-left: 3px solid var(--grade-a); padding-left: 12px; font-size: 13.5px; color: var(--muted); }
+
+      .gate { display: grid; grid-template-columns: 118px 92px minmax(0, 1fr); gap: 4px 12px; font-size: 13px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+      .gate:last-child { border-bottom: 0; }
+      .gate .name { font-family: var(--mono); font-size: 11.5px; text-transform: uppercase; color: var(--faint); letter-spacing: 0.05em; }
+      .gate .verdict-cell { font-family: var(--mono); font-size: 11.5px; font-weight: 700; }
+      .gate .why { color: var(--muted); }
+      .v-PASS { color: var(--grade-a); }
+      .v-CONDITIONAL { color: var(--grade-b); }
+      .v-FAIL { color: var(--grade-x); }
+      .v-UNKNOWN { color: var(--muted); }
+
+      .links a { color: var(--accent); font-size: 12.5px; font-family: var(--mono); display: block; word-break: break-all; }
     </style>
   </head>
   <body>
@@ -103,8 +161,9 @@
         return el;
       };
 
-      /* A table from rows of cells; cells may be strings or nodes. */
-      const table = (headers, rows, numCols = []) => {
+      /* A table from rows of cells; cells may be strings or nodes.
+       * `onRow(i)` makes rows activatable by mouse and keyboard alike. */
+      const table = (headers, rows, numCols = [], onRow = null) => {
         const wrap = $('div', 'scroll');
         const t = $('table');
         const thead = $('thead');
@@ -115,8 +174,18 @@
         });
         thead.append(hr);
         const tbody = $('tbody');
-        rows.forEach((cells) => {
+        rows.forEach((cells, rowIndex) => {
           const tr = $('tr');
+          if (onRow) {
+            tr.className = 'clickable';
+            tr.tabIndex = 0;
+            tr.setAttribute('role', 'button');
+            const open = () => onRow(rowIndex);
+            tr.addEventListener('click', open);
+            tr.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+            });
+          }
           cells.forEach((cell, i) => {
             const td = $('td', numCols.includes(i) ? 'num-col' : '');
             if (cell instanceof Node) td.append(cell);
@@ -150,6 +219,144 @@
       };
 
       const fmt = (v, unit) => (v === null || v === undefined ? '—' : formatValue(v, unit));
+
+      /* ------------------------------------------------------------------ the Dataset Card
+       *
+       * The catalogue's Risk & Notes column is the actual research value, and a table cell
+       * flattens it. The card is where a dataset's licence, its size split, its caveats and all
+       * five gate verdicts are readable at once — with each gate's reasoning shown, because a
+       * verdict you cannot interrogate is worse than none.
+       */
+      const GATE_ORDER = ['provenance', 'composition', 'contamination', 'yield', 'evidence'];
+
+      const flag = (label, value) => {
+        const known = value === true || value === false;
+        const el = $('span', `flag ${known ? (value ? 'yes' : 'no') : 'unknown'}`);
+        el.append($('span', 'mark', known ? (value ? '✔' : '✘') : '?'), $('span', '', label));
+        return el;
+      };
+
+      const block = (title, ...children) => {
+        const b = $('div', 'row-block');
+        b.append($('h4', '', title), ...children.filter(Boolean));
+        return b;
+      };
+
+      function renderCard(record, grade) {
+        const body = $('div', 'card-body');
+
+        // --- head
+        const head = $('div', 'card-head');
+        const left = $('div');
+        left.append($('div', 'id', record.id), $('h3', '', record.name));
+        const right = $('div');
+        right.style.cssText = 'display:flex;align-items:center;gap:10px';
+        right.append(badge('grade', { 'data-grade': grade || 'C' }, `GRADE ${grade || '—'}`));
+        const close = $('button', 'card-close', '×');
+        close.type = 'button';
+        close.setAttribute('aria-label', 'Close');
+        right.append(close);
+        head.append(left, right);
+        body.append(head);
+        if (record.owner) body.append($('p', 'card-owner', record.owner));
+
+        // --- licence
+        const lic = record.licence || {};
+        const flags = $('div', 'flags');
+        flags.append(flag('commercial use', lic.commercial), flag('attribution', lic.attribution), flag('share-alike', lic.share_alike));
+        body.append(block('Licence', $('p', '', lic.raw || 'not stated'), flags));
+
+        // --- size, with the naturalness split
+        const size = record.size || {};
+        const sizeKids = [];
+        if (size.tokens) {
+          const p = $('p');
+          p.append('Total: ', renderNumber(size.tokens));
+          sizeKids.push(p);
+        }
+        const nat = size.naturalness || {};
+        if (Object.keys(nat).length) {
+          const total = Object.values(nat).reduce((a, v) => a + (v.value || 0), 0) || 1;
+          const bar = $('div', 'split');
+          ['verified', 'unverified', 'synthetic'].forEach((k) => {
+            if (!nat[k]) return;
+            const seg = $('span', k);
+            seg.style.width = `${((nat[k].value || 0) / total) * 100}%`;
+            bar.append(seg);
+          });
+          const key = $('div', 'split-key');
+          ['verified', 'unverified', 'synthetic'].forEach((k) => {
+            if (!nat[k]) return;
+            key.append(`${k} `, renderNumber(nat[k], { unit: false }), '   ');
+          });
+          sizeKids.push(bar, key);
+          if (nat.synthetic) {
+            sizeKids.push($('p', 'split-key', 'Synthetic text is manufactured, not collected — it fills a token budget without adding what the source language knew.'));
+          }
+        }
+        if (sizeKids.length) body.append(block('Size', ...sizeKids));
+
+        // --- stage / languages
+        const kv = $('dl', 'kv');
+        const pair = (k, v) => { kv.append($('dt', '', k), $('dd', '', v || '—')); };
+        pair('stage', (record.stage || []).join(' · '));
+        pair('languages', record.languages);
+        pair('confidence', record.confidence);
+        body.append(block('Scope', kv));
+
+        // --- gotchas
+        if ((record.gotchas || []).length) {
+          const kids = record.gotchas.map((g) => {
+            const line = $('div', 'gotcha-line');
+            line.append(badge('gotcha', { 'data-type': g.type, 'data-severity': g.severity }, g.type),
+              $('span', 'text', g.text));
+            return line;
+          });
+          body.append(block(`Gotchas — ${record.gotchas.length}`, ...kids));
+        }
+
+        if (record.opportunity) body.append(block('Opportunity', $('p', 'opportunity', record.opportunity)));
+
+        // --- the five gates, each with its reasoning (INV-3 made visible)
+        const gates = record.gates || {};
+        const gateKids = GATE_ORDER.filter((n) => gates[n]).map((name) => {
+          const g = gates[name];
+          const row = $('div', 'gate');
+          row.append($('span', 'name', name),
+            $('span', `verdict-cell v-${g.verdict}`, g.verdict),
+            $('span', 'why', `${g.reasoning}${g.confidence ? ` (${g.confidence} confidence)` : ''}`));
+          return row;
+        });
+        if (gateKids.length) body.append(block('The five gates', ...gateKids));
+
+        // --- used by / access
+        if (record.used_by) body.append(block('Used by', $('p', '', record.used_by)));
+        const links = record.access?.links || [];
+        if (links.length || record.access?.raw) {
+          const wrap = $('div', 'links');
+          links.forEach((href) => {
+            const a = $('a', '', href);
+            a.href = href.startsWith('http') ? href : `https://arxiv.org/abs/${href.replace(/^arXiv:/i, '')}`;
+            a.rel = 'noopener';
+            a.target = '_blank';
+            wrap.append(a);
+          });
+          if (!links.length) wrap.append($('p', '', record.access.raw));
+          body.append(block('Access', wrap));
+        }
+
+        if (record.note) body.append(block('Also recorded', $('p', 'split-key', record.note)));
+
+        const dialog = $('dialog', 'card-dialog');
+        dialog.append(body);
+        close.addEventListener('click', () => dialog.close());
+        dialog.addEventListener('close', () => dialog.remove());
+        dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+        document.body.append(dialog);
+        dialog.showModal();
+        close.focus();
+        return dialog;
+      }
 
       const load = (path) => fetch(path).then((r) => { if (!r.ok) throw new Error(`${path}: ${r.status}`); return r.json(); });
 
@@ -193,7 +400,7 @@
               (!tierSel.value || d.tier === tierSel.value) &&
               (!stageSel.value || (d.stage || []).includes(stageSel.value)) &&
               (!gotchaSel.value || (d.gotchas || []).some((g) => g.type === gotchaSel.value)));
-            count.textContent = `${rows.length} of ${catalog.length}`;
+            count.textContent = `${rows.length} of ${catalog.length} — open any row for the full card`;
             host.replaceChildren(table(
               ['id', 'dataset', 'tier', 'grade', 'size', 'caveats'],
               rows.map((d) => {
@@ -205,7 +412,13 @@
                 const size = d.size?.tokens ? renderNumber(d.size.tokens, { unit: false }) : '—';
                 return [d.id, d.name, d.tier || 'does not exist yet',
                   badge('grade', { 'data-grade': idx.grade || 'C' }, idx.grade || '—'), size, caveats];
-              }), [4]));
+              }),
+              [4],
+              (i) => {
+                const record = rows[i];
+                const idx = data.datasets.find((x) => x.id === record.id) || {};
+                renderCard(record, idx.grade);
+              }));
           };
           [search, tierSel, stageSel, gotchaSel].forEach((el) => el.addEventListener('input', draw));
           draw();
