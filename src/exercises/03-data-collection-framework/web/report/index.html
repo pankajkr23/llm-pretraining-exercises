@@ -931,45 +931,101 @@
             'Switch rungs to see the same tier shape scaled. Orange is manufactured text; blue is natural Indic.'));
         }
 
-        /* ---------------------------------------------------- 5 · The Filter */
+        /* ---------------------------------------------------- 5 · The Filter (Destroyer)
+         *
+         * Audit row #5, and the one the audit said buys the most: the rescue toggle was missing,
+         * so the old version showed languages dying and stopped there. Watching them come back is
+         * the entire argument for the protected lane, and it is one state away.
+         *
+         * Carries the page's predict-before-reveal (EXPLAINER_PROMPT §14.1). Readers guess high on
+         * this one, and the gap between the guess and 10 is the lesson. The guess is pinned beside
+         * the answer rather than replaced by it.
+         */
         {
-          const langs = records.languages || [];
-          const host = $('div');
-          const slider = document.createElement('input');
-          slider.type = 'range'; slider.min = '0'; slider.max = '3'; slider.value = '0'; slider.step = '1';
-          const label = $('div');
-          label.style.cssText = 'font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-bottom:10px';
-          const draw = () => {
-            const th = Number(slider.value);
-            const kept = langs.filter((l) => (l.tier || 3) <= Math.max(1, 4 - th) || th === 0);
-            const survivors = th === 0 ? langs : langs.filter((l) => (l.tier || 3) <= (4 - th));
-            label.textContent = th === 0
-              ? `no quality threshold — all ${langs.length} languages present`
-              : `threshold ${th} — ${survivors.length} of ${langs.length} languages survive`;
-            const grid = $('div');
-            grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px';
-            langs.forEach((l) => {
-              const chip = $('span', '', l.name || l.code);
-              const alive = survivors.includes(l);
-              chip.style.cssText =
-                `font-family:var(--mono);font-size:11.5px;padding:3px 8px;border-radius:5px;border:1px solid var(--line);` +
-                `color:${alive ? `var(--lang-tier-${l.tier || 3})` : 'var(--faint)'};opacity:${alive ? 1 : 0.32};` +
-                `text-decoration:${alive ? 'none' : 'line-through'}`;
-              grid.append(chip);
-            });
-            host.replaceChildren(grid);
-            void kept;
+          const langs = (records.languages || []).slice();
+          const TOTAL = langs.length;
+          const lane = data.mix_rules.always_on_share;
+          const tiersOf = (max) => langs.filter((l) => (l.tier || 3) <= max);
+
+          const STATES = [
+            { keep: 3, marg: 'Before the filter',
+              lead: 'Every language the project has scheduled is present, which is the only moment in this section when that is true. Tier 3 here is not a judgement about the languages — it is ',
+              bold: 'a statement about how much text exists', tail: '.' },
+            { keep: 2, marg: 'The filter runs',
+              lead: 'A quality classifier trained on English proxies scores thin-resource text as noise, so the languages with least data go first. Nothing has malfunctioned: this is ',
+              bold: 'the filter working as designed', tail: ', on the wrong objective.' },
+            { keep: 1, marg: 'Turn it up',
+              lead: 'Raise the threshold the way anyone chasing a cleaner corpus would, and the losses reach the languages with real corpora behind them. What survives is ',
+              bold: 'the set that needed no help', tail: '.' },
+            { keep: 1, rescue: true, marg: 'The lane',
+              lead: 'Now reserve a fixed share of every batch that no selector is allowed to touch. The threshold has not moved and the classifier still scores the same way, but ',
+              bold: 'every language is back', tail: '.' },
+            { keep: 1, rescue: true, cost: true, marg: 'What it costs',
+              lead: 'The whole rescue is a standing charge on the batch, decided once and never renegotiated per language. It is ',
+              bold: 'cheap enough to be uninteresting', tail: ' — which is the argument for doing it rather than optimising it.' },
+          ];
+
+          const guessOf = (api) => {
+            const n = parseInt(String(api.input && api.input.value).replace(/[^\d]/g, ''), 10);
+            return Number.isFinite(n) && n >= 0 && n <= TOTAL ? n : null;
           };
-          slider.addEventListener('input', draw);
-          draw();
-          const w = widget(label, slider, host);
-          main.append(sect(5, 'What a quality filter quietly deletes',
-            [document.createTextNode('Quality classifiers are trained on English proxies, so they score thin-resource languages as noise. Raise the threshold and the languages with least data disappear first — the ones the model exists to serve. One language in this set collapses to '),
-             $('b', '', '77 words'),
-             document.createTextNode(' after standard filtering. The fix is a reserved share of every batch that no selector may touch; details in '),
-             ref('the languages', 'languages'), document.createTextNode('.')],
-            w,
-            'Drag the threshold. Nothing here is a bug in the filter — it is the filter working as designed, on the wrong objective.'));
+
+          main.append(buildExplainer({
+            n: 5,
+            title: 'The filter deletes exactly the languages the model exists to serve',
+            claim: [
+              document.createTextNode('Quality classifiers are trained on English proxies, so they read thin-resource languages as noise. Raising the threshold is the obvious move and it is the wrong one — the languages with least data disappear first. Before scrolling, put a number in the box: '),
+              $('b', '', 'how many of the 22 survive'),
+              document.createTextNode(' a filter turned up hard? Then scroll, and watch what brings them back. Details in '),
+              ref('the languages', 'languages'), document.createTextNode('.'),
+            ],
+            figNum: 'Fig. 5 — what survives',
+            caption: 'Fig. 5 — One mark per scheduled language, ordered by tier. Red is a language the filter removes. The rescue state changes no threshold and no classifier — it reserves a share of the batch that the selector may not touch.',
+            input: { rows: 1, label: `Before you scroll — how many of the ${TOTAL} survive a hard filter?`, value: '' },
+            pill: '8% of every batch',
+            rail: [
+              document.createTextNode('The lane is '),
+              renderNumber(lane),
+              document.createTextNode(' of every batch, fixed in FRAMEWORK.md R2 rather than tuned per language — a per-language exception list is a thing somebody eventually edits under deadline. Tier assignments come from available corpus size, not from any judgement about the languages themselves.'),
+            ],
+            states: STATES,
+            refresh: (api) => {
+              STATES.forEach((st, i) => {
+                const alive = st.rescue ? TOTAL : tiersOf(st.keep).length;
+                api.shard(i, langs.filter((l) => !(st.rescue || (l.tier || 3) <= st.keep))
+                  .map((l) => l.name || l.code).join(' · ') || 'nothing removed');
+                api.inline(i, `→ ${alive} of ${TOTAL} survive${st.rescue ? ' (lane on)' : ''}`, alive < TOTAL);
+              });
+            },
+            render: (i, api) => {
+              const st = STATES[i];
+              const survivors = st.rescue ? langs : tiersOf(st.keep);
+              const lost = TOTAL - survivors.length;
+              const guess = guessOf(api);
+
+              api.big({ value: survivors.length, unit: 'languages', provenance: 'measured', source: 'computed from the language register' });
+              api.bigHit(lost > 0);
+              api.sub(st.rescue ? `of ${TOTAL} present — the lane restores every one` : `of ${TOTAL} survive the threshold`);
+              api.verdict(st.rescue ? 'LANE ON' : (lost ? `${lost} DELETED` : 'UNFILTERED'), lost > 0);
+
+              if (st.cost) {
+                api.note(`The lane costs ${(lane.value * 100).toFixed(0)}% of every batch and returns ${TOTAL - tiersOf(1).length} languages that a threshold alone would have removed. That is the entire trade.`);
+              } else if (st.rescue) {
+                api.note('No red anywhere. Nothing about the filter changed — the batch simply has a floor the filter cannot reach below.');
+              } else if (lost && guess !== null) {
+                const dir = guess > survivors.length ? 'high' : guess < survivors.length ? 'low' : 'exactly right';
+                api.note(dir === 'exactly right'
+                  ? `You guessed ${guess}, which is exactly right — most people guess high.`
+                  : `You guessed ${guess}; ${survivors.length} survive. You were ${Math.abs(guess - survivors.length)} too ${dir}.`);
+              } else if (lost) {
+                api.note(`${lost} languages removed. The filter never sees a language — it sees documents that score badly, and thin-resource text always does.`);
+              } else {
+                api.note('Red marks a language the filter removes. Here it removes none, because nothing has run yet.');
+              }
+
+              api.strip(langs.map((l) => (st.rescue ? 'reg' : ((l.tier || 3) <= st.keep ? '' : 'hit'))));
+            },
+          }));
         }
 
         /* ---------------------------------------------------- 6 · The mix, dissected
