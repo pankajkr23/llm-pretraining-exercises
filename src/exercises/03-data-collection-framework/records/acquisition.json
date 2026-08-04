@@ -1,0 +1,74 @@
+[
+  {
+    "id": "A1",
+    "item": "NCERT / MoE commercial-training licence",
+    "cost_inr": 0,
+    "effort": "A letter - §15.4 prices it at '₹0 (a letter)'; §19 item 1 flags it as zero cost but the longest lead time, so send it in week 1",
+    "why": "Unlocks the entire K-12 curriculum in 36 languages. Highest ROI action available. §10.1: India's magnificent public educational corpus is CC BY-NC-ND (NCERT) and CC BY-NC-SA (DIKSHA) and therefore unusable in a commercial foundation model, and §14.1 point 4 stresses that the ANI fair-dealing ruling 'does not override contracts' - an NC licence is a contract, so only a grant dissolves it.",
+    "priority": 1,
+    "note": "One of the three ₹0 acquisitions §21 says are 'worth more than any amount of additional scraping, and should be initiated in week one'. §15.4: 'Items 1-3 are free and worth more than everything else combined.'"
+  },
+  {
+    "id": "A2",
+    "item": "BharatGen / Bharat Data Sagar MoU",
+    "cost_inr": 0,
+    "effort": "A formal data-sharing MoU. §3.6: 'Bharat Data Sagar is a partnership target, not a download... the single highest-leverage business-development action available to you, worth more than months of scraping.'",
+    "why": "~20T tokens claimed, publicly funded. Public-interest framing helps. §3.6 sizes the public investment at ~₹1,293 crore (₹235 crore NM-ICPS + ₹1,058 crore MeitY / IndiaAI Mission).",
+    "priority": 2,
+    "note": "§15.4 states the cost as '₹0-small', not a flat zero; cost_inr is 0 as the stated floor. The 20T / ~3 petabyte figure is a [VENDOR CLAIM] - a CEO statement from Feb 2026, unaudited, and §A.7 rates it LOW confidence: 'Do not build a plan that depends on this being true.' The corpus itself is not publicly redistributable and models trained on it ship under a BharatGen non-commercial licence."
+  },
+  {
+    "id": "A3",
+    "item": "AIKosh contributor status",
+    "cost_inr": 0,
+    "effort": "Submit the EOI to contribute (https://aikosh.indiaai.gov.in/static/datasets_EOI.pdf) and contribute your derived datasets",
+    "why": "Contribute your derived datasets, gain access + goodwill + compute credits. §3.7: AIKosh is the national aggregator - 10,262+ datasets, 292 models, 20 sectors, 394 contributing organisations - hosting IndicVoices, SPRING-INX and the EKA corpus, and providing GPU/CPU notebooks via AIRAWAT.",
+    "priority": 3,
+    "note": "Third of the three free actions in §21. §3.7 flags the catch: licensing is per-dataset and heterogeneous - 'you must build a per-dataset licence ingestion step - do not bulk download'."
+  },
+  {
+    "id": "A4",
+    "item": "Regional-language publisher archives (20-40 publishers)",
+    "cost_inr": null,
+    "effort": "Licensing conversations with 20-40 publishers; §15.3 advises negotiating a retrieval/grounding deal rather than a training deal - 'far cheaper, publishers accept it more readily, and for a conversational model it delivers most of the value'. §19 item 10 starts these at week 12+",
+    "why": "Natural, edited, high-register Indic text at a scale nothing else provides. §15.3: no single publisher has dominant leverage, so 'you do not need Times of India. You need forty regional-language publishers' - Dainik Jagran, Malayala Manorama, Eenadu, Daily Thanthi, Sakal, Anandabazar Patrika and the hundreds beneath them.",
+    "priority": 4,
+    "note": "cost_inr is null because §15.4 gives a range, not a value: '₹3-15 crore total' (₹30,000,000-150,000,000). §13.4 is the counterweight: scraped Indian news sites are exactly where legal risk concentrates - 'The ANI v. OpenAI litigation exists precisely because of this.'"
+  },
+  {
+    "id": "A5",
+    "item": "Commission Tier-3 language collection (Bodo, Dogri, Santali, Manipuri)",
+    "cost_inr": null,
+    "effort": "Commissioned primary fieldwork - §2: 'you will not find this data'; for Tier 3 'this is not a data problem, it is a fieldwork problem'",
+    "why": "Nothing else will fix these four languages. Also excellent public positioning. §2 records Sangraha's Stage-3 filtering collapsing Bodo to 77 words / 1 document; §18.1 rates 'Tier-3 languages remain unusable' a High severity risk whose only alternatives are commissioning collection or communicating the limitation honestly.",
+    "priority": 5,
+    "note": "cost_inr is null because §15.4 gives a range, not a value: '₹2-5 crore' (₹20,000,000-50,000,000)."
+  },
+  {
+    "id": "A6",
+    "item": "Private Indic evaluation set (~3,000 native items x 22 languages)",
+    "cost_inr": null,
+    "effort": "Commission ~3,000 native-speaker-written items across 22 languages, never published, covering conversation, translation, cultural knowledge and code-mixed input (§12.3 Rule 4); §19 item 9 places it at weeks 10-14",
+    "why": "Your only uncontaminated measuring instrument. §12.3 Rule 4: 'Every public Indic benchmark will be contaminated within 18 months.' §1.3 item 3: India can now train sovereign models but struggles to prove they work, because Indic benchmarks are thin, translated and contamination-prone.",
+    "priority": 6,
+    "note": "cost_inr is null because §15.4 and §12.3 give a range, not a value: '₹15-30 lakh' (₹1,500,000-3,000,000). §12.3 calls it 'the most valuable evaluation asset you own'."
+  },
+  {
+    "id": "A7",
+    "item": "Human preference / red-team annotation in 22 languages",
+    "cost_inr": null,
+    "effort": "Human annotation across all 22 languages - §11.4: 'You must red-team in all 22 languages, not extrapolate', and preference alignment must be genuinely multilingual with natively generated (not translated) pairs judged by in-language human annotators",
+    "why": "Safety alignment does not transfer across languages (§11.4): the 2024 Language Barrier work showed multilingual safety degrades sharply in low-resource languages even after English RLHF - 'a model that refuses correctly in English will comply with the same jailbreak in Bodo'. §B.5 adds the Language Boundary Effect (arXiv:2607.23545): an Indic-expert model acquires a new jailbreak surface via injections written in its own favoured languages, so cross-language-injection red-teaming belongs in the plan.",
+    "priority": 7,
+    "note": "cost_inr is null because §15.4 gives a range, not a value: '₹2-8 crore' (₹20,000,000-80,000,000). §15.4 totals items 4-7 at roughly ₹8-30 crore - 'genuinely small against a 300B training run, and they are the only line items that buy something a competitor cannot simply download'."
+  },
+  {
+    "id": "A8",
+    "item": "Commercial Indic speech vendors (e.g. Shaip and similar)",
+    "cost_inr": null,
+    "effort": "Not stated in the document beyond the cost being 'Varies'",
+    "why": "Only if open speech corpora prove insufficient - they probably will not. §8 counts ~35,000+ hours of open, permissively-licensed Indic speech, and §A.5 corrects the total upward to 'well north of 100,000 hours' once BhasaAnuvaad (~44,400 h, CC BY 4.0) and Rasa are included.",
+    "priority": 8,
+    "note": "cost_inr is null: §15.4 gives 'Varies' rather than a figure. Ranked last of the eight and the only one the document effectively advises against."
+  }
+]

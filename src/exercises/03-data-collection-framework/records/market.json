@@ -1,0 +1,174 @@
+{
+  "deals": [
+    {
+      "id": "D01",
+      "buyer": "OpenAI",
+      "seller": "News Corp (WSJ, The Times, NY Post, The Australian)",
+      "value_usd": 250000000,
+      "year": null,
+      "reported": true,
+      "note": "Reported at ~$250M over 5 years — the largest known deal. Type: training + display. The document states no signing year."
+    },
+    {
+      "id": "D02",
+      "buyer": "Meta",
+      "seller": "News Corp",
+      "value_usd": null,
+      "year": null,
+      "reported": true,
+      "note": "Reported as 'up to ~$50M/year over 3 years'. value_usd is null because the document gives a per-year ceiling, not a total. Deal type not stated."
+    },
+    {
+      "id": "D03",
+      "buyer": "Google + OpenAI",
+      "seller": "Reddit",
+      "value_usd": 203000000,
+      "year": null,
+      "reported": true,
+      "note": "$203M aggregate contract value disclosed at Reddit's IPO; ~$60M/yr Google and ~$70M/yr OpenAI reported. Type: API / retrieval. The Section 15.2 table prints Reddit in the Buyer column and 'Google + OpenAI' in the Seller column, which is inverted relative to Section 13.4 ('Reddit now licenses data commercially... ~$60M/yr Google, ~$70M/yr OpenAI reported'); buyer/seller are recorded here per Section 13.4."
+    },
+    {
+      "id": "D04",
+      "buyer": "Amazon",
+      "seller": "The New York Times",
+      "value_usd": null,
+      "year": null,
+      "reported": true,
+      "note": "Reported at ~$20-25M/year; described as the first Amazon AI content deal. value_usd null — the document gives only a per-year range."
+    },
+    {
+      "id": "D05",
+      "buyer": "OpenAI",
+      "seller": "Dotdash Meredith",
+      "value_usd": null,
+      "year": null,
+      "reported": true,
+      "note": "Reported at ~$16M/year. value_usd null — per-year figure only, no total or term stated. Deal type not stated."
+    },
+    {
+      "id": "D06",
+      "buyer": "OpenAI",
+      "seller": "Axel Springer (Business Insider, Politico)",
+      "value_usd": null,
+      "year": null,
+      "reported": true,
+      "note": "Reported at ~$13M/year over 3 years. value_usd null — the document gives a per-year figure, not a total. Deal type not stated."
+    },
+    {
+      "id": "D07",
+      "buyer": "OpenAI",
+      "seller": "Financial Times",
+      "value_usd": null,
+      "year": null,
+      "reported": true,
+      "note": "Reported at ~$5-10M/year. value_usd null — per-year range only. Deal type not stated."
+    },
+    {
+      "id": "D08",
+      "buyer": "Microsoft",
+      "seller": "Informa",
+      "value_usd": null,
+      "year": null,
+      "reported": true,
+      "note": "Reported at ~$10M+ initially; specialist content. value_usd null — the document gives an initial-payment floor, not a deal total."
+    },
+    {
+      "id": "D09",
+      "buyer": "Various (Big Tech)",
+      "seller": "Shutterstock",
+      "value_usd": 138000000,
+      "year": 2024,
+      "reported": true,
+      "note": "$138M is total AI licensing revenue in 2024 (up from $104M in 2023), not a single deal; individual Big Tech deals are reported at $25-50M each. Type: images. Section 15.3 separately counts Shutterstock at 7 deals."
+    },
+    {
+      "id": "D10",
+      "buyer": "Various",
+      "seller": "Wiley",
+      "value_usd": 40000000,
+      "year": null,
+      "reported": true,
+      "note": "Reported at $40M+ across two deals, so 40000000 is a floor for the combined value, not a single-deal price. Type: academic. Section 6 cites the same figure as evidence that the market rate is established, which makes unlicensed use clearly wilful."
+    },
+    {
+      "id": "D11",
+      "buyer": "Mistral",
+      "seller": "AFP",
+      "value_usd": null,
+      "year": null,
+      "reported": true,
+      "note": "Value undisclosed. Explicitly grounding only, NOT training."
+    },
+    {
+      "id": "D12",
+      "buyer": "Meta",
+      "seller": "Reuters, CNN, Fox News, USA Today, People Inc.",
+      "value_usd": null,
+      "year": null,
+      "reported": true,
+      "note": "Value undisclosed. Type: real-time answers. Recorded as one row because the document lists these sellers in a single table row."
+    },
+    {
+      "id": "D13",
+      "buyer": "Apple",
+      "seller": "Condé Nast, NBC News, IAC (reported approach), Shutterstock",
+      "value_usd": null,
+      "year": null,
+      "reported": true,
+      "note": "The document says '$50M+ sought' — an amount sought, not an agreed value — so value_usd is null. Type: training."
+    },
+    {
+      "id": "D14",
+      "buyer": "Runway",
+      "seller": "Getty Images",
+      "value_usd": null,
+      "year": null,
+      "reported": true,
+      "note": "Value undisclosed. Type: video/images."
+    },
+    {
+      "id": "D15",
+      "buyer": "Anthropic",
+      "seller": null,
+      "value_usd": 1500000000,
+      "year": 2025,
+      "reported": true,
+      "note": "Listed in the Section 15.2 deals table as a notable outlier: 'No comparable publisher licensing programme.' The $1.5B is a proposed settlement in a books-related class action agreed in 2025 — litigation, not a licensing deal. Seller is null because the table's seller cell is an em dash."
+    },
+    {
+      "id": "D16",
+      "buyer": "OpenAI",
+      "seller": "The Washington Post",
+      "value_usd": null,
+      "year": 2025,
+      "reported": true,
+      "note": "From Section 15.3 rather than the Section 15.2 table. Dated April 2025 and cited as an attribution/live-access deal that explicitly excludes training: content can be surfaced and attributed but not learned. No value stated."
+    },
+    {
+      "id": "D17",
+      "buyer": "Perplexity",
+      "seller": "Le Monde",
+      "value_usd": null,
+      "year": null,
+      "reported": true,
+      "note": "From Section 15.3 rather than the Section 15.2 table. Cited alongside the Washington Post deal as explicitly excluding training. No value or date stated."
+    }
+  ],
+  "trends": [
+    {
+      "id": "TR1",
+      "trend": "The market shifted from 'training' to 'live access'. Attribution/live-access deals went 2 (2023) -> 11 (2024) -> 18 (2025) -> ~34 projected (2026), and deals such as The Washington Post's April 2025 OpenAI deal and Le Monde's Perplexity deal explicitly exclude training — content can be surfaced and attributed but not learned.",
+      "implication": "For Indian news, negotiate a retrieval/grounding deal rather than a training deal. It is far cheaper, publishers accept it more readily, and for a conversational model it delivers most of the value."
+    },
+    {
+      "id": "TR2",
+      "trend": "No single publisher has dominant leverage. Even the largest sellers have single-digit deal counts (Shutterstock 7, Wikimedia 6, Reddit 5), while 'other' publishers collectively account for 36 deals.",
+      "implication": "You do not need Times of India — you need forty regional-language publishers, each with very little individual leverage and considerable incentive. The Indian regional press (Dainik Jagran, Malayala Manorama, Eenadu, Daily Thanthi, Sakal, Anandabazar Patrika and the hundreds beneath them) is exactly the fragmented, monetisation-hungry, linguistically-irreplaceable long tail this pattern predicts you can afford."
+    },
+    {
+      "id": "TR3",
+      "trend": "The total market is small relative to compute: AI training-data licensing is estimated at ~$4B globally in 2026.",
+      "implication": "Against a 300B-model training budget, a Rs 5-20 crore ($600K-$2.4M) Indic content licensing programme is a rounding error that buys the one thing money can buy in this project: exclusive, high-quality, natural Indic text that no competitor has."
+    }
+  ]
+}

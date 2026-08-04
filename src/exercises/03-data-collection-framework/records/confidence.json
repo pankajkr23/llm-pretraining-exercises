@@ -1,0 +1,149 @@
+[
+  {
+    "id": "C01",
+    "claim": "Sarvam-105B and Sarvam-30B architecture, pre-training token counts (12T and 16T) and Apache 2.0 licence.",
+    "band": "high",
+    "basis": "The Hugging Face model cards `sarvamai/sarvam-105b` and `sarvamai/sarvam-30b` themselves — architecture and licence read from the cards.",
+    "note": "§A.7, \"High confidence — read from primary sources, independently verifiable in minutes\". Detail table in §A.1; official blog https://www.sarvam.ai/blogs/sarvam-30b-105b, public rollout 6 March 2026. This is the basis of MATERIAL CORRECTION #1."
+  },
+  {
+    "id": "C02",
+    "claim": "Sangraha totals 251B tokens across 22 languages, split 64B verified / 24B unverified / 162B synthetic.",
+    "band": "high",
+    "basis": "The IndicLLMSuite paper (arXiv:2403.06350).",
+    "note": "§A.7 high-confidence list. §3.1 adds CC-BY-4.0 for the data and MIT for the Setu tooling; §13.5 warns the 162B synthetic portion must not be reported as natural Indic data."
+  },
+  {
+    "id": "C03",
+    "claim": "BPCC-Mined, NLLB-Seed, ILCI, MASSIVE and BPCC-BT are released under CC0 — AI4Bharat waived all rights to the packaging.",
+    "band": "high",
+    "basis": "The IndicTrans2 repo licence table (github.com/ai4bharat/IndicTrans2).",
+    "note": "§A.7 high-confidence list; §A.5 records this as a correction to §7's blanket \"CC-BY-4.0\" characterisation. See corrections.json X07."
+  },
+  {
+    "id": "C04",
+    "claim": "NCERT textbook content is CC BY-NC-ND and DIKSHA non-textbook resources are CC BY-NC-SA.",
+    "band": "high",
+    "basis": "NCERT / CIET's own site.",
+    "note": "§A.7 high-confidence list; §10.1 and §13.1. This underwrites what §10.1 calls \"the most counter-intuitive finding in this report\": India's public educational corpus, in 36 languages, is almost entirely NonCommercial-licensed and therefore unusable in a commercial foundation model."
+  },
+  {
+    "id": "C05",
+    "claim": "BhasaAnuvaad is ~44,400 hours plus 17M aligned text segments, 13–14 Indian languages and English, CC BY 4.0.",
+    "band": "high",
+    "basis": "AI4Bharat GitHub (github.com/AI4Bharat/BhasaAnuvaad) plus arXiv:2411.04699.",
+    "note": "§A.7 high-confidence list. This is the basis of the §A.5 correction that raises open Indic speech from \"~35,000+ hours\" to \"well north of 100,000 hours\". See corrections.json X04."
+  },
+  {
+    "id": "C06",
+    "claim": "The four arXiv papers cited in §A.2–A.4 say what the addendum says they say.",
+    "band": "high",
+    "basis": "Abstracts pulled directly from arxiv.org abstract pages, via live query sorted by announcement date; coverage confirmed current through 27 July 2026.",
+    "note": "§A.7 high-confidence list. AMBIGUITY: the document says \"the four arXiv papers in §A.2–A.4\" without enumerating which four, and §A.2–A.4 together cite more than four arXiv identifiers (2606.29213, 2607.24276, 2607.23319, 2607.23242, 2607.23808, 2606.29024, 2605.20712, 2605.29637, 2606.08272, 2606.18222, 2604.18423), so the exact set is not recoverable from the text."
+  },
+  {
+    "id": "C07",
+    "claim": "Parliament figures: 20 sovereign AI foundation-model proposals identified for support (12 LLMs + 8 SLMs), 237 projects supported, 93.18 lakh GPU hours sanctioned.",
+    "band": "high",
+    "basis": "Multiple independent outlets reporting the same written Lok Sabha reply of 22 July 2026 by Union Minister Ashwini Vaishnaw (ANI, Business Standard, Tribune and others).",
+    "note": "§A.7 high-confidence list; detail in §A.6, which also lists 15 empanelled compute service providers, 27 India Data and AI Labs, 58 AI Centres of Excellence, and the 12 funded organisations."
+  },
+  {
+    "id": "C08",
+    "claim": "The ANI v. OpenAI ruling of 24 July 2026 — Delhi High Court, Justice Amit Bansal, 135 pages — happened, and the interim injunction was refused.",
+    "band": "high",
+    "basis": "Multiple independent legal and business outlets (Business Standard, LawBeat, The New Publishing Standard).",
+    "note": "§A.7 high-confidence list; the holdings are set out in §14.1. High confidence attaches to the ruling's existence and content, not to its durability — see C19."
+  },
+  {
+    "id": "C09",
+    "claim": "The government allocated ₹988.6 crore to the IIT Bombay-led BharatGen consortium specifically to develop a 1-trillion-parameter LLM.",
+    "band": "medium",
+    "basis": "Government press coverage — \"not a tender document I read\".",
+    "note": "§A.7, \"Medium confidence — reported but not primary\". §A.6 calls this \"the number that should most affect your planning\", because a 300B then sits between a free Apache-2.0 105B and a publicly-funded 1T. BharatGen's own careers page is cited as corroboration."
+  },
+  {
+    "id": "C10",
+    "claim": "The frontier licensing deal values in §15.2 — e.g. OpenAI–News Corp at ~$250M over 5 years, Reddit's $203M aggregate contract value, Shutterstock's $138M of 2024 AI licensing revenue, Wiley's $40M+ across two deals.",
+    "band": "medium",
+    "basis": "All figures explicitly \"reported\", none confirmed by the parties — stated in the §15.2 table header and repeated in §A.7.",
+    "note": "§A.7 medium-confidence list. §15.3 draws structural conclusions from the pattern (the shift from training to live-access deals: 2 in 2023 → 11 → 18 → ~34 projected in 2026) rather than from any individual figure."
+  },
+  {
+    "id": "C11",
+    "claim": "Qwen3.6-27B scores 77.2% on SWE-bench Verified, beating a 397B MoE, running on 18GB VRAM and matching frontier models on Terminal-Bench.",
+    "band": "medium",
+    "basis": "A single secondary source — industry reporting. The author states in §A.6: \"I have not independently verified this figure against the SWE-bench leaderboard — treat as secondary reporting.\"",
+    "note": "§A.7 medium-confidence list. Load-bearing for an argument rather than a number: if accurate, agentic coding capability is not primarily a scale problem but a data-and-environment problem (§5.2), and §B.4 uses it to price the \"buy capability via data quality + RL environments\" path."
+  },
+  {
+    "id": "C12",
+    "claim": "Bharat Data Sagar has \"crossed 20 trillion tokens\" at ~3 petabytes.",
+    "band": "low",
+    "basis": "A CEO statement (February 2026) echoed in DST press material. Unaudited, and \"tokens\" is a soft unit for a multimodal store.",
+    "note": "§A.7, \"Low confidence — treat as directional only\": \"Do not build a plan that depends on this being true.\" Flagged [VENDOR CLAIM] on first use per the §0 honesty note, and again in §3.6, §13.2 and §18.3."
+  },
+  {
+    "id": "C13",
+    "claim": "Deduplicated, quality-filtered, naturally-written Indic text totals roughly 250–500 billion tokens across all 22 scheduled languages combined.",
+    "band": "low",
+    "basis": "The author's own inference from Sangraha, FineWeb-2, IndicCorp and HPLT figures. \"It has never been measured.\"",
+    "note": "§A.7, \"Low confidence — treat as directional only\". The same section calls it \"the single most important unverified number in the entire document, and it drives the whole corpus architecture\" — low-confidence and load-bearing at once. §19 item 2 makes measuring it a week-one, two-week task."
+  },
+  {
+    "id": "C14",
+    "claim": "Real-time X/Twitter and the last ~24 hours of arXiv are not covered by this document.",
+    "band": null,
+    "basis": "§A.0: no direct X access, so X content reached the document only where a search engine had indexed it — \"anything announced on X in the last ~24–72 hours may be invisible to me\". arXiv coverage confirmed through 27 July 2026; the newest paper confirmed is dated 27 July.",
+    "note": "§A.7 \"Known blind spots\". The document assigns no confidence band to blind spots — they mark absence of coverage, not a graded claim — so band is null. Addendum B partially closes the arXiv half by parsing the 28 July cs.CL listing (140 papers) live; §B.7 confirms real-time X remains unverified."
+  },
+  {
+    "id": "C15",
+    "claim": "Whether the IndicTalk and Indic DiarBench data — and, per §B.7, IKS-Instruct — are actually downloadable is unknown.",
+    "band": null,
+    "basis": "§A.0: \"Several say 'we will release' — that is a promise, not a download.\" §A.4 attaches an explicit ⚠️ to IndicTalk: \"verify the data is actually up before planning around it\". §B.5 marks IKS-Instruct's licence unverified.",
+    "note": "§A.7 \"Known blind spots\", repeated in §B.7. No confidence band assigned by the document."
+  },
+  {
+    "id": "C16",
+    "claim": "Anything under embargo, announced in private or Discord/closed communities, or presented at a conference in the last few days is not covered.",
+    "band": null,
+    "basis": "§A.0 lists private/Discord/closed-community announcements, embargoed releases and anything not yet on a public URL as things that could not be verified directly.",
+    "note": "§A.7 \"Known blind spots\". No confidence band assigned by the document."
+  },
+  {
+    "id": "C17",
+    "claim": "Chinese and other non-English-language sources on Indic AI are not covered.",
+    "band": null,
+    "basis": "Stated as a known blind spot in §A.7; no sources in those languages were consulted.",
+    "note": "§A.7 \"Known blind spots\". No confidence band assigned by the document, and no basis beyond the author's own declaration."
+  },
+  {
+    "id": "C18",
+    "claim": "The §16 reference token budget — ~23.4T raw → ~15.0T after dedup, Indic total ~2.8T (18.7%) of which only 0.30T (2.0%) is naturally occurring.",
+    "band": "load-bearing",
+    "basis": "§16 preamble: \"All figures are post-global-dedup unique tokens, estimated with a fertility-optimised Indic tokenizer. Assume 40–70% loss at global dedup for web-derived sources.\" These are estimates, not measurements, and they rest on the unmeasured pool of C13.",
+    "note": "Not part of §A.7's ledger — drawn from the main text. Load-bearing because §1.2's milestone verdict, §16.2's ladder and the whole capital plan are denominated in it, while §18.1 ranks \"global dedup collapses 23T → 9T, not 15T\" as the single most likely schedule-breaker. §B.1 revises the framing from unique tokens to unique pool × epoch schedule."
+  },
+  {
+    "id": "C19",
+    "claim": "India has no explicit TDM exception, so the ANI court's stretch of Section 52(1)(a)(i) of the Copyright Act, 1957 is the entire legal foundation for training on crawled Indian content.",
+    "band": "load-bearing",
+    "basis": "§14.1, verbatim: \"That stretch is the entire legal foundation, and it is one appeal away from re-examination.\" The findings are prima facie, from a single-judge interim order that expressly does not control the final outcome; commentators have already identified vulnerabilities.",
+    "note": "Not part of §A.7's ledger — drawn from the main text. §14.1 also lists four things the ruling does NOT do: resolve the hallucination limb, override NC contracts, touch the DPDP Act, or bind an appellate bench. §18.2's first legal risk is this claim failing."
+  },
+  {
+    "id": "C20",
+    "claim": "Up to 4 epochs of repeated data is almost as good as fresh data, with decay constant R*_D ≈ 15 and a hard ceiling at ~16× the unique pool — the results that lift the natural-Indic effective share from ~2% to ~7–8%.",
+    "band": "load-bearing",
+    "basis": "Muennighoff et al., arXiv:2305.16264 (in-project), measured on English web data (C4-family) at ≤9B parameters and ≤900B tokens: an 8.7B model, 4 epochs on 44B unique tokens, finished 0.5% higher validation loss than a single epoch on 178B unique tokens. §B.1 states plainly that nobody has measured R*_D for Indic, translated or synthetic text.",
+    "note": "§B.1 \"Two honest limits\" and §B.7. The corrected corpus arithmetic of MATERIAL CORRECTION #3 rests entirely on this transferring to Indic/translated/synthetic text — an open question logged as risks.json R20. §B.1 also carries Hernandez et al.'s caveat that up-sampling 0.1% of a corpus 100× significantly degrades performance: repetition works on whole tiers, not slivers."
+  },
+  {
+    "id": "C21",
+    "claim": "Addendum B's figures in §B.1–B.4 are verbatim from documents inside the project, and §B.5's characterisations come from abstracts fetched directly rather than inferred from titles.",
+    "band": "high",
+    "basis": "§B.7 grounding statement, naming arXiv:2305.16264, 2606.07404, 2602.05400, 2605.29379, 2605.29459, 2511.03237 plus s3.md and s5.md, retrieved via project knowledge; §B.5's six headline abstracts were fetched from the 28 July 2026 cs.CL listing before characterisation.",
+    "note": "§B.7. The same statement flags one exception explicitly: Sardana & Frankle (arXiv:2401.00448) is cited at thesis level only, not from the paper's accounting. AMBIGUITY: arXiv:2602.05400 is named in §B.7 but never cited or identified anywhere else in the document."
+  }
+]

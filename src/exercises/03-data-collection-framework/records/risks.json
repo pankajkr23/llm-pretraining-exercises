@@ -1,0 +1,162 @@
+[
+  {
+    "id": "R01",
+    "class": "technical",
+    "severity": "high",
+    "risk": "Global dedup collapses 23T → 9T, not 15T.",
+    "mitigation": "Run dedup on a 10% sample first and extrapolate before committing to a budget.",
+    "note": "§18.1. The document calls this \"the single most likely schedule-breaker\". §3.9 expects 60–80% cross-corpus duplication because Sangraha, CulturaX, MADLAD-400, FineWeb-2 and HPLT all derive from Common Crawl. §B.1 later judges the risk \"half-defused\": dedup down to the unique pool, then choose repetition deliberately — dedup ≠ see-once."
+  },
+  {
+    "id": "R02",
+    "class": "technical",
+    "severity": "high",
+    "risk": "Synthetic data collapse — training on translated/generated Indic degrades diversity.",
+    "mitigation": "Cap synthetic at ~50% of the Indic tier; enforce KenLM-perplexity and n-gram diversity floors; keep natural data in every phase; monitor per-language output entropy.",
+    "note": "§18.1. Related: §3.1/§13.5 flag Sangraha's 162B synthetic portion as machine-translated Wikimedia plus transliteration — \"do not report it as natural Indic data\". §7 adds that translation buys reasoning transfer but not culture."
+  },
+  {
+    "id": "R03",
+    "class": "technical",
+    "severity": "high",
+    "risk": "Tokenizer fertility undermines everything.",
+    "mitigation": "Dedicated workstream, target 1.4–2.1 fertility. Test on all 22 scripts including Ol Chiki and Meitei Mayek before freezing.",
+    "note": "§18.1. §A.3 revises this from a workstream to a gating milestone after \"The Tokenizer Tax\" (arXiv:2607.24276) measured an average 8.0× Indic tokenization tax under cl100k_base (13.0× for Malayalam); §B.3 puts two in-project recipes on the table. See corrections.json X03."
+  },
+  {
+    "id": "R04",
+    "class": "technical",
+    "severity": "high",
+    "risk": "Tier-3 languages (Bodo, Dogri, Santali, Manipuri) remain unusable.",
+    "mitigation": "Accept and communicate honestly, or commission collection. Do not publish inflated per-language claims.",
+    "note": "§18.1. §2 puts these four at <10M tokens, some near-zero; Sangraha's own Stage-3 filtering table drops Bodo to 77 words / 1 document. §15.4 prices commissioned collection at ₹2–5 crore. §B.2 adds the Always-ON lane (~8% of every batch) as the mechanism that guarantees they train at every stage."
+  },
+  {
+    "id": "R05",
+    "class": "technical",
+    "severity": "high",
+    "risk": "Agentic capability requires infrastructure you have not budgeted.",
+    "mitigation": "Per-repo containers, 100-turn rollouts, harness co-development. Start the NeMo Gym work in parallel with data, not after.",
+    "note": "§18.1. §5.2: agentic coding benchmarks measure a model + harness pair, not a model — SWE-bench Verified leaderboard entries are literally \"harness + model\". §A.6 argues agentic coding is the strongest available differentiator and that it is a data-and-environment problem, not a scale problem."
+  },
+  {
+    "id": "R06",
+    "class": "technical",
+    "severity": "medium",
+    "risk": "Benchmark contamination.",
+    "mitigation": "§12.3, plus a fully held-out benchmark and a private eval set.",
+    "note": "§18.1. §12.3 specifies a BENCHMARK_BLOCKLIST of exact eval-item text, 13-gram overlap plus MinHash detection, drop-not-down-weight, and logged drops; Rule 4 prices a private ~3,000-item 22-language eval set at ~₹15–30 lakh. §B.2 records LightningLM dropping a full 31.3B-token pool for contamination as an existence proof at 120B scale."
+  },
+  {
+    "id": "R07",
+    "class": "technical",
+    "severity": "medium",
+    "risk": "Indic OCR quality gates the print archive.",
+    "mitigation": "Fine-tune olmOCR per script; this is a 2–3 month project with very high payoff.",
+    "note": "§18.1. The stated mitigation is superseded by Addendum A.2: do NOT build on olmOCR for Devanagari (olmOCR-7B falls to 40.5 chrF++ on real scans, worst in class); use Qwen3-VL-8B (75.2). See corrections.json X02. The risk itself stands."
+  },
+  {
+    "id": "R08",
+    "class": "technical",
+    "severity": "medium",
+    "risk": "MoE routing collapses across 22 languages.",
+    "mitigation": "Use shared + routed experts (Param-2 uses 64 experts with 2 shared for code-mixing/domain-mixing) and monitor per-language expert utilisation from step one.",
+    "note": "§18.1. BharatGen reported MoE layers naturally grouping related languages (Hindi/Marathi). §B.5 adds MoLGE (arXiv:2607.24030) as converging evidence that language-*group* experts, not per-language experts, are the emerging pattern for 22-language capacity without dilution."
+  },
+  {
+    "id": "R09",
+    "class": "legal",
+    "severity": null,
+    "risk": "ANI ruling reversed on appeal.",
+    "mitigation": "Keep the ✅ clean tier separable so you can retrain a compliant base if needed. Do not architect a corpus you cannot decompose.",
+    "note": "§18.2. The §18.2 table has no severity column, so the document assigns no severity; the section is titled \"Legal and reputational risks\" without labelling rows individually as legal or reputational. §14.1: the ruling is a single-judge interim order resting on a stretched Section 52(1)(a)(i), \"one appeal away from re-examination\"."
+  },
+  {
+    "id": "R10",
+    "class": "legal",
+    "severity": null,
+    "risk": "DPDP erasure request against training data.",
+    "mitigation": "Provenance index from day one; document-hash→shard→checkpoint lineage.",
+    "note": "§18.2; no severity stated. §14.2: requests must be addressed within 90 days (Rule 14), which implies selective removal from pipelines and logs and arguably machine unlearning. \"The erasure-request index is the part teams skip and later regret.\""
+  },
+  {
+    "id": "R11",
+    "class": "legal",
+    "severity": null,
+    "risk": "NC-licensed content leaks into the mix.",
+    "mitigation": "Automated licence-tag propagation; hard-fail the build on any NC tag, not a warning.",
+    "note": "§18.2; no severity stated. §13.1 lists the NonCommercial set: NCERT/DIKSHA textbook and non-textbook content, NPTEL/SWAYAM, AI4Bharat IndicNLP Corpus v1, NLLB mined bitext, ILDC, BharatGen Param-2/Patram checkpoints, some xLAM releases. §14.1: fair dealing does not dissolve an NC licence, which is a contract."
+  },
+  {
+    "id": "R12",
+    "class": "legal",
+    "severity": null,
+    "risk": "Synthetic-data licence chain (Gemma/Llama/Qwen terms).",
+    "mitigation": "Prefer Apache-2.0 generators (Qwen3, some Nemotron) for anything that will be redistributed.",
+    "note": "§18.2; no severity stated. §3.4: BhashaKritika was generated with Krutrim-2, Gemma-3, Llama-3.3 and Sarvam-Translate; §4.1 flags the same question for FineTranslations (Gemma-3-27B). §A.1 offers Apache-2.0 Sarvam-105B as an Indic teacher with zero licence-chain contamination."
+  },
+  {
+    "id": "R13",
+    "class": "legal",
+    "severity": null,
+    "risk": "CSAM in image data.",
+    "mitigation": "PhotoDNA-equivalent hash matching on every image; never ingest original LAION-5B.",
+    "note": "§18.2; no severity stated. §13.4: CSAM was found in LAION-5B (Thiel, Dec 2023) and it was taken down from hosting services; use Re-LAION-5B (Aug 2024) only, and even then with a fresh safety scan. §17 places CSAM hash matching in the safety and compliance gate."
+  },
+  {
+    "id": "R14",
+    "class": "legal",
+    "severity": null,
+    "risk": "Model memorises and regurgitates Indic news.",
+    "mitigation": "Run memorisation testing and publish results — this is now an affirmative legal asset in India.",
+    "note": "§18.2; no severity stated. §14.1: ANI failed to establish that ChatGPT memorised or reproduced its reports, so the burden has shifted onto publishers to prove memorisation or reproduction rather than mere ingestion. §13.4 identifies scraped Indian news sites as where the risk concentrates."
+  },
+  {
+    "id": "R15",
+    "class": "unknown",
+    "severity": "high",
+    "risk": "Bharat Data Sagar's claimed ~20 trillion tokens / ~3 petabytes is unaudited. It is a CEO statement from February 2026, echoed in DST press material, flagged [VENDOR CLAIM] throughout — and \"tokens\" is a soft unit for a 3PB multimodal store. The corpus is also not publicly redistributable.",
+    "mitigation": "Treat as directional (§18.3). §A.7: \"Do not build a plan that depends on this being true.\" §3.6: pursue a formal data-sharing MoU with BharatGen and/or AIKosh contributor status rather than a download; §15.4 ranks the MoU second by value-per-rupee at ₹0–small.",
+    "note": "§18.3, §3.6, §0 honesty note, §A.7 (\"Low confidence — treat as directional only\"). Severity \"high\" is assigned by this extraction brief; §18.3 states no severity. ₹1,293 crore of public investment sits behind the corpus (§3.6), and §A.6 adds a further ₹988.6 crore to BharatGen for a 1-trillion-parameter LLM."
+  },
+  {
+    "id": "R16",
+    "class": "unknown",
+    "severity": null,
+    "risk": "EKA Pre-training Indic Corpus v1's licence string is unspecified — listed only as \"Open Source\" on AIKosh, with no specific licence string on the dataset page.",
+    "mitigation": "Get the exact licence in writing before ingesting (§13.2); inspect the sample archive before committing pipeline time (§3.5).",
+    "note": "§18.3; the document states no severity. Dedup status against Sangraha/CulturaX is also unknown (§3.5). Soket AI Labs is one of the 12 government-funded organisations named in §A.6."
+  },
+  {
+    "id": "R17",
+    "class": "unknown",
+    "severity": null,
+    "risk": "Sarvam's and BharatGen's actual data mixtures are undisclosed. Token counts (12T, 16T, 22T) and rough Indic shares (15–25%; BharatGen's \"over one-third of the training data representing Indian content\") are known; the compositions are not.",
+    "mitigation": null,
+    "note": "§18.3; the document states neither a severity nor a mitigation for this unknown. Addendum A.1 later recovers full *architecture* — not data mixture — for Sarvam-105B/30B from their Hugging Face model cards."
+  },
+  {
+    "id": "R18",
+    "class": "unknown",
+    "severity": "high",
+    "risk": "Whether model weights are a derivative work of CC BY-SA training data is unresolved anywhere in the world. It governs Wikipedia / Wikisource / Wikibooks / FineWiki, FLORES-200, People's Speech and Stack Exchange / Stack Overflow dumps.",
+    "mitigation": "§13.3: most labs proceed; document your position. §10.2 notes Wikimedia has signed 6 AI licensing deals, so a commercial channel exists; §13.3 notes Stack Overflow now licenses data commercially, making free bulk use contested.",
+    "note": "§18.3 and §13.3. Severity \"high\" is assigned by this extraction brief; §18.3 states no severity. §10.2 calls the share-alike obligation on Wikipedia \"a live legal question\"."
+  },
+  {
+    "id": "R19",
+    "class": "unknown",
+    "severity": "high",
+    "risk": "The real deduplicated natural-Indic text volume has never been measured across all sources jointly, by anyone. The document's 250–500B-token figure across all 22 scheduled languages is an inference from Sangraha, FineWeb-2, IndicCorp and HPLT figures — not a measurement — and it drives the entire corpus architecture.",
+    "mitigation": "§19 item 2 / §A.7: measure it in week one. Ingest Sangraha + IndicCorp v2 + FineWeb-2 Indic + HPLT 3.0 Indic + MADLAD Indic, run global MinHash, and publish the number internally. A two-week job, not a six-month one — and a publishable contribution in itself.",
+    "note": "§18.3 and §A.7 (\"Low confidence — treat as directional only\"). §A.7 calls it \"the single most important unverified number in the entire document\". Severity \"high\" is assigned by this extraction brief; the document states no severity."
+  },
+  {
+    "id": "R20",
+    "class": "unknown",
+    "severity": "high",
+    "risk": "R*_D — the repetition decay constant — has never been measured for Indic text, translated text, or synthetic text. Muennighoff et al. measured R*_D ≈ 15 only on English web data (C4-family), at ≤9B parameters and ≤900B tokens. Synthetic data plausibly has a lower repetition ceiling, having less latent diversity per token.",
+    "mitigation": "§B.1 / §B.6: run an Indic repetition-value ablation at 1.5B scale — a one-week job — as a pre-capital gate, before the epoch schedule is fixed.",
+    "note": "§B.1 (\"Two honest limits\"), §B.6 and §B.7. Called \"the second-most-important unmeasured number after the total-unique-Indic-pool measurement of §A.7\". Severity \"high\" is assigned by this extraction brief; the document states no severity. It is load-bearing because §B.1's reframe of the natural-Indic effective share from ~2% to ~7–8% rests on ≤4-epoch repetition holding for Indic, translated and synthetic text. Not listed in §18.3 — it appears only in Addendum B."
+  }
+]

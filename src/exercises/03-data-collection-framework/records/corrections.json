@@ -1,0 +1,114 @@
+[
+  {
+    "id": "X01",
+    "before": "The main document treated Sarvam's models as reference points only — data for token counts (Sarvam-105B on 12T, Sarvam-30B on 16T, §1.1) and for tokenizer fertility of 1.4–2.1 (§1.3) — and §16 planned a 300B trained from scratch.",
+    "after": "Sarvam-105B and Sarvam-30B are Apache 2.0 with full architecture disclosed on their Hugging Face model cards: 105B with 10.3B active, 128 experts with top-8 routing, 1 shared expert, MLA-style decoupled QK (q_head_dim 192, v_head_dim 128, head_dim 576, hidden_size 4096), YaRN scaling factor 40 at 128K, auxiliary-loss-free router balancing, 12T pre-training tokens. That is a licence-free starting position, not a reference point, and it opens three options that did not exist in the main document's framing: upcycle a 105B Apache-2.0 checkpoint toward ~300B, distil it as an Indic teacher with zero licence-chain contamination, or benchmark against it honestly.",
+    "why": "Licence and architecture were read directly from the model cards. A free Apache-2.0 105B MoE with an Indic-optimised tokenizer, already strong on agentic and coding tasks, is now the bar any 300B must beat — and it is the clean alternative to BhashaKritika's bespoke Krutrim Community Licence (§3.4), which the main document said you would otherwise have to replicate yourself. The addendum recommends a 2-week evaluation of Sarvam-105B on the target task set before committing capital: if it lands within ~10% on Indic tasks, the case for a from-scratch 300B rests entirely on coding/agentic/English headroom.",
+    "source": "Hugging Face model cards `sarvamai/sarvam-105b` and `sarvamai/sarvam-30b`; https://www.sarvam.ai/blogs/sarvam-30b-105b (public rollout 6 March 2026)",
+    "severity": "material"
+  },
+  {
+    "id": "X02",
+    "before": "§9.2: \"Fine-tuning olmOCR for Devanagari, Bengali, Tamil, Telugu and Perso-Arabic scripts is arguably the highest-ROI engineering project in this whole plan.\" §17 lists olmOCR/olmOCR-2 as the OCR tool to adopt rather than rebuild, §18.1 makes it the mitigation for the Indic-OCR risk, and §19 item 6 budgets weeks 4–10 for it.",
+    "after": "Do not use olmOCR for Devanagari. On 300 real printed Hindi/Devanagari scans, olmOCR-7B falls to 40.5 chrF++ — the worst-in-class result of ten systems, from the model behind olmOCR-Bench. Build the Indic OCR pipeline on Qwen3-VL-8B instead, the best open model at 75.2, which beats GPT-5.5 (58.5) and runs on a single 24 GB GPU. Report median and catastrophic-failure rate, never mean, and validate exclusively on real scans.",
+    "why": "A ten-system stress test showed that on clean rendered text all ten cluster at chrF++ 91–98 — synthetic text does not separate systems at all, so any vendor benchmark using rendered text is meaningless — while on real scans nine of ten collapse across a 76-point range (EasyOCR 93.6 → 58.3). Strong English OCR does not predict Indic OCR. DeepSeek-OCR has the best median of any system but rare catastrophic repetition failures (outputs up to 71× reference length) destroy its mean. The addendum states the correction \"is worth months of misdirected effort\".",
+    "source": "arXiv:2606.29213 — \"Can OCR-VLMs Read Devanagari? A Stress-Test Benchmark and Post-Correction Study\", published 28 June 2026",
+    "severity": "material"
+  },
+  {
+    "id": "X03",
+    "before": "§1.3 listed tokenizer fertility as one of three things that will determine whether the model is good, asserted that \"your tokenizer decision is worth more than 2T extra tokens\", and told you to \"budget a dedicated workstream\". §18.1 rated it a High technical risk with the same workstream mitigation.",
+    "after": "Elevate the tokenizer from a workstream to a gating milestone — nothing else should start until fertility is validated across all 22 scripts. The penalty is now measured: Indian languages pay an average 8.0× tokenization tax versus English under cl100k_base, reaching 13.0× for Malayalam, which reduces the effective context window to as little as 12% of what English users get for equivalent semantic content. The mechanism is identified and remediable — failed byte-pair merges leaving text fragmented into single-byte tokens, with merge failure correlating with tax at Pearson r = 0.89 — and XLM-R and o200k_base already reduce the average Indic tax by 73%.",
+    "why": "The main document's #1 priority was an assertion; it is now backed by measurement on FLORES-200 across six tokenizers and fourteen Indian languages, with an identified mechanism. The finding also reframes the problem: \"This is not a property of Indic scripts — it is a tokenizer design failure.\" §B.3 adds that because o200k already removes 73% of the tax, the retrofit path (BrahmicTokenizer-131K + Kronecker embeddings) starts closer to the goal than the main report assumed.",
+    "source": "arXiv:2607.24276 — \"The Tokenizer Tax\", 27 July 2026; companion arXiv:2607.23319 — \"BHARATI\", 25 July 2026",
+    "severity": "minor"
+  },
+  {
+    "id": "X04",
+    "before": "§8.2: \"You have ~35,000+ hours of open, permissively-licensed Indic speech across IndicVoices + Vaani + SPRING-INX + Shrutilipi + Kathbath + SYSPIN.\" §19 item 5 budgets weeks 4–8 to ASR-transcribe \"all 35K hours\".",
+    "after": "BhasaAnuvaad alone is ~44,400 hours plus 17M aligned text segments across 13–14 Indian languages and English, under CC BY 4.0. The total open Indic speech pool across BhasaAnuvaad + IndicVoices + Vaani + SPRING-INX + Shrutilipi + Kathbath + SYSPIN + Rasa is well north of 100,000 hours.",
+    "why": "The main document omitted BhasaAnuvaad entirely, understating the open Indic speech pool by roughly 3×. Since §8 calls ASR transcription \"one of the only ways to manufacture genuinely natural Indic text at scale\", the transcription programme and its projected text yield scale with the corrected figure.",
+    "source": "arXiv:2411.04699 · github.com/AI4Bharat/BhasaAnuvaad",
+    "severity": "minor"
+  },
+  {
+    "id": "X05",
+    "before": "§7 described BPCC as the \"largest public Indic parallel corpus; all 22 languages\", without quantifying it.",
+    "after": "BPCC is ~230 million bitext pairs across all 22 scheduled languages.",
+    "why": "The main document's entry was unquantified; the addendum supplies the figure from AI4Bharat's own NMT project page.",
+    "source": "ai4bharat.iitm.ac.in/areas/nmt",
+    "severity": "minor"
+  },
+  {
+    "id": "X06",
+    "before": "§7 listed Samanantar at \"~50M sentence pairs, 11 Indic languages\".",
+    "after": "49.7M pairs across 11 Indic languages, of which 37.4M were newly mined.",
+    "why": "Precision: the rounded ~50M figure is replaced with the published count, and the newly-mined share is added.",
+    "source": "ai4bharat.iitm.ac.in/areas/nmt",
+    "severity": "minor"
+  },
+  {
+    "id": "X07",
+    "before": "§7 listed BPCC's licence as \"CC-BY-4.0 ✅\".",
+    "after": "More precise, and cleaner than stated: BPCC-Mined, NLLB-Seed, ILCI, MASSIVE and BPCC-BT are released under CC0 — \"no rights reserved\". AI4Bharat waived all rights to the packaging.",
+    "why": "The blanket CC-BY-4.0 characterisation understated how permissive the components actually are; CC0 removes even the attribution obligation for those subsets.",
+    "source": "github.com/ai4bharat/IndicTrans2 (repo licence table)",
+    "severity": "minor"
+  },
+  {
+    "id": "X08",
+    "before": "§17 listed IndicTrans2 (AI4Bharat, all 22 languages, MIT) as the translation tool to adopt, and §7/§16 built the synthesis plan around it.",
+    "after": "IndicTrans3-beta now exists, with document-level MT. For speech, IndicSeamless — SeamlessM4T-v2 fine-tuned on BhasaAnuvaad — is SOTA for Indic speech-to-text translation, beating cascaded approaches on both FLEURS and BhasaAnuvaad-test.",
+    "why": "The main document's tooling table was one generation behind, and the cascaded ASR-then-MT approach it implies for speech is no longer the best option.",
+    "source": "AI4Bharat Hugging Face org",
+    "severity": "minor"
+  },
+  {
+    "id": "X09",
+    "before": "§8.1 covered Indic TTS thinly — IndicTTS (IIT Madras, 13 languages, research-use 🟡) and SYSPIN (900+ hours, 9 languages) — with no all-22-language open TTS or ASR named.",
+    "after": "TTS and ASR coverage is materially better than stated: Rasa (500+ hours of expressive studio speech, 20 speakers, 13 languages), IndicParler-TTS (the first open TTS covering all 22 languages, with prompt-controlled style), IndicF5 (11 languages), and IndicConformer (ASR for all 22).",
+    "why": "The addendum records the main document's TTS coverage as \"understated\"; these releases change what is available off the shelf for the multimodal and ASR-transcription workstreams.",
+    "source": "AI4Bharat Hugging Face org",
+    "severity": "minor"
+  },
+  {
+    "id": "X10",
+    "before": "Not mentioned anywhere in the main document.",
+    "after": "The FBI and CIA datasets (AI4Bharat) exist, for building and testing multilingual LLM *evaluators*.",
+    "why": "They are relevant to the recommendation to build a private Indic evaluation set — an evaluator you can trust is a prerequisite for the uncontaminated measuring instrument §12.3 Rule 4 asks you to commission.",
+    "source": "AI4Bharat Hugging Face org",
+    "severity": "minor"
+  },
+  {
+    "id": "X11",
+    "before": "§16 budgeted the corpus in unique tokens seen once: ~0.3T naturally-occurring Indic tokens exist, therefore natural Indic can only be ~2.0% of a 15T mix (\"that ratio is uncomfortable and it is also unavoidable\"), the 40–70% dedup loss is the single most likely schedule-breaker (§18.1), and the 20T milestone requires \"aggressive multi-epoch reuse\" left hand-waved.",
+    "after": "Budget in unique pool × deliberate epoch schedule = effective tokens. ~0.3T unique natural Indic × 4 epochs ≈ 1.2T effective at roughly zero quality cost, with a theoretical ceiling of ~4.8T effective at 16× — raising the natural-Indic effective share from ~2% to ~7–8% without collecting a single new token. Two-to-four epochs on the highest-quality tiers (FineWeb-Edu, curated-clean) is cheap and standard. The dedup risk is half-defused: dedup down to the unique pool, then choose repetition deliberately, because dedup ≠ see-once. The 20T milestone becomes principled and quantified — ~11–13T unique plus a scheduled epoch plan concentrated on the scarce, high-value tiers.",
+    "why": "The section-16 math was \"Chinchilla-brained\": it silently assumed every token is seen once. Muennighoff et al. measured that up to 4 epochs of repeated data is almost as good as fresh data — an 8.7B model trained 4 epochs on 44B unique tokens finished with only 0.5% higher validation loss than a single-epoch model on 178B unique tokens — with a decay constant R*_D ≈ 15, worthlessness at 40 epochs, a hard ceiling at U·(1+R*_D) ≈ 16× the unique pool, and an allocation rule that when data-constrained you scale epochs faster than parameters. Two honest limits attach: the measurements are English web data at ≤9B parameters, and nobody has measured R*_D for Indic, translated or synthetic text; and repetition works on whole tiers, not slivers (up-sampling 0.1% of a corpus 100× significantly degrades performance).",
+    "source": "arXiv:2305.16264 — Muennighoff et al., \"Scaling Data-Constrained Language Models\" (in-project); arXiv:2401.00448 — Sardana & Frankle, cited at thesis level only",
+    "severity": "material"
+  },
+  {
+    "id": "X12",
+    "before": "§17's pipeline treated the mixture as static and phase-scheduled (§16.3), and considered neither what a per-iteration data selector costs at scale nor what an English-trained quality classifier does to Indic data.",
+    "after": "Static phase-scheduled mixing is confirmed as the production backbone — it is what the only in-project 120B run actually shipped with. Add an Always-ON lane: ~8% of every batch reserved for Tier-2/3 Indic scripts, agentic/world-model traces and benchmark training splits, bypassing every selector and quality classifier. Demote dynamic selection to ablation-stage tooling, never with an English-heavy reference proxy, and evaluate DataOrchestra for the *cleaning* stage instead of the selection stage.",
+    "why": "LightningLM's golden proxy was English-heavy (cosine 0.876 with the English web band), so OPUS systematically under-valued Indic data and would have rejected it — \"a single selector should not govern data whose value it cannot see\". FineWeb-Edu-style quality classifiers carry exactly the same bias, so the Always-ON lane is the mechanism that guarantees Bodo, Santali, Dogri and Manipuri actually train at every stage. The economics also do not hold up: OPUS cost ~17% wall-clock throughput at the 5B stage in a sharded stack (30,429 vs 36,737 tok/s) against the 4.7% its own paper reports, and was disabled at 2B and again from 9B onward. The document marks this a 🔴 REVISION, though not one of the three labelled MATERIAL CORRECTIONs.",
+    "source": "arXiv:2606.07404 — LightningLM 0.1V technical report (in-project); arXiv:2607.24717 — DataOrchestra, 28 July 2026",
+    "severity": "minor"
+  },
+  {
+    "id": "X13",
+    "before": "The main document framed the programme as which 300B to train from scratch — §1.2 recommends architecting for 15T tokens, and §16/§19 sequence a from-scratch run.",
+    "after": "The $1B question is not \"which 300B do we train\" but \"scratch vs grow\", and the burden of proof now sits on scratch. Insert, before any capital commitment, a 4-week head-to-head at ~2B scale: from-scratch on your mix versus grown/upcycled, on identical data, judged on Indic + code held-out loss.",
+    "why": "LightningLM grew a 120B sparse MoE (460 routed experts, top-12 routing, 5.93B active ≈ 5% of 118.67B stored) in four stages from a 1.78B dense seed, trained end-to-end on a single eight-GPU node at ~67 days and ~$100K-class economics; Grove-MoE upcycled Qwen3-30B-A3B-Base into a 33B MoE; and Sarvam-105B is Apache 2.0 with its full MoE recipe on the model card (X01). Growing inherits both the tokenizer and Indic competence at a large multiple less pre-training cost. For calibration, Llama 4 trained on >30T tokens and Qwen3 on 36T across 119 languages — the 15T target is respectable but not frontier-scale, which is why the effective-token and growth machinery matter more than raw collection.",
+    "source": "arXiv:2606.07404 — LightningLM 0.1V (in-project); Grove-MoE (in its reference list); Hugging Face model cards per §A.1; in-project Session-3 notes",
+    "severity": "minor"
+  },
+  {
+    "id": "X14",
+    "before": "§6: \"Indic math/STEM is essentially absent.\"",
+    "after": "Amend to \"nearly absent\": PatiGonit22K exists — 22,441 Bengali math word problems, simple through multi-operation, translated, annotated, culturally adapted and verified. The generate-and-translate strategy of §6 still stands, since this is roughly four orders of magnitude below MegaMath.",
+    "why": "A category the main document said was empty turned out not to be, as of the 28 July 2026 cs.CL announcement. The document marks the row 🟡 \"Corrects the report\" and keeps the strategic conclusion unchanged because of the scale gap.",
+    "source": "arXiv:2607.22859 — PatiGonit22K, announced 28 July 2026",
+    "severity": "minor"
+  }
+]

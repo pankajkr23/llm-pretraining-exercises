@@ -21,13 +21,24 @@ from typing import Any
 from .config import Config
 from .models import CONFIDENCES, GOTCHA_TYPES, PROVENANCES, SEVERITIES, VERDICTS
 
-# The spine the Atlas is expected to produce. Drift here means content was gained or lost.
+# The spine the Atlas actually produces. Drift here means content was gained or lost.
+#
+# Two counts differ from the estimates in `docs/TODO.md`, and the extraction was right to differ —
+# padding to hit a planned number would be inventing rows (ground rule 7):
+#
+#   risks         20, not 21 — §18 holds 8 technical + 6 legal + 5 unknowns = 19, plus the R*_D
+#                             unknown, which appears only in Addendum B. There is no 21st.
+#   market.deals  17, not 16 — §15.2's table lists 15 (including the Anthropic settlement row the
+#                             source prints there) and §15.3 names 2 more.
+#
+# The reference tier then totals 179 rows, which is what TODO's own per-file table sums to; the
+# "~186" in its prose was approximate.
 EXPECTED_COUNTS: dict[str, int] = {
     "catalog": 145,
     "benchmarks": 31,
     "priors": 17,
     "papers": 19,
-    "risks": 21,
+    "risks": 20,
     "confidence": 21,
     "corrections": 14,
     "tools": 17,
@@ -36,6 +47,9 @@ EXPECTED_COUNTS: dict[str, int] = {
     "languages": 22,
     "architectures": 5,
     "milestones": 4,
+    # `market.json` holds two arrays; both are counted so neither can quietly empty.
+    "market.deals": 17,
+    "market.trends": 3,
 }
 
 TIERS: frozenset[str] = frozenset({"GREEN", "AMBER", "RED"})
@@ -140,6 +154,32 @@ def validate_benchmark(record: dict[str, Any], errors: list[str]) -> None:
             )
 
 
+def _check_row_ids(rows: list[Any], where: str, errors: list[str]) -> None:
+    """Check that reference rows carry unique ids.
+
+    The reference tier is lower-ceremony than the catalogue, but a duplicate id still means one row
+    silently shadows another once the arrays are indexed for export.
+
+    Args:
+        rows: The loaded rows.
+        where: Record name, for the error message.
+        errors: Accumulator.
+    """
+    seen: set[str] = set()
+    for i, row in enumerate(rows):
+        if not isinstance(row, dict):
+            errors.append(f"{where}[{i}]: expected an object, got {type(row).__name__}")
+            continue
+        # `languages` is keyed by ISO code rather than a synthetic id.
+        rid = row.get("id") or row.get("code")
+        if not rid:
+            errors.append(f"{where}[{i}]: row has no id")
+        elif rid in seen:
+            errors.append(f"{where}[{i}]: duplicate id {rid!r}")
+        else:
+            seen.add(str(rid))
+
+
 def load_json(path: Path) -> Any:
     """Load one JSON file with a useful error message.
 
@@ -195,18 +235,28 @@ def validate(cfg: Config | None = None) -> tuple[dict[str, int], list[str]]:
     for name in EXPECTED_COUNTS:
         if name in ("catalog", "benchmarks"):
             continue
-        path = cfg.records_dir / f"{name}.json"
+        # "market.deals" addresses one array inside a multi-array record file.
+        file_stem, _, array_key = name.partition(".")
+        path = cfg.records_dir / f"{file_stem}.json"
         if not path.exists():
-            errors.append(f"missing records/{name}.json")
+            errors.append(f"missing records/{file_stem}.json")
             counts[name] = 0
             continue
         content = load_json(path)
-        rows = content.get("deals", []) if isinstance(content, dict) else content
+        if array_key:
+            if not isinstance(content, dict) or array_key not in content:
+                errors.append(f"records/{file_stem}.json: expected an object with '{array_key}'")
+                counts[name] = 0
+                continue
+            rows = content[array_key]
+        else:
+            rows = content
         if not isinstance(rows, list):
-            errors.append(f"records/{name}.json: expected a list (or an object with 'deals')")
+            errors.append(f"records/{name}.json: expected a list of rows")
             counts[name] = 0
             continue
         counts[name] = len(rows)
+        _check_row_ids(rows, name, errors)
 
     for name, expected in EXPECTED_COUNTS.items():
         actual = counts.get(name, 0)
