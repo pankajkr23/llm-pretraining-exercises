@@ -21,12 +21,14 @@ Component notes. Repo-wide conventions: root `AGENTS.md`.
   `web/data.json` — the precomputed, provenance-typed pipeline output the static site reads.
 - **Every number is provenance-typed** `{value, unit, provenance: "measured"|"estimated"|"unknown", source}` —
   never render a bare number; never invent a figure (unknown → say so). See `docs/DESIGN.md` §6.
-- **The pages carry interactive explainers, not widgets.** An explainer teaches one idea: framing
-  line → a title that is a question → prose with the key numbers bold → controls whose presets are
-  real alternatives from the data → live stat tiles showing their own arithmetic → a chart with
-  named zones and a marker → a callout that interprets the *current* state → a footnote on
-  provenance. Anything that only draws a shape is unfinished. Spec and worked examples:
-  `docs/DESIGN.md` §4; code: `web/report/` §11, §6, and §3 for the honest-gap variant.
+- **The pages carry interactive explainers, not widgets.** An explainer makes one claim, and the
+  thing the reader does is the *proof* of that claim, not an illustration of it. If a static image
+  would teach the same thing, write a paragraph instead. Anything that only draws a shape is
+  unfinished. Read `../../../docs/EXPLAINER_PROMPT.md` (what to build, and when **not** to) and
+  `../../../docs/EXPLAINER_PATTERN.md` (how — DOM, class names, state-and-render shape, voice)
+  before starting one. **Reference implementation: `web/report/` §1**, the gate — scrollytelling ·
+  Adversary, reader-supplied input, verified against `dataframework/shingles.py`. Earlier explainers
+  (§11, §6, §3) predate the pattern and are dashboard columns; treat §1 as the standard.
 - **Web = zero runtime dependencies** (hand-written SVG/CSS/vanilla JS), inherits the repo design
   system (`docs/DESIGN.md` at repo root), served per-slug at `/03-data-collection-framework/`. Ship a
   `NOTICE` disclaiming org affiliation. Non-ASCII glyphs: edit with Edit/Write, never byte-mode `perl`/`sed`.
