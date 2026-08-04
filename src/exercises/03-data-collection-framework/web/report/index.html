@@ -40,9 +40,53 @@
       .fill.synth { background: var(--gotcha-composition); }
       .fill.gap { background: repeating-linear-gradient(45deg, var(--track), var(--track) 5px, var(--faint) 5px, var(--faint) 6px); }
 
-      .gatebox { font-family: var(--mono); font-size: 13px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; white-space: pre-wrap; line-height: 1.65; }
-      .gatebox .fail { color: var(--grade-x); font-weight: 700; }
-      .gatebox .pass { color: var(--grade-a); font-weight: 700; }
+      /* --- §1 the gate · scroll-driven, editorial register (EXPLAINER_PROMPT §§15,17) ---
+       * No card and no control row: the reader's position through the prose performs the attacks,
+       * so there is nothing to press (§18.2). The one input is their own sentence (§11). */
+      .scrolly { display: grid; grid-template-columns: minmax(0, 1fr) 296px; gap: 34px; align-items: start; }
+      .qbox { grid-column: 1 / -1; }
+      .qbox label { display: block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); margin-bottom: 6px; }
+      .qinput { width: 100%; font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; resize: vertical; }
+      .qinput:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      .step { min-height: 46vh; display: flex; flex-direction: column; justify-content: center; border-left: 2px solid var(--track); padding-left: 18px; opacity: 0.34; transition: opacity 0.18s, border-color 0.18s; }
+      .step.on { opacity: 1; border-left-color: var(--accent); }
+      .step:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 3px; }
+      .step .marg { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); margin-bottom: 7px; }
+      .step p { margin: 0; max-width: 44ch; }
+      .step .shard { font-family: var(--mono); font-size: 11.5px; line-height: 1.5; color: var(--muted); max-width: 44ch; margin-top: 11px; padding-top: 9px; border-top: 1px solid var(--line); white-space: pre-wrap; overflow-wrap: anywhere; }
+      .step .inline { display: none; font-family: var(--mono); font-size: 11px; margin-top: 8px; }
+
+      /* One oversized mono figure, hairlines instead of a border, provenance in the gutter. */
+      .gsticky { position: sticky; top: 11vh; }
+      .gfig { border-top: 1.5px solid var(--ink); border-bottom: 1px solid var(--line); padding: 12px 0 14px; }
+      .fignum { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
+      .gbig { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 3.3rem; line-height: 1; letter-spacing: -0.03em; margin: 12px 0 3px; }
+      .gbig.hit { color: var(--grade-x); }
+      .gsub { font-size: 12px; color: var(--muted); max-width: 30ch; }
+      .gverdict { display: inline-block; font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; border: 1px solid currentColor; border-radius: 5px; padding: 2px 8px; margin-top: 13px; color: var(--faint); }
+      .gverdict.hit { color: var(--grade-x); }
+      .strip { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 15px; }
+      .tick { width: 9px; height: 19px; border-radius: 2px; background: var(--track); transition: background 0.18s; }
+      .tick.reg { background: var(--accent); }
+      .tick.hit { background: var(--grade-x); }
+      .gnote { font-size: 11.5px; color: var(--muted); margin-top: 12px; }
+      .grail { margin-top: 13px; padding-top: 11px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--muted); }
+      .grail b { color: var(--grade-b); font-weight: 700; }
+      .pill { display: inline-block; font-family: var(--mono); font-size: 11.5px; font-weight: 700; border-radius: 980px; padding: 3px 12px; background: var(--accent-soft); color: var(--accent); margin-top: 14px; }
+
+      @media (max-width: 760px) {
+        .scrolly { grid-template-columns: 1fr; gap: 0; }
+        .gsticky { position: sticky; top: 0; order: -1; background: var(--bg); padding: 10px 0 6px; z-index: 3; }
+        .step { min-height: 34vh; }
+      }
+
+      /* The complete end state: every attack and its verdict, with nothing left to scroll for. */
+      @media (prefers-reduced-motion: reduce) {
+        .step { min-height: 0; opacity: 1; margin-bottom: 22px; }
+        .step .inline { display: block; }
+        .gsticky { position: static; }
+      }
 
       .verdictline { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; font-family: var(--mono); font-size: 13px; margin-top: 12px; }
       .chip { border: 1px solid currentColor; border-radius: 5px; padding: 1px 8px; font-size: 11.5px; font-weight: 700; }
@@ -162,7 +206,18 @@
         .barrow { grid-template-columns: 110pt 1fr 52pt; gap: 5pt; font-size: 7.6pt; }
         .barrow .track { height: 7pt; }
         .bars { gap: 2.5pt; }
-        .gatebox { font-size: 7.4pt; padding: 5pt 6pt; line-height: 1.45; }
+        /* Paper cannot scroll, so every attack prints with its own verdict beside it. */
+        .scrolly { grid-template-columns: 1fr; gap: 0; }
+        .step { min-height: 0; opacity: 1 !important; margin: 0 0 4pt; padding-left: 5pt; border-left-width: 1pt; }
+        .step p, .step .shard { max-width: none; }
+        .step .shard { font-size: 7pt; margin-top: 2pt; padding-top: 2pt; }
+        .step .inline { display: block; font-size: 7.4pt; font-weight: 700; margin-top: 2pt; }
+        .step .marg { font-size: 6.8pt; margin-bottom: 2pt; }
+        .gsticky { position: static; }
+        .gfig { padding: 4pt 0; border-top-width: 1pt; }
+        .gbig { font-size: 20pt; margin: 3pt 0 1pt; }
+        .tick { width: 5pt; height: 10pt; }
+        .qbox { display: none; }
         .stage { padding: 2pt 5pt; font-size: 7.6pt; opacity: 1 !important; }
         .task { font-size: 7.2pt; }
         .task .lane { height: 9pt; }
@@ -277,29 +332,256 @@
         const START = data.milestones.presets.find((p) => p.id === '5T') || data.milestones.presets[0];
         const rec = data.milestones.presets.find((p) => p.recommended) || data.milestones.presets[2];
 
-        /* ---------------------------------------------------- 1 · The Gate */
+        /* ---------------------------------------------------- 1 · The Gate (Adversary)
+         *
+         * The reader tries to smuggle a question they wrote past the contamination check, and the
+         * scroll position performs the attacks. Everything on screen is computed here, in the
+         * browser, from their sentence — no figure is asserted.
+         *
+         * normalise() and shingle() are ported from dataframework/shingles.py exactly. The pipeline
+         * hashes each window with blake2b because its index ships publicly; nothing leaves this
+         * page, so windows are compared as text and no digest is fabricated to look authentic.
+         *
+         * INV-1b: no benchmark item text may appear in the bundle, so the protected question is a
+         * synthetic default the reader is invited to replace with their own.
+         */
         {
-          const box = $('div', 'gatebox');
-          const play = () => {
-            box.replaceChildren();
-            const fail = $('span', 'fail', 'CONTAMINATION GATE — FAILED\n');
-            box.append(fail);
-            box.append(
-              `  a training shard collides with MILU on 12 of its 13-gram shingles\n` +
-              `  action: drop the shard, or drop the benchmark from the eval set\n\n`);
-            box.append($('span', 'pass', 'CLEAN SHARD — PASSED\n'));
-            box.append('  no collisions against any registered benchmark');
+          const N = 13; // dataframework/shingles.py SHINGLE_N
+          const DEFAULT_Q =
+            'In which year did the Indian Railways first run a scheduled passenger service ' +
+            'between Bombay and Thane, and how long was that inaugural route in miles?';
+          const LEAD = 'Ordinary web text about monsoon agriculture in the Gangetic plain. ';
+          const TAIL = ' More ordinary web text about irrigation and canal systems.';
+
+          const words = (t) => t.toLowerCase().match(/[\p{L}\p{N}_]+/gu) || [];
+          const windows = (t) => {
+            const w = words(t);
+            if (!w.length) return [];
+            if (w.length < N) return [w.join(' ')];
+            return Array.from({ length: w.length - N + 1 }, (_, i) => w.slice(i, i + N).join(' '));
           };
-          const w = widget(box);
-          animateOnce(w, play);
-          playAll.push(play);
-          main.append(sect(1, 'The gate that comes first',
-            [document.createTextNode('Everything else here is an argument about proportions. This one is a hard stop: if training text overlaps the evaluation set, every score afterwards is fiction. So the contamination check is built before any of it — plant a known benchmark item in an ordinary shard and the build fails and '),
-             $('b', '', 'names the benchmark'),
-             document.createTextNode('. It runs in CI, so it cannot be forgotten. Coverage today is limited by what eval items we hold — see '),
-             ref('the instruments', 'benchmarks'), document.createTextNode('.')],
-            w,
-            'Reproduced from the test suite. A gate that has never been watched to fail is not a gate.'));
+          /* Insert a filler word every `gap` words. gap < N breaks every window; gap = Infinity is
+           * a single insertion at the midpoint. Both are mechanical, so they work on any input. */
+          const wedge = (text, gap) => {
+            const parts = text.split(/(\s+)/).filter((s) => s.trim());
+            if (gap === Infinity) {
+              const at = Math.min(N, Math.floor(parts.length / 2));
+              return [...parts.slice(0, at), 'roughly', ...parts.slice(at)].join(' ');
+            }
+            return parts.flatMap((w, i) => ((i + 1) % gap === 0 ? [w, 'roughly'] : [w])).join(' ');
+          };
+
+          const ATTACKS = [
+            { marg: 'The index',
+              lead: 'What we are protecting is one question we intend to grade the model on. The gate hashes it into every ',
+              bold: 'thirteen-word window', tail: ' it contains and keeps only those. The sentence itself never ships.',
+              transform: null },
+            { marg: 'Attack 1 · paste it',
+              lead: 'Now it turns up inside an ordinary training shard, copied exactly. Every window matches, so ',
+              bold: 'the shard is dropped', tail: ' and the gate names what it collided with.',
+              transform: (q) => q },
+            { marg: 'Attack 2 · shout it',
+              lead: 'Uppercase it, strip the punctuation, wrap it in quotation marks. The index compares ',
+              bold: 'lowercased word tokens', tail: ', so none of that is visible to it. Nothing changes.',
+              transform: (q) => `“${q.toUpperCase().replace(/[?,.;:]/g, '')}!”` },
+            { marg: 'Attack 3 · reflow it',
+              lead: 'Break it across lines, double the spaces, indent it like a pull quote. Whitespace is not a token either, so ',
+              bold: 'the window count is identical', tail: '.',
+              transform: (q) => q.split(/\s+/).map((w, i) => ((i + 1) % 6 === 0 ? `${w}\n   ` : w)).join(' ') },
+            { marg: 'Attack 4 · add a word',
+              lead: 'Slip one word into the middle. That destroys ',
+              bold: 'every window spanning it', tail: ' — and the windows either side survive, which is enough. Still dropped.',
+              transform: (q) => wedge(q, Infinity) },
+            { marg: 'Attack 5 · add one every twelve',
+              lead: 'Do it again every twelve words and no run of thirteen survives intact. ',
+              bold: 'Nothing is dropped', tail: '. The question is still plainly the same question, and the gate cannot see it. That is the boundary of the method, not a defect in this implementation of it.',
+              transform: (q) => wedge(q, N - 1) },
+          ];
+
+          /* ---- the pinned figure ---- */
+          const big = $('div', 'gbig');
+          const gsub = $('div', 'gsub');
+          const verdict = $('div', 'gverdict');
+          const strip = $('div', 'strip');
+          const gnote = $('div', 'gnote');
+          const fig = $('div', 'gfig');
+          fig.append($('div', 'fignum', 'Fig. 1 — the gate, against your sentence'), big, gsub, verdict, strip, gnote);
+
+          const rail = $('div', 'grail');
+          rail.append(
+            document.createTextNode('The live index holds '),
+            renderNumber(data.contamination.shingle_count),
+            document.createTextNode(' and covers '),
+            $('b', '', data.contamination.coverage),
+            document.createTextNode(' of the '),
+            renderNumber({
+              value: data.record_counts.benchmarks,
+              unit: 'benchmarks',
+              provenance: data.record_counts.provenance,
+              source: data.record_counts.source,
+            }),
+            document.createTextNode(' registered by name. What you defeated above is the mechanism, run against your own sentence — not a certificate that the corpus is clean.'),
+          );
+
+          const gsticky = $('div', 'gsticky');
+          gsticky.append(fig, rail, $('div', 'pill', '13 words = a fingerprint'));
+
+          /* ---- the prose steps ---- */
+          const question = $('textarea', 'qinput');
+          question.rows = 3;
+          question.id = 'gate-q';
+          question.value = DEFAULT_Q;
+          question.spellcheck = false;
+
+          const qbox = $('div', 'qbox');
+          const qlabel = $('label', '', 'The question we are protecting — replace it with one of your own');
+          qlabel.htmlFor = 'gate-q';
+          qbox.append(qlabel, question);
+
+          const stepEls = ATTACKS.map((a, i) => {
+            const el = $('div', 'step');
+            el.tabIndex = 0;
+            el.dataset.i = String(i);
+            const p = $('p');
+            p.append(document.createTextNode(a.lead), $('b', '', a.bold), document.createTextNode(a.tail));
+            el.append($('div', 'marg', a.marg), p);
+            el.append($('div', 'shard'), $('div', 'inline'));
+            el.addEventListener('focus', () => show(i));
+            return el;
+          });
+
+          const steps = $('div', 'steps');
+          steps.append(...stepEls);
+
+          /* ---- state ---- */
+          let registry = new Set();
+          let current = 0;
+
+          /* A question the index cannot hold has no verdict to give, and saying "nothing dropped"
+           * would read as a successful attack. Under 13 words `shingle()` emits a single
+           * whole-text gram, which can never match a 13-gram drawn from a longer shard — so a
+           * short item is undetectable once embedded. That is the pipeline's behaviour, not this
+           * page's: see the note under Fig. 1. */
+          const guard = () => {
+            const n = words(question.value).length;
+            if (!n) return { verdict: 'NOTHING TO PROTECT', note: 'With no question in the index there is nothing for a shard to collide with.', inline: '→ no question registered' };
+            if (n < N) return {
+              verdict: 'NOT INDEXABLE',
+              note: `A question of ${n} words is shorter than the 13-word window, so it hashes to a single whole-text gram that cannot match inside a longer shard. Short items are undetectable — give it 13 words or more.`,
+              inline: `→ ${n} words; needs ${N}`,
+            };
+            return null;
+          };
+
+          /* `marks` is one flag per window of the shard, in order, so the strip shows *where* the
+           * collisions are — clustered where the question sits, never in the surrounding text. */
+          const stateFor = (i) => {
+            const a = ATTACKS[i];
+            if (!a.transform) return { text: null, marks: registry.size ? Array(registry.size).fill(false) : [], hits: registry.size };
+            const text = a.transform(question.value);
+            const marks = windows(LEAD + text + TAIL).map((x) => registry.has(x));
+            return { text, marks, hits: marks.filter(Boolean).length };
+          };
+
+          const show = (i) => {
+            current = i;
+            stepEls.forEach((el, k) => el.classList.toggle('on', k === i));
+            const short = guard();
+            if (short) {
+              big.replaceChildren(renderNumber(
+                { value: null, unit: 'windows', provenance: 'unknown', source: 'question is shorter than the 13-word window' },
+                { unit: false },
+              ));
+              big.classList.remove('hit');
+              gsub.textContent = 'no verdict is available for this question';
+              verdict.textContent = short.verdict;
+              verdict.classList.remove('hit');
+              gnote.textContent = short.note;
+              strip.replaceChildren();
+              return;
+            }
+            const st = stateFor(i);
+            const caught = Boolean(ATTACKS[i].transform) && st.hits > 0;
+
+            big.replaceChildren(renderNumber(
+              { value: st.hits, unit: 'windows', provenance: 'measured', source: 'computed in your browser' },
+              { unit: false },
+            ));
+            big.classList.toggle('hit', caught);
+            gsub.textContent = ATTACKS[i].transform
+              ? `of the shard's ${st.marks.length} thirteen-word windows match the index`
+              : 'thirteen-word windows taken from your question';
+            verdict.textContent = ATTACKS[i].transform
+              ? (caught ? 'SHARD DROPPED' : 'NOTHING DROPPED')
+              : 'REGISTERED';
+            verdict.classList.toggle('hit', caught);
+            gnote.textContent = ATTACKS[i].transform
+              ? (caught
+                ? 'Named source: your question. One matching window is already enough — thirteen consecutive words agreeing by chance is not a thing that happens.'
+                : 'No red anywhere is the alarm. The gate removes nothing, so this shard would be trained on.')
+              : 'Red marks what the gate removes. Here it removes nothing yet.';
+
+            strip.replaceChildren();
+            st.marks.slice(0, 44).forEach((matched) => {
+              const t = $('div', 'tick');
+              if (!ATTACKS[i].transform) t.classList.add('reg');
+              else if (matched) t.classList.add('hit');
+              strip.append(t);
+            });
+          };
+
+          const recompute = () => {
+            registry = new Set(windows(question.value));
+            const short = guard();
+            stepEls.forEach((el, i) => {
+              const st = stateFor(i);
+              const caught = !short && Boolean(ATTACKS[i].transform) && st.hits > 0;
+              el.querySelector('.shard').textContent = st.text === null
+                ? `${registry.size} windows registered`
+                : `…${LEAD.trim()} ${st.text} ${TAIL.trim()}`;
+              const inl = el.querySelector('.inline');
+              if (short) inl.textContent = short.inline;
+              else inl.textContent = ATTACKS[i].transform
+                ? `→ ${st.hits} of ${st.marks.length} windows match — ${caught ? 'SHARD DROPPED' : 'NOTHING DROPPED'}`
+                : `→ ${registry.size} windows registered`;
+              inl.style.color = caught ? 'var(--grade-x)' : 'var(--muted)';
+            });
+            show(current);
+          };
+          question.addEventListener('input', recompute);
+
+          /* Scroll position is the control, so there is no control row to operate (§18.2). Tab
+           * through the steps does the same job for anyone not using a pointer. */
+          if ('IntersectionObserver' in window) {
+            const io = new IntersectionObserver(
+              (entries) => entries.forEach((e) => { if (e.isIntersecting) show(Number(e.target.dataset.i)); }),
+              { rootMargin: '-45% 0px -45% 0px' },
+            );
+            stepEls.forEach((el) => io.observe(el));
+          }
+
+          const s = $('section', 'gate');
+          s.id = 's1';
+          const h = $('h2');
+          h.append($('span', 'n', '1'), document.createTextNode('Thirteen words in a row is a fingerprint'));
+          const claim = $('p', 'claim');
+          claim.append(
+            document.createTextNode('Everything else here argues about proportions. This one is a hard stop: if training text overlaps the evaluation set, every score afterwards is fiction. Below is the check itself, and it is worth trying to beat — '),
+            $('b', '', 'the sentence is yours to change'),
+            document.createTextNode(', and scrolling attacks it. Watch how far '),
+            $('b', '', 'cosmetic edits'),
+            document.createTextNode(' get, and where they stop. Coverage today is limited by what eval items we hold — see '),
+            ref('the instruments', 'benchmarks'), document.createTextNode('.'),
+          );
+          const body = $('div', 'scrolly');
+          body.append(qbox, steps, gsticky);
+          const figure = $('figure');
+          figure.append(body, $('figcaption', '', 'Fig. 1 — 13-word shingles, the algorithm in dataframework/shingles.py, run live on the text above. The pipeline stores each window as a truncated blake2b digest because that index ships publicly; nothing here leaves your browser, so the windows are compared as text.'));
+          s.append(h, claim, figure);
+          main.append(s);
+
+          recompute();
+          playAll.push(() => show(ATTACKS.length - 1));
         }
 
         /* ---------------------------------------------------- 2 · Vocab crossing */
