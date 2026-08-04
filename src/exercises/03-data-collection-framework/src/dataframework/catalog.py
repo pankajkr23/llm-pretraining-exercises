@@ -47,6 +47,11 @@ EXPECTED_COUNTS: dict[str, int] = {
     "languages": 22,
     "architectures": 5,
     "milestones": 4,
+    # Not in the plan's list of twelve arrays, but Phase 5 needs a legal surface and the Atlas has
+    # the material. Six limits on the copyright ruling, not the five the design doc cites: the
+    # numbered list's third item is the unresolved hallucination claim, and the no-TDM-exception
+    # point sits in a separate paragraph. Dropping one to reach five would have been tidying.
+    "legal": 53,
     # `market.json` holds two arrays; both are counted so neither can quietly empty.
     "market.deals": 17,
     "market.trends": 3,

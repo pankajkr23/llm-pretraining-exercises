@@ -244,6 +244,51 @@
           add(s, 'Licensing', 'Datasets');
         }
 
+        // ---------------------------------------------------------------- #legal
+        {
+          const legal = records.legal || [];
+          const by = (kind) => legal.filter((r) => r.kind === kind);
+          const s = section('legal', 'What the law actually allows',
+            'Given its own surface rather than buried in a licence column, because it is the part that decides whether any of this is buildable. A court held that training on copyrighted text is fair dealing for research — but that holding is narrow, and it does not touch the two things that bind hardest: contracts you agreed to, and personal data.');
+
+          const rulings = by('ruling');
+          if (rulings.length) {
+            s.append($('h3', '', 'The ruling'));
+            s.append(table(['what was held', 'status', 'source'],
+              rulings.map((r) => [r.detail, r.status || '—', r.source || '—'])));
+          }
+
+          const limits = by('limit');
+          if (limits.length) {
+            s.append($('h3', '', `Why it is narrower than it sounds — ${limits.length} limits`));
+            s.append($('p', 'sub', 'Each of these is a way the ruling could fail to protect you.'));
+            s.append(table(['limit', 'detail'], limits.map((r) => [r.title, r.detail])));
+          }
+
+          const obligations = by('obligation');
+          if (obligations.length) {
+            s.append($('h3', '', 'What you owe regardless'));
+            s.append($('p', 'sub', 'Data-protection duties are the harder constraint: no ruling about copyright dissolves them, and the erasure right implies being able to remove one person from a trained model.'));
+            s.append(table(['obligation', 'regime', 'what to do'],
+              obligations.map((r) => [r.title, r.regime || '—', r.action || r.detail])));
+          }
+
+          const posture = by('posture');
+          if (posture.length) {
+            s.append($('h3', '', 'The defensible posture'));
+            s.append($('p', 'sub', 'Build these on day one. Retrofitting provenance onto a corpus you already trained on is not possible.'));
+            const cards = $('div', 'cards');
+            posture.forEach((p) => {
+              const c = $('div', 'card');
+              c.append($('h3', '', p.title), $('p', '', p.action || p.detail));
+              if (p.source) c.append($('div', 'meta', p.source));
+              cards.append(c);
+            });
+            s.append(cards);
+          }
+          add(s, 'The law', 'Evidence');
+        }
+
         // ---------------------------------------------------------------- #benchmarks
         {
           const s = section('benchmarks', 'The instruments',
