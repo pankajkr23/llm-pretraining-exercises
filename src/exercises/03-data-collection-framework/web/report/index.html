@@ -249,6 +249,136 @@
 
       const widget = (...kids) => { const w = $('div', 'widget'); w.append(...kids); return w; };
 
+      const SVGNS = 'http://www.w3.org/2000/svg';
+      const svgEl = (tag, attrs = {}) => {
+        const e = document.createElementNS(SVGNS, tag);
+        Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, String(v)));
+        return e;
+      };
+
+      /* ---- the explainer skeleton — docs/EXPLAINER_PATTERN.md §§2-4 --------------------
+       *
+       * States on the left, one pinned figure on the right. Scroll position and keyboard focus
+       * both call show(), so the argument is identical with or without a pointer — which matters
+       * because deleting the control row (§18.2) also deletes what a keyboard would land on.
+       *
+       * Every explainer on this page is built through here. That is the point: it makes the
+       * detail slots identical across explainers mechanically, rather than by intention, and it
+       * means a fix to the skeleton is a fix everywhere.
+       *
+       * The caller supplies `render(i, api)` — pure presentation, one state at a time — and
+       * optionally `refresh(api)`, which reruns when an input changes and owns every step's
+       * `.shard` and `.inline` (print and reduced-motion depend on those being populated).
+       */
+      const buildExplainer = (cfg) => {
+        const figEl = $('div', 'fig');
+        const bigEl = $('div', 'fig-big');
+        const subEl = $('div', 'fig-sub');
+        const verdictEl = $('div', 'fig-verdict');
+        const extraEl = $('div', 'fig-extra');
+        const stripEl = $('div', 'strip');
+        const noteEl = $('div', 'fig-note');
+        figEl.append($('div', 'fig-num', cfg.figNum), bigEl, subEl, verdictEl, extraEl, stripEl, noteEl);
+
+        const stickyEl = $('div', 'sticky');
+        const railEl = $('div', 'fig-rail');
+        (cfg.rail || []).forEach((node) => railEl.append(node));
+        stickyEl.append(figEl, railEl);
+        if (cfg.pill) stickyEl.append($('div', 'pill', cfg.pill));
+
+        const stepEls = cfg.states.map((st, i) => {
+          const el = $('div', 'step');
+          el.tabIndex = 0;
+          el.dataset.i = String(i);
+          const p = $('p');
+          p.append(document.createTextNode(st.lead), $('b', '', st.bold), document.createTextNode(st.tail));
+          el.append($('div', 'marg', st.marg), p, $('div', 'shard'), $('div', 'inline'));
+          el.addEventListener('focus', () => show(i));
+          return el;
+        });
+        const stepsEl = $('div', 'steps');
+        stepsEl.append(...stepEls);
+
+        let current = 0;
+        const api = {
+          states: cfg.states,
+          extra: extraEl,
+          big: (v, opts) => bigEl.replaceChildren(
+            v instanceof Node ? v : renderNumber(v, opts === undefined ? { unit: false } : opts),
+          ),
+          bigHit: (on) => bigEl.classList.toggle('hit', Boolean(on)),
+          sub: (t) => { subEl.textContent = t; },
+          verdict: (t, hit) => { verdictEl.textContent = t; verdictEl.classList.toggle('hit', Boolean(hit)); },
+          note: (t) => { noteEl.textContent = t; },
+          /* marks: an array of '' | 'reg' | 'hit', one per unit, in order. */
+          strip: (marks) => {
+            stripEl.replaceChildren();
+            marks.slice(0, 44).forEach((m) => {
+              const t = $('div', 'fig-tick');
+              if (m) t.classList.add(m);
+              stripEl.append(t);
+            });
+          },
+          shard: (i, t) => { stepEls[i].querySelector('.shard').textContent = t; },
+          inline: (i, t, hit) => {
+            const el = stepEls[i].querySelector('.inline');
+            el.textContent = t;
+            el.style.color = hit ? 'var(--grade-x)' : 'var(--muted)';
+          },
+        };
+
+        function show(i) {
+          current = i;
+          stepEls.forEach((el, k) => el.classList.toggle('on', k === i));
+          cfg.render(i, api);
+        }
+
+        const body = $('div', `scrolly${cfg.wide ? ' wide' : ''}`);
+        let inputEl = null;
+        if (cfg.input) {
+          inputEl = $('textarea', 'qinput');
+          inputEl.rows = cfg.input.rows || 3;
+          inputEl.id = `x${cfg.n}-input`;
+          inputEl.value = cfg.input.value;
+          inputEl.spellcheck = false;
+          const label = $('label', '', cfg.input.label);
+          label.htmlFor = inputEl.id;
+          const qbox = $('div', 'qbox');
+          qbox.append(label, inputEl);
+          body.append(qbox);
+          api.input = inputEl;
+          inputEl.addEventListener('input', () => refresh());
+        }
+        body.append(stepsEl, stickyEl);
+
+        /* The middle band of the viewport picks the active state. */
+        if ('IntersectionObserver' in window) {
+          const io = new IntersectionObserver(
+            (entries) => entries.forEach((e) => { if (e.isIntersecting) show(Number(e.target.dataset.i)); }),
+            { rootMargin: '-45% 0px -45% 0px' },
+          );
+          stepEls.forEach((el) => io.observe(el));
+        }
+
+        const s = $('section');
+        s.id = `s${cfg.n}`;
+        const h = $('h2');
+        h.append($('span', 'n', String(cfg.n)), document.createTextNode(cfg.title));
+        const claim = $('p', 'claim');
+        cfg.claim.forEach((node) => claim.append(node));
+        const figure = $('figure');
+        figure.append(body, $('figcaption', '', cfg.caption));
+        s.append(h, claim, figure);
+
+        function refresh() {
+          if (cfg.refresh) cfg.refresh(api);
+          show(current);
+        }
+        refresh();
+        playAll.push(() => show(cfg.states.length - 1));
+        return s;
+      };
+
       /* A live stat tile: label, big figure, and the arithmetic behind it in small type. */
       const tileOf = (lbl, big, sub, cls = '') => {
         const t = $('div', `tile ${cls}`);
@@ -537,44 +667,161 @@
           playAll.push(() => show(ATTACKS.length - 1));
         }
 
-        /* ---------------------------------------------------- 2 · Vocab crossing */
+        /* ---------------------------------------------------- 2 · Vocab crossing (Optimizer)
+         *
+         * The sweep is ported from dataframework/vocab_sweep.py and verified against it: peak
+         * vocabulary at d_model 2048/4096/6144/8192 comes out 64K/96K/136K/176K in both. Porting
+         * rather than reading the shipped curve is what makes the width a live input — data.json
+         * carries one curve, at one width, and the argument is that the answer moves.
+         *
+         * The two component curves are drawn, not just the net. The peak is where the GAP between
+         * them is widest, which is a thing you can see; they never cross, and saying they do would
+         * be a nicer sentence about a different chart.
+         */
         {
           const sw = data.vocab_sweep;
-          const curve = sw.curve;
-          const W = 640, H = 200, pad = 34;
-          const xs = (i) => pad + (i / (curve.length - 1)) * (W - pad * 2);
-          const maxNet = Math.max(...curve.map((c) => c.net_benefit));
-          const minNet = Math.min(...curve.map((c) => c.net_benefit));
-          const ys = (v) => H - pad - ((v - minNet) / (maxNet - minNet || 1)) * (H - pad * 2);
-          const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-          svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-          svg.setAttribute('width', '100%');
-          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          path.setAttribute('fill', 'none');
-          path.setAttribute('stroke', 'var(--accent)');
-          path.setAttribute('stroke-width', '2');
-          path.setAttribute('d', curve.map((c, i) => `${i ? 'L' : 'M'}${xs(i)},${ys(c.net_benefit)}`).join(' '));
-          const peakI = curve.findIndex((c) => c.vocab_size === sw.peak.vocab_size);
-          const mark = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-          mark.setAttribute('cx', xs(peakI)); mark.setAttribute('cy', ys(sw.peak.net_benefit));
-          mark.setAttribute('r', '5'); mark.setAttribute('fill', 'var(--accent)');
-          const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-          lbl.setAttribute('x', xs(peakI)); lbl.setAttribute('y', ys(sw.peak.net_benefit) - 12);
-          lbl.setAttribute('text-anchor', 'middle'); lbl.setAttribute('font-size', '12');
-          lbl.setAttribute('fill', 'var(--ink)'); lbl.setAttribute('font-family', 'var(--mono)');
-          lbl.textContent = `peak ${fmt(sw.peak.vocab_size, 'count')}`;
-          svg.append(path, mark, lbl);
+          const V_MIN = 64_000, V_MAX = 320_000, V_STEP = 8_000;
+          const LAYERS = 48;            // vocab_sweep.DEFAULT_LAYERS
+          const REF_V = 100_000, REF_F = 2.4;  // export.REFERENCE_VOCAB / REFERENCE_FERTILITY
 
-          const note = $('p', 'val');
-          note.style.cssText = 'font-family:var(--mono);font-size:12px;color:var(--muted);margin:10px 0 0';
-          note.textContent = sw.note;
-          const w = widget(svg, note);
-          main.append(sect(2, 'How big the vocabulary should be',
-            [document.createTextNode('Two costs pull against each other. A bigger vocabulary means fewer tokens per word — every Indic sentence gets cheaper for the whole run — but the output projection grows with it, taxing every forward pass. The answer is where the net is deepest. It is a shallow optimum, which is the useful part: being 40,000 slots out costs almost nothing, so this is not a decision to agonise over. The curve is '),
-             $('b', '', 'not yet anchored on a measurement'),
-             document.createTextNode(' — see '), ref('the tokenizer tax', 'fertility'), document.createTextNode('.')],
-            w,
-            'Net benefit against vocabulary size. Flat around the peak — the precise number matters less than being in the region.'));
+          const softmaxCost = (V, d) => (2 * d * V) / (2 * d * V + 12 * d * d * LAYERS);
+          const fertilityAt = (V) => {
+            const scale = Math.log(V / REF_V) / Math.log(2);
+            return Math.max(1, 1 + Math.max(REF_F - 1, 0) * 0.92 ** scale);
+          };
+          const sweep = (d) => {
+            const baseF = fertilityAt(V_MIN), baseC = softmaxCost(V_MIN, d);
+            const out = [];
+            for (let V = V_MIN; V <= V_MAX; V += V_STEP) {
+              const saving = (baseF - fertilityAt(V)) / baseF;
+              const extra = softmaxCost(V, d) - baseC;
+              out.push({ V, saving, extra, net: saving - extra });
+            }
+            return out;
+          };
+          const peakOf = (c) => c.reduce((a, b) => (b.net > a.net ? b : a));
+
+          const WIDTHS = [2048, 4096, 6144, 8192];
+          const TARGET = sw.d_model.value;   // 6144, the confirmed 40B width
+
+          const STATES = [
+            { d: WIDTHS[0], marg: 'Narrow · 2,048',
+              lead: 'On a narrow model the vocabulary projection is a large share of every forward pass, so ',
+              bold: 'the optimum falls off the bottom of the range', tail: ' we swept. The answer is not "64,000" — it is "smaller than we looked".' },
+            { d: WIDTHS[1], marg: 'Wider · 4,096',
+              lead: 'Double the width and the body of the network dwarfs the projection, so ',
+              bold: 'a bigger vocabulary starts paying', tail: '. The peak moves right, and it moves a long way.' },
+            { d: TARGET, marg: 'The 40B target · 6,144',
+              lead: 'At the width this project has actually settled on, the widest gap between saving and cost sits here. This is ',
+              bold: 'the number the sweep recommends', tail: ' — and it is not the number the project uses.' },
+            { d: WIDTHS[3], marg: 'Wide · 8,192',
+              lead: 'Wider still and the vocabulary is almost free: the projection barely registers against the body, so ',
+              bold: 'the peak keeps sliding right', tail: '. Vocabulary size is a consequence of width, not an independent choice.' },
+            { d: TARGET, band: true, marg: 'How shallow',
+              lead: 'Back at the target width, the region within a tenth of the best net benefit is ',
+              bold: 'tens of thousands of slots wide', tail: '. Being well inside the region beats being exactly on the peak of a curve this soft.' },
+            { d: TARGET, anchor: true, marg: 'What holds it up',
+              lead: 'All of it rests on one fertility measurement that ',
+              bold: 'has never been taken', tail: '. Move that anchor and every peak above moves with it. The shape of the trade-off is real; the position of the answer is not yet.' },
+          ];
+
+          const W = 384, H = 168, PAD_L = 6, PAD_R = 6, PAD_T = 14, PAD_B = 20;
+          const draw = (state) => {
+            const curve = sweep(state.d);
+            const peak = peakOf(curve);
+            const hi = Math.max(...curve.map((c) => Math.max(c.saving, c.extra)));
+            const x = (i) => PAD_L + (i / (curve.length - 1)) * (W - PAD_L - PAD_R);
+            const y = (v) => H - PAD_B - (v / (hi || 1)) * (H - PAD_T - PAD_B);
+            const line = (key, stroke, dash) => svgEl('path', {
+              fill: 'none', stroke, 'stroke-width': 2, ...(dash ? { 'stroke-dasharray': dash } : {}),
+              d: curve.map((c, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(c[key]).toFixed(1)}`).join(' '),
+            });
+            const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img' });
+            const title = svgEl('title');
+            title.textContent = `Token saving and added softmax cost against vocabulary size at d_model ${state.d}.`;
+            svg.append(title);
+
+            // The gap between the two curves IS the net benefit — shade it rather than assert it.
+            const peakI = curve.indexOf(peak);
+            svg.append(svgEl('path', {
+              fill: 'var(--accent-soft)', stroke: 'none',
+              d: `M${x(0)},${y(curve[0].saving)} ` +
+                 curve.map((c, i) => `L${x(i).toFixed(1)},${y(c.saving).toFixed(1)}`).join(' ') + ' ' +
+                 curve.slice().reverse().map((c, k) => `L${x(curve.length - 1 - k).toFixed(1)},${y(c.extra).toFixed(1)}`).join(' ') + ' Z',
+            }));
+            svg.append(line('extra', 'var(--faint)', '4 3'), line('saving', 'var(--accent)'));
+            svg.append(svgEl('line', {
+              x1: x(peakI), x2: x(peakI), y1: y(peak.saving), y2: y(peak.extra),
+              stroke: 'var(--ink)', 'stroke-width': 1.5,
+            }));
+            const cap = svgEl('text', {
+              x: Math.min(x(peakI) + 6, W - 96), y: PAD_T + 4, 'font-size': 11,
+              fill: 'var(--ink)', 'font-family': 'var(--mono)', 'data-provenance': 'estimated',
+            });
+            cap.textContent = `widest gap · ${fmt(peak.V, 'count')}`;
+            svg.append(cap);
+            const axis = svgEl('text', { x: PAD_L, y: H - 4, 'font-size': 10, fill: 'var(--faint)', 'font-family': 'var(--mono)', 'data-provenance': 'estimated' });
+            axis.textContent = `${fmt(V_MIN, 'count')} → ${fmt(V_MAX, 'count')} vocabulary · saving (solid) vs added cost (dashed)`;
+            svg.append(axis);
+            return { svg, curve, peak };
+          };
+
+          main.append(buildExplainer({
+            n: 2, wide: true,
+            title: 'The vocabulary is a consequence of the width',
+            claim: [
+              document.createTextNode('Two costs pull against each other. A bigger vocabulary means fewer tokens per word, which is a saving on every token of the whole run; but the output projection grows with it, taxing every forward pass. The best size is where the gap between them is widest — and that gap moves with '),
+              $('b', '', 'how wide the model is'),
+              document.createTextNode('. Scrolling changes the width. The curve is '),
+              $('b', '', 'not yet anchored on a measurement'),
+              document.createTextNode(' — see '), ref('the tokenizer tax', 'fertility'), document.createTextNode('.'),
+            ],
+            figNum: 'Fig. 2 — where the gap is widest',
+            caption: 'Fig. 2 — Token saving and added softmax cost against vocabulary, swept live from vocab_sweep.py’s model at the width each step names. The shaded gap is the net benefit; the peak is where it is widest. The two curves do not cross — the optimum is a widest gap, not a crossing.',
+            states: STATES,
+            pill: 'the peak moves with d_model',
+            rail: [
+              document.createTextNode('Every figure here is '),
+              $('b', '', 'estimated'),
+              document.createTextNode(', not measured: the fertility model has no anchor until task 2.2b runs. The project’s settled vocabulary is '),
+              renderNumber({ value: 208_896, unit: 'tokens', provenance: 'estimated', source: 'docs/DECISIONS.md' }),
+              document.createTextNode(', which this sweep does not reproduce at any width it covers — the sweep informs the decision, it did not make it.'),
+            ],
+            refresh: (api) => {
+              STATES.forEach((st, i) => {
+                const { curve, peak } = draw(st);
+                const near = curve.filter((c) => c.net >= peak.net * 0.9).length;
+                api.shard(i, `d_model ${st.d} · ${LAYERS} layers · V ${fmt(V_MIN, 'count')}–${fmt(V_MAX, 'count')}`);
+                api.inline(i, st.anchor
+                  ? '→ anchor unmeasured; the position of every peak above is provisional'
+                  : `→ widest gap at ${fmt(peak.V, 'count')}${st.band ? `, and ${near} of ${curve.length} candidates land within a tenth of it` : ''}`,
+                  Boolean(st.anchor) || peak.V === V_MIN);
+              });
+            },
+            render: (i, api) => {
+              const st = STATES[i];
+              const { svg, curve, peak } = draw(st);
+              const offEdge = peak.V === V_MIN;
+              api.extra.replaceChildren(svg);
+              api.big({ value: peak.V, unit: 'tokens', provenance: 'estimated', source: 'computed:vocab_sweep' });
+              api.bigHit(offEdge);
+              api.sub(`vocabulary at the widest gap, d_model ${st.d}`);
+              api.verdict(offEdge ? 'OUTSIDE THE SWEEP' : (st.anchor ? 'UNANCHORED' : 'BEST IN RANGE'), offEdge);
+              api.note(st.anchor
+                ? 'The shape of this trade-off is sound. Its position is a projection from a fertility number nobody has measured yet.'
+                : offEdge
+                  ? 'Red marks a candidate the sweep cannot price: the optimum is below the smallest vocabulary we considered.'
+                  : st.band
+                    ? `${curve.filter((c) => c.net >= peak.net * 0.9).length} of ${curve.length} candidates sit within a tenth of the best. The optimum is a region, not a point.`
+                    : 'The peak is where the shaded gap is widest — where one more slot stops paying for itself.');
+              const near = st.band ? curve.map((c) => (c.net >= peak.net * 0.9 ? 'reg' : '')) : null;
+              api.strip(curve.map((c, k) => {
+                if (offEdge && k === 0) return 'hit';
+                if (near) return near[k];
+                return c.V === peak.V ? 'reg' : '';
+              }));
+            },
+          }));
         }
 
         /* ---------------------------------------------------- 3 · The Tax
