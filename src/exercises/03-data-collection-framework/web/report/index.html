@@ -1209,53 +1209,170 @@
           main.append(s);
         }
 
-        /* ---------------------------------------------------- 7 · The Pipeline */
+        /* ---------------------------------------------------- 7 · The Pipeline (Accumulator)
+         *
+         * Audit row #7. Absorbs /reasoning#tools, which held the same 17 records as a lookup table
+         * — the detail this walk needs, so keeping both was keeping a duplicate.
+         *
+         * The reference Accumulator collapses a volume bar a millionfold across stages. We hold no
+         * per-stage volumes, so the thing that compounds here is the decision count: seven stages,
+         * seventeen tools, and the commitments pile up whether or not anyone revisits them.
+         */
         {
           const tools = records.tools || [];
-          const stages = [...new Set(tools.map((t) => t.stage))];
-          const list = $('div', 'stages');
-          const rows = stages.map((st, i) => {
-            const row = $('div', 'stage');
-            const picks = tools.filter((t) => t.stage === st);
-            const verdicts = $('span');
-            picks.slice(0, 3).forEach((t) => {
-              const c = $('span', `verdict ${t.verdict}`, t.name);
-              c.style.cssText = `font-family:var(--mono);font-size:11px;margin-left:6px;padding:1px 6px;border-radius:4px;border:1px solid currentColor;color:var(${t.verdict === 'avoid' ? '--grade-x' : t.verdict === 'build' ? '--accent' : '--grade-a'})`;
-              if (t.verdict === 'avoid') c.style.textDecoration = 'line-through';
-              verdicts.append(c);
-            });
-            row.append($('span', 'idx', String(i + 1)), $('span', '', st), verdicts);
-            list.append(row);
-            return row;
-          });
-          const w = widget(list);
-          const litAll = () => rows.forEach((r) => r.classList.add('on'));
-          animateOnce(w, () => {
-            rows.forEach((r) => r.classList.remove('on'));
-            rows.forEach((r, i) => setTimeout(() => r.classList.add('on'), prefersReducedMotion() ? 0 : i * 260));
-          });
-          playAll.push(litAll);
-          main.append(sect(7, 'The pipeline you have to build',
-            [document.createTextNode('Nine stages between a URL and a training shard. Most have a tool worth adopting; one has a tool worth avoiding, and the struck-through entry is a recommendation this research reversed on itself after measuring it. Full verdicts in '),
-             ref('the tools', 'tools'), document.createTextNode('.')],
-            w, 'Stages light in order. Struck-through tools are ones to avoid, not adopt.'));
+          const STAGES = [...new Set(tools.map((t) => t.stage))];
+          const at = (i) => tools.filter((t) => t.stage === STAGES[i]);
+          const upTo = (i) => tools.filter((t) => STAGES.indexOf(t.stage) <= i);
+
+          const LEDE = {
+            filtering: ['The first stage is the one with a tool worth adopting outright, purpose-built for Indian scripts. Everything downstream inherits ', 'whatever this stage lets through', '.'],
+            lid: ['Language identification decides which pipeline a document even enters, so its errors are ', 'invisible rather than wrong', ' — a misrouted document is simply never seen again.'],
+            extraction: ['Getting text out of a page is the stage everyone assumes is solved. It is solved for English layout; ', 'Indic layout is a different problem', '.'],
+            ocr: ['Here the research reversed itself. The recommended system scored ', 'worst in class on real Devanagari scans', ', and the second candidate fails rarely but catastrophically. Both are marked avoid, in red.'],
+            asr: ['Speech is where the largest untapped Indic corpus lives, and where the tooling is thinnest — this stage is mostly ', 'things you have to build', '.'],
+            dedup: ['Deduplication is cheap to run and expensive to skip: two of the largest open corpora ship duplication their publishers ', 'did not remove', '.'],
+            decontamination: ['The last stage is the gate from section 1. It is last in the pipeline and ', 'first in the build order', ', because a contaminated corpus invalidates every measurement taken after it.'],
+          };
+
+          const STATES = STAGES.map((st, i) => ({
+            i, marg: `Stage ${i + 1} · ${st}`,
+            lead: (LEDE[st] || ['This stage contributes ', 'its own decisions', ' to the pile.'])[0],
+            bold: (LEDE[st] || ['', 'its own decisions', ''])[1],
+            tail: (LEDE[st] || ['', '', '.'])[2],
+          }));
+
+          const chipFor = (t) => {
+            const c = $('span', '', t.name);
+            const colour = t.verdict === 'avoid' ? '--grade-x' : t.verdict === 'build' ? '--accent' : '--muted';
+            c.style.cssText = `font-family:var(--mono);font-size:11px;margin:0 5px 5px 0;padding:1px 6px;border-radius:4px;` +
+              `border:1px solid currentColor;display:inline-block;color:var(${colour})`;
+            if (t.verdict === 'avoid') c.style.textDecoration = 'line-through';
+            return c;
+          };
+
+          main.append(buildExplainer({
+            n: 7,
+            title: 'Seven stages, and the commitments do not un-make themselves',
+            claim: [
+              document.createTextNode('Between a URL and a training shard sit seven stages, each needing a tool you adopt, build, or avoid. Scrolling walks them, and the decisions '),
+              $('b', '', 'accumulate'),
+              document.createTextNode(' — by the last stage there are seventeen, two of them reversals of an earlier recommendation. Red is a tool this research decided against '),
+              $('b', '', 'after measuring it'),
+              document.createTextNode('. Full reasoning per tool in '),
+              ref('the tools', 'tools'), document.createTextNode('.'),
+            ],
+            figNum: 'Fig. 7 — decisions committed',
+            caption: 'Fig. 7 — One mark per tool in the register, filling as the pipeline is walked. Red marks a tool the research rejected on its own measurement, not on reputation. Stage names come from the tool register; there are seven, not the nine an earlier draft of this section claimed.',
+            pill: '17 tools, 2 rejected',
+            rail: [
+              document.createTextNode('Verdicts are '),
+              $('b', '', 'adopt, build or avoid'),
+              document.createTextNode(' — there is no "evaluate later" band, because a stage with an undecided tool is a stage nobody can schedule. The two rejections are in OCR, and both came from running the systems on real Devanagari scans rather than from their published numbers.'),
+            ],
+            states: STATES,
+            refresh: (api) => {
+              STATES.forEach((st, i) => {
+                const here = at(i);
+                api.shard(i, here.map((t) => `${t.name} — ${t.verdict}`).join('\n'));
+                const avoided = upTo(i).filter((t) => t.verdict === 'avoid').length;
+                api.inline(i, `→ ${upTo(i).length} of ${tools.length} tools decided${avoided ? `, ${avoided} rejected` : ''}`, avoided > 0);
+              });
+            },
+            render: (i, api) => {
+              const here = at(i);
+              const sofar = upTo(i);
+              const rejected = sofar.filter((t) => t.verdict === 'avoid');
+              const chips = $('div');
+              here.forEach((t) => chips.append(chipFor(t)));
+              api.extra.replaceChildren(chips);
+              api.big({ value: sofar.length, unit: 'tools', provenance: 'measured', source: 'computed from the tool register' });
+              api.bigHit(false);
+              api.sub(`of ${tools.length} decided by the end of stage ${i + 1}`);
+              api.verdict(rejected.length ? `${rejected.length} REJECTED` : 'ALL USABLE', rejected.length > 0);
+              api.note(STAGES[i] === 'ocr'
+                ? 'This is the reversal. Both rejections are in this stage, and both were made on measurement rather than on the systems’ published claims.'
+                : rejected.length
+                  ? `${rejected.length} tool(s) rejected so far. A rejection carries downstream: nothing later in the pipeline can rescue text this stage mangled.`
+                  : 'Nothing rejected yet. Red appears the moment a tool is one this research decided against.');
+              api.strip(tools.map((t) => {
+                if (STAGES.indexOf(t.stage) > i) return '';
+                return t.verdict === 'avoid' ? 'hit' : 'reg';
+              }));
+            },
+          }));
         }
 
-        /* ---------------------------------------------------- 8 · The Instruments */
+        /* ---------------------------------------------------- 8 · The Instruments (Destroyer)
+         *
+         * Audit row #8, re-framed from Inspector so it does not sit adjacent to another one. The
+         * claim is not "capabilities differ" — it is that coverage is thinner than the raw count
+         * suggests, because a translated benchmark is not evidence about Indic ability.
+         *
+         * Recomputed from data.coverage.capabilities[].benchmarks against each benchmark's
+         * trust_band, so the collapse is measured rather than asserted.
+         */
         {
-          const bars = $('div', 'bars');
-          const max = Math.max(...data.coverage.capabilities.map((c) => c.count), 1);
-          data.coverage.capabilities.forEach((c) => {
-            bars.append(barRow(c.capability, (c.count / max) * 100, String(c.count), c.count <= 1 ? 'gap' : ''));
-          });
-          const w = widget(bars);
-          const grow8 = () => [...bars.children].forEach((r) => { if (r._grow) r._grow(); });
-          animateOnce(w, () => [...bars.children].forEach((r, i) => { if (r._grow) setTimeout(r._grow, prefersReducedMotion() ? 0 : i * 40); }));
-          playAll.push(grow8);
-          main.append(sect(8, 'Whether you could tell if it worked',
-            [document.createTextNode('Every capability the model is built for, against the number of benchmarks that can detect it. A capability with one instrument is a coverage risk; with none, it is a goal you cannot grade. Trust bands and split policies in '),
-             ref('the instruments', 'benchmarks'), document.createTextNode('.')],
-            w, 'Hatched rows have one instrument or none.'));
+          const caps = data.coverage.capabilities;
+          const bandOf = new Map(data.benchmarks.map((b) => [b.name, b.trust_band]));
+          const BANDS = [
+            { keep: null, marg: 'Every instrument',
+              lead: 'This is the register as it stands: every benchmark that can detect anything the model is built for. Counted this way, coverage looks ',
+              bold: 'broadly adequate', tail: '.' },
+            { keep: ['native-sourced', 'translation-derived'], marg: 'Drop harness-dependent',
+              lead: 'Two of these produce a number that depends on which evaluation harness you ran, so the score is ',
+              bold: 'not comparable between labs', tail: ' — including against the model you are trying to beat.' },
+            { keep: ['native-sourced'], marg: 'Drop translated',
+              lead: 'Four more were translated from English. A translated benchmark measures whether the model handles translated English, which is ',
+              bold: 'not the thing being claimed', tail: '. What remains is evidence about Indic ability.' },
+            { keep: ['native-sourced'], holes: true, marg: 'What is left uncovered',
+              lead: 'Counting only native-sourced instruments, the capabilities with a single instrument or none are the ones where a regression could ship ',
+              bold: 'without anybody noticing', tail: '.' },
+          ];
+          const countFor = (cap, keep) => (keep === null ? cap.benchmarks.length
+            : cap.benchmarks.filter((n) => keep.includes(bandOf.get(n))).length);
+
+          main.append(buildExplainer({
+            n: 8,
+            title: 'Most of the coverage is not evidence about Indic ability',
+            claim: [
+              document.createTextNode('Every capability the model is built for, against the benchmarks that can detect it. The raw count flatters the picture: scroll and remove the instruments whose scores '),
+              $('b', '', 'do not mean what the count implies'),
+              document.createTextNode(' — harness-dependent first, then translated-from-English — and watch how many capabilities are left with one instrument or none. Bands and split policies in '),
+              ref('the instruments', 'benchmarks'), document.createTextNode('.'),
+            ],
+            figNum: 'Fig. 8 — capabilities you could grade',
+            caption: 'Fig. 8 — One mark per capability. Red is a capability left with one instrument or none once the named band is removed. Trust bands are recorded per benchmark in the register; the counts here are recomputed from them, not restated.',
+            pill: '25 of 31 native-sourced',
+            rail: [
+              document.createTextNode('A translated benchmark is not worthless — it is '),
+              $('b', '', 'evidence about a different question'),
+              document.createTextNode('. Reporting it beside native-sourced results without the distinction is how a model looks better at Indic than it is. The register keeps the band on every row so the two can never be silently summed.'),
+            ],
+            states: BANDS,
+            refresh: (api) => {
+              BANDS.forEach((b, i) => {
+                const thin = caps.filter((c) => countFor(c, b.keep) <= 1);
+                api.shard(i, thin.length ? thin.map((c) => `${c.capability} (${countFor(c, b.keep)})`).join(' · ') : 'every capability has two or more');
+                api.inline(i, `→ ${thin.length} of ${caps.length} capabilities on one instrument or none`, thin.length > 0);
+              });
+            },
+            render: (i, api) => {
+              const b = BANDS[i];
+              const counts = caps.map((c) => countFor(c, b.keep));
+              const thin = counts.filter((n) => n <= 1).length;
+              const gone = counts.filter((n) => n === 0).length;
+              api.big({ value: caps.length - thin, unit: 'capabilities', provenance: 'measured', source: 'computed:coverage' });
+              api.bigHit(thin > 0);
+              api.sub(`of ${caps.length} still have more than one instrument`);
+              api.verdict(gone ? `${gone} UNGRADABLE` : thin ? `${thin} ON ONE` : 'ALL COVERED', thin > 0);
+              api.note(b.holes
+                ? `${thin} capabilities sit on a single native-sourced instrument or none. A single instrument is not a measurement, it is a hostage.`
+                : b.keep === null
+                  ? 'Red marks a capability with one instrument or none. Counted this way there are few — which is the flattering version.'
+                  : `Removing that band cost ${caps.reduce((a, c, k) => a + (c.benchmarks.length - counts[k]), 0)} benchmark slots across the capabilities.`);
+              api.strip(counts.map((n) => (n <= 1 ? 'hit' : 'reg')));
+            },
+          }));
         }
 
         /* ---------------------------------------------------- 9 · Competitive frame */
