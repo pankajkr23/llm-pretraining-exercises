@@ -95,6 +95,51 @@ def is_contaminated(document: str, index: set[str], n: int = SHINGLE_N) -> bool:
     return bool(overlap(document, index, n))
 
 
+def build_attributed_index(
+    items_by_benchmark: dict[str, list[str]], n: int = SHINGLE_N
+) -> dict[str, str]:
+    """Build a shingle index that remembers which benchmark each hash came from.
+
+    A gate that says "contaminated" is a shrug; one that says "this collides with MILU" tells you
+    which score to distrust and which shard to pull. Attribution costs one string per shingle.
+
+    Args:
+        items_by_benchmark: Benchmark name to its eval item texts.
+        n: Shingle length in words.
+
+    Returns:
+        Shingle digest to the benchmark that contributed it. On collision between benchmarks the
+        first one wins, which is harmless — the point is to name a source, not all of them.
+    """
+    index: dict[str, str] = {}
+    for benchmark, items in items_by_benchmark.items():
+        for item in items:
+            for digest in shingle(item, n):
+                index.setdefault(digest, benchmark)
+    return index
+
+
+def find_collisions(
+    document: str, attributed_index: dict[str, str], n: int = SHINGLE_N
+) -> dict[str, int]:
+    """Find which benchmarks a document collides with, and how hard.
+
+    Args:
+        document: Candidate training text.
+        attributed_index: Output of `build_attributed_index`.
+        n: Shingle length.
+
+    Returns:
+        Benchmark name to the number of colliding shingles; empty means clean.
+    """
+    hits: dict[str, int] = {}
+    for digest in shingle(document, n):
+        benchmark = attributed_index.get(digest)
+        if benchmark is not None:
+            hits[benchmark] = hits.get(benchmark, 0) + 1
+    return hits
+
+
 def build_index(cfg: Config | None = None) -> dict[str, Any]:
     """Build the shingle index from the git-ignored benchmark corpus.
 
