@@ -31,8 +31,21 @@ only that, so the deployed page works from a clone regardless.
 ## Run it
 
 ```bash
-uv sync --all-packages    # installs this member into the shared venv
-# pipeline entry point arrives with Phase 2, e.g. `uv run python -m dataframework`
+uv sync --all-packages                        # install this member into the shared venv
+uv run python -m dataframework.ingest         # seed CSVs -> catalog.json + benchmarks.json
+uv run python -m dataframework.catalog --validate   # 355 records, or a loud failure
+uv run python -m dataframework                # compute + write web/data.json
+```
+
+## Preview it
+
+Preview the **built bundle**, not `web/` directly — the pages fetch `catalog.json`, which
+`build.sh` places alongside them rather than duplicating into `web/`:
+
+```bash
+bash ../../../deploy/vercel/build.sh          # assemble public/
+cd ../../../public/03-data-collection-framework
+python3 -m http.server 8000                   # open http://localhost:8000
 ```
 
 ## Tests

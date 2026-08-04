@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The Reasoning — what's behind each number</title>
+    <meta
+      name="description"
+      content="The evidence under the decision: 145 datasets with their licence traps, 31 benchmarks with what they cannot measure, and the quantities nobody has measured at all."
+    />
+    <link rel="stylesheet" href="../_shared/tokens.css" />
+    <style>
+      .layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 40px; align-items: start; }
+      @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } nav.toc { position: static !important; } }
+
+      nav.toc { position: sticky; top: 24px; font-size: 13.5px; }
+      nav.toc a { display: block; color: var(--muted); text-decoration: none; padding: 3px 0; border-left: 2px solid transparent; padding-left: 10px; }
+      nav.toc a:hover { color: var(--ink); }
+      nav.toc a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+      nav.toc .group { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); margin: 16px 0 4px 10px; }
+
+      section { scroll-margin-top: 20px; padding-bottom: 44px; border-bottom: 1px solid var(--line); margin-bottom: 44px; }
+      section:last-child { border-bottom: 0; }
+      section > h2 { display: flex; align-items: baseline; gap: 10px; }
+      section > h2 .anchor { font-family: var(--mono); font-size: 12px; color: var(--faint); text-decoration: none; }
+      section > h2 .anchor:hover { color: var(--accent); }
+      .sub { color: var(--muted); font-size: 0.97rem; max-width: 68ch; margin: 0 0 18px; }
+
+      table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+      th, td { text-align: left; padding: 7px 10px 7px 0; vertical-align: top; border-bottom: 1px solid var(--line); }
+      th { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); font-weight: 600; }
+      td.num-col, th.num-col { text-align: right; font-variant-numeric: tabular-nums; }
+      .scroll { overflow-x: auto; }
+
+      .controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+      .controls input, .controls select {
+        font-family: var(--sans); font-size: 13px; padding: 7px 11px; border: 1px solid var(--line);
+        border-radius: 9px; background: var(--panel); color: var(--ink); outline: none;
+      }
+      .controls input:focus, .controls select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+      .count { font-family: var(--mono); font-size: 12px; color: var(--faint); }
+
+      .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+      .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; box-shadow: var(--shadow); }
+      .card h3 { margin: 0 0 6px; font-size: 1rem; font-family: var(--display); }
+      .card p { margin: 0; font-size: 13px; color: var(--muted); }
+      .card .meta { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-top: 8px; }
+
+      .big { border-left: 3px solid var(--grade-x); padding-left: 16px; margin-bottom: 18px; }
+      .big h3 { margin: 0 0 4px; font-size: 1.05rem; }
+      .big p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+
+      .verdict { font-family: var(--mono); font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 4px; border: 1px solid currentColor; }
+      .verdict.adopt { color: var(--grade-a); }
+      .verdict.build { color: var(--accent); }
+      .verdict.avoid { color: var(--grade-x); }
+      .struck { text-decoration: line-through; opacity: 0.65; }
+
+      .bar { height: 9px; border-radius: 5px; background: var(--accent); min-width: 2px; }
+      .zero-band { background: var(--grade-a); }
+      .hole { color: var(--grade-x); font-weight: 600; }
+      .thin { color: var(--grade-b); font-weight: 600; }
+
+      .intuition { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); }
+      .intuition h3 { margin: 0 0 6px; font-size: 1rem; font-family: var(--display); }
+      .intuition p { margin: 0 0 10px; font-size: 13.5px; color: var(--muted); }
+      .intuition a { font-family: var(--mono); font-size: 12px; color: var(--accent); text-decoration: none; }
+
+      .err { color: var(--grade-x); font-family: var(--mono); }
+      .pending { color: var(--muted); font-size: 13px; font-style: italic; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <a class="back" href="../"><span aria-hidden="true">←</span> Back</a>
+      <p class="eyebrow">03 · Data collection</p>
+      <h1>The reasoning</h1>
+      <p class="lede">
+        Everything the decision rests on. Each number here is marked with how well it is known —
+        <span class="num" data-provenance="measured">measured</span>,
+        <span class="num" data-provenance="estimated">estimated</span>, or
+        <span class="num" data-provenance="unknown">unknown</span> — and hovering any figure shows
+        its source.
+      </p>
+
+      <div class="layout" style="margin-top: 36px">
+        <nav class="toc" id="toc" aria-label="Sections"></nav>
+        <main id="main"><p class="pending">Loading the evidence…</p></main>
+      </div>
+
+      <footer>
+        Every figure on this page came out of the pipeline; none was typed by hand.
+      </footer>
+    </div>
+
+    <script type="module">
+      import { renderNumber, formatValue } from '../_shared/num.js';
+
+      const $ = (tag, cls, text) => {
+        const el = document.createElement(tag);
+        if (cls) el.className = cls;
+        if (text !== undefined) el.textContent = text;
+        return el;
+      };
+
+      /* A table from rows of cells; cells may be strings or nodes. */
+      const table = (headers, rows, numCols = []) => {
+        const wrap = $('div', 'scroll');
+        const t = $('table');
+        const thead = $('thead');
+        const hr = $('tr');
+        headers.forEach((h, i) => {
+          const th = $('th', numCols.includes(i) ? 'num-col' : '', h);
+          hr.append(th);
+        });
+        thead.append(hr);
+        const tbody = $('tbody');
+        rows.forEach((cells) => {
+          const tr = $('tr');
+          cells.forEach((cell, i) => {
+            const td = $('td', numCols.includes(i) ? 'num-col' : '');
+            if (cell instanceof Node) td.append(cell);
+            else td.textContent = cell ?? '—';
+            tr.append(td);
+          });
+          tbody.append(tr);
+        });
+        t.append(thead, tbody);
+        wrap.append(t);
+        return wrap;
+      };
+
+      const section = (id, title, subtitle) => {
+        const s = $('section');
+        s.id = id;
+        const h = $('h2');
+        h.append(document.createTextNode(title));
+        const a = $('a', 'anchor', `#${id}`);
+        a.href = `#${id}`;
+        h.append(a);
+        s.append(h);
+        if (subtitle) s.append($('p', 'sub', subtitle));
+        return s;
+      };
+
+      const badge = (cls, attrs, text) => {
+        const el = $('span', cls, text);
+        Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+        return el;
+      };
+
+      const fmt = (v, unit) => (v === null || v === undefined ? '—' : formatValue(v, unit));
+
+      const load = (path) => fetch(path).then((r) => { if (!r.ok) throw new Error(`${path}: ${r.status}`); return r.json(); });
+
+      Promise.all([load('../data.json'), load('../records.json'), load('../catalog.json')])
+        .then(([data, records, catalog]) => render(data, records, catalog))
+        .catch((e) => {
+          document.getElementById('main').innerHTML =
+            `<p class="err">Could not load the data — ${e.message}. Serve over http, not file://.</p>`;
+        });
+
+      function render(data, records, catalog) {
+        const main = document.getElementById('main');
+        main.replaceChildren();
+        const built = [];
+        const add = (s, label, group) => { main.append(s); built.push({ id: s.id, label, group }); };
+
+        // ---------------------------------------------------------------- #data
+        {
+          const s = section('data', 'The catalogue',
+            `${catalog.length} datasets, each with the licence, the size, and the trap. Filter by anything.`);
+          const controls = $('div', 'controls');
+          const search = $('input'); search.type = 'search'; search.placeholder = 'search datasets…';
+          const tierSel = $('select'); const stageSel = $('select'); const gotchaSel = $('select');
+          const opt = (sel, values, all) => {
+            sel.append(new Option(all, ''));
+            values.forEach((v) => sel.append(new Option(v, v)));
+          };
+          opt(tierSel, ['GREEN', 'AMBER', 'RED'], 'any tier');
+          opt(stageSel, [...new Set(catalog.flatMap((d) => d.stage || []))].sort(), 'any stage');
+          opt(gotchaSel, [...new Set(catalog.flatMap((d) => (d.gotchas || []).map((g) => g.type)))].sort(), 'any caveat');
+          const count = $('span', 'count');
+          controls.append(search, tierSel, stageSel, gotchaSel, count);
+          s.append(controls);
+          const host = $('div');
+          s.append(host);
+
+          const draw = () => {
+            const q = search.value.toLowerCase();
+            const rows = catalog.filter((d) =>
+              (!q || `${d.name} ${d.owner || ''} ${d.category}`.toLowerCase().includes(q)) &&
+              (!tierSel.value || d.tier === tierSel.value) &&
+              (!stageSel.value || (d.stage || []).includes(stageSel.value)) &&
+              (!gotchaSel.value || (d.gotchas || []).some((g) => g.type === gotchaSel.value)));
+            count.textContent = `${rows.length} of ${catalog.length}`;
+            host.replaceChildren(table(
+              ['id', 'dataset', 'tier', 'grade', 'size', 'caveats'],
+              rows.map((d) => {
+                const idx = data.datasets.find((x) => x.id === d.id) || {};
+                const caveats = $('span');
+                (d.gotchas || []).forEach((g) => {
+                  caveats.append(badge('gotcha', { 'data-type': g.type, 'data-severity': g.severity }, g.type), ' ');
+                });
+                const size = d.size?.tokens ? renderNumber(d.size.tokens, { unit: false }) : '—';
+                return [d.id, d.name, d.tier || 'does not exist yet',
+                  badge('grade', { 'data-grade': idx.grade || 'C' }, idx.grade || '—'), size, caveats];
+              }), [4]));
+          };
+          [search, tierSel, stageSel, gotchaSel].forEach((el) => el.addEventListener('input', draw));
+          draw();
+          add(s, 'The catalogue', 'Datasets');
+        }
+
+        // ---------------------------------------------------------------- #gotchas
+        {
+          const byType = {};
+          catalog.forEach((d) => (d.gotchas || []).forEach((g) => (byType[g.type] ||= []).push({ ...g, dataset: d.name, id: d.id })));
+          const s = section('gotchas', 'The traps, by kind',
+            'Every caveat in the catalogue, typed so they can be read together. The dedup group is the most useful screen here: two of the largest open corpora ship with duplication their publishers did not remove.');
+          Object.entries(byType).sort((a, b) => b[1].length - a[1].length).forEach(([type, items]) => {
+            const h = $('h3');
+            h.append(badge('gotcha', { 'data-type': type }, type), ` — ${items.length}`);
+            h.style.cssText = 'font-size:1rem;margin:22px 0 8px;font-family:var(--display)';
+            s.append(h, table(['dataset', 'what will bite you'],
+              items.map((g) => [`${g.id} ${g.dataset}`, g.text])));
+          });
+          add(s, 'The traps', 'Datasets');
+        }
+
+        // ---------------------------------------------------------------- #licensing
+        {
+          const s = section('licensing', 'What survives a licence check',
+            'Walk the catalogue down by permission. Each step removes datasets that cannot be used commercially, and names what is left.');
+          const commercial = catalog.filter((d) => d.licence?.commercial === true);
+          const blocked = catalog.filter((d) => d.licence?.commercial === false);
+          const unclear = catalog.filter((d) => d.licence?.commercial === null || d.licence?.commercial === undefined);
+          s.append(table(['step', 'datasets', 'what this means'], [
+            ['all catalogued', String(catalog.length), 'everything the atlas records'],
+            ['licence permits commercial use', String(commercial.length), 'usable as-is, subject to attribution'],
+            ['licence forbids it', String(blocked.length), 'excluded — an NC licence is a contract, not a default'],
+            ['licence unclear or unstated', String(unclear.length), 'needs legal review before a single byte is ingested'],
+          ], [1]));
+          add(s, 'Licensing', 'Datasets');
+        }
+
+        // ---------------------------------------------------------------- #benchmarks
+        {
+          const s = section('benchmarks', 'The instruments',
+            `${data.benchmarks.length} benchmarks, and — more importantly — what none of them measures.`);
+          const cov = data.coverage;
+          s.append($('h3', '', 'Coverage: which capabilities have an instrument'));
+          s.append(table(['capability', 'instruments', 'trust bands'],
+            cov.capabilities.map((c) => {
+              const label = $('span', c.is_hole ? 'hole' : c.is_thin ? 'thin' : '', c.capability);
+              return [label, String(c.count), (c.trust_bands || []).join(', ') || '—'];
+            }), [1]));
+          if (cov.holes.length || cov.thin.length) {
+            const p = $('p', 'sub');
+            p.style.marginTop = '12px';
+            p.textContent =
+              (cov.holes.length ? `No instrument at all: ${cov.holes.join(', ')}. ` : '') +
+              (cov.thin.length ? `Only one instrument: ${cov.thin.join(', ')} — a single benchmark is a coverage risk, not coverage.` : '');
+            s.append(p);
+          }
+          s.append($('h3', '', 'Split policy: what may be trained on'));
+          s.append(table(['benchmark', 'type', 'split policy', 'trust band'],
+            data.benchmarks.map((b) => [b.name, b.type, b.split_policy, b.trust_band])));
+          add(s, 'The instruments', 'Evidence');
+        }
+
+        // ---------------------------------------------------------------- #languages
+        {
+          const langs = records.languages || [];
+          const s = section('languages', 'The 22 languages',
+            'Sorted by how much natural text exists. Tier 3 is the uncomfortable part: for some languages the honest answer is that the web does not have enough to train on.');
+          const cards = $('div', 'cards');
+          langs.forEach((l) => {
+            const c = $('div', 'card');
+            const h = $('h3', '', l.name || l.code);
+            h.style.borderLeft = `3px solid var(--lang-tier-${l.tier || 3})`;
+            h.style.paddingLeft = '8px';
+            c.append(h, $('p', '', l.strategy || l.note || ''),
+              $('div', 'meta', `tier ${l.tier} · ${l.script || 'script not stated'} · ${l.available_tokens || 'volume unknown'}`));
+            cards.append(c);
+          });
+          s.append(cards);
+          add(s, 'Languages', 'Datasets');
+        }
+
+        // ---------------------------------------------------------------- #fertility
+        {
+          const s = section('fertility', 'The tokenizer tax',
+            'How many tokens a language costs per word. This is the exchange rate between a script and a compute bill — and it is the one table on this site that is still empty.');
+          const f = data.fertility.by_language;
+          const rows = Object.entries(f).map(([code, v]) => [code, renderNumber(v, { unit: false })]);
+          s.append(table(['language', 'tokens per word'], rows, [1]));
+          const p = $('p', 'sub');
+          p.style.marginTop = '14px';
+          p.textContent = Object.values(f)[0]?.source || '';
+          s.append(p);
+          s.append($('h3', '', 'Vocabulary size: two costs that cross'));
+          const sw = data.vocab_sweep;
+          s.append($('p', 'sub', sw.note));
+          s.append(table(['vocabulary', 'fertility', 'softmax cost', 'net benefit'],
+            sw.curve.filter((_, i) => i % 4 === 0).map((r) => [
+              fmt(r.vocab_size, 'count'), r.fertility.toFixed(3),
+              `${(r.softmax_cost * 100).toFixed(2)}%`, `${(r.net_benefit * 100).toFixed(2)}%`]), [0, 1, 2, 3]));
+          add(s, 'The tokenizer tax', 'Evidence');
+        }
+
+        // ---------------------------------------------------------------- #risks + four unknowns
+        {
+          const risks = records.risks || [];
+          const unknowns = risks.filter((r) => r.class === 'unknown');
+          const s = section('risks', 'Risks, and the things nobody has measured',
+            'The unknowns matter more than the risks. Each of these is load-bearing for the whole plan, and none of them has a number.');
+          unknowns.forEach((r) => {
+            const b = $('div', 'big');
+            b.append($('h3', '', r.risk?.slice(0, 90) || r.title || r.id), $('p', '', r.mitigation || r.note || ''));
+            s.append(b);
+          });
+          s.append($('h3', '', 'The rest of the register'));
+          s.append(table(['class', 'severity', 'risk', 'mitigation'],
+            risks.filter((r) => r.class !== 'unknown').map((r) => [r.class, r.severity || '—', r.risk, r.mitigation || '—'])));
+          add(s, 'Risks & unknowns', 'Evidence');
+        }
+
+        // ---------------------------------------------------------------- #tools
+        {
+          const tools = records.tools || [];
+          const s = section('tools', 'The pipeline, tool by tool',
+            'What to adopt, what to build, and what to avoid. One entry here reverses a recommendation made earlier in the same research.');
+          s.append(table(['tool', 'stage', 'verdict', 'why'],
+            tools.map((t) => {
+              const name = $('span', t.verdict === 'avoid' ? 'struck' : '', t.name);
+              return [name, t.stage, $('span', `verdict ${t.verdict}`, t.verdict), t.why];
+            })));
+          add(s, 'Pipeline tools', 'Plan');
+        }
+
+        // ---------------------------------------------------------------- #acquisition
+        {
+          const items = (records.acquisition || []).slice().sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
+          const s = section('acquisition', 'What to get, ranked by cost',
+            'The three highest-value acquisitions are letters, not engineering. They cost nothing and unlock more than any additional scraping.');
+          s.append(table(['#', 'item', 'cost', 'why'],
+            items.map((a) => {
+              const cost = a.cost_inr === 0 ? $('span', 'zero-band', '₹0')
+                : a.cost_inr ? renderNumber({ value: a.cost_inr, unit: 'INR', provenance: 'estimated', source: 'atlas:acquisition' })
+                : $('span', 'num', 'range only');
+              if (a.cost_inr === 0) { cost.style.cssText = 'background:none;color:var(--grade-a);font-weight:600'; }
+              return [String(a.priority ?? ''), a.item, cost, a.why];
+            }), [0]));
+          add(s, 'Acquisition', 'Plan');
+        }
+
+        // ---------------------------------------------------------------- #market
+        {
+          const deals = records.market?.deals || [];
+          const trends = records.market?.trends || [];
+          const max = Math.max(...deals.map((d) => d.value_usd || 0), 1);
+          const s = section('market', 'What data actually sells for',
+            'Reported licensing deals between frontier labs and publishers. Every figure here is reported, not confirmed — and most were never disclosed at all.');
+          s.append(table(['buyer', 'seller', 'reported value', ''],
+            deals.map((d) => {
+              const bar = $('div', 'bar');
+              bar.style.width = `${((d.value_usd || 0) / max) * 100}%`;
+              return [d.buyer, d.seller,
+                d.value_usd ? renderNumber({ value: d.value_usd, unit: 'USD', provenance: 'estimated', source: 'reported, not confirmed' }) : 'undisclosed',
+                bar];
+            }), [2]));
+          trends.forEach((t) => s.append($('p', 'sub', `${t.trend} — ${t.implication}`)));
+          add(s, 'The market', 'Evidence');
+        }
+
+        // ---------------------------------------------------------------- #plan
+        {
+          const plan = records.plan || [];
+          const s = section('plan', 'The critical path',
+            'Twelve actions in order. Two are gates: nothing downstream should start until they clear.');
+          s.append(table(['#', 'action', 'weeks', 'workstream', ''],
+            plan.map((p) => [p.id, p.action,
+              p.week_start ? `${p.week_start}–${p.week_end ?? '?'}` : '—',
+              p.workstream || '—',
+              p.is_gate ? badge('verdict avoid', {}, 'GATE') : ''])));
+          add(s, 'Critical path', 'Plan');
+        }
+
+        // ---------------------------------------------------------------- #priors + #papers
+        {
+          const s = section('priors', 'What the literature already settled',
+            'Findings that constrain the design, so they do not have to be rediscovered.');
+          s.append(table(['claim', 'source', 'effect on the design'],
+            (data.priors || []).map((p) => [p.claim, p.source, p.effect_on_design])));
+          add(s, 'Priors', 'Evidence');
+
+          const p = section('papers', 'The evidence trail',
+            'Every source, and what it did to the argument — reversed it, validated it, or changed the strategy.');
+          p.append(table(['date', 'source', 'effect', 'what it says'],
+            (records.papers || []).map((x) => [x.date || '—', x.title, x.effect, x.summary])));
+          add(p, 'Evidence trail', 'Evidence');
+        }
+
+        // ---------------------------------------------------------------- #confidence + #changelog + #gaps
+        {
+          const s = section('confidence', 'How much of this to believe',
+            'A ledger of the claims and how well each is supported. The load-bearing ones are the ones to attack first.');
+          s.append(table(['claim', 'confidence', 'basis'],
+            (records.confidence || []).map((c) => [c.claim, c.band || 'ungraded', c.basis])));
+          add(s, 'Confidence', 'Honesty');
+
+          const c = section('changelog', 'What this research got wrong',
+            'Claims the later passes reversed. Kept visible on purpose: a document that never corrects itself is not being checked.');
+          c.append(table(['was', 'now', 'why'],
+            (records.corrections || []).map((x) => [x.before, x.after, x.why])));
+          add(c, 'Corrections', 'Honesty');
+
+          const g = section('gaps', 'What does not exist yet',
+            'Slots in the catalogue with nothing in them. These are not omissions — they are where the differentiation argument lives.');
+          const gaps = catalog.filter((d) => d.is_gap);
+          g.append(table(['id', 'what is missing', 'the opportunity'],
+            gaps.map((d) => [d.id, d.name, d.note || d.opportunity || (d.gotchas || [])[0]?.text || ''])));
+          add(g, 'Gaps', 'Honesty');
+        }
+
+        // ---------------------------------------------------------------- the intuitions
+        {
+          const s = section('intuitions', 'Eight things worth internalising',
+            'The ideas the rest of this page is evidence for.');
+          const grid = $('div', 'cards');
+          const counts = data.record_counts;
+          [
+            ['There is not enough Indic text', 'Perhaps 250–500B words exist across all 22 languages, against 15T for English. Every corpus plan is a response to that one fact.', '#languages'],
+            ['Repetition is nearly free', 'Reading a pool four times is almost as good as four times the data. That reframing lifts the natural-Indic share from ~2% to ~8% without collecting a document.', '#priors'],
+            ['The tokenizer is a multiplier', 'An English-centric vocabulary taxes Indic scripts several times over on every token, for the whole run. It is worth more than extra data.', '#fertility'],
+            ['A licence is a contract', 'India\'s own school curriculum is non-commercially licensed. No court ruling about fair dealing dissolves an NC licence you agreed to.', '#licensing'],
+            ['Quality filters are English-biased', 'A selector trained on an English proxy will quietly starve thin Indic tiers. That is why a fixed share of every batch is reserved from it.', '#risks'],
+            ['Synthetic text buys fluency, not culture', 'Translation and generation fill a token budget. They do not add anything the source language knew and English did not.', '#gotchas'],
+            ['Some capabilities have no instrument', `Of the capabilities this model is built for, several are measured by one benchmark or none. You cannot tell whether you hit a goal you cannot see.`, '#benchmarks'],
+            ['The most important number is unmeasured', 'The size of the deduplicated Indic web drives the entire corpus architecture, and nobody has measured it.', '#risks'],
+          ].forEach(([title, body, href]) => {
+            const c = $('div', 'intuition');
+            const a = $('a', '', 'the number behind it →');
+            a.href = href;
+            c.append($('h3', '', title), $('p', '', body), a);
+            grid.append(c);
+          });
+          s.append(grid);
+          add(s, 'Eight intuitions', 'Honesty');
+          void counts;
+        }
+
+        // ---------------------------------------------------------------- nav
+        const toc = document.getElementById('toc');
+        let group = null;
+        built.forEach((b) => {
+          if (b.group !== group) { group = b.group; toc.append($('div', 'group', group)); }
+          const a = $('a', '', b.label);
+          a.href = `#${b.id}`;
+          toc.append(a);
+        });
+
+        const links = [...toc.querySelectorAll('a')];
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((e) => {
+            if (!e.isIntersecting) return;
+            links.forEach((l) => l.classList.toggle('active', l.getAttribute('href') === `#${e.target.id}`));
+          });
+        }, { rootMargin: '-10% 0px -75% 0px' });
+        main.querySelectorAll('section').forEach((s) => observer.observe(s));
+      }
+    </script>
+  </body>
+</html>
