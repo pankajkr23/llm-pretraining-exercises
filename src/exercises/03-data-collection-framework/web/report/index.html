@@ -241,6 +241,15 @@
 
       const widget = (...kids) => { const w = $('div', 'widget'); w.append(...kids); return w; };
 
+      /* A live stat tile: label, big figure, and the arithmetic behind it in small type. */
+      const tileOf = (lbl, big, sub, cls = '') => {
+        const t = $('div', `tile ${cls}`);
+        const b = $('div', 'big');
+        if (big instanceof Node) b.append(big); else b.textContent = big;
+        t.append($('div', 'lbl', lbl), b, $('div', 'sub', sub));
+        return t;
+      };
+
       /* A labelled bar row that animates its width from zero. */
       const barRow = (label, pct, valueNode, cls = '') => {
         const row = $('div', 'barrow');
@@ -333,28 +342,68 @@
             'Net benefit against vocabulary size. Flat around the peak — the precise number matters less than being in the region.'));
         }
 
-        /* ---------------------------------------------------- 3 · The Tax */
+        /* ---------------------------------------------------- 3 · The Tax
+         *
+         * Two columns, deliberately: what a published paper measured, and what we have measured
+         * ourselves (nothing). Citing someone else's measurement is not the same as estimating our
+         * own — the first is evidence with a name on it, the second is the thing ground rule 8
+         * forbids. Keeping them side by side is what makes the distinction legible.
+         */
         {
           const f = data.fertility.by_language;
           const unknownCount = Object.values(f).filter((v) => v.value === null).length;
-          const rows = $('div', 'bars');
-          const empty = $('p');
-          empty.style.cssText = 'font-size:13.5px;color:var(--muted);margin:0';
-          empty.append(document.createTextNode(`All ${Object.keys(f).length} languages report `));
-          empty.append(renderNumber(Object.values(f)[0], { unit: false }));
-          empty.append(document.createTextNode(' — the measurement run has not happened. The honest version of this chart is an empty one.'));
-          rows.append(empty);
-          const target = $('p');
-          target.style.cssText = 'font-family:var(--mono);font-size:12.5px;color:var(--muted);margin:14px 0 0';
-          target.append(document.createTextNode('target: worst Indic language ≤ '));
-          target.append(renderNumber(data.fertility.parity_target));
-          target.append(document.createTextNode(' × English'));
-          main.append(sect(3, 'What the tokenizer costs',
-            [document.createTextNode('An English-centric vocabulary charges Indic scripts several tokens where English pays one. That multiplier applies to every token of the entire run, so it outweighs almost any decision about corpus size — and unlike data, you cannot fix it later. This is the one table on the site that is deliberately '),
-             $('b', '', 'empty'),
-             document.createTextNode(': the rule is that fertility is measured, never estimated, and the run has not happened.')],
-            widget(rows, target),
-            `${unknownCount} of ${Object.keys(f).length} languages unmeasured. Publishing a plausible number here would be the exact failure this framework exists to prevent.`));
+          const tax = (data.priors || []).find((p) => /tokenization tax/i.test(p.claim || ''));
+
+          const card = $('div', 'explainer');
+          card.append($('h3', '', 'What every Indic sentence costs before training starts'));
+          const intro = $('p', 'intro');
+          intro.append(
+            document.createTextNode('A tokenizer built for English splits Indian scripts into far more pieces than it splits English. Every one of those pieces is paid for on '),
+            $('b', '', 'every step of the entire run'), document.createTextNode(', so the multiplier outweighs almost any decision about corpus size — and unlike data, you cannot fix it afterwards. It is also not a property of the scripts: it is a design failure, and other tokenizers already do much better.'));
+          card.append(intro);
+
+          if (tax) {
+            const measured = $('div', 'subpanel');
+            measured.append($('div', 'lbl', 'measured — by someone else, and published'));
+            const tiles3 = $('div', 'tiles');
+            tiles3.append(
+              tileOf('average Indic tax', '8.0×', 'vs English, under cl100k_base', 'bad'),
+              tileOf('worst language', '13.0×', 'Malayalam', 'bad'),
+              tileOf('context left', '12%', 'of what an English user gets', 'bad'),
+              tileOf('better tokenizers cut it by', '73%', 'XLM-R and o200k_base', 'good'));
+            measured.append(tiles3);
+            const src = $('p', 'footnote');
+            src.append(document.createTextNode('FLORES-200, six tokenizers, fourteen Indian languages. Failed byte-pair merges are the mechanism — merge failure correlates with the tax at r = 0.89. Source: '),
+              $('b', '', tax.source || 'the priors'), document.createTextNode('.'));
+            measured.append(src);
+            card.append(measured);
+          }
+
+          const ours = $('div', 'subpanel');
+          ours.append($('div', 'lbl', 'measured — by us'));
+          const nothing = $('p');
+          nothing.style.cssText = 'font-size:13.4px;color:var(--muted);margin:0';
+          nothing.append(document.createTextNode(`Nothing yet. All ${Object.keys(f).length} languages report `),
+            renderNumber(Object.values(f)[0], { unit: false }),
+            document.createTextNode('. The six-tokenizer run against our own candidate vocabulary has not happened, and the rule is that a fertility figure is measured or it is not shown.'));
+          ours.append(nothing);
+          card.append(ours);
+
+          const co = $('div', 'callout warn');
+          co.append($('span', 'lbl', 'why the empty column matters'));
+          const msg = $('span');
+          msg.append(document.createTextNode('The published tax tells us the problem is real and roughly how large. It does not tell us what '),
+            $('b', '', 'our'), document.createTextNode(' vocabulary achieves, and that is the number the whole vocabulary argument in section 2 rests on. Until the run happens, section 2\'s curve is a shape without an anchor — which is why the plan makes this a gate rather than a task. Target: worst Tier-A language within '),
+            renderNumber(data.fertility.parity_target), document.createTextNode(' × English.'));
+          co.append(msg);
+          card.append(co);
+
+          const frame = $('p', 'frame');
+          frame.textContent = 'Before any argument about how much data to collect, there is a cheaper question: how much does each sentence cost to represent at all?';
+          const s = sect(3, 'The tokenizer tax', [], card,
+            `${unknownCount} of ${Object.keys(f).length} languages unmeasured by us. Publishing a plausible-looking number in that column would be the exact failure this framework exists to prevent.`);
+          s.insertBefore(frame, s.children[1]);
+          main.append(s);
         }
 
         /* ---------------------------------------------------- 4 · The Budget */
@@ -448,28 +497,185 @@
             'Drag the threshold. Nothing here is a bug in the filter — it is the filter working as designed, on the wrong objective.'));
         }
 
-        /* ---------------------------------------------------- 6 · The Mix + orphans */
+        /* ---------------------------------------------------- 6 · The mix, dissected
+         *
+         * A stacked mixture that rebalances as the rung changes, tiers grouped by whether a
+         * quality selector can even see them, and a detail panel for whichever tier is open. The
+         * protected-lane grouping is the whole point: it is why a large share of the batch
+         * bypasses the filter, and that only becomes obvious when tiers are sorted that way.
+         */
         {
-          const bars = $('div', 'bars');
-          const total = rec.mix.total_seen_tokens;
+          const info = data.milestones.tier_info || {};
           const covered = new Set(data.coverage.capabilities.filter((c) => c.count > 0).map((c) => c.capability));
-          rec.mix.tiers.forEach((t) => {
-            const caps = t.capabilities || [];
+          const palette = ['var(--lang-tier-1)', 'var(--gotcha-sourcing)', 'var(--grade-a)', 'var(--gotcha-composition)',
+            'var(--gotcha-licence)', 'var(--grade-b)', 'var(--gotcha-heterogeneity)', 'var(--faint)'];
+          let rung = START;
+          let openTier = 'indic-natural';
+
+          const card = $('div', 'explainer');
+          card.append($('h3', '', 'The mix, dissected'));
+          const intro = $('p', 'intro');
+          intro.append(
+            document.createTextNode('This is the corpus proposed for the run: eight tiers, each with a reason to exist and a cost. Switching rung rebalances the mixture in front of you. The grouping that matters is the second one — a quality filter scores every batch and keeps roughly the best of it, but it was tuned on English, so tiers in the '),
+            $('b', '', 'protected lane'), document.createTextNode(' bypass it entirely. Without that lane the thin Indic tiers are scored as noise and quietly dropped.'));
+          card.append(intro);
+
+          const top = $('div', 'subpanel');
+          const rungRow = $('div', 'presets');
+          rungRow.append($('span', 'plabel', 'budget'));
+          const stack = $('div');
+          stack.style.cssText = 'display:flex;height:34px;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin-top:12px';
+          const legendRow = $('div', 'legend');
+          top.append(rungRow, stack, legendRow);
+
+          const tierGroups = $('div');
+          tierGroups.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:12px';
+          const detail = $('div', 'subpanel');
+          const bottom = $('div', 'callout');
+          card.append(top, tierGroups, detail, bottom);
+
+          const drawDetail = () => {
+            const t = rung.mix.tiers.find((x) => x.name === openTier) || rung.mix.tiers[0];
+            const meta = info[t.name] || {};
+            const caps = meta.capabilities || [];
             const orphan = caps.length > 0 && !caps.some((c) => covered.has(c));
-            const row = barRow(t.name + (orphan ? '  (no instrument)' : ''), (t.seen_tokens / total) * 100,
-              `${((t.seen_tokens / total) * 100).toFixed(1)}%`, orphan ? 'gap' : t.is_indic ? 'indic' : '');
-            bars.append(row);
+            const idx = rung.mix.tiers.findIndex((x) => x.name === t.name);
+            detail.replaceChildren();
+            const head = $('div');
+            head.style.cssText = 'display:flex;align-items:baseline;gap:10px;margin-bottom:10px;flex-wrap:wrap';
+            const dot = $('span');
+            dot.style.cssText = 'width:11px;height:11px;border-radius:3px;display:inline-block;background:' + palette[idx % palette.length];
+            const nm = $('span', '', t.name);
+            nm.style.cssText = 'font-family:var(--display);font-size:1.05rem;font-weight:600';
+            head.append(dot, nm);
+            if (meta.always_on) head.append($('span', 'chip win', 'protected lane'));
+            if (meta.is_synthetic) head.append($('span', 'chip parity', 'manufactured'));
+            if (orphan) head.append($('span', 'chip lose', 'no instrument'));
+            detail.append(head);
+
+            const kv = $('dl');
+            kv.style.cssText = 'display:grid;grid-template-columns:112px minmax(0,1fr);gap:7px 14px;font-size:13px;margin:0';
+            const pair = (k, v) => {
+              const dt = $('dt', '', k);
+              dt.style.cssText = 'font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)';
+              const dd = $('dd');
+              dd.style.margin = '0';
+              if (v instanceof Node) dd.append(v); else dd.textContent = v || '—';
+              kv.append(dt, dd);
+            };
+            const tok = $('span');
+            tok.append(renderNumber({ value: t.seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' }, { unit: false }),
+              document.createTextNode(' seen · ' + t.epochs + '× over '),
+              renderNumber({ value: t.unique_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' }, { unit: false }),
+              document.createTextNode(' unique'));
+            pair('tokens', tok);
+            pair('share', (t.share * 100).toFixed(1) + '% of the batch');
+            pair('sources', meta.sources);
+            pair('measured by', caps.length ? caps.map((c) => (covered.has(c) ? c : c + ' (nothing)')).join(' · ') : '—');
+            pair('why it exists', meta.why);
+            detail.append(kv);
+          };
+
+          const draw = () => {
+            const total = rung.mix.total_seen_tokens;
+            stack.replaceChildren();
+            legendRow.replaceChildren();
+            rung.mix.tiers.forEach((t, i) => {
+              const pct = (t.seen_tokens / total) * 100;
+              const seg = $('div');
+              seg.style.cssText = 'width:' + pct + '%;background:' + palette[i % palette.length] +
+                ';display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:#fff;cursor:pointer';
+              seg.textContent = pct >= 8 ? pct.toFixed(0) + '%' : '';
+              seg.title = t.name + ' — ' + pct.toFixed(1) + '%';
+              seg.addEventListener('click', () => { openTier = t.name; draw(); });
+              stack.append(seg);
+              const l = $('span');
+              const sw = $('i');
+              sw.style.background = palette[i % palette.length];
+              l.append(sw, t.name + ' ' + pct.toFixed(0) + '%');
+              l.style.cursor = 'pointer';
+              l.addEventListener('click', () => { openTier = t.name; draw(); });
+              legendRow.append(l);
+            });
+
+            const groups = [
+              ['selector-eligible', rung.mix.tiers.filter((t) => !info[t.name] || !info[t.name].always_on),
+                'Scored by the quality filter, which keeps roughly the best of each batch.'],
+              ['protected lane', rung.mix.tiers.filter((t) => info[t.name] && info[t.name].always_on),
+                'Invisible to the filter, so it cannot be scored away. This is where the scarce data lives.'],
+            ];
+            tierGroups.replaceChildren();
+            groups.forEach(([title, tiers, blurb]) => {
+              const g = $('div', 'subpanel');
+              g.style.marginBottom = '0';
+              const share = tiers.reduce((a, t) => a + t.share, 0) * 100;
+              g.append($('div', 'lbl', title + ' · ' + share.toFixed(0) + '% of every batch'));
+              const b = $('p');
+              b.style.cssText = 'font-size:12px;color:var(--muted);margin:0 0 9px';
+              b.textContent = blurb;
+              g.append(b);
+              tiers.forEach((t) => {
+                const i = rung.mix.tiers.findIndex((x) => x.name === t.name);
+                const btn = $('button');
+                btn.type = 'button';
+                btn.style.cssText = 'display:block;width:100%;text-align:left;margin-bottom:6px;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--ink);border:1px solid ' +
+                  (t.name === openTier ? 'var(--accent)' : 'var(--line)') + ';background:' +
+                  (t.name === openTier ? 'var(--accent-soft)' : 'var(--panel)');
+                const nm = $('div');
+                nm.style.cssText = 'font-size:12.5px;display:flex;align-items:center;gap:6px';
+                const sw = $('span');
+                sw.style.cssText = 'width:9px;height:9px;border-radius:2px;display:inline-block;background:' + palette[i % palette.length];
+                nm.append(sw, t.name);
+                const big = $('div');
+                big.style.cssText = 'font-family:var(--display);font-size:1.15rem;font-weight:600;margin-top:2px';
+                big.append(renderNumber({ value: t.seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' }, { unit: false }));
+                const sub = $('div', '', (t.share * 100).toFixed(1) + '% · ' + t.epochs + '× epochs');
+                sub.style.cssText = 'font-family:var(--mono);font-size:10.5px;color:var(--faint)';
+                btn.append(nm, big, sub);
+                btn.addEventListener('click', () => { openTier = t.name; draw(); });
+                g.append(btn);
+              });
+              tierGroups.append(g);
+            });
+
+            drawDetail();
+
+            const protectedShare = rung.mix.tiers
+              .filter((t) => info[t.name] && info[t.name].always_on)
+              .reduce((a, t) => a + t.share, 0);
+            bottom.className = 'callout';
+            bottom.replaceChildren($('span', 'lbl', 'what the whole design turns on'));
+            const m = $('span');
+            m.append(document.createTextNode('The quality filter is steered by a proxy that is overwhelmingly English, so it systematically '),
+              $('b', '', 'under-values Indic text'), document.createTextNode(' and would reject it if allowed to. Because the protected lane guarantees '),
+              $('b', '', (protectedShare * 100).toFixed(0) + '% of every batch'),
+              document.createTextNode(' regardless of score, the scarce tiers survive contact with the pipeline — which is why that share of the corpus deliberately bypasses the selector. See '),
+              ref('the priors', 'priors'), document.createTextNode('.'));
+            bottom.append(m);
+          };
+
+          data.milestones.presets.forEach((p) => {
+            const b = $('button', 'seg', p.id + (p.recommended ? ' ·target' : ''));
+            b.type = 'button';
+            b.setAttribute('aria-pressed', String(p === START));
+            b.addEventListener('click', () => {
+              rung = p;
+              [...rungRow.querySelectorAll('button')].forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
+              draw();
+            });
+            rungRow.append(b);
           });
-          const gapNote = $('p');
-          gapNote.style.cssText = 'font-size:12.5px;color:var(--muted);margin:12px 0 0';
-          gapNote.append(document.createTextNode('Hatched bars are tiers no benchmark would notice the removal of. That is not an argument to cut them — it is an argument you have to make out loud. See '), ref('the gaps', 'gaps'), document.createTextNode('.'));
-          const w = widget(bars, gapNote);
-          const grow6 = () => [...bars.children].forEach((r) => { if (r._grow) r._grow(); });
-          animateOnce(w, () => [...bars.children].forEach((r, i) => { if (r._grow) setTimeout(r._grow, prefersReducedMotion() ? 0 : i * 45); }));
-          playAll.push(grow6);
-          main.append(sect(6, 'The mix, and what it cannot see',
-            [document.createTextNode('The recommended shape, and an honest note attached to it: some tiers are paid for and unmeasurable. Delete them and every instrument reports the same score.')],
-            w, 'Widths are share of seen tokens in the recommended budget.'));
+
+          draw();
+          playAll.push(draw);
+          card.append($('p', 'footnote',
+            'Tier shares follow the proposed mix; token counts are that shape scaled to the selected rung. Click any band, legend entry or tier card to open it.'));
+
+          const frame = $('p', 'frame');
+          frame.textContent = 'With the budget settled, the question becomes what actually goes into it — and which parts a quality filter would throw away.';
+          const s = sect(6, 'What goes in', [], card, null);
+          s.insertBefore(frame, s.children[1]);
+          main.append(s);
         }
 
         /* ---------------------------------------------------- 7 · The Pipeline */

@@ -22,7 +22,7 @@ from .config import Config
 from .coverage import build_matrix
 from .fertility import D_MODEL_DEFAULT, PARITY_TARGET, unmeasured
 from .grade import grade_dataset
-from .milestones import build_all
+from .milestones import TIER_SHAPE, build_all
 from .mix import ALWAYS_ON_SHARE, MAX_EPOCHS_ADVISED, MAX_EPOCHS_HARD
 from .models import Value
 from .shingles import write_index
@@ -51,6 +51,44 @@ def _value(value: float | int | None, unit: str, provenance: str, source: str) -
     return dataclasses.asdict(
         Value(value=value, unit=unit, provenance=provenance, source=source)  # type: ignore[arg-type]
     )
+
+
+def _strip_tier_prose(presets: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Drop the per-tier prose from every preset, since it is identical across all of them.
+
+    Args:
+        presets: Built milestone presets.
+
+    Returns:
+        The presets with the shape-level fields removed from each tier; they are exported once
+        under `milestones.tier_info` instead.
+    """
+    for preset in presets:
+        mix = preset["mix"]
+        for tier in mix["tiers"]:
+            for field in ("sources", "why", "capabilities"):
+                tier.pop(field, None)
+            # A token count carried to nine decimal places is noise: these are estimates, and the
+            # trailing float precision is pure bytes.
+            for field in ("unique_tokens", "seen_tokens"):
+                if isinstance(tier.get(field), float):
+                    tier[field] = round(tier[field])
+            if isinstance(tier.get("share"), float):
+                tier["share"] = round(tier["share"], 4)
+        for field in ("total_seen_tokens", "total_unique_tokens"):
+            if isinstance(mix.get(field), float):
+                mix[field] = round(mix[field])
+        for field in (
+            "indic_share",
+            "natural_indic_share",
+            "synthetic_share_of_indic",
+            "always_on_share",
+        ):
+            if isinstance(mix.get(field), float):
+                mix[field] = round(mix[field], 4)
+        if isinstance(preset.get("target_seen_tokens"), float):
+            preset["target_seen_tokens"] = round(preset["target_seen_tokens"])
+    return presets
 
 
 def _load_records(cfg: Config) -> dict[str, Any]:
@@ -155,8 +193,21 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
             "provenance": "measured",
             "source": "computed:coverage",
         },
+        # The per-tier prose is a property of the mix shape, not of any one rung — carrying it in
+        # all four presets cost ~10KB of duplication and pushed the index over budget.
         "milestones": {
-            "presets": build_all(records.get("milestones", [])),
+            "presets": _strip_tier_prose(build_all(records.get("milestones", []))),
+            "tier_info": {
+                tier["name"]: {
+                    "sources": tier.get("sources"),
+                    "why": tier.get("why"),
+                    "capabilities": tier.get("capabilities", []),
+                    "always_on": bool(tier.get("always_on")),
+                    "is_indic": bool(tier.get("is_indic")),
+                    "is_synthetic": bool(tier.get("is_synthetic")),
+                }
+                for tier in TIER_SHAPE
+            },
             "provenance": "estimated",
             "source": "computed:milestones from records/milestones.json + DECISIONS tier shape",
         },
@@ -192,9 +243,17 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
             ),
             "note": shingle_meta["note"],
         },
-        # `priors` stays in the index: the Decision cites it inline. The other reference arrays are
-        # reference material for one surface each, so they ship separately and load on demand.
-        "priors": records.get("priors", []),
+        # `priors` stays in the index because the Decision cites it inline — but only the three
+        # fields both surfaces actually render. The full records live in records/priors.json.
+        "priors": [
+            {
+                "id": row.get("id"),
+                "claim": row.get("claim"),
+                "source": row.get("source"),
+                "effect_on_design": row.get("effect_on_design"),
+            }
+            for row in records.get("priors", [])
+        ],
     }
 
     reference = {name: rows for name, rows in records.items() if name != "priors"}
