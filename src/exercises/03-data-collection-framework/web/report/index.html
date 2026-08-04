@@ -881,57 +881,7 @@
             `Fig. 3 — ${unknownCount} of ${Object.keys(f).length} languages unmeasured by us. This is a chart, not an explainer: the interaction that would prove the claim needs per-language fertility for six tokenizers, and inventing it is the exact failure this framework exists to prevent.`));
         }
 
-        /* ---------------------------------------------------- 4 · The Budget */
-        {
-          const host = $('div');
-          const ctr = $('div', 'controls');
-          let current = START;
-          const draw = () => {
-            const bars = $('div', 'bars');
-            const total = current.mix.total_seen_tokens;
-            current.mix.tiers.forEach((t) => {
-              const cls = t.is_synthetic ? 'synth' : t.is_indic ? 'indic' : '';
-              const row = barRow(t.name, (t.seen_tokens / total) * 100,
-                renderNumber({ value: t.seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' }, { unit: false }), cls);
-              bars.append(row);
-            });
-            const sum = $('p');
-            sum.style.cssText = 'font-family:var(--mono);font-size:12.5px;color:var(--muted);margin:14px 0 0';
-            sum.append(document.createTextNode('seen '), renderNumber({ value: total, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' }, { unit: false }),
-              document.createTextNode(` · unique `), renderNumber({ value: current.mix.total_unique_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' }, { unit: false }),
-              document.createTextNode(` · Indic ${(current.mix.indic_share * 100).toFixed(1)}% of which ${(current.mix.natural_indic_share * 100).toFixed(1)}% natural`));
-            host.replaceChildren(bars, sum);
-            current.findings.forEach((fnd) => {
-              const p = $('p');
-              p.style.cssText = 'font-size:12.5px;color:var(--muted);margin:8px 0 0';
-              p.textContent = `${fnd.level}: ${fnd.message}`;
-              host.append(p);
-            });
-            [...bars.children].forEach((r, i) => { if (r._grow) setTimeout(r._grow, prefersReducedMotion() ? 0 : i * 45); });
-          };
-          data.milestones.presets.forEach((p) => {
-            const b = $('button', 'seg', p.id);
-            b.type = 'button';
-            b.setAttribute('aria-pressed', String(p === START));
-            b.addEventListener('click', () => {
-              current = p;
-              [...ctr.children].forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
-              draw();
-            });
-            ctr.append(b);
-          });
-          const w = widget(ctr, host);
-          draw();
-          animateOnce(w, draw);
-          playAll.push(draw);
-          main.append(sect(4, 'How many tokens, and where from',
-            [document.createTextNode('The budget is not "collect 15 trillion tokens". It is a unique pool read on a schedule: repetition up to about four passes is nearly as good as fresh data, so a small Indic pool read four times contributes far more than its size suggests. That single reframing lifts the natural-Indic share several times over without collecting one new document — see '),
-             ref('the priors', 'priors'), document.createTextNode('. It opens on 5T — the rung buildable from open sources today; 15T is the target the research recommends, not a starting position.')],
-            w,
-            'Switch rungs to see the same tier shape scaled. Orange is manufactured text; blue is natural Indic.'));
-        }
-
-        /* ---------------------------------------------------- 5 · The Filter (Destroyer)
+        /* ---------------------------------------------------- 4 · The Filter (Destroyer)
          *
          * Audit row #5, and the one the audit said buys the most: the rescue toggle was missing,
          * so the old version showed languages dying and stopped there. Watching them come back is
@@ -971,7 +921,7 @@
           };
 
           main.append(buildExplainer({
-            n: 5,
+            n: 4,
             title: 'The filter deletes exactly the languages the model exists to serve',
             claim: [
               document.createTextNode('Quality classifiers are trained on English proxies, so they read thin-resource languages as noise. Raising the threshold is the obvious move and it is the wrong one — the languages with least data disappear first. Before scrolling, put a number in the box: '),
@@ -979,8 +929,8 @@
               document.createTextNode(' a filter turned up hard? Then scroll, and watch what brings them back. Details in '),
               ref('the languages', 'languages'), document.createTextNode('.'),
             ],
-            figNum: 'Fig. 5 — what survives',
-            caption: 'Fig. 5 — One mark per scheduled language, ordered by tier. Red is a language the filter removes. The rescue state changes no threshold and no classifier — it reserves a share of the batch that the selector may not touch.',
+            figNum: 'Fig. 4 — what survives',
+            caption: 'Fig. 4 — One mark per scheduled language, ordered by tier. Red is a language the filter removes. The rescue state changes no threshold and no classifier — it reserves a share of the batch that the selector may not touch.',
             input: { rows: 1, label: `Before you scroll — how many of the ${TOTAL} survive a hard filter?`, value: '' },
             pill: '8% of every batch',
             rail: [
@@ -1028,7 +978,7 @@
           }));
         }
 
-        /* ---------------------------------------------------- 6 · The mix (Budget)
+        /* ---------------------------------------------------- 5 · The mix (Budget)
          *
          * Audit row #6. Was a rung control plus a click-to-open detail panel — one tier visible at
          * a time, which EXPLAINER_PROMPT §18 calls a failure of layout dressed as a feature. All
@@ -1084,7 +1034,7 @@
           };
 
           main.append(buildExplainer({
-            n: 6, wide: true,
+            n: 5, wide: true,
             title: 'The mixture is zero-sum, and a third of it is hidden from the filter',
             claim: [
               document.createTextNode('The corpus proposed for the run: eight tiers, all of them visible at once because comparing them is the point. Scrolling scales the budget and then regroups the same tiers twice — by '),
@@ -1094,8 +1044,8 @@
               document.createTextNode('. Per-tier reasoning in '),
               ref('the catalogue', 'data'), document.createTextNode('.'),
             ],
-            figNum: 'Fig. 6 — the mixture',
-            caption: 'Fig. 6 — All eight tiers at every state; no tier is ever hidden. Bar length is seen tokens as a share of the budget. Red marks the tier that has no corpus behind it — the capability is scheduled and the data does not exist.',
+            figNum: 'Fig. 5 — the mixture',
+            caption: 'Fig. 5 — All eight tiers at every state; no tier is ever hidden. Bar length is seen tokens as a share of the budget. Red marks the tier that has no corpus behind it — the capability is scheduled and the data does not exist.',
             pill: '8% never filtered',
             rail: [
               document.createTextNode('One tier is scheduled against data that does not exist. '),
@@ -1152,7 +1102,7 @@
                 api.big({ value: mix.total_seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' });
                 api.sub(`seen tokens across ${mix.tiers.length} tiers`);
                 api.verdict(`${(mix.indic_share * 100).toFixed(0)}% INDIC`, false);
-                api.note(`Read from ${fmt(mix.total_unique_tokens, 'count')} unique tokens. The difference between seen and unique is repetition, which section 11 prices.`);
+                api.note(`Read from ${fmt(mix.total_unique_tokens, 'count')} unique tokens. The difference between seen and unique is repetition, which section 10 prices.`);
               }
               api.strip(mix.tiers.map((t) => {
                 const meta = info[t.name] || {};
@@ -1165,7 +1115,7 @@
           }));
         }
 
-        /* ---------------------------------------------------- 7 · The Pipeline (Accumulator)
+        /* ---------------------------------------------------- 6 · The Pipeline (Accumulator)
          *
          * Audit row #7. Absorbs /reasoning#tools, which held the same 17 records as a lookup table
          * — the detail this walk needs, so keeping both was keeping a duplicate.
@@ -1207,7 +1157,7 @@
           };
 
           main.append(buildExplainer({
-            n: 7,
+            n: 6,
             title: 'Seven stages, and the commitments do not un-make themselves',
             claim: [
               document.createTextNode('Between a URL and a training shard sit seven stages, each needing a tool you adopt, build, or avoid. Scrolling walks them, and the decisions '),
@@ -1217,8 +1167,8 @@
               document.createTextNode('. Full reasoning per tool in '),
               ref('the tools', 'tools'), document.createTextNode('.'),
             ],
-            figNum: 'Fig. 7 — decisions committed',
-            caption: 'Fig. 7 — One mark per tool in the register, filling as the pipeline is walked. Red marks a tool the research rejected on its own measurement, not on reputation. Stage names come from the tool register; there are seven, not the nine an earlier draft of this section claimed.',
+            figNum: 'Fig. 6 — decisions committed',
+            caption: 'Fig. 6 — One mark per tool in the register, filling as the pipeline is walked. Red marks a tool the research rejected on its own measurement, not on reputation. Stage names come from the tool register; there are seven, not the nine an earlier draft of this section claimed.',
             pill: '17 tools, 2 rejected',
             rail: [
               document.createTextNode('Verdicts are '),
@@ -1258,7 +1208,7 @@
           }));
         }
 
-        /* ---------------------------------------------------- 8 · The Instruments (Destroyer)
+        /* ---------------------------------------------------- 7 · The Instruments (Destroyer)
          *
          * Audit row #8, re-framed from Inspector so it does not sit adjacent to another one. The
          * claim is not "capabilities differ" — it is that coverage is thinner than the raw count
@@ -1288,7 +1238,7 @@
             : cap.benchmarks.filter((n) => keep.includes(bandOf.get(n))).length);
 
           main.append(buildExplainer({
-            n: 8,
+            n: 7,
             title: 'Most of the coverage is not evidence about Indic ability',
             claim: [
               document.createTextNode('Every capability the model is built for, against the benchmarks that can detect it. The raw count flatters the picture: scroll and remove the instruments whose scores '),
@@ -1296,8 +1246,8 @@
               document.createTextNode(' — harness-dependent first, then translated-from-English — and watch how many capabilities are left with one instrument or none. Bands and split policies in '),
               ref('the instruments', 'benchmarks'), document.createTextNode('.'),
             ],
-            figNum: 'Fig. 8 — capabilities you could grade',
-            caption: 'Fig. 8 — One mark per capability. Red is a capability left with one instrument or none once the named band is removed. Trust bands are recorded per benchmark in the register; the counts here are recomputed from them, not restated.',
+            figNum: 'Fig. 7 — capabilities you could grade',
+            caption: 'Fig. 7 — One mark per capability. Red is a capability left with one instrument or none once the named band is removed. Trust bands are recorded per benchmark in the register; the counts here are recomputed from them, not restated.',
             pill: '25 of 31 native-sourced',
             rail: [
               document.createTextNode('A translated benchmark is not worthless — it is '),
@@ -1331,7 +1281,7 @@
           }));
         }
 
-        /* ---------------------------------------------------- 9 · Competitive frame */
+        /* ---------------------------------------------------- 8 · Competitive frame */
         {
           const arch = (records.architectures || []).filter((a) => a.params_total);
           const mine = { model: 'this model', params_total: 40e9, params_active: 40e9, mine: true };
@@ -1385,17 +1335,17 @@
 
           const block = $('div', 'chartblock');
           block.append(host);
-          const s9 = $('section');
-          s9.id = 's9';
-          const h9 = $('h2');
-          h9.append($('span', 'n', '9'), document.createTextNode('The model to beat is the one that costs nothing'));
-          const fig9 = $('figure');
-          fig9.append(block, $('figcaption', '', 'Fig. 9 — Parameter counts on a log axis. This is a chart, not an explainer: the claim needs no comparison the reader has to perform, so the one control that earns its place sits in the sentence above rather than in a control bar.'));
-          s9.append(h9, sentence, fig9);
-          main.append(s9);
+          const s8 = $('section');
+          s8.id = 's8';
+          const h8 = $('h2');
+          h8.append($('span', 'n', '8'), document.createTextNode('The model to beat is the one that costs nothing'));
+          const fig8 = $('figure');
+          fig8.append(block, $('figcaption', '', 'Fig. 8 — Parameter counts on a log axis. This is a chart, not an explainer: the claim needs no comparison the reader has to perform, so the one control that earns its place sits in the sentence above rather than in a control bar.'));
+          s8.append(h8, sentence, fig8);
+          main.append(s8);
         }
 
-        /* ---------------------------------------------------- 10 · Critical path */
+        /* ---------------------------------------------------- 9 · Critical path */
         {
           const plan = records.plan || [];
           const maxWeek = Math.max(...plan.map((p) => p.week_end || p.week_start || 0), 12);
@@ -1434,15 +1384,15 @@
           left.append(list);
           grid.append(left, gutter);
 
-          main.append(sect(10, 'Two of the twelve are gates, not tasks',
+          main.append(sect(9, 'Two of the twelve are gates, not tasks',
             [document.createTextNode('Twelve actions across the first quarter. The two in red are not work items — they are '),
              $('b', '', 'permission to spend'),
              document.createTextNode(', and everything after them is provisional until they clear.')],
             grid,
-            'Fig. 10 — Week spans per action; red marks a gate. A chart, not an explainer: the ordering is the argument and there is nothing here for a reader to change.'));
+            'Fig. 9 — Week spans per action; red marks a gate. A chart, not an explainer: the ordering is the argument and there is nothing here for a reader to change.'));
         }
 
-        /* ---------------------------------------------------- 11 · Repetition (Accumulator)
+        /* ---------------------------------------------------- 10 · Repetition (Accumulator)
          *
          * Audit rows #4 and #4'. Absorbs the old §4 (budget rungs), which showed the same tier
          * shape scaled four ways and made the same argument this section makes properly: the
@@ -1483,7 +1433,7 @@
           ];
 
           main.append(buildExplainer({
-            n: 11, wide: true,
+            n: 10, wide: true,
             title: 'A small pool read four times is a large pool',
             claim: [
               document.createTextNode('Only so much natural Indian-language text exists, so reaching a token budget means reading it more than once. The finding worth having is that the first few passes are nearly '),
@@ -1491,8 +1441,8 @@
               document.createTextNode(' — and that they stop being free at a knee somebody measured. Scrolling steps the schedule; the pool never changes. Evidence in '),
               ref('the priors', 'priors'), document.createTextNode('.'),
             ],
-            figNum: 'Fig. 11 — the schedule, not the pool',
-            caption: 'Fig. 11 — Effective tokens from a fixed natural-Indic pool as passes accumulate. One mark per pass: accent while the evidence supports it, red past the hard ceiling of 16, where nothing has been measured. The pool is constant throughout — only the reading changes.',
+            figNum: 'Fig. 10 — the schedule, not the pool',
+            caption: 'Fig. 10 — Effective tokens from a fixed natural-Indic pool as passes accumulate. One mark per pass: accent while the evidence supports it, red past the hard ceiling of 16, where nothing has been measured. The pool is constant throughout — only the reading changes.',
             pill: '4 passes ~= free',
             rail: [
               document.createTextNode('The knee at '),
@@ -1561,7 +1511,7 @@
           }));
         }
 
-        /* ---------------------------------------------------- 12 · The Verdict */
+        /* ---------------------------------------------------- 11 · The Verdict */
         {
           const box = $('div');
           const line = (chip, cls, text) => {
@@ -1578,7 +1528,7 @@
           scope.style.cssText = 'font-size:13px;color:var(--muted);margin:16px 0 0;max-width:62ch';
           scope.append(document.createTextNode('The honest scope line: the single number this all rests on — how much deduplicated natural Indic text exists — has never been measured by anyone, and the fertility figures are still unrun. Both are in '),
             ref('the unknowns', 'risks'), document.createTextNode('. This is a plan with its uncertainty attached, not a result.'));
-          main.append(sect(12, 'The verdict',
+          main.append(sect(11, 'The verdict',
             [document.createTextNode('Where this model would beat the open alternatives, where it would only match them, and where it would lose.')],
             widget(box, scope), null));
         }
