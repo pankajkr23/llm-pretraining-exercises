@@ -96,6 +96,27 @@ export function renderNumber(value, options = {}) {
 }
 
 /**
+ * Render provenance as a short word, for places where it changes how a figure should be read.
+ *
+ * Preferred over a typographic mark on the number itself anywhere there is room for it: "estimated"
+ * under a stat tile is unambiguous, where a dotted underline could be a link, an abbreviation, or a
+ * spell-check squiggle.
+ *
+ * @param {{provenance: string, source?: string}} value
+ * @param {string} [extra] - appended after the provenance word, e.g. the arithmetic behind it.
+ * @returns {HTMLElement}
+ */
+export function renderProvenance(value, extra) {
+  const el = document.createElement('span');
+  el.className = 'prov';
+  el.dataset.provenance = value.provenance;
+  const word = value.provenance === 'unknown' ? 'not measured' : value.provenance;
+  el.textContent = extra ? `${word} · ${extra}` : word;
+  if (value.source) el.title = value.source;
+  return el;
+}
+
+/**
  * Replace an element's contents with a rendered Value.
  * @param {Element|string} target - element or selector.
  * @param {object} value

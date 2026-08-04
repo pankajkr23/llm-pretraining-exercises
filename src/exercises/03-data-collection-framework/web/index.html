@@ -195,8 +195,9 @@
           document.getElementById('honesty').innerHTML =
             `<b>Which numbers to trust.</b> This page reports ${tally.measured} measured figures, ` +
             `${tally.estimated} estimates and ${tally.unknown} quantities nobody has measured — ` +
-            'including the size of the Indian-language web itself. A solid underline means measured, ' +
-            'a dotted one means estimated, faded italics mean unknown. Hover any number for its source.';
+            'including the size of the Indian-language web itself. Only the exceptional cases are ' +
+            'marked: a green rule under the handful that were actually measured, faded italics where ' +
+            'nothing is known. Everything unmarked is an estimate — hover any figure for its source.';
         })
         .catch((e) => fail(e.message));
     </script>

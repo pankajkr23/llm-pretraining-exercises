@@ -232,23 +232,50 @@ footer {
 
 /* ---------------------------------------------------------------- provenance */
 
+/* Provenance marking, second attempt.
+ *
+ * The first version underlined every figure: solid for measured, dotted for estimated, faded for
+ * unknown. It looked principled and failed in practice, because 80% of the bundle is unknown and
+ * only 2% is measured — so a mark fired on every number on the page. A signal that is always on is
+ * not a signal, and a page of dotted underlines reads as broken links, not as epistemic honesty.
+ *
+ * So: mark only what is exceptional. `estimated` is the working default and gets nothing.
+ * `measured` is rare enough to earn a mark. `unknown` is an admission worth making visible. Where
+ * provenance actually matters — a headline figure, a stat tile — it is said in words underneath,
+ * which is both clearer and impossible to mistake for a hyperlink.
+ */
 .num {
   font-variant-numeric: tabular-nums;
+}
+
+/* Rare, and the strongest claim on the site — worth a mark. */
+.num[data-provenance="measured"] {
+  border-bottom: 1.5px solid var(--grade-a);
   cursor: help;
 }
 
-.num[data-provenance="measured"] {
-  border-bottom: 1px solid currentColor;
-}
-
+/* The working default. No mark: labelling the ordinary case tells the reader nothing. */
 .num[data-provenance="estimated"] {
-  border-bottom: 1px dotted currentColor;
+  cursor: help;
 }
 
+/* Not a value at all — usually renders as an em dash, and should look like an absence. */
 .num[data-provenance="unknown"] {
-  opacity: 0.6;
+  color: var(--faint);
   font-style: italic;
+  cursor: help;
 }
+
+/* Provenance in words, for the places where it changes how a figure should be read. */
+.prov {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.prov[data-provenance="measured"] { color: var(--grade-a); }
+.prov[data-provenance="unknown"] { color: var(--grade-b); }
 
 .provenance-key {
   display: flex;

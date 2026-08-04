@@ -176,10 +176,10 @@
         a.ref { color: #000; border-bottom: 0; font-weight: 600; }
         a.ref::after { content: " [" attr(data-note) "]"; font-size: 6.6pt; vertical-align: super; font-weight: 400; }
 
-        /* Provenance must survive the loss of colour — the marks are already shape, not hue. */
-        .num[data-provenance="measured"] { border-bottom: 0.6pt solid #000; }
-        .num[data-provenance="estimated"] { border-bottom: 0.6pt dotted #000; }
-        .num[data-provenance="unknown"] { opacity: 1; font-style: italic; color: #555; }
+        /* Same logic on paper: mark the exceptional, leave the default alone. */
+        .num[data-provenance="measured"] { border-bottom: 0.7pt solid #000; }
+        .num[data-provenance="unknown"] { font-style: italic; color: #555; }
+        .prov { font-size: 6.6pt; color: #555; }
 
         #endnotes { display: block !important; break-inside: avoid; font-size: 7pt; color: #333; }
         #endnotes h2 { font-size: 9pt; }
@@ -954,7 +954,7 @@
                 `${fmt(target, 'tokens')} drawn ÷ ${fmt(poolTokens, 'tokens')} unique`, band),
               tile('effective tokens gained',
                 renderNumber({ value: effective, unit: 'tokens', provenance: 'estimated', source: 'computed:repetition' }, { unit: false }),
-                `${((effective / target) * 100).toFixed(0)}% of what you draw does real work`, band),
+                `${((effective / target) * 100).toFixed(0)}% of what you draw does real work · estimated`, band),
               tile('the last pass is worth', `${(lastWorth * 100).toFixed(0)}%`,
                 'of a fresh token', band));
 
