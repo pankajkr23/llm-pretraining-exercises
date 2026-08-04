@@ -185,6 +185,28 @@
 
 @media (max-width: 760px) { .compare { grid-template-columns: 1fr; gap: 20px; } }
 
+/* A chart in the editorial register: a hairline where a card used to be. */
+.chartblock { border-top: 1.5px solid var(--ink); padding-top: 14px; }
+
+/* Inline topology (§17): the control lives inside a sentence, which recomputes around it. */
+.inlinectl {
+  font-family: var(--mono);
+  font-size: inherit;
+  padding: 0 6px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--accent);
+  cursor: pointer;
+}
+.inlinectl:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Margin-driven topology (§17): visual in the text column, its labels in a wide gutter. */
+.marginal { display: grid; grid-template-columns: minmax(0, 1fr) 196px; gap: 26px; align-items: start; }
+.marginal .gutter { font-size: 11.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+.marginal .gutter b { color: var(--grade-x); font-weight: 700; }
+@media (max-width: 760px) { .marginal { grid-template-columns: 1fr; gap: 16px; } }
+
 /* ------------------------------------------------------------------ narrow, reduced-motion */
 
 @media (max-width: 760px) {

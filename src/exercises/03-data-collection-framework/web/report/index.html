@@ -1399,18 +1399,44 @@
               host.append(dot, t);
             });
           };
-          ['total', 'active'].forEach((m) => {
-            const b = $('button', 'seg', `${m} params`);
-            b.type = 'button'; b.setAttribute('aria-pressed', String(m === mode));
-            b.addEventListener('click', () => { mode = m; [...ctr.children].forEach((c) => c.setAttribute('aria-pressed', String(c === b))); draw(); });
-            ctr.append(b);
+          /* Inline topology (EXPLAINER_PROMPT §17). A chart, not an explainer — the claim is
+           * carried by one sentence and needs no comparison the reader drives. But the one control
+           * that earns its place lives *in* that sentence rather than in a row above the figure,
+           * so there is no control bar to delete (§18.3). */
+          const toggle = $('button', 'inlinectl', 'total');
+          toggle.type = 'button';
+          toggle.setAttribute('aria-live', 'polite');
+          const sentence = $('p', 'claim');
+          const tail = $('span');
+          const retail = () => {
+            tail.textContent = mode === 'total'
+              ? ' parameters, every model here is counted at its full size — which is the number press releases use and the number that says least about what a forward pass costs.'
+              : ' parameters, the sparse models move a long way left: a mixture-of-experts model the size of a building runs like a much smaller one, and that is the comparison a serving budget cares about.';
+          };
+          toggle.addEventListener('click', () => {
+            mode = mode === 'total' ? 'active' : 'total';
+            toggle.textContent = mode;
+            retail();
+            draw();
           });
+          sentence.append(
+            document.createTextNode('The comparison that matters is not the biggest model but the free one: a capable open-licensed model in this class means a from-scratch run has to justify itself against something anyone can download today. Measured by '),
+            toggle, tail,
+            document.createTextNode(' Architectures in '), ref('the evidence', 'papers'), document.createTextNode('.'),
+          );
+          retail();
           draw();
-          main.append(sect(9, 'What you are up against',
-            [document.createTextNode('The comparison that matters is not the biggest model but the free one. A capable open-licensed model in this class means a from-scratch run has to justify itself against something anyone can download today — which is why the plan puts a head-to-head before any capital commitment. Architectures in '),
-             ref('the evidence', 'papers'), document.createTextNode('.')],
-            widget(ctr, host),
-            'Log scale. Toggle to active parameters — sparse models move a long way left.'));
+
+          const block = $('div', 'chartblock');
+          block.append(host);
+          const s9 = $('section');
+          s9.id = 's9';
+          const h9 = $('h2');
+          h9.append($('span', 'n', '9'), document.createTextNode('The model to beat is the one that costs nothing'));
+          const fig9 = $('figure');
+          fig9.append(block, $('figcaption', '', 'Fig. 9 — Parameter counts on a log axis. This is a chart, not an explainer: the claim needs no comparison the reader has to perform, so the one control that earns its place sits in the sentence above rather than in a control bar.'));
+          s9.append(h9, sentence, fig9);
+          main.append(s9);
         }
 
         /* ---------------------------------------------------- 10 · Critical path */
