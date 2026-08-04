@@ -1028,185 +1028,141 @@
           }));
         }
 
-        /* ---------------------------------------------------- 6 · The mix, dissected
+        /* ---------------------------------------------------- 6 · The mix (Budget)
          *
-         * A stacked mixture that rebalances as the rung changes, tiers grouped by whether a
-         * quality selector can even see them, and a detail panel for whichever tier is open. The
-         * protected-lane grouping is the whole point: it is why a large share of the batch
-         * bypasses the filter, and that only becomes obvious when tiers are sorted that way.
+         * Audit row #6. Was a rung control plus a click-to-open detail panel — one tier visible at
+         * a time, which EXPLAINER_PROMPT §18 calls a failure of layout dressed as a feature. All
+         * eight tiers fit on screen at once, so the selector is deleted and comparison is free.
+         *
+         * Family is Budget: the mixture is zero-sum. Scrolling walks the four rungs and then the
+         * two groupings that decide the argument — what a quality selector can see, and how much
+         * of the Indic share is manufactured rather than collected.
+         *
+         * Absorbs /reasoning#gaps, whose single row (no Indic-commented code corpus exists) is the
+         * red rail this section needed and did not have.
          */
         {
           const info = data.milestones.tier_info || {};
-          const covered = new Set(data.coverage.capabilities.filter((c) => c.count > 0).map((c) => c.capability));
-          const palette = ['var(--lang-tier-1)', 'var(--gotcha-sourcing)', 'var(--grade-a)', 'var(--gotcha-composition)',
-            'var(--gotcha-licence)', 'var(--grade-b)', 'var(--gotcha-heterogeneity)', 'var(--faint)'];
-          let rung = START;
-          let openTier = 'indic-natural';
+          const presets = data.milestones.presets;
+          const TIERS = presets[0].mix.tiers.map((t) => t.name);
+          /* The red rail, taken from the catalogue rather than named by hand: a tier is marked
+           * when a dataset flagged is_gap sits in its category. Today that is COD-03,
+           * Indic-commented code — scheduled, and no corpus exists in any licence at any size. */
+          const GAPS = (data.datasets || []).filter((x) => x.is_gap);
+          const gapTiers = new Set(GAPS.map((x) => String(x.category || '').split(' ')[0].toLowerCase()));
+          const gapNames = GAPS.map((x) => x.name).join(', ');
 
-          const card = $('div', 'explainer');
-          card.append($('h3', '', 'The mix, dissected'));
-          const intro = $('p', 'intro');
-          intro.append(
-            document.createTextNode('This is the corpus proposed for the run: eight tiers, each with a reason to exist and a cost. Switching rung rebalances the mixture in front of you. The grouping that matters is the second one — a quality filter scores every batch and keeps roughly the best of it, but it was tuned on English, so tiers in the '),
-            $('b', '', 'protected lane'), document.createTextNode(' bypass it entirely. Without that lane the thin Indic tiers are scored as noise and quietly dropped.'));
-          card.append(intro);
+          const STATES = [
+            ...presets.map((p, k) => ({
+              rung: k, marg: `Budget · ${p.id}`,
+              lead: k === 0
+                ? 'This is the rung buildable from open sources today. Eight tiers, each with a reason to exist, and every share here is '
+                : `At ${p.id} the same shape scales, and the constraint does not move: every share is still `,
+              bold: 'taken from the others',
+              tail: k === 0
+                ? '. There is no spare capacity in a training budget — a point added to one tier is a point removed from another.'
+                : '. Collecting more English does not create room for Indic; it spends it.',
+            })),
+            { rung: 2, lane: true, marg: 'What the filter may touch',
+              lead: 'Group the same tiers by whether the quality selector is allowed to score them. The tiers in the protected lane are there because an English-tuned filter reads them as noise, so they are ',
+              bold: 'exempted rather than defended', tail: ' — a filter you have to argue with every batch is a filter that eventually wins.' },
+            { rung: 2, synth: true, marg: 'How much is manufactured',
+              lead: 'Now split the Indic share by where it came from. Most of it is generated rather than collected, which is the fact the whole corpus architecture exists to work around: ',
+              bold: 'synthetic text cannot teach what the languages know', tail: ', only how they are shaped.' },
+          ];
 
-          const top = $('div', 'subpanel');
-          const rungRow = $('div', 'presets');
-          rungRow.append($('span', 'plabel', 'budget'));
-          const stack = $('div');
-          stack.style.cssText = 'display:flex;height:34px;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin-top:12px';
-          const legendRow = $('div', 'legend');
-          top.append(rungRow, stack, legendRow);
-
-          const tierGroups = $('div');
-          tierGroups.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:12px';
-          const detail = $('div', 'subpanel');
-          const bottom = $('div', 'callout');
-          card.append(top, tierGroups, detail, bottom);
-
-          const drawDetail = () => {
-            const t = rung.mix.tiers.find((x) => x.name === openTier) || rung.mix.tiers[0];
-            const meta = info[t.name] || {};
-            const caps = meta.capabilities || [];
-            const orphan = caps.length > 0 && !caps.some((c) => covered.has(c));
-            const idx = rung.mix.tiers.findIndex((x) => x.name === t.name);
-            detail.replaceChildren();
-            const head = $('div');
-            head.style.cssText = 'display:flex;align-items:baseline;gap:10px;margin-bottom:10px;flex-wrap:wrap';
-            const dot = $('span');
-            dot.style.cssText = 'width:11px;height:11px;border-radius:3px;display:inline-block;background:' + palette[idx % palette.length];
-            const nm = $('span', '', t.name);
-            nm.style.cssText = 'font-family:var(--display);font-size:1.05rem;font-weight:600';
-            head.append(dot, nm);
-            if (meta.always_on) head.append($('span', 'chip win', 'protected lane'));
-            if (meta.is_synthetic) head.append($('span', 'chip parity', 'manufactured'));
-            if (orphan) head.append($('span', 'chip lose', 'no instrument'));
-            detail.append(head);
-
-            const kv = $('dl');
-            kv.style.cssText = 'display:grid;grid-template-columns:112px minmax(0,1fr);gap:7px 14px;font-size:13px;margin:0';
-            const pair = (k, v) => {
-              const dt = $('dt', '', k);
-              dt.style.cssText = 'font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)';
-              const dd = $('dd');
-              dd.style.margin = '0';
-              if (v instanceof Node) dd.append(v); else dd.textContent = v || '—';
-              kv.append(dt, dd);
-            };
-            const tok = $('span');
-            tok.append(renderNumber({ value: t.seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' }, { unit: false }),
-              document.createTextNode(' seen · ' + t.epochs + '× over '),
-              renderNumber({ value: t.unique_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' }, { unit: false }),
-              document.createTextNode(' unique'));
-            pair('tokens', tok);
-            pair('share', (t.share * 100).toFixed(1) + '% of the batch');
-            pair('sources', meta.sources);
-            pair('measured by', caps.length ? caps.map((c) => (covered.has(c) ? c : c + ' (nothing)')).join(' · ') : '—');
-            pair('why it exists', meta.why);
-            detail.append(kv);
+          const barFor = (t, total, cls) => {
+            const row = $('div', 'tierrow');
+            const track = $('div', 'tiertrack');
+            const fill = $('div', `tierfill ${cls}`);
+            fill.style.width = `${(t.seen_tokens / total) * 100}%`;
+            track.append(fill);
+            const val = $('div', 'tierval');
+            val.append(renderNumber({ value: t.seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' }, { unit: false }));
+            row.append($('div', 'tiername', t.name), track, val);
+            return row;
           };
 
-          const draw = () => {
-            const total = rung.mix.total_seen_tokens;
-            stack.replaceChildren();
-            legendRow.replaceChildren();
-            rung.mix.tiers.forEach((t, i) => {
-              const pct = (t.seen_tokens / total) * 100;
-              const seg = $('div');
-              seg.style.cssText = 'width:' + pct + '%;background:' + palette[i % palette.length] +
-                ';display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:#fff;cursor:pointer';
-              seg.textContent = pct >= 8 ? pct.toFixed(0) + '%' : '';
-              seg.title = t.name + ' — ' + pct.toFixed(1) + '%';
-              seg.addEventListener('click', () => { openTier = t.name; draw(); });
-              stack.append(seg);
-              const l = $('span');
-              const sw = $('i');
-              sw.style.background = palette[i % palette.length];
-              l.append(sw, t.name + ' ' + pct.toFixed(0) + '%');
-              l.style.cursor = 'pointer';
-              l.addEventListener('click', () => { openTier = t.name; draw(); });
-              legendRow.append(l);
-            });
-
-            const groups = [
-              ['selector-eligible', rung.mix.tiers.filter((t) => !info[t.name] || !info[t.name].always_on),
-                'Scored by the quality filter, which keeps roughly the best of each batch.'],
-              ['protected lane', rung.mix.tiers.filter((t) => info[t.name] && info[t.name].always_on),
-                'Invisible to the filter, so it cannot be scored away. This is where the scarce data lives.'],
-            ];
-            tierGroups.replaceChildren();
-            groups.forEach(([title, tiers, blurb]) => {
-              const g = $('div', 'subpanel');
-              g.style.marginBottom = '0';
-              const share = tiers.reduce((a, t) => a + t.share, 0) * 100;
-              g.append($('div', 'lbl', title + ' · ' + share.toFixed(0) + '% of every batch'));
-              const b = $('p');
-              b.style.cssText = 'font-size:12px;color:var(--muted);margin:0 0 9px';
-              b.textContent = blurb;
-              g.append(b);
-              tiers.forEach((t) => {
-                const i = rung.mix.tiers.findIndex((x) => x.name === t.name);
-                const btn = $('button');
-                btn.type = 'button';
-                btn.style.cssText = 'display:block;width:100%;text-align:left;margin-bottom:6px;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--ink);border:1px solid ' +
-                  (t.name === openTier ? 'var(--accent)' : 'var(--line)') + ';background:' +
-                  (t.name === openTier ? 'var(--accent-soft)' : 'var(--panel)');
-                const nm = $('div');
-                nm.style.cssText = 'font-size:12.5px;display:flex;align-items:center;gap:6px';
-                const sw = $('span');
-                sw.style.cssText = 'width:9px;height:9px;border-radius:2px;display:inline-block;background:' + palette[i % palette.length];
-                nm.append(sw, t.name);
-                const big = $('div');
-                big.style.cssText = 'font-family:var(--display);font-size:1.15rem;font-weight:600;margin-top:2px';
-                big.append(renderNumber({ value: t.seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' }, { unit: false }));
-                const sub = $('div', '', (t.share * 100).toFixed(1) + '% · ' + t.epochs + '× epochs');
-                sub.style.cssText = 'font-family:var(--mono);font-size:10.5px;color:var(--faint)';
-                btn.append(nm, big, sub);
-                btn.addEventListener('click', () => { openTier = t.name; draw(); });
-                g.append(btn);
+          main.append(buildExplainer({
+            n: 6, wide: true,
+            title: 'The mixture is zero-sum, and a third of it is hidden from the filter',
+            claim: [
+              document.createTextNode('The corpus proposed for the run: eight tiers, all of them visible at once because comparing them is the point. Scrolling scales the budget and then regroups the same tiers twice — by '),
+              $('b', '', 'what the quality filter may score'),
+              document.createTextNode(', and by '),
+              $('b', '', 'how much of the Indic share is manufactured'),
+              document.createTextNode('. Per-tier reasoning in '),
+              ref('the catalogue', 'data'), document.createTextNode('.'),
+            ],
+            figNum: 'Fig. 6 — the mixture',
+            caption: 'Fig. 6 — All eight tiers at every state; no tier is ever hidden. Bar length is seen tokens as a share of the budget. Red marks the tier that has no corpus behind it — the capability is scheduled and the data does not exist.',
+            pill: '8% never filtered',
+            rail: [
+              document.createTextNode('One tier is scheduled against data that does not exist. '),
+              $('b', '', gapNames),
+              document.createTextNode(' has no corpus behind it in any licence at any size, and it stays in the mixture as a stated gap rather than being quietly dropped — removing it would make the plan look complete when it is not.'),
+            ],
+            states: STATES,
+            refresh: (api) => {
+              STATES.forEach((st, i) => {
+                const mix = presets[st.rung].mix;
+                if (st.lane) {
+                  const on = mix.tiers.filter((t) => (info[t.name] || {}).always_on);
+                  api.shard(i, `protected: ${on.map((t) => t.name).join(' · ')}`);
+                  api.inline(i, `→ ${(mix.always_on_share * 100).toFixed(0)}% of the batch bypasses the selector`, false);
+                } else if (st.synth) {
+                  api.shard(i, `Indic ${(mix.indic_share * 100).toFixed(1)}% of the batch · natural ${(mix.natural_indic_share * 100).toFixed(1)}% of that`);
+                  api.inline(i, `→ ${(mix.synthetic_share_of_indic * 100).toFixed(0)}% of the Indic share is manufactured`, true);
+                } else {
+                  api.shard(i, mix.tiers.map((t) => `${t.name} ${(t.share * 100).toFixed(0)}%`).join(' · '));
+                  api.inline(i, `→ ${fmt(mix.total_seen_tokens, 'count')} seen from ${fmt(mix.total_unique_tokens, 'count')} unique`, false);
+                }
               });
-              tierGroups.append(g);
-            });
+            },
+            render: (i, api) => {
+              const st = STATES[i];
+              const mix = presets[st.rung].mix;
+              const total = mix.total_seen_tokens;
+              const bars = $('div', 'tierbars');
+              mix.tiers.forEach((t) => {
+                const meta = info[t.name] || {};
+                // Red is only ever the excluded thing: the tier with no corpus behind it.
+                const missing = gapTiers.has(t.name);
+                let cls = '';
+                if (st.lane) cls = meta.always_on ? 'lane' : 'dim';
+                else if (st.synth) cls = meta.is_indic ? (meta.is_synthetic ? 'synth' : 'natural') : 'dim';
+                if (missing) cls = 'missing';
+                bars.append(barFor(t, total, cls));
+              });
+              api.extra.replaceChildren(bars);
 
-            drawDetail();
-
-            const protectedShare = rung.mix.tiers
-              .filter((t) => info[t.name] && info[t.name].always_on)
-              .reduce((a, t) => a + t.share, 0);
-            bottom.className = 'callout';
-            bottom.replaceChildren($('span', 'lbl', 'what the whole design turns on'));
-            const m = $('span');
-            m.append(document.createTextNode('The quality filter is steered by a proxy that is overwhelmingly English, so it systematically '),
-              $('b', '', 'under-values Indic text'), document.createTextNode(' and would reject it if allowed to. Because the protected lane guarantees '),
-              $('b', '', (protectedShare * 100).toFixed(0) + '% of every batch'),
-              document.createTextNode(' regardless of score, the scarce tiers survive contact with the pipeline — which is why that share of the corpus deliberately bypasses the selector. See '),
-              ref('the priors', 'priors'), document.createTextNode('.'));
-            bottom.append(m);
-          };
-
-          data.milestones.presets.forEach((p) => {
-            const b = $('button', 'seg', p.id + (p.recommended ? ' ·target' : ''));
-            b.type = 'button';
-            b.setAttribute('aria-pressed', String(p === START));
-            b.addEventListener('click', () => {
-              rung = p;
-              [...rungRow.querySelectorAll('button')].forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
-              draw();
-            });
-            rungRow.append(b);
-          });
-
-          draw();
-          playAll.push(draw);
-          card.append($('p', 'footnote',
-            'Tier shares follow the proposed mix; token counts are that shape scaled to the selected rung. Click any band, legend entry or tier card to open it.'));
-
-          const frame = $('p', 'frame');
-          frame.textContent = 'With the budget settled, the question becomes what actually goes into it — and which parts a quality filter would throw away.';
-          const s = sect(6, 'What goes in', [], card, null);
-          s.insertBefore(frame, s.children[1]);
-          main.append(s);
+              if (st.lane) {
+                api.big(mix.always_on_share === undefined
+                  ? data.mix_rules.always_on_share
+                  : { value: mix.always_on_share, unit: 'share', provenance: 'estimated', source: 'computed:milestones' });
+                api.sub('of every batch the selector may not score');
+                api.verdict('PROTECTED LANE', false);
+                api.note('The lane is a property of the batch, not a plea to the filter. Nothing here argues with the classifier — it simply cannot reach these tiers.');
+              } else if (st.synth) {
+                api.big({ value: mix.synthetic_share_of_indic, unit: 'share', provenance: 'estimated', source: 'computed:milestones' });
+                api.sub('of the Indic share is manufactured, not collected');
+                api.verdict('MOSTLY SYNTHETIC', true);
+                api.note(`Natural Indic is ${(mix.natural_indic_share * 100).toFixed(1)}% of the whole batch. Every argument about Indic capability rests on that slice, not on the headline Indic share.`);
+              } else {
+                api.big({ value: mix.total_seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' });
+                api.sub(`seen tokens across ${mix.tiers.length} tiers`);
+                api.verdict(`${(mix.indic_share * 100).toFixed(0)}% INDIC`, false);
+                api.note(`Read from ${fmt(mix.total_unique_tokens, 'count')} unique tokens. The difference between seen and unique is repetition, which section 11 prices.`);
+              }
+              api.strip(mix.tiers.map((t) => {
+                const meta = info[t.name] || {};
+                if (gapTiers.has(t.name)) return 'hit';
+                if (st.lane) return meta.always_on ? 'reg' : '';
+                if (st.synth) return meta.is_indic && !meta.is_synthetic ? 'reg' : '';
+                return 'reg';
+              }));
+            },
+          }));
         }
 
         /* ---------------------------------------------------- 7 · The Pipeline (Accumulator)

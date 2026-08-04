@@ -221,3 +221,21 @@
   .step .inline { display: block; }
   .sticky { position: static; }
 }
+
+/* ------------------------------------------------------------------ small multiples (§18.1)
+ *
+ * Every unit on screen at once, so comparison is free rather than a memory exercise across
+ * clicks. Interaction highlights; it never hides.
+ */
+.tierbars { display: grid; gap: 5px; }
+.tierrow { display: grid; grid-template-columns: 104px minmax(0, 1fr) 52px; gap: 8px; align-items: center; font-size: 11px; }
+.tiername { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tiertrack { background: var(--track); border-radius: 4px; height: 13px; overflow: hidden; }
+.tierfill { height: 100%; border-radius: 4px; background: var(--faint); transition: width 0.18s, background 0.18s, opacity 0.18s; }
+.tierval { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 10.5px; }
+.tierfill.lane { background: var(--accent); }
+.tierfill.natural { background: var(--accent); }
+.tierfill.synth { background: var(--gotcha-composition); }
+.tierfill.dim { opacity: 0.32; }
+/* The only red: a tier scheduled against a corpus that does not exist. */
+.tierfill.missing { background: repeating-linear-gradient(45deg, var(--grade-x), var(--grade-x) 4px, transparent 4px, transparent 7px); }
