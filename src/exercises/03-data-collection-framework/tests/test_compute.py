@@ -15,7 +15,14 @@ from dataframework.fertility import (
 from dataframework.grade import grade_dataset, is_commercially_usable, score_gates
 from dataframework.mix import MAX_EPOCHS_HARD, check, compose, effective_tokens, is_buildable
 from dataframework.orphans import find_orphans
-from dataframework.shingles import build_index, is_contaminated, overlap, shingle
+from dataframework.shingles import (
+    build_attributed_index,
+    build_index,
+    gram_width,
+    is_contaminated,
+    overlap,
+    shingle,
+)
 from dataframework.vocab_sweep import find_peak, round_to_multiple, sweep
 
 
@@ -251,8 +258,29 @@ def test_a_planted_item_is_caught_inside_a_larger_document():
     assert overlap(document, shingle(item))
 
 
-def test_short_items_are_still_indexed():
-    assert shingle("only four words here")  # shorter than the 13-gram window
+def test_a_short_item_hashes_to_one_whole_text_gram():
+    """Shorter than the window means one gram, not thirteen — and it is only findable at width 4.
+
+    The old name for this test claimed short items were "still indexed", which read as "still
+    detectable" and was not true of the case that matters. See `ShingleIndex`.
+    """
+    assert len(shingle("only four words here")) == 1
+    assert gram_width("only four words here") == 4
+    assert gram_width("the quick brown fox jumps over the lazy dog again and again today") == 13
+
+
+def test_an_index_records_every_width_it_used():
+    index = build_attributed_index(
+        {"B": ["only five words here now", " ".join(f"w{i}" for i in range(20))]}
+    )
+    assert index.widths == frozenset({5, 13})
+    assert not index.unindexable
+
+
+def test_an_index_refuses_items_narrower_than_the_floor():
+    index = build_attributed_index({"B": ["far too short"]})
+    assert index.widths == frozenset()
+    assert index.unindexable == {"B": 1}
 
 
 def test_missing_corpus_reports_unchecked_never_clean(tmp_path):

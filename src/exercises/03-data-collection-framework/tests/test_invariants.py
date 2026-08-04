@@ -24,9 +24,12 @@ from dataframework.gotchas import parse as parse_notes
 from dataframework.grade import grade_dataset, is_commercially_usable
 from dataframework.shingles import (
     DIGEST_BYTES,
+    SHINGLE_N,
     build_attributed_index,
+    build_index,
     find_collisions,
     is_contaminated,
+    shingle,
 )
 
 CFG = Config()
@@ -45,7 +48,14 @@ FIXTURE_REGISTRY: dict[str, list[str]] = {
         "Identify the grammatical case of the highlighted noun phrase in the "
         "following Marathi sentence taken from a news corpus",
     ],
+    # Seven words: shorter than the 13-word window, which is the ordinary shape of an MCQ stem
+    # and the case the gate used to miss silently.
+    "ShortStem": ["Which river drains the Chota Nagpur plateau"],
 }
+
+# Below MIN_SHINGLE_N. A window this narrow matches ordinary prose, so the gate must refuse it
+# and say so rather than index it and cry wolf.
+TOO_SHORT_REGISTRY: dict[str, list[str]] = {"Stub": ["Name the capital"]}
 
 
 def _catalog() -> list[dict]:
@@ -272,7 +282,7 @@ def test_a_clean_shard_passes_the_gate():
     index = build_attributed_index(FIXTURE_REGISTRY)
     clean = "Ordinary web text about monsoon agriculture, irrigation and canal systems in India."
     assert not find_collisions(clean, index)
-    assert not is_contaminated(clean, set(index))
+    assert not is_contaminated(clean, index)
 
 
 def test_detection_survives_the_item_being_embedded_mid_document():
@@ -280,6 +290,67 @@ def test_detection_survives_the_item_being_embedded_mid_document():
     item = FIXTURE_REGISTRY["IndicXTREME"][0]
     document = "preamble " * 200 + item + " epilogue " * 200
     assert "IndicXTREME" in find_collisions(document, build_attributed_index(FIXTURE_REGISTRY))
+
+
+# ------------------------------------------------------------------ 3.7b  short items
+
+
+def test_a_short_item_is_caught_inside_a_longer_shard():
+    """An item shorter than the window must still be found once embedded.
+
+    The gate used to be structurally incapable of this: a 7-word item emits one 7-gram, a shard
+    emits only 13-grams, and the two never intersect — so the shard came back clean. The index now
+    records the width each item was hashed at and the document is shingled at each of them.
+    """
+    index = build_attributed_index(FIXTURE_REGISTRY)
+    short = FIXTURE_REGISTRY["ShortStem"][0]
+    shard = "Ordinary web text about canal irrigation. " + short + " More ordinary web text."
+
+    hits = find_collisions(shard, index)
+
+    assert "ShortStem" in hits, f"short item went undetected; gate named {list(hits)}"
+    assert is_contaminated(shard, index)
+
+
+def test_the_short_item_check_can_actually_fail():
+    """Breaking 3.7b must fail: drop the width-awareness and the short item vanishes again.
+
+    This reproduces the old single-width lookup. If it ever stops finding nothing, the widths are
+    no longer doing the work the test above credits them with.
+    """
+    index = build_attributed_index(FIXTURE_REGISTRY)
+    short = FIXTURE_REGISTRY["ShortStem"][0]
+    shard = "Ordinary web text about canal irrigation. " + short + " More ordinary web text."
+
+    old_lookup = shingle(shard, SHINGLE_N) & set(index.grams)
+    assert not old_lookup, (
+        "a 13-gram-only lookup found the short item, so this mutation no longer proves anything"
+    )
+
+
+def test_an_item_below_the_floor_is_reported_not_indexed():
+    """Too short to identify anything: refuse it, and make the refusal a number."""
+    index = build_attributed_index(TOO_SHORT_REGISTRY)
+
+    assert not index.grams, "a 3-word item was indexed; it would match ordinary prose"
+    assert index.unindexable == {"Stub": 1}
+    assert not find_collisions("Name the capital of Bihar and its principal river.", index)
+
+
+def test_the_widths_in_play_are_reported(tmp_path):
+    """Coverage must state which widths it used and how many items it could not cover."""
+    corpus = tmp_path / "benchmarks"
+    corpus.mkdir()
+    (corpus / "Mixed.json").write_text(
+        json.dumps([FIXTURE_REGISTRY["ShortStem"][0], *TOO_SHORT_REGISTRY["Stub"]]),
+        encoding="utf-8",
+    )
+
+    report = build_index(Config(data_dir=tmp_path, web_dir=tmp_path))
+
+    assert report["gram_widths"] == [7]
+    assert report["unindexable_items"] == 1
+    assert "shorter than" in report["note"]
 
 
 # ------------------------------------------------------------------ 3.8  INV-5

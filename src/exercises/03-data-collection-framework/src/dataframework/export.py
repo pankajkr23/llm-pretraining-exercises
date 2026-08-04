@@ -241,6 +241,12 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
             "shingle_count": _value(
                 shingle_meta["shingle_count"], "shingles", "measured", "computed:shingles"
             ),
+            # Eval items the gate structurally cannot protect. A reported number, because the
+            # alternative is silence that reads as "clean".
+            "unindexable_items": _value(
+                shingle_meta["unindexable_items"], "items", "measured", "computed:shingles"
+            ),
+            "gram_widths": shingle_meta["gram_widths"],
             "note": shingle_meta["note"],
         },
         # `priors` stays in the index because the Decision cites it inline — but only the three

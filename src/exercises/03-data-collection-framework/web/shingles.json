@@ -2,6 +2,8 @@
   "shingle_count": 0,
   "benchmarks": [],
   "coverage": "none",
+  "gram_widths": [],
+  "unindexable_items": 0,
   "note": "No benchmark corpus in data/benchmarks/ (open item B3). Contamination is UNCHECKED \u2014 not clean. Supply raw items, or the MILU validation split as the documented fallback, before relying on the gate.",
   "shingles": []
 }
