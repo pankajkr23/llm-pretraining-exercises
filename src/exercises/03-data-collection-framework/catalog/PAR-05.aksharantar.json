@@ -1,0 +1,83 @@
+{
+  "id": "PAR-05",
+  "slug": "aksharantar",
+  "name": "Aksharantar",
+  "category": "Transliteration",
+  "tier": "GREEN",
+  "is_gap": false,
+  "owner": "AI4Bharat",
+  "licence": {
+    "raw": "CC-BY-4.0",
+    "commercial": true,
+    "attribution": true,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "26M transliteration pairs",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: 26M transliteration pairs"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT",
+    "SFT"
+  ],
+  "languages": "Indic <-> Latin",
+  "gotchas": [],
+  "opportunity": null,
+  "note": "ESSENTIAL for romanised Hindi/Hinglish - how Indians actually type",
+  "gates": {
+    "provenance": {
+      "verdict": "PASS",
+      "reasoning": "Tier GREEN with a stated licence: CC-BY-4.0",
+      "confidence": "high",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: IndicXlit",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "IndicXlit",
+  "access": {
+    "raw": "https://huggingface.co/ai4bharat",
+    "links": [
+      "https://huggingface.co/ai4bharat"
+    ]
+  },
+  "confidence": "high"
+}

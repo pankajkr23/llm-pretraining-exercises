@@ -1,0 +1,86 @@
+{
+  "id": "ENG-10",
+  "slug": "dclm-baseline",
+  "name": "DCLM-Baseline",
+  "category": "English Web",
+  "tier": "GREEN",
+  "is_gap": false,
+  "owner": "DataComp consortium",
+  "licence": {
+    "raw": "Open",
+    "commercial": null,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "3.8T (~1.0T unique)",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: 3.8T (~1.0T unique)"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "English",
+  "gotchas": [
+    {
+      "type": "DEDUP",
+      "text": "HEAVILY DUPLICATED INTERNALLY (~80% fuzzy duplicates per Nemotron-CC authors)",
+      "severity": "advisory"
+    }
+  ],
+  "opportunity": null,
+  "note": "Strong quality-filter research;",
+  "gates": {
+    "provenance": {
+      "verdict": "PASS",
+      "reasoning": "Tier GREEN with a stated licence: Open",
+      "confidence": "high",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "CONDITIONAL",
+      "reasoning": "Duplication caveat recorded; usable yield is below the headline size.",
+      "confidence": "medium",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: DataComp-LM",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "DataComp-LM",
+  "access": {
+    "raw": "Search HF 'DCLM'",
+    "links": []
+  },
+  "confidence": "high"
+}

@@ -1,0 +1,80 @@
+{
+  "id": "MTH-06",
+  "slug": "arxiv-bulk",
+  "name": "arXiv bulk",
+  "category": "Math / STEM",
+  "tier": "AMBER",
+  "is_gap": false,
+  "owner": "Cornell / arXiv",
+  "licence": {
+    "raw": "Per-paper (many CC-BY)",
+    "commercial": null,
+    "attribution": true,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "100B+",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: 100B+"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "English academic",
+  "gotchas": [],
+  "opportunity": null,
+  "note": "PER-PAPER LICENCE CHECK REQUIRED",
+  "gates": {
+    "provenance": {
+      "verdict": "CONDITIONAL",
+      "reasoning": "Tier AMBER: Per-paper (many CC-BY)",
+      "confidence": "medium",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Many",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Many",
+  "access": {
+    "raw": "arXiv S3 requester-pays",
+    "links": []
+  },
+  "confidence": "high"
+}

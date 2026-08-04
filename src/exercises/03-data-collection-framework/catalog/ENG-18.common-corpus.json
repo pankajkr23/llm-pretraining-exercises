@@ -1,0 +1,88 @@
+{
+  "id": "ENG-18",
+  "slug": "common-corpus",
+  "name": "Common Corpus",
+  "category": "English Clean-Provenance",
+  "tier": "GREEN",
+  "is_gap": false,
+  "owner": "Pleias (AI Alliance Open Trusted Data Initiative)",
+  "licence": {
+    "raw": "Permissive only",
+    "commercial": null,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "2,003,039,184,047 tokens with full provenance metadata",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: 2,003,039,184,047 tokens with full provenance metadata"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "Multilingual",
+  "gotchas": [
+    {
+      "type": "SAFETY",
+      "text": "Ships a MULTILINGUAL HISTORICAL-CONTENT TOXICITY CLASSIFIER - reusable for your Indic safety pipeline",
+      "severity": "advisory"
+    }
+  ],
+  "opportunity": null,
+  "note": null,
+  "gates": {
+    "provenance": {
+      "verdict": "PASS",
+      "reasoning": "Tier GREEN with a stated licence: Permissive only",
+      "confidence": "high",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Pleias models",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Pleias models",
+  "access": {
+    "raw": "https://huggingface.co/datasets/PleIAs/common_corpus",
+    "links": [
+      "https://huggingface.co/datasets/PleIAs/common_corpus"
+    ]
+  },
+  "confidence": "high"
+}

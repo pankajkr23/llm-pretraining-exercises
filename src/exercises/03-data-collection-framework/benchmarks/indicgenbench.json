@@ -1,0 +1,16 @@
+{
+  "name": "IndicGenBench",
+  "slug": "indicgenbench",
+  "owner": "Google Research",
+  "type": "Indic generation",
+  "coverage": "29 Indic languages",
+  "size": "-",
+  "split_policy": "TEST",
+  "held_out": false,
+  "trust_band": "translation-derived",
+  "access": {
+    "raw": "ACL 2024",
+    "links": []
+  },
+  "notes": "Summarisation, translation, QA"
+}

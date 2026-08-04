@@ -1,0 +1,16 @@
+{
+  "name": "Indic QA Benchmark",
+  "slug": "indic-qa-benchmark",
+  "owner": "IBM Research + IIT Bombay",
+  "type": "Indic QA",
+  "coverage": "11 Indic languages",
+  "size": "Large-scale",
+  "split_policy": "TEST",
+  "held_out": false,
+  "trust_band": "native-sourced",
+  "access": {
+    "raw": "NAACL 2025 Findings",
+    "links": []
+  },
+  "notes": "-"
+}

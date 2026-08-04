@@ -1,0 +1,83 @@
+{
+  "id": "MUL-01",
+  "slug": "fineweb-2",
+  "name": "FineWeb-2",
+  "category": "Global Multilingual",
+  "tier": "GREEN",
+  "is_gap": false,
+  "owner": "Hugging Face",
+  "licence": {
+    "raw": "ODC-By 1.0",
+    "commercial": null,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "~3T words / 8TB compressed, 1000+ languages, 96 CC dumps (2013-Apr 2024)",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: ~3T words / 8TB compressed, 1000+ languages, 96 CC dumps (20"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "1000+ languages; ~40B WORDS Indic",
+  "gotchas": [],
+  "opportunity": "The ~40B-word Indic slice is a KEY SCARCITY DATAPOINT (per BhashaKritika authors)",
+  "note": "Per-language tuned filters using GlotLID.",
+  "gates": {
+    "provenance": {
+      "verdict": "PASS",
+      "reasoning": "Tier GREEN with a stated licence: ODC-By 1.0",
+      "confidence": "high",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Widely used",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Widely used",
+  "access": {
+    "raw": "https://huggingface.co/datasets/HuggingFaceFW/fineweb-2 ; https://github.com/huggingface/fineweb-2",
+    "links": [
+      "https://huggingface.co/datasets/HuggingFaceFW/fineweb-2",
+      "https://github.com/huggingface/fineweb-2"
+    ]
+  },
+  "confidence": "high"
+}

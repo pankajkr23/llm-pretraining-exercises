@@ -1,0 +1,82 @@
+{
+  "id": "EDU-07",
+  "slug": "iks-instruct",
+  "name": "IKS-Instruct",
+  "category": "Curriculum (Indic)",
+  "tier": "AMBER",
+  "is_gap": false,
+  "owner": "Research (announced 28 Jul 2026)",
+  "licence": {
+    "raw": "LICENCE UNVERIFIED - CHECK BEFORE INGESTION",
+    "commercial": null,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "24,795 instruction-response pairs",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: 24,795 instruction-response pairs"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "SFT"
+  ],
+  "languages": "7 languages (en, hi, sa, ta, te, kn, ml)",
+  "gotchas": [],
+  "opportunity": null,
+  "note": "41 PEDAGOGICAL TECHNIQUES from Vedic oral and mathematical traditions; ALIGNED WITH CBSE CURRICULUM CLASSES 6-12. Sources: Bhagavad Gita, Thirukkural, Sangam literature, Vedic texts, curriculum-aligned templates, Vedic mathematical sutra demonstrations, bilingual pairs, technique-grounded multi-turn dialogues, cross-tradition comparative analyses. THIS IS A LIVE INSTANCE OF THE CURRICULUM-GENERATION STRATEGY THE REPORT RECOMMENDED. Its 41-technique taxonomy is reusable as a generation scaffold",
+  "gates": {
+    "provenance": {
+      "verdict": "CONDITIONAL",
+      "reasoning": "Tier AMBER: LICENCE UNVERIFIED - CHECK BEFORE INGESTION",
+      "confidence": "medium",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: NEW - 28 Jul 2026",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "NEW - 28 Jul 2026",
+  "access": {
+    "raw": "arXiv:2607.23322",
+    "links": [
+      "arXiv:2607.23322"
+    ]
+  },
+  "confidence": "high"
+}

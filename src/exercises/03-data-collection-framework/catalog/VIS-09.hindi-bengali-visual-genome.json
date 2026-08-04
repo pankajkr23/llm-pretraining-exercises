@@ -1,0 +1,81 @@
+{
+  "id": "VIS-09",
+  "slug": "hindi-bengali-visual-genome",
+  "name": "Hindi / Bengali Visual Genome",
+  "category": "Multimodal (Indic)",
+  "tier": "AMBER",
+  "is_gap": false,
+  "owner": "Parida, Sen et al.",
+  "licence": {
+    "raw": "CC-BY",
+    "commercial": null,
+    "attribution": true,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "-",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: -"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT",
+    "EVAL"
+  ],
+  "languages": "Hindi, Bengali",
+  "gotchas": [],
+  "opportunity": null,
+  "note": "-",
+  "gates": {
+    "provenance": {
+      "verdict": "CONDITIONAL",
+      "reasoning": "Tier AMBER: CC-BY",
+      "confidence": "medium",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Multimodal MT research",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Multimodal MT research",
+  "access": {
+    "raw": "Research release",
+    "links": []
+  },
+  "confidence": "high"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "SWE-bench Verified / SWE-bench Multilingual / Terminal-Bench 2.0 / SWE-Lancer",
+  "slug": "swe-bench-verified-swe-bench-multilingual-terminal-bench-2-0-swe-lancer",
+  "owner": "Various",
+  "type": "Agentic coding",
+  "coverage": "Code",
+  "size": "SWE-bench Verified: 500 tasks",
+  "split_policy": "TEST - REPORT MODEL + HARNESS",
+  "held_out": false,
+  "trust_band": "harness-dependent",
+  "access": {
+    "raw": "Standard",
+    "links": []
+  },
+  "notes": "MEASURES A MODEL+HARNESS PAIR, NOT A MODEL. Leaderboard entries are literally 'harness + model'. Never publish a number without naming harness, scaffold version, turn limit, context window"
+}

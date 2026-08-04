@@ -1,0 +1,16 @@
+{
+  "name": "Sanskriti / Pariksha",
+  "slug": "sanskriti-pariksha",
+  "owner": "Research",
+  "type": "Socio-cultural alignment",
+  "coverage": "English, India-focused",
+  "size": "-",
+  "split_policy": "TEST",
+  "held_out": false,
+  "trust_band": "native-sourced",
+  "access": {
+    "raw": "Research release",
+    "links": []
+  },
+  "notes": "CULTURAL CORRECTNESS != SAFETY. Budget for both"
+}

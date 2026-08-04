@@ -1,0 +1,88 @@
+{
+  "id": "EDU-11",
+  "slug": "wikipedia-wikisource-wikibooks-wikiversity",
+  "name": "Wikipedia / Wikisource / Wikibooks / Wikiversity",
+  "category": "Curriculum (Global)",
+  "tier": "AMBER",
+  "is_gap": false,
+  "owner": "Wikimedia Foundation",
+  "licence": {
+    "raw": "CC BY-SA - share-alike",
+    "commercial": null,
+    "attribution": true,
+    "share_alike": true
+  },
+  "size": {
+    "raw": "All Indic editions",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: All Indic editions"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "300+ languages",
+  "gotchas": [
+    {
+      "type": "LICENCE",
+      "text": "Share-alike.",
+      "severity": "advisory"
+    }
+  ],
+  "opportunity": null,
+  "note": "WHETHER MODEL WEIGHTS ARE A DERIVATIVE WORK IS LEGALLY UNRESOLVED WORLDWIDE. Most labs proceed; document your position. Wikimedia has signed 6 AI licensing deals - a commercial channel exists. WIKISOURCE holds substantial PUBLIC-DOMAIN INDIC LITERATURE",
+  "gates": {
+    "provenance": {
+      "verdict": "CONDITIONAL",
+      "reasoning": "Tier AMBER: CC BY-SA - share-alike",
+      "confidence": "medium",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Universal",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Universal",
+  "access": {
+    "raw": "https://dumps.wikimedia.org/",
+    "links": [
+      "https://dumps.wikimedia.org/"
+    ]
+  },
+  "confidence": "high"
+}

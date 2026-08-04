@@ -1,0 +1,83 @@
+{
+  "id": "SFT-09",
+  "slug": "nemotron-post-training-collections-nano-super-ultra-v3",
+  "name": "Nemotron post-training collections (Nano/Super/Ultra v3)",
+  "category": "SFT (General)",
+  "tier": "GREEN",
+  "is_gap": false,
+  "owner": "NVIDIA",
+  "licence": {
+    "raw": "Open, commercial use",
+    "commercial": true,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "~50 items in the collection",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: ~50 items in the collection"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "SFT",
+    "RL"
+  ],
+  "languages": "English + multilingual",
+  "gotchas": [],
+  "opportunity": null,
+  "note": "MOST COMPLETE OPEN POST-TRAINING CORPUS AVAILABLE",
+  "gates": {
+    "provenance": {
+      "verdict": "PASS",
+      "reasoning": "Tier GREEN with a stated licence: Open, commercial use",
+      "confidence": "high",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Nemotron 3",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Nemotron 3",
+  "access": {
+    "raw": "https://huggingface.co/nvidia",
+    "links": [
+      "https://huggingface.co/nvidia"
+    ]
+  },
+  "confidence": "high"
+}

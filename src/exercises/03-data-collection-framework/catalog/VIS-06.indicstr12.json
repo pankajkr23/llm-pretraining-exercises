@@ -1,0 +1,81 @@
+{
+  "id": "VIS-06",
+  "slug": "indicstr12",
+  "name": "IndicSTR12",
+  "category": "OCR (Indic)",
+  "tier": "AMBER",
+  "is_gap": false,
+  "owner": "Lunia et al.",
+  "licence": {
+    "raw": "Open - verify",
+    "commercial": null,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "-",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: -"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT",
+    "EVAL"
+  ],
+  "languages": "12 scripts",
+  "gotchas": [],
+  "opportunity": null,
+  "note": "Scene text recognition",
+  "gates": {
+    "provenance": {
+      "verdict": "CONDITIONAL",
+      "reasoning": "Tier AMBER: Open - verify",
+      "confidence": "medium",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: -",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "-",
+  "access": {
+    "raw": "Research release",
+    "links": []
+  },
+  "confidence": "high"
+}

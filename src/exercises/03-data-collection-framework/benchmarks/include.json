@@ -1,0 +1,16 @@
+{
+  "name": "INCLUDE",
+  "slug": "include",
+  "owner": "Research",
+  "type": "Regional exams",
+  "coverage": "44 languages",
+  "size": "-",
+  "split_policy": "TEST",
+  "held_out": false,
+  "trust_band": "translation-derived",
+  "access": {
+    "raw": "Search HF",
+    "links": []
+  },
+  "notes": "NATIVE, not translated"
+}

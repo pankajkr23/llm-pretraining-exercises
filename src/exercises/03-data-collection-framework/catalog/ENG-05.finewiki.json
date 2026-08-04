@@ -1,0 +1,82 @@
+{
+  "id": "ENG-05",
+  "slug": "finewiki",
+  "name": "FineWiki",
+  "category": "English Web",
+  "tier": "GREEN",
+  "is_gap": false,
+  "owner": "Hugging Face",
+  "licence": {
+    "raw": "ODC-By",
+    "commercial": null,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "Wikipedia, 300+ languages, better extraction",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: Wikipedia, 300+ languages, better extraction"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "300+ languages",
+  "gotchas": [],
+  "opportunity": "DIRECTLY RELEVANT - better Indic Wikipedia extraction than raw dumps",
+  "note": null,
+  "gates": {
+    "provenance": {
+      "verdict": "PASS",
+      "reasoning": "Tier GREEN with a stated licence: ODC-By",
+      "confidence": "high",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: -",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "-",
+  "access": {
+    "raw": "https://huggingface.co/HuggingFaceFW",
+    "links": [
+      "https://huggingface.co/HuggingFaceFW"
+    ]
+  },
+  "confidence": "high"
+}

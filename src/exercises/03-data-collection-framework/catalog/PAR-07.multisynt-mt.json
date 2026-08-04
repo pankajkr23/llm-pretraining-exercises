@@ -1,0 +1,80 @@
+{
+  "id": "PAR-07",
+  "slug": "multisynt-mt",
+  "name": "MultiSynt/MT",
+  "category": "Parallel / MT",
+  "tier": "GREEN",
+  "is_gap": false,
+  "owner": "Consortium (2026)",
+  "licence": {
+    "raw": "Open",
+    "commercial": null,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "Trillion-token multi-parallel, 36 languages",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: Trillion-token multi-parallel, 36 languages"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "36 languages",
+  "gotchas": [],
+  "opportunity": null,
+  "note": "KEY FINDING: translated data is NOT a substitute for native corpora on all phenomena. On culturally-grounded/idiomatic tasks native data wins THROUGHOUT training; on commonsense reasoning translated data closes the gap and eventually overtakes. TRANSLATION BUYS REASONING TRANSFER, NOT CULTURE",
+  "gates": {
+    "provenance": {
+      "verdict": "PASS",
+      "reasoning": "Tier GREEN with a stated licence: Open",
+      "confidence": "high",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: -",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "-",
+  "access": {
+    "raw": "2026 release",
+    "links": []
+  },
+  "confidence": "high"
+}

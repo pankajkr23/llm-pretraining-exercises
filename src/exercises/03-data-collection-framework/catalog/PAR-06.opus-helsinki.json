@@ -1,0 +1,82 @@
+{
+  "id": "PAR-06",
+  "slug": "opus-helsinki",
+  "name": "OPUS (Helsinki)",
+  "category": "Parallel / MT",
+  "tier": "AMBER",
+  "is_gap": false,
+  "owner": "Helsinki NLP (Tiedemann)",
+  "licence": {
+    "raw": "PER-SUBCORPUS",
+    "commercial": null,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "Very large",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: Very large"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "Many",
+  "gotchas": [],
+  "opportunity": null,
+  "note": "AGGREGATOR. CONTAINS OPENSUBTITLES (copyright-tainted) FILTER EXPLICITLY",
+  "gates": {
+    "provenance": {
+      "verdict": "CONDITIONAL",
+      "reasoning": "Tier AMBER: PER-SUBCORPUS",
+      "confidence": "medium",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Universal MT resource",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Universal MT resource",
+  "access": {
+    "raw": "https://opus.nlpl.eu/",
+    "links": [
+      "https://opus.nlpl.eu/"
+    ]
+  },
+  "confidence": "high"
+}

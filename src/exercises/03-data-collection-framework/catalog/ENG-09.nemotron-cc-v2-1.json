@@ -1,0 +1,82 @@
+{
+  "id": "ENG-09",
+  "slug": "nemotron-cc-v2-1",
+  "name": "Nemotron-CC-v2.1",
+  "category": "English Web",
+  "tier": "GREEN",
+  "is_gap": false,
+  "owner": "NVIDIA",
+  "licence": {
+    "raw": "Open",
+    "commercial": null,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "+2.5T new tokens; 5 rephrase prompts over Medium-High-Quality tier across 110 CC snapshots -> 2.1T new tokens",
+    "tokens": {
+      "value": 2500000000000.0,
+      "unit": "tokens",
+      "provenance": "estimated",
+      "source": "seed:Size_Scale"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "English",
+  "gotchas": [],
+  "opportunity": null,
+  "note": "-",
+  "gates": {
+    "provenance": {
+      "verdict": "PASS",
+      "reasoning": "Tier GREEN with a stated licence: Open",
+      "confidence": "high",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: NVIDIA",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "NVIDIA",
+  "access": {
+    "raw": "https://huggingface.co/nvidia",
+    "links": [
+      "https://huggingface.co/nvidia"
+    ]
+  },
+  "confidence": "high"
+}

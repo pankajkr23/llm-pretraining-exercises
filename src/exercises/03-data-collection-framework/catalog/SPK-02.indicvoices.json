@@ -1,0 +1,84 @@
+{
+  "id": "SPK-02",
+  "slug": "indicvoices",
+  "name": "IndicVoices",
+  "category": "Speech (Indic)",
+  "tier": "GREEN",
+  "is_gap": false,
+  "owner": "AI4Bharat / IIT Madras + Sarvam AI; funded by Bhashini, MeitY, Nilekani Philanthropies",
+  "licence": {
+    "raw": "CC-BY-4.0",
+    "commercial": true,
+    "attribution": true,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "23.7K hours total, 11.2K transcribed, 51K speakers, 400+ districts",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: 23.7K hours total, 11.2K transcribed, 51K speakers, 400+ dis"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT",
+    "SFT"
+  ],
+  "languages": "ALL 22 languages",
+  "gotchas": [],
+  "opportunity": null,
+  "note": "THE FLAGSHIP. 8% read / 76% EXTEMPORE / 15% conversational SPONTANEOUS, NOT READ, which is vastly more valuable. Grew 7,348h -> 12K -> 23.7K",
+  "gates": {
+    "provenance": {
+      "verdict": "PASS",
+      "reasoning": "Tier GREEN with a stated licence: CC-BY-4.0",
+      "confidence": "high",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: IndicASR (first ASR for all 22)",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "IndicASR (first ASR for all 22)",
+  "access": {
+    "raw": "https://huggingface.co/datasets/ai4bharat/IndicVoices ; arXiv:2403.01926 ; also on AIKosh",
+    "links": [
+      "https://huggingface.co/datasets/ai4bharat/IndicVoices",
+      "arXiv:2403.01926"
+    ]
+  },
+  "confidence": "high"
+}

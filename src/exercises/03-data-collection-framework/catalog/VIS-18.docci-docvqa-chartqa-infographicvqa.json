@@ -1,0 +1,81 @@
+{
+  "id": "VIS-18",
+  "slug": "docci-docvqa-chartqa-infographicvqa",
+  "name": "DOCCI / DocVQA / ChartQA / InfographicVQA",
+  "category": "Multimodal (Global)",
+  "tier": "AMBER",
+  "is_gap": false,
+  "owner": "Various",
+  "licence": {
+    "raw": "Mixed",
+    "commercial": null,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "-",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: -"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "SFT",
+    "EVAL"
+  ],
+  "languages": "English",
+  "gotchas": [],
+  "opportunity": null,
+  "note": "Document understanding",
+  "gates": {
+    "provenance": {
+      "verdict": "CONDITIONAL",
+      "reasoning": "Tier AMBER: Mixed",
+      "confidence": "medium",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Many",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Many",
+  "access": {
+    "raw": "Various",
+    "links": []
+  },
+  "confidence": "high"
+}

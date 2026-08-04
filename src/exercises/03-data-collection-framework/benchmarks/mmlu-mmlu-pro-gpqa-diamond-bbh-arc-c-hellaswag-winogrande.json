@@ -1,0 +1,16 @@
+{
+  "name": "MMLU / MMLU-Pro / GPQA-Diamond / BBH / ARC-C / HellaSwag / WinoGrande",
+  "slug": "mmlu-mmlu-pro-gpqa-diamond-bbh-arc-c-hellaswag-winogrande",
+  "owner": "Various",
+  "type": "Knowledge & reasoning",
+  "coverage": "English",
+  "size": "-",
+  "split_policy": "TEST",
+  "held_out": false,
+  "trust_band": "native-sourced",
+  "access": {
+    "raw": "Standard",
+    "links": []
+  },
+  "notes": "Global knowledge/reasoning suite"
+}

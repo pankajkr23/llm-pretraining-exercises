@@ -1,0 +1,18 @@
+{
+  "name": "IndicXTREME",
+  "slug": "indicxtreme",
+  "owner": "AI4Bharat",
+  "type": "Indic NLU",
+  "coverage": "20-22 languages, 9 NLU tasks",
+  "size": "105 evaluation sets (52 new)",
+  "split_policy": "TEST",
+  "held_out": false,
+  "trust_band": "native-sourced",
+  "access": {
+    "raw": "https://huggingface.co/ai4bharat",
+    "links": [
+      "https://huggingface.co/ai4bharat"
+    ]
+  },
+  "notes": "BROADEST Indic NLU benchmark"
+}

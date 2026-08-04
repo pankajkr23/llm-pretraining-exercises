@@ -1,0 +1,86 @@
+{
+  "id": "SPK-18",
+  "slug": "gigaspeech-emilia-yodas",
+  "name": "GigaSpeech / Emilia / YODAS",
+  "category": "Speech (Global)",
+  "tier": "AMBER",
+  "is_gap": false,
+  "owner": "Various",
+  "licence": {
+    "raw": "Mixed",
+    "commercial": null,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "10K-100K+ h",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: 10K-100K+ h"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "Many",
+  "gotchas": [
+    {
+      "type": "LICENCE",
+      "text": "ToS exposure",
+      "severity": "advisory"
+    }
+  ],
+  "opportunity": null,
+  "note": "YODAS IS YOUTUBE-DERIVED",
+  "gates": {
+    "provenance": {
+      "verdict": "CONDITIONAL",
+      "reasoning": "Tier AMBER: Mixed",
+      "confidence": "medium",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Many",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Many",
+  "access": {
+    "raw": "Search HF",
+    "links": []
+  },
+  "confidence": "high"
+}

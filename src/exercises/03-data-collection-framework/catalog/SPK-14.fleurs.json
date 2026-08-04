@@ -1,0 +1,80 @@
+{
+  "id": "SPK-14",
+  "slug": "fleurs",
+  "name": "FLEURS",
+  "category": "Speech (Global)",
+  "tier": "GREEN",
+  "is_gap": false,
+  "owner": "Google",
+  "licence": {
+    "raw": "CC-BY-4.0",
+    "commercial": true,
+    "attribution": true,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "-",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: -"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "EVAL"
+  ],
+  "languages": "102 languages incl. Indic",
+  "gotchas": [],
+  "opportunity": null,
+  "note": "-",
+  "gates": {
+    "provenance": {
+      "verdict": "PASS",
+      "reasoning": "Tier GREEN with a stated licence: CC-BY-4.0",
+      "confidence": "high",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Universal multilingual eval",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Universal multilingual eval",
+  "access": {
+    "raw": "Search HF 'google/fleurs'",
+    "links": []
+  },
+  "confidence": "high"
+}

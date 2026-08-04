@@ -1,0 +1,89 @@
+{
+  "id": "ENG-07",
+  "slug": "nemotron-cc-v1",
+  "name": "Nemotron-CC (v1)",
+  "category": "English Web",
+  "tier": "GREEN",
+  "is_gap": false,
+  "owner": "NVIDIA",
+  "licence": {
+    "raw": "Open, released with commercial use in mind",
+    "commercial": true,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "6.3T tokens (4.4T globally-deduped real + 1.9T synthetic), 99 CC snapshots 2013-2024",
+    "tokens": {
+      "value": 6300000000000.0,
+      "unit": "tokens",
+      "provenance": "estimated",
+      "source": "seed:Size_Scale"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "English",
+  "gotchas": [
+    {
+      "type": "COMPOSITION",
+      "text": "Published rephrasing prompts (Appendix H)",
+      "severity": "advisory"
+    }
+  ],
+  "opportunity": "PORT TO INDIC",
+  "note": null,
+  "gates": {
+    "provenance": {
+      "verdict": "PASS",
+      "reasoning": "Tier GREEN with a stated licence: Open, released with commercial use in mind",
+      "confidence": "high",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "CONDITIONAL",
+      "reasoning": "Risk & Notes flags a composition caveat.",
+      "confidence": "medium",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: NVIDIA Nemotron family",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "NVIDIA Nemotron family",
+  "access": {
+    "raw": "https://huggingface.co/nvidia ; arXiv:2412.02595",
+    "links": [
+      "https://huggingface.co/nvidia",
+      "arXiv:2412.02595"
+    ]
+  },
+  "confidence": "high"
+}

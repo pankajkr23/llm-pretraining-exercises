@@ -1,0 +1,95 @@
+{
+  "id": "IND-04",
+  "slug": "bhashakritika",
+  "name": "BhashaKritika",
+  "category": "Indic Text (PT)",
+  "tier": "AMBER",
+  "is_gap": false,
+  "owner": "Krutrim AI Labs (Ola)",
+  "licence": {
+    "raw": "Krutrim Community License - bespoke, not OSI-approved. REQUIRES LEGAL REVIEW",
+    "commercial": null,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "540B synthetic tokens",
+    "tokens": {
+      "value": 540000000000.0,
+      "unit": "tokens",
+      "provenance": "estimated",
+      "source": "seed:Size_Scale"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT",
+    "MT"
+  ],
+  "languages": "10 Indic languages",
+  "gotchas": [
+    {
+      "type": "LICENCE",
+      "text": "RISKS: (1) bespoke licence;",
+      "severity": "advisory"
+    },
+    {
+      "type": "PROVENANCE",
+      "text": "(2) model-output provenance chain",
+      "severity": "advisory"
+    }
+  ],
+  "opportunity": "LARGEST SYNTHETIC INDIC CORPUS.",
+  "note": "5 generation strategies: document-grounded, persona-based, topic-guided, math/reasoning-grounded, translation-based. Backbones: Krutrim-2, Gemma-3, Llama-3.3, Sarvam-Translate. Gemma-3/Llama-3.3 licences carry downstream terms; (3) ships per-record QC metadata (excellent - filter hard). RECOMMENDATION: negotiate or replicate the methodology under your own licence",
+  "gates": {
+    "provenance": {
+      "verdict": "CONDITIONAL",
+      "reasoning": "Tier AMBER: Krutrim Community License - bespoke, not OSI-approved. REQUIRES LEGAL REVIEW",
+      "confidence": "medium",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Krutrim",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Krutrim",
+  "access": {
+    "raw": "https://huggingface.co/datasets/krutrim-ai-labs/BhashaKritika ; paper arXiv:2511.10338 (AAAI)",
+    "links": [
+      "https://huggingface.co/datasets/krutrim-ai-labs/BhashaKritika",
+      "arXiv:2511.10338"
+    ]
+  },
+  "confidence": "high"
+}

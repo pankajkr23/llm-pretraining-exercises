@@ -1,0 +1,83 @@
+{
+  "id": "MUL-02",
+  "slug": "fineweb-2-hq",
+  "name": "FineWeb-2-HQ",
+  "category": "Global Multilingual",
+  "tier": "GREEN",
+  "is_gap": false,
+  "owner": "EPFL ML",
+  "licence": {
+    "raw": "ODC-By",
+    "commercial": null,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "Top 10% of FineWeb-2 by XLM-R-based quality classifier, 20 languages",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: Top 10% of FineWeb-2 by XLM-R-based quality classifier, 20 l"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT",
+    "MT"
+  ],
+  "languages": "20 languages",
+  "gotchas": [],
+  "opportunity": "Matches FineWeb-2 performance with 6x FEWER tokens",
+  "note": null,
+  "gates": {
+    "provenance": {
+      "verdict": "PASS",
+      "reasoning": "Tier GREEN with a stated licence: ODC-By",
+      "confidence": "high",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: -",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "-",
+  "access": {
+    "raw": "https://huggingface.co/datasets/epfml/FineWeb2-HQ",
+    "links": [
+      "https://huggingface.co/datasets/epfml/FineWeb2-HQ"
+    ]
+  },
+  "confidence": "high"
+}

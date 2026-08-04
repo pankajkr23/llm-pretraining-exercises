@@ -1,0 +1,82 @@
+{
+  "id": "VIS-02",
+  "slug": "chitrakshara-cap",
+  "name": "Chitrakshara-Cap",
+  "category": "Multimodal (Indic)",
+  "tier": "AMBER",
+  "is_gap": false,
+  "owner": "Krutrim AI Labs",
+  "licence": {
+    "raw": "Krutrim licence",
+    "commercial": null,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "44M image-text pairs, 733M tokens",
+    "tokens": {
+      "value": 44000000.0,
+      "unit": "tokens",
+      "provenance": "estimated",
+      "source": "seed:Size_Scale"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "11 Indian languages",
+  "gotchas": [],
+  "opportunity": null,
+  "note": "Alt-text caption pairs",
+  "gates": {
+    "provenance": {
+      "verdict": "CONDITIONAL",
+      "reasoning": "Tier AMBER: Krutrim licence",
+      "confidence": "medium",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Chitrarth",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Chitrarth",
+  "access": {
+    "raw": "arXiv:2603.23521",
+    "links": [
+      "arXiv:2603.23521"
+    ]
+  },
+  "confidence": "high"
+}

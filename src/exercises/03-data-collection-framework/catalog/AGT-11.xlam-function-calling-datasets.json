@@ -1,0 +1,86 @@
+{
+  "id": "AGT-11",
+  "slug": "xlam-function-calling-datasets",
+  "name": "xLAM function-calling datasets",
+  "category": "Agentic SFT",
+  "tier": "RED",
+  "is_gap": false,
+  "owner": "Salesforce",
+  "licence": {
+    "raw": "CC-BY-NC on some releases - VERIFY THE SPECIFIC RELEASE",
+    "commercial": false,
+    "attribution": true,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "-",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: -"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "SFT"
+  ],
+  "languages": "Tool use",
+  "gotchas": [
+    {
+      "type": "LICENCE",
+      "text": "Some Salesforce releases are NonCommercial.",
+      "severity": "blocking"
+    }
+  ],
+  "opportunity": null,
+  "note": "CHECK BEFORE USE",
+  "gates": {
+    "provenance": {
+      "verdict": "FAIL",
+      "reasoning": "Blocking caveat in Risk & Notes; tier RED.",
+      "confidence": "high",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Salesforce",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Salesforce",
+  "access": {
+    "raw": "Search HF 'Salesforce/xlam'",
+    "links": []
+  },
+  "confidence": "high"
+}

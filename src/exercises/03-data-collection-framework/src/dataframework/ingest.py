@@ -1,0 +1,375 @@
+"""Expand the seed CSVs into one reviewable JSON file per record.
+
+`data/seed/*.csv` is a convenient bootstrap format and a terrible review format: a licence
+downgrade buried in a 40KB CSV diff is invisible. So the CSVs are expanded once into
+`catalog/<ID>.<slug>.json` and `benchmarks/<slug>.json` — the *contested tier*, where every licence
+and trust judgment arrives as its own diff hunk.
+
+The expansion is derivation, not invention. Licence flags, size splits, and the five gates are all
+read off the row, and each gate records the field it reasoned from, so a reviewer can check the
+judgment against the source. Where the row is silent the gate says `UNKNOWN` rather than guessing
+(ground rule 7).
+
+Run: ``uv run python -m dataframework.ingest``
+"""
+
+import argparse
+import csv
+import dataclasses
+import json
+import re
+from pathlib import Path
+from typing import Any
+
+from .config import Config
+from .gotchas import parse as parse_notes
+from .models import Gate, Value
+
+# Gate names, in the order the Dataset Card renders them.
+GATE_NAMES: tuple[str, ...] = ("provenance", "composition", "contamination", "yield", "evidence")
+
+_TOKEN_SIZE = re.compile(r"([\d.]+)\s*([BMTK])\b", re.IGNORECASE)
+_MULTIPLIER = {"K": 1e3, "M": 1e6, "B": 1e9, "T": 1e12}
+_SPLIT_SIZE = re.compile(r"(verified|unverified|synthetic)\s*([\d.]+)\s*([BMTK])", re.IGNORECASE)
+_URL = re.compile(r"https?://\S+|arXiv:[\d.]+", re.IGNORECASE)
+
+
+def slugify(name: str) -> str:
+    """Reduce a dataset name to a filename-safe slug.
+
+    Args:
+        name: The dataset or benchmark name.
+
+    Returns:
+        A lowercase, hyphenated slug.
+    """
+    slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+    return slug or "unnamed"
+
+
+def parse_tokens(text: str) -> Value:
+    """Read a token count out of a free-text size field.
+
+    Args:
+        text: The `Size_Scale` cell, e.g. ``"251B tokens total: Verified 64B / ..."``.
+
+    Returns:
+        A `Value` in tokens, or an explicitly unknown one when the cell states no token count.
+    """
+    if not text:
+        return Value.unknown("tokens", source="size field empty")
+    match = _TOKEN_SIZE.search(text)
+    if not match or "token" not in text.lower():
+        return Value.unknown("tokens", source=f"no token count stated: {text[:60]}")
+    amount = float(match.group(1)) * _MULTIPLIER[match.group(2).upper()]
+    return Value(value=amount, unit="tokens", provenance="estimated", source="seed:Size_Scale")
+
+
+def parse_naturalness(text: str) -> dict[str, Any]:
+    """Split a size field into verified / unverified / synthetic parts.
+
+    The Atlas's headline sizes hide this: Sangraha's 251B is 64B verified, 24B unverified and 162B
+    machine-translated, and only the first two are natural Indic text.
+
+    Args:
+        text: The `Size_Scale` cell.
+
+    Returns:
+        A mapping of part name to serialised `Value`, empty when the cell states no split.
+    """
+    parts: dict[str, Any] = {}
+    for name, amount, suffix in _SPLIT_SIZE.findall(text or ""):
+        value = float(amount) * _MULTIPLIER[suffix.upper()]
+        parts[name.lower()] = dataclasses.asdict(
+            Value(value=value, unit="tokens", provenance="estimated", source="seed:Size_Scale")
+        )
+    return parts
+
+
+def parse_licence(text: str) -> dict[str, Any]:
+    """Read the permission flags the Dataset Card shows off a licence string.
+
+    Args:
+        text: The `License` cell.
+
+    Returns:
+        The raw string plus `commercial`, `attribution` and `share_alike` flags, each `True`,
+        `False`, or `None` when the cell does not say.
+    """
+    lowered = (text or "").lower()
+    noncommercial = any(m in lowered for m in ("-nc", " nc", "noncommercial", "non-commercial"))
+    permits_commercial = "permits commercial" in lowered or "commercial use" in lowered
+    commercial: bool | None
+    if noncommercial:
+        commercial = False
+    elif permits_commercial or any(
+        m in lowered for m in ("cc-by-4", "cc by 4", "cc-0", "cc0", "mit", "apache")
+    ):
+        commercial = True
+    else:
+        commercial = None
+    return {
+        "raw": text or None,
+        "commercial": commercial,
+        "attribution": ("by" in lowered and "cc" in lowered) or "attribution" in lowered or None,
+        "share_alike": ("-sa" in lowered or "share-alike" in lowered or "sharealike" in lowered)
+        or None,
+    }
+
+
+def _gate(verdict: str, reasoning: str, confidence: str, field: str) -> dict[str, Any]:
+    """Build a serialised gate that cites the seed field it reasoned from.
+
+    Args:
+        verdict: One of the four verdicts.
+        reasoning: Why — never blank.
+        confidence: How much weight it bears.
+        field: The seed column the judgment derives from.
+
+    Returns:
+        The gate as a JSON-ready dict.
+    """
+    gate = Gate(
+        verdict=verdict,  # type: ignore[arg-type]
+        reasoning=reasoning,
+        confidence=confidence,  # type: ignore[arg-type]
+        citations=(f"seed:{field}",),
+    )
+    return {**dataclasses.asdict(gate), "citations": list(gate.citations)}
+
+
+def derive_gates(row: dict[str, str], gotcha_types: set[str], blocking: bool) -> dict[str, Any]:
+    """Derive the five framework gates from one catalogue row.
+
+    Each verdict is read off the row and cites the field it came from; nothing is invented. A silent
+    row yields `UNKNOWN`, which the UI renders honestly rather than as a pass.
+
+    Args:
+        row: The seed CSV row.
+        gotcha_types: Gotcha types found in its Risk & Notes.
+        blocking: Whether any of those gotchas is blocking.
+
+    Returns:
+        A mapping of the five gate names to serialised `Gate` records.
+    """
+    tier = (row.get("Tier") or "").strip().upper()
+    licence = (row.get("License") or "").strip()
+
+    if blocking:
+        provenance = _gate(
+            "FAIL",
+            f"Blocking caveat in Risk & Notes; tier {tier or 'unset'}.",
+            "high",
+            "Risk_Notes",
+        )
+    elif tier == "GREEN" and licence:
+        provenance = _gate(
+            "PASS", f"Tier GREEN with a stated licence: {licence[:80]}", "high", "License"
+        )
+    elif tier == "AMBER":
+        provenance = _gate(
+            "CONDITIONAL", f"Tier AMBER: {licence[:80] or 'licence unclear'}", "medium", "License"
+        )
+    elif tier == "RED":
+        provenance = _gate("FAIL", f"Tier RED: {licence[:80] or 'excluded'}", "high", "Tier")
+    else:
+        provenance = _gate("UNKNOWN", "Tier or licence not stated in the seed row.", "low", "Tier")
+
+    composition = (
+        _gate("CONDITIONAL", "Risk & Notes flags a composition caveat.", "medium", "Risk_Notes")
+        if "COMPOSITION" in gotcha_types
+        else _gate(
+            "UNKNOWN",
+            "No composition caveat recorded; not independently verified.",
+            "low",
+            "Risk_Notes",
+        )
+    )
+    contamination = (
+        _gate("FAIL", "Risk & Notes flags upstream contamination.", "high", "Risk_Notes")
+        if "PROVENANCE" in gotcha_types and blocking
+        else _gate(
+            "UNKNOWN",
+            "Decontamination is measured in phase 2, not asserted here.",
+            "low",
+            "Risk_Notes",
+        )
+    )
+    dedup_note = "DEDUP" in gotcha_types
+    yield_gate = (
+        _gate(
+            "CONDITIONAL",
+            "Duplication caveat recorded; usable yield is below the headline size.",
+            "medium",
+            "Risk_Notes",
+        )
+        if dedup_note
+        else _gate("UNKNOWN", "Yield after dedup not measured.", "low", "Size_Scale")
+    )
+    used_by = (row.get("Used_By") or "").strip()
+    evidence = (
+        _gate("PASS", f"Prior use recorded: {used_by[:80]}", "medium", "Used_By")
+        if used_by
+        else _gate("UNKNOWN", "No prior use recorded in the seed row.", "low", "Used_By")
+    )
+    return {
+        "provenance": provenance,
+        "composition": composition,
+        "contamination": contamination,
+        "yield": yield_gate,
+        "evidence": evidence,
+    }
+
+
+def build_dataset_record(row: dict[str, str]) -> dict[str, Any]:
+    """Expand one catalogue row into a Dataset Card record.
+
+    Args:
+        row: The seed CSV row.
+
+    Returns:
+        The record, JSON-ready.
+    """
+    parsed = parse_notes(row.get("Risk_Notes"))
+    gotcha_types = {g.type for g in parsed.gotchas}
+    blocking = any(g.is_blocking for g in parsed.gotchas)
+    size_raw = row.get("Size_Scale") or ""
+    # A "-" tier marks a dataset that does not exist yet — the Atlas records these deliberately,
+    # because an unfilled slot is where the differentiation argument lives (see `#gaps`).
+    tier_raw = (row.get("Tier") or "").strip().upper()
+    tier = tier_raw if tier_raw in {"GREEN", "AMBER", "RED"} else None
+    return {
+        "id": row["ID"].strip(),
+        "slug": slugify(row["Dataset"]),
+        "name": row["Dataset"].strip(),
+        "category": (row.get("Category") or "").strip(),
+        "tier": tier,
+        "is_gap": tier is None,
+        "owner": (row.get("Owner_Steward") or "").strip() or None,
+        "licence": parse_licence(row.get("License", "")),
+        "size": {
+            "raw": size_raw or None,
+            "tokens": dataclasses.asdict(parse_tokens(size_raw)),
+            "naturalness": parse_naturalness(size_raw),
+        },
+        "stage": [s.strip() for s in re.split(r"[/,]", row.get("Stage") or "") if s.strip()],
+        "languages": (row.get("Languages") or "").strip() or None,
+        "gotchas": [dataclasses.asdict(g) for g in parsed.gotchas],
+        "opportunity": parsed.opportunity,
+        "note": parsed.note,
+        "gates": derive_gates(row, gotcha_types, blocking),
+        "used_by": (row.get("Used_By") or "").strip() or None,
+        "access": {
+            "raw": (row.get("Access") or "").strip() or None,
+            "links": _URL.findall(row.get("Access") or ""),
+        },
+        "confidence": "high" if (row.get("Access") or "").strip() else "low",
+    }
+
+
+def build_benchmark_record(row: dict[str, str]) -> dict[str, Any]:
+    """Expand one benchmark row into a record.
+
+    Carries the split policy and trust band, and **never** benchmark items — the eval registry must
+    not reach `web/` (INV-1).
+
+    Args:
+        row: The seed CSV row.
+
+    Returns:
+        The record, JSON-ready.
+    """
+    notes = row.get("Notes") or ""
+    policy = (row.get("Split_Policy") or "").strip()
+    lowered = f"{notes} {row.get('Type', '')}".lower()
+    if "translat" in lowered:
+        trust = "translation-derived"
+    elif "harness" in lowered or "harness" in policy.lower():
+        trust = "harness-dependent"
+    elif "contaminat" in lowered:
+        trust = "contamination-prone"
+    else:
+        trust = "native-sourced"
+    return {
+        "name": row["Benchmark"].strip(),
+        "slug": slugify(row["Benchmark"]),
+        "owner": (row.get("Owner") or "").strip() or None,
+        "type": (row.get("Type") or "").strip() or None,
+        "coverage": (row.get("Coverage") or "").strip() or None,
+        "size": (row.get("Size") or "").strip() or None,
+        "split_policy": policy or None,
+        "held_out": "held-out" in policy.lower() or "locked" in policy.lower(),
+        "trust_band": trust,
+        "access": {
+            "raw": (row.get("Access") or "").strip() or None,
+            "links": _URL.findall(row.get("Access") or ""),
+        },
+        "notes": notes.strip() or None,
+    }
+
+
+def _read_csv(path: Path) -> list[dict[str, str]]:
+    """Read a seed CSV.
+
+    Args:
+        path: The CSV path.
+
+    Returns:
+        The rows as dicts.
+
+    Raises:
+        FileNotFoundError: If the seed file is absent (it is git-ignored by design).
+    """
+    if not path.exists():
+        raise FileNotFoundError(
+            f"{path} not found. The seed CSVs are local working files, kept out of git "
+            "(see docs/README.md) — restore them from your backup before running ingest."
+        )
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
+def _write(path: Path, record: dict[str, Any]) -> None:
+    """Write one record as pretty JSON, so diffs are line-oriented and reviewable.
+
+    Args:
+        path: Destination file.
+        record: The record.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def ingest(cfg: Config | None = None) -> dict[str, int]:
+    """Expand both seed CSVs into per-record JSON files.
+
+    Args:
+        cfg: Paths to use; defaults to `Config()`.
+
+    Returns:
+        Counts of records written, keyed by tier name.
+    """
+    cfg = cfg or Config()
+    datasets = _read_csv(cfg.seed_dir / "master_dataset_catalog.csv")
+    benchmarks = _read_csv(cfg.seed_dir / "benchmarks.csv")
+
+    for row in datasets:
+        record = build_dataset_record(row)
+        _write(cfg.catalog_dir / f"{record['id']}.{record['slug']}.json", record)
+    for row in benchmarks:
+        record = build_benchmark_record(row)
+        _write(cfg.benchmarks_dir / f"{record['slug']}.json", record)
+
+    return {"catalog": len(datasets), "benchmarks": len(benchmarks)}
+
+
+def main() -> None:
+    """Run the expansion from the command line."""
+    parser = argparse.ArgumentParser(description="Expand the seed CSVs into per-record JSON.")
+    parser.parse_args()
+    counts = ingest()
+    print(f"wrote {counts['catalog']} catalog + {counts['benchmarks']} benchmark records")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,91 @@
+{
+  "id": "VIS-12",
+  "slug": "datacomp-commonpool",
+  "name": "DataComp / CommonPool",
+  "category": "Multimodal (Global)",
+  "tier": "RED",
+  "is_gap": false,
+  "owner": "DataComp consortium",
+  "licence": {
+    "raw": "CC-BY-4.0",
+    "commercial": true,
+    "attribution": true,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "12.8B",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: 12.8B"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "Multilingual",
+  "gotchas": [
+    {
+      "type": "DEDUP",
+      "text": "substantial overlap with LAION-5B.",
+      "severity": "blocking"
+    },
+    {
+      "type": "SAFETY",
+      "text": "Avoid, or apply your own PII/CSAM filtering first",
+      "severity": "blocking"
+    }
+  ],
+  "opportunity": null,
+  "note": "DOCUMENTED LARGE-SCALE PRIVACY PROBLEMS (arXiv:2506.17185);",
+  "gates": {
+    "provenance": {
+      "verdict": "FAIL",
+      "reasoning": "Blocking caveat in Risk & Notes; tier RED.",
+      "confidence": "high",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "CONDITIONAL",
+      "reasoning": "Duplication caveat recorded; usable yield is below the headline size.",
+      "confidence": "medium",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Many",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Many",
+  "access": {
+    "raw": "DataComp",
+    "links": []
+  },
+  "confidence": "high"
+}

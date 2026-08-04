@@ -1,0 +1,80 @@
+{
+  "id": "SFT-12",
+  "slug": "tulu-3-tulu-3-sft-mixture",
+  "name": "Tulu 3 / Tulu 3 SFT Mixture",
+  "category": "SFT (General)",
+  "tier": "GREEN",
+  "is_gap": false,
+  "owner": "Allen Institute for AI",
+  "licence": {
+    "raw": "ODC-By",
+    "commercial": null,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "-",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: -"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "SFT"
+  ],
+  "languages": "English",
+  "gotchas": [],
+  "opportunity": null,
+  "note": "FULLY DOCUMENTED, REPRODUCIBLE post-training recipe. COPY THE METHODOLOGY",
+  "gates": {
+    "provenance": {
+      "verdict": "PASS",
+      "reasoning": "Tier GREEN with a stated licence: ODC-By",
+      "confidence": "high",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Tulu 3",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Tulu 3",
+  "access": {
+    "raw": "Search HF 'allenai/tulu-3'",
+    "links": []
+  },
+  "confidence": "high"
+}

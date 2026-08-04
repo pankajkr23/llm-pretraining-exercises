@@ -1,0 +1,16 @@
+{
+  "name": "GSM8K / MATH / AIME 2024-2025 / HMMT / MathArena",
+  "slug": "gsm8k-math-aime-2024-2025-hmmt-matharena",
+  "owner": "Various",
+  "type": "Math",
+  "coverage": "English",
+  "size": "-",
+  "split_policy": "TEST",
+  "held_out": false,
+  "trust_band": "native-sourced",
+  "access": {
+    "raw": "Standard",
+    "links": []
+  },
+  "notes": "Global math suite"
+}

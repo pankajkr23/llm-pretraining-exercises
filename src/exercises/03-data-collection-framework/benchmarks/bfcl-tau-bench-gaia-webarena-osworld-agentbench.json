@@ -1,0 +1,16 @@
+{
+  "name": "BFCL / tau-bench / GAIA / WebArena / OSWorld / AgentBench",
+  "slug": "bfcl-tau-bench-gaia-webarena-osworld-agentbench",
+  "owner": "Various",
+  "type": "Tool use & agents",
+  "coverage": "English",
+  "size": "-",
+  "split_policy": "TEST",
+  "held_out": false,
+  "trust_band": "native-sourced",
+  "access": {
+    "raw": "Standard",
+    "links": []
+  },
+  "notes": "BFCL data is Apache-2.0 but the TEST SPLIT MUST NOT BE TRAINED ON"
+}

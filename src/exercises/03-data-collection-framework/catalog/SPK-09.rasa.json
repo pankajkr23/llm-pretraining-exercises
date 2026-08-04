@@ -1,0 +1,82 @@
+{
+  "id": "SPK-09",
+  "slug": "rasa",
+  "name": "Rasa",
+  "category": "Speech (Indic)",
+  "tier": "GREEN",
+  "is_gap": false,
+  "owner": "AI4Bharat",
+  "licence": {
+    "raw": "CC-BY-4.0",
+    "commercial": true,
+    "attribution": true,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "500+ hours high-quality studio recordings, 20 speakers",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: 500+ hours high-quality studio recordings, 20 speakers"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "TTS"
+  ],
+  "languages": "13 Indian languages",
+  "gotchas": [],
+  "opportunity": null,
+  "note": "EXPRESSIVE speech dataset",
+  "gates": {
+    "provenance": {
+      "verdict": "PASS",
+      "reasoning": "Tier GREEN with a stated licence: CC-BY-4.0",
+      "confidence": "high",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: IndicParler-TTS",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "IndicParler-TTS",
+  "access": {
+    "raw": "https://huggingface.co/datasets/ai4bharat",
+    "links": [
+      "https://huggingface.co/datasets/ai4bharat"
+    ]
+  },
+  "confidence": "high"
+}

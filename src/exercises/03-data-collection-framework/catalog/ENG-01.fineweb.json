@@ -1,0 +1,88 @@
+{
+  "id": "ENG-01",
+  "slug": "fineweb",
+  "name": "FineWeb",
+  "category": "English Web",
+  "tier": "GREEN",
+  "is_gap": false,
+  "owner": "Hugging Face",
+  "licence": {
+    "raw": "ODC-By 1.0",
+    "commercial": null,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "15T tokens (18.5T in later revisions), 96 CC dumps",
+    "tokens": {
+      "value": 15000000000000.0,
+      "unit": "tokens",
+      "provenance": "estimated",
+      "source": "seed:Size_Scale"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "English",
+  "gotchas": [
+    {
+      "type": "COMPOSITION",
+      "text": "GPT-2 tokenizer counts",
+      "severity": "advisory"
+    }
+  ],
+  "opportunity": null,
+  "note": null,
+  "gates": {
+    "provenance": {
+      "verdict": "PASS",
+      "reasoning": "Tier GREEN with a stated licence: ODC-By 1.0",
+      "confidence": "high",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "CONDITIONAL",
+      "reasoning": "Risk & Notes flags a composition caveat.",
+      "confidence": "medium",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Default open English base",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Default open English base",
+  "access": {
+    "raw": "https://huggingface.co/HuggingFaceFW",
+    "links": [
+      "https://huggingface.co/HuggingFaceFW"
+    ]
+  },
+  "confidence": "high"
+}

@@ -1,0 +1,88 @@
+{
+  "id": "IND-02",
+  "slug": "indiccorp-v2",
+  "name": "IndicCorp v2",
+  "category": "Indic Text (PT)",
+  "tier": "GREEN",
+  "is_gap": false,
+  "owner": "AI4Bharat, IIT Madras",
+  "licence": {
+    "raw": "CC-0 (public domain dedication) - most permissive Indic corpus available",
+    "commercial": true,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "20.9B tokens",
+    "tokens": {
+      "value": 20900000000.0,
+      "unit": "tokens",
+      "provenance": "estimated",
+      "source": "seed:Size_Scale"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "24 languages, 4 language families",
+  "gotchas": [
+    {
+      "type": "DEDUP",
+      "text": "Largely subsumed by Sangraha.",
+      "severity": "advisory"
+    }
+  ],
+  "opportunity": null,
+  "note": null,
+  "gates": {
+    "provenance": {
+      "verdict": "PASS",
+      "reasoning": "Tier GREEN with a stated licence: CC-0 (public domain dedication) - most permissive Indic corpus available",
+      "confidence": "high",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "CONDITIONAL",
+      "reasoning": "Duplication caveat recorded; usable yield is below the headline size.",
+      "confidence": "medium",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: IndicBERT v2, Paramanu family, numerous continued-pretraining efforts",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "IndicBERT v2, Paramanu family, numerous continued-pretraining efforts",
+  "access": {
+    "raw": "https://huggingface.co/datasets/ai4bharat/IndicCorpV2",
+    "links": [
+      "https://huggingface.co/datasets/ai4bharat/IndicCorpV2"
+    ]
+  },
+  "confidence": "high"
+}

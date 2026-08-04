@@ -1,0 +1,82 @@
+{
+  "id": "PAR-03",
+  "slug": "in-22",
+  "name": "IN-22",
+  "category": "Parallel / EVAL",
+  "tier": "GREEN",
+  "is_gap": false,
+  "owner": "AI4Bharat",
+  "licence": {
+    "raw": "CC-BY-4.0",
+    "commercial": true,
+    "attribution": true,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "n-way parallel",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: n-way parallel"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "EVAL"
+  ],
+  "languages": "22 languages",
+  "gotchas": [],
+  "opportunity": "GOLD STANDARD for Indic MT eval.",
+  "note": "Critically includes SOURCE-ORIGINAL test sets with Indian-origin content - not just translated-from-English",
+  "gates": {
+    "provenance": {
+      "verdict": "PASS",
+      "reasoning": "Tier GREEN with a stated licence: CC-BY-4.0",
+      "confidence": "high",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: IndicTrans2 evaluation",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "IndicTrans2 evaluation",
+  "access": {
+    "raw": "https://huggingface.co/ai4bharat",
+    "links": [
+      "https://huggingface.co/ai4bharat"
+    ]
+  },
+  "confidence": "high"
+}

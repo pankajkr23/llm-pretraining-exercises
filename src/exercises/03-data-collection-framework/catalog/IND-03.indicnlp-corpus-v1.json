@@ -1,0 +1,93 @@
+{
+  "id": "IND-03",
+  "slug": "indicnlp-corpus-v1",
+  "name": "IndicNLP Corpus v1",
+  "category": "Indic Text (PT)",
+  "tier": "RED",
+  "is_gap": false,
+  "owner": "AI4Bharat",
+  "licence": {
+    "raw": "CC BY-NC-SA 4.0 - NONCOMMERCIAL",
+    "commercial": false,
+    "attribution": true,
+    "share_alike": true
+  },
+  "size": {
+    "raw": "2.7B words",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: 2.7B words"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "10 languages",
+  "gotchas": [
+    {
+      "type": "DEDUP",
+      "text": "Superseded by IndicCorp v2 / Sangraha.",
+      "severity": "blocking"
+    },
+    {
+      "type": "LICENCE",
+      "text": "NOTE: only v1 is NC;",
+      "severity": "blocking"
+    }
+  ],
+  "opportunity": null,
+  "note": "EXCLUDE from commercial mix. Listed so your pipeline BLOCKLISTS it - frequently and incorrectly bundled into 'Indic corpus' collections. IndicCorp v2 and Sangraha are not",
+  "gates": {
+    "provenance": {
+      "verdict": "FAIL",
+      "reasoning": "Blocking caveat in Risk & Notes; tier RED.",
+      "confidence": "high",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "CONDITIONAL",
+      "reasoning": "Duplication caveat recorded; usable yield is below the headline size.",
+      "confidence": "medium",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Legacy academic work",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Legacy academic work",
+  "access": {
+    "raw": "https://github.com/AI4Bharat/indicnlp_corpus",
+    "links": [
+      "https://github.com/AI4Bharat/indicnlp_corpus"
+    ]
+  },
+  "confidence": "high"
+}

@@ -1,0 +1,82 @@
+{
+  "id": "LEG-01",
+  "slug": "ecourts-high-court-judgments-open-justice-india",
+  "name": "eCourts High Court judgments (Open Justice India)",
+  "category": "Legal (Indic)",
+  "tier": "AMBER",
+  "is_gap": false,
+  "owner": "eCourts / Open Justice India",
+  "licence": {
+    "raw": "Public record",
+    "commercial": null,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "25 High Courts, 1950-2025, ~1TB, JSON+Parquet, quarterly updates",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: 25 High Courts, 1950-2025, ~1TB, JSON+Parquet, quarterly upd"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "English + Indic",
+  "gotchas": [],
+  "opportunity": null,
+  "note": "RECOMMENDED SOURCE - source judgments here, NOT from Indian Kanoon",
+  "gates": {
+    "provenance": {
+      "verdict": "CONDITIONAL",
+      "reasoning": "Tier AMBER: Public record",
+      "confidence": "medium",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Legal NLP research",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Legal NLP research",
+  "access": {
+    "raw": "https://openjustice-in.github.io/",
+    "links": [
+      "https://openjustice-in.github.io/"
+    ]
+  },
+  "confidence": "high"
+}

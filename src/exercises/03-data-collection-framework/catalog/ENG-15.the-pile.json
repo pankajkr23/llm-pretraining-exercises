@@ -1,0 +1,91 @@
+{
+  "id": "ENG-15",
+  "slug": "the-pile",
+  "name": "The Pile",
+  "category": "English Web",
+  "tier": "RED",
+  "is_gap": false,
+  "owner": "EleutherAI",
+  "licence": {
+    "raw": "MIT (claimed) - BUT CONTAINS BOOKS3",
+    "commercial": true,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "825GB",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: 825GB"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "English",
+  "gotchas": [
+    {
+      "type": "PROVENANCE",
+      "text": "CONTAINS BOOKS3 (pirated).",
+      "severity": "blocking"
+    },
+    {
+      "type": "AVAILABILITY",
+      "text": "Original download URL dead since ~Sept 2023",
+      "severity": "blocking"
+    }
+  ],
+  "opportunity": null,
+  "note": null,
+  "gates": {
+    "provenance": {
+      "verdict": "FAIL",
+      "reasoning": "Blocking caveat in Risk & Notes; tier RED.",
+      "confidence": "high",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "FAIL",
+      "reasoning": "Risk & Notes flags upstream contamination.",
+      "confidence": "high",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: GPT-Neo, GPT-J, many legacy models",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "GPT-Neo, GPT-J, many legacy models",
+  "access": {
+    "raw": "Original distribution TAKEN DOWN",
+    "links": []
+  },
+  "confidence": "high"
+}

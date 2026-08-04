@@ -1,0 +1,80 @@
+{
+  "id": "MUL-06",
+  "slug": "mala-glot500-c",
+  "name": "MaLA / Glot500-c",
+  "category": "Global Multilingual",
+  "tier": "AMBER",
+  "is_gap": false,
+  "owner": "Helsinki NLP et al.",
+  "licence": {
+    "raw": "Mixed",
+    "commercial": null,
+    "attribution": null,
+    "share_alike": null
+  },
+  "size": {
+    "raw": "939 languages (MaLA)",
+    "tokens": {
+      "value": null,
+      "unit": "tokens",
+      "provenance": "unknown",
+      "source": "no token count stated: 939 languages (MaLA)"
+    },
+    "naturalness": {}
+  },
+  "stage": [
+    "PT"
+  ],
+  "languages": "939 languages",
+  "gotchas": [],
+  "opportunity": "BEST long-tail language coverage;",
+  "note": "tiny per-language volume. Useful for Tier-3 languages ONLY",
+  "gates": {
+    "provenance": {
+      "verdict": "CONDITIONAL",
+      "reasoning": "Tier AMBER: Mixed",
+      "confidence": "medium",
+      "citations": [
+        "seed:License"
+      ]
+    },
+    "composition": {
+      "verdict": "UNKNOWN",
+      "reasoning": "No composition caveat recorded; not independently verified.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "contamination": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Decontamination is measured in phase 2, not asserted here.",
+      "confidence": "low",
+      "citations": [
+        "seed:Risk_Notes"
+      ]
+    },
+    "yield": {
+      "verdict": "UNKNOWN",
+      "reasoning": "Yield after dedup not measured.",
+      "confidence": "low",
+      "citations": [
+        "seed:Size_Scale"
+      ]
+    },
+    "evidence": {
+      "verdict": "PASS",
+      "reasoning": "Prior use recorded: Glot500",
+      "confidence": "medium",
+      "citations": [
+        "seed:Used_By"
+      ]
+    }
+  },
+  "used_by": "Glot500",
+  "access": {
+    "raw": "Search HF for 'MaLA-LM'",
+    "links": []
+  },
+  "confidence": "high"
+}
