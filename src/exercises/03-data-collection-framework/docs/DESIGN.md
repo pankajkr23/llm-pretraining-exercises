@@ -85,7 +85,37 @@ Everything else — fade-ins, parallax, decorative motion — is banned.
 
 ---
 
-## 4. THE DECISION and THE REASONING — widget specs
+## 4. THE DECISION and THE REASONING — interactive explainers
+
+**They are explainers, not widgets, and the distinction is the standard.** A widget renders data
+and leaves the reader to work out what it means. An interactive explainer teaches exactly one idea:
+it states a claim, hands you controls to test it, and then says *in words* what the state you have
+just created implies. A reader who touches nothing should still come away with the idea; a reader
+who plays should be able to break the claim and see it admit that.
+
+Anything on either surface that only draws a shape is unfinished. The shape is the evidence, not
+the point.
+
+**The seven parts.** Not every explainer needs all of them, but this is the shape they take:
+
+1. **A framing line** above the card — why this question arises here, in one sentence.
+2. **A title that is a question or a claim**, never a noun phrase. "When the text runs out, how many
+   times can you re-read it?" beats "Repetition analysis".
+3. **Teaching prose** with the numbers that matter in bold. This carries the idea for the reader who
+   never touches a control.
+4. **Controls with presets.** Sliders for continuous quantities, segmented buttons for real
+   alternatives, and presets that correspond to *actual options in the data* — so moving between
+   them is an argument, not a demo.
+5. **Live stat tiles** showing the derived quantities, each with the arithmetic beneath it in small
+   type, so the reader can check the sum rather than trust it.
+6. **The chart**, with named zones and a marker for where the current setting sits. Zones are what
+   turn a curve into a judgement.
+7. **A callout that interprets the current state**, changing as the state does — and a footnote
+   naming where the numbers came from and what is still unmeasured.
+
+Worked examples in the code: `/report` §11 (repetition) and §6 (the mix, dissected). §3 shows the
+variant where the honest answer is that we have not measured it — it puts a published measurement
+and our empty column side by side rather than hiding the gap.
 
 ### 4.1 · The Instrument Panel — benchmarks, done properly
 `/reasoning#benchmarks` + `/report` §8
@@ -354,7 +384,9 @@ Ship each with `prefers-reduced-motion` and keyboard access from the start. Retr
 
 | Don't | Do |
 |---|---|
-| A dashboard grid of every chart | One claim per widget, prose above, caption below |
+| A dashboard grid of every chart | One claim per explainer, prose above, caption below |
+| A chart that leaves the reader to interpret it | A callout that says what the current state means |
+| Controls that only demo the interaction | Presets that are real alternatives from the data |
 | Animate because it looks alive | Animate only transformation, crossing, loss, causation |
 | Bare numbers | Every figure typed `measured` or `estimated`, visible in the underline |
 | Hide uncertainty behind confident UI | The confidence ledger is a linked section, not a footnote |
