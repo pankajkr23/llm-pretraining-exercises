@@ -367,3 +367,9 @@ h3.appendix-h4 {
 .resolver .tierfill.part { background: color-mix(in srgb, var(--accent) 45%, var(--track)); }
 .resolver .tierrow:has(.tierfill.none) .tiertrack { border: 1px dashed var(--grade-x); }
 .resolver .tierval { color: var(--muted); }
+
+/* Rows in the full register open their five gates. A row is not a button, so it says it is one. */
+tr.rowlink { cursor: pointer; }
+tr.rowlink:hover td { background: var(--panel); }
+tr.rowlink:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+tr.rowlink.sel td { background: color-mix(in srgb, var(--accent) 10%, transparent); }

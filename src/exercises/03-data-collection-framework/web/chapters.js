@@ -2001,6 +2001,54 @@ function chapterAppendix(ctx) {
    * contents list you open the one row you came for. The first block stays open as a worked
    * example of what the rest contain. */
   let blockIndex = 0;
+  /* One gate card, shared by every register that lists datasets. It lived inside the search block,
+   * so the 145-row "Every dataset" table below had no way to open anything — a reader could see a
+   * row and not reach its reasoning, which the old 145-mark canvas had allowed. `into` puts the
+   * card next to whichever list was clicked rather than making the reader scroll back. */
+  let catalogue = null;
+  const openCard = async (d, into) => {
+    const card = into;
+    card.hidden = false;
+    card.replaceChildren($('p', 'gatecard-name', `${d.name} — loading its five gates…`));
+    if (!catalogue) {
+      try {
+        const root = data.registry_root || 'catalog.json';
+        catalogue = new Map((await (await fetch(`./${root}`)).json()).map((x) => [x.id, x]));
+      } catch {
+        card.replaceChildren($('p', 'gatecard-name', `${d.name} — the register could not be loaded. Serve over http, not file://.`));
+        return;
+      }
+    }
+    const full = catalogue.get(d.id) || {};
+    const gates = full.gates || {};
+    card.replaceChildren();
+    const head = $('p', 'gatecard-name');
+    head.append(text(`${d.name} `));
+    const g = $('span', 'grade', d.grade);
+    g.setAttribute('data-grade', d.grade);
+    head.append(g);
+    if (full.owner) head.append($('span', 'gatecard-owner', ` ${full.owner}`));
+    card.append(head);
+    const keys = Object.keys(gates);
+    if (!keys.length) card.append($('p', 'gatecard-none', 'No gate was scored for this entry.'));
+    else {
+      card.append(table(['gate', 'verdict', 'why', 'confidence'], keys.map((k) => {
+        const v = gates[k] || {};
+        const verdict = $('span', 'gateverdict', v.verdict || '—');
+        verdict.setAttribute('data-verdict', v.verdict || '');
+        return [k, verdict, v.reasoning || '—', v.confidence || '—'];
+      })));
+    }
+    (full.gotchas || []).forEach((x) => {
+      const q = $('p', 'gatecard-gotcha');
+      const badge = $('span', 'gotcha', x.type);
+      badge.setAttribute('data-type', x.type);
+      q.append(badge, text(` ${x.text}`));
+      card.append(q);
+    });
+    card.append($('p', 'gatecard-none', full.licence ? `Licence: ${full.licence.raw}` : 'Licence: nobody established one.'));
+  };
+
   const block = (title, node) => {
     const d = $('details', 'register');
     if (blockIndex === 0) d.open = true;
@@ -2187,50 +2235,8 @@ function chapterAppendix(ctx) {
     search.placeholder = `Find one of ${data.datasets.length} datasets by name…`;
     search.setAttribute('aria-label', 'Search the catalogue by dataset name');
     const results = $('div', 'catresults');
-    const card = $('div', 'gatecard');
-    card.hidden = true;
-    let catalogue = null;
-    const openCard = async (d) => {
-      card.hidden = false;
-      card.replaceChildren($('p', 'gatecard-name', `${d.name} — loading its five gates…`));
-      if (!catalogue) {
-        try {
-          const root = data.registry_root || 'catalog.json';
-          catalogue = new Map((await (await fetch(`./${root}`)).json()).map((x) => [x.id, x]));
-        } catch {
-          card.replaceChildren($('p', 'gatecard-name', `${d.name} — the register could not be loaded. Serve over http, not file://.`));
-          return;
-        }
-      }
-      const full = catalogue.get(d.id) || {};
-      const gates = full.gates || {};
-      card.replaceChildren();
-      const head = $('p', 'gatecard-name');
-      head.append(text(`${d.name} `));
-      const g = $('span', 'grade', d.grade);
-      g.setAttribute('data-grade', d.grade);
-      head.append(g);
-      if (full.owner) head.append($('span', 'gatecard-owner', ` ${full.owner}`));
-      card.append(head);
-      const keys = Object.keys(gates);
-      if (!keys.length) card.append($('p', 'gatecard-none', 'No gate was scored for this entry.'));
-      else {
-        card.append(table(['gate', 'verdict', 'why', 'confidence'], keys.map((k) => {
-          const v = gates[k] || {};
-          const verdict = $('span', 'gateverdict', v.verdict || '—');
-          verdict.setAttribute('data-verdict', v.verdict || '');
-          return [k, verdict, v.reasoning || '—', v.confidence || '—'];
-        })));
-      }
-      (full.gotchas || []).forEach((x) => {
-        const q = $('p', 'gatecard-gotcha');
-        const badge = $('span', 'gotcha', x.type);
-        badge.setAttribute('data-type', x.type);
-        q.append(badge, text(` ${x.text}`));
-        card.append(q);
-      });
-      card.append($('p', 'gatecard-none', full.licence ? `Licence: ${full.licence.raw}` : 'Licence: nobody established one.'));
-    };
+    const searchCard = $('div', 'gatecard');
+    searchCard.hidden = true;
 
     search.addEventListener('input', () => {
       const q = search.value.trim().toLowerCase();
@@ -2252,27 +2258,68 @@ function chapterAppendix(ctx) {
           grade,
           $('span', 'catrow-why', blocked.length ? `blocked on ${blocked.join(', ')}` : 'committable today'),
         );
-        line.addEventListener('click', () => openCard(d));
+        line.addEventListener('click', () => openCard(d, searchCard));
         results.append(line);
       });
     });
 
     const wrap = $('div');
-    wrap.append(resolver, $('h3', 'appendix-h4', 'Or find one dataset'), search, results, card);
+    wrap.append(resolver, $('h3', 'appendix-h4', 'Or find one dataset'), search, results, searchCard);
     block(`What would have to be fixed — ${pool.length} datasets against ${fmt(needed, 'count')}`, wrap);
   }
 
-  block(`Every dataset — ${data.datasets.length}`, table(
-    ['id', 'dataset', 'kind', 'grade', 'stage', 'tokens', 'commercial use'],
-    data.datasets.map((d) => [
-      d.id, d.name, d.category,
-      (() => { const g = $('span', 'grade', d.grade); g.setAttribute('data-grade', d.grade); return g; })(),
-      (d.stage || []).join(' · '),
-      (d.size_tokens || {}).value ? renderNumber(d.size_tokens, { unit: false }) : $('span', 'unpriced', 'unstated'),
-      d.licence_commercial === true ? 'permitted' : d.licence_commercial === false ? 'forbidden' : 'unestablished',
-    ]),
-    [5],
-  ));
+  {
+    /* Every row opens its five gates, which is the reach the old 145-mark canvas had and the
+     * search-only replacement lost. A row is not a button, so it carries the keyboard affordances
+     * a button would: a tab stop, Enter and Space, and a role saying what it does. */
+    const everyCard = $('div', 'gatecard');
+    everyCard.hidden = true;
+    const everyTable = table(
+      ['id', 'dataset', 'kind', 'grade', 'stage', 'tokens', 'commercial use'],
+      data.datasets.map((d) => [
+        d.id, d.name, d.category,
+        (() => { const g = $('span', 'grade', d.grade); g.setAttribute('data-grade', d.grade); return g; })(),
+        (d.stage || []).join(' · '),
+        (d.size_tokens || {}).value ? renderNumber(d.size_tokens, { unit: false }) : $('span', 'unpriced', 'unstated'),
+        d.licence_commercial === true ? 'permitted' : d.licence_commercial === false ? 'forbidden' : 'unestablished',
+      ]),
+      [5],
+    );
+    const trs = [...everyTable.querySelectorAll('tbody tr')];
+    /* One tab stop for the whole table, arrows within — 145 sequential stops is an obstacle
+     * between a keyboard reader and the rest of the page, not navigation. */
+    let rover = 0;
+    trs.forEach((tr, k) => {
+      const d = data.datasets[k];
+      if (!d) return;
+      tr.classList.add('rowlink');
+      tr.tabIndex = k === 0 ? 0 : -1;
+      tr.setAttribute('role', 'button');
+      tr.setAttribute('aria-label', `${d.name} — show its five gates`);
+      const open = () => {
+        trs.forEach((x) => x.classList.remove('sel'));
+        tr.classList.add('sel');
+        openCard(d, everyCard);
+      };
+      tr.addEventListener('click', open);
+      tr.addEventListener('focus', () => {
+        rover = k;
+        trs.forEach((x, j) => { x.tabIndex = j === k ? 0 : -1; });
+      });
+      tr.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); return; }
+        const step = { ArrowDown: 1, ArrowUp: -1, PageDown: 10, PageUp: -10, Home: -trs.length, End: trs.length }[e.key];
+        if (step === undefined) return;
+        e.preventDefault();
+        rover = Math.max(0, Math.min(trs.length - 1, rover + step));
+        trs.forEach((x, j) => { x.tabIndex = j === rover ? 0 : -1; });
+        trs[rover].focus();
+      });
+    });
+    const everyWrap = $('div');
+    everyWrap.append(everyTable, everyCard);
+    block(`Every dataset — ${data.datasets.length}`, everyWrap);
+  }
 
   block(`Every benchmark — ${data.benchmarks.length}`, table(
     ['benchmark', 'measures', 'coverage', 'split policy', 'trust'],
