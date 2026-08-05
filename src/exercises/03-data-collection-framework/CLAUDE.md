@@ -36,5 +36,6 @@ Component notes. Repo-wide conventions: root `AGENTS.md`.
   system (`docs/DESIGN.md` at repo root), served per-slug at `/03-data-collection-framework/`. Ship a
   `NOTICE` disclaiming org affiliation. Non-ASCII glyphs: edit with Edit/Write, never byte-mode `perl`/`sed`.
 - **Naming:** exercise slug + package are `03-data-collection-framework` / `dataframework` (the docs
-  assume this). Keep the docs' counts consistent when you touch them — the enumerated lists in
-  `TODO.md` (14 explorers + 8 intuitions; 12 Decision sections; five invariants) are canonical.
+  assume this). Keep the docs' counts consistent when you touch them — **twelve chapters plus an
+  appendix**, one per reader question, and **five invariants**. `docs/TODO.md`'s section counts
+  describe the retired two-page build; `docs/NEW_TODO.md` is the live plan.
