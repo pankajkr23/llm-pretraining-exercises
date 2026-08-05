@@ -360,6 +360,13 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
         },
         "vocab_sweep": {
             **curve,
+            # The curve ships the two fields the page reads. `fertility`, `softmax_cost` and
+            # `token_saving` are the intermediate terms of `net_benefit` and nothing renders them,
+            # so shipping all five was 2.5KB of index budget spent on values no reader can reach.
+            "curve": [
+                {"vocab_size": point["vocab_size"], "net_benefit": point["net_benefit"]}
+                for point in curve.get("curve", [])
+            ],
             "provenance": "estimated",
             "note": (
                 "The fertility model behind this curve has no measured anchor until task 2.2b "

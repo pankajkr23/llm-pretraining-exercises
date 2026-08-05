@@ -24,6 +24,12 @@ MIN_TIER_SHARE = 0.01  # a tier below 1% is noise, and repeating it is wasted co
 # Rule R2.
 ALWAYS_ON_SHARE = 0.08
 
+# And an upper bound. The lane means "not the English-trained scorer", not "no scorer" — every tier
+# in it still passes a purpose-built check. But the lane is the one part of the mixture no general
+# quality signal reaches, so it has to stay a reserved minority rather than grow by accretion each
+# time a tier looks hard to filter.
+ALWAYS_ON_CEILING = 0.20
+
 # Composition guardrail: past this, the "Indic" tier is mostly manufactured text.
 MAX_SYNTHETIC_SHARE_OF_INDIC = 0.50
 
@@ -139,6 +145,19 @@ def check(mix: dict[str, Any]) -> list[dict[str, str]]:
                 "message": (
                     f"{mix['synthetic_share_of_indic']:.0%} of the Indic tier is synthetic. "
                     "Translation and synthesis buy fluency; they do not buy culture."
+                ),
+            }
+        )
+
+    if mix["always_on_share"] > ALWAYS_ON_CEILING:
+        findings.append(
+            {
+                "level": "warning",
+                "tier": "always-on",
+                "message": (
+                    f"the Always-ON lane is {mix['always_on_share']:.1%}, above the "
+                    f"{ALWAYS_ON_CEILING:.0%} ceiling; the lane bypasses the general quality "
+                    "scorer, so it has to stay a reserved minority rather than grow by accretion."
                 ),
             }
         )

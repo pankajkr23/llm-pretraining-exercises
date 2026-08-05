@@ -21,20 +21,21 @@ TIER_SHAPE: tuple[dict[str, Any], ...] = (
     {
         "name": "english-web-hq",
         "kind": "knowledge",
-        "share": 0.200,
+        "share": 0.150,
         "epochs": 1,
         "capabilities": ["knowledge"],
         "sources": "FineWeb-Edu · Nemotron-CC",
         "why": (
-            "Filtered English web is where the model learns to reason at all. It is the cheapest "
-            "capability in the mix and the one an India-first model is least likely to be judged "
-            "on — but skimping here degrades everything downstream, including Indic reasoning."
+            "Filtered English web is where the model learns to reason at all, and the capability "
+            "an India-first model is least likely to be judged on. It gave up five points to the "
+            "skills tiers on the argument that code teaches reasoning too — which is a bet, and "
+            "the tier to watch if general reasoning regresses."
         ),
     },
     {
         "name": "code",
         "kind": "skills",
-        "share": 0.147,
+        "share": 0.200,
         "epochs": 1,
         "capabilities": ["code", "agentic-coding"],
         "sources": "The Stack v2 (permissive subset)",
@@ -47,7 +48,7 @@ TIER_SHAPE: tuple[dict[str, Any], ...] = (
     {
         "name": "math-stem",
         "kind": "skills",
-        "share": 0.080,
+        "share": 0.120,
         "epochs": 1,
         "capabilities": ["math-reasoning"],
         "sources": "Proof-Pile-2 · OpenWebMath · MegaMath",
@@ -101,7 +102,7 @@ TIER_SHAPE: tuple[dict[str, Any], ...] = (
     {
         "name": "agentic-traces",
         "kind": "skills",
-        "share": 0.053,
+        "share": 0.080,
         "epochs": 1,
         "always_on": True,
         "capabilities": ["agentic-coding"],
@@ -146,13 +147,15 @@ TIER_SHAPE: tuple[dict[str, Any], ...] = (
     {
         "name": "general-web",
         "kind": "knowledge",
-        "share": 0.197,
+        "share": 0.127,
         "epochs": 1,
         "capabilities": ["knowledge"],
         "sources": "FineWeb · CommonCrawl derivatives",
         "why": (
-            "Breadth. The least interesting tier per token and the largest by volume, which is the "
-            "usual shape of a pre-training corpus."
+            "Breadth — everyday knowledge and common sense, and the least interesting tier per "
+            "token. It used to be the largest here, and gave up seven points to code, maths and "
+            "tool use, "
+            "because the assignment names those as primary capabilities and a mixture is zero-sum."
         ),
     },
 )
