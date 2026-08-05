@@ -542,8 +542,10 @@
               document.createTextNode(` ${rows.length} candidate${rows.length > 1 ? 's' : ''} in the catalogue.`),
             );
             s.append(lede);
+            // No cap. This is a reference table on a reference page, and a silent truncation here
+            // would hide candidates from the one view meant to be exhaustive (EXPLAINER_PROMPT §18).
             s.append(table(['dataset', 'tokens', 'grade', 'commercial use', 'known caveats', 'what has to happen'],
-              rows.slice(0, 12).map((d) => {
+              rows.map((d) => {
                 const [label, colour] = ACTIONS[actionOf(d)];
                 const act = $('span', '', label);
                 act.style.cssText = `font-family:var(--mono);font-size:10.5px;font-weight:700;color:${colour}`;
