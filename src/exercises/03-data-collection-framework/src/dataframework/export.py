@@ -163,6 +163,15 @@ def _dataset_index_entry(record: dict[str, Any]) -> dict[str, Any]:
         # number, so trimming this to a plain float would be a false economy. The grade's
         # reasoning and every gate live in catalog.json, loaded on demand.
         "size_tokens": record.get("size", {}).get("tokens"),
+        # The verified human-origin portion, when the card records one. Sangraha's headline is 251B
+        # and only 64B of it is verified: the rest is machine translation and transliteration. A
+        # framework whose own mixture chapter warns that counting synthetic as natural is "the
+        # commonest way to overstate a corpus" cannot then budget the headline.
+        **(
+            {"size_verified": record["size"]["naturalness"]["verified"]}
+            if (record.get("size") or {}).get("naturalness", {}).get("verified")
+            else {}
+        ),
         "gotcha_types": sorted({g["type"] for g in record.get("gotchas") or []}),
         **(
             {"blocking": True}

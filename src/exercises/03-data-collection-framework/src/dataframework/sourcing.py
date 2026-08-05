@@ -127,6 +127,47 @@ def build_lifecycle(datasets: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+# Tiers whose whole purpose is text a human actually wrote. A machine translation of an English
+# Wikipedia article is Indic-language text, and it is not what these tiers exist to supply.
+NATURAL_TIERS: frozenset[str] = frozenset(
+    {"indic-natural", "indic-knowledge-systems", "indic-civilizational"}
+)
+
+
+def _tokens_for(record: dict[str, Any], tier: str | None) -> float | None:
+    """How many of a dataset's tokens may be counted toward a given tier.
+
+    For the natural-Indic tiers this is the verified human-origin portion when the card records
+    one, not the headline. Where no split was ever recorded the headline is used and the dataset is
+    reported separately, because "nobody checked" and "checked and clean" must not add up to the
+    same number.
+
+    Args:
+        record: A catalogue index entry.
+        tier: The tier being filled, or None for a tier-agnostic total.
+
+    Returns:
+        The countable token total, or None when no size was ever stated.
+    """
+    if tier in NATURAL_TIERS:
+        verified = (record.get("size_verified") or {}).get("value")
+        if verified is not None:
+            return verified
+    return _tokens(record)
+
+
+def _has_verified_split(record: dict[str, Any]) -> bool:
+    """Whether anybody has separated this dataset's human-origin text from its synthetic padding.
+
+    Args:
+        record: A catalogue index entry.
+
+    Returns:
+        True when a verified figure exists.
+    """
+    return (record.get("size_verified") or {}).get("value") is not None
+
+
 def _tokens(record: dict[str, Any]) -> float | None:
     """Read a dataset's token count if one was ever stated.
 
@@ -193,7 +234,11 @@ def build_plan(datasets: list[dict[str, Any]], mix: dict[str, Any]) -> dict[str,
     for tier, target in wanted.items():
         candidates = [d for d in datasets if tier_of(d) == tier]
         committed = [d for d in candidates if not blockers(d)]
-        have = round(sum(_tokens(d) or 0 for d in committed))
+        have = round(sum(_tokens_for(d, tier) or 0 for d in committed))
+        headline = round(sum(_tokens(d) or 0 for d in committed))
+        unchecked = [
+            d["id"] for d in committed if tier in NATURAL_TIERS and not _has_verified_split(d)
+        ]
         tiers.append(
             {
                 "tier": tier,
@@ -208,6 +253,13 @@ def build_plan(datasets: list[dict[str, Any]], mix: dict[str, Any]) -> dict[str,
                 "committed": [d["id"] for d in sorted(committed, key=lambda r: -(_tokens(r) or 0))],
                 "candidates_total": len(candidates),
                 "blocked": len(candidates) - len(committed),
+                # What the same datasets would have contributed if their headline totals were taken
+                # at face value. Reported rather than discarded: the difference between these two
+                # numbers is the single most misleading figure in Indic corpus planning.
+                **({"headline_tokens": headline} if headline != have else {}),
+                # Committed to a natural tier with nobody having separated human text from
+                # synthetic. Not an error, but not evidence either.
+                **({"unverified_ids": unchecked} if unchecked else {}),
             }
         )
 
