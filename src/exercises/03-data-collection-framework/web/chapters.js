@@ -2528,7 +2528,12 @@ function buildLegend(data) {
   const host = document.getElementById('legend');
   if (!host) return;
   const d = $('details', 'legend');
-  d.append($('summary', '', 'How to read this page — the nine words and three colour codes it uses'));
+  const sum = $('summary');
+  sum.append(
+    $('span', 'legend-flag', 'Start here'),
+    $('span', '', 'How to read this page — the nine words and three colour codes it uses'),
+  );
+  d.append(sum);
   const inner = $('div', 'legend-body');
 
   /* data.grades is the pipeline's tally, computed from the five gates. Re-counting in the browser

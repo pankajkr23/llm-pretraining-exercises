@@ -171,22 +171,55 @@ h3.appendix-h { font-family: var(--display); font-size: 1.05rem; margin: 26px 0 
 .disclaim { margin-top: 8px; font-family: var(--sans); font-size: 11.5px; line-height: 1.5; color: var(--faint); max-width: 72ch; }
 .disclaim a { color: inherit; }
 
-/* How to read this page — closed by default, so it costs the reader who does not need it nothing. */
-details.legend { margin-top: 24px; border-top: 1px solid var(--line); padding-top: 14px; }
-#legend { min-height: 54px; }
+/* How to read this page.
+ *
+ * This shipped as a quiet grey line at 13px and was, correctly, ignored — it is the one thing a
+ * reader benefits from opening before anything else, and it looked like a footnote. It is now a
+ * band that asks to be read.
+ *
+ * The text is --ink rather than --accent on purpose. Accent on an accent-soft wash measures 4.3:1
+ * in the light theme, just under AA; --ink clears 12.4:1 in every one of the six. The accent is
+ * carried by the border and the marker, which are not text and do not owe 4.5:1.
+ */
+details.legend {
+  margin: 22px 0 4px;
+  padding: 13px 16px;
+  border: 1px solid var(--accent);
+  border-left-width: 3px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+}
 details.legend > summary {
   cursor: pointer;
-  font-size: 13px;
-  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
   list-style: none;
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 9px;
 }
 details.legend > summary::-webkit-details-marker { display: none; }
-details.legend > summary::before { content: '▸'; font-size: 10px; color: var(--faint); transition: transform 0.15s; }
+details.legend > summary::before {
+  content: '▸';
+  font-size: 11px;
+  color: var(--accent);
+  transition: transform 0.15s;
+  flex: none;
+}
 details.legend[open] > summary::before { transform: rotate(90deg); }
 details.legend > summary:hover { color: var(--accent); }
+details.legend > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+/* The lead-in, so the band says what it is before the sentence explains it. */
+.legend-flag {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  flex: none;
+}
 .legend-body { margin-top: 14px; font-size: 13px; }
 .legend-row { display: grid; grid-template-columns: 116px minmax(0, 1fr); gap: 14px; margin-bottom: 12px; align-items: baseline; }
 .legend-k {
