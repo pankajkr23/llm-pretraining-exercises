@@ -66,12 +66,23 @@ const table = (headers, rows, numeric = []) => {
   return t;
 };
 
+/**
+ * A hover-revealed deep link. Every chapter gets one, in the same shape — a raw `#budget` sitting
+ * in a heading reads as build scaffolding, and having it on only some of them reads as a bug.
+ */
+const permalink = (id) => {
+  const a = $('a', 'anchor', '#');
+  a.href = `#${id}`;
+  a.setAttribute('aria-label', 'Link to this chapter');
+  return a;
+};
+
 /** A chapter with no interaction — a statement or a table. Same shape as the rest. */
 const chapter = ({ id, n, title, claim, body, caption, arithmetic }) => {
   const s = $('section');
   s.id = id;
   const h = $('h2');
-  h.append($('span', 'n', String(n)), text(title));
+  h.append($('span', 'n', String(n)), text(title), permalink(id));
   const p = $('p', 'claim');
   claim.forEach((node) => p.append(node));
   s.append(h, p);
@@ -334,6 +345,7 @@ function chapterMix(ctx) {
       para('India total sits at ', b(`${(recommended.mix.indic_share * 100).toFixed(1)}%`), ' of the batch, of which ', b(`${(recommended.mix.natural_indic_share * 100).toFixed(1)}%`), ' is natural text rather than manufactured. Code and agentic work together take ', b(`${(((recommended.mix.tiers.find((t) => t.name === 'code') || {}).share || 0) * 100 + ((recommended.mix.tiers.find((t) => t.name === 'agentic-traces') || {}).share || 0) * 100).toFixed(1)}%`), '.'),
       para('The research this is drawn from proposes a finer twelve-tier split reaching 25.3% India, separating English-educational, Indic-parallel, multilingual-non-Indic, clean-provenance and anneal tiers. The site collapses those into eight for legibility, which is why the India share here reads slightly lower. Both are recorded; neither is hidden.'),
       para('The protected lane is a ', b(`floor of ${(data.mix_rules.always_on_share.value * 100).toFixed(0)}%`), ' of every batch — a standing rule rather than a per-language exception list, because an exception list is a thing somebody eventually edits under deadline. This tier shape lands at ', b(`${(recommended.mix.always_on_share * 100).toFixed(1)}%`), ', above the floor, because two tiers sit in it: natural Indic text and agentic traces.'),
+      para(b('What the lane is defending against, concretely.'), ' Sangraha is the largest verified Indic corpus anyone has built, and it publishes what its own cleaning stages did to each language. Bodo — a scheduled language with about 1.5 million speakers — came out of the third stage at ', b('seventy-seven words, in one document'), '. Not seventy-seven thousand. The filter did not decide Bodo was unimportant; it had learned what good text looks like from English and scored an entire language as noise. A lane is the only mechanism that survives that, because a threshold you tune per language is a threshold somebody re-tunes under deadline.'),
       para('Agentic traces are in the lane for the opposite reason to Indic text. They are not under-valued by the scorer; they are filtered ', b('harder'), ' than anything else — a mediocre eighty-turn trace is worse than none — but by a purpose-built check, not by a classifier that learned "good writing" from English prose. The lane exempts them from the generic scorer, not from scrutiny. ', ref('How we clean it', 'cleaning'), ' has that rule in full.'),
     ],
     refresh: (api) => {
@@ -687,7 +699,7 @@ function chapterPostTraining(ctx) {
     caption: `The catalogue holds ${post.datasets} datasets tagged for this stage. Not one of them states a size, which is why none appears in a token budget anywhere on this page.`,
     arithmetic: [
       para('The three stages run in order: supervised fine-tuning, then preference alignment, then reinforcement learning against verifiable rewards. Each corrects something the previous one cannot.'),
-      para(b('The differentiator.'), ' ', pt.differentiator.how, ' ', pt.differentiator.why_it_matters, ' Catalogue entry ', pt.differentiator.catalogue_id, ' records it as ', b('does not exist'), '.'),
+      para(b('The differentiator.'), ' ', pt.differentiator.how, ' ', pt.differentiator.why_it_matters, ' The catalogue carries it as a named gap rather than as a dataset — ', b('no corpus exists for it at any licence, at any size'), ', which is why it appears in the mixture with nothing behind it.'),
       para(b('Three findings that shape the budget.'), ' ', pt.alignment_findings.map((f) => `${f.finding} — ${f.consequence}`).join(' ')),
       para('The honest gap: ', b(`${post.datasets} datasets carry a post-training tag and ${post.sized} of them state a size`), '. The budgets above come from the design, not from adding up available corpora, because those corpora do not publish their sizes. Anyone building this would have to measure first.'),
     ],
@@ -1096,7 +1108,7 @@ function chapterTokenizer(ctx) {
           val.append(renderNumber(v, { unit: false }));
           bars.append(row);
         });
-        api.big({ value: worst[1].value / english, unit: 'ratio', provenance: 'measured', source: fert.run_id || 'our run' });
+        api.big({ value: worst[1].value / english, unit: 'ratio', provenance: 'measured', source: `measured by us on ${fert.corpus || 'IN22-Gen'}` });
         api.bigHit(true);
         api.sub(`times what English costs, for ${nameOf.get(worst[0]) || worst[0]}`);
         api.verdict('THE TAX', true);
@@ -1370,6 +1382,33 @@ function chapterFirst(ctx) {
     [1],
   ));
 
+  /* The letters above buy English volume. These buy the thing the whole page says is scarce, and
+   * the first three cost nothing but somebody's time — so leaving them off the queue was the
+   * omission that made this chapter read as an English plan. */
+  const acquisition = [...(records.acquisition || [])].sort((a, c) => (a.priority || 99) - (c.priority || 99));
+  const free = acquisition.filter((x) => x.cost_inr === 0);
+  body.append($('h3', 'appendix-h', 'What to ask for, ranked — and what it costs'));
+  const acqLede = $('p');
+  acqLede.style.cssText = 'margin:0 0 4px;font-size:12.5px;color:var(--muted)';
+  acqLede.append(
+    text('The letters above unlock English volume. These unlock the scarce thing. '),
+    b(`${free.length} of the ${acquisition.length} cost nothing`),
+    text(' — they are a letter, an MoU and an expression of interest, and the top one would open India’s school curriculum in 36 languages, which no amount of scraping replaces.'),
+  );
+  body.append(acqLede);
+  body.append(table(
+    ['#', 'ask', 'cost', 'why it ranks here'],
+    acquisition.map((x) => [
+      String(x.priority),
+      x.item,
+      x.cost_inr === 0
+        ? (() => { const z = $('span', '', '₹0'); z.style.cssText = 'font-family:var(--mono);font-weight:700;color:var(--grade-a)'; return z; })()
+        : $('span', 'unpriced', 'never costed'),
+      (x.why || '').split(/(?<=\.)\s/)[0],
+    ]),
+    [0],
+  ));
+
   body.append($('h3', 'appendix-h', 'The first quarter, in order'));
   body.append(table(
     ['#', 'action', 'weeks', 'kind'],
@@ -1390,14 +1429,15 @@ function chapterFirst(ctx) {
       b('permission to spend'),
       text('. Everything after them is provisional until they clear. And before any of it, there are '),
       b(`${licenceOnly.length} letters to write`),
-      text(': datasets where nothing is wrong with the data and nobody has established whether it may be used.'),
+      text(': datasets where nothing is wrong with the data and nobody has established whether it may be used. Those buy volume, almost all of it English. A second, shorter list buys the thing this page says is actually scarce — and its top three cost nothing but somebody’s time.'),
     ],
     body,
-    caption: `${gates.length} of the ${plan.length} actions are gates rather than tasks. The letters come first because two of them alone would cover the entire token budget.`,
+    caption: `${gates.length} of the ${plan.length} actions are gates rather than tasks. The licence letters come first for volume — two alone would cover the whole token budget — but every one of them is an English corpus, so the second table is the one that changes what the model knows.`,
     arithmetic: [
       para('The two gates are the tokenizer validation and the from-scratch question. Until the tokenizer is measured against a trained candidate and the build-or-grow question is settled at small scale, committing capital is guessing.'),
       para('The letters unlock ', b(fmt(licenceOnly.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), 'count')), ' between them. The two largest would each cover the whole budget alone — which is why "resolve the licences" outranks "collect more data" in every version of this plan.'),
       para('Beyond the letters: ', String(src.counts.size_unknown), ' datasets are mapped to a tier and have never stated a size, so somebody has to measure before they can be budgeted at all.'),
+      para(b('Why two queues.'), ' The licence letters are the cheapest way to reach the token budget and they do nothing for the binding constraint, which is that all 22 Indian languages together offer roughly a fiftieth of what English does. Volume and scarcity are separate problems and the plan has to fund both — which is why a ₹0 letter to a ministry outranks a trillion scraped tokens in every version of this list.'),
     ],
   });
 }
@@ -1409,7 +1449,7 @@ function chapterAppendix(ctx) {
   const s = $('section');
   s.id = 'appendix';
   const h = $('h2');
-  h.append($('span', 'n', 'A'), text('Appendix — everything behind the above'));
+  h.append($('span', 'n', 'A'), text('Appendix — everything behind the above'), permalink('appendix'));
   const claim = $('p', 'claim');
   claim.append(text('The full registers. Nothing here argues; it is what the chapters above are drawn from, kept whole so any number can be traced back to its row.'));
   s.append(h, claim);
@@ -1562,9 +1602,11 @@ function chapterAppendix(ctx) {
     [2],
   ));
 
-  block(`What the literature settled — ${(records.priors || []).length}`, table(
+  /* `priors` rides in data.json, not records.json — it is cited inline by two chapters, so it has
+   * to be there when the page paints. Reading it from records rendered an empty block. */
+  block(`What the literature settled — ${(data.priors || []).length}`, table(
     ['claim', 'effect on this design'],
-    (records.priors || []).map((r) => [r.claim, r.effect_on_design]),
+    (data.priors || []).map((r) => [r.claim, r.effect_on_design]),
   ));
 
   block(`Risks and unknowns — ${(records.risks || []).length}`, table(
@@ -1587,17 +1629,48 @@ function chapterAppendix(ctx) {
     (records.corrections || []).map((x) => [x.before, x.after, x.why]),
   ));
 
-  block(`Every tokenizer measurement — ${Object.keys(data.fertility.by_language || {}).length - 1} languages`, table(
-    ['language', 'tokens per word', 'times English'],
-    Object.entries(data.fertility.by_language || {})
-      .filter(([c]) => c !== 'en')
-      .sort((a, b2) => (b2[1].value || 0) - (a[1].value || 0))
-      .map(([code, v]) => [
-        nameOf.get(code) || code,
-        v.value === null ? $('span', 'unpriced', 'not measured') : renderNumber(v, { unit: false }),
-        v.value && data.fertility.by_language.en.value ? `${(v.value / data.fertility.by_language.en.value).toFixed(1)}×` : '—',
+  /* The whole 5 x 22 matrix, not one tokenizer's column. It is the only place on the page where a
+   * reader can check the ranking chapter 9 asserts against every language it was computed from. */
+  {
+    const fr = records.fertility || {};
+    const byTok = fr.by_tokenizer || {};
+    const toks = fr.tokenizers_measured || Object.keys(byTok);
+    const codes = [...new Set(toks.flatMap((t) => Object.keys(byTok[t] || {})))]
+      .filter((c) => c !== 'en')
+      .sort((a, c) => ((byTok[toks[0]] || {})[c]?.value || 0) - ((byTok[toks[0]] || {})[a]?.value || 0));
+    block(
+      `Every tokenizer measurement — ${codes.length} languages x ${toks.length} tokenizers, on ${fr.corpus || 'IN22-Gen'}`,
+      table(
+        ['language', ...toks.map((t) => t.split('/').pop())],
+        codes.map((code) => [
+          nameOf.get(code) || code,
+          ...toks.map((t) => {
+            const v = (byTok[t] || {})[code];
+            return v && v.value !== null ? renderNumber(v, { unit: false }) : $('span', 'unpriced', '—');
+          }),
+        ]),
+        toks.map((_, k) => k + 1),
+      ),
+    );
+    const gaps = $('p');
+    gaps.style.cssText = 'font-size:11.5px;color:var(--faint);margin:8px 0 0;max-width:72ch';
+    gaps.append(text(fr.protocol_gaps || ''));
+    Object.entries(fr.tokenizers_unavailable || {}).forEach(([name, why]) => {
+      gaps.append($('br'), text(`${name}: ${why}`));
+    });
+    s.append(gaps);
+  }
+
+  block(`What the literature says — ${(records.papers || []).length} papers read`, table(
+    ['paper', 'what it changed here', 'summary'],
+    [...(records.papers || [])]
+      .sort((a, c) => String(a.date || '').localeCompare(String(c.date || '')))
+      .reverse()
+      .map((x) => [
+        x.arxiv ? (() => { const a = $('span', '', `${x.title} (arXiv ${x.arxiv})`); return a; })() : x.title,
+        x.effect || '—',
+        x.summary || '—',
       ]),
-    [1, 2],
   ));
 
   void ctx;
@@ -1637,6 +1710,7 @@ export function buildPage(data, records) {
   );
 
   fillLede(data);
+  buildLegend(data);
   buildNav(main);
   buildFooter(data);
 
@@ -1658,6 +1732,81 @@ export function buildPage(data, records) {
 
 /* The lede quotes five figures. Typed into the markup they would drift the first time the pipeline
  * reran, so they are filled from the same data every chapter uses. */
+/* ── the legend ─────────────────────────────────────────────────────────────────────────────────
+ *
+ * Nine words do the work on this page — tier, lane, rung, epoch, gate, grade, trust band, fertility,
+ * shingle — plus three visual codes: the grade badges, the caveat badges and the green underline
+ * under every measured number. Each is defined at the point of use in the chapter that needs it,
+ * but a reader who lands mid-page has no point of use to read. So they are all here too, one click
+ * from the top, closed by default: free for the reader who does not need it.
+ */
+
+const GLOSSARY = [
+  ['tier', 'One kind of text in the mixture — English web pages, code, natural Indian-language text. The mixture is eight of them, and their shares add to one whole.'],
+  ['lane', 'A part of every training batch that the quality-scoring program is not allowed to look at. Not an argument with the filter; a place it cannot reach.'],
+  ['rung', 'One of the four budget sizes on offer — 5, 10, 15 or 20 trillion tokens. The mixture keeps the same shape on every rung.'],
+  ['pass (epoch)', 'One complete read of a body of text. Reading a small pool four times contributes four times its size to the budget, at almost no cost in quality — which is the only reason the Indic budget is reachable at all.'],
+  ['gate', 'A check that stops a build rather than filing a report. Used here in two senses: the contamination gate, which drops training documents that contain exam questions; and the five gates whose combined verdict is a dataset’s grade.'],
+  ['grade', 'Those five gates scored together — where the text came from, whether its composition matches its claims, whether it overlaps the exam sets, how much survives cleaning, and whether anyone has evidenced any of it.'],
+  ['trust band', 'How much a benchmark score can be compared between labs. Native-sourced means written in the language; translation-derived means written in English first; harness-dependent means the score moves with the testing program you run it under.'],
+  ['fertility', 'How many tokens a word costs under a given tokenizer. English averages about 1.35; Malayalam under an English tokenizer costs roughly thirteen times that, and the difference is paid on every step of the whole run.'],
+  ['shingle', 'Thirteen consecutive words, hashed. Thirteen words landing in the same order by chance essentially never happens, which is what makes it a fingerprint.'],
+];
+
+function buildLegend(data) {
+  const host = document.getElementById('legend');
+  if (!host) return;
+  const d = $('details', 'legend');
+  d.append($('summary', '', 'How to read this page — the nine words and three colour codes it uses'));
+  const inner = $('div', 'legend-body');
+
+  const counts = data.datasets.reduce((a, x) => { a[x.grade] = (a[x.grade] || 0) + 1; return a; }, {});
+  const grades = $('div', 'legend-row');
+  grades.append($('div', 'legend-k', 'Grades'));
+  const gv = $('div', 'legend-v');
+  [['A', 'usable'], ['B', 'usable with care'], ['C', 'nobody has answered the questions'], ['X', 'a check failed — excluded']].forEach(([g, what], k) => {
+    if (k) gv.append(text(' · '));
+    const badge = $('span', 'grade', g);
+    badge.setAttribute('data-grade', g);
+    gv.append(badge, text(` ${what} (${counts[g] || 0})`));
+  });
+  grades.append(gv);
+
+  const types = [...new Set(data.datasets.flatMap((x) => x.gotcha_types || []))].sort();
+  const caveats = $('div', 'legend-row');
+  caveats.append($('div', 'legend-k', 'Caveat badges'));
+  const cv = $('div', 'legend-v');
+  cv.append(text('A known problem recorded against a dataset — not a disqualification, but something you would have to handle. '));
+  types.forEach((t, k) => {
+    if (k) cv.append(text(' '));
+    const badge = $('span', 'gotcha', t);
+    badge.setAttribute('data-type', t);
+    cv.append(badge);
+  });
+  caveats.append(cv);
+
+  const prov = $('div', 'legend-row');
+  prov.append($('div', 'legend-k', 'Numbers'));
+  const pv = $('div', 'legend-v');
+  pv.append(
+    text('Every figure on this page carries where it came from. '),
+    renderNumber({ value: 1.35, unit: 'ratio', provenance: 'measured', source: 'the legend' }, { unit: false }),
+    text(' underlined means somebody ran it. '),
+    renderNumber({ value: 15e12, unit: 'tokens', provenance: 'estimated', source: 'the legend' }, { unit: false }),
+    text(' plain means it is a design figure or a published estimate. Hover any of them for the source. Nothing on this page is a number with no origin — the renderer refuses to print one.'),
+  );
+  prov.append(pv);
+
+  inner.append(grades, caveats, prov);
+  const words = $('dl', 'legend-words');
+  GLOSSARY.forEach(([term, meaning]) => {
+    words.append($('dt', '', term), $('dd', '', meaning));
+  });
+  inner.append(words);
+  d.append(inner);
+  host.replaceChildren(d);
+}
+
 const SPELLED = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
 
 function fillLede(data) {
@@ -1674,9 +1823,12 @@ function fillLede(data) {
     budget: `${(budget / 1e12).toFixed(0)}-trillion-token`,
     committable: `${spelled[0].toUpperCase()}${spelled.slice(1)} datasets clear every bar.`,
   };
+  /* Only write when it differs. The markup already carries the right words; this exists so they
+   * cannot drift from the data. Writing an identical string still repaints, and the lede is the
+   * page's largest-contentful-paint element — so the no-op case has to be a genuine no-op. */
   document.querySelectorAll('[data-fact]').forEach((el) => {
     const v = values[el.dataset.fact];
-    if (v) el.textContent = v;
+    if (v && el.textContent.replace(/\s+/g, ' ').trim() !== v) el.textContent = v;
   });
 }
 

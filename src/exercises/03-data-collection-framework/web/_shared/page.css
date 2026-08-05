@@ -11,6 +11,18 @@ section { padding-bottom: 34px; margin-bottom: 34px; border-bottom: 1px solid va
 section:last-of-type { border-bottom: 0; }
 section h2 { display: flex; align-items: baseline; gap: 10px; }
 section h2 .n { font-family: var(--mono); font-size: 12px; color: var(--faint); }
+/* A deep link that stays out of the way until wanted — and is reachable by keyboard. */
+section h2 .anchor {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--faint);
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+section h2:hover .anchor,
+section h2 .anchor:focus-visible { opacity: 1; }
+section h2 .anchor:hover { color: var(--accent); }
 
 .claim { font-size: 1.04rem; max-width: 66ch; margin: 0 0 18px; }
 .claim b { font-weight: 600; }
@@ -60,8 +72,12 @@ table.plain th {
 }
 table.plain td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 
-/* Twelve chapters as a contents block, not a run-on line of mono text. */
+/* Twelve chapters as a contents block, not a run-on line of mono text.
+ *
+ * Both this and the legend are built by JS after data.json lands, so both reserve their height up
+ * front — otherwise the first paint is a page that jumps under the reader's cursor. */
 nav.chapters {
+  min-height: 214px;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
   gap: 2px 24px;
@@ -106,3 +122,38 @@ h3.appendix-h { font-family: var(--display); font-size: 1.05rem; margin: 26px 0 
 /* Footer disclaimer, same treatment as the pages it replaces. */
 .disclaim { margin-top: 8px; font-family: var(--sans); font-size: 11.5px; line-height: 1.5; color: var(--faint); max-width: 72ch; }
 .disclaim a { color: inherit; }
+
+/* How to read this page — closed by default, so it costs the reader who does not need it nothing. */
+details.legend { margin-top: 24px; border-top: 1px solid var(--line); padding-top: 14px; }
+#legend { min-height: 54px; }
+details.legend > summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+details.legend > summary::-webkit-details-marker { display: none; }
+details.legend > summary::before { content: '▸'; font-size: 10px; color: var(--faint); transition: transform 0.15s; }
+details.legend[open] > summary::before { transform: rotate(90deg); }
+details.legend > summary:hover { color: var(--accent); }
+.legend-body { margin-top: 14px; font-size: 13px; }
+.legend-row { display: grid; grid-template-columns: 116px minmax(0, 1fr); gap: 14px; margin-bottom: 12px; align-items: baseline; }
+.legend-k {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+  font-weight: 600;
+}
+.legend-v { color: var(--muted); line-height: 1.6; }
+.legend-words { display: grid; grid-template-columns: 116px minmax(0, 1fr); gap: 6px 14px; margin: 16px 0 0; }
+.legend-words dt { font-weight: 600; color: var(--ink); }
+.legend-words dd { margin: 0; color: var(--muted); line-height: 1.55; }
+@media (max-width: 620px) {
+  .legend-row, .legend-words { grid-template-columns: 1fr; gap: 3px; }
+  .legend-words dd { margin-bottom: 8px; }
+}

@@ -55,7 +55,13 @@ export function formatValue(value, unit) {
  * @returns {string}
  */
 export function describe(value) {
-  const source = value.source ? ` — ${value.source}` : '';
+  /* INV-4 records a measurement's source as `tokenizer@run-id`, because a measurement that cannot
+   * name the run that produced it is not evidence. That is the right thing to store and the wrong
+   * thing to show: a reader hovering a number wants the instrument, not the build stamp. Both are
+   * kept — the run is labelled rather than dropped. */
+  const raw = value.source || '';
+  const [instrument, run] = raw.includes('@') ? raw.split('@') : [raw, ''];
+  const source = raw ? ` — ${instrument}${run ? ` (run ${run.slice(0, 8)}…)` : ''}` : '';
   if (value.provenance === 'measured') return `measured${source}`;
   if (value.provenance === 'estimated') return `estimated, not measured${source}`;
   return `not known${source}`;

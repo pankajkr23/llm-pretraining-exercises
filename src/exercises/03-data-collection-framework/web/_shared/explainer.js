@@ -149,11 +149,10 @@ export function makeExplainer({ $, onPlay }) {
         const h = $('h2');
         if (cfg.n !== undefined && cfg.n !== null) h.append($('span', 'n', String(cfg.n)));
         h.append(document.createTextNode(cfg.title));
-        if (cfg.anchor) {
-          const link = $('a', 'anchor', `#${cfg.anchor}`);
-          link.href = `#${cfg.anchor}`;
-          h.append(link);
-        }
+        const link = $('a', 'anchor', '#');
+        link.href = `#${s.id}`;
+        link.setAttribute('aria-label', 'Link to this chapter');
+        h.append(link);
         const claim = $('p', 'claim');
         cfg.claim.forEach((node) => claim.append(node));
         const figure = $('figure');
