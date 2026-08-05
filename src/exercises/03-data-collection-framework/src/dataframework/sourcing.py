@@ -169,6 +169,9 @@ def build_plan(datasets: list[dict[str, Any]], mix: dict[str, Any]) -> dict[str,
         # counted from the catalogue, and typing each one individually would add bytes only.
         "provenance": "measured",
         "source": "matched from the catalogue against the proposed mixture",
+        # Shipped so the atlas can group the catalogue the same way, and so the mapping is
+        # inspectable in the bundle rather than only in this file.
+        "tier_categories": {k: list(v) for k, v in TIER_CATEGORIES.items()},
         "tiers": tiers,
         "committed_tokens": committed_total,
         "target_tokens": target_total,

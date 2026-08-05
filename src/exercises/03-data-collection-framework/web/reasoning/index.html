@@ -382,8 +382,8 @@
 
           const ENCODINGS = [
             { key: 'grade', marg: 'By grade',
-              lead: 'Every dataset in the catalogue, one mark each, and none of them will disappear for the rest of this section. Graded first: green is usable, amber is usable with care, and red is ',
-              bold: 'excluded from any commercial mix', tail: ' — a grade the framework enforces rather than advises.',
+              lead: 'Every dataset in the catalogue, one mark each, and none of them will disappear for the rest of this section. The grade is not an opinion: each dataset is scored on five checks — can we prove where it came from, is its composition what it claims, does it overlap the exam sets, how much usable text survives cleaning, and is any of this actually evidenced. Two points for a pass, one for a qualified pass, ',
+              bold: 'nothing for a question nobody answered', tail: '. Eight or more out of ten is A, five is B, below that is C — and a failure on provenance or contamination is X, an exclusion rather than a low mark.',
               mark: (d) => ({ A: 'ok', B: 'mid', C: '' , X: 'out' }[gradeOf(d)] ?? ''),
               count: (ds) => ds.filter((d) => gradeOf(d) === 'X').length,
               big: 'excluded outright', verdict: (n) => `${n} GRADE X` },
@@ -454,8 +454,8 @@
             caption: `Fig. A — One mark per dataset, ${catalog.length} in all. Nothing is ever filtered out; only the colouring changes. Red is always the excluded thing under the current encoding.`,
             pill: `${catalog.length} datasets, none hidden`,
             rail: [
-              document.createTextNode('Grades are computed from the five gates, not assigned by hand, and a '),
-              $('b', '', 'blocking caveat overrides a clean gate sheet'),
+            document.createTextNode('A grade summarises five checks and never replaces them — click any mark and you get all five verdicts with the reasoning behind each. '),
+              $('b', '', 'A blocking caveat overrides a clean gate sheet'),
               document.createTextNode('. An unresolved licence is counted separately from a permitted one throughout — the two are never summed.'),
             ],
             states: ENCODINGS,
@@ -484,6 +484,94 @@
           });
           add(s, 'The catalogue', 'Datasets');
         }
+
+        // ---------------------------------------------------------------- #shortlist
+        //
+        // The decision matrix. Everything else on this site grades datasets or proposes tiers; this
+        // is the table that says which datasets fill which tier, how many tokens each brings, and
+        // what stands in the way. A reader who wants to build the corpus starts here.
+        {
+          const src = data.sourcing;
+          const shape = data.milestones.presets.find((p) => p.recommended) || data.milestones.presets[2];
+          const targets = Object.fromEntries(shape.mix.tiers.map((t) => [t.name, t.unique_tokens]));
+          const tierOf = (d) => Object.entries(src.tier_categories)
+            .find(([, cats]) => cats.includes(d.category))?.[0] || null;
+
+          const s = section('shortlist', 'What to actually pull, tier by tier',
+            `Every catalogued dataset that could supply the ${shape.id} mixture, grouped by the tier it feeds and ranked by size. The action column is the point: what would have to happen before each one could be counted.`);
+
+          const ACTIONS = {
+            commit: ['COMMIT', 'var(--grade-a)'],
+            licence: ['ASK THE OWNER', 'var(--grade-b)'],
+            size: ['MEASURE IT', 'var(--grade-b)'],
+            both: ['ASK, THEN MEASURE', 'var(--grade-b)'],
+            excluded: ['EXCLUDED', 'var(--grade-x)'],
+            gap: ['DOES NOT EXIST', 'var(--grade-x)'],
+          };
+          const actionOf = (d) => {
+            if (d.is_gap) return 'gap';
+            if (d.grade === 'X') return 'excluded';
+            const noLic = d.licence_commercial !== true;
+            const noSize = !(d.size_tokens || {}).value;
+            if (d.grade === 'C') return noLic || noSize ? 'both' : 'commit';
+            if (noLic && noSize) return 'both';
+            if (noLic) return 'licence';
+            if (noSize) return 'size';
+            return 'commit';
+          };
+
+          const grouped = {};
+          data.datasets.forEach((d) => { const t = tierOf(d); if (t) (grouped[t] ||= []).push(d); });
+
+          Object.keys(targets).forEach((tier) => {
+            const rows = (grouped[tier] || []).sort((a, b) =>
+              ((b.size_tokens || {}).value || -1) - ((a.size_tokens || {}).value || -1));
+            if (!rows.length) return;
+            const committed = rows.filter((d) => actionOf(d) === 'commit');
+            const have = committed.reduce((a, d) => a + (d.size_tokens.value || 0), 0);
+
+            const h = $('h3', '', tier);
+            s.append(h);
+            const lede = $('p', 'sub');
+            lede.style.margin = '0 0 10px';
+            lede.append(
+              document.createTextNode(`Needs ${fmt(targets[tier], 'count')} unique tokens. `),
+              $('b', '', committed.length
+                ? `${committed.length} dataset${committed.length > 1 ? 's' : ''} can be committed today, supplying ${fmt(have, 'count')}.`
+                : 'Nothing here can be committed today.'),
+              document.createTextNode(` ${rows.length} candidate${rows.length > 1 ? 's' : ''} in the catalogue.`),
+            );
+            s.append(lede);
+            s.append(table(['dataset', 'tokens', 'grade', 'commercial use', 'known caveats', 'what has to happen'],
+              rows.slice(0, 12).map((d) => {
+                const [label, colour] = ACTIONS[actionOf(d)];
+                const act = $('span', '', label);
+                act.style.cssText = `font-family:var(--mono);font-size:10.5px;font-weight:700;color:${colour}`;
+                const lic = $('span', '', d.licence_commercial === true ? 'permitted'
+                  : d.licence_commercial === false ? 'forbidden' : 'nobody established it');
+                if (d.licence_commercial !== true) lic.style.color = 'var(--grade-x)';
+                const caveats = $('span');
+                (d.gotcha_types || []).slice(0, 3).forEach((t) => {
+                  caveats.append(badge('gotcha', { 'data-type': t }, t), ' ');
+                });
+                if (!(d.gotcha_types || []).length) caveats.textContent = '—';
+                const size = (d.size_tokens || {}).value
+                  ? renderNumber(d.size_tokens, { unit: false })
+                  : $('span', 'unpriced', 'unstated');
+                return [d.name, size, badge('grade', { 'data-grade': d.grade }, d.grade), lic, caveats, act];
+              })));
+          });
+
+          const foot = $('p', 'sub');
+          foot.style.marginTop = '16px';
+          foot.append(
+            $('b', '', 'How to read the action column. '),
+            document.createTextNode('COMMIT means all three conditions hold — the gates passed, the licence permits commercial use, and a size is on record. ASK THE OWNER means nothing is wrong with the data; nobody has established whether it may be used commercially, and unknown is not permission. MEASURE IT means the size was never stated, and a budget you cannot add up is not a budget. EXCLUDED means a gate failed on provenance or contamination, which is a disqualification rather than a deduction.'),
+          );
+          s.append(foot);
+          add(s, 'What to pull', 'Plan');
+        }
+
 
         // ---------------------------------------------------------------- #legal
         {
