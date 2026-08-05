@@ -391,6 +391,20 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
                 "measured",
                 "computed from the indexed eval items",
             ),
+            "indexed_items": _value(
+                shingle_meta.get("indexed_items", 0),
+                "items",
+                "measured",
+                "computed from the indexed eval items",
+            ),
+            # Items shorter than the preferred window. The page cites this to explain why the
+            # index holds more than one width, so it has to come from the run, not from prose.
+            "narrow_items": _value(
+                shingle_meta.get("narrow_items", 0),
+                "items",
+                "measured",
+                "computed from the indexed eval items",
+            ),
             # As text, not a list of ints: every number in this bundle must be provenance-typed,
             # and a window width is a parameter rather than a measurement.
             "gram_widths": ", ".join(str(w) for w in shingle_meta["gram_widths"]) or "none",

@@ -150,7 +150,9 @@ function chapterBudget(ctx) {
   const POOL = naturalOf(recommended).unique_tokens;
   const advised = data.mix_rules.max_epochs_advised.value;
   const hard = data.mix_rules.max_epochs_hard.value;
-  const LADDER = [1, 4, 16];
+  /* The top rung sits past the hard ceiling on purpose: a ladder that stops exactly at the ceiling
+   * can never render the state the caption promises, and the unevidenced zone is the point. */
+  const LADDER = [1, advised, hard + 4];
 
   const states = [
     ...LADDER.map((e) => ({
@@ -160,15 +162,15 @@ function chapterBudget(ctx) {
         e === 1
           ? 'There is only so much Indian-language text in the world. Read the whole natural pool once and this is everything it gives you — nowhere near the budget, and no amount of collecting closes that gap in the time available. So the question becomes '
           : e <= advised
-            ? 'Read it four times and it counts four times over. The surprising part, measured rather than assumed, is that a word seen a fourth time teaches almost as much as a fresh one — so the pool is '
-            : 'Past four passes each re-read buys less than the last. It still helps, but this is now ',
+            ? `Read it ${e} times and it counts ${e} times over. The surprising part, measured rather than assumed, is that a word seen a fourth time teaches almost as much as a fresh one — so the pool is `
+            : `Push to ${e} passes and the arithmetic still multiplies, but the evidence has run out. Published work stops at ${hard}; past that the number on the left is `,
       bold:
         e === 1
           ? 'how many times the same text can be read'
           : e <= advised
             ? 'far larger than its size suggests'
-            : 'the edge of what anyone can defend',
-      tail: '.',
+            : 'arithmetic, not a measurement',
+      tail: e > hard ? ' — which is the worst kind of number to build a plan on.' : '.',
     })),
     {
       rungs: true,
@@ -257,7 +259,6 @@ function chapterMix(ctx) {
   const { data, presets, recommended } = ctx;
   const info = data.milestones.tier_info || {};
   const gaps = (data.datasets || []).filter((x) => x.is_gap);
-  const gapTiers = new Set(gaps.map((x) => String(x.category || '').split(' ')[0].toLowerCase()));
   const gapNames = gaps.map((x) => x.name).join(', ');
   const rungIndex = presets.indexOf(recommended);
 
@@ -280,7 +281,7 @@ function chapterMix(ctx) {
       rung: rungIndex,
       lane: true,
       marg: 'What the filter is allowed to touch',
-      lead: 'Before training, a scoring program reads every document and throws away what it rates poorly. It learned "good" from English, so it rates thin Indian-language text as rubbish. Group the same tiers by whether that scorer may even look at them: the protected ones are ',
+      lead: 'Before training, a scoring program reads every document and throws away what it rates poorly. It learned "good" from English prose, so it rates thin Indian-language text as rubbish and multi-step tool logs as gibberish. Group the same tiers by whether that scorer may even look at them: the protected ones are ',
       bold: 'exempted rather than defended',
       tail: ' — a filter you argue with every batch is a filter that eventually wins.',
     },
@@ -301,7 +302,8 @@ function chapterMix(ctx) {
     fill.style.width = `${(t.seen_tokens / total) * 100}%`;
     track.append(fill);
     const val = $('div', 'tierval');
-    val.append(renderNumber({ value: t.seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'the proposed tier shape' }, { unit: false }));
+    if (t.seen_tokens) val.append(renderNumber({ value: t.seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'the proposed tier shape' }, { unit: false }));
+    else val.append($('span', 'unpriced', 'none'));
     row.append($('div', 'tiername', t.name), track, val);
     return row;
   };
@@ -319,8 +321,8 @@ function chapterMix(ctx) {
       text('.'),
     ],
     figNum: `Fig. 2 — the mixture at ${recommended.id}`,
-    caption: `Fig. 2 — All eight tiers at every state; nothing is ever hidden. Bar length is the share of a ${recommended.id} budget. Red marks the tier with no corpus behind it — the capability is scheduled and the data does not exist.`,
-    pill: '8% never filtered',
+    caption: `Fig. 2 — All eight tiers at every state; nothing is ever hidden. Bar length is the share of a ${recommended.id} budget. The last row is red and has no length: it is a capability that is scheduled and has no corpus behind it at any licence, at any size.`,
+    pill: `${(recommended.mix.always_on_share * 100).toFixed(1)}% never filtered`,
     rail: [
       text('One tier is scheduled against data that does not exist. '),
       b(gapNames || 'Indic-commented code'),
@@ -331,7 +333,8 @@ function chapterMix(ctx) {
       para('The shares are fixed by the proposed tier shape; the totals scale with the budget. At ', recommended.id, ' the mixture is ', fmt(recommended.mix.total_seen_tokens, 'count'), ' seen from ', fmt(recommended.mix.total_unique_tokens, 'count'), ' unique — the difference is repetition, priced in ', ref('how much text', 'budget'), '.'),
       para('India total sits at ', b(`${(recommended.mix.indic_share * 100).toFixed(1)}%`), ' of the batch, of which ', b(`${(recommended.mix.natural_indic_share * 100).toFixed(1)}%`), ' is natural text rather than manufactured. Code and agentic work together take ', b(`${(((recommended.mix.tiers.find((t) => t.name === 'code') || {}).share || 0) * 100 + ((recommended.mix.tiers.find((t) => t.name === 'agentic-traces') || {}).share || 0) * 100).toFixed(1)}%`), '.'),
       para('The research this is drawn from proposes a finer twelve-tier split reaching 25.3% India, separating English-educational, Indic-parallel, multilingual-non-Indic, clean-provenance and anneal tiers. The site collapses those into eight for legibility, which is why the India share here reads slightly lower. Both are recorded; neither is hidden.'),
-      para('The protected lane is ', b(`${(data.mix_rules.always_on_share.value * 100).toFixed(0)}% of every batch`), ', fixed as a standing rule rather than tuned per language — a per-language exception list is a thing somebody eventually edits under deadline.'),
+      para('The protected lane is a ', b(`floor of ${(data.mix_rules.always_on_share.value * 100).toFixed(0)}%`), ' of every batch — a standing rule rather than a per-language exception list, because an exception list is a thing somebody eventually edits under deadline. This tier shape lands at ', b(`${(recommended.mix.always_on_share * 100).toFixed(1)}%`), ', above the floor, because two tiers sit in it: natural Indic text and agentic traces.'),
+      para('Agentic traces are in the lane for the opposite reason to Indic text. They are not under-valued by the scorer; they are filtered ', b('harder'), ' than anything else — a mediocre eighty-turn trace is worse than none — but by a purpose-built check, not by a classifier that learned "good writing" from English prose. The lane exempts them from the generic scorer, not from scrutiny. ', ref('How we clean it', 'cleaning'), ' has that rule in full.'),
     ],
     refresh: (api) => {
       states.forEach((st, i) => {
@@ -339,7 +342,7 @@ function chapterMix(ctx) {
         if (st.lane) {
           const on = mix.tiers.filter((t) => (info[t.name] || {}).always_on);
           api.shard(i, `protected: ${on.map((t) => t.name).join(' · ')}`);
-          api.inline(i, `→ ${(mix.always_on_share * 100).toFixed(0)}% of the batch bypasses the scorer`, false);
+          api.inline(i, `→ ${(mix.always_on_share * 100).toFixed(1)}% of the batch bypasses the scorer`, false);
         } else if (st.synth) {
           api.shard(i, `Indian ${(mix.indic_share * 100).toFixed(1)}% of the batch · natural ${(mix.natural_indic_share * 100).toFixed(1)}% of that`);
           api.inline(i, `→ ${(mix.synthetic_share_of_indic * 100).toFixed(0)}% of the Indian share is manufactured`, true);
@@ -359,16 +362,19 @@ function chapterMix(ctx) {
         let cls = '';
         if (st.lane) cls = meta.always_on ? 'lane' : 'dim';
         else if (st.synth) cls = meta.is_indic ? (meta.is_synthetic ? 'synth' : 'natural') : 'dim';
-        if (gapTiers.has(t.name)) cls = 'missing';
         bars.append(barFor(t, total, cls));
       });
+      /* The gap is not a tier that is under-weight; it is a capability with nothing behind it, so
+       * it gets its own zero-length row rather than colouring a tier that does have a corpus. */
+      gaps.forEach((g) => bars.append(barFor({ name: `${g.name} (no corpus)`, seen_tokens: 0 }, total, 'missing')));
       api.extra.replaceChildren(bars);
 
       if (st.lane) {
+        const on = mix.tiers.filter((t) => (info[t.name] || {}).always_on);
         api.big({ value: mix.always_on_share, unit: 'share', provenance: 'estimated', source: 'the proposed tier shape' });
         api.sub('of every batch the scorer may not touch');
         api.verdict('PROTECTED', false);
-        api.note('The lane is a property of the batch, not a plea to the filter. Nothing here argues with the classifier — it simply cannot reach these tiers.');
+        api.note(`The lane is a property of the batch, not a plea to the filter — nothing here argues with the classifier, it simply cannot reach these tiers. Two are in it: ${on.map((t) => t.name).join(' and ')}. Indic text because the scorer under-values it; agentic traces because they are filtered harder than anything else, by a check built for them rather than by one built for English prose.`);
       } else if (st.synth) {
         api.big({ value: mix.synthetic_share_of_indic, unit: 'share', provenance: 'estimated', source: 'the proposed tier shape' });
         api.bigHit(true);
@@ -382,13 +388,15 @@ function chapterMix(ctx) {
         api.verdict(`${(mix.indic_share * 100).toFixed(0)}% INDIAN`, false);
         api.note(`Read from ${fmt(mix.total_unique_tokens, 'count')} of unique text. The gap between the two is repetition.`);
       }
-      api.strip(mix.tiers.map((t) => {
-        const meta = info[t.name] || {};
-        if (gapTiers.has(t.name)) return 'hit';
-        if (st.lane) return meta.always_on ? 'reg' : '';
-        if (st.synth) return meta.is_indic && !meta.is_synthetic ? 'reg' : '';
-        return 'reg';
-      }));
+      api.strip([
+        ...mix.tiers.map((t) => {
+          const meta = info[t.name] || {};
+          if (st.lane) return meta.always_on ? 'reg' : '';
+          if (st.synth) return meta.is_indic && !meta.is_synthetic ? 'reg' : '';
+          return 'reg';
+        }),
+        ...gaps.map(() => 'hit'),
+      ]);
     },
   });
 }
@@ -401,28 +409,50 @@ const ACTIONS = {
   commit: ['COMMIT', 'var(--grade-a)'],
   licence: ['ASK THE OWNER', 'var(--grade-b)'],
   size: ['MEASURE IT', 'var(--grade-b)'],
-  both: ['ASK, THEN MEASURE', 'var(--grade-b)'],
+  evidence: ['CHECK THE CLAIMS', 'var(--grade-b)'],
   excluded: ['EXCLUDED', 'var(--grade-x)'],
   gap: ['DOES NOT EXIST', 'var(--grade-x)'],
 };
 
+/** Every reason a dataset cannot be committed — the same four the pipeline's `blockers()` uses. */
+function blockersOf(d) {
+  const out = [];
+  if (d.is_gap) out.push('gap');
+  if (d.grade !== 'A' && d.grade !== 'B') out.push('evidence');
+  if (d.licence_commercial !== true) out.push('licence');
+  if (!(d.size_tokens || {}).value) out.push('size');
+  return out;
+}
+
+/**
+ * The single cheapest next move, not the whole blocker list — the column has to be readable.
+ * Ordered by cost: one email, then a measurement, then the evidence work.
+ */
 function actionOf(d) {
   if (d.is_gap) return 'gap';
   if (d.grade === 'X') return 'excluded';
-  const noLicence = d.licence_commercial !== true;
-  const noSize = !(d.size_tokens || {}).value;
-  if (d.grade === 'C') return noLicence || noSize ? 'both' : 'commit';
-  if (noLicence && noSize) return 'both';
-  if (noLicence) return 'licence';
-  if (noSize) return 'size';
-  return 'commit';
+  const bad = blockersOf(d);
+  if (!bad.length) return 'commit';
+  if (bad.includes('licence')) return 'licence';
+  if (bad.includes('size')) return 'size';
+  return 'evidence';
 }
 
 function actionCell(d) {
-  const [label, colour] = ACTIONS[actionOf(d)];
+  const action = actionOf(d);
+  const [label, colour] = ACTIONS[action];
+  const cell = $('span');
   const span = $('span', '', label);
   span.style.cssText = `font-family:var(--mono);font-size:10.5px;font-weight:700;color:${colour}`;
-  return span;
+  cell.append(span);
+  /* The label is the cheapest move, so say when it is not the only one. */
+  const rest = action === 'commit' || action === 'excluded' || action === 'gap' ? 0 : blockersOf(d).length - 1;
+  if (rest > 0) {
+    const more = $('span', '', ` +${rest} more`);
+    more.style.cssText = 'font-size:10.5px;color:var(--faint)';
+    cell.append(more);
+  }
+  return cell;
 }
 
 /** One dataset row, in the six columns a data team needs to act. */
@@ -444,7 +474,7 @@ function datasetRow(d) {
   return [d.name, size, grade, licence, caveats, actionCell(d)];
 }
 
-const DATASET_COLUMNS = ['dataset', 'tokens', 'grade', 'commercial use', 'known caveats', 'what has to happen'];
+const DATASET_COLUMNS = ['dataset', 'tokens', 'grade', 'commercial use', 'known caveats', 'cheapest next move'];
 
 function chapterDatasets(ctx) {
   const { data, recommended } = ctx;
@@ -493,11 +523,12 @@ function chapterDatasets(ctx) {
       text(' for the queue that fixes it.'),
     ],
     body,
-    caption: 'Committable means all three at once: the checks passed, the licence permits commercial use, and somebody stated a size. Missing any one and the dataset cannot be counted, however good it looks. Which categories may supply which tier is an editorial mapping, written out in full in sourcing.py.',
+    caption: 'Committable means all three at once: the five checks scored A or B, the licence permits commercial use, and somebody stated a size. Missing any one and the dataset cannot be counted, however good it looks. Which categories may supply which tier is an editorial mapping, listed in full in the appendix.',
     arithmetic: [
       para('Coverage against the ', recommended.id, ' budget: ', b(fmt(src.committed_tokens, 'count')), ' committable against ', b(fmt(src.target_tokens, 'count')), ' needed — ', b(`${(src.covered_share * 100).toFixed(0)}%`), '.'),
       para(src.counts.size_unknown, ' datasets are mapped to a tier and have no stated size, so they cannot enter a budget even when everything else about them is fine. A further ', src.counts.blocked_on_licence_only, ' are blocked on a licence question alone — no check failed, nobody found a problem, and one answered email would move each into the committable column.'),
-      para('The action column reads: COMMIT — all three hold. ASK THE OWNER — nothing is wrong with the data; nobody established whether it may be used commercially, and unknown is not permission. MEASURE IT — the size was never stated, and a budget you cannot add up is not a budget. EXCLUDED — a check failed on provenance or contamination, which is a disqualification rather than a deduction.'),
+      para('The last column names the ', b('cheapest'), ' move, not the only one, which is why most rows carry a "+n more". Read it as: COMMIT — all three hold. ASK THE OWNER — nothing is wrong with the data; nobody established whether it may be used commercially, and unknown is not permission. MEASURE IT — the size was never stated, and a budget you cannot add up is not a budget. CHECK THE CLAIMS — the licence and the size are fine, but the dataset sits at grade C: nobody has answered the questions the grade is made of, so nothing was scored. EXCLUDED — a check failed on provenance or contamination, which is a disqualification rather than a deduction.'),
+      para('Grade C is the binding constraint and the least dramatic one. It blocks ', b(String(data.datasets.filter((d) => !d.is_gap && d.grade !== 'X' && blockersOf(d).includes('evidence')).length)), ' of the ', String(data.datasets.length), ' datasets — not because anything is wrong with them, but because unevidenced is not the same as fine, and a corpus assembled from things nobody checked is exactly the corpus that fails an audit later.'),
     ],
   });
 }
@@ -671,7 +702,13 @@ function chapterCleaning(ctx) {
   const rules = records.cleaning_rules;
   const tools = records.tools || [];
   const stages = rules.stages;
-  const toolsAt = (id) => tools.filter((t) => t.stage === id);
+  /* The register records what a tool reads (`ocr`, `asr`); the pipeline records where it runs.
+   * Both are extraction — getting words off a page, whether the page is a scan or a recording. */
+  const STAGE_ALIAS = { ocr: 'extraction', asr: 'extraction' };
+  const stageOf = (t) => STAGE_ALIAS[t.stage] || t.stage;
+  const toolsAt = (id) => tools.filter((t) => stageOf(t) === id);
+  const staffed = stages.filter((s) => toolsAt(s.id).length);
+  const unreached = stages.filter((s) => !toolsAt(s.id).length && !s.unstaffed);
 
   /* All nine stages stay on screen — they fit, so hiding them behind a walk would be a selector
    * that layout does not need. The states change what you are asked to notice about them. */
@@ -690,18 +727,20 @@ function chapterCleaning(ctx) {
       bold: 'inverts "more data is better"', tail: ', which is the only place in this project where deleting data reliably improves the model.' },
   ];
 
-  const list = $('div', 'tierbars');
-  const rows = stages.map((st) => {
-    const row = $('div', 'tierrow');
-    const name = $('div', 'tiername', st.name);
-    const track = $('div', 'tiertrack');
-    const fill = $('div', 'tierfill');
-    fill.style.width = '100%';
-    track.append(fill);
-    const val = $('div', 'tierval', '');
-    row.append(name, track, val);
+  /* Nine stages have an order and a set of attributes, and no magnitude — so this is a table, not
+   * a bar chart. A bar whose length is always 100% is a shape pretending to be a measurement. */
+  const list = $('div', 'stagelist');
+  const rows = stages.map((st, k) => {
+    const row = $('div', 'stagerow');
+    row.append(
+      $('div', 'stagen', String(k + 1)),
+      $('div', 'stagename', st.name),
+      $('div', 'stageplain', st.plain),
+    );
+    const val = $('div', 'stagetools', '');
+    row.append(val);
     list.append(row);
-    return { st, fill, val };
+    return { st, row, val };
   });
 
   return buildExplainer({
@@ -715,7 +754,7 @@ function chapterCleaning(ctx) {
       text('. Filtering for quality deletes the languages you exist to serve; filtering agentic examples harder makes the model better.'),
     ],
     figNum: 'Fig. 4 — the nine jobs',
-    caption: 'Fig. 4 — Every stage between a URL and a training shard. Red marks the stage with no tool assigned to it. The tool register covers seven of the nine; acquisition and synthesis it does not reach, and the safety gate has nobody on it.',
+    caption: `Fig. 4 — Every stage between a URL and a training shard. Red marks the stage with no tool assigned to it. The register's ${tools.length} tools attach to ${staffed.length} of the ${stages.length}. ${unreached.length} more — ${unreached.map((s) => s.name.toLowerCase()).join(' · ')} — are schedule and policy rather than software, so having no tool is not a gap. The safety gate is the one that should have a tool and has nobody on it.`,
     pill: 'one stage unstaffed',
     rail: [
       text('The one rule that governs all nine: '),
@@ -750,14 +789,19 @@ function chapterCleaning(ctx) {
     },
     render: (i, api) => {
       const st = states[i];
-      rows.forEach(({ st: stage, fill, val }) => {
+      rows.forEach(({ st: stage, row, val }) => {
+        const at = toolsAt(stage.id);
         let cls = '';
         if (st.key === 'gap') cls = stage.unstaffed ? 'missing' : 'dim';
-        else if (st.key === 'tools') cls = toolsAt(stage.id).length ? 'natural' : 'dim';
+        else if (st.key === 'tools') cls = at.length ? 'natural' : 'dim';
         else if (st.key === 'rules') cls = 'dim';
-        else cls = 'natural';
-        fill.className = `tierfill ${cls}`.trim();
-        val.textContent = st.key === 'tools' ? String(toolsAt(stage.id).length || '—') : '';
+        row.className = `stagerow ${cls}`.trim();
+        const named = at.slice(0, 2).map((t) => t.name.split(/[/(]/)[0].trim());
+        val.textContent = st.key === 'tools'
+          ? at.length
+            ? `${named.join(' · ')}${at.length > 2 ? ` +${at.length - 2}` : ''}`
+            : stage.unstaffed ? 'nobody' : '—'
+          : '';
       });
       api.extra.replaceChildren(list);
       api.strip([]);
@@ -889,7 +933,7 @@ function chapterGate(ctx) {
     states: ATTACKS,
     arithmetic: [
       para('A question of W words yields W−12 overlapping thirteen-word windows. Each is hashed to a short digest, and only the digests are stored — publishing the exam would be the leak the check exists to prevent.'),
-      para('One collision is enough to drop a document, because thirteen consecutive words agreeing by chance is not a thing that happens. The index also records the width each item was hashed at: an item shorter than thirteen words is indexed at its own width, because otherwise it could never be found inside a longer document. ', b('56 of the 8,923 indexed items are that short'), ' — they were undetectable before that fix.'),
+      para('One collision is enough to drop a document, because thirteen consecutive words agreeing by chance is not a thing that happens. The index also records the width each item was hashed at: an item shorter than thirteen words is indexed at its own width, because otherwise it could never be found inside a longer document. ', b(`${fmt(data.contamination.narrow_items.value, 'count')} of the ${fmt(data.contamination.indexed_items.value, 'count')} indexed items are that short`), ' — they were undetectable before that fix, which is why the index holds widths ', data.contamination.gram_widths, ' rather than thirteen alone.'),
       para('Coverage today is ', b(data.contamination.coverage), ': one benchmark of ', String(data.record_counts.benchmarks), ' has supplied its items. This is a build gate rather than a report — the precedent it follows dropped a full 31.3-billion-token pool rather than down-weight it.'),
     ],
     refresh: (api) => {
@@ -952,14 +996,19 @@ function chapterTokenizer(ctx) {
   const measured = Object.entries(fert.by_language || {}).filter(([, v]) => v.value !== null);
   const english = (fert.by_language.en || {}).value;
   const worst = measured.filter(([c]) => c !== 'en').sort((a, c) => c[1].value - a[1].value)[0];
+  /* The tiktoken pair are English tokenizers included as the baseline the tax is measured against.
+   * Nobody would ship one for this model, so "worst of the multilingual candidates" has to name
+   * which candidates, or it is a ranking with the losers quietly removed. */
+  const multilingual = ranked.filter((r) => !/tiktoken/.test(r.tokenizer));
+  const shortName = (t) => t.split('/').pop();
 
   const states = [
     { key: 'tax', marg: 'The tax nobody budgets for',
       lead: 'A model does not read letters, it reads pieces. A tokenizer built for English chops Indian words into far more pieces than English ones — and every extra piece is paid for on every step of the whole run. Measured on our own text, the worst language costs ',
       bold: 'thirteen times what English costs', tail: ' for the same meaning.' },
     { key: 'ranked', marg: 'Some tokenizers are far better',
-      lead: 'This is not a property of the scripts. Run the same 22 languages through five tokenizers and the spread is enormous — and the one this project was told to match is ',
-      bold: 'the worst of the three serious candidates', tail: '. That matters beyond this chapter: continue-pretraining from a model inherits its tokenizer.' },
+      lead: `This is not a property of the scripts. Run the same 22 languages through five tokenizers and the spread is enormous. Two are English tokenizers, shown greyed as the baseline the tax is measured against; ${multilingual.length} were built for multilingual text, and of those ${multilingual.length} the one this project was told to match is `,
+      bold: 'the worst', tail: '. That matters beyond this chapter: continue-pretraining from a model inherits its tokenizer.' },
     { key: 'blocks', marg: 'So we build our own',
       lead: 'The vocabulary is not guessed, it is added up. Every script gets the slots it needs to spell its words efficiently, plus Latin for English and code, plus maths and structured output. The sum comes to ',
       bold: '204,256 slots', tail: ', rounded up to 208,896 — which is 1,632 × 128, a multiple the hardware likes.' },
@@ -1025,8 +1074,8 @@ function chapterTokenizer(ctx) {
           api.shard(i, `English ${english.toFixed(2)} tok/word · worst ${worst ? (nameOf.get(worst[0]) || worst[0]) : '—'} ${worst ? worst[1].value.toFixed(2) : '—'}`);
           api.inline(i, `→ worst Indian language costs ${worst && english ? (worst[1].value / english).toFixed(1) : '—'}× English`, true);
         } else if (st.key === 'ranked') {
-          api.shard(i, ranked.map((r) => `${r.tokenizer.split('/').pop()} ×${r.mean_tax.value.toFixed(2)}`).join(' · '));
-          api.inline(i, `→ ${ranked.length} tokenizers measured, best ×${ranked[0] ? ranked[0].mean_tax.value.toFixed(2) : '—'}`, false);
+          api.shard(i, ranked.map((r) => `${shortName(r.tokenizer)} ×${r.mean_tax.value.toFixed(2)}`).join(' · '));
+          api.inline(i, `→ ${ranked.length} tokenizers measured, ${multilingual.length} of them multilingual; best ×${multilingual[0] ? multilingual[0].mean_tax.value.toFixed(2) : '—'}`, false);
         } else if (st.key === 'blocks') {
           api.shard(i, `${blocks.blocks.length} blocks · ${fmt(blocks.sum, 'count')} → ${fmt(blocks.chosen, 'count')}`);
           api.inline(i, `→ ${blocks.blocks.length} script and symbol blocks sum to ${fmt(blocks.sum, 'count')}`, false);
@@ -1056,7 +1105,13 @@ function chapterTokenizer(ctx) {
         const worstMean = ranked[ranked.length - 1].mean_tax.value;
         ranked.forEach((r) => {
           const isGemma = /gemma/i.test(r.tokenizer);
-          const { row, val } = barFor(r.tokenizer.split('/').pop(), r.mean_tax.value, worstMean, isGemma ? 'synth' : 'natural');
+          const isBaseline = /tiktoken/.test(r.tokenizer);
+          const { row, val } = barFor(
+            `${shortName(r.tokenizer)}${isBaseline ? ' (English)' : ''}`,
+            r.mean_tax.value,
+            worstMean,
+            isGemma ? 'synth' : isBaseline ? 'dim' : 'natural',
+          );
           val.append(text('×'), renderNumber(r.mean_tax, { unit: false }));
           bars.append(row);
         });
@@ -1064,8 +1119,8 @@ function chapterTokenizer(ctx) {
         api.big(gemma ? gemma.mean_tax : ranked[0].mean_tax);
         api.bigHit(true);
         api.sub('mean Indian tax under the tokenizer we were told to match');
-        api.verdict('WORST OF THREE', true);
-        api.note(`Against ${ranked[0].mean_tax.value.toFixed(2)}× for the best. Continue-pretraining from a model inherits its tokenizer, because you cannot swap one without discarding the embedding table you were reusing — so this cost would be locked in for the life of the model.`);
+        api.verdict(`WORST OF ${multilingual.length}`, true);
+        api.note(`The greyed bars are English tokenizers, here as the baseline the tax is measured against. Among the ${multilingual.length} built for multilingual text — ${multilingual.map((r) => shortName(r.tokenizer)).join(', ')} — Gemma 4 is last, against ${multilingual[0].mean_tax.value.toFixed(2)}× for the best. Continue-pretraining from a model inherits its tokenizer, because you cannot swap one without discarding the embedding table you were reusing — so this cost would be locked in for the life of the model.`);
       } else if (st.key === 'blocks') {
         const top = blocks.blocks[0].slots;
         blocks.blocks.slice(0, 10).forEach((blk) => {
@@ -1099,7 +1154,7 @@ function chapterTokenizer(ctx) {
 // ─────────────────────────────────────────── 10 · how we would know it worked
 
 function chapterEvaluation(ctx) {
-  const { data, records } = ctx;
+  const { data, records, recommended } = ctx;
   const caps = data.coverage.capabilities;
   const bandOf = new Map(data.benchmarks.map((bm) => [bm.name, bm.trust_band]));
   const policy = records.eval_policy;
@@ -1115,11 +1170,29 @@ function chapterEvaluation(ctx) {
     { keep: ['native-sourced'], marg: 'Drop the translated ones',
       lead: 'Four more were written in English and then translated. A test like that measures how well the model handles translated English rather than the language as people actually write it, which is ',
       bold: 'not the thing being claimed', tail: '.' },
-    { keep: ['native-sourced'], holes: true, marg: 'What is left uncovered',
-      lead: 'Counting only tests written natively, the capabilities left with one test or none are the ones where a regression could ship ',
-      bold: 'without anybody noticing', tail: '.' },
+    { keep: ['native-sourced'], holes: true, marg: 'Which tiers you can no longer defend',
+      lead: 'Turn it around and ask it of the mixture instead. A tier of the corpus earns its share by buying a capability, so if nothing trustworthy would notice that capability regressing, the share behind it is ',
+      bold: 'a budget you cannot defend', tail: ' — and the rule this project set itself is that such a tier gets cut or gets an instrument.' },
   ];
   const countFor = (cap, keep) => (keep === null ? cap.benchmarks.length : cap.benchmarks.filter((n) => keep.includes(bandOf.get(n))).length);
+
+  /* The chapter's own rule — every tier must have an instrument — checked against the surviving
+   * tests rather than the raw count. The raw count clears every tier, which is exactly the
+   * flattery the chapter exists to strip. */
+  const tierInfo = data.milestones.tier_info || {};
+  const capCount = (keep) => new Map(caps.map((c) => [c.capability, countFor(c, keep)]));
+  const tiersWithoutInstrument = (keep) => {
+    const by = capCount(keep);
+    return Object.entries(tierInfo)
+      .filter(([, meta]) => (meta.capabilities || []).some((cap) => (by.get(cap) || 0) === 0))
+      .map(([name]) => name);
+  };
+  const thinTiers = (keep) => {
+    const by = capCount(keep);
+    return Object.entries(tierInfo)
+      .filter(([, meta]) => (meta.capabilities || []).some((cap) => (by.get(cap) || 0) <= 1))
+      .map(([name]) => name);
+  };
 
   return buildExplainer({
     n: 10,
@@ -1132,7 +1205,7 @@ function chapterEvaluation(ctx) {
       text(', and watch how much coverage survives.'),
     ],
     figNum: 'Fig. 7 — what you could actually grade',
-    caption: 'Fig. 7 — One mark per capability. Red is a capability left with one test or none once the named band is removed. Trust bands are recorded per benchmark; the counts here are recomputed from them.',
+    caption: 'Fig. 7 — One mark per capability for the first three states, then one per tier of the mixture for the last. Red is a capability, or a tier, left with no test at all once the named band is removed; a hollow mark is one left with exactly one. Trust bands are recorded per benchmark; every count here is recomputed from them.',
     pill: `${data.benchmarks.filter((x) => x.trust_band === 'native-sourced').length} of ${data.benchmarks.length} native`,
     rail: [
       text('One benchmark is '),
@@ -1152,6 +1225,12 @@ function chapterEvaluation(ctx) {
     ],
     refresh: (api) => {
       bands.forEach((bd, i) => {
+        if (bd.holes) {
+          const at_risk = thinTiers(bd.keep);
+          api.shard(i, at_risk.length ? at_risk.join(' · ') : 'every tier keeps two or more trusted tests');
+          api.inline(i, `→ ${at_risk.length} of ${recommended.mix.tiers.length} tiers of the mixture rest on one trusted test or none`, at_risk.length > 0);
+          return;
+        }
         const thin = caps.filter((c) => countFor(c, bd.keep) <= 1);
         api.shard(i, thin.length ? thin.map((c) => `${c.capability} (${countFor(c, bd.keep)})`).join(' · ') : 'every capability has two or more');
         api.inline(i, `→ ${thin.length} of ${caps.length} capabilities on one test or none`, thin.length > 0);
@@ -1163,15 +1242,50 @@ function chapterEvaluation(ctx) {
       const thin = counts.filter((n) => n <= 1).length;
       const gone = counts.filter((n) => n === 0).length;
       api.extra.replaceChildren();
+
+      if (bd.holes) {
+        /* Tiers, not capabilities — the same register asked the question that decides a budget. */
+        const at_risk = thinTiers(bd.keep);
+        const blind = tiersWithoutInstrument(bd.keep);
+        const shareOf = (names) => recommended.mix.tiers.filter((t) => names.includes(t.name)).reduce((a, t) => a + t.share, 0);
+        const list = $('div', 'stagelist');
+        recommended.mix.tiers.forEach((t) => {
+          const meta = tierInfo[t.name] || {};
+          const worstCap = Math.min(...(meta.capabilities || []).map((c) => capCount(bd.keep).get(c) || 0), Infinity);
+          const best = Number.isFinite(worstCap) ? worstCap : 0;
+          const row = $('div', `stagerow ${best === 0 ? 'missing' : best <= 1 ? 'dim' : ''}`.trim());
+          row.append(
+            $('div', 'stagen', `${(t.share * 100).toFixed(1)}%`),
+            $('div', 'stagename', t.name),
+            $('div', 'stageplain', (meta.capabilities || []).join(', ')),
+            $('div', 'stagetools', best === 0 ? 'no trusted test' : `${best} trusted test${best > 1 ? 's' : ''}`),
+          );
+          list.append(row);
+        });
+        api.extra.replaceChildren(list);
+        api.big({ value: shareOf(at_risk), unit: 'share', provenance: 'measured', source: 'the mixture matched against the benchmark register' });
+        api.bigHit(at_risk.length > 0);
+        api.sub('of the batch bought by a capability with one trusted test or none');
+        api.verdict(blind.length ? `${blind.length} TIER${blind.length > 1 ? 'S' : ''} BLIND` : at_risk.length ? `${at_risk.length} ON ONE` : 'ALL DEFENSIBLE', at_risk.length > 0);
+        api.note(at_risk.length
+          ? `${at_risk.join(', ')} rest on a single natively-written test or none. A single test is not a measurement, it is a hostage: tune against it and you have lost the only instrument that would have told you.`
+          : 'Every tier keeps at least two natively-written tests, which is the version of this chart the raw count promised and this one has to earn.');
+        api.strip(recommended.mix.tiers.map((t) => {
+          const meta = tierInfo[t.name] || {};
+          const worstCap = Math.min(...(meta.capabilities || []).map((c) => capCount(bd.keep).get(c) || 0), Infinity);
+          const best = Number.isFinite(worstCap) ? worstCap : 0;
+          return best === 0 ? 'hit' : best <= 1 ? 'guess' : 'reg';
+        }));
+        return;
+      }
+
       api.big({ value: caps.length - thin, unit: 'capabilities', provenance: 'measured', source: 'counted from the benchmark register' });
       api.bigHit(thin > 0);
       api.sub(`of ${caps.length} still have more than one test`);
       api.verdict(gone ? `${gone} UNGRADABLE` : thin ? `${thin} ON ONE` : 'ALL COVERED', thin > 0);
-      api.note(bd.holes
-        ? `${thin} capabilities sit on a single natively-written test or none. A single test is not a measurement, it is a hostage.`
-        : bd.keep === null
-          ? 'Red marks a capability with one test or none. Counted this way there are few — which is the flattering version.'
-          : `Removing that band cost ${caps.reduce((a, c, k) => a + (c.benchmarks.length - counts[k]), 0)} test slots across the capabilities.`);
+      api.note(bd.keep === null
+        ? 'Red marks a capability with one test or none. Counted this way there are few — which is the flattering version.'
+        : `Removing that band cost ${caps.reduce((a, c, k) => a + (c.benchmarks.length - counts[k]), 0)} test slots across the capabilities.`);
       api.strip(counts.map((n) => (n <= 1 ? 'hit' : 'reg')));
     },
   });
@@ -1309,11 +1423,69 @@ function chapterAppendix(ctx) {
     const canvas = $('div', 'canvas');
     canvas.setAttribute('role', 'group');
     canvas.setAttribute('aria-label', `${data.datasets.length} datasets, coloured by grade`);
+    /* Every mark opens the five gates that produced its grade. A grade with no reasoning behind it
+     * is a number to be argued with; the reasoning is the part worth reading. `catalog.json` holds
+     * it and is fetched once, on the first click, because it is 300 KB the page does not need. */
+    const card = $('div', 'gatecard');
+    card.hidden = true;
+    let catalogue = null;
+    const openCard = async (d) => {
+      card.hidden = false;
+      card.replaceChildren($('p', 'gatecard-name', `${d.name} — loading its five gates…`));
+      if (!catalogue) {
+        try {
+          catalogue = new Map((await (await fetch('./catalog.json')).json()).map((x) => [x.id, x]));
+        } catch {
+          card.replaceChildren($('p', 'gatecard-name', `${d.name} — the full register could not be loaded. Serve over http, not file://.`));
+          return;
+        }
+      }
+      const full = catalogue.get(d.id) || {};
+      const gates = full.gates || {};
+      card.replaceChildren();
+      const head = $('p', 'gatecard-name');
+      head.append(text(`${d.name} `));
+      const g = $('span', 'grade', d.grade);
+      g.setAttribute('data-grade', d.grade);
+      head.append(g);
+      if (full.owner) head.append($('span', 'gatecard-owner', ` ${full.owner}`));
+      card.append(head);
+      const keys = Object.keys(gates);
+      if (!keys.length) {
+        card.append($('p', 'gatecard-none', 'No gate was scored for this entry.'));
+      } else {
+        card.append(table(
+          ['gate', 'verdict', 'why', 'confidence'],
+          keys.map((k) => {
+            const v = gates[k] || {};
+            const verdict = $('span', 'gateverdict', v.verdict || '—');
+            verdict.setAttribute('data-verdict', v.verdict || '');
+            return [k, verdict, v.reasoning || '—', v.confidence || '—'];
+          }),
+        ));
+      }
+      if ((full.gotchas || []).length) {
+        full.gotchas.forEach((x) => {
+          const p = $('p', 'gatecard-gotcha');
+          const badge = $('span', 'gotcha', x.type);
+          badge.setAttribute('data-type', x.type);
+          p.append(badge, text(` ${x.text}`));
+          card.append(p);
+        });
+      }
+      card.append($('p', 'gatecard-none', full.licence ? `Licence: ${full.licence.raw}` : 'Licence: nobody established one.'));
+    };
+
     const units = data.datasets.map((d) => {
       const u = $('button', `unit ${d.is_gap ? 'out' : { A: 'ok', B: 'mid', C: '', X: 'out' }[d.grade] || ''}`.trim());
       u.type = 'button';
       u.title = `${d.id} · ${d.name} — grade ${d.grade}${d.is_gap ? ' · does not exist yet' : ''}`;
-      u.setAttribute('aria-label', `${d.name}, grade ${d.grade}`);
+      u.setAttribute('aria-label', `${d.name}, grade ${d.grade}. Show its five gates`);
+      u.addEventListener('click', () => {
+        units.forEach((x) => x.classList.remove('sel'));
+        u.classList.add('sel');
+        openCard(d);
+      });
       return u;
     });
     /* One tab stop, arrows within: 145 sequential stops is an obstacle, not navigation. */
@@ -1334,10 +1506,12 @@ function chapterAppendix(ctx) {
     key.append(
       text(`${counts.A || 0} usable · ${counts.B || 0} usable with care · ${counts.C || 0} thin evidence · ${counts.X || 0} excluded · `),
       b(`${data.datasets.filter((d) => d.is_gap).length} does not exist yet`),
-      text('. A grade is five checks scored together — where the text came from, whether its composition matches its claims, whether it overlaps the exam sets, how much survives cleaning, and whether any of it is evidenced. Nothing is scored for a question nobody answered, which is why most sit at C.'),
+      text('. A grade is five checks scored together — where the text came from, whether its composition matches its claims, whether it overlaps the exam sets, how much survives cleaning, and whether any of it is evidenced. Nothing is scored for a question nobody answered, which is why most sit at C. '),
+      b('Click any mark'),
+      text(' to read the five verdicts, the reasoning behind each and how confident it is.'),
     );
     block(`The whole catalogue at once — ${data.datasets.length} datasets`, canvas);
-    s.append(key);
+    s.append(key, card);
   }
 
   block(`Every dataset — ${data.datasets.length}`, table(
@@ -1484,15 +1658,21 @@ export function buildPage(data, records) {
 
 /* The lede quotes five figures. Typed into the markup they would drift the first time the pipeline
  * reran, so they are filled from the same data every chapter uses. */
+const SPELLED = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+
 function fillLede(data) {
   const src = data.sourcing;
   const measuredLangs = Object.values(data.fertility.by_language || {}).filter((v) => v.provenance === 'measured').length - 1;
+  const budget = (data.milestones.presets.find((p) => p.recommended) || {}).target_seen_tokens || 0;
+  const committable = src.counts.committable;
+  const spelled = SPELLED[committable] || String(committable);
   const values = {
     catalogued: `${src.counts.catalogued} candidate datasets`,
     measured: `${measuredLangs} languages and ${(data.fertility.by_tokenizer_mean || []).length} tokenizers`,
     shingles: `${(data.contamination.shingle_count.value || 0).toLocaleString('en-US')} fingerprints`,
-    budget: `${fmt((data.milestones.presets.find((p) => p.recommended) || {}).target_seen_tokens, 'count')}-token`,
-    committable: `${src.counts.committable} datasets clear every bar.`,
+    // Spelled out: "a 15T-token corpus" reads as a units bug, "15-trillion-token" reads as English.
+    budget: `${(budget / 1e12).toFixed(0)}-trillion-token`,
+    committable: `${spelled[0].toUpperCase()}${spelled.slice(1)} datasets clear every bar.`,
   };
   document.querySelectorAll('[data-fact]').forEach((el) => {
     const v = values[el.dataset.fact];

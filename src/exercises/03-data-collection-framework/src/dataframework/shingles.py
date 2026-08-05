@@ -124,11 +124,17 @@ class ShingleIndex:
         unindexable: Benchmark to the count of items too short to index at all. Not a detail:
             these are eval items the gate cannot protect, and the number belongs in the coverage
             report.
+        indexed: How many items were indexed, at any width.
+        narrow: How many of those were shorter than the preferred window and so had to be indexed
+            at their own width. Before that was handled they were undetectable, which is why the
+            count is reported rather than left to be inferred.
     """
 
     grams: dict[str, str] = field(default_factory=dict)
     widths: frozenset[int] = frozenset()
     unindexable: dict[str, int] = field(default_factory=dict)
+    indexed: int = 0
+    narrow: int = 0
 
 
 def is_contaminated(document: str, index: "ShingleIndex | set[str]", n: int = SHINGLE_N) -> bool:
@@ -171,16 +177,27 @@ def build_attributed_index(
     grams: dict[str, str] = {}
     widths: set[int] = set()
     unindexable: dict[str, int] = {}
+    indexed = 0
+    narrow = 0
     for benchmark, items in items_by_benchmark.items():
         for item in items:
             width = gram_width(item, n)
             if width < MIN_SHINGLE_N:
                 unindexable[benchmark] = unindexable.get(benchmark, 0) + 1
                 continue
+            indexed += 1
+            if width < n:
+                narrow += 1
             widths.add(width)
             for digest in shingle(item, width):
                 grams.setdefault(digest, benchmark)
-    return ShingleIndex(grams=grams, widths=frozenset(widths), unindexable=unindexable)
+    return ShingleIndex(
+        grams=grams,
+        widths=frozenset(widths),
+        unindexable=unindexable,
+        indexed=indexed,
+        narrow=narrow,
+    )
 
 
 def find_collisions(document: str, index: ShingleIndex) -> dict[str, int]:
@@ -225,6 +242,8 @@ def build_index(cfg: Config | None = None) -> dict[str, Any]:
             "coverage": "none",
             "gram_widths": [],
             "unindexable_items": 0,
+            "indexed_items": 0,
+            "narrow_items": 0,
             "note": (
                 "No benchmark corpus in data/benchmarks/ (open item B3). Contamination is "
                 "UNCHECKED — not clean. Supply raw items, or the MILU validation split as the "
@@ -264,6 +283,8 @@ def build_index(cfg: Config | None = None) -> dict[str, Any]:
         "coverage": "partial" if covered else "none",
         "gram_widths": sorted(index.widths),
         "unindexable_items": refused,
+        "indexed_items": index.indexed,
+        "narrow_items": index.narrow,
         "note": note,
         "shingles": sorted(index.grams),
     }
@@ -297,6 +318,8 @@ def write_index(cfg: Config | None = None) -> dict[str, Any]:
         "coverage": index["coverage"],
         "gram_widths": index["gram_widths"],
         "unindexable_items": index["unindexable_items"],
+        "indexed_items": index["indexed_items"],
+        "narrow_items": index["narrow_items"],
         "note": index["note"],
     }
     (cfg.web_dir / "shingles.json").write_text(

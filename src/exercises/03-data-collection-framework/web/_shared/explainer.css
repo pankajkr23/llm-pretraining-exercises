@@ -199,6 +199,34 @@
 .tierfill.dim { opacity: 0.32; }
 /* The only red: a tier scheduled against a corpus that does not exist. */
 .tierfill.missing { background: repeating-linear-gradient(45deg, var(--grade-x), var(--grade-x) 4px, transparent 4px, transparent 7px); }
+/* A zero-length bar still has to be visible — the gap row is the point of the figure. */
+.tierrow .tiertrack:has(.tierfill.missing) { outline: 1px dashed var(--grade-x); outline-offset: -1px; }
+
+/* An ordered list of stages: a sequence with attributes, and no magnitude to draw. */
+.stagelist { display: grid; gap: 1px; }
+.stagerow {
+  display: grid;
+  grid-template-columns: 18px 168px minmax(0, 1fr) minmax(0, 148px);
+  gap: 10px;
+  align-items: baseline;
+  font-size: 11.5px;
+  padding: 5px 7px;
+  border-radius: 5px;
+  border-left: 2px solid transparent;
+  transition: background 0.3s, opacity 0.3s, border-color 0.3s;
+}
+.stagen { font-family: var(--mono); font-size: 10px; color: var(--faint); }
+.stagename { color: var(--ink); font-weight: 600; }
+.stageplain { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stagetools { font-family: var(--mono); font-size: 10px; color: var(--accent); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stagerow.dim { opacity: 0.4; }
+.stagerow.natural { background: color-mix(in srgb, var(--accent) 9%, transparent); border-left-color: var(--accent); }
+.stagerow.missing { background: color-mix(in srgb, var(--grade-x) 12%, transparent); border-left-color: var(--grade-x); }
+.stagerow.missing .stagetools { color: var(--grade-x); }
+@media (max-width: 640px) {
+  .stagerow { grid-template-columns: 16px 1fr; }
+  .stageplain, .stagetools { grid-column: 2; text-align: left; white-space: normal; }
+}
 
 /* ------------------------------------------------------------------ single canvas (§17)
  *
@@ -225,6 +253,7 @@ span.unit { width: 13px; height: 13px; padding: 0; border-radius: 3px; backgroun
 /* The only red: a dataset excluded from a commercial mix. */
 .unit.out { background: var(--grade-x); }
 .unit.dim { opacity: 0.28; }
+.unit.sel { outline: 2px solid var(--ink); outline-offset: 2px; }
 /* Not a figure: an item whose cost was never priced. It must not wear .num, which would make it
    look like a number nobody typed a provenance for. */
 .unpriced { font-family: var(--mono); font-size: 11.5px; color: var(--faint); font-style: italic; }
