@@ -243,8 +243,8 @@ function chapterBudget(ctx) {
         api.big({ value: naturalOf(recommended).seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'the recommended budget' });
         api.bigHit(false);
         api.sub('natural Indian-language text at the recommended budget');
-        api.verdict('NO NEW COLLECTION', false);
-        api.note('Every budget reads its own pool four times. What changes between them is how much text was collected, not how hard it was read — and past this model size, collection is the wall.');
+        api.verdict((recommended.verdict || 'recommended').toUpperCase(), false);
+        api.note(`Every budget reads its own pool four times. What changes between them is how much text was collected, not how hard it was read — and past this model size, collection is the wall. The ladder is judged as: ${presets.map((p) => `${p.id}, ${(p.verdict || '').toLowerCase()}`).join('; ')}.`);
         api.strip(presets.map((p) => (p.recommended ? 'reg' : '')));
         return;
       }
@@ -253,13 +253,15 @@ function chapterBudget(ctx) {
       api.big({ value: effective, unit: 'tokens', provenance: 'estimated', source: 'pool × passes' });
       api.bigHit(past);
       api.sub(`from ${fmt(POOL, 'count')} of real text, read ${st.epochs} ${st.epochs === 1 ? 'time' : 'times'}`);
-      api.verdict(past ? 'UNEVIDENCED' : st.epochs <= advised ? 'NEARLY FREE' : 'DECAYING', past);
+      api.verdict(past ? 'UNEVIDENCED' : st.epochs === 1 ? 'ALL THERE IS' : st.epochs <= advised ? 'NEARLY FREE' : 'DECAYING', past);
       api.note(
         past
           ? `Red marks passes beyond ${hard}, where no published work reaches. That is not a measured penalty — it is an absence of evidence, which is worse to plan against.`
-          : st.epochs <= advised
-            ? `Multiplied ${st.epochs}× for the cost of re-reading. Collecting this much fresh Indian-language text is not something anyone can do to a schedule.`
-            : 'Still ahead of four passes, but each extra read buys less than the last.',
+          : st.epochs === 1
+            ? 'Read once, this is the entire natural Indian-language pool — every verified corpus anyone has assembled, added together. It is about a fiftieth of what the budget asks for, and collecting harder does not close it on any schedule.'
+            : st.epochs <= advised
+              ? `Multiplied ${st.epochs}× for the cost of re-reading the same text ${st.epochs} times. Collecting this much fresh Indian-language text instead is not something anyone can do to a schedule.`
+              : 'Still ahead of four passes, but each extra read buys less than the last.',
       );
       api.strip(Array.from({ length: LADDER[LADDER.length - 1] }, (_, k) => (k >= st.epochs ? '' : k >= hard ? 'hit' : 'reg')));
     },
@@ -1014,6 +1016,19 @@ function chapterTokenizer(ctx) {
    * Nobody would ship one for this model, so "worst of the multilingual candidates" has to name
    * which candidates, or it is a ranking with the losers quietly removed. */
   const multilingual = ranked.filter((r) => !/tiktoken/.test(r.tokenizer));
+  const sweep = data.vocab_sweep || { curve: [], peak: {} };
+  /* The curve is sampled every 8,000 slots; interpolate rather than snap, so quoting a competitor's
+   * vocabulary does not silently quote the nearest grid point instead. */
+  const sweepAt = (v) => {
+    const c = sweep.curve || [];
+    const hi = c.find((x) => x.vocab_size >= v);
+    const lo = [...c].reverse().find((x) => x.vocab_size <= v);
+    if (!hi || !lo) return null;
+    if (hi.vocab_size === lo.vocab_size) return hi.net_benefit;
+    const t = (v - lo.vocab_size) / (hi.vocab_size - lo.vocab_size);
+    return lo.net_benefit + t * (hi.net_benefit - lo.net_benefit);
+  };
+
   const shortName = (t) => t.split('/').pop();
 
   const states = [
@@ -1078,7 +1093,8 @@ function chapterTokenizer(ctx) {
         fmt(r.embedding_params, 'count'),
       ]), [1, 2, 3]),
       para(b('The trade.'), ' ', cost.vocab_trade.steps.map((st) => `${st.label}: ${st.expression ? st.expression + ' = ' : ''}${st.unit === 'share' ? (st.value * 100).toFixed(2) + '%' : fmt(st.value, 'count')} ${st.unit === 'share' ? '' : st.unit}`).join('; '), '. ', cost.vocab_trade.return),
-      para(b('Why not Gemma’s 262,144?'), ' ', blocks.upper_bound),
+      para(b('An independent check on the same answer.'), ' The block sum above is bottom-up: give every script the slots it needs and add them. A separate sweep works top-down — for each candidate vocabulary size, price the extra softmax against the tokens saved, and take the peak of the difference. It is a different method on different inputs, and it lands at ', b(sweep.recommended_vocab.toLocaleString('en-US')), ' against the sum’s ', b(blocks.chosen.toLocaleString('en-US')), ` — ${(Math.abs(blocks.chosen - sweep.recommended_vocab) / blocks.chosen * 100).toFixed(1)}% apart. Neither result is evidence for the other, which is exactly why the agreement is worth stating; a single derivation nobody cross-checked is how a wrong vocabulary ships.`),
+      para(b('Why not Gemma’s 262,144?'), ' ', blocks.upper_bound, sweepAt(262144) ? ` The sweep prices it too: net benefit at 262,144 is about ${(sweepAt(262144) * 100).toFixed(2)}% against ${(sweep.peak.net_benefit * 100).toFixed(2)}% at the peak, so the larger vocabulary is roughly ${Math.round((1 - sweepAt(262144) / sweep.peak.net_benefit) * 100)}% worse on this trade — a shallow curve, but it turns over, and past the peak you are paying for slots nobody spells with.` : ''),
       para(b('Why embeddings are not the constraint.'), ' ', blocks.embedding_note),
       para(b('Caveat.'), ' ', blocks.caveat),
     ],
@@ -1282,7 +1298,7 @@ function chapterEvaluation(ctx) {
         api.sub('of the batch bought by a capability with one trusted test or none');
         api.verdict(blind.length ? `${blind.length} TIER${blind.length > 1 ? 'S' : ''} BLIND` : at_risk.length ? `${at_risk.length} ON ONE` : 'ALL DEFENSIBLE', at_risk.length > 0);
         api.note(at_risk.length
-          ? `${at_risk.join(', ')} rest on a single natively-written test or none. A single test is not a measurement, it is a hostage: tune against it and you have lost the only instrument that would have told you.`
+          ? `${at_risk.join(', ')} ${at_risk.length > 1 ? 'rest' : 'rests'} on a single natively-written test or none. A single test is not a measurement, it is a hostage: tune against it and you have lost the only instrument that would have told you.`
           : 'Every tier keeps at least two natively-written tests, which is the version of this chart the raw count promised and this one has to earn.');
         api.strip(recommended.mix.tiers.map((t) => {
           const meta = tierInfo[t.name] || {};
@@ -1494,7 +1510,8 @@ function chapterAppendix(ctx) {
       card.replaceChildren($('p', 'gatecard-name', `${d.name} — loading its five gates…`));
       if (!catalogue) {
         try {
-          catalogue = new Map((await (await fetch('./catalog.json')).json()).map((x) => [x.id, x]));
+          const root = data.registry_root || 'catalog.json';
+          catalogue = new Map((await (await fetch(`./${root}`)).json()).map((x) => [x.id, x]));
         } catch {
           card.replaceChildren($('p', 'gatecard-name', `${d.name} — the full register could not be loaded. Serve over http, not file://.`));
           return;
@@ -1769,7 +1786,7 @@ const GLOSSARY = [
   ['gate', 'A check that stops a build rather than filing a report. Used here in two senses: the contamination gate, which drops training documents that contain exam questions; and the five gates whose combined verdict is a dataset’s grade.'],
   ['grade', 'Those five gates scored together — where the text came from, whether its composition matches its claims, whether it overlaps the exam sets, how much survives cleaning, and whether anyone has evidenced any of it.'],
   ['trust band', 'How much a benchmark score can be compared between labs. Native-sourced means written in the language; translation-derived means written in English first; harness-dependent means the score moves with the testing program you run it under.'],
-  ['fertility', 'How many tokens a word costs under a given tokenizer. English averages about 1.35; Malayalam under an English tokenizer costs roughly thirteen times that, and the difference is paid on every step of the whole run.'],
+  ['fertility', 'How many tokens a word costs under a given tokenizer. English averages about 1.35 tokens per word; the worst Indian language measured here costs over thirteen times that under an English tokenizer, and the difference is paid on every step of the whole run.'],
   ['shingle', 'Thirteen consecutive words, hashed. Thirteen words landing in the same order by chance essentially never happens, which is what makes it a fingerprint.'],
 ];
 
@@ -1780,7 +1797,9 @@ function buildLegend(data) {
   d.append($('summary', '', 'How to read this page — the nine words and three colour codes it uses'));
   const inner = $('div', 'legend-body');
 
-  const counts = data.datasets.reduce((a, x) => { a[x.grade] = (a[x.grade] || 0) + 1; return a; }, {});
+  /* data.grades is the pipeline's tally, computed from the five gates. Re-counting in the browser
+   * would work today and drift the first time the two disagree. */
+  const counts = data.grades || {};
   const grades = $('div', 'legend-row');
   grades.append($('div', 'legend-k', 'Grades'));
   const gv = $('div', 'legend-v');

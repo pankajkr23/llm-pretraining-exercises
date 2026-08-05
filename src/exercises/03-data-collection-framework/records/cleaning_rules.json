@@ -38,7 +38,7 @@
       "name": "Safety and compliance gate",
       "plain": "Remove what must never be trained on",
       "does": "PII redaction with Aadhaar, PAN, passport and bank pattern detection; CSAM hash matching on all image data; multilingual toxicity classification; children's-data exclusion; licence-tag propagation; a provenance record carrying URL, licence, hash and retrieval date.",
-      "rule": "This stage has no tool in the register and no surface on the old site. It is the one stage where a miss is not a quality problem but a legal and ethical one.",
+      "rule": "No tool in the register covers this stage. It is the one stage where a miss is not a quality problem but a legal and ethical one — and it is the only stage that has to be built rather than adopted.",
       "source": "docs/ATLAS.md §17",
       "unstaffed": true
     },
@@ -77,7 +77,12 @@
   ],
   "universal": {
     "order": "NFC and homoglyph normalisation, script-aware language ID, India-specific PII, global MinHash and SemDeDup, 13-gram benchmark decontamination, provenance record",
-    "adopt_not_build": ["Setu (MIT, Spark, Indic-specific)", "datatrove", "NeMo Curator", "GlotLID"],
+    "adopt_not_build": [
+      "Setu (MIT, Spark, Indic-specific)",
+      "datatrove",
+      "NeMo Curator",
+      "GlotLID"
+    ],
     "source": "docs/DECISIONS.md §2.1"
   },
   "objective_rules": [
@@ -122,10 +127,30 @@
     "why": "The order matters as much as the mixture. Rare-script embeddings form early or not at all.",
     "source": "docs/DECISIONS.md §2.4",
     "phases": [
-      { "name": "Foundations", "from": 0, "to": 40, "emphasis": "Broad web, heavy multilingual, Indic scripts front-loaded" },
-      { "name": "Knowledge", "from": 40, "to": 75, "emphasis": "Educational, encyclopaedic, academic, code" },
-      { "name": "Reasoning", "from": 75, "to": 92, "emphasis": "Maths, long chains, synthetic QA, curriculum-graded Indic" },
-      { "name": "Anneal", "from": 92, "to": 100, "emphasis": "Highest quality only, learning rate to zero. This is where benchmark performance is bought." }
+      {
+        "name": "Foundations",
+        "from": 0,
+        "to": 40,
+        "emphasis": "Broad web, heavy multilingual, Indic scripts front-loaded"
+      },
+      {
+        "name": "Knowledge",
+        "from": 40,
+        "to": 75,
+        "emphasis": "Educational, encyclopaedic, academic, code"
+      },
+      {
+        "name": "Reasoning",
+        "from": 75,
+        "to": 92,
+        "emphasis": "Maths, long chains, synthetic QA, curriculum-graded Indic"
+      },
+      {
+        "name": "Anneal",
+        "from": 92,
+        "to": 100,
+        "emphasis": "Highest quality only, learning rate to zero. This is where benchmark performance is bought."
+      }
     ]
   }
 }
