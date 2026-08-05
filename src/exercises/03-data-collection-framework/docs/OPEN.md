@@ -4,15 +4,38 @@ Decisions the spec deliberately leaves for a human, collected in one place so th
 buried. The standing rule (from `README.md` / `DESIGN.md`): **never silently substitute an
 assumption** — anything unresolved surfaces in the UI as `estimated` or `unknown` and says so.
 
+## Not this exercise's to close
+
+Two items were briefly tracked as pending work and should never have been. They belong to the plan
+this exercise **describes**, not to the exercise itself — like the ₹ costings and the 12-week critical
+path, they are content, not chores.
+
+- **The 40B fork.** Its stated resolution is a head-to-head at ~2B scale. That is a recommendation to
+  whoever builds the model, costing days of compute; this is a data-collection framework and trains
+  nothing. **The deliverable is the fork stated honestly with its criterion named** — and, since the
+  fertility run, with one side priced: continue-pretraining inherits Gemma 4's tokenizer at ×2.49 mean
+  Indic tax against Sarvam's ×1.81. Stated and priced *is* the finished state.
+- **The candidate tokenizer, V = 208,896.** Training it belongs to `02-tokenization` if that exercise
+  grows. Its absence is why no `parity_ratio` is reported and why §2's curve is a projection, and both
+  pages say so rather than showing a number.
+
+There is likewise no "frozen training corpus" to assemble. The 8-tier mix is a proposal on a page;
+5T–20T tokens nobody has collected.
+
 ## Resolved (kept here for the record)
 - **`d_model` for the 40B** — ✅ **6,144 confirmed.** Default in tasks 2.2 / 2.3 / report §6.2; keep
   the live input so a reviewer can test robustness.
-- **Gemma-4 fertility measurement runnable?** — ✅ **Yes, runs this week** (task 2.2b). Fertility
-  ships `measured`, not `estimated`.
+- **Gemma-4 fertility measurement runnable?** — ✅ **Run.** All 22 languages ship `measured` on
+  IN22-Gen and IN22-Conv across five tokenizers. The sixth, our own candidate, does not exist — see
+  above. Code and maths slices were dropped on licensing grounds, recorded below.
 
 ## Open — needs a decision
 
-1. **B3 · Raw benchmark items for `data/benchmarks/`.** Do we supply real benchmark items to build
+1. ~~**B3 · Raw benchmark items for `data/benchmarks/`.**~~ **CLOSED.** MILU's validation split is
+   indexed — 411,442 shingles from 8,923 items across 11 languages — so contamination coverage is
+   `partial` rather than `none`. `dataframework.fetch_benchmarks` reproduces it. Original wording:
+
+   **B3 · Raw benchmark items for `data/benchmarks/`.** Do we supply real benchmark items to build
    the contamination shingles from, or accept the fallback: shingles from the **MILU validation split
    only**, with reduced decontamination coverage noted in the UI? (`TODO.md` "Blocked"; `README.md`
    §"Resolved and open".) — *Default if unanswered: the MILU-split fallback, flagged in the UI.*
