@@ -613,7 +613,10 @@ const ACTIONS = {
 function blockersOf(d) {
   const out = [];
   if (d.is_gap) out.push('gap');
-  if (d.grade !== 'A' && d.grade !== 'B') out.push('evidence');
+  /* Mirrors sourcing.blockers(): "nobody scored it" and "a check failed" are different blockers,
+   * and only the first is ours to fix without asking anyone. */
+  if (d.grade === 'X') out.push('excluded');
+  else if (d.grade !== 'A' && d.grade !== 'B') out.push('evidence');
   if (d.licence_commercial !== true) out.push('licence');
   if (!(d.size_tokens || {}).value) out.push('size');
   return out;
@@ -625,8 +628,8 @@ function blockersOf(d) {
  */
 function actionOf(d) {
   if (d.is_gap) return 'gap';
-  if (d.grade === 'X') return 'excluded';
   const bad = blockersOf(d);
+  if (bad.includes('excluded')) return 'excluded';
   if (!bad.length) return 'commit';
   if (bad.includes('licence')) return 'licence';
   if (bad.includes('size')) return 'size';
@@ -1714,147 +1717,270 @@ function chapterCost(ctx) {
   const acquisition = records.acquisition || [];
   const free = acquisition.filter((a) => a.cost_inr === 0);
 
-  /* The run priced with the record's own constants — 6ND, 4.0e14 FLOP/s, and the USD/INR rate its
-   * vocabulary arithmetic already implies. A chapter titled "what it costs" that priced nothing was
-   * the weakest thing on the page. */
   const run = records.cost.run_cost;
   const hours = run.steps.find((x) => x.unit === 'H100-hours');
   const money = run.steps.find((x) => x.unit === 'USD');
-  const usd = (v) => renderNumber({ value: v, unit: 'USD', provenance: 'estimated', source: run.note }, { unit: false });
 
-  const paths = [
-    { id: 'scratch', name: 'Train from scratch', share: 1, inherits: 'Nothing',
-      tokenizer: 'Ours — designed for these scripts, and the only path where that is possible' },
-    { id: 'continue', name: 'Continue-pretrain from Gemma 4', share: 0.15, inherits: 'Gemma-4-class coding and agentic ability on day one',
-      tokenizer: gemma ? `Gemma’s — ×${gemma.mean_tax.value.toFixed(2)} mean Indian tax, permanently` : 'Gemma’s, permanently' },
-    { id: 'upcycle', name: 'Upcycle to a mixture of experts', share: 0.45, inherits: 'Whatever you upcycle from',
-      tokenizer: 'Inherited from the seed model' },
+  const PATHS = [
+    {
+      id: 'scratch', name: 'Train from scratch', share: 1,
+      marg: 'Path 1 · train it yourself',
+      lead: 'The full price, and the only path where the tokenizer is a decision rather than an inheritance. Everything this page has argued about the mixture, the licences and the scripts ',
+      bold: 'only applies here',
+      tail: ' — on the other two paths somebody else already made those choices.',
+      inherits: 'Nothing', tokenizer: 'Ours — designed for these scripts',
+      verdict: 'FULL PRICE, FULL CONTROL',
+    },
+    {
+      id: 'continue', name: 'Continue-pretrain from Gemma 4', share: 0.15,
+      marg: 'Path 2 · keep training somebody else’s',
+      lead: 'A sixth of the compute, Gemma-4-class coding and agentic ability on day one, and one consequence people forget: ',
+      bold: 'you inherit its tokenizer, permanently',
+      tail: '. You cannot swap one out without discarding the embedding table you were trying to reuse.',
+      inherits: 'Gemma-4-class coding and agentic ability', tokenizer: gemma ? `Gemma’s — ×${gemma.mean_tax.value.toFixed(2)} on Indian text` : 'Gemma’s',
+      verdict: 'CHEAPEST, AND LOCKED IN',
+    },
+    {
+      id: 'upcycle', name: 'Upcycle to a mixture of experts', share: 0.45,
+      marg: 'Path 3 · grow a sparse model from a dense one',
+      lead: 'In between on price, and the path this project’s own prior work takes. It competes with a different class of model than the dense one, and it still ',
+      bold: 'inherits whatever tokenizer the seed had',
+      tail: ' — so the seed’s choices outlive the seed, which is the argument in the growth chapter one level down.',
+      inherits: 'Whatever you upcycle from', tokenizer: 'Inherited from the seed model',
+      verdict: 'A DIFFERENT COMPETITOR',
+    },
   ];
 
-  const body = $('div');
-  body.append(table(
-    ['path', 'tokens trained', 'compute, order of magnitude', 'what it inherits', 'the tokenizer you get'],
-    paths.map((x) => [
-      x.name,
-      renderNumber({ value: recommended.target_seen_tokens * x.share, unit: 'tokens', provenance: 'estimated', source: 'the share of a full run each path needs' }, { unit: false }),
-      x.share === 1
-        ? (() => { const c = $('span'); c.append(usd(money.value), text(` · ${fmt(hours.value, 'count')} H100-hours`)); return c; })()
-        : (() => { const c = $('span'); c.append(text('about '), usd(Math.round(money.value * x.share / 1e5) * 1e5)); return c; })(),
-      x.inherits,
-      x.tokenizer,
-    ]),
-    [1, 2],
-  ));
+  const bars = $('div', 'tierbars');
+  const usd = (v) => renderNumber({ value: v, unit: 'USD', provenance: 'estimated', source: run.note }, { unit: false });
 
-  return chapter({
-    id: 'cost',
+  return buildExplainer({
     n: 12,
+    anchor: 'cost',
+    arithmeticLabel: 'The cost arithmetic, and the fork it does not settle',
+    wide: true,
     title: 'What it costs, and whether to build it at all',
     claim: [
-      text('There are three ways to get a 40-billion-parameter model, and only one of them is "train it". The cheap path is to take somebody else’s and keep training — which works, and carries one consequence people forget: '),
-      b('you inherit its tokenizer'),
-      text('. You cannot swap one out without discarding the embedding table you were trying to reuse, so the choice locks in a per-token cost for the life of the model.'),
+      text('There are three ways to get a 40-billion-parameter model, and only one of them is "train it". They differ by an order of magnitude in price and by one thing money cannot undo: '),
+      b('two of the three inherit somebody else’s tokenizer'),
+      text('. Scroll the paths; the bars compare what each spends and what each is stuck with.'),
     ],
-    body,
-    caption: gemma && best
-      ? `Measured here: Gemma 4's tokenizer costs ×${gemma.mean_tax.value.toFixed(2)} on Indian text against ×${best.mean_tax.value.toFixed(2)} for the best available — roughly ${Math.round((gemma.mean_tax.value / best.mean_tax.value - 1) * 100)}% more tokens for the same meaning, on every step and every request afterwards.`
-      : 'The tokenizer you inherit is the cost you cannot renegotiate.',
+    figNum: 'Fig. 9 — three paths, priced',
+    caption: `Fig. 9 — Compute for each path as a share of a full run, using the same constants as the vocabulary trade: 6ND, ${fmt(hours.value, 'count')} H100-hours at list price for the full run. Order of magnitude, not a quote — reservations are negotiated well below list, and nothing here counts data, annotation, storage or the failed runs every project has.`,
+    pill: gemma && best ? `inherited tax ×${gemma.mean_tax.value.toFixed(2)} vs ×${best.mean_tax.value.toFixed(2)}` : 'the tokenizer you inherit',
+    rail: [
+      text('The cost that is not on the chart. '),
+      b('A tokenizer is the one decision you cannot renegotiate later'),
+      text(' — measured here, Gemma 4 costs '),
+      gemma ? renderNumber(gemma.mean_tax, { unit: false }) : text('—'),
+      text('× on Indian text against '),
+      best ? renderNumber(best.mean_tax, { unit: false }) : text('—'),
+      text('× for the best available. That is roughly 50% more tokens for the same meaning, on every training step and every request for the life of the model.'),
+    ],
+    states: PATHS,
     arithmetic: [
       para(b('What a full run costs.'), ' ', run.steps.map((x) => `${x.label}: ${x.expression ? x.expression + ' = ' : ''}${x.unit === 'USD' ? '$' + fmt(x.value, 'count') : fmt(x.value, 'count') + ' ' + x.unit}`).join('; '), ' — about ', b(`₹${(money.inr / 1e7).toFixed(0)} crore`), ' of compute. ', run.caveat),
-      para(b('Read against that:'), ' the vocabulary decision in ', ref('how we cut it into tokens', 'tokenizer'), ' saves ', b(`₹${((records.cost.vocab_trade.steps.find((x) => x.unit === 'USD') || {}).inr / 1e7).toFixed(1)} crore`), ' of this, for a 1.2% increase in the cost of every step — a ', b(`${records.cost.vocab_trade.return_multiple}× return`), '. That is the whole argument for designing a tokenizer rather than inheriting one, expressed as a fraction of the bill.'),
+      para(b('Read against that:'), ' the vocabulary decision in ', ref('how we cut it into tokens', 'tokenizer'), ' saves ', b(`₹${((records.cost.vocab_trade.steps.find((x) => x.unit === 'USD') || {}).inr / 1e7).toFixed(1)} crore`), ' of this, for a 1.2% increase in the cost of every step — a ', b(`${records.cost.vocab_trade.return_multiple}× return`), '.'),
       para(b('This does not settle the fork.'), ' It prices one side of it. The stated resolution is a head-to-head at roughly 2-billion-parameter scale on identical data, judged on held-out loss for Indian languages and code — and the comparison has to be normalised for the tokenizer, because a model spending more tokens on the same text sees more tokens for the same budget and looks better than it is. Compare bits per character, not loss per token; skip that and the fork resolves to whichever tokenizer is worst.'),
-      para(b('What the vocabulary choice is worth.'), ` Roughly a ${records.cost.vocab_trade.return_multiple}× return on the 1.2% compute cost, for one epoch, before any inference-side saving.`, ' Full derivation in ', ref('how we cut it into tokens', 'tokenizer'), '.'),
       para(b('What acquisition costs.'), ' Of ', String(acquisition.length), ' ranked acquisitions, ', b(`${free.length} cost nothing`), ' — they are letters and permissions rather than engineering. The market records ', String((records.market || {}).deals ? records.market.deals.length : 0), ' real data deals for comparison, every value reported rather than confirmed.'),
       para(b('The competition.'), ' ', arch.map((a) => `${a.model} at ${fmt(a.params_total, 'count')}${a.licence ? ` (${a.licence})` : ''}`).join('; '), '. The one that matters is not the largest but the freest to download: an Apache-2.0 105B with an Indic-tuned tokenizer already exists, so a from-scratch 40B has to justify itself against something anyone can have today for nothing.'),
     ],
+    refresh: (api) => {
+      PATHS.forEach((x, i) => {
+        api.shard(i, `${fmt(recommended.target_seen_tokens * x.share, 'count')} tokens · about $${fmt(money.value * x.share, 'count')} · tokenizer: ${x.tokenizer}`);
+        api.inline(i, `→ ${(x.share * 100).toFixed(0)}% of a full run’s compute`, false);
+      });
+    },
+    render: (i, api) => {
+      const p2 = PATHS[i];
+      bars.replaceChildren();
+      PATHS.forEach((x) => {
+        const row = $('div', 'tierrow');
+        const track = $('div', 'tiertrack');
+        const fill = $('div', `tierfill ${x.id === p2.id ? 'lane' : 'dim'}`);
+        fill.style.width = `${x.share * 100}%`;
+        track.append(fill);
+        const val = $('div', 'tierval');
+        val.append(usd(Math.round(money.value * x.share / 1e5) * 1e5));
+        row.append($('div', 'tiername', x.name.replace('Continue-pretrain from ', 'continue from ').replace('Upcycle to a mixture of experts', 'upcycle to MoE').replace('Train from scratch', 'from scratch')), track, val);
+        bars.append(row);
+      });
+      api.extra.replaceChildren(bars);
+      api.big({ value: money.value * p2.share, unit: 'USD', provenance: 'estimated', source: run.note });
+      api.bigHit(p2.id !== 'scratch');
+      api.sub(`of compute · ${fmt(recommended.target_seen_tokens * p2.share, 'count')} tokens trained`);
+      api.verdict(p2.verdict, p2.id !== 'scratch');
+      api.note(`Inherits: ${p2.inherits}. Tokenizer: ${p2.tokenizer}.${p2.id === 'scratch' ? ' The only path where the twelve script blocks in the tokenizer chapter are a choice anyone gets to make.' : ' Whatever the seed model decided about Indian scripts is now permanent.'}`);
+      api.strip(PATHS.map((x) => (x.id === p2.id ? 'reg' : '')));
+    },
   });
 }
 
 // ────────────────────────────────────────────────── 12 · what we would do first
 
 function chapterFirst(ctx) {
-  const { data, records, byId } = ctx;
+  const { data, records, byId, recommended } = ctx;
   const plan = records.plan || [];
   const gates = plan.filter((x) => x.is_gate);
   const src = data.sourcing;
-  const licenceOnly = src.blocked.filter((x) => x.blockers.length === 1 && x.blockers[0] === 'licence');
+  const asr = ((records.growth || {}).indic_supply || {}).asr_route || {};
 
-  const body = $('div');
-  body.append($('h3', 'appendix-h', 'The letters, ranked by what they unlock'));
-  const lede = $('p');
-  lede.style.cssText = 'margin:0 0 4px;font-size:12.5px;color:var(--muted)';
-  lede.append(text('No check failed on any of these. Each is a question nobody has asked the owner yet.'));
-  body.append(lede);
-  body.append(table(
-    ['dataset', 'unlocks', 'for'],
-    licenceOnly.map((x) => {
-      const d = byId.get(x.id) || {};
-      return [
-        d.name || x.id,
-        renderNumber({ value: x.unlocks_tokens, unit: 'tokens', provenance: 'estimated', source: 'the catalogue' }, { unit: false }),
-        x.tier,
-      ];
-    }),
-    [1],
-  ));
+  const tierOf = (d) => Object.entries(src.tier_categories).find(([, cats]) => cats.includes(d.category))?.[0] || null;
+  const targets = Object.fromEntries(recommended.mix.tiers.map((t) => [t.name, t.unique_tokens]));
 
-  /* The letters above buy English volume. These buy the thing the whole page says is scarce, and
-   * the first three cost nothing but somebody's time — so leaving them off the queue was the
-   * omission that made this chapter read as an English plan. */
+  /* Three kinds of action, and they differ by who has to agree — which is the only thing that
+   * decides whether you can start on Monday. The chapter used to lead with the letters, so the
+   * work needing nobody's permission was invisible and every headline dataset was English. */
+  const ours = data.datasets
+    .map((d) => ({ d, tier: tierOf(d), blockers: blockersOf(d) }))
+    .filter((r) => r.tier && r.blockers.length && r.blockers.every((b) => b === 'evidence' || b === 'size'))
+    .sort((a, c) => (String(a.tier).startsWith('indic') === String(c.tier).startsWith('indic') ? 0 : String(a.tier).startsWith('indic') ? -1 : 1));
+  const oursIndic = ours.filter((r) => String(r.tier).startsWith('indic'));
+  const letters = src.blocked.filter((x) => x.blockers.length === 1 && x.blockers[0] === 'licence');
   const acquisition = [...(records.acquisition || [])].sort((a, c) => (a.priority || 99) - (c.priority || 99));
   const free = acquisition.filter((x) => x.cost_inr === 0);
-  body.append($('h3', 'appendix-h', 'What to ask for, ranked — and what it costs'));
-  const acqLede = $('p');
-  acqLede.style.cssText = 'margin:0 0 4px;font-size:12.5px;color:var(--muted)';
-  acqLede.append(
-    text('The letters above unlock English volume. These unlock the scarce thing. '),
-    b(`${free.length} of the ${acquisition.length} cost nothing`),
-    text(' — they are a letter, an MoU and an expression of interest, and the top one would open India’s school curriculum in 36 languages, which no amount of scraping replaces.'),
+
+  const GROUPS = [
+    {
+      id: 'ours',
+      marg: 'Nobody has to say yes',
+      count: ours.length,
+      label: 'datasets already open, and unmeasured',
+      lead: 'Start here, because nothing on this list needs anyone’s permission. Every one of these is already licensed for commercial use and is held up only by work nobody has done — no size stated, or the five checks never scored. ',
+      bold: `${oursIndic.length} of the ${ours.length} are Indian-language`,
+      tail: ', which is the tier this whole page says is scarcest. They are not blocked. They are unmeasured.',
+      verdict: 'OURS TO FIX',
+      note: `${oursIndic.length} feed the Indian-language tiers, and ${ours.filter((r) => r.tier === 'indic-natural').length} feed indic-natural specifically — the tier at ${((src.tiers.find((t) => t.tier === 'indic-natural') || {}).covered_share * 100).toFixed(0)}% coverage. Sangraha and IndicCorp v2 already cleared every bar and are counted; these are the ones behind them.`,
+    },
+    {
+      id: 'letters',
+      marg: 'Somebody else has to say yes',
+      count: letters.length,
+      label: 'letters to write, ranked by what they unlock',
+      lead: 'Then the letters. No check failed on any of these and nobody found a problem with the data — somebody simply has not asked the owner whether it may be used. They unlock the most volume by far, and ',
+      bold: 'every single one is an English corpus',
+      tail: '. That is worth seeing plainly: the cheapest lever on this page does nothing for the capability the model is named for.',
+      verdict: 'FOUR EMAILS',
+      note: `Together they unlock ${fmt(letters.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), 'count')} — more than three times the whole budget. Two alone would cover it. And not one of them adds an Indian-language token.`,
+    },
+    {
+      id: 'asks',
+      marg: 'A partnership has to be agreed',
+      count: acquisition.length,
+      label: 'asks, ranked — and what each costs',
+      lead: 'Last, the asks: the things that buy what is actually scarce. These are not purchases — the standing rule on this plan is to create or partner rather than buy — so what they cost is time and goodwill. ',
+      bold: `${free.length} of the ${acquisition.length} cost nothing at all`,
+      tail: ', and the top one would open India’s school curriculum in 36 languages, which no amount of scraping replaces.',
+      verdict: `${free.length} AT ZERO COST`,
+      note: 'A letter, an MoU and an expression of interest. The rest were never costed, which is its own finding: the plan can name what it needs and cannot yet say what it would take.',
+    },
+  ];
+
+  const bars = $('div', 'tierbars');
+
+  const ourTable = () => table(
+    ['dataset', 'tier', 'what is missing', 'who has to agree'],
+    ours.slice(0, 12).map((r) => [
+      r.d.name,
+      r.tier,
+      r.blockers.map((b) => (b === 'evidence' ? 'nobody scored the checks' : 'nobody stated a size')).join(', '),
+      (() => { const z = $('span', '', 'nobody'); z.style.cssText = 'font-family:var(--mono);font-weight:700;color:var(--grade-a)'; return z; })(),
+    ]),
   );
-  body.append(acqLede);
-  body.append(table(
-    ['#', 'ask', 'cost', 'why it ranks here'],
-    acquisition.map((x) => [
-      String(x.priority),
-      x.item,
-      x.cost_inr === 0
-        ? (() => { const z = $('span', '', '₹0'); z.style.cssText = 'font-family:var(--mono);font-weight:700;color:var(--grade-a)'; return z; })()
-        : $('span', 'unpriced', 'never costed'),
-      (x.why || '').split(/(?<=\.)\s/)[0],
-    ]),
-    [0],
-  ));
 
-  body.append($('h3', 'appendix-h', 'The first quarter, in order'));
-  body.append(table(
-    ['#', 'action', 'weeks', 'kind'],
-    plan.map((x) => [
-      String(x.id),
-      x.action,
-      x.week_start ? `${x.week_start}–${x.week_end || x.week_start}` : '—',
-      x.is_gate ? (() => { const g = $('span', '', 'GATE'); g.style.cssText = 'font-family:var(--mono);font-size:10.5px;font-weight:700;color:var(--grade-x)'; return g; })() : x.workstream,
-    ]),
-  ));
-
-  return chapter({
-    id: 'first',
+  return buildExplainer({
     n: 13,
+    anchor: 'first',
+    arithmeticLabel: 'The queue, and what each move unlocks',
+    wide: true,
     title: 'What we would do first',
     claim: [
-      text('The plan is twelve actions across a quarter, and two of them are not work items at all — they are '),
+      text('Sort the work by '),
+      b('who has to agree'),
+      text(', and the order changes. Some of it needs nobody: '),
+      b(`${ours.length} datasets are already licensed and simply unmeasured`),
+      text(', and most of them are Indian-language. Some needs one answered email. Some needs a partnership. The plan itself is twelve actions across a quarter, two of which are '),
       b('permission to spend'),
-      text('. Everything after them is provisional until they clear. And before any of it, there are '),
-      b(`${licenceOnly.length} letters to write`),
-      text(': datasets where nothing is wrong with the data and nobody has established whether it may be used. Those buy volume, almost all of it English. A second, shorter list buys the thing this page says is actually scarce — and its top three cost nothing but somebody’s time.'),
+      text(' rather than work.'),
     ],
-    body,
-    caption: `${gates.length} of the ${plan.length} actions are gates rather than tasks. The licence letters come first for volume — two alone would cover the whole token budget — but every one of them is an English corpus, so the second table is the one that changes what the model knows.`,
+    figNum: 'Fig. 10 — the queue, by who has to agree',
+    caption: `Fig. 10 — Three kinds of action. The bars are how many actions each holds and, where it is known, what they would unlock. Sorting by permission rather than by size is what surfaces the ${ours.length} open Indian-language datasets that no letter and no budget can accelerate — only measurement.`,
+    pill: `${ours.length} need nobody · ${letters.length} need a letter`,
+    rail: [
+      text('The route nothing else reaches. '),
+      b('India is an oral-first information economy'),
+      text(' — enormous amounts of Indian language were never written down, so no crawler will ever find them. Roughly '),
+      renderNumber(asr.hours || { value: null, unit: 'hours', provenance: 'unknown', source: 'docs/ATLAS.md' }),
+      text(' of open, permissively-licensed Indic speech sit in this catalogue. Transcribing them is the one supply route that does not compete with anybody.'),
+    ],
+    states: GROUPS,
     arithmetic: [
-      para('The two gates are the tokenizer validation and the from-scratch question. Until the tokenizer is measured against a trained candidate and the build-or-grow question is settled at small scale, committing capital is guessing.'),
-      para('The letters unlock ', b(fmt(licenceOnly.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), 'count')), ' between them. The two largest would each cover the whole budget alone — which is why "resolve the licences" outranks "collect more data" in every version of this plan.'),
-      para('Beyond the letters: ', String(src.counts.size_unknown), ' datasets are mapped to a tier and have never stated a size, so somebody has to measure before they can be budgeted at all.'),
-      para(b('Why two queues.'), ' The licence letters are the cheapest way to reach the token budget and they do nothing for the binding constraint, which is that all 22 Indian languages together offer roughly a fiftieth of what English does. Volume and scarcity are separate problems and the plan has to fund both — which is why a ₹0 letter to a ministry outranks a trillion scraped tokens in every version of this list.'),
+      para(b('Already open, and ours to fix.'), ` ${ours.length} datasets carry a licence that permits commercial use and are held up only by our own unfinished work. `, b(`${oursIndic.length} of them are Indian-language.`), ' Nobody needs to be asked, nothing needs to be bought, and the work is measurement and grading rather than collection.'),
+      ourTable(),
+      para(b('The speech route, and why it is not optional.'), ' ', asr.claim || '', ' ', asr.why || ''),
+      para(
+        'Roughly ', renderNumber(asr.hours || {}), ' at about ', renderNumber(asr.words_per_hour || {}),
+        ' yields on the order of ', renderNumber(asr.words_yield || {}), '. ', asr.caveat || '',
+      ),
+      para(b('The letters.'), ' They unlock ', b(fmt(letters.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), 'count')), ' between them — the two largest would each cover the whole budget alone, and all four are English. That is why "resolve the licences" outranks "collect more data" for volume, and why it is not the same thing as resolving the Indic problem.'),
+      table(['dataset', 'unlocks', 'for'], letters.map((x) => {
+        const d = byId.get(x.id) || {};
+        return [d.name || x.id, renderNumber({ value: x.unlocks_tokens, unit: 'tokens', provenance: 'estimated', source: 'the catalogue' }, { unit: false }), x.tier];
+      }), [1]),
+      para(b('The asks.'), ' ', (records.growth || {}).acquisition_strategy?.rule || '', ' ', (records.growth || {}).acquisition_strategy?.detail || ''),
+      table(['#', 'ask', 'cost', 'why it ranks here'], acquisition.map((x) => [
+        String(x.priority),
+        x.item,
+        x.cost_inr === 0
+          ? (() => { const z = $('span', '', '₹0'); z.style.cssText = 'font-family:var(--mono);font-weight:700;color:var(--grade-a)'; return z; })()
+          : $('span', 'unpriced', 'never costed'),
+        (x.why || '').split(/(?<=\.)\s/)[0],
+      ]), [0]),
+      para(b('The plan itself.'), ` ${gates.length} of the ${plan.length} actions are gates rather than tasks: until the tokenizer is measured against a trained candidate and the build-or-grow question is settled at small scale, committing capital is guessing.`),
+      table(['#', 'action', 'weeks', 'kind'], plan.map((x) => [
+        String(x.id),
+        x.action,
+        x.week_start ? `${x.week_start}–${x.week_end || x.week_start}` : '—',
+        x.is_gate ? (() => { const g = $('span', '', 'GATE'); g.style.cssText = 'font-family:var(--mono);font-size:10.5px;font-weight:700;color:var(--grade-x)'; return g; })() : x.workstream,
+      ])),
+      para(b('And what is still missing.'), ' ', String(src.counts.size_unknown), ' datasets are mapped to a tier and have never stated a size, so somebody has to measure before they can be budgeted at all. That is the same work as the first list, at a larger scale.'),
     ],
+    refresh: (api) => {
+      GROUPS.forEach((g, i) => {
+        if (g.id === 'ours') {
+          api.shard(i, ours.slice(0, 8).map((r) => r.d.name).join(' · '));
+          api.inline(i, `→ ${ours.length} datasets, ${oursIndic.length} of them Indian-language, none needing permission`, false);
+        } else if (g.id === 'letters') {
+          api.shard(i, letters.map((x) => `${(byId.get(x.id) || {}).name || x.id} ${fmt(x.unlocks_tokens, 'count')}`).join(' · '));
+          api.inline(i, `→ ${fmt(letters.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), 'count')} unlocked, all of it English`, true);
+        } else {
+          api.shard(i, acquisition.slice(0, 5).map((x) => x.item.split(/[(/]/)[0].trim()).join(' · '));
+          api.inline(i, `→ ${free.length} of ${acquisition.length} cost nothing but time`, false);
+        }
+      });
+    },
+    render: (i, api) => {
+      const g = GROUPS[i];
+      bars.replaceChildren();
+      const top = Math.max(...GROUPS.map((x) => x.count));
+      GROUPS.forEach((x) => {
+        const row = $('div', 'tierrow');
+        const track = $('div', 'tiertrack');
+        const fill = $('div', `tierfill ${x.id === g.id ? 'lane' : 'dim'}`);
+        fill.style.width = `${Math.max((x.count / top) * 100, 3)}%`;
+        track.append(fill);
+        const val = $('div', 'tierval', String(x.count));
+        row.append($('div', 'tiername', x.marg.replace(' has to say yes', '').replace(' has to be agreed', '')), track, val);
+        bars.append(row);
+      });
+      api.extra.replaceChildren(bars);
+      api.big({ value: g.count, unit: 'actions', provenance: 'measured', source: 'counted from the catalogue and the plan' });
+      api.bigHit(g.id === 'letters');
+      api.sub(g.label);
+      api.verdict(g.verdict, g.id === 'letters');
+      api.note(g.note);
+      api.strip(GROUPS.map((x) => (x.id === g.id ? 'reg' : '')));
+    },
   });
 }
 
@@ -2028,10 +2154,12 @@ function chapterAppendix(ctx) {
           text(' — an unmeasured dataset contributes nothing until somebody counts it, and what it would contribute is exactly the unknown. That is the difference between a dataset you may use and a dataset you can budget.'),
         );
       } else if (on.size === FIXES.length) {
+        const unfixable = pool.filter((r) => r.blockers.some((b) => b === 'excluded' || b === 'gap')).length;
         note.append(
           text('Everything resolvable, resolved — and '),
           b(`${empty.length} tier${empty.length === 1 ? '' : 's'} still cannot be filled`),
-          text(empty.length ? `: ${empty.join(', ')}. Paperwork cannot conjure a corpus that was never collected, which is the one gap on this page that money and letters do not close.` : '.'),
+          text(empty.length ? `: ${empty.join(', ')}. Paperwork cannot conjure a corpus that was never collected, which is the one gap on this page that money and letters do not close. ` : '. '),
+          text(`${unfixable} datasets are missing from that total too, and no switch here will ever reach them: a check came back FAIL, which is a fact about the data rather than about our unfinished work.`),
         );
       } else {
         note.append(

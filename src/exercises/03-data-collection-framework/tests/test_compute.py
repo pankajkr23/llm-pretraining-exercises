@@ -358,8 +358,38 @@ def test_a_budget_you_cannot_add_up_is_not_a_budget():
 
 def test_a_rejected_dataset_can_never_be_committed():
     """INV-2 again, from the sourcing side: grade X is not a shortfall to be filled."""
-    assert "grade" in blockers(_ds(grade="X"))
-    assert "grade" in blockers(_ds(grade="C"))
+    assert "excluded" in blockers(_ds(grade="X"))
+    assert "evidence" in blockers(_ds(grade="C"))
+
+
+def test_unscored_and_failed_are_different_blockers():
+    """The distinction that decides whether a dataset is anyone's to unblock.
+
+    Grade X means a gate returned FAIL — a fact about the data, and nothing anyone can do about it.
+    Grade C means the questions were never asked, which is a fact about us and is resolvable by
+    doing the work. Collapsing the two into one "grade" blocker dropped every unscored dataset out
+    of the work queue, and that is where the whole open Indic catalogue lives.
+    """
+    assert blockers(_ds(grade="C")) == ["evidence"]
+    assert blockers(_ds(grade="X")) == ["excluded"]
+    assert "evidence" not in blockers(_ds(grade="X"))
+    assert "excluded" not in blockers(_ds(grade="C"))
+
+
+def test_an_unscored_licence_clean_dataset_is_counted_as_ours_to_fix():
+    """Nobody's permission is needed for these, so the plan has to be able to see them."""
+    mix = {"tiers": [{"name": "english-web-hq", "unique_tokens": 1e12}]}
+    plan = build_plan(
+        [
+            _ds(id="ours", grade="C", licence_commercial=True, size_tokens={}),
+            _ds(id="theirs", licence_commercial=None, size_tokens={"value": 1e9}),
+            _ds(id="dead", grade="X", licence_commercial=True, size_tokens={"value": 1e9}),
+        ],
+        mix,
+    )
+    assert plan["counts"]["open_but_unmeasured"] == 1
+    # The letters ship; the rest of the queue is derivable from the index and is not duplicated.
+    assert [b["id"] for b in plan["blocked"]] == ["theirs"]
 
 
 def test_a_gap_is_not_a_candidate():
@@ -390,8 +420,10 @@ def test_the_work_queue_ranks_paperwork_above_the_unmeasured():
         ],
         mix,
     )
-    assert [b["id"] for b in plan["blocked"]] == ["huge", "small", "unsized"]
-    assert plan["blocked"][-1]["unlocks_tokens"] is None
+    # Only the letters ship — a dataset blocked on a licence *and* a size is derivable from the
+    # index, so it is counted rather than duplicated.
+    assert [b["id"] for b in plan["blocked"]] == ["huge", "small"]
+    assert plan["blocked"][0]["unlocks_tokens"] == 9e12
 
 
 def test_over_supply_is_not_a_surplus_to_spend_elsewhere():

@@ -88,5 +88,41 @@
     "covered_share": 0.416,
     "surprise": "Every tier is short, and the two that are shortest are the ones nobody expects. Natural Indian text is covered at 25% once machine translation is excluded from the count. Indian civilizational literature is covered at 0% because not one of the 145 catalogued datasets supplies it. What is missing elsewhere — general web, code, maths — is abundant and blocked on a licence nobody has established.",
     "reading": "A reader arrives assuming an India-first corpus fails on Indian data. It does not. It fails on the ordinary bulk that everybody assumes is free, and it fails for legal reasons rather than technical ones."
+  },
+  "indic_supply": {
+    "note": "The Indic supply route the action chapter kept missing. Every dataset here is already open — its licence permits commercial use — and every one is blocked on work nobody has done rather than on anyone's permission. That distinction is why they never appeared in a queue built around letters.",
+    "source": "docs/ATLAS.md sections on speech and the week 4-8 plan",
+    "asr_route": {
+      "claim": "ASR transcription is one of the only ways to manufacture genuinely natural Indic text at scale.",
+      "why": "India is an oral-first information economy: enormous amounts of Indic language were never written down, so they cannot be crawled. Transcription is the only way to reach them.",
+      "hours": {
+        "value": 35000,
+        "unit": "hours",
+        "provenance": "estimated",
+        "source": "docs/ATLAS.md — open, permissively-licensed Indic speech across IndicVoices, Vaani, SPRING-INX, Shrutilipi, Kathbath and SYSPIN"
+      },
+      "words_per_hour": {
+        "value": 9000,
+        "unit": "words/hour",
+        "provenance": "estimated",
+        "source": "docs/ATLAS.md"
+      },
+      "words_yield": {
+        "value": 300000000,
+        "unit": "words",
+        "provenance": "estimated",
+        "source": "docs/ATLAS.md — 35,000 hours at roughly 9,000 words/hour"
+      },
+      "caveat": "Small in raw token terms and extraordinary in distributional value: it is the conversational register web text completely lacks, and conversation is this model's stated primary task. No token figure is given here on purpose — the Atlas counts words, the conversion depends on a tokenizer nobody has trained, and counting it is the first task rather than an assumption.",
+      "corpora": [
+        "SPK-02",
+        "SPK-03",
+        "SPK-07",
+        "SPK-08",
+        "SPK-06",
+        "SPK-01",
+        "SPK-04"
+      ]
+    }
   }
 }

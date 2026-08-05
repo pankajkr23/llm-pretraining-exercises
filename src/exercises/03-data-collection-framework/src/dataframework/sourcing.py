@@ -203,13 +203,21 @@ def blockers(record: dict[str, Any]) -> list[str]:
         record: A catalogue index entry.
 
     Returns:
-        Zero or more of `grade`, `licence`, `size`, `does not exist`. Empty means committable.
+        Zero or more of `evidence`, `excluded`, `licence`, `size`, `does not exist`. Empty means
+        committable. `evidence` and `excluded` are deliberately distinct: the first is work nobody
+        has done, the second is a check that came back FAIL.
     """
     reasons: list[str] = []
     if record.get("is_gap"):
         reasons.append("does not exist")
-    if record.get("grade") not in USABLE_GRADES:
-        reasons.append("grade")
+    # "Nobody scored it" and "a check failed" are not the same blocker, and treating them as one
+    # buried the entire open Indic catalogue. Grade X means a gate returned FAIL — a fact about the
+    # data. Grade C means the questions were never asked, which is a fact about us, and it is
+    # resolvable by doing the work rather than by anyone granting permission.
+    if record.get("grade") == "X":
+        reasons.append("excluded")
+    elif record.get("grade") not in USABLE_GRADES:
+        reasons.append("evidence")
     if record.get("licence_commercial") is not True:
         reasons.append("licence")
     if _tokens(record) is None:
@@ -269,7 +277,16 @@ def build_plan(datasets: list[dict[str, Any]], mix: dict[str, Any]) -> dict[str,
     for record in datasets:
         tier = tier_of(record)
         reasons = blockers(record)
-        if not tier or not reasons or "does not exist" in reasons or "grade" in reasons:
+        # Only a failed gate or a missing corpus leaves the queue. An unscored dataset belongs in
+        # it — it is work somebody can start today without asking anyone.
+        if not tier or not reasons or "does not exist" in reasons or "excluded" in reasons:
+            continue
+        # Ships only the rows the browser cannot derive: the letters, which carry a ranking by what
+        # each unlocks. Everything else in the queue is fully described by fields already in the
+        # index — grade, licence, size, category — and the page recomputes it with the same rule.
+        # Shipping the whole 95-row queue cost 7KB of index budget to repeat what was already
+        # there. The counts below still describe all of it.
+        if reasons != ["licence"]:
             continue
         blocked.append(
             {
@@ -303,6 +320,13 @@ def build_plan(datasets: list[dict[str, Any]], mix: dict[str, Any]) -> dict[str,
             "mapped_to_a_tier": sum(1 for d in datasets if tier_of(d)),
             "committable": sum(1 for d in datasets if tier_of(d) and not blockers(d)),
             "blocked_on_licence_only": sum(1 for b in blocked if b["blockers"] == ["licence"]),
+            # Licence-clean and blocked only on work nobody has done: no permission needed from
+            # anyone. Counted here because `blocked` no longer ships these rows.
+            "open_but_unmeasured": sum(
+                1
+                for d in datasets
+                if tier_of(d) and blockers(d) and set(blockers(d)) <= {"evidence", "size"}
+            ),
             "size_unknown": sum(1 for d in datasets if tier_of(d) and _tokens(d) is None),
         },
     }
