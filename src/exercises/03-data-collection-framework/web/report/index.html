@@ -230,6 +230,14 @@
       };
       const fmt = (v, u) => formatValue(v, u);
 
+      /* Sections that merged into this page need a same-page link. ref() points at the atlas and
+       * would bounce the reader through a redirect to get back here. */
+      const secRef = (text, n) => {
+        const a = $('a', 'ref', text);
+        a.href = `#s${n}`;
+        return a;
+      };
+
       /* prose · widget · italic caption — the shape every section takes. */
       const sect = (n, title, claimNodes, widget, caption) => {
         const s = $('section');
@@ -654,7 +662,7 @@
               $('b', '', 'how wide the model is'),
               document.createTextNode('. Scrolling changes the width. The curve is '),
               $('b', '', 'not yet anchored on a measurement'),
-              document.createTextNode(' — see '), ref('the tokenizer tax', 'fertility'), document.createTextNode('.'),
+              document.createTextNode(' — see '), secRef('the tokenizer tax', 3), document.createTextNode('.'),
             ],
             figNum: 'Fig. 2 — where the gap is widest',
             caption: 'Fig. 2 — Token saving and added softmax cost against vocabulary, swept live from vocab_sweep.py’s model at the width each step names. The shaded gap is the net benefit; the peak is where it is widest. The two curves do not cross — the optimum is a widest gap, not a crossing.',
@@ -1104,8 +1112,7 @@
               $('b', '', 'accumulate'),
               document.createTextNode(' — by the last stage there are seventeen, two of them reversals of an earlier recommendation. Red is a tool this research decided against '),
               $('b', '', 'after measuring it'),
-              document.createTextNode('. Full reasoning per tool in '),
-              ref('the tools', 'tools'), document.createTextNode('.'),
+              document.createTextNode('. Each stage names the tools it commits to, with the verdict beside them.'),
             ],
             figNum: 'Fig. 6 — decisions committed',
             caption: 'Fig. 6 — One mark per tool in the register, filling as the pipeline is walked. Red marks a tool the research rejected on its own measurement, not on reputation. Stage names come from the tool register; there are seven, not the nine an earlier draft of this section claimed.',
