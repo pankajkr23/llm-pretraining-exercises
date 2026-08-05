@@ -1860,7 +1860,7 @@ function chapterFirst(ctx) {
 // ──────────────────────────────────────────────────────────────── the appendix
 
 function chapterAppendix(ctx) {
-  const { data, records, nameOf } = ctx;
+  const { data, records, nameOf, recommended } = ctx;
   const s = $('section');
   s.id = 'appendix';
   const h = $('h2');
@@ -1886,14 +1886,133 @@ function chapterAppendix(ctx) {
     s.append(d);
   };
 
-  /* The canvas the two-page version opened its atlas with, kept because it is the one view where
-   * the whole catalogue is visible at once. Static here rather than a five-state walk: the states
-   * were re-encodings, and the tables below carry those encodings already. */
+  /* The catalogue, as the question a reader actually has.
+   *
+   * This was 145 identical marks in a wall. Grouping them by grade fixed the legend and left the
+   * real problem untouched: 115 grey squares say nothing the number 115 did not already say. The
+   * marks carried no information, only a hover.
+   *
+   * What the catalogue actually contains is a set problem. Four things can block a dataset —
+   * evidence, licence, size, existence — and the interesting fact is which combinations occur and
+   * what each is worth. Resolving licences alone takes the corpus from 6.57T to 61.17T, because
+   * four datasets are blocked on nothing else and hold 54.6T between them. That is the page's
+   * whole thesis, and it was rendered as grey squares.
+   *
+   * So: the reader resolves blockers and watches the corpus move. */
   {
-    const canvas = $('div', 'catalogue');
-    /* Every mark opens the five gates that produced its grade. A grade with no reasoning behind it
-     * is a number to be argued with; the reasoning is the part worth reading. `catalog.json` holds
-     * it and is fetched once, on the first click, because it is 300 KB the page does not need. */
+    const tierOf = (d) => Object.entries(data.sourcing.tier_categories).find(([, cats]) => cats.includes(d.category))?.[0] || null;
+    const NATURAL = new Set(['indic-natural', 'indic-knowledge-systems', 'indic-civilizational']);
+    /* Same rule the pipeline uses: natural tiers count verified human-origin text, never headlines. */
+    const countable = (d, tier) =>
+      (NATURAL.has(tier) && (d.size_verified || {}).value !== undefined
+        ? d.size_verified.value
+        : (d.size_tokens || {}).value) || 0;
+
+    const pool = data.datasets.map((d) => ({ d, tier: tierOf(d), blockers: blockersOf(d) })).filter((r) => r.tier);
+    const targets = Object.fromEntries(recommended.mix.tiers.map((t) => [t.name, t.unique_tokens]));
+    const needed = Object.values(targets).reduce((a, v) => a + v, 0);
+
+    const FIXES = [
+      { id: 'licence', label: 'licences answered', sub: 'somebody asks the owner and gets a yes' },
+      { id: 'size', label: 'sizes measured', sub: 'somebody counts the tokens nobody stated' },
+      { id: 'evidence', label: 'claims checked', sub: 'the five gates get scored instead of left blank' },
+    ];
+    const on = new Set();
+
+    /* `gap` is deliberately not resolvable: a corpus that does not exist cannot be unblocked by
+     * paperwork, and letting the reader switch it off would teach the opposite of the finding. */
+    const unlocked = () => pool.filter((r) => r.blockers.every((b) => on.has(b)));
+
+    const resolver = $('div', 'resolver');
+    const switches = $('div', 'filter-chips');
+    const big = $('div', 'resolver-big');
+    const sub = $('div', 'resolver-sub');
+    const note = $('p', 'resolver-note');
+    const bars = $('div', 'tierbars');
+
+    function drawResolver() {
+      switches.replaceChildren();
+      FIXES.forEach((f) => {
+        const chip = $('button', 'chip');
+        chip.type = 'button';
+        const would = pool.filter((r) => r.blockers.every((b) => b === f.id || on.has(b))).length;
+        chip.append($('span', '', f.label), $('span', 'chip-n', on.has(f.id) ? 'on' : `→ ${would}`));
+        chip.setAttribute('aria-pressed', String(on.has(f.id)));
+        chip.title = f.sub;
+        chip.addEventListener('click', () => {
+          if (on.has(f.id)) on.delete(f.id); else on.add(f.id);
+          drawResolver();
+        });
+        switches.append(chip);
+      });
+
+      const rows = unlocked();
+      const tokens = rows.reduce((a, r) => a + countable(r.d, r.tier), 0);
+      big.replaceChildren(renderNumber({ value: tokens, unit: 'tokens', provenance: 'measured', source: 'summed from the catalogue under the selected resolutions' }, { unit: false }));
+      sub.textContent = `${rows.length} of ${pool.length} datasets committable, against ${fmt(needed, 'count')} the mixture needs`;
+
+      bars.replaceChildren();
+      Object.keys(targets).forEach((tier) => {
+        const have = rows.filter((r) => r.tier === tier).reduce((a, r) => a + countable(r.d, r.tier), 0);
+        const share = Math.min(have / targets[tier], 1);
+        const row = $('div', 'tierrow');
+        const track = $('div', 'tiertrack');
+        const fill = $('div', `tierfill ${share >= 1 ? 'natural' : share > 0 ? 'lane' : 'missing'}`);
+        fill.style.width = `${Math.max(share * 100, share ? 2 : 0)}%`;
+        track.append(fill);
+        const val = $('div', 'tierval', `${(share * 100).toFixed(0)}%`);
+        row.append($('div', 'tiername', tier), track, val);
+        bars.append(row);
+      });
+
+      const covered = Object.keys(targets).filter((t) => rows.some((r) => r.tier === t)).length;
+      const empty = Object.keys(targets).filter((t) => !rows.some((r) => r.tier === t));
+      note.replaceChildren();
+      if (!on.size) {
+        note.append(
+          text('Nothing resolved yet — this is the catalogue as it stands, and it is the number every chapter above is arguing with. '),
+          b('Switch on a repair and watch what it buys.'),
+        );
+      } else if (on.has('licence') && on.size === 1) {
+        note.append(
+          b('One answered email each, and the corpus grows almost tenfold.'),
+          text(' Four datasets are blocked on nothing but an unanswered licence and hold 54.6T between them. No check failed on any of them, nobody found a problem with the data, and nobody has written the letter. This is why the queue in '),
+          ref('what we would do first', 'first'),
+          text(' opens with letters rather than crawlers.'),
+        );
+      } else if (on.has('size') && !on.has('evidence')) {
+        /* Measuring a size tells you a number nobody has; it does not invent tokens. Six datasets
+         * move into the committable column and the total does not shift, which is the honest and
+         * initially baffling consequence of not knowing how big something is. */
+        note.append(
+          text('Notice the total barely moves. Measuring sizes makes '),
+          b('more datasets countable without making the corpus bigger'),
+          text(' — an unmeasured dataset contributes nothing until somebody counts it, and what it would contribute is exactly the unknown. That is the difference between a dataset you may use and a dataset you can budget.'),
+        );
+      } else if (on.size === FIXES.length) {
+        note.append(
+          text('Everything resolvable, resolved — and '),
+          b(`${empty.length} tier${empty.length === 1 ? '' : 's'} still cannot be filled`),
+          text(empty.length ? `: ${empty.join(', ')}. Paperwork cannot conjure a corpus that was never collected, which is the one gap on this page that money and letters do not close.` : '.'),
+        );
+      } else {
+        note.append(
+          text(`${covered} of the ${Object.keys(targets).length} tiers now have something in them. `),
+          text(empty.length ? `Still empty: ${empty.join(', ')}.` : 'Every tier has a supply.'),
+        );
+      }
+    }
+
+    resolver.append(switches, big, sub, bars, note);
+    drawResolver();
+
+    /* Finding one row is the other thing anybody wants from a catalogue, and it needs names, not
+     * anonymous marks. The list is the search result rather than a wall rendered up front. */
+    const search = $('input', 'catsearch');
+    search.type = 'search';
+    search.placeholder = `Find one of ${data.datasets.length} datasets by name…`;
+    search.setAttribute('aria-label', 'Search the catalogue by dataset name');
+    const results = $('div', 'catresults');
     const card = $('div', 'gatecard');
     card.hidden = true;
     let catalogue = null;
@@ -1905,7 +2024,7 @@ function chapterAppendix(ctx) {
           const root = data.registry_root || 'catalog.json';
           catalogue = new Map((await (await fetch(`./${root}`)).json()).map((x) => [x.id, x]));
         } catch {
-          card.replaceChildren($('p', 'gatecard-name', `${d.name} — the full register could not be loaded. Serve over http, not file://.`));
+          card.replaceChildren($('p', 'gatecard-name', `${d.name} — the register could not be loaded. Serve over http, not file://.`));
           return;
         }
       }
@@ -1920,141 +2039,53 @@ function chapterAppendix(ctx) {
       if (full.owner) head.append($('span', 'gatecard-owner', ` ${full.owner}`));
       card.append(head);
       const keys = Object.keys(gates);
-      if (!keys.length) {
-        card.append($('p', 'gatecard-none', 'No gate was scored for this entry.'));
-      } else {
-        card.append(table(
-          ['gate', 'verdict', 'why', 'confidence'],
-          keys.map((k) => {
-            const v = gates[k] || {};
-            const verdict = $('span', 'gateverdict', v.verdict || '—');
-            verdict.setAttribute('data-verdict', v.verdict || '');
-            return [k, verdict, v.reasoning || '—', v.confidence || '—'];
-          }),
-        ));
+      if (!keys.length) card.append($('p', 'gatecard-none', 'No gate was scored for this entry.'));
+      else {
+        card.append(table(['gate', 'verdict', 'why', 'confidence'], keys.map((k) => {
+          const v = gates[k] || {};
+          const verdict = $('span', 'gateverdict', v.verdict || '—');
+          verdict.setAttribute('data-verdict', v.verdict || '');
+          return [k, verdict, v.reasoning || '—', v.confidence || '—'];
+        })));
       }
-      if ((full.gotchas || []).length) {
-        full.gotchas.forEach((x) => {
-          const p = $('p', 'gatecard-gotcha');
-          const badge = $('span', 'gotcha', x.type);
-          badge.setAttribute('data-type', x.type);
-          p.append(badge, text(` ${x.text}`));
-          card.append(p);
-        });
-      }
+      (full.gotchas || []).forEach((x) => {
+        const q = $('p', 'gatecard-gotcha');
+        const badge = $('span', 'gotcha', x.type);
+        badge.setAttribute('data-type', x.type);
+        q.append(badge, text(` ${x.text}`));
+        card.append(q);
+      });
       card.append($('p', 'gatecard-none', full.licence ? `Licence: ${full.licence.raw}` : 'Licence: nobody established one.'));
     };
 
-    const units = new Map(data.datasets.map((d) => {
-      const u = $('button', `unit ${d.is_gap ? 'out gapmark' : { A: 'ok', B: 'mid', C: '', X: 'out' }[d.grade] || ''}`.trim());
-      u.type = 'button';
-      u.title = `${d.id} · ${d.name} — grade ${d.grade}${d.is_gap ? ' · does not exist yet' : ''}`;
-      u.setAttribute('aria-label', `${d.name}, grade ${d.grade}. Show its five gates`);
-      u.addEventListener('click', () => {
-        units.forEach((x) => x.classList.remove('sel'));
-        u.classList.add('sel');
-        openCard(d);
-      });
-      return [d.id, u];
-    }));
-    /* Grouped by grade, so where a mark sits tells you what it is before you touch it. A flat wall
-     * of 145 identical squares carried its meaning entirely in hover, which is not a meaning most
-     * readers ever collect. And a search box, because the other thing anybody wants from a
-     * catalogue view is to find one row. */
-    const GRADE_BANDS = [
-      { key: 'A', cls: 'ok', label: 'usable', sub: 'all five checks scored, nothing outstanding' },
-      { key: 'B', cls: 'mid', label: 'usable with care', sub: 'scored, with a caveat recorded against it' },
-      { key: 'C', cls: '', label: 'thin evidence', sub: 'nobody has answered the questions a grade is made of' },
-      { key: 'X', cls: 'out', label: 'excluded', sub: 'a check failed on provenance or contamination' },
-      { key: 'GAP', cls: 'out gapmark', label: 'does not exist yet', sub: 'a capability with no corpus behind it at any licence' },
-    ];
-    const bandOfDataset = (d) => (d.is_gap ? 'GAP' : d.grade);
-
-    const search = $('input', 'catsearch');
-    search.type = 'search';
-    search.placeholder = `Find one of ${data.datasets.length} datasets by name…`;
-    search.setAttribute('aria-label', 'Filter the catalogue by dataset name');
-
-    const bands = $('div', 'bands');
-    GRADE_BANDS.forEach((band) => {
-      const members = data.datasets.filter((d) => bandOfDataset(d) === band.key);
-      const row = $('div', 'band');
-      const head = $('div', 'band-head');
-      const swatch = $('span', `band-swatch ${band.cls}`.trim());
-      head.append(swatch, $('span', 'band-label', band.label), $('span', 'band-n', String(members.length)));
-      const strip = $('div', 'canvas');
-      strip.setAttribute('role', 'group');
-      strip.setAttribute('aria-label', `${members.length} datasets graded ${band.label}`);
-      if (!members.length) {
-        const none = $('span', 'band-none', 'none in this catalogue');
-        strip.append(none);
-      }
-      members.forEach((d) => {
-        const u = units.get(d.id);
-        strip.append(u);
-      });
-      row.append(head, $('div', 'band-sub', band.sub), strip);
-      bands.append(row);
-    });
-
-    /* One tab stop per band, arrows within: 145 sequential stops is an obstacle, not navigation. */
-    const ordered = [...units.values()];
-    ordered.forEach((u, k) => { u.tabIndex = k === 0 ? 0 : -1; });
-    let rover = 0;
-    bands.addEventListener('keydown', (e) => {
-      const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 20, ArrowUp: -20 }[e.key];
-      if (step === undefined) return;
-      e.preventDefault();
-      rover = Math.max(0, Math.min(ordered.length - 1, rover + step));
-      ordered.forEach((u, k) => { u.tabIndex = k === rover ? 0 : -1; });
-      ordered[rover].focus();
-    });
-
-    const hits = $('p', 'catsearch-hits');
     search.addEventListener('input', () => {
       const q = search.value.trim().toLowerCase();
-      let n = 0;
-      data.datasets.forEach((d) => {
-        const u = units.get(d.id);
-        const match = !q || `${d.name} ${d.id} ${d.category}`.toLowerCase().includes(q);
-        u.classList.toggle('dim', Boolean(q) && !match);
-        if (q && match) n += 1;
+      results.replaceChildren();
+      if (q.length < 2) return;
+      const hits = data.datasets.filter((d) => `${d.name} ${d.id} ${d.category}`.toLowerCase().includes(q)).slice(0, 12);
+      if (!hits.length) {
+        results.append($('p', 'filter-none', 'No dataset matches that.'));
+        return;
+      }
+      hits.forEach((d) => {
+        const line = $('button', 'catrow');
+        line.type = 'button';
+        const grade = $('span', 'grade', d.grade);
+        grade.setAttribute('data-grade', d.grade);
+        const blocked = blockersOf(d);
+        line.append(
+          $('span', 'catrow-name', d.name),
+          grade,
+          $('span', 'catrow-why', blocked.length ? `blocked on ${blocked.join(', ')}` : 'committable today'),
+        );
+        line.addEventListener('click', () => openCard(d));
+        results.append(line);
       });
-      hits.replaceChildren();
-      if (!q) return;
-      hits.append(
-        text(n ? `${n} match${n > 1 ? 'es' : ''} — ` : 'No dataset matches that. '),
-        ...(n && n <= 6
-          ? [text(data.datasets.filter((d) => `${d.name} ${d.id} ${d.category}`.toLowerCase().includes(q)).map((d) => d.name).join(', '))]
-          : n
-            ? [text('narrow it further to see them named.')]
-            : []),
-      );
     });
 
-    canvas.append(search, hits, bands);
-
-    /* The bands carry the legend now, so this says only what a grade is and how to read one. */
-    const note = $('p');
-    note.style.cssText = 'font-size:12px;color:var(--muted);margin:14px 0 0;max-width:72ch';
-    note.append(
-      text('A grade is five checks scored together — where the text came from, whether its composition matches its claims, whether it overlaps the exam sets, how much survives cleaning, and whether any of it is evidenced. Nothing is scored for a question nobody answered, which is why '),
-      /* The bands above split grade C from the scheduled gap, and the gap is graded C as well. Say
-       * 115 to match what the reader can count, and name the 116th rather than quietly rolling it
-       * in — two true totals for one fact, sitting next to each other, is how a page loses trust. */
-      b(`${data.datasets.filter((d) => d.grade === 'C' && !d.is_gap).length} of ${data.datasets.length} sit at C`),
-      text(
-        data.datasets.some((d) => d.grade === 'C' && d.is_gap)
-          ? ' — a further one is graded C and has no corpus at all, which is why it is banded separately above — and none reaches A. '
-          : ' and none reaches A. ',
-      ),
-      b('Click any mark'),
-      text(' to read its five verdicts, the reasoning behind each and how confident it is.'),
-    );
-
     const wrap = $('div');
-    wrap.append(canvas, note, card);
-    block(`The whole catalogue at once — ${data.datasets.length} datasets`, wrap);
+    wrap.append(resolver, $('h3', 'appendix-h4', 'Or find one dataset'), search, results, card);
+    block(`What would have to be fixed — ${pool.length} datasets against ${fmt(needed, 'count')}`, wrap);
   }
 
   block(`Every dataset — ${data.datasets.length}`, table(
