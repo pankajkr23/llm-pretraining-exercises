@@ -120,13 +120,39 @@ export function makeExplainer({ $, onPlay }) {
         }
         body.append(stepsEl, stickyEl);
   
-        /* The middle band of the viewport picks the active state. */
+        /* Whichever step is nearest the middle of the viewport is the active one.
+         *
+         * The first version keyed off `isIntersecting` against a 10%-tall band. Two things go
+         * wrong at speed: several steps can be inside the band at once and the last entry
+         * processed wins regardless of which is actually centred, and a step can pass through the
+         * band entirely between two callbacks and never fire at all — so a fast scroll skipped
+         * states. Measuring distance to the centre has neither failure: there is always exactly
+         * one nearest step, and it is correct no matter how far the page moved since the last
+         * frame. The observer is now only a cheap trigger for "something moved". */
+        const pickNearest = () => {
+          const middle = window.innerHeight / 2;
+          let best = 0;
+          let bestGap = Infinity;
+          stepEls.forEach((el, k) => {
+            const box = el.getBoundingClientRect();
+            const gap = Math.abs(box.top + box.height / 2 - middle);
+            if (gap < bestGap) { bestGap = gap; best = k; }
+          });
+          show(best);
+        };
         if ('IntersectionObserver' in window) {
-          const io = new IntersectionObserver(
-            (entries) => entries.forEach((e) => { if (e.isIntersecting) show(Number(e.target.dataset.i)); }),
-            { rootMargin: '-45% 0px -45% 0px' },
-          );
+          let queued = false;
+          const onMove = () => {
+            if (queued) return;
+            queued = true;
+            requestAnimationFrame(() => { queued = false; pickNearest(); });
+          };
+          /* A wide band so the callback fires across the whole scroll, not just at the midpoint. */
+          const io = new IntersectionObserver(onMove, { rootMargin: '0px', threshold: [0, 0.5, 1] });
           stepEls.forEach((el) => io.observe(el));
+          /* Momentum scrolling can outrun the observer, so the scroll itself is the backstop. */
+          window.addEventListener('scroll', onMove, { passive: true });
+          window.addEventListener('resize', onMove, { passive: true });
         }
   
         /* Layer 3. Closed by default: a 13-year-old never opens it and is not misled, an engineer

@@ -26,6 +26,8 @@
   --line: #d2d2d7;
   /* 4.94:1 on --bg, 5.38:1 on --panel. #0071e3 measured 4.31:1 and failed as link text. */
   --accent: #0068d1;
+  /* Text that sits ON the accent. White clears 5.38:1 here; see the dark block for why it flips. */
+  --on-accent: #ffffff;
   --accent-soft: rgba(0, 104, 209, 0.1);
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.03);
 
@@ -67,6 +69,9 @@
     --faint: #8a8a90;
     --line: #2f2f31;
     --accent: #2997ff;
+    /* White on this measures 3.01:1 and fails. Near-black measures about 6.9:1, so the pill and the
+       jump button invert rather than losing their fill. */
+    --on-accent: #06121f;
     --accent-soft: rgba(41, 151, 255, 0.14);
     --shadow: none;
 

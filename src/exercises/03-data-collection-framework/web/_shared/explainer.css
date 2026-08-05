@@ -56,7 +56,10 @@
  * --muted and --faint text faster than it fades anything else: even 0.8 fails. The affordance is
  * carried by the rule and the label instead, both of which stay legible at every state. */
 .step {
-  min-height: 30vh;
+  /* Tall enough to read as its own screen, with real air between states: at 30vh and no margin the
+   * steps ran together and the active one abutted the next heading. */
+  min-height: 34vh;
+  margin-bottom: 7vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -64,7 +67,8 @@
   padding-left: 18px;
   transition: border-color 0.18s;
 }
-.step.on { border-left-color: var(--accent); }
+.step:last-child { margin-bottom: 0; }
+.step.on { border-left-color: var(--accent); border-left-width: 3px; padding-left: 17px; }
 .step.on .marg { color: var(--accent); }
 /* Deleting the control row (§18.2) deletes what a keyboard would land on, so focus walks states. */
 .step:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 3px; }
@@ -153,7 +157,7 @@
   /* Solid rather than a tint: accent text on a 10% accent wash measured under 4.5:1, and white on
      the accent clears 5.38:1. */
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   margin-top: 14px;
 }
 
@@ -172,7 +176,7 @@
 @media (max-width: 760px) {
   .scrolly, .scrolly.wide { grid-template-columns: 1fr; gap: 0; }
   .sticky { position: sticky; top: 0; order: -1; background: var(--bg); padding: 10px 0 6px; z-index: 3; }
-  .step { min-height: 26vh; }
+  .step { min-height: 30vh; margin-bottom: 5vh; }
 }
 
 /* The complete end state: every step and its verdict, with nothing left to scroll for. */

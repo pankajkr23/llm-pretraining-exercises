@@ -30,10 +30,14 @@ from .orphans import find_orphans
 from .shingles import write_index
 from .sourcing import build_lifecycle, build_plan
 from .vocab_sweep import summarise, sweep
+from .vocab_trade import price_vocab_trade
 
 # Fertility has no measured anchor until task 2.2b runs, so the sweep's own reference point is
 # declared estimated and the curve is labelled accordingly.
 REFERENCE_VOCAB = 100_000
+
+# The seed model this whole plan is written for.
+MODEL_PARAMS = 40_000_000_000
 REFERENCE_FERTILITY = 2.4
 
 
@@ -294,6 +298,7 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
     datasets = load_json(cfg.catalog_file)
     benchmarks = load_json(cfg.benchmarks_file)
     records = _load_records(cfg)
+
     fertility_run = cfg.records_dir / "fertility.json"
     if fertility_run.exists():
         records["fertility"] = load_json(fertility_run)
@@ -313,6 +318,21 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
     shingle_meta = write_index(cfg)
 
     presets = _strip_tier_prose(build_all(records.get("milestones", [])))
+    # The vocabulary trade, recomputed against the mixture actually shipping. docs/DECISIONS.md
+    # 4.4 works it by hand against a 15T budget with a 25.3% India slice; both have since moved,
+    # and a copied derivation goes stale without saying so. The record's hand-worked steps are
+    # replaced rather than shipped alongside, so there is one answer on the page.
+    _rec_mix = next(
+        (preset for preset in presets if preset.get("recommended")), presets[len(presets) // 2]
+    )
+    if "cost" in records:
+        _trade = records["cost"].get("vocab_trade", {})
+        records["cost"]["vocab_trade"] = _trade | price_vocab_trade(
+            params=MODEL_PARAMS,
+            seen_tokens=_rec_mix["mix"]["total_seen_tokens"],
+            indic_share=_rec_mix["mix"]["indic_share"],
+            compute_cost_share=(_trade.get("costs") or {}).get("value") or 0.012,
+        )
 
     grades: dict[str, int] = {}
     for record in datasets:

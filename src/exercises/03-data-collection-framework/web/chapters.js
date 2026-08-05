@@ -685,69 +685,123 @@ function chapterDatasets(ctx) {
   const src = data.sourcing;
   const tierOf = (d) => Object.entries(src.tier_categories).find(([, cats]) => cats.includes(d.category))?.[0] || null;
   const targets = Object.fromEntries(recommended.mix.tiers.map((t) => [t.name, t.unique_tokens]));
+  const planOf = (tier) => (src.tiers || []).find((x) => x.tier === tier) || {};
 
-  const grouped = {};
-  data.datasets.forEach((d) => {
-    const t = tierOf(d);
-    if (t) (grouped[t] ||= []).push(d);
-  });
+  const rows = data.datasets
+    .map((d) => ({ d, tier: tierOf(d), action: actionOf(d) }))
+    .filter((r) => r.tier)
+    .sort((a, c) => ((c.d.size_tokens || {}).value || -1) - ((a.d.size_tokens || {}).value || -1));
+
+  /* 145 rows in ten stacked tables is a reference document, not a shopping list. The reader arrives
+   * with one of two questions — "what can I use for X" or "what is blocked on Y" — and both are a
+   * filter. Nothing is hidden: every row is one click away and the counts always show the whole. */
+  const ACTION_ORDER = ['commit', 'licence', 'size', 'evidence', 'excluded', 'gap'];
+  const state = { tier: 'all', action: 'all' };
 
   const body = $('div');
-  Object.keys(targets).forEach((tier) => {
-    const rows = (grouped[tier] || []).sort((a, c) => ((c.size_tokens || {}).value || -1) - ((a.size_tokens || {}).value || -1));
-    if (!rows.length) return;
-    const committed = rows.filter((d) => actionOf(d) === 'commit');
-    const have = committed.reduce((a, d) => a + (d.size_tokens.value || 0), 0);
-    body.append($('h3', 'appendix-h', tier));
-    const lede = $('p', 'sub');
-    lede.style.cssText = 'margin:0 0 4px;font-size:12.5px;color:var(--muted)';
-    const plan = (src.tiers || []).find((x) => x.tier === tier) || {};
-    lede.append(
-      text(`Needs ${fmt(targets[tier], 'count')}. `),
-      b(committed.length
-        ? `${committed.length} dataset${committed.length > 1 ? 's' : ''} can be committed today, supplying ${fmt(plan.committed_tokens ?? have, 'count')}.`
-        : 'Nothing here can be committed today.'),
-      text(` ${rows.length} candidate${rows.length > 1 ? 's' : ''} in the catalogue.`),
+  const controls = $('div', 'filters');
+  const tally = $('p', 'filter-tally');
+  const host = $('div');
+
+  const chipRow = (label, key, options) => {
+    const wrap = $('div', 'filter-row');
+    wrap.append($('span', 'filter-k', label));
+    const group = $('div', 'filter-chips');
+    group.setAttribute('role', 'group');
+    group.setAttribute('aria-label', label);
+    options.forEach(({ value, text: label2, count }) => {
+      const chip = $('button', 'chip');
+      chip.type = 'button';
+      chip.append($('span', '', label2));
+      if (count !== undefined) chip.append($('span', 'chip-n', String(count)));
+      chip.setAttribute('aria-pressed', String(state[key] === value));
+      chip.addEventListener('click', () => { state[key] = value; draw(); });
+      group.append(chip);
+    });
+    wrap.append(group);
+    return wrap;
+  };
+
+  function draw() {
+    const shown = rows.filter(
+      (r) => (state.tier === 'all' || r.tier === state.tier) && (state.action === 'all' || r.action === state.action),
     );
-    /* Where a headline was trimmed to its verified portion, say so here. A reader who sees 251B in
-     * the table and 84.9B in the total is entitled to know which number is doing what. */
-    if (plan.headline_tokens && plan.headline_tokens !== plan.committed_tokens) {
-      const warn = $('p');
-      warn.style.cssText = 'margin:0 0 4px;font-size:12.5px;color:var(--grade-b)';
-      warn.append(
-        text('Counted on verified human-origin text only. Taking the headline totals at face value would say '),
-        b(fmt(plan.headline_tokens, 'count')),
-        text(' — the difference is machine translation and transliteration, which is Indian-language text and is not text an Indian wrote.'),
-      );
-      body.append(lede, warn);
-      body.append(table(DATASET_COLUMNS, rows.map(datasetRow), [1]));
-      return;
-    }
-    body.append(lede, table(DATASET_COLUMNS, rows.map(datasetRow), [1]));
-  });
+
+    controls.replaceChildren(
+      chipRow('tier', 'tier', [
+        { value: 'all', text: 'every tier', count: rows.length },
+        ...Object.keys(targets).map((t) => ({ value: t, text: t, count: rows.filter((r) => r.tier === t).length })),
+      ]),
+      chipRow('what has to happen', 'action', [
+        { value: 'all', text: 'anything', count: rows.length },
+        ...ACTION_ORDER.filter((a) => rows.some((r) => r.action === a)).map((a) => ({
+          value: a, text: ACTIONS[a][0].toLowerCase(), count: rows.filter((r) => r.action === a).length,
+        })),
+      ]),
+    );
+
+    /* Committable totals come from the pipeline, never from summing the size column. The size
+     * column carries headlines; the pipeline counts verified human-origin text for the natural
+     * tiers. Adding the column up here is how this widget briefly claimed 272B for a tier that can
+     * commit 84.9B — the same error the sourcing plan was fixed for. */
+    const committable = state.tier === 'all' ? src.committed_tokens : planOf(state.tier).committed_tokens || 0;
+    tally.replaceChildren();
+    tally.append(
+      b(`${shown.length} of ${rows.length}`),
+      text(` shown. ${rows.length} of the ${src.counts.catalogued} catalogued datasets map to a pre-training tier; the rest are post-training or evaluation sets`),
+      ...(state.tier !== 'all'
+        ? [
+            text(`. This tier needs ${fmt(targets[state.tier], 'count')} and can commit `),
+            b(fmt(committable, 'count')),
+            text(` — ${((planOf(state.tier).covered_share || 0) * 100).toFixed(0)}% of it.`),
+          ]
+        : [
+            text('. Across all of them '),
+            b(`${src.counts.committable}`),
+            text(' can be committed today, supplying '),
+            b(fmt(committable, 'count')),
+            text(` against the ${fmt(src.target_tokens, 'count')} the mixture needs.`),
+          ]),
+    );
+
+    host.replaceChildren(
+      shown.length
+        ? table([...DATASET_COLUMNS, 'tier'], shown.map((r) => [...datasetRow(r.d), r.tier]), [1])
+        : (() => { const p2 = $('p', 'filter-none', 'Nothing matches that combination — which is itself the answer.'); return p2; })(),
+    );
+  }
+
+  draw();
+  body.append(controls, tally, host);
 
   return chapter({
     id: 'datasets',
     n: 5,
     title: 'Which datasets — the reading itself',
     claim: [
-      text('This is the shopping list. Every catalogued dataset that could fill each tier, biggest first, with the one column that matters: '),
+      text('This is the shopping list: every catalogued dataset that could fill a tier, with the one column that matters — '),
       b('what would have to happen before you could use it'),
-      text('. Only '),
+      text('. Filter it by tier or by what is blocking, because only '),
       b(`${src.counts.committable} of ${src.counts.catalogued}`),
-      text(' can be committed today — and the reason is almost never quality. See '),
+      text(' can be committed today and the reason is almost never quality. See '),
       ref('what we may legally use', 'legal'),
       text(' for why, and '),
       ref('what we would do first', 'first'),
       text(' for the queue that fixes it.'),
     ],
     body,
-    caption: 'Committable means all three at once: the five checks scored A or B, the licence permits commercial use, and somebody stated a size. Missing any one and the dataset cannot be counted, however good it looks. Which categories may supply which tier is an editorial mapping, listed in full in the appendix.',
+    caption: 'Committable means all three at once: the five checks scored A or B, the licence permits commercial use, and somebody stated a size. Missing any one and the dataset cannot be counted, however good it looks. Sorted biggest first; every row stays reachable, the filters only choose which to show.',
     arithmetic: [
       para('Coverage against the ', recommended.id, ' budget: ', b(fmt(src.committed_tokens, 'count')), ' committable against ', b(fmt(src.target_tokens, 'count')), ' needed — ', b(`${(src.covered_share * 100).toFixed(0)}%`), '.'),
       para(src.counts.size_unknown, ' datasets are mapped to a tier and have no stated size, so they cannot enter a budget even when everything else about them is fine. A further ', src.counts.blocked_on_licence_only, ' are blocked on a licence question alone — no check failed, nobody found a problem, and one answered email would move each into the committable column.'),
-      para('The last column names the ', b('cheapest'), ' move, not the only one, which is why most rows carry a "+n more". Read it as: COMMIT — all three hold. ASK THE OWNER — nothing is wrong with the data; nobody established whether it may be used commercially, and unknown is not permission. MEASURE IT — the size was never stated, and a budget you cannot add up is not a budget. CHECK THE CLAIMS — the licence and the size are fine, but the dataset sits at grade C: nobody has answered the questions the grade is made of, so nothing was scored. EXCLUDED — a check failed on provenance or contamination, which is a disqualification rather than a deduction.'),
+      para('The last column names the ', b('cheapest'), ' move, not the only one, which is why most rows carry a "+n more". Read it as: COMMIT — all three hold. ASK THE OWNER — nothing is wrong with the data; nobody established whether it may be used commercially, and unknown is not permission. MEASURE IT — the size was never stated, and a budget you cannot add up is not a budget. CHECK THE CLAIMS — the licence and the size are fine, but the dataset sits at grade C: nobody has answered the questions the grade is made of. EXCLUDED — a check failed on provenance or contamination, which is a disqualification rather than a deduction.'),
       para('Grade C is the binding constraint and the least dramatic one. It blocks ', b(String(data.datasets.filter((d) => !d.is_gap && d.grade !== 'X' && blockersOf(d).includes('evidence')).length)), ' of the ', String(data.datasets.length), ' datasets — not because anything is wrong with them, but because unevidenced is not the same as fine, and a corpus assembled from things nobody checked is exactly the corpus that fails an audit later.'),
+      table(['tier', 'needs', 'can commit', 'covered'], (src.tiers || []).map((t) => [
+        t.tier,
+        renderNumber({ value: t.target_tokens, unit: 'tokens', provenance: 'estimated', source: 'the proposed tier shape' }, { unit: false }),
+        renderNumber({ value: t.committed_tokens, unit: 'tokens', provenance: 'measured', source: 'summed from the committable catalogue' }, { unit: false }),
+        `${((t.covered_share || 0) * 100).toFixed(0)}%`,
+      ]), [1, 2, 3]),
     ],
   });
 }
@@ -1401,8 +1455,9 @@ function chapterTokenizer(ctx) {
         `${(r.share_of_forward * 100).toFixed(2)}%`,
         fmt(r.embedding_params, 'count'),
       ]), [1, 2, 3]),
-      para(b('The trade.'), ' ', cost.vocab_trade.steps.map((st) => `${st.label}: ${st.expression ? st.expression + ' = ' : ''}${st.unit === 'share' ? (st.value * 100).toFixed(2) + '%' : fmt(st.value, 'count')} ${st.unit === 'share' ? '' : st.unit}`).join('; '), '. ', cost.vocab_trade.return),
+      para(b('The trade, recomputed against the mixture actually shipping.'), ' ', cost.vocab_trade.steps.map((st) => `${st.label}: ${st.expression ? st.expression + ' = ' : ''}${st.unit === 'share' ? (st.value * 100).toFixed(2) + '%' : fmt(st.value, 'count')} ${st.unit === 'share' ? '' : st.unit}`).join('; '), `. Roughly a ${cost.vocab_trade.return_multiple}× return on the 1.2% compute cost, for one epoch, before any inference-side saving.`),
       para(b('An independent check on the same answer.'), ' The block sum above is bottom-up: give every script the slots it needs and add them. A separate sweep works top-down — for each candidate vocabulary size, price the extra softmax against the tokens saved, and take the peak of the difference. It is a different method on different inputs, and it lands at ', b(sweep.recommended_vocab.toLocaleString('en-US')), ' against the sum’s ', b(blocks.chosen.toLocaleString('en-US')), ` — ${(Math.abs(blocks.chosen - sweep.recommended_vocab) / blocks.chosen * 100).toFixed(1)}% apart. Neither result is evidence for the other, which is exactly why the agreement is worth stating; a single derivation nobody cross-checked is how a wrong vocabulary ships.`),
+      para(b('The input this rests on that nobody can measure.'), ' ', cost.vocab_trade.unmeasured_input.source, ' Every other figure in the trade is computed from the mixture on this page; this one is an assumption, and the result moves with it.'),
       para(b('Why not Gemma’s 262,144?'), ' ', blocks.upper_bound, sweepAt(262144) ? ` The sweep prices it too: net benefit at 262,144 is about ${(sweepAt(262144) * 100).toFixed(2)}% against ${(sweep.peak.net_benefit * 100).toFixed(2)}% at the peak, so the larger vocabulary is roughly ${Math.round((1 - sweepAt(262144) / sweep.peak.net_benefit) * 100)}% worse on this trade — a shallow curve, but it turns over, and past the peak you are paying for slots nobody spells with.` : ''),
       para(b('Why embeddings are not the constraint.'), ' ', blocks.embedding_note),
       para(b('Caveat.'), ' ', blocks.caveat),
@@ -1691,9 +1746,9 @@ function chapterCost(ctx) {
       : 'The tokenizer you inherit is the cost you cannot renegotiate.',
     arithmetic: [
       para(b('What a full run costs.'), ' ', run.steps.map((x) => `${x.label}: ${x.expression ? x.expression + ' = ' : ''}${x.unit === 'USD' ? '$' + fmt(x.value, 'count') : fmt(x.value, 'count') + ' ' + x.unit}`).join('; '), ' — about ', b(`₹${(money.inr / 1e7).toFixed(0)} crore`), ' of compute. ', run.caveat),
-      para(b('Read against that:'), ' the vocabulary decision in ', ref('how we cut it into tokens', 'tokenizer'), ' saves ', b('₹2.5 crore'), ' of this, for a 1.2% increase in the cost of every step. That is the whole argument for designing a tokenizer rather than inheriting one, expressed as a fraction of the bill.'),
+      para(b('Read against that:'), ' the vocabulary decision in ', ref('how we cut it into tokens', 'tokenizer'), ' saves ', b(`₹${((records.cost.vocab_trade.steps.find((x) => x.unit === 'USD') || {}).inr / 1e7).toFixed(1)} crore`), ' of this, for a 1.2% increase in the cost of every step — a ', b(`${records.cost.vocab_trade.return_multiple}× return`), '. That is the whole argument for designing a tokenizer rather than inheriting one, expressed as a fraction of the bill.'),
       para(b('This does not settle the fork.'), ' It prices one side of it. The stated resolution is a head-to-head at roughly 2-billion-parameter scale on identical data, judged on held-out loss for Indian languages and code — and the comparison has to be normalised for the tokenizer, because a model spending more tokens on the same text sees more tokens for the same budget and looks better than it is. Compare bits per character, not loss per token; skip that and the fork resolves to whichever tokenizer is worst.'),
-      para(b('What the vocabulary choice is worth.'), ' ', records.cost.vocab_trade.return, ' Full derivation in ', ref('how we cut it into tokens', 'tokenizer'), '.'),
+      para(b('What the vocabulary choice is worth.'), ` Roughly a ${records.cost.vocab_trade.return_multiple}× return on the 1.2% compute cost, for one epoch, before any inference-side saving.`, ' Full derivation in ', ref('how we cut it into tokens', 'tokenizer'), '.'),
       para(b('What acquisition costs.'), ' Of ', String(acquisition.length), ' ranked acquisitions, ', b(`${free.length} cost nothing`), ' — they are letters and permissions rather than engineering. The market records ', String((records.market || {}).deals ? records.market.deals.length : 0), ' real data deals for comparison, every value reported rather than confirmed.'),
       para(b('The competition.'), ' ', arch.map((a) => `${a.model} at ${fmt(a.params_total, 'count')}${a.licence ? ` (${a.licence})` : ''}`).join('; '), '. The one that matters is not the largest but the freest to download: an Apache-2.0 105B with an Indic-tuned tokenizer already exists, so a from-scratch 40B has to justify itself against something anyone can have today for nothing.'),
     ],
