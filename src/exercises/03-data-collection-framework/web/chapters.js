@@ -894,7 +894,7 @@ function chapterPostTraining(ctx) {
 
   return chapter({
     id: 'behaviour',
-    n: 7,
+    n: 9,
     title: 'Teaching it how to behave',
     claim: [
       text('Everything so far decides what the model '),
@@ -964,7 +964,7 @@ function chapterCleaning(ctx) {
   });
 
   return buildExplainer({
-    n: 8,
+    n: 7,
     anchor: 'cleaning',
     arithmeticLabel: 'All nine stages, and the rules that surprise people',
     wide: true,
@@ -1134,7 +1134,7 @@ function chapterGate(ctx) {
   };
 
   return buildExplainer({
-    n: 9,
+    n: 8,
     anchor: 'gate',
     arithmeticLabel: 'How a fingerprint works, and what it cannot see',
     wide: true,
@@ -1970,8 +1970,11 @@ export function buildPage(data, records) {
     buildExplainer,
   };
 
-  [chapterTarget, chapterBudget, chapterGrowth, chapterMix, chapterDatasets, chapterLegal, chapterPostTraining,
-    chapterCleaning, chapterGate, chapterTokenizer, chapterEvaluation,
+  /* Post-training sits after the contamination gate, not before the cleaning chapters. Chapters 5
+   * and 6 are the pre-training catalogue and 7 and 8 clean that same corpus; putting a different
+   * corpus, a different lifecycle stage and a different unit between them broke the thread twice. */
+  [chapterTarget, chapterBudget, chapterGrowth, chapterMix, chapterDatasets, chapterLegal,
+    chapterCleaning, chapterGate, chapterPostTraining, chapterTokenizer, chapterEvaluation,
     chapterCost, chapterFirst, chapterAppendix].forEach(
     (fn) => main.append(fn(ctx)),
   );
