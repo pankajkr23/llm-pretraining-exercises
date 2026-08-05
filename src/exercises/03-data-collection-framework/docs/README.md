@@ -63,4 +63,4 @@ The full set of open forks and unmeasured unknowns is tracked in [`OPEN.md`](OPE
 
 ## The output
 
-`report/index.html` carries a `@media print` stylesheet. **`Ctrl+P → Save as PDF` is the submission**, capped at 4 pages of A4. One source, no drift between what was built and what was handed in.
+The site is **one page** (`web/index.html` + `web/chapters.js`), twelve chapters, one per reader question. Printing still works — every widget is forced to its end state and the closed detail blocks open — but the page is designed for screen rather than to a page count, and `report/`/`reasoning/` are redirect stubs from the earlier two-page version.

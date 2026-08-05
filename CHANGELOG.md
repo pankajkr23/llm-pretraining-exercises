@@ -13,10 +13,11 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 ### Added
 
 - **Exercise 03 — data collection framework.** A graded catalogue of 145 datasets and 31 benchmarks
-  behind two public pages: **the decision** (what to train an India-first model on, in what
-  proportion, at what cost) and **the atlas** (the evidence under every number). Every figure
-  carries `{value, unit, provenance, source}` and the renderer refuses to print a bare one; where a
-  quantity has never been measured, the page says so rather than showing a plausible number.
+  behind one public page that works out what an India-first, 40-billion-parameter model would train
+  on — how much text, what kind, which datasets, how to clean it, how to tokenise it, and how you
+  would know it worked. Every figure carries `{value, unit, provenance, source}` and the renderer
+  refuses to print a bare one; where a quantity has never been measured, the page says so rather
+  than showing a plausible number.
 - **Five data-handling invariants enforced in CI.** Training never touches eval data · nothing
   excluded may enter a commercial mix · every judgment carries its reasoning and confidence · a
   measurement must name what produced it · no source content is silently dropped. Each ships with a
@@ -34,7 +35,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 - **Contamination coverage is no longer `none`.** MILU's validation split is indexed — 411,442
   shingles from 8,923 items across 11 languages — so the gate guards something. 56 of those items
   fall under the 13-word window and would have been undetectable before the short-item fix.
-- **Interactive explainers** on both pages, replacing static tables and charts: the contamination
+- **Interactive explainers** rather than static tables and charts: the contamination
   gate you can try to defeat with your own sentence, a vocabulary optimum that moves as you change
   the model width, a quality filter that deletes twelve of twenty-two languages until the protected
   lane restores them, and a confidence ledger that narrows to the nine claims that would survive
@@ -45,6 +46,26 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   typography, components, interaction, and copy/tone rules — that every exercise's `web/` bundle
   follows.
 
+### Changed
+
+- **Exercise 03 is one page instead of three.** The decision and the evidence behind it were split
+  across two dense pages of 25 sections; a reader could not find what to actually train on. It is now
+  a single page of twelve chapters, each answering one question in the order a reader asks it — what
+  we are building, how much text, what goes into it, **which datasets**, what we may legally use, how
+  to teach behaviour, how to clean it, keeping the exam out of the training data, how to tokenise it,
+  how we would know it worked, what it costs, and what to do first. Old links still resolve: every
+  retired anchor redirects to the chapter that absorbed it.
+- **Every chapter has three layers**, so one page serves a reader meeting the subject today and one
+  who trains models for a living: a plain headline and a single number, the interaction that proves
+  it, and a closed *"The arithmetic"* holding the derivation, sources and caveats. Stepped content
+  fell from 45 states (~21 screens) to 29 (~8.7), because states are now justified by the argument
+  rather than filled to a quota.
+- **The corpus defaults to 15 trillion tokens** and names real datasets. The previous version opened
+  on the smallest rung, which answers a different question from the one a reader asks.
+- **Four questions the site never answered now have chapters**: what may legally be used, what to
+  train on after pre-training, what the whole thing costs and whether to build from scratch at all,
+  and what to do first.
+
 ### Fixed
 
 - **Contamination gate missed short evaluation items.** An item shorter than the 13-word shingle
@@ -53,6 +74,29 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   The index now records the window width each item was hashed at and checks the document at each
   width; items too short to identify anything are refused and counted rather than silently
   accepted.
+- **The framework answered a third of its own assignment.** The class brief scopes this exercise as
+  the full lifecycle — pre-training, SFT, preference, safety and evaluation — and the exercise brief
+  narrowed it to "the pre-training data mix". Every one of the 145 catalogue records already carried
+  a training-stage tag (101 pre-training, 47 SFT, 17 RL, 15 evaluation, 1 safety); it was rendered in
+  one place and read by no module, while the tier mapping silently dropped 36 records including every
+  preference, RL-only and safety dataset. The catalogue is now grouped by stage and nothing is
+  dropped without being reported. Recorded in full in `docs/DESIGN_CRITIQUE.md`.
+- **Seventeen answers that were already written had never been published** — the SFT/DPO/RLVR
+  budgets, the twelve script blocks that sum to the chosen vocabulary, the per-language fertility
+  targets, the FLOP comparison, the ₹2.5 crore trade, six objective-specific cleaning rules, the
+  safety and PII gate, the curriculum phases, and the evaluation trust matrix. All are extracted into
+  data and rendered.
+- **Seven statements that were false as shipped**, most introduced when the vocabulary sweep was
+  anchored on a measurement and the consequence was not propagated: a section claiming the curve was
+  unanchored while the next said it was anchored, "three tokenizers" beside a chart showing five, a
+  corpus described as translated when it is source-original, and a landing-page honesty line wrong in
+  all three of its parts.
+- **Two interactions that defeated themselves**: the landing page printed the answer to the page's
+  only predict-before-reveal question, and using that question's input suppressed the most concrete
+  fact on the page.
+- **Contrast failures across the palette.** Seven semantic tokens passed as fills and failed as text
+  — `--accent` at 4.31:1, `--grade-b` at 2.99:1. Re-measured and darkened; the page now scores 100
+  for accessibility and 100 for performance.
 - **Every page claimed a build time it did not have.** `generated_at` was exported as `None` with a
   comment saying the caller would stamp it; no caller ever did. It is stamped at the I/O boundary
   now, leaving the bundle builder pure.

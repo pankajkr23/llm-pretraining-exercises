@@ -73,7 +73,7 @@ uv run pytest            # run every exercise's tests from the root
 | --- | --- | --- |
 | 01 | [Introductions](src/exercises/01-introductions/) | Four live, in-browser interactive proofs of *why neural nets work*. Static site, zero dependencies, deployed to Vercel. |
 | 02 | [Tokenization](src/exercises/02-tokenization/) | A single 10k BPE vocabulary balanced across India's Wikipedia article in four languages, with an ablation harness that sweeps algorithm × representation × normalization × vocab × weighting. |
-| 03 | [Data collection framework](src/exercises/03-data-collection-framework/) | How you decide what an India-first model trains on: 145 datasets graded on five gates, five data-handling invariants enforced in CI, and two interactive pages — the decision and the evidence under it. |
+| 03 | [Data collection framework](src/exercises/03-data-collection-framework/) | How you decide what an India-first 40B model trains on — one interactive page, twelve chapters: how much text, what kind, **which datasets**, how to clean it, how to tokenise it, and how you would know it worked. 145 datasets graded on five checks, with five data-handling invariants enforced in CI. |
 
 More exercises are added each week.
 
@@ -136,9 +136,10 @@ python3 -m http.server 8000   # open http://localhost:8000
 ### 03 · Data collection framework — deciding the mix
 
 A Python pipeline (`src/exercises/03-data-collection-framework/src/dataframework/`) turns a research
-atlas into a **graded catalogue of 145 datasets and 31 benchmarks**, then publishes two pages: a
-**decision** (what to train on, in what proportion, at what cost) and an **atlas** (the evidence
-under every number, including the parts that do not hold up).
+atlas into a **graded catalogue of 145 datasets and 31 benchmarks**, then publishes **one page** that
+answers, in the order a reader asks them: how much text a 40B model needs, what kind, **which
+datasets to actually use**, what may legally be used, what to train on after pre-training, how to
+clean it, how to tokenise it, how you would know it worked, what it costs, and what to do first.
 
 Two things make it more than a write-up:
 
@@ -150,11 +151,13 @@ Two things make it more than a write-up:
   DOM, and the renderer throws on a bare number rather than printing it. Where a figure has never
   been measured, the page says so instead of showing a plausible one.
 
-The pages are **interactive explainers**: each makes one claim, and what the reader does is the
-proof of it rather than an illustration. The contamination gate is the clearest example — type your
-own sentence, try to smuggle it past a 13-word shingle index, and watch where the method stops
-working. Conventions in [`docs/EXPLAINER_PROMPT.md`](docs/EXPLAINER_PROMPT.md) (what to build) and
-[`docs/EXPLAINER_PATTERN.md`](docs/EXPLAINER_PATTERN.md) (how).
+Every chapter is an **interactive explainer** in three layers: a plain headline and one number that
+a newcomer can stop at, the interaction that proves the claim, and a closed *"The arithmetic"* with
+the derivation for anyone who wants it. The contamination gate is the clearest example — type your
+own sentence, try to smuggle it past a thirteen-word fingerprint index, and watch where the method
+stops working. Conventions in [`docs/EXPLAINER_PROMPT.md`](docs/EXPLAINER_PROMPT.md) (what to build)
+and [`docs/EXPLAINER_PATTERN.md`](docs/EXPLAINER_PATTERN.md) (how); what the first build got wrong
+is in [`DESIGN_CRITIQUE.md`](src/exercises/03-data-collection-framework/docs/DESIGN_CRITIQUE.md).
 
 ```bash
 uv run python -m dataframework          # rebuild web/data.json from the data spine
