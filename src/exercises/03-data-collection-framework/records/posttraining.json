@@ -175,5 +175,30 @@
     ],
     "finding": "This plan's 3M SFT examples sit between Tulu 3's 939K and Llama 3's 10M+, which is a defensible place for a 40B seed to be. Its preference budget is not. Tulu 3 converts preference data at roughly 36% of its SFT size; this plan proposes 200K against 3M, which is 6.7%. Either the SFT budget is three times larger than it needs to be, or the preference budget is five times smaller than published practice — and nothing in the plan says which.",
     "gathered": "2026-08-05"
+  },
+  "provenance": {
+    "note": "Provenance for every number in this record, declared here rather than chosen by whatever chapter happens to render it. The counts are a proposal and the reference figures are published; those are different claims and the page must not present them alike.",
+    "fields": {
+      "stages[].total": {
+        "provenance": "estimated",
+        "unit": "count",
+        "source": "proposed in docs/DECISIONS.md 1.3, which states these with a tilde and cites nothing. Not measured, not read off any published model, and not derivable from the catalogue."
+      },
+      "stages[].splits[].count": {
+        "provenance": "estimated",
+        "unit": "count",
+        "source": "proposed in docs/DECISIONS.md 1.3, which states these with a tilde and cites nothing."
+      },
+      "reference.models[].sft": {
+        "provenance": "measured",
+        "unit": "count",
+        "source": "published by the lab that built it — see the model's own `source` field in this record"
+      },
+      "reference.models[].preference": {
+        "provenance": "measured",
+        "unit": "count",
+        "source": "published by the lab that built it — see the model's own `source` field in this record"
+      }
+    }
   }
 }

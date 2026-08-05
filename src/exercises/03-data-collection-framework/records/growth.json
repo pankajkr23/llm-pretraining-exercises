@@ -1,5 +1,5 @@
 {
-  "note": "The 40B is a seed, not a product. This record holds the staged path from it to the largest Indic model, and — because this is a data project rather than an architecture one — what each stage asks of the corpus. The method is not invented here: it is the four-stage, state-preserving growth reported in arXiv:2606.07404, this project's own prior work, which grew one lineage from a small dense seed through 5B and 9B mixtures of experts to a 120B model with 460 routed experts. Every stage below is a proposal built on that method; the corpus figures are the part this project is responsible for.",
+  "note": "The lineage runs 3B to 200B in four stages. The 40B the assignment names is stage three, not the start: it is grown from a trained 8B, which was grown from a trained 3B. The method is the four-stage state-preserving growth of arXiv:2606.07404, this project's own prior work, which grew one lineage from a small dense seed through 5B and 9B mixtures of experts to a 120B model. Sizes below are the plan; the corpus figures are what this project is responsible for, and the 40B's is the only one derived rather than proposed.",
   "method": {
     "source": "arXiv:2606.07404, Reversible Foundations: Training a 120B Sparse MoE through State-Preserving Scaling",
     "relationship": "this project's own prior work",
@@ -28,48 +28,48 @@
       "n": 1,
       "id": "seed",
       "name": "The seed",
-      "params_total": 40000000000,
-      "params_active": 40000000000,
+      "params_total": 3000000000,
+      "params_active": 3000000000,
       "architecture": "dense",
-      "corpus": 16800000000000,
-      "corpus_basis": "Gemma-4 class: Gemma 3 27B's officially stated 14T, plus 20% for one generation.",
-      "asks_of_the_corpus": "Everything. This is the only stage whose data is read by every model that follows it, so provenance, licensing and decontamination have to be right here rather than fixed later. It asks for 336B unique tokens of natural Indian-language text and the catalogue can commit 84.9B of verified human-origin text — a quarter of it. That is the smallest shortfall of any stage, and it is still four times short.",
-      "status": "the assignment"
+      "corpus": 3000000000000,
+      "corpus_basis": "About a trillion tokens per billion parameters, which is where Gemma 3's own family sits at this size — its 4B took 4T.",
+      "asks_of_the_corpus": "Everything, and it is the only stage this catalogue can actually supply. 3T asks for 60B unique tokens of natural Indian-language text and 84.9B can be committed today. Every token read here is inherited by all three stages above, so this is where provenance, licensing and decontamination have to be right rather than fixed later — and the one stage where getting it right is affordable.",
+      "status": "proposed"
     },
     {
       "n": 2,
-      "id": "sparse",
-      "name": "Grow it sparse",
-      "params_total": 120000000000,
-      "params_active": 12000000000,
-      "architecture": "moe",
-      "corpus": 20000000000000,
-      "corpus_basis": "The Atlas's stretch rung. A 19% larger corpus against a 3x larger model — the first place the reader sees that these two do not scale together.",
-      "asks_of_the_corpus": "Diversity more than volume. Experts specialise on what the mixture actually contains, so this is the stage where a lopsided mixture becomes permanent architecture rather than a tuning choice.",
+      "id": "grow",
+      "name": "Grow it",
+      "params_total": 8000000000,
+      "params_active": 8000000000,
+      "architecture": "dense",
+      "corpus": 8000000000000,
+      "corpus_basis": "Same family slope. Gemma 3's 12B took 12T and Llama 3.1's 8B took 15T, so 8T is conservative for this size.",
+      "asks_of_the_corpus": "The first stage the Indic pool cannot fill: 160B unique needed against 84.9B committable, short by nearly half. Everything else at this size is abundant, which is exactly what makes the shortfall specific rather than general.",
       "status": "proposed"
     },
     {
       "n": 3,
-      "id": "deep",
-      "name": "Grow it deep",
-      "params_total": 200000000000,
-      "params_active": 15000000000,
-      "architecture": "moe",
-      "corpus": 20000000000000,
-      "corpus_basis": "No new corpus. Depth is added to a trained stack, and the tokens already read are inherited.",
-      "asks_of_the_corpus": "Nothing new, which is the point. A stage that adds 80 billion parameters and reads no additional text is the clearest demonstration available that a corpus is not sized by the model reading it.",
-      "status": "proposed"
+      "id": "target",
+      "name": "The assignment",
+      "params_total": 40000000000,
+      "params_active": 40000000000,
+      "architecture": "dense",
+      "corpus": 16800000000000,
+      "corpus_basis": "Gemma-4 class, and the only corpus figure here that is derived: Gemma 3's officially stated 14T for the 27B, plus 20% for one generation. Gemma 4 discloses no token count of its own.",
+      "asks_of_the_corpus": "336B unique natural Indian tokens, four times what the catalogue can commit. This is the model the whole page is about, and it is the stage where the Indic gap stops being a rounding error and becomes the plan's binding constraint.",
+      "status": "the assignment"
     },
     {
       "n": 4,
       "id": "frontier",
       "name": "Frontier parity",
-      "params_total": 300000000000,
-      "params_active": 35000000000,
+      "params_total": 200000000000,
+      "params_active": 20000000000,
       "architecture": "moe",
       "corpus": 30000000000000,
-      "corpus_basis": "Llama 4 trained on over 30T; Qwen3 on 36T across 119 languages. 30T is parity, not ambition.",
-      "asks_of_the_corpus": "Ten trillion more tokens than the last stage, and not one of them Indian. Every source that can supply volume at this scale is English, code or multilingual web text. The mixture still reserves 8% for natural Indian text, which at 30T means 600B unique — more than twice what the catalogue can commit today. The design does not change; its feasibility does.",
+      "corpus_basis": "Frontier scale: Llama 4 trained on over 30T and Qwen3 on 36T across 119 languages. 30T is parity, not ambition.",
+      "asks_of_the_corpus": "600B unique natural Indian tokens — seven times what exists in the catalogue — and the step where the architecture changes. Going sparse buys capacity at roughly a tenth of the compute per token, which is what makes 200B affordable at all; it does nothing whatever for the Indian-language supply.",
       "status": "proposed"
     }
   ],
@@ -80,7 +80,7 @@
   },
   "invariant": {
     "claim": "The natural Indian-language pool is a fixed quantity. Holding its share constant means needing more of it at every stage, and there is no more of it.",
-    "detail": "The mixture reserves 8% of every batch for natural Indian-language text, read four times. At the 16.8T seed that asks for 336B unique tokens; at 20T, 400B; at 30T, 600B. What this catalogue can commit is 84.9B of verified human-origin text — a quarter of the seed's requirement and a seventh of the frontier rung's. The share on the chart stays at 8% because it is a design decision; what changes is how far out of reach it is.",
+    "detail": "The mixture reserves 8% of every batch for natural Indian-language text, read four times. At the 3B seed that asks for 60B unique tokens; at 8B, 160B; at 40B, 336B; at 200B, 600B. What this catalogue can commit is 84.9B of verified human-origin text. It covers the first stage and nothing above it.",
     "consequence": "Every stage of growth makes the Indic tier harder to fill, not easier. The only remedies are collection and partnership, and both are decisions taken years before the model trains."
   },
   "gap": {
@@ -124,5 +124,24 @@
         "SPK-04"
       ]
     }
+  },
+  "shape": {
+    "note": "What actually grows, across the lineage, and what does not.",
+    "params": {
+      "from": 3000000000,
+      "to": 200000000000,
+      "multiple": 66.7
+    },
+    "corpus": {
+      "from": 3000000000000,
+      "to": 30000000000000,
+      "multiple": 10.0
+    },
+    "natural_indic_committable": {
+      "from": 84900000000,
+      "to": 84900000000,
+      "multiple": 1.0
+    },
+    "finding": "Parameters rise sixty-seven fold and the corpus tenfold, while the natural Indian-language text anybody can commit does not move at all. The 3B seed is the only stage its supply covers; by the 40B it is four times short and by 200B seven. Growth does not dilute the Indic share on the chart — the mixture reserves 8% at every stage — it makes that 8% progressively impossible to fill."
   }
 }
