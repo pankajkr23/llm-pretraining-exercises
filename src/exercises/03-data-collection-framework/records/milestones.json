@@ -1,5 +1,15 @@
 [
   {
+    "id": "3T",
+    "tokens": 3000000000000,
+    "stage": "growth",
+    "ladder": true,
+    "recommended": false,
+    "verdict": "The seed — 3B",
+    "feasibility": "About a trillion tokens per billion parameters, which is where Gemma 3's family sits at this size. It is also the only rung whose natural Indian-language requirement this catalogue can meet: 60B unique needed, 84.9B committable.",
+    "requirement": "Licence-clean sources only, and every one of them graded. What is read here is inherited by every model grown from it, so this is the rung where being right is both essential and affordable."
+  },
+  {
     "id": "5T",
     "tokens": 5000000000000,
     "feasibility": "Trivially achievable today. FineWeb-Edu (1.3T) + Nemotron-CC-v2 subset + Stack v2 (900B) + Sangraha (251B) + FinePDFs (3T) already overshoots.",
@@ -8,6 +18,16 @@
     "recommended": false,
     "stage": "prior",
     "ladder": false
+  },
+  {
+    "id": "8T",
+    "tokens": 8000000000000,
+    "stage": "growth",
+    "ladder": true,
+    "recommended": false,
+    "verdict": "Grown — 8B",
+    "feasibility": "Conservative for the size: Gemma 3's 12B took 12T and Llama 3.1's 8B took 15T. The first rung the Indic pool cannot fill — 160B unique needed against 84.9B committable.",
+    "requirement": "Web-scale English and code enter here, which is the point at which the licence questions in the catalogue stop being theoretical."
   },
   {
     "id": "10T",
@@ -32,18 +52,18 @@
   {
     "id": "16.8T",
     "tokens": 16800000000000,
-    "stage": "seed",
+    "stage": "growth",
     "ladder": true,
     "recommended": true,
-    "verdict": "The seed — Gemma-4 class",
+    "verdict": "The assignment — 40B",
     "feasibility": "Derived, because the comparator does not disclose its own. Gemma 4's technical report and its model card both describe the training data without ever stating a token count; Gemma 3's card does state one, verbatim: the 27B was trained with 14 trillion tokens. 16.8T is that figure plus 20% for one generation of growth. It is a stated estimate with a stated method, not a published number, and it is labelled that way everywhere it appears.",
     "requirement": "Everything the 10T rung lists, plus the volume that only arrives when the licence questions are answered. This catalogue can commit 6.57T today, so the seed as specified is 10.2T short — and the shortfall is a stack of unwritten letters rather than a collection problem."
   },
   {
     "id": "20T",
     "tokens": 20000000000000,
-    "stage": "growth",
-    "ladder": true,
+    "stage": "prior",
+    "ladder": false,
     "recommended": false,
     "verdict": "Grown — dense to sparse",
     "feasibility": "Achievable only with aggressive multi-epoch reuse + very large synthetic generation + PDF/OCR/ASR pipelines that don't exist off-the-shelf for Indic. BharatGen claims to be here [VENDOR CLAIM] but the corpus is not redistributable.",
@@ -55,7 +75,7 @@
     "stage": "growth",
     "ladder": true,
     "recommended": false,
-    "verdict": "Frontier parity",
+    "verdict": "Frontier parity — 200B",
     "feasibility": "Frontier scale, and the rung where collection rather than compute is the whole problem. Llama 4 trained on over 30T; Qwen3 on 36T across 119 languages. Every extra trillion beyond the seed comes from English, code and multilingual web text, all of which is purchasable or already open.",
     "requirement": "Nothing in the Indian-language plan changes at this rung, which is the finding rather than an omission. The natural Indic pool contributes the same absolute quantity it always did, so the India share falls purely by growing. Holding it requires funding the acquisition queue, not the crawl budget."
   }

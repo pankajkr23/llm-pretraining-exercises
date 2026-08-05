@@ -49,10 +49,10 @@ EXPECTED_COUNTS: dict[str, int] = {
     # chapter names it, so a table of models that omitted it was a hole rather than fidelity. Its
     # figures come from docs/DECISIONS.md's preamble, not from a new source.
     "architectures": 6,
-    # 6, not 4: the ladder the page draws is the seed and its two growth rungs, and the research's
-    # own earlier staging (5T/10T/15T) is kept as the argument for how you reach the seed rather
-    # than deleted. `stage` and `ladder` separate the two.
-    "milestones": 6,
+    # 8, not 4: the ladder the page draws is the four-stage lineage (3T/8T/16.8T/30T), and the
+    # research's own earlier staging (5T/10T/15T/20T) is kept as the argument for how you reach it
+    # rather than deleted. `stage` and `ladder` separate the two.
+    "milestones": 8,
     # Not in the plan's list of twelve arrays, but Phase 5 needs a legal surface and the Atlas has
     # the material. Six limits on the copyright ruling, not the five the design doc cites: the
     # numbered list's third item is the unresolved hallucination claim, and the no-TDM-exception

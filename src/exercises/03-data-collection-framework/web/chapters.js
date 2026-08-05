@@ -348,13 +348,13 @@ function chapterGrowth(ctx) {
     wide: true,
     title: 'How it grows, and what stops growing with it',
     claim: [
-      text('The 40B is a seed, not a product. It grows in four stages toward the largest Indic model — dense first, then sparse, then deep — and each stage is grown from the trained weights of the last rather than started again. The interesting part for a data plan is that '),
-      b('parameters and corpus do not grow together'),
-      text('. Parameters rise sevenfold; the corpus rises by four fifths; and the natural Indian-language pool does not rise at all.'),
+      text('The 40B is stage three of four, not the start. The lineage runs 3B, 8B, 40B, 200B, and each model is grown from the trained weights of the one before rather than started again. The interesting part for a data plan is what the three quantities do: '),
+      b('parameters rise 67-fold, the corpus tenfold, and the Indian-language text anybody can commit does not move at all'),
+      text('. The 3B seed is the only stage its supply covers.'),
     ],
     figNum: 'Fig. 2 — four stages, three quantities',
     caption: `Fig. 2 — Each stage's stored parameters, active parameters and corpus, all as a share of the largest. The method is the four-stage state-preserving growth of ${g.method.source.split(',')[0]} — this project's own prior work. Stage 1 is the assignment; the three above it are proposals.`,
-    pill: 'params ×7.5 · corpus ×1.8 · Indic ×1',
+    pill: 'params ×67 · corpus ×10 · Indic ×1',
     rail: [
       text('The one quantity that never moves. Natural Indian-language text is a '),
       b('fixed absolute quantity'),
@@ -413,12 +413,10 @@ function chapterGrowth(ctx) {
       api.bigHit(need > committedNatural);
       api.sub('of unique natural Indian text this stage asks for');
       const ratio = need / committedNatural;
-      api.verdict(st.architecture === 'dense' ? 'DENSE SEED' : `${(st.params_active / st.params_total * 100).toFixed(0)}% ACTIVE`, need > committedNatural);
-      api.note(
-        need > committedNatural
-          ? `${ratio.toFixed(1)}× what the catalogue can commit. ${st.asks_of_the_corpus}`
-          : `Within reach of the ${fmt(committedNatural, 'count')} the catalogue can commit — the only stage where that is true. ${st.asks_of_the_corpus}`,
-      );
+      /* The verdict slot carries the finding, not the architecture: whether this stage's Indic
+       * requirement can be met at all. The architecture is already drawn in the bars. */
+      api.verdict(need > committedNatural ? `${ratio.toFixed(1)}× SHORT` : 'SUPPLY MEETS IT', need > committedNatural);
+      api.note(`${fmt(st.params_total, 'count')} ${st.architecture === 'moe' ? `sparse, ${fmt(st.params_active, 'count')} active` : 'dense'} on ${fmt(st.corpus, 'count')}. ${st.asks_of_the_corpus}`);
       api.strip(stages.map((x, k) => (k === i ? 'reg' : x.corpus * 0.08 / 4 > committedNatural ? 'hit' : '')));
     },
   });
