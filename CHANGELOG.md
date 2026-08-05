@@ -21,12 +21,19 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   excluded may enter a commercial mix · every judgment carries its reasoning and confidence · a
   measurement must name what produced it · no source content is silently dropped. Each ships with a
   test proving it fails when broken.
-- **The tokenizer tax, measured rather than cited.** Twenty of the twenty-two scheduled languages
-  now carry a real fertility number with a run id behind it, from three ungated tokenizers over
-  FLORES-200. Our own measurement puts the mean Indic tax at ×7.46 under cl100k and finds XLM-R
-  removes 78% of it — independent corroboration of the published figures the atlas cites (8.0× and
-  73%). Still partial: three of the protocol's six tokenizers are unavailable, and the candidate
-  vocabulary under test has never been trained, so no parity ratio is reported.
+- **The tokenizer tax, measured rather than cited.** All twenty-two scheduled languages now carry a
+  real fertility number with a run id behind it — five tokenizers over IN22-Gen (source-original
+  Indian text) and IN22-Conv (conversational), reported apart because register changes the answer.
+  Our measurement puts the mean Indic tax at ×7.45 under cl100k and finds a better tokenizer removes
+  78% of it, independently corroborating the published figures the atlas cites (8.0× and 73%); we
+  measure Malayalam at ×13.0 on our own text, which is the paper's own headline example.
+- **Gemma 4 is the worst Indic tokenizer of the three serious candidates.** ×2.49 mean tax against
+  Sarvam-105B's ×1.81 and XLM-R's ×1.66, and ×8.84 worst-case against ×2.90. It is the assignment's
+  named target, so `docs/DECISIONS.md` now prices the "continue-pretrain from Gemma-4-31B" fork with
+  that number attached: continue-pretraining inherits the tokenizer, and the tokenizer is not free.
+- **Contamination coverage is no longer `none`.** MILU's validation split is indexed — 411,442
+  shingles from 8,923 items across 11 languages — so the gate guards something. 56 of those items
+  fall under the 13-word window and would have been undetectable before the short-item fix.
 - **Interactive explainers** on both pages, replacing static tables and charts: the contamination
   gate you can try to defeat with your own sentence, a vocabulary optimum that moves as you change
   the model width, a quality filter that deletes twelve of twenty-two languages until the protected

@@ -195,7 +195,31 @@ Gemma 4 31B Dense is **30.7B parameters under Apache 2.0.** "Train a 40B" theref
 | **Vocabulary-expand + continue-pretrain** from Gemma-4-31B | A fraction | Gemma-4-class coding and agentic capability on day one |
 | Upcycle to MoE (~40B total / ~5B active) | Middle | Competes with Gemma 4 26B-A4B, not the 31B Dense |
 
-**Resolution:** a head-to-head at ~2B scale on identical data, judged on Indic and code held-out loss. State the fork, state the criterion, name the experiment. Do not pretend the choice is obvious.
+### What the fork now costs, measured
+
+The "Inherits" column understates the second path. **Continue-pretraining inherits the tokenizer**, and
+a tokenizer cannot be swapped without discarding the embedding table — which is most of what you were
+reusing. So that path locks in Gemma 4's vocabulary for the life of the model.
+
+Task 2.2b measured what that costs, on IN22-Gen, all 22 scheduled languages, run
+`in22gen-20260805T061749Z`:
+
+| Tokenizer | Mean Indic tax | Worst language |
+|---|---|---|
+| Gemma 4 31B | **×2.49** | ×8.84 |
+| Sarvam-105B | ×1.81 | ×2.90 |
+| XLM-R (2019, general-purpose) | ×1.66 | ×2.42 |
+
+Gemma 4 is the assignment's named target and the worst of the three on Indic. Against Sarvam that is
+roughly **37% more tokens for the same Indic text**, paid on every step of the entire run and on every
+token served afterwards. Vocabulary expansion mitigates it — new tokens can be added — but the merges
+already learned stay as they are, so expansion narrows the gap rather than closing it.
+
+This does not settle the fork. It prices one side of it, which the table above did not.
+
+**Resolution:** a head-to-head at ~2B scale on identical data, judged on Indic and code held-out loss.
+State the fork, state the criterion, name the experiment. Do not pretend the choice is obvious — and
+now, do not pretend the inherited tokenizer is free.
 
 ---
 

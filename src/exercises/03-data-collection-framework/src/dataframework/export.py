@@ -192,6 +192,31 @@ def _fertility_block(cfg: Config, languages: list[str]) -> dict[str, Any]:
             )
     block["by_language"] = by_language
     block["baseline_tokenizer"] = baseline
+
+    # One mean per tokenizer: enough for the report to rank them without shipping the whole matrix.
+    ranking = []
+    for ref, values in measured.items():
+        english = (values.get("en") or {}).get("value")
+        indic = [v["value"] for c, v in values.items() if c != "en" and v.get("value")]
+        if english and indic:
+            ranking.append(
+                {
+                    "tokenizer": ref,
+                    "mean_tax": _value(
+                        round(sum(i / english for i in indic) / len(indic), 3),
+                        "ratio",
+                        "measured",
+                        f"{ref}@{run['run_id']}",
+                    ),
+                    "worst_tax": _value(
+                        round(max(indic) / english, 3),
+                        "ratio",
+                        "measured",
+                        f"{ref}@{run['run_id']}",
+                    ),
+                }
+            )
+    block["by_tokenizer_mean"] = sorted(ranking, key=lambda r: r["mean_tax"]["value"])
     # The full per-tokenizer matrix is three times this size and only §3 reads it, so it rides in
     # records.json rather than the index — the 100KB budget is what keeps the first paint fast.
     # Expansion is by_language divided by English, so shipping it would be a second copy of the

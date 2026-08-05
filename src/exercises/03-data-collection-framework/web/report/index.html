@@ -772,11 +772,52 @@
           ours.append(why);
 
           cmp.append(theirs, ours);
+
+          /* The ranking is the decision-relevant part: Gemma 4 is the assignment's named target and
+           * the worst Indic tokenizer of the three serious candidates. Continue-pretraining from it
+           * inherits that tax for the life of the model — see docs/DECISIONS.md, "the fork". */
+          const ranked = fert.by_tokenizer_mean || [];
+          const rank = $('div', 'chartblock');
+          rank.style.marginTop = '26px';
+          rank.append($('div', 'lbl', 'every tokenizer we could reach, ranked'));
+          const worstOf = ranked.length ? ranked[ranked.length - 1].mean_tax.value : 1;
+          ranked.forEach((r) => {
+            const row = $('div', 'tierrow');
+            const track = $('div', 'tiertrack');
+            const fill = $('div', `tierfill ${/gemma/i.test(r.tokenizer) ? 'synth' : 'natural'}`);
+            fill.style.width = `${(r.mean_tax.value / worstOf) * 100}%`;
+            track.append(fill);
+            const val = $('div', 'tierval');
+            val.append(document.createTextNode('×'), renderNumber(r.mean_tax, { unit: false }));
+            row.append($('div', 'tiername', r.tokenizer.split('/').pop()), track, val);
+            rank.append(row);
+          });
+          const rankNote = $('p', 'fig-note');
+          const gemma = ranked.find((r) => /gemma/i.test(r.tokenizer));
+          const best = ranked[0];
+          if (gemma && best) {
+            rankNote.append(
+              document.createTextNode('Orange is '),
+              $('b', '', 'the assignment’s named target'),
+              document.createTextNode(', and it is the worst Indic tokenizer of the three serious candidates — ×'),
+              renderNumber(gemma.mean_tax, { unit: false }),
+              document.createTextNode(' mean against ×'),
+              renderNumber(best.mean_tax, { unit: false }),
+              document.createTextNode(', and ×'),
+              renderNumber(gemma.worst_tax, { unit: false }),
+              document.createTextNode(' at worst. That matters beyond this section: continue-pretraining from a model '),
+              $('b', '', 'inherits its tokenizer'),
+              document.createTextNode(', because you cannot swap one without discarding the embedding table you were reusing. The cheap path to a 40B carries this tax for the life of the model.'),
+            );
+          }
+          rank.append(rankNote);
+          const wrap3 = $('div');
+          wrap3.append(cmp, rank);
           main.append(sect(3, 'The tax is charged before the first training step',
             [document.createTextNode('A tokenizer built for English splits Indian scripts into far more pieces than it splits English, and every extra piece is paid for on '),
              $('b', '', 'every step of the entire run'),
              document.createTextNode('. The multiplier outweighs almost any decision about corpus size, and unlike data you cannot fix it afterwards. It is not a property of the scripts — other tokenizers already do far better on the same sentences — which is why it is worth measuring rather than accepting.')],
-            cmp,
+            wrap3,
             `Fig. 3 — Measured by us on ${data.fertility.corpus || 'FLORES-200'} under run ${(data.fertility.run_id || '').slice(0, 24)}; ${unknownCount} of ${Object.keys(f).length} languages have no measurement. Still a chart rather than an explainer: three of the protocol's six tokenizers are unavailable, and the one under test does not exist yet.`));
         }
 
