@@ -33,7 +33,7 @@
       "architecture": "dense",
       "corpus": 16800000000000,
       "corpus_basis": "Gemma-4 class: Gemma 3 27B's officially stated 14T, plus 20% for one generation.",
-      "asks_of_the_corpus": "Everything. This is the only stage whose data is read by every model that follows it, so provenance, licensing and decontamination have to be right here rather than fixed later. It is also the stage where the Indic share is highest, because the natural pool is a fixed quantity and this is the smallest budget it is divided into.",
+      "asks_of_the_corpus": "Everything. This is the only stage whose data is read by every model that follows it, so provenance, licensing and decontamination have to be right here rather than fixed later. It is also the one rung where the Indic requirement is nearly met: 336B unique tokens of natural Indian-language text are asked for and 270B can be committed. Every rung above asks for more of a pool that does not grow.",
       "status": "the assignment"
     },
     {
@@ -69,7 +69,7 @@
       "architecture": "moe",
       "corpus": 30000000000000,
       "corpus_basis": "Llama 4 trained on over 30T; Qwen3 on 36T across 119 languages. 30T is parity, not ambition.",
-      "asks_of_the_corpus": "Ten trillion more tokens than the last stage, and not one of them Indian. Every source that can supply volume at this scale is English, code or multilingual web text, so the India share falls by growing unless collection is funded alongside.",
+      "asks_of_the_corpus": "Ten trillion more tokens than the last stage, and not one of them Indian. Every source that can supply volume at this scale is English, code or multilingual web text. The mixture still reserves 8% for natural Indian text, which at 30T means 600B unique — more than twice what the catalogue can commit today. The design does not change; its feasibility does.",
       "status": "proposed"
     }
   ],
