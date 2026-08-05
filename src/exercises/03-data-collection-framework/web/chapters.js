@@ -88,6 +88,35 @@ const ARITHMETIC_LABELS = {
 };
 
 /**
+ * Build a provenance-typed Value from a record's own declaration.
+ *
+ * Every number in the six records extracted from `docs/DECISIONS.md` used to be typed at the point
+ * of render, with a source string written in this file. That put the claim about a number
+ * somewhere no reviewer of the record would ever look, and several of the strings were circular —
+ * "the vocabulary design" as the source for a figure *in* the vocabulary design. The records now
+ * declare their own provenance under a `provenance.fields` map keyed by path, and this reads it.
+ *
+ * Throwing on an undeclared key is the point: a new number added to a record without a provenance
+ * entry fails loudly here rather than quietly acquiring whichever source string was nearest.
+ *
+ * @param {object} record - a record carrying `provenance.fields`.
+ * @param {string} key - the field path, e.g. 'stages[].splits[].count'.
+ * @param {number} value - the magnitude.
+ * @param {string} [unit] - overrides the declared unit where one field covers several.
+ * @returns {{value: number, unit: string, provenance: string, source: string}}
+ */
+const declared = (record, key, value, unit) => {
+  const field = ((record || {}).provenance || {}).fields?.[key];
+  if (!field) {
+    throw new Error(
+      `No provenance declared for "${key}". Add it to the record's provenance.fields rather than ` +
+        'inventing a source at the point of render.',
+    );
+  }
+  return { value, unit: unit || field.unit, provenance: field.provenance, source: field.source };
+};
+
+/**
  * A hover-revealed deep link. Every chapter gets one, in the same shape — a raw `#budget` sitting
  * in a heading reads as build scaffolding, and having it on only some of them reads as a bug.
  */
@@ -479,7 +508,7 @@ function chapterMix(ctx) {
     fill.style.width = `${(t.seen_tokens / total) * 100}%`;
     track.append(fill);
     const val = $('div', 'tierval');
-    if (t.seen_tokens) val.append(renderNumber({ value: t.seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'the proposed tier shape' }, { unit: false }));
+    if (t.seen_tokens) val.append(renderNumber({ value: t.seen_tokens, unit: 'tokens', provenance: data.milestones.provenance, source: data.milestones.source }, { unit: false }));
     else val.append($('span', 'unpriced', 'none'));
     row.append($('div', 'tiername', t.name), track, val);
     return row;
@@ -508,6 +537,13 @@ function chapterMix(ctx) {
     ],
     states,
     arithmetic: [
+      /* tier_info's `why` and `sources` shipped in the index and rendered nowhere — 2.7KB of the
+       * budget spent on text no reader could reach, while the figure above labels eleven bars by
+       * name alone. A reader seeing "indic-knowledge-systems" had no way to learn what it is. */
+      table(['tier', 'what it is for', 'where it would come from'], recommended.mix.tiers.map((t) => {
+        const meta = info[t.name] || {};
+        return [t.name, meta.why || '—', meta.sources || '—'];
+      })),
       para('The shares are fixed by the proposed tier shape; the totals scale with the budget. At ', recommended.id, ' the mixture is ', fmt(recommended.mix.total_seen_tokens, 'count'), ' seen from ', fmt(recommended.mix.total_unique_tokens, 'count'), ' unique — the difference is repetition, priced in ', ref('how much text', 'budget'), '.'),
       para('India total sits at ', b(`${(recommended.mix.indic_share * 100).toFixed(1)}%`), ' of the batch, of which ', b(`${(recommended.mix.natural_indic_share * 100).toFixed(1)}%`), ' is natural text rather than manufactured. Code and agentic work together take ', b(`${(((recommended.mix.tiers.find((t) => t.name === 'code') || {}).share || 0) * 100 + ((recommended.mix.tiers.find((t) => t.name === 'agentic-traces') || {}).share || 0) * 100).toFixed(1)}%`), '.'),
       para('The research this is drawn from proposes a finer twelve-tier split reaching 25.3% India, separating English-educational, Indic-parallel, multilingual-non-Indic, clean-provenance and anneal tiers. The site collapses those into eight for legibility, which is why the India share here reads slightly lower. Both are recorded; neither is hidden.'),
@@ -555,25 +591,25 @@ function chapterMix(ctx) {
 
       if (st.lane) {
         const on = mix.tiers.filter((t) => (info[t.name] || {}).always_on);
-        api.big({ value: mix.always_on_share, unit: 'share', provenance: 'estimated', source: 'the proposed tier shape' });
+        api.big({ value: mix.always_on_share, unit: 'share', provenance: data.milestones.provenance, source: data.milestones.source });
         api.sub('of every batch the scorer may not touch');
         api.verdict('PROTECTED', false);
         api.note(`The lane is a property of the batch, not a plea to the filter — nothing here argues with the classifier, it simply cannot reach these tiers. ${on.length} are in it: ${on.map((t) => t.name).join(', ').replace(/, ([^,]*)$/, ' and $1')}. Indic text because the scorer under-values it; agentic traces because they are filtered harder than anything else, by a check built for them rather than by one built for English prose.`);
       } else if (st.kind) {
         const skills = mix.tiers.filter((t) => (info[t.name] || {}).kind === 'skills').reduce((a, t) => a + t.share, 0);
-        api.big({ value: skills, unit: 'share', provenance: 'estimated', source: 'the proposed tier shape' });
+        api.big({ value: skills, unit: 'share', provenance: data.milestones.provenance, source: data.milestones.source });
         api.bigHit(false);
         api.sub('of every batch teaches the model to do something');
         api.verdict('40 / 60', false);
         api.note('The assignment names coding and agentic work as primary capabilities, so the skills tiers take 40% — twelve points more than an earlier draft, taken off filtered English web and general web rather than off anything Indian. That is a bet that code teaches reasoning too, and English web is the tier to watch if general reasoning regresses.');
       } else if (st.synth) {
-        api.big({ value: mix.synthetic_share_of_indic, unit: 'share', provenance: 'estimated', source: 'the proposed tier shape' });
+        api.big({ value: mix.synthetic_share_of_indic, unit: 'share', provenance: data.milestones.provenance, source: data.milestones.source });
         api.bigHit(true);
         api.sub('of the Indian share is manufactured, not collected');
         api.verdict('MOSTLY MADE', true);
         api.note(`Natural Indian text is ${(mix.natural_indic_share * 100).toFixed(1)}% of the whole batch. Every claim about Indian-language ability rests on that slice, not on the headline share.`);
       } else {
-        api.big({ value: mix.total_seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'the proposed tier shape' });
+        api.big({ value: mix.total_seen_tokens, unit: 'tokens', provenance: data.milestones.provenance, source: data.milestones.source });
         api.bigHit(false);
         /* The figure draws one row per tier plus one per scheduled gap, so a reader counts more bars
          * than this number names unless it says which is which. */
@@ -814,7 +850,7 @@ function chapterDatasets(ctx) {
       para('Grade C is the binding constraint and the least dramatic one. It blocks ', b(String(data.datasets.filter((d) => !d.is_gap && d.grade !== 'X' && blockersOf(d).includes('evidence')).length)), ' of the ', String(data.datasets.length), ' datasets — not because anything is wrong with them, but because unevidenced is not the same as fine, and a corpus assembled from things nobody checked is exactly the corpus that fails an audit later.'),
       table(['tier', 'needs', 'can commit', 'covered'], (src.tiers || []).map((t) => [
         t.tier,
-        renderNumber({ value: t.target_tokens, unit: 'tokens', provenance: 'estimated', source: 'the proposed tier shape' }, { unit: false }),
+        renderNumber({ value: t.target_tokens, unit: 'tokens', provenance: data.milestones.provenance, source: data.milestones.source }, { unit: false }),
         renderNumber({ value: t.committed_tokens, unit: 'tokens', provenance: 'measured', source: 'summed from the committable catalogue' }, { unit: false }),
         `${((t.covered_share || 0) * 100).toFixed(0)}%`,
       ]), [1, 2, 3]),
@@ -950,12 +986,7 @@ function chapterPostTraining(ctx) {
   /* Every count here is a proposal, so it is typed as one. The source names the document that
    * proposes it rather than "the post-training plan", which told a reader that the number came
    * from the thing containing the number. */
-  const proposed = (value, unit) => ({
-    value,
-    unit,
-    provenance: 'estimated',
-    source: `proposed in ${sft.source || 'docs/DECISIONS.md'}; not measured and not read off a published model`,
-  });
+  const proposed = (value, unit, key = 'stages[].total') => declared(pt, key, value, unit);
 
   const states = [
     ...plan.map((stage, k) => ({
@@ -1005,8 +1036,8 @@ function chapterPostTraining(ctx) {
       para(b('What other people actually built.'), ' ', (pt.reference || {}).finding || ''),
       table(['model', 'SFT examples', 'preference pairs', 'source'], refs.map((r) => [
         r.model,
-        r.sft ? renderNumber({ value: r.sft, unit: 'count', provenance: 'measured', source: r.source }, { unit: false }) : $('span', 'unpriced', 'not stated'),
-        r.preference ? renderNumber({ value: r.preference, unit: 'count', provenance: 'measured', source: r.source }, { unit: false }) : $('span', 'unpriced', r.preference_note || 'not stated'),
+        r.sft ? renderNumber(declared(pt, 'reference.models[].sft', r.sft), { unit: false }) : $('span', 'unpriced', 'not stated'),
+        r.preference ? renderNumber(declared(pt, 'reference.models[].preference', r.preference), { unit: false }) : $('span', 'unpriced', r.preference_note || 'not stated'),
         r.source,
       ]), [1, 2]),
       para(b('The differentiator.'), ' ', pt.differentiator.how, ' ', pt.differentiator.why_it_matters, ' The catalogue carries it as a named gap rather than as a dataset — ', b('no corpus exists for it at any licence, at any size'), '.'),
@@ -1066,7 +1097,7 @@ function chapterPostTraining(ctx) {
         fill.style.width = `${Math.max((sp.count / top) * 100, 2)}%`;
         track.append(fill);
         const val = $('div', 'tierval');
-        val.append(renderNumber(proposed(sp.count, 'count'), { unit: false }));
+        val.append(renderNumber(proposed(sp.count, 'count', 'stages[].splits[].count'), { unit: false }));
         row.append($('div', 'tiername', sp.name), track, val);
         bars.append(row);
       });
@@ -1463,13 +1494,13 @@ function chapterTokenizer(ctx) {
     states,
     arithmetic: [
       para(b('Targets per language tier.'), ' ', targets.tiers.map((t) => `tier ${t.tier} ≤ ${t.target} tokens/word (${t.languages.length} languages)`).join('; '), '; English ≤ 1.25. Code is measured the other way round, at least 3.6 characters per token, and structured output at most 25 tokens per tool call — 100 turns times 30 wasted tokens is 3,000 tokens burned on punctuation.'),
-      table(['block', 'slots'], blocks.blocks.map((x) => [x.name, renderNumber({ value: x.slots, unit: 'count', provenance: 'estimated', source: 'the vocabulary design' }, { unit: false })]), [1]),
+      table(['block', 'slots'], blocks.blocks.map((x) => [x.name, renderNumber(declared(blocks, 'blocks[].slots', x.slots), { unit: false })]), [1]),
       para('Sum: ', b(fmt(blocks.sum, 'count')), ' → chosen ', b(fmt(blocks.chosen, 'count')), ' (', blocks.alignment, ').'),
       table(['vocabulary', 'output projection', 'share of forward', 'embedding'], blocks.comparison.rows.map((r) => [
         `${fmt(r.vocab, 'count')}${r.label === 'chosen' ? ' — chosen' : r.label === 'Gemma 4' ? ' — Gemma 4' : ''}`,
-        `${r.projection_gflop} GFLOP`,
-        `${(r.share_of_forward * 100).toFixed(2)}%`,
-        fmt(r.embedding_params, 'count'),
+        renderNumber(declared(blocks, 'comparison.rows[].projection_gflop', r.projection_gflop), { unit: false }),
+        renderNumber(declared(blocks, 'comparison.rows[].share_of_forward', r.share_of_forward), { unit: false }),
+        renderNumber(declared(blocks, 'comparison.rows[].embedding_params', r.embedding_params), { unit: false }),
       ]), [1, 2, 3]),
       para(b('The trade, recomputed against the mixture actually shipping.'), ' ', cost.vocab_trade.steps.map((st) => `${st.label}: ${st.expression ? st.expression + ' = ' : ''}${st.unit === 'share' ? (st.value * 100).toFixed(2) + '%' : fmt(st.value, 'count')} ${st.unit === 'share' ? '' : st.unit}`).join('; '), `. Roughly a ${cost.vocab_trade.return_multiple}× return on the 1.2% compute cost, for one epoch, before any inference-side saving.`),
       para(b('An independent check on the same answer.'), ' The block sum above is bottom-up: give every script the slots it needs and add them. A separate sweep works top-down — for each candidate vocabulary size, price the extra softmax against the tokens saved, and take the peak of the difference. It is a different method on different inputs, and it lands at ', b(sweep.recommended_vocab.toLocaleString('en-US')), ' against the sum’s ', b(blocks.chosen.toLocaleString('en-US')), ` — ${(Math.abs(blocks.chosen - sweep.recommended_vocab) / blocks.chosen * 100).toFixed(1)}% apart. Neither result is evidence for the other, which is exactly why the agreement is worth stating; a single derivation nobody cross-checked is how a wrong vocabulary ships.`),
@@ -1537,10 +1568,10 @@ function chapterTokenizer(ctx) {
         shownBlocks.forEach((blk) => {
           const cls = blk.kind === 'latin' ? 'dim' : blk.kind === 'technical' ? 'dim' : 'natural';
           const { row, val } = barFor(blk.name, blk.slots, top, cls);
-          val.append(renderNumber({ value: blk.slots, unit: 'count', provenance: 'estimated', source: 'the vocabulary design' }, { unit: false }));
+          val.append(renderNumber(declared(blocks, 'blocks[].slots', blk.slots), { unit: false }));
           bars.append(row);
         });
-        api.big({ value: blocks.chosen, unit: 'count', provenance: 'estimated', source: 'the vocabulary design' });
+        api.big(declared(blocks, 'chosen', blocks.chosen, 'count'));
         api.bigHit(false);
         api.sub(`slots — ${fmt(blocks.sum, 'count')} needed across ${blocks.blocks.length} blocks, rounded to ${blocks.alignment}`);
         api.verdict('DESIGNED, NOT GUESSED', false);
@@ -1751,7 +1782,7 @@ function chapterCost(ctx) {
   ];
 
   const bars = $('div', 'tierbars');
-  const usd = (v) => renderNumber({ value: v, unit: 'USD', provenance: 'estimated', source: run.note }, { unit: false });
+  const usd = (v) => renderNumber(declared(records.cost, 'run_cost.steps[].value', v, 'USD'), { unit: false });
 
   return buildExplainer({
     n: 12,
@@ -1805,7 +1836,7 @@ function chapterCost(ctx) {
         bars.append(row);
       });
       api.extra.replaceChildren(bars);
-      api.big({ value: money.value * p2.share, unit: 'USD', provenance: 'estimated', source: run.note });
+      api.big(declared(records.cost, 'run_cost.steps[].value', money.value * p2.share, 'USD'));
       api.bigHit(p2.id !== 'scratch');
       api.sub(`of compute · ${fmt(recommended.target_seen_tokens * p2.share, 'count')} tokens trained`);
       api.verdict(p2.verdict, p2.id !== 'scratch');

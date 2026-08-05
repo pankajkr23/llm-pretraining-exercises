@@ -375,8 +375,14 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
                 }
                 for tier in TIER_SHAPE
             },
+            # The source a figure drawn from this shape should name. It read "the proposed tier
+            # shape" on 21 figures, which told a reader nothing they could check — it named the
+            # thing the number was already part of.
             "provenance": "estimated",
-            "source": "computed from the proposed tier shape",
+            "source": (
+                "the tier shape in docs/DECISIONS.md 1.1, composed by milestones.py — proportions "
+                "decided, then scaled per rung. Not measured, nor what the catalogue can supply."
+            ),
         },
         "vocab_sweep": {
             **curve,
@@ -449,8 +455,10 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
             ),
             # As text, not a list of ints: every number in this bundle must be provenance-typed,
             # and a window width is a parameter rather than a measurement.
+            # `note` used to ship here and restated the counts above it in prose. Nothing rendered
+            # it — the gate chapter writes its own sentence from the numbers — so it was index
+            # budget spent on a paraphrase no reader could reach. It stays in shingles.json.
             "gram_widths": ", ".join(str(w) for w in shingle_meta["gram_widths"]) or "none",
-            "note": shingle_meta["note"],
         },
         # `priors` stays in the index because the Decision cites it inline — but only the three
         # fields both surfaces actually render. The full records live in records/priors.json.

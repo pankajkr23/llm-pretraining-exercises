@@ -76,5 +76,35 @@
     ],
     "caveat": "Compute only, and one full pass of the schedule. It excludes data acquisition, annotation, storage, egress, the failed runs every real project has, and every salary. A published rate of USD 2.00 per H100-hour is a list price; large reservations are negotiated well below it and spot capacity below that again. Treat it as the order of magnitude, which is what the fork actually turns on.",
     "provenance": "estimated"
+  },
+  "provenance": {
+    "note": "Everything here is derived, and every derivation is shown as ordered steps so it can be checked. The one exception is called out: the fertility improvement a larger vocabulary buys describes a tokenizer nobody has trained and cannot be measured until somebody does.",
+    "fields": {
+      "vocab_trade.costs.value": {
+        "provenance": "estimated",
+        "unit": "share of forward compute",
+        "source": "derived from the projection arithmetic in docs/DECISIONS.md 4.4"
+      },
+      "vocab_trade.buys.value": {
+        "provenance": "estimated",
+        "unit": "share",
+        "source": "THE ONE UNMEASURED INPUT: an assumption about a candidate tokenizer that has never been trained. Everything else in this record follows from it."
+      },
+      "vocab_trade.over.value": {
+        "provenance": "measured",
+        "unit": "share of the mixture",
+        "source": "the India share of the shipping mixture, recomputed on every export"
+      },
+      "vocab_trade.steps[].value": {
+        "provenance": "estimated",
+        "unit": "varies",
+        "source": "recomputed on every export by dataframework/vocab_trade.py from the mixture actually shipping"
+      },
+      "run_cost.steps[].value": {
+        "provenance": "estimated",
+        "unit": "varies",
+        "source": "derived from 6ND, 4.0e14 sustained FLOP/s per H100, and a list hourly rate — see this record's run_cost.note and caveat"
+      }
+    }
   }
 }

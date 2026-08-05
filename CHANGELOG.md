@@ -73,6 +73,19 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   text token in every theme was generated from a palette that a contrast checker had already
   passed — four contrast failures had shipped in this exercise when values were picked by eye — and
   all six themes measure accessibility 100 in the browser.
+- **Every number now carries provenance declared in the record it comes from.** Figures extracted
+  from `docs/DECISIONS.md` used to be typed at the point of render with a source string written in
+  the chapter — putting the claim about a number somewhere no reviewer of the record would look,
+  and several of them circular ("the vocabulary design" as the source for a figure *in* the
+  vocabulary design). All six records now declare their own `provenance.fields`, distinguishing a
+  proposal from a derivation from a published figure, and a number with no declaration throws
+  rather than quietly borrowing the nearest string. The 21 figures sourced to "the proposed tier
+  shape" now name the document and module that decided it.
+- **The growth lineage is 3B, 8B, 40B, 200B.** The 40B is stage three, not the start. Each stage
+  reserves 8% of its batch for natural Indian-language text, so the requirement scales with the
+  corpus while the supply does not: 60B unique needed at 3B against 84.9B committable, then 160B,
+  336B and 600B. The seed is the only stage this catalogue can supply, and its text is inherited by
+  every model above it.
 - **A growth chapter.** The 40B is a seed, and the chapter follows it to the largest Indic model in
   four stages — dense, grow sparse, grow deep, frontier parity — using the state-preserving growth
   method of arXiv:2606.07404. The shape of the answer is the lesson: parameters rise 7.5×, the

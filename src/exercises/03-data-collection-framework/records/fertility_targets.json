@@ -2,15 +2,80 @@
   "note": "Extracted from docs/DECISIONS.md §4.2. Languages are tiered, not cut: a tier-3 language gets guaranteed coverage even where fertility cannot be brought down.",
   "source": "docs/DECISIONS.md §4.2",
   "tiers": [
-    { "tier": "A", "target": 1.85, "unit": "tokens/word", "languages": ["hi", "bn", "ta", "te", "mr", "ml", "kn", "gu", "pa", "or", "ur"], "note": "Urdu included deliberately — see the vocabulary scope." },
-    { "tier": "B", "target": 2.20, "unit": "tokens/word", "languages": ["as", "sa", "ne", "kok", "mai", "sd"], "note": null },
-    { "tier": "C", "target": 2.60, "unit": "tokens/word", "languages": ["ks", "brx", "doi", "mni", "sat"], "note": "Coverage guaranteed, fertility best-effort." }
+    {
+      "tier": "A",
+      "target": 1.85,
+      "unit": "tokens/word",
+      "languages": [
+        "hi",
+        "bn",
+        "ta",
+        "te",
+        "mr",
+        "ml",
+        "kn",
+        "gu",
+        "pa",
+        "or",
+        "ur"
+      ],
+      "note": "Urdu included deliberately — see the vocabulary scope."
+    },
+    {
+      "tier": "B",
+      "target": 2.2,
+      "unit": "tokens/word",
+      "languages": [
+        "as",
+        "sa",
+        "ne",
+        "kok",
+        "mai",
+        "sd"
+      ],
+      "note": null
+    },
+    {
+      "tier": "C",
+      "target": 2.6,
+      "unit": "tokens/word",
+      "languages": [
+        "ks",
+        "brx",
+        "doi",
+        "mni",
+        "sat"
+      ],
+      "note": "Coverage guaranteed, fertility best-effort."
+    }
   ],
   "other": [
-    { "objective": "English", "target": 1.25, "unit": "tokens/word", "note": null },
-    { "objective": "Code", "target": 3.6, "unit": "chars/token", "direction": "at least", "note": "Measured the other way round: more characters per token is better." },
-    { "objective": "Math", "target": null, "unit": null, "note": "Digits atomic; frequent LaTeX commands single-token." },
-    { "objective": "Agentic / JSON", "target": 25, "unit": "structural tokens per tool call", "direction": "at most", "note": "100 turns x 30 wasted structural tokens is 3,000 tokens burned on punctuation." }
+    {
+      "objective": "English",
+      "target": 1.25,
+      "unit": "tokens/word",
+      "note": null
+    },
+    {
+      "objective": "Code",
+      "target": 3.6,
+      "unit": "chars/token",
+      "direction": "at least",
+      "note": "Measured the other way round: more characters per token is better."
+    },
+    {
+      "objective": "Math",
+      "target": null,
+      "unit": null,
+      "note": "Digits atomic; frequent LaTeX commands single-token."
+    },
+    {
+      "objective": "Agentic / JSON",
+      "target": 25,
+      "unit": "structural tokens per tool call",
+      "direction": "at most",
+      "note": "100 turns x 30 wasted structural tokens is 3,000 tokens burned on punctuation."
+    }
   ],
   "headline": {
     "name": "parity ratio",
@@ -19,5 +84,25 @@
     "why": "One number that states the India-first claim quantitatively.",
     "today": "Under cl100k_base it sits near 8.0.",
     "blocked_by": "Defined against our own candidate tokenizer, which has never been trained."
+  },
+  "provenance": {
+    "note": "Targets, not observations. Every figure here is a bar somebody set for a tokenizer nobody has trained yet; the measured fertility of tokenizers that do exist lives in records/fertility.json and is typed there.",
+    "fields": {
+      "headline.target": {
+        "provenance": "estimated",
+        "unit": "ratio",
+        "source": "the parity target set in docs/DECISIONS.md 4.2 — a goal, and not achieved by any tokenizer measured in this project"
+      },
+      "tiers[].target": {
+        "provenance": "estimated",
+        "unit": "tokens/word",
+        "source": "per-tier targets set in docs/DECISIONS.md 4.2"
+      },
+      "other[].target": {
+        "provenance": "estimated",
+        "unit": "varies",
+        "source": "per-objective targets set in docs/DECISIONS.md 4.2"
+      }
+    }
   }
 }
