@@ -73,6 +73,7 @@ uv run pytest            # run every exercise's tests from the root
 | --- | --- | --- |
 | 01 | [Introductions](src/exercises/01-introductions/) | Four live, in-browser interactive proofs of *why neural nets work*. Static site, zero dependencies, deployed to Vercel. |
 | 02 | [Tokenization](src/exercises/02-tokenization/) | A single 10k BPE vocabulary balanced across India's Wikipedia article in four languages, with an ablation harness that sweeps algorithm × representation × normalization × vocab × weighting. |
+| 03 | [Data collection framework](src/exercises/03-data-collection-framework/) | How you decide what an India-first model trains on: 145 datasets graded on five gates, five data-handling invariants enforced in CI, and two interactive pages — the decision and the evidence under it. |
 
 More exercises are added each week.
 
@@ -131,6 +132,38 @@ python3 -m http.server 8000   # open http://localhost:8000
 > [`deploy/`](deploy/)) — the single-project + routing setup serves every exercise, so this is no
 > longer blocked on multi-exercise publishing. Connecting the Vercel project to the repo is the
 > remaining one-time step.
+
+### 03 · Data collection framework — deciding the mix
+
+A Python pipeline (`src/exercises/03-data-collection-framework/src/dataframework/`) turns a research
+atlas into a **graded catalogue of 145 datasets and 31 benchmarks**, then publishes two pages: a
+**decision** (what to train on, in what proportion, at what cost) and an **atlas** (the evidence
+under every number, including the parts that do not hold up).
+
+Two things make it more than a write-up:
+
+- **Five invariants enforced in CI, not in review.** Training never touches eval data · nothing
+  excluded may enter a commercial mix · every judgment carries its reasoning and confidence · a
+  measurement must name what produced it · no source content is silently dropped. Each is paired
+  with a test proving it *fails* when broken — a guard nobody has watched fail is not a guard.
+- **Every number carries its provenance.** `{value, unit, provenance, source}` all the way to the
+  DOM, and the renderer throws on a bare number rather than printing it. Where a figure has never
+  been measured, the page says so instead of showing a plausible one.
+
+The pages are **interactive explainers**: each makes one claim, and what the reader does is the
+proof of it rather than an illustration. The contamination gate is the clearest example — type your
+own sentence, try to smuggle it past a 13-word shingle index, and watch where the method stops
+working. Conventions in [`docs/EXPLAINER_PROMPT.md`](docs/EXPLAINER_PROMPT.md) (what to build) and
+[`docs/EXPLAINER_PATTERN.md`](docs/EXPLAINER_PATTERN.md) (how).
+
+```bash
+uv run python -m dataframework          # rebuild web/data.json from the data spine
+uv run pytest -m "not integration"      # the invariants, and the proofs they can fail
+```
+
+> **Hosting:** deploys via the repo-wide Vercel project at `/03-data-collection-framework/`.
+> **Scope:** a coursework exercise, not a proposal to anyone — see
+> [`NOTICE`](src/exercises/03-data-collection-framework/NOTICE).
 
 ## Development
 

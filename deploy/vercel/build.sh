@@ -34,7 +34,8 @@ for web in "$ROOT"/src/exercises/*/web; do
   # Some exercises lazy-fetch their per-record JSON at runtime. Those records are already tracked
   # as the reviewable source of truth, so they are served directly rather than duplicated into
   # web/ by the pipeline.
-  for served in catalog.json benchmarks.json; do
+  # NOTICE ships beside the pages it qualifies: a disclaimer nobody can reach is not one.
+  for served in catalog.json benchmarks.json NOTICE; do
     if [ -f "$exercise/$served" ]; then
       cp "$exercise/$served" "$OUT/$slug/$served"
       echo "  + $slug/$served <- ${exercise#"$ROOT"/}/$served"

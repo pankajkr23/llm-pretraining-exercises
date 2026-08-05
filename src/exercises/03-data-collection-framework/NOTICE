@@ -1,0 +1,54 @@
+NOTICE — 03-data-collection-framework
+=====================================
+
+WHAT THIS IS
+
+A coursework exercise: a framework for deciding the pre-training data mix of an
+India-first language model. It is a study of a decision, not a product, not a
+proposal to any organisation, and not a plan anybody has committed to.
+
+NO AFFILIATION
+
+This work is not affiliated with, endorsed by, sponsored by, or produced on
+behalf of any company, government body, research institute, university, or
+funding programme. Every organisation named in these pages — dataset publishers,
+model developers, benchmark owners, tool authors, government ministries — is
+named because their public work is the evidence being examined. Naming them is
+citation, not association, and none of them has reviewed or approved anything
+here.
+
+Where this document records a licence, a price, a benchmark result, or a legal
+position attributed to a third party, that record is a reading of their public
+material by the author of this exercise. It may be out of date, and it may be
+wrong. Anyone acting on it should verify against the source, which is cited.
+
+NOT LEGAL ADVICE
+
+The licensing and copyright material — including the sections on Indian
+copyright law, fair dealing, and text-and-data-mining exceptions — is a summary
+written by a non-lawyer for a coursework exercise. It is not legal advice. Data
+licensing decisions with commercial consequences need a qualified lawyer in the
+relevant jurisdiction.
+
+NO DATASET IS REDISTRIBUTED
+
+This exercise catalogues datasets; it does not host, mirror, or redistribute
+them. Links point at the publishers. Each dataset's own licence governs its use,
+and several catalogued here forbid commercial use outright. The catalogue records
+that fact; it does not grant permission to ignore it.
+
+NO EVALUATION CONTENT IS PUBLISHED
+
+The contamination gate stores benchmark items as truncated hashes only, never as
+text (see src/dataframework/shingles.py, and the invariant test that fails if any
+item text reaches the published bundle). Nothing in this repository reproduces
+the content of any evaluation set.
+
+WHAT IS MEASURED AND WHAT IS NOT
+
+Most figures on these pages are estimates or values read from other people's
+published work, and each carries its provenance in the data. A small number are
+measured. Several load-bearing quantities — the size of the deduplicated Indic
+web, and per-language tokenizer fertility — have not been measured by anyone,
+including here, and the pages say so where those numbers would otherwise appear.
+The confidence ledger on the atlas page lists what would fall over first.

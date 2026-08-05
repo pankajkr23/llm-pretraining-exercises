@@ -12,9 +12,34 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 03 — data collection framework.** A graded catalogue of 145 datasets and 31 benchmarks
+  behind two public pages: **the decision** (what to train an India-first model on, in what
+  proportion, at what cost) and **the atlas** (the evidence under every number). Every figure
+  carries `{value, unit, provenance, source}` and the renderer refuses to print a bare one; where a
+  quantity has never been measured, the page says so rather than showing a plausible number.
+- **Five data-handling invariants enforced in CI.** Training never touches eval data · nothing
+  excluded may enter a commercial mix · every judgment carries its reasoning and confidence · a
+  measurement must name what produced it · no source content is silently dropped. Each ships with a
+  test proving it fails when broken.
+- **Interactive explainers** on both pages, replacing static tables and charts: the contamination
+  gate you can try to defeat with your own sentence, a vocabulary optimum that moves as you change
+  the model width, a quality filter that deletes twelve of twenty-two languages until the protected
+  lane restores them, and a confidence ledger that narrows to the nine claims that would survive
+  checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
+
+
 - **Web design system** (`docs/DESIGN.md`): a shared Apple-style visual language — palette tokens,
   typography, components, interaction, and copy/tone rules — that every exercise's `web/` bundle
   follows.
+
+### Fixed
+
+- **Contamination gate missed short evaluation items.** An item shorter than the 13-word shingle
+  window hashed to a single whole-text gram, which can never match a 13-gram drawn from a longer
+  training shard — so a short benchmark question pasted verbatim into a shard was reported clean.
+  The index now records the window width each item was hashed at and checks the document at each
+  width; items too short to identify anything are refused and counted rather than silently
+  accepted.
 
 ### Changed
 

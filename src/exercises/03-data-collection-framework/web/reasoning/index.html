@@ -424,7 +424,25 @@
             return b;
           });
           const canvas = $('div', 'canvas');
+          canvas.setAttribute('role', 'group');
+          canvas.setAttribute('aria-label', `${catalog.length} datasets — arrow keys move between them, Enter opens a card`);
           canvas.append(...units);
+          /* Roving tabindex: the grid is one tab stop, arrows move inside it. 145 sequential stops
+           * between one section and the next is not navigation, it is an obstacle. */
+          let rover = 0;
+          const setRover = (i) => {
+            rover = Math.max(0, Math.min(units.length - 1, i));
+            units.forEach((u, k) => { u.tabIndex = k === rover ? 0 : -1; });
+            units[rover].focus();
+          };
+          units.forEach((u, k) => { u.tabIndex = k === 0 ? 0 : -1; });
+          canvas.addEventListener('keydown', (e) => {
+            const per = 20;
+            const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: per, ArrowUp: -per }[e.key];
+            if (step === undefined) return;
+            e.preventDefault();
+            setRover(rover + step);
+          });
 
           const s = buildExplainer({
             n: 'data', anchor: 'data', wide: true,
@@ -527,6 +545,7 @@
           s.append($('h3', '', `The register — all ${data.benchmarks.length}, none hidden`));
           const BAND_CLASS = { 'native-sourced': 'ok', 'translation-derived': 'out', 'harness-dependent': 'mid' };
           const bstrip = $('div', 'canvas');
+          bstrip.setAttribute('aria-hidden', 'true');   // the counts beneath it say the same thing
           data.benchmarks.forEach((b) => {
             const u = $('span', `unit ${BAND_CLASS[b.trust_band] || ''}`);
             u.title = `${b.name} — ${b.trust_band}`;
@@ -685,14 +704,16 @@
               bold: 'the claims it can least support', tail: ' — which is the honest summary of this whole document.' },
           ];
 
+          /* Marks, not controls: they carry no behaviour, so they must not be buttons. Every claim
+           * stays readable as text in the table below — the canvas shows the shape, the table says
+           * what the shape is made of. */
           const units = claims.map((c) => {
-            const b = $('button', 'unit');
-            b.type = 'button';
-            b.title = `${c.id} · ${bandOf(c)} — ${c.claim}`;
-            b.setAttribute('aria-label', `${c.id}, ${bandOf(c)} confidence`);
-            return b;
+            const u = $('span', 'unit');
+            u.title = `${c.id} · ${bandOf(c)} — ${c.claim}`;
+            return u;
           });
           const canvas = $('div', 'canvas');
+          canvas.setAttribute('aria-hidden', 'true');
           canvas.append(...units);
 
           const s = buildExplainer({
@@ -749,6 +770,16 @@
               api.strip([]);
             },
           });
+          const ledger = $('div');
+          ledger.append($('h3', '', `The ledger — all ${claims.length} claims`));
+          ledger.append(table(['claim', 'confidence', 'basis'],
+            claims.map((c) => {
+              const band = $('span', '', bandOf(c));
+              if (bandOf(c) === 'load-bearing') band.style.cssText = 'color:var(--grade-x);font-weight:600';
+              if (bandOf(c) === 'high') band.style.cssText = 'color:var(--grade-a);font-weight:600';
+              return [c.claim, band, c.basis];
+            })));
+          s.append(ledger);
           add(s, 'Confidence', 'Honesty');
 
           const c = section('changelog', 'What this research got wrong');
