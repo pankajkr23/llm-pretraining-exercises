@@ -727,15 +727,23 @@ function chapterDatasets(ctx) {
       (r) => (state.tier === 'all' || r.tier === state.tier) && (state.action === 'all' || r.action === state.action),
     );
 
+    /* Faceted counts: each chip counts what selecting it would actually show, which means counting
+     * against the *other* filter rather than against the whole catalogue. Counting globally made
+     * "commit 4" sit above a two-row table whenever a tier was also selected — the chip was
+     * answering a question the reader had already narrowed. */
+    const underAction = rows.filter((r) => state.action === 'all' || r.action === state.action);
+    const underTier = rows.filter((r) => state.tier === 'all' || r.tier === state.tier);
     controls.replaceChildren(
       chipRow('tier', 'tier', [
-        { value: 'all', text: 'every tier', count: rows.length },
-        ...Object.keys(targets).map((t) => ({ value: t, text: t, count: rows.filter((r) => r.tier === t).length })),
+        { value: 'all', text: 'every tier', count: underAction.length },
+        ...Object.keys(targets).map((t) => ({
+          value: t, text: t, count: underAction.filter((r) => r.tier === t).length,
+        })),
       ]),
       chipRow('what has to happen', 'action', [
-        { value: 'all', text: 'anything', count: rows.length },
+        { value: 'all', text: 'anything', count: underTier.length },
         ...ACTION_ORDER.filter((a) => rows.some((r) => r.action === a)).map((a) => ({
-          value: a, text: ACTIONS[a][0].toLowerCase(), count: rows.filter((r) => r.action === a).length,
+          value: a, text: ACTIONS[a][0].toLowerCase(), count: underTier.filter((r) => r.action === a).length,
         })),
       ]),
     );
@@ -747,8 +755,12 @@ function chapterDatasets(ctx) {
     const committable = state.tier === 'all' ? src.committed_tokens : planOf(state.tier).committed_tokens || 0;
     tally.replaceChildren();
     tally.append(
-      b(`${shown.length} of ${rows.length}`),
-      text(` shown. ${rows.length} of the ${src.counts.catalogued} catalogued datasets map to a pre-training tier; the rest are post-training or evaluation sets`),
+      b(`${shown.length} of ${state.tier === 'all' ? rows.length : underTier.length}`),
+      text(
+        state.tier === 'all'
+          ? ` shown. ${rows.length} of the ${src.counts.catalogued} catalogued datasets map to a pre-training tier; the rest are post-training or evaluation sets`
+          : ` shown in this tier. ${rows.length} of the ${src.counts.catalogued} catalogued datasets map to a pre-training tier at all`,
+      ),
       ...(state.tier !== 'all'
         ? [
             text(`. This tier needs ${fmt(targets[state.tier], 'count')} and can commit `),
