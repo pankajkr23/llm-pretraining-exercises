@@ -576,7 +576,9 @@ function chapterMix(ctx) {
       } else {
         api.big({ value: mix.total_seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'the proposed tier shape' });
         api.bigHit(false);
-        api.sub(`across ${mix.tiers.length} kinds of text`);
+        /* The figure draws one row per tier plus one per scheduled gap, so a reader counts more bars
+         * than this number names unless it says which is which. */
+        api.sub(`across ${mix.tiers.length} kinds of text${gaps.length ? `, plus ${gaps.length === 1 ? 'one that does not exist' : `${gaps.length} that do not exist`}` : ''}`);
         api.verdict(`${(mix.indic_share * 100).toFixed(0)}% INDIAN`, false);
         api.note(`Read from ${fmt(mix.total_unique_tokens, 'count')} of unique text. The gap between the two is repetition.`);
       }
@@ -2037,8 +2039,15 @@ function chapterAppendix(ctx) {
     note.style.cssText = 'font-size:12px;color:var(--muted);margin:14px 0 0;max-width:72ch';
     note.append(
       text('A grade is five checks scored together — where the text came from, whether its composition matches its claims, whether it overlaps the exam sets, how much survives cleaning, and whether any of it is evidenced. Nothing is scored for a question nobody answered, which is why '),
-      b(`${data.grades.C || 0} of ${data.datasets.length} sit at C`),
-      text(' and none reaches A. '),
+      /* The bands above split grade C from the scheduled gap, and the gap is graded C as well. Say
+       * 115 to match what the reader can count, and name the 116th rather than quietly rolling it
+       * in — two true totals for one fact, sitting next to each other, is how a page loses trust. */
+      b(`${data.datasets.filter((d) => d.grade === 'C' && !d.is_gap).length} of ${data.datasets.length} sit at C`),
+      text(
+        data.datasets.some((d) => d.grade === 'C' && d.is_gap)
+          ? ' — a further one is graded C and has no corpus at all, which is why it is banded separately above — and none reaches A. '
+          : ' and none reaches A. ',
+      ),
       b('Click any mark'),
       text(' to read its five verdicts, the reasoning behind each and how confident it is.'),
     );
