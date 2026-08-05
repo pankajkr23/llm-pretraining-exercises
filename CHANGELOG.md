@@ -48,6 +48,13 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   every left edge lines up; prose stops at its own line-length measure and leaves the right ragged,
   while tables, figures and registers fill the width. The explainer's chart column grows with the
   window rather than the prose lines getting longer.
+- **Deploys no longer leave readers on a stale page.** Assets were referenced by bare name and
+  served with default caching, so after a release a returning reader could hold a fresh
+  `index.html` alongside a cached `chapters.js` — and every chapter title, number and figure on the
+  data-collection page comes out of that one file. The build now appends each asset's content hash
+  to every reference, walking the whole `index.html → chapters.js → explainer.js → num.js` graph to
+  a fixpoint so a change to a leaf reaches the top. Sources keep bare names; only the built output
+  carries hashes.
 - **Six themes, site-wide, every one contrast-checked.** Tokens moved out of the individual pages
   into one `/_shared/tokens.css` that the landing page and all three exercises link, so a colour
   decision is made once. The system light/dark pair stays the default, joined by soft light (warm

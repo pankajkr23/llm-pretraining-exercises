@@ -49,4 +49,9 @@ for web in "$ROOT"/src/exercises/*/web; do
   done
 done
 
+# Cache-busting. Every asset reference gets its target's content hash, so a deploy cannot leave a
+# reader holding a fresh index.html and a cached chapters.js. Runs on the assembled output, so
+# nothing under src/ carries a hash.
+python3 "$ROOT/deploy/vercel/fingerprint.py" "$OUT"
+
 echo "Assembled $(find "$OUT" -type f | wc -l | tr -d ' ') files into public/"
