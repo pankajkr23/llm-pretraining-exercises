@@ -45,7 +45,10 @@ EXPECTED_COUNTS: dict[str, int] = {
     "acquisition": 8,
     "plan": 12,
     "languages": 22,
-    "architectures": 5,
+    # 6, not the Atlas's 5: Gemma 4 is the comparator the whole plan is written against and every
+    # chapter names it, so a table of models that omitted it was a hole rather than fidelity. Its
+    # figures come from docs/DECISIONS.md's preamble, not from a new source.
+    "architectures": 6,
     "milestones": 4,
     # Not in the plan's list of twelve arrays, but Phase 5 needs a legal surface and the Atlas has
     # the material. Six limits on the copyright ruling, not the five the design doc cites: the

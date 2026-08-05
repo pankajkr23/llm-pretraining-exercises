@@ -132,16 +132,16 @@ function chapterTarget(ctx) {
     n: 1,
     title: 'What we are building',
     claim: [
-      text('The target is Gemma-4 class — 40 billion parameters, strong at code and at running tools unattended — but fluent in 22 Indian languages and reasoning from Indian law, institutions and history rather than translating an American default. No open model does all four, and the reason is not architecture. It is that '),
+      text('The target is a 40-billion-parameter model — about a third larger than Gemma 4’s 30.7B, and meant to beat it rather than match it — strong at code and at running tools unattended, fluent in 22 Indian languages, and reasoning from Indian law, institutions and history rather than translating an American default. No open model does all four, and the reason is not architecture. It is that '),
       b('the text does not exist in the proportions the model needs'),
       text(': English offers something like fifty times more than every Indian language combined. Everything downstream is a consequence of that one fact.'),
     ],
     body: facts,
     arithmetic: [
       para(
-        'The target is a 40-billion-parameter model of roughly Gemma 4 class, with coding, agentic work, Indian languages and an India-first worldview as its primary capabilities. Model width is settled at ',
+        'Coding, agentic work, Indian languages and an India-first worldview are the four primary capabilities, and every later chapter is downstream of one of them. Model width is settled at ',
         b('d_model = 6,144'),
-        ', which matters later: it is the number that prices the tokenizer decision.',
+        ', which matters later: it is the number that prices the tokenizer decision, because a vocabulary costs one row of that width per entry.',
       ),
       para(
         '"India-first" is a claim about content, not only about language. A model with flawless Hindi that assumes American default law is not India-first. The worldview comes from India-context material, much of it written in English — government releases, parliamentary debates, court judgments, Indian science and history writing. That is why it gets a tier of its own in the mixture rather than being folded into general web text.',
@@ -218,9 +218,11 @@ function chapterBudget(ctx) {
     ],
     states,
     arithmetic: [
+      para(b('Where 15T comes from.'), ' Chinchilla puts the compute-optimal ratio at about 20 tokens per parameter, which for 40B would be 800 billion. Nobody trains that way any more, because compute-optimal minimises the cost of ', b('training'), ' and every deployed model pays the cost of ', b('serving'), ' forever. Overtraining a smaller model is how you buy a cheaper one to run: ', fmt(recommended.target_seen_tokens, 'count'), ' on 40B is ', b(`${Math.round(recommended.target_seen_tokens / 40e9)} tokens per parameter`), ', roughly ', String(Math.round(recommended.target_seen_tokens / 40e9 / 20)), '× past compute-optimal, and squarely in the band the open 8–70B models of the last two years were trained in. It is a deliberate choice, not a scaling law.'),
       para('The sum is ', b('unique text × passes = effective tokens'), '. A pool of ', fmt(POOL, 'count'), ' read four times contributes ', fmt(POOL * 4, 'count'), ' to the budget.'),
-      para('The evidence for "nearly free": an 8.7B-parameter model trained four epochs on 44B unique tokens finished only 0.5% worse on validation loss than a single epoch over 178B unique tokens. The decay constant behind the ceiling is R*_D ≈ 15 — no amount of repetition beats one epoch on about 16× the unique pool.'),
+      para(b('The evidence for "nearly free"'), ' is Muennighoff et al., ', ref('Scaling Data-Constrained Language Models', 'appendix'), ' (NeurIPS 2023): an 8.7B-parameter model trained four epochs on 44B unique tokens finished only 0.5% worse on validation loss than a single epoch over 178B unique tokens. The decay constant behind the ceiling is R*_D ≈ 15 — no amount of repetition beats one epoch on about 16× the unique pool. Two guardrails come with it: repetition operates on whole tiers only (up-sampling 0.1% of a corpus a hundred times degrades the model badly), and every one of those measurements is on English web text at 9B parameters or less.'),
       para('The allocation rule that follows inverts naive Chinchilla scaling: when you are data-constrained, scale epochs faster than parameters. Mixing in code data buys roughly another 2× of headroom.'),
+      para(b('Where this page is harder on itself than the research it comes from.'), ' The research schedules twelve tiers with epochs from 1 to 4, reaching ', fmt(recommended.target_seen_tokens, 'count'), ' seen from a 9.65T unique pool. This page collapses those to eight for legibility, and the collapse reads all but the Indic tier once — so the same ', fmt(recommended.target_seen_tokens, 'count'), ' needs ', b(fmt(recommended.mix.total_unique_tokens, 'count')), ' of unique text, about 46% more. Since sourcing is the binding constraint everywhere on this page, the simplified plan is the more demanding one. Both are recorded; the harder number is the one shown.'),
       para('At 300B parameters the token budget grows and the Indic pool does not. Published frontier runs sit above 30T tokens; this plan targets 15T. The honest statement is that a 300B India-first model is not blocked by compute — it is blocked by there not being enough Indian-language text in existence, and no reading schedule fixes that.'),
     ],
     refresh: (api) => {
@@ -1307,7 +1309,7 @@ function chapterEvaluation(ctx) {
 // ──────────────────────────────────────── 11 · what it costs, and whether to build
 
 function chapterCost(ctx) {
-  const { data, records } = ctx;
+  const { data, records, recommended } = ctx;
   const arch = (records.architectures || []).filter((a) => a.params_total);
   const fert = data.fertility;
   const ranked = fert.by_tokenizer_mean || [];
@@ -1316,20 +1318,36 @@ function chapterCost(ctx) {
   const acquisition = records.acquisition || [];
   const free = acquisition.filter((a) => a.cost_inr === 0);
 
+  /* The run priced with the record's own constants — 6ND, 4.0e14 FLOP/s, and the USD/INR rate its
+   * vocabulary arithmetic already implies. A chapter titled "what it costs" that priced nothing was
+   * the weakest thing on the page. */
+  const run = records.cost.run_cost;
+  const hours = run.steps.find((x) => x.unit === 'H100-hours');
+  const money = run.steps.find((x) => x.unit === 'USD');
+  const usd = (v) => renderNumber({ value: v, unit: 'USD', provenance: 'estimated', source: run.note }, { unit: false });
+
   const paths = [
-    { id: 'scratch', name: 'Train from scratch', cost: '1.0× baseline', inherits: 'Nothing', tokenizer: 'Ours — designed for these scripts',
-      verdict: 'Full control, full price.' },
-    { id: 'continue', name: 'Continue-pretrain from Gemma 4', cost: 'A fraction', inherits: 'Gemma-4-class coding and agentic ability on day one',
-      tokenizer: gemma ? `Gemma’s — ×${gemma.mean_tax.value.toFixed(2)} mean Indian tax` : 'Gemma’s',
-      verdict: 'Cheapest to start, and the tokenizer comes with it — permanently.' },
-    { id: 'upcycle', name: 'Upcycle to a mixture of experts', cost: 'In between', inherits: 'Whatever you upcycle from',
-      tokenizer: 'Inherited from the seed model', verdict: 'Competes with a different class of model than the dense one.' },
+    { id: 'scratch', name: 'Train from scratch', share: 1, inherits: 'Nothing',
+      tokenizer: 'Ours — designed for these scripts, and the only path where that is possible' },
+    { id: 'continue', name: 'Continue-pretrain from Gemma 4', share: 0.15, inherits: 'Gemma-4-class coding and agentic ability on day one',
+      tokenizer: gemma ? `Gemma’s — ×${gemma.mean_tax.value.toFixed(2)} mean Indian tax, permanently` : 'Gemma’s, permanently' },
+    { id: 'upcycle', name: 'Upcycle to a mixture of experts', share: 0.45, inherits: 'Whatever you upcycle from',
+      tokenizer: 'Inherited from the seed model' },
   ];
 
   const body = $('div');
   body.append(table(
-    ['path', 'cost', 'what it inherits', 'the tokenizer you get'],
-    paths.map((x) => [x.name, x.cost, x.inherits, x.tokenizer]),
+    ['path', 'tokens trained', 'compute, order of magnitude', 'what it inherits', 'the tokenizer you get'],
+    paths.map((x) => [
+      x.name,
+      renderNumber({ value: recommended.target_seen_tokens * x.share, unit: 'tokens', provenance: 'estimated', source: 'the share of a full run each path needs' }, { unit: false }),
+      x.share === 1
+        ? (() => { const c = $('span'); c.append(usd(money.value), text(` · ${fmt(hours.value, 'count')} H100-hours`)); return c; })()
+        : (() => { const c = $('span'); c.append(text('about '), usd(Math.round(money.value * x.share / 1e5) * 1e5)); return c; })(),
+      x.inherits,
+      x.tokenizer,
+    ]),
+    [1, 2],
   ));
 
   return chapter({
@@ -1346,10 +1364,12 @@ function chapterCost(ctx) {
       ? `Measured here: Gemma 4's tokenizer costs ×${gemma.mean_tax.value.toFixed(2)} on Indian text against ×${best.mean_tax.value.toFixed(2)} for the best available — roughly ${Math.round((gemma.mean_tax.value / best.mean_tax.value - 1) * 100)}% more tokens for the same meaning, on every step and every request afterwards.`
       : 'The tokenizer you inherit is the cost you cannot renegotiate.',
     arithmetic: [
+      para(b('What a full run costs.'), ' ', run.steps.map((x) => `${x.label}: ${x.expression ? x.expression + ' = ' : ''}${x.unit === 'USD' ? '$' + fmt(x.value, 'count') : fmt(x.value, 'count') + ' ' + x.unit}`).join('; '), ' — about ', b(`₹${(money.inr / 1e7).toFixed(0)} crore`), ' of compute. ', run.caveat),
+      para(b('Read against that:'), ' the vocabulary decision in ', ref('how we cut it into tokens', 'tokenizer'), ' saves ', b('₹2.5 crore'), ' of this, for a 1.2% increase in the cost of every step. That is the whole argument for designing a tokenizer rather than inheriting one, expressed as a fraction of the bill.'),
       para(b('This does not settle the fork.'), ' It prices one side of it. The stated resolution is a head-to-head at roughly 2-billion-parameter scale on identical data, judged on held-out loss for Indian languages and code — and the comparison has to be normalised for the tokenizer, because a model spending more tokens on the same text sees more tokens for the same budget and looks better than it is. Compare bits per character, not loss per token; skip that and the fork resolves to whichever tokenizer is worst.'),
       para(b('What the vocabulary choice is worth.'), ' ', records.cost.vocab_trade.return, ' Full derivation in ', ref('how we cut it into tokens', 'tokenizer'), '.'),
       para(b('What acquisition costs.'), ' Of ', String(acquisition.length), ' ranked acquisitions, ', b(`${free.length} cost nothing`), ' — they are letters and permissions rather than engineering. The market records ', String((records.market || {}).deals ? records.market.deals.length : 0), ' real data deals for comparison, every value reported rather than confirmed.'),
-      para(b('The competition.'), ' ', arch.map((a) => `${a.model} at ${fmt(a.params_total, 'count')}`).join(', '), '. The one that matters is not the largest but the one that is free to download, because a from-scratch run has to justify itself against something anyone can have today.'),
+      para(b('The competition.'), ' ', arch.map((a) => `${a.model} at ${fmt(a.params_total, 'count')}${a.licence ? ` (${a.licence})` : ''}`).join('; '), '. The one that matters is not the largest but the freest to download: an Apache-2.0 105B with an Indic-tuned tokenizer already exists, so a from-scratch 40B has to justify itself against something anyone can have today for nothing.'),
     ],
   });
 }

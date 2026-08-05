@@ -38,6 +38,14 @@ export function formatValue(value, unit) {
   if (unit === 'INR') return `₹${Math.round(value).toLocaleString('en-IN')}`;
 
   const magnitude = Math.abs(value);
+  /* Past the largest suffix the SI ladder stops meaning anything — "3600000000000T FLOPs" is not a
+   * number a reader can hold. FLOP counts live out here, so they get exponent notation. */
+  if (magnitude >= 1e15) {
+    const exp = Math.floor(Math.log10(magnitude));
+    const mantissa = value / 10 ** exp;
+    const sup = String(exp).replace(/\d/g, (d) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[+d]);
+    return `${mantissa.toFixed(1).replace(/\.0$/, '')} × 10${sup}`;
+  }
   for (const [size, suffix] of SCALES) {
     if (magnitude >= size) {
       const scaled = value / size;

@@ -1,5 +1,14 @@
 [
   {
+    "id": "gemma-4-31b",
+    "model": "Gemma 4 31B Dense",
+    "params_total": 30700000000,
+    "params_active": 30700000000,
+    "context": 262144,
+    "licence": "Apache 2.0",
+    "note": "The comparator this whole plan is written against (docs/DECISIONS.md preamble): 30.7B dense parameters, 256K context, a 262,144-token BPE vocabulary, 140+ languages, Apache 2.0, released 2 April 2026. Dense rather than MoE, so active parameters equal total. Its tokenizer is measured in this repository and is the worst of the three multilingual candidates on Indian text (x2.49 mean tax against x1.66 for the best) — which is the cost a continue-pretraining route would inherit and could not undo."
+  },
+  {
     "id": "sarvam-30b",
     "model": "Sarvam-30B",
     "params_total": 30000000000,
