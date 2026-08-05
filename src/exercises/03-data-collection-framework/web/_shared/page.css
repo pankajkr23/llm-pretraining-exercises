@@ -72,30 +72,42 @@ table.plain th {
 }
 table.plain td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 
-/* Twelve chapters as a contents block, not a run-on line of mono text.
- *
- * Both this and the legend are built by JS after data.json lands, so both reserve their height up
- * front — otherwise the first paint is a page that jumps under the reader's cursor. */
+/* Thirteen chapters as a real contents block: number, title, and what the chapter answers. A grid
+ * of bare titles tells a reader the order and nothing about where to land. */
 nav.chapters {
-  min-height: 214px;
+  /* The nav is built from the rendered chapters, so its height has to be reserved or the whole
+   * page jumps when data.json lands. Two columns above 700px, one below, and the reservation
+   * follows: 14 rows of roughly 56px, halved when they pair up. */
+  min-height: 812px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
-  gap: 2px 24px;
+  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  gap: 0 34px;
   margin: 30px 0 8px;
   padding-top: 16px;
   border-top: 1px solid var(--line);
 }
 nav.chapters a {
-  display: flex;
-  gap: 9px;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 10px;
   align-items: baseline;
-  color: var(--muted);
+  color: inherit;
   text-decoration: none;
-  font-size: 13.5px;
-  padding: 4px 0;
+  padding: 8px 0;
+  border-bottom: 1px solid transparent;
 }
-nav.chapters a:hover { color: var(--accent); }
-nav.chapters a .cn { font-family: var(--mono); font-size: 11px; color: var(--faint); min-width: 14px; }
+nav.chapters a:hover { border-bottom-color: var(--line); }
+nav.chapters a:hover .ct-title { color: var(--accent); }
+nav.chapters a .cn {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+.ct { display: block; min-width: 0; }
+.ct-title { display: block; font-size: 14px; font-weight: 600; color: var(--ink); line-height: 1.35; }
+.ct-sub { display: block; font-size: 12px; color: var(--muted); line-height: 1.45; margin-top: 2px; }
+@media (min-width: 701px) { nav.chapters { min-height: 420px; } }
 
 h3.appendix-h { font-family: var(--display); font-size: 1.05rem; margin: 26px 0 4px; }
 
@@ -157,3 +169,36 @@ details.legend > summary:hover { color: var(--accent); }
   .legend-row, .legend-words { grid-template-columns: 1fr; gap: 3px; }
   .legend-words dd { margin-bottom: 8px; }
 }
+
+/* Appendix registers: thirteen of them, one a 145-row table. Folded, the appendix is a contents
+ * list; expanded it was most of the page's height for material nobody reads linearly. */
+details.register { border-top: 1px solid var(--line); }
+details.register:last-of-type { border-bottom: 1px solid var(--line); }
+details.register > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 11px 2px;
+  font-size: 14px;
+}
+details.register > summary::-webkit-details-marker { display: none; }
+details.register > summary::before {
+  content: '▸';
+  font-size: 10px;
+  color: var(--faint);
+  transition: transform 0.15s;
+  flex: none;
+}
+details.register[open] > summary::before { transform: rotate(90deg); }
+details.register > summary:hover .register-t { color: var(--accent); }
+.register-t { font-weight: 600; }
+.register-n {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--faint);
+  margin-left: auto;
+  text-align: right;
+}
+details.register > *:not(summary) { padding-bottom: 18px; }

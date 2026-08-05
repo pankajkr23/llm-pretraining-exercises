@@ -67,6 +67,27 @@ const table = (headers, rows, numeric = []) => {
 };
 
 /**
+ * What each chapter's third layer actually contains. "The arithmetic" twelve times tells a reader
+ * nothing about which one to open; the heading is the only affordance they get, so it has to earn
+ * the click.
+ */
+const ARITHMETIC_LABELS = {
+  target: 'The specification, in full',
+  budget: 'Where 16.8T comes from, and the arithmetic of re-reading',
+  growth: 'The growth method, stage by stage',
+  mix: 'How the ten shares were set',
+  datasets: 'How committable is decided',
+  legal: 'What the law actually permits',
+  behaviour: 'The post-training budget, in full',
+  cleaning: 'All nine stages, and the rules that surprise people',
+  gate: 'How a fingerprint works, and what it cannot see',
+  tokenizer: 'The vocabulary sum, block by block',
+  evaluation: 'Which tests to trust, and which to discount',
+  cost: 'The cost arithmetic, and the fork it does not settle',
+  first: 'The queue, and what each letter unlocks',
+};
+
+/**
  * A hover-revealed deep link. Every chapter gets one, in the same shape — a raw `#budget` sitting
  * in a heading reads as build scaffolding, and having it on only some of them reads as a bug.
  */
@@ -94,7 +115,7 @@ const chapter = ({ id, n, title, claim, body, caption, arithmetic }) => {
   }
   if (arithmetic) {
     const d = $('details', 'arithmetic');
-    d.append($('summary', '', 'The arithmetic'));
+    d.append($('summary', '', ARITHMETIC_LABELS[id] || 'The arithmetic'));
     const inner = $('div', 'arithmetic-body');
     arithmetic.forEach((node) => inner.append(node));
     d.append(inner);
@@ -195,6 +216,7 @@ function chapterBudget(ctx) {
   return buildExplainer({
     n: 2,
     anchor: 'budget',
+    arithmeticLabel: 'Where 16.8T comes from, and the arithmetic of re-reading',
     wide: true,
     title: 'How much text, and can we even get it',
     claim: [
@@ -321,6 +343,7 @@ function chapterGrowth(ctx) {
   return buildExplainer({
     n: 3,
     anchor: 'growth',
+    arithmeticLabel: 'The growth method, stage by stage',
     wide: true,
     title: 'How it grows, and what stops growing with it',
     claim: [
@@ -466,6 +489,7 @@ function chapterMix(ctx) {
   return buildExplainer({
     n: 4,
     anchor: 'mix',
+    arithmeticLabel: 'How the ten shares were set',
     wide: true,
     title: 'What goes into it',
     claim: [
@@ -790,6 +814,7 @@ function chapterLegal(ctx) {
   return buildExplainer({
     n: 6,
     anchor: 'legal',
+    arithmeticLabel: 'What the law actually permits',
     wide: true,
     title: 'What we may legally use',
     claim: [
@@ -941,6 +966,7 @@ function chapterCleaning(ctx) {
   return buildExplainer({
     n: 8,
     anchor: 'cleaning',
+    arithmeticLabel: 'All nine stages, and the rules that surprise people',
     wide: true,
     title: 'How we clean it',
     claim: [
@@ -1110,6 +1136,7 @@ function chapterGate(ctx) {
   return buildExplainer({
     n: 9,
     anchor: 'gate',
+    arithmeticLabel: 'How a fingerprint works, and what it cannot see',
     wide: true,
     title: 'Keeping the exam out of the textbook',
     input: { rows: 3, label: 'The question we are protecting — replace it with one of your own', value: DEFAULT_Q },
@@ -1245,6 +1272,7 @@ function chapterTokenizer(ctx) {
   return buildExplainer({
     n: 10,
     anchor: 'tokenizer',
+    arithmeticLabel: 'The vocabulary sum, block by block',
     wide: true,
     title: 'How we cut it into tokens',
     claim: [
@@ -1410,6 +1438,7 @@ function chapterEvaluation(ctx) {
   return buildExplainer({
     n: 11,
     anchor: 'evaluation',
+    arithmeticLabel: 'Which tests to trust, and which to discount',
     wide: true,
     title: 'How we would know it worked',
     claim: [
@@ -1673,7 +1702,22 @@ function chapterAppendix(ctx) {
   claim.append(text('The full registers. Nothing here argues; it is what the chapters above are drawn from, kept whole so any number can be traced back to its row.'));
   s.append(h, claim);
 
-  const block = (title, node) => { s.append($('h3', 'appendix-h', title), node); };
+  /* Every register folds. The appendix is thirteen blocks and one of them is a 145-row table: fully
+   * expanded it is most of the page's height for content nobody reads linearly. Closed, it is a
+   * contents list you open the one row you came for. The first block stays open as a worked
+   * example of what the rest contain. */
+  let blockIndex = 0;
+  const block = (title, node) => {
+    const d = $('details', 'register');
+    if (blockIndex === 0) d.open = true;
+    blockIndex += 1;
+    const sum = $('summary');
+    const [label, count] = String(title).split(/\s+—\s+/);
+    sum.append($('span', 'register-t', label));
+    if (count) sum.append($('span', 'register-n', count));
+    d.append(sum, node);
+    s.append(d);
+  };
 
   /* The canvas the two-page version opened its atlas with, kept because it is the one view where
    * the whole catalogue is visible at once. Static here rather than a five-state walk: the states
@@ -1770,8 +1814,9 @@ function chapterAppendix(ctx) {
       b('Click any mark'),
       text(' to read the five verdicts, the reasoning behind each and how confident it is.'),
     );
-    block(`The whole catalogue at once — ${data.datasets.length} datasets`, canvas);
-    s.append(key, card);
+    const wrap = $('div');
+    wrap.append(canvas, key, card);
+    block(`The whole catalogue at once — ${data.datasets.length} datasets`, wrap);
   }
 
   block(`Every dataset — ${data.datasets.length}`, table(
@@ -1858,9 +1903,8 @@ function chapterAppendix(ctx) {
     const codes = [...new Set(toks.flatMap((t) => Object.keys(byTok[t] || {})))]
       .filter((c) => c !== 'en')
       .sort((a, c) => ((byTok[toks[0]] || {})[c]?.value || 0) - ((byTok[toks[0]] || {})[a]?.value || 0));
-    block(
-      `Every tokenizer measurement — ${codes.length} languages x ${toks.length} tokenizers, on ${fr.corpus || 'IN22-Gen'}`,
-      table(
+    const matrix = $('div');
+    matrix.append(table(
         ['language', ...toks.map((t) => t.split('/').pop())],
         codes.map((code) => [
           nameOf.get(code) || code,
@@ -1870,15 +1914,18 @@ function chapterAppendix(ctx) {
           }),
         ]),
         toks.map((_, k) => k + 1),
-      ),
-    );
+      ));
     const gaps = $('p');
     gaps.style.cssText = 'font-size:11.5px;color:var(--faint);margin:8px 0 0;max-width:72ch';
     gaps.append(text(fr.protocol_gaps || ''));
     Object.entries(fr.tokenizers_unavailable || {}).forEach(([name, why]) => {
       gaps.append($('br'), text(`${name}: ${why}`));
     });
-    s.append(gaps);
+    matrix.append(gaps);
+    block(
+      `Every tokenizer measurement — ${codes.length} languages x ${toks.length} tokenizers, on ${fr.corpus || 'IN22-Gen'}`,
+      matrix,
+    );
   }
 
   block(`What the literature says — ${(records.papers || []).length} papers read`, table(
@@ -2054,6 +2101,25 @@ function fillLede(data) {
   });
 }
 
+/* What each chapter answers, in one line. A contents list of thirteen titles tells a reader the
+ * order; it does not tell them which one holds the thing they came for. */
+const NAV_ANSWERS = {
+  target: 'a dense 40B seed, and the one fact everything else follows from',
+  budget: '16.8T, derived rather than copied — and why re-reading is nearly free',
+  growth: 'the seed becomes the largest Indic model — and what refuses to grow with it',
+  mix: 'ten tiers, zero-sum: 40% skills, 27% Indian, and one tier with nothing behind it',
+  datasets: 'the shopping list — every candidate, and the cheapest next move on each',
+  legal: '39 of 145 clear — and unknown is not permission',
+  behaviour: '55 datasets for SFT, preference and RL — and not one states a size',
+  cleaning: 'nine jobs in a fixed order, and the one nobody is staffed for',
+  gate: 'type your own sentence and try to sneak it past the contamination check',
+  tokenizer: 'Indian scripts cost 13x what English does — measured, on our own run',
+  evaluation: 'drop the tests whose scores do not mean what the count implies',
+  cost: 'about 2.5M H100-hours, and the fork this does not settle',
+  first: 'the queue: twelve actions, two gates, and the letters that come before both',
+  appendix: 'every register the chapters are drawn from, kept whole',
+};
+
 function buildNav(main) {
   const nav = document.getElementById('chapters');
   if (!nav) return;
@@ -2069,7 +2135,11 @@ function buildNav(main) {
       .join('')
       .trim();
     const a = $('a');
-    a.append($('span', 'cn', num ? num.textContent : ''), text(label));
+    a.append($('span', 'cn', num ? num.textContent : ''));
+    const body = $('span', 'ct');
+    body.append($('span', 'ct-title', label));
+    if (NAV_ANSWERS[s.id]) body.append($('span', 'ct-sub', NAV_ANSWERS[s.id]));
+    a.append(body);
     a.href = `#${s.id}`;
     nav.append(a);
   });
