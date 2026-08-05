@@ -187,7 +187,7 @@ export function makeExplainer({ $, onPlay }) {
         h.append(link);
         const claim = $('p', 'claim');
         cfg.claim.forEach((node) => claim.append(node));
-        const figure = $('figure');
+        const figure = $('figure', 'breakout');
         figure.append(body, $('figcaption', '', cfg.caption));
         s.append(h, claim, figure);
         if (detailsEl) s.append(detailsEl);

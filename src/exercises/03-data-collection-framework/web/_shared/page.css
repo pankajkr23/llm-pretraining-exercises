@@ -5,7 +5,31 @@
  * read anything (the jump to the datasets).
  */
 
+/* Prose stays narrow; wide content escapes.
+ *
+ * 860px is a reading measure, not a page width: past roughly 75 characters a line the eye starts
+ * losing its place on the return sweep, and at this type size 860px already lands near 90. That is
+ * right for the lede, the claims and the arithmetic, and wrong for a seven-column dataset table or
+ * a two-column figure, which were being squeezed while a thousand pixels sat empty on either side.
+ *
+ * So the wrapper keeps the measure and `.breakout` widens past it, symmetrically, using negative
+ * inline margins rather than a transform — a transform would create a containing block and break
+ * the sticky figure column inside every explainer.
+ */
 .wrap { max-width: 860px; }
+
+.breakout {
+  --breakout-w: min(1240px, 94vw);
+  margin-inline: calc((860px - var(--breakout-w)) / 2);
+}
+/* Below the point where there is real room to spare, a breakout is just a narrower page. */
+@media (max-width: 1080px) {
+  .breakout { --breakout-w: 100%; margin-inline: 0; }
+}
+
+/* A caption is prose and belongs at the reading measure even when its figure is wide. */
+.breakout > figcaption,
+figure.breakout > figcaption { max-width: 64ch; }
 
 section { padding-bottom: 34px; margin-bottom: 34px; border-bottom: 1px solid var(--line); }
 section:last-of-type { border-bottom: 0; }
