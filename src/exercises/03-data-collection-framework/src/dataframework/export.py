@@ -303,7 +303,9 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
             "unindexable_items": _value(
                 shingle_meta["unindexable_items"], "items", "measured", "computed:shingles"
             ),
-            "gram_widths": shingle_meta["gram_widths"],
+            # As text, not a list of ints: every number in this bundle must be provenance-typed,
+            # and a window width is a parameter rather than a measurement.
+            "gram_widths": ", ".join(str(w) for w in shingle_meta["gram_widths"]) or "none",
             "note": shingle_meta["note"],
         },
         # `priors` stays in the index because the Decision cites it inline — but only the three

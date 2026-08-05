@@ -281,6 +281,16 @@ def write_index(cfg: Config | None = None) -> dict[str, Any]:
     cfg = cfg or Config()
     index = build_index(cfg)
     cfg.web_dir.mkdir(parents=True, exist_ok=True)
+
+    # The digests are a build artifact, not a browser asset. MILU's validation split alone produces
+    # 411,442 of them — 9.6 MB that no page ever fetches, because the pages only ever report the
+    # count. They stay in the git-ignored data directory, where CI and a local run can use them.
+    cfg.data_dir.mkdir(parents=True, exist_ok=True)
+    (cfg.data_dir / "shingle_index.json").write_text(
+        json.dumps({"gram_widths": index["gram_widths"], "shingles": index["shingles"]}),
+        encoding="utf-8",
+    )
+
     payload = {
         "shingle_count": index["shingle_count"],
         "benchmarks": index["benchmarks"],
@@ -288,7 +298,6 @@ def write_index(cfg: Config | None = None) -> dict[str, Any]:
         "gram_widths": index["gram_widths"],
         "unindexable_items": index["unindexable_items"],
         "note": index["note"],
-        "shingles": index["shingles"],  # hashes only — never source text
     }
     (cfg.web_dir / "shingles.json").write_text(
         json.dumps(payload, indent=2) + "\n", encoding="utf-8"

@@ -139,12 +139,14 @@ name = "exercise-03-data-collection-framework"
 version = "0.1.0"
 source = { editable = "src/exercises/03-data-collection-framework" }
 dependencies = [
+    { name = "pyarrow" },
     { name = "tiktoken" },
     { name = "tokenizers" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "pyarrow", specifier = ">=25.0.0" },
     { name = "tiktoken", specifier = ">=0.13.0" },
     { name = "tokenizers", specifier = ">=0.23.1" },
 ]
@@ -278,9 +280,6 @@ wheels = [
 name = "llm-pretraining-exercises"
 version = "0.1.0"
 source = { virtual = "." }
-dependencies = [
-    { name = "pyarrow" },
-]
 
 [package.dev-dependencies]
 dev = [
@@ -289,7 +288,6 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pyarrow", specifier = ">=25.0.0" }]
 
 [package.metadata.requires-dev]
 dev = [

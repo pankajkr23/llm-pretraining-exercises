@@ -124,7 +124,11 @@ def test_eval_text_absent_from_the_web_bundle():
 def test_shingles_bundle_carries_hashes_only():
     """shingles.json must be digests, never recoverable text."""
     payload = json.loads((WEB / "shingles.json").read_text(encoding="utf-8"))
-    for digest in payload.get("shingles", []):
+    assert "shingles" not in payload, "the digest index must not ship to the browser"
+    index_path = CFG.data_dir / "shingle_index.json"
+    if not index_path.exists():
+        pytest.skip("no shingle index built (data/benchmarks/ is empty)")
+    for digest in json.loads(index_path.read_text(encoding="utf-8")).get("shingles", []):
         assert re.fullmatch(rf"[0-9a-f]{{{DIGEST_BYTES * 2}}}", digest), (
             f"{digest!r} is not a bare hex digest"
         )

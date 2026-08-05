@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "A framework for deciding the pre-training data mix of an India-first LLM: grade sources, budget tokens, measure fertility"
 requires-python = ">=3.12"
 dependencies = [
+    "pyarrow>=25.0.0",
     "tiktoken>=0.13.0",
     "tokenizers>=0.23.1",
 ]
