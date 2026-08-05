@@ -16,13 +16,19 @@
     <div class="wrap">
       <a class="back" href="../"><span aria-hidden="true">←</span> Back</a>
       <p class="eyebrow">03 · Data collection</p>
-      <h1>How to build a corpus for a 40-billion-parameter model</h1>
+      <h1>What would a 40B India-first model actually train on?</h1>
       <p class="lede">
-        A language model is, mostly, the text it read. This page works out what an India-first model
-        — one good at coding, at using tools on its own, and at 22 Indian languages — would have to
-        read, where that text would come from, and how you would know it had worked.
+        We catalogued <b data-fact="catalogued">145 candidate datasets</b>, graded each against five
+        checks, measured tokenizer cost across <b data-fact="measured">22 languages and 5
+        tokenizers</b>, and built a contamination gate over <b data-fact="shingles">411,442
+        fingerprints</b>. Then we tried to assemble a <b data-fact="budget">15-trillion-token</b>
+        corpus from what survived. <b data-fact="committable">Four datasets clear every bar.</b>
+        The blocker is almost never quality.
       </p>
-      <p><a class="jump" href="#datasets">Skip to the datasets <span aria-hidden="true">→</span></a></p>
+      <p class="lede-actions">
+        <a class="jump" href="#datasets">See the datasets <span aria-hidden="true">→</span></a>
+        <a class="jump ghost" href="#appendix">Full registers</a>
+      </p>
       <nav class="chapters" id="chapters" aria-label="Chapters"></nav>
       <main id="main"><p class="lede">Loading…</p></main>
       <footer id="foot"></footer>

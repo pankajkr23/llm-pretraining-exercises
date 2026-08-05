@@ -105,17 +105,15 @@ function chapterTarget(ctx) {
     f.append(v, $('div', 'k', label));
     return f;
   };
+  const src = data.sourcing;
+  const unresolved = data.datasets.filter((d) => d.licence_commercial !== true && d.licence_commercial !== false).length;
+  const gemma = (data.fertility.by_tokenizer_mean || []).find((r) => /gemma/i.test(r.tokenizer));
+  const post = (data.lifecycle.stages || []).find((x) => x.stage === 'post-training') || {};
   facts.append(
-    fact(
-      renderNumber({ value: 40e9, unit: 'count', provenance: 'estimated', source: 'the project target' }, { unit: false }),
-      'parameters — about the size of Gemma 4',
-    ),
-    fact(
-      renderNumber({ value: recommended.target_seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'the recommended budget' }, { unit: false }),
-      'words of training text to find',
-    ),
-    fact(String(data.record_counts.languages), 'Indian languages it must handle'),
-    fact(String(data.record_counts.catalog), 'datasets examined for the job'),
+    fact(`${src.counts.committable} of ${src.counts.catalogued}`, 'datasets we could commit to today — covering under half the budget'),
+    fact(`${unresolved}`, 'have a licence nobody has established. Unknown is not permission'),
+    fact(gemma ? `×${gemma.mean_tax.value.toFixed(2)}` : '—', 'what Gemma 4’s tokenizer costs on Indian text — worse than a 2019 baseline'),
+    fact(`${post.sized || 0} of ${post.datasets || 0}`, 'post-training datasets that state a size'),
   );
 
   return chapter({
@@ -123,9 +121,9 @@ function chapterTarget(ctx) {
     n: 1,
     title: 'What we are building',
     claim: [
-      text('A language model is, mostly, the text it read. So before anyone writes a line of training code, somebody has to decide what it reads — and that is harder than it sounds here, because the model we want has to be '),
-      b('good at 22 Indian languages'),
-      text(', good at writing code, good at using tools on its own, and it should see the world from India rather than translating somebody else’s view of it. Nothing you can download does all four. This page works out what would.'),
+      text('The target is Gemma-4 class — 40 billion parameters, strong at code and at running tools unattended — but fluent in 22 Indian languages and reasoning from Indian law, institutions and history rather than translating an American default. No open model does all four, and the reason is not architecture. It is that '),
+      b('the text does not exist in the proportions the model needs'),
+      text(': English offers something like fifty times more than every Indian language combined. Everything downstream is a consequence of that one fact.'),
     ],
     body: facts,
     arithmetic: [
@@ -189,7 +187,7 @@ function chapterBudget(ctx) {
     claim: [
       text('A model this size needs roughly '),
       b(fmt(recommended.target_seen_tokens, 'count')),
-      text(' words of training text. English has that and more. All 22 Indian languages together have perhaps a fiftieth of it, so the budget cannot be met by collecting harder. It is met by '),
+      text(' tokens — roughly three-quarters of that in words. English offers that and more; all 22 Indian languages together offer perhaps a fiftieth, so the budget cannot be met by collecting harder. It is met by '),
       b('reading the same text more than once'),
       text(' — which is nearly free up to a point somebody measured. Scrolling steps the schedule; the pool never changes.'),
     ],
@@ -1464,6 +1462,7 @@ export function buildPage(data, records) {
     (fn) => main.append(fn(ctx)),
   );
 
+  fillLede(data);
   buildNav(main);
   buildFooter(data);
 
@@ -1483,6 +1482,24 @@ export function buildPage(data, records) {
   }
 }
 
+/* The lede quotes five figures. Typed into the markup they would drift the first time the pipeline
+ * reran, so they are filled from the same data every chapter uses. */
+function fillLede(data) {
+  const src = data.sourcing;
+  const measuredLangs = Object.values(data.fertility.by_language || {}).filter((v) => v.provenance === 'measured').length - 1;
+  const values = {
+    catalogued: `${src.counts.catalogued} candidate datasets`,
+    measured: `${measuredLangs} languages and ${(data.fertility.by_tokenizer_mean || []).length} tokenizers`,
+    shingles: `${(data.contamination.shingle_count.value || 0).toLocaleString('en-US')} fingerprints`,
+    budget: `${fmt((data.milestones.presets.find((p) => p.recommended) || {}).target_seen_tokens, 'count')}-token`,
+    committable: `${src.counts.committable} datasets clear every bar.`,
+  };
+  document.querySelectorAll('[data-fact]').forEach((el) => {
+    const v = values[el.dataset.fact];
+    if (v) el.textContent = v;
+  });
+}
+
 function buildNav(main) {
   const nav = document.getElementById('chapters');
   if (!nav) return;
@@ -1497,7 +1514,8 @@ function buildNav(main) {
       .map((node) => node.textContent)
       .join('')
       .trim();
-    const a = $('a', '', `${num ? num.textContent : ''} · ${label}`);
+    const a = $('a');
+    a.append($('span', 'cn', num ? num.textContent : ''), text(label));
     a.href = `#${s.id}`;
     nav.append(a);
   });
