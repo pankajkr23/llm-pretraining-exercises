@@ -522,38 +522,43 @@
 
         // ---------------------------------------------------------------- #benchmarks
         {
-          const s = section('benchmarks', 'The instruments',
-            `${data.benchmarks.length} benchmarks, and — more importantly — what none of them measures.`);
+          const s = section('benchmarks', 'Most of these do not measure Indic ability',
+            `All ${data.benchmarks.length} benchmarks, and — more importantly — what none of them measures.`);
           const cov = data.coverage;
 
-          // The register itself comes first — it is the thing people come here to look up.
-          s.append($('h3', '', `The register — all ${data.benchmarks.length}`));
-          const bctl = $('div', 'controls');
-          const bsearch = $('input'); bsearch.type = 'search'; bsearch.placeholder = 'search benchmarks…';
-          const bband = $('select');
-          bband.append(new Option('any trust band', ''));
-          [...new Set(data.benchmarks.map((b) => b.trust_band).filter(Boolean))].sort()
-            .forEach((v) => bband.append(new Option(v, v)));
-          const bcount = $('span', 'count');
-          bctl.append(bsearch, bband, bcount);
+          // Audit row #5, verdict CHART, topology small multiples. All 31 benchmarks fit at once,
+          // so the search box and the trust-band filter are deleted (EXPLAINER_PROMPT §18.1) and
+          // the band becomes a colour on a strip that is always fully drawn. Filtering a register
+          // of 31 rows hides the one thing worth seeing: how few are native-sourced.
+          s.append($('h3', '', `The register — all ${data.benchmarks.length}, none hidden`));
+          const BAND_CLASS = { 'native-sourced': 'ok', 'translation-derived': 'out', 'harness-dependent': 'mid' };
+          const bstrip = $('div', 'canvas');
+          data.benchmarks.forEach((b) => {
+            const u = $('span', `unit ${BAND_CLASS[b.trust_band] || ''}`);
+            u.title = `${b.name} — ${b.trust_band}`;
+            bstrip.append(u);
+          });
+          s.append(bstrip);
+          const bkey = $('p', 'sub');
+          bkey.style.margin = '10px 0 16px';
+          const bandCount = (v) => data.benchmarks.filter((b) => b.trust_band === v).length;
+          bkey.append(
+            document.createTextNode(`${bandCount('native-sourced')} native-sourced · ${bandCount('harness-dependent')} harness-dependent · `),
+            $('b', '', `${bandCount('translation-derived')} translated from English`),
+            document.createTextNode(' — a translated benchmark measures whether the model handles translated English, which is a different question from the one being claimed. Red marks those throughout.'),
+          );
+          s.append(bkey);
           const bhost = $('div');
-          const bdraw = () => {
-            const q = bsearch.value.toLowerCase();
-            const rows = data.benchmarks.filter((b) =>
-              (!q || `${b.name} ${b.type} ${b.coverage || ''}`.toLowerCase().includes(q)) &&
-              (!bband.value || b.trust_band === bband.value));
-            bcount.textContent = `${rows.length} of ${data.benchmarks.length}`;
-            bhost.replaceChildren(table(
-              ['benchmark', 'measures', 'coverage', 'split policy', 'trust'],
-              rows.map((b) => {
-                const held = $('span', '', b.split_policy || '—');
-                if (b.held_out) held.style.cssText = 'color:var(--grade-a);font-weight:600';
-                return [b.name, b.type, b.coverage || '—', held, b.trust_band];
-              })));
-          };
-          [bsearch, bband].forEach((el) => el.addEventListener('input', bdraw));
-          bdraw();
-          s.append(bctl, bhost);
+          bhost.append(table(
+            ['benchmark', 'measures', 'coverage', 'split policy', 'trust'],
+            data.benchmarks.map((b) => {
+              const held = $('span', '', b.split_policy || '—');
+              if (b.held_out) held.style.cssText = 'color:var(--grade-a);font-weight:600';
+              const band = $('span', '', b.trust_band);
+              if (b.trust_band === 'translation-derived') band.style.cssText = 'color:var(--grade-x);font-weight:600';
+              return [b.name, b.type, b.coverage || '—', held, band];
+            })));
+          s.append(bhost);
 
           s.append($('h3', '', 'And what none of them measures'));
           s.append(table(['capability', 'instruments', 'trust bands'],
