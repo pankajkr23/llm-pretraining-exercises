@@ -6,37 +6,30 @@
     <title>The Bend · Activations</title>
     <style>
       :root {
-        --bg: #f5f5f7;
-        --panel: #ffffff;
-        --ink: #1d1d1f;
-        --muted: #6e6e73;
-        --faint: #86868b;
-        --line: #d2d2d7;
-        --accent: #0071e3;
         --plane: #8e99b3;
         --bend: #d1730a;
         --pos: #d1730a;
         --neg: #0071e3;
         --probe: #0071e3;
-        --serif: -apple-system, system-ui, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-        --sans: -apple-system, system-ui, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-        --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
-      }
+    }
       @media (prefers-color-scheme: dark) {
-        :root {
-          --bg: #000000;
-          --panel: #1c1c1e;
-          --ink: #f5f5f7;
-          --muted: #a1a1a6;
-          --faint: #6e6e73;
-          --line: #2f2f31;
-          --accent: #2997ff;
-          --plane: #9aa6c0;
-          --bend: #ff9f0a;
-          --pos: #ff9f0a;
-          --neg: #2997ff;
-          --probe: #2997ff;
+        :root:not([data-theme]) {
+          --plane: #9aa6c0
+          --bend: #ff9f0a
+          --pos: #ff9f0a
+          --neg: #2997ff
+          --probe: #2997ff
         }
+      }
+      /* The page's own diagram tokens, for the themes that are dark. Without this a
+         reader on Neon with a light OS gets light diagram colours on a dark page. */
+      :root[data-theme="tinted-dark"],
+      :root[data-theme="neon"] {
+          --plane: #9aa6c0
+          --bend: #ff9f0a
+          --pos: #ff9f0a
+          --neg: #2997ff
+          --probe: #2997ff
       }
       * { box-sizing: border-box; }
       html { -webkit-text-size-adjust: 100%; }
@@ -159,6 +152,17 @@
 
       footer { margin-top: 40px; color: var(--faint); font-size: 0.85rem; font-family: var(--mono); }
     </style>
+      <link rel="stylesheet" href="/_shared/tokens.css" />
+    <!--
+      Applied before first paint. A module loads too late: the page would render system colours for
+      a frame and then repaint, which is the flash a theme switcher is judged by.
+    -->
+    <script>
+      try {
+        var t = localStorage.getItem('era5-theme');
+        if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div class="wrap">
@@ -630,6 +634,10 @@
         reset();
       }
       initRings();
+    </script>
+      <script type="module">
+      import { mountThemePicker } from '/_shared/theme.js';
+      mountThemePicker(null);
     </script>
   </body>
 </html>

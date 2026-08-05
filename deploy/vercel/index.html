@@ -5,16 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LLM Pre-training</title>
     <style>
-      :root {
-        --bg: #f5f5f7; --fg: #1d1d1f; --muted: #6e6e73; --faint: #86868b;
-        --line: #d2d2d7; --line-strong: #c7c7cc; --accent: #0071e3;
-      }
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --bg: #000000; --fg: #f5f5f7; --muted: #a1a1a6; --faint: #6e6e73;
-          --line: #2f2f31; --line-strong: #48484a; --accent: #2997ff;
-        }
-      }
+      
+      
       * { box-sizing: border-box; }
       html { -webkit-text-size-adjust: 100%; }
       body {
@@ -49,6 +41,17 @@
       footer a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--line-strong); }
       footer a:hover { color: var(--accent); border-color: var(--accent); }
     </style>
+      <link rel="stylesheet" href="/_shared/tokens.css" />
+    <!--
+      Applied before first paint. A module loads too late: the page would render system colours for
+      a frame and then repaint, which is the flash a theme switcher is judged by.
+    -->
+    <script>
+      try {
+        var t = localStorage.getItem('era5-theme');
+        if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <main class="wrap">
@@ -92,5 +95,9 @@
         Source on <a href="https://github.com/pankajkr23/llm-pretraining-exercises">GitHub</a>.
       </footer>
     </main>
+      <script type="module">
+      import { mountThemePicker } from '/_shared/theme.js';
+      mountThemePicker(null);
+    </script>
   </body>
 </html>

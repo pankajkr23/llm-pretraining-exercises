@@ -1,0 +1,235 @@
+/* Design tokens for every page on this site.
+ *
+ * One file, linked by the landing page and by each exercise, so a colour decision is made once.
+ * It defines tokens only — no layout, no components — because each page owns its own structure and
+ * this file has to be safe to drop into all of them.
+ *
+ * Six themes: the system light/dark pair, plus four the reader can choose. Two rules keep that from
+ * becoming a liability:
+ *
+ *   1. The prefers-color-scheme block is scoped to `:root:not([data-theme])`, so an explicitly
+ *      chosen theme always wins regardless of source order.
+ *   2. Every theme defines the WHOLE token set. A theme inheriting half its colours is how a token
+ *      ends up unreadable in exactly one combination nobody tested.
+ *
+ * Every text token in every theme is verified at 4.5:1 or better against both surfaces it can sit
+ * on, and the values were generated from a palette file that a contrast checker had already passed
+ * rather than chosen by eye. Four contrast failures shipped on this site when they were eyeballed —
+ * --faint at 3.33:1 and --accent at 4.31:1 among them — which is why this is mechanical now.
+ */
+
+:root {
+  --bg: #f5f5f7;
+  --panel: #ffffff;
+  --track: #e8e8ed;
+  --ink: #1d1d1f;
+  --muted: #6e6e73;
+  --faint: #6f6f74;
+  --line: #d2d2d7;
+  --line-strong: #e8e8ed;
+  --accent: #0068d1;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(0,104,209,.10);
+  --hi: #a85c08;
+  --lo: #0068d1;
+  --shadow: 0 1px 3px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.03);
+  --grade-a: #1f7a35;
+  --grade-b: #8a6508;
+  --grade-c: #6e6e73;
+  --grade-x: #c1121f;
+  --lang-tier-1: #0068d1;
+  --lang-tier-2: #0062c4;
+  --lang-tier-3: #6f6f74;
+  --gotcha-licence: #7d5ba6;
+  --gotcha-dedup: #0062c4;
+  --gotcha-composition: #a85c08;
+  --gotcha-provenance: #8a6508;
+  --gotcha-safety: #c1121f;
+  --gotcha-attribution: #1f7a35;
+  --gotcha-availability: #6e6e73;
+  --gotcha-sourcing: #0f766e;
+  --gotcha-heterogeneity: #a03fce;
+  --fg: var(--ink);
+
+  --serif: -apple-system, system-ui, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  --display: -apple-system, system-ui, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  --sans: -apple-system, system-ui, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+}
+
+/* The system default. Scoped so a chosen theme is never overridden by the reader's OS. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #000000;
+    --panel: #1c1c1e;
+    --track: #2a2a2c;
+    --ink: #f5f5f7;
+    --muted: #a1a1a6;
+    --faint: #8a8a90;
+    --line: #2f2f31;
+    --line-strong: #2a2a2c;
+    --accent: #2997ff;
+    --on-accent: #06121f;
+    --accent-soft: rgba(41,151,255,.14);
+    --hi: #ff9f0a;
+    --lo: #2997ff;
+    --shadow: none;
+    --grade-a: #30d158;
+    --grade-b: #ffd60a;
+    --grade-c: #a1a1a6;
+    --grade-x: #ff453a;
+    --lang-tier-1: #2997ff;
+    --lang-tier-2: #2997ff;
+    --lang-tier-3: #8a8a90;
+    --gotcha-licence: #bf5af2;
+    --gotcha-dedup: #2997ff;
+    --gotcha-composition: #ff9f0a;
+    --gotcha-provenance: #ffd60a;
+    --gotcha-safety: #ff453a;
+    --gotcha-attribution: #30d158;
+    --gotcha-availability: #a1a1a6;
+    --gotcha-sourcing: #2dd4bf;
+    --gotcha-heterogeneity: #d68bf5;
+    --fg: var(--ink);
+  }
+}
+
+/* --- Soft light. Warm, creamy off-white instead of cool grey — easier over long reading. */
+:root[data-theme="soft-light"] {
+  --bg: #faf6ef;
+  --panel: #fffdf9;
+  --track: #ece5d9;
+  --ink: #2b2419;
+  --muted: #6b6155;
+  --faint: #6f6559;
+  --line: #ddd3c4;
+  --line-strong: #ece5d9;
+  --accent: #0a6ab8;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(10,106,184,.10);
+  --hi: #95530a;
+  --lo: #0a6ab8;
+  --shadow: 0 1px 3px rgba(60,45,20,.05), 0 6px 20px rgba(60,45,20,.04);
+  --grade-a: #1f6f33;
+  --grade-b: #7d5c07;
+  --grade-c: #6b6155;
+  --grade-x: #b3121d;
+  --lang-tier-1: #0a6ab8;
+  --lang-tier-2: #0a63ad;
+  --lang-tier-3: #6f6559;
+  --gotcha-licence: #6f4f96;
+  --gotcha-dedup: #0a63ad;
+  --gotcha-composition: #95530a;
+  --gotcha-provenance: #7d5c07;
+  --gotcha-safety: #b3121d;
+  --gotcha-attribution: #1f6f33;
+  --gotcha-availability: #6b6155;
+  --gotcha-sourcing: #0d6b63;
+  --gotcha-heterogeneity: #8f39b8;
+  --fg: var(--ink);
+}
+
+/* --- Tinted dark. Deep navy rather than pure black. Black on an OLED panel is a hole, and it haloes text. */
+:root[data-theme="tinted-dark"] {
+  --bg: #0f1522;
+  --panel: #18202f;
+  --track: #243044;
+  --ink: #e9edf5;
+  --muted: #a3adc2;
+  --faint: #8f99ae;
+  --line: #25314a;
+  --line-strong: #243044;
+  --accent: #5aa9ff;
+  --on-accent: #08101c;
+  --accent-soft: rgba(90,169,255,.14);
+  --hi: #f5a742;
+  --lo: #5aa9ff;
+  --shadow: none;
+  --grade-a: #4ad07a;
+  --grade-b: #f0c53d;
+  --grade-c: #a3adc2;
+  --grade-x: #ff6b63;
+  --lang-tier-1: #5aa9ff;
+  --lang-tier-2: #5aa9ff;
+  --lang-tier-3: #8f99ae;
+  --gotcha-licence: #c98bf5;
+  --gotcha-dedup: #5aa9ff;
+  --gotcha-composition: #f5a742;
+  --gotcha-provenance: #f0c53d;
+  --gotcha-safety: #ff6b63;
+  --gotcha-attribution: #4ad07a;
+  --gotcha-availability: #a3adc2;
+  --gotcha-sourcing: #3ed6c4;
+  --gotcha-heterogeneity: #d79bf7;
+  --fg: var(--ink);
+}
+
+/* --- High contrast. Monochrome, maximum separation. Semantic colour never carries meaning alone on this site — a grade always shows its letter — so the pages survive this intact. */
+:root[data-theme="high-contrast"] {
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --track: #d4d4d4;
+  --ink: #000000;
+  --muted: #000000;
+  --faint: #3d3d3d;
+  --line: #000000;
+  --line-strong: #d4d4d4;
+  --accent: #0000cc;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(0,0,204,.12);
+  --hi: #6b3200;
+  --lo: #0000cc;
+  --shadow: none;
+  --grade-a: #00591f;
+  --grade-b: #5c3d00;
+  --grade-c: #3d3d3d;
+  --grade-x: #a10000;
+  --lang-tier-1: #0000cc;
+  --lang-tier-2: #0000cc;
+  --lang-tier-3: #3d3d3d;
+  --gotcha-licence: #4b0082;
+  --gotcha-dedup: #0000cc;
+  --gotcha-composition: #6b3200;
+  --gotcha-provenance: #5c3d00;
+  --gotcha-safety: #a10000;
+  --gotcha-attribution: #00591f;
+  --gotcha-availability: #3d3d3d;
+  --gotcha-sourcing: #00474d;
+  --gotcha-heterogeneity: #5c0080;
+  --fg: var(--ink);
+}
+
+/* --- Neon. Near-black with luminous accents. Every hue is contrast-checked as text rather than chosen for glow, which is where neon palettes usually fail. */
+:root[data-theme="neon"] {
+  --bg: #08080e;
+  --panel: #12121c;
+  --track: #22222f;
+  --ink: #eaeaf5;
+  --muted: #9ea0bd;
+  --faint: #8e90ad;
+  --line: #2a2a3d;
+  --line-strong: #22222f;
+  --accent: #00e5ff;
+  --on-accent: #04141a;
+  --accent-soft: rgba(0,229,255,.14);
+  --hi: #ffab3d;
+  --lo: #00e5ff;
+  --shadow: none;
+  --grade-a: #39ff8b;
+  --grade-b: #ffe14d;
+  --grade-c: #9ea0bd;
+  --grade-x: #ff5c7a;
+  --lang-tier-1: #00e5ff;
+  --lang-tier-2: #00e5ff;
+  --lang-tier-3: #8e90ad;
+  --gotcha-licence: #c77dff;
+  --gotcha-dedup: #00e5ff;
+  --gotcha-composition: #ffab3d;
+  --gotcha-provenance: #ffe14d;
+  --gotcha-safety: #ff5c7a;
+  --gotcha-attribution: #39ff8b;
+  --gotcha-availability: #9ea0bd;
+  --gotcha-sourcing: #2ff5d8;
+  --gotcha-heterogeneity: #e0a3ff;
+  --fg: var(--ink);
+}

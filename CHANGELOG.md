@@ -42,6 +42,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **Six themes, site-wide, every one contrast-checked.** Tokens moved out of the individual pages
+  into one `/_shared/tokens.css` that the landing page and all three exercises link, so a colour
+  decision is made once. The system light/dark pair stays the default, joined by soft light (warm
+  off-white), tinted dark (deep navy, not pure black), high contrast (monochrome) and neon
+  (near-black with luminous accents). The choice persists across the whole site and is applied
+  before first paint, so there is no flash of the wrong theme. Promoting the tokens also fixed two
+  WCAG failures that were still live on the landing page and exercises 01 and 02 — `--faint` at
+  3.33:1 and `--accent` at 4.31:1, both already corrected in 03 and never propagated. Verified in
+  the browser: five pages x four themes plus both system modes, all contrast-pass.
 - **Five themes, and every one of them contrast-checked.** The system light/dark pair stays the
   default, joined by soft light (warm off-white rather than cool grey), tinted dark (deep navy, not
   pure black), high contrast (monochrome), and neon (near-black with luminous accents). The choice

@@ -19,6 +19,12 @@ OUT="$ROOT/public"
 rm -rf "$OUT"
 mkdir -p "$OUT"
 
+# Tokens and the theme picker, shared by every page. One copy at the site root, linked absolutely
+# from the landing page and from each exercise, so a colour decision is made in one file.
+mkdir -p "$OUT/_shared"
+cp -R "$ROOT/deploy/vercel/_shared/." "$OUT/_shared/"
+echo "  + _shared/ <- deploy/vercel/_shared/"
+
 # Landing page at the site root.
 cp "$ROOT/deploy/vercel/index.html" "$OUT/index.html"
 
