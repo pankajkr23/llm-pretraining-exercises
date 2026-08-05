@@ -160,7 +160,9 @@ def _fertility_block(cfg: Config, languages: list[str]) -> dict[str, Any]:
         cover.
     """
     block: dict[str, Any] = {
-        "parity_target": _value(PARITY_TARGET, "ratio", "estimated", "docs/DECISIONS.md"),
+        "parity_target": _value(
+            PARITY_TARGET, "ratio", "estimated", "the project's fertility target"
+        ),
     }
     path = cfg.records_dir / "fertility.json"
     if not path.exists():
@@ -258,7 +260,17 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
     if fertility_run.exists():
         records["fertility"] = load_json(fertility_run)
 
-    curve = summarise(sweep(REFERENCE_VOCAB, REFERENCE_FERTILITY))
+    # Anchor the sweep on our own measurement when one exists. cl100k_base is a ~100K vocabulary,
+    # which is the sweep's reference point, so its measured mean Indic fertility is the right anchor
+    # — and it is four times the 2.4 that was assumed before anything was measured.
+    fertility_run = cfg.records_dir / "fertility.json"
+    anchor, anchor_provenance = REFERENCE_FERTILITY, "estimated"
+    if fertility_run.exists():
+        rows = load_json(fertility_run)["by_tokenizer"].get("tiktoken/cl100k_base", {})
+        indic = [v["value"] for code, v in rows.items() if code != "en" and v.get("value")]
+        if indic:
+            anchor, anchor_provenance = round(sum(indic) / len(indic), 4), "measured"
+    curve = summarise(sweep(REFERENCE_VOCAB, anchor))
     languages = [row.get("code") for row in records.get("languages", []) if row.get("code")]
     shingle_meta = write_index(cfg)
 
@@ -274,14 +286,18 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
         # Series-level provenance: these blocks are wholly computed, and every number inside
         # inherits the declaration. Typing 33 curve points individually would add bytes, not
         # information — the whole series shares one origin.
-        "record_counts": {**counts, "provenance": "measured", "source": "computed:catalog"},
+        "record_counts": {
+            **counts,
+            "provenance": "measured",
+            "source": "counted from the catalogue",
+        },
         "datasets": [_dataset_index_entry(record) for record in datasets],
         "benchmarks": benchmarks,
-        "grades": {**grades, "provenance": "measured", "source": "computed:grade"},
+        "grades": {**grades, "provenance": "measured", "source": "computed from the five gates"},
         "coverage": {
             **build_matrix(benchmarks),
             "provenance": "measured",
-            "source": "computed:coverage",
+            "source": "counted from the benchmark register",
         },
         # The per-tier prose is a property of the mix shape, not of any one rung — carrying it in
         # all four presets cost ~10KB of duplication and pushed the index over budget.
@@ -299,7 +315,7 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
                 for tier in TIER_SHAPE
             },
             "provenance": "estimated",
-            "source": "computed:milestones from records/milestones.json + DECISIONS tier shape",
+            "source": "computed from the proposed tier shape",
         },
         "vocab_sweep": {
             **curve,
@@ -309,25 +325,45 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
                 "runs, so the peak is illustrative of the trade-off, not the recommended "
                 "vocabulary."
             ),
-            "d_model": _value(D_MODEL_DEFAULT, "dimensions", "estimated", "docs/DECISIONS.md"),
+            "d_model": _value(
+                D_MODEL_DEFAULT, "dimensions", "estimated", "the project's model plan"
+            ),
+            "anchor_fertility": _value(
+                anchor,
+                "tokens/word",
+                anchor_provenance,
+                "our own measurement, cl100k_base over IN22-Gen"
+                if anchor_provenance == "measured"
+                else "assumed before anything was measured",
+            ),
         },
         "fertility": _fertility_block(cfg, languages),
         "mix_rules": {
-            "always_on_share": _value(ALWAYS_ON_SHARE, "share", "estimated", "FRAMEWORK.md R2"),
-            "max_epochs_advised": _value(
-                MAX_EPOCHS_ADVISED, "epochs", "estimated", "FRAMEWORK.md R1"
+            "always_on_share": _value(
+                ALWAYS_ON_SHARE, "share", "estimated", "the framework's protected-lane rule"
             ),
-            "max_epochs_hard": _value(MAX_EPOCHS_HARD, "epochs", "estimated", "FRAMEWORK.md R1"),
+            "max_epochs_advised": _value(
+                MAX_EPOCHS_ADVISED, "epochs", "estimated", "published repetition studies"
+            ),
+            "max_epochs_hard": _value(
+                MAX_EPOCHS_HARD, "epochs", "estimated", "published repetition studies"
+            ),
         },
         "contamination": {
             "coverage": shingle_meta["coverage"],
             "shingle_count": _value(
-                shingle_meta["shingle_count"], "shingles", "measured", "computed:shingles"
+                shingle_meta["shingle_count"],
+                "shingles",
+                "measured",
+                "computed from the indexed eval items",
             ),
             # Eval items the gate structurally cannot protect. A reported number, because the
             # alternative is silence that reads as "clean".
             "unindexable_items": _value(
-                shingle_meta["unindexable_items"], "items", "measured", "computed:shingles"
+                shingle_meta["unindexable_items"],
+                "items",
+                "measured",
+                "computed from the indexed eval items",
             ),
             # As text, not a list of ints: every number in this bundle must be provenance-typed,
             # and a window width is a parameter rather than a measurement.

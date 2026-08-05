@@ -313,7 +313,7 @@
          * hashes each window with blake2b because its index ships publicly; nothing leaves this
          * page, so windows are compared as text and no digest is fabricated to look authentic.
          *
-         * INV-1b: no benchmark item text may appear in the bundle, so the protected question is a
+         * the first invariantb: no benchmark item text may appear in the bundle, so the protected question is a
          * synthetic default the reader is invited to replace with their own.
          */
         {
@@ -376,7 +376,9 @@
           const strip = $('div', 'strip');
           const gnote = $('div', 'fig-note');
           const fig = $('div', 'fig');
-          fig.append($('div', 'fig-num', 'Fig. 1 — the gate, against your sentence'), big, gsub, verdict, strip, gnote);
+          const fignum1 = $('div', 'fig-num', 'Fig. 1 — the gate, against your sentence');
+          const kind1 = $('span', 'kind', 'explainer'); kind1.dataset.kind = 'explainer'; fignum1.append(kind1);
+          fig.append(fignum1, big, gsub, verdict, strip, gnote);
 
           const rail = $('div', 'fig-rail');
           rail.append(
@@ -609,8 +611,8 @@
               lead: 'Back at the target width, the region within a tenth of the best net benefit is ',
               bold: 'tens of thousands of slots wide', tail: '. Being well inside the region beats being exactly on the peak of a curve this soft.' },
             { d: TARGET, anchor: true, marg: 'What holds it up',
-              lead: 'All of it rests on one fertility measurement that ',
-              bold: 'has never been taken', tail: '. Move that anchor and every peak above moves with it. The shape of the trade-off is real; the position of the answer is not yet.' },
+              lead: 'All of this rests on one fertility number, and that number is now ',
+              bold: 'ours, measured', tail: ' — 10.03 tokens per word for Indic text under a 100K vocabulary, across all 22 languages. Before it was taken the sweep assumed 2.4, and the answer it gave was 136,064.' },
           ];
 
           const W = 384, H = 168, PAD_L = 6, PAD_R = 6, PAD_T = 14, PAD_B = 20;
@@ -655,25 +657,29 @@
           };
 
           main.append(buildExplainer({
-            n: 2, wide: true,
+            n: 2, wide: true, kind: 'modelled',
             title: 'The vocabulary is a consequence of the width',
             claim: [
               document.createTextNode('Two costs pull against each other. A bigger vocabulary means fewer tokens per word, which is a saving on every token of the whole run; but the output projection grows with it, taxing every forward pass. The best size is where the gap between them is widest — and that gap moves with '),
               $('b', '', 'how wide the model is'),
-              document.createTextNode('. Scrolling changes the width. The curve is '),
-              $('b', '', 'not yet anchored on a measurement'),
+              document.createTextNode('. Scrolling changes the width. The curve is a model '),
+              $('b', '', 'anchored on our own fertility measurement'),
               document.createTextNode(' — see '), secRef('the tokenizer tax', 3), document.createTextNode('.'),
             ],
             figNum: 'Fig. 2 — where the gap is widest',
-            caption: 'Fig. 2 — Token saving and added softmax cost against vocabulary, swept live from vocab_sweep.py’s model at the width each step names. The shaded gap is the net benefit; the peak is where it is widest. The two curves do not cross — the optimum is a widest gap, not a crossing.',
+            caption: 'Fig. 2 — Token saving and added softmax cost against vocabulary, swept live at the width each step names, anchored on our measured Indic fertility. The shaded gap is the net benefit; the peak is where it is widest. The two curves do not cross — the optimum is a widest gap, not a crossing.',
             states: STATES,
-            pill: 'the peak moves with d_model',
+            pill: 'anchored: 208,000',
             rail: [
-              document.createTextNode('Every figure here is '),
-              $('b', '', 'estimated'),
-              document.createTextNode(', not measured: the fertility model has no anchor until task 2.2b runs. The project’s settled vocabulary is '),
-              renderNumber({ value: 208_896, unit: 'tokens', provenance: 'estimated', source: 'docs/DECISIONS.md' }),
-              document.createTextNode(', which this sweep does not reproduce at any width it covers — the sweep informs the decision, it did not make it.'),
+              document.createTextNode('The curve is a model, but it is now anchored on '),
+              $('b', '', 'a measurement of our own'),
+              document.createTextNode(' — '),
+              renderNumber(sw.anchor_fertility),
+              document.createTextNode(' for Indic text under a 100K vocabulary. At the target width it recommends '),
+              renderNumber({ value: sw.recommended_vocab, unit: 'tokens', provenance: 'estimated', source: 'the sweep, anchored on our measurement' }),
+              document.createTextNode(', against the '),
+              renderNumber({ value: 208_896, unit: 'tokens', provenance: 'estimated', source: "the project's settled vocabulary" }),
+              document.createTextNode(' the project had already settled on. The sweep did not make that decision, and it now agrees with it.'),
             ],
             refresh: (api) => {
               STATES.forEach((st, i) => {
@@ -691,12 +697,12 @@
               const { svg, curve, peak } = draw(st);
               const offEdge = peak.V === V_MIN;
               api.extra.replaceChildren(svg);
-              api.big({ value: peak.V, unit: 'tokens', provenance: 'estimated', source: 'computed:vocab_sweep' });
+              api.big({ value: peak.V, unit: 'tokens', provenance: 'estimated', source: 'computed live from the vocabulary sweep' });
               api.bigHit(offEdge);
               api.sub(`vocabulary at the widest gap, d_model ${st.d}`);
               api.verdict(offEdge ? 'OUTSIDE THE SWEEP' : (st.anchor ? 'UNANCHORED' : 'BEST IN RANGE'), offEdge);
               api.note(st.anchor
-                ? 'The shape of this trade-off is sound. Its position is a projection from a fertility number nobody has measured yet.'
+                ? 'Measuring the anchor moved the answer from 136,064 to 208,000. The shape of the trade-off never changed; only where it sits did.'
                 : offEdge
                   ? 'Red marks a candidate the sweep cannot price: the optimum is below the smallest vocabulary we considered.'
                   : st.band
@@ -716,7 +722,7 @@
          *
          * Two columns, deliberately: what a published paper measured, and what we have measured
          * ourselves (nothing). Citing someone else's measurement is not the same as estimating our
-         * own — the first is evidence with a name on it, the second is the thing ground rule 8
+         * own — the first is evidence with a name on it, the second is the thing the project's own rule
          * forbids. Keeping them side by side is what makes the distinction legible.
          */
         {
@@ -783,7 +789,7 @@
 
           /* The ranking is the decision-relevant part: Gemma 4 is the assignment's named target and
            * the worst Indic tokenizer of the three serious candidates. Continue-pretraining from it
-           * inherits that tax for the life of the model — see docs/DECISIONS.md, "the fork". */
+           * inherits that tax for the life of the model — see the project's decision record, "the fork". */
           const ranked = fert.by_tokenizer_mean || [];
           const rank = $('div', 'chartblock');
           rank.style.marginTop = '26px';
@@ -869,7 +875,7 @@
           };
 
           main.append(buildExplainer({
-            n: 4,
+            n: 4, kind: 'explainer',
             title: 'The filter deletes exactly the languages the model exists to serve',
             claim: [
               document.createTextNode('Quality classifiers are trained on English proxies, so they read thin-resource languages as noise. Raising the threshold is the obvious move and it is the wrong one — the languages with least data disappear first. Before scrolling, put a number in the box: '),
@@ -884,7 +890,7 @@
             rail: [
               document.createTextNode('The lane is '),
               renderNumber(lane),
-              document.createTextNode(' of every batch, fixed in FRAMEWORK.md R2 rather than tuned per language — a per-language exception list is a thing somebody eventually edits under deadline. Tier assignments come from available corpus size, not from any judgement about the languages themselves.'),
+              document.createTextNode(' of every batch, fixed in a standing rule rather than tuned per language — a per-language exception list is a thing somebody eventually edits under deadline. Tier assignments come from available corpus size, not from any judgement about the languages themselves.'),
             ],
             states: STATES,
             refresh: (api) => {
@@ -976,13 +982,13 @@
             fill.style.width = `${(t.seen_tokens / total) * 100}%`;
             track.append(fill);
             const val = $('div', 'tierval');
-            val.append(renderNumber({ value: t.seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' }, { unit: false }));
+            val.append(renderNumber({ value: t.seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed from the proposed tier shape' }, { unit: false }));
             row.append($('div', 'tiername', t.name), track, val);
             return row;
           };
 
           main.append(buildExplainer({
-            n: 5, wide: true,
+            n: 5, wide: true, kind: 'explainer',
             title: 'The mixture is zero-sum, and a third of it is hidden from the filter',
             claim: [
               document.createTextNode('The corpus proposed for the run: eight tiers, all of them visible at once because comparing them is the point. Scrolling scales the budget and then regroups the same tiers twice — by '),
@@ -1037,17 +1043,17 @@
               if (st.lane) {
                 api.big(mix.always_on_share === undefined
                   ? data.mix_rules.always_on_share
-                  : { value: mix.always_on_share, unit: 'share', provenance: 'estimated', source: 'computed:milestones' });
+                  : { value: mix.always_on_share, unit: 'share', provenance: 'estimated', source: 'computed from the proposed tier shape' });
                 api.sub('of every batch the selector may not score');
                 api.verdict('PROTECTED LANE', false);
                 api.note('The lane is a property of the batch, not a plea to the filter. Nothing here argues with the classifier — it simply cannot reach these tiers.');
               } else if (st.synth) {
-                api.big({ value: mix.synthetic_share_of_indic, unit: 'share', provenance: 'estimated', source: 'computed:milestones' });
+                api.big({ value: mix.synthetic_share_of_indic, unit: 'share', provenance: 'estimated', source: 'computed from the proposed tier shape' });
                 api.sub('of the Indic share is manufactured, not collected');
                 api.verdict('MOSTLY SYNTHETIC', true);
                 api.note(`Natural Indic is ${(mix.natural_indic_share * 100).toFixed(1)}% of the whole batch. Every argument about Indic capability rests on that slice, not on the headline Indic share.`);
               } else {
-                api.big({ value: mix.total_seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' });
+                api.big({ value: mix.total_seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed from the proposed tier shape' });
                 api.sub(`seen tokens across ${mix.tiers.length} tiers`);
                 api.verdict(`${(mix.indic_share * 100).toFixed(0)}% INDIC`, false);
                 api.note(`Read from ${fmt(mix.total_unique_tokens, 'count')} unique tokens. The difference between seen and unique is repetition, which section 10 prices.`);
@@ -1105,7 +1111,7 @@
           };
 
           main.append(buildExplainer({
-            n: 6,
+            n: 6, kind: 'explainer',
             title: 'Seven stages, and the commitments do not un-make themselves',
             claim: [
               document.createTextNode('Between a URL and a training shard sit seven stages, each needing a tool you adopt, build, or avoid. Scrolling walks them, and the decisions '),
@@ -1185,7 +1191,7 @@
             : cap.benchmarks.filter((n) => keep.includes(bandOf.get(n))).length);
 
           main.append(buildExplainer({
-            n: 7,
+            n: 7, kind: 'explainer',
             title: 'Most of the coverage is not evidence about Indic ability',
             claim: [
               document.createTextNode('Every capability the model is built for, against the benchmarks that can detect it. The raw count flatters the picture: scroll and remove the instruments whose scores '),
@@ -1214,7 +1220,7 @@
               const counts = caps.map((c) => countFor(c, b.keep));
               const thin = counts.filter((n) => n <= 1).length;
               const gone = counts.filter((n) => n === 0).length;
-              api.big({ value: caps.length - thin, unit: 'capabilities', provenance: 'measured', source: 'computed:coverage' });
+              api.big({ value: caps.length - thin, unit: 'capabilities', provenance: 'measured', source: 'counted from the benchmark register' });
               api.bigHit(thin > 0);
               api.sub(`of ${caps.length} still have more than one instrument`);
               api.verdict(gone ? `${gone} UNGRADABLE` : thin ? `${thin} ON ONE` : 'ALL COVERED', thin > 0);
@@ -1380,7 +1386,7 @@
           ];
 
           main.append(buildExplainer({
-            n: 10, wide: true,
+            n: 10, wide: true, kind: 'explainer',
             title: 'A small pool read four times is a large pool',
             claim: [
               document.createTextNode('Only so much natural Indian-language text exists, so reaching a token budget means reading it more than once. The finding worth having is that the first few passes are nearly '),
@@ -1425,12 +1431,12 @@
                   fill.style.width = `${(n.seen_tokens / maxSeen) * 100}%`;
                   track.append(fill);
                   const val = $('div', 'tierval');
-                  val.append(renderNumber({ value: n.seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' }, { unit: false }));
+                  val.append(renderNumber({ value: n.seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed from the proposed tier shape' }, { unit: false }));
                   row.append($('div', 'tiername', p.id), track, val);
                   bars.append(row);
                 });
                 api.extra.replaceChildren(bars);
-                api.big({ value: naturalOf(presets[2]).seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed:milestones' });
+                api.big({ value: naturalOf(presets[2]).seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'computed from the proposed tier shape' });
                 api.bigHit(false);
                 api.sub('natural Indic supplied at the recommended rung');
                 api.verdict('NO NEW COLLECTION', false);
@@ -1441,7 +1447,7 @@
               const effective = POOL * st.epochs;
               const past = st.epochs > hard;
               api.extra.replaceChildren();
-              api.big({ value: effective, unit: 'tokens', provenance: 'estimated', source: 'computed: pool x epochs' });
+              api.big({ value: effective, unit: 'tokens', provenance: 'estimated', source: 'computed live: pool x epochs' });
               api.bigHit(past);
               api.sub(`from ${fmt(POOL, 'count')} unique, read ${st.epochs} ${st.epochs === 1 ? 'time' : 'times'}`);
               api.verdict(past ? 'UNEVIDENCED' : st.epochs <= advised ? 'NEARLY FREE' : 'DECAYING', past);

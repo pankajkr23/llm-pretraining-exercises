@@ -312,7 +312,7 @@
 
         if (record.opportunity) body.append(block('Opportunity', $('p', 'opportunity', record.opportunity)));
 
-        // --- the five gates, each with its reasoning (INV-3 made visible)
+        // --- the five gates, each with its reasoning (the reasoning rule made visible)
         const gates = record.gates || {};
         const gateKids = GATE_ORDER.filter((n) => gates[n]).map((name) => {
           const g = gates[name];
@@ -443,7 +443,7 @@
           });
 
           const s = buildExplainer({
-            n: 'data', anchor: 'data', wide: true,
+            n: 'data', anchor: 'data', wide: true, kind: 'explainer',
             title: 'Every dataset at once, coloured five ways',
             claim: [
               document.createTextNode(`All ${catalog.length} datasets, drawn once and never hidden. Scrolling re-colours them — by grade, by licence, by caveat — so the question changes while `),
@@ -470,7 +470,7 @@
               units.forEach((u, k) => { u.className = `unit ${e.mark(catalog[k])}`.trim(); });
               api.extra.replaceChildren(canvas);
               const n = e.count(catalog);
-              api.big({ value: n, unit: 'datasets', provenance: 'measured', source: 'computed:catalog' });
+              api.big({ value: n, unit: 'datasets', provenance: 'measured', source: 'counted from the catalogue' });
               api.bigHit(n > 0);
               api.sub(e.big);
               api.verdict(e.verdict(n), n > 0);
@@ -715,7 +715,7 @@
           canvas.append(...units);
 
           const s = buildExplainer({
-            anchor: 'confidence', wide: true,
+            anchor: 'confidence', wide: true, kind: 'explainer',
             title: 'The design leans hardest on the claims it can least support',
             claim: [
               document.createTextNode(`All ${claims.length} claims this research makes, one mark each. Scrolling removes bands rather than rows — nothing is hidden, the colouring narrows — and what survives is `),
@@ -751,13 +751,13 @@
               });
               api.extra.replaceChildren(canvas);
               if (lv.bearing) {
-                api.big({ value: bearing.length, unit: 'claims', provenance: 'measured', source: 'computed:confidence' });
+                api.big({ value: bearing.length, unit: 'claims', provenance: 'measured', source: 'counted from the confidence ledger' });
                 api.bigHit(true);
                 api.sub('carry the design, and none is in the verifiable band');
                 api.verdict('LOAD-BEARING', true);
                 api.note('Red is not "wrong" here — it is "most consequential and least checkable". If any of these turns out false, the corpus architecture changes rather than a footnote changing.');
               } else {
-                api.big({ value: kept.length, unit: 'claims', provenance: 'measured', source: 'computed:confidence' });
+                api.big({ value: kept.length, unit: 'claims', provenance: 'measured', source: 'counted from the confidence ledger' });
                 api.bigHit(kept.length < claims.length);
                 api.sub(`of ${claims.length} survive this band`);
                 api.verdict(`${claims.length - kept.length} DROPPED`, kept.length < claims.length);

@@ -27,7 +27,15 @@ export function makeExplainer({ $, onPlay }) {
         const extraEl = $('div', 'fig-extra');
         const stripEl = $('div', 'strip');
         const noteEl = $('div', 'fig-note');
-        figEl.append($('div', 'fig-num', cfg.figNum), bigEl, subEl, verdictEl, extraEl, stripEl, noteEl);
+        const numEl = $('div', 'fig-num', cfg.figNum);
+    /* Say what this figure is. `explainer` means the interaction is the argument; `modelled` means
+     * the shape is a model rather than a measurement, whatever its inputs. */
+    if (cfg.kind) {
+      const kind = $('span', 'kind', cfg.kind === 'modelled' ? 'modelled' : 'explainer');
+      kind.dataset.kind = cfg.kind;
+      numEl.append(kind);
+    }
+    figEl.append(numEl, bigEl, subEl, verdictEl, extraEl, stripEl, noteEl);
   
         const stickyEl = $('div', 'sticky');
         const railEl = $('div', 'fig-rail');

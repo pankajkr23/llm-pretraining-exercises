@@ -1,5 +1,26 @@
 # Open decisions
 
+## Scope — what this exercise measured, modelled, and left alone
+
+**Measured, with a run id behind every number**
+- Tokenizer fertility: 22 languages × 5 tokenizers × 2 registers, on IN22-Gen and IN22-Conv.
+- Contamination coverage: MILU's validation split indexed, 411,442 shingles.
+- Everything counted from the catalogue: grades, licences, caveats, coverage, confidence bands.
+
+**Modelled — a shape, not an observation**
+- The vocabulary sweep. It is now anchored on our own measured fertility rather than an assumption,
+  which moved its answer from 136,064 to 208,000 — but the softmax-cost model and the log-law
+  fertility projection remain models, and the figure says `modelled` on its face.
+- The mixture, the epoch schedule, the costings, the critical path. All proposals.
+
+**Out of scope, deliberately**
+- Training anything. No model, no tokenizer, no corpus is built here — this exercise decides what a
+  model would train on, and stops there.
+- Code and maths tokenisation. The corpora were dropped on licensing grounds, recorded below.
+- The candidate vocabulary at V = 208,896, and the 40B fork's bake-off. Both belong to the plan this
+  exercise describes rather than to the exercise; see the next section.
+
+
 Decisions the spec deliberately leaves for a human, collected in one place so they're tracked, not
 buried. The standing rule (from `README.md` / `DESIGN.md`): **never silently substitute an
 assumption** — anything unresolved surfaces in the UI as `estimated` or `unknown` and says so.
