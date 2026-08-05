@@ -304,7 +304,10 @@ span.unit { width: 13px; height: 13px; padding: 0; border-radius: 3px; backgroun
  * page serve someone meeting the subject today and someone who trains models for a living.
  */
 details.arithmetic {
-  margin-top: 18px;
+  /* Pulled close to the chapter it belongs to. At 18px, with the chapter separator only 34px
+     below it, this block sat almost equidistant between two chapters and read as the opening of
+     the next one rather than the close of its own. */
+  margin-top: 32px;
   border-top: 1px solid var(--line);
   padding-top: 12px;
 }

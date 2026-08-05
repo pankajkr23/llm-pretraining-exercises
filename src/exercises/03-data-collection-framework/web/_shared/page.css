@@ -24,6 +24,42 @@
 .resolver-sub,
 .catsearch-hits { max-width: 72ch; }
 
+/* Chapter separation. These were lost in a careless edit to the width rules, which took the
+ * heading layout and the section rule with them: the number ran into the title, the deep link
+ * stopped hiding itself, and every chapter's closing "arithmetic" block ended up touching the next
+ * chapter's heading — so it read as belonging to the chapter below it rather than above.
+ *
+ * The gap is deliberately larger than the 34px it was. A chapter ends with a collapsed details
+ * block, which is visually light, and 34px was not enough to stop it being read as the next
+ * chapter's opening. */
+section {
+  padding-bottom: 56px;
+  margin-bottom: 56px;
+  border-bottom: 1px solid var(--line);
+}
+section:last-of-type { border-bottom: 0; }
+
+/* The chapter number sits beside the title, not glued to it. */
+section h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+section h2 .n { font-family: var(--mono); font-size: 12px; color: var(--faint); }
+/* A deep link that stays out of the way until wanted — and is reachable by keyboard. */
+section h2 .anchor {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--faint);
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+section h2:hover .anchor,
+section h2 .anchor:focus-visible { opacity: 1; }
+section h2 .anchor:hover { color: var(--accent); }
+
 .claim { font-size: 1.04rem; max-width: 66ch; margin: 0 0 18px; }
 .claim b { font-weight: 600; }
 
