@@ -1,4 +1,4 @@
-"""Turn the 5T / 10T / 15T / 20T ladder into complete, checked mix configurations.
+"""Turn the milestone ladder into complete, checked mix configurations.
 
 The ladder is the report's central budget argument, and each rung has to be a real mix rather than a
 headline: a milestone you cannot compose is not a plan. Each preset is built from the same tier
@@ -153,6 +153,11 @@ def build_all(milestones: list[dict[str, Any]]) -> list[dict[str, Any]]:
     for record in milestones:
         tokens = record.get("tokens")
         if not tokens:
+            continue
+        # Only rungs the page draws become presets. The research's earlier staging (5T/10T/15T) is
+        # the argument for how you reach the seed, not a budget on offer — and composing a full mix
+        # for each of them costs the index budget several KB to say nothing the page renders.
+        if not record.get("ladder"):
             continue
         preset = build_preset(float(tokens))
         presets.append(

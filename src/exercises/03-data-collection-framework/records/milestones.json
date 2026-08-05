@@ -5,7 +5,9 @@
     "feasibility": "Trivially achievable today. FineWeb-Edu (1.3T) + Nemotron-CC-v2 subset + Stack v2 (900B) + Sangraha (251B) + FinePDFs (3T) already overshoots.",
     "verdict": "Under-ambitious for 300B params",
     "requirement": "§16.2 'Prove the recipe' (weeks 1-8): FineWeb-Edu (1.3T) + Nemotron-CC-v2 HQ subset (1.5T) + Stack v2 permissive (0.7T) + Nemotron-CC-Math (0.13T) + Sangraha full (0.25T) + BPCC/Samanantar/Aksharantar (0.05T) + FineWeb-2 Indic (0.04T) + multilingual (0.8T) + Common Pile (0.25T). Everything here is green-licence. Train a 7-15B dense proxy on this before touching the 300B.",
-    "recommended": false
+    "recommended": false,
+    "stage": "prior",
+    "ladder": false
   },
   {
     "id": "10T",
@@ -13,7 +15,9 @@
     "feasibility": "Achievable in ~8-12 weeks of pipeline work. Requires global cross-corpus dedup, which typically removes 40-70%.",
     "verdict": "Safe target",
     "requirement": "§16.2 'Safe production floor' (weeks 8-20): add full Nemotron-CC-v2 + v2.1, FinePDFs, FineWeb-2-HQ, full Stack v2 + Nemotron-Code, MegaMath + full math tier, HPLT 3.0 multilingual, 0.8T of your own Indic synthetic, and ASR transcription of all 35K hours of Indic speech. Still fully licence-clean if BhashaKritika is replicated rather than ingested. §1.2 frames this as the validated 'must-have' core underneath the 15T architecture.",
-    "recommended": false
+    "recommended": false,
+    "stage": "prior",
+    "ladder": false
   },
   {
     "id": "15T",
@@ -21,14 +25,38 @@
     "feasibility": "Achievable but requires manufacturing. You must generate 1.5-3T synthetic Indic tokens yourself (à la BhashaKritika's 540B, scaled up ~4x) plus heavy FinePDFs/FineTranslations use.",
     "verdict": "Recommended target",
     "requirement": "§16.2 'Recommended target' (weeks 20-40): add 2.4T Indic synthetic (scaled generation), FineTranslations both sides, a curriculum-generation tier across 22 languages x 5 difficulty levels, licensed regional-publisher archives, and translated Nemotron Diverse-QA into 22 Indic languages. §1.2's recommendation: 'architect for 15T, with a validated 10T must-have core and a 5T synthetic/expansion tier that can grow'; 15T unique tokens at ~35B active params is called a sane, defensible ratio. §16.1 gives the mix: ~23.4T raw -> ~15.0T after dedup, Indic total ~2.8T (18.7%) of which only 0.30T (2.0%) is naturally occurring.",
-    "recommended": true
+    "recommended": false,
+    "stage": "prior",
+    "ladder": false
+  },
+  {
+    "id": "16.8T",
+    "tokens": 16800000000000,
+    "stage": "seed",
+    "ladder": true,
+    "recommended": true,
+    "verdict": "The seed — Gemma-4 class",
+    "feasibility": "Derived, because the comparator does not disclose its own. Gemma 4's technical report and its model card both describe the training data without ever stating a token count; Gemma 3's card does state one, verbatim: the 27B was trained with 14 trillion tokens. 16.8T is that figure plus 20% for one generation of growth. It is a stated estimate with a stated method, not a published number, and it is labelled that way everywhere it appears.",
+    "requirement": "Everything the 10T rung lists, plus the volume that only arrives when the licence questions are answered. This catalogue can commit 6.57T today, so the seed as specified is 10.2T short — and the shortfall is a stack of unwritten letters rather than a collection problem."
   },
   {
     "id": "20T",
     "tokens": 20000000000000,
+    "stage": "growth",
+    "ladder": true,
+    "recommended": false,
+    "verdict": "Grown — dense to sparse",
     "feasibility": "Achievable only with aggressive multi-epoch reuse + very large synthetic generation + PDF/OCR/ASR pipelines that don't exist off-the-shelf for Indic. BharatGen claims to be here [VENDOR CLAIM] but the corpus is not redistributable.",
-    "verdict": "Stretch goal, phase 2",
-    "requirement": "§16.2 'Stretch, phase 2': OCR of India's print archive at scale (an Indic-script OCR model), a BharatGen/Bharat Data Sagar data agreement, 2 epochs on the highest-quality 30% of the mix, and materially expanded synthetic generation. 'Do not plan the first training run around 20T' - reach it in a continued-pretraining phase. Addendum B.1 revises this from hand-waved to quantified: 20T processed ~= 11-13T unique plus a scheduled epoch plan concentrated on the scarce, high-value tiers (Muennighoff: up to 4 epochs is almost as good as fresh data; R*_D ~= 15).",
-    "recommended": false
+    "requirement": "§16.2 'Stretch, phase 2': OCR of India's print archive at scale (an Indic-script OCR model), a BharatGen/Bharat Data Sagar data agreement, 2 epochs on the highest-quality 30% of the mix, and materially expanded synthetic generation. 'Do not plan the first training run around 20T' - reach it in a continued-pretraining phase. Addendum B.1 revises this from hand-waved to quantified: 20T processed ~= 11-13T unique plus a scheduled epoch plan concentrated on the scarce, high-value tiers (Muennighoff: up to 4 epochs is almost as good as fresh data; R*_D ~= 15)."
+  },
+  {
+    "id": "30T",
+    "tokens": 30000000000000,
+    "stage": "growth",
+    "ladder": true,
+    "recommended": false,
+    "verdict": "Frontier parity",
+    "feasibility": "Frontier scale, and the rung where collection rather than compute is the whole problem. Llama 4 trained on over 30T; Qwen3 on 36T across 119 languages. Every extra trillion beyond the seed comes from English, code and multilingual web text, all of which is purchasable or already open.",
+    "requirement": "Nothing in the Indian-language plan changes at this rung, which is the finding rather than an omission. The natural Indic pool contributes the same absolute quantity it always did, so the India share falls purely by growing. Holding it requires funding the acquisition queue, not the crawl budget."
   }
 ]

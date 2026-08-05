@@ -1,0 +1,92 @@
+{
+  "note": "The 40B is a seed, not a product. This record holds the staged path from it to the largest Indic model, and — because this is a data project rather than an architecture one — what each stage asks of the corpus. The method is not invented here: it is the four-stage, state-preserving growth reported in arXiv:2606.07404, this project's own prior work, which grew one lineage from a small dense seed through 5B and 9B mixtures of experts to a 120B model with 460 routed experts. Every stage below is a proposal built on that method; the corpus figures are the part this project is responsible for.",
+  "method": {
+    "source": "arXiv:2606.07404, Reversible Foundations: Training a 120B Sparse MoE through State-Preserving Scaling",
+    "relationship": "this project's own prior work",
+    "principle": "Each larger model is grown from the trained weights of the smaller one rather than trained afresh.",
+    "axes": [
+      {
+        "axis": "dense to mixture-of-experts",
+        "what": "One feed-forward block becomes many, and a router learns to send each token to a few of them.",
+        "why_it_matters_for_data": "Capacity rises without a matching rise in compute per token, so the corpus does not have to grow in step with the parameter count."
+      },
+      {
+        "axis": "shallow to deep",
+        "what": "Layers are added to a trained stack rather than a deeper stack being trained from scratch.",
+        "why_it_matters_for_data": "The tokens already read are inherited. Depth added late does not re-read the corpus, which is why the seed's data quality outlives the seed."
+      },
+      {
+        "axis": "few experts to many",
+        "what": "The expert count rises — in the reported lineage, to 460 under top-12 routing.",
+        "why_it_matters_for_data": "More experts specialise only if the mixture gives them something to specialise on. A corpus that is 90% English web text produces experts that all learn English web text."
+      }
+    ],
+    "warning": "The paper reports that several of the failures from getting an expansion wrong are silent — the model trains, the loss falls, and the capability is simply absent. That is the same failure mode this project's five data invariants exist to catch, one level down the stack."
+  },
+  "stages": [
+    {
+      "n": 1,
+      "id": "seed",
+      "name": "The seed",
+      "params_total": 40000000000,
+      "params_active": 40000000000,
+      "architecture": "dense",
+      "corpus": 16800000000000,
+      "corpus_basis": "Gemma-4 class: Gemma 3 27B's officially stated 14T, plus 20% for one generation.",
+      "asks_of_the_corpus": "Everything. This is the only stage whose data is read by every model that follows it, so provenance, licensing and decontamination have to be right here rather than fixed later. It is also the stage where the Indic share is highest, because the natural pool is a fixed quantity and this is the smallest budget it is divided into.",
+      "status": "the assignment"
+    },
+    {
+      "n": 2,
+      "id": "sparse",
+      "name": "Grow it sparse",
+      "params_total": 120000000000,
+      "params_active": 12000000000,
+      "architecture": "moe",
+      "corpus": 20000000000000,
+      "corpus_basis": "The Atlas's stretch rung. A 19% larger corpus against a 3x larger model — the first place the reader sees that these two do not scale together.",
+      "asks_of_the_corpus": "Diversity more than volume. Experts specialise on what the mixture actually contains, so this is the stage where a lopsided mixture becomes permanent architecture rather than a tuning choice.",
+      "status": "proposed"
+    },
+    {
+      "n": 3,
+      "id": "deep",
+      "name": "Grow it deep",
+      "params_total": 200000000000,
+      "params_active": 15000000000,
+      "architecture": "moe",
+      "corpus": 20000000000000,
+      "corpus_basis": "No new corpus. Depth is added to a trained stack, and the tokens already read are inherited.",
+      "asks_of_the_corpus": "Nothing new, which is the point. A stage that adds 80 billion parameters and reads no additional text is the clearest demonstration available that a corpus is not sized by the model reading it.",
+      "status": "proposed"
+    },
+    {
+      "n": 4,
+      "id": "frontier",
+      "name": "Frontier parity",
+      "params_total": 300000000000,
+      "params_active": 35000000000,
+      "architecture": "moe",
+      "corpus": 30000000000000,
+      "corpus_basis": "Llama 4 trained on over 30T; Qwen3 on 36T across 119 languages. 30T is parity, not ambition.",
+      "asks_of_the_corpus": "Ten trillion more tokens than the last stage, and not one of them Indian. Every source that can supply volume at this scale is English, code or multilingual web text, so the India share falls by growing unless collection is funded alongside.",
+      "status": "proposed"
+    }
+  ],
+  "acquisition_strategy": {
+    "rule": "Create or partner. Do not purchase.",
+    "detail": "The corpus is assembled from open sources, from data this project generates itself, and from partnerships and grants — not from bought licences. That is a constraint on the plan rather than a preference, and it changes which blocked datasets are worth pursuing: a letter to a ministry and a data-sharing MoU are in scope, and a commercial publisher licence is not.",
+    "consequence": "It also raises the value of the three zero-cost items in the acquisition register above everything else in it, and makes the licence questions in the catalogue the highest-leverage unresolved work in the whole project — because an answered licence costs nothing and a bought one is off the table."
+  },
+  "invariant": {
+    "claim": "The natural Indian-language pool is a fixed quantity. Holding its share constant means needing more of it at every stage, and there is no more of it.",
+    "detail": "The mixture reserves 8% of every batch for natural Indian-language text, read four times. At the 16.8T seed that asks for 336B unique tokens; at 20T, 400B; at 30T, 600B. What this catalogue can actually commit is 270B — 81% of the seed's requirement, and 45% of the frontier rung's. The share on the chart stays at 8% because it is a design decision; what changes is whether it can be met.",
+    "consequence": "Every stage of growth makes the Indic tier harder to fill, not easier. The only remedies are collection and partnership, and both are decisions taken years before the model trains."
+  },
+  "gap": {
+    "note": "Measured against the seed. This is the finding the exercise exists to produce, and it is the opposite of what most readers expect.",
+    "covered_share": 0.416,
+    "surprise": "Natural Indian-language text is the best-covered tier in the whole mixture at 81%. The scarce thing is nearly sourced. What is missing is general web text, code, maths and synthetic Indic — every one of them abundant, and every one blocked on a licence nobody has established.",
+    "reading": "A reader arrives assuming an India-first corpus fails on Indian data. It does not. It fails on the ordinary bulk that everybody assumes is free, and it fails for legal reasons rather than technical ones."
+  }
+}

@@ -125,6 +125,11 @@ def _load_records(cfg: Config) -> dict[str, Any]:
         "vocab_blocks",
         "fertility_targets",
         "cost",
+        # The 40B is a seed. `growth` holds the staged path from it to the largest Indic model and
+        # what each stage asks of the corpus; `scaling_reference` holds what comparable models were
+        # actually trained on, which is how the seed's own budget is derived rather than asserted.
+        "growth",
+        "scaling_reference",
     ):
         path = cfg.records_dir / f"{name}.json"
         if path.exists():
