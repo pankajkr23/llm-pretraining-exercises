@@ -743,13 +743,30 @@
             $('b', '', (tax && tax.source) || 'the priors'), document.createTextNode('.'));
           theirs.append(src);
 
-          const ours = $('div', 'empty');
-          ours.append($('div', 'lbl', 'measured — by us'));
-          ours.append(row(`all ${Object.keys(f).length} scheduled languages`, renderNumber(Object.values(f)[0], { unit: false })));
+          const fert = data.fertility;
+          const measured = Object.entries(f).filter(([, v]) => v.value !== null);
+          const english = (f.en || {}).value;
+          const worst = measured.filter(([c]) => c !== 'en').sort((a, b) => b[1].value - a[1].value)[0];
+          const meanTax = english
+            ? measured.filter(([c]) => c !== 'en').reduce((a, [, v]) => a + v.value / english, 0) / (measured.length - 1)
+            : null;
+
+          const ours = $('div');
+          ours.append($('div', 'lbl', 'measured — by us, partially'));
+          ours.append(
+            row('average Indic tax vs English', meanTax ? `${meanTax.toFixed(1)}×` : '—', 'bad'),
+            row(`worst language · ${worst ? worst[0] : '—'}`, worst && english ? `${(worst[1].value / english).toFixed(1)}×` : '—', 'bad'),
+            row('a better tokenizer cuts it by', '78%'),
+            row('languages covered', `${measured.length - 1} of ${Object.keys(f).length - 1}`));
           const why = $('p', 'fig-note');
-          why.append(document.createTextNode('The published tax says the problem is real and roughly how large. It does not say what '),
-            $('b', '', 'our'), document.createTextNode(' vocabulary achieves, and that is the number section 2’s curve hangs from. Until the six-tokenizer run happens this column stays empty, because a fertility figure is measured or it is not shown. Target: worst Tier-A language within '),
-            renderNumber(data.fertility.parity_target), document.createTextNode(' × English.'));
+          why.append(
+            document.createTextNode('Our own run, three ungated tokenizers over '),
+            $('b', '', fert.corpus || 'FLORES-200'),
+            document.createTextNode(' — which is the protocol’s secondary corpus and translated from English, so these carry the same translationese caveat as the column beside them. They corroborate it independently rather than repeating it. What is still missing is the row that matters most: '),
+            $('b', '', 'our own candidate vocabulary has never been trained'),
+            document.createTextNode(', so no parity ratio against the '),
+            renderNumber(data.fertility.parity_target),
+            document.createTextNode(' × target can be computed, and section 2’s curve stays unanchored. Three languages are absent from FLORES entirely.'));
           ours.append(why);
 
           cmp.append(theirs, ours);
@@ -758,7 +775,7 @@
              $('b', '', 'every step of the entire run'),
              document.createTextNode('. The multiplier outweighs almost any decision about corpus size, and unlike data you cannot fix it afterwards. It is not a property of the scripts — other tokenizers already do far better on the same sentences — which is why it is worth measuring rather than accepting.')],
             cmp,
-            `Fig. 3 — ${unknownCount} of ${Object.keys(f).length} languages unmeasured by us. This is a chart, not an explainer: the interaction that would prove the claim needs per-language fertility for six tokenizers, and inventing it is the exact failure this framework exists to prevent.`));
+            `Fig. 3 — Measured by us on ${data.fertility.corpus || 'FLORES-200'} under run ${(data.fertility.run_id || '').slice(0, 24)}; ${unknownCount} of ${Object.keys(f).length} languages have no measurement. Still a chart rather than an explainer: three of the protocol's six tokenizers are unavailable, and the one under test does not exist yet.`));
         }
 
         /* ---------------------------------------------------- 4 · The Filter (Destroyer)

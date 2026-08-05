@@ -3,7 +3,10 @@ name = "exercise-03-data-collection-framework"
 version = "0.1.0"
 description = "A framework for deciding the pre-training data mix of an India-first LLM: grade sources, budget tokens, measure fertility"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "tiktoken>=0.13.0",
+    "tokenizers>=0.23.1",
+]
 
 [build-system]
 requires = ["hatchling"]

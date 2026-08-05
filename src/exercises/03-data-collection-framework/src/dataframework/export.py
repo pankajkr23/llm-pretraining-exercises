@@ -144,6 +144,66 @@ def _dataset_index_entry(record: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _fertility_block(cfg: Config, languages: list[str]) -> dict[str, Any]:
+    """Assemble the fertility block from a real measurement when one exists.
+
+    Ground rule 8 forbids shipping fertility as `estimated`: it is measured or it is `unknown`.
+    So this reads `records/fertility.json` if `measure_fertility` has been run and falls back to
+    `unknown` otherwise — there is deliberately no middle path.
+
+    Args:
+        cfg: Paths to use.
+        languages: Every scheduled language code.
+
+    Returns:
+        The fertility block, carrying whatever was actually measured plus what the run could not
+        cover.
+    """
+    block: dict[str, Any] = {
+        "parity_target": _value(PARITY_TARGET, "ratio", "estimated", "docs/DECISIONS.md"),
+    }
+    path = cfg.records_dir / "fertility.json"
+    if not path.exists():
+        block["by_language"] = unmeasured(
+            languages,
+            "task 2.2b has not run: no tokenizer measurement exists yet (ground rule 8 forbids "
+            "shipping fertility as estimated)",
+        )
+        return block
+
+    run = load_json(path)
+    measured = run["by_tokenizer"]
+    baseline = "tiktoken/cl100k_base"
+
+    # The headline column stays the published baseline, so our numbers sit beside the paper's.
+    rows = measured.get(baseline, {})
+    by_language: dict[str, Any] = {}
+    for code in [*languages, "en"]:
+        # Kashmiri is measured in both scripts; the headline column carries Perso-Arabic, the
+        # script the language is predominantly written in, and both stay in the detail record.
+        key = "ks-Arab" if code == "ks" else code
+        if key in rows:
+            by_language[code] = rows[key]
+        else:
+            absent = run["languages_unavailable"].get(code, "not measured")
+            by_language[code] = dataclasses.asdict(
+                Value.unknown("tokens/word", source=f"absent from {run['corpus']}: {absent}")
+            )
+    block["by_language"] = by_language
+    block["baseline_tokenizer"] = baseline
+    # The full per-tokenizer matrix is three times this size and only §3 reads it, so it rides in
+    # records.json rather than the index — the 100KB budget is what keeps the first paint fast.
+    # Expansion is by_language divided by English, so shipping it would be a second copy of the
+    # same fact — and a copy made of bare floats, which the bundle forbids. The UI divides.
+    block["run_id"] = run["run_id"]
+    block["corpus"] = run["corpus"]
+    block["corpus_trust_band"] = run["corpus_trust_band"]
+    block["tokenizers_unavailable"] = run["tokenizers_unavailable"]
+    block["languages_unavailable"] = run["languages_unavailable"]
+    block["protocol_gaps"] = run["protocol_gaps"]
+    return block
+
+
 def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
     """Compute the whole bundle.
 
@@ -168,6 +228,9 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
     datasets = load_json(cfg.catalog_file)
     benchmarks = load_json(cfg.benchmarks_file)
     records = _load_records(cfg)
+    fertility_run = cfg.records_dir / "fertility.json"
+    if fertility_run.exists():
+        records["fertility"] = load_json(fertility_run)
 
     curve = summarise(sweep(REFERENCE_VOCAB, REFERENCE_FERTILITY))
     languages = [row.get("code") for row in records.get("languages", []) if row.get("code")]
@@ -222,14 +285,7 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
             ),
             "d_model": _value(D_MODEL_DEFAULT, "dimensions", "estimated", "docs/DECISIONS.md"),
         },
-        "fertility": {
-            "parity_target": _value(PARITY_TARGET, "ratio", "estimated", "docs/DECISIONS.md"),
-            "by_language": unmeasured(
-                languages,
-                "task 2.2b has not run: no tokenizer measurement exists yet (ground rule 8 "
-                "forbids shipping fertility as estimated)",
-            ),
-        },
+        "fertility": _fertility_block(cfg, languages),
         "mix_rules": {
             "always_on_share": _value(ALWAYS_ON_SHARE, "share", "estimated", "FRAMEWORK.md R2"),
             "max_epochs_advised": _value(
