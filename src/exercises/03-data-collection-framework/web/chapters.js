@@ -109,7 +109,7 @@ const chapter = ({ id, n, title, claim, body, caption, arithmetic }) => {
   s.append(h, p);
   if (body) {
     /* A statement chapter's body is a table or a widget, both of which read better with the room. */
-    const fig = $('figure', 'breakout');
+    const fig = $('figure');
     fig.append(body);
     if (caption) fig.append($('figcaption', '', caption));
     s.append(fig);
@@ -2051,7 +2051,7 @@ function chapterAppendix(ctx) {
   };
 
   const block = (title, node) => {
-    const d = $('details', 'register breakout');
+    const d = $('details', 'register');
     if (blockIndex === 0) d.open = true;
     blockIndex += 1;
     const sum = $('summary');

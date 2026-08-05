@@ -42,12 +42,12 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
-- **Wide content is no longer squeezed into a reading measure.** The page capped everything at
-  860px, which is right for prose and wrong for a seven-column dataset table or a two-column figure
-  — they were cramped while a thousand pixels sat empty either side. Figures, the appendix
-  registers and the statement chapters' tables now widen to `min(1240px, 94vw)` on large screens
-  while prose and captions stay at the measure, and the explainer's chart column grows from 384px
-  to whatever is left rather than the prose lines getting longer. Below 1080px nothing changes.
+- **One content width, with prose held to a reading measure inside it.** The page used to cap
+  everything at 860px, which cramped a seven-column dataset table and a two-column figure while a
+  thousand pixels sat empty either side. The container is now a single 1240px and never moves, so
+  every left edge lines up; prose stops at its own line-length measure and leaves the right ragged,
+  while tables, figures and registers fill the width. The explainer's chart column grows with the
+  window rather than the prose lines getting longer.
 - **Six themes, site-wide, every one contrast-checked.** Tokens moved out of the individual pages
   into one `/_shared/tokens.css` that the landing page and all three exercises link, so a colour
   decision is made once. The system light/dark pair stays the default, joined by soft light (warm

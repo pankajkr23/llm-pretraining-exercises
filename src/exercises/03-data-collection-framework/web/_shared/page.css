@@ -5,48 +5,24 @@
  * read anything (the jump to the datasets).
  */
 
-/* Prose stays narrow; wide content escapes.
+/* One width for everything, and prose held to a reading measure inside it.
  *
- * 860px is a reading measure, not a page width: past roughly 75 characters a line the eye starts
- * losing its place on the return sweep, and at this type size 860px already lands near 90. That is
- * right for the lede, the claims and the arithmetic, and wrong for a seven-column dataset table or
- * a two-column figure, which were being squeezed while a thousand pixels sat empty on either side.
+ * An earlier version capped the wrapper at 860px and let figures and tables break out past it.
+ * Both widths were defensible and the alternation was not: every breakout moved the left edge, so
+ * the eye lost its anchor twice per chapter and the page read as though it could not decide.
  *
- * So the wrapper keeps the measure and `.breakout` widens past it, symmetrically, using negative
- * inline margins rather than a transform — a transform would create a containing block and break
- * the sticky figure column inside every explainer.
+ * So the container is one width and never moves. What varies is how far a given element *fills*
+ * it: prose stops at its own `ch` measure and leaves the right-hand side ragged, while tables,
+ * figures and registers use the whole thing. Every left edge on the page lines up.
  */
-.wrap { max-width: 860px; }
+.wrap { max-width: 1240px; }
 
-.breakout {
-  --breakout-w: min(1240px, 94vw);
-  margin-inline: calc((860px - var(--breakout-w)) / 2);
-}
-/* Below the point where there is real room to spare, a breakout is just a narrower page. */
-@media (max-width: 1080px) {
-  .breakout { --breakout-w: 100%; margin-inline: 0; }
-}
-
-/* A caption is prose and belongs at the reading measure even when its figure is wide. */
-.breakout > figcaption,
-figure.breakout > figcaption { max-width: 64ch; }
-
-section { padding-bottom: 34px; margin-bottom: 34px; border-bottom: 1px solid var(--line); }
-section:last-of-type { border-bottom: 0; }
-section h2 { display: flex; align-items: baseline; gap: 10px; }
-section h2 .n { font-family: var(--mono); font-size: 12px; color: var(--faint); }
-/* A deep link that stays out of the way until wanted — and is reachable by keyboard. */
-section h2 .anchor {
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--faint);
-  text-decoration: none;
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-section h2:hover .anchor,
-section h2 .anchor:focus-visible { opacity: 1; }
-section h2 .anchor:hover { color: var(--accent); }
+/* Prose caps. These are line-length limits, not layout — they never move an element's left edge. */
+.lede,
+.disclaim,
+.filter-tally,
+.resolver-sub,
+.catsearch-hits { max-width: 72ch; }
 
 .claim { font-size: 1.04rem; max-width: 66ch; margin: 0 0 18px; }
 .claim b { font-weight: 600; }

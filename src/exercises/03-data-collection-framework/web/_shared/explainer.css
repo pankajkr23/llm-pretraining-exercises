@@ -23,11 +23,11 @@
 
 /* A chart needs more room than a single number does. */
 .scrolly.wide { grid-template-columns: minmax(0, 1fr) 384px; }
-/* Once the figure has escaped the reading measure, spend the extra width on the figure rather than
-   on longer lines of prose: the prose column is capped, the chart column takes the remainder. */
+/* The prose column is capped at a reading measure and the figure column takes whatever is left, so
+   a wider window grows the chart rather than the line length. */
 @media (min-width: 1081px) {
-  .breakout .scrolly { grid-template-columns: minmax(0, 62ch) minmax(360px, 1fr); gap: 44px; }
-  .breakout .scrolly.wide { grid-template-columns: minmax(0, 60ch) minmax(430px, 1fr); gap: 48px; }
+  .scrolly { grid-template-columns: minmax(0, 62ch) minmax(360px, 1fr); gap: 44px; }
+  .scrolly.wide { grid-template-columns: minmax(0, 60ch) minmax(430px, 1fr); gap: 48px; }
 }
 
 /* The reader's own input spans both columns — it governs the whole widget, not one side. */

@@ -11,12 +11,12 @@ This is the canonical reference; `AGENTS.md` carries the short version.
 - **One consistent shell across pages.** Same header structure, back navigation, type scale,
   accent, panel/card treatment, and footer voice on every page (landing, each exercise).
 - **Written for a general audience** — blog-style and self-contained (see [Copy & tone](#copy--tone)).
-- **Prose keeps a reading measure; wide content escapes it.** The wrapper caps at 860px because
-  past roughly 75 characters a line the eye loses its place on the return sweep — that is right for
-  prose and wrong for a seven-column table or a two-column figure. `.breakout` widens to
-  `min(1240px, 94vw)` with symmetric negative inline margins (not a transform, which would create a
-  containing block and break the sticky figure column), and collapses to the wrapper below 1080px
-  where there is no room to spare. Captions stay at the measure even inside a wide figure.
+- **One content width; prose is limited by line length, not by the container.** The wrapper is a
+  single width and never moves, so every left edge on a page lines up. What varies is how far an
+  element *fills* it: prose stops at its own `ch` measure and leaves the right ragged, while
+  tables, figures and registers use the whole width. An earlier version capped the wrapper narrow
+  and let wide content break out past it — both widths were defensible and the alternation was
+  not, because every breakout moved the left edge and the eye lost its anchor twice per chapter.
 - **Tokens live in one file: `deploy/vercel/_shared/tokens.css`**, copied to `/_shared/` by the
   build and linked absolutely by every page. A page defines no colour of its own beyond what is
   genuinely local to it (a diagram's own hues); everything shared is declared once.
