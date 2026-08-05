@@ -152,5 +152,11 @@
         "emphasis": "Highest quality only, learning rate to zero. This is where benchmark performance is bought."
       }
     ]
+  },
+  "zero_trust": {
+    "rule": "Every dataset passes the full pipeline, including the ones labelled verified.",
+    "why": "A label is a claim its publisher made, not a measurement you performed. The clearest case in this catalogue is Sangraha, which is the best-documented Indic corpus anybody has built and still ships 251B tokens of which 64B are verified human-origin: roughly 90B is machine-translated from Wikimedia and 72B is romanised transliteration. Nothing is wrong with that — the publisher says so plainly — but a plan that budgets the headline has silently counted machine translation as human text.",
+    "consequence": "Trust is not transitive and it does not survive a merge. Once corpora are combined, cleaned, shuffled and sharded, a per-document record of what was verified and what was manufactured cannot be reconstructed — so it has to be carried from the first fetch or it does not exist.",
+    "source": "docs/ATLAS.md and the Sangraha dataset card"
   }
 }

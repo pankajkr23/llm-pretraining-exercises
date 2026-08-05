@@ -626,9 +626,20 @@ function actionCell(d) {
 
 /** One dataset row, in the six columns a data team needs to act. */
 function datasetRow(d) {
-  const size = (d.size_tokens || {}).value
-    ? renderNumber(d.size_tokens, { unit: false })
-    : $('span', 'unpriced', 'unstated');
+  const size = $('span');
+  if ((d.size_tokens || {}).value) {
+    size.append(renderNumber(d.size_tokens, { unit: false }));
+    /* A headline with a verified split is two numbers, and showing only the larger one is how a
+     * corpus gets overstated. Both, always, wherever anybody has done the separation. */
+    if ((d.size_verified || {}).value) {
+      const v = $('span');
+      v.style.cssText = 'color:var(--faint);font-size:11px';
+      v.append(text(' of which '), renderNumber(d.size_verified, { unit: false }), text(' verified'));
+      size.append(v);
+    }
+  } else {
+    size.append($('span', 'unpriced', 'unstated'));
+  }
   const licence = $('span', '', d.licence_commercial === true ? 'permitted' : d.licence_commercial === false ? 'forbidden' : 'nobody established it');
   if (d.licence_commercial !== true) licence.style.color = 'var(--grade-x)';
   const caveats = $('span');
@@ -666,13 +677,28 @@ function chapterDatasets(ctx) {
     body.append($('h3', 'appendix-h', tier));
     const lede = $('p', 'sub');
     lede.style.cssText = 'margin:0 0 4px;font-size:12.5px;color:var(--muted)';
+    const plan = (src.tiers || []).find((x) => x.tier === tier) || {};
     lede.append(
       text(`Needs ${fmt(targets[tier], 'count')}. `),
       b(committed.length
-        ? `${committed.length} dataset${committed.length > 1 ? 's' : ''} can be committed today, supplying ${fmt(have, 'count')}.`
+        ? `${committed.length} dataset${committed.length > 1 ? 's' : ''} can be committed today, supplying ${fmt(plan.committed_tokens ?? have, 'count')}.`
         : 'Nothing here can be committed today.'),
       text(` ${rows.length} candidate${rows.length > 1 ? 's' : ''} in the catalogue.`),
     );
+    /* Where a headline was trimmed to its verified portion, say so here. A reader who sees 251B in
+     * the table and 84.9B in the total is entitled to know which number is doing what. */
+    if (plan.headline_tokens && plan.headline_tokens !== plan.committed_tokens) {
+      const warn = $('p');
+      warn.style.cssText = 'margin:0 0 4px;font-size:12.5px;color:var(--grade-b)';
+      warn.append(
+        text('Counted on verified human-origin text only. Taking the headline totals at face value would say '),
+        b(fmt(plan.headline_tokens, 'count')),
+        text(' — the difference is machine translation and transliteration, which is Indian-language text and is not text an Indian wrote.'),
+      );
+      body.append(lede, warn);
+      body.append(table(DATASET_COLUMNS, rows.map(datasetRow), [1]));
+      return;
+    }
     body.append(lede, table(DATASET_COLUMNS, rows.map(datasetRow), [1]));
   });
 
@@ -927,11 +953,15 @@ function chapterCleaning(ctx) {
     pill: 'one stage unstaffed',
     rail: [
       text('The one rule that governs all nine: '),
-      b('synthetic text re-enters every gate'),
-      text('. Translation and generation are not exempt from quality, deduplication or decontamination because you made them yourself — which is easy to forget, and expensive to remember late.'),
+      b('nothing is trusted at face value'),
+      text(', including datasets whose own label says verified. Synthetic text re-enters every gate — translation and generation are not exempt from quality, deduplication or decontamination because you made them yourself. And a publisher\u2019s label is a claim, not a measurement: '),
+      ref('the shopping list', 'datasets'),
+      text(' shows what taking one at face value costs.'),
     ],
     states,
     arithmetic: [
+      para(b('Zero trust.'), ' ', rules.zero_trust.rule, ' ', rules.zero_trust.why),
+      para(b('And it cannot be recovered afterwards.'), ' ', rules.zero_trust.consequence),
       para(b('The universal order.'), ' ', rules.universal.order, '.'),
       para(b('Adopt rather than rebuild:'), ' ', rules.universal.adopt_not_build.join(', '), '.'),
       table(['objective', 'the rule that is not obvious'], rules.objective_rules.map((r) => [r.objective, `${r.rule} ${r.counterintuitive}`])),
