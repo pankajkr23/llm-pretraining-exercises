@@ -1099,13 +1099,13 @@
           const upTo = (i) => tools.filter((t) => STAGES.indexOf(t.stage) <= i);
 
           const LEDE = {
-            filtering: ['The first stage is the one with a tool worth adopting outright, purpose-built for Indian scripts. Everything downstream inherits ', 'whatever this stage lets through', '.'],
-            lid: ['Language identification decides which pipeline a document even enters, so its errors are ', 'invisible rather than wrong', ' — a misrouted document is simply never seen again.'],
-            extraction: ['Getting text out of a page is the stage everyone assumes is solved. It is solved for English layout; ', 'Indic layout is a different problem', '.'],
-            ocr: ['Here the research reversed itself. The recommended system scored ', 'worst in class on real Devanagari scans', ', and the second candidate fails rarely but catastrophically. Both are marked avoid, in red.'],
-            asr: ['Speech is where the largest untapped Indic corpus lives, and where the tooling is thinnest — this stage is mostly ', 'things you have to build', '.'],
-            dedup: ['Deduplication is cheap to run and expensive to skip: two of the largest open corpora ship duplication their publishers ', 'did not remove', '.'],
-            decontamination: ['The last stage is the gate from section 1. It is last in the pipeline and ', 'first in the build order', ', because a contaminated corpus invalidates every measurement taken after it.'],
+            filtering: ['Filtering is throwing away the rubbish — boilerplate, spam, broken encodings. This is the one stage with a tool worth adopting outright, purpose-built for Indian scripts. Everything downstream inherits ', 'whatever this stage lets through', '.'],
+            lid: ['Language identification is guessing what language a document is in, which decides where it goes next. Its errors are ', 'invisible rather than wrong', ' — a misrouted document is simply never seen again.'],
+            extraction: ['Extraction is pulling readable text out of a web page or a PDF, which everyone assumes is solved. It is solved for English layout; ', 'Indic layout is a different problem', '.'],
+            ocr: ['Optical character recognition reads text off scanned images — the only way to reach printed books. Here the research reversed itself: the recommended system scored ', 'worst in class on real Devanagari scans', ', and the second candidate fails rarely but catastrophically. Both are marked avoid, in red.'],
+            asr: ['Speech recognition turns recordings into text. It is where the largest untapped Indic corpus lives, and where the tooling is thinnest — this stage is mostly ', 'things you have to build', '.'],
+            dedup: ['Deduplication removes text that appears more than once, so the model does not over-learn whatever was copied around the web. Cheap to run and expensive to skip: two of the largest open corpora ship duplication their publishers ', 'did not remove', '.'],
+            decontamination: ['Decontamination is the exam check from section 1 — the fingerprint match that keeps test questions out of training. It is last in the pipeline and ', 'first in the build order', ', because a contaminated corpus invalidates every measurement taken after it.'],
           };
 
           const STATES = STAGES.map((st, i) => ({
@@ -1128,7 +1128,7 @@
             n: 6, kind: 'explainer',
             title: 'Seven stages, and the commitments do not un-make themselves',
             claim: [
-              document.createTextNode('Between a URL and a training shard sit seven stages, each needing a tool you adopt, build, or avoid. Scrolling walks them, and the decisions '),
+              document.createTextNode('Training text does not arrive as text. It arrives as web pages, scanned books and recordings, and turning that into something a model can read takes seven separate jobs — find the words, work out which language they are in, get them off the page, strip the junk, remove the duplicates, and check nothing from the exam set slipped in. Each job needs a piece of software, and for each you either adopt one that exists, build your own, or rule one out. Scrolling walks the seven, and the decisions '),
               $('b', '', 'accumulate'),
               document.createTextNode(' — by the last stage there are seventeen, two of them reversals of an earlier recommendation. Red is a tool this research decided against '),
               $('b', '', 'after measuring it'),
@@ -1189,13 +1189,13 @@
           const bandOf = new Map(data.benchmarks.map((b) => [b.name, b.trust_band]));
           const BANDS = [
             { keep: null, marg: 'Every instrument',
-              lead: 'This is the register as it stands: every benchmark that can detect anything the model is built for. Counted this way, coverage looks ',
+              lead: 'Every test we know of, against the capability it can detect. Counted this way — one mark per capability, green if more than one test covers it — the picture looks ',
               bold: 'broadly adequate', tail: '.' },
             { keep: ['native-sourced', 'translation-derived'], marg: 'Drop harness-dependent',
-              lead: 'Two of these produce a number that depends on which evaluation harness you ran, so the score is ',
+              lead: 'Two of these give a different score depending on which testing program you run them with, so the number is ',
               bold: 'not comparable between labs', tail: ' — including against the model you are trying to beat.' },
             { keep: ['native-sourced'], marg: 'Drop translated',
-              lead: 'Four more were translated from English. A translated benchmark measures whether the model handles translated English, which is ',
+              lead: 'Four more were written in English and then translated. A test like that measures how well the model handles translated English rather than how well it handles the language as people actually write it, which is ',
               bold: 'not the thing being claimed', tail: '. What remains is evidence about Indic ability.' },
             { keep: ['native-sourced'], holes: true, marg: 'What is left uncovered',
               lead: 'Counting only native-sourced instruments, the capabilities with a single instrument or none are the ones where a regression could ship ',
@@ -1208,9 +1208,9 @@
             n: 7, kind: 'explainer',
             title: 'Most of the coverage is not evidence about Indic ability',
             claim: [
-              document.createTextNode('Every capability the model is built for, against the benchmarks that can detect it. The raw count flatters the picture: scroll and remove the instruments whose scores '),
+              document.createTextNode('A benchmark is a test. A capability is something you want the model to be able to do — answer in Tamil, write code, do arithmetic. If a capability has no test behind it, you cannot tell whether you achieved it, so counting tests per capability is how you check whether the plan is even gradeable. The raw count flatters it, though: scroll and drop the tests whose scores '),
               $('b', '', 'do not mean what the count implies'),
-              document.createTextNode(' — harness-dependent first, then translated-from-English — and watch how many capabilities are left with one instrument or none. Bands and split policies in '),
+              document.createTextNode(' — first the ones whose result changes with the testing program, then the ones translated out of English — and watch how many capabilities are left with a single test, or none at all. Every test and how far it can be trusted is listed under '),
               ref('the instruments', 'benchmarks'), document.createTextNode('.'),
             ],
             figNum: 'Fig. 7 — capabilities you could grade',
