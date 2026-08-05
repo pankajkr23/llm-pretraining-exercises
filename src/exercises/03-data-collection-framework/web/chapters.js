@@ -219,7 +219,7 @@ function chapterBudget(ctx) {
     anchor: 'budget',
     arithmeticLabel: 'Where 16.8T comes from, and the arithmetic of re-reading',
     wide: true,
-    title: 'How much text, and can we even get it',
+    title: 'How much text, and whether we can get it',
     claim: [
       text('A model this size needs roughly '),
       b(fmt(recommended.target_seen_tokens, 'count')),
