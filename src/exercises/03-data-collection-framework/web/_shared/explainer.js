@@ -28,13 +28,8 @@ export function makeExplainer({ $, onPlay }) {
         const stripEl = $('div', 'strip');
         const noteEl = $('div', 'fig-note');
         const numEl = $('div', 'fig-num', cfg.figNum);
-    /* Say what this figure is. `explainer` means the interaction is the argument; `modelled` means
-     * the shape is a model rather than a measurement, whatever its inputs. */
-    if (cfg.kind) {
-      const kind = $('span', 'kind', cfg.kind === 'modelled' ? 'modelled' : 'explainer');
-      kind.dataset.kind = cfg.kind;
-      numEl.append(kind);
-    }
+    /* The two-page version stamped every figure EXPLAINER or MODELLED. That was project taxonomy
+     * with no key anywhere, so it is gone; what a figure is should be legible from what it says. */
     const guessEl = $('div', 'fig-guess');
     guessEl.style.display = 'none';
     figEl.append(numEl, bigEl, subEl, verdictEl, extraEl, stripEl, guessEl, noteEl);

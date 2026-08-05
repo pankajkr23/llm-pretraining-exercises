@@ -4,9 +4,7 @@
  * is built). These rules were extracted from the reference implementation — report §1, the gate —
  * when the second explainer landed, exactly as EXPLAINER_PATTERN.md §7 said they should be.
  *
- * The `g` prefix that §1 shipped with (.gfig, .gbig, .gsub, .gverdict, .gnote, .grail) was a
- * collision workaround: bare .big and .sub already belong to tileOf() in report/index.html. The
- * role names below replace it, so the vocabulary is the same on every explainer.
+ * One vocabulary, used by every chapter on the one page.
  *
  * Three colours only: --accent for the live thing, --grade-x for the excluded thing, greyscale for
  * everything else. --grade-b marks a known-unknown inside .fig-rail. Nothing here introduces a
@@ -163,54 +161,9 @@
 .fig-tick.reg { background: var(--accent); }
 .fig-tick.hit { background: var(--grade-x); }
 
-/* ------------------------------------------------------------------ charts (not explainers)
- *
- * EXPLAINER_PROMPT §9: when the claim needs no comparison the reader can drive, a static chart is
- * more honest and loads faster. These sections still wear the editorial register — hairlines, mono
- * numerals, marginalia — so the page reads as one document; they just do not pretend to interact.
- */
 
-.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
-.compare > div { border-top: 1.5px solid var(--ink); padding-top: 12px; }
-/* The column with nothing in it is the point, so it is not styled as an error. */
-.compare > div.empty { border-top-color: var(--line); }
-.compare .lbl {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--faint);
-  margin-bottom: 10px;
-}
-.figrow { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: baseline; padding: 5px 0; border-bottom: 1px solid var(--line); }
-.figrow:last-of-type { border-bottom: 0; }
-.figrow .k { font-size: 12.5px; color: var(--muted); }
-.figrow .v { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 1.25rem; }
-.figrow .v.bad { color: var(--grade-x); }
 
-@media (max-width: 760px) { .compare { grid-template-columns: 1fr; gap: 20px; } }
 
-/* A chart in the editorial register: a hairline where a card used to be. */
-.chartblock { border-top: 1.5px solid var(--ink); padding-top: 14px; }
-
-/* Inline topology (§17): the control lives inside a sentence, which recomputes around it. */
-.inlinectl {
-  font-family: var(--mono);
-  font-size: inherit;
-  padding: 0 6px;
-  border-radius: 6px;
-  border: 1px solid var(--line);
-  background: var(--panel);
-  color: var(--accent);
-  cursor: pointer;
-}
-.inlinectl:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-/* Margin-driven topology (§17): visual in the text column, its labels in a wide gutter. */
-.marginal { display: grid; grid-template-columns: minmax(0, 1fr) 196px; gap: 26px; align-items: start; }
-.marginal .gutter { font-size: 11.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
-.marginal .gutter b { color: var(--grade-x); font-weight: 700; }
-@media (max-width: 760px) { .marginal { grid-template-columns: 1fr; gap: 16px; } }
 
 /* ------------------------------------------------------------------ narrow, reduced-motion */
 
@@ -278,24 +231,6 @@ span.unit { width: 13px; height: 13px; padding: 0; border-radius: 3px; backgroun
 .disclaim { margin-top: 8px; font-family: var(--sans); font-size: 11.5px; line-height: 1.5; color: var(--faint); max-width: 72ch; }
 .disclaim a { color: inherit; }
 
-/* Figure kind, stated rather than inferred. A reader should never have to guess whether a panel is
-   something they can interrogate, a static chart, or a model standing in for a measurement. */
-.kind {
-  display: inline-block;
-  font-family: var(--mono);
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 1px 7px;
-  border-radius: 3px;
-  border: 1px solid var(--line);
-  color: var(--faint);
-  margin-left: 8px;
-  vertical-align: 2px;
-}
-.kind[data-kind="explainer"] { color: var(--accent); border-color: var(--accent); }
-.kind[data-kind="modelled"] { color: var(--grade-b); border-color: var(--grade-b); }
 
 /* A prediction the reader committed to, pinned beside the answer. It must be visible the moment it
    is typed and stay visible through every state — a commitment device that acknowledges nothing

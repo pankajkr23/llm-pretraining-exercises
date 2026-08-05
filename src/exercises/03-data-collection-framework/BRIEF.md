@@ -2,9 +2,15 @@
 
 Sourcing data for a frontier LLM is a **decision problem under hard constraints**, not a shopping
 list. This exercise turns a large research investigation — **the India LLM Data Atlas**
-([`docs/ATLAS.md`](docs/ATLAS.md)) — into a **reusable, mechanically-checkable framework for deciding
-the pre-training data mix** of an India-first model, and packages that decision as a self-justifying
-interactive site plus a short printable report.
+([`docs/ATLAS.md`](docs/ATLAS.md)) — into a framework for deciding what an India-first model trains
+on **across the full lifecycle: pre-training corpora, SFT, preference, safety and evaluation**, and
+publishes that decision as one interactive page.
+
+> **Scope correction.** An earlier version of this brief said "the **pre-training** data mix". That
+> narrowing dropped four of the five stages the class brief names, and everything downstream
+> inherited it — the framework's five gates and three rules are all pre-training constructs, and the
+> `stage` tag on all 145 catalogue records went unread. See
+> [`docs/DESIGN_CRITIQUE.md`](docs/DESIGN_CRITIQUE.md).
 
 ## The core claim
 
@@ -23,9 +29,9 @@ in code**.
    every number carrying `{value, unit, provenance, source}`.
 2. **Five invariants enforced in CI** (see [`docs/README.md`](docs/README.md)) — rigor is machine-checked,
    not asserted.
-3. A **three-page zero-dependency static site** on the repo's design system: the thesis (`index`),
-   **The Decision** (`report/`, ~4 print pages — `Ctrl+P → PDF` is the submission), and **The Reasoning**
-   (`reasoning/` — an explorable reference where every number in The Decision links to its justification).
+3. **One zero-dependency page** on the repo's design system, with a chapter per question a reader
+   actually asks and three layers in each — a plain headline, the interaction that proves it, and a
+   closed "The arithmetic" for anyone who wants the derivation.
 4. A **fertility measurement run** — the site's only `measured` numbers.
 
 ## The source of truth

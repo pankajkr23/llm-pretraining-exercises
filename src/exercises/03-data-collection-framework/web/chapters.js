@@ -441,7 +441,9 @@ function datasetRow(d) {
     caveats.append(badge, text(' '));
   });
   if (!(d.gotcha_types || []).length) caveats.textContent = '—';
-  return [d.name, size, d.grade, licence, caveats, actionCell(d)];
+  const grade = $('span', 'grade', d.grade);
+  grade.setAttribute('data-grade', d.grade);
+  return [d.name, size, grade, licence, caveats, actionCell(d)];
 }
 
 const DATASET_COLUMNS = ['dataset', 'tokens', 'grade', 'commercial use', 'known caveats', 'what has to happen'];
@@ -1302,10 +1304,50 @@ function chapterAppendix(ctx) {
 
   const block = (title, node) => { s.append($('h3', 'appendix-h', title), node); };
 
+  /* The canvas the two-page version opened its atlas with, kept because it is the one view where
+   * the whole catalogue is visible at once. Static here rather than a five-state walk: the states
+   * were re-encodings, and the tables below carry those encodings already. */
+  {
+    const canvas = $('div', 'canvas');
+    canvas.setAttribute('role', 'group');
+    canvas.setAttribute('aria-label', `${data.datasets.length} datasets, coloured by grade`);
+    const units = data.datasets.map((d) => {
+      const u = $('button', `unit ${d.is_gap ? 'out' : { A: 'ok', B: 'mid', C: '', X: 'out' }[d.grade] || ''}`.trim());
+      u.type = 'button';
+      u.title = `${d.id} · ${d.name} — grade ${d.grade}${d.is_gap ? ' · does not exist yet' : ''}`;
+      u.setAttribute('aria-label', `${d.name}, grade ${d.grade}`);
+      return u;
+    });
+    /* One tab stop, arrows within: 145 sequential stops is an obstacle, not navigation. */
+    let rover = 0;
+    units.forEach((u, k) => { u.tabIndex = k === 0 ? 0 : -1; });
+    canvas.addEventListener('keydown', (e) => {
+      const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 20, ArrowUp: -20 }[e.key];
+      if (step === undefined) return;
+      e.preventDefault();
+      rover = Math.max(0, Math.min(units.length - 1, rover + step));
+      units.forEach((u, k) => { u.tabIndex = k === rover ? 0 : -1; });
+      units[rover].focus();
+    });
+    canvas.append(...units);
+    const key = $('p');
+    key.style.cssText = 'font-size:12px;color:var(--muted);margin:10px 0 0';
+    const counts = data.datasets.reduce((a, d) => { a[d.grade] = (a[d.grade] || 0) + 1; return a; }, {});
+    key.append(
+      text(`${counts.A || 0} usable · ${counts.B || 0} usable with care · ${counts.C || 0} thin evidence · ${counts.X || 0} excluded · `),
+      b(`${data.datasets.filter((d) => d.is_gap).length} does not exist yet`),
+      text('. A grade is five checks scored together — where the text came from, whether its composition matches its claims, whether it overlaps the exam sets, how much survives cleaning, and whether any of it is evidenced. Nothing is scored for a question nobody answered, which is why most sit at C.'),
+    );
+    block(`The whole catalogue at once — ${data.datasets.length} datasets`, canvas);
+    s.append(key);
+  }
+
   block(`Every dataset — ${data.datasets.length}`, table(
     ['id', 'dataset', 'kind', 'grade', 'stage', 'tokens', 'commercial use'],
     data.datasets.map((d) => [
-      d.id, d.name, d.category, d.grade, (d.stage || []).join(' · '),
+      d.id, d.name, d.category,
+      (() => { const g = $('span', 'grade', d.grade); g.setAttribute('data-grade', d.grade); return g; })(),
+      (d.stage || []).join(' · '),
       (d.size_tokens || {}).value ? renderNumber(d.size_tokens, { unit: false }) : $('span', 'unpriced', 'unstated'),
       d.licence_commercial === true ? 'permitted' : d.licence_commercial === false ? 'forbidden' : 'unestablished',
     ]),
