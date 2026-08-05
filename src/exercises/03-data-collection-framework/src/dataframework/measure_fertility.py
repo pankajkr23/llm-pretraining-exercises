@@ -36,6 +36,9 @@ from .fertility import measure
 # column per language.
 IN22_REPO = "ai4bharat/IN22-Gen"
 IN22_FILE = "data/train-00000-of-00001.parquet"
+# IN22-Conv is the same 22 languages in a conversational register. Fertility differs between
+# registers and conversation is the stated primary task, so both are measured and reported apart.
+IN22_CONV_REPO = "ai4bharat/IN22-Conv"
 
 # FLORES-200 devtest, the secondary corpus: translated from English, so it measures how a tokenizer
 # handles translationese. Kept as the fallback when IN22 is unreachable.
@@ -106,8 +109,8 @@ IN22_COLUMNS: dict[str, str] = {
 }
 
 
-def load_in22() -> dict[str, str]:
-    """Read IN22-Gen, joining every sentence per language into one string.
+def load_in22(repo: str = IN22_REPO) -> dict[str, str]:
+    """Read an IN22 split, joining every sentence per language into one string.
 
     Returns:
         Language code to text, English under `en`. Empty if the dataset is unreachable — it is
@@ -115,9 +118,12 @@ def load_in22() -> dict[str, str]:
     """
     try:
         import pyarrow.parquet as pq
-        from huggingface_hub import hf_hub_download
+        from huggingface_hub import hf_hub_download, list_repo_files
 
-        table = pq.read_table(hf_hub_download(IN22_REPO, IN22_FILE, repo_type="dataset"))
+        files = [f for f in list_repo_files(repo, repo_type="dataset") if f.endswith(".parquet")]
+        if not files:
+            return {}
+        table = pq.read_table(hf_hub_download(repo, sorted(files)[0], repo_type="dataset"))
     except Exception:
         return {}
     columns = set(table.column_names)
@@ -165,15 +171,20 @@ def tokenizers_available() -> dict[str, Callable[[str], list[int]]]:
     encoders: dict[str, Callable[[str], list[int]]] = {}
 
     import tiktoken
+    from tokenizers import Tokenizer
 
     for name in ("cl100k_base", "o200k_base"):
         encoding = tiktoken.get_encoding(name)
         encoders[f"tiktoken/{name}"] = encoding.encode
 
-    from tokenizers import Tokenizer
-
-    xlmr = Tokenizer.from_pretrained("xlm-roberta-base")
-    encoders["hf/xlm-roberta-base"] = lambda text: xlmr.encode(text).ids
+    # A tokenizer that will not load is omitted rather than stubbed: a stand-in would produce a
+    # number indistinguishable from a real one, which is the failure this whole project guards.
+    for ref in ("google/gemma-4-31b", "sarvamai/sarvam-105b", "xlm-roberta-base"):
+        try:
+            tok = Tokenizer.from_pretrained(ref)
+        except Exception:
+            continue
+        encoders[f"hf/{ref}"] = (lambda t: lambda text: t.encode(text).ids)(tok)
 
     return encoders
 
@@ -211,6 +222,16 @@ def run(cfg: Config | None = None, run_id: str = "") -> dict[str, Any]:
     for ref, encode in encoders.items():
         by_tokenizer[ref] = measure(encode, corpus, tokenizer_ref=ref, run_id=run_id)
 
+    # Conversation is the stated primary task and fertility differs by register, so the
+    # conversational split is measured separately rather than averaged into the written one.
+    conv_corpus = load_in22(IN22_CONV_REPO) if source == "IN22-Gen" else {}
+    conversational: dict[str, Any] = {}
+    for ref, encode in encoders.items():
+        if conv_corpus:
+            conversational[ref] = measure(
+                encode, conv_corpus, tokenizer_ref=f"{ref}|conv", run_id=run_id
+            )
+
     # Expansion against English, computed from the same run so the two numbers cannot drift apart.
     expansion: dict[str, dict[str, float | None]] = {}
     for ref, values in by_tokenizer.items():
@@ -229,9 +250,10 @@ def run(cfg: Config | None = None, run_id: str = "") -> dict[str, Any]:
         "languages_unavailable": unavailable,
         "tokenizers_measured": sorted(by_tokenizer),
         "tokenizers_unavailable": {
-            "google/gemma-4 262K": "gated on Hugging Face; requires licence acceptance",
-            "sarvamai/sarvam-105b": "tokenizer not published independently of the weights",
-            "candidate V=208,896": "never trained — nothing in this repository builds it",
+            "candidate V=208,896": (
+                "never trained. Nothing in this repository builds it, so the row the protocol "
+                "calls 'the proposal under test' stays empty and no parity_ratio is computable."
+            ),
         },
         "protocol_gaps": (
             "Partial execution of docs/FERTILITY_MEASUREMENT.md: three of the six tokenizers are "
@@ -239,6 +261,8 @@ def run(cfg: Config | None = None, run_id: str = "") -> dict[str, Any]:
             f"candidate tokenizer, which does not exist. Corpus: {source} ({band})."
         ),
         "by_tokenizer": by_tokenizer,
+        "conversational_corpus": "IN22-Conv" if conversational else None,
+        "conversational": conversational,
         "expansion_vs_english": expansion,
     }
 
