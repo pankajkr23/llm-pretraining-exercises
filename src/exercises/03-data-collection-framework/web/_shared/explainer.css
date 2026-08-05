@@ -239,3 +239,26 @@
 .tierfill.dim { opacity: 0.32; }
 /* The only red: a tier scheduled against a corpus that does not exist. */
 .tierfill.missing { background: repeating-linear-gradient(45deg, var(--grade-x), var(--grade-x) 4px, transparent 4px, transparent 7px); }
+
+/* ------------------------------------------------------------------ single canvas (§17)
+ *
+ * One coordinate space every unit lives in. Controls change the ENCODING — colour, order — never
+ * which units are visible, so moving between licence, caveat and grade views is a re-encoding
+ * rather than a page change, and the reader never loses the object they were looking at.
+ */
+.canvas { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+.unit {
+  width: 13px; height: 13px; padding: 0; border: 0; border-radius: 3px;
+  background: var(--track); cursor: pointer;
+  transition: background 0.18s, opacity 0.18s;
+}
+.unit:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.unit.on { background: var(--accent); }
+.unit.mid { background: var(--grade-b); }
+.unit.ok { background: var(--grade-a); }
+/* The only red: a dataset excluded from a commercial mix. */
+.unit.out { background: var(--grade-x); }
+.unit.dim { opacity: 0.28; }
+/* Not a figure: an item whose cost was never priced. It must not wear .num, which would make it
+   look like a number nobody typed a provenance for. */
+.unpriced { font-family: var(--mono); font-size: 11.5px; color: var(--faint); font-style: italic; }

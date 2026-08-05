@@ -9,6 +9,7 @@
       content="The evidence under the decision: 145 datasets with their licence traps, 31 benchmarks with what they cannot measure, and the quantities nobody has measured at all."
     />
     <link rel="stylesheet" href="../_shared/tokens.css" />
+    <link rel="stylesheet" href="../_shared/explainer.css" />
     <style>
       .layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 40px; align-items: start; }
       @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } nav.toc { position: static !important; } }
@@ -152,6 +153,7 @@
 
     <script type="module">
       import { renderNumber, formatValue } from '../_shared/num.js';
+      import { makeExplainer } from '../_shared/explainer.js';
 
       const $ = (tag, cls, text) => {
         const el = document.createElement(tag);
@@ -210,6 +212,8 @@
         if (subtitle) s.append($('p', 'sub', subtitle));
         return s;
       };
+
+      const buildExplainer = makeExplainer({ $ });
 
       const badge = (cls, attrs, text) => {
         const el = $('span', cls, text);
@@ -372,123 +376,103 @@
         const built = [];
         const add = (s, label, group) => { main.append(s); built.push({ id: s.id, label, group }); };
 
-        // ---------------------------------------------------------------- #data
+        // ---------------------------------------------------------------- #data (single canvas)
+        //
+        // Audit rows #1, #2 and #3. Was a faceted table behind five dropdowns and a search box —
+        // EXPLAINER_PROMPT §18.1: if every unit fits on screen, the selector was never necessary.
+        // All 145 datasets are drawn at once and stay drawn; scrolling changes the ENCODING, never
+        // which units are visible. #gotchas and #licensing were the same 145 records grouped two
+        // other ways, so they are two of the encodings rather than two more sections.
         {
-          const s = section('data', 'The catalogue',
-            `${catalog.length} datasets, each with the licence, the size, and the trap. Filter by anything.`);
-          const controls = $('div', 'controls');
-          const search = $('input'); search.type = 'search'; search.placeholder = 'search datasets…';
-          const catSel = $('select'); const tierSel = $('select'); const stageSel = $('select');
-          const licSel = $('select'); const gotchaSel = $('select');
-          const opt = (sel, values, all) => {
-            sel.append(new Option(all, ''));
-            values.forEach((v) => sel.append(new Option(v, v)));
-          };
-          // Category is the facet that answers "what kind of data is this" — web, code, speech,
-          // multimodal, legal. Without it the catalogue reads as one undifferentiated pile.
-          opt(catSel, [...new Set(catalog.map((d) => d.category).filter(Boolean))].sort(), 'any kind');
-          opt(tierSel, ['GREEN', 'AMBER', 'RED'], 'any tier');
-          opt(stageSel, [...new Set(catalog.flatMap((d) => d.stage || []))].sort(), 'any stage');
-          opt(licSel, ['commercial use permitted', 'forbidden', 'unclear'], 'any licence');
-          opt(gotchaSel, [...new Set(catalog.flatMap((d) => (d.gotchas || []).map((g) => g.type)))].sort(), 'any caveat');
-          const count = $('span', 'count');
-          controls.append(search, catSel, tierSel, stageSel, licSel, gotchaSel, count);
+          const blocking = (d) => (d.gotchas || []).some((g) => g.severity === 'blocking');
+          const licOf = (d) => d.licence && d.licence.commercial;
+          const gradeOf = (d) => (data.datasets.find((x) => x.id === d.id) || {}).grade || 'C';
 
-          // What kinds of data the catalogue actually holds — clicking a kind filters to it.
-          const kinds = {};
-          catalog.forEach((d) => { if (d.category) kinds[d.category] = (kinds[d.category] || 0) + 1; });
-          const kindBar = $('div');
-          kindBar.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px';
-          Object.entries(kinds).sort((a, b) => b[1] - a[1]).forEach(([kind, n]) => {
-            const chip = $('button', '', `${kind} ${n}`);
-            chip.type = 'button';
-            chip.style.cssText =
-              'font-family:var(--mono);font-size:11.5px;padding:3px 9px;border-radius:6px;cursor:pointer;' +
-              'border:1px solid var(--line);background:var(--panel);color:var(--muted)';
-            chip.addEventListener('click', () => {
-              catSel.value = catSel.value === kind ? '' : kind;
-              catSel.dispatchEvent(new Event('input'));
-            });
-            kindBar.append(chip);
+          const ENCODINGS = [
+            { key: 'grade', marg: 'By grade',
+              lead: 'Every dataset in the catalogue, one mark each, and none of them will disappear for the rest of this section. Graded first: green is usable, amber is usable with care, and red is ',
+              bold: 'excluded from any commercial mix', tail: ' — a grade the framework enforces rather than advises.',
+              mark: (d) => ({ A: 'ok', B: 'mid', C: '' , X: 'out' }[gradeOf(d)] ?? ''),
+              count: (ds) => ds.filter((d) => gradeOf(d) === 'X').length,
+              big: 'excluded outright', verdict: (n) => `${n} GRADE X` },
+            { key: 'licence', marg: 'By licence',
+              lead: 'Re-coloured by what the licence permits. Red here is a dataset whose licence forbids commercial use — and no ruling about fair dealing dissolves ',
+              bold: 'a contract you agreed to', tail: '. Grey is a licence nobody could establish, which is not the same as permission.',
+              mark: (d) => (licOf(d) === true ? 'ok' : licOf(d) === false ? 'out' : ''),
+              count: (ds) => ds.filter((d) => licOf(d) === false).length,
+              big: 'forbidden for commercial use', verdict: (n) => `${n} FORBIDDEN` },
+            { key: 'unclear', marg: 'The unclear ones',
+              lead: 'Now hold that view and pick out only the licences nobody could establish. An unresolved licence is not a mild problem — it is ',
+              bold: 'indistinguishable from forbidden', tail: ' until somebody does the work, and the work is a letter, not an engineering task.',
+              mark: (d) => (licOf(d) === true || licOf(d) === false ? 'dim' : 'out'),
+              count: (ds) => ds.filter((d) => licOf(d) !== true && licOf(d) !== false).length,
+              big: 'licence unresolved', verdict: (n) => `${n} UNRESOLVED` },
+            { key: 'blocking', marg: 'By caveat',
+              lead: 'The same marks again, coloured by whether the dataset carries a caveat that stops it being used at all. Most caveats are advisory; these are ',
+              bold: 'blocking', tail: ', and two of them sit on the largest open corpora in the catalogue.',
+              mark: (d) => (blocking(d) ? 'out' : (d.gotchas || []).length ? 'mid' : 'dim'),
+              count: (ds) => ds.filter(blocking).length,
+              big: 'carry a blocking caveat', verdict: (n) => `${n} BLOCKING` },
+            { key: 'gap', marg: 'What is not here',
+              lead: 'Last, the slot with nothing in it. A catalogue that only lists what exists reads as complete; marking the absence is what makes the ',
+              bold: 'differentiation argument', tail: ' visible at all.',
+              mark: (d) => (d.is_gap ? 'out' : 'dim'),
+              count: (ds) => ds.filter((d) => d.is_gap).length,
+              big: 'scheduled with no corpus behind it', verdict: (n) => `${n} DOES NOT EXIST` },
+          ];
+
+          const units = catalog.map((d, i) => {
+            const b = $('button', 'unit');
+            b.type = 'button';
+            b.title = `${d.id} · ${d.name}`;
+            b.setAttribute('aria-label', `${d.name} — open card`);
+            b.addEventListener('click', () => renderCard(d, gradeOf(d)));
+            return b;
           });
+          const canvas = $('div', 'canvas');
+          canvas.append(...units);
 
-          s.append(kindBar, controls);
-          const host = $('div');
-          s.append(host);
-
-          const licMatches = (d) => {
-            const c = d.licence?.commercial;
-            if (licSel.value === 'commercial use permitted') return c === true;
-            if (licSel.value === 'forbidden') return c === false;
-            if (licSel.value === 'unclear') return c === null || c === undefined;
-            return true;
-          };
-          const draw = () => {
-            const q = search.value.toLowerCase();
-            const rows = catalog.filter((d) =>
-              (!q || `${d.name} ${d.owner || ''} ${d.category} ${d.languages || ''}`.toLowerCase().includes(q)) &&
-              (!catSel.value || d.category === catSel.value) &&
-              (!tierSel.value || d.tier === tierSel.value) &&
-              (!stageSel.value || (d.stage || []).includes(stageSel.value)) &&
-              licMatches(d) &&
-              (!gotchaSel.value || (d.gotchas || []).some((g) => g.type === gotchaSel.value)));
-            count.textContent = `${rows.length} of ${catalog.length} — open any row for the full card`;
-            host.replaceChildren(table(
-              ['id', 'dataset', 'kind', 'tier', 'grade', 'size', 'caveats'],
-              rows.map((d) => {
-                const idx = data.datasets.find((x) => x.id === d.id) || {};
-                const caveats = $('span');
-                (d.gotchas || []).forEach((g) => {
-                  caveats.append(badge('gotcha', { 'data-type': g.type, 'data-severity': g.severity }, g.type), ' ');
-                });
-                const size = d.size?.tokens ? renderNumber(d.size.tokens, { unit: false }) : '—';
-                const kind = $('span', '', d.category || '—');
-                kind.style.cssText = 'font-family:var(--mono);font-size:11.5px;color:var(--muted)';
-                return [d.id, d.name, kind, d.tier || 'does not exist yet',
-                  badge('grade', { 'data-grade': idx.grade || 'C' }, idx.grade || '—'), size, caveats];
-              }),
-              [5],
-              (i) => {
-                const record = rows[i];
-                const idx = data.datasets.find((x) => x.id === record.id) || {};
-                renderCard(record, idx.grade);
-              }));
-          };
-          [search, catSel, tierSel, stageSel, licSel, gotchaSel].forEach((el) => el.addEventListener('input', draw));
-          draw();
+          const s = buildExplainer({
+            n: 'data', anchor: 'data', wide: true,
+            title: 'Every dataset at once, coloured five ways',
+            claim: [
+              document.createTextNode(`All ${catalog.length} datasets, drawn once and never hidden. Scrolling re-colours them — by grade, by licence, by caveat — so the question changes while `),
+              $('b', '', 'the object you are looking at does not'),
+              document.createTextNode('. Any mark opens its full card.'),
+            ],
+            figNum: 'Fig. A — the catalogue',
+            caption: `Fig. A — One mark per dataset, ${catalog.length} in all. Nothing is ever filtered out; only the colouring changes. Red is always the excluded thing under the current encoding.`,
+            pill: `${catalog.length} datasets, none hidden`,
+            rail: [
+              document.createTextNode('Grades are computed from the five gates, not assigned by hand, and a '),
+              $('b', '', 'blocking caveat overrides a clean gate sheet'),
+              document.createTextNode('. An unresolved licence is counted separately from a permitted one throughout — the two are never summed.'),
+            ],
+            states: ENCODINGS,
+            refresh: (api) => {
+              ENCODINGS.forEach((e, i) => {
+                api.shard(i, catalog.filter((d) => e.mark(d) === 'out').slice(0, 8).map((d) => d.name).join(' · ') || 'none under this encoding');
+                api.inline(i, `→ ${e.count(catalog)} of ${catalog.length} ${e.big}`, e.count(catalog) > 0);
+              });
+            },
+            render: (i, api) => {
+              const e = ENCODINGS[i];
+              units.forEach((u, k) => { u.className = `unit ${e.mark(catalog[k])}`.trim(); });
+              api.extra.replaceChildren(canvas);
+              const n = e.count(catalog);
+              api.big({ value: n, unit: 'datasets', provenance: 'measured', source: 'computed:catalog' });
+              api.bigHit(n > 0);
+              api.sub(e.big);
+              api.verdict(e.verdict(n), n > 0);
+              api.note(e.key === 'unclear'
+                ? 'Grey in the previous state, red here. Nothing changed about these datasets — only whether the view admits that nobody checked.'
+                : e.key === 'gap'
+                  ? 'One mark, and it is the reason this catalogue is worth reading rather than downloading.'
+                  : `Red marks what this encoding excludes. Switch the encoding and the same ${catalog.length} marks answer a different question.`);
+              api.strip([]);
+            },
+          });
           add(s, 'The catalogue', 'Datasets');
-        }
-
-        // ---------------------------------------------------------------- #gotchas
-        {
-          const byType = {};
-          catalog.forEach((d) => (d.gotchas || []).forEach((g) => (byType[g.type] ||= []).push({ ...g, dataset: d.name, id: d.id })));
-          const s = section('gotchas', 'The traps, by kind',
-            'Every caveat in the catalogue, typed so they can be read together. The dedup group is the most useful screen here: two of the largest open corpora ship with duplication their publishers did not remove.');
-          Object.entries(byType).sort((a, b) => b[1].length - a[1].length).forEach(([type, items]) => {
-            const h = $('h3');
-            h.append(badge('gotcha', { 'data-type': type }, type), ` — ${items.length}`);
-            h.style.cssText = 'font-size:1rem;margin:22px 0 8px;font-family:var(--display)';
-            s.append(h, table(['dataset', 'what will bite you'],
-              items.map((g) => [`${g.id} ${g.dataset}`, g.text])));
-          });
-          add(s, 'The traps', 'Datasets');
-        }
-
-        // ---------------------------------------------------------------- #licensing
-        {
-          const s = section('licensing', 'What survives a licence check',
-            'Walk the catalogue down by permission. Each step removes datasets that cannot be used commercially, and names what is left.');
-          const commercial = catalog.filter((d) => d.licence?.commercial === true);
-          const blocked = catalog.filter((d) => d.licence?.commercial === false);
-          const unclear = catalog.filter((d) => d.licence?.commercial === null || d.licence?.commercial === undefined);
-          s.append(table(['step', 'datasets', 'what this means'], [
-            ['all catalogued', String(catalog.length), 'everything the atlas records'],
-            ['licence permits commercial use', String(commercial.length), 'usable as-is, subject to attribution'],
-            ['licence forbids it', String(blocked.length), 'excluded — an NC licence is a contract, not a default'],
-            ['licence unclear or unstated', String(unclear.length), 'needs legal review before a single byte is ingested'],
-          ], [1]));
-          add(s, 'Licensing', 'Datasets');
         }
 
         // ---------------------------------------------------------------- #legal
@@ -607,27 +591,6 @@
           add(s, 'Languages', 'Datasets');
         }
 
-        // ---------------------------------------------------------------- #fertility
-        {
-          const s = section('fertility', 'The tokenizer tax',
-            'How many tokens a language costs per word. This is the exchange rate between a script and a compute bill — and it is the one table on this site that is still empty.');
-          const f = data.fertility.by_language;
-          const rows = Object.entries(f).map(([code, v]) => [code, renderNumber(v, { unit: false })]);
-          s.append(table(['language', 'tokens per word'], rows, [1]));
-          const p = $('p', 'sub');
-          p.style.marginTop = '14px';
-          p.textContent = Object.values(f)[0]?.source || '';
-          s.append(p);
-          s.append($('h3', '', 'Vocabulary size: two costs that cross'));
-          const sw = data.vocab_sweep;
-          s.append($('p', 'sub', sw.note));
-          s.append(table(['vocabulary', 'fertility', 'softmax cost', 'net benefit'],
-            sw.curve.filter((_, i) => i % 4 === 0).map((r) => [
-              fmt(r.vocab_size, 'count'), r.fertility.toFixed(3),
-              `${(r.softmax_cost * 100).toFixed(2)}%`, `${(r.net_benefit * 100).toFixed(2)}%`]), [0, 1, 2, 3]));
-          add(s, 'The tokenizer tax', 'Evidence');
-        }
-
         // ---------------------------------------------------------------- #risks + four unknowns
         {
           const risks = records.risks || [];
@@ -645,19 +608,6 @@
           add(s, 'Risks & unknowns', 'Evidence');
         }
 
-        // ---------------------------------------------------------------- #tools
-        {
-          const tools = records.tools || [];
-          const s = section('tools', 'The pipeline, tool by tool',
-            'What to adopt, what to build, and what to avoid. One entry here reverses a recommendation made earlier in the same research.');
-          s.append(table(['tool', 'stage', 'verdict', 'why'],
-            tools.map((t) => {
-              const name = $('span', t.verdict === 'avoid' ? 'struck' : '', t.name);
-              return [name, t.stage, $('span', `verdict ${t.verdict}`, t.verdict), t.why];
-            })));
-          add(s, 'Pipeline tools', 'Plan');
-        }
-
         // ---------------------------------------------------------------- #acquisition
         {
           const items = (records.acquisition || []).slice().sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
@@ -667,7 +617,7 @@
             items.map((a) => {
               const cost = a.cost_inr === 0 ? $('span', 'zero-band', '₹0')
                 : a.cost_inr ? renderNumber({ value: a.cost_inr, unit: 'INR', provenance: 'estimated', source: 'atlas:acquisition' })
-                : $('span', 'num', 'range only');
+                : $('span', 'unpriced', 'range only');
               if (a.cost_inr === 0) { cost.style.cssText = 'background:none;color:var(--grade-a);font-weight:600'; }
               return [String(a.priority ?? ''), a.item, cost, a.why];
             }), [0]));
@@ -693,19 +643,6 @@
           add(s, 'The market', 'Evidence');
         }
 
-        // ---------------------------------------------------------------- #plan
-        {
-          const plan = records.plan || [];
-          const s = section('plan', 'The critical path',
-            'Twelve actions in order. Two are gates: nothing downstream should start until they clear.');
-          s.append(table(['#', 'action', 'weeks', 'workstream', ''],
-            plan.map((p) => [p.id, p.action,
-              p.week_start ? `${p.week_start}–${p.week_end ?? '?'}` : '—',
-              p.workstream || '—',
-              p.is_gate ? badge('verdict avoid', {}, 'GATE') : ''])));
-          add(s, 'Critical path', 'Plan');
-        }
-
         // ---------------------------------------------------------------- #priors + #papers
         {
           const s = section('priors', 'What the literature already settled',
@@ -721,27 +658,107 @@
           add(p, 'Evidence trail', 'Evidence');
         }
 
-        // ---------------------------------------------------------------- #confidence + #changelog + #gaps
+        // ---------------------------------------------------------------- #confidence (canvas)
+        //
+        // Audit row #15, and the one EXPLAINER_PROMPT §13 singles out: the confidence ledger,
+        // blind spots and corrections log are the distinguishing content of this research, and the
+        // reference format has no way to express any of it. A table of bands renders every claim
+        // equally solid. Re-encoding the whole set by band and watching the solid ground shrink is
+        // the same move as the catalogue canvas, applied to the argument rather than the data.
         {
-          const s = section('confidence', 'How much of this to believe',
-            'A ledger of the claims and how well each is supported. The load-bearing ones are the ones to attack first.');
-          s.append(table(['claim', 'confidence', 'basis'],
-            (records.confidence || []).map((c) => [c.claim, c.band || 'ungraded', c.basis])));
+          const claims = records.confidence || [];
+          const bandOf = (c) => c.band || 'ungraded';
+          const LEVELS = [
+            { keep: ['high', 'medium', 'low', 'load-bearing', 'ungraded'], marg: 'Everything claimed',
+              lead: 'Every claim this research makes, one mark each. Presented as a list they look alike, which is exactly the problem — a table of bands renders ',
+              bold: 'a read licence and an unmeasured corpus size', tail: ' as equally solid.' },
+            { keep: ['high', 'medium', 'low', 'load-bearing'], marg: 'Drop the ungraded',
+              lead: 'First remove the claims nobody assigned a band to. An unbanded claim is not a confident one; it is ',
+              bold: 'one that was never assessed', tail: '.' },
+            { keep: ['high', 'medium', 'load-bearing'], marg: 'Drop the low',
+              lead: 'Then the ones explicitly marked low. These are not wrong — they are ',
+              bold: 'claims the research would not defend', tail: ' if pressed, and they should not be carrying weight.' },
+            { keep: ['high'], marg: 'What is verifiable',
+              lead: 'What is left is what was read from a primary source and could be checked in minutes. Everything else in this atlas rests on ',
+              bold: 'inference, not verification', tail: '.' },
+            { keep: ['high'], bearing: true, marg: 'What carries the weight',
+              lead: 'Now the uncomfortable view: the claims marked load-bearing, shown against the verifiable ones. The design depends most on ',
+              bold: 'the claims it can least support', tail: ' — which is the honest summary of this whole document.' },
+          ];
+
+          const units = claims.map((c) => {
+            const b = $('button', 'unit');
+            b.type = 'button';
+            b.title = `${c.id} · ${bandOf(c)} — ${c.claim}`;
+            b.setAttribute('aria-label', `${c.id}, ${bandOf(c)} confidence`);
+            return b;
+          });
+          const canvas = $('div', 'canvas');
+          canvas.append(...units);
+
+          const s = buildExplainer({
+            anchor: 'confidence', wide: true,
+            title: 'The design leans hardest on the claims it can least support',
+            claim: [
+              document.createTextNode(`All ${claims.length} claims this research makes, one mark each. Scrolling removes bands rather than rows — nothing is hidden, the colouring narrows — and what survives is `),
+              $('b', '', 'the ground that would hold under checking'),
+              document.createTextNode('. Hover any mark for the claim.'),
+            ],
+            figNum: 'Fig. B — the confidence ledger',
+            caption: `Fig. B — One mark per claim, ${claims.length} in all. Red marks a claim outside the surviving band at each step. The final state shows load-bearing claims against verifiable ones; where those two sets fail to overlap is where this research is most exposed.`,
+            pill: `${claims.filter((c) => bandOf(c) === 'high').length} of ${claims.length} verifiable`,
+            rail: [
+              document.createTextNode('Bands are self-assessed, which makes this ledger '),
+              $('b', '', 'evidence of care rather than proof of accuracy'),
+              document.createTextNode('. It is published because a document with no stated confidence invites the reader to assume uniform confidence, and that assumption is always wrong.'),
+            ],
+            states: LEVELS,
+            refresh: (api) => {
+              LEVELS.forEach((lv, i) => {
+                const out = claims.filter((c) => !lv.keep.includes(bandOf(c)));
+                api.shard(i, out.slice(0, 6).map((c) => `${c.id} (${bandOf(c)})`).join(' · ') || 'nothing dropped');
+                api.inline(i, lv.bearing
+                  ? `→ ${claims.filter((c) => bandOf(c) === 'load-bearing').length} load-bearing claims, none of them in the verifiable band`
+                  : `→ ${claims.length - out.length} of ${claims.length} claims survive`, out.length > 0);
+              });
+            },
+            render: (i, api) => {
+              const lv = LEVELS[i];
+              const kept = claims.filter((c) => lv.keep.includes(bandOf(c)));
+              const bearing = claims.filter((c) => bandOf(c) === 'load-bearing');
+              units.forEach((u, k) => {
+                const c = claims[k];
+                if (lv.bearing) u.className = `unit ${bandOf(c) === 'load-bearing' ? 'out' : bandOf(c) === 'high' ? 'ok' : 'dim'}`;
+                else u.className = `unit ${lv.keep.includes(bandOf(c)) ? (bandOf(c) === 'high' ? 'ok' : 'mid') : 'out'}`;
+              });
+              api.extra.replaceChildren(canvas);
+              if (lv.bearing) {
+                api.big({ value: bearing.length, unit: 'claims', provenance: 'measured', source: 'computed:confidence' });
+                api.bigHit(true);
+                api.sub('carry the design, and none is in the verifiable band');
+                api.verdict('LOAD-BEARING', true);
+                api.note('Red is not "wrong" here — it is "most consequential and least checkable". If any of these turns out false, the corpus architecture changes rather than a footnote changing.');
+              } else {
+                api.big({ value: kept.length, unit: 'claims', provenance: 'measured', source: 'computed:confidence' });
+                api.bigHit(kept.length < claims.length);
+                api.sub(`of ${claims.length} survive this band`);
+                api.verdict(`${claims.length - kept.length} DROPPED`, kept.length < claims.length);
+                api.note(i === 0
+                  ? 'Nothing dropped yet. This is the view a plain table gives, and it is the one that flatters.'
+                  : `${claims.length - kept.length} claims are now outside the band. None of them has been deleted from the research — they simply stop counting as support.`);
+              }
+              api.strip([]);
+            },
+          });
           add(s, 'Confidence', 'Honesty');
 
-          const c = section('changelog', 'What this research got wrong',
-            'Claims the later passes reversed. Kept visible on purpose: a document that never corrects itself is not being checked.');
+          const c = section('changelog', 'What this research got wrong');
+          c.append($('p', 'sub', 'Claims the later passes reversed. Kept visible on purpose: a document that never corrects itself is not being checked.'));
           c.append(table(['was', 'now', 'why'],
             (records.corrections || []).map((x) => [x.before, x.after, x.why])));
           add(c, 'Corrections', 'Honesty');
-
-          const g = section('gaps', 'What does not exist yet',
-            'Slots in the catalogue with nothing in them. These are not omissions — they are where the differentiation argument lives.');
-          const gaps = catalog.filter((d) => d.is_gap);
-          g.append(table(['id', 'what is missing', 'the opportunity'],
-            gaps.map((d) => [d.id, d.name, d.note || d.opportunity || (d.gotchas || [])[0]?.text || ''])));
-          add(g, 'Gaps', 'Honesty');
         }
+
 
         // ---------------------------------------------------------------- the intuitions
         {
@@ -752,10 +769,10 @@
           [
             ['There is not enough Indic text', 'Perhaps 250–500B words exist across all 22 languages, against 15T for English. Every corpus plan is a response to that one fact.', '#languages'],
             ['Repetition is nearly free', 'Reading a pool four times is almost as good as four times the data. That reframing lifts the natural-Indic share from ~2% to ~8% without collecting a document.', '#priors'],
-            ['The tokenizer is a multiplier', 'An English-centric vocabulary taxes Indic scripts several times over on every token, for the whole run. It is worth more than extra data.', '#fertility'],
-            ['A licence is a contract', 'India\'s own school curriculum is non-commercially licensed. No court ruling about fair dealing dissolves an NC licence you agreed to.', '#licensing'],
+            ['The tokenizer is a multiplier', 'An English-centric vocabulary taxes Indic scripts several times over on every token, for the whole run. It is worth more than extra data.', '../report/#s3'],
+            ['A licence is a contract', 'India\'s own school curriculum is non-commercially licensed. No court ruling about fair dealing dissolves an NC licence you agreed to.', '#data'],
             ['Quality filters are English-biased', 'A selector trained on an English proxy will quietly starve thin Indic tiers. That is why a fixed share of every batch is reserved from it.', '#risks'],
-            ['Synthetic text buys fluency, not culture', 'Translation and generation fill a token budget. They do not add anything the source language knew and English did not.', '#gotchas'],
+            ['Synthetic text buys fluency, not culture', 'Translation and generation fill a token budget. They do not add anything the source language knew and English did not.', '#data'],
             ['Some capabilities have no instrument', `Of the capabilities this model is built for, several are measured by one benchmark or none. You cannot tell whether you hit a goal you cannot see.`, '#benchmarks'],
             ['The most important number is unmeasured', 'The size of the deduplicated Indic web drives the entire corpus architecture, and nobody has measured it.', '#risks'],
           ].forEach(([title, body, href]) => {
