@@ -40,6 +40,13 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   The index now records the window width each item was hashed at and checks the document at each
   width; items too short to identify anything are refused and counted rather than silently
   accepted.
+- **Every page claimed a build time it did not have.** `generated_at` was exported as `None` with a
+  comment saying the caller would stamp it; no caller ever did. It is stamped at the I/O boundary
+  now, leaving the bundle builder pure.
+- **Accessibility failures found by an actual Lighthouse run**, not by inspection: 145 interactive
+  marks below the minimum touch-target size, a `--faint` token at 3.33:1, inactive scrollytelling
+  steps dimmed to 1.57:1, and white ribbon labels at 3.25:1 on amber. All four fixed; all three
+  pages now score 100 on accessibility and 95–100 on performance.
 
 ### Changed
 
