@@ -24,12 +24,11 @@
 
       .widget { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); }
       .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
-      button.seg, .replay {
+      button.seg {
         font-family: var(--mono); font-size: 12.5px; padding: 6px 13px; border-radius: 8px;
         border: 1px solid var(--line); background: var(--bg); color: var(--muted); cursor: pointer;
       }
       button.seg[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
-      .replay { margin-top: 12px; }
       input[type="range"] { accent-color: var(--accent); }
 
       .bars { display: grid; gap: 7px; }
@@ -138,7 +137,7 @@
         .wrap { max-width: none; margin: 0; padding: 0; }
 
         /* Interaction has no meaning on paper. */
-        .back, .controls, .replay, button, input[type="range"], nav { display: none !important; }
+        .back, .controls, button, input[type="range"], nav { display: none !important; }
 
         h1 { font-size: 17pt; margin: 0 0 4pt; letter-spacing: -0.02em; }
         .eyebrow { font-size: 7pt; margin: 0 0 2pt; color: #444; }

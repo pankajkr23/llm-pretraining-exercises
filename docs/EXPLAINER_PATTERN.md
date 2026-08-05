@@ -3,9 +3,11 @@
 `EXPLAINER_PROMPT.md` decides *what* an explainer must be. This file records *how* one is built, so
 the next one does not re-invent the skeleton.
 
-It is extracted from the reference implementation: **§1 "Thirteen words in a row is a fingerprint"**
-in `src/exercises/03-data-collection-framework/web/report/index.html` — a scrollytelling · Adversary
-explainer where the reader supplies the input and scroll position runs the states.
+It began as an extraction from **§1 "Thirteen words in a row is a fingerprint"** and now describes
+the shipped implementation across both surfaces. The skeleton lives in
+`web/_shared/explainer.js` (`makeExplainer`) with its rules in `web/_shared/explainer.css`; every
+explainer on the site is built through it, which is what makes the identical-slot discipline
+mechanical rather than aspirational.
 
 Everything below is descriptive of code that ships and passes CI. Where the reference deviates from
 what this file prescribes, §9 says so rather than pretending otherwise.
@@ -21,9 +23,8 @@ every state fills the same slots, which is what makes the states comparable — 
 
 ## 2. DOM skeleton
 
-Built in JS, not written as HTML, because every figure is derived from provenance-typed data. The
-`sect()` helper in `report/index.html` does **not** fit — it produces prose → widget → caption, a
-dashboard column. Build the section by hand:
+Built in JS by `makeExplainer` — you supply states and a `render(i, api)`, not markup. The shape it
+produces, for reference when debugging:
 
 ```html
 <section id="sN">
@@ -48,16 +49,16 @@ dashboard column. Build the section by hand:
         …
       </div>
 
-      <div class="gsticky">                  <!-- pinned: does not scroll away -->
-        <div class="gfig">
-          <div class="fignum">Fig. N — …</div>
-          <div class="gbig">…</div>          <!-- ONE oversized mono number -->
-          <div class="gsub">…</div>          <!-- what that number is of -->
-          <div class="gverdict">…</div>      <!-- 1–2 words, shouted -->
+      <div class="sticky">                  <!-- pinned: does not scroll away -->
+        <div class="fig">
+          <div class="fig-num">Fig. N — …</div>
+          <div class="fig-big">…</div>          <!-- ONE oversized mono number -->
+          <div class="fig-sub">…</div>          <!-- what that number is of -->
+          <div class="fig-verdict">…</div>      <!-- 1–2 words, shouted -->
           <div class="strip">…</div>         <!-- per-unit marks; red = excluded -->
-          <div class="gnote">…</div>         <!-- interprets THIS state -->
+          <div class="fig-note">…</div>         <!-- interprets THIS state -->
         </div>
-        <div class="grail">…</div>           <!-- the standing limitation -->
+        <div class="fig-rail">…</div>           <!-- the standing limitation -->
         <div class="pill">…</div>            <!-- one number to remember -->
       </div>
 
@@ -68,7 +69,10 @@ dashboard column. Build the section by hand:
 ```
 
 Order matters once: `.qbox` spans both columns (`grid-column: 1 / -1`), and on narrow screens
-`.gsticky` takes `order: -1` so the figure sits above the prose rather than below all of it.
+`.sticky` takes `order: -1` so the figure sits above the prose rather than below all of it.
+
+Do not hand-build this. Call `makeExplainer({ $, onPlay })` once per page and `buildExplainer(cfg)`
+per section; `cfg.anchor` gives a slug id instead of `s<n>`.
 
 ## 3. CSS class names
 
@@ -82,26 +86,26 @@ Canonical names by role. Reuse these; do not invent a per-section vocabulary.
 | `.marg` | Gutter label — uppercase mono, the §15 marginalia |
 | `.shard` | The state's raw text, monospace, `white-space: pre-wrap` |
 | `.inline` | Per-step verdict. `display: none` on screen; shown in print and reduced-motion |
-| `.gsticky` | The pinned column (`position: sticky`) |
-| `.gfig` | Hairline rule above and below. **No card, no border, no shadow** |
-| `.fignum` | `Fig. N —` label |
-| `.gbig` | The one oversized number. Mono, `tabular-nums`, ~3.3rem |
-| `.gsub` | What the big number is a count *of* |
-| `.gverdict` | Bordered chip, 1–2 words |
-| `.strip` / `.tick` | One mark per unit. `.tick.hit` is the excluded thing |
-| `.gnote` | Interprets the current state; changes with it |
-| `.grail` | The standing caveat. Always visible, never state-dependent |
+| `.sticky` | The pinned column (`position: sticky`) |
+| `.fig` | Hairline rule above and below. **No card, no border, no shadow** |
+| `.fig-num` | `Fig. N —` label |
+| `.fig-big` | The one oversized number. Mono, `tabular-nums`, ~3.3rem |
+| `.fig-sub` | What the big number is a count *of* |
+| `.fig-verdict` | Bordered chip, 1–2 words |
+| `.strip` / `.fig-tick` | One mark per unit. `.fig-tick.hit` is the excluded thing |
+| `.fig-note` | Interprets the current state; changes with it |
+| `.fig-rail` | The standing caveat. Always visible, never state-dependent |
 | `.pill` | One number, accent-tinted |
 
 Only three colours are in play: `var(--accent)` for the live/selected thing, `var(--grade-x)` for
 the excluded thing, and greyscale (`--ink` / `--muted` / `--faint` / `--track`) for everything else.
-`var(--grade-b)` marks a known-unknown inside `.grail`. **Never introduce a colour that is not
+`var(--grade-b)` marks a known-unknown inside `.fig-rail`. **Never introduce a colour that is not
 already a token in `_shared/tokens.css`.**
 
 Three media blocks are not optional:
 
 ```css
-@media (max-width: 760px)               { /* one column; .gsticky gets order: -1 */ }
+@media (max-width: 760px)               { /* one column; .sticky gets order: -1 */ }
 @media (prefers-reduced-motion: reduce) { /* .step { min-height: 0 } .inline { display: block } */ }
 @media print                            { /* same as above + .qbox { display: none } */ }
 ```
@@ -200,9 +204,9 @@ how a scrollytelling explainer stays operable without a pointer, since deleting 
 | `.claim` | Say what changes and what the reader does. Bold the **variables** | "the **sentence is yours to change**, and scrolling attacks it" |
 | `.marg` | 2–4 words. A label plus a verb | "Attack 3 · reflow it" |
 | `.step p` | One sentence of mechanism, one bolded variable, one consequence | "Whitespace is not a token either, so **the window count is identical**." |
-| `.gverdict` | 1–2 words, shouted | `SHARD DROPPED` |
-| `.gnote` | Interprets *this* state — must differ between states or it is decoration | "No red anywhere is the alarm." |
-| `.grail` | The standing limitation, in plain words | "…not a certificate that the corpus is clean." |
+| `.fig-verdict` | 1–2 words, shouted | `SHARD DROPPED` |
+| `.fig-note` | Interprets *this* state — must differ between states or it is decoration | "No red anywhere is the alarm." |
+| `.fig-rail` | The standing limitation, in plain words | "…not a certificate that the corpus is clean." |
 | `.pill` | **One** number, under ~30 characters | `13 words = a fingerprint` |
 
 Collective, present tense: *"what we are protecting is…"*. Bold the thing that changes, never the
@@ -224,15 +228,34 @@ and saying so is worth more than showing only where the method works — §11 se
 - Print and reduced-motion render the complete end state.
 - The pill states one number.
 
-## 7. Known deviations
+## 7. Topologies in use
 
-- **Class names carry a `g` prefix in §1** (`.gfig`, `.gbig`, `.gsub`, `.gverdict`, `.gnote`,
-  `.grail`) because bare `.big` and `.sub` already belong to `tileOf()` in the same file. The
-  prefix is a collision workaround, not a convention. When the second explainer lands, move these
-  rules into `_shared/` and rename to `.fig-big` / `.fig-sub` / `.fig-verdict` / `.fig-note` /
-  `.fig-rail`.
+Not every section is an explainer, and forcing one where the claim needs no reader-driven
+comparison is what `EXPLAINER_PROMPT.md` §9 warns against. What shipped:
+
+| Topology | Class | Where |
+|---|---|---|
+| Scrollytelling | `.scrolly` (`.wide` for charts) | report §§1, 2, 4, 5, 6, 7, 10 |
+| Single canvas | `.canvas` + `.unit` | atlas `#data`, `#confidence` |
+| Small multiples | `.canvas` (static), `.tierbars` | atlas `#benchmarks`, report §5's tiers |
+| Inline | `.inlinectl` inside a `<p class="claim">` | report §8 |
+| Margin-driven | `.marginal` + `.gutter` | report §9 |
+| Chart / prose | `.chartblock`, `.compare` | report §§3, 11 |
+
+Two rules that survived contact with all of them: **the canvas never filters** — controls change
+the encoding, never which units are visible — and **red is only the excluded thing under the
+current encoding**, which is why `#data` can recolour five ways without red ever meaning two
+things at once.
+
+## 8. Known deviations
+
+- **`.tick` is `.fig-tick`.** Moving the rules to `_shared/` collided with `.axis .tick` in the
+  competitive-frame chart, which would have put a 9×19px box behind every axis label. Check for
+  collisions before adding a name to the shared sheet — the report is a big file.
+- **Rename class strings, never JS identifiers.** `const gsub = …` renamed wholesale becomes
+  `const fig-sub = …`, which is not JavaScript.
 - **`EXPLAINER_PROMPT.md` §15 asks for a serif display face.** `AGENTS.md` forbids serif, and the
   repo design language wins. The rest of the editorial register — hairlines instead of cards, mono
   numerals, marginalia, `Fig. n`, one accent — carries it without the typeface.
-- **"Red only on the excluded thing" holds inside §1, not page-wide.** Sections 10 and 12 of the
-  report use `--grade-x` for other purposes. Resolve when those sections are rebuilt.
+- **"Red only on the excluded thing" now holds page-wide** on both surfaces. It did not when this
+  file was written; the sections that used `--grade-x` for other purposes have been rebuilt.
