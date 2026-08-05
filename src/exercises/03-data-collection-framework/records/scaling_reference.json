@@ -92,24 +92,24 @@
       "id": "sarvam-30b",
       "family": "Sarvam",
       "model": "Sarvam-30B",
-      "params_total": 30000000000,
+      "params_total": 32000000000,
       "params_active": 2400000000,
       "architecture": "moe",
       "tokens": 16000000000000,
       "vocab": null,
-      "source": "docs/ATLAS.md 1.1, from the Hugging Face model card",
+      "source": "Sarvam AI, 'Open-Sourcing Sarvam 30B and 105B' (sarvam.ai/blogs/sarvam-30b-105b): 32B total, ~2.4B active, 128 experts, GQA, 65K context, 16T tokens",
       "why_here": "The closest Indian peer to the seed size, and it read more text than Gemma 3 27B did."
     },
     {
       "id": "sarvam-105b",
       "family": "Sarvam",
       "model": "Sarvam-105B",
-      "params_total": 105000000000,
-      "params_active": 10300000000,
+      "params_total": 106000000000,
+      "params_active": 10000000000,
       "architecture": "moe",
       "tokens": 12000000000000,
       "vocab": null,
-      "source": "docs/ATLAS.md A.1, from the Hugging Face model card",
+      "source": "Sarvam AI, 'Open-Sourcing Sarvam 30B and 105B': 106B total, ~10B active, 128 experts top-8, MLA, 128K context, 12T tokens",
       "why_here": "The inversion that makes the point: three and a half times the parameters of Sarvam-30B, trained on a quarter less text."
     },
     {
@@ -187,5 +187,49 @@
       "evidence": "Every model above grew its corpus by adding English, code and multilingual web text. The natural Indian-language pool measured in this project is about 300B tokens and does not grow because a model got larger.",
       "consequence": "At every rung of the growth path the Indic share falls unless somebody funds collection. Scaling makes an India-first model less Indian, not more, unless the collection queue is funded alongside the compute."
     }
-  ]
+  ],
+  "density": {
+    "note": "Tokens per parameter, on both denominators. For a sparse mixture of experts the meaningful one is active parameters — the count that actually processes each token — and it is the denominator the 40B seed has to be judged on, because the proposed architecture activates about 5B of its 40B.",
+    "chinchilla": 20,
+    "chinchilla_note": "Compute-optimal, and obsolete as a planning figure. It minimises the cost of training; every model below deliberately overtrains because the cost that matters is serving.",
+    "rows": [
+      {
+        "model": "Sarvam-30B",
+        "tokens": 16000000000000,
+        "active": 2400000000,
+        "per_active": 6667,
+        "per_total": 500
+      },
+      {
+        "model": "Sarvam-105B",
+        "tokens": 12000000000000,
+        "active": 10000000000,
+        "per_active": 1200,
+        "per_total": 113
+      },
+      {
+        "model": "DeepSeek-V3",
+        "tokens": 14800000000000,
+        "active": 37000000000,
+        "per_active": 400,
+        "per_total": 22
+      },
+      {
+        "model": "Gemma 3 27B (dense)",
+        "tokens": 14000000000000,
+        "active": 27000000000,
+        "per_active": 519,
+        "per_total": 519
+      },
+      {
+        "model": "Llama 3.1 8B (dense)",
+        "tokens": 15000000000000,
+        "active": 8000000000,
+        "per_active": 1875,
+        "per_total": 1875
+      }
+    ],
+    "finding": "Comparable models train between 400 and 6,667 tokens per active parameter. The two closest Indian peers bracket the range at 1,200 and 6,667. A 40B sparse model with about 5B active, trained on 16.8T, sits at 3,360 per active parameter — inside that bracket, between Sarvam-105B and Sarvam-30B.",
+    "against_200b": "A 200B-token budget on the same 5B active parameters is 40 tokens per active parameter: twice Chinchilla, and between 10x and 167x below every model in this table. Chinchilla is the wrong anchor for a model that will be served rather than benchmarked, which is the argument this project already makes for training past compute-optimal."
+  }
 }

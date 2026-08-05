@@ -238,3 +238,6 @@ public/
 .vercel/
 # Netlify local state (deactivated host; see deploy/netlify/)
 .netlify/
+# Reference material dropped into an exercise's docs/ for an agent to read — third-party or
+# unpublished source documents that inform the work but are not ours to redistribute.
+**/docs/*.html
