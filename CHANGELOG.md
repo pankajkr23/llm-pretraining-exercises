@@ -42,6 +42,29 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **A growth chapter.** The 40B is a seed, and the chapter follows it to the largest Indic model in
+  four stages — dense, grow sparse, grow deep, frontier parity — using the state-preserving growth
+  method of arXiv:2606.07404. The shape of the answer is the lesson: parameters rise 7.5×, the
+  corpus rises 1.8×, and the natural Indian-language pool does not rise at all. One stage adds 80
+  billion parameters and reads no additional text.
+- **Two India-first tiers no frontier lab has a reason to build.** Indian knowledge systems
+  (Ayurveda, Siddha, Jyotish, and the NDLI/DLI scanned archives) and Indian civilizational
+  literature (Vedic corpus, classical Sanskrit, Upanishads, Dharmashastra). Both are OCR problems
+  before they are data problems. The mixture is zero-sum, so their 5% comes off general web and
+  synthetic Indic. One of them has **zero catalogued candidates** — not one of the 145 datasets
+  supplies it.
+- **A second lens on the mixture.** Ten tiers is more than a reader holds in mind, so each is also
+  labelled *skills* or *knowledge*. The mixture now runs 40% skills / 60% knowledge, raised from 28%
+  because the assignment names coding and agentic work as primary capabilities.
+- **A comparison table for the corpus budget** (`records/scaling_reference.json`): thirteen models
+  with their parameters, architecture and pre-training tokens, every row carrying its source. The
+  finding that matters is that a corpus is not sized by the model reading it — Llama 3.1 trained 8B,
+  70B and 405B on about the same 15T, and DeepSeek-V3 at 671B total read less than Gemma 3 27B.
+- **The shopping list is filterable.** Chapter 5 was ten stacked tables and 109 rows; it now filters
+  by tier and by what is blocking each dataset, with live counts on every chip and nothing hidden.
+- **The catalogue view is grouped and searchable.** 145 identical marks in one wall carried their
+  meaning entirely in hover. They are now grouped into labelled grade bands — each naming its own
+  colour — with a search box, and an empty band says so rather than being silently absent.
 - **Web design system** (`docs/DESIGN.md`): a shared Apple-style visual language — palette tokens,
   typography, components, interaction, and copy/tone rules — that every exercise's `web/` bundle
   follows.
@@ -50,24 +73,54 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 - **Exercise 03 is one page instead of three.** The decision and the evidence behind it were split
   across two dense pages of 25 sections; a reader could not find what to actually train on. It is now
-  a single page of twelve chapters, each answering one question in the order a reader asks it — what
-  we are building, how much text, what goes into it, **which datasets**, what we may legally use, how
-  to teach behaviour, how to clean it, keeping the exam out of the training data, how to tokenise it,
-  how we would know it worked, what it costs, and what to do first. Old links still resolve: every
-  retired anchor redirects to the chapter that absorbed it.
+  a single page of thirteen chapters and an appendix, each answering one question in the order a
+  reader asks it — what we are building, how much text, how it grows, what goes into it, **which
+  datasets**, what we may legally use, how to clean it, keeping the exam out of the training data,
+  how to teach behaviour, how to tokenise it, how we would know it worked, what it costs, and what
+  to do first. Old links still resolve: every retired anchor redirects to the chapter that absorbed
+  it.
 - **Every chapter has three layers**, so one page serves a reader meeting the subject today and one
   who trains models for a living: a plain headline and a single number, the interaction that proves
   it, and a closed *"The arithmetic"* holding the derivation, sources and caveats. Stepped content
   fell from 45 states (~21 screens) to 29 (~8.7), because states are now justified by the argument
   rather than filled to a quota.
-- **The corpus defaults to 15 trillion tokens** and names real datasets. The previous version opened
-  on the smallest rung, which answers a different question from the one a reader asks.
+- **The 40B is a seed, and its corpus is derived rather than asserted.** An earlier draft presented
+  15 trillion tokens as the model's budget; 15T was the research's target for a 300B mixture of
+  experts, so a growth ladder had been mislabelled as one model's options. The seed now sits at
+  16.8T — Gemma 3's officially stated 14T for its 27B, plus 20% for one generation — and it is
+  labelled an estimate with a stated method everywhere it appears, because Gemma 4 discloses no
+  token count in either its technical report or its model card.
 - **Four questions the site never answered now have chapters**: what may legally be used, what to
   train on after pre-training, what the whole thing costs and whether to build from scratch at all,
   and what to do first.
 
 ### Fixed
 
+- **Machine translation was being counted as natural Indian text.** Sangraha ships 251B tokens of
+  which 64B are verified human-origin; the rest is roughly 90B machine-translated from Wikimedia and
+  72B romanised transliteration. The catalogue card records that split and the budget used the
+  headline — while the mixture chapter argued, in the same page, that counting synthetic as natural
+  is "the commonest way to overstate a corpus". The natural-Indic tiers now count verified
+  human-origin tokens only, which takes that tier from 80.9% covered to **25.3%**. Both figures are
+  kept: every tier reports what its headline totals would have claimed, because the gap between them
+  is the finding.
+- **The vocabulary trade was a stale hand calculation.** `docs/DECISIONS.md` works it once against a
+  15T budget with a 25.3% India slice; both have since moved. It is now recomputed from the mixture
+  on every export — 1.05T tokens, 175,048 H100-hours, about ₹3.0 crore — and the one input that
+  cannot be measured is named on the page rather than buried, since it describes a candidate
+  tokenizer nobody has trained.
+- **The post-training budget was three tables of uncited numbers.** `docs/DECISIONS.md` states them
+  with a tilde and cites nothing, and the page typed them as estimates whose source was *"the
+  post-training plan"* — the document containing the number. They now say what they are, and a new
+  state compares them against the two labs that published theirs. That comparison finds a real
+  defect: Tulu 3 pairs preference data at 36% of its SFT size and this plan proposes 6.7%.
+- **Fast scrolling skipped explainer states.** The active state was chosen by intersection with a
+  band 10% of the viewport tall, so several steps could be inside it at once with the last one
+  processed winning, and a step could pass through entirely between callbacks and never fire. It is
+  now whichever step is nearest the viewport centre, which has neither failure.
+- **White text on the dark-mode accent measured 3.01:1.** Wrong since the accent was darkened, and
+  invisible because every previous audit happened to run in light mode. One `--on-accent` token now
+  carries white on light and near-black on dark; both themes score 100 for accessibility.
 - **Contamination gate missed short evaluation items.** An item shorter than the 13-word shingle
   window hashed to a single whole-text gram, which can never match a 13-gram drawn from a longer
   training shard — so a short benchmark question pasted verbatim into a shard was reported clean.
@@ -83,7 +136,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   dropped without being reported. Recorded in full in `docs/DESIGN_CRITIQUE.md`.
 - **Seventeen answers that were already written had never been published** — the SFT/DPO/RLVR
   budgets, the twelve script blocks that sum to the chosen vocabulary, the per-language fertility
-  targets, the FLOP comparison, the ₹2.5 crore trade, six objective-specific cleaning rules, the
+  targets, the FLOP comparison, the vocabulary trade, six objective-specific cleaning rules, the
   safety and PII gate, the curriculum phases, and the evaluation trust matrix. All are extracted into
   data and rendered.
 - **Seven statements that were false as shipped**, most introduced when the vocabulary sweep was

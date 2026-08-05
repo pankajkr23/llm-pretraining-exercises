@@ -242,3 +242,43 @@ details.register > *:not(summary) { padding-bottom: 18px; }
 @media (max-width: 620px) {
   .filter-row { grid-template-columns: 1fr; gap: 4px; }
 }
+
+/* The catalogue view, grouped by grade.
+ *
+ * It used to be 145 identical squares in one wall, where the colour scale was never stated, red
+ * meant both "excluded" and "does not exist", and grade A was invisible because nothing has it.
+ * Position now carries the grade, each band names its own colour, and an empty band says so. */
+.catalogue { display: grid; gap: 14px; }
+.catsearch {
+  width: 100%;
+  max-width: 380px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px 12px;
+}
+.catsearch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.catsearch-hits { font-size: 12px; color: var(--muted); margin: 0; min-height: 1.2em; }
+.bands { display: grid; gap: 16px; }
+.band-head { display: flex; align-items: baseline; gap: 8px; }
+.band-swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  background: var(--track);
+  flex: none;
+  transform: translateY(1px);
+}
+.band-swatch.ok { background: var(--grade-a); }
+.band-swatch.mid { background: var(--grade-b); }
+.band-swatch.out { background: var(--grade-x); }
+.band-swatch.gapmark { background: repeating-linear-gradient(45deg, var(--grade-x), var(--grade-x) 3px, transparent 3px, transparent 5px); }
+.band-label { font-size: 13px; font-weight: 600; }
+.band-n { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-left: auto; }
+.band-sub { font-size: 11.5px; color: var(--faint); margin: 1px 0 6px; }
+.band-none { font-size: 12px; color: var(--faint); font-style: italic; }
+/* The gap mark has to differ from an excluded one: they are not the same finding. */
+.unit.gapmark { background: repeating-linear-gradient(45deg, var(--grade-x), var(--grade-x) 4px, transparent 4px, transparent 7px); }

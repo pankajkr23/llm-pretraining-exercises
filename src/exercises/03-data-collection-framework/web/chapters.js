@@ -1876,9 +1876,7 @@ function chapterAppendix(ctx) {
    * the whole catalogue is visible at once. Static here rather than a five-state walk: the states
    * were re-encodings, and the tables below carry those encodings already. */
   {
-    const canvas = $('div', 'canvas');
-    canvas.setAttribute('role', 'group');
-    canvas.setAttribute('aria-label', `${data.datasets.length} datasets, coloured by grade`);
+    const canvas = $('div', 'catalogue');
     /* Every mark opens the five gates that produced its grade. A grade with no reasoning behind it
      * is a number to be argued with; the reasoning is the part worth reading. `catalog.json` holds
      * it and is fetched once, on the first click, because it is 300 KB the page does not need. */
@@ -1933,8 +1931,8 @@ function chapterAppendix(ctx) {
       card.append($('p', 'gatecard-none', full.licence ? `Licence: ${full.licence.raw}` : 'Licence: nobody established one.'));
     };
 
-    const units = data.datasets.map((d) => {
-      const u = $('button', `unit ${d.is_gap ? 'out' : { A: 'ok', B: 'mid', C: '', X: 'out' }[d.grade] || ''}`.trim());
+    const units = new Map(data.datasets.map((d) => {
+      const u = $('button', `unit ${d.is_gap ? 'out gapmark' : { A: 'ok', B: 'mid', C: '', X: 'out' }[d.grade] || ''}`.trim());
       u.type = 'button';
       u.title = `${d.id} · ${d.name} — grade ${d.grade}${d.is_gap ? ' · does not exist yet' : ''}`;
       u.setAttribute('aria-label', `${d.name}, grade ${d.grade}. Show its five gates`);
@@ -1943,32 +1941,98 @@ function chapterAppendix(ctx) {
         u.classList.add('sel');
         openCard(d);
       });
-      return u;
+      return [d.id, u];
+    }));
+    /* Grouped by grade, so where a mark sits tells you what it is before you touch it. A flat wall
+     * of 145 identical squares carried its meaning entirely in hover, which is not a meaning most
+     * readers ever collect. And a search box, because the other thing anybody wants from a
+     * catalogue view is to find one row. */
+    const GRADE_BANDS = [
+      { key: 'A', cls: 'ok', label: 'usable', sub: 'all five checks scored, nothing outstanding' },
+      { key: 'B', cls: 'mid', label: 'usable with care', sub: 'scored, with a caveat recorded against it' },
+      { key: 'C', cls: '', label: 'thin evidence', sub: 'nobody has answered the questions a grade is made of' },
+      { key: 'X', cls: 'out', label: 'excluded', sub: 'a check failed on provenance or contamination' },
+      { key: 'GAP', cls: 'out gapmark', label: 'does not exist yet', sub: 'a capability with no corpus behind it at any licence' },
+    ];
+    const bandOfDataset = (d) => (d.is_gap ? 'GAP' : d.grade);
+
+    const search = $('input', 'catsearch');
+    search.type = 'search';
+    search.placeholder = `Find one of ${data.datasets.length} datasets by name…`;
+    search.setAttribute('aria-label', 'Filter the catalogue by dataset name');
+
+    const bands = $('div', 'bands');
+    GRADE_BANDS.forEach((band) => {
+      const members = data.datasets.filter((d) => bandOfDataset(d) === band.key);
+      const row = $('div', 'band');
+      const head = $('div', 'band-head');
+      const swatch = $('span', `band-swatch ${band.cls}`.trim());
+      head.append(swatch, $('span', 'band-label', band.label), $('span', 'band-n', String(members.length)));
+      const strip = $('div', 'canvas');
+      strip.setAttribute('role', 'group');
+      strip.setAttribute('aria-label', `${members.length} datasets graded ${band.label}`);
+      if (!members.length) {
+        const none = $('span', 'band-none', 'none in this catalogue');
+        strip.append(none);
+      }
+      members.forEach((d) => {
+        const u = units.get(d.id);
+        strip.append(u);
+      });
+      row.append(head, $('div', 'band-sub', band.sub), strip);
+      bands.append(row);
     });
-    /* One tab stop, arrows within: 145 sequential stops is an obstacle, not navigation. */
+
+    /* One tab stop per band, arrows within: 145 sequential stops is an obstacle, not navigation. */
+    const ordered = [...units.values()];
+    ordered.forEach((u, k) => { u.tabIndex = k === 0 ? 0 : -1; });
     let rover = 0;
-    units.forEach((u, k) => { u.tabIndex = k === 0 ? 0 : -1; });
-    canvas.addEventListener('keydown', (e) => {
+    bands.addEventListener('keydown', (e) => {
       const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 20, ArrowUp: -20 }[e.key];
       if (step === undefined) return;
       e.preventDefault();
-      rover = Math.max(0, Math.min(units.length - 1, rover + step));
-      units.forEach((u, k) => { u.tabIndex = k === rover ? 0 : -1; });
-      units[rover].focus();
+      rover = Math.max(0, Math.min(ordered.length - 1, rover + step));
+      ordered.forEach((u, k) => { u.tabIndex = k === rover ? 0 : -1; });
+      ordered[rover].focus();
     });
-    canvas.append(...units);
-    const key = $('p');
-    key.style.cssText = 'font-size:12px;color:var(--muted);margin:10px 0 0';
-    const counts = data.datasets.reduce((a, d) => { a[d.grade] = (a[d.grade] || 0) + 1; return a; }, {});
-    key.append(
-      text(`${counts.A || 0} usable · ${counts.B || 0} usable with care · ${counts.C || 0} thin evidence · ${counts.X || 0} excluded · `),
-      b(`${data.datasets.filter((d) => d.is_gap).length} does not exist yet`),
-      text('. A grade is five checks scored together — where the text came from, whether its composition matches its claims, whether it overlaps the exam sets, how much survives cleaning, and whether any of it is evidenced. Nothing is scored for a question nobody answered, which is why most sit at C. '),
+
+    const hits = $('p', 'catsearch-hits');
+    search.addEventListener('input', () => {
+      const q = search.value.trim().toLowerCase();
+      let n = 0;
+      data.datasets.forEach((d) => {
+        const u = units.get(d.id);
+        const match = !q || `${d.name} ${d.id} ${d.category}`.toLowerCase().includes(q);
+        u.classList.toggle('dim', Boolean(q) && !match);
+        if (q && match) n += 1;
+      });
+      hits.replaceChildren();
+      if (!q) return;
+      hits.append(
+        text(n ? `${n} match${n > 1 ? 'es' : ''} — ` : 'No dataset matches that. '),
+        ...(n && n <= 6
+          ? [text(data.datasets.filter((d) => `${d.name} ${d.id} ${d.category}`.toLowerCase().includes(q)).map((d) => d.name).join(', '))]
+          : n
+            ? [text('narrow it further to see them named.')]
+            : []),
+      );
+    });
+
+    canvas.append(search, hits, bands);
+
+    /* The bands carry the legend now, so this says only what a grade is and how to read one. */
+    const note = $('p');
+    note.style.cssText = 'font-size:12px;color:var(--muted);margin:14px 0 0;max-width:72ch';
+    note.append(
+      text('A grade is five checks scored together — where the text came from, whether its composition matches its claims, whether it overlaps the exam sets, how much survives cleaning, and whether any of it is evidenced. Nothing is scored for a question nobody answered, which is why '),
+      b(`${data.grades.C || 0} of ${data.datasets.length} sit at C`),
+      text(' and none reaches A. '),
       b('Click any mark'),
-      text(' to read the five verdicts, the reasoning behind each and how confident it is.'),
+      text(' to read its five verdicts, the reasoning behind each and how confident it is.'),
     );
+
     const wrap = $('div');
-    wrap.append(canvas, key, card);
+    wrap.append(canvas, note, card);
     block(`The whole catalogue at once — ${data.datasets.length} datasets`, wrap);
   }
 
