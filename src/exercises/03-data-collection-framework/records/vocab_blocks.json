@@ -1,0 +1,44 @@
+{
+  "note": "Extracted from docs/DECISIONS.md §4.1-4.5. The vocabulary is derived bottom-up from the scripts it must serve, then rounded to a tensor-parallel-friendly multiple. None of this derivation reached a page; only the final number did.",
+  "source": "docs/DECISIONS.md §4.3",
+  "blocks": [
+    { "name": "Latin / code base", "slots": 96000, "kind": "latin" },
+    { "name": "Devanagari (8 languages)", "slots": 18000, "kind": "brahmic" },
+    { "name": "Bengali-Assamese", "slots": 12000, "kind": "brahmic" },
+    { "name": "Tamil", "slots": 12000, "kind": "brahmic" },
+    { "name": "Malayalam", "slots": 12000, "kind": "brahmic" },
+    { "name": "Telugu", "slots": 10000, "kind": "brahmic" },
+    { "name": "Kannada", "slots": 9000, "kind": "brahmic" },
+    { "name": "Perso-Arabic", "slots": 8000, "kind": "other-script" },
+    { "name": "Gujarati", "slots": 7000, "kind": "brahmic" },
+    { "name": "Gurmukhi", "slots": 6000, "kind": "brahmic" },
+    { "name": "Odia", "slots": 6000, "kind": "brahmic" },
+    { "name": "Math / LaTeX", "slots": 3000, "kind": "technical" },
+    { "name": "Ol Chiki", "slots": 1500, "kind": "other-script" },
+    { "name": "Meitei Mayek", "slots": 1500, "kind": "other-script" },
+    { "name": "JSON / agentic", "slots": 1000, "kind": "technical" },
+    { "name": "Special tokens", "slots": 1000, "kind": "technical" },
+    { "name": "Byte fallback", "slots": 256, "kind": "technical" }
+  ],
+  "sum": 204256,
+  "chosen": 208896,
+  "alignment": "1,632 x 128, aligned for tensor parallelism",
+  "scope": {
+    "script_blocks": 12,
+    "brahmic": 9,
+    "plus": ["Perso-Arabic", "Ol Chiki", "Meitei Mayek"],
+    "why_perso_arabic": "Dropping Urdu to stay Brahmic-only is the most conspicuous omission an India-first model can make. Perso-Arabic costs about 8,000 slots and covers Urdu, Sindhi and Kashmiri."
+  },
+  "comparison": {
+    "note": "Output projection costs 2 x d_model x V FLOPs per token. At d_model 6,144 the total forward is about 80 GFLOP/token.",
+    "source": "docs/DECISIONS.md §4.4",
+    "rows": [
+      { "vocab": 131072, "projection_gflop": 1.61, "share_of_forward": 0.0201, "embedding_params": 805000000, "share_of_40b": 0.020, "label": "too small" },
+      { "vocab": 208896, "projection_gflop": 2.57, "share_of_forward": 0.0321, "embedding_params": 1280000000, "share_of_40b": 0.032, "label": "chosen" },
+      { "vocab": 262144, "projection_gflop": 3.22, "share_of_forward": 0.0403, "embedding_params": 1610000000, "share_of_40b": 0.040, "label": "Gemma 4" }
+    ]
+  },
+  "upper_bound": "262K buys about 53,000 more slots with no script left to serve. Gemma needs it for 140+ languages; a 12-script tokenizer does not.",
+  "embedding_note": "Kronecker factorisation replaced a ~537M-parameter table with a 33.55M projection at 131K vocab, so the input embedding largely stops mattering. The vocabulary decision rests on softmax and output-projection compute, not embedding parameters — the part most analyses get backwards.",
+  "caveat": "The 2.4 to 1.85 fertility figures behind the trade are estimated. The measurement run replaces them with observations for the tokenizers that exist; the candidate at 208,896 has never been trained, so its own fertility remains unmeasured."
+}

@@ -1,0 +1,75 @@
+{
+  "note": "Extracted from docs/DECISIONS.md §3 and docs/ATLAS.md §12.3. The benchmark register says what each test is; this says which to trust for which objective, and what never to report.",
+  "matrix": [
+    {
+      "objective": "Indic",
+      "trust": ["MILU (1,500+ Indian competitive exams)", "IN-22 (source-original)", "INCLUDE", "IndicIFEval"],
+      "discount": ["IndicMMLU-Pro (translated via IndicTrans2)"],
+      "never": "Pooled scores. Macro average only — a pooled number lets Hindi carry Santali.",
+      "source": "docs/DECISIONS.md §3"
+    },
+    {
+      "objective": "Coding",
+      "trust": ["HumanEval+", "MBPP+", "LiveCodeBench"],
+      "discount": ["HumanEval (saturated)"],
+      "never": null,
+      "source": "docs/DECISIONS.md §3"
+    },
+    {
+      "objective": "Agentic",
+      "trust": ["SWE-bench Verified with a named harness", "Terminal-Bench 2.0", "BFCL", "tau-bench"],
+      "discount": ["GAIA"],
+      "never": "Any number without the harness, scaffold version, turn limit and context window stated. Those four change the score more than the model does.",
+      "source": "docs/DECISIONS.md §3"
+    },
+    {
+      "objective": "India-first",
+      "trust": ["BhashaBench, fully held out", "Sanskriti", "Pariksha"],
+      "discount": [],
+      "never": "Preferred wording as evidence of correctness. Sounding Indian is not knowing India.",
+      "source": "docs/DECISIONS.md §3"
+    },
+    {
+      "objective": "Safety",
+      "trust": ["22-language red team", "XIH-Bench cross-language injection"],
+      "discount": ["HarmBench", "XSTest"],
+      "never": "English-only safety testing. Safety alignment does not transfer across languages.",
+      "source": "docs/DECISIONS.md §3"
+    }
+  ],
+  "disciplines": [
+    {
+      "id": "gate",
+      "title": "Contamination is a build gate, not a check",
+      "detail": "13-gram and MinHash against a registry that lives in CI and never enters the deployed bundle.",
+      "precedent": "LightningLM dropped a full 31.3B-token pool rather than down-weight it.",
+      "source": "docs/DECISIONS.md §3"
+    },
+    {
+      "id": "heldout",
+      "title": "One benchmark is never looked at during development",
+      "detail": "BhashaBench — domain-specific across Agriculture, Legal, Finance and Ayurveda, and unlikely to appear in web text.",
+      "precedent": "A benchmark you tune against stops being a measurement the first time you look at it.",
+      "source": "docs/DECISIONS.md §3"
+    },
+    {
+      "id": "private",
+      "title": "A private set, commissioned early",
+      "detail": "3,000 items across 22 languages, written natively rather than translated.",
+      "precedent": "Every public Indic benchmark will be contaminated within 18 months.",
+      "source": "docs/DECISIONS.md §3"
+    },
+    {
+      "id": "instrument",
+      "title": "Every tier must have an instrument",
+      "detail": "If no benchmark would detect a tier's removal, cut the tier or add an instrument.",
+      "precedent": "You cannot defend a token budget you cannot measure.",
+      "source": "docs/DECISIONS.md §3"
+    }
+  ],
+  "split_policy": {
+    "rule": "Three-way split, declared before training, never revisited.",
+    "detail": "Train, validate and test are separated at the source level rather than the row level, so a paraphrase cannot land on both sides.",
+    "source": "docs/ATLAS.md §12.3"
+  }
+}

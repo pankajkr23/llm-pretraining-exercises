@@ -1,0 +1,56 @@
+[
+  {
+    "id": "gemma-4-31b",
+    "model": "Gemma 4 31B Dense",
+    "params_total": 30700000000,
+    "params_active": 30700000000,
+    "context": 262144,
+    "licence": "Apache 2.0",
+    "note": "The comparator this whole plan is written against (docs/DECISIONS.md preamble): 30.7B dense parameters, 256K context, a 262,144-token BPE vocabulary, 140+ languages, Apache 2.0, released 2 April 2026. Dense rather than MoE, so active parameters equal total. Its tokenizer is measured in this repository and is the worst of the three multilingual candidates on Indian text (x2.49 mean tax against x1.66 for the best) — which is the cost a continue-pretraining route would inherit and could not undo."
+  },
+  {
+    "id": "sarvam-30b",
+    "model": "Sarvam-30B",
+    "params_total": 30000000000,
+    "params_active": 2400000000,
+    "context": null,
+    "licence": "Apache 2.0",
+    "note": "Read from the Hugging Face model card `sarvamai/sarvam-30b` (§A.1). Active params 2.4B non-embedding; 128 experts, top-6 routing, 1 shared expert; grouped KV (num_key_value_heads=4), 19 layers; intermediate 8192 / moe_intermediate 1024; rope_theta 8e6 with no RoPE scaling; auxiliary-loss-free router balancing, routed scaling factor 2.5; pre-trained on 16T tokens. params_total is taken from the model name and §A.6's 'Sarvam AI (30B, 105B)' - the Atlas never states a total-parameter figure. context is null: the card details rope_theta but no context length for the 30B. Positioning: 'reliable coding ability, best-in-class conversational quality across Indian languages'; handles multilingual voice calls while performing tool calls. Public rollout 6 March 2026."
+  },
+  {
+    "id": "sarvam-105b",
+    "model": "Sarvam-105B",
+    "params_total": 105000000000,
+    "params_active": 10300000000,
+    "context": 128000,
+    "licence": "Apache 2.0",
+    "note": "LICENCE CORRECTED BY ADDENDUM A.1 ('MATERIAL CORRECTION #1 - Sarvam-105B is Apache 2.0, with full architecture disclosed'), read from the Hugging Face model card `sarvamai/sarvam-105b`; the addendum wins where it conflicts with Sections 1-21, which had treated Sarvam only as a reference point rather than 'a licence-free starting position'. 128 experts, top-8 routing, 1 shared expert; MLA-style attention with decoupled QK (q_head_dim 192 RoPE+noPE split, v_head_dim 128, head_dim 576, hidden_size 4096); FFN intermediate 16384 / moe_intermediate 2048; YaRN scaling factor 40 for 128K context; auxiliary-loss-free router balancing, routed scaling factor 2.5; pre-trained on 12T tokens. params_total from the model name and §A.6. Consequences per §A.1: it can be upcycled toward ~300B, used as an Indic teacher with zero licence-chain contamination (the clean alternative to BhashaKritika), and it sets the public bar any new 300B must beat."
+  },
+  {
+    "id": "lightninglm-120b",
+    "model": "LightningLM 120B",
+    "params_total": 118670000000,
+    "params_active": 5930000000,
+    "context": 8000,
+    "licence": null,
+    "note": "§B.4, from the LightningLM 0.1V technical report (arXiv:2606.07404), described as in-project. A 120B sparse MoE: 460 routed experts, top-12 routing, 5.93B active (~5% of 118.67B stored), grown in four stages from a 1.78B dense seed (1.78B -> 5B -> 9B -> 120B), trained end-to-end on a single eight-GPU node; early stages at 4K context and 9B+ at 8K, so context here is the 8K final-stage figure. Capstone economics quoted as ~67 days and ~$100K-class without spot pricing for the V4 run. Corpus (§B.2): 1,118B tokens across 33,353 shards, ~1,254B effective, with a 78.1B always-ON tier at 8% of every batch and 31.3B dropped for contamination. Licence is null - the Atlas never states one."
+  },
+  {
+    "id": "param-2-17b-a2.4b",
+    "model": "Param-2-17B-A2.4B",
+    "params_total": 17000000000,
+    "params_active": 2400000000,
+    "context": null,
+    "licence": "BharatGen non-commercial licence",
+    "note": "BharatGen. Pre-trained on ~22T tokens (§1.1). §18.1: 'Param-2 uses 64 experts with 2 shared for code-mixing/domain-mixing', and BharatGen reported MoE layers naturally grouping related languages (Hindi/Marathi). Released under a BharatGen non-commercial licence (§3.6, §13.1) - §13.1 notes this blocks distillation-based data generation. params_total and params_active are read off the model name (17B total / A2.4B active); the Atlas states no separate figures. Context length is not stated. Trained on Bharat Data Sagar, which is not publicly redistributable."
+  },
+  {
+    "id": "bharatgen-1t",
+    "model": "BharatGen 1T",
+    "params_total": 1000000000000,
+    "params_active": null,
+    "context": null,
+    "licence": null,
+    "note": "Not a released model - a funded programme. §A.6, from Union Minister Ashwini Vaishnaw's written Lok Sabha reply of 22 July 2026: the government allocated ₹988.6 crore to the IIT Bombay-led BharatGen consortium specifically to develop a 1-trillion-parameter LLM, and BharatGen's own careers page states they are 'moving from 10B-class systems to 1 Trillion across language, document/vision, and speech'. §A.7 rates this MEDIUM confidence: 'government press coverage, not a tender document I read'. Active params, context and licence are all unstated. Strategic implication (§A.6): 'Your 300B sits between a free Apache-2.0 105B that already exists and a publicly-funded 1T that is being built.'"
+  }
+]

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>How to build a corpus for a 40-billion-parameter model</title>
+    <meta
+      name="description"
+      content="What to train an India-first language model on: how much text, what kind, which datasets, how to clean it, how to tokenise it, and how you would know it worked."
+    />
+    <!-- Inline so it costs no request; a missing favicon is a 404 in every reader's console. -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230071e3'/%3E%3Cg fill='%23fff'%3E%3Crect x='7' y='9' width='18' height='3' rx='1.5'/%3E%3Crect x='7' y='15' width='12' height='3' rx='1.5'/%3E%3Crect x='7' y='21' width='6' height='3' rx='1.5'/%3E%3C/g%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/_shared/tokens.css" />
+    <link rel="stylesheet" href="./_shared/tokens.css" />
+    <link rel="stylesheet" href="./_shared/explainer.css" />
+    <link rel="stylesheet" href="./_shared/page.css" />
+    <!--
+      Applied before first paint, on purpose. Reading the stored theme from a module would leave
+      the page rendering system colours for a frame and then repainting, which is the flash every
+      theme switcher is judged by. Four lines inline is the cost of not having it.
+    -->
+    <script>
+      try {
+        var t = localStorage.getItem('era5-theme');
+        if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        /* Private mode or blocked storage: the system theme is a fine answer. */
+      }
+    </script>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="shellbar">
+        <a class="back" href="../"><span aria-hidden="true">←</span> Back</a>
+        <div class="themepick">
+          <label for="theme">Theme</label>
+          <select id="theme">
+            <option value="system">System</option>
+            <option value="soft-light">Soft light</option>
+            <option value="tinted-dark">Tinted dark</option>
+            <option value="high-contrast">High contrast</option>
+            <option value="neon">Neon</option>
+          </select>
+        </div>
+      </div>
+      <p class="eyebrow">03 · Data collection</p>
+      <h1>What would a 40B India-first model actually train on?</h1>
+      <p class="lede">
+        We catalogued <b data-fact="catalogued">145 candidate datasets</b>, graded each against five
+        checks, measured tokenizer cost across <b data-fact="measured">22 languages and 5
+        tokenizers</b>, and built a contamination gate over <b data-fact="shingles">411,442
+        fingerprints</b>. Then we tried to assemble a <b data-fact="budget">15-trillion-token</b>
+        corpus from what survived. <b data-fact="committable">Four datasets clear every bar.</b>
+        The blocker is almost never quality.
+      </p>
+      <p class="lede-actions">
+        <a class="jump" href="#datasets">See the datasets <span aria-hidden="true">→</span></a>
+        <a class="jump ghost" href="#appendix">Full registers</a>
+      </p>
+      <div id="legend"></div>
+      <nav class="chapters" id="chapters" aria-label="Chapters"></nav>
+      <main id="main"><p class="lede">Loading…</p></main>
+      <footer id="foot"></footer>
+    </div>
+
+    <script type="module">
+      import { buildPage } from './chapters.js';
+
+      const fail = (message) => {
+        document.getElementById('main').innerHTML =
+          `<p class="err">Could not load the data — ${message}. Serve over http, not file://.</p>`;
+      };
+      const load = (p) =>
+        fetch(p).then((r) => {
+          if (!r.ok) throw new Error(`${p}: ${r.status}`);
+          return r.json();
+        });
+
+      Promise.all([load('./data.json'), load('./records.json')])
+        .then(([data, records]) => buildPage(data, records))
+        .catch((e) => fail(e.message));
+
+      /* The picker. The head script already applied the stored choice; this only keeps the control
+       * in step with it and writes changes back. "system" removes the attribute rather than setting
+       * a value, because that is what lets prefers-color-scheme take over again. */
+      const picker = document.getElementById('theme');
+      const stored = (() => {
+        try { return localStorage.getItem('era5-theme'); } catch { return null; }
+      })();
+      picker.value = stored || 'system';
+      picker.addEventListener('change', () => {
+        const v = picker.value;
+        if (v === 'system') document.documentElement.removeAttribute('data-theme');
+        else document.documentElement.setAttribute('data-theme', v);
+        try { localStorage.setItem('era5-theme', v); } catch { /* nothing to do */ }
+      });
+    </script>
+  </body>
+</html>

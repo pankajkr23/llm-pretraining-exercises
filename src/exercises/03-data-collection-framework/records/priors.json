@@ -1,0 +1,155 @@
+[
+  {
+    "id": "PR01",
+    "claim": "Up to 4 epochs of repeated data is almost as good as fresh data: an 8.7B-parameter model trained for 4 epochs on 44B unique tokens finished with only 0.5% higher validation loss than a single-epoch model on 178B unique tokens. The decay constant R*_D is approximately 15 — a repeated token has lost 1/e of its value at around 15 repetitions (16 epochs) — and no amount of repetition beats a single epoch on U·(1 + R*_D) ~= 16x the unique pool.",
+    "source": "arXiv:2305.16264 — Muennighoff et al., Scaling Data-Constrained Language Models",
+    "effect_on_design": "Re-budgets the corpus as unique pool x deliberate epoch schedule = effective tokens instead of '15T unique tokens'. The ~0.3T unique natural Indic pool at 4 epochs is ~1.2T effective at near-zero quality cost, raising the natural-Indic effective share from 2% to ~7-8% without collecting a single new token (theoretical ceiling ~4.8T effective at 16x). Also half-defuses the 40-70% global-dedup loss risk: dedup down to the unique pool, then choose repetition deliberately.",
+    "confidence": "high",
+    "in_project": true,
+    "note": "Addendum B.1 states this paper is inside the project and that its figures are verbatim retrievals. Two limits the document flags: the experiments are English web data (C4-family) at <=9B parameters and <=900B tokens, and nobody has measured R*_D for Indic, translated, or synthetic text — the document calls that the second-most-important unmeasured number in the plan."
+  },
+  {
+    "id": "PR02",
+    "claim": "At 40 epochs, repeating data is worthless, and some 44-epoch runs diverge mid-training.",
+    "source": "arXiv:2305.16264 — Muennighoff et al., Scaling Data-Constrained Language Models",
+    "effect_on_design": "Sets a hard upper bound on any epoch schedule: repetition budgets must stay far below 40 epochs, and divergence — not just diminishing returns — is the failure mode past that point.",
+    "confidence": "high",
+    "in_project": true,
+    "note": null
+  },
+  {
+    "id": "PR03",
+    "claim": "Allocation rule under data constraint: scale epochs faster than parameters, because excess parameters decay in value faster than repeated data (R*_N < R*_D). This is the opposite of what naively extending Chinchilla predicts.",
+    "source": "arXiv:2305.16264 — Muennighoff et al., Scaling Data-Constrained Language Models",
+    "effect_on_design": "When the Indic pool is fixed, spend the marginal FLOP on more epochs over the scarce high-value tiers rather than on more parameters. Directly contradicts the Chinchilla-style arithmetic the main report's Section 16 used.",
+    "confidence": "high",
+    "in_project": true,
+    "note": null
+  },
+  {
+    "id": "PR04",
+    "claim": "Mixing code data into a data-constrained run 'gives the ability to scale an additional 2x'.",
+    "source": "arXiv:2305.16264 — Muennighoff et al., Scaling Data-Constrained Language Models",
+    "effect_on_design": "The code tier is not just a capability tier — it buys headroom against the data ceiling, which reinforces keeping Stack v2 permissive + Nemotron code at a meaningful share of the mix.",
+    "confidence": "high",
+    "in_project": true,
+    "note": null
+  },
+  {
+    "id": "PR05",
+    "claim": "Up-sampling just 0.1% of the corpus 100x significantly degrades performance. Repetition works on whole tiers, not on tiny slivers hammered repeatedly.",
+    "source": "Hernandez et al., cited within arXiv:2305.16264",
+    "effect_on_design": "Constrains how the epoch schedule may be applied: repeat the whole natural-Indic or curated-clean tier, never a small favoured subset. Rules out 'just loop the 64B Sangraha-verified slice' as a shortcut.",
+    "confidence": "high",
+    "in_project": false,
+    "note": "The document cites this only as a caveat inside Muennighoff et al.; it gives no separate arXiv id for the Hernandez paper, and does not list it among the project's own documents."
+  },
+  {
+    "id": "PR06",
+    "claim": "Once expected inference demand is accounted for, the compute optimum shifts toward smaller models trained on more tokens than Chinchilla prescribes.",
+    "source": "arXiv:2401.00448 — Sardana & Frankle",
+    "effect_on_design": "Formal justification for training well past compute-optimal, and — at India-population deployment scale — pressure toward maximising active-parameter efficiency (MoE with a small active count) rather than total parameters.",
+    "confidence": "medium",
+    "in_project": true,
+    "note": "Addendum B.1 says the paper is in the project but explicitly cites it 'at thesis level only', and B.7 repeats that flag. The exact accounting was not extracted into the document, so the numbers behind the claim are not reproduced here."
+  },
+  {
+    "id": "PR07",
+    "claim": "Running the OPUS per-iteration data selector at the 5B stage cost a ~17% wall-clock tax: 30,429 tok/s with OPUS active vs 36,737 tok/s ordinary — despite amortizing each scoring pass over 10 training steps and implementing Ghost extraction, CountSketch projection (m=8192) and the per-step preconditioner as custom kernels. The originating OPUS paper reports 4.7% end-to-end overhead, but in synchronous data-parallel training without ZeRO-style sharding; integration with sharded parameters is where 4.7% became ~17%.",
+    "source": "arXiv:2606.07404 — LightningLM 0.1V technical report",
+    "effect_on_design": "Prices dynamic data selection honestly for a 300B run. Budget the selector's cost against a sharded stack, not against the paper's headline overhead. OPUS defaults recorded: buffer b=64, temperature tau=0.9, sketch m=8192.",
+    "confidence": "high",
+    "in_project": true,
+    "note": "Addendum B.2 states the LightningLM report is inside the project and that quotes and figures are verbatim retrievals. Calibration also given: naive per-candidate gradient selection was 3.5x slower (6,875 min vs 1,985 for random), which Ghost+CountSketch cut to 2,083 min in the native setting."
+  },
+  {
+    "id": "PR08",
+    "claim": "OPUS was active at the 5B stage only — disabled at 2B (easy-token regime; candidates differed too little in utility to be worth scoring) and disabled again from 9B onward. The 8x compute-reduction result that motivates OPUS (GPT-2 XL / FineWeb) did not transfer cheaply into the production stack.",
+    "source": "arXiv:2606.07404 — LightningLM 0.1V technical report",
+    "effect_on_design": "Demotes dynamic selection to ablation-stage tooling rather than the production backbone at 300B, and confirms the static, phase-scheduled mixture as the backbone — that is what the only in-project 120B run actually shipped with.",
+    "confidence": "high",
+    "in_project": true,
+    "note": null
+  },
+  {
+    "id": "PR09",
+    "claim": "The Golden Proxy that OPUS steers toward is English-heavy (cosine 0.876 with the English web band), so the selector systematically under-values Indic data and would reject it if allowed to govern everything. LightningLM therefore reserves an Always-ON tier of 78.1B tokens — 8% of every batch, invisible to the selector — protecting Indic data and benchmark training splits. Stated principle: 'A single selector should not govern data whose value it cannot see.'",
+    "source": "arXiv:2606.07404 — LightningLM 0.1V technical report",
+    "effect_on_design": "Add an Always-ON lane of ~8% of every batch reserved for Tier-2/Tier-3 Indic scripts plus agentic/world-model traces and benchmark training splits, bypassing every selector and quality classifier. FineWeb-Edu-style quality classifiers carry the same English-proxy bias, so the lane is the mechanism that guarantees Bodo, Santali, Dogri and Manipuri actually train at every stage.",
+    "confidence": "high",
+    "in_project": true,
+    "note": "Addendum B.2 calls this 'the single most important design fact in the whole project'."
+  },
+  {
+    "id": "PR10",
+    "claim": "Contamination discipline has an existence proof at 120B scale: LightningLM dropped pool B2 (31.3B tokens — a full pool) for contamination, and kept the 6.8M-token Golden Proxy (11 shards) strictly held out, never trained on.",
+    "source": "arXiv:2606.07404 — LightningLM 0.1V technical report",
+    "effect_on_design": "Validates the mandatory train/validate/test quarantine of Section 12.3 as operationally survivable — dropping a whole pool is an acceptable cost, and the steering proxy must never enter the training mix.",
+    "confidence": "high",
+    "in_project": true,
+    "note": "Corpus context recorded alongside it: LightningLM V4 was 1,118B tokens across 33,353 shards (~1,254B effective after selection dynamics), tiers D1 164.1B / D2 627.4B / D3 199.0B / D4 49.1B, with OPUS keeping ~40% of scored candidates."
+  },
+  {
+    "id": "PR11",
+    "claim": "A 120B sparse MoE (460 routed experts, top-12 routing, 5.93B active ~= 5% of 118.67B stored) was grown in four stages from a 1.78B dense seed (1.78B -> 5B -> 9B -> 120B), trained end-to-end on a single eight-GPU node, early stages at 4K context and 9B+ at 8K, at roughly 67 days and ~$100K-class without spot pricing.",
+    "source": "arXiv:2606.07404 — LightningLM 0.1V technical report",
+    "effect_on_design": "Shifts the burden of proof onto training a 300B from scratch. Combined with Sarvam-105B being Apache 2.0 with its full MoE recipe published, the capital question becomes 'scratch vs grow'; the document inserts a 4-week head-to-head at ~2B scale (from-scratch vs grown/upcycled on identical data, judged on Indic + code held-out loss) before any capital commitment.",
+    "confidence": "high",
+    "in_project": true,
+    "note": "The adjacent upcycling path (Grove-MoE upcycling Qwen3-30B-A3B-Base into a 33B MoE) is documented in the report's reference list, not reproduced with its own figures."
+  },
+  {
+    "id": "PR12",
+    "claim": "Measured on FLORES-200 across six tokenizers and fourteen Indian languages: under cl100k_base (GPT-3.5/GPT-4) Indian languages pay an average 8.0x tokenization tax vs English, reaching 13.0x for Malayalam, reducing the effective context window to as little as 12% of what English users get for equivalent semantic content. The mechanism is failed byte-pair merges leaving text fragmented into single-byte tokens (merge failure correlates with tax at Pearson r = 0.89). XLM-R and o200k_base reduce the average Indic tax by 73% — this is a tokenizer design failure, not a property of Indic scripts.",
+    "source": "arXiv:2607.24276 — 'The Tokenizer Tax', 27 July 2026",
+    "effect_on_design": "Elevates the tokenizer from a workstream to a gating milestone: nothing else starts until fertility is validated across all 22 scripts. Also argues that the o200k retrofit path starts materially closer to the goal than the main report assumed.",
+    "confidence": "high",
+    "in_project": false,
+    "note": "Addendum A.7 puts the four arXiv papers of A.2-A.4 at high confidence, with abstracts pulled directly from arxiv.org. Addendum B.3 notes it was formally announced in the 28 July 2026 listing."
+  },
+  {
+    "id": "PR13",
+    "claim": "Indic scripts are punished by English-centric BPE at 4-8 tokens per word. Sarvam reports achieving fertility of 1.4-2.1 across Indian languages, which they translate into a 200-400% efficiency gain. Stated conclusion: 'Your tokenizer decision is worth more than 2T extra tokens.'",
+    "source": "Sarvam (reported in Atlas Section 1.3); target restated in Section 17 and Section 18.1",
+    "effect_on_design": "Fixes the fertility target for the project's own tokenizer at 1.4-2.1 across all 22 scripts, including Ol Chiki and Meitei Mayek, tested before the tokenizer is frozen; it is also the pipeline's stated mixing/tokenization acceptance criterion.",
+    "confidence": "medium",
+    "in_project": false,
+    "note": "The document attributes the 1.4-2.1 fertility and the 200-400% efficiency gain to Sarvam's own reporting without a paper id. Addendum A.7 lists Sarvam architecture, token counts and licence as high-confidence (read from the HF model cards) but does not list the fertility figure among those primary-source items."
+  },
+  {
+    "id": "PR14",
+    "claim": "Morphology-aware SentencePiece BPE tokenizers trained on a 781MB balanced corpus across seven languages, handling Sanskrit/Tamil agglutination and sandhi, achieve 2.6 tokens per Indian Knowledge System technical term vs 5.25 for GPT-2, and ~90% sequence-length reduction vs GPT-2/byte-level on a released 490-sentence IKS test set (measurement script published).",
+    "source": "arXiv:2607.23319 — 'BHARATI', 25 July 2026",
+    "effect_on_design": "Supplies a published, reproducible measurement harness for the fertility gate and evidence that morphology-aware segmentation is where the Indic compression gains come from.",
+    "confidence": "high",
+    "in_project": false,
+    "note": null
+  },
+  {
+    "id": "PR15",
+    "claim": "BrahmicTokenizer-131K is a byte-level BPE that retrofits o200k_base via a two-stage procedure (script-prune crop plus surgical installation of Brahmic vocabulary), closing the Indic compression gap at the 131K-vocab class while preserving English and code compression. It deliberately declines language-aware pre-tokenization to stay drop-in compatible. It is the tokenizer used across the entire LightningLM family.",
+    "source": "arXiv:2605.29379 — BrahmicTokenizer-131K",
+    "effect_on_design": "Candidate recipe 1 for the 300B tokenizer: retrofit preserves the English/code frontier and ecosystem compatibility, and is the demonstrated-in-production choice.",
+    "confidence": "high",
+    "in_project": true,
+    "note": "Honesty caveat carried from the document: the headline compression number is measured on a 27M-document public Indic corpus whose sources (AI4Bharat + Sarvam-AI public releases) overlap the 1.045B-token audit corpus used to score surgery candidates — the authors label that in-distribution and corroborate out-of-distribution on FLORES-200 and IN22-Gen."
+  },
+  {
+    "id": "PR16",
+    "claim": "Kronecker embeddings replace the ~537M-parameter embedding table at that vocabulary/width with a 33.55M-parameter projection — negligible at 120B, but most of a quarter of the model at the 1.78B seed.",
+    "source": "arXiv:2605.29459 — Kronecker Embeddings",
+    "effect_on_design": "Makes a large Indic-capable vocabulary affordable at the small end of a staged-growth plan, which is what allows growth to start from a 1.78B dense seed rather than a wider one.",
+    "confidence": "high",
+    "in_project": true,
+    "note": "Paired with BrahmicTokenizer-131K across the LightningLM family."
+  },
+  {
+    "id": "PR17",
+    "claim": "MUTANT-Indic is a 200K shared-vocabulary SuperBPE-based tokenizer trained on a 10GB sample drawn from ~50GB of curated multilingual data (OLMo, Wikipedia, books, PDFs, Common Crawl, Sangraha; code from Stack v2), via fastText LID -> MinHash dedup -> NFKC normalization -> script validation, FineWeb-style.",
+    "source": "arXiv:2511.03237 — MUTANT-Indic",
+    "effect_on_design": "Candidate recipe 2 for the 300B tokenizer: from-scratch at 200K (the Sarvam path, fertility 1.4-2.1) maximises Indic fertility at the cost of re-deriving English/code performance. The gate is unchanged either way — fertility validated on all 22 scripts before any other workstream commits.",
+    "confidence": "high",
+    "in_project": true,
+    "note": null
+  }
+]

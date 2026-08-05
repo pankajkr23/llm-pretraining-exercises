@@ -1,0 +1,138 @@
+[
+  {
+    "id": "T01",
+    "name": "Setu",
+    "stage": "filtering",
+    "verdict": "adopt",
+    "why": "Spark-based distributed cleaning/dedup/filtering pipeline purpose-built for Indian scripts (PDF, web, speech extraction), from AI4Bharat, MIT-licensed. The document calls it 'arguably as valuable as the data itself' and says to adopt or fork it rather than rebuild; the Section 17 pipeline uses it at the quality-filtering stage alongside forked FineWeb-2 configs.",
+    "note": "Listed in the Section 17 tool table as 'Indic-specific cleaning/dedup at scale', so it spans filtering and dedup; the pipeline diagram places it under QUALITY FILTERING, which is the stage recorded here. AI4Bharat also used it to re-clean CulturaX."
+  },
+  {
+    "id": "T02",
+    "name": "datatrove",
+    "stage": "filtering",
+    "verdict": "adopt",
+    "why": "Hugging Face's general-purpose data processing library, Apache-2.0, listed in the Section 17 'tools you should adopt rather than rebuild' table.",
+    "note": "The document assigns it the generic need 'general-purpose data processing' rather than one pipeline box; filtering is the closest stage in this schema."
+  },
+  {
+    "id": "T03",
+    "name": "NeMo Curator",
+    "stage": "filtering",
+    "verdict": "adopt",
+    "why": "NVIDIA's curation stack for GPU-scale data curation, Apache-2.0, listed in the Section 17 adopt-rather-than-rebuild table.",
+    "note": "Stage recorded as filtering; the document's need column says 'curation at GPU scale', which spans filtering and dedup."
+  },
+  {
+    "id": "T04",
+    "name": "GlotLID",
+    "stage": "lid",
+    "verdict": "adopt",
+    "why": "Open, script-aware language ID with 2000+ labels; the Section 17 pipeline runs a GlotLID ensemble as the LANGUAGE & SCRIPT ID stage across Devanagari, Bengali, Tamil, Telugu, Kannada, Malayalam, Gurmukhi, Gujarati, Odia, Perso-Arabic, Meitei Mayek, Ol Chiki and Latin. FineWeb-2 already uses it for per-language tuned filters.",
+    "note": "Code-mix and romanisation detection sit in the same stage — the document treats Hinglish as a first-class language, not noise — but names no specific tool for it."
+  },
+  {
+    "id": "T05",
+    "name": "trafilatura",
+    "stage": "extraction",
+    "verdict": "adopt",
+    "why": "Named in the Section 17 pipeline as an HTML-to-text extractor for the EXTRACTION stage.",
+    "note": "Named only in the pipeline diagram, not in the Section 17 tool table, so the document gives no licence or explicit adopt/build verdict; 'adopt' is inferred from its being listed as the pipeline's chosen extractor."
+  },
+  {
+    "id": "T06",
+    "name": "resiliparse",
+    "stage": "extraction",
+    "verdict": "adopt",
+    "why": "Named in the Section 17 pipeline alongside trafilatura as an HTML-to-text extractor for the EXTRACTION stage.",
+    "note": "As with trafilatura, named only in the pipeline diagram; no licence or explicit verdict is stated in the document."
+  },
+  {
+    "id": "T07",
+    "name": "olmOCR / olmOCR-2",
+    "stage": "ocr",
+    "verdict": "avoid",
+    "why": "Addendum A.2 is an explicit material correction: on 300 real printed Devanagari scans, olmOCR-7B falls to 40.5 chrF++ — the worst-in-class result of ten benchmarked systems, from the model behind olmOCR-Bench — while all ten cluster at 91-98 on clean rendered text. The main document's 'fine-tune olmOCR for Indic scripts' recommendation is withdrawn; Qwen3-VL-8B (75.2) is the recommended alternative base.",
+    "note": "Section 17's tool table and Sections 9/19 still list olmOCR as the OCR tool to adopt (Apache-2.0, arXiv:2510.19817). Addendum A explicitly overrides Sections 1-21 where they conflict, so the verdict here is 'avoid'. Benchmark source: arXiv:2606.29213, published 28 June 2026."
+  },
+  {
+    "id": "T08",
+    "name": "Qwen3-VL-8B",
+    "stage": "ocr",
+    "verdict": "adopt",
+    "why": "The winner among open models on the real-scan Devanagari stress test at 75.2 chrF++, beating GPT-5.5 (58.5) and olmOCR-7B (40.5), and it runs on a single 24 GB GPU. Addendum A.2's revised recommendation is to build the Indic OCR pipeline on it, report median and catastrophic-failure-rate rather than mean, and validate exclusively on real scans.",
+    "note": "Source: arXiv:2606.29213. The document also notes Apache-2.0-class generators are preferred for anything redistributable, to avoid synthetic-data licence-chain problems."
+  },
+  {
+    "id": "T09",
+    "name": "DeepSeek-OCR",
+    "stage": "ocr",
+    "verdict": "avoid",
+    "why": "Has the best median of any system in the Devanagari stress test, but suffers rare catastrophic repetition failures — outputs up to 71x reference length — that destroy its mean. Addendum A.2's revised recommendation names Qwen3-VL-8B, not DeepSeek-OCR, as the pipeline base.",
+    "note": "The document issues no explicit adopt/avoid verdict for DeepSeek-OCR; 'avoid' is inferred from the catastrophic-failure finding plus the explicit recommendation of a different base model. Its strong median is a genuine reason to revisit if the failure mode can be detected and retried."
+  },
+  {
+    "id": "T10",
+    "name": "IndicConformer",
+    "stage": "asr",
+    "verdict": "adopt",
+    "why": "AI4Bharat's ASR model covering all 22 scheduled languages, surfaced in Addendum A.5 as coverage the main document understated. Needed for the Section 8 high-leverage move: transcribing the open Indic speech pool, which Addendum A.5 revises upward from ~35,000 hours to well north of 100,000 hours across BhasaAnuvaad, IndicVoices, Vaani, SPRING-INX, Shrutilipi, Kathbath, SYSPIN and Rasa.",
+    "note": "Listed in Addendum A.5 as available from the AI4Bharat HF org; no licence string is given for the model itself in the document."
+  },
+  {
+    "id": "T11",
+    "name": "IndicSeamless",
+    "stage": "asr",
+    "verdict": "adopt",
+    "why": "SeamlessM4T-v2 fine-tuned on BhasaAnuvaad; stated as SOTA for Indic speech-to-text translation, beating cascaded approaches on FLEURS and BhasaAnuvaad-test.",
+    "note": "From Addendum A.5's correction table (AI4Bharat HF org). Relevant where transcription and translation are combined; no licence string is given in the document."
+  },
+  {
+    "id": "T12",
+    "name": "IndicASR / Whisper-Indic fine-tune",
+    "stage": "asr",
+    "verdict": "build",
+    "why": "The Section 17 pipeline specifies ASR at the EXTRACTION stage as 'IndicASR / Whisper-Indic FT' — a fine-tune you produce, not an off-the-shelf adoption. It feeds recommended action 5: ASR-transcribe all the open Indic speech, which the document says nobody else has done at scale and which produces text that exists nowhere else.",
+    "note": "The document names no specific released Whisper-Indic checkpoint; SCRIBE (arXiv:2605.20712) is flagged as useful diagnostic evaluation for this pipeline."
+  },
+  {
+    "id": "T13",
+    "name": "KenLM perplexity filter (vs a Sangraha-verified reference)",
+    "stage": "filtering",
+    "verdict": "build",
+    "why": "The Section 17 QUALITY FILTERING box specifies KenLM perplexity scored against a Sangraha-verified reference; BhashaKritika's modular QC pipeline (script/language ID, n-gram repetition, KenLM perplexity) is cited as the reason synthetic Indic converged faster than noisy web Indic. Section 18.1 also makes KenLM-perplexity floors part of the anti-synthetic-collapse mitigation.",
+    "note": "Reference model must be trained per language against the Sangraha-verified tier — the document treats this as something you construct, not adopt."
+  },
+  {
+    "id": "T14",
+    "name": "FineWeb-Edu-style per-language quality classifier",
+    "stage": "filtering",
+    "verdict": "build",
+    "why": "The Section 17 pipeline calls for a model-based classifier 'trained per-lang'. Addendum B.2 warns these classifiers carry the same English-proxy bias that made OPUS under-value Indic data (golden-proxy cosine 0.876 with the English web band), so the Always-ON lane of ~8% of every batch must bypass them entirely.",
+    "note": "FineWeb-2-HQ is cited as evidence the approach works — an XLM-R-based quality classifier keeping the top 10% matches full FineWeb-2 with 6x fewer tokens."
+  },
+  {
+    "id": "T15",
+    "name": "Global MinHash + LSH deduplication",
+    "stage": "dedup",
+    "verdict": "build",
+    "why": "Sangraha, CulturaX, MADLAD-400, FineWeb-2 and HPLT all derive from Common Crawl, so the document expects 60-80% cross-corpus duplication and requires global MinHash+LSH across the entire mix rather than per-corpus dedup — 'the difference between 20T tokens and 20T tokens of which 6T are unique'. Nemotron-CC's authors found FineWebEdu-2 and DCLM held roughly 80% fuzzy duplicates because they only did sharded approximate dedup.",
+    "note": "The pipeline runs exact SHA dedup first, then global MinHash+LSH. Section 18.1 rates 'global dedup collapses 23T to 9T, not 15T' as the single most likely schedule-breaker and prescribes running dedup on a 10% sample first. Addendum B.1 tempers this: dedup down to the unique pool, then choose repetition deliberately — dedup is not the same as see-once."
+  },
+  {
+    "id": "T16",
+    "name": "SemDeDup",
+    "stage": "dedup",
+    "verdict": "adopt",
+    "why": "Embedding-based semantic dedup, applied in the Section 17 pipeline to the top-quality tier after exact and fuzzy dedup.",
+    "note": "Named as a pipeline step only; the document gives no licence, owner or explicit adopt/build verdict, so 'adopt' reflects that it is specified as an existing technique to apply rather than something to invent."
+  },
+  {
+    "id": "T17",
+    "name": "13-gram overlap + MinHash decontamination against BENCHMARK_BLOCKLIST",
+    "stage": "decontamination",
+    "verdict": "build",
+    "why": "Section 12.3 Rule 1 mandates a BENCHMARK_BLOCKLIST holding the exact text of every evaluation item across every benchmark listed, with 13-gram overlap detection (the Llama/GPT convention) plus MinHash near-duplicate detection run against the entire pre-training corpus at every stage; any hit is dropped, not down-weighted, and every drop is logged with the benchmark it hit. Synthesised data re-enters the same gate.",
+    "note": "There is an existence proof at scale: LightningLM dropped its 31.3B-token B2 pool entirely for contamination and never trained on the golden proxy (Addendum B.2). No off-the-shelf tool is named — the document treats the blocklist and detector as project-built."
+  }
+]

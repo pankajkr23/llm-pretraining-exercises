@@ -1,0 +1,200 @@
+[
+  {
+    "code": "hi",
+    "name": "Hindi",
+    "script": "Devanagari",
+    "tier": 1,
+    "available_tokens": "1B-10B+",
+    "strategy": "Standard web pipeline + dedup + quality classifier",
+    "note": "Script stated (§A.2 'Hindi/Devanagari'). Aksharantar's 26M transliteration pairs target romanised Hindi/Hinglish, which §17 treats as a first-class language, not noise. Gramvaani adds ~1,000 h of rural-telephony Hindi. NVIDIA's Nemotron-Mini-Hindi work found English-only SFT improved Hindi instruction-following while synthetic Hindi during DPO helped (§11.4)."
+  },
+  {
+    "code": "bn",
+    "name": "Bengali",
+    "script": "Bengali",
+    "tier": 1,
+    "available_tokens": "1B-10B+",
+    "strategy": "Standard web pipeline + dedup + quality classifier",
+    "note": "Script inferred from the Atlas naming 'Bengali' as a script in §9 (olmOCR fine-tuning targets) and §17; the language-to-script mapping itself is not stated. §5.3 names a Bengali-language GitHub issue resolving into a passing patch as the demo that proves the model. §B.5 adds PatiGonit22K: 22,441 Bengali math word problems."
+  },
+  {
+    "code": "ta",
+    "name": "Tamil",
+    "script": "Tamil",
+    "tier": 1,
+    "available_tokens": "1B-10B+",
+    "strategy": "Standard web pipeline + dedup + quality classifier",
+    "note": "Script inferred from the Atlas naming 'Tamil' as a script in §9/§17; the mapping is not stated explicitly. BHARATI (§A.3) handles Sanskrit/Tamil agglutination and sandhi. §B.5 lists an English<->Tamil MT analysis (arXiv:2607.24515) and IKS-Instruct sources including Thirukkural and Sangam literature."
+  },
+  {
+    "code": "te",
+    "name": "Telugu",
+    "script": "Telugu",
+    "tier": 1,
+    "available_tokens": "1B-10B+",
+    "strategy": "Standard web pipeline + dedup + quality classifier",
+    "note": "Script inferred from the Atlas naming 'Telugu' as a script in §9/§17; the mapping is not stated explicitly. Named among the scripts whose OCR §9 flags as the bottleneck to India's scanned print archive."
+  },
+  {
+    "code": "mr",
+    "name": "Marathi",
+    "script": null,
+    "tier": 1,
+    "available_tokens": "1B-10B+",
+    "strategy": "Standard web pipeline + dedup + quality classifier",
+    "note": "The Atlas names Indic scripts as a set (§17 language/script-ID stage) but does not map this language to one, so script is null. §18.1 reports BharatGen observing MoE layers naturally grouping related languages (Hindi/Marathi). §10.1 uses a Class 7 Marathi explanation of photosynthesis at CBSE level as the worked example of generating curriculum you own outright."
+  },
+  {
+    "code": "ml",
+    "name": "Malayalam",
+    "script": "Malayalam",
+    "tier": 1,
+    "available_tokens": "1B-10B+",
+    "strategy": "Standard web pipeline + dedup + quality classifier",
+    "note": "Script inferred from the Atlas naming 'Malayalam' as a script in §17; the mapping is not stated explicitly. Code 'ml' appears in §B.5's IKS-Instruct language list. Worst case in The Tokenizer Tax (§A.3): a 13.0x tokenization tax under cl100k_base vs an 8.0x Indic average."
+  },
+  {
+    "code": "kn",
+    "name": "Kannada",
+    "script": "Kannada",
+    "tier": 1,
+    "available_tokens": "1B-10B+",
+    "strategy": "Standard web pipeline + dedup + quality classifier",
+    "note": "Script inferred from the Atlas naming 'Kannada' as a script in §17; the mapping is not stated explicitly. Code 'kn' appears in §12.1 (IndicMMLU-Pro) and §B.5 (IKS-Instruct)."
+  },
+  {
+    "code": "gu",
+    "name": "Gujarati",
+    "script": "Gujarati",
+    "tier": 1,
+    "available_tokens": "1B-10B+",
+    "strategy": "Standard web pipeline + dedup + quality classifier",
+    "note": "Script inferred from the Atlas naming 'Gujarati' as a script in §17; the mapping is not stated explicitly. Code 'gu' appears in §12.1 (IndicMMLU-Pro)."
+  },
+  {
+    "code": "ur",
+    "name": "Urdu",
+    "script": null,
+    "tier": 1,
+    "available_tokens": "1B-10B+",
+    "strategy": "Standard web pipeline + dedup + quality classifier",
+    "note": "The Atlas names Indic scripts as a set (§17 language/script-ID stage) but does not map this language to one, so script is null. Perso-Arabic is in the Atlas's script list (§9, §17) but is not attributed to Urdu in the text. Code 'ur' appears in §12.1 (IndicMMLU-Pro)."
+  },
+  {
+    "code": "pa",
+    "name": "Punjabi",
+    "script": null,
+    "tier": 1,
+    "available_tokens": "1B-10B+",
+    "strategy": "Standard web pipeline + dedup + quality classifier",
+    "note": "The Atlas names Indic scripts as a set (§17 language/script-ID stage) but does not map this language to one, so script is null. Gurmukhi is in the Atlas's script list (§17) but is not attributed to Punjabi in the text. Code 'pa' appears in §12.1 (IndicMMLU-Pro)."
+  },
+  {
+    "code": "or",
+    "name": "Odia",
+    "script": null,
+    "tier": 2,
+    "available_tokens": "10M-1B",
+    "strategy": "Web + aggressive synthetic + OCR of print + ASR transcripts",
+    "note": "The Atlas names Indic scripts as a set (§17 language/script-ID stage) but does not map this language to one, so script is null. 'Odia' does appear as a script name in §17's script-ID stage, but the Atlas never maps the language to it. ISO code not given in the Atlas (§12.1 lists only hi, bn, gu, mr, kn, pa, ta, te, ur; §B.5 adds sa, ml); the code here is a standard ISO 639 identifier, not a doc-derived fact."
+  },
+  {
+    "code": "as",
+    "name": "Assamese",
+    "script": null,
+    "tier": 2,
+    "available_tokens": "10M-1B",
+    "strategy": "Web + aggressive synthetic + OCR of print + ASR transcripts",
+    "note": "The Atlas gives no language-specific detail for Assamese beyond the §2 Tier-2 triage row. The Atlas names Indic scripts as a set (§17 language/script-ID stage) but does not map this language to one, so script is null. ISO code not given in the Atlas (§12.1 lists only hi, bn, gu, mr, kn, pa, ta, te, ur; §B.5 adds sa, ml); the code here is a standard ISO 639 identifier, not a doc-derived fact."
+  },
+  {
+    "code": "ne",
+    "name": "Nepali",
+    "script": null,
+    "tier": 2,
+    "available_tokens": "10M-1B",
+    "strategy": "Web + aggressive synthetic + OCR of print + ASR transcripts",
+    "note": "The Atlas gives no language-specific detail for Nepali beyond the §2 Tier-2 triage row. The Atlas names Indic scripts as a set (§17 language/script-ID stage) but does not map this language to one, so script is null. ISO code not given in the Atlas (§12.1 lists only hi, bn, gu, mr, kn, pa, ta, te, ur; §B.5 adds sa, ml); the code here is a standard ISO 639 identifier, not a doc-derived fact."
+  },
+  {
+    "code": "sa",
+    "name": "Sanskrit",
+    "script": null,
+    "tier": 2,
+    "available_tokens": "10M-1B",
+    "strategy": "Web + aggressive synthetic + OCR of print + ASR transcripts",
+    "note": "The Atlas names Indic scripts as a set (§17 language/script-ID stage) but does not map this language to one, so script is null. BHARATI (§A.3, arXiv:2607.23319) builds morphology-aware tokenizers handling Sanskrit/Tamil agglutination and sandhi. Code 'sa' appears in §B.5's IKS-Instruct language list; §B.5 also notes Darshana Graph (comparative Indian philosophy) as rare classical/IKS content."
+  },
+  {
+    "code": "sd",
+    "name": "Sindhi",
+    "script": null,
+    "tier": 2,
+    "available_tokens": "10M-1B",
+    "strategy": "Web + aggressive synthetic + OCR of print + ASR transcripts",
+    "note": "The Atlas gives no language-specific detail for Sindhi beyond the §2 Tier-2 triage row. The Atlas names Indic scripts as a set (§17 language/script-ID stage) but does not map this language to one, so script is null. ISO code not given in the Atlas (§12.1 lists only hi, bn, gu, mr, kn, pa, ta, te, ur; §B.5 adds sa, ml); the code here is a standard ISO 639 identifier, not a doc-derived fact."
+  },
+  {
+    "code": "ks",
+    "name": "Kashmiri",
+    "script": null,
+    "tier": 2,
+    "available_tokens": "10M-1B",
+    "strategy": "Web + aggressive synthetic + OCR of print + ASR transcripts",
+    "note": "The Atlas gives no language-specific detail for Kashmiri beyond the §2 Tier-2 triage row. The Atlas names Indic scripts as a set (§17 language/script-ID stage) but does not map this language to one, so script is null. ISO code not given in the Atlas (§12.1 lists only hi, bn, gu, mr, kn, pa, ta, te, ur; §B.5 adds sa, ml); the code here is a standard ISO 639 identifier, not a doc-derived fact."
+  },
+  {
+    "code": "kok",
+    "name": "Konkani",
+    "script": null,
+    "tier": 2,
+    "available_tokens": "10M-1B",
+    "strategy": "Web + aggressive synthetic + OCR of print + ASR transcripts",
+    "note": "The Atlas gives no language-specific detail for Konkani beyond the §2 Tier-2 triage row. The Atlas names Indic scripts as a set (§17 language/script-ID stage) but does not map this language to one, so script is null. ISO code not given in the Atlas (§12.1 lists only hi, bn, gu, mr, kn, pa, ta, te, ur; §B.5 adds sa, ml); the code here is a standard ISO 639 identifier, not a doc-derived fact."
+  },
+  {
+    "code": "mai",
+    "name": "Maithili",
+    "script": null,
+    "tier": 2,
+    "available_tokens": "10M-1B",
+    "strategy": "Web + aggressive synthetic + OCR of print + ASR transcripts",
+    "note": "The Atlas gives no language-specific detail for Maithili beyond the §2 Tier-2 triage row. The Atlas names Indic scripts as a set (§17 language/script-ID stage) but does not map this language to one, so script is null. ISO code not given in the Atlas (§12.1 lists only hi, bn, gu, mr, kn, pa, ta, te, ur; §B.5 adds sa, ml); the code here is a standard ISO 639 identifier, not a doc-derived fact."
+  },
+  {
+    "code": "brx",
+    "name": "Bodo",
+    "script": null,
+    "tier": 3,
+    "available_tokens": "<10M; some near-zero",
+    "strategy": "Almost entirely synthetic + primary collection. Commission collection, rely on Bharat Data Sagar / AIKosh government contributions, or accept cross-lingual transfer + heavy synthetic augmentation and set honest expectations.",
+    "note": "The famous collapse: Sangraha's own Stage-3 cleaning stats show Bodo dropping to 77 words / 1 document after filtering (§2, restated in §13.5) - 'not a data problem, it is a fieldwork problem'. §13.5 says to treat any published Bodo/Dogri/Santali/Manipuri token count with deep scepticism in every corpus. §11.4 uses Bodo as the safety example: 'a model that refuses correctly in English will comply with the same jailbreak in Bodo'. §15.4 item 5 prices commissioned Tier-3 collection at ₹2-5 crore. The Atlas names Indic scripts as a set (§17 language/script-ID stage) but does not map this language to one, so script is null. ISO code not given in the Atlas (§12.1 lists only hi, bn, gu, mr, kn, pa, ta, te, ur; §B.5 adds sa, ml); the code here is a standard ISO 639 identifier, not a doc-derived fact."
+  },
+  {
+    "code": "doi",
+    "name": "Dogri",
+    "script": null,
+    "tier": 3,
+    "available_tokens": "<10M; some near-zero",
+    "strategy": "Almost entirely synthetic + primary collection. Commission collection, rely on Bharat Data Sagar / AIKosh government contributions, or accept cross-lingual transfer + heavy synthetic augmentation and set honest expectations.",
+    "note": "§13.5 and §18.1 group Dogri with Bodo, Santali and Manipuri as the four languages that may remain unusable; published token counts for it are to be treated with deep scepticism. §15.4 item 5 prices commissioned Tier-3 collection at ₹2-5 crore. The Atlas names Indic scripts as a set (§17 language/script-ID stage) but does not map this language to one, so script is null. ISO code not given in the Atlas (§12.1 lists only hi, bn, gu, mr, kn, pa, ta, te, ur; §B.5 adds sa, ml); the code here is a standard ISO 639 identifier, not a doc-derived fact."
+  },
+  {
+    "code": "mni",
+    "name": "Manipuri (Meitei)",
+    "script": "Bengali and Meitei Mayek",
+    "tier": 3,
+    "available_tokens": "<10M; some near-zero",
+    "strategy": "Almost entirely synthetic + primary collection. Commission collection, rely on Bharat Data Sagar / AIKosh government contributions, or accept cross-lingual transfer + heavy synthetic augmentation and set honest expectations.",
+    "note": "Script stated explicitly (§2): 'Manipuri uses both Bengali and Meitei Mayek scripts - script coverage in your tokenizer is a hard requirement'. §18.1 and §B.3 require fertility validation on Meitei Mayek before the tokenizer is frozen. ISO code not given in the Atlas (§12.1 lists only hi, bn, gu, mr, kn, pa, ta, te, ur; §B.5 adds sa, ml); the code here is a standard ISO 639 identifier, not a doc-derived fact."
+  },
+  {
+    "code": "sat",
+    "name": "Santali",
+    "script": "Ol Chiki",
+    "tier": 3,
+    "available_tokens": "<10M; some near-zero",
+    "strategy": "Almost entirely synthetic + primary collection. Commission collection, rely on Bharat Data Sagar / AIKosh government contributions, or accept cross-lingual transfer + heavy synthetic augmentation and set honest expectations.",
+    "note": "Script stated explicitly (§2): 'Santali uses the Ol Chiki script'. §18.1 and §B.3 require fertility validation on Ol Chiki before the tokenizer is frozen. §B.2's Always-ON lane (~8% of every batch, bypassing all selectors) is the mechanism that guarantees Santali actually trains at every stage. ISO code not given in the Atlas (§12.1 lists only hi, bn, gu, mr, kn, pa, ta, te, ur; §B.5 adds sa, ml); the code here is a standard ISO 639 identifier, not a doc-derived fact."
+  }
+]

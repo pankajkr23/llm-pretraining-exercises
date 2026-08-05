@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Moved — one page now</title>
+    <link rel="canonical" href="../" />
+    <meta http-equiv="refresh" content="0; url=../#appendix" />
+    <link rel="stylesheet" href="../_shared/tokens.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <p class="lede">
+        This used to be a separate page. The decision and its evidence are now one page —
+        <a href="../#appendix">continue there</a>.
+      </p>
+    </div>
+    <script>
+      /* Deep links from the two-page version still resolve: every old anchor maps to the chapter
+       * that absorbed it, so a shared URL lands on the content rather than the top of a long page. */
+      const MOVED = {
+        s1: 'gate', s2: 'tokenizer', s3: 'tokenizer', s4: 'mix', s5: 'mix', s6: 'cleaning',
+        s7: 'evaluation', s8: 'cost', s9: 'first', s10: 'budget', s11: 'cost', commit: 'datasets',
+        data: 'appendix', shortlist: 'datasets', legal: 'legal', benchmarks: 'evaluation',
+        languages: 'appendix', risks: 'appendix', acquisition: 'first', market: 'appendix',
+        priors: 'appendix', papers: 'appendix', confidence: 'appendix', changelog: 'appendix',
+        intuitions: 'appendix', gotchas: 'appendix', licensing: 'legal', fertility: 'tokenizer',
+        tools: 'cleaning', plan: 'first', gaps: 'mix',
+      };
+      const key = decodeURIComponent(location.hash.slice(1));
+      location.replace('../#' + (MOVED[key] || '../#appendix'.replace('../#', '')));
+    </script>
+  </body>
+</html>

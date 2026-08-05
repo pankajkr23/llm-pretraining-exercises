@@ -1,0 +1,173 @@
+[
+  {
+    "id": "P01",
+    "title": "IndicTalk",
+    "arxiv": "2607.23242",
+    "date": "2026-07-25",
+    "effect": "new-corpus",
+    "in_project": false,
+    "summary": "1,328,604 event-grounded multi-turn conversations, 18 language varieties, 9 Indic languages, code-mixed in both native-script and Romanized forms; built via news-grounding + persona-conditioned generation + automatic quality validation. Directly serves the project's stated #1 task (conversation); nothing else at this scale exists for Indic code-mixed dialogue. The paper says 'we will release' — verify the data is actually up before planning around it."
+  },
+  {
+    "id": "P02",
+    "title": "Indic DiarBench",
+    "arxiv": "2607.23808",
+    "date": "2026-07-26",
+    "effect": "new-benchmark",
+    "in_project": false,
+    "summary": "~108 hours across all 22 scheduled languages with human-corrected, time-aligned, speaker-attributed transcriptions; near-field meetings, far-field and in-the-wild, capturing code-mixing, dialect and speaker overlap. First joint diarization+ASR benchmark covering all 22 languages. Open access — add to the EVAL suite."
+  },
+  {
+    "id": "P03",
+    "title": "BHARATI",
+    "arxiv": "2607.23319",
+    "date": "2026-07-25",
+    "effect": "changed-strategy",
+    "in_project": false,
+    "summary": "Morphology-aware SentencePiece BPE tokenizers on a 781MB balanced corpus across seven languages, handling Sanskrit/Tamil agglutination and sandhi. Achieves 2.6 tokens per Indian Knowledge System technical term vs 5.25 for GPT-2 and ~90% sequence-length reduction vs GPT-2/byte-level on a released 490-sentence IKS test set, with the measurement script published."
+  },
+  {
+    "id": "P04",
+    "title": "The Tokenizer Tax",
+    "arxiv": "2607.24276",
+    "date": "2026-07-27",
+    "effect": "validated",
+    "in_project": false,
+    "summary": "Measured on FLORES-200 across six tokenizers and fourteen Indian languages: an average 8.0x tokenization tax under cl100k_base (13.0x for Malayalam), effective context window cut to as little as 12%, mechanism identified as failed byte-pair merges (Pearson r = 0.89), and XLM-R/o200k_base reducing the average Indic tax by 73%. Quantifies and validates the main document's claim that the tokenizer decision is worth more than 2T extra tokens; elevates it from workstream to gating milestone."
+  },
+  {
+    "id": "P05",
+    "title": "Can OCR-VLMs Read Devanagari? A Stress-Test Benchmark and Post-Correction Study",
+    "arxiv": "2606.29213",
+    "date": "2026-06-28",
+    "effect": "reversed",
+    "in_project": false,
+    "summary": "Ten systems benchmarked on Hindi/Devanagari across four synthetic degradations and 300 real printed scans. On clean rendered text all ten cluster at chrF++ 91-98; on real scans nine of ten collapse across a 76-point range. EasyOCR falls 93.6 -> 58.3, GPT-5.5 drops to 58.5, and olmOCR-7B falls to 40.5 — worst in class. Qwen3-VL-8B wins among open models at 75.2 on a single 24 GB GPU; DeepSeek-OCR has the best median but rare catastrophic repetition failures (up to 71x reference length). Reverses the main document's 'fine-tune olmOCR for Indic' recommendation."
+  },
+  {
+    "id": "P06",
+    "title": "Conversational IndicTrans2 adaptation",
+    "arxiv": "2606.29024",
+    "date": "2026-06-27",
+    "effect": "changed-strategy",
+    "in_project": false,
+    "summary": "Adapts IndicTrans2-1B to conversational register across all 21 Indic languages using only public data (OpenSubtitles, BPCC-H-Daily, Tatoeba) via experience replay + model souping: +6.2 mean conversational chrF with no FLORES regression. Directly reusable recipe. The authors' own blind human + multi-model check did not confirm a perceived quality improvement — they call it register matching, not better translation; the document says adopt the technique and the scepticism."
+  },
+  {
+    "id": "P07",
+    "title": "SCRIBE",
+    "arxiv": "2605.20712",
+    "date": "2026-06-29",
+    "effect": "new-benchmark",
+    "in_project": false,
+    "summary": "Diagnostic evaluation plus rich transcription models for Indic ASR. Useful for the ASR-transcription pipeline of Section 8."
+  },
+  {
+    "id": "P08",
+    "title": "IndicKLAR",
+    "arxiv": "2605.29637",
+    "date": "2026-05-28",
+    "effect": "changed-strategy",
+    "in_project": false,
+    "summary": "Cross-lingual knowledge consistency, code-mixed vs native, across nine open-weight models: the native-language accuracy gap to English reaches ~0.50, but code-mixed inputs close most of it — to within ~0.05 of English — with no model-level intervention. Strategically important: suggests code-mixed input is a far more efficient path to Indic parity than native-script-only training, and should influence the data mixture."
+  },
+  {
+    "id": "P09",
+    "title": "AgriGov",
+    "arxiv": "2606.08272",
+    "date": "2026-06-06",
+    "effect": "new-corpus",
+    "in_project": false,
+    "summary": "Structured multilingual dataset of Indian government farmer schemes. Domain-specific; matches BharatGen's agriculture vertical."
+  },
+  {
+    "id": "P10",
+    "title": "Darshana Graph",
+    "arxiv": "2606.18222",
+    "date": "2026-06-16",
+    "effect": "new-corpus",
+    "in_project": false,
+    "summary": "Parallel commentary corpus for comparative Indian philosophy. Rare classical/Indian Knowledge System content."
+  },
+  {
+    "id": "P11",
+    "title": "BhashaSutra",
+    "arxiv": "2604.18423",
+    "date": null,
+    "effect": "changed-strategy",
+    "in_project": false,
+    "summary": "Task-centric unified survey of Indian NLP datasets. The document recommends using it as the master index — 'the most complete catalogue in existence'. Date given only as 'Apr 2026' in Addendum A.4 (and as '2026' in the Section 20 source index), with no day, so the date field is null."
+  },
+  {
+    "id": "P12",
+    "title": "DataOrchestra: Learning to Orchestrate Per-Example Curation of Pretraining Data",
+    "arxiv": "2607.24717",
+    "date": "2026-07-28",
+    "effect": "changed-strategy",
+    "in_project": false,
+    "summary": "The successor research line to OPUS-style selection, but for per-example processing: an orchestrator decides drop/keep/clean per chunk, then selects operations from programmatic edits to LLM rewriting with a generated instruction per rewrite. Validated by from-scratch pretrains at 0.5B-7B with stable average gains across 11 benchmarks, and effective for math continued-pretraining. To be read before finalizing the Section 17 pipeline — it is the strongest current argument that per-example adaptivity pays at the cleaning stage rather than the selection stage."
+  },
+  {
+    "id": "P13",
+    "title": "IKS-Instruct",
+    "arxiv": "2607.23322",
+    "date": "2026-07-28",
+    "effect": "new-corpus",
+    "in_project": false,
+    "summary": "24,795 instruction pairs across 7 languages (en/hi/sa/ta/te/kn/ml), 41 Vedic pedagogical techniques, aligned to CBSE classes 6-12; sources include the Bhagavad Gita, Thirukkural, Sangam literature, Vedic texts, Vedic-math sutra demonstrations, bilingual pairs and multi-turn dialogues. Fills two flagged gaps: BhashaBench's weakest domain (Ayurveda, GPT-4o 59.74%) and Section 10.1's proposed syllabus-structure curriculum-generation workaround, now executed by someone else. Licence unverified — check before ingestion."
+  },
+  {
+    "id": "P14",
+    "title": "MoLGE: Mixture of Language-Group Experts",
+    "arxiv": "2607.24030",
+    "date": "2026-07-28",
+    "effect": "changed-strategy",
+    "in_project": false,
+    "summary": "Dedicated experts per cluster of similar languages plus hierarchical LoRA for massively multilingual ASR, studying linguistic vs data-driven grouping criteria. Design evidence for MoE routing: converges from the ASR side with BharatGen's observation that MoE layers spontaneously grouped Hindi/Marathi and with Param-2's shared+routed expert split. Language-group experts (not per-language) are emerging as the pattern for 22-language capacity without dilution."
+  },
+  {
+    "id": "P15",
+    "title": "The Physics of Multi-Turn Long-Horizon Planning",
+    "arxiv": "2607.24720",
+    "date": "2026-07-28",
+    "effect": "changed-strategy",
+    "in_project": false,
+    "summary": "Controlled environment isolating how planning ability is acquired across pre- and post-training. Three findings for agentic data: explicit world-model construction via chain-of-thought state-transition data in pre-training yields stronger long-horizon generalization; atomic skills alone do not compose, but a little long-horizon data works; and suboptimal trajectories severely impair performance because errors amplify over horizons — so filter agentic traces hard rather than maximizing volume."
+  },
+  {
+    "id": "P16",
+    "title": "XIH-Bench / Language Shapes Instruction-Hierarchy Compliance",
+    "arxiv": "2607.23545",
+    "date": "2026-07-28",
+    "effect": "new-benchmark",
+    "in_project": false,
+    "summary": "Six languages, same- and cross-language instruction conflicts. Names a new failure mode — the 'Language Boundary Effect', where cross-language conflicts get higher compliance than same-language — and finds that language specialization makes lower-priority instructions in model-favored languages harder to override. Threat-model translation: an Indic-expert model acquires a jailbreak surface of injections written in its own favored languages, so cross-language-injection red-teaming joins the 22-language safety plan."
+  },
+  {
+    "id": "P17",
+    "title": "PatiGonit22K",
+    "arxiv": "2607.22859",
+    "date": "2026-07-28",
+    "effect": "reversed",
+    "in_project": false,
+    "summary": "22,441 Bengali math word problems, simple through multi-operation, translated/annotated/culturally adapted/verified. Corrects the report: Section 6 said Indic math/STEM is 'essentially absent'; amend to 'nearly absent' — this exists, though four orders of magnitude below MegaMath. The generate-and-translate strategy of Section 6 stands."
+  },
+  {
+    "id": "P18",
+    "title": "Systematic analysis of LLM and transformer MT for English-Tamil across diverse data",
+    "arxiv": "2607.24515",
+    "date": "2026-07-28",
+    "effect": "validated",
+    "in_project": false,
+    "summary": "Added to the Section 7 translation evidence base. The document records no further detail and issues no strategy change on the back of it."
+  },
+  {
+    "id": "P19",
+    "title": "Agentic code repair via typed revision contracts / relevance-guided agentic corpus search",
+    "arxiv": "2607.24604",
+    "date": "2026-07-28",
+    "effect": "validated",
+    "in_project": false,
+    "summary": "Listed jointly in Addendum B.5 as a single row covering arXiv:2607.24604 and arXiv:2607.24223; the arxiv field records the first id only. The document's point is that the agentic-coding literature is compounding daily, reinforcing Section 5.2's conclusion that this is the live front."
+  }
+]

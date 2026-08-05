@@ -1,0 +1,80 @@
+{
+  "note": "Extracted from docs/DECISIONS.md §4.4. The vocabulary decision is the one place in this project where a design choice has a price attached end to end.",
+  "source": "docs/DECISIONS.md §4.4",
+  "vocab_trade": {
+    "change": "131,072 to 208,896",
+    "costs": {
+      "value": 0.012,
+      "unit": "share of forward compute",
+      "note": "1.2% more work on every token."
+    },
+    "buys": {
+      "value": 0.229,
+      "unit": "share",
+      "note": "Indic fertility from about 2.4 to about 1.85 tokens per word."
+    },
+    "over": {
+      "value": 0.253,
+      "unit": "share of the mixture",
+      "note": "The India slice of a 15T budget."
+    },
+    "steps": [
+      {
+        "label": "token saving",
+        "expression": "0.253 x 0.229",
+        "value": 0.0579,
+        "unit": "share",
+        "as_tokens": 869000000000
+      },
+      {
+        "label": "FLOPs saved",
+        "expression": "6 x 40e9 x 8.69e11",
+        "value": 2.09e+23,
+        "unit": "FLOPs"
+      },
+      {
+        "label": "GPU-hours",
+        "expression": "2.09e23 / 4.0e14",
+        "value": 144800,
+        "unit": "H100-hours"
+      },
+      {
+        "label": "cost saved",
+        "expression": null,
+        "value": 290000,
+        "unit": "USD",
+        "inr": 25000000
+      }
+    ],
+    "return": "Roughly a 5x return on the 1.2% compute cost, for one epoch, before any inference-side saving.",
+    "provenance": "estimated"
+  },
+  "run_cost": {
+    "note": "Derived here, from the same three constants docs/DECISIONS.md 4.4 uses for the vocabulary trade: 6ND for training FLOPs, 4.0e14 sustained FLOP/s per H100, and the USD/INR rate implied by that section's own figures. No new assumption is introduced; the chapter that asks what it costs was otherwise pricing nothing.",
+    "params": 40000000000,
+    "tokens": 15000000000000,
+    "steps": [
+      {
+        "label": "training FLOPs",
+        "expression": "6 x 40e9 x 15e12",
+        "value": 3.6e+24,
+        "unit": "FLOPs"
+      },
+      {
+        "label": "H100-hours",
+        "expression": "3.6e24 / 4.0e14 / 3600",
+        "value": 2500000,
+        "unit": "H100-hours"
+      },
+      {
+        "label": "compute cost",
+        "expression": "2.5e6 x 2.00",
+        "value": 5000000,
+        "unit": "USD",
+        "inr": 431000000
+      }
+    ],
+    "caveat": "Compute only, and one full pass of the schedule. It excludes data acquisition, annotation, storage, egress, the failed runs every real project has, and every salary. A published rate of USD 2.00 per H100-hour is a list price; large reservations are negotiated well below it and spot capacity below that again. Treat it as the order of magnitude, which is what the fork actually turns on.",
+    "provenance": "estimated"
+  }
+}

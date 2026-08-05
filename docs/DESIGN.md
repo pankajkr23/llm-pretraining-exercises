@@ -11,7 +11,28 @@ This is the canonical reference; `AGENTS.md` carries the short version.
 - **One consistent shell across pages.** Same header structure, back navigation, type scale,
   accent, panel/card treatment, and footer voice on every page (landing, each exercise).
 - **Written for a general audience** — blog-style and self-contained (see [Copy & tone](#copy--tone)).
-- **Theme-aware.** Style light and dark via `prefers-color-scheme`; every token has both values.
+- **One content width; prose is limited by line length, not by the container.** The wrapper is a
+  single width and never moves, so every left edge on a page lines up. What varies is how far an
+  element *fills* it: prose stops at its own `ch` measure and leaves the right ragged, while
+  tables, figures and registers use the whole width. An earlier version capped the wrapper narrow
+  and let wide content break out past it — both widths were defensible and the alternation was
+  not, because every breakout moved the left edge and the eye lost its anchor twice per chapter.
+- **Tokens live in one file: `deploy/vercel/_shared/tokens.css`**, copied to `/_shared/` by the
+  build and linked absolutely by every page. A page defines no colour of its own beyond what is
+  genuinely local to it (a diagram's own hues); everything shared is declared once.
+- **Six themes.** The system light/dark pair is the default, joined by four the reader chooses —
+  soft light, tinted dark, high contrast, neon — via `:root[data-theme="…"]`, with the choice kept
+  in `localStorage` under `era5-theme` and applied by a few inline lines in each `<head>` before
+  first paint. Three rules make this safe rather than decorative:
+  1. The `prefers-color-scheme` block is scoped to `:root:not([data-theme])`, so a chosen theme
+     always wins regardless of source order.
+  2. **Every theme defines the whole token set.** A theme inheriting half its colours is how a
+     token ends up unreadable in exactly one combination nobody tested.
+  3. A page with its own local tokens repeats them for the dark themes, or a reader on Neon with a
+     light OS gets light diagram colours on a dark page.
+  Every text token in every theme is verified at 4.5:1 against both surfaces **before** it ships,
+  generated from a checked palette rather than chosen by eye — four contrast failures reached
+  production here when they were eyeballed, `--faint` at 3.33:1 and `--accent` at 4.31:1 among them.
 
 ## Palette tokens
 

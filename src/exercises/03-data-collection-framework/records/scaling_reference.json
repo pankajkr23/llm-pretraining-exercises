@@ -1,0 +1,235 @@
+{
+  "note": "What comparable models were actually trained on. Gathered by web research in August 2026 rather than extracted from docs/ATLAS.md, because the Atlas carries only the Indian models and two frontier figures — and the question this record answers (how big a corpus does a 40B seed need, and how does it grow) cannot be settled from five rows. Every entry names the source it was read from. Where a figure is undisclosed it is recorded as null rather than estimated: Gemma 4's token budget is the assignment's own comparator and its technical report does not state it, which is itself the finding.",
+  "gathered": "2026-08-05",
+  "models": [
+    {
+      "id": "gemma-4-31b",
+      "family": "Gemma 4",
+      "model": "Gemma 4 31B",
+      "params_total": 30700000000,
+      "params_active": 30700000000,
+      "architecture": "dense",
+      "tokens": null,
+      "tokens_note": "Not disclosed. The technical report's data section (2.4) states only the domains — web documents, code, images, audio — and a January 2025 cutoff. Table 1 gives 29,290M LLM parameters, which is the non-embedding count; the 30.7B here is the total the assignment brief names, and the 262,144 x 6,144 embedding table accounts for the difference.",
+      "vocab": 262144,
+      "source": "arXiv:2607.02770, Gemma 4 technical report, Table 1 and section 2.4",
+      "why_here": "The assignment's named comparator. That its budget is undisclosed is why this project cannot simply match it and has to derive its own."
+    },
+    {
+      "id": "gemma-4-26b-a4b",
+      "family": "Gemma 4",
+      "model": "Gemma 4 26B-A4B",
+      "params_total": 26000000000,
+      "params_active": 3800000000,
+      "architecture": "moe",
+      "tokens": null,
+      "tokens_note": "Not disclosed, as with every Gemma 4 variant.",
+      "vocab": 262144,
+      "source": "arXiv:2607.02770, Gemma 4 technical report, Table 1",
+      "why_here": "The same family shipping a dense model and a sparse one side by side. 3.8B active of 26B stored is 14.6% — the clearest in-family evidence that the dense-to-MoE move buys capacity without buying proportional compute."
+    },
+    {
+      "id": "gemma-3-27b",
+      "family": "Gemma 3",
+      "model": "Gemma 3 27B",
+      "params_total": 27000000000,
+      "params_active": 27000000000,
+      "architecture": "dense",
+      "tokens": 14000000000000,
+      "vocab": 262144,
+      "source": "arXiv:2503.19786, Gemma 3 technical report",
+      "why_here": "The previous generation of the comparator, and the only Gemma whose budget is public. Its family scales the corpus with the model: 1B on 2T, 4B on 4T, 12B on 12T, 27B on 14T."
+    },
+    {
+      "id": "gemma-3-12b",
+      "family": "Gemma 3",
+      "model": "Gemma 3 12B",
+      "params_total": 12000000000,
+      "params_active": 12000000000,
+      "architecture": "dense",
+      "tokens": 12000000000000,
+      "vocab": 262144,
+      "source": "arXiv:2503.19786, Gemma 3 technical report",
+      "why_here": "The lower rung of the same ladder, showing the family's scaling is roughly one trillion tokens per billion parameters at this size."
+    },
+    {
+      "id": "llama-3.1-405b",
+      "family": "Llama 3.1",
+      "model": "Llama 3.1 405B",
+      "params_total": 405000000000,
+      "params_active": 405000000000,
+      "architecture": "dense",
+      "tokens": 15600000000000,
+      "vocab": 128256,
+      "source": "Meta, Llama 3.1 release and the Llama 3 Herd of Models report",
+      "why_here": "The counter-example to Gemma's ladder, and the single most useful row here: Llama 3.1 trained 8B, 70B and 405B on about the same 15T. A corpus is not sized by the model that reads it."
+    },
+    {
+      "id": "llama-3.1-8b",
+      "family": "Llama 3.1",
+      "model": "Llama 3.1 8B",
+      "params_total": 8000000000,
+      "params_active": 8000000000,
+      "architecture": "dense",
+      "tokens": 15000000000000,
+      "vocab": 128256,
+      "source": "Meta, Llama 3.1 release",
+      "why_here": "1,875 tokens per parameter — the overtrained end of the range, and the reason a small model can be worth serving."
+    },
+    {
+      "id": "deepseek-v3",
+      "family": "DeepSeek",
+      "model": "DeepSeek-V3",
+      "params_total": 671000000000,
+      "params_active": 37000000000,
+      "architecture": "moe",
+      "tokens": 14800000000000,
+      "vocab": null,
+      "source": "arXiv:2412.19437, DeepSeek-V3 technical report",
+      "why_here": "The scale target's shape: 671B stored, 37B active (5.5%), 256 routed experts plus one shared, trained on 14.8T for 2.664M H800-hours. A 671B model reading no more text than a 27B Gemma."
+    },
+    {
+      "id": "sarvam-30b",
+      "family": "Sarvam",
+      "model": "Sarvam-30B",
+      "params_total": 32000000000,
+      "params_active": 2400000000,
+      "architecture": "moe",
+      "tokens": 16000000000000,
+      "vocab": null,
+      "source": "Sarvam AI, 'Open-Sourcing Sarvam 30B and 105B' (sarvam.ai/blogs/sarvam-30b-105b): 32B total, ~2.4B active, 128 experts, GQA, 65K context, 16T tokens",
+      "why_here": "The closest Indian peer to the seed size, and it read more text than Gemma 3 27B did."
+    },
+    {
+      "id": "sarvam-105b",
+      "family": "Sarvam",
+      "model": "Sarvam-105B",
+      "params_total": 106000000000,
+      "params_active": 10000000000,
+      "architecture": "moe",
+      "tokens": 12000000000000,
+      "vocab": null,
+      "source": "Sarvam AI, 'Open-Sourcing Sarvam 30B and 105B': 106B total, ~10B active, 128 experts top-8, MLA, 128K context, 12T tokens",
+      "why_here": "The inversion that makes the point: three and a half times the parameters of Sarvam-30B, trained on a quarter less text."
+    },
+    {
+      "id": "lightninglm-120b",
+      "family": "LightningLM",
+      "model": "LightningLM 0.1V 120B",
+      "params_total": 118670000000,
+      "params_active": 5930000000,
+      "architecture": "moe",
+      "tokens": null,
+      "tokens_note": "Not stated in the abstract. The paper is a systems and experience report; its contribution is the growth method rather than a corpus.",
+      "vocab": null,
+      "source": "arXiv:2606.07404, Reversible Foundations: Training a 120B Sparse MoE through State-Preserving Scaling",
+      "why_here": "The growth method this plan copies. Grown in four stages from a small dense seed through 5B and 9B MoE to 120B with 460 routed experts under top-12 routing, each stage grown from the trained weights of the last. Active parameters rise from 1.78B to 5.93B — about 5% of the 118.67B stored — and the whole lineage runs on single eight-GPU nodes."
+    },
+    {
+      "id": "param-2-17b",
+      "family": "BharatGen",
+      "model": "Param-2-17B-A2.4B",
+      "params_total": 17000000000,
+      "params_active": 2400000000,
+      "architecture": "moe",
+      "tokens": 22000000000000,
+      "vocab": null,
+      "source": "docs/ATLAS.md 1.1",
+      "why_here": "The most overtrained Indian model on record: 22T tokens into 2.4B active parameters."
+    },
+    {
+      "id": "qwen3",
+      "family": "Qwen",
+      "model": "Qwen3",
+      "params_total": null,
+      "params_active": null,
+      "architecture": "moe",
+      "tokens": 36000000000000,
+      "vocab": null,
+      "source": "docs/ATLAS.md B, session notes",
+      "why_here": "The frontier corpus figure, across 119 languages. The ceiling this plan's last rung is aiming at."
+    },
+    {
+      "id": "llama-4",
+      "family": "Llama 4",
+      "model": "Llama 4",
+      "params_total": null,
+      "params_active": null,
+      "architecture": "moe",
+      "tokens": 30000000000000,
+      "vocab": null,
+      "source": "docs/ATLAS.md B, session notes",
+      "why_here": "The other frontier figure: over 30T. Stated as a floor rather than a measurement."
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "claim": "A corpus is not sized by the model that reads it.",
+      "evidence": "Llama 3.1 trained 8B, 70B and 405B on about the same 15T. DeepSeek-V3 at 671B total read 14.8T — less than Gemma 3 27B's 14T is above. Sarvam-105B read 12T where the smaller Sarvam-30B read 16T.",
+      "consequence": "Growing from a 40B seed to the largest Indic model is not a proportional data problem. Parameters can grow tenfold while the corpus grows by half."
+    },
+    {
+      "id": "F2",
+      "claim": "Sparsity is what makes the growth affordable, not more text.",
+      "evidence": "DeepSeek-V3 activates 37B of 671B stored (5.5%); LightningLM 5.93B of 118.67B (5.0%); Gemma 4's own MoE variant 3.8B of 26B (14.6%); Sarvam-105B 10.3B of 105B (9.8%).",
+      "consequence": "The step from a dense seed to a sparse successor buys capacity at close to constant compute per token, which is why the growth path is dense-to-MoE rather than dense-to-bigger-dense."
+    },
+    {
+      "id": "F3",
+      "claim": "Growth can preserve state rather than restart.",
+      "evidence": "LightningLM grew one lineage in four stages — dense seed, 5B MoE, 9B MoE, 120B — each from the trained weights of the one before, on single eight-GPU nodes.",
+      "consequence": "The seed is not a throwaway prototype. Every token it reads is inherited by everything grown from it, which is what makes the seed's data quality the highest-leverage decision in the plan."
+    },
+    {
+      "id": "F4",
+      "claim": "None of this helps the constraint that actually binds.",
+      "evidence": "Every model above grew its corpus by adding English, code and multilingual web text. The natural Indian-language pool measured in this project is about 300B tokens and does not grow because a model got larger.",
+      "consequence": "At every rung of the growth path the Indic share falls unless somebody funds collection. Scaling makes an India-first model less Indian, not more, unless the collection queue is funded alongside the compute."
+    }
+  ],
+  "density": {
+    "note": "Tokens per parameter, on both denominators. For a sparse mixture of experts the meaningful one is active parameters — the count that actually processes each token — and it is the denominator the 40B seed has to be judged on, because the proposed architecture activates about 5B of its 40B.",
+    "chinchilla": 20,
+    "chinchilla_note": "Compute-optimal, and obsolete as a planning figure. It minimises the cost of training; every model below deliberately overtrains because the cost that matters is serving.",
+    "rows": [
+      {
+        "model": "Sarvam-30B",
+        "tokens": 16000000000000,
+        "active": 2400000000,
+        "per_active": 6667,
+        "per_total": 500
+      },
+      {
+        "model": "Sarvam-105B",
+        "tokens": 12000000000000,
+        "active": 10000000000,
+        "per_active": 1200,
+        "per_total": 113
+      },
+      {
+        "model": "DeepSeek-V3",
+        "tokens": 14800000000000,
+        "active": 37000000000,
+        "per_active": 400,
+        "per_total": 22
+      },
+      {
+        "model": "Gemma 3 27B (dense)",
+        "tokens": 14000000000000,
+        "active": 27000000000,
+        "per_active": 519,
+        "per_total": 519
+      },
+      {
+        "model": "Llama 3.1 8B (dense)",
+        "tokens": 15000000000000,
+        "active": 8000000000,
+        "per_active": 1875,
+        "per_total": 1875
+      }
+    ],
+    "finding": "Comparable models train between 400 and 6,667 tokens per active parameter. The two closest Indian peers bracket the range at 1,200 and 6,667. A 40B sparse model with about 5B active, trained on 16.8T, sits at 3,360 per active parameter — inside that bracket, between Sarvam-105B and Sarvam-30B.",
+    "against_200b": "A 200B-token budget on the same 5B active parameters is 40 tokens per active parameter: twice Chinchilla, and between 10x and 167x below every model in this table. Chinchilla is the wrong anchor for a model that will be served rather than benchmarked, which is the argument this project already makes for training past compute-optimal."
+  }
+}

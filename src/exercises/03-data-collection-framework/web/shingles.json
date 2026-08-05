@@ -1,0 +1,18 @@
+{
+  "shingle_count": 411442,
+  "benchmarks": [
+    "MILU"
+  ],
+  "coverage": "partial",
+  "gram_widths": [
+    9,
+    10,
+    11,
+    12,
+    13
+  ],
+  "unindexable_items": 0,
+  "indexed_items": 8923,
+  "narrow_items": 56,
+  "note": "Index built from 1 benchmark file(s) at window widths [9, 10, 11, 12, 13]. Coverage is limited to these; any benchmark absent here is undetectable."
+}
