@@ -227,7 +227,7 @@ function chapterBudget(ctx) {
       text(' — which is nearly free up to a point somebody measured. Scrolling steps the schedule; the pool never changes.'),
     ],
     figNum: 'Fig. 1 — the schedule, not the pool',
-    caption: `Fig. 1 — Effective tokens from a fixed pool of ${fmt(POOL, 'count')} of natural Indian-language text as passes accumulate. One mark per pass; red past the ceiling of ${hard}, where no published work reaches.`,
+    caption: `Fig. 1 — Effective tokens from a fixed pool of ${fmt(POOL, 'count')} of natural Indian-language text as passes accumulate. One mark per pass for the first three states, red past the ceiling of ${hard} where no published work reaches; the last state switches to one mark per budget on the growth path, with the seed filled.`,
     pill: `${advised} passes ≈ free`,
     rail: [
       text('The knee at '),
@@ -268,7 +268,7 @@ function chapterBudget(ctx) {
         api.bigHit(false);
         api.sub('natural Indian-language text at the recommended budget');
         api.verdict((recommended.verdict || 'recommended').toUpperCase(), false);
-        api.note(`Every budget reads its own pool four times. What changes between them is how much text was collected, not how hard it was read — and past this model size, collection is the wall. The ladder is judged as: ${presets.map((p) => `${p.id}, ${(p.verdict || '').toLowerCase()}`).join('; ')}.`);
+        api.note(`One mark per budget here rather than per pass — the seed, and the two rungs above it. Every budget reads its own pool four times. What changes between them is how much text was collected, not how hard it was read — and past this model size, collection is the wall. The ladder is judged as: ${presets.map((p) => `${p.id}, ${(p.verdict || '').toLowerCase()}`).join('; ')}.`);
         api.strip(presets.map((p) => (p.recommended ? 'reg' : '')));
         return;
       }
@@ -1531,7 +1531,8 @@ function chapterTokenizer(ctx) {
         api.note(`The greyed bars are English tokenizers, here as the baseline the tax is measured against. Among the ${multilingual.length} built for multilingual text — ${multilingual.map((r) => shortName(r.tokenizer)).join(', ')} — Gemma 4 is last, against ${multilingual[0].mean_tax.value.toFixed(2)}× for the best. Continue-pretraining from a model inherits its tokenizer, because you cannot swap one without discarding the embedding table you were reusing — so this cost would be locked in for the life of the model.`);
       } else if (st.key === 'blocks') {
         const top = blocks.blocks[0].slots;
-        blocks.blocks.slice(0, 10).forEach((blk) => {
+        const shownBlocks = blocks.blocks.slice(0, 10);
+        shownBlocks.forEach((blk) => {
           const cls = blk.kind === 'latin' ? 'dim' : blk.kind === 'technical' ? 'dim' : 'natural';
           const { row, val } = barFor(blk.name, blk.slots, top, cls);
           val.append(renderNumber({ value: blk.slots, unit: 'count', provenance: 'estimated', source: 'the vocabulary design' }, { unit: false }));
@@ -1539,9 +1540,9 @@ function chapterTokenizer(ctx) {
         });
         api.big({ value: blocks.chosen, unit: 'count', provenance: 'estimated', source: 'the vocabulary design' });
         api.bigHit(false);
-        api.sub(`slots — ${fmt(blocks.sum, 'count')} needed, rounded to ${blocks.alignment}`);
+        api.sub(`slots — ${fmt(blocks.sum, 'count')} needed across ${blocks.blocks.length} blocks, rounded to ${blocks.alignment}`);
         api.verdict('DESIGNED, NOT GUESSED', false);
-        api.note('Nine Brahmic scripts, plus Perso-Arabic for Urdu, Sindhi and Kashmiri, plus Ol Chiki and Meitei Mayek. Dropping Urdu to stay Brahmic-only would be the most conspicuous omission an India-first model could make.');
+        api.note(`The ten largest of ${blocks.blocks.length} blocks are drawn; the rest are maths, structured output, special tokens and byte fallback, and the arithmetic below lists every one. Nine Brahmic scripts, plus Perso-Arabic for Urdu, Sindhi and Kashmiri, plus Ol Chiki and Meitei Mayek — dropping Urdu to stay Brahmic-only would be the most conspicuous omission an India-first model could make.`);
       } else {
         const steps = cost.vocab_trade.steps;
         const top = steps[2].value;
@@ -1551,7 +1552,7 @@ function chapterTokenizer(ctx) {
         api.bigHit(false);
         api.sub(`saved on one epoch — about ${fmt(steps[2].value, 'count')} H100-hours`);
         api.verdict('~5× RETURN', false);
-        api.note('A 1.2% increase in per-token compute, against 869 billion tokens never spent. One epoch, before any saving at serving time.');
+        api.note(`A ${(cost.vocab_trade.costs.value * 100).toFixed(1)}% increase in per-token compute, against ${fmt((cost.vocab_trade.steps.find((x) => x.as_tokens) || {}).as_tokens, 'count')} of tokens never spent. One epoch, before any saving at serving time.`);
       }
       api.extra.replaceChildren(bars);
       api.strip([]);

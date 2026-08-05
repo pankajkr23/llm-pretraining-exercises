@@ -166,6 +166,11 @@
 .fig-tick { width: 9px; height: 19px; border-radius: 2px; background: var(--track); transition: background 0.18s; }
 .fig-tick.reg { background: var(--accent); }
 .fig-tick.hit { background: var(--grade-x); }
+/* A strip of 145 has to fit the figure column without dropping any of them. */
+.strip.dense { gap: 2px; }
+.strip.dense .fig-tick { width: 7px; height: 15px; border-radius: 2px; }
+.strip.denser { gap: 2px; }
+.strip.denser .fig-tick { width: 5px; height: 12px; border-radius: 1px; }
 
 
 

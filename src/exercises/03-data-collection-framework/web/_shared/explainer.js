@@ -80,9 +80,15 @@ export function makeExplainer({ $, onPlay }) {
           /* Each mark is '' or a space-separated set of modifiers — 'reg', 'hit', 'guess' — so one
            * unit can be both excluded and the reader's prediction without either overwriting the
            * other. classList.add takes a single token, hence the split. */
+          /* Every mark, always. This used to `slice(0, 44)` — a silent truncation that rendered 44
+           * of the legal chapter's 145 datasets under a caption promising nothing was hidden. A
+           * cap that drops data without saying so is the one thing this whole page argues against,
+           * so the marks shrink to fit instead of disappearing. */
           strip: (marks) => {
             stripEl.replaceChildren();
-            marks.slice(0, 44).forEach((m) => {
+            stripEl.classList.toggle('dense', marks.length > 60);
+            stripEl.classList.toggle('denser', marks.length > 120);
+            marks.forEach((m) => {
               const t = $('div', 'fig-tick');
               String(m || '').split(/\s+/).filter(Boolean).forEach((cls) => t.classList.add(cls));
               stripEl.append(t);
