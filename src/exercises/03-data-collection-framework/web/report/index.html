@@ -345,7 +345,7 @@
           const ATTACKS = [
             { marg: 'The index',
               lead: 'What we are protecting is one question we intend to grade the model on. The gate hashes it into every ',
-              bold: 'thirteen-word window', tail: ' it contains and keeps only those. The sentence itself never ships.',
+              bold: 'thirteen-word window', tail: ' it contains — a 26-word question makes 14 of them, a 14-word question makes 2 — and keeps only those hashes. The sentence itself never ships.',
               transform: null },
             { marg: 'Attack 1 · paste it',
               lead: 'Now it turns up inside an ordinary training shard, copied exactly. Every window matches, so ',
@@ -481,9 +481,13 @@
               { unit: false },
             ));
             big.classList.toggle('hit', caught);
+            /* State 0 has to teach the arithmetic, or the number is just a number: a question of W
+             * words yields W-12 overlapping windows, and each is a fingerprint. Without that a
+             * reader watches the count change and has no idea what changed it. */
+            const words0 = words(question.value).length;
             gsub.textContent = ATTACKS[i].transform
               ? `of the shard's ${st.marks.length} thirteen-word windows match the index`
-              : 'thirteen-word windows taken from your question';
+              : `overlapping windows from your ${words0}-word question — every 13 consecutive words make one`;
             verdict.textContent = ATTACKS[i].transform
               ? (caught ? 'SHARD DROPPED' : 'NOTHING DROPPED')
               : 'REGISTERED';
@@ -492,7 +496,9 @@
               ? (caught
                 ? 'Named source: your question. One matching window is already enough — thirteen consecutive words agreeing by chance is not a thing that happens.'
                 : 'No red anywhere is the alarm. The gate removes nothing, so this shard would be trained on.')
-              : 'Red marks what the gate removes. Here it removes nothing yet.';
+              : (st.hits <= 3
+                ? `Each window is a fingerprint, and a short question leaves few of them — yours makes ${st.hits}. That is exactly why short questions are the hardest to protect. Scroll: this question is about to turn up inside a training shard.`
+                : `Each of these ${st.hits} windows is a fingerprint the gate can match. Scroll: this question is about to turn up inside a training shard, and then somebody starts trying to hide it.`);
 
             strip.replaceChildren();
             st.marks.slice(0, 44).forEach((matched) => {
