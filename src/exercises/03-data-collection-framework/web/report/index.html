@@ -744,6 +744,8 @@
           theirs.append(src);
 
           const fert = data.fertility;
+          // Language codes are for the data; a reader wants the name.
+          const nameOf = new Map((records.languages || []).map((l) => [l.code, l.name]));
           const measured = Object.entries(f).filter(([, v]) => v.value !== null);
           const english = (f.en || {}).value;
           const worst = measured.filter(([c]) => c !== 'en').sort((a, b) => b[1].value - a[1].value)[0];
@@ -755,7 +757,7 @@
           ours.append($('div', 'lbl', 'measured — by us, partially'));
           ours.append(
             row('average Indic tax vs English', meanTax ? `${meanTax.toFixed(1)}×` : '—', 'bad'),
-            row(`worst language · ${worst ? worst[0] : '—'}`, worst && english ? `${(worst[1].value / english).toFixed(1)}×` : '—', 'bad'),
+            row(`worst language · ${worst ? (nameOf.get(worst[0]) || worst[0]) : '—'}`, worst && english ? `${(worst[1].value / english).toFixed(1)}×` : '—', 'bad'),
             row('a better tokenizer cuts it by', '78%'),
             row('languages covered', `${measured.length - 1} of ${Object.keys(f).length - 1}`));
           const why = $('p', 'fig-note');
