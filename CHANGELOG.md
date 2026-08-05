@@ -21,6 +21,12 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   excluded may enter a commercial mix · every judgment carries its reasoning and confidence · a
   measurement must name what produced it · no source content is silently dropped. Each ships with a
   test proving it fails when broken.
+- **The tokenizer tax, measured rather than cited.** Twenty of the twenty-two scheduled languages
+  now carry a real fertility number with a run id behind it, from three ungated tokenizers over
+  FLORES-200. Our own measurement puts the mean Indic tax at ×7.46 under cl100k and finds XLM-R
+  removes 78% of it — independent corroboration of the published figures the atlas cites (8.0× and
+  73%). Still partial: three of the protocol's six tokenizers are unavailable, and the candidate
+  vocabulary under test has never been trained, so no parity ratio is reported.
 - **Interactive explainers** on both pages, replacing static tables and charts: the contamination
   gate you can try to defeat with your own sentence, a vocabulary optimum that moves as you change
   the model width, a quality filter that deletes twelve of twenty-two languages until the protected
