@@ -601,7 +601,7 @@
 
           const STATES = [
             { d: WIDTHS[0], marg: 'Narrow · 2,048',
-              lead: 'On a narrow model the vocabulary projection is a large share of every forward pass, so ',
+              lead: 'Width is how much the model computes per token. On a narrow model there is little else going on, so scoring the vocabulary list dominates every step and a long list is expensive — which means ',
               bold: 'the optimum falls off the bottom of the range', tail: ' we swept. The answer is not "64,000" — it is "smaller than we looked".' },
             { d: WIDTHS[1], marg: 'Wider · 4,096',
               lead: 'Double the width and the body of the network dwarfs the projection, so ',
@@ -665,7 +665,7 @@
             n: 2, wide: true, kind: 'modelled',
             title: 'The vocabulary is a consequence of the width',
             claim: [
-              document.createTextNode('Two costs pull against each other. A bigger vocabulary means fewer tokens per word, which is a saving on every token of the whole run; but the output projection grows with it, taxing every forward pass. The best size is where the gap between them is widest — and that gap moves with '),
+              document.createTextNode('A model does not read letters, it reads pieces — and the vocabulary is the list of pieces it knows. Make that list longer and Indic words get chopped into fewer pieces, so every sentence costs less to train on. But the model’s last layer has to score every entry in the list on every single step, so a longer list also makes each step slower. One line below is the saving, the other is the added cost; the best size is where the gap between them is widest, because that gap is what you actually gain. It moves with '),
               $('b', '', 'how wide the model is'),
               document.createTextNode('. Scrolling changes the width. The curve is a model '),
               $('b', '', 'anchored on our own fertility measurement'),
@@ -982,7 +982,7 @@
                 : '. Collecting more English does not create room for Indic; it spends it.',
             })),
             { rung: 2, lane: true, marg: 'What the filter may touch',
-              lead: 'Group the same tiers by whether the quality selector is allowed to score them. The tiers in the protected lane are there because an English-tuned filter reads them as noise, so they are ',
+              lead: 'Before training, a scoring model reads every document and throws away the ones it rates poorly. It was tuned on English, so it rates thin Indian-language text as rubbish. Group the tiers by whether that scorer is even allowed to look at them: the ones in the protected lane are ',
               bold: 'exempted rather than defended', tail: ' — a filter you have to argue with every batch is a filter that eventually wins.' },
             { rung: 2, synth: true, marg: 'How much is manufactured',
               lead: 'Now split the Indic share by where it came from. Most of it is generated rather than collected, which is the fact the whole corpus architecture exists to work around: ',
@@ -1005,7 +1005,7 @@
             n: 5, wide: true, kind: 'explainer',
             title: 'The mixture is zero-sum, and a third of it is hidden from the filter',
             claim: [
-              document.createTextNode('The corpus proposed for the run: eight tiers, all of them visible at once because comparing them is the point. Scrolling scales the budget and then regroups the same tiers twice — by '),
+              document.createTextNode('You cannot train on everything, so you decide what fraction of the reading is what kind of text — English web pages, code, maths, Indian-language writing. Each kind is a tier, and the eight shares have to add up to one whole: giving more to one takes it from another. All eight stay on screen because comparing them is the point. Scrolling scales the total and then regroups the same eight twice — by '),
               $('b', '', 'what the quality filter may score'),
               document.createTextNode(', and by '),
               $('b', '', 'how much of the Indic share is manufactured'),
@@ -1380,7 +1380,7 @@
           const STATES = [
             ...LADDER.map((e) => ({
               epochs: e,
-              marg: `x${e} ${e === 1 ? 'pass' : 'passes'}`,
+              marg: `${e} ${e === 1 ? 'pass' : 'passes'} over the same text`,
               lead: e === 1
                 ? 'Read the natural Indic pool once and this is everything it contributes. It is not enough for the budget, and no amount of collecting closes the gap in the time available — so the question is not how much more text exists, it is '
                 : e <= advised
@@ -1403,7 +1403,7 @@
             n: 10, wide: true, kind: 'explainer',
             title: 'A small pool read four times is a large pool',
             claim: [
-              document.createTextNode('Only so much natural Indian-language text exists, so reaching a token budget means reading it more than once. The finding worth having is that the first few passes are nearly '),
+              document.createTextNode('There is only so much Indian-language text in the world — far less than the budget needs — so the same text gets read more than once. Two passes over 300 billion words counts as 600 billion words of training; the sum is just pool × passes. A word seen twice still teaches something, just less than a fresh one, and the useful finding is that the first few passes are nearly '),
               $('b', '', 'free'),
               document.createTextNode(' — and that they stop being free at a knee somebody measured. Scrolling steps the schedule; the pool never changes. Evidence in '),
               ref('the priors', 'priors'), document.createTextNode('.'),
