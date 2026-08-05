@@ -26,8 +26,9 @@ from .grade import grade_dataset
 from .milestones import TIER_SHAPE, build_all
 from .mix import ALWAYS_ON_SHARE, MAX_EPOCHS_ADVISED, MAX_EPOCHS_HARD
 from .models import Value
+from .orphans import find_orphans
 from .shingles import write_index
-from .sourcing import build_plan
+from .sourcing import build_lifecycle, build_plan
 from .vocab_sweep import summarise, sweep
 
 # Fertility has no measured anchor until task 2.2b runs, so the sweep's own reference point is
@@ -112,6 +113,22 @@ def _load_records(cfg: Config) -> dict[str, Any]:
     market_path = cfg.records_dir / "market.json"
     if market_path.exists():
         records["market"] = load_json(market_path)
+
+    # Documents rather than record arrays: these were extracted from the prose in DECISIONS.md and
+    # ATLAS.md, where the answers to the assignment's questions had been written and never
+    # published. They are object-shaped, so they load by name instead of through EXPECTED_COUNTS,
+    # whose check is a length.
+    for name in (
+        "posttraining",
+        "cleaning_rules",
+        "eval_policy",
+        "vocab_blocks",
+        "fertility_targets",
+        "cost",
+    ):
+        path = cfg.records_dir / f"{name}.json"
+        if path.exists():
+            records[name] = load_json(path)
     return records
 
 
@@ -390,6 +407,29 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
                 presets[len(presets) // 2]["mix"],
             ),
         ),
+        # Every dataset grouped by the training stage it serves, so post-training and evaluation
+        # stop being invisible. Nothing unmatched is dropped — it is listed with its tags.
+        "lifecycle": build_lifecycle([_dataset_index_entry(record) for record in datasets]),
+        # Tiers no benchmark can detect, priced. "Every tier must have an instrument" is one of the
+        # four evaluation disciplines, and until now nothing checked it.
+        "orphan_tiers": {
+            "provenance": "measured",
+            "source": "matched from the mixture against the benchmark register",
+            # `_strip_tier_prose` removes `capabilities` from the shipped presets to save bytes,
+            # and that is exactly the field the orphan check matches on — so this rebuilds the
+            # recommended mix from TIER_SHAPE, which still carries it. Passing the stripped mix
+            # reported all eight tiers as orphans, which is the answer you get when you ask a
+            # question with the evidence deleted.
+            "tiers": find_orphans(
+                build_all(records.get("milestones", []))[
+                    next(
+                        (i for i, p in enumerate(presets) if p.get("recommended")),
+                        len(presets) // 2,
+                    )
+                ]["mix"],
+                benchmarks,
+            ),
+        },
         "priors": [
             {
                 "id": row.get("id"),

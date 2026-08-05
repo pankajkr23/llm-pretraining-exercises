@@ -57,6 +57,71 @@ TIER_CATEGORIES: dict[str, tuple[str, ...]] = {
 
 USABLE_GRADES = ("A", "B")
 
+# The training lifecycle, read from the `stage` tag every catalogue record already carries. The
+# first build of this framework mapped `category` onto pre-training tiers and dropped everything
+# that did not fit — 36 of 145 records, including every preference, RL-only and safety dataset.
+# Grouping by stage instead is how the catalogue answers the whole assignment rather than a third
+# of it.
+LIFECYCLE: dict[str, tuple[str, ...]] = {
+    "pre-training": ("PT", "PT (multimodal)", "MT"),
+    "post-training": ("SFT", "RL", "Safety"),
+    "evaluation": ("EVAL",),
+}
+
+
+def lifecycle_of(record: dict[str, Any]) -> list[str]:
+    """Which training stages a dataset can serve.
+
+    A dataset may serve several — an instruction set that is also an eval suite is both, and
+    saying so is more useful than forcing a choice.
+
+    Args:
+        record: A catalogue index entry.
+
+    Returns:
+        Lifecycle names, in pipeline order. Empty when the record carries no recognised stage.
+    """
+    tags = set(record.get("stage") or [])
+    return [name for name, members in LIFECYCLE.items() if tags & set(members)]
+
+
+def build_lifecycle(datasets: list[dict[str, Any]]) -> dict[str, Any]:
+    """Group the whole catalogue by training stage, dropping nothing silently.
+
+    Args:
+        datasets: Catalogue index entries.
+
+    Returns:
+        Per-stage counts and committable sets, plus every record that matched no stage — reported
+        with its tags rather than discarded, because a silent drop is how two-thirds of this
+        catalogue went missing the first time.
+    """
+    stages: list[dict[str, Any]] = []
+    for name in LIFECYCLE:
+        members = [d for d in datasets if name in lifecycle_of(d)]
+        committable = [d for d in members if not blockers(d)]
+        sized = [d for d in members if _tokens(d) is not None]
+        stages.append(
+            {
+                "stage": name,
+                "datasets": len(members),
+                "committable": len(committable),
+                "committable_ids": [d["id"] for d in committable],
+                "sized": len(sized),
+                "tokens_known": round(sum(_tokens(d) or 0 for d in sized)),
+                "blocked_on_licence_only": sum(1 for d in members if blockers(d) == ["licence"]),
+            }
+        )
+
+    unclassified = [d for d in datasets if not lifecycle_of(d)]
+    return {
+        "provenance": "measured",
+        "source": "grouped from the catalogue's own stage tags",
+        "stages": stages,
+        "unclassified": [{"id": d["id"], "stage": d.get("stage") or []} for d in unclassified],
+        "unclassified_count": len(unclassified),
+    }
+
 
 def _tokens(record: dict[str, Any]) -> float | None:
     """Read a dataset's token count if one was ever stated.

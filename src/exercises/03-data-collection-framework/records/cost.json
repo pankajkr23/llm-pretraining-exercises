@@ -1,0 +1,18 @@
+{
+  "note": "Extracted from docs/DECISIONS.md §4.4. The vocabulary decision is the one place in this project where a design choice has a price attached end to end.",
+  "source": "docs/DECISIONS.md §4.4",
+  "vocab_trade": {
+    "change": "131,072 to 208,896",
+    "costs": { "value": 0.012, "unit": "share of forward compute", "note": "1.2% more work on every token." },
+    "buys": { "value": 0.229, "unit": "share", "note": "Indic fertility from about 2.4 to about 1.85 tokens per word." },
+    "over": { "value": 0.253, "unit": "share of the mixture", "note": "The India slice of a 15T budget." },
+    "steps": [
+      { "label": "token saving", "expression": "0.253 x 0.229", "value": 0.0579, "unit": "share", "as_tokens": 869000000000 },
+      { "label": "FLOPs saved", "expression": "6 x 40e9 x 8.69e11", "value": 2.09e23, "unit": "FLOPs" },
+      { "label": "GPU-hours", "expression": "2.09e23 / 4.0e14", "value": 144800, "unit": "H100-hours" },
+      { "label": "cost saved", "expression": null, "value": 290000, "unit": "USD", "inr": 25000000 }
+    ],
+    "return": "Roughly a 5x return on the 1.2% compute cost, for one epoch, before any inference-side saving.",
+    "provenance": "estimated"
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "note": "Extracted from docs/DECISIONS.md §2 and the pipeline diagram at docs/ATLAS.md §17. The tool register (records/tools.json) covers seven pipeline steps; this covers nine, and the two it adds — the safety gate and synthesis — had no surface anywhere.",
+  "stages": [
+    {
+      "id": "acquisition",
+      "name": "Acquisition",
+      "plain": "Fetch it, and be allowed to",
+      "does": "CC crawls, HF datasets, AIKosh/ULCA, eCourts, PIB, licensed publisher feeds, speech corpora, PDF and print scans.",
+      "rule": "robots.txt, noai and TDM-reservation honoured at fetch time — not retrospectively.",
+      "source": "docs/ATLAS.md §17"
+    },
+    {
+      "id": "extraction",
+      "name": "Extraction",
+      "plain": "Get the words off the page",
+      "does": "HTML to text (trafilatura, resiliparse), PDF and scans through OCR, speech through ASR, image-text interleaving.",
+      "rule": "Everyone assumes this is solved. It is solved for English layout.",
+      "source": "docs/ATLAS.md §17"
+    },
+    {
+      "id": "lid",
+      "name": "Language and script identification",
+      "plain": "Work out what language it is in",
+      "does": "GlotLID script-aware ensemble across all twelve script blocks plus Latin, with code-mix and romanisation detection.",
+      "rule": "Hinglish is a first-class language here, not noise. Misrouting is invisible — a document sent to the wrong pipeline is simply never seen again.",
+      "source": "docs/ATLAS.md §17"
+    },
+    {
+      "id": "filtering",
+      "name": "Quality filtering",
+      "plain": "Throw away the rubbish",
+      "does": "Per-language heuristics, KenLM perplexity against a verified reference, a model-based classifier trained per language, repetition and length checks.",
+      "rule": "The classifier is the adversary here, not the tool. See the objective-specific rules below.",
+      "source": "docs/ATLAS.md §17"
+    },
+    {
+      "id": "safety",
+      "name": "Safety and compliance gate",
+      "plain": "Remove what must never be trained on",
+      "does": "PII redaction with Aadhaar, PAN, passport and bank pattern detection; CSAM hash matching on all image data; multilingual toxicity classification; children's-data exclusion; licence-tag propagation; a provenance record carrying URL, licence, hash and retrieval date.",
+      "rule": "This stage has no tool in the register and no surface on the old site. It is the one stage where a miss is not a quality problem but a legal and ethical one.",
+      "source": "docs/ATLAS.md §17",
+      "unstaffed": true
+    },
+    {
+      "id": "dedup",
+      "name": "Deduplication",
+      "plain": "Remove what you already have",
+      "does": "Exact SHA, then global MinHash and LSH across corpora, then embedding-based SemDeDup on the top-quality tier.",
+      "rule": "This is the step that determines your real token count. Everything quoted before it is a claim about file size.",
+      "source": "docs/ATLAS.md §17"
+    },
+    {
+      "id": "decontamination",
+      "name": "Benchmark decontamination",
+      "plain": "Make sure the exam is not in the textbook",
+      "does": "13-gram overlap plus MinHash against the benchmark blocklist. Every drop logged with the benchmark it matched.",
+      "rule": "A build gate, not a check — see how we would know it worked.",
+      "source": "docs/ATLAS.md §17"
+    },
+    {
+      "id": "synthesis",
+      "name": "Synthesis",
+      "plain": "Make more text when there is not enough",
+      "does": "Translation, transliteration, rephrasing, curriculum generation across 22 languages and five difficulty tiers, document-grounded and persona-grounded generation.",
+      "rule": "Synthetic text re-enters the quality, dedup and decontamination gates. It is not exempt because you made it.",
+      "source": "docs/ATLAS.md §17"
+    },
+    {
+      "id": "mixing",
+      "name": "Mixing and tokenisation",
+      "plain": "Decide the proportions and cut it into tokens",
+      "does": "Custom tokenizer, temperature-sampled multilingual mixture, phase-scheduled curriculum.",
+      "rule": "The last stage in the pipeline and the first decision you cannot reverse.",
+      "source": "docs/ATLAS.md §17"
+    }
+  ],
+  "universal": {
+    "order": "NFC and homoglyph normalisation, script-aware language ID, India-specific PII, global MinHash and SemDeDup, 13-gram benchmark decontamination, provenance record",
+    "adopt_not_build": ["Setu (MIT, Spark, Indic-specific)", "datatrove", "NeMo Curator", "GlotLID"],
+    "source": "docs/DECISIONS.md §2.1"
+  },
+  "objective_rules": [
+    {
+      "objective": "Indic",
+      "rule": "Quality classifiers are the adversary. Per-language calibrated thresholds, never a global one. Tier-3 languages bypass filtering entirely into the protected lane.",
+      "counterintuitive": "The fix is not a better classifier. It is refusing to let the classifier vote.",
+      "source": "docs/DECISIONS.md §2.2"
+    },
+    {
+      "objective": "Code",
+      "rule": "Do not length-filter like prose. Licence allowlist plus a live opt-out list. Function-level near-dedup.",
+      "counterintuitive": "Prose heuristics delete correct code for being terse.",
+      "source": "docs/DECISIONS.md §2.2"
+    },
+    {
+      "objective": "Agentic",
+      "rule": "Filter suboptimal trajectories hard. Errors amplify over long horizons — a mediocre 80-turn trace is worse than none.",
+      "counterintuitive": "This inverts \"more data is better\". It is the only tier where deleting data reliably improves the model.",
+      "source": "docs/DECISIONS.md §2.2"
+    },
+    {
+      "objective": "Math",
+      "rule": "Preserve LaTeX. Do not normalise digits.",
+      "counterintuitive": "Standard text cleaning destroys the notation that carries the meaning.",
+      "source": "docs/DECISIONS.md §2.2"
+    },
+    {
+      "objective": "India-context",
+      "rule": "Temporal validity. Law changes — date-stamp everything.",
+      "counterintuitive": "Undated statute trains as current fact, and stays wrong for the life of the model.",
+      "source": "docs/DECISIONS.md §2.2"
+    },
+    {
+      "objective": "OCR",
+      "rule": "Build on Qwen3-VL-8B, not olmOCR. Validate on real scans only. Report median and catastrophic-rate, never mean.",
+      "counterintuitive": "A mean hides the failure mode that matters: rare, total, unrecoverable garbling.",
+      "source": "docs/DECISIONS.md §2.2"
+    }
+  ],
+  "curriculum": {
+    "why": "The order matters as much as the mixture. Rare-script embeddings form early or not at all.",
+    "source": "docs/DECISIONS.md §2.4",
+    "phases": [
+      { "name": "Foundations", "from": 0, "to": 40, "emphasis": "Broad web, heavy multilingual, Indic scripts front-loaded" },
+      { "name": "Knowledge", "from": 40, "to": 75, "emphasis": "Educational, encyclopaedic, academic, code" },
+      { "name": "Reasoning", "from": 75, "to": 92, "emphasis": "Maths, long chains, synthetic QA, curriculum-graded Indic" },
+      { "name": "Anneal", "from": 92, "to": 100, "emphasis": "Highest quality only, learning rate to zero. This is where benchmark performance is bought." }
+    ]
+  }
+}

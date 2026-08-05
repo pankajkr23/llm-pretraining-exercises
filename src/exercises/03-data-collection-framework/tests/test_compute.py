@@ -1,6 +1,9 @@
 """Unit tests for the phase-2 computation (pure, fast, no network)."""
 
+import json
+
 import pytest
+from dataframework.config import Config
 from dataframework.coverage import build_matrix, capabilities_for
 from dataframework.fertility import (
     PARITY_TARGET,
@@ -25,7 +28,7 @@ from dataframework.shingles import (
     overlap,
     shingle,
 )
-from dataframework.sourcing import blockers, build_plan
+from dataframework.sourcing import blockers, build_lifecycle, build_plan, lifecycle_of
 from dataframework.vocab_sweep import find_peak, round_to_multiple, sweep
 
 
@@ -396,3 +399,82 @@ def test_over_supply_is_not_a_surplus_to_spend_elsewhere():
     tier = build_plan([_ds(size_tokens={"value": 9e9})], mix)["tiers"][0]
     assert tier["shortfall_tokens"] == 0
     assert tier["covered_share"] == 1.0
+
+
+# --------------------------------------------------------------------------- lifecycle
+
+
+def test_a_dataset_can_serve_more_than_one_stage():
+    """An instruction set that is also an eval suite is both; forcing a choice loses information."""
+    assert lifecycle_of({"stage": ["PT"]}) == ["pre-training"]
+    assert lifecycle_of({"stage": ["SFT", "RL"]}) == ["post-training"]
+    assert lifecycle_of({"stage": ["PT", "EVAL"]}) == ["pre-training", "evaluation"]
+    assert lifecycle_of({"stage": []}) == []
+
+
+def test_nothing_is_dropped_silently():
+    """The first build discarded 36 of 145 records without saying so. Unmatched must be reported."""
+    plan = build_lifecycle(
+        [
+            {
+                "id": "a",
+                "stage": ["PT"],
+                "grade": "B",
+                "licence_commercial": True,
+                "size_tokens": {"value": 1e9},
+            },
+            {"id": "b", "stage": ["Reference"], "grade": "C"},
+        ]
+    )
+    assert plan["unclassified_count"] == 1
+    assert plan["unclassified"] == [{"id": "b", "stage": ["Reference"]}]
+
+
+def test_post_training_is_counted_even_when_nothing_is_committable():
+    """55 post-training datasets with no stated size is a finding, not an empty section."""
+    plan = build_lifecycle([{"id": "s", "stage": ["SFT"], "grade": "C", "size_tokens": {}}])
+    post = next(s for s in plan["stages"] if s["stage"] == "post-training")
+    assert post["datasets"] == 1
+    assert post["committable"] == 0
+    assert post["sized"] == 0
+
+
+# --------------------------------------------------------------------------- extracted answers
+
+
+def _record(name):
+    return json.loads((Config().records_dir / f"{name}.json").read_text(encoding="utf-8"))
+
+
+def test_the_vocabulary_blocks_add_up_to_the_stated_sum():
+    """The derivation is the argument; if the blocks do not sum, the chosen vocab is unexplained."""
+    blocks = _record("vocab_blocks")
+    assert sum(b["slots"] for b in blocks["blocks"]) == blocks["sum"] == 204_256
+    assert blocks["chosen"] == 208_896 == 1_632 * 128
+    assert blocks["chosen"] > blocks["sum"], "the chosen vocab must leave headroom over the blocks"
+
+
+def test_post_training_splits_sum_to_their_totals():
+    """A budget whose parts do not add up is a slogan."""
+    for stage in _record("posttraining")["stages"]:
+        assert sum(s["count"] for s in stage["splits"]) == stage["total"], stage["id"]
+
+
+def test_every_fertility_tier_covers_distinct_languages():
+    """A language in two tiers has two targets, which is no target."""
+    tiers = _record("fertility_targets")["tiers"]
+    seen = [code for t in tiers for code in t["languages"]]
+    assert len(seen) == len(set(seen))
+    assert [t["target"] for t in tiers] == sorted(t["target"] for t in tiers), "tiers must loosen"
+
+
+def test_the_safety_stage_is_recorded_as_unstaffed():
+    """It has no tool in the register; the page must not imply somebody is on it."""
+    safety = next(s for s in _record("cleaning_rules")["stages"] if s["id"] == "safety")
+    assert safety["unstaffed"] is True
+
+
+def test_the_eval_matrix_names_something_to_never_report():
+    """The 'never' column is the load-bearing one — it is what stops a flattering number."""
+    matrix = _record("eval_policy")["matrix"]
+    assert sum(1 for row in matrix if row["never"]) >= 4
