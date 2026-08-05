@@ -9,6 +9,7 @@
       content="There is not enough Indian-language text on the internet to train a frontier model on it alone. A framework for deciding what to train on anyway — and for showing which numbers are measured and which are guesses."
     />
     <link rel="stylesheet" href="./_shared/tokens.css" />
+    <link rel="stylesheet" href="./_shared/explainer.css" />
     <style>
       .hero { margin-bottom: 44px; }
 
@@ -24,11 +25,19 @@
 
       /* The tier ribbon: 145 datasets, sorted by whether you may actually use them. */
       .ribbon { display: flex; height: 34px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
-      .ribbon span { display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 12px; font-weight: 600; color: #fff; }
-      .ribbon .green { background: var(--grade-a); }
-      .ribbon .amber { background: var(--grade-b); }
-      .ribbon .red { background: var(--grade-x); }
-      .ribbon .gap { background: var(--faint); }
+      /* Label colour is picked per band so every one clears 4.5:1. White reads as the obvious
+         choice and fails on two of them: on the light amber it measures 3.25:1, on the light green
+         4.40:1. Measured values are in the comments. */
+      .ribbon span { display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 12px; font-weight: 600; }
+      .ribbon .green { background: var(--grade-a); color: #000; }  /* 4.78:1 */
+      .ribbon .amber { background: var(--grade-b); color: #000; }  /* 6.45:1 */
+      .ribbon .red   { background: var(--grade-x); color: #fff; }  /* 6.22:1 */
+      .ribbon .gap   { background: var(--faint);   color: #fff; }  /* 5.00:1 */
+
+      @media (prefers-color-scheme: dark) {
+        /* Every dark band is a bright fill, so black clears by a wide margin on all four. */
+        .ribbon .green, .ribbon .amber, .ribbon .red, .ribbon .gap { color: #000; }
+      }
       .ribbon-key { display: flex; gap: 20px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin-top: 10px; font-family: var(--mono); }
 
       .doors { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 36px 0 28px; }
@@ -103,9 +112,14 @@
 
       <p class="honesty" id="honesty">Loading…</p>
 
-      <footer>
+      <footer id="foot">
         Built from a research atlas by a pipeline that refuses to print a number without saying
         where it came from.
+        <div class="disclaim">
+          Licence and legal summaries here are a coursework reading of public material, not legal
+          advice. Not affiliated with any organisation named — see
+          <a href="./NOTICE">NOTICE</a>.
+        </div>
       </footer>
     </div>
 

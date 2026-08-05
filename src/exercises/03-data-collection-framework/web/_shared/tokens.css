@@ -20,7 +20,9 @@
   --track: #e8e8ed;
   --ink: #1d1d1f;
   --muted: #6e6e73;
-  --faint: #86868b;
+  /* 4.59:1 on --bg, 5.00:1 on --panel. The old #86868b measured 3.33:1 and failed WCAG AA on
+     every marginalia label, figure number and unknown-provenance figure that uses it. */
+  --faint: #6f6f74;
   --line: #d2d2d7;
   --accent: #0071e3;
   --accent-soft: rgba(0, 113, 227, 0.1);
@@ -60,7 +62,8 @@
     --track: #2a2a2c;
     --ink: #f5f5f7;
     --muted: #a1a1a6;
-    --faint: #6e6e73;
+    /* 6.12:1 on black, 4.96:1 on --panel; the old #6e6e73 was 3.36:1 against panels. */
+    --faint: #8a8a90;
     --line: #2f2f31;
     --accent: #2997ff;
     --accent-soft: rgba(41, 151, 255, 0.14);

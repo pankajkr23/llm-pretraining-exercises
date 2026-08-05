@@ -14,6 +14,7 @@ Run: ``uv run python -m dataframework``
 
 import dataclasses
 import json
+from datetime import UTC, datetime
 from typing import Any
 
 from . import __version__
@@ -282,6 +283,11 @@ def write_bundle(cfg: Config | None = None) -> dict[str, Any]:
     """
     cfg = cfg or Config()
     bundle = build_bundle(cfg)
+
+    # `build_bundle` is pure so its output can be diffed and tested; the timestamp is stamped here,
+    # at the I/O boundary, because a page that says when it was built is worth more than a bundle
+    # that is byte-identical between runs. Nothing downstream compares two bundles for equality.
+    bundle["data"]["generated_at"] = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
     cfg.web_dir.mkdir(parents=True, exist_ok=True)
     index_path = cfg.web_dir / "data.json"

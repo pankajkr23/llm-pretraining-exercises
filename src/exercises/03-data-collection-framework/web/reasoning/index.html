@@ -140,9 +140,7 @@
         <main id="main"><p class="pending">Loading the evidence…</p></main>
       </div>
 
-      <footer>
-        Every figure on this page came out of the pipeline; none was typed by hand.
-      </footer>
+      <footer id="foot">Every figure on this page came out of the pipeline; none was typed by hand.</footer>
     </div>
 
     <script type="module">
@@ -848,6 +846,13 @@
           location.replace(to);
           return true;
         };
+
+        document.getElementById('foot').replaceChildren(
+          document.createTextNode(
+            'Every figure on this page came out of the pipeline; none was typed by hand. '
+            + `Pipeline ${data.pipeline_version}${data.generated_at ? `, generated ${data.generated_at}` : ''}.`),
+          $('div', 'disclaim', 'Licence and legal summaries here are a coursework reading of public material, not legal advice. Not affiliated with any organisation named — see NOTICE.'),
+        );
 
         if (location.hash && !reroute()) {
           const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));

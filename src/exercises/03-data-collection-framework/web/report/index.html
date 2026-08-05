@@ -160,7 +160,7 @@
         .bars { gap: 2.5pt; }
         /* Paper cannot scroll, so every attack prints with its own verdict beside it. */
         .scrolly { grid-template-columns: 1fr; gap: 0; }
-        .step { min-height: 0; opacity: 1 !important; margin: 0 0 4pt; padding-left: 5pt; border-left-width: 1pt; }
+        .step { min-height: 0; margin: 0 0 4pt; padding-left: 5pt; border-left-width: 1pt; }
         .step p, .step .shard { max-width: none; }
         .step .shard { font-size: 7pt; margin-top: 2pt; padding-top: 2pt; }
         .step .inline { display: block; font-size: 7.4pt; font-weight: 700; margin-top: 2pt; }
@@ -1418,8 +1418,12 @@
         }
 
         const counts = data.record_counts;
-        document.getElementById('foot').textContent =
-          `Built from ${counts.catalog} datasets, ${counts.benchmarks} benchmarks and ${counts.legal} legal records. Pipeline ${data.pipeline_version}.`;
+        document.getElementById('foot').replaceChildren(
+          document.createTextNode(
+            `Built from ${counts.catalog} datasets, ${counts.benchmarks} benchmarks and ${counts.legal} legal records. `
+            + `Pipeline ${data.pipeline_version}${data.generated_at ? `, generated ${data.generated_at}` : ''}.`),
+          $('div', 'disclaim', 'Licence and legal summaries here are a coursework reading of public material, not legal advice. Not affiliated with any organisation named — see NOTICE.'),
+        );
 
         /* ---------------------------------------------------- endnotes + print
          *
