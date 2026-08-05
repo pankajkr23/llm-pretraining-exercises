@@ -150,8 +150,10 @@
   font-weight: 700;
   border-radius: 980px;
   padding: 3px 12px;
-  background: var(--accent-soft);
-  color: var(--accent);
+  /* Solid rather than a tint: accent text on a 10% accent wash measured under 4.5:1, and white on
+     the accent clears 5.38:1. */
+  background: var(--accent);
+  color: #fff;
   margin-top: 14px;
 }
 

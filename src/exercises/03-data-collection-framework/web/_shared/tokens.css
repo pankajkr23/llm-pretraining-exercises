@@ -24,8 +24,9 @@
      every marginalia label, figure number and unknown-provenance figure that uses it. */
   --faint: #6f6f74;
   --line: #d2d2d7;
-  --accent: #0071e3;
-  --accent-soft: rgba(0, 113, 227, 0.1);
+  /* 4.94:1 on --bg, 5.38:1 on --panel. #0071e3 measured 4.31:1 and failed as link text. */
+  --accent: #0068d1;
+  --accent-soft: rgba(0, 104, 209, 0.1);
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.03);
 
   --sans: -apple-system, system-ui, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
@@ -33,8 +34,8 @@
   --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
 
   /* --- grades: A usable, B usable with care, C thin evidence, X excluded --- */
-  --grade-a: #248a3d;
-  --grade-b: #b8860b;
+  --grade-a: #1f7a35; /* 4.95:1 — #248a3d was 4.04:1 */
+  --grade-b: #8a6508; /* 4.89:1 — #b8860b was 2.99:1 */
   --grade-c: #6e6e73;
   --grade-x: #c1121f; /* the only red on the site. Reserve it. */
 
@@ -45,11 +46,11 @@
 
   /* --- gotcha types: distinguishable, but none shout except SAFETY --- */
   --gotcha-licence: #7d5ba6;
-  --gotcha-dedup: #0071e3;
-  --gotcha-composition: #d1730a;
-  --gotcha-provenance: #b8860b;
+  --gotcha-dedup: #0062c4; /* 5.44:1 */
+  --gotcha-composition: #a85c08; /* 4.59:1 */
+  --gotcha-provenance: #8a6508; /* 4.89:1 */
   --gotcha-safety: #c1121f;
-  --gotcha-attribution: #248a3d;
+  --gotcha-attribution: #1f7a35; /* 4.95:1 */
   --gotcha-availability: #6e6e73;
   --gotcha-sourcing: #0f766e;
   --gotcha-heterogeneity: #a03fce;
