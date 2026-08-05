@@ -58,7 +58,7 @@
  * --muted and --faint text faster than it fades anything else: even 0.8 fails. The affordance is
  * carried by the rule and the label instead, both of which stay legible at every state. */
 .step {
-  min-height: 46vh;
+  min-height: 30vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -217,7 +217,7 @@
 @media (max-width: 760px) {
   .scrolly, .scrolly.wide { grid-template-columns: 1fr; gap: 0; }
   .sticky { position: sticky; top: 0; order: -1; background: var(--bg); padding: 10px 0 6px; z-index: 3; }
-  .step { min-height: 34vh; }
+  .step { min-height: 26vh; }
 }
 
 /* The complete end state: every step and its verdict, with nothing left to scroll for. */
@@ -315,3 +315,38 @@ span.unit { width: 13px; height: 13px; padding: 0; border-radius: 3px; backgroun
 .fig-guess .g-gap { color: var(--grade-b); font-weight: 700; }
 /* The reader's mark on the strip, so the guess sits against the units it was a guess about. */
 .fig-tick.guess { box-shadow: inset 0 0 0 2px var(--grade-b); }
+
+/* ------------------------------------------------------------------ layer 3
+ *
+ * The arithmetic, closed. A reader who never opens it has still been told the truth by layers 1
+ * and 2; a reader who does gets the derivation, the sources and the caveats. This is what lets one
+ * page serve someone meeting the subject today and someone who trains models for a living.
+ */
+details.arithmetic {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+details.arithmetic > summary {
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+details.arithmetic > summary::-webkit-details-marker { display: none; }
+details.arithmetic > summary::before { content: '▸ '; }
+details.arithmetic[open] > summary::before { content: '▾ '; }
+details.arithmetic > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.arithmetic-body { margin-top: 12px; font-size: 13px; color: var(--muted); max-width: 74ch; }
+.arithmetic-body p { margin: 0 0 10px; }
+.arithmetic-body table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+.arithmetic-body th, .arithmetic-body td { text-align: left; padding: 4px 10px 4px 0; border-bottom: 1px solid var(--line); }
+.arithmetic-body th { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); font-weight: 600; }
+.arithmetic-body td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+.arithmetic-body code { font-family: var(--mono); font-size: 11.5px; }
+
+/* Printed, the detail should be open — paper has no affordance for a disclosure triangle. */
+@media print { details.arithmetic > div { display: block !important; } }

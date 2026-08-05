@@ -134,12 +134,25 @@ export function makeExplainer({ $, onPlay }) {
           stepEls.forEach((el) => io.observe(el));
         }
   
+        /* Layer 3. Closed by default: a 13-year-old never opens it and is not misled, an engineer
+         * opens it and finds the derivation. Everything the old pages put in the main flow —
+         * arithmetic, sources, caveats — belongs here. */
+        let detailsEl = null;
+        if (cfg.arithmetic) {
+          detailsEl = $('details', 'arithmetic');
+          const summary = $('summary', '', cfg.arithmeticLabel || 'The arithmetic');
+          detailsEl.append(summary);
+          const body = $('div', 'arithmetic-body');
+          cfg.arithmetic.forEach((node) => body.append(node));
+          detailsEl.append(body);
+        }
+
         const s = $('section');
         /* The report addresses sections by number, the atlas by slug. `anchor` picks the latter
          * and appends the deep link the atlas's other sections carry. */
         s.id = cfg.anchor || `s${cfg.n}`;
         const h = $('h2');
-        if (!cfg.anchor) h.append($('span', 'n', String(cfg.n)));
+        if (cfg.n !== undefined && cfg.n !== null) h.append($('span', 'n', String(cfg.n)));
         h.append(document.createTextNode(cfg.title));
         if (cfg.anchor) {
           const link = $('a', 'anchor', `#${cfg.anchor}`);
@@ -151,6 +164,7 @@ export function makeExplainer({ $, onPlay }) {
         const figure = $('figure');
         figure.append(body, $('figcaption', '', cfg.caption));
         s.append(h, claim, figure);
+        if (detailsEl) s.append(detailsEl);
   
         function refresh() {
           if (cfg.refresh) cfg.refresh(api);
