@@ -343,9 +343,9 @@
           };
 
           const ATTACKS = [
-            { marg: 'The index',
-              lead: 'What we are protecting is one question we intend to grade the model on. The gate hashes it into every ',
-              bold: 'thirteen-word window', tail: ' it contains — a 26-word question makes 14 of them, a 14-word question makes 2 — and keeps only those hashes. The sentence itself never ships.',
+            { marg: 'Step 1 · fingerprint it',
+              lead: 'Take one question we intend to grade the model on, and slide a window thirteen words wide along it, one word at a time. Each position gives thirteen words in a row, and each of those is ',
+              bold: 'a fingerprint', tail: '. They overlap, so a 26-word question makes 14 of them and a 14-word question makes 2 — words minus twelve. Only the fingerprints are stored, never the sentence: publishing the exam would be the leak we are trying to prevent.',
               transform: null },
             { marg: 'Attack 1 · paste it',
               lead: 'Now it turns up inside an ordinary training shard, copied exactly. Every window matches, so ',
@@ -361,7 +361,7 @@
               transform: (q) => q.split(/\s+/).map((w, i) => ((i + 1) % 6 === 0 ? `${w}\n   ` : w)).join(' ') },
             { marg: 'Attack 4 · add a word',
               lead: 'Slip one word into the middle. That destroys ',
-              bold: 'every window spanning it', tail: ' — and the windows either side survive, which is enough. Still dropped.',
+              bold: 'every window spanning it', tail: ' — and the windows either side survive, which is enough. Thirteen is chosen for exactly this: short enough that edits cannot erase every fingerprint, long enough that innocent text never matches by accident. Still dropped.',
               transform: (q) => wedge(q, Infinity) },
             { marg: 'Attack 5 · add one every twelve',
               lead: 'Do it again every twelve words and no run of thirteen survives intact. ',
@@ -382,18 +382,17 @@
 
           const rail = $('div', 'fig-rail');
           rail.append(
-            document.createTextNode('The live index holds '),
-            renderNumber(data.contamination.shingle_count),
-            document.createTextNode(' and covers '),
-            $('b', '', data.contamination.coverage),
-            document.createTextNode(' of the '),
+            document.createTextNode('We hold the actual questions for '),
+            $('b', '', 'one exam set out of '),
             renderNumber({
               value: data.record_counts.benchmarks,
               unit: 'benchmarks',
               provenance: data.record_counts.provenance,
               source: data.record_counts.source,
             }),
-            document.createTextNode(' registered by name. What you defeated above is the mechanism, run against your own sentence — not a certificate that the corpus is clean.'),
+            document.createTextNode('. That one set makes '),
+            renderNumber(data.contamination.shingle_count, { unit: false }),
+            document.createTextNode(' fingerprints, so the gate catches copies of it. It cannot see the other thirty, because nobody has given us their questions. Passing this check means “no copy of what we indexed” — it does not mean the training data is clean.'),
           );
 
           const gsticky = $('div', 'sticky');
@@ -545,17 +544,17 @@
           h.append($('span', 'n', '1'), document.createTextNode('Thirteen words in a row is a fingerprint'));
           const claim = $('p', 'claim');
           claim.append(
-            document.createTextNode('Everything else here argues about proportions. This one is a hard stop: if training text overlaps the evaluation set, every score afterwards is fiction. Below is the check itself, and it is worth trying to beat — '),
-            $('b', '', 'the sentence is yours to change'),
-            document.createTextNode(', and scrolling attacks it. Watch how far '),
+            document.createTextNode('You test a model with exam questions. If those questions were sitting in its training data, it memorised the answers and the score means nothing — so before any training happens, every document is checked against every exam question. Below is that check, running on '),
+            $('b', '', 'a sentence you choose'),
+            document.createTextNode('. Scrolling tries to sneak it past: watch how far '),
             $('b', '', 'cosmetic edits'),
-            document.createTextNode(' get, and where they stop. Coverage today is limited by what eval items we hold — see '),
+            document.createTextNode(' get, and where they stop working. The exam sets we hold are listed under '),
             ref('the instruments', 'benchmarks'), document.createTextNode('.'),
           );
           const body = $('div', 'scrolly');
           body.append(qbox, steps, gsticky);
           const figure = $('figure');
-          figure.append(body, $('figcaption', '', 'Fig. 1 — 13-word shingles, the algorithm in dataframework/shingles.py, run live on the text above. The pipeline stores each window as a truncated blake2b digest because that index ships publicly; nothing here leaves your browser, so the windows are compared as text.'));
+          figure.append(body, $('figcaption', '', 'Fig. 1 — Overlapping thirteen-word windows (their technical name is shingles), computed live on the text above. One match is enough: thirteen words landing in the same order by chance essentially never happens, so a match means the text was copied. The pipeline stores each window as a short hash because that index is published; nothing here leaves your browser, so the windows are compared as text.'));
           s.append(h, claim, figure);
           main.append(s);
 
