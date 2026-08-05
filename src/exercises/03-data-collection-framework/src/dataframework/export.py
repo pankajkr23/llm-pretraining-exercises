@@ -179,9 +179,10 @@ def _fertility_block(cfg: Config, languages: list[str]) -> dict[str, Any]:
     rows = measured.get(baseline, {})
     by_language: dict[str, Any] = {}
     for code in [*languages, "en"]:
-        # Kashmiri is measured in both scripts; the headline column carries Perso-Arabic, the
-        # script the language is predominantly written in, and both stay in the detail record.
-        key = "ks-Arab" if code == "ks" else code
+        # The corpora key Kashmiri differently — IN22-Gen has one column, FLORES ships both
+        # scripts — so take the plain code when it exists and fall back to Perso-Arabic, the
+        # script the language is predominantly written in.
+        key = code if code in rows else f"{code}-Arab"
         if key in rows:
             by_language[code] = rows[key]
         else:

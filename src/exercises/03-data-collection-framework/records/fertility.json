@@ -1,15 +1,17 @@
 {
- "run_id": "flores200-20260805T025507Z-00ed5caa",
- "corpus": "FLORES-200 devtest",
- "corpus_trust_band": "translation-derived",
+ "run_id": "in22gen-20260805T055949Z-2273a984",
+ "corpus": "IN22-Gen",
+ "corpus_trust_band": "native-sourced",
  "languages_measured": [
   "as",
   "bn",
+  "brx",
+  "doi",
   "gu",
   "hi",
   "kn",
-  "ks-Arab",
-  "ks-Deva",
+  "kok",
+  "ks",
   "mai",
   "ml",
   "mni",
@@ -24,11 +26,7 @@
   "te",
   "ur"
  ],
- "languages_unavailable": {
-  "kok": "Konkani",
-  "doi": "Dogri",
-  "brx": "Bodo"
- },
+ "languages_unavailable": {},
  "tokenizers_measured": [
   "hf/xlm-roberta-base",
   "tiktoken/cl100k_base",
@@ -39,459 +37,501 @@
   "sarvamai/sarvam-105b": "tokenizer not published independently of the weights",
   "candidate V=208,896": "never trained — nothing in this repository builds it"
  },
- "protocol_gaps": "Partial execution of docs/FERTILITY_MEASUREMENT.md. The primary corpora (IN22-Gen, IN22-Conv) are gated, so this runs on the secondary corpus, which is translated from English. No parity_ratio is reported: it is defined against our own candidate tokenizer, which does not exist.",
+ "protocol_gaps": "Partial execution of docs/FERTILITY_MEASUREMENT.md: three of the six tokenizers are unavailable, and no parity_ratio is reported because it is defined against our own candidate tokenizer, which does not exist. Corpus: IN22-Gen (native-sourced).",
  "by_tokenizer": {
   "tiktoken/cl100k_base": {
    "hi": {
-    "value": 5.0571,
+    "value": 5.3591,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
    "bn": {
-    "value": 8.129,
+    "value": 8.5305,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
    "ta": {
-    "value": 12.3862,
+    "value": 12.493,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
    "te": {
-    "value": 13.301,
+    "value": 13.6533,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
    "mr": {
-    "value": 7.2151,
+    "value": 7.6159,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
    "ml": {
-    "value": 16.272,
+    "value": 17.5063,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
    "kn": {
-    "value": 14.9579,
+    "value": 16.0569,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
    "gu": {
-    "value": 9.9728,
+    "value": 10.6814,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
    "ur": {
-    "value": 4.3009,
+    "value": 4.3143,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
    "pa": {
-    "value": 8.2757,
+    "value": 7.9914,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
    "or": {
-    "value": 17.2288,
+    "value": 18.2151,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
    "as": {
-    "value": 8.7175,
+    "value": 9.3314,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
    "ne": {
-    "value": 6.9788,
+    "value": 7.5365,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
    "sa": {
-    "value": 7.9625,
+    "value": 10.2571,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
    "sd": {
-    "value": 4.2689,
+    "value": 5.7461,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
-   "ks-Arab": {
-    "value": 5.477,
+   "ks": {
+    "value": 5.8869,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
-   "ks-Deva": {
-    "value": 5.2768,
+   "kok": {
+    "value": 7.3638,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
    "mai": {
-    "value": 5.4253,
+    "value": 6.3541,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
+   },
+   "brx": {
+    "value": 8.0967,
+    "unit": "tokens/word",
+    "provenance": "measured",
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
+   },
+   "doi": {
+    "value": 5.5754,
+    "unit": "tokens/word",
+    "provenance": "measured",
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
    "mni": {
-    "value": 9.5128,
+    "value": 16.4958,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
    "sat": {
-    "value": 14.436,
+    "value": 15.697,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    },
    "en": {
-    "value": 1.2414,
+    "value": 1.3462,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T055949Z-2273a984"
    }
   },
   "tiktoken/o200k_base": {
    "hi": {
-    "value": 1.6496,
+    "value": 1.757,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
    "bn": {
-    "value": 2.3384,
+    "value": 2.562,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
    "ta": {
-    "value": 3.1718,
+    "value": 3.3857,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
    "te": {
-    "value": 3.0623,
+    "value": 3.3008,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
    "mr": {
-    "value": 2.5713,
+    "value": 2.7338,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
    "ml": {
-    "value": 3.5234,
+    "value": 4.0088,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
    "kn": {
-    "value": 3.2906,
+    "value": 3.7751,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
    "gu": {
-    "value": 2.3053,
+    "value": 2.5627,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
    "ur": {
-    "value": 1.6064,
+    "value": 1.6889,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
    "pa": {
-    "value": 2.716,
+    "value": 2.762,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
    "or": {
-    "value": 6.8297,
+    "value": 7.3124,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
    "as": {
-    "value": 2.7759,
+    "value": 2.9736,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
    "ne": {
-    "value": 2.3208,
+    "value": 2.5372,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
    "sa": {
-    "value": 3.3077,
+    "value": 4.5562,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
    "sd": {
-    "value": 1.8127,
+    "value": 2.565,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
-   "ks-Arab": {
-    "value": 3.047,
+   "ks": {
+    "value": 3.6778,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
-   "ks-Deva": {
-    "value": 2.483,
+   "kok": {
+    "value": 3.1261,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
    "mai": {
-    "value": 1.9207,
+    "value": 2.3085,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
+   },
+   "brx": {
+    "value": 3.9557,
+    "unit": "tokens/word",
+    "provenance": "measured",
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
+   },
+   "doi": {
+    "value": 2.3136,
+    "unit": "tokens/word",
+    "provenance": "measured",
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
    "mni": {
-    "value": 4.2847,
+    "value": 16.4958,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
    "sat": {
-    "value": 15.3467,
+    "value": 16.5871,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    },
    "en": {
-    "value": 1.2272,
+    "value": 1.3241,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@flores200-20260805T025507Z-00ed5caa"
+    "source": "tiktoken/o200k_base@in22gen-20260805T055949Z-2273a984"
    }
   },
   "hf/xlm-roberta-base": {
    "hi": {
-    "value": 1.4906,
+    "value": 1.5625,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
    "bn": {
-    "value": 2.1608,
+    "value": 2.3922,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
    "ta": {
-    "value": 2.4655,
+    "value": 2.6216,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
    "te": {
-    "value": 2.3839,
+    "value": 2.5737,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
    "mr": {
-    "value": 1.9601,
+    "value": 2.1192,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
    "ml": {
-    "value": 2.8265,
+    "value": 3.1772,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
    "kn": {
-    "value": 2.5766,
+    "value": 2.9971,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
    "gu": {
-    "value": 2.0808,
+    "value": 2.3018,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
    "ur": {
-    "value": 1.3566,
+    "value": 1.3933,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
    "pa": {
-    "value": 1.8635,
+    "value": 1.9422,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
    "or": {
-    "value": 2.2476,
+    "value": 2.563,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
    "as": {
-    "value": 2.9968,
+    "value": 3.1199,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
    "ne": {
-    "value": 1.8442,
+    "value": 2.0219,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
    "sa": {
-    "value": 2.5601,
+    "value": 3.6152,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
    "sd": {
-    "value": 1.5525,
+    "value": 2.35,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
-   "ks-Arab": {
-    "value": 2.5777,
+   "ks": {
+    "value": 3.0564,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
-   "ks-Deva": {
-    "value": 2.3044,
+   "kok": {
+    "value": 2.7621,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
    "mai": {
-    "value": 1.9614,
+    "value": 2.197,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
+   },
+   "brx": {
+    "value": 3.6232,
+    "unit": "tokens/word",
+    "provenance": "measured",
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
+   },
+   "doi": {
+    "value": 2.1094,
+    "unit": "tokens/word",
+    "provenance": "measured",
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
    "mni": {
-    "value": 4.0828,
+    "value": 2.1469,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
    "sat": {
-    "value": 2.0818,
+    "value": 2.0659,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    },
    "en": {
-    "value": 1.4001,
+    "value": 1.4996,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@flores200-20260805T025507Z-00ed5caa"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T055949Z-2273a984"
    }
   }
  },
  "expansion_vs_english": {
   "tiktoken/cl100k_base": {
-   "hi": 4.0737,
-   "bn": 6.5483,
-   "ta": 9.9776,
-   "te": 10.7145,
-   "mr": 5.8121,
-   "ml": 13.1078,
-   "kn": 12.0492,
-   "gu": 8.0335,
-   "ur": 3.4646,
-   "pa": 6.6664,
-   "or": 13.8785,
-   "as": 7.0223,
-   "ne": 5.6217,
-   "sa": 6.4141,
-   "sd": 3.4388,
-   "ks-Arab": 4.412,
-   "ks-Deva": 4.2507,
-   "mai": 4.3703,
-   "mni": 7.663,
-   "sat": 11.6288
+   "hi": 3.9809,
+   "bn": 6.3367,
+   "ta": 9.2802,
+   "te": 10.1421,
+   "mr": 5.6573,
+   "ml": 13.0042,
+   "kn": 11.9276,
+   "gu": 7.9345,
+   "ur": 3.2048,
+   "pa": 5.9363,
+   "or": 13.5308,
+   "as": 6.9317,
+   "ne": 5.5984,
+   "sa": 7.6193,
+   "sd": 4.2684,
+   "ks": 4.373,
+   "kok": 5.4701,
+   "mai": 4.72,
+   "brx": 6.0145,
+   "doi": 4.1416,
+   "mni": 12.2536,
+   "sat": 11.6602
   },
   "tiktoken/o200k_base": {
-   "hi": 1.3442,
-   "bn": 1.9055,
-   "ta": 2.5846,
-   "te": 2.4954,
-   "mr": 2.0953,
-   "ml": 2.8711,
-   "kn": 2.6814,
-   "gu": 1.8785,
-   "ur": 1.309,
-   "pa": 2.2132,
-   "or": 5.5653,
-   "as": 2.262,
-   "ne": 1.8911,
-   "sa": 2.6953,
-   "sd": 1.4771,
-   "ks-Arab": 2.4829,
-   "ks-Deva": 2.0233,
-   "mai": 1.5651,
-   "mni": 3.4914,
-   "sat": 12.5055
+   "hi": 1.3269,
+   "bn": 1.9349,
+   "ta": 2.557,
+   "te": 2.4929,
+   "mr": 2.0646,
+   "ml": 3.0276,
+   "kn": 2.8511,
+   "gu": 1.9354,
+   "ur": 1.2755,
+   "pa": 2.0859,
+   "or": 5.5225,
+   "as": 2.2458,
+   "ne": 1.9162,
+   "sa": 3.441,
+   "sd": 1.9372,
+   "ks": 2.7776,
+   "kok": 2.3609,
+   "mai": 1.7434,
+   "brx": 2.9875,
+   "doi": 1.7473,
+   "mni": 12.4581,
+   "sat": 12.5271
   },
   "hf/xlm-roberta-base": {
-   "hi": 1.0646,
-   "bn": 1.5433,
-   "ta": 1.7609,
-   "te": 1.7027,
-   "mr": 1.4,
-   "ml": 2.0188,
-   "kn": 1.8403,
-   "gu": 1.4862,
-   "ur": 0.9689,
-   "pa": 1.331,
-   "or": 1.6053,
-   "as": 2.1404,
-   "ne": 1.3172,
-   "sa": 1.8285,
-   "sd": 1.1088,
-   "ks-Arab": 1.8411,
-   "ks-Deva": 1.6459,
-   "mai": 1.4009,
-   "mni": 2.9161,
-   "sat": 1.4869
+   "hi": 1.0419,
+   "bn": 1.5952,
+   "ta": 1.7482,
+   "te": 1.7163,
+   "mr": 1.4132,
+   "ml": 2.1187,
+   "kn": 1.9986,
+   "gu": 1.5349,
+   "ur": 0.9291,
+   "pa": 1.2951,
+   "or": 1.7091,
+   "as": 2.0805,
+   "ne": 1.3483,
+   "sa": 2.4108,
+   "sd": 1.5671,
+   "ks": 2.0381,
+   "kok": 1.8419,
+   "mai": 1.4651,
+   "brx": 2.4161,
+   "doi": 1.4066,
+   "mni": 1.4316,
+   "sat": 1.3776
   }
  }
 }

@@ -30,13 +30,20 @@ from typing import Any
 from .config import Config
 from .fertility import measure
 
-# FLORES-200 devtest, downloaded to the git-ignored corpora directory. One file per language, one
-# sentence per line, n-way parallel — the same semantic content in every language, which is what
-# makes tokens-per-word comparable across them at all.
+# IN22-Gen is the protocol's primary corpus and the reason it leads: source-original Indian content
+# rather than English translated outward, n-way parallel across all 22 scheduled languages —
+# including Bodo, Dogri and Konkani, which FLORES-200 does not carry at all. One wide table, one
+# column per language.
+IN22_REPO = "ai4bharat/IN22-Gen"
+IN22_FILE = "data/train-00000-of-00001.parquet"
+
+# FLORES-200 devtest, the secondary corpus: translated from English, so it measures how a tokenizer
+# handles translationese. Kept as the fallback when IN22 is unreachable.
 CORPUS_DIRNAME = "corpora/flores200_dataset/devtest"
 
-# Our 22 scheduled languages to their FLORES code. Two have no FLORES entry at all, which is itself
-# a finding: Konkani and Dogri are absent from a 200-language benchmark.
+# Our 22 scheduled languages to their FLORES code, used only when IN22-Gen cannot be reached.
+# Three have no FLORES entry at all, which is itself a finding: Konkani, Dogri and Bodo are absent
+# from a 200-language benchmark, and IN22-Gen carries all three.
 FLORES_CODES: dict[str, str] = {
     "hi": "hin_Deva",
     "bn": "ben_Beng",
@@ -69,6 +76,56 @@ FLORES_CODES: dict[str, str] = {
 # script for Bodo, Kashmiri or Dogri, so a script cross-check could not catch it.
 UNAVAILABLE = {"kok": "Konkani", "doi": "Dogri", "brx": "Bodo"}
 ENGLISH = "eng_Latn"
+
+# IN22-Gen carries every scheduled language, so nothing is unavailable here. Two differ in script
+# from the FLORES run and the difference is recorded rather than reconciled: Manipuri is Meitei
+# Mayek here and Bengali there, Sindhi is Devanagari here and Perso-Arabic there.
+IN22_COLUMNS: dict[str, str] = {
+    "hi": "hin_Deva",
+    "bn": "ben_Beng",
+    "ta": "tam_Taml",
+    "te": "tel_Telu",
+    "mr": "mar_Deva",
+    "ml": "mal_Mlym",
+    "kn": "kan_Knda",
+    "gu": "guj_Gujr",
+    "ur": "urd_Arab",
+    "pa": "pan_Guru",
+    "or": "ory_Orya",
+    "as": "asm_Beng",
+    "ne": "npi_Deva",
+    "sa": "san_Deva",
+    "sd": "snd_Deva",
+    "ks": "kas_Arab",
+    "kok": "gom_Deva",
+    "mai": "mai_Deva",
+    "brx": "brx_Deva",
+    "doi": "doi_Deva",
+    "mni": "mni_Mtei",
+    "sat": "sat_Olck",
+}
+
+
+def load_in22() -> dict[str, str]:
+    """Read IN22-Gen, joining every sentence per language into one string.
+
+    Returns:
+        Language code to text, English under `en`. Empty if the dataset is unreachable — it is
+        gated, and an unauthenticated caller gets nothing rather than a partial corpus.
+    """
+    try:
+        import pyarrow.parquet as pq
+        from huggingface_hub import hf_hub_download
+
+        table = pq.read_table(hf_hub_download(IN22_REPO, IN22_FILE, repo_type="dataset"))
+    except Exception:
+        return {}
+    columns = set(table.column_names)
+    corpus: dict[str, str] = {}
+    for code, column in {**IN22_COLUMNS, "en": ENGLISH}.items():
+        if column in columns:
+            corpus[code] = "\n".join(v for v in table.column(column).to_pylist() if v)
+    return corpus
 
 
 def load_corpus(cfg: Config) -> dict[str, str]:
@@ -137,7 +194,17 @@ def run(cfg: Config | None = None, run_id: str = "") -> dict[str, Any]:
     if not run_id.strip():
         raise ValueError("run() needs a run_id (INV-4)")
     cfg = cfg or Config()
-    corpus = load_corpus(cfg)
+    # Primary corpus first; FLORES only if IN22 cannot be reached.
+    corpus = load_in22()
+    if corpus:
+        source, band, unavailable = "IN22-Gen", "native-sourced", {}
+    else:
+        corpus, source, band, unavailable = (
+            load_corpus(cfg),
+            "FLORES-200 devtest",
+            "translation-derived",
+            UNAVAILABLE,
+        )
     encoders = tokenizers_available()
 
     by_tokenizer: dict[str, Any] = {}
@@ -156,10 +223,10 @@ def run(cfg: Config | None = None, run_id: str = "") -> dict[str, Any]:
 
     record = {
         "run_id": run_id,
-        "corpus": "FLORES-200 devtest",
-        "corpus_trust_band": "translation-derived",
+        "corpus": source,
+        "corpus_trust_band": band,
         "languages_measured": sorted(c for c in corpus if c != "en"),
-        "languages_unavailable": UNAVAILABLE,
+        "languages_unavailable": unavailable,
         "tokenizers_measured": sorted(by_tokenizer),
         "tokenizers_unavailable": {
             "google/gemma-4 262K": "gated on Hugging Face; requires licence acceptance",
@@ -167,10 +234,9 @@ def run(cfg: Config | None = None, run_id: str = "") -> dict[str, Any]:
             "candidate V=208,896": "never trained — nothing in this repository builds it",
         },
         "protocol_gaps": (
-            "Partial execution of docs/FERTILITY_MEASUREMENT.md. The primary corpora (IN22-Gen, "
-            "IN22-Conv) are gated, so this runs on the secondary corpus, which is translated from "
-            "English. No parity_ratio is reported: it is defined against our own candidate "
-            "tokenizer, which does not exist."
+            "Partial execution of docs/FERTILITY_MEASUREMENT.md: three of the six tokenizers are "
+            "unavailable, and no parity_ratio is reported because it is defined against our own "
+            f"candidate tokenizer, which does not exist. Corpus: {source} ({band})."
         ),
         "by_tokenizer": by_tokenizer,
         "expansion_vs_english": expansion,
@@ -189,14 +255,25 @@ def main() -> None:
     import time
 
     stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
-    run_id = f"flores200-{stamp}-{hashlib.blake2b(stamp.encode(), digest_size=4).hexdigest()}"
-    record = run(run_id=run_id)
+    # The corpus is decided inside run(), so the id is stamped with it afterwards rather than
+    # guessed here — a run id that names the wrong corpus is worse than one that names none.
+    record = run(run_id=f"pending-{stamp}")
+    slug = record["corpus"].split()[0].lower().replace("-", "")
+    record["run_id"] = (
+        f"{slug}-{stamp}-{hashlib.blake2b(stamp.encode(), digest_size=4).hexdigest()}"
+    )
+    for values in record["by_tokenizer"].values():
+        for value in values.values():
+            value["source"] = value["source"].replace(f"pending-{stamp}", record["run_id"])
+    (Config().records_dir / "fertility.json").write_text(
+        json.dumps(record, ensure_ascii=False, indent=1) + "\n", encoding="utf-8"
+    )
     print(f"run_id            {record['run_id']}")
     print(f"corpus            {record['corpus']} ({record['corpus_trust_band']})")
     print(f"tokenizers        {', '.join(record['tokenizers_measured'])}")
     print(
         f"languages         {len(record['languages_measured'])} measured, "
-        f"{len(record['languages_unavailable'])} absent from FLORES"
+        f"{len(record['languages_unavailable'])} absent from the corpus"
     )
     for ref, values in record["by_tokenizer"].items():
         indic = [v["value"] for c, v in values.items() if c != "en" and v.get("value")]
