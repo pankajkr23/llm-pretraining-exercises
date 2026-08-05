@@ -871,46 +871,144 @@ function chapterLegal(ctx) {
 function chapterPostTraining(ctx) {
   const { data, records } = ctx;
   const pt = records.posttraining;
-  const lifecycle = data.lifecycle;
-  const post = lifecycle.stages.find((s) => s.stage === 'post-training');
+  const post = data.lifecycle.stages.find((s) => s.stage === 'post-training');
+  const refs = (pt.reference || {}).models || [];
+  const plan = pt.stages;
+  const sft = plan.find((x) => x.id === 'sft') || plan[0];
+  const dpo = plan.find((x) => x.id === 'dpo') || plan[1];
 
-  const body = $('div');
-  pt.stages.forEach((stage) => {
-    body.append($('h3', 'appendix-h', `${stage.name} — ${fmt(stage.total, 'count')} ${stage.unit}`));
-    const lede = $('p');
-    lede.style.cssText = 'margin:0 0 4px;font-size:12.5px;color:var(--muted)';
-    lede.append(b(stage.plain), text('. ' + stage.why));
-    body.append(lede);
-    body.append(table(
-      ['what', 'how many', 'why it is there'],
-      stage.splits.map((sp) => [
-        sp.name,
-        renderNumber({ value: sp.count, unit: 'count', provenance: 'estimated', source: 'the post-training plan' }, { unit: false }),
-        sp.why,
-      ]),
-      [1],
-    ));
+  /* Every count here is a proposal, so it is typed as one. The source names the document that
+   * proposes it rather than "the post-training plan", which told a reader that the number came
+   * from the thing containing the number. */
+  const proposed = (value, unit) => ({
+    value,
+    unit,
+    provenance: 'estimated',
+    source: `proposed in ${sft.source || 'docs/DECISIONS.md'}; not measured and not read off a published model`,
   });
 
-  return chapter({
-    id: 'behaviour',
+  const states = [
+    ...plan.map((stage, k) => ({
+      stage: k,
+      marg: `${stage.name} — ${fmt(stage.total, 'count')} ${stage.unit}`,
+      lead: `${stage.plain}. ${stage.why} The split below is where the budget goes, and the shape of it is the argument: `,
+      bold: stage.splits[0] ? `${stage.splits[0].name} takes the largest share` : 'the split is the argument',
+      tail: `, because ${(stage.splits[0] || {}).why || 'it is the scarcest capability'}`,
+    })),
+    {
+      compare: true,
+      marg: 'Against what anybody has published',
+      lead: 'None of those numbers is a measurement. They are a proposal, and the only way to judge a proposal is against somebody who published theirs. Two did, and the comparison ',
+      bold: 'finds one of the three budgets out of line',
+      tail: ' — which is the point of putting them side by side rather than asserting them alone.',
+    },
+  ];
+
+  const bars = $('div', 'tierbars');
+
+  return buildExplainer({
     n: 9,
+    anchor: 'behaviour',
+    arithmeticLabel: 'The post-training budget, and what it is not',
+    wide: true,
     title: 'Teaching it how to behave',
     claim: [
       text('Everything so far decides what the model '),
       b('knows'),
       text('. None of it decides how it '),
       b('behaves'),
-      text(' — whether it answers helpfully, refuses what it should, stops when it is done, or uses a tool correctly. That is a second corpus entirely, three times over: show it worked examples, show it which of two answers people preferred, and let it practise against a checker that says pass or fail.'),
+      text(' — whether it answers helpfully, refuses what it should, stops when it is done, or uses a tool correctly. That is a second corpus entirely, three times over. Every figure in this chapter is a '),
+      b('proposal rather than a measurement'),
+      text(', and the last state compares it against the two labs that published theirs.'),
     ],
-    body,
-    caption: `The catalogue holds ${post.datasets} datasets tagged for this stage. Not one of them states a size, which is why none appears in a token budget anywhere on this page.`,
+    figNum: 'Fig. 9 — where the post-training budget goes',
+    caption: `Fig. 9 — Each stage's budget split by category, as a share of that stage's total. Every number here is a design proposal from ${sft.source}, which states them with a tilde and cites nothing. They are drawn as estimates and compared against published sets in the last state. The catalogue holds ${post.datasets} datasets tagged for this stage and ${post.sized} of them state a size.`,
+    pill: `${fmt(sft.total, 'count')} · ${fmt(dpo.total, 'count')} · ${fmt(plan[2].total, 'count')}`,
+    rail: [
+      text('Why none of this enters a token budget. '),
+      b(`${post.datasets} catalogued datasets carry a post-training tag and ${post.sized} state a size`),
+      text('. Post-training sets are counted in examples, pairs and problems rather than tokens, and almost nobody publishes either — so this chapter proposes a budget where the pre-training chapters could at least argue with a catalogue.'),
+    ],
+    states,
     arithmetic: [
-      para('The three stages run in order: supervised fine-tuning, then preference alignment, then reinforcement learning against verifiable rewards. Each corrects something the previous one cannot.'),
-      para(b('The differentiator.'), ' ', pt.differentiator.how, ' ', pt.differentiator.why_it_matters, ' The catalogue carries it as a named gap rather than as a dataset — ', b('no corpus exists for it at any licence, at any size'), ', which is why it appears in the mixture with nothing behind it.'),
+      para(b('What these numbers are.'), ' A proposed budget, stated in ', sft.source, ' with a tilde and no citation. They are not measured, not read off any published model, and not derived from the catalogue — which could not supply them anyway, since ', String(post.datasets - post.sized), ' of the ', String(post.datasets), ' tagged datasets state no size at all.'),
+      para(b('What other people actually built.'), ' ', (pt.reference || {}).finding || ''),
+      table(['model', 'SFT examples', 'preference pairs', 'source'], refs.map((r) => [
+        r.model,
+        r.sft ? renderNumber({ value: r.sft, unit: 'count', provenance: 'measured', source: r.source }, { unit: false }) : $('span', 'unpriced', 'not stated'),
+        r.preference ? renderNumber({ value: r.preference, unit: 'count', provenance: 'measured', source: r.source }, { unit: false }) : $('span', 'unpriced', r.preference_note || 'not stated'),
+        r.source,
+      ]), [1, 2]),
+      para(b('The differentiator.'), ' ', pt.differentiator.how, ' ', pt.differentiator.why_it_matters, ' The catalogue carries it as a named gap rather than as a dataset — ', b('no corpus exists for it at any licence, at any size'), '.'),
       para(b('Three findings that shape the budget.'), ' ', pt.alignment_findings.map((f) => `${f.finding} — ${f.consequence}`).join(' ')),
-      para('The honest gap: ', b(`${post.datasets} datasets carry a post-training tag and ${post.sized} of them state a size`), '. The budgets above come from the design, not from adding up available corpora, because those corpora do not publish their sizes. Anyone building this would have to measure first.'),
     ],
+    refresh: (api) => {
+      states.forEach((st, i) => {
+        if (st.compare) {
+          api.shard(i, refs.map((r) => `${r.model}: SFT ${r.sft ? fmt(r.sft, 'count') : '—'} · pref ${r.preference ? fmt(r.preference, 'count') : 'not stated'}`).join('\n'));
+          api.inline(i, `→ this plan pairs ${fmt(dpo.total, 'count')} preferences to ${fmt(sft.total, 'count')} demonstrations — ${(dpo.total / sft.total * 100).toFixed(1)}%`, true);
+          return;
+        }
+        const stage = plan[st.stage];
+        api.shard(i, stage.splits.map((x) => `${x.name} ${fmt(x.count, 'count')}`).join(' · '));
+        api.inline(i, `→ ${stage.splits.length} categories summing to ${fmt(stage.total, 'count')} ${stage.unit}`, false);
+      });
+    },
+    render: (i, api) => {
+      const st = states[i];
+      bars.replaceChildren();
+
+      if (st.compare) {
+        const ratio = (r) => (r.preference && r.sft ? r.preference / r.sft : null);
+        const rows = [
+          { label: 'this plan', sft: sft.total, pref: dpo.total, ours: true },
+          ...refs.map((r) => ({ label: r.model, sft: r.sft, pref: r.preference, note: r.preference_note })),
+        ];
+        const top = Math.max(...rows.map((r) => r.sft || 0));
+        rows.forEach((r) => {
+          const row = $('div', 'tierrow');
+          const track = $('div', 'tiertrack');
+          const fill = $('div', `tierfill ${r.ours ? 'lane' : 'dim'}`);
+          fill.style.width = `${Math.max((r.sft / top) * 100, 1.5)}%`;
+          track.append(fill);
+          const val = $('div', 'tierval');
+          val.textContent = r.pref ? `${(r.pref / r.sft * 100).toFixed(0)}% pref` : 'not stated';
+          row.append($('div', 'tiername', `${r.label} · ${fmt(r.sft, 'count')}`), track, val);
+          bars.append(row);
+        });
+        api.extra.replaceChildren(bars);
+        api.big({ value: dpo.total / sft.total, unit: 'share', provenance: 'estimated', source: 'this plan divided against itself' });
+        api.bigHit(true);
+        api.sub('preference pairs per demonstration in this plan');
+        api.verdict('OUT OF LINE', true);
+        const tulu = refs.find((r) => /tulu/i.test(r.model));
+        api.note(tulu ? `Tulu 3 — the only fully published recipe at this level of detail — pairs ${fmt(tulu.preference, 'count')} preferences to ${fmt(tulu.sft, 'count')} demonstrations, which is ${(ratio(tulu) * 100).toFixed(0)}%. This plan proposes ${(dpo.total / sft.total * 100).toFixed(1)}%. Either the SFT budget is three times larger than it needs to be or the preference budget is five times too small, and nothing in the plan says which. That is what an uncited number costs.` : 'No published comparison is available.');
+        api.strip(rows.map((r) => (r.ours ? 'hit' : 'reg')));
+        return;
+      }
+
+      const stage = plan[st.stage];
+      const top = stage.splits[0].count;
+      stage.splits.forEach((sp) => {
+        const row = $('div', 'tierrow');
+        const track = $('div', 'tiertrack');
+        const fill = $('div', `tierfill ${/indic|india/i.test(sp.name) ? 'natural' : /safety/i.test(sp.name) ? 'synth' : 'lane'}`);
+        fill.style.width = `${Math.max((sp.count / top) * 100, 2)}%`;
+        track.append(fill);
+        const val = $('div', 'tierval');
+        val.append(renderNumber(proposed(sp.count, 'count'), { unit: false }));
+        row.append($('div', 'tiername', sp.name), track, val);
+        bars.append(row);
+      });
+      api.extra.replaceChildren(bars);
+      api.big(proposed(stage.total, stage.unit));
+      api.bigHit(false);
+      api.sub(`${stage.unit} proposed for ${stage.name.toLowerCase()}`);
+      const indic = stage.splits.filter((x) => /indic|india/i.test(x.name)).reduce((a, x) => a + x.count, 0);
+      api.verdict(`${(indic / stage.total * 100).toFixed(0)}% INDIAN`, false);
+      api.note(`${stage.splits.length} categories. ${fmt(indic, 'count')} of the ${fmt(stage.total, 'count')} is Indian-language or India-context work — the share that decides whether this is an India-first model or a general one with an Indic evaluation.`);
+      api.strip(stage.splits.map((x) => (/indic|india/i.test(x.name) ? 'reg' : '')));
+    },
   });
 }
 

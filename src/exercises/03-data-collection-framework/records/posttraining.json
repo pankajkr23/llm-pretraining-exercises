@@ -1,5 +1,5 @@
 {
-  "note": "Extracted from docs/DECISIONS.md §1.3-1.4 and docs/ATLAS.md §11. Pre-training decides what the model knows; post-training decides how it behaves. The exercise's first build covered only the first, so none of this reached a page.",
+  "note": "Extracted from docs/DECISIONS.md 1.3-1.4 and docs/ATLAS.md 11. Pre-training decides what the model knows; post-training decides how it behaves. IMPORTANT: every count below is a PROPOSED BUDGET, not a measurement and not a figure read off any published model. docs/DECISIONS.md states them with a tilde and cites nothing. They are recorded here as estimates and the `reference` block gives the published numbers they should be judged against.",
   "stages": [
     {
       "id": "sft",
@@ -10,13 +10,41 @@
       "source": "docs/DECISIONS.md §1.3",
       "why": "The model has read the internet but has never been shown what a good answer looks like. SFT is the demonstration set.",
       "splits": [
-        { "name": "agentic", "count": 600000, "why": "Multi-step tool use is the capability least present in raw web text." },
-        { "name": "code", "count": 600000, "why": "Matches the agentic budget, because agentic work here is mostly code work." },
-        { "name": "Indic conversation", "count": 500000, "why": "IndicTalk, UPDESH, IndicAlign-Instruct. The only tier that teaches how these languages are actually spoken." },
-        { "name": "reasoning", "count": 450000, "why": "Long chains, shown rather than described." },
-        { "name": "general instruct", "count": 400000, "why": "The baseline instruction-following everyone needs." },
-        { "name": "India-context factuality", "count": 250000, "why": "Answers that assume Indian law, geography and institutions as default." },
-        { "name": "safety", "count": 200000, "why": "Refusals and boundaries, taught in every language rather than translated into them." }
+        {
+          "name": "agentic",
+          "count": 600000,
+          "why": "Multi-step tool use is the capability least present in raw web text."
+        },
+        {
+          "name": "code",
+          "count": 600000,
+          "why": "Matches the agentic budget, because agentic work here is mostly code work."
+        },
+        {
+          "name": "Indic conversation",
+          "count": 500000,
+          "why": "IndicTalk, UPDESH, IndicAlign-Instruct. The only tier that teaches how these languages are actually spoken."
+        },
+        {
+          "name": "reasoning",
+          "count": 450000,
+          "why": "Long chains, shown rather than described."
+        },
+        {
+          "name": "general instruct",
+          "count": 400000,
+          "why": "The baseline instruction-following everyone needs."
+        },
+        {
+          "name": "India-context factuality",
+          "count": 250000,
+          "why": "Answers that assume Indian law, geography and institutions as default."
+        },
+        {
+          "name": "safety",
+          "count": 200000,
+          "why": "Refusals and boundaries, taught in every language rather than translated into them."
+        }
       ]
     },
     {
@@ -28,12 +56,36 @@
       "source": "docs/DECISIONS.md §1.3",
       "why": "Demonstrations teach a good answer. Preferences teach which of two plausible answers is better — a judgement you cannot write down as a rule.",
       "splits": [
-        { "name": "India factuality and plural perspectives", "count": 50000, "why": "Contested questions where a single confident answer is the wrong shape." },
-        { "name": "safety incl. transliterated slurs", "count": 40000, "why": "Romanised Hindi abuse passes every English filter. It has to be learned, not matched." },
-        { "name": "code quality", "count": 35000, "why": "Both answers compile; one is maintainable." },
-        { "name": "agentic tool-selection and termination", "count": 35000, "why": "Knowing when to stop is a preference, not a fact." },
-        { "name": "stop discipline", "count": 25000, "why": "Models over-answer. This is where that gets corrected." },
-        { "name": "Indic register", "count": 15000, "why": "Judged by native speakers, not translated from English judgements." }
+        {
+          "name": "India factuality and plural perspectives",
+          "count": 50000,
+          "why": "Contested questions where a single confident answer is the wrong shape."
+        },
+        {
+          "name": "safety incl. transliterated slurs",
+          "count": 40000,
+          "why": "Romanised Hindi abuse passes every English filter. It has to be learned, not matched."
+        },
+        {
+          "name": "code quality",
+          "count": 35000,
+          "why": "Both answers compile; one is maintainable."
+        },
+        {
+          "name": "agentic tool-selection and termination",
+          "count": 35000,
+          "why": "Knowing when to stop is a preference, not a fact."
+        },
+        {
+          "name": "stop discipline",
+          "count": 25000,
+          "why": "Models over-answer. This is where that gets corrected."
+        },
+        {
+          "name": "Indic register",
+          "count": 15000,
+          "why": "Judged by native speakers, not translated from English judgements."
+        }
       ]
     },
     {
@@ -46,11 +98,31 @@
       "source": "docs/DECISIONS.md §1.3",
       "why": "No human grades these. A test suite or a Python interpreter says pass or fail, so the model can practise millions of times without anyone watching.",
       "splits": [
-        { "name": "math", "count": 20000, "why": "Python-verified — the answer is checkable exactly." },
-        { "name": "code", "count": 20000, "why": "Unit tests are the reward function." },
-        { "name": "Indic issue to patch", "count": 8000, "why": "The differentiator. See below — this dataset does not exist yet." },
-        { "name": "agentic multi-turn", "count": 7000, "why": "Long horizons, where errors compound." },
-        { "name": "verifiable instruction-following", "count": 5000, "why": "Constraints a checker can confirm were obeyed." }
+        {
+          "name": "math",
+          "count": 20000,
+          "why": "Python-verified — the answer is checkable exactly."
+        },
+        {
+          "name": "code",
+          "count": 20000,
+          "why": "Unit tests are the reward function."
+        },
+        {
+          "name": "Indic issue to patch",
+          "count": 8000,
+          "why": "The differentiator. See below — this dataset does not exist yet."
+        },
+        {
+          "name": "agentic multi-turn",
+          "count": 7000,
+          "why": "Long horizons, where errors compound."
+        },
+        {
+          "name": "verifiable instruction-following",
+          "count": 5000,
+          "why": "Constraints a checker can confirm were obeyed."
+        }
       ]
     }
   ],
@@ -78,5 +150,30 @@
       "consequence": "Pairs generated in the language and judged by in-language annotators. Translated preference data teaches translated taste.",
       "source": "docs/ATLAS.md §11.4"
     }
-  ]
+  ],
+  "reference": {
+    "note": "What post-training sets other people actually built, so the proposal above can be compared rather than merely asserted. Gathered by web research in August 2026.",
+    "models": [
+      {
+        "model": "Tulu 3",
+        "sft": 939344,
+        "preference": 337000,
+        "preference_note": "337K for the 8B checkpoint, 361K for the 70B. Roughly 30% of the collected prompts converted to preference data.",
+        "rlvr": null,
+        "source": "arXiv:2411.15124, Tulu 3: Pushing Frontiers in Open Language Model Post-Training (Allen Institute for AI)",
+        "why_here": "The only fully open post-training recipe at this level of detail — mixture, sizes and method all published, including the RLVR stage this plan borrows."
+      },
+      {
+        "model": "Llama 3",
+        "sft": 10000000,
+        "preference": null,
+        "preference_note": "Not broken out. The 10M is human-annotated fine-tuning examples across the whole post-training stack.",
+        "rlvr": null,
+        "source": "Meta, Llama 3 model card and technical report",
+        "why_here": "The frontier end of the range, and a reminder that the gap between an open recipe and an industrial one is an order of magnitude of human annotation."
+      }
+    ],
+    "finding": "This plan's 3M SFT examples sit between Tulu 3's 939K and Llama 3's 10M+, which is a defensible place for a 40B seed to be. Its preference budget is not. Tulu 3 converts preference data at roughly 36% of its SFT size; this plan proposes 200K against 3M, which is 6.7%. Either the SFT budget is three times larger than it needs to be, or the preference budget is five times smaller than published practice — and nothing in the plan says which.",
+    "gathered": "2026-08-05"
+  }
 }
