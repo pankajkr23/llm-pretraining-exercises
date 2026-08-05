@@ -1,5 +1,5 @@
 {
- "run_id": "in22gen-20260805T061749Z-7e4006da",
+ "run_id": "in22gen-20260805T063758Z-9ce25f1f",
  "corpus": "IN22-Gen",
  "corpus_trust_band": "native-sourced",
  "languages_measured": [
@@ -44,139 +44,139 @@
     "value": 5.3591,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "bn": {
     "value": 8.5305,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ta": {
     "value": 12.493,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "te": {
     "value": 13.6533,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "mr": {
     "value": 7.6159,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ml": {
     "value": 17.5063,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "kn": {
     "value": 16.0569,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "gu": {
     "value": 10.6814,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ur": {
     "value": 4.3143,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "pa": {
     "value": 7.9914,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "or": {
     "value": 18.2151,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "as": {
     "value": 9.3314,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ne": {
     "value": 7.5365,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "sa": {
     "value": 10.2571,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "sd": {
     "value": 5.7461,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ks": {
     "value": 5.8869,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "kok": {
     "value": 7.3638,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "mai": {
     "value": 6.3541,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "brx": {
     "value": 8.0967,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "doi": {
     "value": 5.5754,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "mni": {
     "value": 16.4958,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "sat": {
     "value": 15.697,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "en": {
     "value": 1.3462,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/cl100k_base@in22gen-20260805T063758Z-9ce25f1f"
    }
   },
   "tiktoken/o200k_base": {
@@ -184,139 +184,139 @@
     "value": 1.757,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "bn": {
     "value": 2.562,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ta": {
     "value": 3.3857,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "te": {
     "value": 3.3008,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "mr": {
     "value": 2.7338,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ml": {
     "value": 4.0088,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "kn": {
     "value": 3.7751,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "gu": {
     "value": 2.5627,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ur": {
     "value": 1.6889,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "pa": {
     "value": 2.762,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "or": {
     "value": 7.3124,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "as": {
     "value": 2.9736,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ne": {
     "value": 2.5372,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "sa": {
     "value": 4.5562,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "sd": {
     "value": 2.565,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ks": {
     "value": 3.6778,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "kok": {
     "value": 3.1261,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "mai": {
     "value": 2.3085,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "brx": {
     "value": 3.9557,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "doi": {
     "value": 2.3136,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "mni": {
     "value": 16.4958,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "sat": {
     "value": 16.5871,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "en": {
     "value": 1.3241,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base@in22gen-20260805T061749Z-7e4006da"
+    "source": "tiktoken/o200k_base@in22gen-20260805T063758Z-9ce25f1f"
    }
   },
   "hf/google/gemma-4-31b": {
@@ -324,139 +324,139 @@
     "value": 1.5194,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "bn": {
     "value": 1.8737,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ta": {
     "value": 2.6332,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "te": {
     "value": 3.0986,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "mr": {
     "value": 2.169,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ml": {
     "value": 3.8505,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "kn": {
     "value": 3.7255,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "gu": {
     "value": 2.7254,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ur": {
     "value": 1.6197,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "pa": {
     "value": 2.8955,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "or": {
     "value": 5.2506,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "as": {
     "value": 2.8693,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ne": {
     "value": 2.3399,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "sa": {
     "value": 3.9934,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "sd": {
     "value": 2.3785,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ks": {
     "value": 3.2616,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "kok": {
     "value": 2.8849,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "mai": {
     "value": 2.1148,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "brx": {
     "value": 3.5422,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "doi": {
     "value": 2.0292,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "mni": {
     "value": 12.1773,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "sat": {
     "value": 6.3986,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "en": {
     "value": 1.3777,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/google/gemma-4-31b@in22gen-20260805T063758Z-9ce25f1f"
    }
   },
   "hf/sarvamai/sarvam-105b": {
@@ -464,139 +464,139 @@
     "value": 1.5194,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "bn": {
     "value": 1.8737,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ta": {
     "value": 2.6332,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "te": {
     "value": 2.6035,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "mr": {
     "value": 2.169,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ml": {
     "value": 3.4508,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "kn": {
     "value": 2.9407,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "gu": {
     "value": 2.1974,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ur": {
     "value": 1.6197,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "pa": {
     "value": 1.8069,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "or": {
     "value": 2.2837,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "as": {
     "value": 2.8693,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ne": {
     "value": 2.3399,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "sa": {
     "value": 3.9934,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "sd": {
     "value": 2.3785,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ks": {
     "value": 3.2616,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "kok": {
     "value": 2.8849,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "mai": {
     "value": 2.1148,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "brx": {
     "value": 3.5422,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "doi": {
     "value": 2.0292,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "mni": {
     "value": 2.1866,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "sat": {
     "value": 2.1869,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    },
    "en": {
     "value": 1.3777,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/sarvamai/sarvam-105b@in22gen-20260805T063758Z-9ce25f1f"
    }
   },
   "hf/xlm-roberta-base": {
@@ -604,139 +604,139 @@
     "value": 1.5625,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "bn": {
     "value": 2.3922,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ta": {
     "value": 2.6216,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "te": {
     "value": 2.5737,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "mr": {
     "value": 2.1192,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ml": {
     "value": 3.1772,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "kn": {
     "value": 2.9971,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "gu": {
     "value": 2.3018,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ur": {
     "value": 1.3933,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "pa": {
     "value": 1.9422,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "or": {
     "value": 2.563,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "as": {
     "value": 3.1199,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ne": {
     "value": 2.0219,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "sa": {
     "value": 3.6152,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "sd": {
     "value": 2.35,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "ks": {
     "value": 3.0564,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "kok": {
     "value": 2.7621,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "mai": {
     "value": 2.197,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "brx": {
     "value": 3.6232,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "doi": {
     "value": 2.1094,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "mni": {
     "value": 2.1469,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "sat": {
     "value": 2.0659,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    },
    "en": {
     "value": 1.4996,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base@in22gen-20260805T061749Z-7e4006da"
+    "source": "hf/xlm-roberta-base@in22gen-20260805T063758Z-9ce25f1f"
    }
   }
  },
@@ -747,139 +747,139 @@
     "value": 4.9721,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "bn": {
     "value": 7.4162,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "ta": {
     "value": 12.165,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "te": {
     "value": 12.8233,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "mr": {
     "value": 6.438,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "ml": {
     "value": 16.3365,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "kn": {
     "value": 13.591,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "gu": {
     "value": 8.8058,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "ur": {
     "value": 4.4126,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "pa": {
     "value": 7.6028,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "or": {
     "value": 15.0651,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "as": {
     "value": 8.3781,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "ne": {
     "value": 6.5836,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "sa": {
     "value": 8.0488,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "sd": {
     "value": 5.4216,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "ks": {
     "value": 6.0949,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "kok": {
     "value": 6.5692,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "mai": {
     "value": 5.5892,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "brx": {
     "value": 7.4284,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "doi": {
     "value": 5.2539,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "mni": {
     "value": 15.4451,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "sat": {
     "value": 13.8309,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    },
    "en": {
     "value": 1.2443,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/cl100k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/cl100k_base|conv@pending-20260805T063758Z"
    }
   },
   "tiktoken/o200k_base": {
@@ -887,139 +887,139 @@
     "value": 1.5723,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "bn": {
     "value": 2.1623,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "ta": {
     "value": 3.233,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "te": {
     "value": 3.0477,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "mr": {
     "value": 2.4446,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "ml": {
     "value": 3.74,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "kn": {
     "value": 3.5166,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "gu": {
     "value": 2.0682,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "ur": {
     "value": 1.5287,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "pa": {
     "value": 2.5223,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "or": {
     "value": 6.1118,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "as": {
     "value": 2.6084,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "ne": {
     "value": 2.2454,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "sa": {
     "value": 3.516,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "sd": {
     "value": 2.3984,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "ks": {
     "value": 3.7058,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "kok": {
     "value": 2.8754,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "mai": {
     "value": 2.0531,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "brx": {
     "value": 3.5922,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "doi": {
     "value": 2.2458,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "mni": {
     "value": 15.4449,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "sat": {
     "value": 14.6634,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    },
    "en": {
     "value": 1.2177,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "tiktoken/o200k_base|conv@pending-20260805T061749Z"
+    "source": "tiktoken/o200k_base|conv@pending-20260805T063758Z"
    }
   },
   "hf/google/gemma-4-31b": {
@@ -1027,139 +1027,139 @@
     "value": 1.422,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "bn": {
     "value": 1.6909,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "ta": {
     "value": 2.5451,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "te": {
     "value": 2.9237,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "mr": {
     "value": 1.9718,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "ml": {
     "value": 3.4845,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "kn": {
     "value": 3.5226,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "gu": {
     "value": 2.2496,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "ur": {
     "value": 1.4658,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "pa": {
     "value": 2.6988,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "or": {
     "value": 4.5693,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "as": {
     "value": 2.6436,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "ne": {
     "value": 2.2991,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "sa": {
     "value": 3.1391,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "sd": {
     "value": 2.353,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "ks": {
     "value": 3.3371,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "kok": {
     "value": 2.7202,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "mai": {
     "value": 2.1017,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "brx": {
     "value": 3.2971,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "doi": {
     "value": 2.0292,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "mni": {
     "value": 11.7522,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "sat": {
     "value": 5.7269,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    },
    "en": {
     "value": 1.3496,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/google/gemma-4-31b|conv@pending-20260805T061749Z"
+    "source": "hf/google/gemma-4-31b|conv@pending-20260805T063758Z"
    }
   },
   "hf/sarvamai/sarvam-105b": {
@@ -1167,139 +1167,139 @@
     "value": 1.422,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "bn": {
     "value": 1.6909,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "ta": {
     "value": 2.5451,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "te": {
     "value": 2.494,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "mr": {
     "value": 1.9718,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "ml": {
     "value": 3.1599,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "kn": {
     "value": 2.9816,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "gu": {
     "value": 1.8398,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "ur": {
     "value": 1.4658,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "pa": {
     "value": 1.6132,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "or": {
     "value": 2.033,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "as": {
     "value": 2.6436,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "ne": {
     "value": 2.2991,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "sa": {
     "value": 3.1391,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "sd": {
     "value": 2.353,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "ks": {
     "value": 3.3371,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "kok": {
     "value": 2.7202,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "mai": {
     "value": 2.1017,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "brx": {
     "value": 3.2971,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "doi": {
     "value": 2.0292,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "mni": {
     "value": 2.08,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "sat": {
     "value": 1.937,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    },
    "en": {
     "value": 1.3496,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T061749Z"
+    "source": "hf/sarvamai/sarvam-105b|conv@pending-20260805T063758Z"
    }
   },
   "hf/xlm-roberta-base": {
@@ -1307,139 +1307,139 @@
     "value": 1.4306,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "bn": {
     "value": 1.94,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "ta": {
     "value": 2.3194,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "te": {
     "value": 2.2339,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "mr": {
     "value": 1.7902,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "ml": {
     "value": 2.6771,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "kn": {
     "value": 2.7152,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "gu": {
     "value": 1.799,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "ur": {
     "value": 1.2643,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "pa": {
     "value": 1.6682,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "or": {
     "value": 2.1237,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "as": {
     "value": 2.6863,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "ne": {
     "value": 1.7349,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "sa": {
     "value": 2.6822,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "sd": {
     "value": 2.246,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "ks": {
     "value": 3.1188,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "kok": {
     "value": 2.5802,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "mai": {
     "value": 2.1078,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "brx": {
     "value": 3.3383,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "doi": {
     "value": 2.0736,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "mni": {
     "value": 2.1077,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "sat": {
     "value": 2.0181,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    },
    "en": {
     "value": 1.3494,
     "unit": "tokens/word",
     "provenance": "measured",
-    "source": "hf/xlm-roberta-base|conv@pending-20260805T061749Z"
+    "source": "hf/xlm-roberta-base|conv@pending-20260805T063758Z"
    }
   }
  },

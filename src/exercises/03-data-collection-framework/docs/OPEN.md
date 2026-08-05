@@ -26,6 +26,17 @@ assumption** — anything unresolved surfaces in the UI as `estimated` or `unkno
    Stated resolution: a **head-to-head at ~2B scale on identical data**, judged on Indic + code
    held-out loss. State the fork; don't pretend it's obvious.
 
+## Closed by policy — technical corpora not pursued
+
+The fertility protocol names a Stack v2 code slice and a Proof-Pile-2 LaTeX slice. **Neither was
+taken, deliberately.** Both Stack repositories are gated behind manual approval rather than automatic,
+and the obvious LaTeX substitute (`open-web-math`) ships with **no licence declared at all** — scraped
+web text with nothing stated about reuse. A framework whose entire argument is that licences must be
+established before use does not get to make an exception for its own measurements.
+
+The consequence is stated rather than hidden: fertility is measured on natural language only. Code and
+maths tokenisation is unmeasured here, and the pages say so instead of showing a number.
+
 ## Unknown — unmeasured values that drive the architecture
 Surface as `unknown`/`estimated` in the UI (`DECISIONS.md` §"What we don't know"):
 
