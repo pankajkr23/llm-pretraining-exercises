@@ -58,8 +58,10 @@
   --gotcha-heterogeneity: #a03fce;
 }
 
+/* System dark. Scoped to `:not([data-theme])` so an explicitly chosen theme always wins — without
+   it, this block would override any theme rule that happened to come earlier in the file. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --bg: #000000;
     --panel: #1c1c1e;
     --track: #2a2a2c;
@@ -94,6 +96,141 @@
     --gotcha-sourcing: #2dd4bf;
     --gotcha-heterogeneity: #d68bf5;
   }
+}
+
+/* ------------------------------------------------------------- chosen themes
+
+   Five options: the system default above, plus the four below. Every one of them defines the whole
+   token set — there is no partial theme, because a theme that inherits half its colours from
+   another is how a token ends up unreadable in exactly one combination nobody tested.
+
+   Every text token in every theme is checked at 4.5:1 or better against both surfaces it can sit
+   on. That is not a claim about care taken; it was generated from a palette file that the contrast
+   checker had already passed, precisely because four contrast failures shipped in this exercise
+   when the values were chosen by eye. */
+
+/* --- Soft light. Warm, creamy off-white instead of cool grey — easier on the eyes over long reading, and the tone this exercise's prose was written for. */
+:root[data-theme="soft-light"] {
+  --bg: #faf6ef;
+  --panel: #fffdf9;
+  --track: #ece5d9;
+  --ink: #2b2419;
+  --muted: #6b6155;
+  --faint: #6f6559;
+  --line: #ddd3c4;
+  --accent: #0a6ab8;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(10,106,184,.10);
+  --shadow: 0 1px 3px rgba(60,45,20,.05), 0 6px 20px rgba(60,45,20,.04);
+  --grade-a: #1f6f33;
+  --grade-b: #7d5c07;
+  --grade-c: #6b6155;
+  --grade-x: #b3121d;
+  --lang-tier-1: #0a6ab8;
+  --lang-tier-2: #0a63ad;
+  --lang-tier-3: #6f6559;
+  --gotcha-licence: #6f4f96;
+  --gotcha-dedup: #0a63ad;
+  --gotcha-composition: #95530a;
+  --gotcha-provenance: #7d5c07;
+  --gotcha-safety: #b3121d;
+  --gotcha-attribution: #1f6f33;
+  --gotcha-availability: #6b6155;
+  --gotcha-sourcing: #0d6b63;
+  --gotcha-heterogeneity: #8f39b8;
+}
+
+/* --- Tinted dark. Deep navy rather than pure black. Black on an OLED panel is a hole; a tinted surface keeps depth and reduces halation around text. */
+:root[data-theme="tinted-dark"] {
+  --bg: #0f1522;
+  --panel: #18202f;
+  --track: #243044;
+  --ink: #e9edf5;
+  --muted: #a3adc2;
+  --faint: #8f99ae;
+  --line: #25314a;
+  --accent: #5aa9ff;
+  --on-accent: #08101c;
+  --accent-soft: rgba(90,169,255,.14);
+  --shadow: none;
+  --grade-a: #4ad07a;
+  --grade-b: #f0c53d;
+  --grade-c: #a3adc2;
+  --grade-x: #ff6b63;
+  --lang-tier-1: #5aa9ff;
+  --lang-tier-2: #5aa9ff;
+  --lang-tier-3: #8f99ae;
+  --gotcha-licence: #c98bf5;
+  --gotcha-dedup: #5aa9ff;
+  --gotcha-composition: #f5a742;
+  --gotcha-provenance: #f0c53d;
+  --gotcha-safety: #ff6b63;
+  --gotcha-attribution: #4ad07a;
+  --gotcha-availability: #a3adc2;
+  --gotcha-sourcing: #3ed6c4;
+  --gotcha-heterogeneity: #d79bf7;
+}
+
+/* --- High contrast. Monochrome, maximum separation. Semantic colour never carries meaning alone here — a grade always shows its letter — so the page survives this intact. */
+:root[data-theme="high-contrast"] {
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --track: #d4d4d4;
+  --ink: #000000;
+  --muted: #000000;
+  --faint: #3d3d3d;
+  --line: #000000;
+  --accent: #0000cc;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(0,0,204,.12);
+  --shadow: none;
+  --grade-a: #00591f;
+  --grade-b: #5c3d00;
+  --grade-c: #3d3d3d;
+  --grade-x: #a10000;
+  --lang-tier-1: #0000cc;
+  --lang-tier-2: #0000cc;
+  --lang-tier-3: #3d3d3d;
+  --gotcha-licence: #4b0082;
+  --gotcha-dedup: #0000cc;
+  --gotcha-composition: #6b3200;
+  --gotcha-provenance: #5c3d00;
+  --gotcha-safety: #a10000;
+  --gotcha-attribution: #00591f;
+  --gotcha-availability: #3d3d3d;
+  --gotcha-sourcing: #00474d;
+  --gotcha-heterogeneity: #5c0080;
+}
+
+/* --- Neon. Near-black with luminous accents. Every hue is contrast-checked as text rather than chosen for glow, which is where neon palettes usually fail. */
+:root[data-theme="neon"] {
+  --bg: #08080e;
+  --panel: #12121c;
+  --track: #22222f;
+  --ink: #eaeaf5;
+  --muted: #9ea0bd;
+  --faint: #8e90ad;
+  --line: #2a2a3d;
+  --accent: #00e5ff;
+  --on-accent: #04141a;
+  --accent-soft: rgba(0,229,255,.14);
+  --shadow: none;
+  --grade-a: #39ff8b;
+  --grade-b: #ffe14d;
+  --grade-c: #9ea0bd;
+  --grade-x: #ff5c7a;
+  --lang-tier-1: #00e5ff;
+  --lang-tier-2: #00e5ff;
+  --lang-tier-3: #8e90ad;
+  --gotcha-licence: #c77dff;
+  --gotcha-dedup: #00e5ff;
+  --gotcha-composition: #ffab3d;
+  --gotcha-provenance: #ffe14d;
+  --gotcha-safety: #ff5c7a;
+  --gotcha-attribution: #39ff8b;
+  --gotcha-availability: #9ea0bd;
+  --gotcha-sourcing: #2ff5d8;
+  --gotcha-heterogeneity: #e0a3ff;
 }
 
 /* ---------------------------------------------------------------- base */

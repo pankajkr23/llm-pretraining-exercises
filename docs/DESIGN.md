@@ -12,6 +12,12 @@ This is the canonical reference; `AGENTS.md` carries the short version.
   accent, panel/card treatment, and footer voice on every page (landing, each exercise).
 - **Written for a general audience** — blog-style and self-contained (see [Copy & tone](#copy--tone)).
 - **Theme-aware.** Style light and dark via `prefers-color-scheme`; every token has both values.
+  Exercise 03 additionally offers four explicitly chosen themes (soft light, tinted dark, high
+  contrast, neon) via `:root[data-theme="…"]`, with the system pair as the default. Two rules make
+  that safe: the `prefers-color-scheme` block is scoped to `:root:not([data-theme])` so a chosen
+  theme always wins, and **every theme defines the whole token set** — a theme that inherits half
+  its colours is how a token ends up unreadable in one combination nobody tested. Every text token
+  in every theme is verified at 4.5:1 against both surfaces before it ships.
 
 ## Palette tokens
 

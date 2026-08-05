@@ -2274,6 +2274,12 @@ function chapterAppendix(ctx) {
      * a button would: a tab stop, Enter and Space, and a role saying what it does. */
     const everyCard = $('div', 'gatecard');
     everyCard.hidden = true;
+    /* A detail row, so the card can sit inside the table immediately under its own dataset. */
+    const everyRow = $('tr', 'cardrow');
+    const everyCell = $('td');
+    everyCell.colSpan = 7;
+    everyCell.append(everyCard);
+    everyRow.append(everyCell);
     const everyTable = table(
       ['id', 'dataset', 'kind', 'grade', 'stage', 'tokens', 'commercial use'],
       data.datasets.map((d) => [
@@ -2297,8 +2303,14 @@ function chapterAppendix(ctx) {
       tr.setAttribute('role', 'button');
       tr.setAttribute('aria-label', `${d.name} — show its five gates`);
       const open = () => {
+        const already = tr.classList.contains('sel');
         trs.forEach((x) => x.classList.remove('sel'));
+        everyRow.remove();
+        if (already) { everyCard.hidden = true; return; }
         tr.classList.add('sel');
+        /* The card belongs beside the row that was clicked. Appending it after the table put it
+         * 145 rows below the click, which reads as nothing having happened. */
+        tr.after(everyRow);
         openCard(d, everyCard);
       };
       tr.addEventListener('click', open);
@@ -2316,9 +2328,7 @@ function chapterAppendix(ctx) {
         trs[rover].focus();
       });
     });
-    const everyWrap = $('div');
-    everyWrap.append(everyTable, everyCard);
-    block(`Every dataset — ${data.datasets.length}`, everyWrap);
+    block(`Every dataset — ${data.datasets.length}`, everyTable);
   }
 
   block(`Every benchmark — ${data.benchmarks.length}`, table(

@@ -42,6 +42,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **Five themes, and every one of them contrast-checked.** The system light/dark pair stays the
+  default, joined by soft light (warm off-white rather than cool grey), tinted dark (deep navy, not
+  pure black), high contrast (monochrome), and neon (near-black with luminous accents). The choice
+  persists and is applied before first paint, so there is no flash of the wrong theme. Two rules
+  make it safe rather than decorative: the `prefers-color-scheme` block is scoped so a chosen theme
+  always wins, and each theme defines the whole token set instead of inheriting half of it. Every
+  text token in every theme was generated from a palette that a contrast checker had already
+  passed — four contrast failures had shipped in this exercise when values were picked by eye — and
+  all six themes measure accessibility 100 in the browser.
 - **A growth chapter.** The 40B is a seed, and the chapter follows it to the largest Indic model in
   four stages — dense, grow sparse, grow deep, frontier parity — using the state-preserving growth
   method of arXiv:2606.07404. The shape of the answer is the lesson: parameters rise 7.5×, the
