@@ -27,6 +27,7 @@ from .milestones import TIER_SHAPE, build_all
 from .mix import ALWAYS_ON_SHARE, MAX_EPOCHS_ADVISED, MAX_EPOCHS_HARD
 from .models import Value
 from .shingles import write_index
+from .sourcing import build_plan
 from .vocab_sweep import summarise, sweep
 
 # Fertility has no measured anchor until task 2.2b runs, so the sweep's own reference point is
@@ -130,7 +131,9 @@ def _dataset_index_entry(record: dict[str, Any]) -> dict[str, Any]:
         "name": record.get("name"),
         "category": record.get("category"),
         "tier": record.get("tier"),
-        "is_gap": record.get("is_gap", False),
+        # Omitted when false: `blocking` and `is_gap` are absent-means-no, and 145 explicit
+        # `false`s cost 5KB of the index budget to say nothing.
+        **({"is_gap": True} if record.get("is_gap") else {}),
         "grade": grade,
         "stage": record.get("stage"),
         "languages": record.get("languages"),
@@ -139,7 +142,11 @@ def _dataset_index_entry(record: dict[str, Any]) -> dict[str, Any]:
         # reasoning and every gate live in catalog.json, loaded on demand.
         "size_tokens": record.get("size", {}).get("tokens"),
         "gotcha_types": sorted({g["type"] for g in record.get("gotchas") or []}),
-        "blocking": any(g.get("severity") == "blocking" for g in record.get("gotchas") or []),
+        **(
+            {"blocking": True}
+            if any(g.get("severity") == "blocking" for g in record.get("gotchas") or [])
+            else {}
+        ),
         "licence_commercial": record.get("licence", {}).get("commercial"),
     }
 
@@ -274,6 +281,8 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
     languages = [row.get("code") for row in records.get("languages", []) if row.get("code")]
     shingle_meta = write_index(cfg)
 
+    presets = _strip_tier_prose(build_all(records.get("milestones", [])))
+
     grades: dict[str, int] = {}
     for record in datasets:
         grade, _ = grade_dataset(record)
@@ -302,7 +311,7 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
         # The per-tier prose is a property of the mix shape, not of any one rung — carrying it in
         # all four presets cost ~10KB of duplication and pushed the index over budget.
         "milestones": {
-            "presets": _strip_tier_prose(build_all(records.get("milestones", []))),
+            "presets": presets,
             "tier_info": {
                 tier["name"]: {
                     "sources": tier.get("sources"),
@@ -372,6 +381,15 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
         },
         # `priors` stays in the index because the Decision cites it inline — but only the three
         # fields both surfaces actually render. The full records live in records/priors.json.
+        # The catalogue graded against the proposed mixture: what can actually be committed, and
+        # what is blocking the rest. Computed at the recommended rung.
+        "sourcing": build_plan(
+            [_dataset_index_entry(record) for record in datasets],
+            next(
+                (p["mix"] for p in presets if p.get("recommended")),
+                presets[len(presets) // 2]["mix"],
+            ),
+        ),
         "priors": [
             {
                 "id": row.get("id"),

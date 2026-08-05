@@ -25,6 +25,7 @@ from dataframework.shingles import (
     overlap,
     shingle,
 )
+from dataframework.sourcing import blockers, build_plan
 from dataframework.vocab_sweep import find_peak, round_to_multiple, sweep
 
 
@@ -323,3 +324,75 @@ def test_the_fetch_floor_matches_the_index_floor():
     from dataframework.shingles import MIN_SHINGLE_N
 
     assert FETCH_MIN_WORDS == MIN_SHINGLE_N
+
+
+# --------------------------------------------------------------------------- sourcing
+
+
+def _ds(**kw):
+    base = {
+        "id": "X",
+        "name": "n",
+        "category": "English Web",
+        "grade": "B",
+        "licence_commercial": True,
+        "size_tokens": {"value": 1e9},
+    }
+    return {**base, **kw}
+
+
+def test_unknown_licence_blocks_a_commitment():
+    """Unknown is not permission. The whole framework rests on that distinction."""
+    assert blockers(_ds(licence_commercial=None)) == ["licence"]
+    assert blockers(_ds(licence_commercial=False)) == ["licence"]
+    assert blockers(_ds()) == []
+
+
+def test_a_budget_you_cannot_add_up_is_not_a_budget():
+    assert "size" in blockers(_ds(size_tokens={"value": None}))
+    assert "size" in blockers(_ds(size_tokens=None))
+
+
+def test_a_rejected_dataset_can_never_be_committed():
+    """INV-2 again, from the sourcing side: grade X is not a shortfall to be filled."""
+    assert "grade" in blockers(_ds(grade="X"))
+    assert "grade" in blockers(_ds(grade="C"))
+
+
+def test_a_gap_is_not_a_candidate():
+    assert "does not exist" in blockers(_ds(is_gap=True))
+
+
+def test_the_plan_counts_only_what_it_may_count():
+    mix = {"tiers": [{"name": "english-web-hq", "unique_tokens": 4e9}]}
+    plan = build_plan(
+        [_ds(id="ok"), _ds(id="nolic", licence_commercial=None), _ds(id="nosize", size_tokens={})],
+        mix,
+    )
+    tier = plan["tiers"][0]
+    assert tier["committed"] == ["ok"]
+    assert tier["committed_tokens"] == 1e9
+    assert tier["shortfall_tokens"] == 3e9
+    assert tier["candidates_total"] == 3
+
+
+def test_the_work_queue_ranks_paperwork_above_the_unmeasured():
+    """A dataset blocked only on a licence counts the moment it clears; an unsized one does not."""
+    mix = {"tiers": [{"name": "english-web-hq", "unique_tokens": 1e12}]}
+    plan = build_plan(
+        [
+            _ds(id="small", licence_commercial=None, size_tokens={"value": 1e9}),
+            _ds(id="huge", licence_commercial=None, size_tokens={"value": 9e12}),
+            _ds(id="unsized", licence_commercial=None, size_tokens={}),
+        ],
+        mix,
+    )
+    assert [b["id"] for b in plan["blocked"]] == ["huge", "small", "unsized"]
+    assert plan["blocked"][-1]["unlocks_tokens"] is None
+
+
+def test_over_supply_is_not_a_surplus_to_spend_elsewhere():
+    mix = {"tiers": [{"name": "english-web-hq", "unique_tokens": 1e9}]}
+    tier = build_plan([_ds(size_tokens={"value": 9e9})], mix)["tiers"][0]
+    assert tier["shortfall_tokens"] == 0
+    assert tier["covered_share"] == 1.0

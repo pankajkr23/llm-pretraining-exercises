@@ -1092,6 +1092,141 @@
           }));
         }
 
+        /* ------------------------------------------- 5b · What we can actually commit (Budget)
+         *
+         * The framework graded 145 datasets and, separately, proposed a mixture. Nothing joined the
+         * two, so "which datasets fill this budget" had no answer on the page — which is the one
+         * question a data team would actually ask.
+         *
+         * The answer is 4 of 145, and six tiers at zero. That is not a flaw in the framework; it is
+         * the framework refusing to count a dataset whose licence nobody established. The useful
+         * output is the second half: the work queue, ranked by what resolving each item unlocks.
+         */
+        {
+          const src = data.sourcing;
+          const byId = new Map(data.datasets.map((d) => [d.id, d]));
+          const tiers = src.tiers;
+          const worst = Math.max(...tiers.map((t) => t.target_tokens), 1);
+          const licenceOnly = src.blocked.filter((b) => b.blockers.length === 1 && b.blockers[0] === 'licence');
+
+          const STATES = [
+            { view: 'commit', marg: 'What we can commit today',
+              lead: 'A dataset counts toward the budget only if three things are true at once: it passed the gates, its licence demonstrably allows commercial use, and somebody stated how big it is. Of the ',
+              bold: `${src.counts.catalogued} catalogued`, tail: `, ${src.counts.committable} clear all three.` },
+            { view: 'gap', marg: 'Where that leaves the tiers',
+              lead: 'Laid against the proposed mixture, those few cover the English tier and most of natural Indic, and ',
+              bold: `${tiers.filter((t) => !t.committed_tokens).length} of the ${tiers.length} tiers sit at zero`,
+              tail: '. Not thinly supplied — nothing in them can be committed to at all.' },
+            { view: 'why', marg: 'Why the rest are blocked',
+              lead: 'Almost none of the rest failed a quality gate. They are blocked on paperwork: ',
+              bold: `${src.counts.size_unknown} have no stated size`, tail: ` and most of the catalogue has a licence nobody has established. Unknown is not permission, which is the rule this whole framework turns on.` },
+            { view: 'queue', marg: 'The queue that fixes it',
+              lead: 'Rank the blocked ones by what resolving them would unlock, and the plan becomes a short list of letters to write. The top two are blocked on licence alone, and ',
+              bold: 'either one would cover the entire budget', tail: ' by itself.' },
+          ];
+
+          const bar = (label, valueTokens, ofTokens, cls) => {
+            const row = $('div', 'tierrow');
+            const track = $('div', 'tiertrack');
+            const fill = $('div', `tierfill ${cls}`);
+            fill.style.width = `${Math.min((valueTokens / ofTokens) * 100, 100)}%`;
+            track.append(fill);
+            const val = $('div', 'tierval');
+            val.append(renderNumber({ value: valueTokens, unit: 'tokens', provenance: 'estimated', source: src.source }, { unit: false }));
+            row.append($('div', 'tiername', label), track, val);
+            return row;
+          };
+
+          main.append(buildExplainer({
+            n: '5b', anchor: 'commit', wide: true, kind: 'explainer',
+            title: 'Four datasets out of a hundred and forty-five',
+            claim: [
+              document.createTextNode('Grading a catalogue is only useful if it ends in a shopping list. So: match every graded dataset against the mixture and see what can actually be committed to. The answer is '),
+              $('b', '', `${src.counts.committable} of ${src.counts.catalogued}`),
+              document.createTextNode(', covering under half the budget — and the reason is almost never quality. Scroll to the end for the part worth acting on: '),
+              $('b', '', 'the queue of letters to write'),
+              document.createTextNode(', ranked by how much each one unlocks. Full records in '),
+              ref('the catalogue', 'data'), document.createTextNode('.'),
+            ],
+            figNum: 'Fig. 5b — what the catalogue can supply',
+            caption: 'Fig. 5b — Committable means: passed the gates, licence permits commercial use, and a size was stated. Missing any one and the dataset cannot be counted, however good it looks. Which catalogue categories may supply which tier is an editorial mapping, written out in full in sourcing.py so it can be disagreed with specifically.',
+            pill: `${(src.covered_share * 100).toFixed(0)}% of the budget`,
+            rail: [
+              document.createTextNode('A blocked dataset is not a rejected one. '),
+              $('b', '', `${src.counts.blocked_on_licence_only} are blocked on a licence question alone`),
+              document.createTextNode(' — no gate failed, nobody found a problem with the data, and a single answered email would move each into the committable column. That is why the queue is the output of this section and the shortfall is only its setup.'),
+            ],
+            states: STATES,
+            refresh: (api) => {
+              STATES.forEach((st, i) => {
+                if (st.view === 'queue') {
+                  api.shard(i, licenceOnly.slice(0, 4).map((b) => `${(byId.get(b.id) || {}).name || b.id} — ${fmt(b.unlocks_tokens, 'count')}`).join('\n'));
+                  api.inline(i, `→ ${licenceOnly.length} blocked on licence alone, unlocking ${fmt(licenceOnly.reduce((a, b) => a + (b.unlocks_tokens || 0), 0), 'count')}`, false);
+                } else if (st.view === 'commit') {
+                  api.shard(i, tiers.flatMap((t) => t.committed).map((id) => (byId.get(id) || {}).name || id).join(' · ') || 'nothing');
+                  api.inline(i, `→ ${src.counts.committable} of ${src.counts.catalogued} datasets are committable`, false);
+                } else if (st.view === 'gap') {
+                  const empty = tiers.filter((t) => !t.committed_tokens);
+                  api.shard(i, `empty: ${empty.map((t) => t.tier).join(' · ')}`);
+                  api.inline(i, `→ ${empty.length} of ${tiers.length} tiers have nothing committable`, true);
+                } else {
+                  api.shard(i, `${src.counts.size_unknown} unsized · ${src.blocked.length} blocked on paperwork`);
+                  api.inline(i, `→ ${src.counts.size_unknown} datasets have no stated size`, true);
+                }
+              });
+            },
+            render: (i, api) => {
+              const st = STATES[i];
+              const box = $('div', 'tierbars');
+
+              if (st.view === 'queue') {
+                licenceOnly.slice(0, 6).forEach((b) => {
+                  const d = byId.get(b.id) || {};
+                  box.append(bar((d.name || b.id).slice(0, 20), b.unlocks_tokens, licenceOnly[0].unlocks_tokens || 1, 'natural'));
+                });
+                api.extra.replaceChildren(box);
+                api.big({ value: licenceOnly.reduce((a, b) => a + (b.unlocks_tokens || 0), 0), unit: 'tokens', provenance: 'estimated', source: src.source });
+                api.bigHit(false);
+                api.sub('unlocked by answering licence questions alone');
+                api.verdict(`${licenceOnly.length} LETTERS`, false);
+                api.note('None of these failed a gate. Each is a question nobody has asked the owner yet, and the two largest would each cover the whole budget on their own.');
+                api.strip([]);
+                return;
+              }
+
+              tiers.forEach((t) => {
+                const cls = st.view === 'commit'
+                  ? (t.committed_tokens ? 'natural' : 'dim')
+                  : (t.committed_tokens ? 'natural' : 'missing');
+                box.append(bar(t.tier, st.view === 'why' ? t.target_tokens : t.committed_tokens || 0, worst, cls));
+              });
+              api.extra.replaceChildren(box);
+
+              if (st.view === 'why') {
+                api.big({ value: src.counts.size_unknown, unit: 'datasets', provenance: 'measured', source: src.source });
+                api.bigHit(true);
+                api.sub('mapped to a tier with no stated size');
+                api.verdict('UNCOUNTABLE', true);
+                api.note('A dataset with no size cannot be added to a budget even when everything else about it is fine. Red here is not a judgement about the data — it is a gap in what anyone wrote down.');
+              } else if (st.view === 'gap') {
+                const empty = tiers.filter((t) => !t.committed_tokens).length;
+                api.big({ value: empty, unit: 'tiers', provenance: 'measured', source: src.source });
+                api.bigHit(true);
+                api.sub(`of ${tiers.length} have nothing that can be committed`);
+                api.verdict('EMPTY', true);
+                api.note(`Covered overall: ${fmt(src.committed_tokens, 'count')} of ${fmt(src.target_tokens, 'count')}. A plan that names eight tiers and can fill two is a plan with its homework still to do — which is worth saying out loud rather than shading a chart.`);
+              } else {
+                api.big({ value: src.committed_tokens, unit: 'tokens', provenance: 'estimated', source: src.source });
+                api.bigHit(false);
+                api.sub(`committable, against a ${fmt(src.target_tokens, 'count')} budget`);
+                api.verdict(`${src.counts.committable} DATASETS`, false);
+                api.note(`Every one of these passed the gates, has a licence that permits commercial use, and states its size. ${src.counts.catalogued - src.counts.committable} others do not clear all three.`);
+              }
+              api.strip([]);
+            },
+          }));
+        }
+
         /* ---------------------------------------------------- 6 · The Pipeline (Accumulator)
          *
          * Audit row #7. Absorbs /reasoning#tools, which held the same 17 records as a lookup table

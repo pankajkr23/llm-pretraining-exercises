@@ -60,7 +60,9 @@ def parse_tokens(text: str) -> Value:
         return Value.unknown("tokens", source="size field empty")
     match = _TOKEN_SIZE.search(text)
     if not match or "token" not in text.lower():
-        return Value.unknown("tokens", source=f"no token count stated: {text[:60]}")
+        # The unparsed cell lives in catalog.json, which the atlas loads on demand; carrying it in
+        # the index too cost 18KB of a 100KB budget to say the same thing 121 times.
+        return Value.unknown("tokens", source="no token count stated")
     amount = float(match.group(1)) * _MULTIPLIER[match.group(2).upper()]
     return Value(value=amount, unit="tokens", provenance="estimated", source="seed:Size_Scale")
 
