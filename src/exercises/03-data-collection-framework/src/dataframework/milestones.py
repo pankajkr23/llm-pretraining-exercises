@@ -10,11 +10,17 @@ from typing import Any
 
 from .mix import check, compose, is_buildable
 
-# Tier shape shared by every rung, expressed as shares of the seen-token budget. Values follow the
-# recommended 15T mix in `docs/DECISIONS.md`; the naturalness and epoch structure is what varies.
+# Tier shape shared by every rung, expressed as shares of the seen-token budget. Shares follow
+# `docs/DECISIONS.md`; the naturalness and epoch structure is what varies between rungs.
+#
+# `kind` is a second lens on the same numbers: skills are the tiers that teach the model to *do*
+# something (code, maths, tool use), knowledge the tiers that teach it what is *true*. A reader who
+# cannot hold ten tiers in mind can hold two, and the split is worth knowing on its own — a corpus
+# that is 90% knowledge produces a model that recites.
 TIER_SHAPE: tuple[dict[str, Any], ...] = (
     {
         "name": "english-web-hq",
+        "kind": "knowledge",
         "share": 0.200,
         "epochs": 1,
         "capabilities": ["knowledge"],
@@ -27,6 +33,7 @@ TIER_SHAPE: tuple[dict[str, Any], ...] = (
     },
     {
         "name": "code",
+        "kind": "skills",
         "share": 0.147,
         "epochs": 1,
         "capabilities": ["code", "agentic-coding"],
@@ -39,6 +46,7 @@ TIER_SHAPE: tuple[dict[str, Any], ...] = (
     },
     {
         "name": "math-stem",
+        "kind": "skills",
         "share": 0.080,
         "epochs": 1,
         "capabilities": ["math-reasoning"],
@@ -50,6 +58,7 @@ TIER_SHAPE: tuple[dict[str, Any], ...] = (
     },
     {
         "name": "indic-natural",
+        "kind": "knowledge",
         "share": 0.080,
         "epochs": 4,
         "is_indic": True,
@@ -64,7 +73,8 @@ TIER_SHAPE: tuple[dict[str, Any], ...] = (
     },
     {
         "name": "indic-synthetic",
-        "share": 0.153,
+        "kind": "knowledge",
+        "share": 0.143,
         "epochs": 1,
         "is_indic": True,
         "is_synthetic": True,
@@ -78,6 +88,7 @@ TIER_SHAPE: tuple[dict[str, Any], ...] = (
     },
     {
         "name": "india-context-english",
+        "kind": "knowledge",
         "share": 0.050,
         "epochs": 1,
         "capabilities": ["india-context"],
@@ -89,6 +100,7 @@ TIER_SHAPE: tuple[dict[str, Any], ...] = (
     },
     {
         "name": "agentic-traces",
+        "kind": "skills",
         "share": 0.053,
         "epochs": 1,
         "always_on": True,
@@ -100,8 +112,41 @@ TIER_SHAPE: tuple[dict[str, Any], ...] = (
         ),
     },
     {
+        "name": "indic-knowledge-systems",
+        "kind": "knowledge",
+        "share": 0.030,
+        "epochs": 2,
+        "is_indic": True,
+        "always_on": True,
+        "capabilities": ["india-context", "knowledge"],
+        "sources": "Ayurveda and Siddha · Jyotish and Panchang · NDLI and DLI scans",
+        "why": (
+            "Indian knowledge systems, and the one tier no frontier model has any reason to build. "
+            "Most of it exists only as scanned pages in institutional archives, so it is an OCR "
+            "problem before it is a data problem — which is exactly why nobody else has it and why "
+            "it is worth the collection cost."
+        ),
+    },
+    {
+        "name": "indic-civilizational",
+        "kind": "knowledge",
+        "share": 0.020,
+        "epochs": 2,
+        "is_indic": True,
+        "always_on": True,
+        "capabilities": ["india-context", "knowledge"],
+        "sources": "Vedic corpus · classical Sanskrit · Upanishads · Dharmashastra",
+        "why": (
+            "The civilizational literature an India-first model is expected to reason from rather "
+            "than merely quote. It is small, largely public-domain, and mostly digitised badly. "
+            "Reading it twice costs almost nothing; not having it at all is the difference between "
+            "a model that knows India and one that has read about it."
+        ),
+    },
+    {
         "name": "general-web",
-        "share": 0.237,
+        "kind": "knowledge",
+        "share": 0.197,
         "epochs": 1,
         "capabilities": ["knowledge"],
         "sources": "FineWeb · CommonCrawl derivatives",

@@ -69,7 +69,7 @@ def _strip_tier_prose(presets: list[dict[str, Any]]) -> list[dict[str, Any]]:
     for preset in presets:
         mix = preset["mix"]
         for tier in mix["tiers"]:
-            for field in ("sources", "why", "capabilities"):
+            for field in ("sources", "why", "capabilities", "kind"):
                 tier.pop(field, None)
             # A token count carried to nine decimal places is noise: these are estimates, and the
             # trailing float precision is pure bytes.
@@ -340,6 +340,7 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
                     "why": tier.get("why"),
                     "capabilities": tier.get("capabilities", []),
                     "always_on": bool(tier.get("always_on")),
+                    "kind": tier.get("kind"),
                     "is_indic": bool(tier.get("is_indic")),
                     "is_synthetic": bool(tier.get("is_synthetic")),
                 }

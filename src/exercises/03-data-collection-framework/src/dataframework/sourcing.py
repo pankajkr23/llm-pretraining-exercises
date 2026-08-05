@@ -33,10 +33,14 @@ TIER_CATEGORIES: dict[str, tuple[str, ...]] = {
         "Indic Text (PT)",
         "Indic Text (Aggregator)",
         "Indic Text (Infra)",
-        "Curriculum (Indic)",
         "Speech (Indic)",
         "OCR (Indic)",
     ),
+    # Curriculum and archive material carries Indian knowledge systems rather than general Indic
+    # prose, and it is sourced differently — from institutions and scanned archives rather than
+    # from crawls. It earns its own tier for that reason, not to inflate the India share.
+    "indic-knowledge-systems": ("Curriculum (Indic)",),
+    "indic-civilizational": ("Sanskrit / Civilizational",),
     "indic-synthetic": (
         "Parallel / MT",
         "Parallel / English",
