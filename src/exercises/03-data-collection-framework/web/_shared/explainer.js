@@ -82,11 +82,14 @@ export function makeExplainer({ $, onPlay }) {
         }
       },
           /* marks: an array of '' | 'reg' | 'hit', one per unit, in order. */
+          /* Each mark is '' or a space-separated set of modifiers — 'reg', 'hit', 'guess' — so one
+           * unit can be both excluded and the reader's prediction without either overwriting the
+           * other. classList.add takes a single token, hence the split. */
           strip: (marks) => {
             stripEl.replaceChildren();
             marks.slice(0, 44).forEach((m) => {
               const t = $('div', 'fig-tick');
-              if (m) t.classList.add(m);
+              String(m || '').split(/\s+/).filter(Boolean).forEach((cls) => t.classList.add(cls));
               stripEl.append(t);
             });
           },

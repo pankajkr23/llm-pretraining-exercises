@@ -175,7 +175,7 @@
               'seen tokens buildable from open sources today',
             ),
             statCard(textFigure(String(counts.catalog)), 'datasets catalogued, with their licence traps'),
-            statCard(textFigure(String(counts.languages)), 'scheduled languages, 10 of them web-viable'),
+            statCard(textFigure(String(counts.languages)), 'scheduled languages, most with almost no text online'),
             statCard(textFigure(String(counts.benchmarks)), 'benchmarks — and the capabilities none of them measure'),
           );
 
@@ -204,14 +204,20 @@
             `${tiers.GREEN} usable · ${tiers.AMBER} conditions apply · ${tiers.RED} excluded outright` +
             (tiers.untiered ? ` · ${tiers.untiered} does not exist yet` : '');
 
-          // The honesty line: count what is known versus guessed, and say so.
+          /* The honesty line. It counts the whole data bundle, not this page, and it says what the
+           * unknowns actually are — every one of them is a dataset whose size nobody stated. An
+           * earlier version claimed they included "the size of the Indian-language web", which was
+           * simply untrue, and quoted the tally as though it described the four figures above. */
           const tally = tallyProvenance(data);
+          const unsized = (data.datasets || []).filter((x) => !(x.size_tokens || {}).value).length;
           document.getElementById('honesty').innerHTML =
-            `<b>Which numbers to trust.</b> This page reports ${tally.measured} measured figures, ` +
-            `${tally.estimated} estimates and ${tally.unknown} quantities nobody has measured — ` +
-            'including the size of the Indian-language web itself. Only the exceptional cases are ' +
-            'marked: a green rule under the handful that were actually measured, faded italics where ' +
-            'nothing is known. Everything unmarked is an estimate — hover any figure for its source.';
+            `<b>Which numbers to trust.</b> Across everything behind these pages there are ` +
+            `${tally.measured} measured figures and ${tally.estimated} estimates. A further ` +
+            `${tally.unknown} quantities are unknown${unsized === tally.unknown ? ', every one of them a dataset' : `, of which ${unsized} are datasets`} ` +
+            'whose size nobody has ever stated — and you cannot add a corpus up until somebody does. ' +
+            'Only the exceptional cases are marked: a green rule under what was measured, faded ' +
+            'italics where nothing is known. Everything unmarked is an estimate — hover any figure ' +
+            'for its source.';
         })
         .catch((e) => fail(e.message));
     </script>

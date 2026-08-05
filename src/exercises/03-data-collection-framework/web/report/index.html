@@ -752,11 +752,19 @@
 
           const theirs = $('div');
           theirs.append($('div', 'lbl', 'measured — by someone else, published'));
+          /* Cited figures, not ours — but still numbers, so they carry provenance like every other
+           * number on the page. `estimated` is right: they are read from someone else's paper, not
+           * measured here, and the source is named beneath. */
+          const cited = (value, unit) => renderNumber(
+            { value, unit, provenance: 'estimated', source: (tax && tax.source) || 'the tokenizer tax paper' },
+            { unit: false },
+          );
+          const times = (node) => { const w = $('span'); w.append(node, document.createTextNode('×')); return w; };
           theirs.append(
-            row('average Indic tax vs English', '8.0×', 'bad'),
-            row('worst language · Malayalam', '13.0×', 'bad'),
-            row('context left vs an English user', '12%', 'bad'),
-            row('a better tokenizer cuts it by', '73%'));
+            row('average Indic tax vs English', times(cited(8.0, 'ratio')), 'bad'),
+            row('worst language · Malayalam', times(cited(13.0, 'ratio')), 'bad'),
+            row('context left vs an English user', cited(0.12, 'share'), 'bad'),
+            row('a better tokenizer cuts it by', cited(0.73, 'share')));
           const src = $('p', 'fig-note');
           src.append(document.createTextNode('FLORES-200, six tokenizers, fourteen Indian languages. Failed byte-pair merges are the mechanism — merge failure tracks the tax at r = 0.89. Source: '),
             $('b', '', (tax && tax.source) || 'the priors'), document.createTextNode('.'));
@@ -768,6 +776,11 @@
           const measured = Object.entries(f).filter(([, v]) => v.value !== null);
           const english = (f.en || {}).value;
           const worst = measured.filter(([c]) => c !== 'en').sort((a, b) => b[1].value - a[1].value)[0];
+          /* Computed, not typed: the reduction the best tokenizer achieves against the baseline. */
+          const ranked0 = fert.by_tokenizer_mean || [];
+          const bestCut = ranked0.length > 1
+            ? 1 - ranked0[0].mean_tax.value / ranked0[ranked0.length - 1].mean_tax.value
+            : null;
           const meanTax = english
             ? measured.filter(([c]) => c !== 'en').reduce((a, [, v]) => a + v.value / english, 0) / (measured.length - 1)
             : null;
@@ -777,17 +790,20 @@
           ours.append(
             row('average Indic tax vs English', meanTax ? `${meanTax.toFixed(1)}×` : '—', 'bad'),
             row(`worst language · ${worst ? (nameOf.get(worst[0]) || worst[0]) : '—'}`, worst && english ? `${(worst[1].value / english).toFixed(1)}×` : '—', 'bad'),
-            row('a better tokenizer cuts it by', '78%'),
+            row('a better tokenizer cuts it by', renderNumber(
+              { value: bestCut, unit: 'share', provenance: 'measured', source: fert.run_id || 'our run' },
+              { unit: false })),
             row('languages covered', `${measured.length - 1} of ${Object.keys(f).length - 1}`));
           const why = $('p', 'fig-note');
+          const tokCount = (fert.by_tokenizer_mean || []).length;
           why.append(
-            document.createTextNode('Our own run, three ungated tokenizers over '),
-            $('b', '', fert.corpus || 'FLORES-200'),
-            document.createTextNode(' — which is the protocol’s secondary corpus and translated from English, so these carry the same translationese caveat as the column beside them. They corroborate it independently rather than repeating it. What is still missing is the row that matters most: '),
-            $('b', '', 'our own candidate vocabulary has never been trained'),
-            document.createTextNode(', so no parity ratio against the '),
+            document.createTextNode(`Our own run: ${tokCount} tokenizers over `),
+            $('b', '', fert.corpus || 'IN22-Gen'),
+            document.createTextNode(`, which is ${fert.corpus_trust_band === 'native-sourced' ? 'text written in these languages rather than translated into them' : 'a translated corpus'} — so it corroborates the published figures independently rather than repeating them. All `),
+            $('b', '', `${measured.length - 1} languages measured`),
+            document.createTextNode('. What is still missing is the row that matters most: our own candidate vocabulary has never been trained, so no parity ratio against the '),
             renderNumber(data.fertility.parity_target),
-            document.createTextNode(' × target can be computed, and section 2’s curve stays unanchored. Three languages are absent from FLORES entirely.'));
+            document.createTextNode(' × target can be computed.'));
           ours.append(why);
 
           cmp.append(theirs, ours);
@@ -837,7 +853,7 @@
              $('b', '', 'every step of the entire run'),
              document.createTextNode('. The multiplier outweighs almost any decision about corpus size, and unlike data you cannot fix it afterwards. It is not a property of the scripts — other tokenizers already do far better on the same sentences — which is why it is worth measuring rather than accepting.')],
             wrap3,
-            `Fig. 3 — Measured by us on ${data.fertility.corpus || 'FLORES-200'} under run ${(data.fertility.run_id || '').slice(0, 24)}; ${unknownCount} of ${Object.keys(f).length} languages have no measurement. Still a chart rather than an explainer: three of the protocol's six tokenizers are unavailable, and the one under test does not exist yet.`));
+            `Fig. 3 — Measured by us on ${data.fertility.corpus || 'IN22-Gen'}${unknownCount ? `; ${unknownCount} of ${Object.keys(f).length} languages have no measurement` : ', covering every scheduled language'}. The tokenizer this project proposes has not been built, so the headline parity ratio cannot be computed yet.`));
         }
 
         /* ---------------------------------------------------- 4 · The Filter (Destroyer)
@@ -932,24 +948,31 @@
                 api.note(`The lane costs ${(lane.value * 100).toFixed(0)}% of every batch and returns ${TOTAL - tiersOf(1).length} languages that a threshold alone would have removed. That is the entire trade.`);
               } else if (st.rescue) {
                 api.note('No red anywhere. Nothing about the filter changed — the batch simply has a floor the filter cannot reach below.');
-              } else if (lost && guess !== null) {
-                const off = Math.abs(guess - survivors.length);
-                api.note(off === 0
-                  ? `${survivors.length} survive, and you said so. Most people guess high here.`
-                  : `${survivors.length} survive. You were ${off} ${guess > survivors.length ? 'too many' : 'too few'} — and guessing high is the ordinary mistake, because the languages that vanish are the ones nobody pictures.`);
               } else if (lost) {
-                api.note(collapse
-                  ? `${lost} languages removed. This is not hypothetical: when the publishers of one of the largest Indic corpora ran their own cleaning over it, ${collapse.name} came out the other side as 77 words in a single document. Not 77 million — seventy-seven.`
-                  : `${lost} languages removed. The scorer never sees a language, only documents that rate badly — and text it was never trained on always rates badly.`);
+                /* The concrete fact comes first and always. An earlier version put the guess
+                 * feedback in front of it, so using the interaction the section asks you to use hid
+                 * the best evidence on the page. The guess is already pinned in the figure above. */
+                const fact = collapse
+                  ? `When the publishers of one of the largest Indic corpora ran their own cleaning over it, ${collapse.name} came out the other side as 77 words in a single document. Not 77 million — seventy-seven.`
+                  : 'The scorer never sees a language, only documents that rate badly — and text it was never trained on always rates badly.';
+                const off = guess === null ? null : Math.abs(guess - survivors.length);
+                api.note(off === null
+                  ? `${lost} languages removed. ${fact}`
+                  : off === 0
+                    ? `${survivors.length} survive, and you said so — most people guess high. ${fact}`
+                    : `${survivors.length} survive; you guessed ${off} too ${guess > survivors.length ? 'many' : 'few'}. ${fact}`);
               } else if (guess !== null) {
                 api.note(`Your prediction is held above. Nothing has been filtered yet — all ${TOTAL} are present, and scrolling starts removing them.`);
               } else {
                 api.note('Red marks a language the filter removes. Here it removes none, because nothing has run yet.');
               }
 
+              /* The reader gives a count, so the mark is a boundary, not a language: everything up
+               * to their number is what they predicted would survive. Marking langs[guess-1] made a
+               * count look like a claim about one specific language. */
               api.strip(langs.map((l, k) => {
-                if (guess !== null && k === guess - 1) return 'guess';
-                return st.rescue ? 'reg' : ((l.tier || 3) <= st.keep ? '' : 'hit');
+                const base = st.rescue ? 'reg' : ((l.tier || 3) <= st.keep ? '' : 'hit');
+                return guess !== null && k === guess - 1 ? `${base} guess`.trim() : base;
               }));
             },
           }));
@@ -1637,7 +1660,7 @@
           );
           const scope = $('p');
           scope.style.cssText = 'font-size:13px;color:var(--muted);margin:16px 0 0;max-width:62ch';
-          scope.append(document.createTextNode('The honest scope line: the single number this all rests on — how much deduplicated natural Indic text exists — has never been measured by anyone, and the fertility figures are still unrun. Both are in '),
+          scope.append(document.createTextNode('The honest scope line: the single number this all rests on — how much deduplicated natural Indic text exists — has never been measured by anyone. The tokenizer tax has now been measured here; that one has not. It is in '),
             ref('the unknowns', 'risks'), document.createTextNode('. This is a plan with its uncertainty attached, not a result.'));
           /* PROSE (audit row #11). The claim needs no comparison a reader could perform, so
            * EXPLAINER_PROMPT §9 applies: write the sentence. The card goes; a hairline carries it. */

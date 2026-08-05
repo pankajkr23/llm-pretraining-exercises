@@ -902,17 +902,27 @@
           });
           s.append(grid);
           add(s, 'Eight intuitions', 'Honesty');
-          void counts;
         }
 
         // ---------------------------------------------------------------- nav
         const toc = document.getElementById('toc');
         let group = null;
+        /* Group once, in first-appearance order. Emitting a heading whenever the group changes
+         * printed four categories eight times — Datasets, Plan, Evidence, Datasets, Evidence,
+         * Plan, Evidence, Honesty — which tells a reader the taxonomy is unreliable. */
+        const order = [];
+        const byGroup = new Map();
         built.forEach((b) => {
-          if (b.group !== group) { group = b.group; toc.append($('div', 'group', group)); }
-          const a = $('a', '', b.label);
-          a.href = `#${b.id}`;
-          toc.append(a);
+          if (!byGroup.has(b.group)) { byGroup.set(b.group, []); order.push(b.group); }
+          byGroup.get(b.group).push(b);
+        });
+        order.forEach((name) => {
+          toc.append($('div', 'group', name));
+          byGroup.get(name).forEach((b) => {
+            const a = $('a', '', b.label);
+            a.href = `#${b.id}`;
+            toc.append(a);
+          });
         });
 
         // Sections are built after load, so the browser's own hash jump has already failed by now
