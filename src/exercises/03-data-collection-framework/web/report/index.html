@@ -858,8 +858,8 @@
 
           const STATES = [
             { keep: 3, marg: 'Before the filter',
-              lead: 'Every language the project has scheduled is present, which is the only moment in this section when that is true. Tier 3 here is not a judgement about the languages — it is ',
-              bold: 'a statement about how much text exists', tail: '.' },
+              lead: 'All 22 languages the project has scheduled, before anything is thrown away — the only moment in this section when that is true. They are grouped by how much text exists for them, which is ',
+              bold: 'a fact about the internet, not about the languages', tail: '. The four with least are the ones a cut-off reaches first.' },
             { keep: 2, marg: 'The filter runs',
               lead: 'A quality classifier trained on English proxies scores thin-resource text as noise, so the languages with least data go first. Nothing has malfunctioned: this is ',
               bold: 'the filter working as designed', tail: ', on the wrong objective.' },
@@ -874,6 +874,11 @@
               bold: 'cheap enough to be uninteresting', tail: ' — which is the argument for doing it rather than optimising it.' },
           ];
 
+          /* The one number that makes this concrete. AI4Bharat ran their own cleaning over their own
+           * corpus and Bodo came out as 77 words in a single document — it is in the language
+           * record, so it is read from there rather than retyped into the copy. */
+          const collapse = langs.find((l) => /77 words/.test(l.note || ''));
+
           const guessOf = (api) => {
             const n = parseInt(String(api.input && api.input.value).replace(/[^\d]/g, ''), 10);
             return Number.isFinite(n) && n >= 0 && n <= TOTAL ? n : null;
@@ -883,9 +888,11 @@
             n: 4, kind: 'explainer',
             title: 'The filter deletes exactly the languages the model exists to serve',
             claim: [
-              document.createTextNode('Quality classifiers are trained on English proxies, so they read thin-resource languages as noise. Raising the threshold is the obvious move and it is the wrong one — the languages with least data disappear first. Before scrolling, put a number in the box: '),
-              $('b', '', 'how many of the 22 survive'),
-              document.createTextNode(' a filter turned up hard? Then scroll, and watch what brings them back. Details in '),
+              document.createTextNode('Before training, a scoring program reads every document and rates it for whether it looks like good writing. You keep what scores above a cut-off and bin the rest. The catch is how the scorer learned what "good" means: from examples, and the examples were English — Wikipedia, books, tidy web pages. So it does not rate a Bodo news article badly because the writing is bad. It rates it badly because '),
+              $('b', '', 'it has never seen anything like it'),
+              document.createTextNode('. Raising the cut-off is the obvious way to get a cleaner corpus, and it is the wrong move here. Before scrolling, put a number in the box: '),
+              $('b', '', 'how many of the 22 languages survive'),
+              document.createTextNode(' a cut-off turned up hard? Then scroll, and watch what brings them back. Per-language detail in '),
               ref('the languages', 'languages'), document.createTextNode('.'),
             ],
             figNum: 'Fig. 4 — what survives',
@@ -931,7 +938,9 @@
                   ? `${survivors.length} survive, and you said so. Most people guess high here.`
                   : `${survivors.length} survive. You were ${off} ${guess > survivors.length ? 'too many' : 'too few'} — and guessing high is the ordinary mistake, because the languages that vanish are the ones nobody pictures.`);
               } else if (lost) {
-                api.note(`${lost} languages removed. The filter never sees a language — it sees documents that score badly, and thin-resource text always does.`);
+                api.note(collapse
+                  ? `${lost} languages removed. This is not hypothetical: when the publishers of one of the largest Indic corpora ran their own cleaning over it, ${collapse.name} came out the other side as 77 words in a single document. Not 77 million — seventy-seven.`
+                  : `${lost} languages removed. The scorer never sees a language, only documents that rate badly — and text it was never trained on always rates badly.`);
               } else if (guess !== null) {
                 api.note(`Your prediction is held above. Nothing has been filtered yet — all ${TOTAL} are present, and scrolling starts removing them.`);
               } else {
