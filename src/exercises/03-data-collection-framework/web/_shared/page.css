@@ -330,3 +330,40 @@ h3.appendix-h4 {
   .catrow { grid-template-columns: minmax(0, 1fr) auto; }
   .catrow-why { grid-column: 1 / -1; text-align: left; }
 }
+
+/* How to read the resolver. It shipped as three switches with no statement of what they do. */
+.resolver-howto {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 74ch;
+  border-left: 2px solid var(--line);
+  padding-left: 14px;
+}
+.resolver-howto p { margin: 0 0 8px; }
+.resolver-howto p:last-child { margin-bottom: 0; }
+.resolver-label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+  margin-bottom: -6px;
+}
+.resolver-key { font-size: 11.5px; color: var(--faint); margin: 0; max-width: 74ch; }
+.keymark {
+  display: inline-block;
+  width: 18px;
+  height: 9px;
+  border-radius: 3px;
+  vertical-align: middle;
+  margin: 0 3px 0 8px;
+}
+.keymark.full { background: var(--accent); }
+.keymark.part { background: color-mix(in srgb, var(--accent) 45%, var(--track)); }
+.keymark.none { background: var(--track); border: 1px dashed var(--grade-x); height: 11px; }
+/* The resolver's own bar states. An empty tier is an empty track, not a red box that reads full. */
+.resolver .tierfill.full { background: var(--accent); }
+.resolver .tierfill.part { background: color-mix(in srgb, var(--accent) 45%, var(--track)); }
+.resolver .tierrow:has(.tierfill.none) .tiertrack { border: 1px dashed var(--grade-x); }
+.resolver .tierval { color: var(--muted); }

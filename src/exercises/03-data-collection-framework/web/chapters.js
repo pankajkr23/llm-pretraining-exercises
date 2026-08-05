@@ -1925,6 +1925,34 @@ function chapterAppendix(ctx) {
     const unlocked = () => pool.filter((r) => r.blockers.every((b) => on.has(b)));
 
     const resolver = $('div', 'resolver');
+
+    /* How to read it, before it is read. The widget was shipped with three cryptic switches and no
+     * statement of what a switch does, what the number on it means, or what the bars measure — so
+     * a reader could see the numbers move and not know what moved. */
+    const howto = $('div', 'resolver-howto');
+    const p1 = $('p');
+    p1.append(
+      b('Four things can stop a dataset being usable'),
+      text(': nobody has established its '),
+      b('licence'),
+      text(', nobody has stated its '),
+      b('size'),
+      text(', nobody has scored the five checks that make its '),
+      b('grade'),
+      text(', or the corpus simply '),
+      b('does not exist'),
+      text('. Most are stopped by more than one at a time, and only four of 109 are stopped by nothing.'),
+    );
+    const p2 = $('p');
+    p2.append(
+      text('Switch a repair on and the catalogue is recounted as if that work had been done. '),
+      b('The number on each switch is how many datasets would become usable if you added it'),
+      text(' to whatever is already switched on — so once licences are on, the number on “sizes measured” means licences '),
+      b('and'),
+      text(' sizes. The big figure is the tokens those datasets carry; the bars are how much of each tier’s need they would fill.'),
+    );
+    howto.append(p1, p2);
+
     const switches = $('div', 'filter-chips');
     const big = $('div', 'resolver-big');
     const sub = $('div', 'resolver-sub');
@@ -1937,7 +1965,10 @@ function chapterAppendix(ctx) {
         const chip = $('button', 'chip');
         chip.type = 'button';
         const would = pool.filter((r) => r.blockers.every((b) => b === f.id || on.has(b))).length;
-        chip.append($('span', '', f.label), $('span', 'chip-n', on.has(f.id) ? 'on' : `→ ${would}`));
+        chip.append(
+          $('span', '', f.label),
+          $('span', 'chip-n', on.has(f.id) ? 'on' : `${would} usable`),
+        );
         chip.setAttribute('aria-pressed', String(on.has(f.id)));
         chip.title = f.sub;
         chip.addEventListener('click', () => {
@@ -1958,10 +1989,16 @@ function chapterAppendix(ctx) {
         const share = Math.min(have / targets[tier], 1);
         const row = $('div', 'tierrow');
         const track = $('div', 'tiertrack');
-        const fill = $('div', `tierfill ${share >= 1 ? 'natural' : share > 0 ? 'lane' : 'missing'}`);
-        fill.style.width = `${Math.max(share * 100, share ? 2 : 0)}%`;
+        /* Three states that must look different: covered, partly covered, and nothing. The mix
+         * chapter's `missing` draws a full-width red hatch to mark a scheduled gap; used here it
+         * made every empty tier look full, which is the opposite of what it means. */
+        const fill = $('div', `tierfill ${share >= 1 ? 'full' : share > 0 ? 'part' : 'none'}`);
+        fill.style.width = `${share > 0 ? Math.max(share * 100, 2) : 0}%`;
         track.append(fill);
-        const val = $('div', 'tierval', `${(share * 100).toFixed(0)}%`);
+        /* A tier with 377M against a 2.47T need rounds to 0% and is not zero. Showing "0%" beside a
+         * bar that has some fill in it is the small version of the same mismatch. */
+        const pct = share * 100;
+        const val = $('div', 'tierval', share > 0 && pct < 1 ? '<1%' : `${pct.toFixed(0)}%`);
         row.append($('div', 'tiername', tier), track, val);
         bars.append(row);
       });
@@ -2004,7 +2041,15 @@ function chapterAppendix(ctx) {
       }
     }
 
-    resolver.append(switches, big, sub, bars, note);
+    const bigLabel = $('div', 'resolver-label', 'Committable tokens under these repairs');
+    const key = $('p', 'resolver-key');
+    key.append(
+      text('Each bar is one tier of the mixture, filled to the share of its need that committable datasets could supply. '),
+      $('span', 'keymark full'), text(' its whole need met  '),
+      $('span', 'keymark part'), text(' partly met  '),
+      $('span', 'keymark none'), text(' nothing committable at all.'),
+    );
+    resolver.append(howto, switches, bigLabel, big, sub, key, bars, note);
     drawResolver();
 
     /* Finding one row is the other thing anybody wants from a catalogue, and it needs names, not
