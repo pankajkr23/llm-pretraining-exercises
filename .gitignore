@@ -248,3 +248,6 @@ docs/sessions/
 docs/sessions/**
 **/docs/sessions/
 **/docs/sessions/**
+
+# Working handoff notes, wherever they are — a local scratchpad, like TODO.md above.
+HANDOFF.md
