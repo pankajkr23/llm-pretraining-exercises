@@ -12,6 +12,8 @@ from dataframework.fertility import (
     training_cost,
     unmeasured,
 )
+from dataframework.fetch_benchmarks import MIN_WORDS as FETCH_MIN_WORDS
+from dataframework.fetch_benchmarks import _pick_question_column, _row_to_item
 from dataframework.grade import grade_dataset, is_commercially_usable, score_gates
 from dataframework.mix import MAX_EPOCHS_HARD, check, compose, effective_tokens, is_buildable
 from dataframework.orphans import find_orphans
@@ -290,3 +292,34 @@ def test_missing_corpus_reports_unchecked_never_clean(tmp_path):
     assert index["coverage"] == "none"
     assert "UNCHECKED" in index["note"]
     assert index["shingle_count"] == 0
+
+
+# --------------------------------------------------------------------------- benchmark fetch
+
+
+def test_question_column_is_found_across_plausible_schemas():
+    """MILU's schema is not knowable until the dataset is reachable, so the guess must be broad."""
+    assert _pick_question_column(["question", "option1", "answer"]) == "question"
+    assert _pick_question_column(["question_text", "choices"]) == "question_text"
+    assert _pick_question_column(["id", "Stem", "A"]) == "Stem"
+
+
+def test_an_unknown_schema_exits_saying_what_it_saw():
+    """Guessing wrong must be loud: a silent miss would write an empty index that reads as clean."""
+    with pytest.raises(SystemExit, match="id.*lang.*payload"):
+        _pick_question_column(["id", "lang", "payload"])
+
+
+def test_an_item_carries_its_options():
+    """A leaked document carries the question and its options together, so index them so."""
+    row = {"question": "Which river", "option1": "Ganges", "option2": "Nile", "subject": "Geo"}
+    assert _row_to_item(row, "question", True) == "Which river Ganges Nile"
+    assert _row_to_item(row, "question", False) == "Which river"
+    assert _row_to_item({"question": "   "}, "question", True) == ""
+
+
+def test_the_fetch_floor_matches_the_index_floor():
+    """Writing items the index would refuse anyway is just a confusing count."""
+    from dataframework.shingles import MIN_SHINGLE_N
+
+    assert FETCH_MIN_WORDS == MIN_SHINGLE_N
