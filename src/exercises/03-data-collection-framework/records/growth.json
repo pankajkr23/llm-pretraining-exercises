@@ -33,7 +33,7 @@
       "architecture": "dense",
       "corpus": 16800000000000,
       "corpus_basis": "Gemma-4 class: Gemma 3 27B's officially stated 14T, plus 20% for one generation.",
-      "asks_of_the_corpus": "Everything. This is the only stage whose data is read by every model that follows it, so provenance, licensing and decontamination have to be right here rather than fixed later. It is also the one rung where the Indic requirement is nearly met: 336B unique tokens of natural Indian-language text are asked for and 270B can be committed. Every rung above asks for more of a pool that does not grow.",
+      "asks_of_the_corpus": "Everything. This is the only stage whose data is read by every model that follows it, so provenance, licensing and decontamination have to be right here rather than fixed later. It asks for 336B unique tokens of natural Indian-language text and the catalogue can commit 84.9B of verified human-origin text — a quarter of it. That is the smallest shortfall of any stage, and it is still four times short.",
       "status": "the assignment"
     },
     {
@@ -80,13 +80,13 @@
   },
   "invariant": {
     "claim": "The natural Indian-language pool is a fixed quantity. Holding its share constant means needing more of it at every stage, and there is no more of it.",
-    "detail": "The mixture reserves 8% of every batch for natural Indian-language text, read four times. At the 16.8T seed that asks for 336B unique tokens; at 20T, 400B; at 30T, 600B. What this catalogue can actually commit is 270B — 81% of the seed's requirement, and 45% of the frontier rung's. The share on the chart stays at 8% because it is a design decision; what changes is whether it can be met.",
+    "detail": "The mixture reserves 8% of every batch for natural Indian-language text, read four times. At the 16.8T seed that asks for 336B unique tokens; at 20T, 400B; at 30T, 600B. What this catalogue can commit is 84.9B of verified human-origin text — a quarter of the seed's requirement and a seventh of the frontier rung's. The share on the chart stays at 8% because it is a design decision; what changes is how far out of reach it is.",
     "consequence": "Every stage of growth makes the Indic tier harder to fill, not easier. The only remedies are collection and partnership, and both are decisions taken years before the model trains."
   },
   "gap": {
     "note": "Measured against the seed. This is the finding the exercise exists to produce, and it is the opposite of what most readers expect.",
     "covered_share": 0.416,
-    "surprise": "Natural Indian-language text is the best-covered tier in the whole mixture at 81%. The scarce thing is nearly sourced. What is missing is general web text, code, maths and synthetic Indic — every one of them abundant, and every one blocked on a licence nobody has established.",
+    "surprise": "Every tier is short, and the two that are shortest are the ones nobody expects. Natural Indian text is covered at 25% once machine translation is excluded from the count. Indian civilizational literature is covered at 0% because not one of the 145 catalogued datasets supplies it. What is missing elsewhere — general web, code, maths — is abundant and blocked on a licence nobody has established.",
     "reading": "A reader arrives assuming an India-first corpus fails on Indian data. It does not. It fails on the ordinary bulk that everybody assumes is free, and it fails for legal reasons rather than technical ones."
   }
 }
