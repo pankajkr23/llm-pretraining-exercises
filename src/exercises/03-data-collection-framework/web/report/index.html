@@ -1528,9 +1528,13 @@
           scope.style.cssText = 'font-size:13px;color:var(--muted);margin:16px 0 0;max-width:62ch';
           scope.append(document.createTextNode('The honest scope line: the single number this all rests on — how much deduplicated natural Indic text exists — has never been measured by anyone, and the fertility figures are still unrun. Both are in '),
             ref('the unknowns', 'risks'), document.createTextNode('. This is a plan with its uncertainty attached, not a result.'));
-          main.append(sect(11, 'The verdict',
-            [document.createTextNode('Where this model would beat the open alternatives, where it would only match them, and where it would lose.')],
-            widget(box, scope), null));
+          /* PROSE (audit row #11). The claim needs no comparison a reader could perform, so
+           * EXPLAINER_PROMPT §9 applies: write the sentence. The card goes; a hairline carries it. */
+          const block = $('div', 'chartblock');
+          block.append(box, scope);
+          main.append(sect(11, 'Where this would win, and where it would not',
+            [document.createTextNode('Three claims with their scope attached, because a verdict without one is marketing.')],
+            block, null));
         }
 
         const counts = data.record_counts;
