@@ -830,11 +830,31 @@
         // Sections are built after load, so the browser's own hash jump has already failed by now
         // — every deep link from the report would land on the page title. Re-run it once the
         // targets exist.
-        if (location.hash) {
+        /* Sections that merged elsewhere in the explainer rebuild. Without this an old link lands
+         * silently on the page top, which reads as a broken page rather than as moved content. */
+        const RETIRED = {
+          gotchas: '#data',            // an encoding of the catalogue canvas
+          licensing: '#data',          // likewise
+          fertility: '../report/#s3',  // the tokenizer tax
+          tools: '../report/#s6',      // the pipeline walk
+          plan: '../report/#s9',       // the critical path
+          gaps: '../report/#s5',       // the mix's red rail
+        };
+        const reroute = () => {
+          const key = decodeURIComponent(location.hash.slice(1));
+          const to = RETIRED[key];
+          if (!to) return false;
+          if (to.startsWith('#')) { location.replace(to); return true; }
+          location.replace(to);
+          return true;
+        };
+
+        if (location.hash && !reroute()) {
           const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
           if (target) requestAnimationFrame(() => target.scrollIntoView({ block: 'start' }));
         }
         window.addEventListener('hashchange', () => {
+          if (reroute()) return;
           const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
           if (target) target.scrollIntoView({ block: 'start', behavior: 'smooth' });
         });
