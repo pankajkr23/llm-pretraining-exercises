@@ -35,7 +35,9 @@ export function makeExplainer({ $, onPlay }) {
       kind.dataset.kind = cfg.kind;
       numEl.append(kind);
     }
-    figEl.append(numEl, bigEl, subEl, verdictEl, extraEl, stripEl, noteEl);
+    const guessEl = $('div', 'fig-guess');
+    guessEl.style.display = 'none';
+    figEl.append(numEl, bigEl, subEl, verdictEl, extraEl, stripEl, guessEl, noteEl);
   
         const stickyEl = $('div', 'sticky');
         const railEl = $('div', 'fig-rail');
@@ -67,6 +69,18 @@ export function makeExplainer({ $, onPlay }) {
           sub: (t) => { subEl.textContent = t; },
           verdict: (t, hit) => { verdictEl.textContent = t; verdictEl.classList.toggle('hit', Boolean(hit)); },
           note: (t) => { noteEl.textContent = t; },
+      /* Show the reader's prediction against the current answer. Called with null to hide it. */
+      guess: (value, actual, unit) => {
+        if (value === null || value === undefined) { guessEl.style.display = 'none'; return; }
+        guessEl.style.display = 'flex';
+        const gap = actual === null || actual === undefined ? null : value - actual;
+        guessEl.replaceChildren($('span', '', 'you said'), $('span', 'g-val', String(value)));
+        if (gap !== null && gap !== 0) {
+          guessEl.append($('span', 'g-gap', `${gap > 0 ? '+' : ''}${gap} ${unit || ''}`.trim()));
+        } else if (gap === 0) {
+          guessEl.append($('span', 'g-gap', 'exactly right'));
+        }
+      },
           /* marks: an array of '' | 'reg' | 'hit', one per unit, in order. */
           strip: (marks) => {
             stripEl.replaceChildren();

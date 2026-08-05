@@ -885,7 +885,7 @@
             ],
             figNum: 'Fig. 4 — what survives',
             caption: 'Fig. 4 — One mark per scheduled language, ordered by tier. Red is a language the filter removes. The rescue state changes no threshold and no classifier — it reserves a share of the batch that the selector may not touch.',
-            input: { rows: 1, label: `Before you scroll — how many of the ${TOTAL} survive a hard filter?`, value: '' },
+            input: { rows: 1, label: `Before you scroll — how many of the ${TOTAL} survive a hard filter? Type a number; it stays pinned beside the answer.`, value: '' },
             pill: '8% of every batch',
             rail: [
               document.createTextNode('The lane is '),
@@ -912,22 +912,31 @@
               api.sub(st.rescue ? `of ${TOTAL} present — the lane restores every one` : `of ${TOTAL} survive the threshold`);
               api.verdict(st.rescue ? 'LANE ON' : (lost ? `${lost} DELETED` : 'UNFILTERED'), lost > 0);
 
+              // Pinned from the moment it is typed, through every state, so a committed guess is
+              // visibly held rather than mentioned once and forgotten.
+              api.guess(guess, survivors.length, 'languages');
+
               if (st.cost) {
                 api.note(`The lane costs ${(lane.value * 100).toFixed(0)}% of every batch and returns ${TOTAL - tiersOf(1).length} languages that a threshold alone would have removed. That is the entire trade.`);
               } else if (st.rescue) {
                 api.note('No red anywhere. Nothing about the filter changed — the batch simply has a floor the filter cannot reach below.');
               } else if (lost && guess !== null) {
-                const dir = guess > survivors.length ? 'high' : guess < survivors.length ? 'low' : 'exactly right';
-                api.note(dir === 'exactly right'
-                  ? `You guessed ${guess}, which is exactly right — most people guess high.`
-                  : `You guessed ${guess}; ${survivors.length} survive. You were ${Math.abs(guess - survivors.length)} too ${dir}.`);
+                const off = Math.abs(guess - survivors.length);
+                api.note(off === 0
+                  ? `${survivors.length} survive, and you said so. Most people guess high here.`
+                  : `${survivors.length} survive. You were ${off} ${guess > survivors.length ? 'too many' : 'too few'} — and guessing high is the ordinary mistake, because the languages that vanish are the ones nobody pictures.`);
               } else if (lost) {
                 api.note(`${lost} languages removed. The filter never sees a language — it sees documents that score badly, and thin-resource text always does.`);
+              } else if (guess !== null) {
+                api.note(`Your prediction is held above. Nothing has been filtered yet — all ${TOTAL} are present, and scrolling starts removing them.`);
               } else {
                 api.note('Red marks a language the filter removes. Here it removes none, because nothing has run yet.');
               }
 
-              api.strip(langs.map((l) => (st.rescue ? 'reg' : ((l.tier || 3) <= st.keep ? '' : 'hit'))));
+              api.strip(langs.map((l, k) => {
+                if (guess !== null && k === guess - 1) return 'guess';
+                return st.rescue ? 'reg' : ((l.tier || 3) <= st.keep ? '' : 'hit');
+              }));
             },
           }));
         }

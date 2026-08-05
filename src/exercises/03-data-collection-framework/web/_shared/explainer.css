@@ -296,3 +296,22 @@ span.unit { width: 13px; height: 13px; padding: 0; border-radius: 3px; backgroun
 }
 .kind[data-kind="explainer"] { color: var(--accent); border-color: var(--accent); }
 .kind[data-kind="modelled"] { color: var(--grade-b); border-color: var(--grade-b); }
+
+/* A prediction the reader committed to, pinned beside the answer. It must be visible the moment it
+   is typed and stay visible through every state — a commitment device that acknowledges nothing
+   reads as a broken input, which is exactly how it was reported. */
+.fig-guess {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--line);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.fig-guess .g-val { font-size: 1.15rem; font-variant-numeric: tabular-nums; color: var(--ink); }
+.fig-guess .g-gap { color: var(--grade-b); font-weight: 700; }
+/* The reader's mark on the strip, so the guess sits against the units it was a guess about. */
+.fig-tick.guess { box-shadow: inset 0 0 0 2px var(--grade-b); }
