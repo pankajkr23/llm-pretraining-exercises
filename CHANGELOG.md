@@ -12,6 +12,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **CI now renders the page, not just parses it.** Every check in the pipeline read the bundle or
+  the syntax; nothing loaded the site, and the two worst bugs this project shipped both lived in
+  exactly that gap — a containment subtraction that was correct in `data.json` and silently never
+  fired in the browser, and a headline reading "0 of 55" that was true of a question nobody meant
+  to ask. `node --check` caught neither, because both files parsed perfectly. A Playwright suite
+  (integration-marked, skipped when no browser is present) now loads the built site and asserts
+  what a reader would see: no JS error takes out the chapters, no headline figure reads as nothing,
+  the body never scrolls sideways at 1500/900/390px, and no chart label is silently cut off.
+
 - **Exercise 03 — data collection framework.** A graded catalogue of 145 datasets and 31 benchmarks
   behind one public page that works out what an India-first, 40-billion-parameter model would train
   on — how much text, what kind, which datasets, how to clean it, how to tokenise it, and how you
