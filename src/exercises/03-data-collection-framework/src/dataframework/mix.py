@@ -42,7 +42,7 @@ EPOCHS_NEAR_FREE = 4  # "up to 4 epochs of repeated data yields negligible chang
 EPOCHS_HALF_LIFE = 16  # R*_D ~= 15 repetitions: repeats have lost 1/e of their value
 EPOCHS_WORTHLESS = 40  # the paper's own Figure 1: "At 40 epochs, repeating is worthless"
 
-MIN_TIER_SHARE = 0.01  # a tier below 1% is noise, and repeating it is wasted compute
+MIN_TIER_SHARE = 0.01
 
 # Rule R2.
 ALWAYS_ON_SHARE = 0.08
@@ -55,6 +55,82 @@ ALWAYS_ON_CEILING = 0.20
 
 # Composition guardrail: past this, the "Indic" tier is mostly manufactured text.
 MAX_SYNTHETIC_SHARE_OF_INDIC = 0.50
+
+
+# Where each of these came from, and how much that is worth.
+#
+# The repetition constants above cite a fitted curve to three significant figures. The composition
+# ones cited nothing at all, and were written in the same voice — a comment reading "past this, the
+# tier is mostly manufactured text" restates what 0.50 *means* and says nothing about why fifty
+# rather than forty. Presented identically, a judgment somebody wrote down and a constant somebody
+# measured are indistinguishable to a reader, which is precisely the confusion the rest of this page
+# exists to prevent.
+#
+# So each guardrail states its basis and how strong that basis is:
+#
+#   fitted    a published curve fit; the number is the fit
+#   published a finding stated by the paper that measured it
+#   adopted   somebody else's operating choice, taken over here; not a measured optimum, and
+#             measured on a corpus that is not ours
+#   asserted  a judgment written down in this project or its research, with no measurement behind
+#             it. Not therefore wrong — but it cannot be cited against an objection, and a mixture
+#             that breaches one has broken a rule we chose rather than a limit somebody found.
+GUARDRAIL_BASIS: dict[str, dict[str, str]] = {
+    "REPETITION_DECAY": {
+        "strength": "fitted",
+        "source": "Muennighoff et al., JMLR v26 (2025), Eq. 18 — R*_D fitted at 15.4",
+    },
+    "WORTH_CEILING_MULTIPLE": {
+        "strength": "fitted",
+        "source": "1 + R*_D, from the same fit; the paper states repetition cannot beat it",
+    },
+    "EPOCHS_NEAR_FREE": {
+        "strength": "published",
+        "source": "Muennighoff et al. — 'up to 4 epochs yields negligible changes to loss'",
+    },
+    "EPOCHS_HALF_LIFE": {
+        "strength": "published",
+        "source": "Muennighoff et al. — R*_D ~= 15 repetitions, where repeats have lost 1/e",
+    },
+    "EPOCHS_WORTHLESS": {
+        "strength": "published",
+        "source": "Muennighoff et al., Figure 1 — 'At 40 epochs, repeating is worthless'",
+    },
+    "ALWAYS_ON_SHARE": {
+        "strength": "adopted",
+        "source": (
+            "arXiv:2606.07404 — LightningLM reserved an Always-ON tier of 78.1B tokens, 8% of "
+            "every batch. Their operating choice on their corpus, not a measured optimum, and "
+            "nobody has checked that 8% is the right reservation for this mixture."
+        ),
+    },
+    "ALWAYS_ON_CEILING": {
+        "strength": "asserted",
+        "source": (
+            "This project. No source in the research or the literature sets an upper bound on a "
+            "protected lane; 20% is a judgment that the part of a batch no general quality signal "
+            "reaches should stay a minority."
+        ),
+    },
+    "MIN_TIER_SHARE": {
+        "strength": "asserted",
+        "source": (
+            "This project, motivated by Hernandez et al. (cited in arXiv:2305.16264): up-sampling "
+            "0.1% of a corpus 100x significantly degrades performance. That finding is about "
+            "slivers hammered repeatedly; 1% is our own line, not theirs."
+        ),
+    },
+    "MAX_SYNTHETIC_SHARE_OF_INDIC": {
+        "strength": "asserted",
+        "source": (
+            "docs/ATLAS.md risk R02, mitigation column: 'Cap synthetic at ~50% of the Indic tier'. "
+            "A rule of thumb against synthetic data collapse, stated as approximate, with no "
+            "measurement behind it and no citation. R02 prescribes four mitigations and this is "
+            "the only one implemented — the KenLM-perplexity floor, the n-gram diversity floor and "
+            "the per-language entropy monitor are recorded as prose and checked by nothing."
+        ),
+    },
+}
 
 
 def seen_tokens(unique_tokens: float, epochs: float) -> float:

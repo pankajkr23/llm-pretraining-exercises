@@ -686,6 +686,7 @@ function chapterGrowth(ctx) {
 
 function chapterMix(ctx) {
   const { data, presets, recommended } = ctx;
+  const GUARDRAILS = (data.mix_rules || {}).guardrails || [];
   /* Spelled from the data. The claim, the caption and a state used to disagree about whether the
    * mixture had eight tiers or ten — on the same screen, beside a figure drawing ten bars a reader
    * can count. Prose that quotes a count has to read it. */
@@ -787,6 +788,18 @@ function chapterMix(ctx) {
        * Leaving one warning lit and the other unmentioned is worse than mentioning neither: it
        * reads as "we show you our breaches" while showing you one of two. */
       para('The mixture crosses a ', b('second'), ' line the framework drew for itself, and this one had gone unsaid until now. The rule is that no more than half the Indian-language tier may be manufactured — translated or synthesised rather than collected — because past that the tier stops being evidence of how Indian languages are written. This shape lands at ', b(`${(recommended.mix.synthetic_share_of_indic * 100).toFixed(1)}%`), '. It is over, for the same reason everything on this page is over: there is not enough natural Indic text, and the alternative to manufacturing it is a smaller Indian share rather than a better one. Both breaches stay lit, and both are arguments for funding collection rather than for editing the rule.'),
+      /* Which of these lines are findings and which are judgments. The page presented all eight
+       * guardrails in one voice, so a reader could not tell the fitted decay constant from a
+       * number somebody wrote in a mitigation column — and both the lines this mixture crosses are
+       * in the second group. That does not excuse the breach; it changes what the breach means. */
+      para(b('And a thing worth knowing about both those lines: we drew them.'), ' The eight guardrails in this framework do not rest on the same kind of evidence, and until now the page presented them in one voice. ', b(`${GUARDRAILS.filter((g) => g.strength === 'fitted' || g.strength === 'published').length} come from the repetition literature`), ' — a fitted curve and the findings of the paper that fitted it. One is ', b('adopted'), ' from another lab: the protected lane\u2019s 8% floor is what LightningLM reserved on its own corpus, and nobody has checked it is the right reservation for this one. The remaining ', b(`${GUARDRAILS.filter((g) => g.strength === 'asserted').length} are asserted`), ' — judgments written down in this project or its research, with no measurement behind them. The 50% synthetic cap is one of those: it appears once, in a risk register\u2019s mitigation column, phrased as \u201ccap synthetic at ~50%\u201d, with no citation and no experiment. So is the 20% lane ceiling. ', b('Both lines this mixture crosses are lines we chose'), ', which is not an excuse for crossing them — it is a reason to go and measure where they actually belong.'),
+      table(['guardrail', 'value', 'basis', 'where it comes from'], GUARDRAILS.map((g) => [
+        g.name,
+        renderNumber(g.value, { unit: false }),
+        g.strength,
+        g.source,
+      ]), [1]),
+      para(b('One more thing the register asks for and nothing checks.'), ' The risk the 50% cap answers — synthetic data collapse — prescribes four mitigations, not one. The cap is implemented. A KenLM-perplexity floor, an n-gram diversity floor and per-language output-entropy monitoring are recorded as prose and checked by nothing. So the mixture is breaching the only mitigation anybody automated, while three others were never wired up at all.'),
       para(b('What the lane is defending against, concretely.'), ' Sangraha is the largest verified Indic corpus anyone has built, and it publishes what its own cleaning stages did to each language. Bodo — a scheduled language with about 1.5 million speakers — came out of the third stage at ', b('seventy-seven words, in one document'), '. Not seventy-seven thousand. The filter did not decide Bodo was unimportant; it had learned what good text looks like from English and scored an entire language as noise. A lane is the only mechanism that survives that, because a threshold you tune per language is a threshold somebody re-tunes under deadline.'),
       para('Agentic traces are in the lane for the opposite reason to Indic text. They are not under-valued by the scorer; they are filtered ', b('harder'), ' than anything else — a mediocre eighty-turn trace is worse than none — but by a purpose-built check, not by a classifier that learned "good writing" from English prose. The lane exempts them from the generic scorer, not from scrutiny. ', ref('How we clean it', 'cleaning'), ' has that rule in full.'),
     ],

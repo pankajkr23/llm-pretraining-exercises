@@ -42,6 +42,23 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **Each guardrail says where its number came from, and how strong that is.** `mix.py` held eight
+  of them in one voice: the repetition constants cited a fitted curve to three significant figures,
+  and the composition constants cited nothing. `MAX_SYNTHETIC_SHARE_OF_INDIC = 0.50` carried the
+  comment *"past this, the Indic tier is mostly manufactured text"* — which restates what 0.50 means
+  and says nothing about why fifty. Traced: it comes from one row of the risk register's mitigation
+  column, phrased as *"cap synthetic at ~50% of the Indic tier"*, with no citation and no
+  experiment. Now every guardrail is classified — **four published or fitted** from the repetition
+  literature, **one adopted** (the protected lane's 8% floor is what LightningLM reserved on its own
+  corpus, not a measured optimum for this one), and **three asserted** with no measurement behind
+  them at all. The strength maps onto provenance, so a measured guardrail wears the mark meaning
+  somebody ran it and an asserted one does not. This matters because **both lines the mixture
+  crosses are in the asserted group** — which does not excuse the breach, but changes it from
+  "we exceeded a measured limit" to "we exceeded a line we drew ourselves and have never tested".
+  One further gap surfaced while tracing it: the risk that 50% answers prescribes **four**
+  mitigations and only the cap was implemented — the KenLM-perplexity floor, the n-gram diversity
+  floor and the per-language entropy monitor are recorded as prose and checked by nothing. The page
+  says that too. Recorded as correction X21.
 - **A grade now says how much was asked, not only how it answered.** `UNKNOWN` and `FAIL` both
   score zero — deliberately, so ignorance costs what a poor result costs — but that made "scored 5
   with every gate measured" and "scored 5 with three gates never looked at" the same letter. Grade A

@@ -25,10 +25,14 @@ from .fertility import D_MODEL_DEFAULT, PARITY_TARGET, unmeasured
 from .grade import SCORED_GATES, gates_scored, grade_dataset
 from .milestones import TIER_SHAPE, build_all
 from .mix import (
+    ALWAYS_ON_CEILING,
     ALWAYS_ON_SHARE,
     EPOCHS_HALF_LIFE,
     EPOCHS_NEAR_FREE,
     EPOCHS_WORTHLESS,
+    GUARDRAIL_BASIS,
+    MAX_SYNTHETIC_SHARE_OF_INDIC,
+    MIN_TIER_SHARE,
     WORTH_CEILING_MULTIPLE,
 )
 from .models import Value
@@ -466,6 +470,50 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
             "epochs_worthless": _value(
                 EPOCHS_WORTHLESS, "epochs", "estimated", "Muennighoff et al. 2025, JMLR v26"
             ),
+            # Every guardrail with the value it enforces and where that value came from. Shipped
+            # because three of them are judgments this project wrote down and four are published
+            # findings, and a reader cannot tell which is which from the number alone.
+            "guardrails": [
+                {
+                    "name": name,
+                    # The strength maps onto provenance exactly, which is the point: a guardrail
+                    # somebody measured earns the mark that means somebody ran it, and one this
+                    # project asserted does not. The page's own underline then does the work of
+                    # telling them apart, with no extra notation to learn.
+                    "value": _value(
+                        value,
+                        "share" if value < 1 else "count",
+                        "measured"
+                        if GUARDRAIL_BASIS[key]["strength"] in ("fitted", "published")
+                        else "estimated",
+                        GUARDRAIL_BASIS[key]["source"],
+                    ),
+                    "strength": GUARDRAIL_BASIS[key]["strength"],
+                    "source": GUARDRAIL_BASIS[key]["source"],
+                }
+                for key, name, value in (
+                    ("EPOCHS_NEAR_FREE", "passes that are near-free", EPOCHS_NEAR_FREE),
+                    ("EPOCHS_HALF_LIFE", "the repetition half-life", EPOCHS_HALF_LIFE),
+                    (
+                        "EPOCHS_WORTHLESS",
+                        "passes past which repetition is worthless",
+                        EPOCHS_WORTHLESS,
+                    ),
+                    (
+                        "WORTH_CEILING_MULTIPLE",
+                        "what repetition can ever be worth",
+                        WORTH_CEILING_MULTIPLE,
+                    ),
+                    ("ALWAYS_ON_SHARE", "the protected lane's floor", ALWAYS_ON_SHARE),
+                    ("ALWAYS_ON_CEILING", "the protected lane's ceiling", ALWAYS_ON_CEILING),
+                    ("MIN_TIER_SHARE", "the smallest tier worth repeating", MIN_TIER_SHARE),
+                    (
+                        "MAX_SYNTHETIC_SHARE_OF_INDIC",
+                        "how much of the Indic tier may be manufactured",
+                        MAX_SYNTHETIC_SHARE_OF_INDIC,
+                    ),
+                )
+            ],
             "worth_ceiling_multiple": _value(
                 WORTH_CEILING_MULTIPLE,
                 "ratio",
