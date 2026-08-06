@@ -45,7 +45,7 @@ from .models import Value
 from .orphans import find_orphans
 from .run_cost import price_run
 from .shingles import write_index
-from .sourcing import blockers, build_lifecycle, build_plan, tier_of
+from .sourcing import blockers, build_lifecycle, build_plan, states_a_size, tier_of
 from .vocab_sweep import summarise, sweep
 from .vocab_trade import price_vocab_trade
 
@@ -604,7 +604,11 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
         ),
         # Every dataset grouped by the training stage it serves, so post-training and evaluation
         # stop being invisible. Nothing unmatched is dropped — it is listed with its tags.
-        "lifecycle": build_lifecycle([_dataset_index_entry(record) for record in datasets]),
+        "lifecycle": build_lifecycle(
+            index_entries,
+            # Read off the full records, so the index pays nothing to carry it.
+            {r["id"] for r in datasets if states_a_size(r)},
+        ),
         # Tiers no benchmark can detect, priced. "Every tier must have an instrument" is one of the
         # four evaluation disciplines, and until now nothing checked it.
         "orphan_tiers": {

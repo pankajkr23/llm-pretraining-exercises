@@ -248,7 +248,7 @@ function chapterTarget(ctx) {
     fact(`${src.counts.committable} of ${src.counts.catalogued}`, 'datasets we could commit to today — covering under half the budget'),
     fact(`${unresolved}`, 'have a licence nobody has established. Unknown is not permission'),
     fact(gemma ? `×${gemma.mean_tax.value.toFixed(2)}` : '—', 'what Gemma 4’s tokenizer costs on Indian text — worse than a 2019 baseline'),
-    fact(`${post.sized || 0} of ${post.datasets || 0}`, 'post-training sets whose size is in tokens — the rest count tasks, trajectories or hours'),
+    fact(`${post.states_a_size || 0} of ${post.datasets || 0}`, 'post-training sets that state a size — in tasks, trajectories and hours. None states one in tokens'),
   );
 
   return chapter({
@@ -1535,11 +1535,11 @@ function chapterPostTraining(ctx) {
       text(', and the last state compares it against the two labs that published theirs.'),
     ],
     figNum: 'Fig. 7 — where the post-training budget goes',
-    caption: `Fig. 7 — Each stage's budget split by category, as a share of that stage's total. Every number here is a design proposal from ${sft.source}, which states them with a tilde and cites nothing. They are drawn as estimates and compared against published sets in the last state. The catalogue holds ${post.datasets} datasets tagged for this stage and ${post.sized} of them state a size in tokens; the rest are counted in tasks, trajectories, instances or audio hours, which is what post-training corpora actually are.`,
+    caption: `Fig. 7 — Each stage's budget split by category, as a share of that stage's total. Every number here is a design proposal from ${sft.source}, which states them with a tilde and cites nothing. They are drawn as estimates and compared against published sets in the last state. The catalogue holds ${post.datasets} datasets tagged for this stage; ${post.states_a_size} state a size and ${post.sized} state it in tokens. Post-training corpora are counted in tasks, trajectories, instances and audio hours, so the budget above cannot be checked against supply the way the pre-training one can.`,
     pill: `${fmt(sft.total, 'count')} · ${fmt(dpo.total, 'count')} · ${fmt(plan[2].total, 'count')}`,
     rail: [
       text('Why none of this enters a token budget. '),
-      b(`${post.datasets} catalogued datasets carry a post-training tag and ${post.sized} stated a size in tokens`),
+      b(`${post.datasets} catalogued datasets carry a post-training tag, ${post.states_a_size} state a size, and none states it in tokens`),
       text('. Post-training sets are counted in examples, pairs and problems rather than tokens, and almost nobody publishes either — so this chapter proposes a budget where the pre-training chapters could at least argue with a catalogue.'),
     ],
     states,

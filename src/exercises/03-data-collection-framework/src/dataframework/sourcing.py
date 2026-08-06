@@ -89,11 +89,39 @@ def lifecycle_of(record: dict[str, Any]) -> list[str]:
     return [name for name, members in LIFECYCLE.items() if tags & set(members)]
 
 
-def build_lifecycle(datasets: list[dict[str, Any]]) -> dict[str, Any]:
+# A size cell that says nothing. "-" and "0" are the catalogue's ways of writing "not stated", and
+# reading them as a quantity would turn silence into a measurement.
+_NO_SIZE: frozenset[str] = frozenset({"", "-", "0", "n/a", "na", "unknown", "tbd", "?"})
+
+
+def states_a_size(record: dict[str, Any]) -> bool:
+    """Whether a record states a size in any unit at all, tokens or not.
+
+    Post-training corpora are counted in tasks, trajectories, instances and audio hours, because
+    that is what they are. Asking only "how many tokens" of them reports 0 of 55 and reads as
+    "we have nothing", when the truth is that 40 of them state a size and none of those sizes is
+    in the unit a pre-training budget is written in.
+
+    Args:
+        record: A catalogue record or index entry.
+
+    Returns:
+        True when the size cell carries something usable.
+    """
+    raw = ((record.get("size") or {}).get("raw") or record.get("size_raw") or "").strip()
+    return bool(raw) and raw.lower() not in _NO_SIZE
+
+
+def build_lifecycle(
+    datasets: list[dict[str, Any]],
+    states_size: set[str] | frozenset[str] | None = None,
+) -> dict[str, Any]:
     """Group the whole catalogue by training stage, dropping nothing silently.
 
     Args:
         datasets: Catalogue index entries.
+        states_size: Ids of records stating a size in any unit, read from the full records so the
+            index pays nothing to carry it. None counts every member, for callers without it.
 
     Returns:
         Per-stage counts and committable sets, plus every record that matched no stage — reported
@@ -105,6 +133,8 @@ def build_lifecycle(datasets: list[dict[str, Any]]) -> dict[str, Any]:
         members = [d for d in datasets if name in lifecycle_of(d)]
         committable = [d for d in members if not blockers(d)]
         sized = [d for d in members if _tokens(d) is not None]
+        # Sized in *any* unit, which for the post-training stages is the only honest question.
+        stated = [d for d in members if states_size is None or d["id"] in states_size]
         stages.append(
             {
                 "stage": name,
@@ -112,6 +142,7 @@ def build_lifecycle(datasets: list[dict[str, Any]]) -> dict[str, Any]:
                 "committable": len(committable),
                 "committable_ids": [d["id"] for d in committable],
                 "sized": len(sized),
+                "states_a_size": len(stated),
                 # The one estimated figure in an otherwise exact row, so it carries its own mark
                 # rather than dragging the whole block down to `estimated`. It is a sum over
                 # `size_tokens`, and no record in the catalogue has a measured size.

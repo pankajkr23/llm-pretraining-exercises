@@ -399,12 +399,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   exact source still reaches the reader, resolved by the renderer instead of by duplication; and
   fields nothing renders were dropped, `slug` having zero references on the page and a benchmark
   shipping eleven fields for a table with five columns. No figure and no citation was shortened.
-- **"0 of 55 post-training datasets that state a size" was the wrong label, not a wrong count.** All
-  56 rows state a size — SWE-Gym's "2,438 executable tasks", SWE-RL's "273K seed tasks", AutoTool's
-  "200K tool-use trajectories", Bhashini's "thousands of audio hours". None states it in *tokens*,
-  which is what the parser accepts, because tasks and trajectories are what post-training corpora
-  actually are. The three places that reported it now say "in tokens" and name the units the rest
-  use.
+- **"0 of 55 post-training datasets state a size" now reads "40 of 55", because it was measuring the
+  wrong thing.** The size parser only understands tokens, so every size these datasets *do* state
+  was discarded — SWE-Gym's "2,438 executable tasks", SWE-RL's "273K seed tasks", AutoTool's "200K
+  tool-use trajectories", Bhashini's "thousands of audio hours". A headline reading `0` says "we
+  have nothing" whatever its caption says, and that was false. The catalogue now records whether a
+  row states a size in *any* unit: 40 of the 55 post-training sets do, 15 state nothing at all, and
+  none states one in tokens — which is the real finding, since it means the post-training budget
+  cannot be checked against supply the way the pre-training one can. Counted from the full records
+  at build time, so the index carries no extra bytes for it.
 
 - **The mix now says what each token is *for*, and whether we can actually source it.** Tiers named
   a provenance and `kind` split them into skills and knowledge, but nothing said what a token
