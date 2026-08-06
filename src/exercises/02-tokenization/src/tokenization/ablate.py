@@ -324,9 +324,15 @@ SUITE: list[Spec] = [
     _reweighted("E1a · mai ×6", en=3, hi=4, te=4, mai=6),
     _reweighted("E1b · mai ×10", en=3, hi=4, te=4, mai=10),
     _reweighted("E1c · mai ×16", en=3, hi=4, te=4, mai=16),
-    # E2 — with Maithili fixed, Telugu becomes the ceiling. Lift both, mildly.
+    # E2 — with Maithili fixed, Telugu becomes the ceiling. Lift both, mildly. These score far
+    # higher in sample and are the trap this suite is built to expose: see ``holdout``.
     _reweighted("E2a · te ×5 · mai ×6", en=3, hi=4, te=5, mai=6),
     _reweighted("E2b · te ×6 · mai ×7", en=3, hi=4, te=6, mai=7),
+    # E5 — the two independent wins composed: documents (E0) and Maithili ×6 (E1a). This is the
+    # submission. It is the only configuration that beats the reference on *both* axes at once,
+    # in sample and out of it: smaller spread and fewer total tokens.
+    _documents("E5 · documents · mai ×6  (submission)", en=3, hi=4, te=4, mai=6),
+    _documents("E5b · documents · mai ×5", en=3, hi=4, te=4, mai=5),
     # E3/E4 — algorithm ablations. The brief asks for BPE, so neither is the submission.
     Spec(
         algo="unigram",
@@ -349,11 +355,20 @@ SUITE: list[Spec] = [
 ]
 
 
-# The recipe we submit: the reference recipe with exactly one variable changed — Maithili's
-# weight, raised from 2 to 6. It is not the highest in-sample scorer (E2b reaches 35603), but
-# ``tokenization.holdout`` shows E2b's extra 3.4× is worth nothing on text the trainer never saw
-# (4103 vs 4096 adjusted) while compressing slightly worse. E1a's gain is the part that transfers.
-SUBMISSION = _reweighted("submission · mai ×6", en=3, hi=4, te=4, mai=6)
+# The recipe we submit: two independent changes to the reference, each justified on its own.
+#
+#   documents  — train on whole articles rather than lines, so a merge may span a newline. Pure
+#                compression: fewer tokens for the same text, no denominator involved.
+#   mai ×6     — Maithili is 1.1% of the weighted mix and sat at the worst fertility, so it won
+#                almost no merges of its own. Raising its weight pulls the *maximum* down, which
+#                is the honest direction to shrink a spread.
+#
+# It is not the highest in-sample scorer — E2b reaches 35603 against this one's 10934. That gap
+# is overfitting, and ``tokenization.holdout`` measures it: on text the trainer never saw, E2b's
+# 3.3× in-sample lead is worth nothing (4103 vs 4213 adjusted, i.e. it is behind) and it
+# compresses worse. This configuration is the one that beats the reference on every axis both in
+# sample and out of it.
+SUBMISSION = _documents("submission · documents · mai ×6", en=3, hi=4, te=4, mai=6)
 
 
 def sweep(specs: list[Spec], corpora: dict[str, str], units: dict[str, int]) -> list[Result]:

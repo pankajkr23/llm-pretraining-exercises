@@ -1,0 +1,10 @@
+{
+  "lang": "ta",
+  "title": "இந்தியா",
+  "source_url": "https://ta.wikipedia.org/api/rest_v1/page/html/%E0%AE%87%E0%AE%A8%E0%AF%8D%E0%AE%A4%E0%AE%BF%E0%AE%AF%E0%AE%BE",
+  "variant": "wiki_faithful_markdown",
+  "generated_at": "2026-08-06T18:09:05Z",
+  "chars": 651188,
+  "faithful_units": 188367,
+  "unit_policy": "Counts each contiguous Unicode letter/mark/number run as one unit and each visible non-space punctuation/symbol character as one unit."
+}

@@ -7,6 +7,9 @@ dependencies = [
   "tokenizers>=0.20",
   "requests>=2.32",
   "regex>=2024.0",
+  "beautifulsoup4>=4.12",
+  "lxml>=5.0",
+  "markdownify>=0.13",
 ]
 
 [build-system]

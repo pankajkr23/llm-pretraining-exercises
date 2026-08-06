@@ -62,6 +62,7 @@ def main() -> None:
     specs = [
         REFERENCE,
         SUBMISSION,
+        _reweighted("mai ×6 alone (no documents)", en=3, hi=4, te=4, mai=6),
         _reweighted("over-tuned · te ×6 · mai ×7", en=3, hi=4, te=6, mai=7),
     ]
     results = [evaluate(spec, corpora) for spec in specs]

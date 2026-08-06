@@ -38,6 +38,11 @@ REFERENCE_LANGUAGES: tuple[Language, ...] = (
 TAMIL = Language("ta", "Tamil", "இந்தியா", weight=2)
 
 
+def all_languages() -> tuple[Language, ...]:
+    """Every language we have a snapshot for — the four reference ones plus Tamil."""
+    return (*REFERENCE_LANGUAGES, TAMIL)
+
+
 @dataclass
 class Config:
     """Knobs for building and scoring the tokenizer."""

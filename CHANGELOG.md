@@ -10,7 +10,55 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
-_Nothing yet._
+### Changed
+
+- **Exercise 02 now scores what the assignment actually grades.** The tokenizer is trained and
+  measured on committed **wiki-faithful Markdown** — Wikipedia's REST HTML with its links, URLs,
+  tables and categories intact — against a **faithful-unit** denominator (one run of
+  letters/marks/digits, or one visible punctuation character), with the Hindi penalty and adjusted
+  score computed everywhere. The earlier numbers were denominated in whitespace words over clipped
+  prose, which is a different measurement, not a worse one: a fertility of 0.60 and one of 2.13 can
+  describe the same tokenizer. The corpus ships in `corpus/`, so a fresh clone reproduces every
+  published figure with the network switched off.
+- **The reference recipe is now a correctness gate, reproduced to the last digit** — tokens
+  111,390 / 51,190 / 24,428 / 4,258, spread 0.153786, score 6502.56 — and it runs as the first row
+  of the ablation suite. Reaching it turned up a detail invisible in any config: HuggingFace splits
+  *files* into lines, so training from files means no merge may span a newline. Handing the same
+  trainer whole documents lowers every token count by ~0.6% and lifts the score to 6771. Same
+  recipe, different number; it is now an explicit `Spec` field rather than an accident, and there
+  is deliberately only one trainer in the package.
+
+### Added
+
+- **A submitted tokenizer that beats the reference on both axes**: score 6,503 → **10,934** with
+  *fewer* total tokens (191,266 → 190,055). Two independent changes — train on documents, and raise
+  Maithili's weight from 2 to 6 (it is 1.8% of the corpus and shares Devanagari with Hindi, so it
+  won almost no merges of its own and sat at the worst fertility).
+- **A held-out check, because train and eval share the same four files.** `tokenization.holdout`
+  trains on 80% of each article and scores the 20% never seen. It is what kept a much higher score
+  out of the submission: a te×6/mai×7 config reaches 35,604 in sample and *loses* to the submitted
+  one out of sample (4,103 vs 4,213) while compressing worse. The transferable gain over the
+  reference is +33%, not +68% — and the README says so.
+- **Corpus-wide fertility reported beside every score.** `1000 / (X_max − X_min)` is maximised by
+  making every language equally mediocre, and the published Hindi penalty only fires above X = 1.2
+  while everything on this corpus sits near 0.6 — so the anti-exploit device is inert. Total
+  tokens / total units is the counterweight that makes flattening visible.
+- **The widget can now actually tokenize.** `web/data.json` carries the **ordered merges**, not
+  just the vocabulary, and `web/encoder.js` replays them in the browser: paste any text and watch
+  it split, with out-of-vocabulary characters rendered as a visible `[UNK]` chip instead of being
+  silently dropped. Plus a download button for the vocab + merges. A vocabulary list on its own
+  cannot reproduce a score.
+- **Python↔JavaScript parity is tested, not hoped for.** `tests/test_js_encoder.py` runs corpus
+  lines through both implementations under `node` and requires identical token streams — including
+  a line containing a literal `_`, which must never be confused with the `▁` metaspace marker.
+- **The faithfulness rule as executable checks**, run against all four real articles: round-trip
+  every visible character (baseline post-NFKC, since NFKC genuinely rewrites `″`→`′′` and friends),
+  assert zero `[UNK]`, and assert the corpus contains no raw `U+2581`. Each invariant is also run
+  against a deliberately broken tokenizer, so every guard is known to be able to fail.
+- **A fourth-language comparison.** Tamil fetched with the same pipeline and compared against
+  Maithili. The scores are not comparable — different corpora — but the structure is the finding:
+  Maithili is 5,808 units in a script Hindi already pays for, Tamil is 188,367 units (larger than
+  English) in a script nothing else uses, and swapping them moves which language is starved.
 
 ## [0.2.0] - 2026-08-06
 
