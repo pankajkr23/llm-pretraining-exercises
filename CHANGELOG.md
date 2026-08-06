@@ -32,8 +32,8 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   Sarvam-105B's ×1.81 and XLM-R's ×1.66, and ×8.84 worst-case against ×2.90. It is the assignment's
   named target, so `docs/DECISIONS.md` now prices the "continue-pretrain from Gemma-4-31B" fork with
   that number attached: continue-pretraining inherits the tokenizer, and the tokenizer is not free.
-- **Contamination coverage is no longer `none`.** MILU's validation split is indexed — 411,442
-  shingles from 8,923 items across 11 languages — so the gate guards something. 56 of those items
+- **Contamination coverage is no longer `none`.** MILU's validation split is indexed — 126,044
+  shingles from 8,923 items across 11 languages — so the gate guards something. 1,090 of those items
   fall under the 13-word window and would have been undetectable before the short-item fix.
 - **Interactive explainers** rather than static tables and charts: the contamination
   gate you can try to defeat with your own sentence, a vocabulary optimum that moves as you change
