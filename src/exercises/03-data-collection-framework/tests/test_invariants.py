@@ -40,7 +40,12 @@ from dataframework.shingles import (
     normalise,
     shingle,
 )
-from dataframework.sourcing import blockers, tier_of
+from dataframework.sourcing import (
+    DEDUP_SURVIVAL,
+    _tokens_for,
+    blockers,
+    tier_of,
+)
 
 CFG = Config()
 WEB = CFG.web_dir
@@ -572,7 +577,11 @@ def test_the_browser_and_the_pipeline_agree_about_what_blocks():
     js = (WEB / "chapters.js").read_text(encoding="utf-8")
     harness = (
         js.replace("export function", "function").replace("export const", "const")
-        + "\nconst rows = JSON.parse(process.argv[2]).map((d) => [d.id, blockersOf(d).join()]);"
+        + "\nconst [entries, cats] = JSON.parse(process.argv[2]);"
+        + "\nconst rows = entries.map((d) => {"
+        + "\n  const tier = tierOfIn(cats, d);"
+        + "\n  return [d.id, blockersOf(d).join(), tier, countableTokens(d, tier)];"
+        + "\n});"
         + "\nconsole.log(JSON.stringify(rows));"
     )
     bundle = _bundle()
@@ -582,7 +591,11 @@ def test_the_browser_and_the_pipeline_agree_about_what_blocks():
     script.write_text(harness, encoding="utf-8")
     try:
         out = subprocess.run(
-            ["node", str(script), json.dumps(bundle["datasets"])],
+            [
+                "node",
+                str(script),
+                json.dumps([bundle["datasets"], bundle["sourcing"]["tier_categories"]]),
+            ],
             capture_output=True,
             text=True,
             timeout=120,
@@ -593,13 +606,34 @@ def test_the_browser_and_the_pipeline_agree_about_what_blocks():
     finally:
         script.unlink(missing_ok=True)
 
-    from_js = dict(json.loads(out.stdout))
-    disagreed = [
-        f"{d['id']}: python={blockers(d)} js={from_js[d['id']]!r}"
-        for d in bundle["datasets"]
-        if from_js.get(d["id"], "") != ",".join(blockers(d))
-    ]
+    from_js = {row[0]: row[1:] for row in json.loads(out.stdout)}
+    disagreed = []
+    for entry in bundle["datasets"]:
+        js_blockers, js_tier, js_countable = from_js[entry["id"]]
+        py_tier = tier_of(entry)
+        py_countable = _tokens_for(entry, py_tier) or 0
+        if js_blockers != ",".join(blockers(entry)):
+            disagreed.append(f"{entry['id']} blockers: py={blockers(entry)} js={js_blockers!r}")
+        if js_tier != py_tier:
+            disagreed.append(f"{entry['id']} tier: py={py_tier!r} js={js_tier!r}")
+        # A dataset that supplies no tier has no countable figure to compare.
+        if py_tier and abs(js_countable - py_countable) > 1:
+            disagreed.append(f"{entry['id']} countable: py={py_countable} js={js_countable}")
     assert not disagreed, f"{len(disagreed)} disagreement(s): {disagreed[:5]}"
+
+
+def test_the_browser_and_the_pipeline_agree_about_the_dedup_range():
+    """The survival band is a constant in Python and a fallback literal in the browser.
+
+    `deduped()` in chapters.js falls back to 0.2/0.4 when a caller passes no range. If
+    DEDUP_SURVIVAL moves and that literal does not, the page keeps quoting the old band wherever
+    the range is not threaded through.
+    """
+    js = (WEB / "chapters.js").read_text(encoding="utf-8")
+    low, high = DEDUP_SURVIVAL
+    assert f"survival?.[0] ?? {low}" in js, f"the browser's fallback low no longer reads {low}"
+    assert f"survival?.[1] ?? {high}" in js, f"the browser's fallback high no longer reads {high}"
+    assert _bundle()["sourcing"]["dedup_survival_range"] == [low, high]
 
 
 def test_nothing_needing_permission_counts_as_committable_today():

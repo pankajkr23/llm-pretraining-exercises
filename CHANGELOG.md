@@ -391,6 +391,18 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **One rule, one implementation — and a guard that runs both.** The containment bug (X28) happened
+  because the same rule lived in Python for the bundle and in JavaScript for the page, and only one
+  got fixed. Auditing for the same shape found `tierOf` written out **four times** in `chapters.js`
+  and the natural-Indic token rule twice; all are now single module-scope functions. The
+  cross-implementation guard was extended from blockers alone to also compare tier assignment and
+  countable tokens per dataset, by running the real browser code against the real bundle, plus a
+  check that the deduplication band's fallback literal still matches `DEDUP_SURVIVAL`.
+- **Index headroom, not just a pass mark.** 99.2KB against a 100KB budget left no room for a
+  sentence. Dropped the per-tier `worth_tokens` and its two totals, and `feasibility` — nothing on
+  the page reads any of them, and the worth-vs-seen distinction stays computable with its own test.
+  **96.4KB.**
+
 - **The index is under its 100KB budget again — 137.5KB to 99.1KB.** It had been over since before
   this branch and the modality work made it worse, so: the per-dataset relationship notes, the 17
   priors and the curriculum prose moved to `records.json` (both surfaces already load it, so this is

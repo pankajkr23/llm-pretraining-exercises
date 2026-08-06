@@ -529,14 +529,11 @@ function chapterGrowth(ctx) {
   /* Which catalogued datasets each stage's own admission rule allows. The seed forbids web text, so
    * its list is computed rather than asserted — and it comes to three datasets, which is the point. */
   const WEB_TIERS = new Set(['english-web-hq', 'general-web']);
-  const tierOf = (x) => Object.entries(data.sourcing.tier_categories).find(([, c]) => c.includes(x.category))?.[0] || null;
-  const NATURAL_T = new Set(['indic-natural', 'indic-knowledge-systems', 'indic-civilizational']);
+  const tierOf = (x) => tierOfIn(data.sourcing.tier_categories, x);
   const committable = data.datasets
     .map((x) => ({ d: x, tier: tierOf(x) }))
     .filter((r) => r.tier && !blockersOf(r.d).length);
-  const countable = (r) => (NATURAL_T.has(r.tier) && (r.d.size_verified || {}).value !== undefined
-    ? r.d.size_verified.value
-    : (r.d.size_tokens || {}).value) || 0;
+  const countable = (r) => countableTokens(r.d, r.tier);
   const admits = (st) => (st.config.web_data === 'none'
     ? committable.filter((r) => !WEB_TIERS.has(r.tier))
     : committable);
@@ -562,7 +559,7 @@ function chapterGrowth(ctx) {
    * anybody wrote in an Indian language, which is the one thing this tier is for. The headline is
    * shown beside the figure wherever the two differ, so a reader who checks the card is not left
    * wondering which of us is wrong. */
-  const sizeValue = (r) => (NATURAL_T.has(r.tier) && r.d.size_verified ? r.d.size_verified : r.d.size_tokens);
+  const sizeValue = (r) => (NATURAL_TIERS.has(r.tier) && r.d.size_verified ? r.d.size_verified : r.d.size_tokens);
   const headlineNote = (r) => {
     const head = (r.d.size_tokens || {}).value;
     const used = (sizeValue(r) || {}).value;
@@ -1139,6 +1136,43 @@ const ACTIONS = {
   gap: ['DOES NOT EXIST', 'var(--grade-x)'],
 };
 
+/* Tiers whose whole purpose is text a human actually wrote — the mirror of NATURAL_TIERS in
+ * sourcing.py. A machine translation of an English article is Indic-language text, and it is not
+ * what these tiers exist to supply. */
+const NATURAL_TIERS = new Set(['indic-natural', 'indic-knowledge-systems', 'indic-civilizational']);
+
+/**
+ * Which tier of the proposed mixture a dataset can supply — the browser's half of `tier_of`.
+ *
+ * Defined once at module scope because it had been written out four times inside four different
+ * chapters. That is the duplication that produced X28, smaller and inside one file.
+ *
+ * @param {object} categories - `sourcing.tier_categories`.
+ * @param {object} d - a dataset index entry.
+ * @returns {string|null}
+ */
+function tierOfIn(categories, d) {
+  return Object.entries(categories || {}).find(([, cats]) => cats.includes(d.category))?.[0] || null;
+}
+
+/**
+ * How many of a dataset's tokens count toward a tier — the browser's half of `_tokens_for`.
+ *
+ * For the natural-Indic tiers that is the verified human-origin portion, never the headline:
+ * Sangraha announces 251B and 64B of it has been confirmed, and a stage planned against the
+ * announcement is a stage planned against 187B nobody has checked.
+ *
+ * @param {object} d - a dataset index entry.
+ * @param {string|null} tier
+ * @returns {number}
+ */
+function countableTokens(d, tier) {
+  if (NATURAL_TIERS.has(tier) && (d.size_verified || {}).value !== undefined) {
+    return d.size_verified.value || 0;
+  }
+  return (d.size_tokens || {}).value || 0;
+}
+
 /**
  * Every reason a dataset cannot be committed — the same list the pipeline's `blockers()` builds.
  *
@@ -1229,7 +1263,7 @@ function chapterDatasets(ctx) {
   const { data, recommended } = ctx;
   const cov = data.gate_coverage || { of: 0, scored: {} };
   const src = data.sourcing;
-  const tierOf = (d) => Object.entries(src.tier_categories).find(([, cats]) => cats.includes(d.category))?.[0] || null;
+  const tierOf = (d) => tierOfIn(src.tier_categories, d);
   const targets = Object.fromEntries(recommended.mix.tiers.map((t) => [t.name, t.unique_tokens_required]));
   const planOf = (tier) => (src.tiers || []).find((x) => x.tier === tier) || {};
 
@@ -2395,7 +2429,7 @@ function chapterFirst(ctx) {
     .filter((r) => r.tier === 'indic-natural' && !blockersOf(r.d).length)
     .reduce((a, r) => a + ((r.d.size_verified || r.d.size_tokens || {}).value || 0), 0);
 
-  const tierOf = (d) => Object.entries(src.tier_categories).find(([, cats]) => cats.includes(d.category))?.[0] || null;
+  const tierOf = (d) => tierOfIn(src.tier_categories, d);
   const targets = Object.fromEntries(recommended.mix.tiers.map((t) => [t.name, t.unique_tokens_required]));
 
   /* Three kinds of action, and they differ by who has to agree — which is the only thing that
@@ -2672,6 +2706,13 @@ function chapterAppendix(ctx) {
       pair('access', text(dist.gated === 'manual' ? 'request access — a person approves it'
         : dist.gated === 'auto' ? 'accept the terms and it is yours'
         : 'open — no account, no terms'));
+      /* The canonical host, but only when the source links below do not already reach it — for
+       * most rows `hf:nvidia/Nemotron-CC-v2` and the HuggingFace link beside it are one fact
+       * written twice, and for the few distributed somewhere nobody links, it is the only place
+       * the reader is told where to go. */
+      const hostPath = String(dist.host || '').replace(/^hf:/, '');
+      const linked = ((full.access || {}).links || []).some((href) => href.includes(hostPath));
+      if (!linked) pair('distributed at', dist.host);
       /* The date matters here and nowhere else on the card: gating and versions move, and a
        * reader deciding whether to trust this row deserves to know when anybody last looked. */
       pair('checked', dist.checked);
@@ -2730,7 +2771,7 @@ function chapterAppendix(ctx) {
    *
    * So: the reader resolves blockers and watches the corpus move. */
   {
-    const tierOf = (d) => Object.entries(data.sourcing.tier_categories).find(([, cats]) => cats.includes(d.category))?.[0] || null;
+    const tierOf = (d) => tierOfIn(data.sourcing.tier_categories, d);
     const NATURAL = new Set(['indic-natural', 'indic-knowledge-systems', 'indic-civilizational']);
     /* Same rule the pipeline uses: natural tiers count verified human-origin text, never headlines. */
     const countable = (d, tier) =>

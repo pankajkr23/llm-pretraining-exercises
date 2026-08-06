@@ -92,6 +92,10 @@ def _strip_tier_prose(presets: list[dict[str, Any]]) -> list[dict[str, Any]]:
         for tier in mix["tiers"]:
             for field in ("sources", "why", "capabilities", "kind"):
                 tier.pop(field, None)
+            # The worth-vs-seen distinction (X15) is real and stays computable — `worth_tokens`
+            # keeps its own test — but nothing on the page renders the per-tier figure or its two
+            # totals, and an index is the wrong place to warehouse numbers no surface reads.
+            tier.pop("worth_tokens", None)
             # A token count carried to nine decimal places is noise: these are estimates, and the
             # trailing float precision is pure bytes.
             for field in ("unique_tokens_required", "seen_tokens"):
@@ -110,6 +114,10 @@ def _strip_tier_prose(presets: list[dict[str, Any]]) -> list[dict[str, Any]]:
         ):
             if isinstance(mix.get(field), float):
                 mix[field] = round(mix[field], 4)
+        for field in ("total_worth_tokens", "natural_indic_worth_share"):
+            mix.pop(field, None)
+        # `feasibility` is prose the page never reads; the verdict beside it is what renders.
+        preset.pop("feasibility", None)
         if isinstance(preset.get("target_seen_tokens"), float):
             preset["target_seen_tokens"] = round(preset["target_seen_tokens"])
     return presets
