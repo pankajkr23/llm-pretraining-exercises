@@ -124,12 +124,14 @@ name = "exercise-02-tokenization"
 version = "0.1.0"
 source = { editable = "src/exercises/02-tokenization" }
 dependencies = [
+    { name = "regex" },
     { name = "requests" },
     { name = "tokenizers" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "regex", specifier = ">=2024.0" },
     { name = "requests", specifier = ">=2.32" },
     { name = "tokenizers", specifier = ">=0.20" },
 ]

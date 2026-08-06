@@ -1,68 +1,69 @@
-"""Build the shared BPE vocabulary and score it across all languages.
+"""Build the submission tokenizer and score it across all languages.
 
-Trains two tokenizers on the same corpora and writes both to ``artifacts/``:
+Trains the submission recipe on the committed wiki-faithful corpus and writes to ``artifacts/``:
 
-* the HuggingFace byte-level BPE baseline (``tokenizer.json``), and
-* the hand-written char-level BPE (``tokenizer_scratch.json``, see :mod:`.bpe_scratch`).
+* ``tokenizer.json`` — the tokenizer itself, and
+* ``report.json`` — per-language units, tokens, fertility, spread, raw score, Hindi penalty and
+  adjusted score.
+
+Everything is read from ``corpus/`` and nothing is fetched, so this runs offline and a fresh
+clone reproduces the published numbers exactly.
 
 Run with:  uv run python -m tokenization
 """
 
 import json
-from typing import Protocol
 
-from .bpe_scratch import ScratchBPE
+from .ablate import SUBMISSION, measure, train_spec
 from .config import Config
-from .corpus import fetch_article
-from .metrics import LangScore, count_words, score, spread
-from .tokenizer import save, train_bpe
-
-
-class _Tokenizer(Protocol):
-    """The slice of the tokenizer API both engines expose (HuggingFace and :class:`ScratchBPE`)."""
-
-    def encode(self, text: str) -> object: ...
-    def get_vocab_size(self) -> int: ...
-
-
-def _report(tok: _Tokenizer, corpora: dict[str, str], words: dict[str, int]) -> dict:
-    """Score ``tok`` on every corpus and assemble the per-language ratios + spread + score."""
-    scores = [LangScore(c, words[c], len(tok.encode(t).ids)) for c, t in corpora.items()]
-    return {
-        "vocab_size": tok.get_vocab_size(),
-        "languages": [
-            {"code": s.code, "words": s.words, "tokens": s.tokens, "ratio": round(s.ratio, 4)}
-            for s in scores
-        ],
-        "spread": round(spread(scores), 4),
-        "score": round(score(scores), 2),
-    }
+from .corpus import load_faithful
+from .metrics import (
+    adjusted_score,
+    count_units,
+    count_words,
+    hindi_penalty,
+    score,
+    spread,
+)
 
 
 def main() -> None:
-    """Fetch corpora, train the baseline + from-scratch BPE, and report their scores."""
+    """Train the submission tokenizer on the committed corpus and write its report."""
     cfg = Config()
-    corpora = {lang.code: fetch_article(lang, cfg.data_dir) for lang in cfg.languages}
-    words = {lang.code: count_words(corpora[lang.code]) for lang in cfg.languages}
-    weights = {lang.code: lang.weight for lang in cfg.languages}
+    names = {lang.code: lang.name for lang in cfg.languages}
+    corpora = {lang.code: load_faithful(lang.code, cfg.corpus_dir) for lang in cfg.languages}
+    units = {c: count_units(t) for c, t in corpora.items()}
 
-    # HuggingFace byte-level BPE baseline.
-    baseline = train_bpe(corpora, cfg.vocab_size, weights)
-    save(baseline, cfg.artifacts_dir / "tokenizer.json")
-    report = _report(baseline, corpora, words)
+    tok = train_spec(SUBMISSION, corpora)
+    scores = measure(tok, corpora, units)
+
+    report = {
+        "recipe": SUBMISSION.label,
+        "vocab_size": tok.get_vocab_size(),
+        "languages": [
+            {
+                "code": s.code,
+                "name": names.get(s.code, s.code),
+                "units": s.units,
+                "tokens": s.tokens,
+                "ratio": round(s.ratio, 6),
+                # Whitespace words are reported for contrast only — nothing is scored on them.
+                "words": count_words(corpora[s.code]),
+            }
+            for s in scores
+        ],
+        "spread": round(spread(scores), 6),
+        "score": round(score(scores), 2),
+        "hindi_penalty": round(hindi_penalty(scores), 6),
+        "adjusted_score": round(adjusted_score(scores), 2),
+    }
+
+    cfg.artifacts_dir.mkdir(parents=True, exist_ok=True)
+    tok.save(str(cfg.artifacts_dir / "tokenizer.json"))
     (cfg.artifacts_dir / "report.json").write_text(
         json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"
     )
     print(json.dumps(report, indent=2, ensure_ascii=False))
-
-    # Hand-written char-level BPE (the winning char + NFKC recipe), persisted for review.
-    scratch = ScratchBPE(normalization="NFKC")
-    scratch.train(corpora, cfg.vocab_size, dict.fromkeys(corpora, 1.0))
-    scratch.save(cfg.artifacts_dir / "tokenizer_scratch.json")
-    print(
-        f"\nsaved from-scratch BPE → artifacts/tokenizer_scratch.json "
-        f"(score {_report(scratch, corpora, words)['score']})"
-    )
 
 
 if __name__ == "__main__":

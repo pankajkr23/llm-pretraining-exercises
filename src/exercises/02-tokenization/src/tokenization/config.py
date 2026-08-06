@@ -15,7 +15,8 @@ class Language:
         code: Wikipedia subdomain, e.g. ``"en"``.
         name: Human-readable name, e.g. ``"English"``.
         title: Article title in that language, e.g. ``"India"``.
-        weight: Corpus upsampling weight — raise it to give a language more merges.
+        weight: Corpus upsampling weight — the language's text is repeated this many times during
+            training, so a higher weight wins more of the shared merges.
     """
 
     code: str
@@ -24,17 +25,29 @@ class Language:
     weight: float = 1.0
 
 
+# The reference recipe's four languages and its 3/4/4/2 weights. Titles are the exact article
+# names behind the committed snapshots in ``corpus/`` — Telugu is ``భారతదేశం`` (no space).
+REFERENCE_LANGUAGES: tuple[Language, ...] = (
+    Language("en", "English", "India", weight=3),
+    Language("hi", "Hindi", "भारत", weight=4),
+    Language("te", "Telugu", "భారతదేశం", weight=4),
+    Language("mai", "Maithili", "भारत", weight=2),
+)
+
+# Our own fourth-language choice, fetched with the same wiki-faithful pipeline.
+TAMIL = Language("ta", "Tamil", "இந்தியா", weight=2)
+
+
 @dataclass
 class Config:
     """Knobs for building and scoring the tokenizer."""
 
     vocab_size: int = 10_000
-    target_ratio: float = 1.2
-    languages: tuple[Language, ...] = (
-        Language("en", "English", "India"),
-        Language("hi", "Hindi", "भारत"),
-        Language("te", "Telugu", "భారత దేశం"),
-        Language("ta", "Tamil", "இந்தியா"),  # your 4th language — change freely
-    )
+    languages: tuple[Language, ...] = REFERENCE_LANGUAGES
+    corpus_dir: Path = field(default=EXERCISE_ROOT / "corpus")
     data_dir: Path = field(default=EXERCISE_ROOT / "data")
     artifacts_dir: Path = field(default=EXERCISE_ROOT / "artifacts")
+
+    def weights(self) -> dict[str, float]:
+        """Language code -> upsampling weight, as configured."""
+        return {lang.code: lang.weight for lang in self.languages}
