@@ -13,6 +13,17 @@ from typing import Any, Literal
 
 Grade = Literal["A", "B", "C", "X"]
 
+# The five gates, and the only five that may score. Named explicitly because `score_gates` used to
+# sum whatever keys it was handed: a duplicated or misspelled gate name added points, so a record
+# with seven gates could score 14 out of a stated maximum of 10 and buy itself a grade A.
+SCORED_GATES: tuple[str, ...] = (
+    "provenance",
+    "composition",
+    "contamination",
+    "yield",
+    "evidence",
+)
+
 # Gates whose failure is disqualifying rather than merely bad.
 BLOCKING_GATES: tuple[str, ...] = ("provenance", "contamination")
 
@@ -30,13 +41,18 @@ GRADE_B_MIN = 5
 def score_gates(gates: dict[str, Any]) -> int:
     """Sum the gate verdicts into a 0–10 score.
 
+    Only the five gates in `SCORED_GATES` count. Anything else in the mapping is ignored rather
+    than silently added, so the score cannot exceed the 10 it is reported out of.
+
     Args:
         gates: Gate name to serialised `Gate`.
 
     Returns:
         The score; 10 means every gate passed.
     """
-    return sum(_VERDICT_POINTS.get((gate or {}).get("verdict", ""), 0) for gate in gates.values())
+    return sum(
+        _VERDICT_POINTS.get((gates.get(name) or {}).get("verdict", ""), 0) for name in SCORED_GATES
+    )
 
 
 def grade_dataset(record: dict[str, Any]) -> tuple[Grade, str]:
@@ -88,13 +104,22 @@ def grade_all(records: list[dict[str, Any]]) -> dict[str, tuple[Grade, str]]:
     return {record["id"]: grade_dataset(record) for record in records if record.get("id")}
 
 
-def is_commercially_usable(grade: Grade) -> bool:
-    """Whether a grade may appear in a mix marked commercial (INV-2).
+def is_commercially_usable(record: dict[str, Any]) -> bool:
+    """Whether a dataset may appear in a mix marked commercial (INV-2).
+
+    Takes the record rather than the grade, because a grade cannot answer the question. This used
+    to be `grade != "X"`, which returned True for a dataset whose licence nobody had established —
+    contradicting the rule the rest of the framework is built on and states in as many words:
+    unknown is not permission. It is INV-2's public surface, so it has to encode the whole rule.
 
     Args:
-        grade: The dataset's grade.
+        record: The catalogue row.
 
     Returns:
-        False only for grade X.
+        True only when the dataset survived every gate and somebody established that its licence
+        permits commercial use.
     """
-    return grade != "X"
+    grade, _ = grade_dataset(record)
+    if grade == "X":
+        return False
+    return record.get("licence_commercial") is True

@@ -112,8 +112,11 @@ def compose(tiers: list[dict[str, Any]]) -> dict[str, Any]:
     """
     composed: list[dict[str, Any]] = []
     for tier in tiers:
-        unique = tier.get("unique_tokens", 0)
-        epochs = tier.get("epochs", 1)
+        unique = tier.get("unique_tokens") or 0
+        # `or 1` rather than a default, so an explicit None reads as "unstated" instead of raising
+        # a TypeError three frames later in the arithmetic.
+        epochs = tier.get("epochs")
+        epochs = 1 if epochs is None else epochs
         composed.append(
             {
                 **tier,
@@ -166,7 +169,10 @@ def check(mix: dict[str, Any]) -> list[dict[str, str]]:
 
     for row in mix["tiers"]:
         name = row.get("name", "<unnamed>")
-        epochs = row.get("epochs", 1)
+        # `compose` normalises its own copy, but the original key survives in the row, so an
+        # explicit None would reach the comparisons below and raise rather than be reported.
+        epochs = row.get("epochs")
+        epochs = 1 if epochs is None else epochs
 
         # Priced both ways, so a schedule can be judged on what it buys rather than on how many
         # times it reads. A tier can sit under every epoch threshold and still be paying for passes
@@ -205,6 +211,35 @@ def check(mix: dict[str, Any]) -> list[dict[str, str]]:
                         f"{epochs} epochs is past the ~{EPOCHS_NEAR_FREE}-epoch point where "
                         f"repetition is near-free; these passes are worth {efficiency:.0%} of "
                         "what they cost."
+                    ),
+                }
+            )
+
+        # A tier with no stated pool cannot be checked against a ceiling expressed as a multiple
+        # of that pool. It used to skip the check in silence, which reads identically to passing it.
+        if not unique:
+            findings.append(
+                {
+                    "level": "warning",
+                    "tier": name,
+                    "message": (
+                        "no unique-token pool stated, so the repetition ceiling cannot be checked "
+                        "for this tier — it is unassessed, not clean."
+                    ),
+                }
+            )
+
+        # A negative or absent schedule is a malformed plan, not a small one. `epochs` defaulting
+        # to 1 is deliberate and fine; a negative count produced a negative budget that still
+        # reported buildable.
+        if epochs < 0:
+            findings.append(
+                {
+                    "level": "error",
+                    "tier": name,
+                    "message": (
+                        f"{epochs} epochs is not a schedule; a pool cannot be read a negative "
+                        "number of times."
                     ),
                 }
             )

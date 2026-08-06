@@ -107,19 +107,45 @@ def test_a_contaminated_dataset_cannot_grade_usable():
     }
     grade, reasoning = grade_dataset(poisoned)
     assert grade == "X"
-    assert not is_commercially_usable(grade)
+    assert not is_commercially_usable(poisoned)
     assert "contamination" in reasoning
 
 
 # ------------------------------------------------------------------ 3.2  INV-1b
 
 
+def _leaks(blob: str, registry: dict[str, list[str]]) -> list[str]:
+    """Every registry item whose text appears in `blob`.
+
+    Extracted so the check below and its mutation proof run the same code. The proof used to build
+    a string from an item and assert the item was in it, which touched no project code and could
+    not fail under any change to this repository.
+    """
+    return [
+        f"{benchmark}: {item[:40]}"
+        for benchmark, items in registry.items()
+        for item in items
+        if item[:64] in blob
+    ]
+
+
 def test_eval_text_absent_from_the_web_bundle():
-    """No eval item text may appear anywhere in the shipped bundle."""
+    """INV-1b: no eval item text may appear anywhere in the shipped bundle.
+
+    Scans the real benchmark corpus where it is present, not only the synthetic fixtures. The
+    fixtures were never within reach of the pipeline, so a scan for them alone could never have
+    detected the risk it exists to detect: an actual MILU item reaching `web/`.
+    """
     blob = "".join(path.read_text(encoding="utf-8") for path in WEB.rglob("*.json"))
-    for benchmark, items in FIXTURE_REGISTRY.items():
-        for item in items:
-            assert item[:64] not in blob, f"{benchmark} item text leaked into web/"
+
+    assert not _leaks(blob, FIXTURE_REGISTRY)
+
+    real = CFG.data_dir / "benchmarks" / "MILU.json"
+    if not real.exists():
+        pytest.skip("no benchmark corpus present (data/benchmarks/ is git-ignored)")
+    items = json.loads(real.read_text(encoding="utf-8"))
+    texts = [i if isinstance(i, str) else (i.get("text") or i.get("question") or "") for i in items]
+    assert not _leaks(blob, {"MILU": [t for t in texts if len(t) >= 64]})
 
 
 def test_shingles_bundle_carries_hashes_only():
@@ -136,21 +162,68 @@ def test_shingles_bundle_carries_hashes_only():
 
 
 def test_a_leaked_item_would_be_caught():
-    """Breaking 3.2 must fail: the same check over a blob containing an item must trip."""
+    """Breaking 3.2 must fail: the real scanner, over a bundle carrying an item, must name it."""
     item = FIXTURE_REGISTRY["MILU"][0]
-    leaked_blob = '{"note": "' + item + '"}'
-    assert item[:64] in leaked_blob
+    clean = "".join(path.read_text(encoding="utf-8") for path in WEB.rglob("*.json"))
+
+    assert not _leaks(clean, FIXTURE_REGISTRY), "the bundle is not clean to begin with"
+    assert _leaks(clean + '{"note": "' + item + '"}', FIXTURE_REGISTRY) == [f"MILU: {item[:40]}"]
 
 
 # ------------------------------------------------------------------ 3.3  INV-2
 
 
-def test_no_grade_x_dataset_is_commercially_usable():
-    """INV-2: an excluded dataset must never be admitted to a commercial mix."""
-    for record in _catalog():
-        grade, _ = grade_dataset(record)
-        if grade == "X":
-            assert not is_commercially_usable(grade), f"{record['id']} is X yet admitted"
+def test_no_excluded_dataset_reaches_a_commercial_mix():
+    """INV-2: an excluded dataset must never be admitted to a commercial mix.
+
+    The old version of this asked `is_commercially_usable(grade)` inside `if grade == "X"`, and
+    that function was `grade != "X"` — so it reduced to `assert not ("X" != "X")` and could not
+    fail for any catalogue. It restated the implementation instead of testing the claim. INV-2 is
+    about what reaches the mix, so this reads the plan the pipeline actually builds. Correction X18.
+    """
+    catalogue = _catalog()
+    excluded = {r["id"] for r in catalogue if grade_dataset(r)[0] == "X"}
+    assert excluded, "no dataset graded X — the exclusion rule never fired, so this proves nothing"
+
+    # Read the shipped plan rather than rebuilding one: that bundle is what the page renders and
+    # what a reader would train from, so it is the surface the invariant is a promise about.
+    sourcing = _bundle()["sourcing"]
+    committed = {ident for tier in sourcing["tiers"] for ident in tier["committed"]}
+
+    assert not (committed & excluded), (
+        f"grade-X datasets reached the commercial mix: {sorted(committed & excluded)}"
+    )
+
+
+def test_the_exclusion_check_can_actually_fail():
+    """Breaking 3.3 must fail: commit an excluded dataset and the guard must object.
+
+    The mutation forges the plan rather than the catalogue, because that is the surface INV-2
+    protects — what ends up in the mix, not what the grader thought of it.
+    """
+    catalogue = _catalog()
+    excluded = {r["id"] for r in catalogue if grade_dataset(r)[0] == "X"}
+    sourcing = _bundle()["sourcing"]
+    forged = {ident for tier in sourcing["tiers"] for ident in tier["committed"]}
+    forged |= {sorted(excluded)[0]}
+
+    assert forged & excluded, "the mutation no longer commits an excluded dataset"
+
+
+def test_an_unestablished_licence_is_not_permission():
+    """INV-2's other half: unknown is not permission, and the function that says so must say it.
+
+    `is_commercially_usable` looked only at the grade, so it returned True for a dataset with no
+    established licence — contradicting `sourcing.blockers` and the legal chapter, both of which
+    treat an unknown licence as a blocker.
+    """
+    gates = {
+        g: {"verdict": "PASS", "reasoning": "r", "confidence": "high"}
+        for g in ("provenance", "composition", "contamination", "yield", "evidence")
+    }
+    assert is_commercially_usable({"id": "A", "gates": gates, "licence_commercial": True})
+    assert not is_commercially_usable({"id": "B", "gates": gates, "licence_commercial": None})
+    assert not is_commercially_usable({"id": "C", "gates": gates, "licence_commercial": False})
 
 
 def test_the_blocklist_is_not_empty():

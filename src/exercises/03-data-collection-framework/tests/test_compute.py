@@ -69,7 +69,26 @@ def test_design_worked_example_grades_b():
 def test_failed_provenance_is_excluded_not_merely_penalised():
     record = {"gates": _gates(provenance="FAIL", evidence="PASS"), "gotchas": []}
     assert grade_dataset(record)[0] == "X"
-    assert not is_commercially_usable("X")
+    # Takes a record now: a grade alone cannot answer the question, because a licence nobody has
+    # established is not permission either.
+    assert not is_commercially_usable(
+        {
+            "id": "X1",
+            "gates": {},
+            "gotchas": [{"type": "SAFETY", "text": "CSAM", "severity": "blocking"}],
+        }
+    )
+    assert not is_commercially_usable({"id": "U1", "gates": {}, "licence_commercial": None})
+    assert is_commercially_usable(
+        {
+            "id": "OK",
+            "licence_commercial": True,
+            "gates": {
+                g: {"verdict": "PASS", "reasoning": "r", "confidence": "high"}
+                for g in ("provenance", "composition", "contamination", "yield", "evidence")
+            },
+        }
+    )
 
 
 def test_failed_contamination_is_also_disqualifying():

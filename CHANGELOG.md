@@ -42,6 +42,24 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **Three of the guards enforcing the five invariants could not fail.** INV-1b's mutation proof
+  built a string from an eval item and asserted the item was in it — it touched no project code and
+  could not fail under any change to the repository. INV-2's check asked
+  `is_commercially_usable(grade)` inside `if grade == "X"`, and that function was `grade != "X"`, so
+  it reduced to asserting that `"X"` equals `"X"`. And the leak scan looked only for synthetic
+  fixtures that were never within reach of the pipeline, never for a real benchmark item. The guards
+  now test the claims: INV-2 reads the shipped plan and asserts no excluded dataset reaches a
+  committed tier, and `is_commercially_usable` takes the record and requires an **established**
+  licence — because *unknown is not permission*, which the rest of the framework says and this one
+  function contradicted. Alongside them: `score_gates` counts only the five named gates, so a
+  duplicated key can no longer score 14 out of a stated maximum of 10 and buy a grade A;
+  `coverage.py`'s exclusion clause, which could only ever fire for one capability, now runs for the
+  first time and stops counting **IndicMMLU-Pro** as an instrument for Indian worldview when its own
+  notes say it was translated; and `mix.check` reports a tier it cannot assess instead of skipping
+  it in silence, errors on a negative schedule, and no longer raises on a null one. The page also
+  now discloses **both** guardrails its mixture breaches — the synthetic-Indic share at 52.4% was
+  going unmentioned beside the protected lane at 21.0%, which reads as candour while showing half
+  the picture. Recorded as correction X18.
 - **Nothing derived from an estimate calls itself measured any more.** The `sourcing`, `lifecycle`
   and `orphan_tiers` blocks each declared `provenance: "measured"` over every number inside them —
   including `committed_tokens` of 6.39T, which is a sum over the catalogue's own sizes, and **not
