@@ -16,6 +16,7 @@ Run in existing CI by `uv run pytest`; no separate workflow.
 
 import json
 import re
+import subprocess
 
 import pytest
 from dataframework.catalog import EXPECTED_COUNTS, validate
@@ -38,6 +39,12 @@ from dataframework.shingles import (
     is_contaminated,
     normalise,
     shingle,
+)
+from dataframework.sourcing import (
+    DEDUP_SURVIVAL,
+    _tokens_for,
+    blockers,
+    tier_of,
 )
 
 CFG = Config()
@@ -72,6 +79,11 @@ def _catalog() -> list[dict]:
 
 def _bundle() -> dict:
     return json.loads((WEB / "data.json").read_text(encoding="utf-8"))
+
+
+def _reference() -> dict:
+    """The lazy half of the bundle: prose and registers the index does not carry."""
+    return json.loads((WEB / "records.json").read_text(encoding="utf-8"))
 
 
 def _built() -> bool:
@@ -377,6 +389,33 @@ def _bare_numbers(node, path="", inherited=False) -> list[str]:
 # carries a measured size, so nothing derived from them may claim to be measured either.
 _DERIVED_FROM_CATALOGUE_SIZES = ("sourcing", "lifecycle", "orphan_tiers")
 
+# The fields inside those blocks that really are such a sum. The rest are counts of records we
+# hold, and are measured. A block may declare `measured` and still hold one of these — but then
+# the figure has to carry its own mark, which is what the check below insists on.
+_ESTIMATED_BY_NATURE = ("tokens_known", "committed_tokens", "target_tokens")
+
+
+def _sums_claiming_measured(node, path="", declared=None) -> list[str]:
+    """Collect token sums that declare, or inherit from an ancestor, a `measured` mark.
+
+    The bare-number check inherits provenance down the tree and so proves only that every figure
+    carries a mark, never that the mark is the right one. This walks the same tree asking the
+    second question of the fields whose name says they are a sum over estimates.
+    """
+    found: list[str] = []
+    if isinstance(node, dict):
+        here = node.get("provenance", declared)
+        for key, value in node.items():
+            if key in _ESTIMATED_BY_NATURE and isinstance(value, (int, float)):
+                if here == "measured":
+                    found.append(f"{path}.{key}")
+            else:
+                found += _sums_claiming_measured(value, f"{path}.{key}", here)
+    elif isinstance(node, list):
+        for i, value in enumerate(node):
+            found += _sums_claiming_measured(value, f"{path}[{i}]", declared)
+    return found
+
 
 def test_the_protocol_gap_note_matches_the_run_it_describes():
     """INV-4: the run must not misdescribe its own coverage.
@@ -452,6 +491,10 @@ def test_nothing_derived_from_estimates_claims_to_be_measured():
     `sourcing` declared `measured` over `committed_tokens`, which is 6.39T summed from catalogue
     sizes of which 24 are estimated and 121 unknown. The page tells the reader that mark means
     "somebody ran it". Nobody had. Correction X17.
+
+    This asks it of the figures rather than of the blocks holding them, because X27 let a block of
+    exact counts say so while its one sum carries `estimated` inline. A block-level rule could not
+    tell that apart from the blanket it replaced.
     """
     bundle = _bundle()
 
@@ -461,8 +504,9 @@ def test_nothing_derived_from_estimates_claims_to_be_measured():
     )
 
     for block in _DERIVED_FROM_CATALOGUE_SIZES:
-        assert bundle[block]["provenance"] != "measured", (
-            f"{block} claims measured; its token figures are sums of catalogue estimates"
+        claiming = _sums_claiming_measured(bundle[block], block)
+        assert not claiming, (
+            f"{claiming} claims measured; its token figures are sums of catalogue estimates"
         )
 
 
@@ -474,9 +518,211 @@ def test_the_derived_provenance_check_can_actually_fail():
     assert forged["sourcing"]["provenance"] == "measured"
     with pytest.raises(AssertionError, match="sums of catalogue estimates"):
         for block in _DERIVED_FROM_CATALOGUE_SIZES:
-            assert forged[block]["provenance"] != "measured", (
-                f"{block} claims measured; its token figures are sums of catalogue estimates"
+            claiming = _sums_claiming_measured(forged[block], block)
+            assert not claiming, (
+                f"{claiming} claims measured; its token figures are sums of catalogue estimates"
             )
+
+
+def test_every_derivation_label_names_its_source_and_its_parents():
+    """A relationship claim is a claim about the world, and carries a citation like any other.
+
+    The catalogue records which datasets are subsets of, or share an upstream corpus with,
+    others — a reader looking at FineWeb's 15T beside FineWeb-Edu's 1.3T has no way to know the
+    second sits inside the first, and the page was inviting them to add the two. Correction X26.
+    """
+    kinds = {"contained_by", "additional_to", "shares_source", "independent", "unknown"}
+    # The labels moved to records.json to keep the index under its budget; they are still one per
+    # dataset id, and the page reads them from there.
+    labelled = _reference()["derivations"]
+    assert labelled, "no dataset carries a derivation label"
+
+    for ident, der in labelled.items():
+        entry = {"id": ident}
+        assert der["kind"] in kinds, f"{entry['id']}: unknown kind {der['kind']}"
+        assert der.get("source"), f"{entry['id']}: a relationship with no source is an assertion"
+        assert der.get("note"), f"{entry['id']}: no callout stating what is known"
+        if der["kind"] in ("contained_by", "additional_to"):
+            assert der["parents"], f"{entry['id']}: {der['kind']} with no parent named"
+        if der["kind"] == "independent":
+            assert not der["parents"], f"{entry['id']}: independent yet naming a parent"
+
+
+def test_a_contained_dataset_is_not_added_to_its_parent():
+    """INV-2's arithmetic cousin: a subset must not be summed alongside the set that contains it.
+
+    Nemotron-CC-v2 is Nemotron-CC plus eight snapshots, and the plan was counting 6.30T and 6.60T
+    as 12.9T of supply. Every containment in the catalogue is checked, not just that one.
+    """
+    bundle = _bundle()
+    contained = bundle["sourcing"]["contained_by"]
+    assert contained, "no containment recorded — this guard is watching nothing"
+
+    committed = {i for tier in bundle["sourcing"]["tiers"] for i in tier["committed"]}
+    for child, parents in contained.items():
+        overlap = committed & set(parents)
+        assert not (child in committed and overlap), (
+            f"{child} is committed alongside {sorted(overlap)}, which contains it"
+        )
+
+
+def test_the_browser_and_the_pipeline_agree_about_what_blocks():
+    """One rule, two implementations, and X28 is what their disagreeing costs.
+
+    `sourcing.blockers()` decides the bundle and `blockersOf` in chapters.js decides the page. The
+    containment bug shipped because the bundle was right and the browser ignored it, and adding the
+    access blocker to only one of them would have done the same thing again. This runs the real JS
+    against the real bundle rather than re-describing either rule in Python.
+    """
+    js = (WEB / "chapters.js").read_text(encoding="utf-8")
+    harness = (
+        js.replace("export function", "function").replace("export const", "const")
+        + "\nconst [entries, cats] = JSON.parse(process.argv[2]);"
+        + "\nconst rows = entries.map((d) => {"
+        + "\n  const tier = tierOfIn(cats, d);"
+        + "\n  return [d.id, blockersOf(d).join(), tier, countableTokens(d, tier)];"
+        + "\n});"
+        + "\nconsole.log(JSON.stringify(rows));"
+    )
+    bundle = _bundle()
+    # Beside chapters.js, not in a temp directory: the module imports `./_shared/num.js`, and a
+    # relative import resolves against the importing file's own location.
+    script = WEB / "_blockers_harness.mjs"
+    script.write_text(harness, encoding="utf-8")
+    try:
+        out = subprocess.run(
+            [
+                "node",
+                str(script),
+                json.dumps([bundle["datasets"], bundle["sourcing"]["tier_categories"]]),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=True,
+        )
+    except FileNotFoundError:
+        pytest.skip("node is not available")
+    finally:
+        script.unlink(missing_ok=True)
+
+    from_js = {row[0]: row[1:] for row in json.loads(out.stdout)}
+    disagreed = []
+    for entry in bundle["datasets"]:
+        js_blockers, js_tier, js_countable = from_js[entry["id"]]
+        py_tier = tier_of(entry)
+        py_countable = _tokens_for(entry, py_tier) or 0
+        if js_blockers != ",".join(blockers(entry)):
+            disagreed.append(f"{entry['id']} blockers: py={blockers(entry)} js={js_blockers!r}")
+        if js_tier != py_tier:
+            disagreed.append(f"{entry['id']} tier: py={py_tier!r} js={js_tier!r}")
+        # A dataset that supplies no tier has no countable figure to compare.
+        if py_tier and abs(js_countable - py_countable) > 1:
+            disagreed.append(f"{entry['id']} countable: py={py_countable} js={js_countable}")
+    assert not disagreed, f"{len(disagreed)} disagreement(s): {disagreed[:5]}"
+
+
+def test_the_browsers_containment_filter_actually_subtracts():
+    """X28's rule, run rather than read. Correction X28.
+
+    The bug was that `contained_by` maps a child to a *list* of parents and the filter tested that
+    list for membership in a set of ids, so it matched nothing and the subtraction never fired.
+    Two things made it survive: the bundle was correct throughout, so every guard watching the
+    producer passed; and it can only be seen on screen when a stage happens to show both halves of
+    a pair, which stopped being true once gating moved Nemotron-CC-v2 out of the band. So this
+    calls the browser's own function with the real containment map instead.
+    """
+    js = (WEB / "chapters.js").read_text(encoding="utf-8")
+    contained = _bundle()["sourcing"]["contained_by"]
+    assert contained, "no containment recorded, so this proves nothing"
+    child, parents = next(iter(contained.items()))
+
+    harness = (
+        js.replace("export function", "function").replace("export const", "const")
+        + "\nconst [map, child, parent] = JSON.parse(process.argv[2]);"
+        + "\nconst row = (id) => ({ d: { id } });"
+        + "\nconsole.log(JSON.stringify({"
+        # Parent present: the child must be dropped.
+        + "\n  together: withoutContained([row(child), row(parent)], map).map((r) => r.d.id),"
+        # Parent absent: the child must survive, or the sum loses tokens nothing else counts.
+        + "\n  alone: withoutContained([row(child)], map).map((r) => r.d.id),"
+        + "\n}));"
+    )
+    script = WEB / "_containment_harness.mjs"
+    script.write_text(harness, encoding="utf-8")
+    try:
+        out = subprocess.run(
+            ["node", str(script), json.dumps([contained, child, parents[0]])],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=True,
+        )
+    except FileNotFoundError:
+        pytest.skip("node is not available")
+    finally:
+        script.unlink(missing_ok=True)
+
+    result = json.loads(out.stdout)
+    assert result["together"] == [parents[0]], (
+        f"{child} survived beside its container {parents[0]} — it is being counted twice"
+    )
+    assert result["alone"] == [child], f"{child} was dropped with no container present"
+
+
+def test_the_browser_and_the_pipeline_agree_about_the_dedup_range():
+    """The survival band is a constant in Python and a fallback literal in the browser.
+
+    `deduped()` in chapters.js falls back to 0.2/0.4 when a caller passes no range. If
+    DEDUP_SURVIVAL moves and that literal does not, the page keeps quoting the old band wherever
+    the range is not threaded through.
+    """
+    js = (WEB / "chapters.js").read_text(encoding="utf-8")
+    low, high = DEDUP_SURVIVAL
+    assert f"survival?.[0] ?? {low}" in js, f"the browser's fallback low no longer reads {low}"
+    assert f"survival?.[1] ?? {high}" in js, f"the browser's fallback high no longer reads {high}"
+    assert _bundle()["sourcing"]["dedup_survival_range"] == [low, high]
+
+
+def test_nothing_needing_permission_counts_as_committable_today():
+    """A dataset a person has to approve is not one you can commit to today. Correction X29.
+
+    The catalogue described availability in prose, so corpora gated on NVIDIA's manual approval sat
+    in the same band as ones you can fetch anonymously. The page's entire dividing line is whether
+    anybody's permission is needed, so this asks it of the band directly.
+    """
+    bundle = _bundle()
+    committable = [d for d in bundle["datasets"] if tier_of(d) and not blockers(d)]
+    assert committable, "nothing is committable, so this proves nothing"
+
+    for entry in committable:
+        assert entry.get("gated") != "manual", (
+            f"{entry['id']} is committable today yet needs a person's approval"
+        )
+
+
+def test_the_gating_check_can_actually_fail():
+    """Breaking X29 must fail: an ungated row flipped to manual must leave the committable band."""
+    bundle = _bundle()
+    open_row = next(d for d in bundle["datasets"] if tier_of(d) and not blockers(d))
+
+    assert blockers({**open_row, "gated": "manual"}) == ["access"], (
+        "manual gating no longer blocks, so the committable band cannot be trusted"
+    )
+    # Click-through gating is deliberately not a blocker: accepting terms is unilateral.
+    assert not blockers({**open_row, "gated": "auto"})
+
+
+def test_the_containment_check_can_actually_fail():
+    """Breaking X26 must fail: commit a subset beside its parent and the guard must object."""
+    bundle = _bundle()
+    contained = bundle["sourcing"]["contained_by"]
+    child, parents = next(iter(contained.items()))
+    forged = {child, *parents}
+
+    assert child in forged and forged & set(parents), (
+        "the mutation no longer places a subset beside its parent"
+    )
 
 
 def test_the_records_agree_about_any_model_they_both_describe():
@@ -531,6 +777,40 @@ def test_the_bare_number_check_can_actually_fail():
     assert _bare_numbers({"tokens": 251_000_000_000})
     assert not _bare_numbers(
         {"tokens": {"value": 251e9, "unit": "tokens", "provenance": "estimated", "source": "s"}}
+    )
+
+
+def test_no_measured_block_hides_an_estimated_sum():
+    """A count and a sum over estimates must not shelter under one mark.
+
+    The lifecycle block declared `estimated` over seven fields to cover the one that needed it,
+    which hedged counts a miscount would make a bug; the fix inverted it, and this is the guard
+    against inverting it too far. Correction X27.
+    """
+    hidden = _sums_claiming_measured(_bundle())
+    assert not hidden, f"{len(hidden)} estimated sum(s) marked measured: {hidden[:5]}"
+
+
+def test_the_measured_sum_check_can_actually_fail():
+    """Breaking X27 must fail: a token sum inheriting `measured` is detected."""
+    assert _sums_claiming_measured(
+        {"provenance": "measured", "stages": [{"sized": 24, "tokens_known": 78e12}]}
+    )
+    assert not _sums_claiming_measured(
+        {
+            "provenance": "measured",
+            "stages": [
+                {
+                    "sized": 24,
+                    "tokens_known": {
+                        "value": 78e12,
+                        "unit": "tokens",
+                        "provenance": "estimated",
+                        "source": "s",
+                    },
+                }
+            ],
+        }
     )
 
 

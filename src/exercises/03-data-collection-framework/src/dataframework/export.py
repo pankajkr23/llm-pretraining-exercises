@@ -25,17 +25,27 @@ from .fertility import D_MODEL_DEFAULT, PARITY_TARGET, unmeasured
 from .grade import SCORED_GATES, gates_scored, grade_dataset
 from .milestones import TIER_SHAPE, build_all
 from .mix import (
+    ALWAYS_ON_CEILING,
     ALWAYS_ON_SHARE,
     EPOCHS_HALF_LIFE,
     EPOCHS_NEAR_FREE,
     EPOCHS_WORTHLESS,
+    GUARDRAIL_BASIS,
+    MAX_SYNTHETIC_SHARE_OF_INDIC,
+    MIN_TIER_SHARE,
     WORTH_CEILING_MULTIPLE,
+)
+from .modalities import (
+    MODALITIES,
+    curriculum_shares,
+    domain_coverage,
+    modality_coverage,
 )
 from .models import Value
 from .orphans import find_orphans
 from .run_cost import price_run
 from .shingles import write_index
-from .sourcing import build_lifecycle, build_plan
+from .sourcing import blockers, build_lifecycle, build_plan, states_a_size, tier_of
 from .vocab_sweep import summarise, sweep
 from .vocab_trade import price_vocab_trade
 
@@ -82,9 +92,13 @@ def _strip_tier_prose(presets: list[dict[str, Any]]) -> list[dict[str, Any]]:
         for tier in mix["tiers"]:
             for field in ("sources", "why", "capabilities", "kind"):
                 tier.pop(field, None)
+            # The worth-vs-seen distinction (X15) is real and stays computable — `worth_tokens`
+            # keeps its own test — but nothing on the page renders the per-tier figure or its two
+            # totals, and an index is the wrong place to warehouse numbers no surface reads.
+            tier.pop("worth_tokens", None)
             # A token count carried to nine decimal places is noise: these are estimates, and the
             # trailing float precision is pure bytes.
-            for field in ("unique_tokens", "seen_tokens"):
+            for field in ("unique_tokens_required", "seen_tokens"):
                 if isinstance(tier.get(field), float):
                     tier[field] = round(tier[field])
             if isinstance(tier.get("share"), float):
@@ -100,6 +114,10 @@ def _strip_tier_prose(presets: list[dict[str, Any]]) -> list[dict[str, Any]]:
         ):
             if isinstance(mix.get(field), float):
                 mix[field] = round(mix[field], 4)
+        for field in ("total_worth_tokens", "natural_indic_worth_share"):
+            mix.pop(field, None)
+        # `feasibility` is prose the page never reads; the verdict beside it is what renders.
+        preset.pop("feasibility", None)
         if isinstance(preset.get("target_seen_tokens"), float):
             preset["target_seen_tokens"] = round(preset["target_seen_tokens"])
     return presets
@@ -167,6 +185,13 @@ def _dataset_index_entry(record: dict[str, Any]) -> dict[str, Any]:
         # Omitted when false: `blocking` and `is_gap` are absent-means-no, and 145 explicit
         # `false`s cost 5KB of the index budget to say nothing.
         **({"is_gap": True} if record.get("is_gap") else {}),
+        # Omitted when nobody checked the distribution point, so "we did not look" and "we looked
+        # and it is open" stay distinguishable — absent is not the same claim as false.
+        **(
+            {"gated": (record.get("access") or {})["distribution"]["gated"]}
+            if "distribution" in (record.get("access") or {})
+            else {}
+        ),
         "grade": grade,
         # How many of the five gates anybody actually answered. Shipped beside the grade because
         # a grade earned over two scored gates is a different claim from the same grade earned
@@ -183,6 +208,10 @@ def _dataset_index_entry(record: dict[str, Any]) -> dict[str, Any]:
         # number, so trimming this to a plain float would be a false economy. The grade's
         # reasoning and every gate live in catalog.json, loaded on demand.
         "size_tokens": record.get("size", {}).get("tokens"),
+        # How this dataset relates to others in the catalogue. Shipped because a reader
+        # looking at a 15T figure needs to know whether it is 15T of anything the row above
+        # it does not already hold.
+        "derivation": record.get("derivation"),
         # The verified human-origin portion, when the card records one. Sangraha's headline is 251B
         # and only 64B of it is verified: the rest is machine translation and transliteration. A
         # framework whose own mixture chapter warns that counting synthetic as natural is "the
@@ -361,6 +390,22 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
         grade, _ = grade_dataset(record)
         grades[grade] = grades.get(grade, 0) + 1
 
+    # `_strip_tier_prose` removes `capabilities` from the shipped presets to save bytes, and that is
+    # exactly the field the orphan check matches on — so this rebuilds the recommended mix from
+    # TIER_SHAPE, which still carries it. Passing the stripped mix reported all eight tiers as
+    # orphans, which is the answer you get when you ask a question with the evidence deleted.
+    # Computed here rather than inline so the block can also report how many tiers were checked.
+    # What each part of the corpus is meant to teach, in what order, and whether the catalogue can
+    # actually supply it. The last of those three is the one worth shipping: the tier shares say
+    # what the mix should contain, and this says what could be pointed at to fill it.
+    index_entries = [_dataset_index_entry(record) for record in datasets]
+    committable_ids = {d["id"] for d in index_entries if tier_of(d) and not blockers(d)}
+
+    mixture_for_orphans = build_all(records.get("milestones", []))[
+        next((i for i, p in enumerate(presets) if p.get("recommended")), len(presets) // 2)
+    ]["mix"]
+    orphan_tiers = find_orphans(mixture_for_orphans, benchmarks)
+
     data = {
         "generated_at": None,  # stamped by the caller; the pipeline itself must stay deterministic
         "pipeline_version": __version__,
@@ -466,6 +511,50 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
             "epochs_worthless": _value(
                 EPOCHS_WORTHLESS, "epochs", "estimated", "Muennighoff et al. 2025, JMLR v26"
             ),
+            # Every guardrail with the value it enforces and where that value came from. Shipped
+            # because three of them are judgments this project wrote down and four are published
+            # findings, and a reader cannot tell which is which from the number alone.
+            "guardrails": [
+                {
+                    "name": name,
+                    # The strength maps onto provenance exactly, which is the point: a guardrail
+                    # somebody measured earns the mark that means somebody ran it, and one this
+                    # project asserted does not. The page's own underline then does the work of
+                    # telling them apart, with no extra notation to learn.
+                    "value": _value(
+                        value,
+                        "share" if value < 1 else "count",
+                        "measured"
+                        if GUARDRAIL_BASIS[key]["strength"] in ("fitted", "published")
+                        else "estimated",
+                        GUARDRAIL_BASIS[key]["source"],
+                    ),
+                    "strength": GUARDRAIL_BASIS[key]["strength"],
+                    "source": GUARDRAIL_BASIS[key]["source"],
+                }
+                for key, name, value in (
+                    ("EPOCHS_NEAR_FREE", "passes that are near-free", EPOCHS_NEAR_FREE),
+                    ("EPOCHS_HALF_LIFE", "the repetition half-life", EPOCHS_HALF_LIFE),
+                    (
+                        "EPOCHS_WORTHLESS",
+                        "passes past which repetition is worthless",
+                        EPOCHS_WORTHLESS,
+                    ),
+                    (
+                        "WORTH_CEILING_MULTIPLE",
+                        "what repetition can ever be worth",
+                        WORTH_CEILING_MULTIPLE,
+                    ),
+                    ("ALWAYS_ON_SHARE", "the protected lane's floor", ALWAYS_ON_SHARE),
+                    ("ALWAYS_ON_CEILING", "the protected lane's ceiling", ALWAYS_ON_CEILING),
+                    ("MIN_TIER_SHARE", "the smallest tier worth repeating", MIN_TIER_SHARE),
+                    (
+                        "MAX_SYNTHETIC_SHARE_OF_INDIC",
+                        "how much of the Indic tier may be manufactured",
+                        MAX_SYNTHETIC_SHARE_OF_INDIC,
+                    ),
+                )
+            ],
             "worth_ceiling_multiple": _value(
                 WORTH_CEILING_MULTIPLE,
                 "ratio",
@@ -523,7 +612,11 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
         ),
         # Every dataset grouped by the training stage it serves, so post-training and evaluation
         # stop being invisible. Nothing unmatched is dropped — it is listed with its tags.
-        "lifecycle": build_lifecycle([_dataset_index_entry(record) for record in datasets]),
+        "lifecycle": build_lifecycle(
+            index_entries,
+            # Read off the full records, so the index pays nothing to carry it.
+            {r["id"] for r in datasets if states_a_size(r)},
+        ),
         # Tiers no benchmark can detect, priced. "Every tier must have an instrument" is one of the
         # four evaluation disciplines, and until now nothing checked it.
         "orphan_tiers": {
@@ -534,20 +627,42 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
                 "matched from the mixture against the benchmark register; the cost of an orphan "
                 "is priced from the estimated mix at a list rate"
             ),
-            # `_strip_tier_prose` removes `capabilities` from the shipped presets to save bytes,
-            # and that is exactly the field the orphan check matches on — so this rebuilds the
-            # recommended mix from TIER_SHAPE, which still carries it. Passing the stripped mix
-            # reported all eight tiers as orphans, which is the answer you get when you ask a
-            # question with the evidence deleted.
-            "tiers": find_orphans(
-                build_all(records.get("milestones", []))[
-                    next(
-                        (i for i, p in enumerate(presets) if p.get("recommended")),
-                        len(presets) // 2,
-                    )
-                ]["mix"],
-                benchmarks,
+            # The half of this block that is not estimated. The page states the orphan count as a
+            # fact — "every tier has at least one test" — and that claim is a match against the
+            # register, not a projection, so it says so on its own terms rather than inheriting
+            # the hedge that belongs to the costs.
+            "counts": {
+                "provenance": "measured",
+                "source": "matched tier by tier against the benchmark register",
+                "tiers_in_mixture": len(mixture_for_orphans["tiers"]),
+                "tiers_without_a_detector": len(orphan_tiers),
+            },
+            "tiers": orphan_tiers,
+        },
+        # The curriculum, and the honest counterweight to it. The shares are a design proposal —
+        # nobody has classified a crawl by modality — so the block says `estimated` and names
+        # itself as the proposal rather than dressing a plan up as a measurement. The coverage
+        # counts underneath it are exact, and say so on their own terms.
+        "modalities": {
+            "provenance": "estimated",
+            "source": (
+                "modality purposes and the code language list are the specification's own; the "
+                "tier-to-modality weights and the curriculum emphases are this framework's "
+                "proposal, not a measurement of any corpus"
             ),
+            "spec": [{"modality": k, **v} for k, v in MODALITIES.items()],
+            "curriculum": curriculum_shares(mixture_for_orphans["tiers"]),
+            "by_modality": modality_coverage(index_entries, committable_ids),
+            "coverage": {
+                # Exact: these count catalogue rows matching a stated pattern, and the pattern
+                # ships beside the count so the match can be checked rather than trusted.
+                "provenance": "measured",
+                "source": (
+                    "counted from the catalogue by the domain patterns in "
+                    "dataframework.modalities, each shipped beside its own count"
+                ),
+                "domains": domain_coverage(index_entries, committable_ids),
+            },
         },
         "priors": [
             {
@@ -561,6 +676,63 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
     }
 
     reference = {name: rows for name, rows in records.items() if name != "priors"}
+
+    # ---- index budget -------------------------------------------------------------------
+    #
+    # Two moves, and neither may cost the reader a fact. Both surfaces already load
+    # `records.json`, so "moved to records" means moved off the critical-path parse, not hidden.
+    #
+    # 1. Prose out of the index. The per-dataset relationship notes, the priors and the
+    #    curriculum's prose are read on hover or inside a `<details>` — never during first paint —
+    #    and together they were a fifth of a file whose whole purpose is to paint immediately.
+    reference["priors"] = data.pop("priors")
+    reference["derivations"] = {
+        entry["id"]: entry.pop("derivation")
+        for entry in data["datasets"]
+        if entry.get("derivation")
+    }
+    reference["curriculum_notes"] = {
+        step.pop("stage"): {"note": step.pop("note"), "teaches": step["teaches"]}
+        for step in [dict(s) for s in data["modalities"]["curriculum"]]
+    }
+    for step, source in zip(
+        data["modalities"]["curriculum"], reference["curriculum_notes"].values(), strict=True
+    ):
+        step.pop("note", None)
+        source["shares"] = step["shares"]
+    reference["domain_patterns"] = {
+        d["domain"]: d.pop("pattern") for d in data["modalities"]["coverage"]["domains"]
+    }
+
+    # 2. One source string, stored once. Every one of the 145 datasets carried the *same*
+    #    sentence under `gates_scored.source`, and most repeated `seed:Size_Scale` under
+    #    `size_tokens.source` — 145 copies of two strings, for 20KB. They are replaced by an index
+    #    into a table shipped beside them, so nothing is dropped and nothing is shortened: a
+    #    reader still gets the exact source, resolved by the renderer instead of by duplication.
+    # 3. Fields nothing renders. `slug` is a filename helper the page never reads, and a benchmark
+    #    ships six fields the appendix table has no column for. The full records stay on disk in
+    #    benchmarks.json for anyone reading the spine directly.
+    for entry in data["datasets"]:
+        entry.pop("slug", None)
+    benchmark_columns = ("name", "type", "coverage", "split_policy", "trust_band")
+    data["benchmarks"] = [
+        {k: v for k, v in row.items() if k in benchmark_columns} for row in data["benchmarks"]
+    ]
+
+    sources: list[str] = []
+    seen: dict[str, int] = {}
+    for entry in data["datasets"]:
+        for field in ("gates_scored", "size_tokens", "size_verified"):
+            value = entry.get(field)
+            if not isinstance(value, dict) or not isinstance(value.get("source"), str):
+                continue
+            text = value["source"]
+            if text not in seen:
+                seen[text] = len(sources)
+                sources.append(text)
+            value["source"] = seen[text]
+    data["sources"] = sources
+
     return {"data": data, "records": reference, "shingles": shingle_meta}
 
 

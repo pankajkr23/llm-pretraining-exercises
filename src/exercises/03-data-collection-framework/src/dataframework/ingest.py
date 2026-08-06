@@ -223,6 +223,356 @@ def derive_gates(row: dict[str, str], gotcha_types: set[str], blocking: bool) ->
     }
 
 
+# How catalogued datasets are related to each other.
+#
+# Adding two corpora only gives you their sum when they are independent, and most of the large ones
+# here are not. This table records what is *published* about those relationships, in three kinds
+# that must not be conflated:
+#
+#   contained_by   A publisher states that this dataset is a subset or an earlier version of
+#                  another one in the catalogue. Exact, so the contained row is subtracted from any
+#                  sum that also holds its parent.
+#   shares_source  Two datasets are built from the same upstream corpus. The overlap is real and
+#                  its size is not published by anybody. Recorded so a reader can see it, and
+#                  discounted only through risk R01's range — never a per-pair coefficient, which
+#                  would be a number with no source wearing the authority of a computation.
+#   independent    Explicitly *not* crawl-derived. Recorded because "no overlap" is as much a
+#                  finding as overlap is, and a reader should not have to assume it.
+#
+# `note` is the callout: the concrete, checkable thing that is known about the relationship, even
+# where the magnitude is not. Modality and crawl dates are published; overlap fractions are not.
+#
+# Multi-parent is normal and the shape allows it. CulturaX is mC4 plus OSCAR; Sangraha's unverified
+# portion is drawn from "existing multilingual corpora", plural and unnamed, which is why that one
+# is `unknown` rather than modelled.
+RELATIONSHIPS: dict[str, dict[str, Any]] = {
+    "ENG-02": {
+        "kind": "contained_by",
+        "parents": ["ENG-01"],
+        "note": "The educational slice of FineWeb, not an addition to it.",
+        "source": (
+            "HuggingFaceFW/fineweb-edu: '1.3T tokens of educational web pages filtered from the "
+            "FineWeb dataset'"
+        ),
+    },
+    "ENG-04": {
+        "kind": "contained_by",
+        "parents": ["ENG-03"],
+        "note": "The educational slice of FinePDFs, not an addition to it.",
+        "source": (
+            "HuggingFaceFW/finepdfs-edu: '350B+ tokens of educational PDFs filtered from the "
+            "FinePDFs "
+            "dataset'"
+        ),
+    },
+    "ENG-07": {
+        "kind": "contained_by",
+        "parents": ["ENG-08"],
+        "note": (
+            "v2 is this dataset plus eight further crawl snapshots, so holding v2 means holding "
+            "this."
+        ),
+        "source": (
+            "nvidia/Nemotron-CC-v2: 'based on Nemotron-CC with eight additional Common Crawl "
+            "snapshots (2024-2025)'"
+        ),
+    },
+    "ENG-09": {
+        "kind": "additional_to",
+        "parents": ["ENG-08"],
+        "note": (
+            "Genuinely additive, unlike the v1/v2 pair — its publisher says to use it alongside "
+            "v2, not instead of it."
+        ),
+        "source": (
+            "nvidia/Nemotron-CC-v2.1: '2.5T new tokens ... to be used in conjunction with the "
+            "previously released 6.6T tokens of Nemotron-CC-v2'"
+        ),
+    },
+    "ENG-01": {
+        "kind": "shares_source",
+        "parents": ["Common Crawl"],
+        "note": (
+            "96 Common Crawl dumps, summer 2013 to April 2024, HTML pages. Deduplicated per "
+            "snapshot "
+            "rather than globally, by the authors' own ablation, so it carries cross-snapshot "
+            "duplicates of its own."
+        ),
+        "source": "HuggingFaceFW/fineweb and arXiv:2406.17557",
+    },
+    "ENG-03": {
+        "kind": "shares_source",
+        "parents": ["Common Crawl"],
+        "note": (
+            "106 Common Crawl dumps, 2013 to February 2025 — the same crawls as FineWeb, but the "
+            "PDFs "
+            "in them rather than the HTML. A PDF and a web page are different documents, so the "
+            "overlap with the HTML corpora is far smaller than the shared source suggests."
+        ),
+        "source": "HuggingFaceFW/finepdfs",
+    },
+    "ENG-08": {
+        "kind": "shares_source",
+        "parents": ["Common Crawl"],
+        "note": (
+            "Common Crawl, with synthetic rephrasing applied to part of it — so some of this is "
+            "not collected text at all."
+        ),
+        "source": (
+            "nvidia/Nemotron-CC-v2: 'synthetic rephrasing using Qwen3-30B-A3B, filtered for "
+            "English and globally deduplicated'"
+        ),
+    },
+    "MUL-03": {
+        "kind": "shares_source",
+        "parents": ["Common Crawl", "Internet Archive"],
+        "note": (
+            "7.2 petabytes of raw crawl: 45% Common Crawl, 33% Internet Archive, 22% ArchiveBot, "
+            "2012-2024. Only the Common Crawl portion overlaps the English corpora here, and "
+            "English "
+            "is one of three languages it deduplicates per-crawl rather than globally."
+        ),
+        "source": "arXiv:2511.01066, HPLT 3.0",
+    },
+    "MUL-04": {
+        "kind": "shares_source",
+        "parents": ["Common Crawl"],
+        "note": (
+            "Not built from the crawl directly but from two corpora that were: mC4 v3.1.0 and "
+            "every "
+            "OSCAR release to 23.01. Two parents, both downstream of the same crawl."
+        ),
+        "source": "uonlp/CulturaX",
+    },
+    "MUL-05": {
+        "kind": "shares_source",
+        "parents": ["Common Crawl"],
+        "note": (
+            "Common Crawl, cleaned. Named in risk R01 as one of the corpora whose mutual overlap "
+            "drives the 60-80% estimate."
+        ),
+        "source": "MADLAD-400, and risk R01",
+    },
+    "MTH-01": {
+        "kind": "shares_source",
+        "parents": ["Common Crawl"],
+        "note": "The mathematics slice of the same Nemotron Common Crawl pipeline.",
+        "source": "nvidia/Nemotron-CC-Math-v1",
+    },
+    "COD-01": {
+        "kind": "independent",
+        "parents": [],
+        "note": (
+            "Source code from Software Heritage, not a web crawl. It does not overlap any of the "
+            "web "
+            "corpora here."
+        ),
+        "source": "BigCode, The Stack v2",
+    },
+    "COD-02": {
+        "kind": "independent",
+        "parents": [],
+        "note": (
+            "Curated from GitHub, not a web crawl, so it does not overlap any of the web corpora "
+            "here. What is distributed is metadata rather than code — commit ids, file paths and "
+            "a detected language — so the tokens have to be re-fetched from GitHub to exist at "
+            "all, which is a dependency none of the other committable rows carry."
+        ),
+        # Cites v3, which is the version this row counts. It cited v1 while the row was named
+        # "v1/v2/v3"; once the row narrowed to the only ungated version, the citation pointed at
+        # a different corpus from the one the figure came from.
+        "source": (
+            "nvidia/Nemotron-Pretraining-Code-v3 card: '146 M new files (173 B tokens)', GitHub "
+            "cutoff 30 September 2025, distributed as commit id, file path and detected language"
+        ),
+    },
+    "IND-01": {
+        "kind": "independent",
+        "parents": [],
+        "note": (
+            "The verified portion counted here is crawled from manually checked Indic websites, "
+            "OCR'd from PDFs (Internet Archive, eGyanKosh, the Indian Parliament, AIR News, "
+            "government magazines, school textbooks) and transcribed from audio (YouTube, "
+            "OpenSubtitles, NPTEL, Mann Ki Baat). None of that is a general web crawl, so risk "
+            "R01's Common Crawl discount does not apply to it. The unverified portion is a "
+            "different matter and is excluded from the figure used here: the paper builds it by "
+            "perplexity-filtering CulturaX and MADLAD-400, both catalogued separately and both "
+            "Common Crawl. IndicCorp is named as an input to neither portion."
+        ),
+        "source": (
+            "IndicLLMSuite, arXiv:2403.06350 - verified data from 'high-quality, manually "
+            "verified Indic language websites' plus PDFs and video; unverified data from 'all "
+            "the high-quality tagged documents from CulturaX and MADLAD-400'"
+        ),
+    },
+    "IND-02": {
+        "kind": "independent",
+        "parents": [],
+        "note": (
+            "AI4Bharat's own crawl, released December 2022 and predating Sangraha by more than a "
+            "year. The IndicLLMSuite paper compares the two and names IndicCorp nowhere as an "
+            "input to Sangraha, so they are counted separately. What nobody publishes is a "
+            "cross-deduplication between them, and both crawl Indian websites, so some overlap "
+            "is plausible and unquantified - but neither contains the other."
+        ),
+        "source": "ai4bharat/IndicCorpV2; IndicLLMSuite, arXiv:2403.06350",
+    },
+}
+
+
+# Figures the seed row gets wrong, corrected against the dataset's own card.
+#
+# The seed CSV is the machine-readable extract of the research and is never hand-edited, so a
+# correction to one of its numbers lives here instead: keyed by id, carrying the replacement and the
+# source that establishes it, and applied on ingest so the whole pipeline sees one value. An entry
+# in this table is a claim about the outside world and is held to the same standard as any other —
+# it names where the figure comes from.
+# How each dataset is actually distributed, read from the publisher's own distribution point rather
+# than from the seed row's prose. Checked 2026-08-06 against the HuggingFace dataset API.
+#
+# This exists because "open" in a seed cell turned out to describe three different things. A corpus
+# you can wget is not the same as one that asks you to click through terms, and neither is the same
+# as one where a human at the publisher decides whether you get it. The catalogue called all three
+# open, and the page's whole dividing line is whether anybody's permission is needed.
+#
+# `gated` takes HuggingFace's own three values:
+#   False    — fetch it, no account, no terms
+#   "auto"   — accept terms and you have it, instantly and unilaterally
+#   "manual" — request access and wait for a person to approve or refuse
+#
+# Only `manual` is treated as a blocker downstream. Clicking through terms is a licence act you
+# perform yourself; waiting on someone's decision is permission, which is the thing the page's two
+# bands are actually sorting by.
+DISTRIBUTION: dict[str, dict[str, Any]] = {
+    "IND-01": {"gated": False, "licence_id": "cc-by-4.0", "host": "hf:ai4bharat/sangraha"},
+    "IND-02": {"gated": False, "licence_id": None, "host": "hf:ai4bharat/IndicCorpV2"},
+    "ENG-01": {"gated": False, "licence_id": "odc-by", "host": "hf:HuggingFaceFW/fineweb"},
+    "ENG-02": {"gated": False, "licence_id": "odc-by", "host": "hf:HuggingFaceFW/fineweb-edu"},
+    "ENG-03": {"gated": False, "licence_id": "odc-by", "host": "hf:HuggingFaceFW/finepdfs"},
+    "ENG-04": {"gated": False, "licence_id": "odc-by", "host": "hf:HuggingFaceFW/finepdfs-edu"},
+    "ENG-07": {
+        "gated": False,
+        "licence_id": None,
+        "host": "data.commoncrawl.org/contrib/Nemotron/Nemotron-CC",
+        "note": (
+            "Not on HuggingFace at all — both nvidia/Nemotron-CC and nvidia/Nemotron-CC-v1 return "
+            "401. NVIDIA's own page gives Common Crawl's CDN as the distribution point, which is "
+            "why this is the one Nemotron corpus needing nobody's approval."
+        ),
+        "source": "research.nvidia.com/labs/adlr/Nemotron-CC/: 'Hosted at commoncrawl.org'",
+    },
+    "ENG-08": {
+        "gated": "manual",
+        "licence_id": "other",
+        "host": "hf:nvidia/Nemotron-CC-v2",
+        "note": (
+            "Request access and wait for a person. The licence is NVIDIA's own Data Agreement for "
+            "Model Training, not a standard open licence, so the catalogue's 'Open' understated "
+            "both halves of what stands between this corpus and a training run."
+        ),
+        "source": "huggingface.co/api/datasets/nvidia/Nemotron-CC-v2: gated=manual, license=other",
+    },
+    "ENG-09": {
+        "gated": "manual",
+        "licence_id": "other",
+        "host": "hf:nvidia/Nemotron-CC-v2.1",
+        "source": (
+            "huggingface.co/api/datasets/nvidia/Nemotron-CC-v2.1: gated=manual, license=other"
+        ),
+    },
+    "ENG-10": {"gated": False, "licence_id": None, "host": "hf:mlfoundations/dclm-baseline-1.0"},
+    "ENG-11": {
+        "gated": False,
+        "licence_id": "odc-by",
+        "host": "hf:allenai/dolma3_mix-6T",
+        "note": (
+            "The catalogue named 'Dolma' with no version while AI2 had moved to Dolma 3 — the "
+            "6T mix behind Olmo 3 — and then to a 3.5 pool. Ungated and ODC-By, but the card "
+            "frames it for 'research and educational use' alongside Responsible Use Guidelines, "
+            "so commercial permission is unresolved rather than granted."
+        ),
+        "source": "hf:allenai/dolma3_mix-6T card and API: gated=false, license=odc-by",
+    },
+    "MUL-03": {"gated": False, "licence_id": None, "host": "hf:HPLT/HPLT3.0"},
+    "MUL-05": {
+        "gated": "auto",
+        "licence_id": None,
+        "host": "hf:uonlp/CulturaX",
+        "source": "huggingface.co/api/datasets/uonlp/CulturaX: gated=auto",
+    },
+    "MTH-01": {
+        "gated": "auto",
+        "licence_id": None,
+        "host": "hf:nvidia/Nemotron-CC-Math-v1",
+        "source": "huggingface.co/api/datasets/nvidia/Nemotron-CC-Math-v1: gated=auto",
+    },
+    "COD-02": {
+        "gated": False,
+        "licence_id": "cc-by-4.0",
+        "host": "hf:nvidia/Nemotron-Pretraining-Code-v3",
+        # The row is named for the version it counts. It read "v1/v2/v3" while carrying v3's
+        # figure alone, which is a label promising two corpora the number does not include.
+        "name": "Nemotron-Pretraining-Code v3",
+        "note": (
+            "Three versions were catalogued as one row and only v3 is reachable without asking: "
+            "v1 and v2 are gated=manual under NVIDIA's own agreement, v3 is ungated under "
+            "CC-BY-4.0. Since v3 is explicitly incremental — 'only incrementally new files, meant "
+            "to be used jointly with the v2 and v1 corpora' — the reachable figure is v3's 173B, "
+            "not the 747.4B of the v1 corpus it extends."
+        ),
+        "source": (
+            "huggingface.co/api/datasets/nvidia/Nemotron-Pretraining-Code-{v1,v2,v3}: "
+            "v1 and v2 gated=manual license=other, v3 gated=false license=cc-by-4.0"
+        ),
+    },
+}
+
+
+SIZE_CORRECTIONS: dict[str, dict[str, Any]] = {
+    "COD-02": {
+        "tokens": 173_000_000_000,
+        "source": (
+            "nvidia/Nemotron-Pretraining-Code-v3 dataset card: '146 M new files (173 B tokens)'. "
+            "The seed row recorded 377M, which is NVIDIA's count of filtered GitHub *files*, not "
+            "tokens — a units error of roughly 900x. It was first corrected to v1's 747.4B, which "
+            "was wrong in the other direction: v1 and v2 are gated=manual, so the only component "
+            "reachable without NVIDIA's approval is v3, and v3's card says it holds 'only "
+            "incrementally new files ... meant to be used jointly with the v2 and v1 corpora'. "
+            "173B is what this row can actually commit. One caveat survives both corrections and "
+            "is not resolvable from published material: every version is metadata for re-fetching "
+            "code from GitHub, not a corpus distributed directly."
+        ),
+    },
+    "ENG-11": {
+        "tokens": 6_000_000_000_000,
+        "source": (
+            "hf:allenai/dolma3_mix-6T — the ~6T mix behind Olmo 3. The seed row named 'Dolma' "
+            "with no version and stated no size, so a 6T open corpus counted as nothing. Its "
+            "licence is unresolved rather than clear, so this adds reachable supply to the "
+            "one-decision band, not to what can be committed today."
+        ),
+    },
+}
+
+
+def _corrected_tokens(row: dict[str, str], size_raw: str) -> dict[str, Any]:
+    """The row's token count, with a cited correction applied where one exists.
+
+    Args:
+        row: The seed CSV row.
+        size_raw: Its raw size string.
+
+    Returns:
+        A serialised `Value`.
+    """
+    fix = SIZE_CORRECTIONS.get((row.get("ID") or "").strip())
+    if fix is None:
+        return dataclasses.asdict(parse_tokens(size_raw))
+    return dataclasses.asdict(
+        Value(value=fix["tokens"], unit="tokens", provenance="estimated", source=fix["source"])
+    )
+
+
 def build_dataset_record(row: dict[str, str]) -> dict[str, Any]:
     """Expand one catalogue row into a Dataset Card record.
 
@@ -243,7 +593,8 @@ def build_dataset_record(row: dict[str, str]) -> dict[str, Any]:
     return {
         "id": row["ID"].strip(),
         "slug": slugify(row["Dataset"]),
-        "name": row["Dataset"].strip(),
+        # Named for what the row actually counts, where the two came apart.
+        "name": (DISTRIBUTION.get(row["ID"].strip(), {}).get("name") or row["Dataset"]).strip(),
         "category": (row.get("Category") or "").strip(),
         "tier": tier,
         "is_gap": tier is None,
@@ -251,9 +602,11 @@ def build_dataset_record(row: dict[str, str]) -> dict[str, Any]:
         "licence": parse_licence(row.get("License", "")),
         "size": {
             "raw": size_raw or None,
-            "tokens": dataclasses.asdict(parse_tokens(size_raw)),
+            "tokens": _corrected_tokens(row, size_raw),
             "naturalness": parse_naturalness(size_raw),
         },
+        # How this dataset relates to others in the catalogue, where anybody has published it.
+        "derivation": RELATIONSHIPS.get((row.get("ID") or "").strip()),
         "stage": [s.strip() for s in re.split(r"[/,]", row.get("Stage") or "") if s.strip()],
         "languages": (row.get("Languages") or "").strip() or None,
         "gotchas": [dataclasses.asdict(g) for g in parsed.gotchas],
@@ -264,6 +617,12 @@ def build_dataset_record(row: dict[str, str]) -> dict[str, Any]:
         "access": {
             "raw": (row.get("Access") or "").strip() or None,
             "links": _URL.findall(row.get("Access") or ""),
+            # What the publisher's distribution point actually requires, where anybody checked.
+            **(
+                {"distribution": DISTRIBUTION[row["ID"].strip()] | {"checked": "2026-08-06"}}
+                if row["ID"].strip() in DISTRIBUTION
+                else {}
+            ),
         },
         "confidence": "high" if (row.get("Access") or "").strip() else "low",
     }

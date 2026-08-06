@@ -243,7 +243,7 @@ def test_no_schedule_beats_the_ceiling():
 
 def test_a_schedule_above_the_ceiling_is_an_error():
     # 20 passes over a pool asks for 20x it, and repetition can never be worth more than 16.4x.
-    mix = compose([{"name": "indic", "unique_tokens": 336e9, "epochs": 20}])
+    mix = compose([{"name": "indic", "unique_tokens_required": 336e9, "epochs": 20}])
     findings = check(mix)
     assert any("no number of passes reaches this" in f["message"] for f in findings)
     assert not is_buildable(findings)
@@ -252,21 +252,21 @@ def test_a_schedule_above_the_ceiling_is_an_error():
 def test_repetition_lifts_a_thin_pool_without_new_data():
     once = compose(
         [
-            {"name": "en", "unique_tokens": 3e12, "epochs": 1},
-            {"name": "in", "unique_tokens": 300e9, "epochs": 1, "is_indic": True},
+            {"name": "en", "unique_tokens_required": 3e12, "epochs": 1},
+            {"name": "in", "unique_tokens_required": 300e9, "epochs": 1, "is_indic": True},
         ]
     )
     repeated = compose(
         [
-            {"name": "en", "unique_tokens": 3e12, "epochs": 1},
-            {"name": "in", "unique_tokens": 300e9, "epochs": 4, "is_indic": True},
+            {"name": "en", "unique_tokens_required": 3e12, "epochs": 1},
+            {"name": "in", "unique_tokens_required": 300e9, "epochs": 4, "is_indic": True},
         ]
     )
     assert repeated["indic_share"] > once["indic_share"]
 
 
 def test_epochs_past_worthless_is_an_error():
-    mix = compose([{"name": "tiny", "unique_tokens": 1e9, "epochs": EPOCHS_WORTHLESS + 1}])
+    mix = compose([{"name": "tiny", "unique_tokens_required": 1e9, "epochs": EPOCHS_WORTHLESS + 1}])
     findings = check(mix)
     assert any(f["level"] == "error" for f in findings)
     assert not is_buildable(findings)
@@ -275,10 +275,10 @@ def test_epochs_past_worthless_is_an_error():
 def test_mostly_synthetic_indic_warns():
     mix = compose(
         [
-            {"name": "nat", "unique_tokens": 100e9, "epochs": 1, "is_indic": True},
+            {"name": "nat", "unique_tokens_required": 100e9, "epochs": 1, "is_indic": True},
             {
                 "name": "syn",
-                "unique_tokens": 900e9,
+                "unique_tokens_required": 900e9,
                 "epochs": 1,
                 "is_indic": True,
                 "is_synthetic": True,
@@ -289,7 +289,7 @@ def test_mostly_synthetic_indic_warns():
 
 
 def test_missing_always_on_lane_warns():
-    mix = compose([{"name": "en", "unique_tokens": 1e12, "epochs": 1}])
+    mix = compose([{"name": "en", "unique_tokens_required": 1e12, "epochs": 1}])
     assert any("Always-ON" in f["message"] for f in check(mix))
 
 
@@ -323,7 +323,7 @@ def test_a_tier_no_benchmark_can_see_is_reported_and_priced():
         [
             {
                 "name": "india-context",
-                "unique_tokens": 500e9,
+                "unique_tokens_required": 500e9,
                 "epochs": 1,
                 "capabilities": ["india-context"],
             }
@@ -335,7 +335,9 @@ def test_a_tier_no_benchmark_can_see_is_reported_and_priced():
 
 
 def test_a_covered_tier_is_not_an_orphan():
-    mix = compose([{"name": "code", "unique_tokens": 1e11, "epochs": 1, "capabilities": ["code"]}])
+    mix = compose(
+        [{"name": "code", "unique_tokens_required": 1e11, "epochs": 1, "capabilities": ["code"]}]
+    )
     assert find_orphans(mix, [{"name": "HumanEval", "type": "code generation"}]) == []
 
 
@@ -473,7 +475,7 @@ def test_unscored_and_failed_are_different_blockers():
 
 def test_an_unscored_licence_clean_dataset_is_counted_as_ours_to_fix():
     """Nobody's permission is needed for these, so the plan has to be able to see them."""
-    mix = {"tiers": [{"name": "english-web-hq", "unique_tokens": 1e12}]}
+    mix = {"tiers": [{"name": "english-web-hq", "unique_tokens_required": 1e12}]}
     plan = build_plan(
         [
             _ds(id="ours", grade="C", licence_commercial=True, size_tokens={}),
@@ -492,7 +494,7 @@ def test_a_gap_is_not_a_candidate():
 
 
 def test_the_plan_counts_only_what_it_may_count():
-    mix = {"tiers": [{"name": "english-web-hq", "unique_tokens": 4e9}]}
+    mix = {"tiers": [{"name": "english-web-hq", "unique_tokens_required": 4e9}]}
     plan = build_plan(
         [_ds(id="ok"), _ds(id="nolic", licence_commercial=None), _ds(id="nosize", size_tokens={})],
         mix,
@@ -506,7 +508,7 @@ def test_the_plan_counts_only_what_it_may_count():
 
 def test_the_work_queue_ranks_paperwork_above_the_unmeasured():
     """A dataset blocked only on a licence counts the moment it clears; an unsized one does not."""
-    mix = {"tiers": [{"name": "english-web-hq", "unique_tokens": 1e12}]}
+    mix = {"tiers": [{"name": "english-web-hq", "unique_tokens_required": 1e12}]}
     plan = build_plan(
         [
             _ds(id="small", licence_commercial=None, size_tokens={"value": 1e9}),
@@ -522,7 +524,7 @@ def test_the_work_queue_ranks_paperwork_above_the_unmeasured():
 
 
 def test_over_supply_is_not_a_surplus_to_spend_elsewhere():
-    mix = {"tiers": [{"name": "english-web-hq", "unique_tokens": 1e9}]}
+    mix = {"tiers": [{"name": "english-web-hq", "unique_tokens_required": 1e9}]}
     tier = build_plan([_ds(size_tokens={"value": 9e9})], mix)["tiers"][0]
     assert tier["shortfall_tokens"] == 0
     assert tier["covered_share"] == 1.0

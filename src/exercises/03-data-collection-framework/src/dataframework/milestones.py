@@ -175,7 +175,12 @@ def build_preset(target_seen_tokens: float) -> dict[str, Any]:
         seen = target_seen_tokens * tier["share"]
         tiers.append(
             {key: value for key, value in tier.items() if key != "share"}
-            | {"unique_tokens": seen / tier["epochs"]}
+            # Demand, not supply, and the name now says so. This field used to be `unique_tokens`,
+            # which reads as an inventory and is computed from a share we chose: at 16.8T the
+            # indic-natural tier came out at 336B, and chapter 2 printed that as "every verified
+            # corpus anyone has assembled, added together". The catalogue can commit 84.9B. The
+            # number a tier holds is in `sourcing`, never here. Correction X22.
+            | {"unique_tokens_required": seen / tier["epochs"]}
         )
 
     mix = compose(tiers)

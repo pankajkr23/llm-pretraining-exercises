@@ -89,11 +89,39 @@ def lifecycle_of(record: dict[str, Any]) -> list[str]:
     return [name for name, members in LIFECYCLE.items() if tags & set(members)]
 
 
-def build_lifecycle(datasets: list[dict[str, Any]]) -> dict[str, Any]:
+# A size cell that says nothing. "-" and "0" are the catalogue's ways of writing "not stated", and
+# reading them as a quantity would turn silence into a measurement.
+_NO_SIZE: frozenset[str] = frozenset({"", "-", "0", "n/a", "na", "unknown", "tbd", "?"})
+
+
+def states_a_size(record: dict[str, Any]) -> bool:
+    """Whether a record states a size in any unit at all, tokens or not.
+
+    Post-training corpora are counted in tasks, trajectories, instances and audio hours, because
+    that is what they are. Asking only "how many tokens" of them reports 0 of 55 and reads as
+    "we have nothing", when the truth is that 40 of them state a size and none of those sizes is
+    in the unit a pre-training budget is written in.
+
+    Args:
+        record: A catalogue record or index entry.
+
+    Returns:
+        True when the size cell carries something usable.
+    """
+    raw = ((record.get("size") or {}).get("raw") or record.get("size_raw") or "").strip()
+    return bool(raw) and raw.lower() not in _NO_SIZE
+
+
+def build_lifecycle(
+    datasets: list[dict[str, Any]],
+    states_size: set[str] | frozenset[str] | None = None,
+) -> dict[str, Any]:
     """Group the whole catalogue by training stage, dropping nothing silently.
 
     Args:
         datasets: Catalogue index entries.
+        states_size: Ids of records stating a size in any unit, read from the full records so the
+            index pays nothing to carry it. None counts every member, for callers without it.
 
     Returns:
         Per-stage counts and committable sets, plus every record that matched no stage — reported
@@ -105,6 +133,8 @@ def build_lifecycle(datasets: list[dict[str, Any]]) -> dict[str, Any]:
         members = [d for d in datasets if name in lifecycle_of(d)]
         committable = [d for d in members if not blockers(d)]
         sized = [d for d in members if _tokens(d) is not None]
+        # Sized in *any* unit, which for the post-training stages is the only honest question.
+        stated = [d for d in members if states_size is None or d["id"] in states_size]
         stages.append(
             {
                 "stage": name,
@@ -112,19 +142,29 @@ def build_lifecycle(datasets: list[dict[str, Any]]) -> dict[str, Any]:
                 "committable": len(committable),
                 "committable_ids": [d["id"] for d in committable],
                 "sized": len(sized),
-                "tokens_known": round(sum(_tokens(d) or 0 for d in sized)),
+                "states_a_size": len(stated),
+                # The one estimated figure in an otherwise exact row, so it carries its own mark
+                # rather than dragging the whole block down to `estimated`. It is a sum over
+                # `size_tokens`, and no record in the catalogue has a measured size.
+                "tokens_known": {
+                    "value": round(sum(_tokens(d) or 0 for d in sized)),
+                    "unit": "tokens",
+                    "provenance": "estimated",
+                    "source": "sum of the catalogue's size estimates for the sized members",
+                },
                 "blocked_on_licence_only": sum(1 for d in members if blockers(d) == ["licence"]),
             }
         )
 
     unclassified = [d for d in datasets if not lifecycle_of(d)]
     return {
-        # `tokens_known` sums catalogue sizes, so the block inherits their weakest provenance.
-        "provenance": "estimated",
-        "source": (
-            "grouped from the catalogue's own stage tags; membership counts are exact, "
-            "token totals are sums of catalogue size estimates"
-        ),
+        # Measured, because everything this block asserts at block level is a count of records we
+        # hold: membership, committable, sized, licence-blocked. A miscount would be a bug, not an
+        # estimate. The block used to declare `estimated` over all of it to cover the one sum that
+        # really is estimated — which put a hedge under "4 of 24 post-training datasets state a
+        # size", a figure that is simply counted. `tokens_known` now carries that mark itself.
+        "provenance": "measured",
+        "source": "grouped and counted from the catalogue's own stage tags",
         "stages": stages,
         "unclassified": [{"id": d["id"], "stage": d.get("stage") or []} for d in unclassified],
         "unclassified_count": len(unclassified),
@@ -207,11 +247,18 @@ def blockers(record: dict[str, Any]) -> list[str]:
         record: A catalogue index entry.
 
     Returns:
-        Zero or more of `evidence`, `excluded`, `licence`, `size`, `does not exist`. Empty means
-        committable. `evidence` and `excluded` are deliberately distinct: the first is work nobody
-        has done, the second is a check that came back FAIL.
+        Zero or more of `access`, `evidence`, `excluded`, `licence`, `size`, `does not exist`.
+        Empty means committable. `evidence` and `excluded` are deliberately distinct: the first is
+        work nobody has done, the second is a check that came back FAIL. `access` and `licence` are
+        distinct for the same reason: a licence is a document you read, and manual gating is a
+        person at the publisher deciding whether you may have the data at all.
     """
     reasons: list[str] = []
+    # Click-through gating ("auto") is not a blocker. Accepting terms is something you do
+    # unilaterally and instantly; waiting on a human's decision is asking permission, which is
+    # exactly what "committable today" is supposed to exclude.
+    if record.get("gated") == "manual":
+        reasons.append("access")
     if record.get("is_gap"):
         reasons.append("does not exist")
     # "Nobody scored it" and "a check failed" are not the same blocker, and treating them as one
@@ -229,23 +276,75 @@ def blockers(record: dict[str, Any]) -> list[str]:
     return reasons
 
 
+# One catalogued dataset containing another. Adding both counts the overlap twice.
+#
+# Nemotron-CC-v2 is, in NVIDIA's own words, "based on Nemotron-CC with eight additional Common Crawl
+# snapshots (2024-2025)". It is a superset. The catalogue holds both as separate rows, and the plan
+# was summing 6.30T and 6.60T into 12.9T of supply when the second figure already includes the
+# first. What v2 adds over v1 is the eight new snapshots, and nobody publishes that number.
+def contained_by(datasets: list[dict[str, Any]]) -> dict[str, list[str]]:
+    """Which catalogued datasets are subsets of which others.
+
+    Read from each record's own `derivation`, so this and the label a reader sees on the page are
+    one statement rather than two lists somebody has to keep in step. Three pairs are published
+    today: FineWeb-Edu is filtered from FineWeb, FinePDFs-Edu from FinePDFs, and Nemotron-CC-v2 is
+    Nemotron-CC plus eight further snapshots.
+
+    Args:
+        datasets: Catalogue index entries.
+
+    Returns:
+        Dataset id to the ids that contain it.
+    """
+    out: dict[str, list[str]] = {}
+    for record in datasets:
+        derivation = record.get("derivation") or {}
+        if derivation.get("kind") == "contained_by":
+            out[record["id"]] = list(derivation.get("parents") or [])
+    return out
+
+
+# What fraction of a raw sum survives global deduplication.
+#
+# Risk R01, severity high, already on this page: "60-80% cross-corpus duplication because Sangraha,
+# CulturaX, MADLAD-400, FineWeb-2 and HPLT all derive from Common Crawl", and "global dedup
+# collapses 23T -> 9T, not 15T". Every large corpus in this catalogue is a differently-filtered view
+# of the same crawls: FineWeb is 96 Common Crawl dumps, FinePDFs is 106 of them, Nemotron-CC is
+# Common Crawl, and HPLT v3.0 is 45% Common Crawl by volume. Summing them and reporting the total as
+# available supply is the error R01 exists to warn about, and the plan was making it.
+#
+# A range, not a point, because nobody has run the dedup. R01 calls it "the single most likely
+# schedule-breaker" and the correct response to that is to show both ends.
+DEDUP_SURVIVAL = (0.20, 0.40)
+
+
 def build_plan(datasets: list[dict[str, Any]], mix: dict[str, Any]) -> dict[str, Any]:
     """Match the graded catalogue against a proposed mixture.
 
     Args:
         datasets: Catalogue index entries.
-        mix: One milestone preset's `mix`, carrying per-tier `unique_tokens`.
+        mix: One milestone preset's `mix`, carrying per-tier `unique_tokens_required`.
 
     Returns:
         Per-tier commitments and shortfalls, plus the blocked datasets ranked by what resolving
         them would unlock.
     """
-    wanted = {t["name"]: t.get("unique_tokens") or 0 for t in mix.get("tiers", [])}
+    wanted = {t["name"]: t.get("unique_tokens_required") or 0 for t in mix.get("tiers", [])}
 
     tiers: list[dict[str, Any]] = []
     for tier, target in wanted.items():
         candidates = [d for d in datasets if tier_of(d) == tier]
         committed = [d for d in candidates if not blockers(d)]
+        # Drop anything whose superset is committed alongside it, so the overlap is not counted
+        # twice. The contained row stays in the catalogue and in `candidates`; it just stops
+        # contributing its tokens a second time.
+        present = {d["id"] for d in committed}
+        contains = contained_by(datasets)
+        committed = [
+            d
+            for d in committed
+            if not any(parent in present for parent in contains.get(d["id"], []))
+        ]
         have = round(sum(_tokens_for(d, tier) or 0 for d in committed))
         headline = round(sum(_tokens(d) or 0 for d in committed))
         unchecked = [
@@ -323,7 +422,24 @@ def build_plan(datasets: list[dict[str, Any]], mix: dict[str, Any]) -> dict[str,
         # inspectable in the bundle rather than only in this file.
         "tier_categories": {k: list(v) for k, v in TIER_CATEGORIES.items()},
         "tiers": tiers,
+        # Shipped so the page can apply the same rule when it adds "clear today" to "one letter
+        # away": v1 is committable and v2 is licence-blocked, so the double-count appears only when
+        # the two lists are summed, which happens in the browser.
+        "contained_by": contained_by(datasets),
+        "dedup_survival_range": list(DEDUP_SURVIVAL),
         "committed_tokens": committed_total,
+        # The same total after global deduplication, as a range. Raw sums of corpora drawn from the
+        # same crawls are not supply; this is what R01 says survives.
+        "committed_tokens_deduplicated": {
+            "low": round(committed_total * DEDUP_SURVIVAL[0]),
+            "high": round(committed_total * DEDUP_SURVIVAL[1]),
+            "survival_range": list(DEDUP_SURVIVAL),
+            "basis": (
+                "risk R01: 60-80% cross-corpus duplication, because every large corpus here is a "
+                "differently-filtered view of the same Common Crawl snapshots. Nobody has run the "
+                "deduplication, so this is a range rather than a figure."
+            ),
+        },
         "target_tokens": target_total,
         "covered_share": round(committed_total / target_total, 4) if target_total else None,
         "blocked": blocked,

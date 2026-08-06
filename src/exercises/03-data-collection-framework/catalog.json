@@ -42,6 +42,12 @@
         }
       }
     },
+    "derivation": {
+      "kind": "independent",
+      "parents": [],
+      "note": "The verified portion counted here is crawled from manually checked Indic websites, OCR'd from PDFs (Internet Archive, eGyanKosh, the Indian Parliament, AIR News, government magazines, school textbooks) and transcribed from audio (YouTube, OpenSubtitles, NPTEL, Mann Ki Baat). None of that is a general web crawl, so risk R01's Common Crawl discount does not apply to it. The unverified portion is a different matter and is excluded from the figure used here: the paper builds it by perplexity-filtering CulturaX and MADLAD-400, both catalogued separately and both Common Crawl. IndicCorp is named as an input to neither portion.",
+      "source": "IndicLLMSuite, arXiv:2403.06350 - verified data from 'high-quality, manually verified Indic language websites' plus PDFs and video; unverified data from 'all the high-quality tagged documents from CulturaX and MADLAD-400'"
+    },
     "stage": [
       "PT"
     ],
@@ -109,7 +115,13 @@
         "https://huggingface.co/datasets/ai4bharat/sangraha",
         "https://github.com/AI4Bharat/IndicLLMSuite",
         "arXiv:2403.06350"
-      ]
+      ],
+      "distribution": {
+        "gated": false,
+        "licence_id": "cc-by-4.0",
+        "host": "hf:ai4bharat/sangraha",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -136,6 +148,12 @@
         "source": "seed:Size_Scale"
       },
       "naturalness": {}
+    },
+    "derivation": {
+      "kind": "independent",
+      "parents": [],
+      "note": "AI4Bharat's own crawl, released December 2022 and predating Sangraha by more than a year. The IndicLLMSuite paper compares the two and names IndicCorp nowhere as an input to Sangraha, so they are counted separately. What nobody publishes is a cross-deduplication between them, and both crawl Indian websites, so some overlap is plausible and unquantified - but neither contains the other.",
+      "source": "ai4bharat/IndicCorpV2; IndicLLMSuite, arXiv:2403.06350"
     },
     "stage": [
       "PT"
@@ -197,7 +215,13 @@
       "raw": "https://huggingface.co/datasets/ai4bharat/IndicCorpV2",
       "links": [
         "https://huggingface.co/datasets/ai4bharat/IndicCorpV2"
-      ]
+      ],
+      "distribution": {
+        "gated": false,
+        "licence_id": null,
+        "host": "hf:ai4bharat/IndicCorpV2",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -221,10 +245,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 2.7B words"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -318,6 +343,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "MT"
@@ -409,10 +435,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 'Multi-billion-token', aggregated to Oct 2025. Stated long-t"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -497,10 +524,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 'Crossed 20 trillion tokens', ~3 petabytes [VENDOR CLAIM - U"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT (multimodal)"
     ],
@@ -585,10 +613,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 10,262+ datasets, 292 models, 20 sectors, 394 contributing o"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT",
@@ -676,10 +705,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Millions of parallel sentences; thousands of audio hours acr"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT",
@@ -771,6 +801,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -853,10 +884,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~3T words / 8TB compressed, 1000+ languages, 96 CC dumps (20"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -936,10 +968,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Top 10% of FineWeb-2 by XLM-R-based quality classifier, 20 l"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "MT"
@@ -1023,6 +1056,15 @@
       },
       "naturalness": {}
     },
+    "derivation": {
+      "kind": "shares_source",
+      "parents": [
+        "Common Crawl",
+        "Internet Archive"
+      ],
+      "note": "7.2 petabytes of raw crawl: 45% Common Crawl, 33% Internet Archive, 22% ArchiveBot, 2012-2024. Only the Common Crawl portion overlaps the English corpora here, and English is one of three languages it deduplicates per-crawl rather than globally.",
+      "source": "arXiv:2511.01066, HPLT 3.0"
+    },
     "stage": [
       "PT"
     ],
@@ -1085,7 +1127,13 @@
         "https://hplt-project.org/datasets",
         "arXiv:2503.10267",
         "arXiv:2511.01066"
-      ]
+      ],
+      "distribution": {
+        "gated": false,
+        "licence_id": null,
+        "host": "hf:HPLT/HPLT3.0",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -1112,6 +1160,14 @@
         "source": "seed:Size_Scale"
       },
       "naturalness": {}
+    },
+    "derivation": {
+      "kind": "shares_source",
+      "parents": [
+        "Common Crawl"
+      ],
+      "note": "Not built from the crawl directly but from two corpora that were: mC4 v3.1.0 and every OSCAR release to 23.01. Two parents, both downstream of the same crawl.",
+      "source": "uonlp/CulturaX"
     },
     "stage": [
       "PT"
@@ -1201,6 +1257,14 @@
       },
       "naturalness": {}
     },
+    "derivation": {
+      "kind": "shares_source",
+      "parents": [
+        "Common Crawl"
+      ],
+      "note": "Common Crawl, cleaned. Named in risk R01 as one of the corpora whose mutual overlap drives the 60-80% estimate.",
+      "source": "MADLAD-400, and risk R01"
+    },
     "stage": [
       "PT"
     ],
@@ -1255,7 +1319,14 @@
       "raw": "https://huggingface.co/datasets/allenai/MADLAD-400",
       "links": [
         "https://huggingface.co/datasets/allenai/MADLAD-400"
-      ]
+      ],
+      "distribution": {
+        "gated": "auto",
+        "licence_id": null,
+        "host": "hf:uonlp/CulturaX",
+        "source": "huggingface.co/api/datasets/uonlp/CulturaX: gated=auto",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -1279,10 +1350,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 939 languages (MaLA)"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -1359,10 +1431,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -1454,6 +1527,14 @@
       },
       "naturalness": {}
     },
+    "derivation": {
+      "kind": "shares_source",
+      "parents": [
+        "Common Crawl"
+      ],
+      "note": "96 Common Crawl dumps, summer 2013 to April 2024, HTML pages. Deduplicated per snapshot rather than globally, by the authors' own ablation, so it carries cross-snapshot duplicates of its own.",
+      "source": "HuggingFaceFW/fineweb and arXiv:2406.17557"
+    },
     "stage": [
       "PT"
     ],
@@ -1514,7 +1595,13 @@
       "raw": "https://huggingface.co/HuggingFaceFW",
       "links": [
         "https://huggingface.co/HuggingFaceFW"
-      ]
+      ],
+      "distribution": {
+        "gated": false,
+        "licence_id": "odc-by",
+        "host": "hf:HuggingFaceFW/fineweb",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -1541,6 +1628,14 @@
         "source": "seed:Size_Scale"
       },
       "naturalness": {}
+    },
+    "derivation": {
+      "kind": "contained_by",
+      "parents": [
+        "ENG-01"
+      ],
+      "note": "The educational slice of FineWeb, not an addition to it.",
+      "source": "HuggingFaceFW/fineweb-edu: '1.3T tokens of educational web pages filtered from the FineWeb dataset'"
     },
     "stage": [
       "PT",
@@ -1597,7 +1692,13 @@
       "raw": "https://huggingface.co/HuggingFaceFW",
       "links": [
         "https://huggingface.co/HuggingFaceFW"
-      ]
+      ],
+      "distribution": {
+        "gated": false,
+        "licence_id": "odc-by",
+        "host": "hf:HuggingFaceFW/fineweb-edu",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -1624,6 +1725,14 @@
         "source": "seed:Size_Scale"
       },
       "naturalness": {}
+    },
+    "derivation": {
+      "kind": "shares_source",
+      "parents": [
+        "Common Crawl"
+      ],
+      "note": "106 Common Crawl dumps, 2013 to February 2025 — the same crawls as FineWeb, but the PDFs in them rather than the HTML. A PDF and a web page are different documents, so the overlap with the HTML corpora is far smaller than the shared source suggests.",
+      "source": "HuggingFaceFW/finepdfs"
     },
     "stage": [
       "PT"
@@ -1685,7 +1794,13 @@
       "raw": "https://huggingface.co/HuggingFaceFW",
       "links": [
         "https://huggingface.co/HuggingFaceFW"
-      ]
+      ],
+      "distribution": {
+        "gated": false,
+        "licence_id": "odc-by",
+        "host": "hf:HuggingFaceFW/finepdfs",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -1712,6 +1827,14 @@
         "source": "seed:Size_Scale"
       },
       "naturalness": {}
+    },
+    "derivation": {
+      "kind": "contained_by",
+      "parents": [
+        "ENG-03"
+      ],
+      "note": "The educational slice of FinePDFs, not an addition to it.",
+      "source": "HuggingFaceFW/finepdfs-edu: '350B+ tokens of educational PDFs filtered from the FinePDFs dataset'"
     },
     "stage": [
       "MT"
@@ -1767,7 +1890,13 @@
       "raw": "https://huggingface.co/HuggingFaceFW",
       "links": [
         "https://huggingface.co/HuggingFaceFW"
-      ]
+      ],
+      "distribution": {
+        "gated": false,
+        "licence_id": "odc-by",
+        "host": "hf:HuggingFaceFW/finepdfs-edu",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -1791,10 +1920,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Wikipedia, 300+ languages, better extraction"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -1877,6 +2007,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "MT"
@@ -1966,6 +2097,14 @@
       },
       "naturalness": {}
     },
+    "derivation": {
+      "kind": "contained_by",
+      "parents": [
+        "ENG-08"
+      ],
+      "note": "v2 is this dataset plus eight further crawl snapshots, so holding v2 means holding this.",
+      "source": "nvidia/Nemotron-CC-v2: 'based on Nemotron-CC with eight additional Common Crawl snapshots (2024-2025)'"
+    },
     "stage": [
       "PT"
     ],
@@ -2027,7 +2166,15 @@
       "links": [
         "https://huggingface.co/nvidia",
         "arXiv:2412.02595"
-      ]
+      ],
+      "distribution": {
+        "gated": false,
+        "licence_id": null,
+        "host": "data.commoncrawl.org/contrib/Nemotron/Nemotron-CC",
+        "note": "Not on HuggingFace at all — both nvidia/Nemotron-CC and nvidia/Nemotron-CC-v1 return 401. NVIDIA's own page gives Common Crawl's CDN as the distribution point, which is why this is the one Nemotron corpus needing nobody's approval.",
+        "source": "research.nvidia.com/labs/adlr/Nemotron-CC/: 'Hosted at commoncrawl.org'",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -2054,6 +2201,14 @@
         "source": "seed:Size_Scale"
       },
       "naturalness": {}
+    },
+    "derivation": {
+      "kind": "shares_source",
+      "parents": [
+        "Common Crawl"
+      ],
+      "note": "Common Crawl, with synthetic rephrasing applied to part of it — so some of this is not collected text at all.",
+      "source": "nvidia/Nemotron-CC-v2: 'synthetic rephrasing using Qwen3-30B-A3B, filtered for English and globally deduplicated'"
     },
     "stage": [
       "PT"
@@ -2116,7 +2271,15 @@
       "links": [
         "https://huggingface.co/nvidia",
         "arXiv:2508.14444"
-      ]
+      ],
+      "distribution": {
+        "gated": "manual",
+        "licence_id": "other",
+        "host": "hf:nvidia/Nemotron-CC-v2",
+        "note": "Request access and wait for a person. The licence is NVIDIA's own Data Agreement for Model Training, not a standard open licence, so the catalogue's 'Open' understated both halves of what stands between this corpus and a training run.",
+        "source": "huggingface.co/api/datasets/nvidia/Nemotron-CC-v2: gated=manual, license=other",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -2143,6 +2306,14 @@
         "source": "seed:Size_Scale"
       },
       "naturalness": {}
+    },
+    "derivation": {
+      "kind": "additional_to",
+      "parents": [
+        "ENG-08"
+      ],
+      "note": "Genuinely additive, unlike the v1/v2 pair — its publisher says to use it alongside v2, not instead of it.",
+      "source": "nvidia/Nemotron-CC-v2.1: '2.5T new tokens ... to be used in conjunction with the previously released 6.6T tokens of Nemotron-CC-v2'"
     },
     "stage": [
       "PT"
@@ -2198,7 +2369,14 @@
       "raw": "https://huggingface.co/nvidia",
       "links": [
         "https://huggingface.co/nvidia"
-      ]
+      ],
+      "distribution": {
+        "gated": "manual",
+        "licence_id": "other",
+        "host": "hf:nvidia/Nemotron-CC-v2.1",
+        "source": "huggingface.co/api/datasets/nvidia/Nemotron-CC-v2.1: gated=manual, license=other",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -2222,10 +2400,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 3.8T (~1.0T unique)"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -2284,7 +2463,13 @@
     "used_by": "DataComp-LM",
     "access": {
       "raw": "Search HF 'DCLM'",
-      "links": []
+      "links": [],
+      "distribution": {
+        "gated": false,
+        "licence_id": null,
+        "host": "hf:mlfoundations/dclm-baseline-1.0",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -2305,13 +2490,14 @@
     "size": {
       "raw": "~3T",
       "tokens": {
-        "value": null,
+        "value": 6000000000000,
         "unit": "tokens",
-        "provenance": "unknown",
-        "source": "no token count stated: ~3T"
+        "provenance": "estimated",
+        "source": "hf:allenai/dolma3_mix-6T — the ~6T mix behind Olmo 3. The seed row named 'Dolma' with no version and stated no size, so a 6T open corpus counted as nothing. Its licence is unresolved rather than clear, so this adds reachable supply to the one-decision band, not to what can be committed today."
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -2364,7 +2550,15 @@
     "used_by": "OLMo",
     "access": {
       "raw": "Search HF 'allenai/dolma'",
-      "links": []
+      "links": [],
+      "distribution": {
+        "gated": false,
+        "licence_id": "odc-by",
+        "host": "hf:allenai/dolma3_mix-6T",
+        "note": "The catalogue named 'Dolma' with no version while AI2 had moved to Dolma 3 — the 6T mix behind Olmo 3 — and then to a 3.5 pool. Ungated and ODC-By, but the card frames it for 'research and educational use' alongside Responsible Use Guidelines, so commercial permission is unresolved rather than granted.",
+        "source": "hf:allenai/dolma3_mix-6T card and API: gated=false, license=odc-by",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -2388,10 +2582,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 30T raw with quality signals"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -2468,10 +2663,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~15T deduplicated"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -2554,10 +2750,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 5T"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -2640,10 +2837,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 825GB"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -2731,10 +2929,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 156B (en)"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -2817,10 +3016,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 8TB, 30 sources (>50% is Stack v2 code)"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -2900,10 +3100,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 2,003,039,184,047 tokens with full provenance metadata"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -2992,6 +3193,12 @@
       },
       "naturalness": {}
     },
+    "derivation": {
+      "kind": "independent",
+      "parents": [],
+      "note": "Source code from Software Heritage, not a web crawl. It does not overlap any of the web corpora here.",
+      "source": "BigCode, The Stack v2"
+    },
     "stage": [
       "PT"
     ],
@@ -3060,7 +3267,7 @@
   {
     "id": "COD-02",
     "slug": "nemotron-pretraining-code-v1-v2-v3",
-    "name": "Nemotron-Pretraining-Code-v1/v2/v3",
+    "name": "Nemotron-Pretraining-Code v3",
     "category": "Code",
     "tier": "GREEN",
     "is_gap": false,
@@ -3074,12 +3281,18 @@
     "size": {
       "raw": "+377M GitHub files in v2 alone; 427.9B-token Common-Crawl-code corpus in v2.1",
       "tokens": {
-        "value": 377000000.0,
+        "value": 173000000000,
         "unit": "tokens",
         "provenance": "estimated",
-        "source": "seed:Size_Scale"
+        "source": "nvidia/Nemotron-Pretraining-Code-v3 dataset card: '146 M new files (173 B tokens)'. The seed row recorded 377M, which is NVIDIA's count of filtered GitHub *files*, not tokens — a units error of roughly 900x. It was first corrected to v1's 747.4B, which was wrong in the other direction: v1 and v2 are gated=manual, so the only component reachable without NVIDIA's approval is v3, and v3's card says it holds 'only incrementally new files ... meant to be used jointly with the v2 and v1 corpora'. 173B is what this row can actually commit. One caveat survives both corrections and is not resolvable from published material: every version is metadata for re-fetching code from GitHub, not a corpus distributed directly."
       },
       "naturalness": {}
+    },
+    "derivation": {
+      "kind": "independent",
+      "parents": [],
+      "note": "Curated from GitHub, not a web crawl, so it does not overlap any of the web corpora here. What is distributed is metadata rather than code — commit ids, file paths and a detected language — so the tokens have to be re-fetched from GitHub to exist at all, which is a dependency none of the other committable rows carry.",
+      "source": "nvidia/Nemotron-Pretraining-Code-v3 card: '146 M new files (173 B tokens)', GitHub cutoff 30 September 2025, distributed as commit id, file path and detected language"
     },
     "stage": [
       "PT"
@@ -3141,7 +3354,16 @@
       "raw": "https://huggingface.co/nvidia",
       "links": [
         "https://huggingface.co/nvidia"
-      ]
+      ],
+      "distribution": {
+        "gated": false,
+        "licence_id": "cc-by-4.0",
+        "host": "hf:nvidia/Nemotron-Pretraining-Code-v3",
+        "name": "Nemotron-Pretraining-Code v3",
+        "note": "Three versions were catalogued as one row and only v3 is reachable without asking: v1 and v2 are gated=manual under NVIDIA's own agreement, v3 is ungated under CC-BY-4.0. Since v3 is explicitly incremental — 'only incrementally new files, meant to be used jointly with the v2 and v1 corpora' — the reachable figure is v3's 173B, not the 747.4B of the v1 corpus it extends.",
+        "source": "huggingface.co/api/datasets/nvidia/Nemotron-Pretraining-Code-{v1,v2,v3}: v1 and v2 gated=manual license=other, v3 gated=false license=cc-by-4.0",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -3165,10 +3387,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 0"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT",
@@ -3247,10 +3470,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 2,438 executable tasks"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL",
       "SFT"
@@ -3328,10 +3552,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~50,000 instances from 128 repos"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL",
       "SFT"
@@ -3409,10 +3634,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 8K+ tasks; published 4,578-env SWE-Bench-disjoint subset"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL",
       "SFT"
@@ -3498,10 +3724,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 273K seed tasks"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL"
     ],
@@ -3578,10 +3805,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 21 environments and 37 RL datasets (Nemotron 3 Super)"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL"
     ],
@@ -3661,10 +3889,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL"
     ],
@@ -3743,10 +3972,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 100+ dataset variants across 6 ablated pipeline stages"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT",
       "RL"
@@ -3824,10 +4054,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 200K tool-use trajectories, 1,346 tools, 120 task types"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT",
       "RL"
@@ -3907,10 +4138,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 32B model + published methodology"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "Reference"
     ],
@@ -3989,10 +4221,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -4069,10 +4302,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -4159,6 +4393,14 @@
       },
       "naturalness": {}
     },
+    "derivation": {
+      "kind": "shares_source",
+      "parents": [
+        "Common Crawl"
+      ],
+      "note": "The mathematics slice of the same Nemotron Common Crawl pipeline.",
+      "source": "nvidia/Nemotron-CC-Math-v1"
+    },
     "stage": [
       "PT"
     ],
@@ -4214,7 +4456,14 @@
       "links": [
         "arXiv:2508.15096",
         "https://huggingface.co/nvidia"
-      ]
+      ],
+      "distribution": {
+        "gated": "auto",
+        "licence_id": null,
+        "host": "hf:nvidia/Nemotron-CC-Math-v1",
+        "source": "huggingface.co/api/datasets/nvidia/Nemotron-CC-Math-v1: gated=auto",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -4242,6 +4491,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -4324,6 +4574,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -4400,10 +4651,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~55B"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -4484,6 +4736,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -4560,10 +4813,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 100B+"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -4640,10 +4894,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -4720,10 +4975,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -4800,10 +5056,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Millions of traces"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -4880,10 +5137,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Procedural - unlimited"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL"
     ],
@@ -4960,10 +5218,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 22,441 Bengali math word problems"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT",
       "EVAL"
@@ -5043,10 +5302,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~230 million bitext pairs; incl. ~2.2M human-created pairs f"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -5127,10 +5387,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 49.7M sentence pairs (37.4M newly mined)"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -5210,10 +5471,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: n-way parallel"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "EVAL"
     ],
@@ -5292,10 +5554,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 200 languages"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "EVAL"
     ],
@@ -5378,10 +5641,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 26M transliteration pairs"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -5461,10 +5725,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Very large"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -5543,10 +5808,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Trillion-token multi-parallel, 36 languages"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -5623,10 +5889,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 200+ languages"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -5703,10 +5970,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~44,400 HOURS + 17M aligned text segments"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -5787,10 +6055,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 23.7K hours total, 11.2K transcribed, 51K speakers, 400+ dis"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -5871,10 +6140,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 1,704 hours, 10,496 speakers"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "TTS",
       "SFT"
@@ -5954,10 +6224,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~31,270 h audio, 2,067 h transcribed, 289K IMAGES, 165 distr"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -6038,10 +6309,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~3,400 h labelled (Ph1 ~2000h + Ph2 ~1400h), 16 kHz"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -6122,10 +6394,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 900+ hours studio TTS"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "TTS"
     ],
@@ -6204,10 +6477,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~6,400 hours"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -6287,10 +6561,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~1,684 hours, 1,218 speakers, 203 districts"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "EVAL"
@@ -6370,10 +6645,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 500+ hours high-quality studio recordings, 20 speakers"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "TTS"
     ],
@@ -6452,10 +6728,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "TTS"
     ],
@@ -6532,10 +6809,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -6612,10 +6890,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~1,000 h Hindi"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -6692,10 +6971,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Growing Indic subsets"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -6775,10 +7055,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "EVAL"
     ],
@@ -6855,10 +7136,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 400K h unlabelled"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -6935,10 +7217,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 50K h"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -7015,10 +7298,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 30K h"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -7095,10 +7379,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 10K-100K+ h"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -7181,10 +7466,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 2M clips"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -7265,6 +7551,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -7347,6 +7634,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -7425,10 +7713,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 289K images from 165 districts"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -7507,10 +7796,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Document-level Indic VLM pre-training"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -7587,10 +7877,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "EVAL"
@@ -7668,10 +7959,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "EVAL"
@@ -7749,10 +8041,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "EVAL"
@@ -7830,10 +8123,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 52,000 documents, 2.4B+ (per BharatGen presentation)"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "EVAL"
@@ -7917,10 +8211,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "EVAL"
@@ -7998,10 +8293,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 5B pairs minus removed links"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -8084,10 +8380,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 5B pairs"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -8175,10 +8472,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 12.8B"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -8266,10 +8564,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 700M"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -8346,10 +8645,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 141M interleaved docs"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -8430,6 +8730,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -8506,10 +8807,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Human-annotated"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -8587,10 +8889,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 50 VQA datasets"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -8667,10 +8970,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT",
       "EVAL"
@@ -8748,10 +9052,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -8828,10 +9133,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -8914,10 +9220,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Complete K-12 curriculum, all subjects"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -8998,10 +9305,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Vast teacher/learner content"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -9081,10 +9389,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 2,500+ courses; 61M+ enrolments, 6.2M certificates"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -9171,10 +9480,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Open University course material"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -9253,10 +9563,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Millions of items"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -9335,10 +9646,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Indian PhD theses"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -9417,10 +9729,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 24,795 instruction-response pairs"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -9499,10 +9812,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: College textbooks"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -9581,10 +9895,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -9663,10 +9978,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -9745,10 +10061,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: All Indic editions"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -9833,10 +10150,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~500K+ scanned Indian books"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -9921,10 +10239,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -10004,10 +10323,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Decades of coverage"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -10086,10 +10406,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -10170,10 +10491,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 25 High Courts, 1950-2025, ~1TB, JSON+Parquet, quarterly upd"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -10252,10 +10574,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 81M case records"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -10332,10 +10655,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 2,282,137 case proceedings to April 2024"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -10413,10 +10737,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 35K Supreme Court cases"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "EVAL"
@@ -10500,10 +10825,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: QA pairs"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT",
       "EVAL"
@@ -10581,10 +10907,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Parallel legal corpus"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -10662,10 +10989,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Large"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -10755,10 +11083,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 74.7M prompt-response pairs"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -10838,10 +11167,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 123K pairs"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT",
       "Safety"
@@ -10927,10 +11257,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 9.5M data points"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -11009,10 +11340,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 1,328,604 event-grounded multi-turn conversations"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -11091,10 +11423,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -11173,10 +11506,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -11253,10 +11587,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 3.4M pairs"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -11339,10 +11674,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -11419,10 +11755,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~50 items in the collection"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT",
       "RL"
@@ -11502,10 +11839,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 11 items"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT",
       "RL"
@@ -11585,10 +11923,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 14 items"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT",
       "RL"
@@ -11668,10 +12007,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -11748,10 +12088,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -11828,10 +12169,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL"
     ],
@@ -11908,10 +12250,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL"
     ],
@@ -11988,10 +12331,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 37 datasets across 21 environments"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL"
     ],
@@ -12070,10 +12414,11 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL"
     ],

@@ -42,7 +42,7 @@ EPOCHS_NEAR_FREE = 4  # "up to 4 epochs of repeated data yields negligible chang
 EPOCHS_HALF_LIFE = 16  # R*_D ~= 15 repetitions: repeats have lost 1/e of their value
 EPOCHS_WORTHLESS = 40  # the paper's own Figure 1: "At 40 epochs, repeating is worthless"
 
-MIN_TIER_SHARE = 0.01  # a tier below 1% is noise, and repeating it is wasted compute
+MIN_TIER_SHARE = 0.01
 
 # Rule R2.
 ALWAYS_ON_SHARE = 0.08
@@ -55,6 +55,82 @@ ALWAYS_ON_CEILING = 0.20
 
 # Composition guardrail: past this, the "Indic" tier is mostly manufactured text.
 MAX_SYNTHETIC_SHARE_OF_INDIC = 0.50
+
+
+# Where each of these came from, and how much that is worth.
+#
+# The repetition constants above cite a fitted curve to three significant figures. The composition
+# ones cited nothing at all, and were written in the same voice — a comment reading "past this, the
+# tier is mostly manufactured text" restates what 0.50 *means* and says nothing about why fifty
+# rather than forty. Presented identically, a judgment somebody wrote down and a constant somebody
+# measured are indistinguishable to a reader, which is precisely the confusion the rest of this page
+# exists to prevent.
+#
+# So each guardrail states its basis and how strong that basis is:
+#
+#   fitted    a published curve fit; the number is the fit
+#   published a finding stated by the paper that measured it
+#   adopted   somebody else's operating choice, taken over here; not a measured optimum, and
+#             measured on a corpus that is not ours
+#   asserted  a judgment written down in this project or its research, with no measurement behind
+#             it. Not therefore wrong — but it cannot be cited against an objection, and a mixture
+#             that breaches one has broken a rule we chose rather than a limit somebody found.
+GUARDRAIL_BASIS: dict[str, dict[str, str]] = {
+    "REPETITION_DECAY": {
+        "strength": "fitted",
+        "source": "Muennighoff et al., JMLR v26 (2025), Eq. 18 — R*_D fitted at 15.4",
+    },
+    "WORTH_CEILING_MULTIPLE": {
+        "strength": "fitted",
+        "source": "1 + R*_D, from the same fit; the paper states repetition cannot beat it",
+    },
+    "EPOCHS_NEAR_FREE": {
+        "strength": "published",
+        "source": "Muennighoff et al. — 'up to 4 epochs yields negligible changes to loss'",
+    },
+    "EPOCHS_HALF_LIFE": {
+        "strength": "published",
+        "source": "Muennighoff et al. — R*_D ~= 15 repetitions, where repeats have lost 1/e",
+    },
+    "EPOCHS_WORTHLESS": {
+        "strength": "published",
+        "source": "Muennighoff et al., Figure 1 — 'At 40 epochs, repeating is worthless'",
+    },
+    "ALWAYS_ON_SHARE": {
+        "strength": "adopted",
+        "source": (
+            "arXiv:2606.07404 — LightningLM reserved an Always-ON tier of 78.1B tokens, 8% of "
+            "every batch. Their operating choice on their corpus, not a measured optimum, and "
+            "nobody has checked that 8% is the right reservation for this mixture."
+        ),
+    },
+    "ALWAYS_ON_CEILING": {
+        "strength": "asserted",
+        "source": (
+            "This project. No source in the research or the literature sets an upper bound on a "
+            "protected lane; 20% is a judgment that the part of a batch no general quality signal "
+            "reaches should stay a minority."
+        ),
+    },
+    "MIN_TIER_SHARE": {
+        "strength": "asserted",
+        "source": (
+            "This project, motivated by Hernandez et al. (cited in arXiv:2305.16264): up-sampling "
+            "0.1% of a corpus 100x significantly degrades performance. That finding is about "
+            "slivers hammered repeatedly; 1% is our own line, not theirs."
+        ),
+    },
+    "MAX_SYNTHETIC_SHARE_OF_INDIC": {
+        "strength": "asserted",
+        "source": (
+            "docs/ATLAS.md risk R02, mitigation column: 'Cap synthetic at ~50% of the Indic tier'. "
+            "A rule of thumb against synthetic data collapse, stated as approximate, with no "
+            "measurement behind it and no citation. R02 prescribes four mitigations and this is "
+            "the only one implemented — the KenLM-perplexity floor, the n-gram diversity floor and "
+            "the per-language entropy monitor are recorded as prose and checked by nothing."
+        ),
+    },
+}
 
 
 def seen_tokens(unique_tokens: float, epochs: float) -> float:
@@ -104,7 +180,7 @@ def compose(tiers: list[dict[str, Any]]) -> dict[str, Any]:
     """Compose tiers into a mix and compute its shares.
 
     Args:
-        tiers: Each with `name`, `unique_tokens`, `epochs`, and optionally `is_indic`,
+        tiers: Each with `name`, `unique_tokens_required`, `epochs`, and optionally `is_indic`,
             `is_synthetic` and `always_on`.
 
     Returns:
@@ -112,7 +188,7 @@ def compose(tiers: list[dict[str, Any]]) -> dict[str, Any]:
     """
     composed: list[dict[str, Any]] = []
     for tier in tiers:
-        unique = tier.get("unique_tokens") or 0
+        unique = tier.get("unique_tokens_required") or 0
         # `or 1` rather than a default, so an explicit None reads as "unstated" instead of raising
         # a TypeError three frames later in the arithmetic.
         epochs = tier.get("epochs")
@@ -126,7 +202,7 @@ def compose(tiers: list[dict[str, Any]]) -> dict[str, Any]:
         )
 
     total_seen = sum(row["seen_tokens"] for row in composed) or 1.0
-    total_unique = sum(row.get("unique_tokens", 0) for row in composed)
+    total_unique = sum(row.get("unique_tokens_required", 0) for row in composed)
     total_worth = sum(row["worth_tokens"] for row in composed)
 
     for row in composed:
@@ -177,7 +253,7 @@ def check(mix: dict[str, Any]) -> list[dict[str, str]]:
         # Priced both ways, so a schedule can be judged on what it buys rather than on how many
         # times it reads. A tier can sit under every epoch threshold and still be paying for passes
         # that return almost nothing.
-        unique = row.get("unique_tokens", 0)
+        unique = row.get("unique_tokens_required", 0)
         efficiency = (row["worth_tokens"] / row["seen_tokens"]) if row["seen_tokens"] else 1.0
 
         if epochs > EPOCHS_WORTHLESS:

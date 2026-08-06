@@ -12,6 +12,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **CI now renders the page, not just parses it.** Every check in the pipeline read the bundle or
+  the syntax; nothing loaded the site, and the two worst bugs this project shipped both lived in
+  exactly that gap — a containment subtraction that was correct in `data.json` and silently never
+  fired in the browser, and a headline reading "0 of 55" that was true of a question nobody meant
+  to ask. `node --check` caught neither, because both files parsed perfectly. A Playwright suite
+  (integration-marked, skipped when no browser is present) now loads the built site and asserts
+  what a reader would see: no JS error takes out the chapters, no headline figure reads as nothing,
+  the body never scrolls sideways at 1500/900/390px, and no chart label is silently cut off.
+
 - **Exercise 03 — data collection framework.** A graded catalogue of 145 datasets and 31 benchmarks
   behind one public page that works out what an India-first, 40-billion-parameter model would train
   on — how much text, what kind, which datasets, how to clean it, how to tokenise it, and how you
@@ -42,6 +51,108 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **Every dataset now says how it relates to the others.** FineWeb's 15T sat beside FineWeb-Edu's
+  1.3T with nothing to say the second is *inside* the first — likewise FinePDFs/FinePDFs-Edu and
+  Nemotron-CC/v2 — so a reader adding any of those pairs was double-counting and the page gave them
+  no way to know. Fifteen datasets now carry a published relationship as a badge beside their name,
+  in four kinds that are deliberately not interchangeable: **contained_by** (3 pairs, stated by
+  their publishers, subtracted from any sum holding the parent), **additional_to** (1 — recorded
+  because Nemotron-CC-v2.1 genuinely *is* additive and shouldn't be "fixed" into a containment),
+  **shares_source** (7, real overlap of unpublished size), and **independent** (2, because "these do
+  not overlap" is as much a finding as the reverse). Each carries the concrete thing that *is* known
+  — crawl counts, date ranges, modality — plus its citation, on hover. **No per-pair overlap
+  coefficient is invented**: nobody has measured one, and a made-up fraction wearing the authority
+  of a computation would be worse than the honest band. What the callouts say instead: FinePDFs
+  draws on the same crawls as FineWeb but takes the PDFs rather than the HTML, so its overlap is far
+  smaller than the shared source implies; CulturaX is built not from the crawl but from mC4 and
+  OSCAR, which both were. Correction X26.
+- **Supply is no longer a raw sum of overlapping corpora.** The page reported "61T reachable · 363%
+  of budget" by adding datasets that are differently-filtered views of the same crawls — FineWeb is
+  96 Common Crawl dumps, FinePDFs 106 of them, Nemotron-CC is Common Crawl, HPLT v3.0 is 45% Common
+  Crawl by volume. Risk **R01** has said so throughout, severity high, *"the single most likely
+  schedule-breaker"*: 60–80% cross-corpus duplication. Every sum over catalogue tokens now reports
+  the deduplicated range alongside the raw figure, through **one shared helper** — there were ten
+  sum sites, and fixing one is how this kind of error survives. Two mechanisms, deliberately not
+  interchangeable: **exact containment is subtracted** (NVIDIA states Nemotron-CC-v2 *is* v1 plus
+  eight snapshots, so counting both double-counted ~6.3T), while **unknown overlap gets a band** —
+  per-pair coefficients are not invented to make the arithmetic look more precise than the evidence.
+  Stage 3 now reads **55.4T raw · 11.1T–22.2T after dedup · 66–132% of budget**: a possible
+  shortfall where it read a comfortable surplus. The Indic pool gets its own treatment, since R01's
+  range is about Common Crawl and Sangraha's *verified* portion is scraped, OCR'd and transcribed
+  rather than crawled — what is unmeasured there is that it and IndicCorp v2 are both AI4Bharat
+  scrapes of Indian sites with no published cross-deduplication, so **84.9B is a ceiling, not a
+  count**. Also corrected: the code row recorded 377M tokens, which is NVIDIA's count of GitHub
+  *files*; its card states 747.4B. Corrections X24.
+- **Chart labels wrap instead of being cut off.** Fourteen were losing text, up to 82px of it —
+  "natural Indic we h…", and every tool name in the cleaning chapter, which appears nowhere else on
+  the page. An ellipsis is honest only when the full text is reachable another way: a catalogue row
+  is a button that opens the dataset's gates, so it keeps its ellipsis; a chart label has no such
+  escape. The deeper bug was grid sizing — a fixed or `auto` track beside a flexible one left the
+  flexible column absorbing the entire shortfall, down to **4px at 900px and 28px at 1180px**, which
+  stacks letters vertically and is worse than truncating. Rows now collapse on a **container query**
+  against their own column rather than the viewport, because the figure column is narrow in two
+  disjoint viewport bands and breakpoints fixed one while leaving the other. Verified clean from
+  390px to 1600px. Correction X25.
+- **Costs are shown as an order of magnitude, never as a figure.** Every price on this page sits on
+  arithmetic that is solid — 6ND, or a share of it — multiplied by two assumptions that are not: a
+  sustained throughput that moves ±30% between real runs, and a list rate the project's own cost
+  record calls *"negotiated well below it"* at reservation scale, and below that again on spot.
+  Those compound to a band several times wide, so `$5,600,000` claimed seven significant figures of
+  precision nobody has. One scale now runs through the whole page — `$` thousands, `$$` tens of
+  thousands, `$$$` hundreds of thousands, `$$$$` millions — and it makes the comparison the cost
+  chapter is actually about legible at a glance: the three forks read `$$$$`, `$$$`, `$$$$`. The
+  figures stay in the records, so the arithmetic remains checkable; it is the display that stops
+  overclaiming. No raw money figure renders anywhere on the page now.
+- **The rephrasing route is costed, and the answer is that it does not close the gap.** Correction
+  X15 established that repetition is the weakest answer to a scarce pool and that the frontier
+  rephrases instead — and the page then went on planning around passes, because nobody had priced
+  the alternative. Now it is priced. Restating the 84.9B committable Indic pool **twice** makes it
+  170B and lifts what the tier is worth by about **25% at identical seen tokens**, for a generation
+  cost that stays **under 1% of the run** however the throughput is estimated. Chapter 2 says so
+  where it used to end on how many times to read the pool; chapter 13 prices it beside the speech
+  route. The finding is that it is worth doing *and is not the answer*: at two variants — the only
+  depth Kimi K2 uses in production — the tier is still **13% unique text and 87% repetition**, and
+  filling it outright would take sixteen variants, past anything anybody has reported. Whether a
+  rephrasing counts as a distinct document for the repetition curve has never been measured; the
+  25% assumes it does. Cost is shown as a **band rather than a figure**, with the arithmetic stated,
+  because the throughput term spans an order of magnitude — decode is bound by weight reads rather
+  than FLOPs, so a point estimate would claim a precision this project does not have. That makes it
+  the strongest argument for funding collection: the one that survives having tried the alternative.
+  Recorded as correction X23.
+- **Chapter 2 was stating the mixture's requirement as if it were the corpus.** It took its pool
+  from a tier field called `unique_tokens` and said of it: *"Read once, this is the entire natural
+  Indian-language pool — every verified corpus anyone has assembled, added together."* That field is
+  not a measurement. `milestones.py` computes it as `share × budget / epochs`, so the 8% Indic tier
+  over 4 passes produced **336B — the pool the mixture would need for the share it wants**. What the
+  catalogue can actually commit is **84.9B**: Sangraha's verified portion plus IndicCorp v2. A demand
+  figure wearing the clothes of a supply figure, and the chapter's whole argument rested on it. The
+  field is renamed `unique_tokens_required` throughout, the pool is now summed from the same
+  catalogue the datasets chapter reads, and the corrected chapter is the stronger one: four passes
+  on the real pool are worth 316B — **24% of what the tier is allocated** — and filling that
+  allocation takes about **16 passes, the half-life the published fit names**, at which the tokens
+  are worth 66% of what they cost. "Nearly free" was true of a pool four times larger than the one
+  anybody holds. Two things had hidden it: the growth chapter had it right all along ("336B… asks
+  for, 4.0× SHORT"), so the page contradicted itself across two chapters with one number; and risk
+  R19 records a 250–500B estimate that 336B sits inside, making it look corroborated — while R19
+  itself calls that estimate *"the single most important unverified number in the entire document"*.
+  Recorded as correction X22.
+- **Each guardrail says where its number came from, and how strong that is.** `mix.py` held eight
+  of them in one voice: the repetition constants cited a fitted curve to three significant figures,
+  and the composition constants cited nothing. `MAX_SYNTHETIC_SHARE_OF_INDIC = 0.50` carried the
+  comment *"past this, the Indic tier is mostly manufactured text"* — which restates what 0.50 means
+  and says nothing about why fifty. Traced: it comes from one row of the risk register's mitigation
+  column, phrased as *"cap synthetic at ~50% of the Indic tier"*, with no citation and no
+  experiment. Now every guardrail is classified — **four published or fitted** from the repetition
+  literature, **one adopted** (the protected lane's 8% floor is what LightningLM reserved on its own
+  corpus, not a measured optimum for this one), and **three asserted** with no measurement behind
+  them at all. The strength maps onto provenance, so a measured guardrail wears the mark meaning
+  somebody ran it and an asserted one does not. This matters because **both lines the mixture
+  crosses are in the asserted group** — which does not excuse the breach, but changes it from
+  "we exceeded a measured limit" to "we exceeded a line we drew ourselves and have never tested".
+  One further gap surfaced while tracing it: the risk that 50% answers prescribes **four**
+  mitigations and only the cap was implemented — the KenLM-perplexity floor, the n-gram diversity
+  floor and the per-language entropy monitor are recorded as prose and checked by nothing. The page
+  says that too. Recorded as correction X21.
 - **A grade now says how much was asked, not only how it answered.** `UNKNOWN` and `FAIL` both
   score zero — deliberately, so ignorance costs what a poor result costs — but that made "scored 5
   with every gate measured" and "scored 5 with three gates never looked at" the same letter. Grade A
@@ -288,6 +399,99 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   and what to do first.
 
 ### Fixed
+
+- **One rule, one implementation — and a guard that runs both.** The containment bug (X28) happened
+  because the same rule lived in Python for the bundle and in JavaScript for the page, and only one
+  got fixed. Auditing for the same shape found `tierOf` written out **four times** in `chapters.js`
+  and the natural-Indic token rule twice; all are now single module-scope functions. The
+  cross-implementation guard was extended from blockers alone to also compare tier assignment and
+  countable tokens per dataset, by running the real browser code against the real bundle, plus a
+  check that the deduplication band's fallback literal still matches `DEDUP_SURVIVAL`.
+- **Index headroom, not just a pass mark.** 99.2KB against a 100KB budget left no room for a
+  sentence. Dropped the per-tier `worth_tokens` and its two totals, and `feasibility` — nothing on
+  the page reads any of them, and the worth-vs-seen distinction stays computable with its own test.
+  **96.4KB.**
+
+- **The index is under its 100KB budget again — 137.5KB to 99.1KB.** It had been over since before
+  this branch and the modality work made it worse, so: the per-dataset relationship notes, the 17
+  priors and the curriculum prose moved to `records.json` (both surfaces already load it, so this is
+  off the first-paint parse, not hidden); repeated source strings are stored once and referenced by
+  index, since 145 datasets carried the *same* sentence under `gates_scored.source` for 17KB — the
+  exact source still reaches the reader, resolved by the renderer instead of by duplication; and
+  fields nothing renders were dropped, `slug` having zero references on the page and a benchmark
+  shipping eleven fields for a table with five columns. No figure and no citation was shortened.
+- **"0 of 55 post-training datasets state a size" now reads "40 of 55", because it was measuring the
+  wrong thing.** The size parser only understands tokens, so every size these datasets *do* state
+  was discarded — SWE-Gym's "2,438 executable tasks", SWE-RL's "273K seed tasks", AutoTool's "200K
+  tool-use trajectories", Bhashini's "thousands of audio hours". A headline reading `0` says "we
+  have nothing" whatever its caption says, and that was false. The catalogue now records whether a
+  row states a size in *any* unit: 40 of the 55 post-training sets do, 15 state nothing at all, and
+  none states one in tokens — which is the real finding, since it means the post-training budget
+  cannot be checked against supply the way the pre-training one can. Counted from the full records
+  at build time, so the index carries no extra bytes for it.
+
+- **The mix now says what each token is *for*, and whether we can actually source it.** Tiers named
+  a provenance and `kind` split them into skills and knowledge, but nothing said what a token
+  *teaches* or what it is *about* — so the growth ladder described four stages without saying what
+  each one teaches, and "145 datasets" could not be asked whether it covers news, or literature, or
+  agriculture. Two lenses added over the same tokens, deliberately not merged with the tier: a
+  **modality** (what kind of thinking) and a **domain** (what it is about). The seven modalities and
+  the code language list are the specification's own, carried verbatim — including that
+  `agentic_traces` is owned by Team 17 with `format_pending`, because a modality nobody has agreed a
+  format for cannot be collected and the plan should say whose decision that is. Each stage of the
+  ladder shows the modality mix it is taught in, in the order a person is taught: language, then the
+  world, then symbols, then the things that need all three. **General text falls 62% → 29% across
+  the four stages while code rises 6% → 26%.**
+- **And the coverage register, which is the counted half.** Of 16 domains the curriculum names, 12
+  have a dataset that isolates them; **social and qa exist only as an unseparated slice of a web
+  crawl** — trainable, but impossible to weight, measure or hold out; and **agriculture and health
+  have nothing in the catalogue at all**, which for an India-first model makes agriculture the
+  uncomfortable one, being the sector most of the country works in. Counting only what could be
+  committed today, **2 of the 16 domains have even one dataset clear of every blocker** — the
+  curriculum is not short of candidates, it is short of permission. Every row ships the pattern it
+  was matched by, so the count is checkable rather than asserted; the tier weights and curriculum
+  emphases are typed `estimated` and named as a proposal, because nobody has classified a crawl by
+  modality and a plan dressed as a measurement is the exact failure this register exists to catch.
+  Correction X30.
+
+- **The Dataset Card shows its sources again.** The card kept the five gates through the one-page
+  rebuild and dropped the facts they were judging, so a reader could see a verdict and not reach the
+  evidence — the links were in the catalogue the whole time (79 of the 145 rows carry one) and had
+  nowhere to be shown. Restored as the things the table it opens from cannot say: the
+  verified/unverified/synthetic split behind a headline token count, languages, prior use, how the
+  data is actually distributed and when that was last checked, and every recorded source as a link,
+  with `arXiv:` identifiers resolved to URLs. Tokens, stage, kind and commercial use stay in the
+  table rather than being repeated on the card.
+- **The catalogue could not see the difference between "open" and "ask permission".** Availability
+  came from prose in a seed cell, so corpora gated behind NVIDIA's manual approval sat in the same
+  band as ones you can fetch anonymously — while the page's whole dividing line is whether anybody's
+  permission is needed. Each dataset's distribution point is now read from the publisher, carrying
+  HuggingFace's three-way gating value and the date it was checked. Manual gating is a blocker in its
+  own right; click-through gating is recorded but does not block, because accepting terms is
+  something you do unilaterally. Nemotron-CC-v2 moves from one letter away to two, which is the
+  honest answer to why the older v1 is the committable one. Two figures were wrong as a result and
+  are corrected: the Nemotron code row counted 747.4B for v1/v2/v3 when v1 and v2 need approval and
+  v3 — the only ungated one, and explicitly incremental to them — holds 173B; and "Dolma" was
+  catalogued with no version and no size while AI2 had shipped Dolma 3, a 6T ungated ODC-By mix, so
+  a corpus larger than the whole committable band counted as nothing. Correction X29.
+- **A web corpus's licence covers the curation, not the copyright of the text inside it.** The legal
+  chapter now says so: Common Crawl's terms license use of the service, require you to respect
+  third-party copyright in the crawled material, demand indemnity, and advise counsel before
+  commercial use. A permitted mark on FineWeb, Nemotron-CC or HPLT means its curator allows you to
+  redistribute their package — not that anyone may train on the text.
+- **A subset was being summed beside the set that contains it, on screen.** The stage registers
+  reported every stage's reachable supply as a plain sum: Nemotron-CC v1's 6.30T counted once alone
+  and again inside Nemotron-CC-v2's 6.60T. The containment map was correct in the bundle and the
+  browser ignored it — `contained_by` maps a child to a *list* of parents, and the filter tested
+  that list for membership in a set of ids, which is false for every list. The reachable total at
+  the recommended budget drops from 61.7T raw to 55.4T. Correction X28.
+- **Provenance is declared where the figure is made, not one block up.** The lifecycle block marked
+  all seven of its fields `estimated` to cover the one that is a sum over catalogue sizes, so
+  "4 of 24 post-training datasets state a size" — a count — rendered under the same hedge as a
+  projection. It now declares `measured` and the sum carries its own mark inline; the orphan-tier
+  block keeps `estimated` for its costs and states its match count as measured. Correction X27.
+- **Nine dataset-relationship notes had lost a space at a line seam**, rendering `notcollected`,
+  `Englishand` and `v2,not` in the hover callouts.
 
 - **Machine translation was being counted as natural Indian text.** Sangraha ships 251B tokens of
   which 64B are verified human-origin; the rest is roughly 90B machine-translated from Wikimedia and

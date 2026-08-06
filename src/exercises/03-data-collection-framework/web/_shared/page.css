@@ -122,6 +122,21 @@ h3.appendix-h { font-family: var(--display); font-size: 1.05rem; margin: 26px 0 
 .gatecard-owner { font-weight: 400; font-size: 11.5px; color: var(--faint); }
 .gatecard-gotcha { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
 .gatecard-none { font-size: 11.5px; color: var(--faint); margin: 8px 0 0; }
+.gatecard-note { font-size: 11.5px; color: var(--muted); margin: 6px 0 0; line-height: 1.5; }
+/* Two columns, the label narrow and fixed and the value taking what is left. `minmax(0, 1fr)` on
+   the value, because a bare `1fr` refuses to shrink below its content and a long dataset URL then
+   pushes the card into a horizontal scroll. */
+.gatecard-kv {
+  display: grid;
+  grid-template-columns: minmax(72px, auto) minmax(0, 1fr);
+  gap: 3px 14px;
+  margin: 10px 0 0;
+  font-size: 11.5px;
+}
+.gatecard-kv dt { color: var(--faint); font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; padding-top: 1px; }
+.gatecard-kv dd { color: var(--muted); margin: 0; }
+.gatecard-links { margin: 8px 0 0; font-size: 11px; font-family: var(--mono); line-height: 1.7; }
+.gatecard-links a { color: var(--accent); word-break: break-all; }
 .gateverdict { font-family: var(--mono); font-size: 10.5px; font-weight: 700; }
 .gateverdict[data-verdict='PASS'] { color: var(--grade-a); }
 .gateverdict[data-verdict='CONDITIONAL'] { color: var(--grade-b); }
@@ -361,6 +376,9 @@ h3.appendix-h4 {
 }
 .catrow:hover { background: var(--panel); }
 .catrow:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* This one keeps its ellipsis, and the distinction is the point: a catalogue row is a control —
+ * clicking it opens the dataset's five gates with the full name at the top — so the text is one
+ * click away rather than gone. A chart label has no such escape, which is why `.tiername` wraps. */
 .catrow-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .catrow-why { font-family: var(--mono); font-size: 10.5px; color: var(--faint); text-align: right; }
 @media (max-width: 620px) {
