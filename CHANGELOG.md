@@ -42,6 +42,11 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **The tier shares in chapter 11 no longer overrun the tier names.** The register's first column
+  was 18px, sized for the single-digit job numbers it was originally built for, and the evaluation
+  chapter reused the same row for percentages — so `15.0%` printed straight over `english-web-hq`.
+  Nine of the ten rows were affected. The share variant now gets its own column width rather than
+  padding the numbered list to fit a string it never contains.
 - **Each growth stage now answers "why this number" twice — from supply, then from analogy.** The
   supply half is measured on this page and had never been placed next to a budget: for every stage,
   what clears every bar today and what is blocked on nothing but an unanswered licence, each as a

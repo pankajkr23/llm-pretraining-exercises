@@ -1917,7 +1917,7 @@ function chapterEvaluation(ctx) {
         const at_risk = thinTiers(bd.keep);
         const blind = tiersWithoutInstrument(bd.keep);
         const shareOf = (names) => recommended.mix.tiers.filter((t) => names.includes(t.name)).reduce((a, t) => a + t.share, 0);
-        const list = $('div', 'stagelist');
+        const list = $('div', 'stagelist shares');
         recommended.mix.tiers.forEach((t) => {
           const meta = tierInfo[t.name] || {};
           const worstCap = Math.min(...(meta.capabilities || []).map((c) => capCount(bd.keep).get(c) || 0), Infinity);

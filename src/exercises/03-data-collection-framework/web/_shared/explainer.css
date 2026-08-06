@@ -230,7 +230,13 @@
   border-left: 2px solid transparent;
   transition: background 0.3s, opacity 0.3s, border-color 0.3s;
 }
+/* Sized for the ordinals it was built for — "1" through "9". The evaluation chapter reuses the row
+ * for tier shares, and "15.0%" does not fit in 18px: it ran straight over the tier name beside it.
+ * A modifier rather than a wider column everywhere, because padding the ordinal list to fit a string
+ * it never contains would leave a visible gutter in the chapter that reads correctly today. */
 .stagen { font-family: var(--mono); font-size: 10px; color: var(--faint); }
+.stagelist.shares .stagerow { grid-template-columns: 40px 168px minmax(0, 1fr) minmax(0, 148px); }
+.stagelist.shares .stagen { text-align: right; }
 .stagename { color: var(--ink); font-weight: 600; }
 .stageplain { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stagetools { font-family: var(--mono); font-size: 10px; color: var(--accent); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
