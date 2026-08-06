@@ -327,6 +327,7 @@ function chapterBudget(ctx) {
       para(b('What the comparison table says, and it is not what most readers expect.'), ' A corpus is not sized by the model that reads it. Llama 3.1 trained 8B, 70B and 405B on about the same 15T. DeepSeek-V3 stores 671B parameters and read 14.8T — less than Gemma 3 27B. Sarvam-105B read 12T where the smaller Sarvam-30B read 16T. Parameter count and corpus size came apart years ago, and the whole growth argument in ', ref('how it grows', 'growth'), ' rests on that.'),
       para(b('The sum, and the correction to it.'), ' This chapter used to say ', b('unique text × passes = effective tokens'), ' and print the product. That is the cost of a schedule, not its value, and the two are not the same number. The paper this rests on gives the value as a decaying sum: ', b('D′ = U + 15.4·U·(1 − e^(−(passes−1)/15.4))'), '. So ', fmt(POOL, 'count'), ' read four times costs ', fmt(POOL * 4, 'count'), ' of compute and is worth ', fmt(worthOf(4), 'count'), ' of fresh text — and sixteen passes, which the old arithmetic scored at ', fmt(POOL * 16, 'count'), ', are worth ', fmt(worthOf(16), 'count'), '.'),
       para(b('The ceiling that no schedule crosses.'), ' Because the sum converges, repetition has a maximum: the paper states that repeating cannot beat a single epoch on U + U·R*_D fresh tokens, which is ', b(`${CEILING}× the unique pool`), ' — ', fmt(POOL * CEILING, 'count'), ' from this one, at any number of passes. An earlier version of this page displayed ', fmt(POOL * 20, 'count'), ' for twenty passes. That figure was not merely unevidenced, as it claimed; it was above a ceiling the same paper had already stated, and no schedule reaches it.'),
+      para(b('And the alternative to reading it again, which is cheaper than it sounds and still not enough.'), ' Repetition is the weakest of the three answers to a small pool. Collecting is the best and the slowest. Between them sits rephrasing — restating each collected document several ways and verifying each against its source — which is what the frontier actually does: Kimi K2 published the comparison at equal seen tokens and got about 28.9% for ten rephrasings read once against 23.8% for ten passes of the raw data, and Kimi K3\u2019s pre-training section does not use the word "epoch" at all. Applied to this pool, restating it twice would lift what this tier is worth by about a quarter at the same compute, for a generation cost that stays under one percent of the run however you estimate it. It is worth doing. It also leaves the tier ', b('87% repetition'), ', because two restatements of ', fmt(POOL, 'count'), ' is still ', fmt(POOL * 2, 'count'), ' against an allocation of ', fmt(WANTED, 'count'), '. ', ref('The queue prices it', 'first'), ', with the three limits that keep it from being the answer. The gap closes by collecting, or it does not close.'),
       para(b('The evidence for "nearly free"'), ' is Muennighoff et al., ', ref('Scaling Data-Constrained Language Models', 'appendix'), ' (JMLR v26, 2025): an 8.7B-parameter model trained four epochs on 44B unique tokens finished only 0.5% worse on validation loss than a single epoch over 178B unique tokens. The fitted decay constant is R*_D ≈ 15.4, and 16 passes is not where the evidence stops — it is the half-life, the point where a repeated token has lost 1/e of its value. The same paper reports 44-epoch models, and its own summary figure reads ', b('"At 40 epochs, repeating is worthless"'), ': at that depth its downstream table has ARC-Easy falling from 39.7 to 25.4 and the benchmark average from 23.1 to 15.9. Repetition does not flatten out at the end. It reverses.'),
       para(b('And the measurement is not on this corpus.'), ' Those runs are English web text (C4 and OSCAR) at 9B parameters or less. The largest public multilingual study to fit the same curve per language — ATLAS, ICLR 2026, 774 runs over MADLAD-400 across 400+ languages — includes Hindi, and reports that for Hindi and Swahili ', b('"the right tail bends upward, consistent with diminishing returns from severe data repetition"'), ' where English does not. Two further caveats survive from the original work: repetition operates on whole tiers only (up-sampling 0.1% of a corpus a hundred times degrades the model badly), and the allocation rule is that when data-constrained you scale epochs faster than parameters.'),
       para(b('What the labs actually do with a scarce pool, which is not this.'), ' Kimi K2 ran the comparison directly: ten epochs over raw data scored about 23.8% where ten rephrasings of the same data read once scored about 28.9%. Kimi K3\u2019s pre-training section does not use the word "epoch" at all — it rephrases knowledge and mathematics corpora with "style and perspective-diverse prompting … and fidelity verification against the source documents". DeepSeek-V3 reports 14.8T tokens and claims no repetition. Re-reading is the weakest of the three answers to a small pool, ahead only of doing nothing; the strongest that does not require years of collection is rephrasing, and this page does not yet cost one.'),
@@ -2144,6 +2145,13 @@ function chapterFirst(ctx) {
   const gates = plan.filter((x) => x.is_gate);
   const src = data.sourcing;
   const asr = ((records.growth || {}).indic_supply || {}).asr_route || {};
+  const rep = ((records.growth || {}).indic_supply || {}).rephrasing_route || {};
+  /* The committable natural-Indic pool, summed from the catalogue exactly as chapter 2 sums it. */
+  const NATURAL13 = new Set(['indic-natural', 'indic-knowledge-systems', 'indic-civilizational']);
+  const POOL13 = data.datasets
+    .map((x) => ({ d: x, tier: Object.entries(data.sourcing.tier_categories).find(([, c]) => c.includes(x.category))?.[0] || null }))
+    .filter((r) => r.tier === 'indic-natural' && !blockersOf(r.d).length)
+    .reduce((a, r) => a + ((r.d.size_verified || r.d.size_tokens || {}).value || 0), 0);
 
   const tierOf = (d) => Object.entries(src.tier_categories).find(([, cats]) => cats.includes(d.category))?.[0] || null;
   const targets = Object.fromEntries(recommended.mix.tiers.map((t) => [t.name, t.unique_tokens_required]));
@@ -2242,6 +2250,17 @@ function chapterFirst(ctx) {
     arithmetic: [
       para(b('Already open, and ours to fix.'), ` ${ours.length} datasets carry a licence that permits commercial use and are held up only by our own unfinished work. `, b(`${oursIndic.length} of them are Indian-language.`), ' Nobody needs to be asked, nothing needs to be bought, and the work is measurement and grading rather than collection.'),
       ourTable(),
+      para(b('The rephrasing route, and what it does not do.'), ' ', rep.claim || '', ' ', rep.how || ''),
+      para(
+        'The comparison at equal seen tokens has been run once, by somebody else: ',
+        renderNumber(rep.evidence || {}), ' relative improvement for ten rephrasings read once over ten passes of the raw data. ',
+        'Applied here, restating the ', fmt(POOL13, 'count'), ' committable pool twice makes it ',
+        renderNumber((rep.at_two_variants || {}).pool_after || {}, { unit: false }),
+        ' and lifts what this tier is worth by ', renderNumber((rep.at_two_variants || {}).worth_gain || {}),
+        ' at the same compute — for a generation cost of ', b(rep.cost_band || '$'), '. ', rep.cost_note || '',
+      ),
+      para(b('Three limits, and the last one is the point.'), ' ', (rep.limits || []).join(' ')),
+      para(b('So it is worth doing, and it is not the answer.'), ' ', rep.conclusion || ''),
       para(b('The speech route, and why it is not optional.'), ' ', asr.claim || '', ' ', asr.why || ''),
       para(
         'Roughly ', renderNumber(asr.hours || {}), ' at about ', renderNumber(asr.words_per_hour || {}),

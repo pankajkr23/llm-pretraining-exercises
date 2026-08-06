@@ -42,6 +42,22 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **The rephrasing route is costed, and the answer is that it does not close the gap.** Correction
+  X15 established that repetition is the weakest answer to a scarce pool and that the frontier
+  rephrases instead — and the page then went on planning around passes, because nobody had priced
+  the alternative. Now it is priced. Restating the 84.9B committable Indic pool **twice** makes it
+  170B and lifts what the tier is worth by about **25% at identical seen tokens**, for a generation
+  cost that stays **under 1% of the run** however the throughput is estimated. Chapter 2 says so
+  where it used to end on how many times to read the pool; chapter 13 prices it beside the speech
+  route. The finding is that it is worth doing *and is not the answer*: at two variants — the only
+  depth Kimi K2 uses in production — the tier is still **13% unique text and 87% repetition**, and
+  filling it outright would take sixteen variants, past anything anybody has reported. Whether a
+  rephrasing counts as a distinct document for the repetition curve has never been measured; the
+  25% assumes it does. Cost is shown as a **band rather than a figure**, with the arithmetic stated,
+  because the throughput term spans an order of magnitude — decode is bound by weight reads rather
+  than FLOPs, so a point estimate would claim a precision this project does not have. That makes it
+  the strongest argument for funding collection: the one that survives having tried the alternative.
+  Recorded as correction X23.
 - **Chapter 2 was stating the mixture's requirement as if it were the corpus.** It took its pool
   from a tier field called `unique_tokens` and said of it: *"Read once, this is the entire natural
   Indian-language pool — every verified corpus anyone has assembled, added together."* That field is

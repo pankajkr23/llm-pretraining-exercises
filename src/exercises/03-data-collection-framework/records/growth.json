@@ -231,6 +231,38 @@
         "SPK-04"
       ],
       "superseded": "This chapter planned against 35,000 hours and ~300M words while correction X04, rendered in this page's own appendix, put the open pool well north of 100,000 — an understatement of roughly threefold, in the direction that made the highest-value Indic route look smaller than it is. Both numbers were on one page. The figures here now follow the correction."
+    },
+    "rephrasing_route": {
+      "claim": "Rephrasing the committable Indic pool is the cheapest real improvement available to the scarcest tier, and it does not close the gap.",
+      "how": "Restate each collected document several ways with an Apache-2.0 generator, verifying each against its source, then read the enlarged pool fewer times. This is the recipe Kimi K2 published and Kimi K3 still uses; K3's pre-training section does not use the word 'epoch' at all.",
+      "evidence": {
+        "value": 0.21,
+        "unit": "share",
+        "provenance": "estimated",
+        "source": "Kimi K2 (arXiv:2507.20534) ran the comparison at equal seen tokens: ten epochs over raw data scored about 23.8%, ten rephrasings read once about 28.9% — a 21% relative improvement. One benchmark average, one model, not our languages."
+      },
+      "at_two_variants": {
+        "pool_after": {
+          "value": 169800000000,
+          "unit": "tokens",
+          "provenance": "estimated",
+          "source": "the 84.9B committable natural-Indic pool, restated twice"
+        },
+        "worth_gain": {
+          "value": 0.25,
+          "unit": "share",
+          "provenance": "estimated",
+          "source": "Muennighoff Eq. 18 applied to the enlarged pool: 170B read 7.9 times is worth about 1,116B against 893B for reading 84.9B 15.8 times, at identical seen tokens"
+        }
+      },
+      "cost_band": "$",
+      "cost_note": "Shown as a band rather than a figure. The arithmetic is stated so anybody can compute it: tokens generated divided by generation throughput. The throughput is the part nobody here has measured — decode is bound by weight reads rather than FLOPs, so the training-run figure of 4.0e14 FLOP/s does not apply and a plausible range spans an order of magnitude. Across that whole range, doubling the pool once costs well under 1% of the run it feeds, which is why the band is worth reporting and the point estimate is not.",
+      "limits": [
+        "Kimi K2 rephrases each corpus at most twice in production; their ablation went to ten. The sixteen variants it would take to fill this tier with unique text is past anything anybody has reported doing.",
+        "Whether a rephrasing counts as a distinct document for the repetition curve has never been measured. The gain above assumes it does. If variants decay faster than fresh text, the gain is smaller than stated and nothing published says by how much.",
+        "At two variants — the only depth with production precedent — the tier is still 13% filled by unique text and 87% by repetition. This is an improvement to the slice, not a solution to the shortage."
+      ],
+      "conclusion": "It is cheap, it measurably helps, and it leaves the Indic gap where it was. That makes it worth doing and makes it the strongest available argument for funding collection: it is the argument that survives having tried the alternative."
     }
   },
   "shape": {
