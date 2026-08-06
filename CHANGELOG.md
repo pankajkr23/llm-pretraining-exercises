@@ -42,6 +42,16 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **Costs are shown as an order of magnitude, never as a figure.** Every price on this page sits on
+  arithmetic that is solid — 6ND, or a share of it — multiplied by two assumptions that are not: a
+  sustained throughput that moves ±30% between real runs, and a list rate the project's own cost
+  record calls *"negotiated well below it"* at reservation scale, and below that again on spot.
+  Those compound to a band several times wide, so `$5,600,000` claimed seven significant figures of
+  precision nobody has. One scale now runs through the whole page — `$` thousands, `$$` tens of
+  thousands, `$$$` hundreds of thousands, `$$$$` millions — and it makes the comparison the cost
+  chapter is actually about legible at a glance: the three forks read `$$$$`, `$$$`, `$$$$`. The
+  figures stay in the records, so the arithmetic remains checkable; it is the display that stops
+  overclaiming. No raw money figure renders anywhere on the page now.
 - **The rephrasing route is costed, and the answer is that it does not close the gap.** Correction
   X15 established that repetition is the weakest answer to a scarce pool and that the frontier
   rephrases instead — and the page then went on planning around passes, because nobody had priced

@@ -23,6 +23,40 @@ from .vocab_trade import (
     USD_TO_INR,
 )
 
+# One scale, used everywhere this page prices something it estimated rather than observed.
+#
+# A figure like "$5,600,000" reads as though somebody costed it. What is behind it is 6ND — solid —
+# multiplied by two assumptions that are not: a sustained 4.0e14 FLOP/s, which is an MFU guess that
+# moves +/-30% between real runs, and a $2.00 list rate that this project's own record calls a list
+# price, "negotiated well below it" at reservation scale and below that again on spot. Those
+# compound to a band several times wide, and seven significant figures claim a precision nobody has.
+#
+# The order of magnitude is what the decision turns on, so the order of magnitude is what is shown.
+COST_BANDS: tuple[tuple[float, str], ...] = (
+    (1e4, "$"),  # thousands
+    (1e5, "$$"),  # tens of thousands
+    (1e6, "$$$"),  # hundreds of thousands
+    (1e7, "$$$$"),  # millions
+    (1e8, "$$$$$"),  # tens of millions
+)
+
+COST_BAND_LEGEND = "$ thousands · $$ tens of thousands · $$$ hundreds of thousands · $$$$ millions"
+
+
+def cost_band(usd: float) -> str:
+    """Bracket a dollar figure to its order of magnitude.
+
+    Args:
+        usd: The estimated cost.
+
+    Returns:
+        A run of dollar signs, one per order of magnitude above a thousand.
+    """
+    for ceiling, band in COST_BANDS:
+        if usd < ceiling:
+            return band
+    return COST_BANDS[-1][1] + "$"
+
 
 def price_run(params: float, seen_tokens: float) -> dict[str, Any]:
     """Work out what one full pass of the schedule costs in compute.
@@ -56,11 +90,18 @@ def price_run(params: float, seen_tokens: float) -> dict[str, Any]:
                 "unit": "H100-hours",
             },
             {
+                # The figure stays in the record and the page renders the band. Keeping the number
+                # is what makes the arithmetic auditable and lets each fork be priced by its share;
+                # showing seven significant figures is what claims a precision nobody has. The
+                # hours above are printed as a number because 6ND is arithmetic and throughput is
+                # their only soft term; the money adds a list price on top of that.
                 "label": "compute cost",
                 "expression": f"{gpu_hours:.3g} x {H100_USD_PER_HOUR:.2f}",
                 "value": round(usd),
                 "unit": "USD",
                 "inr": round(usd * USD_TO_INR),
+                "band": cost_band(usd),
+                "band_legend": COST_BAND_LEGEND,
             },
         ],
         "recomputed": True,

@@ -44,6 +44,15 @@ const para = (...nodes) => {
   return p;
 };
 
+/* Costs on this page are shown as an order of magnitude, never as a figure.
+ *
+ * Behind every one of them is arithmetic that is solid — 6ND, or a share of it — multiplied by two
+ * assumptions that are not: a sustained throughput that moves +/-30% between real runs, and a list
+ * rate this project's own cost record calls "negotiated well below it" at reservation scale. Those
+ * compound to a band several times wide, and the decisions these numbers inform turn on the
+ * magnitude anyway. The figures stay in the records so the arithmetic can be checked. */
+const costBand = (usd) => (usd < 1e4 ? '$' : usd < 1e5 ? '$$' : usd < 1e6 ? '$$$' : usd < 1e7 ? '$$$$' : '$$$$$');
+
 /** A plain lookup table — the right form for reference, and most of the appendix. */
 const table = (headers, rows, numeric = []) => {
   const t = $('table', 'plain');
@@ -1872,7 +1881,9 @@ function chapterTokenizer(ctx) {
         const top = steps[2].value;
         bars.append(barFor('extra compute cost', 0.012 * top, top, 'synth').row);
         bars.append(barFor('compute saved', top, top, 'natural').row);
-        api.big({ value: steps[3].inr, unit: 'INR', provenance: 'estimated', source: 'the vocabulary trade' });
+        /* The same estimate as the run cost, in rupees, and it inherits the same two soft terms:
+         * an MFU guess and a list rate. Banded for the reason the run cost is. */
+        api.big($('span', '', costBand(steps[3].value || 0)));
         api.bigHit(false);
         api.sub(`saved on one epoch — about ${fmt(steps[2].value, 'count')} H100-hours`);
         api.verdict('~5× RETURN', false);
@@ -2041,6 +2052,13 @@ function chapterCost(ctx) {
   const run = records.cost.run_cost;
   const hours = run.steps.find((x) => x.unit === 'H100-hours');
   const money = run.steps.find((x) => x.unit === 'USD');
+  /* Costs are shown as an order of magnitude, not a figure. Behind the money is 6ND — solid —
+   * multiplied by an MFU guess that moves ±30% between real runs and a rate this project's own
+   * record calls a list price, "negotiated well below it" at reservation scale. Those compound to a
+   * band several times wide, and the fork this chapter is about turns on the magnitude anyway. The
+   * figures stay in the record so the arithmetic can be checked; the page prints the band. */
+  const band = costBand;
+  const BAND_LEGEND = money.band_legend || '$ thousands · $$ tens of thousands · $$$ hundreds of thousands · $$$$ millions';
 
   const PATHS = [
     {
@@ -2100,15 +2118,15 @@ function chapterCost(ctx) {
     ],
     states: PATHS,
     arithmetic: [
-      para(b('What a full run costs.'), ' ', run.steps.map((x) => `${x.label}: ${x.expression ? x.expression + ' = ' : ''}${x.unit === 'USD' ? '$' + fmt(x.value, 'count') : fmt(x.value, 'count') + ' ' + x.unit}`).join('; '), ' — about ', b(`₹${(money.inr / 1e7).toFixed(0)} crore`), ' of compute. ', run.caveat),
-      para(b('Read against that:'), ' the vocabulary decision in ', ref('how we cut it into tokens', 'tokenizer'), ' saves ', b(`₹${((records.cost.vocab_trade.steps.find((x) => x.unit === 'USD') || {}).inr / 1e7).toFixed(1)} crore`), ' of this, for a 1.2% increase in the cost of every step — a ', b(`${records.cost.vocab_trade.return_multiple}× return`), '.'),
+      para(b('What a full run costs.'), ' ', run.steps.map((x) => `${x.label}: ${x.expression ? x.expression + ' = ' : ''}${x.unit === 'USD' ? x.band : fmt(x.value, 'count') + ' ' + x.unit}`).join('; '), ' of compute, on the same order in rupees. ', BAND_LEGEND, '. ', run.caveat),
+      para(b('Read against that:'), ' the vocabulary decision in ', ref('how we cut it into tokens', 'tokenizer'), ' saves ', b(band((records.cost.vocab_trade.steps.find((x) => x.unit === 'USD') || {}).value || 0)), ' of this, for a 1.2% increase in the cost of every step — a ', b(`${records.cost.vocab_trade.return_multiple}× return`), '.'),
       para(b('This does not settle the fork.'), ' It prices one side of it. The stated resolution is a head-to-head at roughly 2-billion-parameter scale on identical data, judged on held-out loss for Indian languages and code — and the comparison has to be normalised for the tokenizer, because a model spending more tokens on the same text sees more tokens for the same budget and looks better than it is. Compare bits per character, not loss per token; skip that and the fork resolves to whichever tokenizer is worst.'),
       para(b('What acquisition costs.'), ' Of ', String(acquisition.length), ' ranked acquisitions, ', b(`${free.length} cost nothing`), ' — they are letters and permissions rather than engineering. The market records ', String((records.market || {}).deals ? records.market.deals.length : 0), ' real data deals for comparison, every value reported rather than confirmed.'),
       para(b('The competition.'), ' ', arch.map((a) => `${a.model} at ${fmt(a.params_total, 'count')}${a.licence ? ` (${a.licence})` : ''}`).join('; '), '. The one that matters is not the largest but the freest to download: an Apache-2.0 105B with an Indic-tuned tokenizer already exists, so a from-scratch 40B has to justify itself against something anyone can have today for nothing.'),
     ],
     refresh: (api) => {
       PATHS.forEach((x, i) => {
-        api.shard(i, `${fmt(recommended.target_seen_tokens * x.share, 'count')} tokens · about $${fmt(money.value * x.share, 'count')} · tokenizer: ${x.tokenizer}`);
+        api.shard(i, `${fmt(recommended.target_seen_tokens * x.share, 'count')} tokens · ${band(money.value * x.share)} · tokenizer: ${x.tokenizer}`);
         api.inline(i, `→ ${(x.share * 100).toFixed(0)}% of a full run’s compute`, false);
       });
     },
@@ -2122,12 +2140,12 @@ function chapterCost(ctx) {
         fill.style.width = `${x.share * 100}%`;
         track.append(fill);
         const val = $('div', 'tierval');
-        val.append(usd(Math.round(money.value * x.share / 1e5) * 1e5));
+        val.append($('span', 'costband', band(money.value * x.share)));
         row.append($('div', 'tiername', x.name.replace('Continue-pretrain from ', 'continue from ').replace('Upcycle to a mixture of experts', 'upcycle to MoE').replace('Train from scratch', 'from scratch')), track, val);
         bars.append(row);
       });
       api.extra.replaceChildren(bars);
-      api.big(declared(records.cost, 'run_cost.steps[].value', money.value * p2.share, 'USD'));
+      api.big($('span', '', band(money.value * p2.share)));
       api.bigHit(p2.id !== 'scratch');
       api.sub(`of compute · ${fmt(recommended.target_seen_tokens * p2.share, 'count')} tokens trained`);
       api.verdict(p2.verdict, p2.id !== 'scratch');

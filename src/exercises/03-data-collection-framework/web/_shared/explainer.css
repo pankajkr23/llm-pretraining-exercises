@@ -400,3 +400,8 @@ details.arithmetic > summary:focus-visible { outline: 2px solid var(--accent); o
 .stagereg-foot.short .stagereg-lab { color: var(--grade-x); }
 .stagereg-an { margin-top: 12px; padding-top: 8px; border-top: 1px dashed var(--line); }
 .stagereg-an .stagereg-cap { margin-bottom: 4px; }
+
+/* A cost shown as an order of magnitude. Same monospace weight as a figure would carry, because it
+ * occupies the same slot and means the same kind of thing — just at the precision the estimate
+ * actually supports. */
+.costband { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
