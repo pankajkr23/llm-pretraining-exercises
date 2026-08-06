@@ -40,6 +40,15 @@ lives in a numbered exercise folder under `src/exercises/`.
 
 - Each exercise owns `tests/`; `uv run pytest` from root tests everything.
 - Split fast **unit** vs slower **integration** (`@pytest.mark.integration`). Run fast only: `uv run pytest -m "not integration"`.
+- **A deployable `web/` is tested in a browser, not just parsed.** `node --check` proves a file has no
+  syntax error and nothing more; a call to an undefined function, a filter that silently matches
+  nothing, and a headline reading `0` all parse perfectly. Exercise 03's `tests/test_render.py` is the
+  pattern: Playwright, integration-marked, loading the built site and asserting what a reader sees.
+  One-time setup is `uv run playwright install chromium`; without a browser the suite **skips** rather
+  than fails, which keeps a fresh checkout working and means it protects you silently or not at all.
+- **A guard that cannot fail is worse than no guard**, because it reads as coverage. Every invariant
+  is written twice — once against the real spine, once against a deliberately broken fixture — and
+  when you add one, break the thing on purpose and watch it go red before you commit.
 - The ML-native integration test: **overfit a single batch for a few steps and assert loss collapses** (+ shape/checkpoint round-trip tests).
 - **Data-handling invariants are enforced in CI, not in review.** `03-data-collection-framework` defines five that any agent touching a data pipeline should know exist (`tests/test_invariants.py`, full table in that exercise's `docs/README.md`): training never touches eval data · nothing excluded may enter a commercial mix · every judgment carries its reasoning and confidence · a measurement must name what produced it · no source content is silently dropped. Each is paired with a test proving it *fails* when broken — a guard nobody has watched fail is not a guard.
 
@@ -52,7 +61,7 @@ lives in a numbered exercise folder under `src/exercises/`.
 
 ## CI/CD
 
-- CI (`.github/workflows/ci.yml`): `uv sync --all-packages` → `ruff check` → `ruff format --check` → unit → integration → `node --check` on any `web/js/*.js`.
+- CI (`.github/workflows/ci.yml`): `uv sync --all-packages` → `ruff check` → `ruff format --check` → unit → install chromium → integration → `node --check` on every `web/**/*.js`.
 - CD: **Vercel**, gated. **Previews auto-deploy per PR**; **production never auto-deploys** (`vercel.json` → `git.deploymentEnabled.main: false`). One project serves every exercise's static `web/` under its slug (`/NN-slug/`) via `deploy/vercel/build.sh` → `public/`. (Netlify was the prior host — deactivated config retained in `deploy/netlify/`, pending decommission.)
 - Production deploys go through the reusable `deploy-production.yml` (single source of truth, gated by the `production` environment), invoked two ways: **`deploy.yml`** (`workflow_dispatch`) for an ad-hoc deploy of `main`, and **`release.yml`** for a versioned release.
 - **Releasing:** move `CHANGELOG.md`'s `[Unreleased]` → `[X.Y.Z]` (dated) and merge, then `git tag vX.Y.Z && git push origin vX.Y.Z`. `release.yml` creates a GitHub Release from that changelog section and deploys the tagged commit to production.
