@@ -391,6 +391,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The Dataset Card shows its sources again.** The card kept the five gates through the one-page
+  rebuild and dropped the facts they were judging, so a reader could see a verdict and not reach the
+  evidence — the links were in the catalogue the whole time (79 of the 145 rows carry one) and had
+  nowhere to be shown. Restored as the things the table it opens from cannot say: the
+  verified/unverified/synthetic split behind a headline token count, languages, prior use, how the
+  data is actually distributed and when that was last checked, and every recorded source as a link,
+  with `arXiv:` identifiers resolved to URLs. Tokens, stage, kind and commercial use stay in the
+  table rather than being repeated on the card.
 - **The catalogue could not see the difference between "open" and "ask permission".** Availability
   came from prose in a seed cell, so corpora gated behind NVIDIA's manual approval sat in the same
   band as ones you can fetch anonymously — while the page's whole dividing line is whether anybody's

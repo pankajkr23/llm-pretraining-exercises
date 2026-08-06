@@ -2541,7 +2541,76 @@ function chapterAppendix(ctx) {
       q.append(badge, text(` ${x.text}`));
       card.append(q);
     });
+    /* Everything below was on the Dataset Card before the one-page rebuild and was lost in the
+     * move — the card kept the gates and dropped the facts they were judging. A reader who opens a
+     * row wants to know how big it is, what it covers, and where to go and check; the gates alone
+     * are a verdict with the evidence taken away. */
+    const facts = $('dl', 'gatecard-kv');
+    const pair = (k, v) => {
+      if (v === null || v === undefined || v === '') return;
+      facts.append($('dt', '', k));
+      const dd = $('dd');
+      dd.append(v);
+      facts.append(dd);
+    };
+
+    /* Deliberately not repeated here: tokens, stage, kind and commercial use are all columns of
+     * the table this card opens from, and a card that restates the row it came from is asking the
+     * reader to read the same thing twice. What follows is only what the row cannot say.
+     *
+     * The naturalness split is the exception that proves it. The table shows Sangraha's 251B; the
+     * split says 64B of that is confirmed human-origin, which qualifies the headline rather than
+     * repeating it. */
+    const nat = (full.size || {}).naturalness || {};
+    const parts = ['verified', 'unverified', 'synthetic'].filter((k) => nat[k]);
+    if (parts.length) {
+      const split = $('span');
+      parts.forEach((k, i) => {
+        if (i) split.append(text(' · '));
+        split.append(text(`${k} `), renderNumber(nat[k], { unit: false }));
+      });
+      pair('of which', split);
+    }
+    pair('languages', full.languages);
+    pair('used by', full.used_by);
+
+    /* How it is actually distributed, and when anybody last looked. A card that says "Open" and
+     * nothing else is how a corpus needing a person's approval passed for one you can fetch. */
+    const dist = (full.access || {}).distribution;
+    if (dist) {
+      pair('access', text(dist.gated === 'manual' ? 'request access — a person approves it'
+        : dist.gated === 'auto' ? 'accept the terms and it is yours'
+        : 'open — no account, no terms'));
+      /* The date matters here and nowhere else on the card: gating and versions move, and a
+       * reader deciding whether to trust this row deserves to know when anybody last looked. */
+      pair('checked', dist.checked);
+    }
+    if (facts.childElementCount) card.append(facts);
+
     card.append($('p', 'gatecard-none', full.licence ? `Licence: ${full.licence.raw}` : 'Licence: nobody established one.'));
+    if (full.opportunity) card.append($('p', 'gatecard-note', full.opportunity));
+    if (full.note) card.append($('p', 'gatecard-note', full.note));
+    if (dist && dist.note) card.append($('p', 'gatecard-note', dist.note));
+
+    /* The sources. `arXiv:NNNN.NNNNN` is recorded as an identifier rather than a URL, so it is
+     * resolved to one here — a reader cannot click an identifier. */
+    const links = (full.access || {}).links || [];
+    if (links.length) {
+      const wrap = $('p', 'gatecard-links');
+      links.forEach((href, i) => {
+        const a = $('a', '', href);
+        a.href = href.toLowerCase().startsWith('arxiv:')
+          ? `https://arxiv.org/abs/${href.slice(6)}`
+          : href;
+        a.rel = 'noopener';
+        a.target = '_blank';
+        if (i) wrap.append(text(' · '));
+        wrap.append(a);
+      });
+      card.append(wrap);
+    } else if ((full.access || {}).raw) {
+      card.append($('p', 'gatecard-note', full.access.raw));
+    }
   };
 
   const block = (title, node) => {
