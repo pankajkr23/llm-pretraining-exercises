@@ -3291,8 +3291,8 @@
     "derivation": {
       "kind": "independent",
       "parents": [],
-      "note": "Curated from GitHub, not a web crawl. It does not overlap any of the web corpora here.",
-      "source": "nvidia/Nemotron-Pretraining-Code-v1"
+      "note": "Curated from GitHub, not a web crawl, so it does not overlap any of the web corpora here. What is distributed is metadata rather than code — commit ids, file paths and a detected language — so the tokens have to be re-fetched from GitHub to exist at all, which is a dependency none of the other committable rows carry.",
+      "source": "nvidia/Nemotron-Pretraining-Code-v3 card: '146 M new files (173 B tokens)', GitHub cutoff 30 September 2025, distributed as commit id, file path and detected language"
     },
     "stage": [
       "PT"

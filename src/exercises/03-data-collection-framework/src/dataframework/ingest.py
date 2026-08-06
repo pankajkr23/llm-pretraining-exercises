@@ -373,9 +373,18 @@ RELATIONSHIPS: dict[str, dict[str, Any]] = {
         "kind": "independent",
         "parents": [],
         "note": (
-            "Curated from GitHub, not a web crawl. It does not overlap any of the web corpora here."
+            "Curated from GitHub, not a web crawl, so it does not overlap any of the web corpora "
+            "here. What is distributed is metadata rather than code — commit ids, file paths and "
+            "a detected language — so the tokens have to be re-fetched from GitHub to exist at "
+            "all, which is a dependency none of the other committable rows carry."
         ),
-        "source": "nvidia/Nemotron-Pretraining-Code-v1",
+        # Cites v3, which is the version this row counts. It cited v1 while the row was named
+        # "v1/v2/v3"; once the row narrowed to the only ungated version, the citation pointed at
+        # a different corpus from the one the figure came from.
+        "source": (
+            "nvidia/Nemotron-Pretraining-Code-v3 card: '146 M new files (173 B tokens)', GitHub "
+            "cutoff 30 September 2025, distributed as commit id, file path and detected language"
+        ),
     },
     "IND-01": {
         "kind": "independent",
