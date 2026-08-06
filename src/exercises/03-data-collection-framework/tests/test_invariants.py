@@ -377,6 +377,33 @@ def _bare_numbers(node, path="", inherited=False) -> list[str]:
 # carries a measured size, so nothing derived from them may claim to be measured either.
 _DERIVED_FROM_CATALOGUE_SIZES = ("sourcing", "lifecycle", "orphan_tiers")
 
+# The fields inside those blocks that really are such a sum. The rest are counts of records we
+# hold, and are measured. A block may declare `measured` and still hold one of these — but then
+# the figure has to carry its own mark, which is what the check below insists on.
+_ESTIMATED_BY_NATURE = ("tokens_known", "committed_tokens", "target_tokens")
+
+
+def _sums_claiming_measured(node, path="", declared=None) -> list[str]:
+    """Collect token sums that declare, or inherit from an ancestor, a `measured` mark.
+
+    The bare-number check inherits provenance down the tree and so proves only that every figure
+    carries a mark, never that the mark is the right one. This walks the same tree asking the
+    second question of the fields whose name says they are a sum over estimates.
+    """
+    found: list[str] = []
+    if isinstance(node, dict):
+        here = node.get("provenance", declared)
+        for key, value in node.items():
+            if key in _ESTIMATED_BY_NATURE and isinstance(value, (int, float)):
+                if here == "measured":
+                    found.append(f"{path}.{key}")
+            else:
+                found += _sums_claiming_measured(value, f"{path}.{key}", here)
+    elif isinstance(node, list):
+        for i, value in enumerate(node):
+            found += _sums_claiming_measured(value, f"{path}[{i}]", declared)
+    return found
+
 
 def test_the_protocol_gap_note_matches_the_run_it_describes():
     """INV-4: the run must not misdescribe its own coverage.
@@ -452,6 +479,10 @@ def test_nothing_derived_from_estimates_claims_to_be_measured():
     `sourcing` declared `measured` over `committed_tokens`, which is 6.39T summed from catalogue
     sizes of which 24 are estimated and 121 unknown. The page tells the reader that mark means
     "somebody ran it". Nobody had. Correction X17.
+
+    This asks it of the figures rather than of the blocks holding them, because X27 let a block of
+    exact counts say so while its one sum carries `estimated` inline. A block-level rule could not
+    tell that apart from the blanket it replaced.
     """
     bundle = _bundle()
 
@@ -461,8 +492,9 @@ def test_nothing_derived_from_estimates_claims_to_be_measured():
     )
 
     for block in _DERIVED_FROM_CATALOGUE_SIZES:
-        assert bundle[block]["provenance"] != "measured", (
-            f"{block} claims measured; its token figures are sums of catalogue estimates"
+        claiming = _sums_claiming_measured(bundle[block], block)
+        assert not claiming, (
+            f"{claiming} claims measured; its token figures are sums of catalogue estimates"
         )
 
 
@@ -474,8 +506,9 @@ def test_the_derived_provenance_check_can_actually_fail():
     assert forged["sourcing"]["provenance"] == "measured"
     with pytest.raises(AssertionError, match="sums of catalogue estimates"):
         for block in _DERIVED_FROM_CATALOGUE_SIZES:
-            assert forged[block]["provenance"] != "measured", (
-                f"{block} claims measured; its token figures are sums of catalogue estimates"
+            claiming = _sums_claiming_measured(forged[block], block)
+            assert not claiming, (
+                f"{claiming} claims measured; its token figures are sums of catalogue estimates"
             )
 
 
@@ -583,6 +616,40 @@ def test_the_bare_number_check_can_actually_fail():
     assert _bare_numbers({"tokens": 251_000_000_000})
     assert not _bare_numbers(
         {"tokens": {"value": 251e9, "unit": "tokens", "provenance": "estimated", "source": "s"}}
+    )
+
+
+def test_no_measured_block_hides_an_estimated_sum():
+    """A count and a sum over estimates must not shelter under one mark.
+
+    The lifecycle block declared `estimated` over seven fields to cover the one that needed it,
+    which hedged counts a miscount would make a bug; the fix inverted it, and this is the guard
+    against inverting it too far. Correction X27.
+    """
+    hidden = _sums_claiming_measured(_bundle())
+    assert not hidden, f"{len(hidden)} estimated sum(s) marked measured: {hidden[:5]}"
+
+
+def test_the_measured_sum_check_can_actually_fail():
+    """Breaking X27 must fail: a token sum inheriting `measured` is detected."""
+    assert _sums_claiming_measured(
+        {"provenance": "measured", "stages": [{"sized": 24, "tokens_known": 78e12}]}
+    )
+    assert not _sums_claiming_measured(
+        {
+            "provenance": "measured",
+            "stages": [
+                {
+                    "sized": 24,
+                    "tokens_known": {
+                        "value": 78e12,
+                        "unit": "tokens",
+                        "provenance": "estimated",
+                        "source": "s",
+                    },
+                }
+            ],
+        }
     )
 
 

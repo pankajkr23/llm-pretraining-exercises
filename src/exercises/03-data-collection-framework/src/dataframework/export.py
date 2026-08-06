@@ -369,6 +369,16 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
         grade, _ = grade_dataset(record)
         grades[grade] = grades.get(grade, 0) + 1
 
+    # `_strip_tier_prose` removes `capabilities` from the shipped presets to save bytes, and that is
+    # exactly the field the orphan check matches on — so this rebuilds the recommended mix from
+    # TIER_SHAPE, which still carries it. Passing the stripped mix reported all eight tiers as
+    # orphans, which is the answer you get when you ask a question with the evidence deleted.
+    # Computed here rather than inline so the block can also report how many tiers were checked.
+    mixture_for_orphans = build_all(records.get("milestones", []))[
+        next((i for i, p in enumerate(presets) if p.get("recommended")), len(presets) // 2)
+    ]["mix"]
+    orphan_tiers = find_orphans(mixture_for_orphans, benchmarks)
+
     data = {
         "generated_at": None,  # stamped by the caller; the pipeline itself must stay deterministic
         "pipeline_version": __version__,
@@ -586,20 +596,17 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
                 "matched from the mixture against the benchmark register; the cost of an orphan "
                 "is priced from the estimated mix at a list rate"
             ),
-            # `_strip_tier_prose` removes `capabilities` from the shipped presets to save bytes,
-            # and that is exactly the field the orphan check matches on — so this rebuilds the
-            # recommended mix from TIER_SHAPE, which still carries it. Passing the stripped mix
-            # reported all eight tiers as orphans, which is the answer you get when you ask a
-            # question with the evidence deleted.
-            "tiers": find_orphans(
-                build_all(records.get("milestones", []))[
-                    next(
-                        (i for i, p in enumerate(presets) if p.get("recommended")),
-                        len(presets) // 2,
-                    )
-                ]["mix"],
-                benchmarks,
-            ),
+            # The half of this block that is not estimated. The page states the orphan count as a
+            # fact — "every tier has at least one test" — and that claim is a match against the
+            # register, not a projection, so it says so on its own terms rather than inheriting
+            # the hedge that belongs to the costs.
+            "counts": {
+                "provenance": "measured",
+                "source": "matched tier by tier against the benchmark register",
+                "tiers_in_mixture": len(mixture_for_orphans["tiers"]),
+                "tiers_without_a_detector": len(orphan_tiers),
+            },
+            "tiers": orphan_tiers,
         },
         "priors": [
             {

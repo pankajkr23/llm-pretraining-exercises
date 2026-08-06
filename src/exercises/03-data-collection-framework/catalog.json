@@ -1050,7 +1050,7 @@
         "Common Crawl",
         "Internet Archive"
       ],
-      "note": "7.2 petabytes of raw crawl: 45% Common Crawl, 33% Internet Archive, 22% ArchiveBot, 2012-2024. Only the Common Crawl portion overlaps the English corpora here, and Englishis one of three languages it deduplicates per-crawl rather than globally.",
+      "note": "7.2 petabytes of raw crawl: 45% Common Crawl, 33% Internet Archive, 22% ArchiveBot, 2012-2024. Only the Common Crawl portion overlaps the English corpora here, and English is one of three languages it deduplicates per-crawl rather than globally.",
       "source": "arXiv:2511.01066, HPLT 3.0"
     },
     "stage": [
@@ -1148,7 +1148,7 @@
       "parents": [
         "Common Crawl"
       ],
-      "note": "Not built from the crawl directly but from two corpora that were: mC4 v3.1.0 and everyOSCAR release to 23.01. Two parents, both downstream of the same crawl.",
+      "note": "Not built from the crawl directly but from two corpora that were: mC4 v3.1.0 and every OSCAR release to 23.01. Two parents, both downstream of the same crawl.",
       "source": "uonlp/CulturaX"
     },
     "stage": [
@@ -1507,7 +1507,7 @@
       "parents": [
         "Common Crawl"
       ],
-      "note": "96 Common Crawl dumps, summer 2013 to April 2024, HTML pages. Deduplicated per snapshotrather than globally, by the authors' own ablation, so it carries cross-snapshot duplicates of its own.",
+      "note": "96 Common Crawl dumps, summer 2013 to April 2024, HTML pages. Deduplicated per snapshot rather than globally, by the authors' own ablation, so it carries cross-snapshot duplicates of its own.",
       "source": "HuggingFaceFW/fineweb and arXiv:2406.17557"
     },
     "stage": [
@@ -1694,7 +1694,7 @@
       "parents": [
         "Common Crawl"
       ],
-      "note": "106 Common Crawl dumps, 2013 to February 2025 — the same crawls as FineWeb, but the PDFsin them rather than the HTML. A PDF and a web page are different documents, so the overlap with the HTML corpora is far smaller than the shared source suggests.",
+      "note": "106 Common Crawl dumps, 2013 to February 2025 — the same crawls as FineWeb, but the PDFs in them rather than the HTML. A PDF and a web page are different documents, so the overlap with the HTML corpora is far smaller than the shared source suggests.",
       "source": "HuggingFaceFW/finepdfs"
     },
     "stage": [
@@ -1791,7 +1791,7 @@
         "ENG-03"
       ],
       "note": "The educational slice of FinePDFs, not an addition to it.",
-      "source": "HuggingFaceFW/finepdfs-edu: '350B+ tokens of educational PDFs filtered from the FinePDFsdataset'"
+      "source": "HuggingFaceFW/finepdfs-edu: '350B+ tokens of educational PDFs filtered from the FinePDFs dataset'"
     },
     "stage": [
       "MT"
@@ -2150,8 +2150,8 @@
       "parents": [
         "Common Crawl"
       ],
-      "note": "Common Crawl, with synthetic rephrasing applied to part of it — so some of this is notcollected text at all.",
-      "source": "nvidia/Nemotron-CC-v2: 'synthetic rephrasing using Qwen3-30B-A3B, filtered for Englishand globally deduplicated'"
+      "note": "Common Crawl, with synthetic rephrasing applied to part of it — so some of this is not collected text at all.",
+      "source": "nvidia/Nemotron-CC-v2: 'synthetic rephrasing using Qwen3-30B-A3B, filtered for English and globally deduplicated'"
     },
     "stage": [
       "PT"
@@ -2247,7 +2247,7 @@
       "parents": [
         "ENG-08"
       ],
-      "note": "Genuinely additive, unlike the v1/v2 pair — its publisher says to use it alongside v2,not instead of it.",
+      "note": "Genuinely additive, unlike the v1/v2 pair — its publisher says to use it alongside v2, not instead of it.",
       "source": "nvidia/Nemotron-CC-v2.1: '2.5T new tokens ... to be used in conjunction with the previously released 6.6T tokens of Nemotron-CC-v2'"
     },
     "stage": [
@@ -3110,7 +3110,7 @@
     "derivation": {
       "kind": "independent",
       "parents": [],
-      "note": "Source code from Software Heritage, not a web crawl. It does not overlap any of the webcorpora here.",
+      "note": "Source code from Software Heritage, not a web crawl. It does not overlap any of the web corpora here.",
       "source": "BigCode, The Stack v2"
     },
     "stage": [

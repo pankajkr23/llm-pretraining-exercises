@@ -112,19 +112,28 @@ def build_lifecycle(datasets: list[dict[str, Any]]) -> dict[str, Any]:
                 "committable": len(committable),
                 "committable_ids": [d["id"] for d in committable],
                 "sized": len(sized),
-                "tokens_known": round(sum(_tokens(d) or 0 for d in sized)),
+                # The one estimated figure in an otherwise exact row, so it carries its own mark
+                # rather than dragging the whole block down to `estimated`. It is a sum over
+                # `size_tokens`, and no record in the catalogue has a measured size.
+                "tokens_known": {
+                    "value": round(sum(_tokens(d) or 0 for d in sized)),
+                    "unit": "tokens",
+                    "provenance": "estimated",
+                    "source": "sum of the catalogue's size estimates for the sized members",
+                },
                 "blocked_on_licence_only": sum(1 for d in members if blockers(d) == ["licence"]),
             }
         )
 
     unclassified = [d for d in datasets if not lifecycle_of(d)]
     return {
-        # `tokens_known` sums catalogue sizes, so the block inherits their weakest provenance.
-        "provenance": "estimated",
-        "source": (
-            "grouped from the catalogue's own stage tags; membership counts are exact, "
-            "token totals are sums of catalogue size estimates"
-        ),
+        # Measured, because everything this block asserts at block level is a count of records we
+        # hold: membership, committable, sized, licence-blocked. A miscount would be a bug, not an
+        # estimate. The block used to declare `estimated` over all of it to cover the one sum that
+        # really is estimated — which put a hedge under "4 of 24 post-training datasets state a
+        # size", a figure that is simply counted. `tokens_known` now carries that mark itself.
+        "provenance": "measured",
+        "source": "grouped and counted from the catalogue's own stage tags",
         "stages": stages,
         "unclassified": [{"id": d["id"], "stage": d.get("stage") or []} for d in unclassified],
         "unclassified_count": len(unclassified),

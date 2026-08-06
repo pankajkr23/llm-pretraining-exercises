@@ -391,6 +391,20 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **A subset was being summed beside the set that contains it, on screen.** The stage registers
+  reported every stage's reachable supply as a plain sum: Nemotron-CC v1's 6.30T counted once alone
+  and again inside Nemotron-CC-v2's 6.60T. The containment map was correct in the bundle and the
+  browser ignored it — `contained_by` maps a child to a *list* of parents, and the filter tested
+  that list for membership in a set of ids, which is false for every list. The reachable total at
+  the recommended budget drops from 61.7T raw to 55.4T. Correction X28.
+- **Provenance is declared where the figure is made, not one block up.** The lifecycle block marked
+  all seven of its fields `estimated` to cover the one that is a sum over catalogue sizes, so
+  "4 of 24 post-training datasets state a size" — a count — rendered under the same hedge as a
+  projection. It now declares `measured` and the sum carries its own mark inline; the orphan-tier
+  block keeps `estimated` for its costs and states its match count as measured. Correction X27.
+- **Nine dataset-relationship notes had lost a space at a line seam**, rendering `notcollected`,
+  `Englishand` and `v2,not` in the hover callouts.
+
 - **Machine translation was being counted as natural Indian text.** Sangraha ships 251B tokens of
   which 64B are verified human-origin; the rest is roughly 90B machine-translated from Wikimedia and
   72B romanised transliteration. The catalogue card records that split and the budget used the

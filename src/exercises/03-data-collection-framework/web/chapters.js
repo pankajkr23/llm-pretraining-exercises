@@ -146,24 +146,17 @@ const table = (headers, rows, numeric = []) => {
 };
 
 /**
- * What each chapter's third layer actually contains. "The arithmetic" twelve times tells a reader
+ * What each chapter's third layer actually contains. "The arithmetic" thirteen times tells a reader
  * nothing about which one to open; the heading is the only affordance they get, so it has to earn
  * the click.
+ *
+ * Only the chapters built by chapter() look themselves up here. The eleven explainers pass an
+ * arithmeticLabel of their own, which wins, so an entry for one of them is dead weight that drifts
+ * silently out of step with what actually renders.
  */
 const ARITHMETIC_LABELS = {
   target: 'The specification, in full',
-  budget: 'Where 16.8T comes from, and the arithmetic of re-reading',
-  growth: 'The growth method, stage by stage',
-  mix: 'How the ten shares were set',
   datasets: 'How committable is decided',
-  legal: 'What the law actually permits',
-  behaviour: 'The post-training budget, in full',
-  cleaning: 'All nine stages, and the rules that surprise people',
-  gate: 'How a fingerprint works, and what it cannot see',
-  tokenizer: 'The vocabulary sum, block by block',
-  evaluation: 'Which tests to trust, and which to discount',
-  cost: 'The cost arithmetic, and the fork it does not settle',
-  first: 'The queue, and what each letter unlocks',
 };
 
 /**
@@ -233,7 +226,7 @@ const chapter = ({ id, n, title, claim, body, caption, arithmetic }) => {
   return s;
 };
 
-// ─────────────────────────────────────────────────────────────── 1 · the target
+// ──────────────────────────────────────────────────────────────────── 1 · the target
 
 function chapterTarget(ctx) {
   const { data, recommended } = ctx;
@@ -283,7 +276,7 @@ function chapterTarget(ctx) {
   });
 }
 
-// ─────────────────────────────────────────────────────────── 2 · how much text
+// ───────────────────────────────────────────────────────────────── 2 · how much text
 
 function chapterBudget(ctx) {
   const { data, records, presets, recommended } = ctx;
@@ -591,9 +584,15 @@ function chapterGrowth(ctx) {
   const CONTAINED = data.sourcing.contained_by || {};
   const SURVIVAL = data.sourcing.dedup_survival_range || [0.2, 0.4];
   const sumOf = (rows) => rows.reduce((a, r) => a + (sizeValue(r)?.value || 0), 0);
+  /* Drop any dataset whose containing parent is also in the sum — its tokens are already in that
+   * parent's figure. `contained_by` maps a child to a *list* of parents, because a dataset can sit
+   * inside more than one; this used to test the list itself for membership in a set of ids, which
+   * is false for every list there has ever been, so the subtraction silently never fired and
+   * Nemotron-CC v1's 6.30T was counted twice — once alone, once inside v2. Any one parent being
+   * present is enough. */
   const dropContained = (rows) => {
     const present = new Set(rows.map((r) => r.d.id));
-    return rows.filter((r) => !present.has(CONTAINED[r.d.id]));
+    return rows.filter((r) => !(CONTAINED[r.d.id] || []).some((parent) => present.has(parent)));
   };
   const reachableFor = (st) => sumOf(dropContained([...admits(st), ...awaits(st)]));
   /** What clears every bar today, as a share of the stage's budget — the no-permission-needed half. */
@@ -834,7 +833,7 @@ function chapterGrowth(ctx) {
   });
 }
 
-// ───────────────────────────────────────────────────────────── 4 · what goes in
+// ────────────────────────────────────────────────────────────────── 4 · what goes in
 
 function chapterMix(ctx) {
   const { data, presets, recommended } = ctx;
@@ -1036,7 +1035,7 @@ function chapterMix(ctx) {
 }
 
 
-// ───────────────────────────────────────────── 4 · which datasets (pre-training)
+// ───────────────────────────────────────────────── 5 · which datasets (pre-training)
 
 /** COMMIT / ASK / MEASURE / EXCLUDED — the action column, and the whole point of the chapter. */
 const ACTIONS = {
@@ -1267,7 +1266,7 @@ function chapterDatasets(ctx) {
   });
 }
 
-// ───────────────────────────────────────────────── 5 · what we may legally use
+// ─────────────────────────────────────────────────────── 6 · what we may legally use
 
 function chapterLegal(ctx) {
   const { data } = ctx;
@@ -1381,7 +1380,7 @@ function chapterLegal(ctx) {
   });
 }
 
-// ────────────────────────────────────────────────────────── 6 · post-training
+// ───────────────────────────────────────────────────────────────── 9 · post-training
 
 function chapterPostTraining(ctx) {
   const { data, records } = ctx;
@@ -1523,7 +1522,7 @@ function chapterPostTraining(ctx) {
 }
 
 
-// ─────────────────────────────────────────────────────────── 7 · how we clean it
+// ─────────────────────────────────────────────────────────────── 7 · how we clean it
 
 function chapterCleaning(ctx) {
   const { records } = ctx;
@@ -1669,7 +1668,7 @@ function chapterCleaning(ctx) {
   });
 }
 
-// ──────────────────────────────────────────── 8 · keeping the exam out
+// ────────────────────────────────────────────────────────── 8 · keeping the exam out
 
 function chapterGate(ctx) {
   const { data } = ctx;
@@ -1829,7 +1828,7 @@ function chapterGate(ctx) {
 }
 
 
-// ────────────────────────────────────────────────────── 9 · how we tokenise it
+// ─────────────────────────────────────────────────────────── 10 · how we tokenise it
 
 function chapterTokenizer(ctx) {
   const { data, records, nameOf } = ctx;
@@ -2015,7 +2014,7 @@ function chapterTokenizer(ctx) {
   });
 }
 
-// ─────────────────────────────────────────── 10 · how we would know it worked
+// ────────────────────────────────────────────────── 11 · how we would know it worked
 
 function chapterEvaluation(ctx) {
   const { data, records, recommended } = ctx;
@@ -2157,7 +2156,7 @@ function chapterEvaluation(ctx) {
 }
 
 
-// ──────────────────────────────────────── 11 · what it costs, and whether to build
+// ────────────────────────────────────────── 12 · what it costs, and whether to build
 
 function chapterCost(ctx) {
   const { data, records, recommended } = ctx;
@@ -2275,7 +2274,7 @@ function chapterCost(ctx) {
   });
 }
 
-// ────────────────────────────────────────────────── 12 · what we would do first
+// ─────────────────────────────────────────────────────── 13 · what we would do first
 
 function chapterFirst(ctx) {
   const { data, records, byId, recommended } = ctx;
@@ -2552,7 +2551,7 @@ function chapterAppendix(ctx) {
    *
    * What the catalogue actually contains is a set problem. Four things can block a dataset —
    * evidence, licence, size, existence — and the interesting fact is which combinations occur and
-   * what each is worth. Resolving licences alone takes the corpus from 6.57T to 61.17T, because
+   * what each is worth. Resolving licences alone moves the reachable total by tens of trillions raw, because
    * four datasets are blocked on nothing else and hold 54.6T between them. That is the page's
    * whole thesis, and it was rendered as grey squares.
    *
@@ -2886,7 +2885,7 @@ function chapterAppendix(ctx) {
   ));
 
   /* The whole 5 x 22 matrix, not one tokenizer's column. It is the only place on the page where a
-   * reader can check the ranking chapter 9 asserts against every language it was computed from. */
+   * reader can check the ranking the tokenizer chapter asserts against every language it came from. */
   {
     const fr = records.fertility || {};
     const byTok = fr.by_tokenizer || {};
@@ -2945,7 +2944,7 @@ export function buildPage(data, records) {
     data,
     records,
     presets,
-    /* 15T is the recommended budget and the default everywhere. The site it replaces opened on 5T
+    /* The recommended budget is the default everywhere. The site it replaces opened on 5T
      * — the rung buildable today — which answers a different question from the one asked. */
     recommended: presets.find((p) => p.recommended) || presets[2],
     nameOf: new Map((records.languages || []).map((l) => [l.code, l.name])),
@@ -3104,7 +3103,7 @@ function fillLede(data) {
   });
 }
 
-/* What each chapter answers, in one line. A contents list of thirteen titles tells a reader the
+/* What each chapter answers, in one line. A contents list of bare titles tells a reader the
  * order; it does not tell them which one holds the thing they came for. */
 const NAV_ANSWERS = {
   target: 'a dense 40B seed, and the one fact everything else follows from',

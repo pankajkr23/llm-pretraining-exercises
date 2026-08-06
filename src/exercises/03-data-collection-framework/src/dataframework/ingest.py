@@ -261,7 +261,7 @@ RELATIONSHIPS: dict[str, dict[str, Any]] = {
         "note": "The educational slice of FinePDFs, not an addition to it.",
         "source": (
             "HuggingFaceFW/finepdfs-edu: '350B+ tokens of educational PDFs filtered from the "
-            "FinePDFs"
+            "FinePDFs "
             "dataset'"
         ),
     },
@@ -282,8 +282,7 @@ RELATIONSHIPS: dict[str, dict[str, Any]] = {
         "parents": ["ENG-08"],
         "note": (
             "Genuinely additive, unlike the v1/v2 pair — its publisher says to use it alongside "
-            "v2,"
-            "not instead of it."
+            "v2, not instead of it."
         ),
         "source": (
             "nvidia/Nemotron-CC-v2.1: '2.5T new tokens ... to be used in conjunction with the "
@@ -295,7 +294,7 @@ RELATIONSHIPS: dict[str, dict[str, Any]] = {
         "parents": ["Common Crawl"],
         "note": (
             "96 Common Crawl dumps, summer 2013 to April 2024, HTML pages. Deduplicated per "
-            "snapshot"
+            "snapshot "
             "rather than globally, by the authors' own ablation, so it carries cross-snapshot "
             "duplicates of its own."
         ),
@@ -306,7 +305,7 @@ RELATIONSHIPS: dict[str, dict[str, Any]] = {
         "parents": ["Common Crawl"],
         "note": (
             "106 Common Crawl dumps, 2013 to February 2025 — the same crawls as FineWeb, but the "
-            "PDFs"
+            "PDFs "
             "in them rather than the HTML. A PDF and a web page are different documents, so the "
             "overlap with the HTML corpora is far smaller than the shared source suggests."
         ),
@@ -317,13 +316,11 @@ RELATIONSHIPS: dict[str, dict[str, Any]] = {
         "parents": ["Common Crawl"],
         "note": (
             "Common Crawl, with synthetic rephrasing applied to part of it — so some of this is "
-            "not"
-            "collected text at all."
+            "not collected text at all."
         ),
         "source": (
             "nvidia/Nemotron-CC-v2: 'synthetic rephrasing using Qwen3-30B-A3B, filtered for "
-            "English"
-            "and globally deduplicated'"
+            "English and globally deduplicated'"
         ),
     },
     "MUL-03": {
@@ -332,7 +329,7 @@ RELATIONSHIPS: dict[str, dict[str, Any]] = {
         "note": (
             "7.2 petabytes of raw crawl: 45% Common Crawl, 33% Internet Archive, 22% ArchiveBot, "
             "2012-2024. Only the Common Crawl portion overlaps the English corpora here, and "
-            "English"
+            "English "
             "is one of three languages it deduplicates per-crawl rather than globally."
         ),
         "source": "arXiv:2511.01066, HPLT 3.0",
@@ -342,7 +339,7 @@ RELATIONSHIPS: dict[str, dict[str, Any]] = {
         "parents": ["Common Crawl"],
         "note": (
             "Not built from the crawl directly but from two corpora that were: mC4 v3.1.0 and "
-            "every"
+            "every "
             "OSCAR release to 23.01. Two parents, both downstream of the same crawl."
         ),
         "source": "uonlp/CulturaX",
@@ -367,7 +364,7 @@ RELATIONSHIPS: dict[str, dict[str, Any]] = {
         "parents": [],
         "note": (
             "Source code from Software Heritage, not a web crawl. It does not overlap any of the "
-            "web"
+            "web "
             "corpora here."
         ),
         "source": "BigCode, The Stack v2",
