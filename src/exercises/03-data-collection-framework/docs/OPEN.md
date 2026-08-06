@@ -4,7 +4,7 @@
 
 **Measured, with a run id behind every number**
 - Tokenizer fertility: 22 languages × 5 tokenizers × 2 registers, on IN22-Gen and IN22-Conv.
-- Contamination coverage: MILU's validation split indexed, 411,442 shingles.
+- Contamination coverage: MILU's validation split indexed, 126,044 shingles over 8,923 items.
 - Everything counted from the catalogue: grades, licences, caveats, coverage, confidence bands.
 
 **Modelled — a shape, not an observation**
@@ -53,7 +53,7 @@ There is likewise no "frozen training corpus" to assemble. The 8-tier mix is a p
 ## Open — needs a decision
 
 1. ~~**B3 · Raw benchmark items for `data/benchmarks/`.**~~ **CLOSED.** MILU's validation split is
-   indexed — 411,442 shingles from 8,923 items across 11 languages — so contamination coverage is
+   indexed — 126,044 shingles from 8,923 items across 11 languages — so contamination coverage is
    `partial` rather than `none`. `dataframework.fetch_benchmarks` reproduces it. Original wording:
 
    **B3 · Raw benchmark items for `data/benchmarks/`.** Do we supply real benchmark items to build
@@ -69,6 +69,28 @@ There is likewise no "frozen training corpus" to assemble. The 8-tier mix is a p
    - (c) **upcycle to MoE** (~40B total / ~5B active).
    Stated resolution: a **head-to-head at ~2B scale on identical data**, judged on Indic + code
    held-out loss. State the fork; don't pretend it's obvious.
+
+3. **Four domains the curriculum names and the catalogue cannot supply.** Adding a modality and
+   domain lens over the mix (`dataframework.modalities`) made a gap visible that the tier view could
+   not show. Of 16 domains, **agriculture and health have no catalogued dataset at all** — no row so
+   much as mentions either — and **social and qa exist only as an unseparated slice of a web crawl**,
+   which means they can be trained on but not weighted, measured, or held out of an evaluation. For
+   an India-first model agriculture is the uncomfortable one, being the sector most of the country
+   works in. These are acquisitions, not selections, and nobody has decided whether to make them.
+   — *Default if unanswered: ship the gap named on the page, which is what it does now.*
+
+4. **The post-training budget cannot be checked against supply.** All 55 post-training datasets are
+   counted in tasks, trajectories, instances or audio hours, because that is what they are; **none
+   states a size in tokens**. So the post-training token budget in `DECISIONS.md` is a proposal that
+   no catalogue figure can confirm or contradict, unlike the pre-training one. Converting them would
+   mean tokenising samples of each — real work, not a lookup. — *Default if unanswered: the page says
+   plainly that the check cannot be made.*
+
+5. **`agentic_traces` has no agreed format.** The modality specification carries
+   `owner_team: Team 17` and `status: format_pending`, and both are shipped verbatim rather than
+   smoothed over: a modality nobody has agreed a format for cannot be collected, whatever share the
+   mix allocates it. This is Team 17's decision, not this framework's, and it blocks the tier that
+   the frontier stage leans on hardest.
 
 ## Closed by policy — technical corpora not pursued
 

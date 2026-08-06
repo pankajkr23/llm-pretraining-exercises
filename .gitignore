@@ -229,8 +229,9 @@ artifacts/
 CLAUDE.local.md
 # Claude Code local session state (worktrees, jobs, memory, scratch) — never shared
 .claude/
-# Local planning scratchpad — not tracked
+# Local planning scratchpads — not tracked
 TODO.md
+NEW_TODO.md
 # macOS finder metadata
 .DS_Store
 # Vercel: assembled static output (deploy/vercel/build.sh) + local state

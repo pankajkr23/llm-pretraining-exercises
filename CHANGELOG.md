@@ -10,6 +10,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [0.2.0] - 2026-08-06
+
+Exercise 03 — the data-collection framework: a graded catalogue of 145 datasets behind one
+interactive page that works out what an India-first 40B model would actually train on, and finds
+that four datasets are committable today.
+
 ### Added
 
 - **CI now renders the page, not just parses it.** Every check in the pipeline read the bundle or

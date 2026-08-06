@@ -1,6 +1,6 @@
 # Docs — read me first
 
-You are building **exercise 03** in `pankajkr23/llm-pretraining-exercises`: a three-page zero-dependency static site plus a Python pipeline, deployed at `/03-data-collection-framework/`.
+You are building **exercise 03** in `pankajkr23/llm-pretraining-exercises`: a one-page zero-dependency static site plus a Python pipeline, deployed at `/03-data-collection-framework/`.
 
 ## Read in this order
 
@@ -63,4 +63,4 @@ The full set of open forks and unmeasured unknowns is tracked in [`OPEN.md`](OPE
 
 ## The output
 
-The site is **one page** (`web/index.html` + `web/chapters.js`), twelve chapters, one per reader question. Printing still works — every widget is forced to its end state and the closed detail blocks open — but the page is designed for screen rather than to a page count, and `report/`/`reasoning/` are redirect stubs from the earlier two-page version.
+The site is **one page** (`web/index.html` + `web/chapters.js`), thirteen chapters plus an appendix, one per reader question. Printing still works — every widget is forced to its end state and the closed detail blocks open — but the page is designed for screen rather than to a page count, and `report/`/`reasoning/` are redirect stubs from the earlier two-page version.
