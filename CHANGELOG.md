@@ -391,6 +391,30 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The mix now says what each token is *for*, and whether we can actually source it.** Tiers named
+  a provenance and `kind` split them into skills and knowledge, but nothing said what a token
+  *teaches* or what it is *about* — so the growth ladder described four stages without saying what
+  each one teaches, and "145 datasets" could not be asked whether it covers news, or literature, or
+  agriculture. Two lenses added over the same tokens, deliberately not merged with the tier: a
+  **modality** (what kind of thinking) and a **domain** (what it is about). The seven modalities and
+  the code language list are the specification's own, carried verbatim — including that
+  `agentic_traces` is owned by Team 17 with `format_pending`, because a modality nobody has agreed a
+  format for cannot be collected and the plan should say whose decision that is. Each stage of the
+  ladder shows the modality mix it is taught in, in the order a person is taught: language, then the
+  world, then symbols, then the things that need all three. **General text falls 62% → 29% across
+  the four stages while code rises 6% → 26%.**
+- **And the coverage register, which is the counted half.** Of 16 domains the curriculum names, 12
+  have a dataset that isolates them; **social and qa exist only as an unseparated slice of a web
+  crawl** — trainable, but impossible to weight, measure or hold out; and **agriculture and health
+  have nothing in the catalogue at all**, which for an India-first model makes agriculture the
+  uncomfortable one, being the sector most of the country works in. Counting only what could be
+  committed today, **2 of the 16 domains have even one dataset clear of every blocker** — the
+  curriculum is not short of candidates, it is short of permission. Every row ships the pattern it
+  was matched by, so the count is checkable rather than asserted; the tier weights and curriculum
+  emphases are typed `estimated` and named as a proposal, because nobody has classified a crawl by
+  modality and a plan dressed as a measurement is the exact failure this register exists to catch.
+  Correction X30.
+
 - **The Dataset Card shows its sources again.** The card kept the five gates through the one-page
   rebuild and dropped the facts they were judging, so a reader could see a verdict and not reach the
   evidence — the links were in the catalogue the whole time (79 of the 145 rows carry one) and had

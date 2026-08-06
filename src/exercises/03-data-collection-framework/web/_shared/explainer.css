@@ -406,6 +406,41 @@ details.arithmetic > summary:focus-visible { outline: 2px solid var(--accent); o
   color: var(--faint);
   margin-bottom: 8px;
 }
+/* The curriculum strip: what a stage teaches, before what it would read to do it.
+   One hue per modality, ordered the way the curriculum introduces them — language and knowledge in
+   the accent, then symbols, then the procedural things — so the shift across the four stages reads
+   as a progression rather than as four unrelated pie charts. */
+.modintro { display: flex; gap: 10px; align-items: baseline; margin: 0 0 8px; }
+.modintro-l { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
+.modintro-v { font-family: var(--mono); font-size: 11px; color: var(--ink); }
+.modstrip { display: flex; height: 9px; border-radius: 5px; overflow: hidden; gap: 1px; margin-bottom: 7px; }
+.modseg { min-width: 2px; background: var(--faint); }
+.modseg[data-modality='general_text'] { background: var(--accent); }
+.modseg[data-modality='structured_knowledge'] { background: color-mix(in srgb, var(--accent) 55%, var(--panel)); }
+.modseg[data-modality='math'] { background: var(--grade-b); }
+.modseg[data-modality='code'] { background: var(--grade-a); }
+.modseg[data-modality='research_papers'] { background: color-mix(in srgb, var(--grade-b) 55%, var(--panel)); }
+.modseg[data-modality='cot_reasoning'] { background: color-mix(in srgb, var(--grade-a) 55%, var(--panel)); }
+.modseg[data-modality='agentic_traces'] { background: var(--ink); }
+.modkey { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 8px; }
+.modkey-i { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--muted); }
+.modkey-d { width: 8px; height: 8px; border-radius: 2px; flex: none; background: var(--faint); }
+.modkey-d[data-modality='general_text'] { background: var(--accent); }
+.modkey-d[data-modality='structured_knowledge'] { background: color-mix(in srgb, var(--accent) 55%, var(--panel)); }
+.modkey-d[data-modality='math'] { background: var(--grade-b); }
+.modkey-d[data-modality='code'] { background: var(--grade-a); }
+.modkey-d[data-modality='research_papers'] { background: color-mix(in srgb, var(--grade-b) 55%, var(--panel)); }
+.modkey-d[data-modality='cot_reasoning'] { background: color-mix(in srgb, var(--grade-a) 55%, var(--panel)); }
+.modkey-d[data-modality='agentic_traces'] { background: var(--ink); }
+.stagereg-note { font-size: 11.5px; line-height: 1.55; color: var(--muted); margin: 0 0 14px; }
+
+/* Coverage status. Only the absent state is coloured as a problem: a domain a crawl carries is a
+   measurement gap, not a sourcing one, and colouring the two alike would overstate the second. */
+.covstat { font-family: var(--mono); font-size: 10.5px; }
+.covstat[data-status='isolated'] { color: var(--grade-a); }
+.covstat[data-status='inside-a-crawl'] { color: var(--grade-b); }
+.covstat[data-status='absent'] { color: var(--grade-x); }
+
 .stagereg-h {
   display: flex;
   align-items: baseline;

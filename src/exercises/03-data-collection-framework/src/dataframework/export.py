@@ -35,11 +35,17 @@ from .mix import (
     MIN_TIER_SHARE,
     WORTH_CEILING_MULTIPLE,
 )
+from .modalities import (
+    MODALITIES,
+    curriculum_shares,
+    domain_coverage,
+    modality_coverage,
+)
 from .models import Value
 from .orphans import find_orphans
 from .run_cost import price_run
 from .shingles import write_index
-from .sourcing import build_lifecycle, build_plan
+from .sourcing import blockers, build_lifecycle, build_plan, tier_of
 from .vocab_sweep import summarise, sweep
 from .vocab_trade import price_vocab_trade
 
@@ -381,6 +387,12 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
     # TIER_SHAPE, which still carries it. Passing the stripped mix reported all eight tiers as
     # orphans, which is the answer you get when you ask a question with the evidence deleted.
     # Computed here rather than inline so the block can also report how many tiers were checked.
+    # What each part of the corpus is meant to teach, in what order, and whether the catalogue can
+    # actually supply it. The last of those three is the one worth shipping: the tier shares say
+    # what the mix should contain, and this says what could be pointed at to fill it.
+    index_entries = [_dataset_index_entry(record) for record in datasets]
+    committable_ids = {d["id"] for d in index_entries if tier_of(d) and not blockers(d)}
+
     mixture_for_orphans = build_all(records.get("milestones", []))[
         next((i for i, p in enumerate(presets) if p.get("recommended")), len(presets) // 2)
     ]["mix"]
@@ -614,6 +626,31 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
                 "tiers_without_a_detector": len(orphan_tiers),
             },
             "tiers": orphan_tiers,
+        },
+        # The curriculum, and the honest counterweight to it. The shares are a design proposal —
+        # nobody has classified a crawl by modality — so the block says `estimated` and names
+        # itself as the proposal rather than dressing a plan up as a measurement. The coverage
+        # counts underneath it are exact, and say so on their own terms.
+        "modalities": {
+            "provenance": "estimated",
+            "source": (
+                "modality purposes and the code language list are the specification's own; the "
+                "tier-to-modality weights and the curriculum emphases are this framework's "
+                "proposal, not a measurement of any corpus"
+            ),
+            "spec": [{"modality": k, **v} for k, v in MODALITIES.items()],
+            "curriculum": curriculum_shares(mixture_for_orphans["tiers"]),
+            "by_modality": modality_coverage(index_entries, committable_ids),
+            "coverage": {
+                # Exact: these count catalogue rows matching a stated pattern, and the pattern
+                # ships beside the count so the match can be checked rather than trusted.
+                "provenance": "measured",
+                "source": (
+                    "counted from the catalogue by the domain patterns in "
+                    "dataframework.modalities, each shipped beside its own count"
+                ),
+                "domains": domain_coverage(index_entries, committable_ids),
+            },
         },
         "priors": [
             {

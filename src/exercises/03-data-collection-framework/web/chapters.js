@@ -611,6 +611,53 @@ function chapterGrowth(ctx) {
    * @param {object} st - the stage.
    * @returns {HTMLElement}
    */
+  /* Domain coverage: what the curriculum asks for against what the catalogue holds. Three states,
+   * because "a crawl contains it", "a dataset isolates it" and "nothing supplies it" are three
+   * different problems with three different fixes — and collapsing them into have/have-not is how
+   * a web crawl ends up standing in for every domain by default. */
+  const MOD = data.modalities || {};
+  const COV = ((MOD.coverage || {}).domains) || [];
+  const domainCount = COV.length;
+  const isolatedCount = COV.filter((d) => d.status === 'isolated').length;
+  const crawlCount = COV.filter((d) => d.status === 'inside-a-crawl').length;
+  const absentCount = COV.filter((d) => d.status === 'absent').length;
+  const clearDomains = COV.filter((d) => d.committable > 0).length;
+
+  /* Named, not counted. "Two domains are missing" is a statistic; "nothing in the catalogue covers
+   * agriculture" is a decision somebody has to make. */
+  const absentNames = COV.filter((d) => d.status === 'absent').map((d) => d.domain);
+  const crawlNames = COV.filter((d) => d.status === 'inside-a-crawl').map((d) => d.domain);
+  const gapSentence = [
+    absentNames.length
+      ? `Nothing in the catalogue covers ${absentNames.join(' or ')} — no row mentions either, so these are acquisitions rather than selections, and for an India-first model agriculture is the more uncomfortable of the two: it is the sector most of the country works in.`
+      : '',
+    crawlNames.length
+      ? `A crawl carries ${crawlNames.join(' and ')}, but no catalogued dataset isolates them, so they can be trained on and not weighted, measured or held out of an evaluation.`
+      : '',
+  ].filter(Boolean).join(' ');
+
+  /** The coverage table, one row per domain, with the pattern that produced its count. */
+  function coverageRegister() {
+    const LABEL = { isolated: 'a dataset isolates it', 'inside-a-crawl': 'only inside a crawl', absent: 'nothing covers it' };
+    return table(
+      ['domain', 'teaches', 'status', 'rows', 'clear today', 'example'],
+      COV.map((d) => {
+        const st = $('span', 'covstat', LABEL[d.status] || d.status);
+        st.setAttribute('data-status', d.status);
+        st.title = `matched on /${d.pattern}/i`;
+        return [
+          d.domain,
+          d.modality.replace(/_/g, ' '),
+          st,
+          String(d.datasets),
+          String(d.committable),
+          d.examples.length ? d.examples[0] : '—',
+        ];
+      }),
+      [3, 4],
+    );
+  }
+
   function stageRegister(st) {
     const wrap = $('div', 'stagereg');
     /* Each band is priced against this stage's own budget. A list of datasets answers "what could
@@ -651,6 +698,45 @@ function chapterGrowth(ctx) {
         wrap.append(line);
       });
     };
+    /* What this stage is trying to teach, before what it would read to do it. A curriculum is a
+     * sequence of firsts — language, then the world, then symbols, then the things that need all
+     * three — and the percentages are a consequence of that order rather than the statement of it.
+     *
+     * These shares are a proposal. Nobody has classified a crawl by modality, so this says what
+     * the mix is *intended* to break down into; the coverage register below is the counterweight,
+     * and it is counted rather than proposed. */
+    const cur = ((data.modalities || {}).curriculum || []).find((c) => c.stage === st.id);
+    if (cur) {
+      wrap.append($('div', 'stagereg-cap', `What this stage teaches — ${cur.teaches}`));
+      const intro = $('div', 'modintro');
+      intro.append($('span', 'modintro-l', 'introduces'), $('span', 'modintro-v', cur.introduces.join(' · ')));
+      wrap.append(intro);
+      const strip = $('div', 'modstrip');
+      Object.entries(cur.shares)
+        .sort((a, b) => b[1] - a[1])
+        .filter(([, v]) => v >= 0.01)
+        .forEach(([name, share]) => {
+          const seg = $('span', 'modseg');
+          seg.style.flexGrow = String(share);
+          seg.setAttribute('data-modality', name);
+          seg.title = `${name} — ${pct(share)} of this stage`;
+          strip.append(seg);
+        });
+      wrap.append(strip);
+      const key = $('div', 'modkey');
+      Object.entries(cur.shares)
+        .sort((a, b) => b[1] - a[1])
+        .filter(([, v]) => v >= 0.05)
+        .forEach(([name, share]) => {
+          const k = $('span', 'modkey-i');
+          const dot = $('span', 'modkey-d');
+          dot.setAttribute('data-modality', name);
+          k.append(dot, text(`${name.replace(/_/g, ' ')} ${pct(share)}`));
+          key.append(k);
+        });
+      wrap.append(key, $('p', 'stagereg-note', cur.note));
+    }
+
     wrap.append($('div', 'stagereg-cap', 'What this stage would read, named'));
     group('Clear today', admits(st), 'ok');
     group('One letter away', awaits(st), 'wait');
@@ -723,6 +809,10 @@ function chapterGrowth(ctx) {
       para(b('What a data plan decides, stage by stage.'), ' ', g.config_note.split('\n\n')[0]),
       para(b('Only one of these four budgets is derived, and it is worth being blunt about which.'), ' ', g.derivation.method, ' For the 40B that reads: ', g.stages[2].basis.how, ' ', g.stages[2].basis.checks, ' ', b('The 20% is the one free parameter'), ' — ', g.stages[2].basis.assumption),
       para(b('Why the same method cannot produce the other three.'), ' ', g.derivation.why_it_does_not_generalise, ' So ', b('3T, 8T and 30T are analogies, not derivations'), '. ', g.stages[0].basis.why_not_derived, ' ', g.stages[1].basis.why_not_derived, ' ', g.stages[3].basis.why_not_derived),
+      para(b('What the curriculum asks for, and what the catalogue can actually point at.'), ' The mix is described three ways, and they answer different questions: a ', b('tier'), ' says where text came from and who may use it, a ', b('modality'), ' says what kind of thinking it teaches, and a ', b('domain'), ' says what it is about. The catalogue is organised by the first, and a curriculum is written in the other two — so "145 datasets" and "we can source a curriculum" are not the same claim. Of ', domainCount, ' domains the curriculum names, ', isolatedCount, ' have at least one dataset that isolates them; ', crawlCount, ' exist only as an unseparated slice of a web crawl, which means they cannot be weighted, measured or held out; and ', absentCount, ' have nothing in the catalogue at all. The register below names each one, with the pattern it was matched by so the count can be checked rather than taken on trust.'),
+      para(b('The gaps that would need acquisition.'), ' ', gapSentence),
+      para(b('And the sharper number underneath all of it.'), ' Counting only what could be committed today rather than what is catalogued, ', clearDomains, ' of the ', domainCount, ' domains have even one dataset clear of every blocker. The curriculum is not short of candidates; it is short of permission, which is the same finding this page reaches from every other direction.'),
+      coverageRegister(),
       para(b('What an analogy proves, which is less than it looks.'), ' ', g.analogy_note.what_an_analogy_is, ' ', g.analogy_note.why_keep_them),
       para(b('And what supply says, which is measured here.'), ' ', g.analogy_note.what_supply_says_instead, ' Stage by stage, against each budget: ', stages.map((x) => `${x.name} needs ${fmt(x.corpus, 'count')} and can reach ${fmt(reachableFor(x), 'count')}`).join('; '), '.'),
       para(b('Read together, the two halves say something neither says alone.'), ' Three of the four budgets are comfortably reachable — but only once the unanswered licences are answered, because committable text alone covers ', `${clearPct(stages[1])}`, ' of the second stage and ', `${clearPct(stages[2])}`, ' of the third. The seed is the exception and the exception is instructive: it forbids web text, and without web text the catalogue reaches ', b(`${clearPct(stages[0])} of its budget`), '. The binding constraint on this ladder was never the size of the numbers. It is the web-data policy and ', `${awaits(stages[1]).length}`, ' unanswered emails.'),
