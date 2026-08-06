@@ -57,6 +57,12 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   asserted beside it. A stage now summarises itself as its window size and its corpus rather than
   its parameter count: what to read, and in how long a window, is the decision being made — the
   parameter count follows from it.
+- **Each growth stage names the datasets it would read.** Saying a stage "admits 4 datasets carrying
+  6.39T" is a count standing in for a shopping list. Every stage now prints the list, in two groups,
+  because they are blocked by different things: clear today (3 datasets and 85.3B at the seed, which
+  forbids web text; 4 and 6.39T after it) and one letter away — blocked on an unanswered licence and
+  nothing else, which is four datasets holding 54.6T. The Indic sizes quoted are the verified counts
+  rather than the announced ones, so a stage is never planned against 187B that nobody has checked.
 - **One content width, with prose held to a reading measure inside it.** The page used to cap
   everything at 860px, which cramped a seven-column dataset table and a two-column figure while a
   thousand pixels sat empty either side. The container is now a single 1240px and never moves, so

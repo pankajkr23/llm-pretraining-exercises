@@ -368,7 +368,6 @@ function chapterGrowth(ctx) {
 
   const bars = $('div', 'tierbars');
   const maxCorpus = Math.max(...stages.map((x) => x.corpus));
-  const maxParams = Math.max(...stages.map((x) => x.params_total));
 
   /* Which catalogued datasets each stage's own admission rule allows. The seed forbids web text, so
    * its list is computed rather than asserted — and it comes to three datasets, which is the point. */
@@ -384,6 +383,62 @@ function chapterGrowth(ctx) {
   const admits = (st) => (st.config.web_data === 'none'
     ? committable.filter((r) => !WEB_TIERS.has(r.tier))
     : committable);
+
+  /* Blocked on an unanswered licence and nothing else — somebody else's signature, not our unfinished
+   * work. Held apart from the committable pool rather than added to it, because a stage cannot be
+   * planned against text nobody has been given permission to read. */
+  const licenceOnly = data.datasets
+    .map((x) => ({ d: x, tier: tierOf(x) }))
+    .filter((r) => r.tier && blockersOf(r.d).join() === 'licence');
+  const awaits = (st) => (st.config.web_data === 'none'
+    ? licenceOnly.filter((r) => !WEB_TIERS.has(r.tier))
+    : licenceOnly);
+
+  /* The size to quote for a dataset. For the Indic tiers that is the verified count and not the
+   * headline — Sangraha announces 251B and 64B of it has been confirmed, and a stage planned
+   * against the announcement is a stage planned against 187B of nobody-has-checked. */
+  const sizeValue = (r) => (NATURAL_T.has(r.tier) && r.d.size_verified ? r.d.size_verified : r.d.size_tokens);
+
+  /**
+   * Name the datasets a stage would actually read.
+   *
+   * The chapter could say a stage "admits 4 datasets carrying 6.39T" without ever saying which
+   * four, which is a count standing in for a shopping list. Two groups, because they are blocked by
+   * different things and only one of them is anybody else's decision.
+   *
+   * @param {object} st - the stage.
+   * @returns {HTMLElement}
+   */
+  function stageRegister(st) {
+    const wrap = $('div', 'stagereg');
+    const group = (label, rows, cls) => {
+      const sorted = [...rows].sort((a, b) => (sizeValue(b)?.value || 0) - (sizeValue(a)?.value || 0));
+      /* The heading counts and sums the very rows below it, so the two cannot drift apart. */
+      const total = sorted.reduce((a, r) => a + (sizeValue(r)?.value || 0), 0);
+      const head = $('div', `stagereg-h ${cls}`);
+      head.append(
+        $('span', 'stagereg-lab', label),
+        $('span', 'stagereg-sum', sorted.length
+          ? `${sorted.length} · ${fmt(total, 'count')}`
+          : 'none at this stage'),
+      );
+      wrap.append(head);
+      sorted.forEach((r) => {
+        const line = $('div', 'stagereg-r');
+        const size = sizeValue(r);
+        line.append($('span', 'stagereg-n', r.d.name), $('span', 'stagereg-t', r.tier));
+        const val = $('span', 'stagereg-v');
+        if (size) val.append(renderNumber(size, { unit: false }));
+        else val.textContent = '—';
+        line.append(val);
+        wrap.append(line);
+      });
+    };
+    wrap.append($('div', 'stagereg-cap', 'What this stage would read, named'));
+    group('Clear today', admits(st), 'ok');
+    group('One letter away', awaits(st), 'wait');
+    return wrap;
+  }
 
   return buildExplainer({
     n: 3,
@@ -464,14 +519,16 @@ function chapterGrowth(ctx) {
         return r;
       };
       const need = st.corpus * 0.08 / 4;
+      /* Three bars, all of them text. The stored- and active-parameter bars used to lead here and
+       * have been dropped: they measure the model, and every question this chapter asks is about
+       * the corpus. The ×67 growth in parameters is still the point being made — it is made in the
+       * pill, where it can sit beside the ×1 it is being contrasted with. */
       bars.append(
-        row('stored params', st.params_total, maxParams, 'dim'),
-        row('active params', st.params_active, maxParams, 'natural'),
         row('corpus', st.corpus, maxCorpus, 'lane'),
         row('natural Indic needed', need, maxCorpus, need > committedNatural ? 'missing' : 'natural'),
         row('natural Indic we have', committedNatural, maxCorpus, 'synth'),
       );
-      api.extra.replaceChildren(bars);
+      api.extra.replaceChildren(bars, stageRegister(st));
 
       api.big({ value: need, unit: 'tokens', provenance: 'estimated', source: 'the mixture applied to this stage' });
       api.bigHit(need > committedNatural);
