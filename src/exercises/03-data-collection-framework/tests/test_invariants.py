@@ -622,6 +622,54 @@ def test_the_browser_and_the_pipeline_agree_about_what_blocks():
     assert not disagreed, f"{len(disagreed)} disagreement(s): {disagreed[:5]}"
 
 
+def test_the_browsers_containment_filter_actually_subtracts():
+    """X28's rule, run rather than read. Correction X28.
+
+    The bug was that `contained_by` maps a child to a *list* of parents and the filter tested that
+    list for membership in a set of ids, so it matched nothing and the subtraction never fired.
+    Two things made it survive: the bundle was correct throughout, so every guard watching the
+    producer passed; and it can only be seen on screen when a stage happens to show both halves of
+    a pair, which stopped being true once gating moved Nemotron-CC-v2 out of the band. So this
+    calls the browser's own function with the real containment map instead.
+    """
+    js = (WEB / "chapters.js").read_text(encoding="utf-8")
+    contained = _bundle()["sourcing"]["contained_by"]
+    assert contained, "no containment recorded, so this proves nothing"
+    child, parents = next(iter(contained.items()))
+
+    harness = (
+        js.replace("export function", "function").replace("export const", "const")
+        + "\nconst [map, child, parent] = JSON.parse(process.argv[2]);"
+        + "\nconst row = (id) => ({ d: { id } });"
+        + "\nconsole.log(JSON.stringify({"
+        # Parent present: the child must be dropped.
+        + "\n  together: withoutContained([row(child), row(parent)], map).map((r) => r.d.id),"
+        # Parent absent: the child must survive, or the sum loses tokens nothing else counts.
+        + "\n  alone: withoutContained([row(child)], map).map((r) => r.d.id),"
+        + "\n}));"
+    )
+    script = WEB / "_containment_harness.mjs"
+    script.write_text(harness, encoding="utf-8")
+    try:
+        out = subprocess.run(
+            ["node", str(script), json.dumps([contained, child, parents[0]])],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=True,
+        )
+    except FileNotFoundError:
+        pytest.skip("node is not available")
+    finally:
+        script.unlink(missing_ok=True)
+
+    result = json.loads(out.stdout)
+    assert result["together"] == [parents[0]], (
+        f"{child} survived beside its container {parents[0]} — it is being counted twice"
+    )
+    assert result["alone"] == [child], f"{child} was dropped with no container present"
+
+
 def test_the_browser_and_the_pipeline_agree_about_the_dedup_range():
     """The survival band is a constant in Python and a fallback literal in the browser.
 

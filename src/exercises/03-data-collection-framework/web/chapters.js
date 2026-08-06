@@ -582,16 +582,7 @@ function chapterGrowth(ctx) {
   const CONTAINED = data.sourcing.contained_by || {};
   const SURVIVAL = data.sourcing.dedup_survival_range || [0.2, 0.4];
   const sumOf = (rows) => rows.reduce((a, r) => a + (sizeValue(r)?.value || 0), 0);
-  /* Drop any dataset whose containing parent is also in the sum — its tokens are already in that
-   * parent's figure. `contained_by` maps a child to a *list* of parents, because a dataset can sit
-   * inside more than one; this used to test the list itself for membership in a set of ids, which
-   * is false for every list there has ever been, so the subtraction silently never fired and
-   * Nemotron-CC v1's 6.30T was counted twice — once alone, once inside v2. Any one parent being
-   * present is enough. */
-  const dropContained = (rows) => {
-    const present = new Set(rows.map((r) => r.d.id));
-    return rows.filter((r) => !(CONTAINED[r.d.id] || []).some((parent) => present.has(parent)));
-  };
+  const dropContained = (rows) => withoutContained(rows, CONTAINED);
   const reachableFor = (st) => sumOf(dropContained([...admits(st), ...awaits(st)]));
   /** What clears every bar today, as a share of the stage's budget — the no-permission-needed half. */
   const clearPct = (st) => {
@@ -1135,6 +1126,27 @@ const ACTIONS = {
   excluded: ['EXCLUDED', 'var(--grade-x)'],
   gap: ['DOES NOT EXIST', 'var(--grade-x)'],
 };
+
+/**
+ * Drop any dataset whose containing set is also in the sum — its tokens are already counted there.
+ *
+ * `contained_by` maps a child to a *list* of parents, because a dataset can sit inside more than
+ * one. This once tested that list for membership in a set of ids, which is false for every list
+ * there has ever been, so the subtraction silently never fired and Nemotron-CC v1's 6.30T was
+ * counted twice: once alone, and once inside v2. Any one parent being present is enough.
+ *
+ * At module scope so a test can call it. It lived inside the growth chapter, and the only way to
+ * exercise it was to find a stage showing both halves of a pair — which stopped being true the
+ * moment gating moved v2 out of the band, leaving the rule correct, load-bearing and unobservable.
+ *
+ * @param {Array<{d: {id: string}}>} rows
+ * @param {Record<string, string[]>} containedBy
+ * @returns {Array<{d: {id: string}}>}
+ */
+function withoutContained(rows, containedBy) {
+  const present = new Set(rows.map((r) => r.d.id));
+  return rows.filter((r) => !((containedBy || {})[r.d.id] || []).some((p) => present.has(p)));
+}
 
 /* Tiers whose whole purpose is text a human actually wrote — the mirror of NATURAL_TIERS in
  * sourcing.py. A machine translation of an English article is Indic-language text, and it is not

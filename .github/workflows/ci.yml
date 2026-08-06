@@ -27,6 +27,11 @@ jobs:
       - name: Unit tests
         run: uv run pytest -m "not integration"
 
+      # The rendering tests need a real browser. Cached by setup-uv's own cache key via the lock
+      # file, so this is a download on dependency changes rather than on every run.
+      - name: Install chromium (for the rendering tests)
+        run: uv run playwright install --with-deps chromium
+
       - name: Integration tests
         run: |
           uv run pytest -m integration || code=$?
