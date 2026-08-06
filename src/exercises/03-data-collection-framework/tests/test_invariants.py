@@ -76,6 +76,11 @@ def _bundle() -> dict:
     return json.loads((WEB / "data.json").read_text(encoding="utf-8"))
 
 
+def _reference() -> dict:
+    """The lazy half of the bundle: prose and registers the index does not carry."""
+    return json.loads((WEB / "records.json").read_text(encoding="utf-8"))
+
+
 def _built() -> bool:
     return (WEB / "data.json").exists() and CFG.catalog_file.exists()
 
@@ -522,11 +527,13 @@ def test_every_derivation_label_names_its_source_and_its_parents():
     second sits inside the first, and the page was inviting them to add the two. Correction X26.
     """
     kinds = {"contained_by", "additional_to", "shares_source", "independent", "unknown"}
-    labelled = [d for d in _bundle()["datasets"] if d.get("derivation")]
+    # The labels moved to records.json to keep the index under its budget; they are still one per
+    # dataset id, and the page reads them from there.
+    labelled = _reference()["derivations"]
     assert labelled, "no dataset carries a derivation label"
 
-    for entry in labelled:
-        der = entry["derivation"]
+    for ident, der in labelled.items():
+        entry = {"id": ident}
         assert der["kind"] in kinds, f"{entry['id']}: unknown kind {der['kind']}"
         assert der.get("source"), f"{entry['id']}: a relationship with no source is an assertion"
         assert der.get("note"), f"{entry['id']}: no callout stating what is known"

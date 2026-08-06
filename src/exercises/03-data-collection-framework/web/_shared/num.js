@@ -57,6 +57,30 @@ export function formatValue(value, unit) {
   return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }
 
+/* Sources that repeat across the catalogue are stored once and referenced by index, because 145
+ * copies of one sentence cost a fifth of an index budget whose whole point is to paint fast. The
+ * table is set by the page at load; a figure carrying a string still resolves to itself, so a
+ * bundle built before the table existed renders identically. */
+let SOURCE_TABLE = [];
+
+/**
+ * Register the shared source table.
+ * @param {string[]} table
+ */
+export function setSourceTable(table) {
+  SOURCE_TABLE = Array.isArray(table) ? table : [];
+}
+
+/**
+ * A figure's source, whether it was stored inline or by reference.
+ * @param {string|number|undefined} source
+ * @returns {string}
+ */
+export function resolveSource(source) {
+  if (typeof source === 'number') return SOURCE_TABLE[source] || '';
+  return source || '';
+}
+
 /**
  * Describe how well a figure is known, for the tooltip.
  * @param {{provenance: string, source?: string}} value
@@ -67,7 +91,7 @@ export function describe(value) {
    * name the run that produced it is not evidence. That is the right thing to store and the wrong
    * thing to show: a reader hovering a number wants the instrument, not the build stamp. Both are
    * kept — the run is labelled rather than dropped. */
-  const raw = value.source || '';
+  const raw = resolveSource(value.source);
   const [instrument, run] = raw.includes('@') ? raw.split('@') : [raw, ''];
   const source = raw ? ` — ${instrument}${run ? ` (run ${run.slice(0, 8)}…)` : ''}` : '';
   if (value.provenance === 'measured') return `measured${source}`;

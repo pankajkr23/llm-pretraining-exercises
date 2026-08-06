@@ -391,6 +391,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The index is under its 100KB budget again — 137.5KB to 99.1KB.** It had been over since before
+  this branch and the modality work made it worse, so: the per-dataset relationship notes, the 17
+  priors and the curriculum prose moved to `records.json` (both surfaces already load it, so this is
+  off the first-paint parse, not hidden); repeated source strings are stored once and referenced by
+  index, since 145 datasets carried the *same* sentence under `gates_scored.source` for 17KB — the
+  exact source still reaches the reader, resolved by the renderer instead of by duplication; and
+  fields nothing renders were dropped, `slug` having zero references on the page and a benchmark
+  shipping eleven fields for a table with five columns. No figure and no citation was shortened.
+- **"0 of 55 post-training datasets that state a size" was the wrong label, not a wrong count.** All
+  56 rows state a size — SWE-Gym's "2,438 executable tasks", SWE-RL's "273K seed tasks", AutoTool's
+  "200K tool-use trajectories", Bhashini's "thousands of audio hours". None states it in *tokens*,
+  which is what the parser accepts, because tasks and trajectories are what post-training corpora
+  actually are. The three places that reported it now say "in tokens" and name the units the rest
+  use.
+
 - **The mix now says what each token is *for*, and whether we can actually source it.** Tiers named
   a provenance and `kind` split them into skills and knowledge, but nothing said what a token
   *teaches* or what it is *about* — so the growth ladder described four stages without saying what

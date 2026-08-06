@@ -14,7 +14,7 @@
  * described record types rather than questions. See docs/DESIGN_CRITIQUE.md.
  */
 
-import { renderNumber, formatValue } from './_shared/num.js';
+import { renderNumber, formatValue, setSourceTable } from './_shared/num.js';
 import { makeExplainer } from './_shared/explainer.js';
 
 const $ = (t, c, x) => {
@@ -61,8 +61,9 @@ const DERIVATION_LABEL = {
   unknown: 'overlap unmeasured',
 };
 
+let DERIVATIONS = {};
 const derivationBadge = (d, nameOf) => {
-  const der = d && d.derivation;
+  const der = d && (d.derivation || DERIVATIONS[d.id]);
   if (!der) return null;
   const parents = (der.parents || []).map((x) => (nameOf ? nameOf(x) || x : x));
   const label = DERIVATION_LABEL[der.kind] || der.kind;
@@ -247,7 +248,7 @@ function chapterTarget(ctx) {
     fact(`${src.counts.committable} of ${src.counts.catalogued}`, 'datasets we could commit to today — covering under half the budget'),
     fact(`${unresolved}`, 'have a licence nobody has established. Unknown is not permission'),
     fact(gemma ? `×${gemma.mean_tax.value.toFixed(2)}` : '—', 'what Gemma 4’s tokenizer costs on Indian text — worse than a 2019 baseline'),
-    fact(`${post.sized || 0} of ${post.datasets || 0}`, 'post-training datasets that state a size'),
+    fact(`${post.sized || 0} of ${post.datasets || 0}`, 'post-training sets whose size is in tokens — the rest count tasks, trajectories or hours'),
   );
 
   return chapter({
@@ -1534,11 +1535,11 @@ function chapterPostTraining(ctx) {
       text(', and the last state compares it against the two labs that published theirs.'),
     ],
     figNum: 'Fig. 7 — where the post-training budget goes',
-    caption: `Fig. 7 — Each stage's budget split by category, as a share of that stage's total. Every number here is a design proposal from ${sft.source}, which states them with a tilde and cites nothing. They are drawn as estimates and compared against published sets in the last state. The catalogue holds ${post.datasets} datasets tagged for this stage and ${post.sized} of them state a size.`,
+    caption: `Fig. 7 — Each stage's budget split by category, as a share of that stage's total. Every number here is a design proposal from ${sft.source}, which states them with a tilde and cites nothing. They are drawn as estimates and compared against published sets in the last state. The catalogue holds ${post.datasets} datasets tagged for this stage and ${post.sized} of them state a size in tokens; the rest are counted in tasks, trajectories, instances or audio hours, which is what post-training corpora actually are.`,
     pill: `${fmt(sft.total, 'count')} · ${fmt(dpo.total, 'count')} · ${fmt(plan[2].total, 'count')}`,
     rail: [
       text('Why none of this enters a token budget. '),
-      b(`${post.datasets} catalogued datasets carry a post-training tag and ${post.sized} state a size`),
+      b(`${post.datasets} catalogued datasets carry a post-training tag and ${post.sized} stated a size in tokens`),
       text('. Post-training sets are counted in examples, pairs and problems rather than tokens, and almost nobody publishes either — so this chapter proposes a budget where the pre-training chapters could at least argue with a catalogue.'),
     ],
     states,
@@ -3027,13 +3028,15 @@ function chapterAppendix(ctx) {
     [2],
   ));
 
-  /* `priors` rides in data.json, not records.json — it is cited inline by two chapters, so it has
-   * to be there when the page paints. Reading it from records rendered an empty block. */
+  /* `priors` used to ride in data.json because reading it from records rendered an empty block —
+   * but the cause was that the export deliberately excluded it from records.json, not that records
+   * arrives late. It does not: index.html awaits both files before calling buildPage. It is
+   * 11KB of prose read only inside this `<details>`, so it now ships in records like the rest. */
   /* The source column was being dropped, so a register of published findings printed no citations
    * on the one page whose whole argument is that a figure must name what produced it. */
-  block(`What the literature settled — ${(data.priors || []).length}`, table(
+  block(`What the literature settled — ${(records.priors || []).length}`, table(
     ['claim', 'effect on this design', 'source'],
-    (data.priors || []).map((r) => [r.claim, r.effect_on_design, r.source || '—']),
+    (records.priors || []).map((r) => [r.claim, r.effect_on_design, r.source || '—']),
   ));
 
   block(`Risks and unknowns — ${(records.risks || []).length}`, table(
@@ -3110,6 +3113,19 @@ function chapterAppendix(ctx) {
 export function buildPage(data, records) {
   const main = document.getElementById('main');
   main.replaceChildren();
+
+  /* The index carries figures; the prose and the repeated source strings live in records.json,
+   * which both surfaces load anyway. Wired before anything renders, because every number and
+   * every relationship badge on the page resolves through these two. */
+  setSourceTable(data.sources || []);
+  DERIVATIONS = records.derivations || {};
+  (data.modalities?.curriculum || []).forEach((step) => {
+    const moved = (records.curriculum_notes || {})[step.stage];
+    if (moved) step.note = moved.note;
+  });
+  ((data.modalities?.coverage || {}).domains || []).forEach((d) => {
+    d.pattern = d.pattern || (records.domain_patterns || {})[d.domain] || '';
+  });
 
   const presets = data.milestones.presets;
   const ctx = {

@@ -664,6 +664,63 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
     }
 
     reference = {name: rows for name, rows in records.items() if name != "priors"}
+
+    # ---- index budget -------------------------------------------------------------------
+    #
+    # Two moves, and neither may cost the reader a fact. Both surfaces already load
+    # `records.json`, so "moved to records" means moved off the critical-path parse, not hidden.
+    #
+    # 1. Prose out of the index. The per-dataset relationship notes, the priors and the
+    #    curriculum's prose are read on hover or inside a `<details>` — never during first paint —
+    #    and together they were a fifth of a file whose whole purpose is to paint immediately.
+    reference["priors"] = data.pop("priors")
+    reference["derivations"] = {
+        entry["id"]: entry.pop("derivation")
+        for entry in data["datasets"]
+        if entry.get("derivation")
+    }
+    reference["curriculum_notes"] = {
+        step.pop("stage"): {"note": step.pop("note"), "teaches": step["teaches"]}
+        for step in [dict(s) for s in data["modalities"]["curriculum"]]
+    }
+    for step, source in zip(
+        data["modalities"]["curriculum"], reference["curriculum_notes"].values(), strict=True
+    ):
+        step.pop("note", None)
+        source["shares"] = step["shares"]
+    reference["domain_patterns"] = {
+        d["domain"]: d.pop("pattern") for d in data["modalities"]["coverage"]["domains"]
+    }
+
+    # 2. One source string, stored once. Every one of the 145 datasets carried the *same*
+    #    sentence under `gates_scored.source`, and most repeated `seed:Size_Scale` under
+    #    `size_tokens.source` — 145 copies of two strings, for 20KB. They are replaced by an index
+    #    into a table shipped beside them, so nothing is dropped and nothing is shortened: a
+    #    reader still gets the exact source, resolved by the renderer instead of by duplication.
+    # 3. Fields nothing renders. `slug` is a filename helper the page never reads, and a benchmark
+    #    ships six fields the appendix table has no column for. The full records stay on disk in
+    #    benchmarks.json for anyone reading the spine directly.
+    for entry in data["datasets"]:
+        entry.pop("slug", None)
+    benchmark_columns = ("name", "type", "coverage", "split_policy", "trust_band")
+    data["benchmarks"] = [
+        {k: v for k, v in row.items() if k in benchmark_columns} for row in data["benchmarks"]
+    ]
+
+    sources: list[str] = []
+    seen: dict[str, int] = {}
+    for entry in data["datasets"]:
+        for field in ("gates_scored", "size_tokens", "size_verified"):
+            value = entry.get(field)
+            if not isinstance(value, dict) or not isinstance(value.get("source"), str):
+                continue
+            text = value["source"]
+            if text not in seen:
+                seen[text] = len(sources)
+                sources.append(text)
+            value["source"] = seen[text]
+    data["sources"] = sources
+
     return {"data": data, "records": reference, "shingles": shingle_meta}
 
 
