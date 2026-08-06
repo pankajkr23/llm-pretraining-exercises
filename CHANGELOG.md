@@ -42,6 +42,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **Every dataset now says how it relates to the others.** FineWeb's 15T sat beside FineWeb-Edu's
+  1.3T with nothing to say the second is *inside* the first — likewise FinePDFs/FinePDFs-Edu and
+  Nemotron-CC/v2 — so a reader adding any of those pairs was double-counting and the page gave them
+  no way to know. Fifteen datasets now carry a published relationship as a badge beside their name,
+  in four kinds that are deliberately not interchangeable: **contained_by** (3 pairs, stated by
+  their publishers, subtracted from any sum holding the parent), **additional_to** (1 — recorded
+  because Nemotron-CC-v2.1 genuinely *is* additive and shouldn't be "fixed" into a containment),
+  **shares_source** (7, real overlap of unpublished size), and **independent** (2, because "these do
+  not overlap" is as much a finding as the reverse). Each carries the concrete thing that *is* known
+  — crawl counts, date ranges, modality — plus its citation, on hover. **No per-pair overlap
+  coefficient is invented**: nobody has measured one, and a made-up fraction wearing the authority
+  of a computation would be worse than the honest band. What the callouts say instead: FinePDFs
+  draws on the same crawls as FineWeb but takes the PDFs rather than the HTML, so its overlap is far
+  smaller than the shared source implies; CulturaX is built not from the crawl but from mC4 and
+  OSCAR, which both were. Correction X26.
 - **Supply is no longer a raw sum of overlapping corpora.** The page reported "61T reachable · 363%
   of budget" by adding datasets that are differently-filtered views of the same crawls — FineWeb is
   96 Common Crawl dumps, FinePDFs 106 of them, Nemotron-CC is Common Crawl, HPLT v3.0 is 45% Common

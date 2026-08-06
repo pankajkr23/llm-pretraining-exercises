@@ -223,6 +223,192 @@ def derive_gates(row: dict[str, str], gotcha_types: set[str], blocking: bool) ->
     }
 
 
+# How catalogued datasets are related to each other.
+#
+# Adding two corpora only gives you their sum when they are independent, and most of the large ones
+# here are not. This table records what is *published* about those relationships, in three kinds
+# that must not be conflated:
+#
+#   contained_by   A publisher states that this dataset is a subset or an earlier version of
+#                  another one in the catalogue. Exact, so the contained row is subtracted from any
+#                  sum that also holds its parent.
+#   shares_source  Two datasets are built from the same upstream corpus. The overlap is real and
+#                  its size is not published by anybody. Recorded so a reader can see it, and
+#                  discounted only through risk R01's range — never a per-pair coefficient, which
+#                  would be a number with no source wearing the authority of a computation.
+#   independent    Explicitly *not* crawl-derived. Recorded because "no overlap" is as much a
+#                  finding as overlap is, and a reader should not have to assume it.
+#
+# `note` is the callout: the concrete, checkable thing that is known about the relationship, even
+# where the magnitude is not. Modality and crawl dates are published; overlap fractions are not.
+#
+# Multi-parent is normal and the shape allows it. CulturaX is mC4 plus OSCAR; Sangraha's unverified
+# portion is drawn from "existing multilingual corpora", plural and unnamed, which is why that one
+# is `unknown` rather than modelled.
+RELATIONSHIPS: dict[str, dict[str, Any]] = {
+    "ENG-02": {
+        "kind": "contained_by",
+        "parents": ["ENG-01"],
+        "note": "The educational slice of FineWeb, not an addition to it.",
+        "source": (
+            "HuggingFaceFW/fineweb-edu: '1.3T tokens of educational web pages filtered from the "
+            "FineWeb dataset'"
+        ),
+    },
+    "ENG-04": {
+        "kind": "contained_by",
+        "parents": ["ENG-03"],
+        "note": "The educational slice of FinePDFs, not an addition to it.",
+        "source": (
+            "HuggingFaceFW/finepdfs-edu: '350B+ tokens of educational PDFs filtered from the "
+            "FinePDFs"
+            "dataset'"
+        ),
+    },
+    "ENG-07": {
+        "kind": "contained_by",
+        "parents": ["ENG-08"],
+        "note": (
+            "v2 is this dataset plus eight further crawl snapshots, so holding v2 means holding "
+            "this."
+        ),
+        "source": (
+            "nvidia/Nemotron-CC-v2: 'based on Nemotron-CC with eight additional Common Crawl "
+            "snapshots (2024-2025)'"
+        ),
+    },
+    "ENG-09": {
+        "kind": "additional_to",
+        "parents": ["ENG-08"],
+        "note": (
+            "Genuinely additive, unlike the v1/v2 pair — its publisher says to use it alongside "
+            "v2,"
+            "not instead of it."
+        ),
+        "source": (
+            "nvidia/Nemotron-CC-v2.1: '2.5T new tokens ... to be used in conjunction with the "
+            "previously released 6.6T tokens of Nemotron-CC-v2'"
+        ),
+    },
+    "ENG-01": {
+        "kind": "shares_source",
+        "parents": ["Common Crawl"],
+        "note": (
+            "96 Common Crawl dumps, summer 2013 to April 2024, HTML pages. Deduplicated per "
+            "snapshot"
+            "rather than globally, by the authors' own ablation, so it carries cross-snapshot "
+            "duplicates of its own."
+        ),
+        "source": "HuggingFaceFW/fineweb and arXiv:2406.17557",
+    },
+    "ENG-03": {
+        "kind": "shares_source",
+        "parents": ["Common Crawl"],
+        "note": (
+            "106 Common Crawl dumps, 2013 to February 2025 — the same crawls as FineWeb, but the "
+            "PDFs"
+            "in them rather than the HTML. A PDF and a web page are different documents, so the "
+            "overlap with the HTML corpora is far smaller than the shared source suggests."
+        ),
+        "source": "HuggingFaceFW/finepdfs",
+    },
+    "ENG-08": {
+        "kind": "shares_source",
+        "parents": ["Common Crawl"],
+        "note": (
+            "Common Crawl, with synthetic rephrasing applied to part of it — so some of this is "
+            "not"
+            "collected text at all."
+        ),
+        "source": (
+            "nvidia/Nemotron-CC-v2: 'synthetic rephrasing using Qwen3-30B-A3B, filtered for "
+            "English"
+            "and globally deduplicated'"
+        ),
+    },
+    "MUL-03": {
+        "kind": "shares_source",
+        "parents": ["Common Crawl", "Internet Archive"],
+        "note": (
+            "7.2 petabytes of raw crawl: 45% Common Crawl, 33% Internet Archive, 22% ArchiveBot, "
+            "2012-2024. Only the Common Crawl portion overlaps the English corpora here, and "
+            "English"
+            "is one of three languages it deduplicates per-crawl rather than globally."
+        ),
+        "source": "arXiv:2511.01066, HPLT 3.0",
+    },
+    "MUL-04": {
+        "kind": "shares_source",
+        "parents": ["Common Crawl"],
+        "note": (
+            "Not built from the crawl directly but from two corpora that were: mC4 v3.1.0 and "
+            "every"
+            "OSCAR release to 23.01. Two parents, both downstream of the same crawl."
+        ),
+        "source": "uonlp/CulturaX",
+    },
+    "MUL-05": {
+        "kind": "shares_source",
+        "parents": ["Common Crawl"],
+        "note": (
+            "Common Crawl, cleaned. Named in risk R01 as one of the corpora whose mutual overlap "
+            "drives the 60-80% estimate."
+        ),
+        "source": "MADLAD-400, and risk R01",
+    },
+    "MTH-01": {
+        "kind": "shares_source",
+        "parents": ["Common Crawl"],
+        "note": "The mathematics slice of the same Nemotron Common Crawl pipeline.",
+        "source": "nvidia/Nemotron-CC-Math-v1",
+    },
+    "COD-01": {
+        "kind": "independent",
+        "parents": [],
+        "note": (
+            "Source code from Software Heritage, not a web crawl. It does not overlap any of the "
+            "web"
+            "corpora here."
+        ),
+        "source": "BigCode, The Stack v2",
+    },
+    "COD-02": {
+        "kind": "independent",
+        "parents": [],
+        "note": (
+            "Curated from GitHub, not a web crawl. It does not overlap any of the web corpora here."
+        ),
+        "source": "nvidia/Nemotron-Pretraining-Code-v1",
+    },
+    "IND-01": {
+        "kind": "unknown",
+        "parents": ["IND-02"],
+        "note": (
+            "The verified portion counted here is scraped from human-checked sites, OCR'd from "
+            "PDFs"
+            "and transcribed from audio — sources a crawl does not reach, so risk R01's Common "
+            "Crawl"
+            "discount does not apply to it. What is unmeasured is narrower: this and IndicCorp v2 "
+            "are"
+            "both AI4Bharat scrapes of Indian websites and neither publisher states a cross- "
+            "deduplication, so the two cannot simply be added. Sangraha's *unverified* portion is "
+            "drawn from 'existing multilingual corpora', unnamed, and is excluded from the figure "
+            "used here."
+        ),
+        "source": "ai4bharat/sangraha and IndicLLMSuite, arXiv:2403.06350",
+    },
+    "IND-02": {
+        "kind": "unknown",
+        "parents": ["IND-01"],
+        "note": (
+            "See Sangraha: both are AI4Bharat scrapes of Indian websites with no published cross- "
+            "deduplication between them."
+        ),
+        "source": "ai4bharat/IndicCorpV2",
+    },
+}
+
+
 # Figures the seed row gets wrong, corrected against the dataset's own card.
 #
 # The seed CSV is the machine-readable extract of the research and is never hand-edited, so a
@@ -295,6 +481,8 @@ def build_dataset_record(row: dict[str, str]) -> dict[str, Any]:
             "tokens": _corrected_tokens(row, size_raw),
             "naturalness": parse_naturalness(size_raw),
         },
+        # How this dataset relates to others in the catalogue, where anybody has published it.
+        "derivation": RELATIONSHIPS.get((row.get("ID") or "").strip()),
         "stage": [s.strip() for s in re.split(r"[/,]", row.get("Stage") or "") if s.strip()],
         "languages": (row.get("Languages") or "").strip() or None,
         "gotchas": [dataclasses.asdict(g) for g in parsed.gotchas],

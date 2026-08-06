@@ -268,7 +268,21 @@
  *
  * A container query asks the only question that matters — is there room in *this box* — so it holds
  * at every width, including ones nobody thought to test. */
-.sticky { container-type: inline-size; container-name: figure; }
+/* The figure has to fit the screen, or `position: sticky` silently stops working.
+ *
+ * Sticky can only hold an element shorter than its scrollport. The growth figure grew — bars, then
+ * the named-datasets register, then the analogy block — until it exceeded the viewport, at which
+ * point it scrolled away and the fourth stage had no figure beside it at all. Capping the height
+ * and letting the figure scroll inside itself keeps it pinned at any content length, so adding to
+ * it later cannot break it again. */
+.sticky {
+  container-type: inline-size;
+  container-name: figure;
+  max-height: 86vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
 
 @container figure (max-width: 470px) {
   .stagerow,
@@ -449,3 +463,25 @@ details.arithmetic > summary:focus-visible { outline: 2px solid var(--accent); o
  * occupies the same slot and means the same kind of thing — just at the precision the estimate
  * actually supports. */
 .costband { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+
+/* How a dataset relates to the others, beside its name.
+ *
+ * Four kinds with different standing, so they read differently: a stated containment is a fact and
+ * gets the strongest treatment, a shared upstream source is real but unquantified, an unmeasured
+ * overlap is an admission, and independent is the reassuring one — worth showing, because "these do
+ * not overlap" is as much a finding as the reverse. */
+.derivbadge {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.03em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+  cursor: help;
+}
+.derivbadge.contained_by { color: var(--grade-x); }
+.derivbadge.shares_source { color: var(--grade-b); }
+.derivbadge.unknown { color: var(--grade-b); }
+.derivbadge.additional_to { color: var(--muted); }
+.derivbadge.independent { color: var(--grade-a); }

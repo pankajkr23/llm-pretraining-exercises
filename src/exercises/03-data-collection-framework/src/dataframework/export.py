@@ -187,6 +187,10 @@ def _dataset_index_entry(record: dict[str, Any]) -> dict[str, Any]:
         # number, so trimming this to a plain float would be a false economy. The grade's
         # reasoning and every gate live in catalog.json, loaded on demand.
         "size_tokens": record.get("size", {}).get("tokens"),
+        # How this dataset relates to others in the catalogue. Shipped because a reader
+        # looking at a 15T figure needs to know whether it is 15T of anything the row above
+        # it does not already hold.
+        "derivation": record.get("derivation"),
         # The verified human-origin portion, when the card records one. Sangraha's headline is 251B
         # and only 64B of it is verified: the rest is machine translation and transliteration. A
         # framework whose own mixture chapter warns that counting synthetic as natural is "the

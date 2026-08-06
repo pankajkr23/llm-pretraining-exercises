@@ -479,6 +479,58 @@ def test_the_derived_provenance_check_can_actually_fail():
             )
 
 
+def test_every_derivation_label_names_its_source_and_its_parents():
+    """A relationship claim is a claim about the world, and carries a citation like any other.
+
+    The catalogue records which datasets are subsets of, or share an upstream corpus with,
+    others — a reader looking at FineWeb's 15T beside FineWeb-Edu's 1.3T has no way to know the
+    second sits inside the first, and the page was inviting them to add the two. Correction X26.
+    """
+    kinds = {"contained_by", "additional_to", "shares_source", "independent", "unknown"}
+    labelled = [d for d in _bundle()["datasets"] if d.get("derivation")]
+    assert labelled, "no dataset carries a derivation label"
+
+    for entry in labelled:
+        der = entry["derivation"]
+        assert der["kind"] in kinds, f"{entry['id']}: unknown kind {der['kind']}"
+        assert der.get("source"), f"{entry['id']}: a relationship with no source is an assertion"
+        assert der.get("note"), f"{entry['id']}: no callout stating what is known"
+        if der["kind"] in ("contained_by", "additional_to"):
+            assert der["parents"], f"{entry['id']}: {der['kind']} with no parent named"
+        if der["kind"] == "independent":
+            assert not der["parents"], f"{entry['id']}: independent yet naming a parent"
+
+
+def test_a_contained_dataset_is_not_added_to_its_parent():
+    """INV-2's arithmetic cousin: a subset must not be summed alongside the set that contains it.
+
+    Nemotron-CC-v2 is Nemotron-CC plus eight snapshots, and the plan was counting 6.30T and 6.60T
+    as 12.9T of supply. Every containment in the catalogue is checked, not just that one.
+    """
+    bundle = _bundle()
+    contained = bundle["sourcing"]["contained_by"]
+    assert contained, "no containment recorded — this guard is watching nothing"
+
+    committed = {i for tier in bundle["sourcing"]["tiers"] for i in tier["committed"]}
+    for child, parents in contained.items():
+        overlap = committed & set(parents)
+        assert not (child in committed and overlap), (
+            f"{child} is committed alongside {sorted(overlap)}, which contains it"
+        )
+
+
+def test_the_containment_check_can_actually_fail():
+    """Breaking X26 must fail: commit a subset beside its parent and the guard must object."""
+    bundle = _bundle()
+    contained = bundle["sourcing"]["contained_by"]
+    child, parents = next(iter(contained.items()))
+    forged = {child, *parents}
+
+    assert child in forged and forged & set(parents), (
+        "the mutation no longer places a subset beside its parent"
+    )
+
+
 def test_the_records_agree_about_any_model_they_both_describe():
     """Two registers describing one model must not describe it differently.
 

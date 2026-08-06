@@ -235,9 +235,27 @@ def blockers(record: dict[str, Any]) -> list[str]:
 # snapshots (2024-2025)". It is a superset. The catalogue holds both as separate rows, and the plan
 # was summing 6.30T and 6.60T into 12.9T of supply when the second figure already includes the
 # first. What v2 adds over v1 is the eight new snapshots, and nobody publishes that number.
-CONTAINED_BY: dict[str, str] = {
-    "ENG-07": "ENG-08",  # Nemotron-CC (v1) is contained by Nemotron-CC-v2
-}
+def contained_by(datasets: list[dict[str, Any]]) -> dict[str, list[str]]:
+    """Which catalogued datasets are subsets of which others.
+
+    Read from each record's own `derivation`, so this and the label a reader sees on the page are
+    one statement rather than two lists somebody has to keep in step. Three pairs are published
+    today: FineWeb-Edu is filtered from FineWeb, FinePDFs-Edu from FinePDFs, and Nemotron-CC-v2 is
+    Nemotron-CC plus eight further snapshots.
+
+    Args:
+        datasets: Catalogue index entries.
+
+    Returns:
+        Dataset id to the ids that contain it.
+    """
+    out: dict[str, list[str]] = {}
+    for record in datasets:
+        derivation = record.get("derivation") or {}
+        if derivation.get("kind") == "contained_by":
+            out[record["id"]] = list(derivation.get("parents") or [])
+    return out
+
 
 # What fraction of a raw sum survives global deduplication.
 #
@@ -274,7 +292,12 @@ def build_plan(datasets: list[dict[str, Any]], mix: dict[str, Any]) -> dict[str,
         # twice. The contained row stays in the catalogue and in `candidates`; it just stops
         # contributing its tokens a second time.
         present = {d["id"] for d in committed}
-        committed = [d for d in committed if CONTAINED_BY.get(d["id"]) not in present]
+        contains = contained_by(datasets)
+        committed = [
+            d
+            for d in committed
+            if not any(parent in present for parent in contains.get(d["id"], []))
+        ]
         have = round(sum(_tokens_for(d, tier) or 0 for d in committed))
         headline = round(sum(_tokens(d) or 0 for d in committed))
         unchecked = [
@@ -355,7 +378,7 @@ def build_plan(datasets: list[dict[str, Any]], mix: dict[str, Any]) -> dict[str,
         # Shipped so the page can apply the same rule when it adds "clear today" to "one letter
         # away": v1 is committable and v2 is licence-blocked, so the double-count appears only when
         # the two lists are summed, which happens in the browser.
-        "contained_by": dict(CONTAINED_BY),
+        "contained_by": contained_by(datasets),
         "dedup_survival_range": list(DEDUP_SURVIVAL),
         "committed_tokens": committed_total,
         # The same total after global deduplication, as a range. Raw sums of corpora drawn from the

@@ -44,6 +44,36 @@ const para = (...nodes) => {
   return p;
 };
 
+/* How a dataset relates to the others, as a badge beside its name.
+ *
+ * A reader looking at "FineWeb 15T" next to "FineWeb-Edu 1.3T" has no way to know the second is
+ * inside the first, and the page was inviting them to add the two. The relationship is published
+ * in every case shown here; what is not published is the *size* of an overlap between corpora that
+ * merely share a source, and this badge says which of those two situations a row is in rather than
+ * inventing a number for the second.
+ *
+ * `title` carries the note and the citation, so the claim is checkable without leaving the page. */
+const DERIVATION_LABEL = {
+  contained_by: 'subset of',
+  additional_to: 'adds to',
+  shares_source: 'shares source with',
+  independent: 'independent',
+  unknown: 'overlap unmeasured',
+};
+
+const derivationBadge = (d, nameOf) => {
+  const der = d && d.derivation;
+  if (!der) return null;
+  const parents = (der.parents || []).map((x) => (nameOf ? nameOf(x) || x : x));
+  const label = DERIVATION_LABEL[der.kind] || der.kind;
+  const el = $('span', `derivbadge ${der.kind}`);
+  el.textContent = parents.length && der.kind !== 'independent'
+    ? `${label} ${parents.join(' + ')}`
+    : label;
+  el.title = `${der.note || ''}\n\nSource: ${der.source || 'not stated'}`;
+  return el;
+};
+
 /* Adding two corpora drawn from the same crawls does not give you their sum.
  *
  * Every large corpus in this catalogue is a differently-filtered view of Common Crawl: FineWeb is
@@ -457,7 +487,7 @@ function chapterBudget(ctx) {
  * is the one the whole project exists to serve.
  */
 function chapterGrowth(ctx) {
-  const { data, records, presets, recommended } = ctx;
+  const { data, records, byId, presets, recommended } = ctx;
   const g = records.growth;
   const ref = records.scaling_reference || {};
   const stages = g.stages || [];
@@ -588,7 +618,11 @@ function chapterGrowth(ctx) {
       sorted.forEach((r) => {
         const line = $('div', 'stagereg-r');
         const size = sizeValue(r);
-        line.append($('span', 'stagereg-n', r.d.name), $('span', 'stagereg-t', r.tier));
+        const nameCell = $('span', 'stagereg-n');
+        nameCell.append(r.d.name);
+        const badge = derivationBadge(r.d, (id) => (byId.get(id) || {}).name);
+        if (badge) nameCell.append(' ', badge);
+        line.append(nameCell, $('span', 'stagereg-t', r.tier));
         const val = $('span', 'stagereg-v');
         if (size) val.append(renderNumber(size, { unit: false }));
         else val.textContent = '—';
@@ -617,9 +651,7 @@ function chapterGrowth(ctx) {
       $('span', 'stagereg-sum', `${fmt(raw, 'count')} raw · ${fmt(lo, 'count')}–${fmt(hi, 'count')} after dedup · ${pct(lo / st.corpus)}–${pct(hi / st.corpus)} of ${fmt(st.corpus, 'count')}`),
     );
     wrap.append(foot);
-    const why = $('div', 'stagereg-cap');
-    why.textContent = `Deduplicated because every large corpus here is a differently-filtered view of the same Common Crawl snapshots; risk R01 puts the overlap at ${Math.round((1 - SURVIVAL[1]) * 100)}–${Math.round((1 - SURVIVAL[0]) * 100)}%. Nemotron-CC-v2 contains v1, so it is counted once.`;
-    wrap.append(why);
+
 
     /* And the analogy the budget was actually set by, named and priced, so the reader can see the
      * two halves of the answer side by side. */

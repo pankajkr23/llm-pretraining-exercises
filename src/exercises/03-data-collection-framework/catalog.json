@@ -42,6 +42,14 @@
         }
       }
     },
+    "derivation": {
+      "kind": "unknown",
+      "parents": [
+        "IND-02"
+      ],
+      "note": "The verified portion counted here is scraped from human-checked sites, OCR'd from PDFsand transcribed from audio — sources a crawl does not reach, so risk R01's Common Crawldiscount does not apply to it. What is unmeasured is narrower: this and IndicCorp v2 areboth AI4Bharat scrapes of Indian websites and neither publisher states a cross- deduplication, so the two cannot simply be added. Sangraha's *unverified* portion is drawn from 'existing multilingual corpora', unnamed, and is excluded from the figure used here.",
+      "source": "ai4bharat/sangraha and IndicLLMSuite, arXiv:2403.06350"
+    },
     "stage": [
       "PT"
     ],
@@ -137,6 +145,14 @@
       },
       "naturalness": {}
     },
+    "derivation": {
+      "kind": "unknown",
+      "parents": [
+        "IND-01"
+      ],
+      "note": "See Sangraha: both are AI4Bharat scrapes of Indian websites with no published cross- deduplication between them.",
+      "source": "ai4bharat/IndicCorpV2"
+    },
     "stage": [
       "PT"
     ],
@@ -225,6 +241,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -318,6 +335,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "MT"
@@ -413,6 +431,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -501,6 +520,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT (multimodal)"
     ],
@@ -589,6 +609,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT",
@@ -680,6 +701,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT",
@@ -771,6 +793,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -857,6 +880,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -940,6 +964,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "MT"
@@ -1022,6 +1047,15 @@
         "source": "seed:Size_Scale"
       },
       "naturalness": {}
+    },
+    "derivation": {
+      "kind": "shares_source",
+      "parents": [
+        "Common Crawl",
+        "Internet Archive"
+      ],
+      "note": "7.2 petabytes of raw crawl: 45% Common Crawl, 33% Internet Archive, 22% ArchiveBot, 2012-2024. Only the Common Crawl portion overlaps the English corpora here, and Englishis one of three languages it deduplicates per-crawl rather than globally.",
+      "source": "arXiv:2511.01066, HPLT 3.0"
     },
     "stage": [
       "PT"
@@ -1113,6 +1147,14 @@
       },
       "naturalness": {}
     },
+    "derivation": {
+      "kind": "shares_source",
+      "parents": [
+        "Common Crawl"
+      ],
+      "note": "Not built from the crawl directly but from two corpora that were: mC4 v3.1.0 and everyOSCAR release to 23.01. Two parents, both downstream of the same crawl.",
+      "source": "uonlp/CulturaX"
+    },
     "stage": [
       "PT"
     ],
@@ -1201,6 +1243,14 @@
       },
       "naturalness": {}
     },
+    "derivation": {
+      "kind": "shares_source",
+      "parents": [
+        "Common Crawl"
+      ],
+      "note": "Common Crawl, cleaned. Named in risk R01 as one of the corpora whose mutual overlap drives the 60-80% estimate.",
+      "source": "MADLAD-400, and risk R01"
+    },
     "stage": [
       "PT"
     ],
@@ -1283,6 +1333,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -1363,6 +1414,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -1454,6 +1506,14 @@
       },
       "naturalness": {}
     },
+    "derivation": {
+      "kind": "shares_source",
+      "parents": [
+        "Common Crawl"
+      ],
+      "note": "96 Common Crawl dumps, summer 2013 to April 2024, HTML pages. Deduplicated per snapshotrather than globally, by the authors' own ablation, so it carries cross-snapshot duplicates of its own.",
+      "source": "HuggingFaceFW/fineweb and arXiv:2406.17557"
+    },
     "stage": [
       "PT"
     ],
@@ -1542,6 +1602,14 @@
       },
       "naturalness": {}
     },
+    "derivation": {
+      "kind": "contained_by",
+      "parents": [
+        "ENG-01"
+      ],
+      "note": "The educational slice of FineWeb, not an addition to it.",
+      "source": "HuggingFaceFW/fineweb-edu: '1.3T tokens of educational web pages filtered from the FineWeb dataset'"
+    },
     "stage": [
       "PT",
       "MT"
@@ -1624,6 +1692,14 @@
         "source": "seed:Size_Scale"
       },
       "naturalness": {}
+    },
+    "derivation": {
+      "kind": "shares_source",
+      "parents": [
+        "Common Crawl"
+      ],
+      "note": "106 Common Crawl dumps, 2013 to February 2025 — the same crawls as FineWeb, but the PDFsin them rather than the HTML. A PDF and a web page are different documents, so the overlap with the HTML corpora is far smaller than the shared source suggests.",
+      "source": "HuggingFaceFW/finepdfs"
     },
     "stage": [
       "PT"
@@ -1713,6 +1789,14 @@
       },
       "naturalness": {}
     },
+    "derivation": {
+      "kind": "contained_by",
+      "parents": [
+        "ENG-03"
+      ],
+      "note": "The educational slice of FinePDFs, not an addition to it.",
+      "source": "HuggingFaceFW/finepdfs-edu: '350B+ tokens of educational PDFs filtered from the FinePDFsdataset'"
+    },
     "stage": [
       "MT"
     ],
@@ -1795,6 +1879,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -1877,6 +1962,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "MT"
@@ -1965,6 +2051,14 @@
         "source": "seed:Size_Scale"
       },
       "naturalness": {}
+    },
+    "derivation": {
+      "kind": "contained_by",
+      "parents": [
+        "ENG-08"
+      ],
+      "note": "v2 is this dataset plus eight further crawl snapshots, so holding v2 means holding this.",
+      "source": "nvidia/Nemotron-CC-v2: 'based on Nemotron-CC with eight additional Common Crawl snapshots (2024-2025)'"
     },
     "stage": [
       "PT"
@@ -2055,6 +2149,14 @@
       },
       "naturalness": {}
     },
+    "derivation": {
+      "kind": "shares_source",
+      "parents": [
+        "Common Crawl"
+      ],
+      "note": "Common Crawl, with synthetic rephrasing applied to part of it — so some of this is notcollected text at all.",
+      "source": "nvidia/Nemotron-CC-v2: 'synthetic rephrasing using Qwen3-30B-A3B, filtered for Englishand globally deduplicated'"
+    },
     "stage": [
       "PT"
     ],
@@ -2144,6 +2246,14 @@
       },
       "naturalness": {}
     },
+    "derivation": {
+      "kind": "additional_to",
+      "parents": [
+        "ENG-08"
+      ],
+      "note": "Genuinely additive, unlike the v1/v2 pair — its publisher says to use it alongside v2,not instead of it.",
+      "source": "nvidia/Nemotron-CC-v2.1: '2.5T new tokens ... to be used in conjunction with the previously released 6.6T tokens of Nemotron-CC-v2'"
+    },
     "stage": [
       "PT"
     ],
@@ -2226,6 +2336,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -2312,6 +2423,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -2392,6 +2504,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -2472,6 +2585,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -2558,6 +2672,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -2644,6 +2759,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -2735,6 +2851,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -2821,6 +2938,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -2904,6 +3022,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -2991,6 +3110,12 @@
         "source": "seed:Size_Scale"
       },
       "naturalness": {}
+    },
+    "derivation": {
+      "kind": "independent",
+      "parents": [],
+      "note": "Source code from Software Heritage, not a web crawl. It does not overlap any of the webcorpora here.",
+      "source": "BigCode, The Stack v2"
     },
     "stage": [
       "PT"
@@ -3081,6 +3206,12 @@
       },
       "naturalness": {}
     },
+    "derivation": {
+      "kind": "independent",
+      "parents": [],
+      "note": "Curated from GitHub, not a web crawl. It does not overlap any of the web corpora here.",
+      "source": "nvidia/Nemotron-Pretraining-Code-v1"
+    },
     "stage": [
       "PT"
     ],
@@ -3169,6 +3300,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT",
@@ -3251,6 +3383,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL",
       "SFT"
@@ -3332,6 +3465,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL",
       "SFT"
@@ -3413,6 +3547,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL",
       "SFT"
@@ -3502,6 +3637,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL"
     ],
@@ -3582,6 +3718,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL"
     ],
@@ -3665,6 +3802,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL"
     ],
@@ -3747,6 +3885,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT",
       "RL"
@@ -3828,6 +3967,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT",
       "RL"
@@ -3911,6 +4051,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "Reference"
     ],
@@ -3993,6 +4134,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -4073,6 +4215,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -4159,6 +4302,14 @@
       },
       "naturalness": {}
     },
+    "derivation": {
+      "kind": "shares_source",
+      "parents": [
+        "Common Crawl"
+      ],
+      "note": "The mathematics slice of the same Nemotron Common Crawl pipeline.",
+      "source": "nvidia/Nemotron-CC-Math-v1"
+    },
     "stage": [
       "PT"
     ],
@@ -4242,6 +4393,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -4324,6 +4476,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -4404,6 +4557,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -4484,6 +4638,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -4564,6 +4719,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -4644,6 +4800,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -4724,6 +4881,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -4804,6 +4962,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -4884,6 +5043,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL"
     ],
@@ -4964,6 +5124,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT",
       "EVAL"
@@ -5047,6 +5208,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -5131,6 +5293,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -5214,6 +5377,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "EVAL"
     ],
@@ -5296,6 +5460,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "EVAL"
     ],
@@ -5382,6 +5547,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -5465,6 +5631,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -5547,6 +5714,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -5627,6 +5795,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -5707,6 +5876,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -5791,6 +5961,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -5875,6 +6046,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "TTS",
       "SFT"
@@ -5958,6 +6130,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -6042,6 +6215,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -6126,6 +6300,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "TTS"
     ],
@@ -6208,6 +6383,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -6291,6 +6467,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "EVAL"
@@ -6374,6 +6551,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "TTS"
     ],
@@ -6456,6 +6634,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "TTS"
     ],
@@ -6536,6 +6715,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -6616,6 +6796,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -6696,6 +6877,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -6779,6 +6961,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "EVAL"
     ],
@@ -6859,6 +7042,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -6939,6 +7123,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -7019,6 +7204,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -7099,6 +7285,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -7185,6 +7372,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -7265,6 +7453,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -7347,6 +7536,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -7429,6 +7619,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -7511,6 +7702,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -7591,6 +7783,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "EVAL"
@@ -7672,6 +7865,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "EVAL"
@@ -7753,6 +7947,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "EVAL"
@@ -7834,6 +8029,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "EVAL"
@@ -7921,6 +8117,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "EVAL"
@@ -8002,6 +8199,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -8088,6 +8286,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -8179,6 +8378,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -8270,6 +8470,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -8350,6 +8551,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -8430,6 +8632,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -8510,6 +8713,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -8591,6 +8795,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -8671,6 +8876,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT",
       "EVAL"
@@ -8752,6 +8958,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -8832,6 +9039,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -8918,6 +9126,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -9002,6 +9211,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -9085,6 +9295,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -9175,6 +9386,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -9257,6 +9469,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -9339,6 +9552,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -9421,6 +9635,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -9503,6 +9718,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -9585,6 +9801,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -9667,6 +9884,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -9749,6 +9967,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -9837,6 +10056,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -9925,6 +10145,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -10008,6 +10229,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -10090,6 +10312,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -10174,6 +10397,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -10256,6 +10480,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -10336,6 +10561,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -10417,6 +10643,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "EVAL"
@@ -10504,6 +10731,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT",
       "EVAL"
@@ -10585,6 +10813,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT",
       "SFT"
@@ -10666,6 +10895,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "PT"
     ],
@@ -10759,6 +10989,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -10842,6 +11073,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT",
       "Safety"
@@ -10931,6 +11163,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -11013,6 +11246,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -11095,6 +11329,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -11177,6 +11412,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -11257,6 +11493,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -11343,6 +11580,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -11423,6 +11661,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT",
       "RL"
@@ -11506,6 +11745,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT",
       "RL"
@@ -11589,6 +11829,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT",
       "RL"
@@ -11672,6 +11913,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -11752,6 +11994,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "SFT"
     ],
@@ -11832,6 +12075,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL"
     ],
@@ -11912,6 +12156,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL"
     ],
@@ -11992,6 +12237,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL"
     ],
@@ -12074,6 +12320,7 @@
       },
       "naturalness": {}
     },
+    "derivation": null,
     "stage": [
       "RL"
     ],
