@@ -42,6 +42,23 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **Repeated tokens are no longer counted as though they were fresh ones.** The mix engine computed
+  `effective tokens = unique pool × epochs`, and chapter 2 printed that product as the value of a
+  repetition schedule. The multiplication is right for what compute is billed on and wrong for what
+  the passes are worth, and the paper the page cites gives the second as a decaying sum. Seen and
+  worth are now separate quantities everywhere: four passes cost 4× and are worth 3.73×, sixteen
+  cost 16× and are worth 10.6×, forty cost 40× and are worth 15.2×, and **no schedule exceeds 16.4×
+  the unique pool**. The page used to display 6.72T from a 336B pool read twenty times, badged
+  "unevidenced"; it was not unevidenced but unreachable — the ceiling for that pool is 5.51T at any
+  number of passes — and a guardrail now errors rather than rendering such a figure. Two claims
+  beside it were false and are corrected: 16 epochs is the half-life at which a repeated token has
+  lost 1/e of its value, not where published work stops (the same paper reports 44-epoch runs and
+  labels 40 epochs worthless), and repetition **has** been measured on Indian-language text — ATLAS
+  (ICLR 2026, 774 runs over 400+ languages) finds Hindi's curve bends upward sooner than English's,
+  which makes these constants the optimistic end for an Indic pool rather than the neutral one.
+  Recorded as correction X15, with what the frontier does instead: Kimi K2 measured ten epochs of
+  raw repetition at ~23.8% against ~28.9% for ten rephrasings read once, and Kimi K3's pre-training
+  section never uses the word "epoch".
 - **A contents rail that stays with the reader, and only one contents list.** The one-page report
   runs thirteen chapters and an appendix, and the only way to see where you were was to scroll back
   to the top. There is now a single contents with two presentations: a block in the flow on narrow

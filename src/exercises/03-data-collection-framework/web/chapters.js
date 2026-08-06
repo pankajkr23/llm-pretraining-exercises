@@ -210,11 +210,27 @@ function chapterBudget(ctx) {
   const { data, presets, recommended } = ctx;
   const naturalOf = (p) => p.mix.tiers.find((t) => t.name === 'indic-natural');
   const POOL = naturalOf(recommended).unique_tokens;
-  const advised = data.mix_rules.max_epochs_advised.value;
-  const hard = data.mix_rules.max_epochs_hard.value;
-  /* The top rung sits past the hard ceiling on purpose: a ladder that stops exactly at the ceiling
-   * can never render the state the caption promises, and the unevidenced zone is the point. */
-  const LADDER = [1, advised, hard + 4];
+  const nearFree = data.mix_rules.epochs_near_free.value;
+  const halfLife = data.mix_rules.epochs_half_life.value;
+  const worthless = data.mix_rules.epochs_worthless.value;
+  const CEILING = data.mix_rules.worth_ceiling_multiple.value;
+
+  /* What a schedule is worth, as against what it costs. Muennighoff et al. (JMLR v26, Eq. 18):
+   *
+   *     D' = U + R*_D . U . (1 - e^(-(passes-1)/R*_D)),   R*_D = 15.4
+   *
+   * This chapter used to print U x passes and call it "effective", which is the cost and not the
+   * value. It made four passes look 7% better than measured, sixteen 51% better, and twenty 68%
+   * better -- and it printed 6.72T from this pool, which is above the 5.51T that infinite
+   * repetition could ever be worth. Every state below now shows both numbers. */
+  const DECAY = CEILING - 1;
+  const worthOf = (passes) => (passes <= 1
+    ? POOL * Math.max(passes, 0)
+    : POOL * (1 + DECAY * (1 - Math.exp(-(passes - 1) / DECAY))));
+
+  /* Four rungs, all of them places the paper actually measured: one pass, the near-free knee, the
+   * half-life, and the point its own Figure 1 labels worthless. */
+  const LADDER = [1, nearFree, halfLife, worthless];
 
   const states = [
     ...LADDER.map((e) => ({
@@ -223,16 +239,26 @@ function chapterBudget(ctx) {
       lead:
         e === 1
           ? 'There is only so much Indian-language text in the world. Read the whole natural pool once and this is everything it gives you — nowhere near the budget, and no amount of collecting closes that gap in the time available. So the question becomes '
-          : e <= advised
-            ? `Read it ${e} times and it counts ${e} times over. The surprising part, measured rather than assumed, is that a word seen a fourth time teaches almost as much as a fresh one — so the pool is `
-            : `Push to ${e} passes and the arithmetic still multiplies, but the evidence has run out. Published work stops at ${hard}; past that the number on the left is `,
+          : e <= nearFree
+            ? `Read it ${e} times and you pay for ${e} times the compute. You do not get ${e} times the text — a fourth pass over the same words teaches less than a fresh one — but measurably close to it. Up to here the pool behaves as though it were `
+            : e <= halfLife
+              ? `Keep going to ${e} passes and the curve is visibly bending. This is the half-life the published fit names: a repeated token here is worth about ${(1 - 1 / Math.E).toFixed(2)} of a fresh one, so ${e} passes buy `
+              : `At ${e} passes the paper that measured all of this labels the next read worthless. You are still paying full compute per pass, and what you take home has `,
       bold:
         e === 1
           ? 'how many times the same text can be read'
-          : e <= advised
-            ? 'far larger than its size suggests'
-            : 'arithmetic, not a measurement',
-      tail: e > hard ? ' — which is the worst kind of number to build a plan on.' : '.',
+          : e <= nearFree
+            ? 'nearly four times its size'
+            : e <= halfLife
+              ? 'nowhere near sixteen times the pool'
+              : 'stopped moving',
+      tail: e === 1
+        ? '.'
+        : e <= nearFree
+          ? '.'
+          : e <= halfLife
+            ? '.'
+            : ` — and it can never pass ${CEILING}× this pool, however long the run.`,
     })),
     {
       rungs: true,
@@ -254,27 +280,34 @@ function chapterBudget(ctx) {
       b(fmt(recommended.target_seen_tokens, 'count')),
       text(' tokens — roughly three-quarters of that in words. English offers that and more; all 22 Indian languages together offer perhaps a fiftieth, so the budget cannot be met by collecting harder. It is met by '),
       b('reading the same text more than once'),
-      text(' — which is nearly free up to a point somebody measured. Scrolling steps the schedule; the pool never changes.'),
+      text(' — which is nearly free up to a point somebody measured, and steadily less free after it. Scrolling steps the schedule; the pool never changes, and neither does what it can ever be worth.'),
     ],
     figNum: 'Fig. 1 — the schedule, not the pool',
-    caption: `Fig. 1 — Effective tokens from a fixed pool of ${fmt(POOL, 'count')} of natural Indian-language text as passes accumulate. One mark per pass for the first three states, red past the ceiling of ${hard} where no published work reaches; the last state switches to one mark per budget on the growth path, with the seed filled.`,
-    pill: `${advised} passes ≈ free`,
+    caption: `Fig. 1 — What a fixed pool of ${fmt(POOL, 'count')} of natural Indian-language text is worth as passes accumulate, against what those passes cost. One mark per pass, dimmed once a pass is worth less than half a fresh one; the last state switches to one mark per budget on the growth path, with the seed filled.`,
+    pill: `${nearFree} passes ≈ free · ceiling ${CEILING}×`,
     rail: [
       text('The knee at '),
-      renderNumber(data.mix_rules.max_epochs_advised),
-      text(' and the ceiling at '),
-      renderNumber(data.mix_rules.max_epochs_hard),
-      text(' are '),
-      b('estimated from published work'),
-      text(' on English web text at small scale. Nobody has measured them for Indian, translated or synthetic text — and the whole Indic budget rests on them.'),
+      renderNumber(data.mix_rules.epochs_near_free),
+      text(', the half-life at '),
+      renderNumber(data.mix_rules.epochs_half_life),
+      text(' and the ceiling of '),
+      renderNumber(data.mix_rules.worth_ceiling_multiple),
+      text('× the pool are '),
+      b('one fitted curve, on English web text'),
+      text(' at 9B parameters or less. The one large multilingual study that fits the same curve per language — 774 runs across 400+ languages — reports that Hindi and Swahili '),
+      b('bend upward sooner'),
+      text(' than English does. So these numbers are the optimistic end for an Indic pool, not the neutral one.'),
     ],
     states,
     arithmetic: [
       para(b(`Where ${recommended.id} comes from — and why it is derived rather than copied.`), ' The comparator does not say. Gemma 4\u2019s technical report describes its training data by domain and cutoff date and states no token count anywhere; neither does its model card. The previous generation does: Google\u2019s Gemma 3 card states that the 27B was trained with 14 trillion tokens, the 12B with 12 trillion, the 4B with 4 and the 1B with 2. ', b(`${recommended.id} is that 14T plus 20% for one generation`), ' — an estimate with a stated method, and labelled as one everywhere it appears.'),
       para(b('Two independent checks on that figure.'), ' On tokens per parameter it lands at ', b(`${Math.round(recommended.target_seen_tokens / 40e9)}:1`), ' for a dense 40B, next to Gemma 3 27B\u2019s 519:1 and inside the 400–1,900 band every comparable dense model of the last two years sits in. And Chinchilla — the compute-optimal ratio of about 20 tokens per parameter — would put a 40B at 800 billion. Nobody has planned that way in years, because compute-optimal minimises the cost of ', b('training'), ' while every deployed model pays the cost of ', b('serving'), ' forever. Overtraining is how you buy a model that is cheaper to run.'),
       para(b('What the comparison table says, and it is not what most readers expect.'), ' A corpus is not sized by the model that reads it. Llama 3.1 trained 8B, 70B and 405B on about the same 15T. DeepSeek-V3 stores 671B parameters and read 14.8T — less than Gemma 3 27B. Sarvam-105B read 12T where the smaller Sarvam-30B read 16T. Parameter count and corpus size came apart years ago, and the whole growth argument in ', ref('how it grows', 'growth'), ' rests on that.'),
-      para('The sum is ', b('unique text × passes = effective tokens'), '. A pool of ', fmt(POOL, 'count'), ' read four times contributes ', fmt(POOL * 4, 'count'), ' to the budget.'),
-      para(b('The evidence for "nearly free"'), ' is Muennighoff et al., ', ref('Scaling Data-Constrained Language Models', 'appendix'), ' (NeurIPS 2023): an 8.7B-parameter model trained four epochs on 44B unique tokens finished only 0.5% worse on validation loss than a single epoch over 178B unique tokens. The decay constant behind the ceiling is R*_D ≈ 15 — no amount of repetition beats one epoch on about 16× the unique pool. Two guardrails come with it: repetition operates on whole tiers only (up-sampling 0.1% of a corpus a hundred times degrades the model badly), and every one of those measurements is on English web text at 9B parameters or less.'),
+      para(b('The sum, and the correction to it.'), ' This chapter used to say ', b('unique text × passes = effective tokens'), ' and print the product. That is the cost of a schedule, not its value, and the two are not the same number. The paper this rests on gives the value as a decaying sum: ', b('D′ = U + 15.4·U·(1 − e^(−(passes−1)/15.4))'), '. So ', fmt(POOL, 'count'), ' read four times costs ', fmt(POOL * 4, 'count'), ' of compute and is worth ', fmt(worthOf(4), 'count'), ' of fresh text — and sixteen passes, which the old arithmetic scored at ', fmt(POOL * 16, 'count'), ', are worth ', fmt(worthOf(16), 'count'), '.'),
+      para(b('The ceiling that no schedule crosses.'), ' Because the sum converges, repetition has a maximum: the paper states that repeating cannot beat a single epoch on U + U·R*_D fresh tokens, which is ', b(`${CEILING}× the unique pool`), ' — ', fmt(POOL * CEILING, 'count'), ' from this one, at any number of passes. An earlier version of this page displayed ', fmt(POOL * 20, 'count'), ' for twenty passes. That figure was not merely unevidenced, as it claimed; it was above a ceiling the same paper had already stated, and no schedule reaches it.'),
+      para(b('The evidence for "nearly free"'), ' is Muennighoff et al., ', ref('Scaling Data-Constrained Language Models', 'appendix'), ' (JMLR v26, 2025): an 8.7B-parameter model trained four epochs on 44B unique tokens finished only 0.5% worse on validation loss than a single epoch over 178B unique tokens. The fitted decay constant is R*_D ≈ 15.4, and 16 passes is not where the evidence stops — it is the half-life, the point where a repeated token has lost 1/e of its value. The same paper reports 44-epoch models, and its own summary figure reads ', b('"At 40 epochs, repeating is worthless"'), ': at that depth its downstream table has ARC-Easy falling from 39.7 to 25.4 and the benchmark average from 23.1 to 15.9. Repetition does not flatten out at the end. It reverses.'),
+      para(b('And the measurement is not on this corpus.'), ' Those runs are English web text (C4 and OSCAR) at 9B parameters or less. The largest public multilingual study to fit the same curve per language — ATLAS, ICLR 2026, 774 runs over MADLAD-400 across 400+ languages — includes Hindi, and reports that for Hindi and Swahili ', b('"the right tail bends upward, consistent with diminishing returns from severe data repetition"'), ' where English does not. Two further caveats survive from the original work: repetition operates on whole tiers only (up-sampling 0.1% of a corpus a hundred times degrades the model badly), and the allocation rule is that when data-constrained you scale epochs faster than parameters.'),
+      para(b('What the labs actually do with a scarce pool, which is not this.'), ' Kimi K2 ran the comparison directly: ten epochs over raw data scored about 23.8% where ten rephrasings of the same data read once scored about 28.9%. Kimi K3\u2019s pre-training section does not use the word "epoch" at all — it rephrases knowledge and mathematics corpora with "style and perspective-diverse prompting … and fidelity verification against the source documents". DeepSeek-V3 reports 14.8T tokens and claims no repetition. Re-reading is the weakest of the three answers to a small pool, ahead only of doing nothing; the strongest that does not require years of collection is rephrasing, and this page does not yet cost one.'),
       para('The allocation rule that follows inverts naive Chinchilla scaling: when you are data-constrained, scale epochs faster than parameters. Mixing in code data buys roughly another 2× of headroom.'),
       para(b('Seen tokens are not unique tokens.'), ' Reading the Indic tier four times means ', fmt(recommended.target_seen_tokens, 'count'), ' seen still needs ', b(fmt(recommended.mix.total_unique_tokens, 'count')), ' of distinct text to be found, cleaned and licensed. That second number is the one the rest of this page is about, and it is the one the catalogue cannot currently meet.'),
       para(b('And past this model?'), ' The 40B is a seed rather than a product, and what happens to the budget when it grows is its own chapter — ', ref('how it grows', 'growth'), '. The short version is that the corpus grows far less than the parameter count does, and the Indian-language pool does not grow at all.'),
@@ -282,11 +315,12 @@ function chapterBudget(ctx) {
     refresh: (api) => {
       states.forEach((st, i) => {
         if (st.rungs) {
-          api.shard(i, presets.map((p) => `${p.id}: ${fmt(naturalOf(p).unique_tokens, 'count')} unique × ${naturalOf(p).epochs}`).join('\n'));
+          api.shard(i, presets.map((p) => `${p.id}: ${fmt(naturalOf(p).unique_tokens, 'count')} unique × ${naturalOf(p).epochs} = ${fmt(naturalOf(p).worth_tokens, 'count')} worth`).join('\n'));
           api.inline(i, `→ every budget reads its pool ${naturalOf(presets[0]).epochs} times`, false);
         } else {
-          api.shard(i, `${fmt(POOL, 'count')} unique × ${st.epochs} = ${fmt(POOL * st.epochs, 'count')} effective`);
-          api.inline(i, `→ ${fmt(POOL * st.epochs, 'count')} effective${st.epochs > hard ? ' — past the ceiling' : ''}`, st.epochs > hard);
+          const worth = worthOf(st.epochs);
+          api.shard(i, `${fmt(POOL, 'count')} × ${st.epochs} ${st.epochs === 1 ? 'pass' : 'passes'} = ${fmt(POOL * st.epochs, 'count')} seen\n${' '.repeat(String(fmt(POOL, 'count')).length)}   ${' '.repeat(String(st.epochs).length)}       = ${fmt(worth, 'count')} worth`);
+          api.inline(i, `→ worth ${Math.round((worth / (POOL * st.epochs)) * 100)}% of what it costs`, st.epochs > halfLife);
         }
       });
     },
@@ -294,30 +328,47 @@ function chapterBudget(ctx) {
       const st = states[i];
       api.extra.replaceChildren();
       if (st.rungs) {
-        api.big({ value: naturalOf(recommended).seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'the recommended budget' });
+        /* Priced the same way as every other state in this chapter, rather than reverting to the
+         * product on the one state that names the actual plan. */
+        api.big({ value: naturalOf(recommended).worth_tokens, unit: 'tokens', provenance: 'estimated', source: 'Muennighoff et al. 2025, JMLR v26 Eq. 18' });
         api.bigHit(false);
-        api.sub('natural Indian-language text at the recommended budget');
+        api.sub(`worth of natural Indian-language text at the recommended budget — costing ${fmt(naturalOf(recommended).seen_tokens, 'count')}`);
         api.verdict((recommended.verdict || 'recommended').toUpperCase(), false);
         api.note(`One mark per budget here rather than per pass — the seed, and the two rungs above it. Every budget reads its own pool four times. What changes between them is how much text was collected, not how hard it was read — and past this model size, collection is the wall. The ladder is judged as: ${presets.map((p) => `${p.id}, ${(p.verdict || '').toLowerCase()}`).join('; ')}.`);
         api.strip(presets.map((p) => (p.recommended ? 'reg' : '')));
         return;
       }
-      const effective = POOL * st.epochs;
-      const past = st.epochs > hard;
-      api.big({ value: effective, unit: 'tokens', provenance: 'estimated', source: 'pool × passes' });
-      api.bigHit(past);
-      api.sub(`from ${fmt(POOL, 'count')} of real text, read ${st.epochs} ${st.epochs === 1 ? 'time' : 'times'}`);
-      api.verdict(past ? 'UNEVIDENCED' : st.epochs === 1 ? 'ALL THERE IS' : st.epochs <= advised ? 'NEARLY FREE' : 'DECAYING', past);
-      api.note(
-        past
-          ? `Red marks passes beyond ${hard}, where no published work reaches. That is not a measured penalty — it is an absence of evidence, which is worse to plan against.`
-          : st.epochs === 1
-            ? 'Read once, this is the entire natural Indian-language pool — every verified corpus anyone has assembled, added together. It is about a fiftieth of what the budget asks for, and collecting harder does not close it on any schedule.'
-            : st.epochs <= advised
-              ? `Multiplied ${st.epochs}× for the cost of re-reading the same text ${st.epochs} times. Collecting this much fresh Indian-language text instead is not something anyone can do to a schedule.`
-              : 'Still ahead of four passes, but each extra read buys less than the last.',
+      /* The headline is what the schedule is WORTH. The cost sits underneath it, because the gap
+       * between the two is the entire finding of this chapter and used to be invisible. */
+      const seen = POOL * st.epochs;
+      const worth = worthOf(st.epochs);
+      const ratio = worth / seen;
+      const thin = st.epochs > halfLife;
+      api.big({ value: worth, unit: 'tokens', provenance: 'estimated', source: 'Muennighoff et al. 2025, JMLR v26 Eq. 18' });
+      api.bigHit(thin);
+      api.sub(`worth this much fresh text — for the compute cost of ${fmt(seen, 'count')}`);
+      api.verdict(
+        st.epochs === 1 ? 'ALL THERE IS'
+          : st.epochs <= nearFree ? `NEARLY FREE — ${Math.round(ratio * 100)}%`
+            : st.epochs <= halfLife ? `HALF-LIFE — ${Math.round(ratio * 100)}%`
+              : `WORTHLESS FROM HERE — ${Math.round(ratio * 100)}%`,
+        thin,
       );
-      api.strip(Array.from({ length: LADDER[LADDER.length - 1] }, (_, k) => (k >= st.epochs ? '' : k >= hard ? 'hit' : 'reg')));
+      api.note(
+        st.epochs === 1
+          ? 'Read once, this is the entire natural Indian-language pool — every verified corpus anyone has assembled, added together. It is about a fiftieth of what the budget asks for, and collecting harder does not close it on any schedule.'
+          : st.epochs <= nearFree
+            ? `Four passes cost 4× and are worth ${(worth / POOL).toFixed(2)}×. That is the closest repetition ever comes to free, and it is the one part of this curve the published work calls negligible. Collecting this much fresh Indian-language text instead is not something anyone can do to a schedule.`
+            : st.epochs <= halfLife
+              ? `${st.epochs} passes cost ${st.epochs}× and are worth ${(worth / POOL).toFixed(1)}×. Half the compute past four passes is buying nothing — and this is where a plan that multiplies instead of measuring overstates itself by half.`
+              : `${st.epochs} passes cost ${st.epochs}× and are worth ${(worth / POOL).toFixed(1)}×. The curve is flat here: the paper's own figure labels a pass at this depth worthless, and its downstream table shows accuracy falling, not plateauing. No schedule can take this pool past ${fmt(POOL * CEILING, 'count')}.`,
+      );
+      /* One mark per pass, and a pass goes dim once it is worth under half a fresh token — which
+       * is a measured property of that pass, not a boundary of the evidence. */
+      api.strip(Array.from({ length: LADDER[LADDER.length - 1] }, (_, k) => {
+        if (k >= st.epochs) return '';
+        return (worthOf(k + 1) - worthOf(k)) / POOL < 0.5 ? 'hit' : 'reg';
+      }));
     },
   });
 }

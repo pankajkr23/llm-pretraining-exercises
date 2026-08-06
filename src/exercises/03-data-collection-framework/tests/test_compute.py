@@ -18,7 +18,15 @@ from dataframework.fertility import (
 from dataframework.fetch_benchmarks import MIN_WORDS as FETCH_MIN_WORDS
 from dataframework.fetch_benchmarks import _pick_question_column, _row_to_item
 from dataframework.grade import grade_dataset, is_commercially_usable, score_gates
-from dataframework.mix import MAX_EPOCHS_HARD, check, compose, effective_tokens, is_buildable
+from dataframework.mix import (
+    EPOCHS_WORTHLESS,
+    WORTH_CEILING_MULTIPLE,
+    check,
+    compose,
+    is_buildable,
+    seen_tokens,
+    worth_tokens,
+)
 from dataframework.orphans import find_orphans
 from dataframework.shingles import (
     build_attributed_index,
@@ -149,9 +157,45 @@ def test_vocab_is_rounded_for_tensor_cores():
 # --------------------------------------------------------------------------- mix
 
 
-def test_effective_tokens_is_pool_times_epochs():
-    # Rule R1 — the correction to the "Chinchilla-brained" single-pass assumption.
-    assert effective_tokens(300e9, 4) == 1.2e12
+def test_seen_tokens_is_pool_times_epochs():
+    # What compute is billed on, and the only thing repetition multiplies linearly.
+    assert seen_tokens(300e9, 4) == 1.2e12
+
+
+def test_worth_tokens_follows_the_published_curve():
+    """Rule R1, against Muennighoff et al. JMLR v26 Eq. 18 rather than against a multiplication.
+
+    The three points below are the ones the page quotes. The first version of this module returned
+    the product for all of them, which overstated sixteen passes by half.
+    """
+    pool = 300e9
+    assert worth_tokens(pool, 1) == pool
+    assert worth_tokens(pool, 4) / pool == pytest.approx(3.73, abs=0.01)
+    assert worth_tokens(pool, 16) / pool == pytest.approx(10.59, abs=0.01)
+    assert worth_tokens(pool, 40) / pool == pytest.approx(15.18, abs=0.01)
+
+
+def test_no_schedule_beats_the_ceiling():
+    """The guard that would have caught the 6.72T the page used to print.
+
+    The paper is explicit that repetition cannot beat one epoch on U + U.R*_D fresh tokens, so the
+    worth of any schedule -- including an absurd one -- stays under that multiple.
+    """
+    pool = 336e9
+    for epochs in (20, 100, 10_000):
+        assert worth_tokens(pool, epochs) <= pool * WORTH_CEILING_MULTIPLE
+    # 20 passes was the page's figure: it asks for 20x and is worth under 12x.
+    assert worth_tokens(pool, 20) / pool < 12
+    # And the curve saturates rather than growing: absurd repetition converges on the ceiling.
+    assert worth_tokens(pool, 10_000) / pool == pytest.approx(WORTH_CEILING_MULTIPLE, abs=0.01)
+
+
+def test_a_schedule_above_the_ceiling_is_an_error():
+    # 20 passes over a pool asks for 20x it, and repetition can never be worth more than 16.4x.
+    mix = compose([{"name": "indic", "unique_tokens": 336e9, "epochs": 20}])
+    findings = check(mix)
+    assert any("no number of passes reaches this" in f["message"] for f in findings)
+    assert not is_buildable(findings)
 
 
 def test_repetition_lifts_a_thin_pool_without_new_data():
@@ -170,8 +214,8 @@ def test_repetition_lifts_a_thin_pool_without_new_data():
     assert repeated["indic_share"] > once["indic_share"]
 
 
-def test_epochs_past_the_hard_ceiling_is_an_error():
-    mix = compose([{"name": "tiny", "unique_tokens": 1e9, "epochs": MAX_EPOCHS_HARD + 1}])
+def test_epochs_past_worthless_is_an_error():
+    mix = compose([{"name": "tiny", "unique_tokens": 1e9, "epochs": EPOCHS_WORTHLESS + 1}])
     findings = check(mix)
     assert any(f["level"] == "error" for f in findings)
     assert not is_buildable(findings)

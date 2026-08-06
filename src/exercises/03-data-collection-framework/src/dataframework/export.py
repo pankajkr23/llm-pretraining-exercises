@@ -24,7 +24,13 @@ from .coverage import build_matrix
 from .fertility import D_MODEL_DEFAULT, PARITY_TARGET, unmeasured
 from .grade import grade_dataset
 from .milestones import TIER_SHAPE, build_all
-from .mix import ALWAYS_ON_SHARE, MAX_EPOCHS_ADVISED, MAX_EPOCHS_HARD
+from .mix import (
+    ALWAYS_ON_SHARE,
+    EPOCHS_HALF_LIFE,
+    EPOCHS_NEAR_FREE,
+    EPOCHS_WORTHLESS,
+    WORTH_CEILING_MULTIPLE,
+)
 from .models import Value
 from .orphans import find_orphans
 from .shingles import write_index
@@ -416,11 +422,22 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
             "always_on_share": _value(
                 ALWAYS_ON_SHARE, "share", "estimated", "the framework's protected-lane rule"
             ),
-            "max_epochs_advised": _value(
-                MAX_EPOCHS_ADVISED, "epochs", "estimated", "published repetition studies"
+            # Three distinct points on one curve, kept distinct. The pair these replace was
+            # "advised" and "hard", and "hard" was doing duty for both 16 epochs and 16x the pool.
+            "epochs_near_free": _value(
+                EPOCHS_NEAR_FREE, "epochs", "estimated", "Muennighoff et al. 2025, JMLR v26"
             ),
-            "max_epochs_hard": _value(
-                MAX_EPOCHS_HARD, "epochs", "estimated", "published repetition studies"
+            "epochs_half_life": _value(
+                EPOCHS_HALF_LIFE, "epochs", "estimated", "Muennighoff et al. 2025, JMLR v26"
+            ),
+            "epochs_worthless": _value(
+                EPOCHS_WORTHLESS, "epochs", "estimated", "Muennighoff et al. 2025, JMLR v26"
+            ),
+            "worth_ceiling_multiple": _value(
+                WORTH_CEILING_MULTIPLE,
+                "ratio",
+                "estimated",
+                "Muennighoff et al. 2025, JMLR v26 — 1 + R*_D, repetition's ceiling",
             ),
         },
         "contamination": {
