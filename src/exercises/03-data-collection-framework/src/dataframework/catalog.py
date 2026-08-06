@@ -40,7 +40,11 @@ EXPECTED_COUNTS: dict[str, int] = {
     "papers": 19,
     "risks": 20,
     "confidence": 21,
-    "corrections": 14,
+    # 15, not 14: X15 is this project correcting itself rather than the Atlas. The mix engine
+    # multiplied a pool by its epoch count and called the product "effective", which is the cost of
+    # a schedule and not its value; the register exists to hold errors found after the fact, and
+    # excluding our own would make it a record of somebody else's mistakes.
+    "corrections": 20,
     "tools": 17,
     "acquisition": 8,
     "plan": 12,

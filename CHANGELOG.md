@@ -32,8 +32,8 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   Sarvam-105B's ×1.81 and XLM-R's ×1.66, and ×8.84 worst-case against ×2.90. It is the assignment's
   named target, so `docs/DECISIONS.md` now prices the "continue-pretrain from Gemma-4-31B" fork with
   that number attached: continue-pretraining inherits the tokenizer, and the tokenizer is not free.
-- **Contamination coverage is no longer `none`.** MILU's validation split is indexed — 411,442
-  shingles from 8,923 items across 11 languages — so the gate guards something. 56 of those items
+- **Contamination coverage is no longer `none`.** MILU's validation split is indexed — 126,044
+  shingles from 8,923 items across 11 languages — so the gate guards something. 1,090 of those items
   fall under the 13-word window and would have been undetectable before the short-item fix.
 - **Interactive explainers** rather than static tables and charts: the contamination
   gate you can try to defeat with your own sentence, a vocabulary optimum that moves as you change
@@ -42,6 +42,155 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **A grade now says how much was asked, not only how it answered.** `UNKNOWN` and `FAIL` both
+  score zero — deliberately, so ignorance costs what a poor result costs — but that made "scored 5
+  with every gate measured" and "scored 5 with three gates never looked at" the same letter. Grade A
+  requires all five gates scored, B requires at least three, and every dataset ships a `gates_scored`
+  count beside its grade. **The distribution is unchanged** (B 14, C 116, X 15), which is the point:
+  the rule states what the letters already meant instead of reshuffling them. And the page now says
+  why no dataset holds the top grade, which was previously left for a reader to notice. Gate by gate,
+  out of 145: provenance 144 scored, composition 6, **contamination 1**, yield 15, evidence 145.
+  Evidence passes for every dataset because every catalogued dataset has been used by somebody, so
+  it is two free points that discriminate nothing, and 125 of 145 records have two gates scored or
+  fewer — for most of the catalogue the only real signal is where the text came from. A is empty not
+  because nothing is good enough but because **nothing has been fully checked**, and the sharpest
+  case is now stated plainly: the contamination gate is scored on one dataset in the entire
+  catalogue and on none of the four the plan commits to. Those four clear licence, provenance and
+  size; they are not datasets somebody finished checking. Recorded as correction X20.
+- **Prose that quotes a count now reads it.** The opening paragraph called the corpus **17
+  trillion** tokens — `.toFixed(0)` on 16.8 — while every other mention said 16.8T. Chapter 4 said
+  the mixture had **eight** tiers and **ten** tiers on one screen, beside a figure drawing ten bars a
+  reader can count. The glossary defined a rung as one of "5, 10, 15 or 20 trillion tokens", a ladder
+  replaced by 3T/8T/16.8T/30T, and defined a pass as contributing "four times its size" — the exact
+  arithmetic correction X15 exists to retract, sitting in the band readers are told to read first.
+  Chapter 13 claimed all four licence-blocked datasets were English corpora when the largest is
+  **HPLT v3.0 at 198 languages**, and planned against 35,000 hours of open Indic speech while this
+  page's own appendix put the pool "well north of 100,000". The cost chapter priced a 15T run: 2.50M
+  H100-hours where the recommendation implies **2.80M**, and $5.0M where it implies **$5.6M**. Two
+  figures were both numbered Fig. 9. Sarvam-30B was 30B in one register and 32B in another (the card
+  says 32B), and both cited the model cards for token counts **the cards do not state**. All fixed —
+  and fixed at the cause: every count quoted in prose is now read from the record that holds it, a
+  new `run_cost.py` recomputes the run price the way `vocab_trade.py` already recomputes the
+  vocabulary trade, and a test asserts the two model registers agree about any model they both
+  describe. Recorded as correction X19.
+- **Three of the guards enforcing the five invariants could not fail.** INV-1b's mutation proof
+  built a string from an eval item and asserted the item was in it — it touched no project code and
+  could not fail under any change to the repository. INV-2's check asked
+  `is_commercially_usable(grade)` inside `if grade == "X"`, and that function was `grade != "X"`, so
+  it reduced to asserting that `"X"` equals `"X"`. And the leak scan looked only for synthetic
+  fixtures that were never within reach of the pipeline, never for a real benchmark item. The guards
+  now test the claims: INV-2 reads the shipped plan and asserts no excluded dataset reaches a
+  committed tier, and `is_commercially_usable` takes the record and requires an **established**
+  licence — because *unknown is not permission*, which the rest of the framework says and this one
+  function contradicted. Alongside them: `score_gates` counts only the five named gates, so a
+  duplicated key can no longer score 14 out of a stated maximum of 10 and buy a grade A;
+  `coverage.py`'s exclusion clause, which could only ever fire for one capability, now runs for the
+  first time and stops counting **IndicMMLU-Pro** as an instrument for Indian worldview when its own
+  notes say it was translated; and `mix.check` reports a tier it cannot assess instead of skipping
+  it in silence, errors on a negative schedule, and no longer raises on a null one. The page also
+  now discloses **both** guardrails its mixture breaches — the synthetic-Indic share at 52.4% was
+  going unmentioned beside the protected lane at 21.0%, which reads as candour while showing half
+  the picture. Recorded as correction X18.
+- **Nothing derived from an estimate calls itself measured any more.** The `sourcing`, `lifecycle`
+  and `orphan_tiers` blocks each declared `provenance: "measured"` over every number inside them —
+  including `committed_tokens` of 6.39T, which is a sum over the catalogue's own sizes, and **not
+  one of the 145 records carries a measured size** (24 estimated, 121 unknown). The page tells
+  readers the green underline means "somebody ran it". Nobody had. A derived number is now no more
+  measured than its least-measured input, so those blocks are estimated — while the exact counts
+  keep the mark they earned, because counting records in a catalogue we hold really is a
+  measurement. Three figures the browser labelled by hand are corrected too, one of them a
+  counterfactual showing what the corpus *would* hold if the reader resolved blockers that have not
+  been resolved. Separately, 115 fertility values shipped claiming measurement against a run id
+  literally prefixed `pending-`: the substitution walked one block and missed `conversational`. It
+  now walks all of them, and `protocol_gaps` — a hardcoded string still insisting "three of the six
+  tokenizers are unavailable" long after the run measured five with one unavailable — is computed
+  from the run it describes. Recorded as correction X17.
+- **The contamination gate no longer shatters Indic text, or deletes clean documents.** It
+  tokenised with `\w+`, and Python's `\w` matches letters and digits but **not Unicode combining
+  marks** — which is what every Indic vowel sign, virama, anusvara and nukta is. So every Indic word
+  was split at every vowel sign and the sign discarded: five Hindi words became eleven consonant
+  fragments. 91% of the indexed items are in Indic scripts, inflated by a mean factor of 2.58, so a
+  "thirteen-word fingerprint" was about five real words of consonant skeleton there. It produced
+  **false positives that would have deleted clean training text**: measured against 203,388 held-out
+  FLORES-200 sentences the old tokeniser collided with 5, all Indic, all ordinary news prose — one
+  of them the Malayalam for "the attack greatly affected relations between India and Pakistan",
+  three ordinary words that normalised to a full thirteen-token window. The corrected tokeniser
+  collides with none of them. The same corpus now indexes to 126,044 fingerprints rather than
+  411,442, across eight window widths rather than five, and **1,090 of 8,923 items are genuinely
+  shorter than the window where the old count said 56**. The refusal floor rose from 5 words to 6,
+  because the example the code's own comment gives as too generic to index is five words long. The
+  browser demo carried the identical defect and now mirrors the pipeline, including the floor — it
+  used to tell readers any question under thirteen words was unprotectable, contradicting both the
+  pipeline and the paragraph beneath it. Recorded as correction X16.
+- **The tier shares in chapter 11 no longer overrun the tier names.** The register's first column
+  was 18px, sized for the single-digit job numbers it was originally built for, and the evaluation
+  chapter reused the same row for percentages — so `15.0%` printed straight over `english-web-hq`.
+  Nine of the ten rows were affected. The share variant now gets its own column width rather than
+  padding the numbered list to fit a string it never contains.
+- **Each growth stage now answers "why this number" twice — from supply, then from analogy.** The
+  supply half is measured on this page and had never been placed next to a budget: for every stage,
+  what clears every bar today and what is blocked on nothing but an unanswered licence, each as a
+  percentage of that stage's own budget. The analogy half names the comparators the budget was set
+  by (Gemma 3 4B's 4T, Llama 3.1 8B's 15T, Qwen3's 36T) and states plainly what an analogy proves
+  about this corpus, which is nothing — it assumes corpus size follows parameter count, the
+  assumption the same chapter disproves. Reading them together produces a finding neither gives
+  alone: three of the four budgets are comfortably reachable, but only once four licence letters are
+  answered, and the seed — which admits no web text at all — can reach **2.8% of its own budget**.
+  The binding constraint on the ladder was never the size of the numbers; it is the web-data policy
+  and four emails.
+- **The growth stages say which of their numbers were reasoned and which were assumed.** Four token
+  budgets printed in the same typeface read as four equally solid figures, and only one is. 16.8T is
+  derived, and the page now shows the derivation: the plan is written against Gemma 4 31B, which
+  publishes no token count, so it takes the 14T its predecessor Gemma 3 27B does publish and adds
+  20% for one generation — with that 20% named as the single free parameter. 3T, 8T and 30T are
+  analogies to other labs' models, each labelled as what it is: a rule of thumb, a figure chosen
+  below its own comparators, and parity with published frontier counts. The method cannot produce
+  them because it anchors to a *model* rather than to a size, and only one stage has a comparator —
+  nobody publishes the corpus for an intermediate stage of a lineage they grew. The parameter counts
+  are marked illustrative throughout, since no scaling strategy has been chosen. A tokens-per-
+  parameter row makes the seam visible: the two rule-of-thumb stages sit on exactly 1,000, which is
+  the signature of a rule applied rather than a budget set — and it is the same tokens-per-parameter
+  reasoning the rest of the page argues against. Two stage descriptions that had drifted from the
+  record are now computed from it (the seed's text called a 3B model "a dense 40B"; the third stage
+  claimed to add 80B parameters where it adds 32B).
+- **Repeated tokens are no longer counted as though they were fresh ones.** The mix engine computed
+  `effective tokens = unique pool × epochs`, and chapter 2 printed that product as the value of a
+  repetition schedule. The multiplication is right for what compute is billed on and wrong for what
+  the passes are worth, and the paper the page cites gives the second as a decaying sum. Seen and
+  worth are now separate quantities everywhere: four passes cost 4× and are worth 3.73×, sixteen
+  cost 16× and are worth 10.6×, forty cost 40× and are worth 15.2×, and **no schedule exceeds 16.4×
+  the unique pool**. The page used to display 6.72T from a 336B pool read twenty times, badged
+  "unevidenced"; it was not unevidenced but unreachable — the ceiling for that pool is 5.51T at any
+  number of passes — and a guardrail now errors rather than rendering such a figure. Two claims
+  beside it were false and are corrected: 16 epochs is the half-life at which a repeated token has
+  lost 1/e of its value, not where published work stops (the same paper reports 44-epoch runs and
+  labels 40 epochs worthless), and repetition **has** been measured on Indian-language text — ATLAS
+  (ICLR 2026, 774 runs over 400+ languages) finds Hindi's curve bends upward sooner than English's,
+  which makes these constants the optimistic end for an Indic pool rather than the neutral one.
+  Recorded as correction X15, with what the frontier does instead: Kimi K2 measured ten epochs of
+  raw repetition at ~23.8% against ~28.9% for ten rephrasings read once, and Kimi K3's pre-training
+  section never uses the word "epoch".
+- **A contents rail that stays with the reader, and only one contents list.** The one-page report
+  runs thirteen chapters and an appendix, and the only way to see where you were was to scroll back
+  to the top. There is now a single contents with two presentations: a block in the flow on narrow
+  screens, carrying a line on what each chapter answers, and on wide ones a rail pinned to the left
+  margin, vertically centred, marking the chapter you are in and collapsing to one button when you
+  want the width back — a choice it remembers. The two-column block that used to sit under the lede
+  is gone, along with the screen of scrolling it put between the opening and the first chapter.
+- **The growth plan says what each stage would actually train on.** The four stages — 3T, 8T, 16.8T
+  and 30T — now each carry the sequence length, whether web data is admitted, whether the script
+  quarantine is absolute or enforced, and how much noise passes, with a table comparing all four
+  down the page. Each stage then names how many catalogued datasets its own rule admits and what
+  they carry, so the corpus a stage needs is checked against the corpus that exists rather than
+  asserted beside it. A stage now summarises itself as its window size and its corpus rather than
+  its parameter count: what to read, and in how long a window, is the decision being made — the
+  parameter count follows from it.
+- **Each growth stage names the datasets it would read.** Saying a stage "admits 4 datasets carrying
+  6.39T" is a count standing in for a shopping list. Every stage now prints the list, in two groups,
+  because they are blocked by different things: clear today (3 datasets and 85.3B at the seed, which
+  forbids web text; 4 and 6.39T after it) and one letter away — blocked on an unanswered licence and
+  nothing else, which is four datasets holding 54.6T. The Indic sizes quoted are the verified counts
+  rather than the announced ones, so a stage is never planned against 187B that nobody has checked.
 - **One content width, with prose held to a reading measure inside it.** The page used to cap
   everything at 860px, which cramped a seven-column dataset table and a two-column figure while a
   thousand pixels sat empty either side. The container is now a single 1240px and never moves, so

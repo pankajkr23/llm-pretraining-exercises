@@ -50,7 +50,7 @@
     "provenance": "estimated"
   },
   "run_cost": {
-    "note": "Derived here, from the same three constants docs/DECISIONS.md 4.4 uses for the vocabulary trade: 6ND for training FLOPs, 4.0e14 sustained FLOP/s per H100, and the USD/INR rate implied by that section's own figures. No new assumption is introduced; the chapter that asks what it costs was otherwise pricing nothing.",
+    "note": "Recomputed by dataframework/run_cost.py from the budget the page recommends, using the three constants docs/DECISIONS.md 4.4 already uses: 6ND for training FLOPs, 4.0e14 sustained FLOP/s per H100, and that section's own USD/INR rate. It shipped as a static block worked against a 15T budget and stayed there when the recommendation moved to 16.8T, which made it 12% low.",
     "params": 40000000000,
     "tokens": 15000000000000,
     "steps": [

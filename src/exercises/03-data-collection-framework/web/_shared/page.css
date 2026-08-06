@@ -108,43 +108,6 @@ table.plain th {
 }
 table.plain td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 
-/* Thirteen chapters as a real contents block: number, title, and what the chapter answers. A grid
- * of bare titles tells a reader the order and nothing about where to land. */
-nav.chapters {
-  /* The nav is built from the rendered chapters, so its height has to be reserved or the whole
-   * page jumps when data.json lands. Two columns above 700px, one below, and the reservation
-   * follows: 14 rows of roughly 56px, halved when they pair up. */
-  min-height: 812px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
-  gap: 0 34px;
-  margin: 30px 0 8px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-}
-nav.chapters a {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr);
-  gap: 10px;
-  align-items: baseline;
-  color: inherit;
-  text-decoration: none;
-  padding: 8px 0;
-  border-bottom: 1px solid transparent;
-}
-nav.chapters a:hover { border-bottom-color: var(--line); }
-nav.chapters a:hover .ct-title { color: var(--accent); }
-nav.chapters a .cn {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--faint);
-  font-variant-numeric: tabular-nums;
-}
-.ct { display: block; min-width: 0; }
-.ct-title { display: block; font-size: 14px; font-weight: 600; color: var(--ink); line-height: 1.35; }
-.ct-sub { display: block; font-size: 12px; color: var(--muted); line-height: 1.45; margin-top: 2px; }
-@media (min-width: 701px) { nav.chapters { min-height: 420px; } }
-
 h3.appendix-h { font-family: var(--display); font-size: 1.05rem; margin: 26px 0 4px; }
 
 /* The five gates behind one dataset's grade. A grade with no reasoning is a number to argue with. */
@@ -210,14 +173,19 @@ details.legend > summary::before {
 details.legend[open] > summary::before { transform: rotate(90deg); }
 details.legend > summary:hover { color: var(--accent); }
 details.legend > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
-/* The lead-in, so the band says what it is before the sentence explains it. */
+/* The lead-in, so the band says what it is before the sentence explains it.
+ *
+ * --ink and not --accent. The accent on its own soft wash measures 4.30:1 in the light themes, which
+ * is under AA, and this is the third element on the page to make that exact mistake — the gate card
+ * and the rail's active number were the others. The mono uppercase treatment is what makes this read
+ * as a flag; the colour was never carrying it. */
 .legend-flag {
   font-family: var(--mono);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--ink);
   flex: none;
 }
 .legend-body { margin-top: 14px; font-size: 13px; }
@@ -468,3 +436,142 @@ tr.cardrow .gatecard { margin-top: 4px; }
 }
 .themepick select:hover { border-color: var(--accent); }
 .themepick select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* The contents rail — the only table of contents on the page.
+ *
+ * It had a twin: a two-column block sitting under the lede, carrying the same thirteen chapters plus
+ * a line on what each one answers. Two lists of the same thing is one too many, and the block pushed
+ * the first chapter most of a screen down. So this is now the single contents, and it took the
+ * answer lines with it.
+ *
+ * One list, two presentations, and which one you get is a question of width:
+ *
+ *   narrow  — a block in the flow, exactly where the old one sat, answer lines and all
+ *   wide    — fixed to the left margin, vertically centred, following the reader
+ *
+ * `position: fixed` is what makes one element do both: it leaves the flow entirely, so the rail can
+ * live inside the wrapper for the narrow case and still pin itself to the viewport edge for the
+ * wide one.
+ */
+
+/* ---- narrow: a block in the flow ---- */
+
+.rail {
+  display: block;
+  /* Built from the rendered chapters, so the height has to be reserved or the page jumps when
+     data.json lands. Fourteen rows of roughly 58px, halved once they pair up. */
+  min-height: 812px;
+  margin: 30px 0 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+@media (min-width: 701px) { .rail { min-height: 420px; } }
+
+.rail-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 0 34px; }
+.rail-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.rail-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* Collapsing is a sidebar affordance; there is nothing to reclaim from a block in the flow. */
+.rail-toggle { display: none; }
+
+.rail-link {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+  color: inherit;
+  text-decoration: none;
+  padding: 8px 0;
+  border-bottom: 1px solid transparent;
+}
+.rail-link:hover { border-bottom-color: var(--line); }
+.rail-link:hover .rail-t { color: var(--accent); }
+.rail-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.rail-body { display: block; min-width: 0; }
+.rail-t { display: block; font-size: 14px; font-weight: 600; color: var(--ink); line-height: 1.35; }
+.rail-sub { display: block; font-size: 12px; color: var(--muted); line-height: 1.45; margin-top: 2px; }
+.rail-n { font-family: var(--mono); font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+
+/* ---- wide: pinned to the margin ---- */
+
+@media (min-width: 1180px) {
+  .rail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 236px;
+    height: 100vh;
+    min-height: 0;
+    margin: 0;
+    padding: 26px 14px 30px 20px;
+    overflow-y: auto;
+    border-top: none;
+    border-right: 1px solid var(--line);
+    background: var(--bg);
+    z-index: 5;
+    /* Centred rather than top-aligned: the list is well short of a screen, and hanging it off the
+       top edge leaves the reader's eye travelling to a corner. `margin-block: auto` and not
+       `justify-content: center`, because auto margins give up their space when the content does
+       overflow — a centred overflowing column clips its own first rows and cannot be scrolled
+       back to them. */
+    display: flex;
+    flex-direction: column;
+  }
+  .rail-inner { margin-block: auto; width: 100%; }
+
+  /* An overlay on the margin, not a column: the wrapper keeps its own centring, so nothing shifts
+     under the reader when the rail collapses. */
+  .wrap { padding-left: 260px; max-width: 1500px; }
+
+  .rail-list { grid-template-columns: 1fr; gap: 1px; }
+  /* No room for the answer line beside the text — it stays on the link's title. */
+  .rail-sub { display: none; }
+  .rail-toggle {
+    display: inline-block;
+    font: inherit;
+    font-size: 13px;
+    line-height: 1;
+    color: var(--muted);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 3px 7px;
+    cursor: pointer;
+    flex: none;
+  }
+  .rail-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .rail-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .rail-link {
+    grid-template-columns: 16px minmax(0, 1fr);
+    gap: 8px;
+    padding: 6px 8px;
+    border-bottom: none;
+    border-left: 2px solid transparent;
+    border-radius: 0 6px 6px 0;
+    color: var(--muted);
+  }
+  .rail-link:hover { background: var(--accent-soft); }
+  .rail-link:focus-visible { outline-offset: -2px; }
+  .rail-t { font-size: 12.5px; font-weight: 400; color: inherit; line-height: 1.4; }
+  .rail-n { font-size: 10px; }
+  .rail-link.on { background: var(--accent-soft); border-left-color: var(--accent); }
+  .rail-link.on .rail-t { color: var(--ink); font-weight: 600; }
+  /* --ink, not --accent: the accent on its own soft wash lands at 4.3:1 in the light themes, and
+     the left bar is already carrying the accent for this state. */
+  .rail-link.on .rail-n { color: var(--ink); }
+
+  /* Collapsed. The state lives on the root element because it has to reach the wrapper too, and
+     the rail is inside it rather than beside it. */
+  :root.rail-shut .rail { width: 46px; padding: 26px 8px; }
+  :root.rail-shut .rail-list,
+  :root.rail-shut .rail-title { display: none; }
+  :root.rail-shut .wrap { padding-left: 70px; }
+}

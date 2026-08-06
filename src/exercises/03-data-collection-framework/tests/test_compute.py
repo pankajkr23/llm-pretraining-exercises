@@ -18,8 +18,17 @@ from dataframework.fertility import (
 from dataframework.fetch_benchmarks import MIN_WORDS as FETCH_MIN_WORDS
 from dataframework.fetch_benchmarks import _pick_question_column, _row_to_item
 from dataframework.grade import grade_dataset, is_commercially_usable, score_gates
-from dataframework.mix import MAX_EPOCHS_HARD, check, compose, effective_tokens, is_buildable
+from dataframework.mix import (
+    EPOCHS_WORTHLESS,
+    WORTH_CEILING_MULTIPLE,
+    check,
+    compose,
+    is_buildable,
+    seen_tokens,
+    worth_tokens,
+)
 from dataframework.orphans import find_orphans
+from dataframework.run_cost import price_run
 from dataframework.shingles import (
     build_attributed_index,
     build_index,
@@ -61,7 +70,26 @@ def test_design_worked_example_grades_b():
 def test_failed_provenance_is_excluded_not_merely_penalised():
     record = {"gates": _gates(provenance="FAIL", evidence="PASS"), "gotchas": []}
     assert grade_dataset(record)[0] == "X"
-    assert not is_commercially_usable("X")
+    # Takes a record now: a grade alone cannot answer the question, because a licence nobody has
+    # established is not permission either.
+    assert not is_commercially_usable(
+        {
+            "id": "X1",
+            "gates": {},
+            "gotchas": [{"type": "SAFETY", "text": "CSAM", "severity": "blocking"}],
+        }
+    )
+    assert not is_commercially_usable({"id": "U1", "gates": {}, "licence_commercial": None})
+    assert is_commercially_usable(
+        {
+            "id": "OK",
+            "licence_commercial": True,
+            "gates": {
+                g: {"verdict": "PASS", "reasoning": "r", "confidence": "high"}
+                for g in ("provenance", "composition", "contamination", "yield", "evidence")
+            },
+        }
+    )
 
 
 def test_failed_contamination_is_also_disqualifying():
@@ -146,12 +174,79 @@ def test_vocab_is_rounded_for_tensor_cores():
     assert round_to_multiple(208_896) == 208_896  # 1,632 x 128
 
 
+def test_the_run_price_tracks_the_shipping_budget():
+    """The cost chapter must price the budget the page recommends, not a superseded one.
+
+    `records/cost.json` carried this as a static block worked against 15T. The recommendation moved
+    to 16.8T and the chapter kept answering for the old run — 2.50M H100-hours where the plan
+    implies 2.80M, twelve percent low and silent about it. Correction X19.
+    """
+    bundle = json.loads((Config().web_dir / "data.json").read_text(encoding="utf-8"))
+    records = json.loads((Config().web_dir / "records.json").read_text(encoding="utf-8"))
+    recommended = next(p for p in bundle["milestones"]["presets"] if p.get("recommended"))
+    budget = recommended["mix"]["total_seen_tokens"]
+
+    run = records["cost"]["run_cost"]
+    assert run["tokens"] == budget, "the run is priced against a budget the page does not recommend"
+    assert run.get("recomputed") is True, "the price is static again, so it can go stale again"
+
+    hours = next(s for s in run["steps"] if s["unit"] == "H100-hours")["value"]
+    assert hours == pytest.approx(6 * 40e9 * budget / 4.0e14 / 3600, rel=1e-6)
+
+
+def test_the_run_price_check_can_actually_fail():
+    """Breaking X19 must fail: a price against the old budget must be caught."""
+    bundle = json.loads((Config().web_dir / "data.json").read_text(encoding="utf-8"))
+    recommended = next(p for p in bundle["milestones"]["presets"] if p.get("recommended"))
+
+    stale = price_run(params=40e9, seen_tokens=15e12)
+    assert stale["tokens"] != recommended["mix"]["total_seen_tokens"], (
+        "15T is now the recommended budget, so this mutation no longer proves anything"
+    )
+
+
 # --------------------------------------------------------------------------- mix
 
 
-def test_effective_tokens_is_pool_times_epochs():
-    # Rule R1 — the correction to the "Chinchilla-brained" single-pass assumption.
-    assert effective_tokens(300e9, 4) == 1.2e12
+def test_seen_tokens_is_pool_times_epochs():
+    # What compute is billed on, and the only thing repetition multiplies linearly.
+    assert seen_tokens(300e9, 4) == 1.2e12
+
+
+def test_worth_tokens_follows_the_published_curve():
+    """Rule R1, against Muennighoff et al. JMLR v26 Eq. 18 rather than against a multiplication.
+
+    The three points below are the ones the page quotes. The first version of this module returned
+    the product for all of them, which overstated sixteen passes by half.
+    """
+    pool = 300e9
+    assert worth_tokens(pool, 1) == pool
+    assert worth_tokens(pool, 4) / pool == pytest.approx(3.73, abs=0.01)
+    assert worth_tokens(pool, 16) / pool == pytest.approx(10.59, abs=0.01)
+    assert worth_tokens(pool, 40) / pool == pytest.approx(15.18, abs=0.01)
+
+
+def test_no_schedule_beats_the_ceiling():
+    """The guard that would have caught the 6.72T the page used to print.
+
+    The paper is explicit that repetition cannot beat one epoch on U + U.R*_D fresh tokens, so the
+    worth of any schedule -- including an absurd one -- stays under that multiple.
+    """
+    pool = 336e9
+    for epochs in (20, 100, 10_000):
+        assert worth_tokens(pool, epochs) <= pool * WORTH_CEILING_MULTIPLE
+    # 20 passes was the page's figure: it asks for 20x and is worth under 12x.
+    assert worth_tokens(pool, 20) / pool < 12
+    # And the curve saturates rather than growing: absurd repetition converges on the ceiling.
+    assert worth_tokens(pool, 10_000) / pool == pytest.approx(WORTH_CEILING_MULTIPLE, abs=0.01)
+
+
+def test_a_schedule_above_the_ceiling_is_an_error():
+    # 20 passes over a pool asks for 20x it, and repetition can never be worth more than 16.4x.
+    mix = compose([{"name": "indic", "unique_tokens": 336e9, "epochs": 20}])
+    findings = check(mix)
+    assert any("no number of passes reaches this" in f["message"] for f in findings)
+    assert not is_buildable(findings)
 
 
 def test_repetition_lifts_a_thin_pool_without_new_data():
@@ -170,8 +265,8 @@ def test_repetition_lifts_a_thin_pool_without_new_data():
     assert repeated["indic_share"] > once["indic_share"]
 
 
-def test_epochs_past_the_hard_ceiling_is_an_error():
-    mix = compose([{"name": "tiny", "unique_tokens": 1e9, "epochs": MAX_EPOCHS_HARD + 1}])
+def test_epochs_past_worthless_is_an_error():
+    mix = compose([{"name": "tiny", "unique_tokens": 1e9, "epochs": EPOCHS_WORTHLESS + 1}])
     findings = check(mix)
     assert any(f["level"] == "error" for f in findings)
     assert not is_buildable(findings)
@@ -277,9 +372,9 @@ def test_a_short_item_hashes_to_one_whole_text_gram():
 
 def test_an_index_records_every_width_it_used():
     index = build_attributed_index(
-        {"B": ["only five words here now", " ".join(f"w{i}" for i in range(20))]}
+        {"B": ["exactly six short words sit here", " ".join(f"w{i}" for i in range(20))]}
     )
-    assert index.widths == frozenset({5, 13})
+    assert index.widths == frozenset({6, 13})
     assert not index.unindexable
 
 

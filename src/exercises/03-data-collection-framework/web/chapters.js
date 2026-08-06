@@ -207,14 +207,33 @@ function chapterTarget(ctx) {
 // ─────────────────────────────────────────────────────────── 2 · how much text
 
 function chapterBudget(ctx) {
-  const { data, presets, recommended } = ctx;
+  const { data, records, presets, recommended } = ctx;
+  /* The top of the growth ladder, read rather than typed. This state asked "and at 300 billion
+   * parameters?" while the note inside it printed the ladder ending at 200B. */
+  const LADDER_TOP = ((records.growth || {}).stages || []).slice(-1)[0] || {};
   const naturalOf = (p) => p.mix.tiers.find((t) => t.name === 'indic-natural');
   const POOL = naturalOf(recommended).unique_tokens;
-  const advised = data.mix_rules.max_epochs_advised.value;
-  const hard = data.mix_rules.max_epochs_hard.value;
-  /* The top rung sits past the hard ceiling on purpose: a ladder that stops exactly at the ceiling
-   * can never render the state the caption promises, and the unevidenced zone is the point. */
-  const LADDER = [1, advised, hard + 4];
+  const nearFree = data.mix_rules.epochs_near_free.value;
+  const halfLife = data.mix_rules.epochs_half_life.value;
+  const worthless = data.mix_rules.epochs_worthless.value;
+  const CEILING = data.mix_rules.worth_ceiling_multiple.value;
+
+  /* What a schedule is worth, as against what it costs. Muennighoff et al. (JMLR v26, Eq. 18):
+   *
+   *     D' = U + R*_D . U . (1 - e^(-(passes-1)/R*_D)),   R*_D = 15.4
+   *
+   * This chapter used to print U x passes and call it "effective", which is the cost and not the
+   * value. It made four passes look 7% better than measured, sixteen 51% better, and twenty 68%
+   * better -- and it printed 6.72T from this pool, which is above the 5.51T that infinite
+   * repetition could ever be worth. Every state below now shows both numbers. */
+  const DECAY = CEILING - 1;
+  const worthOf = (passes) => (passes <= 1
+    ? POOL * Math.max(passes, 0)
+    : POOL * (1 + DECAY * (1 - Math.exp(-(passes - 1) / DECAY))));
+
+  /* Four rungs, all of them places the paper actually measured: one pass, the near-free knee, the
+   * half-life, and the point its own Figure 1 labels worthless. */
+  const LADDER = [1, nearFree, halfLife, worthless];
 
   const states = [
     ...LADDER.map((e) => ({
@@ -223,20 +242,30 @@ function chapterBudget(ctx) {
       lead:
         e === 1
           ? 'There is only so much Indian-language text in the world. Read the whole natural pool once and this is everything it gives you — nowhere near the budget, and no amount of collecting closes that gap in the time available. So the question becomes '
-          : e <= advised
-            ? `Read it ${e} times and it counts ${e} times over. The surprising part, measured rather than assumed, is that a word seen a fourth time teaches almost as much as a fresh one — so the pool is `
-            : `Push to ${e} passes and the arithmetic still multiplies, but the evidence has run out. Published work stops at ${hard}; past that the number on the left is `,
+          : e <= nearFree
+            ? `Read it ${e} times and you pay for ${e} times the compute. You do not get ${e} times the text — a fourth pass over the same words teaches less than a fresh one — but measurably close to it. Up to here the pool behaves as though it were `
+            : e <= halfLife
+              ? `Keep going to ${e} passes and the curve is visibly bending. This is the half-life the published fit names: a repeated token here is worth about ${(1 - 1 / Math.E).toFixed(2)} of a fresh one, so ${e} passes buy `
+              : `At ${e} passes the paper that measured all of this labels the next read worthless. You are still paying full compute per pass, and what you take home has `,
       bold:
         e === 1
           ? 'how many times the same text can be read'
-          : e <= advised
-            ? 'far larger than its size suggests'
-            : 'arithmetic, not a measurement',
-      tail: e > hard ? ' — which is the worst kind of number to build a plan on.' : '.',
+          : e <= nearFree
+            ? 'nearly four times its size'
+            : e <= halfLife
+              ? 'nowhere near sixteen times the pool'
+              : 'stopped moving',
+      tail: e === 1
+        ? '.'
+        : e <= nearFree
+          ? '.'
+          : e <= halfLife
+            ? '.'
+            : ` — and it can never pass ${CEILING}× this pool, however long the run.`,
     })),
     {
       rungs: true,
-      marg: 'And at 300 billion parameters?',
+      marg: `And at ${fmt(LADDER_TOP.params_total || 0, 'count')} parameters?`,
       lead: 'A bigger model does not need proportionally more Indian text — it needs more of every kind, and the Indic pool is the one that cannot grow to meet it. Scaling past this size is ',
       bold: 'an English and synthetic story',
       tail: ', unless somebody funds collection. That is a factual limit, not a pessimistic one.',
@@ -254,27 +283,34 @@ function chapterBudget(ctx) {
       b(fmt(recommended.target_seen_tokens, 'count')),
       text(' tokens — roughly three-quarters of that in words. English offers that and more; all 22 Indian languages together offer perhaps a fiftieth, so the budget cannot be met by collecting harder. It is met by '),
       b('reading the same text more than once'),
-      text(' — which is nearly free up to a point somebody measured. Scrolling steps the schedule; the pool never changes.'),
+      text(' — which is nearly free up to a point somebody measured, and steadily less free after it. Scrolling steps the schedule; the pool never changes, and neither does what it can ever be worth.'),
     ],
     figNum: 'Fig. 1 — the schedule, not the pool',
-    caption: `Fig. 1 — Effective tokens from a fixed pool of ${fmt(POOL, 'count')} of natural Indian-language text as passes accumulate. One mark per pass for the first three states, red past the ceiling of ${hard} where no published work reaches; the last state switches to one mark per budget on the growth path, with the seed filled.`,
-    pill: `${advised} passes ≈ free`,
+    caption: `Fig. 1 — What a fixed pool of ${fmt(POOL, 'count')} of natural Indian-language text is worth as passes accumulate, against what those passes cost. One mark per pass, dimmed once a pass is worth less than half a fresh one; the last state switches to one mark per budget on the growth path, with the seed filled.`,
+    pill: `${nearFree} passes ≈ free · ceiling ${CEILING}×`,
     rail: [
       text('The knee at '),
-      renderNumber(data.mix_rules.max_epochs_advised),
-      text(' and the ceiling at '),
-      renderNumber(data.mix_rules.max_epochs_hard),
-      text(' are '),
-      b('estimated from published work'),
-      text(' on English web text at small scale. Nobody has measured them for Indian, translated or synthetic text — and the whole Indic budget rests on them.'),
+      renderNumber(data.mix_rules.epochs_near_free),
+      text(', the half-life at '),
+      renderNumber(data.mix_rules.epochs_half_life),
+      text(' and the ceiling of '),
+      renderNumber(data.mix_rules.worth_ceiling_multiple),
+      text('× the pool are '),
+      b('one fitted curve, on English web text'),
+      text(' at 9B parameters or less. The one large multilingual study that fits the same curve per language — 774 runs across 400+ languages — reports that Hindi and Swahili '),
+      b('bend upward sooner'),
+      text(' than English does. So these numbers are the optimistic end for an Indic pool, not the neutral one.'),
     ],
     states,
     arithmetic: [
       para(b(`Where ${recommended.id} comes from — and why it is derived rather than copied.`), ' The comparator does not say. Gemma 4\u2019s technical report describes its training data by domain and cutoff date and states no token count anywhere; neither does its model card. The previous generation does: Google\u2019s Gemma 3 card states that the 27B was trained with 14 trillion tokens, the 12B with 12 trillion, the 4B with 4 and the 1B with 2. ', b(`${recommended.id} is that 14T plus 20% for one generation`), ' — an estimate with a stated method, and labelled as one everywhere it appears.'),
       para(b('Two independent checks on that figure.'), ' On tokens per parameter it lands at ', b(`${Math.round(recommended.target_seen_tokens / 40e9)}:1`), ' for a dense 40B, next to Gemma 3 27B\u2019s 519:1 and inside the 400–1,900 band every comparable dense model of the last two years sits in. And Chinchilla — the compute-optimal ratio of about 20 tokens per parameter — would put a 40B at 800 billion. Nobody has planned that way in years, because compute-optimal minimises the cost of ', b('training'), ' while every deployed model pays the cost of ', b('serving'), ' forever. Overtraining is how you buy a model that is cheaper to run.'),
       para(b('What the comparison table says, and it is not what most readers expect.'), ' A corpus is not sized by the model that reads it. Llama 3.1 trained 8B, 70B and 405B on about the same 15T. DeepSeek-V3 stores 671B parameters and read 14.8T — less than Gemma 3 27B. Sarvam-105B read 12T where the smaller Sarvam-30B read 16T. Parameter count and corpus size came apart years ago, and the whole growth argument in ', ref('how it grows', 'growth'), ' rests on that.'),
-      para('The sum is ', b('unique text × passes = effective tokens'), '. A pool of ', fmt(POOL, 'count'), ' read four times contributes ', fmt(POOL * 4, 'count'), ' to the budget.'),
-      para(b('The evidence for "nearly free"'), ' is Muennighoff et al., ', ref('Scaling Data-Constrained Language Models', 'appendix'), ' (NeurIPS 2023): an 8.7B-parameter model trained four epochs on 44B unique tokens finished only 0.5% worse on validation loss than a single epoch over 178B unique tokens. The decay constant behind the ceiling is R*_D ≈ 15 — no amount of repetition beats one epoch on about 16× the unique pool. Two guardrails come with it: repetition operates on whole tiers only (up-sampling 0.1% of a corpus a hundred times degrades the model badly), and every one of those measurements is on English web text at 9B parameters or less.'),
+      para(b('The sum, and the correction to it.'), ' This chapter used to say ', b('unique text × passes = effective tokens'), ' and print the product. That is the cost of a schedule, not its value, and the two are not the same number. The paper this rests on gives the value as a decaying sum: ', b('D′ = U + 15.4·U·(1 − e^(−(passes−1)/15.4))'), '. So ', fmt(POOL, 'count'), ' read four times costs ', fmt(POOL * 4, 'count'), ' of compute and is worth ', fmt(worthOf(4), 'count'), ' of fresh text — and sixteen passes, which the old arithmetic scored at ', fmt(POOL * 16, 'count'), ', are worth ', fmt(worthOf(16), 'count'), '.'),
+      para(b('The ceiling that no schedule crosses.'), ' Because the sum converges, repetition has a maximum: the paper states that repeating cannot beat a single epoch on U + U·R*_D fresh tokens, which is ', b(`${CEILING}× the unique pool`), ' — ', fmt(POOL * CEILING, 'count'), ' from this one, at any number of passes. An earlier version of this page displayed ', fmt(POOL * 20, 'count'), ' for twenty passes. That figure was not merely unevidenced, as it claimed; it was above a ceiling the same paper had already stated, and no schedule reaches it.'),
+      para(b('The evidence for "nearly free"'), ' is Muennighoff et al., ', ref('Scaling Data-Constrained Language Models', 'appendix'), ' (JMLR v26, 2025): an 8.7B-parameter model trained four epochs on 44B unique tokens finished only 0.5% worse on validation loss than a single epoch over 178B unique tokens. The fitted decay constant is R*_D ≈ 15.4, and 16 passes is not where the evidence stops — it is the half-life, the point where a repeated token has lost 1/e of its value. The same paper reports 44-epoch models, and its own summary figure reads ', b('"At 40 epochs, repeating is worthless"'), ': at that depth its downstream table has ARC-Easy falling from 39.7 to 25.4 and the benchmark average from 23.1 to 15.9. Repetition does not flatten out at the end. It reverses.'),
+      para(b('And the measurement is not on this corpus.'), ' Those runs are English web text (C4 and OSCAR) at 9B parameters or less. The largest public multilingual study to fit the same curve per language — ATLAS, ICLR 2026, 774 runs over MADLAD-400 across 400+ languages — includes Hindi, and reports that for Hindi and Swahili ', b('"the right tail bends upward, consistent with diminishing returns from severe data repetition"'), ' where English does not. Two further caveats survive from the original work: repetition operates on whole tiers only (up-sampling 0.1% of a corpus a hundred times degrades the model badly), and the allocation rule is that when data-constrained you scale epochs faster than parameters.'),
+      para(b('What the labs actually do with a scarce pool, which is not this.'), ' Kimi K2 ran the comparison directly: ten epochs over raw data scored about 23.8% where ten rephrasings of the same data read once scored about 28.9%. Kimi K3\u2019s pre-training section does not use the word "epoch" at all — it rephrases knowledge and mathematics corpora with "style and perspective-diverse prompting … and fidelity verification against the source documents". DeepSeek-V3 reports 14.8T tokens and claims no repetition. Re-reading is the weakest of the three answers to a small pool, ahead only of doing nothing; the strongest that does not require years of collection is rephrasing, and this page does not yet cost one.'),
       para('The allocation rule that follows inverts naive Chinchilla scaling: when you are data-constrained, scale epochs faster than parameters. Mixing in code data buys roughly another 2× of headroom.'),
       para(b('Seen tokens are not unique tokens.'), ' Reading the Indic tier four times means ', fmt(recommended.target_seen_tokens, 'count'), ' seen still needs ', b(fmt(recommended.mix.total_unique_tokens, 'count')), ' of distinct text to be found, cleaned and licensed. That second number is the one the rest of this page is about, and it is the one the catalogue cannot currently meet.'),
       para(b('And past this model?'), ' The 40B is a seed rather than a product, and what happens to the budget when it grows is its own chapter — ', ref('how it grows', 'growth'), '. The short version is that the corpus grows far less than the parameter count does, and the Indian-language pool does not grow at all.'),
@@ -282,11 +318,12 @@ function chapterBudget(ctx) {
     refresh: (api) => {
       states.forEach((st, i) => {
         if (st.rungs) {
-          api.shard(i, presets.map((p) => `${p.id}: ${fmt(naturalOf(p).unique_tokens, 'count')} unique × ${naturalOf(p).epochs}`).join('\n'));
+          api.shard(i, presets.map((p) => `${p.id}: ${fmt(naturalOf(p).unique_tokens, 'count')} unique × ${naturalOf(p).epochs} = ${fmt(naturalOf(p).worth_tokens, 'count')} worth`).join('\n'));
           api.inline(i, `→ every budget reads its pool ${naturalOf(presets[0]).epochs} times`, false);
         } else {
-          api.shard(i, `${fmt(POOL, 'count')} unique × ${st.epochs} = ${fmt(POOL * st.epochs, 'count')} effective`);
-          api.inline(i, `→ ${fmt(POOL * st.epochs, 'count')} effective${st.epochs > hard ? ' — past the ceiling' : ''}`, st.epochs > hard);
+          const worth = worthOf(st.epochs);
+          api.shard(i, `${fmt(POOL, 'count')} × ${st.epochs} ${st.epochs === 1 ? 'pass' : 'passes'} = ${fmt(POOL * st.epochs, 'count')} seen\n${' '.repeat(String(fmt(POOL, 'count')).length)}   ${' '.repeat(String(st.epochs).length)}       = ${fmt(worth, 'count')} worth`);
+          api.inline(i, `→ worth ${Math.round((worth / (POOL * st.epochs)) * 100)}% of what it costs`, st.epochs > halfLife);
         }
       });
     },
@@ -294,30 +331,47 @@ function chapterBudget(ctx) {
       const st = states[i];
       api.extra.replaceChildren();
       if (st.rungs) {
-        api.big({ value: naturalOf(recommended).seen_tokens, unit: 'tokens', provenance: 'estimated', source: 'the recommended budget' });
+        /* Priced the same way as every other state in this chapter, rather than reverting to the
+         * product on the one state that names the actual plan. */
+        api.big({ value: naturalOf(recommended).worth_tokens, unit: 'tokens', provenance: 'estimated', source: 'Muennighoff et al. 2025, JMLR v26 Eq. 18' });
         api.bigHit(false);
-        api.sub('natural Indian-language text at the recommended budget');
+        api.sub(`worth of natural Indian-language text at the recommended budget — costing ${fmt(naturalOf(recommended).seen_tokens, 'count')}`);
         api.verdict((recommended.verdict || 'recommended').toUpperCase(), false);
-        api.note(`One mark per budget here rather than per pass — the seed, and the two rungs above it. Every budget reads its own pool four times. What changes between them is how much text was collected, not how hard it was read — and past this model size, collection is the wall. The ladder is judged as: ${presets.map((p) => `${p.id}, ${(p.verdict || '').toLowerCase()}`).join('; ')}.`);
+        api.note(`One mark per budget here rather than per pass — the seed and the ${['no', 'one', 'two', 'three', 'four', 'five'][presets.length - 1] || presets.length - 1} rungs above it. Every budget reads its own pool four times. What changes between them is how much text was collected, not how hard it was read — and past this model size, collection is the wall. The ladder is judged as: ${presets.map((p) => `${p.id}, ${(p.verdict || '').toLowerCase()}`).join('; ')}.`);
         api.strip(presets.map((p) => (p.recommended ? 'reg' : '')));
         return;
       }
-      const effective = POOL * st.epochs;
-      const past = st.epochs > hard;
-      api.big({ value: effective, unit: 'tokens', provenance: 'estimated', source: 'pool × passes' });
-      api.bigHit(past);
-      api.sub(`from ${fmt(POOL, 'count')} of real text, read ${st.epochs} ${st.epochs === 1 ? 'time' : 'times'}`);
-      api.verdict(past ? 'UNEVIDENCED' : st.epochs === 1 ? 'ALL THERE IS' : st.epochs <= advised ? 'NEARLY FREE' : 'DECAYING', past);
-      api.note(
-        past
-          ? `Red marks passes beyond ${hard}, where no published work reaches. That is not a measured penalty — it is an absence of evidence, which is worse to plan against.`
-          : st.epochs === 1
-            ? 'Read once, this is the entire natural Indian-language pool — every verified corpus anyone has assembled, added together. It is about a fiftieth of what the budget asks for, and collecting harder does not close it on any schedule.'
-            : st.epochs <= advised
-              ? `Multiplied ${st.epochs}× for the cost of re-reading the same text ${st.epochs} times. Collecting this much fresh Indian-language text instead is not something anyone can do to a schedule.`
-              : 'Still ahead of four passes, but each extra read buys less than the last.',
+      /* The headline is what the schedule is WORTH. The cost sits underneath it, because the gap
+       * between the two is the entire finding of this chapter and used to be invisible. */
+      const seen = POOL * st.epochs;
+      const worth = worthOf(st.epochs);
+      const ratio = worth / seen;
+      const thin = st.epochs > halfLife;
+      api.big({ value: worth, unit: 'tokens', provenance: 'estimated', source: 'Muennighoff et al. 2025, JMLR v26 Eq. 18' });
+      api.bigHit(thin);
+      api.sub(`worth this much fresh text — for the compute cost of ${fmt(seen, 'count')}`);
+      api.verdict(
+        st.epochs === 1 ? 'ALL THERE IS'
+          : st.epochs <= nearFree ? `NEARLY FREE — ${Math.round(ratio * 100)}%`
+            : st.epochs <= halfLife ? `HALF-LIFE — ${Math.round(ratio * 100)}%`
+              : `WORTHLESS FROM HERE — ${Math.round(ratio * 100)}%`,
+        thin,
       );
-      api.strip(Array.from({ length: LADDER[LADDER.length - 1] }, (_, k) => (k >= st.epochs ? '' : k >= hard ? 'hit' : 'reg')));
+      api.note(
+        st.epochs === 1
+          ? 'Read once, this is the entire natural Indian-language pool — every verified corpus anyone has assembled, added together. It is about a fiftieth of what the budget asks for, and collecting harder does not close it on any schedule.'
+          : st.epochs <= nearFree
+            ? `Four passes cost 4× and are worth ${(worth / POOL).toFixed(2)}×. That is the closest repetition ever comes to free, and it is the one part of this curve the published work calls negligible. Collecting this much fresh Indian-language text instead is not something anyone can do to a schedule.`
+            : st.epochs <= halfLife
+              ? `${st.epochs} passes cost ${st.epochs}× and are worth ${(worth / POOL).toFixed(1)}×. Half the compute past four passes is buying nothing — and this is where a plan that multiplies instead of measuring overstates itself by half.`
+              : `${st.epochs} passes cost ${st.epochs}× and are worth ${(worth / POOL).toFixed(1)}×. The curve is flat here: the paper's own figure labels a pass at this depth worthless, and its downstream table shows accuracy falling, not plateauing. No schedule can take this pool past ${fmt(POOL * CEILING, 'count')}.`,
+      );
+      /* One mark per pass, and a pass goes dim once it is worth under half a fresh token — which
+       * is a measured property of that pass, not a boundary of the evidence. */
+      api.strip(Array.from({ length: LADDER[LADDER.length - 1] }, (_, k) => {
+        if (k >= st.epochs) return '';
+        return (worthOf(k + 1) - worthOf(k)) / POOL < 0.5 ? 'hit' : 'reg';
+      }));
     },
   });
 }
@@ -330,7 +384,7 @@ function chapterBudget(ctx) {
  * is the one the whole project exists to serve.
  */
 function chapterGrowth(ctx) {
-  const { records, presets, recommended } = ctx;
+  const { data, records, presets, recommended } = ctx;
   const g = records.growth;
   const ref = records.scaling_reference || {};
   const stages = g.stages || [];
@@ -341,26 +395,32 @@ function chapterGrowth(ctx) {
     stage: k,
     marg: `Stage ${st.n} · ${st.name}`,
     lead:
+      /* Computed from the record, not typed alongside it. These four sentences quoted parameter
+       * and token figures by hand, and when the ladder was resealed to four stages they kept the
+       * old ones: the seed's text still said "a dense 40B" of what the record calls 3B, and the
+       * third stage still claimed to add 80 billion parameters where the record adds 32. A reader
+       * who checks one number against the table beside it and finds it wrong has no reason to
+       * trust the next one. */
       k === 0
-        ? 'Start here. A dense 40B, and the only stage whose text every later model inherits — grow from trained weights and you never re-read the corpus, so the seed\u2019s data quality '
+        ? `Start here — a dense model, around ${fmt(st.params_total, 'count')} in this drawing. It is the only stage whose text every later model inherits: grow from trained weights and you never re-read the corpus, so the seed\u2019s data quality `
         : k === 1
-          ? 'Now grow it sparse. Three times the parameters, and the corpus grows by a fifth, because a mixture of experts adds capacity without adding compute per token. What it asks for instead is '
+          ? 'Grow it. Whether that happens by adding parameters densely or by routing to experts is not settled here, and the two want different things from the corpus — a mixture of experts specialises on whatever it is given and rewards diversity, while a dense stack of the same size mostly wants more of everything. So what this stage asks for is '
           : k === 2
-            ? 'Grow it deep, and read nothing new at all. Layers are added to a trained stack, so this stage adds 80 billion parameters and '
-            : 'Frontier parity. Ten trillion more tokens than the last stage, and not one of them Indian, because every source that supplies volume at this scale is English, code or multilingual web — which means the India share is ',
+            ? `Grow it deep. Layers are added to a trained stack rather than trained from scratch, so the parameter count rises by about ${fmt(st.params_total - stages[k - 1].params_total, 'count')} while the tokens already read `
+            : `Frontier parity — ${fmt(st.corpus - stages[k - 1].corpus, 'count')} more tokens than the last stage, and not one of them Indian, because every source that supplies volume at this scale is English, code or multilingual web — which means the India share is `,
     bold:
       k === 0
         ? 'outlives the seed'
         : k === 1
-          ? 'diversity, not volume'
+          ? 'genuinely undecided until the architecture is'
           : k === 2
-            ? 'costs zero additional tokens'
+            ? 'carry over at zero additional cost'
             : 'defended by collection or not at all',
     tail:
       k === 0
-        ? '. Provenance, licensing and decontamination have to be right here, not fixed later.'
+        ? `. Provenance, licensing and decontamination have to be right here, not fixed later. Its budget works out at ${Math.round(st.corpus / st.params_total).toLocaleString('en-US')} tokens per parameter, which is a rule of thumb rather than a finding.`
         : k === 1
-          ? '. Experts specialise on whatever the mixture actually contains.'
+          ? `, and this page would rather say so than invent a preference. What can be settled without the architecture is the collection order, which is what the rest of this chapter is about. Worth noticing what did not happen here: parameters and corpus both grew ${(st.params_total / stages[k - 1].params_total).toFixed(1)}×, in exact step, leaving this stage on the same ${Math.round(st.corpus / st.params_total).toLocaleString('en-US')} tokens per parameter as the seed. That is the tokens-per-parameter rule applied twice — and it is the rule this page spends the rest of its length arguing against.`
           : k === 2
             ? ' — the clearest demonstration available that a corpus is not sized by the model reading it.'
             : '.',
@@ -368,7 +428,116 @@ function chapterGrowth(ctx) {
 
   const bars = $('div', 'tierbars');
   const maxCorpus = Math.max(...stages.map((x) => x.corpus));
-  const maxParams = Math.max(...stages.map((x) => x.params_total));
+
+  /* Which catalogued datasets each stage's own admission rule allows. The seed forbids web text, so
+   * its list is computed rather than asserted — and it comes to three datasets, which is the point. */
+  const WEB_TIERS = new Set(['english-web-hq', 'general-web']);
+  const tierOf = (x) => Object.entries(data.sourcing.tier_categories).find(([, c]) => c.includes(x.category))?.[0] || null;
+  const NATURAL_T = new Set(['indic-natural', 'indic-knowledge-systems', 'indic-civilizational']);
+  const committable = data.datasets
+    .map((x) => ({ d: x, tier: tierOf(x) }))
+    .filter((r) => r.tier && !blockersOf(r.d).length);
+  const countable = (r) => (NATURAL_T.has(r.tier) && (r.d.size_verified || {}).value !== undefined
+    ? r.d.size_verified.value
+    : (r.d.size_tokens || {}).value) || 0;
+  const admits = (st) => (st.config.web_data === 'none'
+    ? committable.filter((r) => !WEB_TIERS.has(r.tier))
+    : committable);
+
+  /* Blocked on an unanswered licence and nothing else — somebody else's signature, not our unfinished
+   * work. Held apart from the committable pool rather than added to it, because a stage cannot be
+   * planned against text nobody has been given permission to read. */
+  const licenceOnly = data.datasets
+    .map((x) => ({ d: x, tier: tierOf(x) }))
+    .filter((r) => r.tier && blockersOf(r.d).join() === 'licence');
+  const awaits = (st) => (st.config.web_data === 'none'
+    ? licenceOnly.filter((r) => !WEB_TIERS.has(r.tier))
+    : licenceOnly);
+
+  /* The size to quote for a dataset. For the Indic tiers that is the verified count and not the
+   * headline — Sangraha announces 251B and 64B of it has been confirmed, and a stage planned
+   * against the announcement is a stage planned against 187B of nobody-has-checked. */
+  const sizeValue = (r) => (NATURAL_T.has(r.tier) && r.d.size_verified ? r.d.size_verified : r.d.size_tokens);
+
+  /** Everything a stage could put behind its budget: clear today, plus one letter away. */
+  const sumOf = (rows) => rows.reduce((a, r) => a + (sizeValue(r)?.value || 0), 0);
+  const reachableFor = (st) => sumOf(admits(st)) + sumOf(awaits(st));
+  /** What clears every bar today, as a share of the stage's budget — the no-permission-needed half. */
+  const clearPct = (st) => {
+    const share = sumOf(admits(st)) / st.corpus;
+    return `${share >= 0.1 ? Math.round(share * 100) : (share * 100).toFixed(1)}%`;
+  };
+
+  /**
+   * Name the datasets a stage would actually read.
+   *
+   * The chapter could say a stage "admits 4 datasets carrying 6.39T" without ever saying which
+   * four, which is a count standing in for a shopping list. Two groups, because they are blocked by
+   * different things and only one of them is anybody else's decision.
+   *
+   * @param {object} st - the stage.
+   * @returns {HTMLElement}
+   */
+  function stageRegister(st) {
+    const wrap = $('div', 'stagereg');
+    /* Each band is priced against this stage's own budget. A list of datasets answers "what could
+     * we read"; the percentage answers "and is it enough", which is the question the budget beside
+     * it is making a claim about. */
+    const pct = (x) => `${x >= 0.1 ? Math.round(x * 100) : (x * 100).toFixed(1)}%`;
+    const group = (label, rows, cls) => {
+      const sorted = [...rows].sort((a, b) => (sizeValue(b)?.value || 0) - (sizeValue(a)?.value || 0));
+      /* The heading counts and sums the very rows below it, so the two cannot drift apart. */
+      const total = sorted.reduce((a, r) => a + (sizeValue(r)?.value || 0), 0);
+      const head = $('div', `stagereg-h ${cls}`);
+      head.append(
+        $('span', 'stagereg-lab', label),
+        $('span', 'stagereg-sum', sorted.length
+          ? `${sorted.length} · ${fmt(total, 'count')} · ${pct(total / st.corpus)} of budget`
+          : 'none at this stage'),
+      );
+      wrap.append(head);
+      sorted.forEach((r) => {
+        const line = $('div', 'stagereg-r');
+        const size = sizeValue(r);
+        line.append($('span', 'stagereg-n', r.d.name), $('span', 'stagereg-t', r.tier));
+        const val = $('span', 'stagereg-v');
+        if (size) val.append(renderNumber(size, { unit: false }));
+        else val.textContent = '—';
+        line.append(val);
+        wrap.append(line);
+      });
+    };
+    wrap.append($('div', 'stagereg-cap', 'What this stage would read, named'));
+    group('Clear today', admits(st), 'ok');
+    group('One letter away', awaits(st), 'wait');
+
+    /* The two bands added together, against the budget. This is the supply-side answer to "why
+     * this number", and it belongs above the analogy rather than below it: it is the half that is
+     * measured on this page rather than read off somebody else's model card. */
+    const reachable = [...admits(st), ...awaits(st)].reduce((a, r) => a + (sizeValue(r)?.value || 0), 0);
+    const short = reachable < st.corpus;
+    const foot = $('div', `stagereg-foot${short ? ' short' : ''}`);
+    foot.append(
+      $('span', 'stagereg-lab', short ? 'Short of the budget' : 'Covers the budget'),
+      $('span', 'stagereg-sum', `${fmt(reachable, 'count')} reachable · ${pct(reachable / st.corpus)} of ${fmt(st.corpus, 'count')}`),
+    );
+    wrap.append(foot);
+
+    /* And the analogy the budget was actually set by, named and priced, so the reader can see the
+     * two halves of the answer side by side. */
+    const an = $('div', 'stagereg-an');
+    an.append($('div', 'stagereg-cap', `Why the budget is ${fmt(st.corpus, 'count')} — ${st.basis.kind}`));
+    st.analogy.comparators.forEach((c) => {
+      const line = $('div', 'stagereg-r');
+      line.append($('span', 'stagereg-n', c.model), $('span', 'stagereg-t', c.why_this_one));
+      const val = $('span', 'stagereg-v');
+      val.append(renderNumber({ value: c.corpus, unit: 'tokens', provenance: 'estimated', source: `published by its authors — ${c.why_this_one}` }, { unit: false }));
+      line.append(val);
+      an.append(line);
+    });
+    wrap.append(an);
+    return wrap;
+  }
 
   return buildExplainer({
     n: 3,
@@ -382,25 +551,75 @@ function chapterGrowth(ctx) {
       text('. The 3B seed is the only stage its supply covers.'),
     ],
     figNum: 'Fig. 2 — four stages, three quantities',
-    caption: `Fig. 2 — Each stage's stored parameters, active parameters and corpus, all as a share of the largest. The method is the four-stage state-preserving growth of ${g.method.source.split(',')[0]} — this project's own prior work. Stage 1 is the assignment; the three above it are proposals.`,
-    pill: 'params ×67 · corpus ×10 · Indic ×1',
+    caption: `Fig. 2 — Each stage's sequence length, data policy and corpus. The parameter counts are illustrative: no scaling strategy has been chosen, and they are drawn only to give the data policy a shape to hang on. What a data plan settles is when web text is admitted, when the script quarantine lifts, and how much text has to be found. Of the four token budgets, one is derived from a published figure and three are analogies to other labs' models — the arithmetic below says which, and why the derivation does not generalise.`.replace(/\s+/g, ' ') + `  The method is the four-stage state-preserving growth of ${g.method.source.split(',')[0]} — this project's own prior work.`,
+    /* Was "params ×67 · corpus ×10 · Indic ×1". The first two ratios are between illustrative
+     * parameter counts and analogy budgets, so putting them in the page's shortest, boldest claim
+     * lent them a confidence they have not earned. The ×1 is the finding and it is the one figure
+     * here that is measured: the committable Indic pool is the same 84.9B at every stage. */
+    pill: `Indic supply ×1 at every stage`,
     rail: [
       text('The one quantity that never moves. Natural Indian-language text is a '),
       b('fixed absolute quantity'),
       text(' — this catalogue can commit '),
-      renderNumber({ value: committedNatural, unit: 'tokens', provenance: 'measured', source: 'verified human-origin tokens in the committable catalogue' }, { unit: false }),
+      /* Estimated, not measured: this is a sum over catalogue `size_tokens`, and none of the 145
+       * records carries a measured size. The green underline means "somebody ran it". X17. */
+      renderNumber({ value: committedNatural, unit: 'tokens', provenance: 'estimated', source: 'summed from the committable catalogue, whose sizes are themselves estimates' }, { unit: false }),
       text(' of it. The mixture reserves 8% of every batch for it, so the requirement rises with the corpus while the supply does not. That gap is the whole argument for funding collection years before a model trains.'),
     ],
     states,
     arithmetic: [
       para(b('The method is not invented here.'), ' ', g.method.principle, ' It comes from ', g.method.source, ', ', g.method.relationship, ': one lineage grown in four stages from a small dense seed through 5B and 9B mixtures of experts to a 120B model with 460 routed experts under top-12 routing, with active parameters rising from 1.78B to 5.93B — about 5% of the 118.67B stored.'),
+      para(b('What a data plan decides, stage by stage.'), ' ', g.config_note.split('\n\n')[0]),
+      para(b('Only one of these four budgets is derived, and it is worth being blunt about which.'), ' ', g.derivation.method, ' For the 40B that reads: ', g.stages[2].basis.how, ' ', g.stages[2].basis.checks, ' ', b('The 20% is the one free parameter'), ' — ', g.stages[2].basis.assumption),
+      para(b('Why the same method cannot produce the other three.'), ' ', g.derivation.why_it_does_not_generalise, ' So ', b('3T, 8T and 30T are analogies, not derivations'), '. ', g.stages[0].basis.why_not_derived, ' ', g.stages[1].basis.why_not_derived, ' ', g.stages[3].basis.why_not_derived),
+      para(b('What an analogy proves, which is less than it looks.'), ' ', g.analogy_note.what_an_analogy_is, ' ', g.analogy_note.why_keep_them),
+      para(b('And what supply says, which is measured here.'), ' ', g.analogy_note.what_supply_says_instead, ' Stage by stage, against each budget: ', stages.map((x) => `${x.name} needs ${fmt(x.corpus, 'count')} and can reach ${fmt(reachableFor(x), 'count')}`).join('; '), '.'),
+      para(b('Read together, the two halves say something neither says alone.'), ' Three of the four budgets are comfortably reachable — but only once the unanswered licences are answered, because committable text alone covers ', `${clearPct(stages[1])}`, ' of the second stage and ', `${clearPct(stages[2])}`, ' of the third. The seed is the exception and the exception is instructive: it forbids web text, and without web text the catalogue reaches ', b(`${clearPct(stages[0])} of its budget`), '. The binding constraint on this ladder was never the size of the numbers. It is the web-data policy and ', `${awaits(stages[1]).length}`, ' unanswered emails.'),
+      para(b('What would fix the analogies.'), ' ', g.derivation.what_would_fix_it),
+      /* Parameter rows against stage columns: the shape a training config is actually read in. */
+      table(['', ...stages.map((x) => x.name)], [
+        /* Illustrative for the same reason the parameter counts are: the lineage this method comes
+         * from went dense-seed-then-experts, this ladder's record says dense until the last rung,
+         * and nobody has chosen between them. The data policy below is indifferent to the answer. */
+        ['architecture — illustrative', ...stages.map((x) => (x.architecture === 'moe' ? 'sparse mixture of experts' : 'dense'))],
+        /* Prefixed, every one of them, because no scaling strategy has been chosen. These are one
+         * shape a growth path could take, drawn so the data policy has something to hang on. */
+        ['parameters — illustrative', ...stages.map((x) => `~${fmt(x.params_total, 'count')}`)],
+        ['sequence length', ...stages.map((x) => x.config.sequence_length.toLocaleString('en-US'))],
+        ['token budget', ...stages.map((x) => fmt(x.corpus, 'count'))],
+        /* The row the chapter was missing. Four budgets printed in the same typeface read as four
+         * equally solid numbers, and they are not: one is derived and three are analogies. */
+        /* The row that shows the seams. Two stages sit on exactly 1,000 and did not arrive there by
+         * reasoning; the derived one is at 420 and the frontier-matched one at 150. A constant in a
+         * column that should vary is the signature of a rule applied rather than a budget set. */
+        ['tokens per parameter', ...stages.map((x) => Math.round(x.corpus / x.params_total).toLocaleString('en-US'))],
+        ['how that budget was reached', ...stages.map((x) => x.basis.kind)],
+        /* The two halves of "why this number", adjacent so neither can be read alone. The analogy
+         * is what the budget was set by; the supply is what could actually be put behind it. */
+        ['the analogy it was set by', ...stages.map((x) => x.analogy.comparators.map((c) => `${c.model} ${fmt(c.corpus, 'count')}`).join(' · '))],
+        ['what this catalogue can reach', ...stages.map((x) => {
+          const r = reachableFor(x);
+          return `${fmt(r, 'count')} — ${r / x.corpus >= 0.1 ? Math.round((r / x.corpus) * 100) : ((r / x.corpus) * 100).toFixed(1)}% of it`;
+        })],
+        ['web data', ...stages.map((x) => x.config.web_data)],
+        ['script quarantine', ...stages.map((x) => x.config.script_quarantine)],
+        ['noise admitted', ...stages.map((x) => x.config.noise)],
+        ['LR schedule', ...stages.map((x) => x.lr_schedule)],
+        ['datasets clear today', ...stages.map((x) => {
+          const pool = admits(x);
+          return `${pool.length} · ${fmt(pool.reduce((a, r) => a + countable(r), 0), 'count')}`;
+        })],
+      ]),
+      para(b('Why each stage gets its own learning-rate cycle.'), ' ', g.config_note.split('\n\n')[1], ' ', g.config_note.split('\n\n')[2]),
+      para(b('The quarantine, and what it costs.'), ' ', g.quarantine.what, ' ', g.quarantine.why, ' ', g.quarantine.consequence),
       para(b('Three ways a model expands, and what each asks of the data.'), ' ', g.method.axes.map((a) => `${a.axis} — ${a.why_it_matters_for_data}`).join(' ')),
       para(b('Why it can be done at all.'), ' ', g.method.warning),
-      table(['stage', 'stored', 'active', 'corpus', 'what it asks of the corpus'], stages.map((st) => [
+      table(['stage', 'stored ~', 'active ~', 'corpus', 'basis', 'what it asks of the corpus'], stages.map((st) => [
         `${st.n} · ${st.name}`,
         renderNumber({ value: st.params_total, unit: 'parameters', provenance: 'estimated', source: st.status }, { unit: false }),
         renderNumber({ value: st.params_active, unit: 'parameters', provenance: 'estimated', source: st.status }, { unit: false }),
         renderNumber({ value: st.corpus, unit: 'tokens', provenance: 'estimated', source: st.corpus_basis }, { unit: false }),
+        st.basis.kind,
         st.asks_of_the_corpus,
       ]), [1, 2, 3]),
       para(b('The fixed quantity.'), ' ', g.invariant.detail, ' ', g.invariant.consequence),
@@ -409,7 +628,10 @@ function chapterGrowth(ctx) {
     ],
     refresh: (api) => {
       stages.forEach((st, i) => {
-        api.shard(i, `${fmt(st.params_total, 'count')} stored · ${fmt(st.params_active, 'count')} active · ${fmt(st.corpus, 'count')} corpus`);
+        /* Sequence length and corpus, not parameter counts. A stage is a decision about what text
+         * to read and in how long a window; the parameter count is a consequence of that and is
+         * drawn in the figure anyway, where it is making an argument rather than labelling one. */
+        api.shard(i, `${st.config.sequence_length.toLocaleString('en-US')}-token windows · web ${st.config.web_data_short}\n${fmt(st.corpus, 'count')} corpus — ${st.basis.kind}`);
         const need = st.corpus * 0.08 / 4;
         api.inline(i, `→ needs ${fmt(need, 'count')} unique natural Indic; ${fmt(committedNatural, 'count')} can be committed`, need > committedNatural);
       });
@@ -429,14 +651,16 @@ function chapterGrowth(ctx) {
         return r;
       };
       const need = st.corpus * 0.08 / 4;
+      /* Three bars, all of them text. The stored- and active-parameter bars used to lead here and
+       * have been dropped: they measure the model, and every question this chapter asks is about
+       * the corpus. The ×67 growth in parameters is still the point being made — it is made in the
+       * pill, where it can sit beside the ×1 it is being contrasted with. */
       bars.append(
-        row('stored params', st.params_total, maxParams, 'dim'),
-        row('active params', st.params_active, maxParams, 'natural'),
         row('corpus', st.corpus, maxCorpus, 'lane'),
         row('natural Indic needed', need, maxCorpus, need > committedNatural ? 'missing' : 'natural'),
         row('natural Indic we have', committedNatural, maxCorpus, 'synth'),
       );
-      api.extra.replaceChildren(bars);
+      api.extra.replaceChildren(bars, stageRegister(st));
 
       api.big({ value: need, unit: 'tokens', provenance: 'estimated', source: 'the mixture applied to this stage' });
       api.bigHit(need > committedNatural);
@@ -445,7 +669,14 @@ function chapterGrowth(ctx) {
       /* The verdict slot carries the finding, not the architecture: whether this stage's Indic
        * requirement can be met at all. The architecture is already drawn in the bars. */
       api.verdict(need > committedNatural ? `${ratio.toFixed(1)}× SHORT` : 'SUPPLY MEETS IT', need > committedNatural);
-      api.note(`${fmt(st.params_total, 'count')} ${st.architecture === 'moe' ? `sparse, ${fmt(st.params_active, 'count')} active` : 'dense'} on ${fmt(st.corpus, 'count')}. ${st.asks_of_the_corpus}`);
+      const pool = admits(st);
+      const have = pool.reduce((a, r) => a + countable(r), 0);
+      api.note(
+        `Sequence length ${st.config.sequence_length.toLocaleString('en-US')}, web data ${st.config.web_data}, ` +
+        `script quarantine ${st.config.script_quarantine}. Under that rule the catalogue admits ` +
+        `${pool.length} dataset${pool.length === 1 ? '' : 's'} carrying ${fmt(have, 'count')} against a ` +
+        `${fmt(st.corpus, 'count')} budget. ${st.asks_of_the_corpus}`,
+      );
       api.strip(stages.map((x, k) => (k === i ? 'reg' : x.corpus * 0.08 / 4 > committedNatural ? 'hit' : '')));
     },
   });
@@ -455,6 +686,10 @@ function chapterGrowth(ctx) {
 
 function chapterMix(ctx) {
   const { data, presets, recommended } = ctx;
+  /* Spelled from the data. The claim, the caption and a state used to disagree about whether the
+   * mixture had eight tiers or ten — on the same screen, beside a figure drawing ten bars a reader
+   * can count. Prose that quotes a count has to read it. */
+  const TIER_COUNT = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'][recommended.mix.tiers.length] || String(recommended.mix.tiers.length);
   const info = data.milestones.tier_info || {};
   const gaps = (data.datasets || []).filter((x) => x.is_gap);
   const gapNames = gaps.map((x) => x.name).join(', ');
@@ -464,7 +699,7 @@ function chapterMix(ctx) {
     {
       rung: rungIndex,
       marg: `The mixture at ${recommended.id}`,
-      lead: 'You cannot train on everything, so you decide what fraction of the reading is what kind of text. Each kind is a tier, and the eight shares add to one whole — which means ',
+      lead: `You cannot train on everything, so you decide what fraction of the reading is what kind of text. Each kind is a tier, and the ${TIER_COUNT} shares add to one whole — which means `,
       bold: 'giving more to one takes it from another',
       tail: '. There is no spare capacity in a training budget.',
     },
@@ -521,7 +756,7 @@ function chapterMix(ctx) {
     wide: true,
     title: 'What goes into it',
     claim: [
-      text('Eight kinds of text, and the argument is entirely about the proportions. All eight stay on screen because comparing them is the point. These are '),
+      text(`${TIER_COUNT[0].toUpperCase()}${TIER_COUNT.slice(1)} kinds of text, and the argument is entirely about the proportions. All ${TIER_COUNT} stay on screen because comparing them is the point. These are `),
       b('proportions, not a shopping list'),
       text(' — for the datasets that would actually fill each one, see '),
       ref('which datasets', 'datasets'),
@@ -546,8 +781,12 @@ function chapterMix(ctx) {
       })),
       para('The shares are fixed by the proposed tier shape; the totals scale with the budget. At ', recommended.id, ' the mixture is ', fmt(recommended.mix.total_seen_tokens, 'count'), ' seen from ', fmt(recommended.mix.total_unique_tokens, 'count'), ' unique — the difference is repetition, priced in ', ref('how much text', 'budget'), '.'),
       para('India total sits at ', b(`${(recommended.mix.indic_share * 100).toFixed(1)}%`), ' of the batch, of which ', b(`${(recommended.mix.natural_indic_share * 100).toFixed(1)}%`), ' is natural text rather than manufactured. Code and agentic work together take ', b(`${(((recommended.mix.tiers.find((t) => t.name === 'code') || {}).share || 0) * 100 + ((recommended.mix.tiers.find((t) => t.name === 'agentic-traces') || {}).share || 0) * 100).toFixed(1)}%`), '.'),
-      para('The research this is drawn from proposes a finer twelve-tier split reaching 25.3% India, separating English-educational, Indic-parallel, multilingual-non-Indic, clean-provenance and anneal tiers. The site collapses those into eight for legibility, which is why the India share here reads slightly lower. Both are recorded; neither is hidden.'),
+      para(`The research this is drawn from proposes a finer twelve-tier split reaching 25.3% India, separating English-educational, Indic-parallel, multilingual-non-Indic, clean-provenance and anneal tiers. The site collapses those into ${TIER_COUNT} for legibility, and the India share here lands `, b(`${(recommended.mix.indic_share * 100).toFixed(1)}%`), ' — ', b('higher'), ' than the 25.3% those twelve tiers reach, not lower. Collapsing tiers moved the number up rather than down. Both are recorded; neither is hidden.'),
       para('The protected lane has a ', b(`floor of ${(data.mix_rules.always_on_share.value * 100).toFixed(0)}%`), ' and a ceiling of 20% — a standing rule rather than a per-language exception list, because an exception list is a thing somebody eventually edits under deadline. This tier shape lands at ', b(`${(recommended.mix.always_on_share * 100).toFixed(1)}%`), ', which is ', b('over the ceiling, and the mixture says so'), '. Four tiers sit in it, and the reason it went over is worth following: raising the agentic share to meet the assignment\u2019s stated priority put more of the batch outside the general quality scorer, because agentic traces are one of the things that scorer cannot judge. You cannot have more of the one without more of the other. The warning is left lit rather than silenced by moving the line.'),
+      /* The mixture breaches a second guardrail, and the page used to disclose only the first.
+       * Leaving one warning lit and the other unmentioned is worse than mentioning neither: it
+       * reads as "we show you our breaches" while showing you one of two. */
+      para('The mixture crosses a ', b('second'), ' line the framework drew for itself, and this one had gone unsaid until now. The rule is that no more than half the Indian-language tier may be manufactured — translated or synthesised rather than collected — because past that the tier stops being evidence of how Indian languages are written. This shape lands at ', b(`${(recommended.mix.synthetic_share_of_indic * 100).toFixed(1)}%`), '. It is over, for the same reason everything on this page is over: there is not enough natural Indic text, and the alternative to manufacturing it is a smaller Indian share rather than a better one. Both breaches stay lit, and both are arguments for funding collection rather than for editing the rule.'),
       para(b('What the lane is defending against, concretely.'), ' Sangraha is the largest verified Indic corpus anyone has built, and it publishes what its own cleaning stages did to each language. Bodo — a scheduled language with about 1.5 million speakers — came out of the third stage at ', b('seventy-seven words, in one document'), '. Not seventy-seven thousand. The filter did not decide Bodo was unimportant; it had learned what good text looks like from English and scored an entire language as noise. A lane is the only mechanism that survives that, because a threshold you tune per language is a threshold somebody re-tunes under deadline.'),
       para('Agentic traces are in the lane for the opposite reason to Indic text. They are not under-valued by the scorer; they are filtered ', b('harder'), ' than anything else — a mediocre eighty-turn trace is worse than none — but by a purpose-built check, not by a classifier that learned "good writing" from English prose. The lane exempts them from the generic scorer, not from scrutiny. ', ref('How we clean it', 'cleaning'), ' has that rule in full.'),
     ],
@@ -722,6 +961,7 @@ const DATASET_COLUMNS = ['dataset', 'tokens', 'grade', 'commercial use', 'known 
 
 function chapterDatasets(ctx) {
   const { data, recommended } = ctx;
+  const cov = data.gate_coverage || { of: 0, scored: {} };
   const src = data.sourcing;
   const tierOf = (d) => Object.entries(src.tier_categories).find(([, cats]) => cats.includes(d.category))?.[0] || null;
   const targets = Object.fromEntries(recommended.mix.tiers.map((t) => [t.name, t.unique_tokens]));
@@ -844,6 +1084,10 @@ function chapterDatasets(ctx) {
     body,
     caption: 'Committable means all three at once: the five checks scored A or B, the licence permits commercial use, and somebody stated a size. Missing any one and the dataset cannot be counted, however good it looks. Sorted biggest first; every row stays reachable, the filters only choose which to show.',
     arithmetic: [
+      /* The reason grade A is empty, stated rather than left as a curiosity a reader has to notice.
+       * It is not that nothing is good enough; it is that nothing has been fully checked, and the
+       * gate least checked is the one that would poison an evaluation. */
+      para(b('Why no dataset holds the top grade.'), ' Grade A means every one of the five gates was scored and nearly all passed. Nothing reaches it, and the reason is coverage rather than quality. ', b(`${data.datasets.filter((d) => (d.gates_scored || {}).value <= 2).length} of the ${data.datasets.length} datasets have two gates scored or fewer`), ', and one of those two is always the evidence gate, which passes for every single dataset because every one of them has been used by somebody — so for most of the catalogue the only discriminating signal is where the text came from. Gate by gate, out of ', String(cov.of), ': ', Object.entries(cov.scored).map(([g, k]) => `${g} ${k}`).join(', '), '. The contamination gate, the one that decides whether a dataset would poison the evaluation, is the least answered of the five — and it is unscored on all four datasets the plan commits to. Those four clear licence, provenance and size. They are not datasets somebody finished checking.'),
       para('Coverage against the ', recommended.id, ' budget: ', b(fmt(src.committed_tokens, 'count')), ' committable against ', b(fmt(src.target_tokens, 'count')), ' needed — ', b(`${(src.covered_share * 100).toFixed(0)}%`), '.'),
       para(src.counts.size_unknown, ' datasets are mapped to a tier and have no stated size, so they cannot enter a budget even when everything else about them is fine. A further ', src.counts.blocked_on_licence_only, ' are blocked on a licence question alone — no check failed, nobody found a problem, and one answered email would move each into the committable column.'),
       para('The last column names the ', b('cheapest'), ' move, not the only one, which is why most rows carry a "+n more". Read it as: COMMIT — all three hold. ASK THE OWNER — nothing is wrong with the data; nobody established whether it may be used commercially, and unknown is not permission. MEASURE IT — the size was never stated, and a budget you cannot add up is not a budget. CHECK THE CLAIMS — the licence and the size are fine, but the dataset sits at grade C: nobody has answered the questions the grade is made of. EXCLUDED — a check failed on provenance or contamination, which is a disqualification rather than a deduction.'),
@@ -851,7 +1095,7 @@ function chapterDatasets(ctx) {
       table(['tier', 'needs', 'can commit', 'covered'], (src.tiers || []).map((t) => [
         t.tier,
         renderNumber({ value: t.target_tokens, unit: 'tokens', provenance: data.milestones.provenance, source: data.milestones.source }, { unit: false }),
-        renderNumber({ value: t.committed_tokens, unit: 'tokens', provenance: 'measured', source: 'summed from the committable catalogue' }, { unit: false }),
+        renderNumber({ value: t.committed_tokens, unit: 'tokens', provenance: 'estimated', source: 'summed from the committable catalogue, whose sizes are themselves estimates' }, { unit: false }),
         `${((t.covered_share || 0) * 100).toFixed(0)}%`,
       ]), [1, 2, 3]),
     ],
@@ -1022,8 +1266,8 @@ function chapterPostTraining(ctx) {
       b('proposal rather than a measurement'),
       text(', and the last state compares it against the two labs that published theirs.'),
     ],
-    figNum: 'Fig. 9 — where the post-training budget goes',
-    caption: `Fig. 9 — Each stage's budget split by category, as a share of that stage's total. Every number here is a design proposal from ${sft.source}, which states them with a tilde and cites nothing. They are drawn as estimates and compared against published sets in the last state. The catalogue holds ${post.datasets} datasets tagged for this stage and ${post.sized} of them state a size.`,
+    figNum: 'Fig. 7 — where the post-training budget goes',
+    caption: `Fig. 7 — Each stage's budget split by category, as a share of that stage's total. Every number here is a design proposal from ${sft.source}, which states them with a tilde and cites nothing. They are drawn as estimates and compared against published sets in the last state. The catalogue holds ${post.datasets} datasets tagged for this stage and ${post.sized} of them state a size.`,
     pill: `${fmt(sft.total, 'count')} · ${fmt(dpo.total, 'count')} · ${fmt(plan[2].total, 'count')}`,
     rail: [
       text('Why none of this enters a token budget. '),
@@ -1083,7 +1327,7 @@ function chapterPostTraining(ctx) {
         api.sub('preference pairs per demonstration in this plan');
         api.verdict('OUT OF LINE', true);
         const tulu = refs.find((r) => /tulu/i.test(r.model));
-        api.note(tulu ? `Tulu 3 — the only fully published recipe at this level of detail — pairs ${fmt(tulu.preference, 'count')} preferences to ${fmt(tulu.sft, 'count')} demonstrations, which is ${(ratio(tulu) * 100).toFixed(0)}%. This plan proposes ${(dpo.total / sft.total * 100).toFixed(1)}%. Either the SFT budget is three times larger than it needs to be or the preference budget is five times too small, and nothing in the plan says which. That is what an uncited number costs.` : 'No published comparison is available.');
+        api.note(tulu ? `Tulu 3 — the only fully published recipe at this level of detail — pairs ${fmt(tulu.preference, 'count')} preferences to ${fmt(tulu.sft, 'count')} demonstrations, which is ${(ratio(tulu) * 100).toFixed(0)}%. This plan proposes ${(dpo.total / sft.total * 100).toFixed(1)}%. Either the SFT budget is ${(ratio(tulu) / (dpo.total / sft.total)).toFixed(1)}x larger than it needs to be or the preference budget is ${(ratio(tulu) / (dpo.total / sft.total)).toFixed(1)}x too small — it is one gap, and nothing in the plan says which end of it to move. That is what an uncited number costs.` : 'No published comparison is available.');
         api.strip(rows.map((r) => (r.ours ? 'hit' : 'reg')));
         return;
       }
@@ -1265,13 +1509,20 @@ function chapterCleaning(ctx) {
 function chapterGate(ctx) {
   const { data } = ctx;
   const N = 13;
+  /* Mirrors MIN_SHINGLE_N in shingles.py. Below this a window stops identifying anything — "what is
+   * the capital of" is five words and occurs in ordinary text — so the floor sits above it. */
+  const FLOOR = 6;
   const DEFAULT_Q =
     'In which year did the Indian Railways first run a scheduled passenger service ' +
     'between Bombay and Thane, and how long was that inaugural route in miles?';
   const LEAD = 'Ordinary web text about monsoon agriculture in the Gangetic plain. ';
   const TAIL = ' More ordinary web text about irrigation and canal systems.';
 
-  const words = (t) => t.toLowerCase().match(/[\p{L}\p{N}_]+/gu) || [];
+  /* \p{M} is not optional. Letters and digits alone exclude every combining mark, and every Indic
+   * vowel sign, virama and anusvara is one — so without it a reader typing Devanagari or Malayalam
+   * here watches their sentence shatter into consonant fragments and the demo teaches the opposite
+   * of what the gate does. This mirrors `normalise()` in shingles.py, which had the same bug. */
+  const words = (t) => t.toLowerCase().normalize('NFC').match(/[\p{L}\p{M}\p{N}_]+/gu) || [];
   const windows = (t) => {
     const w = words(t);
     if (!w.length) return [];
@@ -1316,10 +1567,14 @@ function chapterGate(ctx) {
   const guard = () => {
     const n = words(inputEl ? inputEl.value : '').length;
     if (!n) return { verdict: 'NOTHING TO PROTECT', note: 'With no question in the index there is nothing for a document to collide with.', inline: '→ no question registered' };
-    if (n < N) return {
+    /* The floor, and only the floor. This used to refuse anything under thirteen words, which
+     * contradicted both the pipeline and the paragraph three inches below it: the index records the
+     * width each item was hashed at, so a short question is indexed at its own width rather than
+     * abandoned. Only items under the floor are genuinely unprotectable. */
+    if (n < FLOOR) return {
       verdict: 'NOT INDEXABLE',
-      note: `A question of ${n} words is shorter than the thirteen-word window, so it cannot be found inside a longer document at all. Short questions are the hardest to protect — give it thirteen words or more.`,
-      inline: `→ ${n} words; needs ${N}`,
+      note: `A question of ${n} ${n === 1 ? 'word' : 'words'} is below the ${FLOOR}-word floor. A window that narrow matches ordinary prose everywhere, so indexing it would drop clean documents — the gate refuses it and reports the gap instead of pretending to cover it.`,
+      inline: `→ ${n} words; the floor is ${FLOOR}`,
     };
     return null;
   };
@@ -1691,7 +1946,7 @@ function chapterEvaluation(ctx) {
         const at_risk = thinTiers(bd.keep);
         const blind = tiersWithoutInstrument(bd.keep);
         const shareOf = (names) => recommended.mix.tiers.filter((t) => names.includes(t.name)).reduce((a, t) => a + t.share, 0);
-        const list = $('div', 'stagelist');
+        const list = $('div', 'stagelist shares');
         recommended.mix.tiers.forEach((t) => {
           const meta = tierInfo[t.name] || {};
           const worstCap = Math.min(...(meta.capabilities || []).map((c) => capCount(bd.keep).get(c) || 0), Infinity);
@@ -1764,7 +2019,7 @@ function chapterCost(ctx) {
     {
       id: 'continue', name: 'Continue-pretrain from Gemma 4', share: 0.15,
       marg: 'Path 2 · keep training somebody else’s',
-      lead: 'A sixth of the compute, Gemma-4-class coding and agentic ability on day one, and one consequence people forget: ',
+      lead: 'A fraction of the compute, Gemma-4-class coding and agentic ability on day one, and one consequence people forget: ',
       bold: 'you inherit its tokenizer, permanently',
       tail: '. You cannot swap one out without discarding the embedding table you were trying to reuse.',
       inherits: 'Gemma-4-class coding and agentic ability', tokenizer: gemma ? `Gemma’s — ×${gemma.mean_tax.value.toFixed(2)} on Indian text` : 'Gemma’s',
@@ -1888,10 +2143,15 @@ function chapterFirst(ctx) {
       count: letters.length,
       label: 'letters to write, ranked by what they unlock',
       lead: 'Then the letters. No check failed on any of these and nobody found a problem with the data — somebody simply has not asked the owner whether it may be used. They unlock the most volume by far, and ',
-      bold: 'every single one is an English corpus',
-      tail: '. That is worth seeing plainly: the cheapest lever on this page does nothing for the capability the model is named for.',
+      /* Was "every single one is an English corpus", which is false and was the sentence the
+       * chapter's argument rested on: the largest of the four is HPLT v3.0, whose catalogue row
+       * reads "198 languages", and Nemotron-CC-v2 is "English + 15 languages". The true claim is
+       * narrower and lands harder, because the reason they cannot be budgeted against is the same
+       * reason the rest of this page exists. */
+      bold: 'not one of them is an Indic corpus',
+      tail: '. Two are English-only. The other two are multilingual — and neither has had its Indian-language partitions measured, so there is no number to put in a budget. The cheapest lever on this page does nothing you can count for the capability the model is named for.',
       verdict: 'FOUR EMAILS',
-      note: `Together they unlock ${fmt(letters.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), 'count')} — more than three times the whole budget. Two alone would cover it. And not one of them adds an Indian-language token.`,
+      note: `Together they unlock ${fmt(letters.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), 'count')} — more than three times the whole budget, and the two largest would cover it between them. None sits in an Indian-language tier: ${letters.filter((x) => /\d+\s+languages/i.test(String((byId[x.id] || {}).languages || ''))).length} of the ${letters.length} are multilingual, the largest carrying 198 languages, but nobody has counted what their Indic partitions hold. An unmeasured partition is not a supply.`,
     },
     {
       id: 'asks',
@@ -1952,7 +2212,7 @@ function chapterFirst(ctx) {
         'Roughly ', renderNumber(asr.hours || {}), ' at about ', renderNumber(asr.words_per_hour || {}),
         ' yields on the order of ', renderNumber(asr.words_yield || {}), '. ', asr.caveat || '',
       ),
-      para(b('The letters.'), ' They unlock ', b(fmt(letters.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), 'count')), ' between them — the two largest would each cover the whole budget alone, and all four are English. That is why "resolve the licences" outranks "collect more data" for volume, and why it is not the same thing as resolving the Indic problem.'),
+      para(b('The letters.'), ' They unlock ', b(fmt(letters.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), 'count')), ' between them — the largest alone exceeds the whole budget, and all four are English. That is why "resolve the licences" outranks "collect more data" for volume, and why it is not the same thing as resolving the Indic problem.'),
       table(['dataset', 'unlocks', 'for'], letters.map((x) => {
         const d = byId.get(x.id) || {};
         return [d.name || x.id, renderNumber({ value: x.unlocks_tokens, unit: 'tokens', provenance: 'estimated', source: 'the catalogue' }, { unit: false }), x.tier];
@@ -2184,7 +2444,10 @@ function chapterAppendix(ctx) {
 
       const rows = unlocked();
       const tokens = rows.reduce((a, r) => a + countable(r.d, r.tier), 0);
-      big.replaceChildren(renderNumber({ value: tokens, unit: 'tokens', provenance: 'measured', source: 'summed from the catalogue under the selected resolutions' }, { unit: false }));
+      /* A counterfactual — what the corpus would hold if the reader resolved these blockers — and
+       * it was carrying the mark that means somebody ran it. It is estimated twice over: the sizes
+       * are estimates, and the resolutions have not happened. */
+      big.replaceChildren(renderNumber({ value: tokens, unit: 'tokens', provenance: 'estimated', source: 'summed from the catalogue under resolutions the reader selected, which have not happened' }, { unit: false }));
       sub.textContent = `${rows.length} of ${pool.length} datasets committable, against ${fmt(needed, 'count')} the mixture needs`;
 
       bars.replaceChildren();
@@ -2399,9 +2662,11 @@ function chapterAppendix(ctx) {
 
   /* `priors` rides in data.json, not records.json — it is cited inline by two chapters, so it has
    * to be there when the page paints. Reading it from records rendered an empty block. */
+  /* The source column was being dropped, so a register of published findings printed no citations
+   * on the one page whose whole argument is that a figure must name what produced it. */
   block(`What the literature settled — ${(data.priors || []).length}`, table(
-    ['claim', 'effect on this design'],
-    (data.priors || []).map((r) => [r.claim, r.effect_on_design]),
+    ['claim', 'effect on this design', 'source'],
+    (data.priors || []).map((r) => [r.claim, r.effect_on_design, r.source || '—']),
   ));
 
   block(`Risks and unknowns — ${(records.risks || []).length}`, table(
@@ -2511,7 +2776,7 @@ export function buildPage(data, records) {
 
   fillLede(data);
   buildLegend(data);
-  buildNav(main);
+  buildRail(main);
   buildFooter(data);
 
   window.addEventListener('beforeprint', () => {
@@ -2544,8 +2809,8 @@ export function buildPage(data, records) {
 const GLOSSARY = [
   ['tier', 'One kind of text in the mixture — English web pages, code, natural Indian-language text. The mixture is eight of them, and their shares add to one whole.'],
   ['lane', 'A part of every training batch that the quality-scoring program is not allowed to look at. Not an argument with the filter; a place it cannot reach.'],
-  ['rung', 'One of the four budget sizes on offer — 5, 10, 15 or 20 trillion tokens. The mixture keeps the same shape on every rung.'],
-  ['pass (epoch)', 'One complete read of a body of text. Reading a small pool four times contributes four times its size to the budget, at almost no cost in quality — which is the only reason the Indic budget is reachable at all.'],
+  ['rung', 'One of the four budget sizes on offer. The mixture keeps the same shape on every rung; what changes is how much text each one asks for.'],
+  ['pass (epoch)', 'One complete read of a body of text. Reading a small pool four times costs four times the compute and is worth about 3.7 times its size — close enough to free that it is the only reason the Indic budget is reachable at all, but not the same as four times. Repetition decays, and past about sixteen passes it stops paying.'],
   ['gate', 'A check that stops a build rather than filing a report. Used here in two senses: the contamination gate, which drops training documents that contain exam questions; and the five gates whose combined verdict is a dataset’s grade.'],
   ['grade', 'Those five gates scored together — where the text came from, whether its composition matches its claims, whether it overlaps the exam sets, how much survives cleaning, and whether anyone has evidenced any of it.'],
   ['trust band', 'How much a benchmark score can be compared between labs. Native-sourced means written in the language; translation-derived means written in English first; harness-dependent means the score moves with the testing program you run it under.'],
@@ -2571,7 +2836,7 @@ function buildLegend(data) {
   const grades = $('div', 'legend-row');
   grades.append($('div', 'legend-k', 'Grades'));
   const gv = $('div', 'legend-v');
-  [['A', 'usable'], ['B', 'usable with care'], ['C', 'nobody has answered the questions'], ['X', 'a check failed — excluded']].forEach(([g, what], k) => {
+  [['A', 'every gate scored and passed — nothing reaches it yet'], ['B', 'usable with care, and what the four committable datasets are'], ['C', 'nobody has answered the questions'], ['X', 'a check failed — excluded']].forEach(([g, what], k) => {
     if (k) gv.append(text(' · '));
     const badge = $('span', 'grade', g);
     badge.setAttribute('data-grade', g);
@@ -2597,7 +2862,7 @@ function buildLegend(data) {
   const pv = $('div', 'legend-v');
   pv.append(
     text('Every figure on this page carries where it came from. '),
-    renderNumber({ value: 1.35, unit: 'ratio', provenance: 'measured', source: 'the legend' }, { unit: false }),
+    renderNumber({ value: 1.35, unit: 'ratio', provenance: 'measured', source: 'tiktoken/cl100k_base over IN22-Gen, our own run — English measures 1.3462' }, { unit: false }),
     text(' underlined means somebody ran it. '),
     renderNumber({ value: 15e12, unit: 'tokens', provenance: 'estimated', source: 'the legend' }, { unit: false }),
     text(' plain means it is a design figure or a published estimate. Hover any of them for the source. Nothing on this page is a number with no origin — the renderer refuses to print one.'),
@@ -2627,8 +2892,12 @@ function fillLede(data) {
     measured: `${measuredLangs} languages and ${(data.fertility.by_tokenizer_mean || []).length} tokenizers`,
     shingles: `${(data.contamination.shingle_count.value || 0).toLocaleString('en-US')} fingerprints`,
     // Spelled out: "a 15T-token corpus" reads as a units bug, "15-trillion-token" reads as English.
-    budget: `${(budget / 1e12).toFixed(0)}-trillion-token`,
-    committable: `${spelled[0].toUpperCase()}${spelled.slice(1)} datasets clear every bar.`,
+    /* `.toFixed(0)` rendered 16.8 as "17", so the opening paragraph disagreed with every other
+     * mention of the budget on the page. One decimal, with a whole number kept whole. */
+    budget: `${(budget / 1e12).toFixed(1).replace(/\.0$/, '')}-trillion-token`,
+    /* "Clear every bar" read against the legend's "A usable (0)" as a contradiction. It is not —
+     * these are grade B with no blocker against them — but the reader has to be told which. */
+    committable: `${spelled[0].toUpperCase()}${spelled.slice(1)} datasets are committable today.`,
   };
   /* Only write when it differs. The markup already carries the right words; this exists so they
    * cannot drift from the data. Writing an identical string still repaints, and the lede is the
@@ -2653,34 +2922,120 @@ const NAV_ANSWERS = {
   gate: 'type your own sentence and try to sneak it past the contamination check',
   tokenizer: 'Indian scripts cost 13x what English does — measured, on our own run',
   evaluation: 'drop the tests whose scores do not mean what the count implies',
-  cost: 'about 2.5M H100-hours, and the fork this does not settle',
+  cost: 'the compute bill, and the fork this does not settle',
   first: 'the queue: twelve actions, two gates, and the letters that come before both',
   appendix: 'every register the chapters are drawn from, kept whole',
 };
 
-function buildNav(main) {
-  const nav = document.getElementById('chapters');
-  if (!nav) return;
-  nav.replaceChildren();
-  [...main.querySelectorAll('section')].forEach((s) => {
-    const heading = s.querySelector('h2');
-    if (!heading) return;
-    const num = heading.querySelector('.n');
+/* A contents rail that stays with the reader, and marks where they are.
+ *
+ * The inline contents block near the top is a landing page — it carries a line about what each
+ * chapter answers, which is what you want on arrival and far too much to keep on screen. This is
+ * the running version: titles only, current chapter marked, collapsible for anyone who would
+ * rather have the width.
+ */
+function buildRail(main) {
+  const host = document.getElementById('rail');
+  if (!host) return;
+  const list = $('nav', 'rail-list');
+  list.setAttribute('aria-label', 'Chapters');
+
+  const links = [...main.querySelectorAll('section')].map((sec) => {
+    const heading = sec.querySelector('h2');
     /* textContent would swallow the deep-link anchor's own label, so read the text nodes only. */
-    const label = [...heading.childNodes]
+    const label = [...(heading ? heading.childNodes : [])]
       .filter((node) => node.nodeType === 3)
       .map((node) => node.textContent)
       .join('')
       .trim();
-    const a = $('a');
-    a.append($('span', 'cn', num ? num.textContent : ''));
-    const body = $('span', 'ct');
-    body.append($('span', 'ct-title', label));
-    if (NAV_ANSWERS[s.id]) body.append($('span', 'ct-sub', NAV_ANSWERS[s.id]));
-    a.append(body);
-    a.href = `#${s.id}`;
-    nav.append(a);
+    const num = heading?.querySelector('.n')?.textContent || '';
+    const a = $('a', 'rail-link');
+    a.href = `#${sec.id}`;
+    const body = $('span', 'rail-body');
+    body.append($('span', 'rail-t', label));
+    /* The answer line shows where the rail is a block and there is width for it, and is hidden by
+     * CSS in the narrow sidebar. It stays in the title either way, so the sidebar reader can still
+     * get at it. */
+    if (NAV_ANSWERS[sec.id]) {
+      body.append($('span', 'rail-sub', NAV_ANSWERS[sec.id]));
+      a.title = NAV_ANSWERS[sec.id];
+    }
+    a.append($('span', 'rail-n', num), body);
+    list.append(a);
+    return { sec, a };
   });
+
+  const head = $('div', 'rail-head');
+  const title = $('span', 'rail-title', 'Contents');
+  const toggle = $('button', 'rail-toggle');
+  toggle.type = 'button';
+
+  /* Remembered, like the theme: a reader who closed the rail on the way in did not ask to be given
+   * it back at every anchor they follow. Storage may be blocked, in which case open is a fine
+   * default and the toggle still works for the page view.
+   *
+   * The state lives on the root element rather than on the rail, because collapsing it also has to
+   * widen the content — and the rail now sits inside the wrapper it would be a sibling of. */
+  const RAIL_KEY = 'era5-rail-shut';
+  const root = document.documentElement;
+  const setOpen = (open) => {
+    root.classList.toggle('rail-shut', !open);
+    toggle.textContent = open ? '«' : '»';
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? 'Hide the contents rail' : 'Show the contents rail');
+  };
+  let shut = false;
+  try {
+    shut = localStorage.getItem(RAIL_KEY) === '1';
+  } catch { /* no storage; stay open */ }
+  setOpen(!shut);
+  toggle.addEventListener('click', () => {
+    const open = root.classList.contains('rail-shut');
+    setOpen(open);
+    try {
+      localStorage.setItem(RAIL_KEY, open ? '0' : '1');
+    } catch { /* the choice still holds for this page view */ }
+  });
+  head.append(title, toggle);
+  /* One wrapper so head and list centre in the viewport together as a block. */
+  const inner = $('div', 'rail-inner');
+  inner.append(head, list);
+  host.replaceChildren(inner);
+
+  /* Mark the chapter the reader is actually in: the last one whose heading has gone past the top of
+   * the viewport.
+   *
+   * The first attempt scored every section by distance from the top and took the nearest, which
+   * reads as reasonable and was wrong on half the page — chapters here run several screens, so from
+   * the middle of one the *next* heading is often nearer than the one behind you, and the rail ran a
+   * chapter ahead of the reader. Nearest is the wrong question. "Which heading have I passed" is the
+   * right one, and it needs no tuning.
+   *
+   * A heading counts as arrived once it reaches the top third of the viewport — a proportion rather
+   * than a pixel count, so it means the same thing on a laptop and on a tall monitor. A fixed 130px
+   * was too strict: headings sitting a quarter of the way down the screen, plainly being read, were
+   * still scored as incoming.
+   *
+   * Note this is deliberately not "whichever section covers most of the viewport", which sounds
+   * more honest and breaks on short sections — one shorter than a screen can sit fully visible and
+   * still lose to the tails of its neighbours either side, so it would never be markable at all. */
+  const mark = () => {
+    const arrived = window.innerHeight / 3;
+    let best = 0;
+    links.forEach(({ sec }, k) => {
+      if (sec.getBoundingClientRect().top - arrived <= 0) best = k;
+    });
+    links.forEach(({ a }, k) => a.classList.toggle('on', k === best));
+  };
+  let queued = false;
+  const onMove = () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => { queued = false; mark(); });
+  };
+  window.addEventListener('scroll', onMove, { passive: true });
+  window.addEventListener('resize', onMove, { passive: true });
+  mark();
 }
 
 function buildFooter(data) {

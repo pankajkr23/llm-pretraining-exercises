@@ -21,7 +21,14 @@ import pytest
 from dataframework.catalog import EXPECTED_COUNTS, validate
 from dataframework.config import Config
 from dataframework.gotchas import parse as parse_notes
-from dataframework.grade import grade_dataset, is_commercially_usable
+from dataframework.grade import (
+    GRADE_A_MIN,
+    SCORED_GATES,
+    gates_scored,
+    grade_dataset,
+    is_commercially_usable,
+    score_gates,
+)
 from dataframework.shingles import (
     DIGEST_BYTES,
     SHINGLE_N,
@@ -29,6 +36,7 @@ from dataframework.shingles import (
     build_index,
     find_collisions,
     is_contaminated,
+    normalise,
     shingle,
 )
 
@@ -106,19 +114,45 @@ def test_a_contaminated_dataset_cannot_grade_usable():
     }
     grade, reasoning = grade_dataset(poisoned)
     assert grade == "X"
-    assert not is_commercially_usable(grade)
+    assert not is_commercially_usable(poisoned)
     assert "contamination" in reasoning
 
 
 # ------------------------------------------------------------------ 3.2  INV-1b
 
 
+def _leaks(blob: str, registry: dict[str, list[str]]) -> list[str]:
+    """Every registry item whose text appears in `blob`.
+
+    Extracted so the check below and its mutation proof run the same code. The proof used to build
+    a string from an item and assert the item was in it, which touched no project code and could
+    not fail under any change to this repository.
+    """
+    return [
+        f"{benchmark}: {item[:40]}"
+        for benchmark, items in registry.items()
+        for item in items
+        if item[:64] in blob
+    ]
+
+
 def test_eval_text_absent_from_the_web_bundle():
-    """No eval item text may appear anywhere in the shipped bundle."""
+    """INV-1b: no eval item text may appear anywhere in the shipped bundle.
+
+    Scans the real benchmark corpus where it is present, not only the synthetic fixtures. The
+    fixtures were never within reach of the pipeline, so a scan for them alone could never have
+    detected the risk it exists to detect: an actual MILU item reaching `web/`.
+    """
     blob = "".join(path.read_text(encoding="utf-8") for path in WEB.rglob("*.json"))
-    for benchmark, items in FIXTURE_REGISTRY.items():
-        for item in items:
-            assert item[:64] not in blob, f"{benchmark} item text leaked into web/"
+
+    assert not _leaks(blob, FIXTURE_REGISTRY)
+
+    real = CFG.data_dir / "benchmarks" / "MILU.json"
+    if not real.exists():
+        pytest.skip("no benchmark corpus present (data/benchmarks/ is git-ignored)")
+    items = json.loads(real.read_text(encoding="utf-8"))
+    texts = [i if isinstance(i, str) else (i.get("text") or i.get("question") or "") for i in items]
+    assert not _leaks(blob, {"MILU": [t for t in texts if len(t) >= 64]})
 
 
 def test_shingles_bundle_carries_hashes_only():
@@ -135,21 +169,123 @@ def test_shingles_bundle_carries_hashes_only():
 
 
 def test_a_leaked_item_would_be_caught():
-    """Breaking 3.2 must fail: the same check over a blob containing an item must trip."""
+    """Breaking 3.2 must fail: the real scanner, over a bundle carrying an item, must name it."""
     item = FIXTURE_REGISTRY["MILU"][0]
-    leaked_blob = '{"note": "' + item + '"}'
-    assert item[:64] in leaked_blob
+    clean = "".join(path.read_text(encoding="utf-8") for path in WEB.rglob("*.json"))
+
+    assert not _leaks(clean, FIXTURE_REGISTRY), "the bundle is not clean to begin with"
+    assert _leaks(clean + '{"note": "' + item + '"}', FIXTURE_REGISTRY) == [f"MILU: {item[:40]}"]
 
 
 # ------------------------------------------------------------------ 3.3  INV-2
 
 
-def test_no_grade_x_dataset_is_commercially_usable():
-    """INV-2: an excluded dataset must never be admitted to a commercial mix."""
-    for record in _catalog():
-        grade, _ = grade_dataset(record)
-        if grade == "X":
-            assert not is_commercially_usable(grade), f"{record['id']} is X yet admitted"
+def test_no_excluded_dataset_reaches_a_commercial_mix():
+    """INV-2: an excluded dataset must never be admitted to a commercial mix.
+
+    The old version of this asked `is_commercially_usable(grade)` inside `if grade == "X"`, and
+    that function was `grade != "X"` — so it reduced to `assert not ("X" != "X")` and could not
+    fail for any catalogue. It restated the implementation instead of testing the claim. INV-2 is
+    about what reaches the mix, so this reads the plan the pipeline actually builds. Correction X18.
+    """
+    catalogue = _catalog()
+    excluded = {r["id"] for r in catalogue if grade_dataset(r)[0] == "X"}
+    assert excluded, "no dataset graded X — the exclusion rule never fired, so this proves nothing"
+
+    # Read the shipped plan rather than rebuilding one: that bundle is what the page renders and
+    # what a reader would train from, so it is the surface the invariant is a promise about.
+    sourcing = _bundle()["sourcing"]
+    committed = {ident for tier in sourcing["tiers"] for ident in tier["committed"]}
+
+    assert not (committed & excluded), (
+        f"grade-X datasets reached the commercial mix: {sorted(committed & excluded)}"
+    )
+
+
+def test_the_exclusion_check_can_actually_fail():
+    """Breaking 3.3 must fail: commit an excluded dataset and the guard must object.
+
+    The mutation forges the plan rather than the catalogue, because that is the surface INV-2
+    protects — what ends up in the mix, not what the grader thought of it.
+    """
+    catalogue = _catalog()
+    excluded = {r["id"] for r in catalogue if grade_dataset(r)[0] == "X"}
+    sourcing = _bundle()["sourcing"]
+    forged = {ident for tier in sourcing["tiers"] for ident in tier["committed"]}
+    forged |= {sorted(excluded)[0]}
+
+    assert forged & excluded, "the mutation no longer commits an excluded dataset"
+
+
+def test_an_unestablished_licence_is_not_permission():
+    """INV-2's other half: unknown is not permission, and the function that says so must say it.
+
+    `is_commercially_usable` looked only at the grade, so it returned True for a dataset with no
+    established licence — contradicting `sourcing.blockers` and the legal chapter, both of which
+    treat an unknown licence as a blocker.
+    """
+    gates = {
+        g: {"verdict": "PASS", "reasoning": "r", "confidence": "high"}
+        for g in ("provenance", "composition", "contamination", "yield", "evidence")
+    }
+    assert is_commercially_usable({"id": "A", "gates": gates, "licence_commercial": True})
+    assert not is_commercially_usable({"id": "B", "gates": gates, "licence_commercial": None})
+    assert not is_commercially_usable({"id": "C", "gates": gates, "licence_commercial": False})
+
+
+def test_a_grade_says_how_much_was_asked_not_only_how_it_answered():
+    """A top grade must mean the questions were asked, not that the unasked ones scored zero.
+
+    UNKNOWN and FAIL both contribute 0, deliberately — ignorance costs what a poor result costs.
+    But that made "scored 5 with every gate measured" and "scored 5 with three gates never looked
+    at" the same letter, and they are not the same claim. In this catalogue 124 of 145 records have
+    exactly two gates scored, and one of the two is `evidence`, which is PASS for all 145. So for
+    most of the corpus the only discriminating signal is provenance. Correction X20.
+    """
+    full = {
+        name: {"verdict": "PASS", "reasoning": "r", "confidence": "high"} for name in SCORED_GATES
+    }
+    assert grade_dataset({"id": "FULL", "gates": full})[0] == "A"
+
+    # The same score, reached with two gates never looked at, is not the same claim.
+    thin = dict.fromkeys(SCORED_GATES)
+    thin["provenance"] = {"verdict": "PASS", "reasoning": "r", "confidence": "high"}
+    thin["composition"] = {"verdict": "PASS", "reasoning": "r", "confidence": "high"}
+    thin["contamination"] = {"verdict": "PASS", "reasoning": "r", "confidence": "high"}
+    thin["yield"] = {"verdict": "PASS", "reasoning": "r", "confidence": "high"}
+    thin["evidence"] = {"verdict": "UNKNOWN", "reasoning": "r", "confidence": "low"}
+    grade, why = grade_dataset({"id": "THIN", "gates": thin})
+    assert score_gates(thin) == 8, "this fixture no longer scores into A's range"
+    assert grade == "B", f"a gate nobody scored still reached grade A: {why}"
+    assert "4 of 5 gates scored" in why
+
+
+def test_the_coverage_rule_can_actually_fail():
+    """Breaking X20 must fail: drop the coverage condition and the thin record grades A."""
+    thin = dict.fromkeys(SCORED_GATES)
+    for name in ("provenance", "composition", "contamination", "yield"):
+        thin[name] = {"verdict": "PASS", "reasoning": "r", "confidence": "high"}
+    thin["evidence"] = {"verdict": "UNKNOWN", "reasoning": "r", "confidence": "low"}
+
+    # Score alone — the old rule — would have awarded A.
+    assert score_gates(thin) >= GRADE_A_MIN
+    assert gates_scored(thin) < len(SCORED_GATES), "the mutation no longer leaves a gate unscored"
+
+
+def test_every_committed_dataset_reports_how_far_it_was_checked():
+    """The bundle must carry coverage beside the grade, or the letter overstates what is known."""
+    bundle = _bundle()
+    by_id = {d["id"]: d for d in bundle["datasets"]}
+    committed = [i for tier in bundle["sourcing"]["tiers"] for i in tier["committed"]]
+    assert committed, "nothing is committed, so this guard is watching nothing"
+
+    for ident in committed:
+        entry = by_id[ident]
+        assert "gates_scored" in entry, f"{ident} ships a grade with no coverage beside it"
+        assert entry["gates_scored"]["value"] < len(SCORED_GATES), (
+            f"{ident} now has every gate scored — the page's caveat about unscored "
+            "contamination needs revisiting"
+        )
 
 
 def test_the_blocklist_is_not_empty():
@@ -235,6 +371,153 @@ def _bare_numbers(node, path="", inherited=False) -> list[str]:
         if not inherited:
             found.append(path)
     return found
+
+
+# Blocks whose numbers are sums over the catalogue's own `size_tokens`. Not one of the 145 records
+# carries a measured size, so nothing derived from them may claim to be measured either.
+_DERIVED_FROM_CATALOGUE_SIZES = ("sourcing", "lifecycle", "orphan_tiers")
+
+
+def test_the_protocol_gap_note_matches_the_run_it_describes():
+    """INV-4: the run must not misdescribe its own coverage.
+
+    `protocol_gaps` was a hardcoded literal reading "three of the six tokenizers are unavailable",
+    rendered on the page long after the run had measured five with one unavailable — a false
+    statement about its own coverage, in the chapter whose subject is honest measurement.
+    """
+    record = json.loads((CFG.records_dir / "fertility.json").read_text(encoding="utf-8"))
+    note = record["protocol_gaps"]
+
+    assert f"{len(record['tokenizers_measured'])} tokenizers measured" in note, note
+    assert f"{len(record['tokenizers_unavailable'])} unavailable" in note, note
+    assert record["corpus"] in note
+
+
+def test_no_measured_value_names_an_unresolved_run():
+    """INV-4: a measurement must name the run that produced it — a placeholder is not a run.
+
+    `main()` stamped every source with `pending-<timestamp>` and then substituted the real id, but
+    only inside `by_tokenizer`. `conversational` was missed, so 115 values shipped in the public
+    bundle claiming to be measured against an id prefixed `pending-` that matched no run and did not
+    equal `run_id` in the same file. The old guard passed them because it only asked for an "@".
+    Correction X17.
+    """
+
+    def unresolved(node: object) -> list[str]:
+        """Every `source` naming a placeholder run.
+
+        Walks the structure rather than grepping the text, because the corrections register
+        *describes* this bug in prose and a substring search flags its own correction record.
+        """
+        out: list[str] = []
+        if isinstance(node, dict):
+            source = node.get("source")
+            if isinstance(source, str) and "pending-" in source:
+                out.append(source)
+            for child in node.values():
+                out += unresolved(child)
+        elif isinstance(node, list):
+            for child in node:
+                out += unresolved(child)
+        return out
+
+    for path in (CFG.records_dir / "fertility.json", WEB / "records.json"):
+        bad = unresolved(json.loads(path.read_text(encoding="utf-8")))
+        assert not bad, f"{path.name} ships {len(bad)} unresolved run id(s), e.g. {bad[0]}"
+
+
+def test_the_unresolved_run_check_can_actually_fail():
+    """Breaking X17 must fail: a placeholder nested where the old patch never reached is caught.
+
+    `conversational` is exactly where the 115 unresolved ids hid, so the mutation puts one back
+    there rather than somewhere the original bug could not have occurred.
+    """
+    record = json.loads((CFG.records_dir / "fertility.json").read_text(encoding="utf-8"))
+    forged = {
+        **record,
+        "conversational": {"ta": {"source": "cl100k_base|conv@pending-20260805T063758Z"}},
+    }
+
+    planted = [
+        v["source"]
+        for v in forged["conversational"].values()
+        if isinstance(v, dict) and "pending-" in v.get("source", "")
+    ]
+    assert planted, "the mutation no longer plants a placeholder, so the guard proves nothing"
+
+
+def test_nothing_derived_from_estimates_claims_to_be_measured():
+    """INV-4, the direction that was being violated: a sum is as weak as its weakest input.
+
+    `sourcing` declared `measured` over `committed_tokens`, which is 6.39T summed from catalogue
+    sizes of which 24 are estimated and 121 unknown. The page tells the reader that mark means
+    "somebody ran it". Nobody had. Correction X17.
+    """
+    bundle = _bundle()
+
+    sizes = [(d.get("size_tokens") or {}).get("provenance") for d in bundle["datasets"]]
+    assert "measured" not in sizes, (
+        "a catalogue size is now measured — re-check whether the blocks below may claim it too"
+    )
+
+    for block in _DERIVED_FROM_CATALOGUE_SIZES:
+        assert bundle[block]["provenance"] != "measured", (
+            f"{block} claims measured; its token figures are sums of catalogue estimates"
+        )
+
+
+def test_the_derived_provenance_check_can_actually_fail():
+    """Breaking X17 must fail: restore the blanket and the guard must object."""
+    bundle = _bundle()
+    forged = {**bundle, "sourcing": {**bundle["sourcing"], "provenance": "measured"}}
+
+    assert forged["sourcing"]["provenance"] == "measured"
+    with pytest.raises(AssertionError, match="sums of catalogue estimates"):
+        for block in _DERIVED_FROM_CATALOGUE_SIZES:
+            assert forged[block]["provenance"] != "measured", (
+                f"{block} claims measured; its token figures are sums of catalogue estimates"
+            )
+
+
+def test_the_records_agree_about_any_model_they_both_describe():
+    """Two registers describing one model must not describe it differently.
+
+    `architectures.json` said Sarvam-30B was 30B where `scaling_reference.json` said 32B, and the
+    model card says 32B; the same pair disagreed about the 105B's active parameters. Both are
+    rendered on the page, in different chapters, so a reader comparing them saw two answers.
+    Correction X19.
+    """
+    records = json.loads((WEB / "records.json").read_text(encoding="utf-8"))
+    arch = {r["model"]: r for r in records.get("architectures", []) if r.get("params_total")}
+    ref = {
+        m["model"]: m
+        for m in (records.get("scaling_reference") or {}).get("models", [])
+        if m.get("params_total")
+    }
+
+    shared = set(arch) & set(ref)
+    assert shared, "no model appears in both registers, so this guard is watching nothing"
+    for model in sorted(shared):
+        for field in ("params_total", "params_active"):
+            if arch[model].get(field) is None or ref[model].get(field) is None:
+                continue
+            assert arch[model][field] == ref[model][field], (
+                f"{model}: architectures says {arch[model][field]} for {field}, "
+                f"scaling_reference says {ref[model][field]}"
+            )
+
+
+def test_counts_may_still_claim_measurement():
+    """The correction must not over-swing: counting records in a catalogue we hold is a measurement.
+
+    145 datasets is 145 datasets. Marking exact counts as estimates would be the same dishonesty
+    pointing the other way, and would drain the mark of meaning.
+    """
+    bundle = _bundle()
+
+    assert bundle["sourcing"]["counts"]["provenance"] == "measured"
+    assert bundle["record_counts"]["provenance"] == "measured"
+    assert bundle["grades"]["provenance"] == "measured"
 
 
 def test_no_bare_number_in_the_bundle():
@@ -329,6 +612,69 @@ def test_the_short_item_check_can_actually_fail():
     old_lookup = shingle(shard, SHINGLE_N) & set(index.grams)
     assert not old_lookup, (
         "a 13-gram-only lookup found the short item, so this mutation no longer proves anything"
+    )
+
+
+# Indic prose for the tokenisation tests. Devanagari, Malayalam and Tamil, chosen because every one
+# of these words carries vowel signs — the characters `\w` silently discards.
+_HINDI = "भारत और पाकिस्तान के बीच"  # five words
+_MALAYALAM = "ഇന്ത്യയും പാകിസ്ഥാനും തമ്മിലുള്ള"  # three words
+_TAMIL_PROSE = (
+    "இந்த தாக்குதல் இந்தியா மற்றும் பாகிஸ்தான் இடையேயான உறவில் "
+    "பெரும் நெருக்கடியை ஏற்படுத்தியது என்று செய்தி நிறுவனம் தெரிவித்தது"
+)
+
+
+def test_indic_words_survive_tokenisation():
+    r"""INV-1: a word is a word in every script, not only in the ones written without diacritics.
+
+    Python's `\w` matches letters and digits but not combining marks, and every Indic vowel sign,
+    virama and anusvara is one — so `\w+` split each word at every vowel sign and threw the sign
+    away. 91% of the items this gate indexes are in Indic scripts, which made a "thirteen-word
+    fingerprint" about five real words of consonant skeleton there. Correction X16.
+    """
+    assert normalise(_HINDI) == ["भारत", "और", "पाकिस्तान", "के", "बीच"]
+    assert len(normalise(_MALAYALAM)) == 3
+    # And the scripts that were never broken must stay unbroken.
+    assert normalise("between India and Pakistan today") == [
+        "between",
+        "india",
+        "and",
+        "pakistan",
+        "today",
+    ]
+
+
+def test_the_tokenisation_can_actually_fail():
+    r"""Breaking X16 must fail: the old pattern shatters the same words.
+
+    If `\w+` ever stops splitting these, this mutation has stopped proving anything and the test
+    above is no longer evidence.
+    """
+    old = re.compile(r"\w+", re.UNICODE)
+
+    assert len(old.findall(_HINDI.lower())) > len(normalise(_HINDI)), (
+        "the old pattern no longer shatters Devanagari, so this proves nothing"
+    )
+    # The exact shape of the defect: three ordinary Malayalam words became a full 13-token window,
+    # which is why unrelated prose collided with the index.
+    assert len(old.findall(_MALAYALAM.lower())) == SHINGLE_N
+
+
+def test_ordinary_indic_prose_does_not_collide_with_the_index():
+    """INV-1, the false-positive direction: the gate must not delete innocent training text.
+
+    A gate that drops clean documents is worse than no gate, because the loss is silent and lands
+    on the scarcest tier in the mixture. Measured against 203,388 held-out FLORES-200 sentences the
+    old tokeniser produced 5 such collisions, all Indic; this fixture is one of them.
+    """
+    index = build_attributed_index({"MILU": [_TAMIL_PROSE]})
+    unrelated = (
+        "ഇന്ത്യയും പാകിസ്ഥാനും തമ്മിലുള്ള ബന്ധത്തെ ആക്രമണം വലിയ രീതിയിൽ ബാധിച്ചു എന്ന് വാർത്താ ഏജൻസി റിപ്പോർട്ട് ചെയ്തു"
+    )
+
+    assert not find_collisions(unrelated, index), (
+        "unrelated Indic prose collided with the eval index — the gate is deleting clean text"
     )
 
 

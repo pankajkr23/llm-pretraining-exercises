@@ -12,25 +12,41 @@ from typing import Any
 
 # The capabilities this model is being built for, as (name, include, exclude).
 #
-# The exclusions are not fussiness — a false positive *hides a hole*, and the holes are the whole
-# point of this matrix. Two traps in this corpus specifically: "code-mixed" means Hindi-English
-# switching, not programming; and a bare "mt" matches inside HMMT, a maths contest.
-CAPABILITIES: tuple[tuple[str, tuple[str, ...], tuple[str, ...]], ...] = (
-    ("indic-language", ("indic", "indian", "bhasha"), ()),
+# Exclusion is two different jobs, and merging them into one field made one of them dead code.
+#
+# A **trap** is a phrase that makes an include term match for the wrong reason: "code-mixed" is
+# Hindi-English switching, and it contains the word "code". The include term is fine; the substring
+# is a coincidence, so the trap is removed from the text before the include terms are tested.
+#
+# A **disqualifier** rules the capability out however it matched: a benchmark translated from
+# English does not measure an Indian worldview, whatever else its description says.
+#
+# The old single `exclude` field was tested as `any(exclude) and not any(include except "code")`.
+# Because the first `any(include)` had already succeeded on the line above, the second was always
+# true for every capability whose include list lacked the literal "code" — so the clause could only
+# ever fire for `code`, and the `india-context` exclusion never ran once. None of this is fussiness:
+# a false positive *hides a hole*, and the holes are the whole point of this matrix.
+CAPABILITIES: tuple[tuple[str, tuple[str, ...], tuple[str, ...], tuple[str, ...]], ...] = (
+    ("indic-language", ("indic", "indian", "bhasha"), (), ()),
     (
         "india-context",
         ("india-context", "india context", "cultural", "worldview", "sanskriti"),
-        ("translated from",),
+        (),
+        # Phrased as the register actually phrases it. "translated from" alone matched nothing:
+        # IndicMMLU-Pro says "Translated via IndicTrans2 + back-translation" and was being counted
+        # as an instrument for Indian worldview, which is the one thing a translated set cannot
+        # measure — it measures how the model handles translated English.
+        ("translated", "back-translation", "machine-translated"),
     ),
-    ("code", ("code", "programming", "swe-bench", "humaneval"), ("code-mix", "code-switch")),
-    ("agentic-coding", ("agentic", "swe-bench", "terminal-bench", "tool use"), ()),
-    ("math-reasoning", ("math", "reasoning", "gsm", "stem", "aime"), ()),
-    ("knowledge", ("knowledge", "mmlu", "question answering", " qa"), ()),
-    ("translation", ("translation", "machine translation", "parallel", "bitext"), ()),
-    ("speech", ("speech", "asr", "audio", "spoken"), ()),
-    ("multimodal", ("multimodal", "vision", "image", "ocr", "document"), ()),
-    ("safety", ("safety", "harm", "jailbreak", "toxic"), ()),
-    ("long-context", ("long context", "long-context"), ()),
+    ("code", ("code", "programming", "swe-bench", "humaneval"), ("code-mix", "code-switch"), ()),
+    ("agentic-coding", ("agentic", "swe-bench", "terminal-bench", "tool use"), (), ()),
+    ("math-reasoning", ("math", "reasoning", "gsm", "stem", "aime"), (), ()),
+    ("knowledge", ("knowledge", "mmlu", "question answering", " qa"), (), ()),
+    ("translation", ("translation", "machine translation", "parallel", "bitext"), (), ()),
+    ("speech", ("speech", "asr", "audio", "spoken"), (), ()),
+    ("multimodal", ("multimodal", "vision", "image", "ocr", "document"), (), ()),
+    ("safety", ("safety", "harm", "jailbreak", "toxic"), (), ()),
+    ("long-context", ("long context", "long-context"), (), ()),
 )
 
 
@@ -47,13 +63,15 @@ def capabilities_for(benchmark: dict[str, Any]) -> list[str]:
         str(benchmark.get(field) or "").lower() for field in ("type", "coverage", "name", "notes")
     )
     matched = []
-    for name, include, exclude in CAPABILITIES:
-        if not any(k in haystack for k in include):
+    for name, include, traps, disqualifiers in CAPABILITIES:
+        # Outright: however it matched, it does not measure this.
+        if any(phrase in haystack for phrase in disqualifiers):
             continue
-        # A disqualifying phrase wins: "code-mixed" is not programming.
-        if any(k in haystack for k in exclude) and not any(
-            k in haystack for k in include if k not in ("code",)
-        ):
+        # Coincidental: remove the trap, then ask whether anything still matches on its own merit.
+        probe = haystack
+        for trap in traps:
+            probe = probe.replace(trap, " ")
+        if not any(k in probe for k in include):
             continue
         matched.append(name)
     return matched
@@ -69,7 +87,7 @@ def build_matrix(benchmarks: list[dict[str, Any]]) -> dict[str, Any]:
         Per-capability instruments and trust bands, plus the explicit list of holes.
     """
     matrix: dict[str, dict[str, Any]] = {
-        name: {"benchmarks": [], "trust_bands": set()} for name, _, _unused in CAPABILITIES
+        name: {"benchmarks": [], "trust_bands": set()} for name, *_ in CAPABILITIES
     }
 
     for benchmark in benchmarks:
@@ -78,7 +96,7 @@ def build_matrix(benchmarks: list[dict[str, Any]]) -> dict[str, Any]:
             matrix[capability]["trust_bands"].add(benchmark.get("trust_band"))
 
     rows = []
-    for name, _, _unused in CAPABILITIES:
+    for name, *_ in CAPABILITIES:
         entry = matrix[name]
         rows.append(
             {

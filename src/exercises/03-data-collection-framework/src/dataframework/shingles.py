@@ -16,8 +16,9 @@ thirteen-grams: the item emits one seven-gram, a training shard emits only thirt
 two sets are structurally incapable of intersecting. Earlier versions of this module indexed short
 items anyway and reported the resulting silence as "clean" — a false negative that appears exactly
 when someone starts trusting the gate. `ShingleIndex` therefore records the window width each item
-was indexed at, and `find_collisions` shingles the document once per width in play. When every item
-is at least `SHINGLE_N` words — the common case — there is one width and the cost is unchanged.
+was indexed at, and `find_collisions` shingles the document once per width in play. Eight widths are
+in play against MILU, so a candidate document is shingled eight times; that is the price of not
+missing the 1,090 items that are genuinely shorter than the window.
 
 Below `MIN_SHINGLE_N` words an item is not indexed at all, because a two-word window matches
 ordinary prose everywhere and a gate that cries wolf gets switched off. Those items are counted in
@@ -28,6 +29,8 @@ read rather than a silence.
 import hashlib
 import json
 import re
+import sys
+import unicodedata
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -36,23 +39,67 @@ from .config import Config
 SHINGLE_N = 13
 DIGEST_BYTES = 8
 
-# Narrower than this and a window stops identifying anything: "what is the capital of" occurs in
-# ordinary text. Items below the floor are reported as uncovered rather than indexed.
-MIN_SHINGLE_N = 5
+# Narrower than this and a window stops identifying anything. The example that sets the floor is
+# "what is the capital of" — five words, and it occurs in ordinary text — so the floor has to sit
+# above it. Items below it are reported as uncovered rather than indexed.
+MIN_SHINGLE_N = 6
 
-_WORD = re.compile(r"\w+", re.UNICODE)
+
+def _mark_ranges() -> str:
+    """Every Unicode combining mark, as a regex character-class body.
+
+    Derived rather than hardcoded so it cannot go stale against a new Unicode version; it costs
+    about 80ms once at import, which is nothing beside a pipeline run.
+
+    Returns:
+        Escaped ranges covering categories Mn, Mc and Me.
+    """
+    marks = [c for c in range(sys.maxunicode + 1) if unicodedata.category(chr(c)) in _MARK_CATS]
+
+    def span(lo: int, hi: int) -> str:
+        first = re.escape(chr(lo))
+        return first if lo == hi else f"{first}-{re.escape(chr(hi))}"
+
+    out: list[str] = []
+    start = prev = marks[0]
+    for code in marks[1:]:
+        if code == prev + 1:
+            prev = code
+            continue
+        out.append(span(start, prev))
+        start = prev = code
+    out.append(span(start, prev))
+    return "".join(out)
+
+
+_MARK_CATS = frozenset({"Mn", "Mc", "Me"})
+
+# `\w` alone is wrong for every Indic script on this page.
+#
+# Python's `\w` matches letters, digits and underscore — but *not* combining marks, and every Indic
+# vowel sign, virama, anusvara and nukta is one. So `\w+` split every Indic word at every vowel sign
+# and threw the sign away: "भारत और पाकिस्तान के बीच" — five words — came out as eleven consonant
+# fragments. 91% of the items this module indexes are in Indic scripts, which made a "thirteen-word
+# fingerprint" about five real words of skeleton there, and produced false positives: three ordinary
+# Malayalam words normalised to a full thirteen-token window, so any document containing that phrase
+# was dropped. Correction X16.
+_WORD = re.compile(rf"[\w{_mark_ranges()}]+", re.UNICODE)
 
 
 def normalise(text: str) -> list[str]:
     """Reduce text to comparable word tokens.
 
+    Combining marks are kept attached to the letter they modify, so a word is a word in every script
+    rather than only in the ones written without diacritics.
+
     Args:
         text: Raw text.
 
     Returns:
-        Lowercased word tokens.
+        Lowercased word tokens, NFC-composed so that two spellings of the same word — precomposed
+        versus decomposed — hash to the same shingle instead of silently missing each other.
     """
-    return _WORD.findall(text.lower())
+    return _WORD.findall(unicodedata.normalize("NFC", text).lower())
 
 
 def shingle(text: str, n: int = SHINGLE_N) -> set[str]:
@@ -304,7 +351,7 @@ def write_index(cfg: Config | None = None) -> dict[str, Any]:
     cfg.web_dir.mkdir(parents=True, exist_ok=True)
 
     # The digests are a build artifact, not a browser asset. MILU's validation split alone produces
-    # 411,442 of them — 9.6 MB that no page ever fetches, because the pages only ever report the
+    # 126,044 of them — 2.5 MB that no page ever fetches, because the pages only ever report the
     # count. They stay in the git-ignored data directory, where CI and a local run can use them.
     cfg.data_dir.mkdir(parents=True, exist_ok=True)
     (cfg.data_dir / "shingle_index.json").write_text(

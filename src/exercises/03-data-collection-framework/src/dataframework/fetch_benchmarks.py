@@ -39,7 +39,9 @@ OPTION_PATTERN = re.compile(
     r"^(option[\s_]?[a-d1-4]|choice[s]?[\s_]?[a-d1-4]?|answer[\s_]?[a-d1-4])$", re.I
 )
 
-MIN_WORDS = 5  # matches shingles.MIN_SHINGLE_N — anything shorter cannot be indexed anyway
+MIN_WORDS = 6  # matches shingles.MIN_SHINGLE_N — anything shorter cannot be indexed anyway.
+# Comparable units at last: `normalise` counts words rather than the consonant fragments `\w+`
+# used to produce, so this whitespace count and the index's floor now mean the same thing.
 
 
 def _pick_question_column(columns: list[str]) -> str:

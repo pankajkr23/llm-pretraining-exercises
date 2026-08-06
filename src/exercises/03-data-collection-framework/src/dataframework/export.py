@@ -22,11 +22,18 @@ from .catalog import EXPECTED_COUNTS, load_json, validate
 from .config import Config
 from .coverage import build_matrix
 from .fertility import D_MODEL_DEFAULT, PARITY_TARGET, unmeasured
-from .grade import grade_dataset
+from .grade import SCORED_GATES, gates_scored, grade_dataset
 from .milestones import TIER_SHAPE, build_all
-from .mix import ALWAYS_ON_SHARE, MAX_EPOCHS_ADVISED, MAX_EPOCHS_HARD
+from .mix import (
+    ALWAYS_ON_SHARE,
+    EPOCHS_HALF_LIFE,
+    EPOCHS_NEAR_FREE,
+    EPOCHS_WORTHLESS,
+    WORTH_CEILING_MULTIPLE,
+)
 from .models import Value
 from .orphans import find_orphans
+from .run_cost import price_run
 from .shingles import write_index
 from .sourcing import build_lifecycle, build_plan
 from .vocab_sweep import summarise, sweep
@@ -161,6 +168,15 @@ def _dataset_index_entry(record: dict[str, Any]) -> dict[str, Any]:
         # `false`s cost 5KB of the index budget to say nothing.
         **({"is_gap": True} if record.get("is_gap") else {}),
         "grade": grade,
+        # How many of the five gates anybody actually answered. Shipped beside the grade because
+        # a grade earned over two scored gates is a different claim from the same grade earned
+        # over five, and the letter alone cannot tell them apart.
+        "gates_scored": _value(
+            gates_scored(record.get("gates") or {}),
+            "gates",
+            "measured",
+            "counted from this record's own gate verdicts",
+        ),
         "stage": record.get("stage"),
         "languages": record.get("languages"),
         # Fully typed even in the index: ground rule 4 leaves the UI no way to render a bare
@@ -333,6 +349,12 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
             indic_share=_rec_mix["mix"]["indic_share"],
             compute_cost_share=(_trade.get("costs") or {}).get("value") or 0.012,
         )
+        # The run price, recomputed for the same reason. It shipped as a static block worked
+        # against a 15T budget and was 12% low once the recommendation moved to 16.8T.
+        records["cost"]["run_cost"] = records["cost"].get("run_cost", {}) | price_run(
+            params=MODEL_PARAMS,
+            seen_tokens=_rec_mix["mix"]["total_seen_tokens"],
+        )
 
     grades: dict[str, int] = {}
     for record in datasets:
@@ -354,6 +376,23 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
         "datasets": [_dataset_index_entry(record) for record in datasets],
         "benchmarks": benchmarks,
         "grades": {**grades, "provenance": "measured", "source": "computed from the five gates"},
+        # How often each gate was actually answered. The grade tally says how well the catalogue
+        # did; this says how much of it anybody looked at, which is the other half of the same
+        # question and the reason no dataset holds the top grade.
+        "gate_coverage": {
+            "provenance": "measured",
+            "source": "counted from the catalogue's gate verdicts",
+            "of": len(datasets),
+            "scored": {
+                name: sum(
+                    1
+                    for record in datasets
+                    if ((record.get("gates") or {}).get(name) or {}).get("verdict")
+                    not in (None, "", "UNKNOWN")
+                )
+                for name in SCORED_GATES
+            },
+        },
         "coverage": {
             **build_matrix(benchmarks),
             "provenance": "measured",
@@ -416,11 +455,22 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
             "always_on_share": _value(
                 ALWAYS_ON_SHARE, "share", "estimated", "the framework's protected-lane rule"
             ),
-            "max_epochs_advised": _value(
-                MAX_EPOCHS_ADVISED, "epochs", "estimated", "published repetition studies"
+            # Three distinct points on one curve, kept distinct. The pair these replace was
+            # "advised" and "hard", and "hard" was doing duty for both 16 epochs and 16x the pool.
+            "epochs_near_free": _value(
+                EPOCHS_NEAR_FREE, "epochs", "estimated", "Muennighoff et al. 2025, JMLR v26"
             ),
-            "max_epochs_hard": _value(
-                MAX_EPOCHS_HARD, "epochs", "estimated", "published repetition studies"
+            "epochs_half_life": _value(
+                EPOCHS_HALF_LIFE, "epochs", "estimated", "Muennighoff et al. 2025, JMLR v26"
+            ),
+            "epochs_worthless": _value(
+                EPOCHS_WORTHLESS, "epochs", "estimated", "Muennighoff et al. 2025, JMLR v26"
+            ),
+            "worth_ceiling_multiple": _value(
+                WORTH_CEILING_MULTIPLE,
+                "ratio",
+                "estimated",
+                "Muennighoff et al. 2025, JMLR v26 — 1 + R*_D, repetition's ceiling",
             ),
         },
         "contamination": {
@@ -477,8 +527,13 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
         # Tiers no benchmark can detect, priced. "Every tier must have an instrument" is one of the
         # four evaluation disciplines, and until now nothing checked it.
         "orphan_tiers": {
-            "provenance": "measured",
-            "source": "matched from the mixture against the benchmark register",
+            # The tier-to-instrument matching is exact; the GPU-hours and rupees attached to
+            # it come from an estimated mix at an assumed list price, so the block is estimated.
+            "provenance": "estimated",
+            "source": (
+                "matched from the mixture against the benchmark register; the cost of an orphan "
+                "is priced from the estimated mix at a list rate"
+            ),
             # `_strip_tier_prose` removes `capabilities` from the shipped presets to save bytes,
             # and that is exactly the field the orphan check matches on — so this rebuilds the
             # recommended mix from TIER_SHAPE, which still carries it. Passing the stripped mix
