@@ -189,8 +189,10 @@ calculation with its penalty, the full searchable vocabulary, a **download** but
 
 The download and the encoder are the point. *"A vocab list without the actual encoding algorithm is
 not enough to reproduce your score"* — so `data.json` carries the **ordered merges**, and
-[`web/encoder.js`](./web/encoder.js) is the algorithm that replays them. Characters outside the
-vocabulary render as a visible `[UNK]` chip instead of vanishing.
+[`web/encoder.js`](./web/encoder.js) is the algorithm that replays them. The submitted tokenizer
+also ships in HuggingFace's own format at [`web/tokenizer.json`](./web/tokenizer.json), so
+`Tokenizer.from_file(...)` reproduces our counts directly. Characters outside the vocabulary render
+as a visible `[UNK]` chip instead of vanishing.
 [`tests/test_js_encoder.py`](./tests/test_js_encoder.py) runs corpus lines through both Python and
 `node` and requires identical token streams — including a line with a literal `_`, which must never
 be confused with the `▁` marker.

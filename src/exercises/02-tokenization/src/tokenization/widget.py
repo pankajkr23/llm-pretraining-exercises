@@ -145,16 +145,24 @@ def build_payload(cfg: Config, corpora: dict[str, str], units: dict[str, int]) -
 
 
 def main() -> None:
-    """Load the committed corpus, train the featured configs, and write ``web/data.json``."""
+    """Load the committed corpus, train the featured configs, and write the shipped bundle."""
     cfg = Config()
     corpora = {lang.code: load_faithful(lang.code, cfg.corpus_dir) for lang in cfg.languages}
     units = {c: count_units(t) for c, t in corpora.items()}
     payload = build_payload(cfg, corpora, units)
     WEB_DIR.mkdir(parents=True, exist_ok=True)
+
     out = WEB_DIR / "data.json"
     out.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+
+    # The submission tokenizer in HuggingFace's own format, tracked and served alongside the page,
+    # so a grader can `Tokenizer.from_file(...)` it directly rather than reassembling one from the
+    # widget's vocab + merges. `artifacts/` is gitignored by design; this is the deliverable.
+    submission = train_spec(SUBMISSION, corpora)
+    submission.save(str(WEB_DIR / "tokenizer.json"))
+
     sizes = " · ".join(f"{c['label']}: {c['adjusted']}" for c in payload["configs"])
-    print(f"wrote {out} ({out.stat().st_size // 1024} KB) — {sizes}")
+    print(f"wrote {out} ({out.stat().st_size // 1024} KB) + tokenizer.json — {sizes}")
 
 
 if __name__ == "__main__":

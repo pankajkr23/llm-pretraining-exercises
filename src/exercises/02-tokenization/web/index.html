@@ -173,9 +173,14 @@
                   <b>encoder.js</b> on this page is the algorithm that replays them.
                 </p>
                 <div class="row">
-                  <button class="btn" id="dl">Download tokenizer JSON</button>
-                  <button class="btn ghost" id="dlenc">Get encoder.js</button>
+                  <button class="btn" id="dl">Download vocab + merges</button>
+                  <a class="btn ghost" href="./tokenizer.json" download>HuggingFace tokenizer.json</a>
+                  <a class="btn ghost" href="./encoder.js" download>encoder.js</a>
                 </div>
+                <p class="note">
+                  <b>tokenizer.json</b> is the submitted tokenizer in HuggingFace's own format —
+                  <span class="tag">Tokenizer.from_file(…)</span> and you have our exact counts.
+                </p>
               </div>
             </div>
             <div>
@@ -205,7 +210,6 @@
         const paste = document.getElementById('paste');
         paste.addEventListener('input', () => renderPaste());
         document.getElementById('dl').addEventListener('click', () => downloadTokenizer(c));
-        document.getElementById('dlenc').addEventListener('click', () => { window.location.href = './encoder.js'; });
         renderTokens();
         renderPaste();
       }
