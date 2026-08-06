@@ -961,6 +961,7 @@ const DATASET_COLUMNS = ['dataset', 'tokens', 'grade', 'commercial use', 'known 
 
 function chapterDatasets(ctx) {
   const { data, recommended } = ctx;
+  const cov = data.gate_coverage || { of: 0, scored: {} };
   const src = data.sourcing;
   const tierOf = (d) => Object.entries(src.tier_categories).find(([, cats]) => cats.includes(d.category))?.[0] || null;
   const targets = Object.fromEntries(recommended.mix.tiers.map((t) => [t.name, t.unique_tokens]));
@@ -1083,6 +1084,10 @@ function chapterDatasets(ctx) {
     body,
     caption: 'Committable means all three at once: the five checks scored A or B, the licence permits commercial use, and somebody stated a size. Missing any one and the dataset cannot be counted, however good it looks. Sorted biggest first; every row stays reachable, the filters only choose which to show.',
     arithmetic: [
+      /* The reason grade A is empty, stated rather than left as a curiosity a reader has to notice.
+       * It is not that nothing is good enough; it is that nothing has been fully checked, and the
+       * gate least checked is the one that would poison an evaluation. */
+      para(b('Why no dataset holds the top grade.'), ' Grade A means every one of the five gates was scored and nearly all passed. Nothing reaches it, and the reason is coverage rather than quality. ', b(`${data.datasets.filter((d) => (d.gates_scored || {}).value <= 2).length} of the ${data.datasets.length} datasets have two gates scored or fewer`), ', and one of those two is always the evidence gate, which passes for every single dataset because every one of them has been used by somebody — so for most of the catalogue the only discriminating signal is where the text came from. Gate by gate, out of ', String(cov.of), ': ', Object.entries(cov.scored).map(([g, k]) => `${g} ${k}`).join(', '), '. The contamination gate, the one that decides whether a dataset would poison the evaluation, is the least answered of the five — and it is unscored on all four datasets the plan commits to. Those four clear licence, provenance and size. They are not datasets somebody finished checking.'),
       para('Coverage against the ', recommended.id, ' budget: ', b(fmt(src.committed_tokens, 'count')), ' committable against ', b(fmt(src.target_tokens, 'count')), ' needed — ', b(`${(src.covered_share * 100).toFixed(0)}%`), '.'),
       para(src.counts.size_unknown, ' datasets are mapped to a tier and have no stated size, so they cannot enter a budget even when everything else about them is fine. A further ', src.counts.blocked_on_licence_only, ' are blocked on a licence question alone — no check failed, nobody found a problem, and one answered email would move each into the committable column.'),
       para('The last column names the ', b('cheapest'), ' move, not the only one, which is why most rows carry a "+n more". Read it as: COMMIT — all three hold. ASK THE OWNER — nothing is wrong with the data; nobody established whether it may be used commercially, and unknown is not permission. MEASURE IT — the size was never stated, and a budget you cannot add up is not a budget. CHECK THE CLAIMS — the licence and the size are fine, but the dataset sits at grade C: nobody has answered the questions the grade is made of. EXCLUDED — a check failed on provenance or contamination, which is a disqualification rather than a deduction.'),

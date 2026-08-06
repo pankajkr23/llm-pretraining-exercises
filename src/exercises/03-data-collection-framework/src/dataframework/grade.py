@@ -37,6 +37,20 @@ _VERDICT_POINTS: dict[str, int] = {"PASS": 2, "CONDITIONAL": 1, "UNKNOWN": 0, "F
 GRADE_A_MIN = 8
 GRADE_B_MIN = 5
 
+# A grade has to say how much was asked, not only how well it answered.
+#
+# The score alone cannot: UNKNOWN and FAIL both contribute 0, deliberately, so that ignorance costs
+# what a poor result costs. But that makes "scored 5 with every gate measured" and "scored 5 with
+# three gates never looked at" the same grade, and they are not the same claim. In this catalogue
+# that is not a hypothetical — 124 of 145 records have exactly two gates scored, and one of the two
+# is `evidence`, which is PASS for all 145 because every catalogued dataset has been used by
+# somebody. So for most of the corpus the only discriminating signal is provenance.
+#
+# Coverage is therefore a condition of the grade rather than a note beside it. A means the questions
+# were all asked; B means most of them were.
+GRADE_A_MIN_SCORED = len(SCORED_GATES)
+GRADE_B_MIN_SCORED = 3
+
 
 def score_gates(gates: dict[str, Any]) -> int:
     """Sum the gate verdicts into a 0–10 score.
@@ -52,6 +66,25 @@ def score_gates(gates: dict[str, Any]) -> int:
     """
     return sum(
         _VERDICT_POINTS.get((gates.get(name) or {}).get("verdict", ""), 0) for name in SCORED_GATES
+    )
+
+
+def gates_scored(gates: dict[str, Any]) -> int:
+    """How many of the five gates somebody actually answered.
+
+    UNKNOWN and absent both count as unanswered. This is the second half of a grade: the score says
+    how well it did, this says how much of it was looked at.
+
+    Args:
+        gates: Gate name to serialised `Gate`.
+
+    Returns:
+        A count from 0 to 5.
+    """
+    return sum(
+        1
+        for name in SCORED_GATES
+        if (gates.get(name) or {}).get("verdict") not in (None, "", "UNKNOWN")
     )
 
 
@@ -79,15 +112,17 @@ def grade_dataset(record: dict[str, Any]) -> tuple[Grade, str]:
             return "X", f"Blocked: {gotcha.get('type')} caveat — {gotcha.get('text', '')[:120]}"
 
     score = score_gates(gates)
-    passed = [n for n, g in gates.items() if (g or {}).get("verdict") == "PASS"]
-    unknown = [n for n, g in gates.items() if (g or {}).get("verdict") == "UNKNOWN"]
-    detail = f"score {score}/10; passed {', '.join(passed) or 'nothing'}"
+    scored = gates_scored(gates)
+    passed = [n for n in SCORED_GATES if (gates.get(n) or {}).get("verdict") == "PASS"]
+    unknown = [n for n in SCORED_GATES if (gates.get(n) or {}).get("verdict") in (None, "UNKNOWN")]
+    detail = f"score {score}/10 across {scored} of {len(SCORED_GATES)} gates scored; "
+    detail += f"passed {', '.join(passed) or 'nothing'}"
     if unknown:
         detail += f"; unmeasured: {', '.join(unknown)}"
 
-    if score >= GRADE_A_MIN:
+    if score >= GRADE_A_MIN and scored >= GRADE_A_MIN_SCORED:
         return "A", detail
-    if score >= GRADE_B_MIN:
+    if score >= GRADE_B_MIN and scored >= GRADE_B_MIN_SCORED:
         return "B", detail
     return "C", detail
 

@@ -22,7 +22,7 @@ from .catalog import EXPECTED_COUNTS, load_json, validate
 from .config import Config
 from .coverage import build_matrix
 from .fertility import D_MODEL_DEFAULT, PARITY_TARGET, unmeasured
-from .grade import grade_dataset
+from .grade import SCORED_GATES, gates_scored, grade_dataset
 from .milestones import TIER_SHAPE, build_all
 from .mix import (
     ALWAYS_ON_SHARE,
@@ -168,6 +168,15 @@ def _dataset_index_entry(record: dict[str, Any]) -> dict[str, Any]:
         # `false`s cost 5KB of the index budget to say nothing.
         **({"is_gap": True} if record.get("is_gap") else {}),
         "grade": grade,
+        # How many of the five gates anybody actually answered. Shipped beside the grade because
+        # a grade earned over two scored gates is a different claim from the same grade earned
+        # over five, and the letter alone cannot tell them apart.
+        "gates_scored": _value(
+            gates_scored(record.get("gates") or {}),
+            "gates",
+            "measured",
+            "counted from this record's own gate verdicts",
+        ),
         "stage": record.get("stage"),
         "languages": record.get("languages"),
         # Fully typed even in the index: ground rule 4 leaves the UI no way to render a bare
@@ -367,6 +376,23 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
         "datasets": [_dataset_index_entry(record) for record in datasets],
         "benchmarks": benchmarks,
         "grades": {**grades, "provenance": "measured", "source": "computed from the five gates"},
+        # How often each gate was actually answered. The grade tally says how well the catalogue
+        # did; this says how much of it anybody looked at, which is the other half of the same
+        # question and the reason no dataset holds the top grade.
+        "gate_coverage": {
+            "provenance": "measured",
+            "source": "counted from the catalogue's gate verdicts",
+            "of": len(datasets),
+            "scored": {
+                name: sum(
+                    1
+                    for record in datasets
+                    if ((record.get("gates") or {}).get(name) or {}).get("verdict")
+                    not in (None, "", "UNKNOWN")
+                )
+                for name in SCORED_GATES
+            },
+        },
         "coverage": {
             **build_matrix(benchmarks),
             "provenance": "measured",

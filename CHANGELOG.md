@@ -42,6 +42,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **A grade now says how much was asked, not only how it answered.** `UNKNOWN` and `FAIL` both
+  score zero — deliberately, so ignorance costs what a poor result costs — but that made "scored 5
+  with every gate measured" and "scored 5 with three gates never looked at" the same letter. Grade A
+  requires all five gates scored, B requires at least three, and every dataset ships a `gates_scored`
+  count beside its grade. **The distribution is unchanged** (B 14, C 116, X 15), which is the point:
+  the rule states what the letters already meant instead of reshuffling them. And the page now says
+  why no dataset holds the top grade, which was previously left for a reader to notice. Gate by gate,
+  out of 145: provenance 144 scored, composition 6, **contamination 1**, yield 15, evidence 145.
+  Evidence passes for every dataset because every catalogued dataset has been used by somebody, so
+  it is two free points that discriminate nothing, and 125 of 145 records have two gates scored or
+  fewer — for most of the catalogue the only real signal is where the text came from. A is empty not
+  because nothing is good enough but because **nothing has been fully checked**, and the sharpest
+  case is now stated plainly: the contamination gate is scored on one dataset in the entire
+  catalogue and on none of the four the plan commits to. Those four clear licence, provenance and
+  size; they are not datasets somebody finished checking. Recorded as correction X20.
 - **Prose that quotes a count now reads it.** The opening paragraph called the corpus **17
   trillion** tokens — `.toFixed(0)` on 16.8 — while every other mention said 16.8T. Chapter 4 said
   the mixture had **eight** tiers and **ten** tiers on one screen, beside a figure drawing ten bars a

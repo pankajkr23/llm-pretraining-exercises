@@ -21,7 +21,14 @@ import pytest
 from dataframework.catalog import EXPECTED_COUNTS, validate
 from dataframework.config import Config
 from dataframework.gotchas import parse as parse_notes
-from dataframework.grade import grade_dataset, is_commercially_usable
+from dataframework.grade import (
+    GRADE_A_MIN,
+    SCORED_GATES,
+    gates_scored,
+    grade_dataset,
+    is_commercially_usable,
+    score_gates,
+)
 from dataframework.shingles import (
     DIGEST_BYTES,
     SHINGLE_N,
@@ -224,6 +231,61 @@ def test_an_unestablished_licence_is_not_permission():
     assert is_commercially_usable({"id": "A", "gates": gates, "licence_commercial": True})
     assert not is_commercially_usable({"id": "B", "gates": gates, "licence_commercial": None})
     assert not is_commercially_usable({"id": "C", "gates": gates, "licence_commercial": False})
+
+
+def test_a_grade_says_how_much_was_asked_not_only_how_it_answered():
+    """A top grade must mean the questions were asked, not that the unasked ones scored zero.
+
+    UNKNOWN and FAIL both contribute 0, deliberately — ignorance costs what a poor result costs.
+    But that made "scored 5 with every gate measured" and "scored 5 with three gates never looked
+    at" the same letter, and they are not the same claim. In this catalogue 124 of 145 records have
+    exactly two gates scored, and one of the two is `evidence`, which is PASS for all 145. So for
+    most of the corpus the only discriminating signal is provenance. Correction X20.
+    """
+    full = {
+        name: {"verdict": "PASS", "reasoning": "r", "confidence": "high"} for name in SCORED_GATES
+    }
+    assert grade_dataset({"id": "FULL", "gates": full})[0] == "A"
+
+    # The same score, reached with two gates never looked at, is not the same claim.
+    thin = dict.fromkeys(SCORED_GATES)
+    thin["provenance"] = {"verdict": "PASS", "reasoning": "r", "confidence": "high"}
+    thin["composition"] = {"verdict": "PASS", "reasoning": "r", "confidence": "high"}
+    thin["contamination"] = {"verdict": "PASS", "reasoning": "r", "confidence": "high"}
+    thin["yield"] = {"verdict": "PASS", "reasoning": "r", "confidence": "high"}
+    thin["evidence"] = {"verdict": "UNKNOWN", "reasoning": "r", "confidence": "low"}
+    grade, why = grade_dataset({"id": "THIN", "gates": thin})
+    assert score_gates(thin) == 8, "this fixture no longer scores into A's range"
+    assert grade == "B", f"a gate nobody scored still reached grade A: {why}"
+    assert "4 of 5 gates scored" in why
+
+
+def test_the_coverage_rule_can_actually_fail():
+    """Breaking X20 must fail: drop the coverage condition and the thin record grades A."""
+    thin = dict.fromkeys(SCORED_GATES)
+    for name in ("provenance", "composition", "contamination", "yield"):
+        thin[name] = {"verdict": "PASS", "reasoning": "r", "confidence": "high"}
+    thin["evidence"] = {"verdict": "UNKNOWN", "reasoning": "r", "confidence": "low"}
+
+    # Score alone — the old rule — would have awarded A.
+    assert score_gates(thin) >= GRADE_A_MIN
+    assert gates_scored(thin) < len(SCORED_GATES), "the mutation no longer leaves a gate unscored"
+
+
+def test_every_committed_dataset_reports_how_far_it_was_checked():
+    """The bundle must carry coverage beside the grade, or the letter overstates what is known."""
+    bundle = _bundle()
+    by_id = {d["id"]: d for d in bundle["datasets"]}
+    committed = [i for tier in bundle["sourcing"]["tiers"] for i in tier["committed"]]
+    assert committed, "nothing is committed, so this guard is watching nothing"
+
+    for ident in committed:
+        entry = by_id[ident]
+        assert "gates_scored" in entry, f"{ident} ships a grade with no coverage beside it"
+        assert entry["gates_scored"]["value"] < len(SCORED_GATES), (
+            f"{ident} now has every gate scored — the page's caveat about unscored "
+            "contamination needs revisiting"
+        )
 
 
 def test_the_blocklist_is_not_empty():
