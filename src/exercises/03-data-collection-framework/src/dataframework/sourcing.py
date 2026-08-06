@@ -234,13 +234,13 @@ def build_plan(datasets: list[dict[str, Any]], mix: dict[str, Any]) -> dict[str,
 
     Args:
         datasets: Catalogue index entries.
-        mix: One milestone preset's `mix`, carrying per-tier `unique_tokens`.
+        mix: One milestone preset's `mix`, carrying per-tier `unique_tokens_required`.
 
     Returns:
         Per-tier commitments and shortfalls, plus the blocked datasets ranked by what resolving
         them would unlock.
     """
-    wanted = {t["name"]: t.get("unique_tokens") or 0 for t in mix.get("tiers", [])}
+    wanted = {t["name"]: t.get("unique_tokens_required") or 0 for t in mix.get("tiers", [])}
 
     tiers: list[dict[str, Any]] = []
     for tier, target in wanted.items():

@@ -212,7 +212,26 @@ function chapterBudget(ctx) {
    * parameters?" while the note inside it printed the ladder ending at 200B. */
   const LADDER_TOP = ((records.growth || {}).stages || []).slice(-1)[0] || {};
   const naturalOf = (p) => p.mix.tiers.find((t) => t.name === 'indic-natural');
-  const POOL = naturalOf(recommended).unique_tokens;
+
+  /* The pool is what the catalogue holds, not what the mixture wants.
+   *
+   * This chapter used to set POOL from the tier's own `unique_tokens` field and describe it as
+   * "every verified corpus anyone has assembled, added together". That field is computed as
+   * share x budget / epochs — it is the tier's requirement, back-computed from a share we chose,
+   * and at 16.8T it comes to 336B. The catalogue can commit 84.9B. The chapter was stating a
+   * demand figure as an inventory, and its whole argument rested on the difference. X22.
+   *
+   * Summed here from the same catalogue the datasets chapter reads, so the two cannot diverge. */
+  const NATURAL_TIERS = new Set(['indic-natural', 'indic-knowledge-systems', 'indic-civilizational']);
+  const tierOfDataset = (x) => Object.entries(data.sourcing.tier_categories).find(([, c]) => c.includes(x.category))?.[0] || null;
+  const POOL = data.datasets
+    .map((x) => ({ d: x, tier: tierOfDataset(x) }))
+    .filter((r) => r.tier === 'indic-natural' && !blockersOf(r.d).length)
+    .reduce((a, r) => a + ((r.d.size_verified || r.d.size_tokens || {}).value || 0), 0);
+
+  /* What the mixture allocates this tier, in seen tokens — the thing the pool has to fill. */
+  const WANTED = naturalOf(recommended).seen_tokens;
+  const REQUIRED = naturalOf(recommended).unique_tokens_required;
   const nearFree = data.mix_rules.epochs_near_free.value;
   const halfLife = data.mix_rules.epochs_half_life.value;
   const worthless = data.mix_rules.epochs_worthless.value;
@@ -241,7 +260,7 @@ function chapterBudget(ctx) {
       marg: `${e} ${e === 1 ? 'pass' : 'passes'} over the same text`,
       lead:
         e === 1
-          ? 'There is only so much Indian-language text in the world. Read the whole natural pool once and this is everything it gives you — nowhere near the budget, and no amount of collecting closes that gap in the time available. So the question becomes '
+          ? `There is only so much Indian-language text anybody has cleared for use. Read the committable pool once and this is everything it gives you — against the ${fmt(WANTED, 'count')} this tier is allocated, and no amount of collecting closes that gap in the time available. So the question becomes `
           : e <= nearFree
             ? `Read it ${e} times and you pay for ${e} times the compute. You do not get ${e} times the text — a fourth pass over the same words teaches less than a fresh one — but measurably close to it. Up to here the pool behaves as though it were `
             : e <= halfLife
@@ -318,8 +337,8 @@ function chapterBudget(ctx) {
     refresh: (api) => {
       states.forEach((st, i) => {
         if (st.rungs) {
-          api.shard(i, presets.map((p) => `${p.id}: ${fmt(naturalOf(p).unique_tokens, 'count')} unique × ${naturalOf(p).epochs} = ${fmt(naturalOf(p).worth_tokens, 'count')} worth`).join('\n'));
-          api.inline(i, `→ every budget reads its pool ${naturalOf(presets[0]).epochs} times`, false);
+          api.shard(i, presets.map((p) => `${p.id}: needs ${fmt(naturalOf(p).unique_tokens_required, 'count')} unique · holds ${fmt(POOL, 'count')} · ${(naturalOf(p).unique_tokens_required / POOL).toFixed(1)}× short`).join('\n'));
+          api.inline(i, `→ the shortfall grows with every rung; the pool does not`, true);
         } else {
           const worth = worthOf(st.epochs);
           api.shard(i, `${fmt(POOL, 'count')} × ${st.epochs} ${st.epochs === 1 ? 'pass' : 'passes'} = ${fmt(POOL * st.epochs, 'count')} seen\n${' '.repeat(String(fmt(POOL, 'count')).length)}   ${' '.repeat(String(st.epochs).length)}       = ${fmt(worth, 'count')} worth`);
@@ -333,11 +352,14 @@ function chapterBudget(ctx) {
       if (st.rungs) {
         /* Priced the same way as every other state in this chapter, rather than reverting to the
          * product on the one state that names the actual plan. */
-        api.big({ value: naturalOf(recommended).worth_tokens, unit: 'tokens', provenance: 'estimated', source: 'Muennighoff et al. 2025, JMLR v26 Eq. 18' });
-        api.bigHit(false);
-        api.sub(`worth of natural Indian-language text at the recommended budget — costing ${fmt(naturalOf(recommended).seen_tokens, 'count')}`);
+        /* The shortfall, not the requirement. This slot used to print the tier's worth computed
+         * from `unique_tokens_required` — the pool the mixture wants — which made a demand figure
+         * look like an achievement. What a reader needs is how far the real pool falls short. */
+        api.big({ value: REQUIRED / POOL, unit: 'ratio', provenance: 'estimated', source: 'the tier requirement against the committable catalogue' });
+        api.bigHit(true);
+        api.sub(`times more unique Indian-language text than the catalogue holds, at the recommended budget`);
         api.verdict((recommended.verdict || 'recommended').toUpperCase(), false);
-        api.note(`One mark per budget here rather than per pass — the seed and the ${['no', 'one', 'two', 'three', 'four', 'five'][presets.length - 1] || presets.length - 1} rungs above it. Every budget reads its own pool four times. What changes between them is how much text was collected, not how hard it was read — and past this model size, collection is the wall. The ladder is judged as: ${presets.map((p) => `${p.id}, ${(p.verdict || '').toLowerCase()}`).join('; ')}.`);
+        api.note(`One mark per budget here rather than per pass — the seed and the ${['no', 'one', 'two', 'three', 'four', 'five'][presets.length - 1] || presets.length - 1} rungs above it. Every rung assumes it holds four times what it reads, and every rung assumes more than the catalogue can commit. What changes between them is how much text was collected, not how hard it was read — and past this model size, collection is the wall. The ladder is judged as: ${presets.map((p) => `${p.id}, ${(p.verdict || '').toLowerCase()}`).join('; ')}.`);
         api.strip(presets.map((p) => (p.recommended ? 'reg' : '')));
         return;
       }
@@ -359,11 +381,11 @@ function chapterBudget(ctx) {
       );
       api.note(
         st.epochs === 1
-          ? 'Read once, this is the entire natural Indian-language pool — every verified corpus anyone has assembled, added together. It is about a fiftieth of what the budget asks for, and collecting harder does not close it on any schedule.'
+          ? `Read once, this is every natural Indian-language corpus the catalogue can commit today — Sangraha's verified portion and IndicCorp v2, added together. Not every corpus that exists: it is what clears provenance, licence and a stated size. The mixture allocates this tier ${fmt(WANTED, 'count')}, so read once the pool covers ${(POOL / WANTED * 100).toFixed(0)}% of its own share.`
           : st.epochs <= nearFree
-            ? `Four passes cost 4× and are worth ${(worth / POOL).toFixed(2)}×. That is the closest repetition ever comes to free, and it is the one part of this curve the published work calls negligible. Collecting this much fresh Indian-language text instead is not something anyone can do to a schedule.`
+            ? `Four passes cost 4× and are worth ${(worth / POOL).toFixed(2)}×. That is the closest repetition ever comes to free, and the one part of this curve the published work calls negligible. It is also ${(worth / WANTED * 100).toFixed(0)}% of what this tier is allocated. The mixture's own arithmetic assumes a pool of ${fmt(REQUIRED, 'count')} — four times what the catalogue holds — because it back-computes the pool it would need from the share it wants. "Nearly free" was true of that pool. It is not the pool we have.`
             : st.epochs <= halfLife
-              ? `${st.epochs} passes cost ${st.epochs}× and are worth ${(worth / POOL).toFixed(1)}×. Half the compute past four passes is buying nothing — and this is where a plan that multiplies instead of measuring overstates itself by half.`
+              ? `${st.epochs} passes cost ${st.epochs}× and are worth ${(worth / POOL).toFixed(1)}×, and this is where the real pool actually lands. Filling this tier's ${fmt(WANTED, 'count')} from ${fmt(POOL, 'count')} takes ${(WANTED / POOL).toFixed(0)} passes — the half-life the published fit names, where a repeated token has lost 1/e of its value. The share is reachable in tokens processed. Those tokens are worth ${(worth / (POOL * st.epochs) * 100).toFixed(0)}% of what they cost.`
               : `${st.epochs} passes cost ${st.epochs}× and are worth ${(worth / POOL).toFixed(1)}×. The curve is flat here: the paper's own figure labels a pass at this depth worthless, and its downstream table shows accuracy falling, not plateauing. No schedule can take this pool past ${fmt(POOL * CEILING, 'count')}.`,
       );
       /* One mark per pass, and a pass goes dim once it is worth under half a fresh token — which
@@ -977,7 +999,7 @@ function chapterDatasets(ctx) {
   const cov = data.gate_coverage || { of: 0, scored: {} };
   const src = data.sourcing;
   const tierOf = (d) => Object.entries(src.tier_categories).find(([, cats]) => cats.includes(d.category))?.[0] || null;
-  const targets = Object.fromEntries(recommended.mix.tiers.map((t) => [t.name, t.unique_tokens]));
+  const targets = Object.fromEntries(recommended.mix.tiers.map((t) => [t.name, t.unique_tokens_required]));
   const planOf = (tier) => (src.tiers || []).find((x) => x.tier === tier) || {};
 
   const rows = data.datasets
@@ -2124,7 +2146,7 @@ function chapterFirst(ctx) {
   const asr = ((records.growth || {}).indic_supply || {}).asr_route || {};
 
   const tierOf = (d) => Object.entries(src.tier_categories).find(([, cats]) => cats.includes(d.category))?.[0] || null;
-  const targets = Object.fromEntries(recommended.mix.tiers.map((t) => [t.name, t.unique_tokens]));
+  const targets = Object.fromEntries(recommended.mix.tiers.map((t) => [t.name, t.unique_tokens_required]));
 
   /* Three kinds of action, and they differ by who has to agree — which is the only thing that
    * decides whether you can start on Monday. The chapter used to lead with the letters, so the
@@ -2387,7 +2409,7 @@ function chapterAppendix(ctx) {
         : (d.size_tokens || {}).value) || 0;
 
     const pool = data.datasets.map((d) => ({ d, tier: tierOf(d), blockers: blockersOf(d) })).filter((r) => r.tier);
-    const targets = Object.fromEntries(recommended.mix.tiers.map((t) => [t.name, t.unique_tokens]));
+    const targets = Object.fromEntries(recommended.mix.tiers.map((t) => [t.name, t.unique_tokens_required]));
     const needed = Object.values(targets).reduce((a, v) => a + v, 0);
 
     const FIXES = [

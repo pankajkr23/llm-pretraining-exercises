@@ -42,6 +42,23 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **Chapter 2 was stating the mixture's requirement as if it were the corpus.** It took its pool
+  from a tier field called `unique_tokens` and said of it: *"Read once, this is the entire natural
+  Indian-language pool — every verified corpus anyone has assembled, added together."* That field is
+  not a measurement. `milestones.py` computes it as `share × budget / epochs`, so the 8% Indic tier
+  over 4 passes produced **336B — the pool the mixture would need for the share it wants**. What the
+  catalogue can actually commit is **84.9B**: Sangraha's verified portion plus IndicCorp v2. A demand
+  figure wearing the clothes of a supply figure, and the chapter's whole argument rested on it. The
+  field is renamed `unique_tokens_required` throughout, the pool is now summed from the same
+  catalogue the datasets chapter reads, and the corrected chapter is the stronger one: four passes
+  on the real pool are worth 316B — **24% of what the tier is allocated** — and filling that
+  allocation takes about **16 passes, the half-life the published fit names**, at which the tokens
+  are worth 66% of what they cost. "Nearly free" was true of a pool four times larger than the one
+  anybody holds. Two things had hidden it: the growth chapter had it right all along ("336B… asks
+  for, 4.0× SHORT"), so the page contradicted itself across two chapters with one number; and risk
+  R19 records a 250–500B estimate that 336B sits inside, making it look corroborated — while R19
+  itself calls that estimate *"the single most important unverified number in the entire document"*.
+  Recorded as correction X22.
 - **Each guardrail says where its number came from, and how strong that is.** `mix.py` held eight
   of them in one voice: the repetition constants cited a fitted curve to three significant figures,
   and the composition constants cited nothing. `MAX_SYNTHETIC_SHARE_OF_INDIC = 0.50` carried the

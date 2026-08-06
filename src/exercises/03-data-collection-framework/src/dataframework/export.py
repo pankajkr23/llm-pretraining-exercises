@@ -88,7 +88,7 @@ def _strip_tier_prose(presets: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 tier.pop(field, None)
             # A token count carried to nine decimal places is noise: these are estimates, and the
             # trailing float precision is pure bytes.
-            for field in ("unique_tokens", "seen_tokens"):
+            for field in ("unique_tokens_required", "seen_tokens"):
                 if isinstance(tier.get(field), float):
                     tier[field] = round(tier[field])
             if isinstance(tier.get("share"), float):

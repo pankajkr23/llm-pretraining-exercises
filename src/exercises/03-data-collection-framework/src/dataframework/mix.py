@@ -180,7 +180,7 @@ def compose(tiers: list[dict[str, Any]]) -> dict[str, Any]:
     """Compose tiers into a mix and compute its shares.
 
     Args:
-        tiers: Each with `name`, `unique_tokens`, `epochs`, and optionally `is_indic`,
+        tiers: Each with `name`, `unique_tokens_required`, `epochs`, and optionally `is_indic`,
             `is_synthetic` and `always_on`.
 
     Returns:
@@ -188,7 +188,7 @@ def compose(tiers: list[dict[str, Any]]) -> dict[str, Any]:
     """
     composed: list[dict[str, Any]] = []
     for tier in tiers:
-        unique = tier.get("unique_tokens") or 0
+        unique = tier.get("unique_tokens_required") or 0
         # `or 1` rather than a default, so an explicit None reads as "unstated" instead of raising
         # a TypeError three frames later in the arithmetic.
         epochs = tier.get("epochs")
@@ -202,7 +202,7 @@ def compose(tiers: list[dict[str, Any]]) -> dict[str, Any]:
         )
 
     total_seen = sum(row["seen_tokens"] for row in composed) or 1.0
-    total_unique = sum(row.get("unique_tokens", 0) for row in composed)
+    total_unique = sum(row.get("unique_tokens_required", 0) for row in composed)
     total_worth = sum(row["worth_tokens"] for row in composed)
 
     for row in composed:
@@ -253,7 +253,7 @@ def check(mix: dict[str, Any]) -> list[dict[str, str]]:
         # Priced both ways, so a schedule can be judged on what it buys rather than on how many
         # times it reads. A tier can sit under every epoch threshold and still be paying for passes
         # that return almost nothing.
-        unique = row.get("unique_tokens", 0)
+        unique = row.get("unique_tokens_required", 0)
         efficiency = (row["worth_tokens"] / row["seen_tokens"]) if row["seen_tokens"] else 1.0
 
         if epochs > EPOCHS_WORTHLESS:
