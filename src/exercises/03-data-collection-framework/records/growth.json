@@ -34,7 +34,15 @@
       "corpus": 3000000000000,
       "corpus_basis": "About a trillion tokens per billion parameters, which is where Gemma 3's own family sits at this size — its 4B took 4T.",
       "asks_of_the_corpus": "Everything, and it is the only stage this catalogue can actually supply. 3T asks for 60B unique tokens of natural Indian-language text and 84.9B can be committed today. Every token read here is inherited by all three stages above, so this is where provenance, licensing and decontamination have to be right rather than fixed later — and the one stage where getting it right is affordable.",
-      "status": "proposed"
+      "status": "proposed",
+      "config": {
+        "sequence_length": 4096,
+        "web_data": "none",
+        "script_quarantine": "absolute",
+        "admits": "committable, non-web only",
+        "noise": "zero"
+      },
+      "lr_schedule": "warmup → stable → decay"
     },
     {
       "n": 2,
@@ -46,7 +54,15 @@
       "corpus": 8000000000000,
       "corpus_basis": "Same family slope. Gemma 3's 12B took 12T and Llama 3.1's 8B took 15T, so 8T is conservative for this size.",
       "asks_of_the_corpus": "The first stage the Indic pool cannot fill: 160B unique needed against 84.9B committable, short by nearly half. Everything else at this size is abundant, which is exactly what makes the shortfall specific rather than general.",
-      "status": "proposed"
+      "status": "proposed",
+      "config": {
+        "sequence_length": 8192,
+        "web_data": "introduced",
+        "script_quarantine": "enforced",
+        "admits": "web enters here",
+        "noise": "filtered"
+      },
+      "lr_schedule": "warmup → stable → decay"
     },
     {
       "n": 3,
@@ -58,7 +74,15 @@
       "corpus": 16800000000000,
       "corpus_basis": "Gemma-4 class, and the only corpus figure here that is derived: Gemma 3's officially stated 14T for the 27B, plus 20% for one generation. Gemma 4 discloses no token count of its own.",
       "asks_of_the_corpus": "336B unique natural Indian tokens, four times what the catalogue can commit. This is the model the whole page is about, and it is the stage where the Indic gap stops being a rounding error and becomes the plan's binding constraint.",
-      "status": "the assignment"
+      "status": "the assignment",
+      "config": {
+        "sequence_length": 8192,
+        "web_data": "full corpus",
+        "script_quarantine": "enforced",
+        "admits": "everything committable",
+        "noise": "filtered"
+      },
+      "lr_schedule": "warmup → stable → decay"
     },
     {
       "n": 4,
@@ -70,7 +94,15 @@
       "corpus": 30000000000000,
       "corpus_basis": "Frontier scale: Llama 4 trained on over 30T and Qwen3 on 36T across 119 languages. 30T is parity, not ambition.",
       "asks_of_the_corpus": "600B unique natural Indian tokens — seven times what exists in the catalogue — and the step where the architecture changes. Going sparse buys capacity at roughly a tenth of the compute per token, which is what makes 200B affordable at all; it does nothing whatever for the Indian-language supply.",
-      "status": "proposed"
+      "status": "proposed",
+      "config": {
+        "sequence_length": 8192,
+        "web_data": "full corpus, plus the hardest subsets",
+        "script_quarantine": "enforced",
+        "admits": "everything committable",
+        "noise": "hardest included"
+      },
+      "lr_schedule": "warmup → stable → decay (annealing)"
     }
   ],
   "acquisition_strategy": {
@@ -143,5 +175,12 @@
       "multiple": 1.0
     },
     "finding": "Parameters rise sixty-seven fold and the corpus tenfold, while the natural Indian-language text anybody can commit does not move at all. The 3B seed is the only stage its supply covers; by the 40B it is four times short and by 200B seven. Growth does not dilute the Indic share on the chart — the mixture reserves 8% at every stage — it makes that 8% progressively impossible to fill."
+  },
+  "config_note": "What a data plan actually decides, stage by stage. Parameter counts belong to whoever designs the architecture; sequence length, what data is admitted and when the quarantine lifts are the corpus team's decisions, and they are the ones that change what has to be collected.\n\nEvery stage runs its own complete learning-rate cycle rather than one schedule across the lineage, because each stage is a larger model than the last and reaches a different loss.\n\nSequence length holds at 8,192 from stage two on. Extending context is an annealing phase after pre-training rather than a stage of it, and no figure for it is proposed here because nothing in this project has measured what it would cost.",
+  "quarantine": {
+    "rule": "Script quarantine is absolute at the seed and enforced everywhere above it.",
+    "what": "No code-mixed or romanised Indic text in pre-training. Hinglish and Tanglish enter at instruction tuning, not before.",
+    "why": "A recurrence model accumulates state across a sequence, so a stray Latin token inside a Brahmic one corrupts the state for everything after it. On this architecture mixed script is a structural fault rather than a quality preference — which is a claim from the reference design and is recorded as one, not as a measurement.",
+    "consequence": "It is also the rule that makes the seed stage so hard to fill: the cleanest Indic text is the scarcest, and quarantine removes the code-mixed material that would otherwise pad it."
   }
 }

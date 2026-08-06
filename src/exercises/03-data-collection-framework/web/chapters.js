@@ -330,7 +330,7 @@ function chapterBudget(ctx) {
  * is the one the whole project exists to serve.
  */
 function chapterGrowth(ctx) {
-  const { records, presets, recommended } = ctx;
+  const { data, records, presets, recommended } = ctx;
   const g = records.growth;
   const ref = records.scaling_reference || {};
   const stages = g.stages || [];
@@ -370,6 +370,21 @@ function chapterGrowth(ctx) {
   const maxCorpus = Math.max(...stages.map((x) => x.corpus));
   const maxParams = Math.max(...stages.map((x) => x.params_total));
 
+  /* Which catalogued datasets each stage's own admission rule allows. The seed forbids web text, so
+   * its list is computed rather than asserted — and it comes to three datasets, which is the point. */
+  const WEB_TIERS = new Set(['english-web-hq', 'general-web']);
+  const tierOf = (x) => Object.entries(data.sourcing.tier_categories).find(([, c]) => c.includes(x.category))?.[0] || null;
+  const NATURAL_T = new Set(['indic-natural', 'indic-knowledge-systems', 'indic-civilizational']);
+  const committable = data.datasets
+    .map((x) => ({ d: x, tier: tierOf(x) }))
+    .filter((r) => r.tier && !blockersOf(r.d).length);
+  const countable = (r) => (NATURAL_T.has(r.tier) && (r.d.size_verified || {}).value !== undefined
+    ? r.d.size_verified.value
+    : (r.d.size_tokens || {}).value) || 0;
+  const admits = (st) => (st.config.web_data === 'none'
+    ? committable.filter((r) => !WEB_TIERS.has(r.tier))
+    : committable);
+
   return buildExplainer({
     n: 3,
     anchor: 'growth',
@@ -382,7 +397,7 @@ function chapterGrowth(ctx) {
       text('. The 3B seed is the only stage its supply covers.'),
     ],
     figNum: 'Fig. 2 — four stages, three quantities',
-    caption: `Fig. 2 — Each stage's stored parameters, active parameters and corpus, all as a share of the largest. The method is the four-stage state-preserving growth of ${g.method.source.split(',')[0]} — this project's own prior work. Stage 1 is the assignment; the three above it are proposals.`,
+    caption: `Fig. 2 — Each stage's sequence length, data policy and corpus. Parameter counts are drawn for scale but they are the architecture team's decision; what a data plan settles is when web text is admitted, when the script quarantine lifts, and how much has to be found.`.replace(/\s+/g, ' ') + `  The method is the four-stage state-preserving growth of ${g.method.source.split(',')[0]} — this project's own prior work. Stage 1 is the assignment; the three above it are proposals.`,
     pill: 'params ×67 · corpus ×10 · Indic ×1',
     rail: [
       text('The one quantity that never moves. Natural Indian-language text is a '),
@@ -394,6 +409,23 @@ function chapterGrowth(ctx) {
     states,
     arithmetic: [
       para(b('The method is not invented here.'), ' ', g.method.principle, ' It comes from ', g.method.source, ', ', g.method.relationship, ': one lineage grown in four stages from a small dense seed through 5B and 9B mixtures of experts to a 120B model with 460 routed experts under top-12 routing, with active parameters rising from 1.78B to 5.93B — about 5% of the 118.67B stored.'),
+      para(b('What a data plan decides, stage by stage.'), ' ', g.config_note.split('\n\n')[0]),
+      /* Parameter rows against stage columns: the shape a training config is actually read in. */
+      table(['', ...stages.map((x) => x.name)], [
+        ['architecture', ...stages.map((x) => (x.architecture === 'moe' ? 'sparse mixture of experts' : 'dense'))],
+        ['sequence length', ...stages.map((x) => x.config.sequence_length.toLocaleString('en-US'))],
+        ['token budget', ...stages.map((x) => fmt(x.corpus, 'count'))],
+        ['web data', ...stages.map((x) => x.config.web_data)],
+        ['script quarantine', ...stages.map((x) => x.config.script_quarantine)],
+        ['noise admitted', ...stages.map((x) => x.config.noise)],
+        ['LR schedule', ...stages.map((x) => x.lr_schedule)],
+        ['datasets the catalogue admits', ...stages.map((x) => {
+          const pool = admits(x);
+          return `${pool.length} · ${fmt(pool.reduce((a, r) => a + countable(r), 0), 'count')}`;
+        })],
+      ]),
+      para(b('Why each stage gets its own learning-rate cycle.'), ' ', g.config_note.split('\n\n')[1], ' ', g.config_note.split('\n\n')[2]),
+      para(b('The quarantine, and what it costs.'), ' ', g.quarantine.what, ' ', g.quarantine.why, ' ', g.quarantine.consequence),
       para(b('Three ways a model expands, and what each asks of the data.'), ' ', g.method.axes.map((a) => `${a.axis} — ${a.why_it_matters_for_data}`).join(' ')),
       para(b('Why it can be done at all.'), ' ', g.method.warning),
       table(['stage', 'stored', 'active', 'corpus', 'what it asks of the corpus'], stages.map((st) => [
@@ -445,7 +477,14 @@ function chapterGrowth(ctx) {
       /* The verdict slot carries the finding, not the architecture: whether this stage's Indic
        * requirement can be met at all. The architecture is already drawn in the bars. */
       api.verdict(need > committedNatural ? `${ratio.toFixed(1)}× SHORT` : 'SUPPLY MEETS IT', need > committedNatural);
-      api.note(`${fmt(st.params_total, 'count')} ${st.architecture === 'moe' ? `sparse, ${fmt(st.params_active, 'count')} active` : 'dense'} on ${fmt(st.corpus, 'count')}. ${st.asks_of_the_corpus}`);
+      const pool = admits(st);
+      const have = pool.reduce((a, r) => a + countable(r), 0);
+      api.note(
+        `Sequence length ${st.config.sequence_length.toLocaleString('en-US')}, web data ${st.config.web_data}, ` +
+        `script quarantine ${st.config.script_quarantine}. Under that rule the catalogue admits ` +
+        `${pool.length} dataset${pool.length === 1 ? '' : 's'} carrying ${fmt(have, 'count')} against a ` +
+        `${fmt(st.corpus, 'count')} budget. ${st.asks_of_the_corpus}`,
+      );
       api.strip(stages.map((x, k) => (k === i ? 'reg' : x.corpus * 0.08 / 4 > committedNatural ? 'hit' : '')));
     },
   });
@@ -2512,6 +2551,7 @@ export function buildPage(data, records) {
   fillLede(data);
   buildLegend(data);
   buildNav(main);
+  buildRail(main);
   buildFooter(data);
 
   window.addEventListener('beforeprint', () => {
@@ -2657,6 +2697,94 @@ const NAV_ANSWERS = {
   first: 'the queue: twelve actions, two gates, and the letters that come before both',
   appendix: 'every register the chapters are drawn from, kept whole',
 };
+
+/* A contents rail that stays with the reader, and marks where they are.
+ *
+ * The inline contents block near the top is a landing page — it carries a line about what each
+ * chapter answers, which is what you want on arrival and far too much to keep on screen. This is
+ * the running version: titles only, current chapter marked, collapsible for anyone who would
+ * rather have the width.
+ */
+function buildRail(main) {
+  const host = document.getElementById('rail');
+  if (!host) return;
+  const list = $('nav', 'rail-list');
+  list.setAttribute('aria-label', 'Chapters');
+
+  const links = [...main.querySelectorAll('section')].map((sec) => {
+    const heading = sec.querySelector('h2');
+    const label = [...(heading ? heading.childNodes : [])]
+      .filter((node) => node.nodeType === 3)
+      .map((node) => node.textContent)
+      .join('')
+      .trim();
+    const num = heading?.querySelector('.n')?.textContent || '';
+    const a = $('a', 'rail-link');
+    a.href = `#${sec.id}`;
+    a.append($('span', 'rail-n', num), $('span', '', label));
+    list.append(a);
+    return { sec, a };
+  });
+
+  const head = $('div', 'rail-head');
+  const title = $('span', 'rail-title', 'Contents');
+  const toggle = $('button', 'rail-toggle');
+  toggle.type = 'button';
+
+  /* Remembered, like the theme: a reader who closed the rail on the way in did not ask to be given
+   * it back at every anchor they follow. Storage may be blocked, in which case open is a fine
+   * default and the toggle still works for the page view. */
+  const RAIL_KEY = 'era5-rail-shut';
+  const setOpen = (open) => {
+    host.classList.toggle('shut', !open);
+    toggle.textContent = open ? '«' : '»';
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? 'Hide the contents rail' : 'Show the contents rail');
+  };
+  let shut = false;
+  try {
+    shut = localStorage.getItem(RAIL_KEY) === '1';
+  } catch { /* no storage; stay open */ }
+  setOpen(!shut);
+  toggle.addEventListener('click', () => {
+    const open = host.classList.contains('shut');
+    setOpen(open);
+    try {
+      localStorage.setItem(RAIL_KEY, open ? '0' : '1');
+    } catch { /* the choice still holds for this page view */ }
+  });
+  head.append(title, toggle);
+  host.append(head, list);
+
+  /* Mark the chapter the reader is actually in: the last one whose heading has gone past the top of
+   * the viewport.
+   *
+   * The first attempt scored every section by distance from the top and took the nearest, which
+   * reads as reasonable and was wrong on half the page — chapters here run several screens, so from
+   * the middle of one the *next* heading is often nearer than the one behind you, and the rail ran a
+   * chapter ahead of the reader. Nearest is the wrong question. "Which heading have I passed" is the
+   * right one, and it needs no tuning.
+   *
+   * The offset is the band just under the top edge where a heading counts as arrived rather than
+   * still incoming. */
+  const ARRIVED = 130;
+  const mark = () => {
+    let best = 0;
+    links.forEach(({ sec }, k) => {
+      if (sec.getBoundingClientRect().top - ARRIVED <= 0) best = k;
+    });
+    links.forEach(({ a }, k) => a.classList.toggle('on', k === best));
+  };
+  let queued = false;
+  const onMove = () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => { queued = false; mark(); });
+  };
+  window.addEventListener('scroll', onMove, { passive: true });
+  window.addEventListener('resize', onMove, { passive: true });
+  mark();
+}
 
 function buildNav(main) {
   const nav = document.getElementById('chapters');
