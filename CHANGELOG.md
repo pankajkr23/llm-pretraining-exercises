@@ -42,6 +42,23 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **The contamination gate no longer shatters Indic text, or deletes clean documents.** It
+  tokenised with `\w+`, and Python's `\w` matches letters and digits but **not Unicode combining
+  marks** — which is what every Indic vowel sign, virama, anusvara and nukta is. So every Indic word
+  was split at every vowel sign and the sign discarded: five Hindi words became eleven consonant
+  fragments. 91% of the indexed items are in Indic scripts, inflated by a mean factor of 2.58, so a
+  "thirteen-word fingerprint" was about five real words of consonant skeleton there. It produced
+  **false positives that would have deleted clean training text**: measured against 203,388 held-out
+  FLORES-200 sentences the old tokeniser collided with 5, all Indic, all ordinary news prose — one
+  of them the Malayalam for "the attack greatly affected relations between India and Pakistan",
+  three ordinary words that normalised to a full thirteen-token window. The corrected tokeniser
+  collides with none of them. The same corpus now indexes to 126,044 fingerprints rather than
+  411,442, across eight window widths rather than five, and **1,090 of 8,923 items are genuinely
+  shorter than the window where the old count said 56**. The refusal floor rose from 5 words to 6,
+  because the example the code's own comment gives as too generic to index is five words long. The
+  browser demo carried the identical defect and now mirrors the pipeline, including the floor — it
+  used to tell readers any question under thirteen words was unprotectable, contradicting both the
+  pipeline and the paragraph beneath it. Recorded as correction X16.
 - **The tier shares in chapter 11 no longer overrun the tier names.** The register's first column
   was 18px, sized for the single-digit job numbers it was originally built for, and the evaluation
   chapter reused the same row for percentages — so `15.0%` printed straight over `english-web-hq`.

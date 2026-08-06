@@ -1491,13 +1491,20 @@ function chapterCleaning(ctx) {
 function chapterGate(ctx) {
   const { data } = ctx;
   const N = 13;
+  /* Mirrors MIN_SHINGLE_N in shingles.py. Below this a window stops identifying anything — "what is
+   * the capital of" is five words and occurs in ordinary text — so the floor sits above it. */
+  const FLOOR = 6;
   const DEFAULT_Q =
     'In which year did the Indian Railways first run a scheduled passenger service ' +
     'between Bombay and Thane, and how long was that inaugural route in miles?';
   const LEAD = 'Ordinary web text about monsoon agriculture in the Gangetic plain. ';
   const TAIL = ' More ordinary web text about irrigation and canal systems.';
 
-  const words = (t) => t.toLowerCase().match(/[\p{L}\p{N}_]+/gu) || [];
+  /* \p{M} is not optional. Letters and digits alone exclude every combining mark, and every Indic
+   * vowel sign, virama and anusvara is one — so without it a reader typing Devanagari or Malayalam
+   * here watches their sentence shatter into consonant fragments and the demo teaches the opposite
+   * of what the gate does. This mirrors `normalise()` in shingles.py, which had the same bug. */
+  const words = (t) => t.toLowerCase().normalize('NFC').match(/[\p{L}\p{M}\p{N}_]+/gu) || [];
   const windows = (t) => {
     const w = words(t);
     if (!w.length) return [];
@@ -1542,10 +1549,14 @@ function chapterGate(ctx) {
   const guard = () => {
     const n = words(inputEl ? inputEl.value : '').length;
     if (!n) return { verdict: 'NOTHING TO PROTECT', note: 'With no question in the index there is nothing for a document to collide with.', inline: '→ no question registered' };
-    if (n < N) return {
+    /* The floor, and only the floor. This used to refuse anything under thirteen words, which
+     * contradicted both the pipeline and the paragraph three inches below it: the index records the
+     * width each item was hashed at, so a short question is indexed at its own width rather than
+     * abandoned. Only items under the floor are genuinely unprotectable. */
+    if (n < FLOOR) return {
       verdict: 'NOT INDEXABLE',
-      note: `A question of ${n} words is shorter than the thirteen-word window, so it cannot be found inside a longer document at all. Short questions are the hardest to protect — give it thirteen words or more.`,
-      inline: `→ ${n} words; needs ${N}`,
+      note: `A question of ${n} ${n === 1 ? 'word' : 'words'} is below the ${FLOOR}-word floor. A window that narrow matches ordinary prose everywhere, so indexing it would drop clean documents — the gate refuses it and reports the gap instead of pretending to cover it.`,
+      inline: `→ ${n} words; the floor is ${FLOOR}`,
     };
     return null;
   };

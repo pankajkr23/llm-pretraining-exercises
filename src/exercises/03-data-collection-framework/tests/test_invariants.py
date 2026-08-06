@@ -29,6 +29,7 @@ from dataframework.shingles import (
     build_index,
     find_collisions,
     is_contaminated,
+    normalise,
     shingle,
 )
 
@@ -329,6 +330,69 @@ def test_the_short_item_check_can_actually_fail():
     old_lookup = shingle(shard, SHINGLE_N) & set(index.grams)
     assert not old_lookup, (
         "a 13-gram-only lookup found the short item, so this mutation no longer proves anything"
+    )
+
+
+# Indic prose for the tokenisation tests. Devanagari, Malayalam and Tamil, chosen because every one
+# of these words carries vowel signs — the characters `\w` silently discards.
+_HINDI = "भारत और पाकिस्तान के बीच"  # five words
+_MALAYALAM = "ഇന്ത്യയും പാകിസ്ഥാനും തമ്മിലുള്ള"  # three words
+_TAMIL_PROSE = (
+    "இந்த தாக்குதல் இந்தியா மற்றும் பாகிஸ்தான் இடையேயான உறவில் "
+    "பெரும் நெருக்கடியை ஏற்படுத்தியது என்று செய்தி நிறுவனம் தெரிவித்தது"
+)
+
+
+def test_indic_words_survive_tokenisation():
+    r"""INV-1: a word is a word in every script, not only in the ones written without diacritics.
+
+    Python's `\w` matches letters and digits but not combining marks, and every Indic vowel sign,
+    virama and anusvara is one — so `\w+` split each word at every vowel sign and threw the sign
+    away. 91% of the items this gate indexes are in Indic scripts, which made a "thirteen-word
+    fingerprint" about five real words of consonant skeleton there. Correction X16.
+    """
+    assert normalise(_HINDI) == ["भारत", "और", "पाकिस्तान", "के", "बीच"]
+    assert len(normalise(_MALAYALAM)) == 3
+    # And the scripts that were never broken must stay unbroken.
+    assert normalise("between India and Pakistan today") == [
+        "between",
+        "india",
+        "and",
+        "pakistan",
+        "today",
+    ]
+
+
+def test_the_tokenisation_can_actually_fail():
+    r"""Breaking X16 must fail: the old pattern shatters the same words.
+
+    If `\w+` ever stops splitting these, this mutation has stopped proving anything and the test
+    above is no longer evidence.
+    """
+    old = re.compile(r"\w+", re.UNICODE)
+
+    assert len(old.findall(_HINDI.lower())) > len(normalise(_HINDI)), (
+        "the old pattern no longer shatters Devanagari, so this proves nothing"
+    )
+    # The exact shape of the defect: three ordinary Malayalam words became a full 13-token window,
+    # which is why unrelated prose collided with the index.
+    assert len(old.findall(_MALAYALAM.lower())) == SHINGLE_N
+
+
+def test_ordinary_indic_prose_does_not_collide_with_the_index():
+    """INV-1, the false-positive direction: the gate must not delete innocent training text.
+
+    A gate that drops clean documents is worse than no gate, because the loss is silent and lands
+    on the scarcest tier in the mixture. Measured against 203,388 held-out FLORES-200 sentences the
+    old tokeniser produced 5 such collisions, all Indic; this fixture is one of them.
+    """
+    index = build_attributed_index({"MILU": [_TAMIL_PROSE]})
+    unrelated = (
+        "ഇന്ത്യയും പാകിസ്ഥാനും തമ്മിലുള്ള ബന്ധത്തെ ആക്രമണം വലിയ രീതിയിൽ ബാധിച്ചു എന്ന് വാർത്താ ഏജൻസി റിപ്പോർട്ട് ചെയ്തു"
+    )
+
+    assert not find_collisions(unrelated, index), (
+        "unrelated Indic prose collided with the eval index — the gate is deleting clean text"
     )
 
 

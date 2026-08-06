@@ -1,10 +1,13 @@
 {
-  "shingle_count": 411442,
+  "shingle_count": 126044,
   "benchmarks": [
     "MILU"
   ],
   "coverage": "partial",
   "gram_widths": [
+    6,
+    7,
+    8,
     9,
     10,
     11,
@@ -13,6 +16,6 @@
   ],
   "unindexable_items": 0,
   "indexed_items": 8923,
-  "narrow_items": 56,
-  "note": "Index built from 1 benchmark file(s) at window widths [9, 10, 11, 12, 13]. Coverage is limited to these; any benchmark absent here is undetectable."
+  "narrow_items": 1090,
+  "note": "Index built from 1 benchmark file(s) at window widths [6, 7, 8, 9, 10, 11, 12, 13]. Coverage is limited to these; any benchmark absent here is undetectable."
 }

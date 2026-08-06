@@ -321,9 +321,9 @@ def test_a_short_item_hashes_to_one_whole_text_gram():
 
 def test_an_index_records_every_width_it_used():
     index = build_attributed_index(
-        {"B": ["only five words here now", " ".join(f"w{i}" for i in range(20))]}
+        {"B": ["exactly six short words sit here", " ".join(f"w{i}" for i in range(20))]}
     )
-    assert index.widths == frozenset({5, 13})
+    assert index.widths == frozenset({6, 13})
     assert not index.unindexable
 
 
