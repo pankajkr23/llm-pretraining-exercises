@@ -223,6 +223,47 @@ def derive_gates(row: dict[str, str], gotcha_types: set[str], blocking: bool) ->
     }
 
 
+# Figures the seed row gets wrong, corrected against the dataset's own card.
+#
+# The seed CSV is the machine-readable extract of the research and is never hand-edited, so a
+# correction to one of its numbers lives here instead: keyed by id, carrying the replacement and the
+# source that establishes it, and applied on ingest so the whole pipeline sees one value. An entry
+# in this table is a claim about the outside world and is held to the same standard as any other —
+# it names where the figure comes from.
+SIZE_CORRECTIONS: dict[str, dict[str, Any]] = {
+    "COD-02": {
+        "tokens": 747_400_000_000,
+        "source": (
+            "nvidia/Nemotron-Pretraining-Code-v1 dataset card: 'metadata to reproduce a 747.4B "
+            "token curated code dataset'. The seed row recorded 377M, which is NVIDIA's count of "
+            "filtered GitHub *files*, not tokens — a units error of roughly 900x. Two caveats "
+            "attach and neither is resolvable from published material: this is metadata to "
+            "reproduce a corpus by re-fetching from GitHub rather than a corpus distributed "
+            "directly, and the catalogue row covers v1/v2/v3 together while 747.4B is v1's figure "
+            "alone, so the row now understates rather than overstates."
+        ),
+    },
+}
+
+
+def _corrected_tokens(row: dict[str, str], size_raw: str) -> dict[str, Any]:
+    """The row's token count, with a cited correction applied where one exists.
+
+    Args:
+        row: The seed CSV row.
+        size_raw: Its raw size string.
+
+    Returns:
+        A serialised `Value`.
+    """
+    fix = SIZE_CORRECTIONS.get((row.get("ID") or "").strip())
+    if fix is None:
+        return dataclasses.asdict(parse_tokens(size_raw))
+    return dataclasses.asdict(
+        Value(value=fix["tokens"], unit="tokens", provenance="estimated", source=fix["source"])
+    )
+
+
 def build_dataset_record(row: dict[str, str]) -> dict[str, Any]:
     """Expand one catalogue row into a Dataset Card record.
 
@@ -251,7 +292,7 @@ def build_dataset_record(row: dict[str, str]) -> dict[str, Any]:
         "licence": parse_licence(row.get("License", "")),
         "size": {
             "raw": size_raw or None,
-            "tokens": dataclasses.asdict(parse_tokens(size_raw)),
+            "tokens": _corrected_tokens(row, size_raw),
             "naturalness": parse_naturalness(size_raw),
         },
         "stage": [s.strip() for s in re.split(r"[/,]", row.get("Stage") or "") if s.strip()],

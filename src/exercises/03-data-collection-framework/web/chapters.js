@@ -44,6 +44,46 @@ const para = (...nodes) => {
   return p;
 };
 
+/* Adding two corpora drawn from the same crawls does not give you their sum.
+ *
+ * Every large corpus in this catalogue is a differently-filtered view of Common Crawl: FineWeb is
+ * 96 CC dumps, FinePDFs 106 of them, Nemotron-CC is CC, and HPLT v3.0 is 45% CC by volume. Risk
+ * R01 — on this page, severity high, "the single most likely schedule-breaker" — puts cross-corpus
+ * duplication at 60-80% and records that global dedup collapsed a comparable pile from 23T to 9T.
+ *
+ * So a raw sum is not supply, and this returns the range that survives. It lives here rather than
+ * at any one call site because the page adds catalogue tokens in six different places, and fixing
+ * one of them is how the error stayed on the page after it was first found. Anything that adds
+ * dataset sizes goes through this.
+ *
+ * What this is NOT, and the distinction matters more than the arithmetic:
+ *
+ *   - It is not an overlap model. It applies one published range to a whole sum. It cannot say that
+ *     FinePDFs — PDFs — overlaps FineWeb's HTML far less than Nemotron-CC does, though all three
+ *     draw on Common Crawl, and it cannot represent a corpus derived from several others at once.
+ *     Sangraha's unverified portion is exactly that case: built from "existing multilingual
+ *     corpora", plural, unnamed.
+ *   - Nobody has published per-pair overlap coefficients for these datasets. Inventing them to make
+ *     this look more precise would be worse than the blanket range, because it would be a number
+ *     with no source wearing the authority of a computation.
+ *
+ * Exact containment is handled separately and is a different kind of claim: `contained_by` records
+ * that Nemotron-CC-v2 *is* v1 plus eight snapshots, which NVIDIA states, so that row is dropped
+ * from the sum outright rather than discounted. Facts get subtracted; uncertainty gets a range.
+ *
+ * `survival` comes from the bundle so Python and the browser cannot drift apart. */
+const deduped = (raw, survival) => ({
+  raw,
+  low: raw * (survival?.[0] ?? 0.2),
+  high: raw * (survival?.[1] ?? 0.4),
+});
+
+/* A raw sum, its deduplicated range, and the phrase that says which is which. */
+const dedupPhrase = (raw, survival) => {
+  const d = deduped(raw, survival);
+  return `${fmt(d.raw, 'count')} raw · ${fmt(d.low, 'count')}–${fmt(d.high, 'count')} after dedup`;
+};
+
 /* Costs on this page are shown as an order of magnitude, never as a figure.
  *
  * Behind every one of them is arithmetic that is solid — 6ND, or a share of it — multiplied by two
@@ -336,6 +376,7 @@ function chapterBudget(ctx) {
       para(b('What the comparison table says, and it is not what most readers expect.'), ' A corpus is not sized by the model that reads it. Llama 3.1 trained 8B, 70B and 405B on about the same 15T. DeepSeek-V3 stores 671B parameters and read 14.8T — less than Gemma 3 27B. Sarvam-105B read 12T where the smaller Sarvam-30B read 16T. Parameter count and corpus size came apart years ago, and the whole growth argument in ', ref('how it grows', 'growth'), ' rests on that.'),
       para(b('The sum, and the correction to it.'), ' This chapter used to say ', b('unique text × passes = effective tokens'), ' and print the product. That is the cost of a schedule, not its value, and the two are not the same number. The paper this rests on gives the value as a decaying sum: ', b('D′ = U + 15.4·U·(1 − e^(−(passes−1)/15.4))'), '. So ', fmt(POOL, 'count'), ' read four times costs ', fmt(POOL * 4, 'count'), ' of compute and is worth ', fmt(worthOf(4), 'count'), ' of fresh text — and sixteen passes, which the old arithmetic scored at ', fmt(POOL * 16, 'count'), ', are worth ', fmt(worthOf(16), 'count'), '.'),
       para(b('The ceiling that no schedule crosses.'), ' Because the sum converges, repetition has a maximum: the paper states that repeating cannot beat a single epoch on U + U·R*_D fresh tokens, which is ', b(`${CEILING}× the unique pool`), ' — ', fmt(POOL * CEILING, 'count'), ' from this one, at any number of passes. An earlier version of this page displayed ', fmt(POOL * 20, 'count'), ' for twenty passes. That figure was not merely unevidenced, as it claimed; it was above a ceiling the same paper had already stated, and no schedule reaches it.'),
+      para(b('Why this pool is not discounted the way the English ones are.'), ' Every large English corpus on this page is a differently-filtered view of Common Crawl, so risk R01 discounts their sum by 60–80%. That range does not apply here. Sangraha\u2019s verified portion is scraped from human-checked websites, OCR of PDFs and transcription of video and audio — sources a crawl does not reach — which is exactly why it is the verified portion and why the unverified remainder is excluded from this figure. What is unmeasured instead is narrower and still real: Sangraha Verified and IndicCorp v2 are both AI4Bharat scrapes of Indian websites, published without a stated cross-deduplication, so ', b(`${fmt(POOL, 'count')} is a ceiling rather than a count`), '. Nobody has run that comparison, and it is a cheaper measurement than any of the collection this page argues for.'),
       para(b('And the alternative to reading it again, which is cheaper than it sounds and still not enough.'), ' Repetition is the weakest of the three answers to a small pool. Collecting is the best and the slowest. Between them sits rephrasing — restating each collected document several ways and verifying each against its source — which is what the frontier actually does: Kimi K2 published the comparison at equal seen tokens and got about 28.9% for ten rephrasings read once against 23.8% for ten passes of the raw data, and Kimi K3\u2019s pre-training section does not use the word "epoch" at all. Applied to this pool, restating it twice would lift what this tier is worth by about a quarter at the same compute, for a generation cost that stays under one percent of the run however you estimate it. It is worth doing. It also leaves the tier ', b('87% repetition'), ', because two restatements of ', fmt(POOL, 'count'), ' is still ', fmt(POOL * 2, 'count'), ' against an allocation of ', fmt(WANTED, 'count'), '. ', ref('The queue prices it', 'first'), ', with the three limits that keep it from being the answer. The gap closes by collecting, or it does not close.'),
       para(b('The evidence for "nearly free"'), ' is Muennighoff et al., ', ref('Scaling Data-Constrained Language Models', 'appendix'), ' (JMLR v26, 2025): an 8.7B-parameter model trained four epochs on 44B unique tokens finished only 0.5% worse on validation loss than a single epoch over 178B unique tokens. The fitted decay constant is R*_D ≈ 15.4, and 16 passes is not where the evidence stops — it is the half-life, the point where a repeated token has lost 1/e of its value. The same paper reports 44-epoch models, and its own summary figure reads ', b('"At 40 epochs, repeating is worthless"'), ': at that depth its downstream table has ARC-Easy falling from 39.7 to 25.4 and the benchmark average from 23.1 to 15.9. Repetition does not flatten out at the end. It reverses.'),
       para(b('And the measurement is not on this corpus.'), ' Those runs are English web text (C4 and OSCAR) at 9B parameters or less. The largest public multilingual study to fit the same curve per language — ATLAS, ICLR 2026, 774 runs over MADLAD-400 across 400+ languages — includes Hindi, and reports that for Hindi and Swahili ', b('"the right tail bends upward, consistent with diminishing returns from severe data repetition"'), ' where English does not. Two further caveats survive from the original work: repetition operates on whole tiers only (up-sampling 0.1% of a corpus a hundred times degrades the model badly), and the allocation rule is that when data-constrained you scale epochs faster than parameters.'),
@@ -391,7 +432,7 @@ function chapterBudget(ctx) {
       );
       api.note(
         st.epochs === 1
-          ? `Read once, this is every natural Indian-language corpus the catalogue can commit today — Sangraha's verified portion and IndicCorp v2, added together. Not every corpus that exists: it is what clears provenance, licence and a stated size. The mixture allocates this tier ${fmt(WANTED, 'count')}, so read once the pool covers ${(POOL / WANTED * 100).toFixed(0)}% of its own share.`
+          ? `Read once, this is every natural Indian-language corpus the catalogue can commit today — Sangraha's verified portion and IndicCorp v2, added together. Two caveats travel with that addition. It is not every corpus that exists: it is what clears provenance, licence and a stated size. And it is a sum of two scrapes by the same group of the same country's websites, which nobody has deduplicated against each other, so the true figure is this or lower — never higher. The mixture allocates this tier ${fmt(WANTED, 'count')}, so read once the pool covers at most ${(POOL / WANTED * 100).toFixed(0)}% of its own share.`
           : st.epochs <= nearFree
             ? `Four passes cost 4× and are worth ${(worth / POOL).toFixed(2)}×. That is the closest repetition ever comes to free, and the one part of this curve the published work calls negligible. It is also ${(worth / WANTED * 100).toFixed(0)}% of what this tier is allocated. The mixture's own arithmetic assumes a pool of ${fmt(REQUIRED, 'count')} — four times what the catalogue holds — because it back-computes the pool it would need from the share it wants. "Nearly free" was true of that pool. It is not the pool we have.`
             : st.epochs <= halfLife
@@ -491,9 +532,25 @@ function chapterGrowth(ctx) {
    * against the announcement is a stage planned against 187B of nobody-has-checked. */
   const sizeValue = (r) => (NATURAL_T.has(r.tier) && r.d.size_verified ? r.d.size_verified : r.d.size_tokens);
 
-  /** Everything a stage could put behind its budget: clear today, plus one letter away. */
+  /** Everything a stage could put behind its budget: clear today, plus one letter away.
+   *
+   * Two corrections live here, both of which the raw sum was getting wrong.
+   *
+   * A dataset whose superset is also on the list contributes nothing extra — Nemotron-CC-v2 is
+   * Nemotron-CC (v1) plus eight snapshots, and v1 sits in "clear today" while v2 sits in "one
+   * letter away", so adding the two counted ~6.3T twice.
+   *
+   * And the total is a raw sum of corpora drawn from the same crawls. Risk R01 puts cross-corpus
+   * duplication at 60-80%, so the reachable figure is reported as the range that survives global
+   * deduplication rather than as the pre-dedup number, which is not supply. */
+  const CONTAINED = data.sourcing.contained_by || {};
+  const SURVIVAL = data.sourcing.dedup_survival_range || [0.2, 0.4];
   const sumOf = (rows) => rows.reduce((a, r) => a + (sizeValue(r)?.value || 0), 0);
-  const reachableFor = (st) => sumOf(admits(st)) + sumOf(awaits(st));
+  const dropContained = (rows) => {
+    const present = new Set(rows.map((r) => r.d.id));
+    return rows.filter((r) => !present.has(CONTAINED[r.d.id]));
+  };
+  const reachableFor = (st) => sumOf(dropContained([...admits(st), ...awaits(st)]));
   /** What clears every bar today, as a share of the stage's budget — the no-permission-needed half. */
   const clearPct = (st) => {
     const share = sumOf(admits(st)) / st.corpus;
@@ -546,14 +603,23 @@ function chapterGrowth(ctx) {
     /* The two bands added together, against the budget. This is the supply-side answer to "why
      * this number", and it belongs above the analogy rather than below it: it is the half that is
      * measured on this page rather than read off somebody else's model card. */
-    const reachable = [...admits(st), ...awaits(st)].reduce((a, r) => a + (sizeValue(r)?.value || 0), 0);
-    const short = reachable < st.corpus;
+    /* The reachable total, with the overlap removed and the deduplication applied. Both lists
+     * above are raw — they say what each dataset holds — and a reader adding them would get a
+     * number that is wrong twice: once because v2 contains v1, and once because these corpora are
+     * differently-filtered views of the same crawls. */
+    const raw = sumOf(dropContained([...admits(st), ...awaits(st)]));
+    const lo = raw * SURVIVAL[0];
+    const hi = raw * SURVIVAL[1];
+    const short = hi < st.corpus;
     const foot = $('div', `stagereg-foot${short ? ' short' : ''}`);
     foot.append(
-      $('span', 'stagereg-lab', short ? 'Short of the budget' : 'Covers the budget'),
-      $('span', 'stagereg-sum', `${fmt(reachable, 'count')} reachable · ${pct(reachable / st.corpus)} of ${fmt(st.corpus, 'count')}`),
+      $('span', 'stagereg-lab', short ? 'Short of the budget' : hi >= st.corpus && lo < st.corpus ? 'Might cover the budget' : 'Covers the budget'),
+      $('span', 'stagereg-sum', `${fmt(raw, 'count')} raw · ${fmt(lo, 'count')}–${fmt(hi, 'count')} after dedup · ${pct(lo / st.corpus)}–${pct(hi / st.corpus)} of ${fmt(st.corpus, 'count')}`),
     );
     wrap.append(foot);
+    const why = $('div', 'stagereg-cap');
+    why.textContent = `Deduplicated because every large corpus here is a differently-filtered view of the same Common Crawl snapshots; risk R01 puts the overlap at ${Math.round((1 - SURVIVAL[1]) * 100)}–${Math.round((1 - SURVIVAL[0]) * 100)}%. Nemotron-CC-v2 contains v1, so it is counted once.`;
+    wrap.append(why);
 
     /* And the analogy the budget was actually set by, named and priced, so the reader can see the
      * two halves of the answer side by side. */
@@ -2164,6 +2230,7 @@ function chapterFirst(ctx) {
   const src = data.sourcing;
   const asr = ((records.growth || {}).indic_supply || {}).asr_route || {};
   const rep = ((records.growth || {}).indic_supply || {}).rephrasing_route || {};
+  const SURVIVAL13 = data.sourcing.dedup_survival_range || [0.2, 0.4];
   /* The committable natural-Indic pool, summed from the catalogue exactly as chapter 2 sums it. */
   const NATURAL13 = new Set(['indic-natural', 'indic-knowledge-systems', 'indic-civilizational']);
   const POOL13 = data.datasets
@@ -2212,7 +2279,7 @@ function chapterFirst(ctx) {
       bold: 'not one of them is an Indic corpus',
       tail: '. Two are English-only. The other two are multilingual — and neither has had its Indian-language partitions measured, so there is no number to put in a budget. The cheapest lever on this page does nothing you can count for the capability the model is named for.',
       verdict: 'FOUR EMAILS',
-      note: `Together they unlock ${fmt(letters.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), 'count')} — more than three times the whole budget, and the two largest would cover it between them. None sits in an Indian-language tier: ${letters.filter((x) => /\d+\s+languages/i.test(String((byId[x.id] || {}).languages || ''))).length} of the ${letters.length} are multilingual, the largest carrying 198 languages, but nobody has counted what their Indic partitions hold. An unmeasured partition is not a supply.`,
+      note: `Together they unlock ${dedupPhrase(letters.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), SURVIVAL13)} — a raw sum of four corpora drawn from the same crawls, so the second figure is the one to plan against. None sits in an Indian-language tier: ${letters.filter((x) => /\d+\s+languages/i.test(String((byId[x.id] || {}).languages || ''))).length} of the ${letters.length} are multilingual, the largest carrying 198 languages, but nobody has counted what their Indic partitions hold. An unmeasured partition is not a supply.`,
     },
     {
       id: 'asks',
@@ -2284,7 +2351,7 @@ function chapterFirst(ctx) {
         'Roughly ', renderNumber(asr.hours || {}), ' at about ', renderNumber(asr.words_per_hour || {}),
         ' yields on the order of ', renderNumber(asr.words_yield || {}), '. ', asr.caveat || '',
       ),
-      para(b('The letters.'), ' They unlock ', b(fmt(letters.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), 'count')), ' between them — the largest alone exceeds the whole budget, and all four are English. That is why "resolve the licences" outranks "collect more data" for volume, and why it is not the same thing as resolving the Indic problem.'),
+      para(b('The letters.'), ' They unlock ', b(dedupPhrase(letters.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), SURVIVAL13)), ' between them — the raw figure is what the four cards add up to, the second is what survives global deduplication, because all four are English. That is why "resolve the licences" outranks "collect more data" for volume, and why it is not the same thing as resolving the Indic problem.'),
       table(['dataset', 'unlocks', 'for'], letters.map((x) => {
         const d = byId.get(x.id) || {};
         return [d.name || x.id, renderNumber({ value: x.unlocks_tokens, unit: 'tokens', provenance: 'estimated', source: 'the catalogue' }, { unit: false }), x.tier];
@@ -2314,7 +2381,7 @@ function chapterFirst(ctx) {
           api.inline(i, `→ ${ours.length} datasets, ${oursIndic.length} of them Indian-language, none needing permission`, false);
         } else if (g.id === 'letters') {
           api.shard(i, letters.map((x) => `${(byId.get(x.id) || {}).name || x.id} ${fmt(x.unlocks_tokens, 'count')}`).join(' · '));
-          api.inline(i, `→ ${fmt(letters.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), 'count')} unlocked, all of it English`, true);
+          api.inline(i, `→ ${dedupPhrase(letters.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), SURVIVAL13)}, none of it Indic`, true);
         } else {
           api.shard(i, acquisition.slice(0, 5).map((x) => x.item.split(/[(/]/)[0].trim()).join(' · '));
           api.inline(i, `→ ${free.length} of ${acquisition.length} cost nothing but time`, false);
@@ -2447,6 +2514,7 @@ function chapterAppendix(ctx) {
 
     const pool = data.datasets.map((d) => ({ d, tier: tierOf(d), blockers: blockersOf(d) })).filter((r) => r.tier);
     const targets = Object.fromEntries(recommended.mix.tiers.map((t) => [t.name, t.unique_tokens_required]));
+    const SURVIVALR = data.sourcing.dedup_survival_range || [0.2, 0.4];
     const needed = Object.values(targets).reduce((a, v) => a + v, 0);
 
     const FIXES = [
@@ -2519,8 +2587,10 @@ function chapterAppendix(ctx) {
       /* A counterfactual — what the corpus would hold if the reader resolved these blockers — and
        * it was carrying the mark that means somebody ran it. It is estimated twice over: the sizes
        * are estimates, and the resolutions have not happened. */
-      big.replaceChildren(renderNumber({ value: tokens, unit: 'tokens', provenance: 'estimated', source: 'summed from the catalogue under resolutions the reader selected, which have not happened' }, { unit: false }));
-      sub.textContent = `${rows.length} of ${pool.length} datasets committable, against ${fmt(needed, 'count')} the mixture needs`;
+      /* The deduplicated low end leads, because the raw sum is not a corpus anybody could train
+       * on — these datasets are differently-filtered views of the same crawls. */
+      big.replaceChildren(renderNumber({ value: deduped(tokens, SURVIVALR).low, unit: 'tokens', provenance: 'estimated', source: 'summed from the catalogue under resolutions the reader selected, then deduplicated at the low end of risk R01 range; the resolutions have not happened and neither has the dedup' }, { unit: false }));
+      sub.textContent = `at the low end of dedup — ${dedupPhrase(tokens, SURVIVALR)} — from ${rows.length} of ${pool.length} datasets, against ${fmt(needed, 'count')} the mixture needs`;
 
       bars.replaceChildren();
       Object.keys(targets).forEach((tier) => {

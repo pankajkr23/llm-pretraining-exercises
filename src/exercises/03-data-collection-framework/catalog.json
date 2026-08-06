@@ -221,7 +221,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 2.7B words"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -409,7 +409,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 'Multi-billion-token', aggregated to Oct 2025. Stated long-t"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -497,7 +497,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 'Crossed 20 trillion tokens', ~3 petabytes [VENDOR CLAIM - U"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -585,7 +585,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 10,262+ datasets, 292 models, 20 sectors, 394 contributing o"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -676,7 +676,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Millions of parallel sentences; thousands of audio hours acr"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -853,7 +853,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~3T words / 8TB compressed, 1000+ languages, 96 CC dumps (20"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -936,7 +936,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Top 10% of FineWeb-2 by XLM-R-based quality classifier, 20 l"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -1279,7 +1279,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 939 languages (MaLA)"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -1359,7 +1359,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -1791,7 +1791,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Wikipedia, 300+ languages, better extraction"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -2222,7 +2222,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 3.8T (~1.0T unique)"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -2308,7 +2308,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~3T"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -2388,7 +2388,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 30T raw with quality signals"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -2468,7 +2468,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~15T deduplicated"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -2554,7 +2554,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 5T"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -2640,7 +2640,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 825GB"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -2731,7 +2731,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 156B (en)"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -2817,7 +2817,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 8TB, 30 sources (>50% is Stack v2 code)"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -2900,7 +2900,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 2,003,039,184,047 tokens with full provenance metadata"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -3074,10 +3074,10 @@
     "size": {
       "raw": "+377M GitHub files in v2 alone; 427.9B-token Common-Crawl-code corpus in v2.1",
       "tokens": {
-        "value": 377000000.0,
+        "value": 747400000000,
         "unit": "tokens",
         "provenance": "estimated",
-        "source": "seed:Size_Scale"
+        "source": "nvidia/Nemotron-Pretraining-Code-v1 dataset card: 'metadata to reproduce a 747.4B token curated code dataset'. The seed row recorded 377M, which is NVIDIA's count of filtered GitHub *files*, not tokens — a units error of roughly 900x. Two caveats attach and neither is resolvable from published material: this is metadata to reproduce a corpus by re-fetching from GitHub rather than a corpus distributed directly, and the catalogue row covers v1/v2/v3 together while 747.4B is v1's figure alone, so the row now understates rather than overstates."
       },
       "naturalness": {}
     },
@@ -3165,7 +3165,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 0"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -3247,7 +3247,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 2,438 executable tasks"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -3328,7 +3328,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~50,000 instances from 128 repos"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -3409,7 +3409,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 8K+ tasks; published 4,578-env SWE-Bench-disjoint subset"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -3498,7 +3498,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 273K seed tasks"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -3578,7 +3578,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 21 environments and 37 RL datasets (Nemotron 3 Super)"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -3661,7 +3661,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -3743,7 +3743,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 100+ dataset variants across 6 ablated pipeline stages"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -3824,7 +3824,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 200K tool-use trajectories, 1,346 tools, 120 task types"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -3907,7 +3907,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 32B model + published methodology"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -3989,7 +3989,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -4069,7 +4069,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -4400,7 +4400,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~55B"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -4560,7 +4560,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 100B+"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -4640,7 +4640,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -4720,7 +4720,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -4800,7 +4800,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Millions of traces"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -4880,7 +4880,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Procedural - unlimited"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -4960,7 +4960,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 22,441 Bengali math word problems"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -5043,7 +5043,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~230 million bitext pairs; incl. ~2.2M human-created pairs f"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -5127,7 +5127,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 49.7M sentence pairs (37.4M newly mined)"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -5210,7 +5210,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: n-way parallel"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -5292,7 +5292,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 200 languages"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -5378,7 +5378,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 26M transliteration pairs"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -5461,7 +5461,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Very large"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -5543,7 +5543,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Trillion-token multi-parallel, 36 languages"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -5623,7 +5623,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 200+ languages"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -5703,7 +5703,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~44,400 HOURS + 17M aligned text segments"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -5787,7 +5787,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 23.7K hours total, 11.2K transcribed, 51K speakers, 400+ dis"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -5871,7 +5871,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 1,704 hours, 10,496 speakers"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -5954,7 +5954,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~31,270 h audio, 2,067 h transcribed, 289K IMAGES, 165 distr"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -6038,7 +6038,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~3,400 h labelled (Ph1 ~2000h + Ph2 ~1400h), 16 kHz"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -6122,7 +6122,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 900+ hours studio TTS"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -6204,7 +6204,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~6,400 hours"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -6287,7 +6287,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~1,684 hours, 1,218 speakers, 203 districts"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -6370,7 +6370,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 500+ hours high-quality studio recordings, 20 speakers"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -6452,7 +6452,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -6532,7 +6532,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -6612,7 +6612,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~1,000 h Hindi"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -6692,7 +6692,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Growing Indic subsets"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -6775,7 +6775,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -6855,7 +6855,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 400K h unlabelled"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -6935,7 +6935,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 50K h"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -7015,7 +7015,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 30K h"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -7095,7 +7095,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 10K-100K+ h"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -7181,7 +7181,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 2M clips"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -7425,7 +7425,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 289K images from 165 districts"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -7507,7 +7507,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Document-level Indic VLM pre-training"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -7587,7 +7587,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -7668,7 +7668,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -7749,7 +7749,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -7830,7 +7830,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 52,000 documents, 2.4B+ (per BharatGen presentation)"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -7917,7 +7917,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -7998,7 +7998,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 5B pairs minus removed links"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -8084,7 +8084,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 5B pairs"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -8175,7 +8175,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 12.8B"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -8266,7 +8266,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 700M"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -8346,7 +8346,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 141M interleaved docs"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -8506,7 +8506,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Human-annotated"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -8587,7 +8587,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 50 VQA datasets"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -8667,7 +8667,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -8748,7 +8748,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -8828,7 +8828,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -8914,7 +8914,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Complete K-12 curriculum, all subjects"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -8998,7 +8998,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Vast teacher/learner content"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -9081,7 +9081,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 2,500+ courses; 61M+ enrolments, 6.2M certificates"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -9171,7 +9171,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Open University course material"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -9253,7 +9253,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Millions of items"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -9335,7 +9335,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Indian PhD theses"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -9417,7 +9417,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 24,795 instruction-response pairs"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -9499,7 +9499,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: College textbooks"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -9581,7 +9581,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -9663,7 +9663,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -9745,7 +9745,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: All Indic editions"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -9833,7 +9833,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~500K+ scanned Indian books"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -9921,7 +9921,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -10004,7 +10004,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Decades of coverage"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -10086,7 +10086,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -10170,7 +10170,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 25 High Courts, 1950-2025, ~1TB, JSON+Parquet, quarterly upd"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -10252,7 +10252,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 81M case records"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -10332,7 +10332,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 2,282,137 case proceedings to April 2024"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -10413,7 +10413,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 35K Supreme Court cases"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -10500,7 +10500,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: QA pairs"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -10581,7 +10581,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Parallel legal corpus"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -10662,7 +10662,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: Large"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -10755,7 +10755,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 74.7M prompt-response pairs"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -10838,7 +10838,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 123K pairs"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -10927,7 +10927,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 9.5M data points"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -11009,7 +11009,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 1,328,604 event-grounded multi-turn conversations"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -11091,7 +11091,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -11173,7 +11173,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -11253,7 +11253,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 3.4M pairs"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -11339,7 +11339,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -11419,7 +11419,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: ~50 items in the collection"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -11502,7 +11502,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 11 items"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -11585,7 +11585,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 14 items"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -11668,7 +11668,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -11748,7 +11748,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -11828,7 +11828,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -11908,7 +11908,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -11988,7 +11988,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: 37 datasets across 21 environments"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },
@@ -12070,7 +12070,7 @@
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "no token count stated: -"
+        "source": "no token count stated"
       },
       "naturalness": {}
     },

@@ -229,6 +229,30 @@ def blockers(record: dict[str, Any]) -> list[str]:
     return reasons
 
 
+# One catalogued dataset containing another. Adding both counts the overlap twice.
+#
+# Nemotron-CC-v2 is, in NVIDIA's own words, "based on Nemotron-CC with eight additional Common Crawl
+# snapshots (2024-2025)". It is a superset. The catalogue holds both as separate rows, and the plan
+# was summing 6.30T and 6.60T into 12.9T of supply when the second figure already includes the
+# first. What v2 adds over v1 is the eight new snapshots, and nobody publishes that number.
+CONTAINED_BY: dict[str, str] = {
+    "ENG-07": "ENG-08",  # Nemotron-CC (v1) is contained by Nemotron-CC-v2
+}
+
+# What fraction of a raw sum survives global deduplication.
+#
+# Risk R01, severity high, already on this page: "60-80% cross-corpus duplication because Sangraha,
+# CulturaX, MADLAD-400, FineWeb-2 and HPLT all derive from Common Crawl", and "global dedup
+# collapses 23T -> 9T, not 15T". Every large corpus in this catalogue is a differently-filtered view
+# of the same crawls: FineWeb is 96 Common Crawl dumps, FinePDFs is 106 of them, Nemotron-CC is
+# Common Crawl, and HPLT v3.0 is 45% Common Crawl by volume. Summing them and reporting the total as
+# available supply is the error R01 exists to warn about, and the plan was making it.
+#
+# A range, not a point, because nobody has run the dedup. R01 calls it "the single most likely
+# schedule-breaker" and the correct response to that is to show both ends.
+DEDUP_SURVIVAL = (0.20, 0.40)
+
+
 def build_plan(datasets: list[dict[str, Any]], mix: dict[str, Any]) -> dict[str, Any]:
     """Match the graded catalogue against a proposed mixture.
 
@@ -246,6 +270,11 @@ def build_plan(datasets: list[dict[str, Any]], mix: dict[str, Any]) -> dict[str,
     for tier, target in wanted.items():
         candidates = [d for d in datasets if tier_of(d) == tier]
         committed = [d for d in candidates if not blockers(d)]
+        # Drop anything whose superset is committed alongside it, so the overlap is not counted
+        # twice. The contained row stays in the catalogue and in `candidates`; it just stops
+        # contributing its tokens a second time.
+        present = {d["id"] for d in committed}
+        committed = [d for d in committed if CONTAINED_BY.get(d["id"]) not in present]
         have = round(sum(_tokens_for(d, tier) or 0 for d in committed))
         headline = round(sum(_tokens(d) or 0 for d in committed))
         unchecked = [
@@ -323,7 +352,24 @@ def build_plan(datasets: list[dict[str, Any]], mix: dict[str, Any]) -> dict[str,
         # inspectable in the bundle rather than only in this file.
         "tier_categories": {k: list(v) for k, v in TIER_CATEGORIES.items()},
         "tiers": tiers,
+        # Shipped so the page can apply the same rule when it adds "clear today" to "one letter
+        # away": v1 is committable and v2 is licence-blocked, so the double-count appears only when
+        # the two lists are summed, which happens in the browser.
+        "contained_by": dict(CONTAINED_BY),
+        "dedup_survival_range": list(DEDUP_SURVIVAL),
         "committed_tokens": committed_total,
+        # The same total after global deduplication, as a range. Raw sums of corpora drawn from the
+        # same crawls are not supply; this is what R01 says survives.
+        "committed_tokens_deduplicated": {
+            "low": round(committed_total * DEDUP_SURVIVAL[0]),
+            "high": round(committed_total * DEDUP_SURVIVAL[1]),
+            "survival_range": list(DEDUP_SURVIVAL),
+            "basis": (
+                "risk R01: 60-80% cross-corpus duplication, because every large corpus here is a "
+                "differently-filtered view of the same Common Crawl snapshots. Nobody has run the "
+                "deduplication, so this is a range rather than a figure."
+            ),
+        },
         "target_tokens": target_total,
         "covered_share": round(committed_total / target_total, 4) if target_total else None,
         "blocked": blocked,

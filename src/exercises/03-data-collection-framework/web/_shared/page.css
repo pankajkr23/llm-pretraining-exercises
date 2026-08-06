@@ -361,6 +361,9 @@ h3.appendix-h4 {
 }
 .catrow:hover { background: var(--panel); }
 .catrow:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* This one keeps its ellipsis, and the distinction is the point: a catalogue row is a control —
+ * clicking it opens the dataset's five gates with the full name at the top — so the text is one
+ * click away rather than gone. A chart label has no such escape, which is why `.tiername` wraps. */
 .catrow-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .catrow-why { font-family: var(--mono); font-size: 10.5px; color: var(--faint); text-align: right; }
 @media (max-width: 620px) {

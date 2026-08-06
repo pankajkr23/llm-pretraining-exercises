@@ -42,6 +42,33 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **Supply is no longer a raw sum of overlapping corpora.** The page reported "61T reachable · 363%
+  of budget" by adding datasets that are differently-filtered views of the same crawls — FineWeb is
+  96 Common Crawl dumps, FinePDFs 106 of them, Nemotron-CC is Common Crawl, HPLT v3.0 is 45% Common
+  Crawl by volume. Risk **R01** has said so throughout, severity high, *"the single most likely
+  schedule-breaker"*: 60–80% cross-corpus duplication. Every sum over catalogue tokens now reports
+  the deduplicated range alongside the raw figure, through **one shared helper** — there were ten
+  sum sites, and fixing one is how this kind of error survives. Two mechanisms, deliberately not
+  interchangeable: **exact containment is subtracted** (NVIDIA states Nemotron-CC-v2 *is* v1 plus
+  eight snapshots, so counting both double-counted ~6.3T), while **unknown overlap gets a band** —
+  per-pair coefficients are not invented to make the arithmetic look more precise than the evidence.
+  Stage 3 now reads **55.4T raw · 11.1T–22.2T after dedup · 66–132% of budget**: a possible
+  shortfall where it read a comfortable surplus. The Indic pool gets its own treatment, since R01's
+  range is about Common Crawl and Sangraha's *verified* portion is scraped, OCR'd and transcribed
+  rather than crawled — what is unmeasured there is that it and IndicCorp v2 are both AI4Bharat
+  scrapes of Indian sites with no published cross-deduplication, so **84.9B is a ceiling, not a
+  count**. Also corrected: the code row recorded 377M tokens, which is NVIDIA's count of GitHub
+  *files*; its card states 747.4B. Corrections X24.
+- **Chart labels wrap instead of being cut off.** Fourteen were losing text, up to 82px of it —
+  "natural Indic we h…", and every tool name in the cleaning chapter, which appears nowhere else on
+  the page. An ellipsis is honest only when the full text is reachable another way: a catalogue row
+  is a button that opens the dataset's gates, so it keeps its ellipsis; a chart label has no such
+  escape. The deeper bug was grid sizing — a fixed or `auto` track beside a flexible one left the
+  flexible column absorbing the entire shortfall, down to **4px at 900px and 28px at 1180px**, which
+  stacks letters vertically and is worse than truncating. Rows now collapse on a **container query**
+  against their own column rather than the viewport, because the figure column is narrow in two
+  disjoint viewport bands and breakpoints fixed one while leaving the other. Verified clean from
+  390px to 1600px. Correction X25.
 - **Costs are shown as an order of magnitude, never as a figure.** Every price on this page sits on
   arithmetic that is solid — 6ND, or a share of it — multiplied by two assumptions that are not: a
   sustained throughput that moves ±30% between real runs, and a list rate the project's own cost
