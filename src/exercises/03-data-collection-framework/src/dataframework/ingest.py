@@ -381,30 +381,35 @@ RELATIONSHIPS: dict[str, dict[str, Any]] = {
         "source": "nvidia/Nemotron-Pretraining-Code-v1",
     },
     "IND-01": {
-        "kind": "unknown",
-        "parents": ["IND-02"],
+        "kind": "independent",
+        "parents": [],
         "note": (
-            "The verified portion counted here is scraped from human-checked sites, OCR'd from "
-            "PDFs"
-            "and transcribed from audio — sources a crawl does not reach, so risk R01's Common "
-            "Crawl"
-            "discount does not apply to it. What is unmeasured is narrower: this and IndicCorp v2 "
-            "are"
-            "both AI4Bharat scrapes of Indian websites and neither publisher states a cross- "
-            "deduplication, so the two cannot simply be added. Sangraha's *unverified* portion is "
-            "drawn from 'existing multilingual corpora', unnamed, and is excluded from the figure "
-            "used here."
+            "The verified portion counted here is crawled from manually checked Indic websites, "
+            "OCR'd from PDFs (Internet Archive, eGyanKosh, the Indian Parliament, AIR News, "
+            "government magazines, school textbooks) and transcribed from audio (YouTube, "
+            "OpenSubtitles, NPTEL, Mann Ki Baat). None of that is a general web crawl, so risk "
+            "R01's Common Crawl discount does not apply to it. The unverified portion is a "
+            "different matter and is excluded from the figure used here: the paper builds it by "
+            "perplexity-filtering CulturaX and MADLAD-400, both catalogued separately and both "
+            "Common Crawl. IndicCorp is named as an input to neither portion."
         ),
-        "source": "ai4bharat/sangraha and IndicLLMSuite, arXiv:2403.06350",
+        "source": (
+            "IndicLLMSuite, arXiv:2403.06350 - verified data from 'high-quality, manually "
+            "verified Indic language websites' plus PDFs and video; unverified data from 'all "
+            "the high-quality tagged documents from CulturaX and MADLAD-400'"
+        ),
     },
     "IND-02": {
-        "kind": "unknown",
-        "parents": ["IND-01"],
+        "kind": "independent",
+        "parents": [],
         "note": (
-            "See Sangraha: both are AI4Bharat scrapes of Indian websites with no published cross- "
-            "deduplication between them."
+            "AI4Bharat's own crawl, released December 2022 and predating Sangraha by more than a "
+            "year. The IndicLLMSuite paper compares the two and names IndicCorp nowhere as an "
+            "input to Sangraha, so they are counted separately. What nobody publishes is a "
+            "cross-deduplication between them, and both crawl Indian websites, so some overlap "
+            "is plausible and unquantified - but neither contains the other."
         ),
-        "source": "ai4bharat/IndicCorpV2",
+        "source": "ai4bharat/IndicCorpV2; IndicLLMSuite, arXiv:2403.06350",
     },
 }
 
