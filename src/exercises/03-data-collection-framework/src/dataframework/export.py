@@ -171,6 +171,13 @@ def _dataset_index_entry(record: dict[str, Any]) -> dict[str, Any]:
         # Omitted when false: `blocking` and `is_gap` are absent-means-no, and 145 explicit
         # `false`s cost 5KB of the index budget to say nothing.
         **({"is_gap": True} if record.get("is_gap") else {}),
+        # Omitted when nobody checked the distribution point, so "we did not look" and "we looked
+        # and it is open" stay distinguishable — absent is not the same claim as false.
+        **(
+            {"gated": (record.get("access") or {})["distribution"]["gated"]}
+            if "distribution" in (record.get("access") or {})
+            else {}
+        ),
         "grade": grade,
         # How many of the five gates anybody actually answered. Shipped beside the grade because
         # a grade earned over two scored gates is a different claim from the same grade earned

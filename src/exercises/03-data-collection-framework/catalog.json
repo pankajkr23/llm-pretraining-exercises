@@ -115,7 +115,13 @@
         "https://huggingface.co/datasets/ai4bharat/sangraha",
         "https://github.com/AI4Bharat/IndicLLMSuite",
         "arXiv:2403.06350"
-      ]
+      ],
+      "distribution": {
+        "gated": false,
+        "licence_id": "cc-by-4.0",
+        "host": "hf:ai4bharat/sangraha",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -209,7 +215,13 @@
       "raw": "https://huggingface.co/datasets/ai4bharat/IndicCorpV2",
       "links": [
         "https://huggingface.co/datasets/ai4bharat/IndicCorpV2"
-      ]
+      ],
+      "distribution": {
+        "gated": false,
+        "licence_id": null,
+        "host": "hf:ai4bharat/IndicCorpV2",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -1115,7 +1127,13 @@
         "https://hplt-project.org/datasets",
         "arXiv:2503.10267",
         "arXiv:2511.01066"
-      ]
+      ],
+      "distribution": {
+        "gated": false,
+        "licence_id": null,
+        "host": "hf:HPLT/HPLT3.0",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -1301,7 +1319,14 @@
       "raw": "https://huggingface.co/datasets/allenai/MADLAD-400",
       "links": [
         "https://huggingface.co/datasets/allenai/MADLAD-400"
-      ]
+      ],
+      "distribution": {
+        "gated": "auto",
+        "licence_id": null,
+        "host": "hf:uonlp/CulturaX",
+        "source": "huggingface.co/api/datasets/uonlp/CulturaX: gated=auto",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -1570,7 +1595,13 @@
       "raw": "https://huggingface.co/HuggingFaceFW",
       "links": [
         "https://huggingface.co/HuggingFaceFW"
-      ]
+      ],
+      "distribution": {
+        "gated": false,
+        "licence_id": "odc-by",
+        "host": "hf:HuggingFaceFW/fineweb",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -1661,7 +1692,13 @@
       "raw": "https://huggingface.co/HuggingFaceFW",
       "links": [
         "https://huggingface.co/HuggingFaceFW"
-      ]
+      ],
+      "distribution": {
+        "gated": false,
+        "licence_id": "odc-by",
+        "host": "hf:HuggingFaceFW/fineweb-edu",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -1757,7 +1794,13 @@
       "raw": "https://huggingface.co/HuggingFaceFW",
       "links": [
         "https://huggingface.co/HuggingFaceFW"
-      ]
+      ],
+      "distribution": {
+        "gated": false,
+        "licence_id": "odc-by",
+        "host": "hf:HuggingFaceFW/finepdfs",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -1847,7 +1890,13 @@
       "raw": "https://huggingface.co/HuggingFaceFW",
       "links": [
         "https://huggingface.co/HuggingFaceFW"
-      ]
+      ],
+      "distribution": {
+        "gated": false,
+        "licence_id": "odc-by",
+        "host": "hf:HuggingFaceFW/finepdfs-edu",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -2117,7 +2166,15 @@
       "links": [
         "https://huggingface.co/nvidia",
         "arXiv:2412.02595"
-      ]
+      ],
+      "distribution": {
+        "gated": false,
+        "licence_id": null,
+        "host": "data.commoncrawl.org/contrib/Nemotron/Nemotron-CC",
+        "note": "Not on HuggingFace at all — both nvidia/Nemotron-CC and nvidia/Nemotron-CC-v1 return 401. NVIDIA's own page gives Common Crawl's CDN as the distribution point, which is why this is the one Nemotron corpus needing nobody's approval.",
+        "source": "research.nvidia.com/labs/adlr/Nemotron-CC/: 'Hosted at commoncrawl.org'",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -2214,7 +2271,15 @@
       "links": [
         "https://huggingface.co/nvidia",
         "arXiv:2508.14444"
-      ]
+      ],
+      "distribution": {
+        "gated": "manual",
+        "licence_id": "other",
+        "host": "hf:nvidia/Nemotron-CC-v2",
+        "note": "Request access and wait for a person. The licence is NVIDIA's own Data Agreement for Model Training, not a standard open licence, so the catalogue's 'Open' understated both halves of what stands between this corpus and a training run.",
+        "source": "huggingface.co/api/datasets/nvidia/Nemotron-CC-v2: gated=manual, license=other",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -2304,7 +2369,14 @@
       "raw": "https://huggingface.co/nvidia",
       "links": [
         "https://huggingface.co/nvidia"
-      ]
+      ],
+      "distribution": {
+        "gated": "manual",
+        "licence_id": "other",
+        "host": "hf:nvidia/Nemotron-CC-v2.1",
+        "source": "huggingface.co/api/datasets/nvidia/Nemotron-CC-v2.1: gated=manual, license=other",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -2391,7 +2463,13 @@
     "used_by": "DataComp-LM",
     "access": {
       "raw": "Search HF 'DCLM'",
-      "links": []
+      "links": [],
+      "distribution": {
+        "gated": false,
+        "licence_id": null,
+        "host": "hf:mlfoundations/dclm-baseline-1.0",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -2412,10 +2490,10 @@
     "size": {
       "raw": "~3T",
       "tokens": {
-        "value": null,
+        "value": 6000000000000,
         "unit": "tokens",
-        "provenance": "unknown",
-        "source": "no token count stated"
+        "provenance": "estimated",
+        "source": "hf:allenai/dolma3_mix-6T — the ~6T mix behind Olmo 3. The seed row named 'Dolma' with no version and stated no size, so a 6T open corpus counted as nothing. Its licence is unresolved rather than clear, so this adds reachable supply to the one-decision band, not to what can be committed today."
       },
       "naturalness": {}
     },
@@ -2472,7 +2550,15 @@
     "used_by": "OLMo",
     "access": {
       "raw": "Search HF 'allenai/dolma'",
-      "links": []
+      "links": [],
+      "distribution": {
+        "gated": false,
+        "licence_id": "odc-by",
+        "host": "hf:allenai/dolma3_mix-6T",
+        "note": "The catalogue named 'Dolma' with no version while AI2 had moved to Dolma 3 — the 6T mix behind Olmo 3 — and then to a 3.5 pool. Ungated and ODC-By, but the card frames it for 'research and educational use' alongside Responsible Use Guidelines, so commercial permission is unresolved rather than granted.",
+        "source": "hf:allenai/dolma3_mix-6T card and API: gated=false, license=odc-by",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -3181,7 +3267,7 @@
   {
     "id": "COD-02",
     "slug": "nemotron-pretraining-code-v1-v2-v3",
-    "name": "Nemotron-Pretraining-Code-v1/v2/v3",
+    "name": "Nemotron-Pretraining-Code v3",
     "category": "Code",
     "tier": "GREEN",
     "is_gap": false,
@@ -3195,10 +3281,10 @@
     "size": {
       "raw": "+377M GitHub files in v2 alone; 427.9B-token Common-Crawl-code corpus in v2.1",
       "tokens": {
-        "value": 747400000000,
+        "value": 173000000000,
         "unit": "tokens",
         "provenance": "estimated",
-        "source": "nvidia/Nemotron-Pretraining-Code-v1 dataset card: 'metadata to reproduce a 747.4B token curated code dataset'. The seed row recorded 377M, which is NVIDIA's count of filtered GitHub *files*, not tokens — a units error of roughly 900x. Two caveats attach and neither is resolvable from published material: this is metadata to reproduce a corpus by re-fetching from GitHub rather than a corpus distributed directly, and the catalogue row covers v1/v2/v3 together while 747.4B is v1's figure alone, so the row now understates rather than overstates."
+        "source": "nvidia/Nemotron-Pretraining-Code-v3 dataset card: '146 M new files (173 B tokens)'. The seed row recorded 377M, which is NVIDIA's count of filtered GitHub *files*, not tokens — a units error of roughly 900x. It was first corrected to v1's 747.4B, which was wrong in the other direction: v1 and v2 are gated=manual, so the only component reachable without NVIDIA's approval is v3, and v3's card says it holds 'only incrementally new files ... meant to be used jointly with the v2 and v1 corpora'. 173B is what this row can actually commit. One caveat survives both corrections and is not resolvable from published material: every version is metadata for re-fetching code from GitHub, not a corpus distributed directly."
       },
       "naturalness": {}
     },
@@ -3268,7 +3354,16 @@
       "raw": "https://huggingface.co/nvidia",
       "links": [
         "https://huggingface.co/nvidia"
-      ]
+      ],
+      "distribution": {
+        "gated": false,
+        "licence_id": "cc-by-4.0",
+        "host": "hf:nvidia/Nemotron-Pretraining-Code-v3",
+        "name": "Nemotron-Pretraining-Code v3",
+        "note": "Three versions were catalogued as one row and only v3 is reachable without asking: v1 and v2 are gated=manual under NVIDIA's own agreement, v3 is ungated under CC-BY-4.0. Since v3 is explicitly incremental — 'only incrementally new files, meant to be used jointly with the v2 and v1 corpora' — the reachable figure is v3's 173B, not the 747.4B of the v1 corpus it extends.",
+        "source": "huggingface.co/api/datasets/nvidia/Nemotron-Pretraining-Code-{v1,v2,v3}: v1 and v2 gated=manual license=other, v3 gated=false license=cc-by-4.0",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },
@@ -4361,7 +4456,14 @@
       "links": [
         "arXiv:2508.15096",
         "https://huggingface.co/nvidia"
-      ]
+      ],
+      "distribution": {
+        "gated": "auto",
+        "licence_id": null,
+        "host": "hf:nvidia/Nemotron-CC-Math-v1",
+        "source": "huggingface.co/api/datasets/nvidia/Nemotron-CC-Math-v1: gated=auto",
+        "checked": "2026-08-06"
+      }
     },
     "confidence": "high"
   },

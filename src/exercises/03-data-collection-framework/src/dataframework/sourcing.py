@@ -216,11 +216,18 @@ def blockers(record: dict[str, Any]) -> list[str]:
         record: A catalogue index entry.
 
     Returns:
-        Zero or more of `evidence`, `excluded`, `licence`, `size`, `does not exist`. Empty means
-        committable. `evidence` and `excluded` are deliberately distinct: the first is work nobody
-        has done, the second is a check that came back FAIL.
+        Zero or more of `access`, `evidence`, `excluded`, `licence`, `size`, `does not exist`.
+        Empty means committable. `evidence` and `excluded` are deliberately distinct: the first is
+        work nobody has done, the second is a check that came back FAIL. `access` and `licence` are
+        distinct for the same reason: a licence is a document you read, and manual gating is a
+        person at the publisher deciding whether you may have the data at all.
     """
     reasons: list[str] = []
+    # Click-through gating ("auto") is not a blocker. Accepting terms is something you do
+    # unilaterally and instantly; waiting on a human's decision is asking permission, which is
+    # exactly what "committable today" is supposed to exclude.
+    if record.get("gated") == "manual":
+        reasons.append("access")
     if record.get("is_gap"):
         reasons.append("does not exist")
     # "Nobody scored it" and "a check failed" are not the same blocker, and treating them as one

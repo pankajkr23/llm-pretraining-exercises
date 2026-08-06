@@ -391,6 +391,23 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The catalogue could not see the difference between "open" and "ask permission".** Availability
+  came from prose in a seed cell, so corpora gated behind NVIDIA's manual approval sat in the same
+  band as ones you can fetch anonymously — while the page's whole dividing line is whether anybody's
+  permission is needed. Each dataset's distribution point is now read from the publisher, carrying
+  HuggingFace's three-way gating value and the date it was checked. Manual gating is a blocker in its
+  own right; click-through gating is recorded but does not block, because accepting terms is
+  something you do unilaterally. Nemotron-CC-v2 moves from one letter away to two, which is the
+  honest answer to why the older v1 is the committable one. Two figures were wrong as a result and
+  are corrected: the Nemotron code row counted 747.4B for v1/v2/v3 when v1 and v2 need approval and
+  v3 — the only ungated one, and explicitly incremental to them — holds 173B; and "Dolma" was
+  catalogued with no version and no size while AI2 had shipped Dolma 3, a 6T ungated ODC-By mix, so
+  a corpus larger than the whole committable band counted as nothing. Correction X29.
+- **A web corpus's licence covers the curation, not the copyright of the text inside it.** The legal
+  chapter now says so: Common Crawl's terms license use of the service, require you to respect
+  third-party copyright in the crawled material, demand indemnity, and advise counsel before
+  commercial use. A permitted mark on FineWeb, Nemotron-CC or HPLT means its curator allows you to
+  redistribute their package — not that anyone may train on the text.
 - **A subset was being summed beside the set that contains it, on screen.** The stage registers
   reported every stage's reachable supply as a plain sum: Nemotron-CC v1's 6.30T counted once alone
   and again inside Nemotron-CC-v2's 6.60T. The containment map was correct in the bundle and the

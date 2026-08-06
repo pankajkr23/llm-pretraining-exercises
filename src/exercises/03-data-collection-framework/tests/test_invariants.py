@@ -16,6 +16,7 @@ Run in existing CI by `uv run pytest`; no separate workflow.
 
 import json
 import re
+import subprocess
 
 import pytest
 from dataframework.catalog import EXPECTED_COUNTS, validate
@@ -39,6 +40,7 @@ from dataframework.shingles import (
     normalise,
     shingle,
 )
+from dataframework.sourcing import blockers, tier_of
 
 CFG = Config()
 WEB = CFG.web_dir
@@ -550,6 +552,76 @@ def test_a_contained_dataset_is_not_added_to_its_parent():
         assert not (child in committed and overlap), (
             f"{child} is committed alongside {sorted(overlap)}, which contains it"
         )
+
+
+def test_the_browser_and_the_pipeline_agree_about_what_blocks():
+    """One rule, two implementations, and X28 is what their disagreeing costs.
+
+    `sourcing.blockers()` decides the bundle and `blockersOf` in chapters.js decides the page. The
+    containment bug shipped because the bundle was right and the browser ignored it, and adding the
+    access blocker to only one of them would have done the same thing again. This runs the real JS
+    against the real bundle rather than re-describing either rule in Python.
+    """
+    js = (WEB / "chapters.js").read_text(encoding="utf-8")
+    harness = (
+        js.replace("export function", "function").replace("export const", "const")
+        + "\nconst rows = JSON.parse(process.argv[2]).map((d) => [d.id, blockersOf(d).join()]);"
+        + "\nconsole.log(JSON.stringify(rows));"
+    )
+    bundle = _bundle()
+    # Beside chapters.js, not in a temp directory: the module imports `./_shared/num.js`, and a
+    # relative import resolves against the importing file's own location.
+    script = WEB / "_blockers_harness.mjs"
+    script.write_text(harness, encoding="utf-8")
+    try:
+        out = subprocess.run(
+            ["node", str(script), json.dumps(bundle["datasets"])],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=True,
+        )
+    except FileNotFoundError:
+        pytest.skip("node is not available")
+    finally:
+        script.unlink(missing_ok=True)
+
+    from_js = dict(json.loads(out.stdout))
+    disagreed = [
+        f"{d['id']}: python={blockers(d)} js={from_js[d['id']]!r}"
+        for d in bundle["datasets"]
+        if from_js.get(d["id"], "") != ",".join(blockers(d))
+    ]
+    assert not disagreed, f"{len(disagreed)} disagreement(s): {disagreed[:5]}"
+
+
+def test_nothing_needing_permission_counts_as_committable_today():
+    """A dataset a person has to approve is not one you can commit to today. Correction X29.
+
+    The catalogue described availability in prose, so corpora gated on NVIDIA's manual approval sat
+    in the same band as ones you can fetch anonymously. The page's entire dividing line is whether
+    anybody's permission is needed, so this asks it of the band directly.
+    """
+    bundle = _bundle()
+    committable = [d for d in bundle["datasets"] if tier_of(d) and not blockers(d)]
+    assert committable, "nothing is committable, so this proves nothing"
+
+    for entry in committable:
+        assert entry.get("gated") != "manual", (
+            f"{entry['id']} is committable today yet needs a person's approval"
+        )
+
+
+def test_the_gating_check_can_actually_fail():
+    """Breaking X29 must fail: an ungated row flipped to manual must leave the committable band."""
+    bundle = _bundle()
+    open_row = next(d for d in bundle["datasets"] if tier_of(d) and not blockers(d))
+
+    assert blockers({**open_row, "gated": "manual"}) == ["access"], (
+        "manual gating no longer blocks, so the committable band cannot be trusted"
+    )
+    # Click-through gating is deliberately not a blocker: accepting terms is unilateral.
+    assert not blockers({**open_row, "gated": "auto"})
 
 
 def test_the_containment_check_can_actually_fail():

@@ -418,17 +418,129 @@ RELATIONSHIPS: dict[str, dict[str, Any]] = {
 # source that establishes it, and applied on ingest so the whole pipeline sees one value. An entry
 # in this table is a claim about the outside world and is held to the same standard as any other —
 # it names where the figure comes from.
+# How each dataset is actually distributed, read from the publisher's own distribution point rather
+# than from the seed row's prose. Checked 2026-08-06 against the HuggingFace dataset API.
+#
+# This exists because "open" in a seed cell turned out to describe three different things. A corpus
+# you can wget is not the same as one that asks you to click through terms, and neither is the same
+# as one where a human at the publisher decides whether you get it. The catalogue called all three
+# open, and the page's whole dividing line is whether anybody's permission is needed.
+#
+# `gated` takes HuggingFace's own three values:
+#   False    — fetch it, no account, no terms
+#   "auto"   — accept terms and you have it, instantly and unilaterally
+#   "manual" — request access and wait for a person to approve or refuse
+#
+# Only `manual` is treated as a blocker downstream. Clicking through terms is a licence act you
+# perform yourself; waiting on someone's decision is permission, which is the thing the page's two
+# bands are actually sorting by.
+DISTRIBUTION: dict[str, dict[str, Any]] = {
+    "IND-01": {"gated": False, "licence_id": "cc-by-4.0", "host": "hf:ai4bharat/sangraha"},
+    "IND-02": {"gated": False, "licence_id": None, "host": "hf:ai4bharat/IndicCorpV2"},
+    "ENG-01": {"gated": False, "licence_id": "odc-by", "host": "hf:HuggingFaceFW/fineweb"},
+    "ENG-02": {"gated": False, "licence_id": "odc-by", "host": "hf:HuggingFaceFW/fineweb-edu"},
+    "ENG-03": {"gated": False, "licence_id": "odc-by", "host": "hf:HuggingFaceFW/finepdfs"},
+    "ENG-04": {"gated": False, "licence_id": "odc-by", "host": "hf:HuggingFaceFW/finepdfs-edu"},
+    "ENG-07": {
+        "gated": False,
+        "licence_id": None,
+        "host": "data.commoncrawl.org/contrib/Nemotron/Nemotron-CC",
+        "note": (
+            "Not on HuggingFace at all — both nvidia/Nemotron-CC and nvidia/Nemotron-CC-v1 return "
+            "401. NVIDIA's own page gives Common Crawl's CDN as the distribution point, which is "
+            "why this is the one Nemotron corpus needing nobody's approval."
+        ),
+        "source": "research.nvidia.com/labs/adlr/Nemotron-CC/: 'Hosted at commoncrawl.org'",
+    },
+    "ENG-08": {
+        "gated": "manual",
+        "licence_id": "other",
+        "host": "hf:nvidia/Nemotron-CC-v2",
+        "note": (
+            "Request access and wait for a person. The licence is NVIDIA's own Data Agreement for "
+            "Model Training, not a standard open licence, so the catalogue's 'Open' understated "
+            "both halves of what stands between this corpus and a training run."
+        ),
+        "source": "huggingface.co/api/datasets/nvidia/Nemotron-CC-v2: gated=manual, license=other",
+    },
+    "ENG-09": {
+        "gated": "manual",
+        "licence_id": "other",
+        "host": "hf:nvidia/Nemotron-CC-v2.1",
+        "source": (
+            "huggingface.co/api/datasets/nvidia/Nemotron-CC-v2.1: gated=manual, license=other"
+        ),
+    },
+    "ENG-10": {"gated": False, "licence_id": None, "host": "hf:mlfoundations/dclm-baseline-1.0"},
+    "ENG-11": {
+        "gated": False,
+        "licence_id": "odc-by",
+        "host": "hf:allenai/dolma3_mix-6T",
+        "note": (
+            "The catalogue named 'Dolma' with no version while AI2 had moved to Dolma 3 — the "
+            "6T mix behind Olmo 3 — and then to a 3.5 pool. Ungated and ODC-By, but the card "
+            "frames it for 'research and educational use' alongside Responsible Use Guidelines, "
+            "so commercial permission is unresolved rather than granted."
+        ),
+        "source": "hf:allenai/dolma3_mix-6T card and API: gated=false, license=odc-by",
+    },
+    "MUL-03": {"gated": False, "licence_id": None, "host": "hf:HPLT/HPLT3.0"},
+    "MUL-05": {
+        "gated": "auto",
+        "licence_id": None,
+        "host": "hf:uonlp/CulturaX",
+        "source": "huggingface.co/api/datasets/uonlp/CulturaX: gated=auto",
+    },
+    "MTH-01": {
+        "gated": "auto",
+        "licence_id": None,
+        "host": "hf:nvidia/Nemotron-CC-Math-v1",
+        "source": "huggingface.co/api/datasets/nvidia/Nemotron-CC-Math-v1: gated=auto",
+    },
+    "COD-02": {
+        "gated": False,
+        "licence_id": "cc-by-4.0",
+        "host": "hf:nvidia/Nemotron-Pretraining-Code-v3",
+        # The row is named for the version it counts. It read "v1/v2/v3" while carrying v3's
+        # figure alone, which is a label promising two corpora the number does not include.
+        "name": "Nemotron-Pretraining-Code v3",
+        "note": (
+            "Three versions were catalogued as one row and only v3 is reachable without asking: "
+            "v1 and v2 are gated=manual under NVIDIA's own agreement, v3 is ungated under "
+            "CC-BY-4.0. Since v3 is explicitly incremental — 'only incrementally new files, meant "
+            "to be used jointly with the v2 and v1 corpora' — the reachable figure is v3's 173B, "
+            "not the 747.4B of the v1 corpus it extends."
+        ),
+        "source": (
+            "huggingface.co/api/datasets/nvidia/Nemotron-Pretraining-Code-{v1,v2,v3}: "
+            "v1 and v2 gated=manual license=other, v3 gated=false license=cc-by-4.0"
+        ),
+    },
+}
+
+
 SIZE_CORRECTIONS: dict[str, dict[str, Any]] = {
     "COD-02": {
-        "tokens": 747_400_000_000,
+        "tokens": 173_000_000_000,
         "source": (
-            "nvidia/Nemotron-Pretraining-Code-v1 dataset card: 'metadata to reproduce a 747.4B "
-            "token curated code dataset'. The seed row recorded 377M, which is NVIDIA's count of "
-            "filtered GitHub *files*, not tokens — a units error of roughly 900x. Two caveats "
-            "attach and neither is resolvable from published material: this is metadata to "
-            "reproduce a corpus by re-fetching from GitHub rather than a corpus distributed "
-            "directly, and the catalogue row covers v1/v2/v3 together while 747.4B is v1's figure "
-            "alone, so the row now understates rather than overstates."
+            "nvidia/Nemotron-Pretraining-Code-v3 dataset card: '146 M new files (173 B tokens)'. "
+            "The seed row recorded 377M, which is NVIDIA's count of filtered GitHub *files*, not "
+            "tokens — a units error of roughly 900x. It was first corrected to v1's 747.4B, which "
+            "was wrong in the other direction: v1 and v2 are gated=manual, so the only component "
+            "reachable without NVIDIA's approval is v3, and v3's card says it holds 'only "
+            "incrementally new files ... meant to be used jointly with the v2 and v1 corpora'. "
+            "173B is what this row can actually commit. One caveat survives both corrections and "
+            "is not resolvable from published material: every version is metadata for re-fetching "
+            "code from GitHub, not a corpus distributed directly."
+        ),
+    },
+    "ENG-11": {
+        "tokens": 6_000_000_000_000,
+        "source": (
+            "hf:allenai/dolma3_mix-6T — the ~6T mix behind Olmo 3. The seed row named 'Dolma' "
+            "with no version and stated no size, so a 6T open corpus counted as nothing. Its "
+            "licence is unresolved rather than clear, so this adds reachable supply to the "
+            "one-decision band, not to what can be committed today."
         ),
     },
 }
@@ -472,7 +584,8 @@ def build_dataset_record(row: dict[str, str]) -> dict[str, Any]:
     return {
         "id": row["ID"].strip(),
         "slug": slugify(row["Dataset"]),
-        "name": row["Dataset"].strip(),
+        # Named for what the row actually counts, where the two came apart.
+        "name": (DISTRIBUTION.get(row["ID"].strip(), {}).get("name") or row["Dataset"]).strip(),
         "category": (row.get("Category") or "").strip(),
         "tier": tier,
         "is_gap": tier is None,
@@ -495,6 +608,12 @@ def build_dataset_record(row: dict[str, str]) -> dict[str, Any]:
         "access": {
             "raw": (row.get("Access") or "").strip() or None,
             "links": _URL.findall(row.get("Access") or ""),
+            # What the publisher's distribution point actually requires, where anybody checked.
+            **(
+                {"distribution": DISTRIBUTION[row["ID"].strip()] | {"checked": "2026-08-06"}}
+                if row["ID"].strip() in DISTRIBUTION
+                else {}
+            ),
         },
         "confidence": "high" if (row.get("Access") or "").strip() else "low",
     }

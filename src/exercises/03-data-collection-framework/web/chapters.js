@@ -1040,6 +1040,7 @@ function chapterMix(ctx) {
 /** COMMIT / ASK / MEASURE / EXCLUDED — the action column, and the whole point of the chapter. */
 const ACTIONS = {
   commit: ['COMMIT', 'var(--grade-a)'],
+  access: ['REQUEST ACCESS', 'var(--grade-b)'],
   licence: ['ASK THE OWNER', 'var(--grade-b)'],
   size: ['MEASURE IT', 'var(--grade-b)'],
   evidence: ['CHECK THE CLAIMS', 'var(--grade-b)'],
@@ -1047,10 +1048,19 @@ const ACTIONS = {
   gap: ['DOES NOT EXIST', 'var(--grade-x)'],
 };
 
-/** Every reason a dataset cannot be committed — the same four the pipeline's `blockers()` uses. */
+/**
+ * Every reason a dataset cannot be committed — the same list the pipeline's `blockers()` builds.
+ *
+ * This is a second implementation of one rule, and the containment bug (X28) was exactly what that
+ * costs: the bundle was right and the browser disagreed with it. Any change here belongs in
+ * `sourcing.blockers()` on the same commit, and the invariant suite checks the two agree.
+ */
 function blockersOf(d) {
   const out = [];
-  if (d.is_gap) out.push('gap');
+  if (d.is_gap) out.push('does not exist');
+  /* Manual gating is a person at the publisher deciding whether you get the data; click-through
+   * gating is a licence you grant yourself. Only the first blocks. */
+  if (d.gated === 'manual') out.push('access');
   /* Mirrors sourcing.blockers(): "nobody scored it" and "a check failed" are different blockers,
    * and only the first is ours to fix without asking anyone. */
   if (d.grade === 'X') out.push('excluded');
@@ -1069,6 +1079,7 @@ function actionOf(d) {
   const bad = blockersOf(d);
   if (bad.includes('excluded')) return 'excluded';
   if (!bad.length) return 'commit';
+  if (bad.includes('access')) return 'access';
   if (bad.includes('licence')) return 'licence';
   if (bad.includes('size')) return 'size';
   return 'evidence';
@@ -1350,6 +1361,8 @@ function chapterLegal(ctx) {
     arithmetic: [
       para('Three states an entry can be in: permitted (', ds.filter((d) => licOf(d) === true).length, '), forbidden (', ds.filter((d) => licOf(d) === false).length, '), and unestablished (', ds.filter((d) => licOf(d) !== true && licOf(d) !== false).length, '). The last group is counted separately from the first throughout this page — the two are never summed, because doing so is exactly how an unlicensed corpus ends up in a commercial model.'),
       para('The framework treats a failed provenance check as disqualifying rather than as a deduction: a dataset you may not use does not become usable by scoring well elsewhere. That is one of two checks that can produce an outright exclusion; the other is contamination.'),
+      para('A licence on a web corpus is narrower than it looks, and the mark above says less than it appears to. Every corpus here drawn from Common Crawl — FineWeb, FinePDFs, Nemotron-CC, HPLT, CulturaX — carries terms set by whoever curated it, and those terms cover the curation: the filtering, the scoring, the packaging. They cannot cover the text itself, because its copyright never left the sites it was crawled from. Common Crawl says as much in its own terms of use, which license you to use the service, require you to respect third-party copyright in the material, make you indemnify Common Crawl against infringement claims, and recommend legal counsel before any commercial use. So a permitted mark on a web corpus means its curator allows you to redistribute their package. Whether anyone may train on the text inside it is the question the ruling above is about, and it is open.'),
+      para('A licence is also not the only thing standing between a catalogued row and a training run. Some corpora are gated: Nemotron-CC-v2 and v2.1 are released only on a request that a person at the publisher approves or refuses. This page counts that as a blocker in its own right rather than folding it into the licence, because reading a document is work you can finish by yourself, and waiting on somebody else’s decision is not. Where the gate is a click-through — accept the terms and the data is yours — it is recorded but not counted as a blocker, because that is a licence you grant yourself.'),
       para('Full rulings, limits, obligations and posture are in ', ref('the appendix', 'appendix'), '.'),
     ],
     refresh: (api) => {
