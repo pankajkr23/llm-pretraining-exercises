@@ -485,3 +485,8 @@ details.arithmetic > summary:focus-visible { outline: 2px solid var(--accent); o
 .derivbadge.unknown { color: var(--grade-b); }
 .derivbadge.additional_to { color: var(--muted); }
 .derivbadge.independent { color: var(--grade-a); }
+
+/* The verified-split marker. A dataset whose published headline is bigger than the figure this page
+ * uses says so here, because otherwise a reader who opens the dataset card finds a number four
+ * times larger and no explanation for the gap. */
+.derivbadge.headline { color: var(--muted); border-style: dashed; }

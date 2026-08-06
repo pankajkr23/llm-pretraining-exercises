@@ -560,7 +560,22 @@ function chapterGrowth(ctx) {
   /* The size to quote for a dataset. For the Indic tiers that is the verified count and not the
    * headline — Sangraha announces 251B and 64B of it has been confirmed, and a stage planned
    * against the announcement is a stage planned against 187B of nobody-has-checked. */
+  /* For a natural-Indic tier the verified split is the figure, not the headline.
+   *
+   * Sangraha's card says 251B and this page says 64B, which looks like an error until you know
+   * that 162.7B of the difference is English Wikipedia translated into fourteen Indic languages
+   * and transliterated, and 24.3B is perplexity-filtered out of other corpora. Neither is text
+   * anybody wrote in an Indian language, which is the one thing this tier is for. The headline is
+   * shown beside the figure wherever the two differ, so a reader who checks the card is not left
+   * wondering which of us is wrong. */
   const sizeValue = (r) => (NATURAL_T.has(r.tier) && r.d.size_verified ? r.d.size_verified : r.d.size_tokens);
+  const headlineNote = (r) => {
+    const head = (r.d.size_tokens || {}).value;
+    const used = (sizeValue(r) || {}).value;
+    return head && used && head > used * 1.05
+      ? `of ${fmt(head, 'count')} published — the rest is translated or synthesised, not collected`
+      : null;
+  };
 
   /** Everything a stage could put behind its budget: clear today, plus one letter away.
    *
@@ -622,6 +637,13 @@ function chapterGrowth(ctx) {
         nameCell.append(r.d.name);
         const badge = derivationBadge(r.d, (id) => (byId.get(id) || {}).name);
         if (badge) nameCell.append(' ', badge);
+        const head = headlineNote(r);
+        if (head) {
+          const hint = $('span', 'derivbadge headline');
+          hint.textContent = 'verified split';
+          hint.title = head;
+          nameCell.append(' ', hint);
+        }
         line.append(nameCell, $('span', 'stagereg-t', r.tier));
         const val = $('span', 'stagereg-v');
         if (size) val.append(renderNumber(size, { unit: false }));
