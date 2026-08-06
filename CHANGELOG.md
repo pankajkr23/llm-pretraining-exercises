@@ -42,6 +42,17 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **Each growth stage now answers "why this number" twice — from supply, then from analogy.** The
+  supply half is measured on this page and had never been placed next to a budget: for every stage,
+  what clears every bar today and what is blocked on nothing but an unanswered licence, each as a
+  percentage of that stage's own budget. The analogy half names the comparators the budget was set
+  by (Gemma 3 4B's 4T, Llama 3.1 8B's 15T, Qwen3's 36T) and states plainly what an analogy proves
+  about this corpus, which is nothing — it assumes corpus size follows parameter count, the
+  assumption the same chapter disproves. Reading them together produces a finding neither gives
+  alone: three of the four budgets are comfortably reachable, but only once four licence letters are
+  answered, and the seed — which admits no web text at all — can reach **2.8% of its own budget**.
+  The binding constraint on the ladder was never the size of the numbers; it is the web-data policy
+  and four emails.
 - **The growth stages say which of their numbers were reasoned and which were assumed.** Four token
   budgets printed in the same typeface read as four equally solid figures, and only one is. 16.8T is
   derived, and the page now shows the derivation: the plan is written against Gemma 4 31B, which

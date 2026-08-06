@@ -401,7 +401,7 @@ function chapterGrowth(ctx) {
       k === 0
         ? `Start here — a dense model, around ${fmt(st.params_total, 'count')} in this drawing. It is the only stage whose text every later model inherits: grow from trained weights and you never re-read the corpus, so the seed\u2019s data quality `
         : k === 1
-          ? 'Now grow it sparse. A mixture of experts adds capacity without adding compute per token, so what this stage asks of the corpus is '
+          ? 'Grow it. Whether that happens by adding parameters densely or by routing to experts is not settled here, and the two want different things from the corpus — a mixture of experts specialises on whatever it is given and rewards diversity, while a dense stack of the same size mostly wants more of everything. So what this stage asks for is '
           : k === 2
             ? `Grow it deep. Layers are added to a trained stack rather than trained from scratch, so the parameter count rises by about ${fmt(st.params_total - stages[k - 1].params_total, 'count')} while the tokens already read `
             : `Frontier parity — ${fmt(st.corpus - stages[k - 1].corpus, 'count')} more tokens than the last stage, and not one of them Indian, because every source that supplies volume at this scale is English, code or multilingual web — which means the India share is `,
@@ -409,7 +409,7 @@ function chapterGrowth(ctx) {
       k === 0
         ? 'outlives the seed'
         : k === 1
-          ? 'diversity, not volume'
+          ? 'genuinely undecided until the architecture is'
           : k === 2
             ? 'carry over at zero additional cost'
             : 'defended by collection or not at all',
@@ -417,7 +417,7 @@ function chapterGrowth(ctx) {
       k === 0
         ? `. Provenance, licensing and decontamination have to be right here, not fixed later. Its budget works out at ${Math.round(st.corpus / st.params_total).toLocaleString('en-US')} tokens per parameter, which is a rule of thumb rather than a finding.`
         : k === 1
-          ? `. Experts specialise on whatever the mixture actually contains. Worth noticing what did not happen here: parameters and corpus both grew ${(st.params_total / stages[k - 1].params_total).toFixed(1)}×, in exact step, leaving this stage on the same ${Math.round(st.corpus / st.params_total).toLocaleString('en-US')} tokens per parameter as the seed. That is the tokens-per-parameter rule applied twice — and it is the rule this page spends the rest of its length arguing against.`
+          ? `, and this page would rather say so than invent a preference. What can be settled without the architecture is the collection order, which is what the rest of this chapter is about. Worth noticing what did not happen here: parameters and corpus both grew ${(st.params_total / stages[k - 1].params_total).toFixed(1)}×, in exact step, leaving this stage on the same ${Math.round(st.corpus / st.params_total).toLocaleString('en-US')} tokens per parameter as the seed. That is the tokens-per-parameter rule applied twice — and it is the rule this page spends the rest of its length arguing against.`
           : k === 2
             ? ' — the clearest demonstration available that a corpus is not sized by the model reading it.'
             : '.',
@@ -456,6 +456,15 @@ function chapterGrowth(ctx) {
    * against the announcement is a stage planned against 187B of nobody-has-checked. */
   const sizeValue = (r) => (NATURAL_T.has(r.tier) && r.d.size_verified ? r.d.size_verified : r.d.size_tokens);
 
+  /** Everything a stage could put behind its budget: clear today, plus one letter away. */
+  const sumOf = (rows) => rows.reduce((a, r) => a + (sizeValue(r)?.value || 0), 0);
+  const reachableFor = (st) => sumOf(admits(st)) + sumOf(awaits(st));
+  /** What clears every bar today, as a share of the stage's budget — the no-permission-needed half. */
+  const clearPct = (st) => {
+    const share = sumOf(admits(st)) / st.corpus;
+    return `${share >= 0.1 ? Math.round(share * 100) : (share * 100).toFixed(1)}%`;
+  };
+
   /**
    * Name the datasets a stage would actually read.
    *
@@ -468,6 +477,10 @@ function chapterGrowth(ctx) {
    */
   function stageRegister(st) {
     const wrap = $('div', 'stagereg');
+    /* Each band is priced against this stage's own budget. A list of datasets answers "what could
+     * we read"; the percentage answers "and is it enough", which is the question the budget beside
+     * it is making a claim about. */
+    const pct = (x) => `${x >= 0.1 ? Math.round(x * 100) : (x * 100).toFixed(1)}%`;
     const group = (label, rows, cls) => {
       const sorted = [...rows].sort((a, b) => (sizeValue(b)?.value || 0) - (sizeValue(a)?.value || 0));
       /* The heading counts and sums the very rows below it, so the two cannot drift apart. */
@@ -476,7 +489,7 @@ function chapterGrowth(ctx) {
       head.append(
         $('span', 'stagereg-lab', label),
         $('span', 'stagereg-sum', sorted.length
-          ? `${sorted.length} · ${fmt(total, 'count')}`
+          ? `${sorted.length} · ${fmt(total, 'count')} · ${pct(total / st.corpus)} of budget`
           : 'none at this stage'),
       );
       wrap.append(head);
@@ -494,6 +507,32 @@ function chapterGrowth(ctx) {
     wrap.append($('div', 'stagereg-cap', 'What this stage would read, named'));
     group('Clear today', admits(st), 'ok');
     group('One letter away', awaits(st), 'wait');
+
+    /* The two bands added together, against the budget. This is the supply-side answer to "why
+     * this number", and it belongs above the analogy rather than below it: it is the half that is
+     * measured on this page rather than read off somebody else's model card. */
+    const reachable = [...admits(st), ...awaits(st)].reduce((a, r) => a + (sizeValue(r)?.value || 0), 0);
+    const short = reachable < st.corpus;
+    const foot = $('div', `stagereg-foot${short ? ' short' : ''}`);
+    foot.append(
+      $('span', 'stagereg-lab', short ? 'Short of the budget' : 'Covers the budget'),
+      $('span', 'stagereg-sum', `${fmt(reachable, 'count')} reachable · ${pct(reachable / st.corpus)} of ${fmt(st.corpus, 'count')}`),
+    );
+    wrap.append(foot);
+
+    /* And the analogy the budget was actually set by, named and priced, so the reader can see the
+     * two halves of the answer side by side. */
+    const an = $('div', 'stagereg-an');
+    an.append($('div', 'stagereg-cap', `Why the budget is ${fmt(st.corpus, 'count')} — ${st.basis.kind}`));
+    st.analogy.comparators.forEach((c) => {
+      const line = $('div', 'stagereg-r');
+      line.append($('span', 'stagereg-n', c.model), $('span', 'stagereg-t', c.why_this_one));
+      const val = $('span', 'stagereg-v');
+      val.append(renderNumber({ value: c.corpus, unit: 'tokens', provenance: 'estimated', source: `published by its authors — ${c.why_this_one}` }, { unit: false }));
+      line.append(val);
+      an.append(line);
+    });
+    wrap.append(an);
     return wrap;
   }
 
@@ -528,10 +567,16 @@ function chapterGrowth(ctx) {
       para(b('What a data plan decides, stage by stage.'), ' ', g.config_note.split('\n\n')[0]),
       para(b('Only one of these four budgets is derived, and it is worth being blunt about which.'), ' ', g.derivation.method, ' For the 40B that reads: ', g.stages[2].basis.how, ' ', g.stages[2].basis.checks, ' ', b('The 20% is the one free parameter'), ' — ', g.stages[2].basis.assumption),
       para(b('Why the same method cannot produce the other three.'), ' ', g.derivation.why_it_does_not_generalise, ' So ', b('3T, 8T and 30T are analogies, not derivations'), '. ', g.stages[0].basis.why_not_derived, ' ', g.stages[1].basis.why_not_derived, ' ', g.stages[3].basis.why_not_derived),
-      para(b('What would fix it.'), ' ', g.derivation.what_would_fix_it),
+      para(b('What an analogy proves, which is less than it looks.'), ' ', g.analogy_note.what_an_analogy_is, ' ', g.analogy_note.why_keep_them),
+      para(b('And what supply says, which is measured here.'), ' ', g.analogy_note.what_supply_says_instead, ' Stage by stage, against each budget: ', stages.map((x) => `${x.name} needs ${fmt(x.corpus, 'count')} and can reach ${fmt(reachableFor(x), 'count')}`).join('; '), '.'),
+      para(b('Read together, the two halves say something neither says alone.'), ' Three of the four budgets are comfortably reachable — but only once the unanswered licences are answered, because committable text alone covers ', `${clearPct(stages[1])}`, ' of the second stage and ', `${clearPct(stages[2])}`, ' of the third. The seed is the exception and the exception is instructive: it forbids web text, and without web text the catalogue reaches ', b(`${clearPct(stages[0])} of its budget`), '. The binding constraint on this ladder was never the size of the numbers. It is the web-data policy and ', `${awaits(stages[1]).length}`, ' unanswered emails.'),
+      para(b('What would fix the analogies.'), ' ', g.derivation.what_would_fix_it),
       /* Parameter rows against stage columns: the shape a training config is actually read in. */
       table(['', ...stages.map((x) => x.name)], [
-        ['architecture', ...stages.map((x) => (x.architecture === 'moe' ? 'sparse mixture of experts' : 'dense'))],
+        /* Illustrative for the same reason the parameter counts are: the lineage this method comes
+         * from went dense-seed-then-experts, this ladder's record says dense until the last rung,
+         * and nobody has chosen between them. The data policy below is indifferent to the answer. */
+        ['architecture — illustrative', ...stages.map((x) => (x.architecture === 'moe' ? 'sparse mixture of experts' : 'dense'))],
         /* Prefixed, every one of them, because no scaling strategy has been chosen. These are one
          * shape a growth path could take, drawn so the data policy has something to hang on. */
         ['parameters — illustrative', ...stages.map((x) => `~${fmt(x.params_total, 'count')}`)],
@@ -544,11 +589,18 @@ function chapterGrowth(ctx) {
          * column that should vary is the signature of a rule applied rather than a budget set. */
         ['tokens per parameter', ...stages.map((x) => Math.round(x.corpus / x.params_total).toLocaleString('en-US'))],
         ['how that budget was reached', ...stages.map((x) => x.basis.kind)],
+        /* The two halves of "why this number", adjacent so neither can be read alone. The analogy
+         * is what the budget was set by; the supply is what could actually be put behind it. */
+        ['the analogy it was set by', ...stages.map((x) => x.analogy.comparators.map((c) => `${c.model} ${fmt(c.corpus, 'count')}`).join(' · '))],
+        ['what this catalogue can reach', ...stages.map((x) => {
+          const r = reachableFor(x);
+          return `${fmt(r, 'count')} — ${r / x.corpus >= 0.1 ? Math.round((r / x.corpus) * 100) : ((r / x.corpus) * 100).toFixed(1)}% of it`;
+        })],
         ['web data', ...stages.map((x) => x.config.web_data)],
         ['script quarantine', ...stages.map((x) => x.config.script_quarantine)],
         ['noise admitted', ...stages.map((x) => x.config.noise)],
         ['LR schedule', ...stages.map((x) => x.lr_schedule)],
-        ['datasets the catalogue admits', ...stages.map((x) => {
+        ['datasets clear today', ...stages.map((x) => {
           const pool = admits(x);
           return `${pool.length} · ${fmt(pool.reduce((a, r) => a + countable(r), 0), 'count')}`;
         })],

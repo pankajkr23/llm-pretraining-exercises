@@ -375,3 +375,22 @@ details.arithmetic > summary:focus-visible { outline: 2px solid var(--accent); o
 .stagereg-n { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stagereg-t { font-family: var(--mono); font-size: 10px; color: var(--faint); }
 .stagereg-v { font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: right; }
+
+/* The register's two closing bands: what the catalogue can actually reach against this stage's
+ * budget, and the analogy the budget was set by. Supply sits above analogy on purpose — one is
+ * measured on this page, the other is read off somebody else's model card. */
+.stagereg-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+.stagereg-foot .stagereg-lab { color: var(--ink); }
+.stagereg-foot.short .stagereg-lab { color: var(--grade-x); }
+.stagereg-an { margin-top: 12px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.stagereg-an .stagereg-cap { margin-bottom: 4px; }
