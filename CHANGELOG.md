@@ -42,6 +42,20 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **Nothing derived from an estimate calls itself measured any more.** The `sourcing`, `lifecycle`
+  and `orphan_tiers` blocks each declared `provenance: "measured"` over every number inside them —
+  including `committed_tokens` of 6.39T, which is a sum over the catalogue's own sizes, and **not
+  one of the 145 records carries a measured size** (24 estimated, 121 unknown). The page tells
+  readers the green underline means "somebody ran it". Nobody had. A derived number is now no more
+  measured than its least-measured input, so those blocks are estimated — while the exact counts
+  keep the mark they earned, because counting records in a catalogue we hold really is a
+  measurement. Three figures the browser labelled by hand are corrected too, one of them a
+  counterfactual showing what the corpus *would* hold if the reader resolved blockers that have not
+  been resolved. Separately, 115 fertility values shipped claiming measurement against a run id
+  literally prefixed `pending-`: the substitution walked one block and missed `conversational`. It
+  now walks all of them, and `protocol_gaps` — a hardcoded string still insisting "three of the six
+  tokenizers are unavailable" long after the run measured five with one unavailable — is computed
+  from the run it describes. Recorded as correction X17.
 - **The contamination gate no longer shatters Indic text, or deletes clean documents.** It
   tokenised with `\w+`, and Python's `\w` matches letters and digits but **not Unicode combining
   marks** — which is what every Indic vowel sign, virama, anusvara and nukta is. So every Indic word

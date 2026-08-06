@@ -238,6 +238,125 @@ def _bare_numbers(node, path="", inherited=False) -> list[str]:
     return found
 
 
+# Blocks whose numbers are sums over the catalogue's own `size_tokens`. Not one of the 145 records
+# carries a measured size, so nothing derived from them may claim to be measured either.
+_DERIVED_FROM_CATALOGUE_SIZES = ("sourcing", "lifecycle", "orphan_tiers")
+
+
+def test_the_protocol_gap_note_matches_the_run_it_describes():
+    """INV-4: the run must not misdescribe its own coverage.
+
+    `protocol_gaps` was a hardcoded literal reading "three of the six tokenizers are unavailable",
+    rendered on the page long after the run had measured five with one unavailable — a false
+    statement about its own coverage, in the chapter whose subject is honest measurement.
+    """
+    record = json.loads((CFG.records_dir / "fertility.json").read_text(encoding="utf-8"))
+    note = record["protocol_gaps"]
+
+    assert f"{len(record['tokenizers_measured'])} tokenizers measured" in note, note
+    assert f"{len(record['tokenizers_unavailable'])} unavailable" in note, note
+    assert record["corpus"] in note
+
+
+def test_no_measured_value_names_an_unresolved_run():
+    """INV-4: a measurement must name the run that produced it — a placeholder is not a run.
+
+    `main()` stamped every source with `pending-<timestamp>` and then substituted the real id, but
+    only inside `by_tokenizer`. `conversational` was missed, so 115 values shipped in the public
+    bundle claiming to be measured against an id prefixed `pending-` that matched no run and did not
+    equal `run_id` in the same file. The old guard passed them because it only asked for an "@".
+    Correction X17.
+    """
+
+    def unresolved(node: object) -> list[str]:
+        """Every `source` naming a placeholder run.
+
+        Walks the structure rather than grepping the text, because the corrections register
+        *describes* this bug in prose and a substring search flags its own correction record.
+        """
+        out: list[str] = []
+        if isinstance(node, dict):
+            source = node.get("source")
+            if isinstance(source, str) and "pending-" in source:
+                out.append(source)
+            for child in node.values():
+                out += unresolved(child)
+        elif isinstance(node, list):
+            for child in node:
+                out += unresolved(child)
+        return out
+
+    for path in (CFG.records_dir / "fertility.json", WEB / "records.json"):
+        bad = unresolved(json.loads(path.read_text(encoding="utf-8")))
+        assert not bad, f"{path.name} ships {len(bad)} unresolved run id(s), e.g. {bad[0]}"
+
+
+def test_the_unresolved_run_check_can_actually_fail():
+    """Breaking X17 must fail: a placeholder nested where the old patch never reached is caught.
+
+    `conversational` is exactly where the 115 unresolved ids hid, so the mutation puts one back
+    there rather than somewhere the original bug could not have occurred.
+    """
+    record = json.loads((CFG.records_dir / "fertility.json").read_text(encoding="utf-8"))
+    forged = {
+        **record,
+        "conversational": {"ta": {"source": "cl100k_base|conv@pending-20260805T063758Z"}},
+    }
+
+    planted = [
+        v["source"]
+        for v in forged["conversational"].values()
+        if isinstance(v, dict) and "pending-" in v.get("source", "")
+    ]
+    assert planted, "the mutation no longer plants a placeholder, so the guard proves nothing"
+
+
+def test_nothing_derived_from_estimates_claims_to_be_measured():
+    """INV-4, the direction that was being violated: a sum is as weak as its weakest input.
+
+    `sourcing` declared `measured` over `committed_tokens`, which is 6.39T summed from catalogue
+    sizes of which 24 are estimated and 121 unknown. The page tells the reader that mark means
+    "somebody ran it". Nobody had. Correction X17.
+    """
+    bundle = _bundle()
+
+    sizes = [(d.get("size_tokens") or {}).get("provenance") for d in bundle["datasets"]]
+    assert "measured" not in sizes, (
+        "a catalogue size is now measured — re-check whether the blocks below may claim it too"
+    )
+
+    for block in _DERIVED_FROM_CATALOGUE_SIZES:
+        assert bundle[block]["provenance"] != "measured", (
+            f"{block} claims measured; its token figures are sums of catalogue estimates"
+        )
+
+
+def test_the_derived_provenance_check_can_actually_fail():
+    """Breaking X17 must fail: restore the blanket and the guard must object."""
+    bundle = _bundle()
+    forged = {**bundle, "sourcing": {**bundle["sourcing"], "provenance": "measured"}}
+
+    assert forged["sourcing"]["provenance"] == "measured"
+    with pytest.raises(AssertionError, match="sums of catalogue estimates"):
+        for block in _DERIVED_FROM_CATALOGUE_SIZES:
+            assert forged[block]["provenance"] != "measured", (
+                f"{block} claims measured; its token figures are sums of catalogue estimates"
+            )
+
+
+def test_counts_may_still_claim_measurement():
+    """The correction must not over-swing: counting records in a catalogue we hold is a measurement.
+
+    145 datasets is 145 datasets. Marking exact counts as estimates would be the same dishonesty
+    pointing the other way, and would drain the mark of meaning.
+    """
+    bundle = _bundle()
+
+    assert bundle["sourcing"]["counts"]["provenance"] == "measured"
+    assert bundle["record_counts"]["provenance"] == "measured"
+    assert bundle["grades"]["provenance"] == "measured"
+
+
 def test_no_bare_number_in_the_bundle():
     """Every figure must be renderable as measured or estimated — so none may be naked."""
     bare = _bare_numbers(_bundle())

@@ -494,8 +494,13 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
         # Tiers no benchmark can detect, priced. "Every tier must have an instrument" is one of the
         # four evaluation disciplines, and until now nothing checked it.
         "orphan_tiers": {
-            "provenance": "measured",
-            "source": "matched from the mixture against the benchmark register",
+            # The tier-to-instrument matching is exact; the GPU-hours and rupees attached to
+            # it come from an estimated mix at an assumed list price, so the block is estimated.
+            "provenance": "estimated",
+            "source": (
+                "matched from the mixture against the benchmark register; the cost of an orphan "
+                "is priced from the estimated mix at a list rate"
+            ),
             # `_strip_tier_prose` removes `capabilities` from the shipped presets to save bytes,
             # and that is exactly the field the orphan check matches on — so this rebuilds the
             # recommended mix from TIER_SHAPE, which still carries it. Passing the stripped mix

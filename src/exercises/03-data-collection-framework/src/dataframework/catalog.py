@@ -44,7 +44,7 @@ EXPECTED_COUNTS: dict[str, int] = {
     # multiplied a pool by its epoch count and called the product "effective", which is the cost of
     # a schedule and not its value; the register exists to hold errors found after the fact, and
     # excluding our own would make it a record of somebody else's mistakes.
-    "corrections": 16,
+    "corrections": 17,
     "tools": 17,
     "acquisition": 8,
     "plan": 12,

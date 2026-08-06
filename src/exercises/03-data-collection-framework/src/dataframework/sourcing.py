@@ -119,8 +119,12 @@ def build_lifecycle(datasets: list[dict[str, Any]]) -> dict[str, Any]:
 
     unclassified = [d for d in datasets if not lifecycle_of(d)]
     return {
-        "provenance": "measured",
-        "source": "grouped from the catalogue's own stage tags",
+        # `tokens_known` sums catalogue sizes, so the block inherits their weakest provenance.
+        "provenance": "estimated",
+        "source": (
+            "grouped from the catalogue's own stage tags; membership counts are exact, "
+            "token totals are sums of catalogue size estimates"
+        ),
         "stages": stages,
         "unclassified": [{"id": d["id"], "stage": d.get("stage") or []} for d in unclassified],
         "unclassified_count": len(unclassified),
@@ -303,10 +307,18 @@ def build_plan(datasets: list[dict[str, Any]], mix: dict[str, Any]) -> dict[str,
     committed_total = round(sum(t["committed_tokens"] for t in tiers))
     target_total = round(sum(t["target_tokens"] for t in tiers))
     return {
-        # Series-level provenance, matching record_counts and coverage: every number below is
-        # counted from the catalogue, and typing each one individually would add bytes only.
-        "provenance": "measured",
-        "source": "matched from the catalogue against the proposed mixture",
+        # Estimated, not measured, and the distinction is the whole point of the mark.
+        #
+        # The counts below are exact — 145 datasets is 145 datasets. The token figures are not:
+        # each is a sum over the catalogue's `size_tokens`, and not one of the 145 records carries a
+        # measured size (24 are estimated, 121 unknown). This block used to declare `measured` over
+        # both, which put a green "somebody ran it" underline under 6.39T that nobody has counted.
+        # A derived number is no more measured than its least-measured input.
+        "provenance": "estimated",
+        "source": (
+            "matched from the catalogue against the proposed mixture; counts are exact, "
+            "token figures are sums of catalogue size estimates"
+        ),
         # Shipped so the atlas can group the catalogue the same way, and so the mapping is
         # inspectable in the bundle rather than only in this file.
         "tier_categories": {k: list(v) for k, v in TIER_CATEGORIES.items()},
@@ -316,6 +328,10 @@ def build_plan(datasets: list[dict[str, Any]], mix: dict[str, Any]) -> dict[str,
         "covered_share": round(committed_total / target_total, 4) if target_total else None,
         "blocked": blocked,
         "counts": {
+            # These really are measured: they count records in a catalogue we hold, and a
+            # miscount would be a bug rather than an estimate.
+            "provenance": "measured",
+            "source": "counted from the catalogue",
             "catalogued": len(datasets),
             "mapped_to_a_tier": sum(1 for d in datasets if tier_of(d)),
             "committable": sum(1 for d in datasets if tier_of(d) and not blockers(d)),

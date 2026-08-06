@@ -558,7 +558,9 @@ function chapterGrowth(ctx) {
       text('The one quantity that never moves. Natural Indian-language text is a '),
       b('fixed absolute quantity'),
       text(' — this catalogue can commit '),
-      renderNumber({ value: committedNatural, unit: 'tokens', provenance: 'measured', source: 'verified human-origin tokens in the committable catalogue' }, { unit: false }),
+      /* Estimated, not measured: this is a sum over catalogue `size_tokens`, and none of the 145
+       * records carries a measured size. The green underline means "somebody ran it". X17. */
+      renderNumber({ value: committedNatural, unit: 'tokens', provenance: 'estimated', source: 'summed from the committable catalogue, whose sizes are themselves estimates' }, { unit: false }),
       text(' of it. The mixture reserves 8% of every batch for it, so the requirement rises with the corpus while the supply does not. That gap is the whole argument for funding collection years before a model trains.'),
     ],
     states,
@@ -1077,7 +1079,7 @@ function chapterDatasets(ctx) {
       table(['tier', 'needs', 'can commit', 'covered'], (src.tiers || []).map((t) => [
         t.tier,
         renderNumber({ value: t.target_tokens, unit: 'tokens', provenance: data.milestones.provenance, source: data.milestones.source }, { unit: false }),
-        renderNumber({ value: t.committed_tokens, unit: 'tokens', provenance: 'measured', source: 'summed from the committable catalogue' }, { unit: false }),
+        renderNumber({ value: t.committed_tokens, unit: 'tokens', provenance: 'estimated', source: 'summed from the committable catalogue, whose sizes are themselves estimates' }, { unit: false }),
         `${((t.covered_share || 0) * 100).toFixed(0)}%`,
       ]), [1, 2, 3]),
     ],
@@ -2421,7 +2423,10 @@ function chapterAppendix(ctx) {
 
       const rows = unlocked();
       const tokens = rows.reduce((a, r) => a + countable(r.d, r.tier), 0);
-      big.replaceChildren(renderNumber({ value: tokens, unit: 'tokens', provenance: 'measured', source: 'summed from the catalogue under the selected resolutions' }, { unit: false }));
+      /* A counterfactual — what the corpus would hold if the reader resolved these blockers — and
+       * it was carrying the mark that means somebody ran it. It is estimated twice over: the sizes
+       * are estimates, and the resolutions have not happened. */
+      big.replaceChildren(renderNumber({ value: tokens, unit: 'tokens', provenance: 'estimated', source: 'summed from the catalogue under resolutions the reader selected, which have not happened' }, { unit: false }));
       sub.textContent = `${rows.length} of ${pool.length} datasets committable, against ${fmt(needed, 'count')} the mixture needs`;
 
       bars.replaceChildren();
@@ -2834,7 +2839,7 @@ function buildLegend(data) {
   const pv = $('div', 'legend-v');
   pv.append(
     text('Every figure on this page carries where it came from. '),
-    renderNumber({ value: 1.35, unit: 'ratio', provenance: 'measured', source: 'the legend' }, { unit: false }),
+    renderNumber({ value: 1.35, unit: 'ratio', provenance: 'measured', source: 'tiktoken/cl100k_base over IN22-Gen, our own run — English measures 1.3462' }, { unit: false }),
     text(' underlined means somebody ran it. '),
     renderNumber({ value: 15e12, unit: 'tokens', provenance: 'estimated', source: 'the legend' }, { unit: false }),
     text(' plain means it is a design figure or a published estimate. Hover any of them for the source. Nothing on this page is a number with no origin — the renderer refuses to print one.'),

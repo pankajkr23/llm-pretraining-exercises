@@ -189,6 +189,16 @@ def tokenizers_available() -> dict[str, Callable[[str], list[int]]]:
     return encoders
 
 
+# The tokenizers the protocol names that this repository cannot measure. Kept as a constant so the
+# gap can be counted rather than described from memory.
+_TOKENIZER_UNAVAILABLE = {
+    "candidate V=208,896": (
+        "never trained. Nothing in this repository builds it, so the row the protocol "
+        "calls 'the proposal under test' stays empty and no parity_ratio is computable."
+    ),
+}
+
+
 def run(cfg: Config | None = None, run_id: str = "") -> dict[str, Any]:
     """Measure every available tokenizer over every available language.
 
@@ -249,16 +259,16 @@ def run(cfg: Config | None = None, run_id: str = "") -> dict[str, Any]:
         "languages_measured": sorted(c for c in corpus if c != "en"),
         "languages_unavailable": unavailable,
         "tokenizers_measured": sorted(by_tokenizer),
-        "tokenizers_unavailable": {
-            "candidate V=208,896": (
-                "never trained. Nothing in this repository builds it, so the row the protocol "
-                "calls 'the proposal under test' stays empty and no parity_ratio is computable."
-            ),
-        },
+        "tokenizers_unavailable": dict(_TOKENIZER_UNAVAILABLE),
+        # Computed, not typed. This was a hardcoded string reading "three of the six tokenizers
+        # are unavailable" long after the run had measured five with one unavailable — a false
+        # statement about the run's own coverage, printed in the chapter about honest measurement.
         "protocol_gaps": (
-            "Partial execution of docs/FERTILITY_MEASUREMENT.md: three of the six tokenizers are "
-            "unavailable, and no parity_ratio is reported because it is defined against our own "
-            f"candidate tokenizer, which does not exist. Corpus: {source} ({band})."
+            f"Partial execution of docs/FERTILITY_MEASUREMENT.md: {len(by_tokenizer)} tokenizer"
+            f"{'' if len(by_tokenizer) == 1 else 's'} measured and "
+            f"{len(_TOKENIZER_UNAVAILABLE)} unavailable, and no parity_ratio is reported because "
+            "it is defined against our own candidate tokenizer, which does not exist. "
+            f"Corpus: {source} ({band})."
         ),
         "by_tokenizer": by_tokenizer,
         "conversational_corpus": "IN22-Conv" if conversational else None,
@@ -286,9 +296,22 @@ def main() -> None:
     record["run_id"] = (
         f"{slug}-{stamp}-{hashlib.blake2b(stamp.encode(), digest_size=4).hexdigest()}"
     )
-    for values in record["by_tokenizer"].values():
-        for value in values.values():
-            value["source"] = value["source"].replace(f"pending-{stamp}", record["run_id"])
+
+    # Every block that carries a source, not just `by_tokenizer`. Patching one of them left 115
+    # values in the shipped public bundle claiming `provenance: "measured"` against an id literally
+    # prefixed `pending-` that matched no run — `conversational` was the one being missed. X17.
+    def _resolve(node: object) -> None:
+        if isinstance(node, dict):
+            source = node.get("source")
+            if isinstance(source, str) and f"pending-{stamp}" in source:
+                node["source"] = source.replace(f"pending-{stamp}", record["run_id"])
+            for child in node.values():
+                _resolve(child)
+        elif isinstance(node, list):
+            for child in node:
+                _resolve(child)
+
+    _resolve(record)
     (Config().records_dir / "fertility.json").write_text(
         json.dumps(record, ensure_ascii=False, indent=1) + "\n", encoding="utf-8"
     )
