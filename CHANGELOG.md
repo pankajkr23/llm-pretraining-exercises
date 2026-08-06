@@ -42,17 +42,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
-- **A contents rail that stays with the reader.** The one-page report runs thirteen chapters and an
-  appendix, and the only way to see where you were was to scroll back to the top. A sticky rail now
-  sits in the left margin on wide screens, marking the chapter you are in and collapsing to a single
-  button when you want the width back — a choice it remembers. Below the breakpoint nothing changes:
-  the inline contents block at the top, which says what each chapter answers, is still the contents.
+- **A contents rail that stays with the reader, and only one contents list.** The one-page report
+  runs thirteen chapters and an appendix, and the only way to see where you were was to scroll back
+  to the top. There is now a single contents with two presentations: a block in the flow on narrow
+  screens, carrying a line on what each chapter answers, and on wide ones a rail pinned to the left
+  margin, vertically centred, marking the chapter you are in and collapsing to one button when you
+  want the width back — a choice it remembers. The two-column block that used to sit under the lede
+  is gone, along with the screen of scrolling it put between the opening and the first chapter.
 - **The growth plan says what each stage would actually train on.** The four stages — 3T, 8T, 16.8T
   and 30T — now each carry the sequence length, whether web data is admitted, whether the script
   quarantine is absolute or enforced, and how much noise passes, with a table comparing all four
   down the page. Each stage then names how many catalogued datasets its own rule admits and what
   they carry, so the corpus a stage needs is checked against the corpus that exists rather than
-  asserted beside it.
+  asserted beside it. A stage now summarises itself as its window size and its corpus rather than
+  its parameter count: what to read, and in how long a window, is the decision being made — the
+  parameter count follows from it.
 - **One content width, with prose held to a reading measure inside it.** The page used to cap
   everything at 860px, which cramped a seven-column dataset table and a two-column figure while a
   thousand pixels sat empty either side. The container is now a single 1240px and never moves, so

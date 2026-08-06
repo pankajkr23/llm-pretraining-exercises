@@ -441,7 +441,10 @@ function chapterGrowth(ctx) {
     ],
     refresh: (api) => {
       stages.forEach((st, i) => {
-        api.shard(i, `${fmt(st.params_total, 'count')} stored · ${fmt(st.params_active, 'count')} active · ${fmt(st.corpus, 'count')} corpus`);
+        /* Sequence length and corpus, not parameter counts. A stage is a decision about what text
+         * to read and in how long a window; the parameter count is a consequence of that and is
+         * drawn in the figure anyway, where it is making an argument rather than labelling one. */
+        api.shard(i, `${st.config.sequence_length.toLocaleString('en-US')}-token windows · ${fmt(st.corpus, 'count')} corpus · web ${st.config.web_data_short}`);
         const need = st.corpus * 0.08 / 4;
         api.inline(i, `→ needs ${fmt(need, 'count')} unique natural Indic; ${fmt(committedNatural, 'count')} can be committed`, need > committedNatural);
       });
@@ -2550,7 +2553,6 @@ export function buildPage(data, records) {
 
   fillLede(data);
   buildLegend(data);
-  buildNav(main);
   buildRail(main);
   buildFooter(data);
 
@@ -2713,6 +2715,7 @@ function buildRail(main) {
 
   const links = [...main.querySelectorAll('section')].map((sec) => {
     const heading = sec.querySelector('h2');
+    /* textContent would swallow the deep-link anchor's own label, so read the text nodes only. */
     const label = [...(heading ? heading.childNodes : [])]
       .filter((node) => node.nodeType === 3)
       .map((node) => node.textContent)
@@ -2721,7 +2724,16 @@ function buildRail(main) {
     const num = heading?.querySelector('.n')?.textContent || '';
     const a = $('a', 'rail-link');
     a.href = `#${sec.id}`;
-    a.append($('span', 'rail-n', num), $('span', '', label));
+    const body = $('span', 'rail-body');
+    body.append($('span', 'rail-t', label));
+    /* The answer line shows where the rail is a block and there is width for it, and is hidden by
+     * CSS in the narrow sidebar. It stays in the title either way, so the sidebar reader can still
+     * get at it. */
+    if (NAV_ANSWERS[sec.id]) {
+      body.append($('span', 'rail-sub', NAV_ANSWERS[sec.id]));
+      a.title = NAV_ANSWERS[sec.id];
+    }
+    a.append($('span', 'rail-n', num), body);
     list.append(a);
     return { sec, a };
   });
@@ -2733,10 +2745,14 @@ function buildRail(main) {
 
   /* Remembered, like the theme: a reader who closed the rail on the way in did not ask to be given
    * it back at every anchor they follow. Storage may be blocked, in which case open is a fine
-   * default and the toggle still works for the page view. */
+   * default and the toggle still works for the page view.
+   *
+   * The state lives on the root element rather than on the rail, because collapsing it also has to
+   * widen the content — and the rail now sits inside the wrapper it would be a sibling of. */
   const RAIL_KEY = 'era5-rail-shut';
+  const root = document.documentElement;
   const setOpen = (open) => {
-    host.classList.toggle('shut', !open);
+    root.classList.toggle('rail-shut', !open);
     toggle.textContent = open ? '«' : '»';
     toggle.setAttribute('aria-expanded', String(open));
     toggle.setAttribute('aria-label', open ? 'Hide the contents rail' : 'Show the contents rail');
@@ -2747,14 +2763,17 @@ function buildRail(main) {
   } catch { /* no storage; stay open */ }
   setOpen(!shut);
   toggle.addEventListener('click', () => {
-    const open = host.classList.contains('shut');
+    const open = root.classList.contains('rail-shut');
     setOpen(open);
     try {
       localStorage.setItem(RAIL_KEY, open ? '0' : '1');
     } catch { /* the choice still holds for this page view */ }
   });
   head.append(title, toggle);
-  host.append(head, list);
+  /* One wrapper so head and list centre in the viewport together as a block. */
+  const inner = $('div', 'rail-inner');
+  inner.append(head, list);
+  host.replaceChildren(inner);
 
   /* Mark the chapter the reader is actually in: the last one whose heading has gone past the top of
    * the viewport.
@@ -2765,13 +2784,19 @@ function buildRail(main) {
    * chapter ahead of the reader. Nearest is the wrong question. "Which heading have I passed" is the
    * right one, and it needs no tuning.
    *
-   * The offset is the band just under the top edge where a heading counts as arrived rather than
-   * still incoming. */
-  const ARRIVED = 130;
+   * A heading counts as arrived once it reaches the top third of the viewport — a proportion rather
+   * than a pixel count, so it means the same thing on a laptop and on a tall monitor. A fixed 130px
+   * was too strict: headings sitting a quarter of the way down the screen, plainly being read, were
+   * still scored as incoming.
+   *
+   * Note this is deliberately not "whichever section covers most of the viewport", which sounds
+   * more honest and breaks on short sections — one shorter than a screen can sit fully visible and
+   * still lose to the tails of its neighbours either side, so it would never be markable at all. */
   const mark = () => {
+    const arrived = window.innerHeight / 3;
     let best = 0;
     links.forEach(({ sec }, k) => {
-      if (sec.getBoundingClientRect().top - ARRIVED <= 0) best = k;
+      if (sec.getBoundingClientRect().top - arrived <= 0) best = k;
     });
     links.forEach(({ a }, k) => a.classList.toggle('on', k === best));
   };
@@ -2784,31 +2809,6 @@ function buildRail(main) {
   window.addEventListener('scroll', onMove, { passive: true });
   window.addEventListener('resize', onMove, { passive: true });
   mark();
-}
-
-function buildNav(main) {
-  const nav = document.getElementById('chapters');
-  if (!nav) return;
-  nav.replaceChildren();
-  [...main.querySelectorAll('section')].forEach((s) => {
-    const heading = s.querySelector('h2');
-    if (!heading) return;
-    const num = heading.querySelector('.n');
-    /* textContent would swallow the deep-link anchor's own label, so read the text nodes only. */
-    const label = [...heading.childNodes]
-      .filter((node) => node.nodeType === 3)
-      .map((node) => node.textContent)
-      .join('')
-      .trim();
-    const a = $('a');
-    a.append($('span', 'cn', num ? num.textContent : ''));
-    const body = $('span', 'ct');
-    body.append($('span', 'ct-title', label));
-    if (NAV_ANSWERS[s.id]) body.append($('span', 'ct-sub', NAV_ANSWERS[s.id]));
-    a.append(body);
-    a.href = `#${s.id}`;
-    nav.append(a);
-  });
 }
 
 function buildFooter(data) {

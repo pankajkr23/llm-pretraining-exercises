@@ -38,6 +38,7 @@
       "config": {
         "sequence_length": 4096,
         "web_data": "none",
+        "web_data_short": "none",
         "script_quarantine": "absolute",
         "admits": "committable, non-web only",
         "noise": "zero"
@@ -58,6 +59,7 @@
       "config": {
         "sequence_length": 8192,
         "web_data": "introduced",
+        "web_data_short": "introduced",
         "script_quarantine": "enforced",
         "admits": "web enters here",
         "noise": "filtered"
@@ -78,6 +80,7 @@
       "config": {
         "sequence_length": 8192,
         "web_data": "full corpus",
+        "web_data_short": "full",
         "script_quarantine": "enforced",
         "admits": "everything committable",
         "noise": "filtered"
@@ -98,6 +101,7 @@
       "config": {
         "sequence_length": 8192,
         "web_data": "full corpus, plus the hardest subsets",
+        "web_data_short": "full + hardest",
         "script_quarantine": "enforced",
         "admits": "everything committable",
         "noise": "hardest included"
