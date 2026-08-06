@@ -203,10 +203,10 @@
       "claim": "ASR transcription is one of the only ways to manufacture genuinely natural Indic text at scale.",
       "why": "India is an oral-first information economy: enormous amounts of Indic language were never written down, so they cannot be crawled. Transcription is the only way to reach them.",
       "hours": {
-        "value": 35000,
+        "value": 100000,
         "unit": "hours",
         "provenance": "estimated",
-        "source": "docs/ATLAS.md — open, permissively-licensed Indic speech across IndicVoices, Vaani, SPRING-INX, Shrutilipi, Kathbath and SYSPIN"
+        "source": "correction X04 — BhasaAnuvaad (~44,400h, CC BY 4.0) plus IndicVoices, Vaani, SPRING-INX, Shrutilipi, Kathbath, SYSPIN and Rasa; \"well north of 100,000 hours\". Stated as a floor, not a total: nobody has added the pool up."
       },
       "words_per_hour": {
         "value": 9000,
@@ -215,10 +215,10 @@
         "source": "docs/ATLAS.md"
       },
       "words_yield": {
-        "value": 300000000,
+        "value": 900000000,
         "unit": "words",
         "provenance": "estimated",
-        "source": "docs/ATLAS.md — 35,000 hours at roughly 9,000 words/hour"
+        "source": "at least 100,000 hours at roughly 9,000 words/hour"
       },
       "caveat": "Small in raw token terms and extraordinary in distributional value: it is the conversational register web text completely lacks, and conversation is this model's stated primary task. No token figure is given here on purpose — the Atlas counts words, the conversion depends on a tokenizer nobody has trained, and counting it is the first task rather than an assumption.",
       "corpora": [
@@ -229,7 +229,8 @@
         "SPK-06",
         "SPK-01",
         "SPK-04"
-      ]
+      ],
+      "superseded": "This chapter planned against 35,000 hours and ~300M words while correction X04, rendered in this page's own appendix, put the open pool well north of 100,000 — an understatement of roughly threefold, in the direction that made the highest-value Indic route look smaller than it is. Both numbers were on one page. The figures here now follow the correction."
     }
   },
   "shape": {

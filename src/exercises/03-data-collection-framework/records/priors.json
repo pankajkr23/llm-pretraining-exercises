@@ -1,7 +1,7 @@
 [
   {
     "id": "PR01",
-    "claim": "Up to 4 epochs of repeated data is almost as good as fresh data: an 8.7B-parameter model trained for 4 epochs on 44B unique tokens finished with only 0.5% higher validation loss than a single-epoch model on 178B unique tokens. The decay constant R*_D is approximately 15 — a repeated token has lost 1/e of its value at around 15 repetitions (16 epochs) — and no amount of repetition beats a single epoch on U·(1 + R*_D) ~= 16x the unique pool.",
+    "claim": "Up to 4 epochs of repeated data is almost as good as fresh data: an 8.7B-parameter model trained for 4 epochs on 44B unique tokens finished with only 0.5% higher validation loss than a single-epoch model on 178B unique tokens. The fitted decay constant R*_D is 15.4, which the paper rounds to 15 when it names the half-life — a repeated token has lost 1/e of its value at around 15 repetitions (16 epochs) — and no amount of repetition beats a single epoch on U·(1 + R*_D) ~= 16x the unique pool.",
     "source": "arXiv:2305.16264 — Muennighoff et al., Scaling Data-Constrained Language Models",
     "effect_on_design": "Re-budgets the corpus as unique pool x deliberate epoch schedule = effective tokens instead of '15T unique tokens'. The ~0.3T unique natural Indic pool at 4 epochs is ~1.2T effective at near-zero quality cost, raising the natural-Indic effective share from 2% to ~7-8% without collecting a single new token (theoretical ceiling ~4.8T effective at 16x). Also half-defuses the 40-70% global-dedup loss risk: dedup down to the unique pool, then choose repetition deliberately.",
     "confidence": "high",

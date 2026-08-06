@@ -417,6 +417,34 @@ def test_the_derived_provenance_check_can_actually_fail():
             )
 
 
+def test_the_records_agree_about_any_model_they_both_describe():
+    """Two registers describing one model must not describe it differently.
+
+    `architectures.json` said Sarvam-30B was 30B where `scaling_reference.json` said 32B, and the
+    model card says 32B; the same pair disagreed about the 105B's active parameters. Both are
+    rendered on the page, in different chapters, so a reader comparing them saw two answers.
+    Correction X19.
+    """
+    records = json.loads((WEB / "records.json").read_text(encoding="utf-8"))
+    arch = {r["model"]: r for r in records.get("architectures", []) if r.get("params_total")}
+    ref = {
+        m["model"]: m
+        for m in (records.get("scaling_reference") or {}).get("models", [])
+        if m.get("params_total")
+    }
+
+    shared = set(arch) & set(ref)
+    assert shared, "no model appears in both registers, so this guard is watching nothing"
+    for model in sorted(shared):
+        for field in ("params_total", "params_active"):
+            if arch[model].get(field) is None or ref[model].get(field) is None:
+                continue
+            assert arch[model][field] == ref[model][field], (
+                f"{model}: architectures says {arch[model][field]} for {field}, "
+                f"scaling_reference says {ref[model][field]}"
+            )
+
+
 def test_counts_may_still_claim_measurement():
     """The correction must not over-swing: counting records in a catalogue we hold is a measurement.
 

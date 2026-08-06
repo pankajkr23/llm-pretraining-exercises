@@ -207,7 +207,10 @@ function chapterTarget(ctx) {
 // ─────────────────────────────────────────────────────────── 2 · how much text
 
 function chapterBudget(ctx) {
-  const { data, presets, recommended } = ctx;
+  const { data, records, presets, recommended } = ctx;
+  /* The top of the growth ladder, read rather than typed. This state asked "and at 300 billion
+   * parameters?" while the note inside it printed the ladder ending at 200B. */
+  const LADDER_TOP = ((records.growth || {}).stages || []).slice(-1)[0] || {};
   const naturalOf = (p) => p.mix.tiers.find((t) => t.name === 'indic-natural');
   const POOL = naturalOf(recommended).unique_tokens;
   const nearFree = data.mix_rules.epochs_near_free.value;
@@ -262,7 +265,7 @@ function chapterBudget(ctx) {
     })),
     {
       rungs: true,
-      marg: 'And at 300 billion parameters?',
+      marg: `And at ${fmt(LADDER_TOP.params_total || 0, 'count')} parameters?`,
       lead: 'A bigger model does not need proportionally more Indian text — it needs more of every kind, and the Indic pool is the one that cannot grow to meet it. Scaling past this size is ',
       bold: 'an English and synthetic story',
       tail: ', unless somebody funds collection. That is a factual limit, not a pessimistic one.',
@@ -334,7 +337,7 @@ function chapterBudget(ctx) {
         api.bigHit(false);
         api.sub(`worth of natural Indian-language text at the recommended budget — costing ${fmt(naturalOf(recommended).seen_tokens, 'count')}`);
         api.verdict((recommended.verdict || 'recommended').toUpperCase(), false);
-        api.note(`One mark per budget here rather than per pass — the seed, and the two rungs above it. Every budget reads its own pool four times. What changes between them is how much text was collected, not how hard it was read — and past this model size, collection is the wall. The ladder is judged as: ${presets.map((p) => `${p.id}, ${(p.verdict || '').toLowerCase()}`).join('; ')}.`);
+        api.note(`One mark per budget here rather than per pass — the seed and the ${['no', 'one', 'two', 'three', 'four', 'five'][presets.length - 1] || presets.length - 1} rungs above it. Every budget reads its own pool four times. What changes between them is how much text was collected, not how hard it was read — and past this model size, collection is the wall. The ladder is judged as: ${presets.map((p) => `${p.id}, ${(p.verdict || '').toLowerCase()}`).join('; ')}.`);
         api.strip(presets.map((p) => (p.recommended ? 'reg' : '')));
         return;
       }
@@ -683,6 +686,10 @@ function chapterGrowth(ctx) {
 
 function chapterMix(ctx) {
   const { data, presets, recommended } = ctx;
+  /* Spelled from the data. The claim, the caption and a state used to disagree about whether the
+   * mixture had eight tiers or ten — on the same screen, beside a figure drawing ten bars a reader
+   * can count. Prose that quotes a count has to read it. */
+  const TIER_COUNT = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'][recommended.mix.tiers.length] || String(recommended.mix.tiers.length);
   const info = data.milestones.tier_info || {};
   const gaps = (data.datasets || []).filter((x) => x.is_gap);
   const gapNames = gaps.map((x) => x.name).join(', ');
@@ -692,7 +699,7 @@ function chapterMix(ctx) {
     {
       rung: rungIndex,
       marg: `The mixture at ${recommended.id}`,
-      lead: 'You cannot train on everything, so you decide what fraction of the reading is what kind of text. Each kind is a tier, and the eight shares add to one whole — which means ',
+      lead: `You cannot train on everything, so you decide what fraction of the reading is what kind of text. Each kind is a tier, and the ${TIER_COUNT} shares add to one whole — which means `,
       bold: 'giving more to one takes it from another',
       tail: '. There is no spare capacity in a training budget.',
     },
@@ -749,7 +756,7 @@ function chapterMix(ctx) {
     wide: true,
     title: 'What goes into it',
     claim: [
-      text('Eight kinds of text, and the argument is entirely about the proportions. All eight stay on screen because comparing them is the point. These are '),
+      text(`${TIER_COUNT[0].toUpperCase()}${TIER_COUNT.slice(1)} kinds of text, and the argument is entirely about the proportions. All ${TIER_COUNT} stay on screen because comparing them is the point. These are `),
       b('proportions, not a shopping list'),
       text(' — for the datasets that would actually fill each one, see '),
       ref('which datasets', 'datasets'),
@@ -774,7 +781,7 @@ function chapterMix(ctx) {
       })),
       para('The shares are fixed by the proposed tier shape; the totals scale with the budget. At ', recommended.id, ' the mixture is ', fmt(recommended.mix.total_seen_tokens, 'count'), ' seen from ', fmt(recommended.mix.total_unique_tokens, 'count'), ' unique — the difference is repetition, priced in ', ref('how much text', 'budget'), '.'),
       para('India total sits at ', b(`${(recommended.mix.indic_share * 100).toFixed(1)}%`), ' of the batch, of which ', b(`${(recommended.mix.natural_indic_share * 100).toFixed(1)}%`), ' is natural text rather than manufactured. Code and agentic work together take ', b(`${(((recommended.mix.tiers.find((t) => t.name === 'code') || {}).share || 0) * 100 + ((recommended.mix.tiers.find((t) => t.name === 'agentic-traces') || {}).share || 0) * 100).toFixed(1)}%`), '.'),
-      para('The research this is drawn from proposes a finer twelve-tier split reaching 25.3% India, separating English-educational, Indic-parallel, multilingual-non-Indic, clean-provenance and anneal tiers. The site collapses those into eight for legibility, which is why the India share here reads slightly lower. Both are recorded; neither is hidden.'),
+      para(`The research this is drawn from proposes a finer twelve-tier split reaching 25.3% India, separating English-educational, Indic-parallel, multilingual-non-Indic, clean-provenance and anneal tiers. The site collapses those into ${TIER_COUNT} for legibility, and the India share here lands `, b(`${(recommended.mix.indic_share * 100).toFixed(1)}%`), ' — ', b('higher'), ' than the 25.3% those twelve tiers reach, not lower. Collapsing tiers moved the number up rather than down. Both are recorded; neither is hidden.'),
       para('The protected lane has a ', b(`floor of ${(data.mix_rules.always_on_share.value * 100).toFixed(0)}%`), ' and a ceiling of 20% — a standing rule rather than a per-language exception list, because an exception list is a thing somebody eventually edits under deadline. This tier shape lands at ', b(`${(recommended.mix.always_on_share * 100).toFixed(1)}%`), ', which is ', b('over the ceiling, and the mixture says so'), '. Four tiers sit in it, and the reason it went over is worth following: raising the agentic share to meet the assignment\u2019s stated priority put more of the batch outside the general quality scorer, because agentic traces are one of the things that scorer cannot judge. You cannot have more of the one without more of the other. The warning is left lit rather than silenced by moving the line.'),
       /* The mixture breaches a second guardrail, and the page used to disclose only the first.
        * Leaving one warning lit and the other unmentioned is worse than mentioning neither: it
@@ -1254,8 +1261,8 @@ function chapterPostTraining(ctx) {
       b('proposal rather than a measurement'),
       text(', and the last state compares it against the two labs that published theirs.'),
     ],
-    figNum: 'Fig. 9 — where the post-training budget goes',
-    caption: `Fig. 9 — Each stage's budget split by category, as a share of that stage's total. Every number here is a design proposal from ${sft.source}, which states them with a tilde and cites nothing. They are drawn as estimates and compared against published sets in the last state. The catalogue holds ${post.datasets} datasets tagged for this stage and ${post.sized} of them state a size.`,
+    figNum: 'Fig. 7 — where the post-training budget goes',
+    caption: `Fig. 7 — Each stage's budget split by category, as a share of that stage's total. Every number here is a design proposal from ${sft.source}, which states them with a tilde and cites nothing. They are drawn as estimates and compared against published sets in the last state. The catalogue holds ${post.datasets} datasets tagged for this stage and ${post.sized} of them state a size.`,
     pill: `${fmt(sft.total, 'count')} · ${fmt(dpo.total, 'count')} · ${fmt(plan[2].total, 'count')}`,
     rail: [
       text('Why none of this enters a token budget. '),
@@ -1315,7 +1322,7 @@ function chapterPostTraining(ctx) {
         api.sub('preference pairs per demonstration in this plan');
         api.verdict('OUT OF LINE', true);
         const tulu = refs.find((r) => /tulu/i.test(r.model));
-        api.note(tulu ? `Tulu 3 — the only fully published recipe at this level of detail — pairs ${fmt(tulu.preference, 'count')} preferences to ${fmt(tulu.sft, 'count')} demonstrations, which is ${(ratio(tulu) * 100).toFixed(0)}%. This plan proposes ${(dpo.total / sft.total * 100).toFixed(1)}%. Either the SFT budget is three times larger than it needs to be or the preference budget is five times too small, and nothing in the plan says which. That is what an uncited number costs.` : 'No published comparison is available.');
+        api.note(tulu ? `Tulu 3 — the only fully published recipe at this level of detail — pairs ${fmt(tulu.preference, 'count')} preferences to ${fmt(tulu.sft, 'count')} demonstrations, which is ${(ratio(tulu) * 100).toFixed(0)}%. This plan proposes ${(dpo.total / sft.total * 100).toFixed(1)}%. Either the SFT budget is ${(ratio(tulu) / (dpo.total / sft.total)).toFixed(1)}x larger than it needs to be or the preference budget is ${(ratio(tulu) / (dpo.total / sft.total)).toFixed(1)}x too small — it is one gap, and nothing in the plan says which end of it to move. That is what an uncited number costs.` : 'No published comparison is available.');
         api.strip(rows.map((r) => (r.ours ? 'hit' : 'reg')));
         return;
       }
@@ -2007,7 +2014,7 @@ function chapterCost(ctx) {
     {
       id: 'continue', name: 'Continue-pretrain from Gemma 4', share: 0.15,
       marg: 'Path 2 · keep training somebody else’s',
-      lead: 'A sixth of the compute, Gemma-4-class coding and agentic ability on day one, and one consequence people forget: ',
+      lead: 'A fraction of the compute, Gemma-4-class coding and agentic ability on day one, and one consequence people forget: ',
       bold: 'you inherit its tokenizer, permanently',
       tail: '. You cannot swap one out without discarding the embedding table you were trying to reuse.',
       inherits: 'Gemma-4-class coding and agentic ability', tokenizer: gemma ? `Gemma’s — ×${gemma.mean_tax.value.toFixed(2)} on Indian text` : 'Gemma’s',
@@ -2131,10 +2138,15 @@ function chapterFirst(ctx) {
       count: letters.length,
       label: 'letters to write, ranked by what they unlock',
       lead: 'Then the letters. No check failed on any of these and nobody found a problem with the data — somebody simply has not asked the owner whether it may be used. They unlock the most volume by far, and ',
-      bold: 'every single one is an English corpus',
-      tail: '. That is worth seeing plainly: the cheapest lever on this page does nothing for the capability the model is named for.',
+      /* Was "every single one is an English corpus", which is false and was the sentence the
+       * chapter's argument rested on: the largest of the four is HPLT v3.0, whose catalogue row
+       * reads "198 languages", and Nemotron-CC-v2 is "English + 15 languages". The true claim is
+       * narrower and lands harder, because the reason they cannot be budgeted against is the same
+       * reason the rest of this page exists. */
+      bold: 'not one of them is an Indic corpus',
+      tail: '. Two are English-only. The other two are multilingual — and neither has had its Indian-language partitions measured, so there is no number to put in a budget. The cheapest lever on this page does nothing you can count for the capability the model is named for.',
       verdict: 'FOUR EMAILS',
-      note: `Together they unlock ${fmt(letters.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), 'count')} — more than three times the whole budget. Two alone would cover it. And not one of them adds an Indian-language token.`,
+      note: `Together they unlock ${fmt(letters.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), 'count')} — more than three times the whole budget, and the two largest would cover it between them. None sits in an Indian-language tier: ${letters.filter((x) => /\d+\s+languages/i.test(String((byId[x.id] || {}).languages || ''))).length} of the ${letters.length} are multilingual, the largest carrying 198 languages, but nobody has counted what their Indic partitions hold. An unmeasured partition is not a supply.`,
     },
     {
       id: 'asks',
@@ -2195,7 +2207,7 @@ function chapterFirst(ctx) {
         'Roughly ', renderNumber(asr.hours || {}), ' at about ', renderNumber(asr.words_per_hour || {}),
         ' yields on the order of ', renderNumber(asr.words_yield || {}), '. ', asr.caveat || '',
       ),
-      para(b('The letters.'), ' They unlock ', b(fmt(letters.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), 'count')), ' between them — the two largest would each cover the whole budget alone, and all four are English. That is why "resolve the licences" outranks "collect more data" for volume, and why it is not the same thing as resolving the Indic problem.'),
+      para(b('The letters.'), ' They unlock ', b(fmt(letters.reduce((a, x) => a + (x.unlocks_tokens || 0), 0), 'count')), ' between them — the largest alone exceeds the whole budget, and all four are English. That is why "resolve the licences" outranks "collect more data" for volume, and why it is not the same thing as resolving the Indic problem.'),
       table(['dataset', 'unlocks', 'for'], letters.map((x) => {
         const d = byId.get(x.id) || {};
         return [d.name || x.id, renderNumber({ value: x.unlocks_tokens, unit: 'tokens', provenance: 'estimated', source: 'the catalogue' }, { unit: false }), x.tier];
@@ -2645,9 +2657,11 @@ function chapterAppendix(ctx) {
 
   /* `priors` rides in data.json, not records.json — it is cited inline by two chapters, so it has
    * to be there when the page paints. Reading it from records rendered an empty block. */
+  /* The source column was being dropped, so a register of published findings printed no citations
+   * on the one page whose whole argument is that a figure must name what produced it. */
   block(`What the literature settled — ${(data.priors || []).length}`, table(
-    ['claim', 'effect on this design'],
-    (data.priors || []).map((r) => [r.claim, r.effect_on_design]),
+    ['claim', 'effect on this design', 'source'],
+    (data.priors || []).map((r) => [r.claim, r.effect_on_design, r.source || '—']),
   ));
 
   block(`Risks and unknowns — ${(records.risks || []).length}`, table(
@@ -2790,8 +2804,8 @@ export function buildPage(data, records) {
 const GLOSSARY = [
   ['tier', 'One kind of text in the mixture — English web pages, code, natural Indian-language text. The mixture is eight of them, and their shares add to one whole.'],
   ['lane', 'A part of every training batch that the quality-scoring program is not allowed to look at. Not an argument with the filter; a place it cannot reach.'],
-  ['rung', 'One of the four budget sizes on offer — 5, 10, 15 or 20 trillion tokens. The mixture keeps the same shape on every rung.'],
-  ['pass (epoch)', 'One complete read of a body of text. Reading a small pool four times contributes four times its size to the budget, at almost no cost in quality — which is the only reason the Indic budget is reachable at all.'],
+  ['rung', 'One of the four budget sizes on offer. The mixture keeps the same shape on every rung; what changes is how much text each one asks for.'],
+  ['pass (epoch)', 'One complete read of a body of text. Reading a small pool four times costs four times the compute and is worth about 3.7 times its size — close enough to free that it is the only reason the Indic budget is reachable at all, but not the same as four times. Repetition decays, and past about sixteen passes it stops paying.'],
   ['gate', 'A check that stops a build rather than filing a report. Used here in two senses: the contamination gate, which drops training documents that contain exam questions; and the five gates whose combined verdict is a dataset’s grade.'],
   ['grade', 'Those five gates scored together — where the text came from, whether its composition matches its claims, whether it overlaps the exam sets, how much survives cleaning, and whether anyone has evidenced any of it.'],
   ['trust band', 'How much a benchmark score can be compared between labs. Native-sourced means written in the language; translation-derived means written in English first; harness-dependent means the score moves with the testing program you run it under.'],
@@ -2817,7 +2831,7 @@ function buildLegend(data) {
   const grades = $('div', 'legend-row');
   grades.append($('div', 'legend-k', 'Grades'));
   const gv = $('div', 'legend-v');
-  [['A', 'usable'], ['B', 'usable with care'], ['C', 'nobody has answered the questions'], ['X', 'a check failed — excluded']].forEach(([g, what], k) => {
+  [['A', 'every gate scored and passed — nothing reaches it yet'], ['B', 'usable with care, and what the four committable datasets are'], ['C', 'nobody has answered the questions'], ['X', 'a check failed — excluded']].forEach(([g, what], k) => {
     if (k) gv.append(text(' · '));
     const badge = $('span', 'grade', g);
     badge.setAttribute('data-grade', g);
@@ -2873,8 +2887,12 @@ function fillLede(data) {
     measured: `${measuredLangs} languages and ${(data.fertility.by_tokenizer_mean || []).length} tokenizers`,
     shingles: `${(data.contamination.shingle_count.value || 0).toLocaleString('en-US')} fingerprints`,
     // Spelled out: "a 15T-token corpus" reads as a units bug, "15-trillion-token" reads as English.
-    budget: `${(budget / 1e12).toFixed(0)}-trillion-token`,
-    committable: `${spelled[0].toUpperCase()}${spelled.slice(1)} datasets clear every bar.`,
+    /* `.toFixed(0)` rendered 16.8 as "17", so the opening paragraph disagreed with every other
+     * mention of the budget on the page. One decimal, with a whole number kept whole. */
+    budget: `${(budget / 1e12).toFixed(1).replace(/\.0$/, '')}-trillion-token`,
+    /* "Clear every bar" read against the legend's "A usable (0)" as a contradiction. It is not —
+     * these are grade B with no blocker against them — but the reader has to be told which. */
+    committable: `${spelled[0].toUpperCase()}${spelled.slice(1)} datasets are committable today.`,
   };
   /* Only write when it differs. The markup already carries the right words; this exists so they
    * cannot drift from the data. Writing an identical string still repaints, and the lede is the
@@ -2899,7 +2917,7 @@ const NAV_ANSWERS = {
   gate: 'type your own sentence and try to sneak it past the contamination check',
   tokenizer: 'Indian scripts cost 13x what English does — measured, on our own run',
   evaluation: 'drop the tests whose scores do not mean what the count implies',
-  cost: 'about 2.5M H100-hours, and the fork this does not settle',
+  cost: 'the compute bill, and the fork this does not settle',
   first: 'the queue: twelve actions, two gates, and the letters that come before both',
   appendix: 'every register the chapters are drawn from, kept whole',
 };

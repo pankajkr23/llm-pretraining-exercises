@@ -28,6 +28,7 @@ from dataframework.mix import (
     worth_tokens,
 )
 from dataframework.orphans import find_orphans
+from dataframework.run_cost import price_run
 from dataframework.shingles import (
     build_attributed_index,
     build_index,
@@ -171,6 +172,37 @@ def test_larger_vocab_lowers_fertility_but_costs_more_softmax():
 def test_vocab_is_rounded_for_tensor_cores():
     assert round_to_multiple(208_000) % 128 == 0
     assert round_to_multiple(208_896) == 208_896  # 1,632 x 128
+
+
+def test_the_run_price_tracks_the_shipping_budget():
+    """The cost chapter must price the budget the page recommends, not a superseded one.
+
+    `records/cost.json` carried this as a static block worked against 15T. The recommendation moved
+    to 16.8T and the chapter kept answering for the old run — 2.50M H100-hours where the plan
+    implies 2.80M, twelve percent low and silent about it. Correction X19.
+    """
+    bundle = json.loads((Config().web_dir / "data.json").read_text(encoding="utf-8"))
+    records = json.loads((Config().web_dir / "records.json").read_text(encoding="utf-8"))
+    recommended = next(p for p in bundle["milestones"]["presets"] if p.get("recommended"))
+    budget = recommended["mix"]["total_seen_tokens"]
+
+    run = records["cost"]["run_cost"]
+    assert run["tokens"] == budget, "the run is priced against a budget the page does not recommend"
+    assert run.get("recomputed") is True, "the price is static again, so it can go stale again"
+
+    hours = next(s for s in run["steps"] if s["unit"] == "H100-hours")["value"]
+    assert hours == pytest.approx(6 * 40e9 * budget / 4.0e14 / 3600, rel=1e-6)
+
+
+def test_the_run_price_check_can_actually_fail():
+    """Breaking X19 must fail: a price against the old budget must be caught."""
+    bundle = json.loads((Config().web_dir / "data.json").read_text(encoding="utf-8"))
+    recommended = next(p for p in bundle["milestones"]["presets"] if p.get("recommended"))
+
+    stale = price_run(params=40e9, seen_tokens=15e12)
+    assert stale["tokens"] != recommended["mix"]["total_seen_tokens"], (
+        "15T is now the recommended budget, so this mutation no longer proves anything"
+    )
 
 
 # --------------------------------------------------------------------------- mix

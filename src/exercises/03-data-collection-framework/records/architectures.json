@@ -11,11 +11,11 @@
   {
     "id": "sarvam-30b",
     "model": "Sarvam-30B",
-    "params_total": 30000000000,
+    "params_total": 32000000000,
     "params_active": 2400000000,
     "context": null,
     "licence": "Apache 2.0",
-    "note": "Read from the Hugging Face model card `sarvamai/sarvam-30b` (§A.1). Active params 2.4B non-embedding; 128 experts, top-6 routing, 1 shared expert; grouped KV (num_key_value_heads=4), 19 layers; intermediate 8192 / moe_intermediate 1024; rope_theta 8e6 with no RoPE scaling; auxiliary-loss-free router balancing, routed scaling factor 2.5; pre-trained on 16T tokens. params_total is taken from the model name and §A.6's 'Sarvam AI (30B, 105B)' - the Atlas never states a total-parameter figure. context is null: the card details rope_theta but no context length for the 30B. Positioning: 'reliable coding ability, best-in-class conversational quality across Indian languages'; handles multilingual voice calls while performing tool calls. Public rollout 6 March 2026."
+    "note": "Read from the Hugging Face model card `sarvamai/sarvam-30b` (§A.1). Active params 2.4B non-embedding; 128 experts, top-6 routing, 1 shared expert; grouped KV (num_key_value_heads=4), 19 layers; intermediate 8192 / moe_intermediate 1024; rope_theta 8e6 with no RoPE scaling; auxiliary-loss-free router balancing, routed scaling factor 2.5; The card states no token count; Sarvam's launch blog reports 16T. params_total is taken from the model name and §A.6's 'Sarvam AI (30B, 105B)' - the Atlas never states a total-parameter figure. context is null: the card details rope_theta but no context length for the 30B. Positioning: 'reliable coding ability, best-in-class conversational quality across Indian languages'; handles multilingual voice calls while performing tool calls. Public rollout 6 March 2026."
   },
   {
     "id": "sarvam-105b",
@@ -24,7 +24,7 @@
     "params_active": 10300000000,
     "context": 128000,
     "licence": "Apache 2.0",
-    "note": "LICENCE CORRECTED BY ADDENDUM A.1 ('MATERIAL CORRECTION #1 - Sarvam-105B is Apache 2.0, with full architecture disclosed'), read from the Hugging Face model card `sarvamai/sarvam-105b`; the addendum wins where it conflicts with Sections 1-21, which had treated Sarvam only as a reference point rather than 'a licence-free starting position'. 128 experts, top-8 routing, 1 shared expert; MLA-style attention with decoupled QK (q_head_dim 192 RoPE+noPE split, v_head_dim 128, head_dim 576, hidden_size 4096); FFN intermediate 16384 / moe_intermediate 2048; YaRN scaling factor 40 for 128K context; auxiliary-loss-free router balancing, routed scaling factor 2.5; pre-trained on 12T tokens. params_total from the model name and §A.6. Consequences per §A.1: it can be upcycled toward ~300B, used as an Indic teacher with zero licence-chain contamination (the clean alternative to BhashaKritika), and it sets the public bar any new 300B must beat."
+    "note": "LICENCE CORRECTED BY ADDENDUM A.1 ('MATERIAL CORRECTION #1 - Sarvam-105B is Apache 2.0, with full architecture disclosed'), read from the Hugging Face model card `sarvamai/sarvam-105b`; the addendum wins where it conflicts with Sections 1-21, which had treated Sarvam only as a reference point rather than 'a licence-free starting position'. 128 experts, top-8 routing, 1 shared expert; MLA-style attention with decoupled QK (q_head_dim 192 RoPE+noPE split, v_head_dim 128, head_dim 576, hidden_size 4096); FFN intermediate 16384 / moe_intermediate 2048; YaRN scaling factor 40 for 128K context; auxiliary-loss-free router balancing, routed scaling factor 2.5; The card states no token count; Sarvam's launch blog reports 12T. params_total from the model name and §A.6. Consequences per §A.1: it can be upcycled toward ~300B, used as an Indic teacher with zero licence-chain contamination (the clean alternative to BhashaKritika), and it sets the public bar any new 300B must beat."
   },
   {
     "id": "lightninglm-120b",

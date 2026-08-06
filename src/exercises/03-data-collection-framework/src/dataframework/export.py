@@ -33,6 +33,7 @@ from .mix import (
 )
 from .models import Value
 from .orphans import find_orphans
+from .run_cost import price_run
 from .shingles import write_index
 from .sourcing import build_lifecycle, build_plan
 from .vocab_sweep import summarise, sweep
@@ -338,6 +339,12 @@ def build_bundle(cfg: Config | None = None) -> dict[str, Any]:
             seen_tokens=_rec_mix["mix"]["total_seen_tokens"],
             indic_share=_rec_mix["mix"]["indic_share"],
             compute_cost_share=(_trade.get("costs") or {}).get("value") or 0.012,
+        )
+        # The run price, recomputed for the same reason. It shipped as a static block worked
+        # against a 15T budget and was 12% low once the recommendation moved to 16.8T.
+        records["cost"]["run_cost"] = records["cost"].get("run_cost", {}) | price_run(
+            params=MODEL_PARAMS,
+            seen_tokens=_rec_mix["mix"]["total_seen_tokens"],
         )
 
     grades: dict[str, int] = {}

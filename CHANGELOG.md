@@ -42,6 +42,22 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **Prose that quotes a count now reads it.** The opening paragraph called the corpus **17
+  trillion** tokens — `.toFixed(0)` on 16.8 — while every other mention said 16.8T. Chapter 4 said
+  the mixture had **eight** tiers and **ten** tiers on one screen, beside a figure drawing ten bars a
+  reader can count. The glossary defined a rung as one of "5, 10, 15 or 20 trillion tokens", a ladder
+  replaced by 3T/8T/16.8T/30T, and defined a pass as contributing "four times its size" — the exact
+  arithmetic correction X15 exists to retract, sitting in the band readers are told to read first.
+  Chapter 13 claimed all four licence-blocked datasets were English corpora when the largest is
+  **HPLT v3.0 at 198 languages**, and planned against 35,000 hours of open Indic speech while this
+  page's own appendix put the pool "well north of 100,000". The cost chapter priced a 15T run: 2.50M
+  H100-hours where the recommendation implies **2.80M**, and $5.0M where it implies **$5.6M**. Two
+  figures were both numbered Fig. 9. Sarvam-30B was 30B in one register and 32B in another (the card
+  says 32B), and both cited the model cards for token counts **the cards do not state**. All fixed —
+  and fixed at the cause: every count quoted in prose is now read from the record that holds it, a
+  new `run_cost.py` recomputes the run price the way `vocab_trade.py` already recomputes the
+  vocabulary trade, and a test asserts the two model registers agree about any model they both
+  describe. Recorded as correction X19.
 - **Three of the guards enforcing the five invariants could not fail.** INV-1b's mutation proof
   built a string from an eval item and asserted the item was in it — it touched no project code and
   could not fail under any change to the repository. INV-2's check asked
