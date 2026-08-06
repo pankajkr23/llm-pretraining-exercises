@@ -392,26 +392,32 @@ function chapterGrowth(ctx) {
     stage: k,
     marg: `Stage ${st.n} · ${st.name}`,
     lead:
+      /* Computed from the record, not typed alongside it. These four sentences quoted parameter
+       * and token figures by hand, and when the ladder was resealed to four stages they kept the
+       * old ones: the seed's text still said "a dense 40B" of what the record calls 3B, and the
+       * third stage still claimed to add 80 billion parameters where the record adds 32. A reader
+       * who checks one number against the table beside it and finds it wrong has no reason to
+       * trust the next one. */
       k === 0
-        ? 'Start here. A dense 40B, and the only stage whose text every later model inherits — grow from trained weights and you never re-read the corpus, so the seed\u2019s data quality '
+        ? `Start here — a dense model, around ${fmt(st.params_total, 'count')} in this drawing. It is the only stage whose text every later model inherits: grow from trained weights and you never re-read the corpus, so the seed\u2019s data quality `
         : k === 1
-          ? 'Now grow it sparse. Three times the parameters, and the corpus grows by a fifth, because a mixture of experts adds capacity without adding compute per token. What it asks for instead is '
+          ? 'Now grow it sparse. A mixture of experts adds capacity without adding compute per token, so what this stage asks of the corpus is '
           : k === 2
-            ? 'Grow it deep, and read nothing new at all. Layers are added to a trained stack, so this stage adds 80 billion parameters and '
-            : 'Frontier parity. Ten trillion more tokens than the last stage, and not one of them Indian, because every source that supplies volume at this scale is English, code or multilingual web — which means the India share is ',
+            ? `Grow it deep. Layers are added to a trained stack rather than trained from scratch, so the parameter count rises by about ${fmt(st.params_total - stages[k - 1].params_total, 'count')} while the tokens already read `
+            : `Frontier parity — ${fmt(st.corpus - stages[k - 1].corpus, 'count')} more tokens than the last stage, and not one of them Indian, because every source that supplies volume at this scale is English, code or multilingual web — which means the India share is `,
     bold:
       k === 0
         ? 'outlives the seed'
         : k === 1
           ? 'diversity, not volume'
           : k === 2
-            ? 'costs zero additional tokens'
+            ? 'carry over at zero additional cost'
             : 'defended by collection or not at all',
     tail:
       k === 0
-        ? '. Provenance, licensing and decontamination have to be right here, not fixed later.'
+        ? `. Provenance, licensing and decontamination have to be right here, not fixed later. Its budget works out at ${Math.round(st.corpus / st.params_total).toLocaleString('en-US')} tokens per parameter, which is a rule of thumb rather than a finding.`
         : k === 1
-          ? '. Experts specialise on whatever the mixture actually contains.'
+          ? `. Experts specialise on whatever the mixture actually contains. Worth noticing what did not happen here: parameters and corpus both grew ${(st.params_total / stages[k - 1].params_total).toFixed(1)}×, in exact step, leaving this stage on the same ${Math.round(st.corpus / st.params_total).toLocaleString('en-US')} tokens per parameter as the seed. That is the tokens-per-parameter rule applied twice — and it is the rule this page spends the rest of its length arguing against.`
           : k === 2
             ? ' — the clearest demonstration available that a corpus is not sized by the model reading it.'
             : '.',
@@ -503,8 +509,12 @@ function chapterGrowth(ctx) {
       text('. The 3B seed is the only stage its supply covers.'),
     ],
     figNum: 'Fig. 2 — four stages, three quantities',
-    caption: `Fig. 2 — Each stage's sequence length, data policy and corpus. Parameter counts are drawn for scale but they are the architecture team's decision; what a data plan settles is when web text is admitted, when the script quarantine lifts, and how much has to be found.`.replace(/\s+/g, ' ') + `  The method is the four-stage state-preserving growth of ${g.method.source.split(',')[0]} — this project's own prior work. Stage 1 is the assignment; the three above it are proposals.`,
-    pill: 'params ×67 · corpus ×10 · Indic ×1',
+    caption: `Fig. 2 — Each stage's sequence length, data policy and corpus. The parameter counts are illustrative: no scaling strategy has been chosen, and they are drawn only to give the data policy a shape to hang on. What a data plan settles is when web text is admitted, when the script quarantine lifts, and how much text has to be found. Of the four token budgets, one is derived from a published figure and three are analogies to other labs' models — the arithmetic below says which, and why the derivation does not generalise.`.replace(/\s+/g, ' ') + `  The method is the four-stage state-preserving growth of ${g.method.source.split(',')[0]} — this project's own prior work.`,
+    /* Was "params ×67 · corpus ×10 · Indic ×1". The first two ratios are between illustrative
+     * parameter counts and analogy budgets, so putting them in the page's shortest, boldest claim
+     * lent them a confidence they have not earned. The ×1 is the finding and it is the one figure
+     * here that is measured: the committable Indic pool is the same 84.9B at every stage. */
+    pill: `Indic supply ×1 at every stage`,
     rail: [
       text('The one quantity that never moves. Natural Indian-language text is a '),
       b('fixed absolute quantity'),
@@ -516,11 +526,24 @@ function chapterGrowth(ctx) {
     arithmetic: [
       para(b('The method is not invented here.'), ' ', g.method.principle, ' It comes from ', g.method.source, ', ', g.method.relationship, ': one lineage grown in four stages from a small dense seed through 5B and 9B mixtures of experts to a 120B model with 460 routed experts under top-12 routing, with active parameters rising from 1.78B to 5.93B — about 5% of the 118.67B stored.'),
       para(b('What a data plan decides, stage by stage.'), ' ', g.config_note.split('\n\n')[0]),
+      para(b('Only one of these four budgets is derived, and it is worth being blunt about which.'), ' ', g.derivation.method, ' For the 40B that reads: ', g.stages[2].basis.how, ' ', g.stages[2].basis.checks, ' ', b('The 20% is the one free parameter'), ' — ', g.stages[2].basis.assumption),
+      para(b('Why the same method cannot produce the other three.'), ' ', g.derivation.why_it_does_not_generalise, ' So ', b('3T, 8T and 30T are analogies, not derivations'), '. ', g.stages[0].basis.why_not_derived, ' ', g.stages[1].basis.why_not_derived, ' ', g.stages[3].basis.why_not_derived),
+      para(b('What would fix it.'), ' ', g.derivation.what_would_fix_it),
       /* Parameter rows against stage columns: the shape a training config is actually read in. */
       table(['', ...stages.map((x) => x.name)], [
         ['architecture', ...stages.map((x) => (x.architecture === 'moe' ? 'sparse mixture of experts' : 'dense'))],
+        /* Prefixed, every one of them, because no scaling strategy has been chosen. These are one
+         * shape a growth path could take, drawn so the data policy has something to hang on. */
+        ['parameters — illustrative', ...stages.map((x) => `~${fmt(x.params_total, 'count')}`)],
         ['sequence length', ...stages.map((x) => x.config.sequence_length.toLocaleString('en-US'))],
         ['token budget', ...stages.map((x) => fmt(x.corpus, 'count'))],
+        /* The row the chapter was missing. Four budgets printed in the same typeface read as four
+         * equally solid numbers, and they are not: one is derived and three are analogies. */
+        /* The row that shows the seams. Two stages sit on exactly 1,000 and did not arrive there by
+         * reasoning; the derived one is at 420 and the frontier-matched one at 150. A constant in a
+         * column that should vary is the signature of a rule applied rather than a budget set. */
+        ['tokens per parameter', ...stages.map((x) => Math.round(x.corpus / x.params_total).toLocaleString('en-US'))],
+        ['how that budget was reached', ...stages.map((x) => x.basis.kind)],
         ['web data', ...stages.map((x) => x.config.web_data)],
         ['script quarantine', ...stages.map((x) => x.config.script_quarantine)],
         ['noise admitted', ...stages.map((x) => x.config.noise)],
@@ -534,11 +557,12 @@ function chapterGrowth(ctx) {
       para(b('The quarantine, and what it costs.'), ' ', g.quarantine.what, ' ', g.quarantine.why, ' ', g.quarantine.consequence),
       para(b('Three ways a model expands, and what each asks of the data.'), ' ', g.method.axes.map((a) => `${a.axis} — ${a.why_it_matters_for_data}`).join(' ')),
       para(b('Why it can be done at all.'), ' ', g.method.warning),
-      table(['stage', 'stored', 'active', 'corpus', 'what it asks of the corpus'], stages.map((st) => [
+      table(['stage', 'stored ~', 'active ~', 'corpus', 'basis', 'what it asks of the corpus'], stages.map((st) => [
         `${st.n} · ${st.name}`,
         renderNumber({ value: st.params_total, unit: 'parameters', provenance: 'estimated', source: st.status }, { unit: false }),
         renderNumber({ value: st.params_active, unit: 'parameters', provenance: 'estimated', source: st.status }, { unit: false }),
         renderNumber({ value: st.corpus, unit: 'tokens', provenance: 'estimated', source: st.corpus_basis }, { unit: false }),
+        st.basis.kind,
         st.asks_of_the_corpus,
       ]), [1, 2, 3]),
       para(b('The fixed quantity.'), ' ', g.invariant.detail, ' ', g.invariant.consequence),
@@ -550,7 +574,7 @@ function chapterGrowth(ctx) {
         /* Sequence length and corpus, not parameter counts. A stage is a decision about what text
          * to read and in how long a window; the parameter count is a consequence of that and is
          * drawn in the figure anyway, where it is making an argument rather than labelling one. */
-        api.shard(i, `${st.config.sequence_length.toLocaleString('en-US')}-token windows · ${fmt(st.corpus, 'count')} corpus · web ${st.config.web_data_short}`);
+        api.shard(i, `${st.config.sequence_length.toLocaleString('en-US')}-token windows · web ${st.config.web_data_short}\n${fmt(st.corpus, 'count')} corpus — ${st.basis.kind}`);
         const need = st.corpus * 0.08 / 4;
         api.inline(i, `→ needs ${fmt(need, 'count')} unique natural Indic; ${fmt(committedNatural, 'count')} can be committed`, need > committedNatural);
       });

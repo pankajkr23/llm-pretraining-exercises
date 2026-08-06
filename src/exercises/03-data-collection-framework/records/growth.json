@@ -43,7 +43,13 @@
         "admits": "committable, non-web only",
         "noise": "zero"
       },
-      "lr_schedule": "warmup → stable → decay"
+      "lr_schedule": "warmup → stable → decay",
+      "basis": {
+        "kind": "rule of thumb",
+        "rank": 3,
+        "how": "About a trillion tokens per billion parameters, read off Gemma 3's own family — its 4B took 4T.",
+        "why_not_derived": "A tokens-per-parameter rule is the one move this page argues against everywhere else: Llama 3.1 trained 8B, 70B and 405B on about the same 15T, so corpus size does not follow parameter count. The rule is used here because nothing better anchors a stage nobody publishes, and it should be read as a placeholder rather than a plan."
+      }
     },
     {
       "n": 2,
@@ -64,7 +70,13 @@
         "admits": "web enters here",
         "noise": "filtered"
       },
-      "lr_schedule": "warmup → stable → decay"
+      "lr_schedule": "warmup → stable → decay",
+      "basis": {
+        "kind": "chosen below its comparators",
+        "rank": 4,
+        "how": "Gemma 3's 12B took 12T and Llama 3.1's 8B took 15T. 8T sits under both.",
+        "why_not_derived": "Both named comparators are higher than the figure, so this is not derived from them — it is chosen beneath them and called conservative. Nothing decides how far beneath. It is the weakest number of the four and the one most likely to move."
+      }
     },
     {
       "n": 3,
@@ -85,7 +97,14 @@
         "admits": "everything committable",
         "noise": "filtered"
       },
-      "lr_schedule": "warmup → stable → decay"
+      "lr_schedule": "warmup → stable → decay",
+      "basis": {
+        "kind": "derived",
+        "rank": 1,
+        "how": "Gemma 4 31B is the model this whole plan is written against, and it publishes no token count — not in its technical report, not on its model card. Its previous generation does: Gemma 3's card states 14T for the 27B (12T for the 12B, 4T for the 4B, 2T for the 1B). 16.8T is that 14T plus 20% for one generation.",
+        "checks": "Two independent checks. At 420 tokens per parameter for a dense 40B it sits inside the 400-1,900 band every comparable dense model of the last two years occupies. And Chinchilla's compute-optimal ratio of about 20:1 would say 800B, which nobody has planned by in years, because compute-optimal minimises the cost of training while every deployed model pays the cost of serving forever.",
+        "assumption": "The 20% is an assumption, not a measurement. It is the one free parameter in the derivation, and halving or doubling it moves the budget to 15.4T or 19.6T."
+      }
     },
     {
       "n": 4,
@@ -106,7 +125,13 @@
         "admits": "everything committable",
         "noise": "hardest included"
       },
-      "lr_schedule": "warmup → stable → decay (annealing)"
+      "lr_schedule": "warmup → stable → decay (annealing)",
+      "basis": {
+        "kind": "matched to published frontier figures",
+        "rank": 2,
+        "how": "Llama 4 trained on over 30T and Qwen3 on 36T across 119 languages. 30T is parity with figures somebody else published, not a derivation from this plan.",
+        "why_not_derived": "It is anchored to real published numbers, which makes it the strongest of the three underived stages, but it answers 'what does frontier scale look like' rather than 'what does this model need'. It is also the project's stated aspiration, so it is a target the plan is aiming at rather than a conclusion the plan reached."
+      }
     }
   ],
   "acquisition_strategy": {
@@ -186,5 +211,11 @@
     "what": "No code-mixed or romanised Indic text in pre-training. Hinglish and Tanglish enter at instruction tuning, not before.",
     "why": "A recurrence model accumulates state across a sequence, so a stray Latin token inside a Brahmic one corrupts the state for everything after it. On this architecture mixed script is a structural fault rather than a quality preference — which is a claim from the reference design and is recorded as one, not as a measurement.",
     "consequence": "It is also the rule that makes the seed stage so hard to fill: the cleanest Indic text is the scarcest, and quarantine removes the code-mixed material that would otherwise pad it."
+  },
+  "derivation": {
+    "question": "Why is 16.8T derived and the other three are not?",
+    "method": "The derivation anchors to a model, not to a size. This plan is written against exactly one comparator — Gemma 4 31B — and the method is: take the token count that comparator's immediate predecessor published, and add one generation's uplift.",
+    "why_it_does_not_generalise": "It needs a named comparator at that stage, and only one stage has one. Nobody publishes the corpus size for an intermediate stage of a lineage they grew — a lab reports the model it shipped, not the 3B it grew that model from. So the other three stages can only be anchored to some other lab's model that happens to be a similar size, and this chapter's own central finding is how weak that substitute is: a corpus is not sized by the model that reads it. Llama 3.1 trained 8B, 70B and 405B on about the same 15T; DeepSeek-V3 stores 671B and read 14.8T, less than Gemma 3's 27B did.",
+    "what_would_fix_it": "Two things would turn the other three into derivations. Either a comparator publishes a staged corpus schedule for a grown lineage, which none has; or these stages get sized by supply instead of by analogy — what the catalogue can commit, what licences would unlock, and what the Indic pool is worth at its repetition ceiling are all measured on this page already. The second is available now and is the honest next move."
   }
 }

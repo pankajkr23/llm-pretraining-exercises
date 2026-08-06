@@ -173,14 +173,19 @@ details.legend > summary::before {
 details.legend[open] > summary::before { transform: rotate(90deg); }
 details.legend > summary:hover { color: var(--accent); }
 details.legend > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
-/* The lead-in, so the band says what it is before the sentence explains it. */
+/* The lead-in, so the band says what it is before the sentence explains it.
+ *
+ * --ink and not --accent. The accent on its own soft wash measures 4.30:1 in the light themes, which
+ * is under AA, and this is the third element on the page to make that exact mistake — the gate card
+ * and the rail's active number were the others. The mono uppercase treatment is what makes this read
+ * as a flag; the colour was never carrying it. */
 .legend-flag {
   font-family: var(--mono);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--ink);
   flex: none;
 }
 .legend-body { margin-top: 14px; font-size: 13px; }

@@ -42,6 +42,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
 
 
+- **The growth stages say which of their numbers were reasoned and which were assumed.** Four token
+  budgets printed in the same typeface read as four equally solid figures, and only one is. 16.8T is
+  derived, and the page now shows the derivation: the plan is written against Gemma 4 31B, which
+  publishes no token count, so it takes the 14T its predecessor Gemma 3 27B does publish and adds
+  20% for one generation — with that 20% named as the single free parameter. 3T, 8T and 30T are
+  analogies to other labs' models, each labelled as what it is: a rule of thumb, a figure chosen
+  below its own comparators, and parity with published frontier counts. The method cannot produce
+  them because it anchors to a *model* rather than to a size, and only one stage has a comparator —
+  nobody publishes the corpus for an intermediate stage of a lineage they grew. The parameter counts
+  are marked illustrative throughout, since no scaling strategy has been chosen. A tokens-per-
+  parameter row makes the seam visible: the two rule-of-thumb stages sit on exactly 1,000, which is
+  the signature of a rule applied rather than a budget set — and it is the same tokens-per-parameter
+  reasoning the rest of the page argues against. Two stage descriptions that had drifted from the
+  record are now computed from it (the seed's text called a 3B model "a dense 40B"; the third stage
+  claimed to add 80B parameters where it adds 32B).
 - **Repeated tokens are no longer counted as though they were fresh ones.** The mix engine computed
   `effective tokens = unique pool × epochs`, and chapter 2 printed that product as the value of a
   repetition schedule. The multiplication is right for what compute is billed on and wrong for what
