@@ -36,13 +36,14 @@ than overwritten, and the widget can now tokenize text you paste into it.
   v2 decisions, and every one of them moves v1's numbers, so `ablate._v1` pins all four rather
   than inheriting them.
 
-- **A one-page explainer at the top of the tokenizer page**, in two interactive figures. Fig. 0
+- **A one-page explainer at [`/02-tokenization/how-it-works.html`](src/exercises/02-tokenization/web/how-it-works.html)**, so the tokenizer page stays a tool and the argument gets its own room. Three figures. Fig. 0
   shows the corpus: English's article is 32× Maithili's, and a weight of `×3` means that article
   is fed to the trainer three times — taking Maithili from 1.1% to 1.6% of what it reads. Fig. 1
   is a dial over ten real training runs: the score peaks and falls while total tokens climb the
   whole way, so a reader can watch evenness being bought with compression. Fig. 2 lets them change
-  which fifth of the corpus is held back and see the ranking fail to hold still. Every point is a
-  measured run — 45 of them behind the two figures — never an interpolation.
+  which fifth of the corpus is held back and see the ranking fail to hold still. It closes with
+  what was tested and how each result was checked. Every point is a measured run — 45 of them
+  behind the figures — never an interpolation, and the landing page links to it from the top.
 - **A submitted tokenizer that beats the reference on both axes**: score 6,503 → **11,250.51** with
   *fewer* total tokens (191,266 → 189,785). Two independent changes — train on documents, and raise
   Maithili's weight from 2 to 3 (it is 1.8% of the corpus and shares Devanagari with Hindi, so it

@@ -300,6 +300,12 @@ apart:
 calculation with its penalty, the full searchable vocabulary, a **download** button, and a
 **paste-your-own-text encoder** that runs the real merge list in the browser.
 
+The long-form explanation lives beside it at
+[`web/how-it-works.html`](./web/how-it-works.html) — what a tokenizer is doing, what a weight of
+`×3` actually means, a dial over ten real training runs, and the five-slice figure showing why
+held-out scoring cannot rank these. The tool links to it from the top so the landing page stays a
+tool rather than an essay.
+
 It opens on **v2** with the reference solution marked ★ and our submission ✓, and a second tab
 holds the **v1** tokenizers. Each section names the denominator it is scored in and says in words
 that its numbers do not travel to the other — a `units` column header over word counts is exactly

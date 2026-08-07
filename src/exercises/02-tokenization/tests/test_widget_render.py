@@ -58,7 +58,7 @@ def _serve(root: Path) -> Iterator[str]:
 
 
 @contextmanager
-def _page(width: int = 1500):
+def _page(width: int = 1500, path: str = ""):
     """One loaded page, with every console error collected."""
     with _serve(WEB) as base, sync_playwright() as pw:
         try:
@@ -68,7 +68,7 @@ def _page(width: int = 1500):
         page = browser.new_page(viewport={"width": width, "height": 1000})
         errors: list[str] = []
         page.on("pageerror", lambda e: errors.append(str(e)))
-        page.goto(base, wait_until="networkidle")
+        page.goto(base + path, wait_until="networkidle")
         page.wait_for_timeout(500)
         try:
             yield page, errors
@@ -243,6 +243,76 @@ def test_the_page_never_scrolls_sideways(width: int):
     """Wide content scrolls inside its own container; the body never does."""
     with _page(width) as (page, errors):
         assert not errors, f"the page threw at {width}px: {errors[:3]}"
+        overflow = page.evaluate(
+            "() => { const d = document.documentElement;"
+            " return d.scrollWidth > d.clientWidth ? [d.scrollWidth, d.clientWidth] : null; }"
+        )
+        assert not overflow, f"{width}px scrolls sideways: {overflow[0]}px into {overflow[1]}px"
+
+
+# -- the explainer subpage ---------------------------------------------------------------------
+#
+# The long-form explanation lives at its own URL so the landing page stays a tool. That split is
+# only safe if both halves are loaded: a broken link or a figure that never renders would leave
+# the tool intact and the argument silently missing.
+
+EXPLAINER = "how-it-works.html"
+
+
+def test_the_landing_page_links_to_the_explainer():
+    with _page() as (page, errors):
+        assert not errors, f"the page threw: {errors[:3]}"
+        link = page.locator(f'a[href="./{EXPLAINER}"]')
+        assert link.count() >= 1, "no link from the tool to the explanation"
+        assert link.first.is_visible(), "the link to the explanation is not visible"
+
+
+def test_the_explainer_page_renders_all_three_figures():
+    """Three figures, each driven by explainer.json. A blank one is the whole failure."""
+    with _page(path=EXPLAINER) as (page, errors):
+        assert not errors, f"the explainer threw: {errors[:3]}"
+        assert page.locator("#err").inner_text().strip() == "", "the explainer showed a load error"
+        # Fig. 0 — the corpus, one row per language.
+        assert page.locator("#mixbody tr").count() == 4
+        # Fig. 1 — the dial, with all three numbers populated.
+        for slot in ("#maiscore", "#maiunseen", "#maitokens"):
+            assert page.locator(slot).inner_text().strip(), f"{slot} is empty"
+        assert page.locator("#maibars .bfill").count() == 4
+        # Fig. 2 — one bar per recipe.
+        assert page.locator("#exambars .bfill").count() == 3
+        for note in ("#mixnote", "#mainote", "#examnote"):
+            assert len(page.locator(note).inner_text()) > 80, f"{note} is too thin"
+
+
+def test_dragging_the_dial_changes_the_figure():
+    """Removing the interaction would destroy the argument, so the interaction must work."""
+    with _page(path=EXPLAINER) as (page, errors):
+        dial = page.locator("#maidial")
+        before = page.locator("#maiscore").inner_text()
+        dial.fill(str(int(dial.get_attribute("max"))))
+        page.wait_for_timeout(300)
+        assert not errors, f"the dial threw: {errors[:3]}"
+        after = page.locator("#maiscore").inner_text()
+        assert before != after, "the score did not change when the dial moved"
+        assert "overshoot" in page.locator("#maiverdict").inner_text().lower()
+
+
+def test_changing_the_held_out_slice_changes_the_numbers():
+    """Fig. 2's claim is that the ranking is unstable, so the slices must actually differ."""
+    with _page(path=EXPLAINER) as (page, errors):
+        buttons = page.locator("#examseg button")
+        assert buttons.count() == 5, "expected five held-out slices"
+        first = page.locator("#exambars .bval").first.inner_text()
+        buttons.nth(3).click()
+        page.wait_for_timeout(400)
+        assert not errors, f"switching slice threw: {errors[:3]}"
+        assert page.locator("#exambars .bval").first.inner_text() != first
+
+
+@pytest.mark.parametrize("width", WIDTHS)
+def test_the_explainer_never_scrolls_sideways(width: int):
+    with _page(width, EXPLAINER) as (page, errors):
+        assert not errors, f"the explainer threw at {width}px: {errors[:3]}"
         overflow = page.evaluate(
             "() => { const d = document.documentElement;"
             " return d.scrollWidth > d.clientWidth ? [d.scrollWidth, d.clientWidth] : null; }"
