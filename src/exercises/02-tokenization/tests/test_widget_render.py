@@ -130,6 +130,45 @@ def test_each_section_labels_the_denominator_it_is_scored_in():
             )
 
 
+def test_every_tokenizer_explains_itself():
+    """A row of numbers with no story is not a finding.
+
+    Each tokenizer on the page carries a short what/why/outcome note and a badge saying whether it
+    is the reference, the submission, a rejected experiment or an ablation. This fails if a new
+    config ever reaches the page unexplained — including the rejected one, whose whole reason for
+    being there is that a reader would otherwise never know a higher score was found and refused.
+    """
+    data = _bundle()
+    assert all(c.get("blurb") for c in data["configs"]), "a config shipped without an explanation"
+    rejected = [c for c in data["configs"] if c.get("is_rejected")]
+    assert len(rejected) == 1, "the rejected experiment is missing from the bundle"
+    assert rejected[0]["adjusted"] > max(
+        c["adjusted"] for c in data["configs"] if c["profile"] == "v2" and not c.get("is_rejected")
+    ), "the rejected row should be the highest v2 scorer — that is the point of showing it"
+
+    with _page() as (page, errors):
+        for i in range(page.locator("#selector button").count()):
+            page.locator("#selector button").nth(i).click()
+            page.wait_for_timeout(250)
+            assert not errors, f"tab {i} threw: {errors[:3]}"
+            blurb = page.locator(".blurb").first.inner_text()
+            assert len(blurb) > 80, f"tab {i} explanation is too thin: {blurb!r}"
+            assert page.locator(".blurb .badge").count() >= 1, f"tab {i} has no role badge"
+
+
+def test_the_rejected_experiment_is_labelled_as_rejected():
+    """It posts the biggest number on the page, so it has to say why it was not submitted."""
+    with _page() as (page, errors):
+        labels = page.locator("#selector button").all_inner_texts()
+        idx = next(i for i, t in enumerate(labels) if "rejected" in t.lower())
+        page.locator("#selector button").nth(idx).click()
+        page.wait_for_timeout(300)
+        assert not errors, f"the page threw: {errors[:3]}"
+        assert page.locator(".badge.rej").count() == 1, "no rejected badge on the rejected config"
+        blurb = page.locator(".blurb").first.inner_text().lower()
+        assert "held-out" in blurb or "overfitting" in blurb, f"no reason given: {blurb!r}"
+
+
 def test_the_paste_box_actually_tokenizes():
     """The deliverable the grader is told to use. A blank panel here is the whole failure."""
     with _page() as (page, errors):

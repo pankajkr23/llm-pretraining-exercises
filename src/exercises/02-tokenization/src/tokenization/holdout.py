@@ -55,7 +55,7 @@ def evaluate(spec: Spec, corpora: dict[str, str]) -> dict:
 
 def main() -> None:
     """Compare the reference recipe, the submission, and an over-tuned config out of sample."""
-    from .ablate import REFERENCE, _reweighted  # noqa: PLC0415 — keeps the suite in one place
+    from .ablate import OVERTUNED, REFERENCE, _reweighted  # noqa: PLC0415 — suite in one place
 
     cfg = Config()
     corpora = load_all(V2, cfg.corpus_dir)
@@ -63,7 +63,7 @@ def main() -> None:
         REFERENCE,
         SUBMISSION,
         _reweighted("mai ×6 alone (no documents)", en=3, hi=4, te=4, mai=6),
-        _reweighted("over-tuned · te ×6 · mai ×7", en=3, hi=4, te=6, mai=7),
+        OVERTUNED,
     ]
     results = [evaluate(spec, corpora) for spec in specs]
 

@@ -305,6 +305,20 @@ def _reweighted(label: str, **weights: float) -> Spec:
     )
 
 
+# The highest-scoring configuration on the graded corpus, and the one we deliberately do not
+# submit. Maithili's article is 5,808 units; seven copies of it teaches the trainer that article's
+# particular phrases rather than more Maithili. ``tokenization.holdout`` is where that shows up.
+OVERTUNED = Spec(
+    algo="bpe",
+    level="char",
+    normalization="NFKC",
+    vocab_size=10_000,
+    weighting="manual",
+    label="E2b · te ×6 · mai ×7  (rejected)",
+    weights=(("en", 3), ("hi", 4), ("te", 6), ("mai", 7)),
+)
+
+
 def _documents(label: str, **weights: float) -> Spec:
     """The reference recipe trained on whole documents, so merges may span a newline."""
     return Spec(
@@ -385,7 +399,7 @@ V2_SUITE: list[Spec] = [
     # E2 — with Maithili fixed, Telugu becomes the ceiling. Lift both, mildly. These score far
     # higher in sample and are the trap this suite is built to expose: see ``holdout``.
     _reweighted("E2a · te ×5 · mai ×6", en=3, hi=4, te=5, mai=6),
-    _reweighted("E2b · te ×6 · mai ×7", en=3, hi=4, te=6, mai=7),
+    OVERTUNED,
     # E5 — the two independent wins composed: documents (E0) and Maithili ×6 (E1a). This is the
     # submission. It is the only configuration that beats the reference on *both* axes at once,
     # in sample and out of it: smaller spread and fewer total tokens.

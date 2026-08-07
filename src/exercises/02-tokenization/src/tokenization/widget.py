@@ -18,7 +18,16 @@ Two things this module is careful about:
 import json
 from pathlib import Path
 
-from .ablate import REFERENCE, REFERENCE_WEIGHTS, SUBMISSION, Spec, _v1, measure, train_spec
+from .ablate import (
+    OVERTUNED,
+    REFERENCE,
+    REFERENCE_WEIGHTS,
+    SUBMISSION,
+    Spec,
+    _v1,
+    measure,
+    train_spec,
+)
 from .bpe_scratch import UNK_TOKEN, WORD_PREFIX, ScratchBPE
 from .config import PROFILES, V1, V2, Config, EvalProfile
 from .corpus import load_all
@@ -35,10 +44,13 @@ FEATURED_V1: list[Spec] = [
     _v1("bpe", "byte", None, 10_000, "flat", "BPE · byte (baseline)"),
 ]
 
-# v2 leads with the reference solution exactly as published, then our permutations on it.
+# v2 leads with the reference solution exactly as published, then our permutations on it —
+# including the one that scores highest and was rejected anyway, because a reader who only sees
+# the submitted number has no way to know a bigger one was found and turned down.
 FEATURED_V2: list[Spec] = [
     REFERENCE,
     SUBMISSION,
+    OVERTUNED,
     Spec(
         algo="bpe-scratch",
         level="char",
@@ -75,6 +87,58 @@ SECTION_NOTES = {
         "The measurement the assignment grades: wiki-faithful Markdown — links, URLs, tables and "
         "all — scored in tokens per faithful unit. The reference solution is shown exactly as "
         "published; everything after it is ours."
+    ),
+}
+
+
+# One short explanation per experiment: what was changed, why it was worth trying, and what came
+# out of it. Every featured config must have one — `tests/test_widget_render.py` fails if a
+# tokenizer reaches the page unexplained, because a row of numbers with no story is not a finding.
+BLURBS = {
+    "reference recipe (gate)": (
+        "The published reference solution, rebuilt from its own recipe and reproduced to the last "
+        "digit. It is the yardstick, not a result of ours — if this row ever stops reading 6,503, "
+        "our measuring apparatus is broken and no other number here can be trusted."
+    ),
+    "submission · documents · mai ×6": (
+        "Two changes. Train on whole articles instead of line by line, so a merge may span a line "
+        "break; and give Maithili six copies instead of two, because it is 1.8% of the corpus and "
+        "was the worst-served language. Result: better evenness <em>and</em> fewer total tokens."
+    ),
+    "E2b · te ×6 · mai ×7  (rejected)": (
+        "Pushes Telugu and Maithili harder still and posts by far the biggest number on this page. "
+        "But those weights were chosen while watching the score on the very articles it trains on, "
+        "and on held-out text it falls behind the submission — 4,103 against 4,213. Overfitting."
+    ),
+    "BPE from scratch, no library": (
+        "The same algorithm written out by hand — the merge loop, the tie-breaking, the encoder — "
+        "with no tokenizer library involved. It compresses better than anything else here (188,091 "
+        "tokens) yet scores worst, because it throws newlines away and never pays for one."
+    ),
+    "Unigram (ablation)": (
+        "A different algorithm: rather than merging pairs upward, it starts with a large candidate "
+        "vocabulary and prunes downward. It scores well, but the brief asks for BPE, so it stays "
+        "an ablation — useful evidence, not a candidate for submission."
+    ),
+    "Unigram · char · NFKC": (
+        "v1's best score. Same pruning algorithm, run on clipped prose against the word "
+        "denominator. It beat every BPE variant of that round, which is what made the algorithm "
+        "look important — until v2 showed the corpus and the denominator mattered far more."
+    ),
+    "BPE from scratch · char · NFKC": (
+        "Our hand-written BPE under v1's measurement, where it edges out HuggingFace's own "
+        "char-level BPE (1,300 against 1,228) on an identical recipe. Part of that margin is the "
+        "discarded newlines rather than a better merge loop — worth stating plainly."
+    ),
+    "BPE · char · NFKC": (
+        "The fix for the byte-level baseline: merge whole characters rather than UTF-8 bytes, "
+        "after NFKC normalisation. Every Indic language improves sharply and the spread collapses "
+        "from 5.27 to 0.81 — this single change is v1's headline finding."
+    ),
+    "BPE · byte (baseline)": (
+        "Where v1 started, and the row that taught us the most by failing. Working on raw bytes "
+        "turns each Devanagari or Telugu character into three, so Indic text costs 3.5–6.5 tokens "
+        "a word against English's 1.2 — a spread of 5.27, and the worst score on this page."
     ),
 }
 
@@ -135,6 +199,8 @@ def build_config(spec: Spec, profile: EvalProfile, corpora: dict[str, str]) -> d
         "weights": dict(spec.weights) or dict.fromkeys(corpora, 1.0),
         "is_submission": spec == SUBMISSION,
         "is_reference": spec == REFERENCE,
+        "is_rejected": spec == OVERTUNED,
+        "blurb": BLURBS[spec.label],
         "vocab_actual": tok.get_vocab_size(),
         "languages": [
             {

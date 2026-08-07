@@ -70,6 +70,11 @@
 
       .note { font-size: 0.92rem; color: var(--muted); margin-top: 16px; }
       .note b { color: var(--ink); }
+      .blurb { margin-bottom: 18px; }
+      .badge { display: inline-block; font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 980px; background: var(--track); color: var(--muted); vertical-align: 2px; margin-right: 6px; }
+      .badge.ref { background: var(--accent-soft); color: var(--accent); }
+      .badge.sub { background: var(--accent); color: #fff; }
+      .badge.rej { background: transparent; color: var(--hi); box-shadow: inset 0 0 0 1px currentColor; }
       footer { margin-top: 40px; color: var(--faint); font-size: 0.85rem; font-family: var(--mono); }
       .err { color: #b91c1c; font-family: var(--mono); }
     </style>
@@ -176,11 +181,12 @@
           : c.penalty > 1.0001
           ? `<div>Hindi penalty <span class="n">×${c.penalty.toFixed(3)}</span> → adjusted <span class="n">${c.adjusted.toLocaleString()}</span></div>`
           : `<div>Hindi penalty <span class="n">1.000</span> (X_hi is well under 1.2, so it never fires)</div>`;
-        const role = c.is_reference
-          ? '<p class="note" style="margin-top:0"><b>The reference solution, exactly as published.</b> Reproduced here to the last digit — it is the correctness gate everything else is measured against, not a result of ours.</p>'
-          : c.is_submission
-          ? '<p class="note" style="margin-top:0"><b>Our submission.</b> Two changes to the reference: train on whole documents, and give Maithili six times the weight. It beats the reference on both axes — smaller spread <em>and</em> fewer total tokens.</p>'
-          : '';
+        // Every tokenizer explains itself: what was changed, why, and what came of it.
+        const tag = c.is_reference ? '<span class="badge ref">reference</span>'
+          : c.is_submission ? '<span class="badge sub">submitted</span>'
+          : c.is_rejected ? '<span class="badge rej">rejected</span>'
+          : '<span class="badge">experiment</span>';
+        const role = `<p class="note blurb" style="margin-top:0">${tag} ${c.blurb}</p>`;
 
         document.getElementById('app').innerHTML = `
           <div class="grid">
