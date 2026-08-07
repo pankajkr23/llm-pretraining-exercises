@@ -10,7 +10,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+
+- **`AGENTS.md` gains a "Reporting a measurement" section** — three rules, each learned by getting
+  it wrong in exercise 02: establish the noise floor before ranking anything (a held-out score
+  there swung 9,421 points across five splits while the recipes sat 648 apart), sweep without gaps
+  (2 → 5 → 6 named the wrong optimum; filling in ×3 and ×4 moved it), and print the absolute
+  quantity beside any ratio-or-gap score so buying the metric is visible. Plus the rule that
+  overturning a published claim means correcting it where it was made, not amending it quietly.
 
 ## [0.3.0] - 2026-08-07
 
