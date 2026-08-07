@@ -259,7 +259,6 @@ HANDOFF.md
 # Programme material — the schedule, the class list, and the internal authoring specs. The public
 # repo carries the engineering work; the course's own calendar and playbooks stay local.
 docs/BRIEF.md
-docs/SESSIONS.md
 docs/EXPLAINER_PROMPT.md
 docs/EXPLAINER_PATTERN.md
 # Self-critique of a shipped build — useful to us, not part of the published work.
