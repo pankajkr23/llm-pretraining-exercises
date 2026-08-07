@@ -50,13 +50,13 @@ Component notes. Repo-wide conventions: root `AGENTS.md`.
   would teach the same thing, write a paragraph instead. Anything that only draws a shape is
   unfinished. Read `../../../docs/EXPLAINER_PROMPT.md` (what to build, and when **not** to) and
   `../../../docs/EXPLAINER_PATTERN.md` (how — DOM, class names, state-and-render shape, voice)
-  before starting one. **The site is one page**: `web/index.html` is the shell and `web/chapters.js`
+  before starting one. Both are gitignored — present locally, absent from the remote. **The site is one page**: `web/index.html` is the shell and `web/chapters.js`
   holds **thirteen chapters plus an appendix**, one per reader question, each in three layers —
   headline, interaction, and a closed "The arithmetic". `web/report/` and `web/reasoning/` are redirect stubs from the two-page
   version. Reference implementation: the contamination gate (chapter 8), reader-supplied input,
   verified against `dataframework/shingles.py`. What the first build got wrong, and why, is in
-  `docs/DESIGN_CRITIQUE.md`. The rebuild plan was `docs/NEW_TODO.md`, now a local file — the
-  rebuild has shipped, so it is a record rather than a queue.
+  `docs/DESIGN_CRITIQUE.md` — local and gitignored, like `docs/NEW_TODO.md`; the rebuild has
+  shipped, so both are a record rather than a queue.
 - **Web = zero runtime dependencies** (hand-written SVG/CSS/vanilla JS), inherits the repo design
   system (`docs/DESIGN.md` at repo root), served per-slug at `/03-data-collection-framework/`. Ship a
   `NOTICE` disclaiming org affiliation. Non-ASCII glyphs: edit with Edit/Write, never byte-mode `perl`/`sed`.

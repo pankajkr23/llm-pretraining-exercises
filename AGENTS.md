@@ -6,8 +6,8 @@ via `CLAUDE.md`'s `@AGENTS.md` import; Cursor/Copilot via the pointer files). Ke
 ## What this repo is
 
 An **LLM pre-training** project: building a language model from scratch, one topic at a time —
-hands-on experiments plus a flagship training run. Overview: `docs/BRIEF.md`. Each topic's work
-lives in a numbered exercise folder under `src/exercises/`.
+hands-on experiments plus a flagship training run. Each topic's work lives in a numbered exercise
+folder under `src/exercises/`.
 
 ## Environment
 
@@ -23,7 +23,10 @@ lives in a numbered exercise folder under `src/exercises/`.
 
 ## Three data concerns — keep them physically separate
 
-- **Briefs/docs** → tracked (`docs/BRIEF.md` program-level, `<exercise>/BRIEF.md` per exercise).
+- **Briefs/docs** → tracked per exercise (`<exercise>/BRIEF.md`). Programme-level material — the
+  schedule, the class list, the internal authoring specs — is **local only** and gitignored
+  (`docs/BRIEF.md`, `docs/SESSIONS.md`, `docs/EXPLAINER_*.md`). Never link to them from a tracked
+  file: the link is dead for everyone but us.
 - **Datasets** → top-level `data/`, **gitignored** (+ a tracked manifest/download script).
 - **Outputs** (plots/checkpoints/logs) → `<exercise>/artifacts/`, **gitignored**.
 
@@ -80,7 +83,7 @@ When one of these overturns a published claim, correct it where the claim was ma
 
 Every deployable exercise's static `web/` bundle shares **one design system** — full reference in `docs/DESIGN.md`. The rules that matter across exercises:
 
-- **Interactive explainers follow two files.** `docs/EXPLAINER_PROMPT.md` decides *what* one must be (the claim, the interaction that proves it, the topology and family, when **not** to build one). `docs/EXPLAINER_PATTERN.md` records *how* — DOM skeleton, class names, the state-and-render shape, copy voice — extracted from the reference implementation, §1 of `03-data-collection-framework/web/report/`. Read both before building an explainer; don't re-invent the skeleton.
+- **Interactive explainers follow two local files.** `docs/EXPLAINER_PROMPT.md` decides *what* one must be (the claim, the interaction that proves it, the topology and family, when **not** to build one). `docs/EXPLAINER_PATTERN.md` records *how* — DOM skeleton, class names, the state-and-render shape, copy voice. Both are gitignored, so they are on a working checkout but not on the remote; read both before building an explainer and don't re-invent the skeleton. Shipped references: `02-tokenization/web/how-it-works.html` and §1 of `03-data-collection-framework/web/chapters.js`.
 
 - **One Apple-style design language** on every page: cool-gray/black surfaces, a single bright-blue accent (`#0071e3` light / `#2997ff` dark), system sans (no serif), soft-shadow rounded panels, and a `← Back` pill to the site root. Style light **and** dark via `prefers-color-scheme`. Reuse the token names in `docs/DESIGN.md` — don't invent a per-exercise palette.
 - **Write for a general audience.** The public pages are standalone, blog-style demos of an idea — a first-time visitor should be able to enjoy them without any course context. Favor plain, explanatory copy; the numbered topic eyebrow (`NN · Topic`) makes a nice light section label.

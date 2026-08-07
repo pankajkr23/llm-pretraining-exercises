@@ -9,8 +9,7 @@ publishes that decision as one interactive page.
 > **Scope correction.** An earlier version of this brief said "the **pre-training** data mix". That
 > narrowing dropped four of the five stages the class brief names, and everything downstream
 > inherited it — the framework's five gates and three rules are all pre-training constructs, and the
-> `stage` tag on all 145 catalogue records went unread. See
-> [`docs/DESIGN_CRITIQUE.md`](docs/DESIGN_CRITIQUE.md).
+> `stage` tag on all 145 catalogue records went unread.
 
 ## The core claim
 

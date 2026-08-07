@@ -8,33 +8,17 @@ Hands-on exercises and capstone work for **LLM pre-training** — building a lar
 from scratch, from a minimal transformer block all the way to launching and operating a real
 training run.
 
-- **Overview & full syllabus:** [`docs/BRIEF.md`](docs/BRIEF.md)
 - **Repo conventions (single source of truth for humans & coding agents):** [`AGENTS.md`](AGENTS.md)
-
-## About the program
-
-| | |
-| --- | --- |
-| **Duration** | ~6 months, including the training run that continues past the formal calendar |
-| **Sessions** | 20 live classes, up to 3 hours each, Saturdays 7:00 AM IST |
-| **Format** | Live coding + weekly assignments + ongoing lab contributions |
-| **Capstone** | The actual flagship training run (starts ~week 22); students are staffed into running roles |
-
-The syllabus moves from transformer foundations → tokenization → data (sourcing, cleaning, mixtures,
-dataset building) → embeddings & attention variants → losses → training loop → optimizers →
-distributed training → MoE → stability & scaling laws → SFT → preference alignment → infra &
-quantization → the training-run kickoff. See [`docs/BRIEF.md`](docs/BRIEF.md) for the class-by-class detail.
 
 ## Repository layout
 
-A [uv](https://docs.astral.sh/uv/) **workspace** on Python 3.12. Each class's work is a member package
+A [uv](https://docs.astral.sh/uv/) **workspace** on Python 3.12. Each topic's work is a member package
 under `src/exercises/NN-slug/` (numeric, zero-padded so folders sort correctly), all sharing one root
 `.venv` and one `uv.lock`.
 
 ```text
-docs/BRIEF.md                     # the program: structure + 20-class syllabus
 docs/DESIGN.md                    # the shared web design system (palette, type, tone)
-src/exercises/NN-slug/            # one self-contained exercise per class (workspace member)
+src/exercises/NN-slug/            # one self-contained exercise per topic (workspace member)
   ├─ BRIEF.md                     # the assignment
   ├─ README.md                    # what it is + how to run
   ├─ pyproject.toml               # workspace member
@@ -169,9 +153,7 @@ Every chapter is an **interactive explainer** in three layers: a plain headline 
 a newcomer can stop at, the interaction that proves the claim, and a closed *"The arithmetic"* with
 the derivation for anyone who wants it. The contamination gate is the clearest example — type your
 own sentence, try to smuggle it past a thirteen-word fingerprint index, and watch where the method
-stops working. Conventions in [`docs/EXPLAINER_PROMPT.md`](docs/EXPLAINER_PROMPT.md) (what to build)
-and [`docs/EXPLAINER_PATTERN.md`](docs/EXPLAINER_PATTERN.md) (how); what the first build got wrong
-is in [`DESIGN_CRITIQUE.md`](src/exercises/03-data-collection-framework/docs/DESIGN_CRITIQUE.md).
+stops working.
 
 ```bash
 uv run python -m dataframework          # rebuild web/data.json from the data spine
