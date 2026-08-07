@@ -153,8 +153,7 @@ Every chapter is an **interactive explainer** in three layers: a plain headline 
 a newcomer can stop at, the interaction that proves the claim, and a closed *"The arithmetic"* with
 the derivation for anyone who wants it. The contamination gate is the clearest example — type your
 own sentence, try to smuggle it past a thirteen-word fingerprint index, and watch where the method
-stops working. What the first build got wrong is in
-[`DESIGN_CRITIQUE.md`](src/exercises/03-data-collection-framework/docs/DESIGN_CRITIQUE.md).
+stops working.
 
 ```bash
 uv run python -m dataframework          # rebuild web/data.json from the data spine

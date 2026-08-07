@@ -20,6 +20,9 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   being published. This repo carries the engineering work; the course calendar is not part of it.
   Every tracked link to them has been removed, because a link to an untracked file is dead for
   everyone but us.
+- **`DESIGN_CRITIQUE.md` is local too.** Exercise 03's self-critique of its own first build is a
+  useful record for whoever works on it next, but it is not part of the published work — untracked,
+  gitignored, unchanged on disk, and no longer linked from the root README or the exercise brief.
 
 ## [0.3.0] - 2026-08-07
 

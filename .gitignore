@@ -262,3 +262,5 @@ docs/BRIEF.md
 docs/SESSIONS.md
 docs/EXPLAINER_PROMPT.md
 docs/EXPLAINER_PATTERN.md
+# Self-critique of a shipped build — useful to us, not part of the published work.
+**/docs/DESIGN_CRITIQUE.md
