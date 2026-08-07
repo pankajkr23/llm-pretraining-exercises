@@ -10,6 +10,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [0.3.1] - 2026-08-07
+
+Housekeeping and one real fix: the tokenizer page's paste box was quietly implying that its
+five tabs were one tokenizer, and the programme's schedule and internal specs stop being
+published.
+
 ### Added
 
 - **`AGENTS.md` gains a "Reporting a measurement" section** — three rules, each learned by getting
@@ -32,6 +40,19 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 - **`DESIGN_CRITIQUE.md` is local too.** Exercise 03's self-critique of its own first build is a
   useful record for whoever works on it next, but it is not part of the published work — untracked,
   gitignored, unchanged on disk, and no longer linked from the root README or the exercise brief.
+
+### Fixed
+
+- **The paste box's default text no longer suggests the five tokenizers are one tokenizer.** It was
+  a plain sentence of common words, which every one of them splits into exactly 16 tokens — the
+  frequent end of a 10,000-token vocabulary is identical across these recipes, and they differ only
+  in the rare 2–12%. Switching tabs changed nothing visible, so a reader reasonably concluded a
+  single tokenizer sat behind all five tabs. There is not: they share 88–98% of their vocabulary
+  with the benchmark (Unigram, 27%) and each has its own merge list. The default is now a Maithili
+  sentence and a Wikipedia link, where the tabs visibly disagree — 10 tokens against 12 for the
+  `mai ×7` tokenizer, which learned `भारतक` whole, and 1 against 4 for the from-scratch BPE, whose
+  pre-tokenizer swallows the entire URL. The caption says each tab is a separately trained
+  tokenizer, and a test fails if the default ever stops separating them.
 
 ## [0.3.0] - 2026-08-07
 
@@ -738,7 +759,8 @@ First tagged release: two interactive exercises live on Vercel with a gated depl
 - **Tooling & conventions:** uv workspace (Python 3.12), ruff lint/format, pytest (unit +
   integration split), GitHub Actions CI, and a PR-only workflow documented in `AGENTS.md`.
 
-[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/pankajkr23/llm-pretraining-exercises/releases/tag/v0.1.0
