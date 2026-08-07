@@ -55,6 +55,16 @@ folder under `src/exercises/`.
 - The ML-native integration test: **overfit a single batch for a few steps and assert loss collapses** (+ shape/checkpoint round-trip tests).
 - **Data-handling invariants are enforced in CI, not in review.** `03-data-collection-framework` defines five that any agent touching a data pipeline should know exist (`tests/test_invariants.py`, full table in that exercise's `docs/README.md`): training never touches eval data · nothing excluded may enter a commercial mix · every judgment carries its reasoning and confidence · a measurement must name what produced it · no source content is silently dropped. Each is paired with a test proving it *fails* when broken — a guard nobody has watched fail is not a guard.
 
+## Reporting a measurement
+
+Three rules, each learned by getting it wrong in `02-tokenization` (see that exercise's `CLAUDE.md`):
+
+- **Establish the noise floor before you rank anything.** A held-out score there swung 9,421 points across the five possible splits while the recipes it was meant to separate sat 648 apart. One split looked decisive; five showed the test could not rank at all. Before quoting a comparison, re-run it under a different arbitrary choice — a different split, seed, or slice — and check the effect survives.
+- **Sweep without gaps.** A weight sweep that went 2 → 5 → 6 confidently named ×6 the optimum; filling in ×3 and ×4 moved it to ×3, which was better on every stable measurement. A coarse sweep does not report "roughly the optimum", it reports the wrong one.
+- **Report the number the metric ignores.** Any score that rewards a *ratio* or a *gap* can be improved by making the denominator worse. Print the absolute quantity next to it — there, total tokens beside the fairness score — so buying the metric is visible rather than inferred.
+
+When one of these overturns a published claim, correct it where the claim was made and say what changed. A quietly amended number is worse than the original error.
+
 ## Git workflow
 
 - **Every change lands on `main` via a pull request.** Branch → push → open a PR → merge. **Never push, merge, or force-push directly to `main`** — it's the protected branch that production is promoted from, and the base every PR previews against.
