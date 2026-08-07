@@ -287,7 +287,7 @@ REFERENCE = Spec(
     normalization="NFKC",
     vocab_size=10_000,
     weighting="manual",
-    label="reference recipe (gate)",
+    label="the reference solution (benchmark)",
     weights=REFERENCE_WEIGHTS,
 )
 
@@ -314,7 +314,7 @@ OVERTUNED = Spec(
     normalization="NFKC",
     vocab_size=10_000,
     weighting="manual",
-    label="E2b · te ×6 · mai ×7  (rejected)",
+    label="more Telugu + Maithili (rejected)",
     weights=(("en", 3), ("hi", 4), ("te", 6), ("mai", 7)),
 )
 
@@ -388,23 +388,23 @@ V2_SUITE: list[Spec] = [
     # cross-line structure (list scaffolding, table rows, reference blocks) that a line-split
     # trainer can never merge; letting merges span newlines is a genuine compression win, not a
     # denominator trick, and it lowers all four fertilities rather than trading one against another.
-    _documents("E0 · train on documents, not lines", en=3, hi=4, te=4, mai=2),
+    _documents("documents, not lines", en=3, hi=4, te=4, mai=2),
     # E1 — Maithili sits at the maximum fertility and is ~1.1% of the weighted mix, so it wins
     # almost no merges of its own. Pulling the maximum down is the honest way to shrink a spread.
     # The sweep overshoots on purpose: past ×6 Maithili becomes the new *minimum* and the spread
     # widens again from the other end, which is the whole shape of the lever in three rows.
-    _reweighted("E1a · mai ×6", en=3, hi=4, te=4, mai=6),
-    _reweighted("E1b · mai ×10", en=3, hi=4, te=4, mai=10),
-    _reweighted("E1c · mai ×16", en=3, hi=4, te=4, mai=16),
+    _reweighted("mai ×6 alone", en=3, hi=4, te=4, mai=6),
+    _reweighted("mai ×10 (overshoot)", en=3, hi=4, te=4, mai=10),
+    _reweighted("mai ×16 (overshoot)", en=3, hi=4, te=4, mai=16),
     # E2 — with Maithili fixed, Telugu becomes the ceiling. Lift both, mildly. These score far
     # higher in sample and are the trap this suite is built to expose: see ``holdout``.
-    _reweighted("E2a · te ×5 · mai ×6", en=3, hi=4, te=5, mai=6),
+    _reweighted("te ×5 · mai ×6", en=3, hi=4, te=5, mai=6),
     OVERTUNED,
     # E5 — the two independent wins composed: documents (E0) and Maithili ×6 (E1a). This is the
     # submission. It is the only configuration that beats the reference on *both* axes at once,
     # in sample and out of it: smaller spread and fewer total tokens.
-    _documents("E5 · documents · mai ×6  (submission)", en=3, hi=4, te=4, mai=6),
-    _documents("E5b · documents · mai ×5", en=3, hi=4, te=4, mai=5),
+    _documents("documents · mai ×6  (submitted)", en=3, hi=4, te=4, mai=6),
+    _documents("documents · mai ×5", en=3, hi=4, te=4, mai=5),
     # E3/E4 — algorithm ablations. The brief asks for BPE, so neither is the submission.
     Spec(
         algo="unigram",
@@ -412,7 +412,7 @@ V2_SUITE: list[Spec] = [
         normalization="NFKC",
         vocab_size=10_000,
         weighting="manual",
-        label="E3 · Unigram (ablation)",
+        label="Unigram (ablation)",
         weights=REFERENCE_WEIGHTS,
     ),
     Spec(
@@ -421,7 +421,7 @@ V2_SUITE: list[Spec] = [
         normalization="NFKC",
         vocab_size=10_000,
         weighting="manual",
-        label="E4 · BPE from scratch, no library",
+        label="BPE from scratch, no library",
         weights=REFERENCE_WEIGHTS,
     ),
 ]
@@ -435,8 +435,8 @@ V2_SUITE: list[Spec] = [
 #                almost no merges of its own. Raising its weight pulls the *maximum* down, which
 #                is the honest direction to shrink a spread.
 #
-# It is not the highest in-sample scorer — E2b reaches 35603 against this one's 10934. That gap
-# is overfitting, and ``tokenization.holdout`` measures it: on text the trainer never saw, E2b's
+# It is not the highest in-sample scorer: OVERTUNED reaches 35603 to this one's 10934. That gap
+# is overfitting, and ``tokenization.holdout`` measures it: on text the trainer never saw, its
 # 3.3× in-sample lead is worth nothing (4103 vs 4213 adjusted, i.e. it is behind) and it
 # compresses worse. This configuration is the one that beats the reference on every axis both in
 # sample and out of it.

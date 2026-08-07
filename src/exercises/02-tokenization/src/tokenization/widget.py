@@ -95,7 +95,7 @@ SECTION_NOTES = {
 # out of it. Every featured config must have one — `tests/test_widget_render.py` fails if a
 # tokenizer reaches the page unexplained, because a row of numbers with no story is not a finding.
 BLURBS = {
-    "reference recipe (gate)": (
+    "the reference solution (benchmark)": (
         "The published reference solution, rebuilt from its own recipe and reproduced to the last "
         "digit. It is the yardstick, not a result of ours — if this row ever stops reading 6,503, "
         "our measuring apparatus is broken and no other number here can be trusted."
@@ -105,7 +105,7 @@ BLURBS = {
         "break; and give Maithili six copies instead of two, because it is 1.8% of the corpus and "
         "was the worst-served language. Result: better evenness <em>and</em> fewer total tokens."
     ),
-    "E2b · te ×6 · mai ×7  (rejected)": (
+    "more Telugu + Maithili (rejected)": (
         "Pushes Telugu and Maithili harder still and posts by far the biggest number on this page. "
         "But those weights were chosen while watching the score on the very articles it trains on, "
         "and on held-out text it falls behind the submission — 4,103 against 4,213. Overfitting."

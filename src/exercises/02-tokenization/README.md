@@ -113,23 +113,23 @@ reference solution reproduced exactly; everything below it is ours.
 
 | experiment | spread | score | total tokens | corpus-wide X |
 | --- | ---: | ---: | ---: | ---: |
-| E2b · te ×6 · mai ×7 | 0.0281 | 35,604 | 192,713 | 0.6083 |
-| E2a · te ×5 · mai ×6 | 0.0656 | 15,254 | 191,893 | 0.6057 |
-| E5b · documents · mai ×5 | 0.0910 | 10,985 | 189,910 | 0.5994 |
-| **E5 · documents · mai ×6 — submitted** | **0.0915** | **10,934** | **190,055** | **0.5999** |
-| E1a · mai ×6 | 0.0957 | 10,445 | 191,446 | 0.6043 |
-| E3 · Unigram (ablation) | 0.1138 | 8,787 | 207,782 | 0.6558 |
-| E0 · documents, not lines | 0.1477 | 6,771 | 189,822 | 0.5991 |
-| reference recipe (gate) | 0.1538 | 6,503 | 191,266 | 0.6037 |
-| E1b · mai ×10 | 0.1577 | 6,343 | 192,249 | 0.6068 |
-| E4 · BPE from scratch, no library | 0.1619 | 6,175 | 188,091 | 0.5937 |
-| E1c · mai ×16 | 0.2353 | 4,251 | 193,299 | 0.6101 |
+| more Telugu + Maithili (rejected) | 0.0281 | 35,604 | 192,713 | 0.6083 |
+| te ×5 · mai ×6 | 0.0656 | 15,254 | 191,893 | 0.6057 |
+| documents · mai ×5 | 0.0910 | 10,985 | 189,910 | 0.5994 |
+| **documents · mai ×6 — submitted** | **0.0915** | **10,934** | **190,055** | **0.5999** |
+| mai ×6 alone | 0.0957 | 10,445 | 191,446 | 0.6043 |
+| Unigram (ablation) | 0.1138 | 8,787 | 207,782 | 0.6558 |
+| documents, not lines | 0.1477 | 6,771 | 189,822 | 0.5991 |
+| the reference solution (benchmark) | 0.1538 | 6,503 | 191,266 | 0.6037 |
+| mai ×10 (overshoot) | 0.1577 | 6,343 | 192,249 | 0.6068 |
+| BPE from scratch, no library | 0.1619 | 6,175 | 188,091 | 0.5937 |
+| mai ×16 (overshoot) | 0.2353 | 4,251 | 193,299 | 0.6101 |
 
 Two changes to the reference, each justified separately:
 
-- **Train on documents (E0).** Costs nothing and helps everything: fewer tokens for the same text
+- **Train on documents.** Costs nothing and helps everything: fewer tokens for the same text
   *and* a smaller spread. Pure compression, no denominator games.
-- **Maithili ×6 (E1a).** Maithili is 1.8% of the corpus and shared Devanagari with Hindi, so it won
+- **Maithili ×6.** Maithili is 1.8% of the corpus and shared Devanagari with Hindi, so it won
   almost no merges of its own and sat at the worst fertility. Spread is `max − min`, so pulling the
   *maximum* down is the honest direction. The sweep deliberately overshoots: past ×6 Maithili
   becomes the new *minimum* and the spread widens from the other end (×10 → 6,343, ×16 → 4,251).
@@ -139,7 +139,7 @@ once, smaller spread *and* fewer total tokens.
 
 ### Why not the row that scores 3× higher
 
-E2b scores 35,604. We did not submit it, and the reason is measured rather than asserted.
+The `more Telugu + Maithili` row scores 35,604. We did not submit it, and the reason is measured rather than asserted.
 
 Training and evaluation share the same four files, so corpus weighting is a knob tuned directly
 against the test set. `uv run python -m tokenization.holdout` trains on 80% of each article (every
@@ -150,9 +150,9 @@ against the test set. `uv run python -m tokenization.holdout` trains on 80% of e
 | reference recipe | 6,503 | 3,168 | 0.6711 |
 | **submission — documents · mai ×6** | 10,934 | **4,213** | **0.6674** |
 | mai ×6 alone | 10,445 | 4,096 | 0.6706 |
-| over-tuned — te ×6 · mai ×7 | 35,604 | 4,103 | 0.6750 |
+| more Telugu + Maithili (rejected) | 35,604 | 4,103 | 0.6750 |
 
-E2b's 3.3× in-sample lead is worth **nothing** out of sample — it lands *behind* the submission
+That row's 3.3× in-sample lead is worth **nothing** out of sample — it lands *behind* the submission
 (4,103 vs 4,213) and compresses worse. That gap is the overfitting, and it is most of the headline.
 The honest, transferable gain over the reference is **+33%**, not +68%.
 

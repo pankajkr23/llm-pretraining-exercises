@@ -82,6 +82,16 @@ profile rather than overwritten, and the widget can now actually tokenize text y
   Maithili. The scores are not comparable — different corpora — but the structure is the finding:
   Maithili is 5,808 units in a script Hindi already pays for, Tamil is 188,367 units (larger than
   English) in a script nothing else uses, and swapping them moves which language is starved.
+- **The rejected experiment is on the page, labelled as rejected.** One configuration scores
+  35,604 — more than three times the submission — and the widget was quietly showing only the
+  submission. A reader had no way to know a bigger number was found and turned down, which is the
+  most interesting decision in the exercise. It now appears badged `rejected`, saying in its own
+  words that its weights were chosen while watching the score on the very articles it trains on,
+  and that it loses to the submission on held-out text (4,103 against 4,213).
+- **Every tokenizer on the page explains itself** in three lines — what was changed, why it was
+  worth trying, what came of it — with a badge marking it as the reference, the submission, a
+  rejected experiment or an ablation. The render test fails if a config reaches the page without
+  an explanation: a row of numbers with no story is not a finding.
 - **The submitted tokenizer ships in the bundle**, in HuggingFace's own format at
   `web/tokenizer.json` — `artifacts/` is gitignored by design, and the assignment asks for the exact
   file. `tests/test_submission.py` trains nothing: it loads that file, scores it on the committed
@@ -101,6 +111,10 @@ profile rather than overwritten, and the widget can now actually tokenize text y
   `1fr` track, which refuses to shrink below its content's min-content width, so one long
   unbreakable string pushed the whole page 18px wider than a 390px viewport. Tables now scroll
   inside their own container instead of widening the page.
+- **Internal jargon removed from the public page.** Experiments were labelled with the codes they
+  carry in the sweep — `reference recipe (gate)`, `E2b · te ×6 · mai ×7` — which mean nothing to a
+  reader arriving cold. They now read `the reference solution (benchmark)` and `more Telugu +
+  Maithili (rejected)`, and the README table matches the labels the code actually emits.
 
 ## [0.2.0] - 2026-08-06
 
