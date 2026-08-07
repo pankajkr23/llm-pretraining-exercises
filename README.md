@@ -116,6 +116,13 @@ uv run python -m tokenization.ablate   # the full experiment table
 uv run python -m tokenization.holdout  # in-sample vs held-out
 ```
 
+The earlier round of experiments — clipped prose scored in tokens per *word* — is **retained in
+full** as a second profile rather than overwritten, with its own committed corpus and a test that
+regenerates its four published scores. Its finding stands on its own: representation is the
+dominant lever, and byte-level BPE wastes the budget rebuilding Indic characters from UTF-8 bytes.
+The two profiles are never ranked against each other; the same tokenizer reads ≈ 2.13 under one
+and ≈ 0.60 under the other.
+
 Two findings worth the detour. **Where the trainer's input is cut matters as much as the recipe:**
 HuggingFace splits files into lines, so training from files means no merge may span a newline —
 feed it whole documents instead and every token count drops ~0.6%. And **most of a weighting win is

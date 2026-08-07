@@ -45,9 +45,28 @@ def count_words(text: str) -> int:
     return len(text.split())
 
 
+def count_denominator(text: str, denominator: str) -> int:
+    """Count ``text`` in a profile's denominator — ``"units"`` or ``"words"``.
+
+    Which one is in play is a property of the *measurement*, never of the tokenizer, so it is
+    selected by :class:`~tokenization.config.EvalProfile` rather than guessed here.
+    """
+    if denominator == "units":
+        return count_units(text)
+    if denominator == "words":
+        return count_words(text)
+    msg = f"unknown denominator {denominator!r}"
+    raise ValueError(msg)
+
+
 @dataclass(frozen=True)
 class LangScore:
-    """One language's measurement: its faithful-unit count and its token count."""
+    """One language's measurement: its denominator count and its token count.
+
+    ``units`` holds whichever denominator the profile scores in — faithful units under v2,
+    whitespace words under v1. The field keeps one name because every formula downstream is the
+    same shape; what differs is what was counted, which is why the two are never ranked together.
+    """
 
     code: str
     units: int
@@ -55,7 +74,7 @@ class LangScore:
 
     @property
     def ratio(self) -> float:
-        """Fertility X = tokens / faithful units. Lower is better; ``0.0`` when there are none."""
+        """Fertility X = tokens / denominator count. Lower is better; ``0.0`` when empty."""
         return self.tokens / self.units if self.units else 0.0
 
 

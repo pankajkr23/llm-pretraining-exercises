@@ -18,8 +18,8 @@ proportions the whole article has.
 import json
 
 from .ablate import SUBMISSION, Spec, measure, train_spec
-from .config import Config
-from .corpus import load_faithful
+from .config import V2, Config
+from .corpus import load_all
 from .metrics import adjusted_score, count_units, mean_ratio, score, spread
 
 HOLDOUT_EVERY = 5
@@ -58,7 +58,7 @@ def main() -> None:
     from .ablate import REFERENCE, _reweighted  # noqa: PLC0415 — keeps the suite in one place
 
     cfg = Config()
-    corpora = {lang.code: load_faithful(lang.code, cfg.corpus_dir) for lang in cfg.languages}
+    corpora = load_all(V2, cfg.corpus_dir)
     specs = [
         REFERENCE,
         SUBMISSION,

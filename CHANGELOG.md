@@ -10,16 +10,30 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Exercise 02 now carries two evaluation profiles, both retained and neither deprecated.**
+  **v1** is the original work — clipped article prose, scored in tokens per whitespace word, no
+  Hindi penalty, en/hi/te/ta — and **v2** is the measurement the assignment grades — wiki-faithful
+  Markdown, faithful units, Hindi penalty, en/hi/te/mai. Their scores can never be ranked against
+  each other: the same tokenizer reads ≈ 2.13 under v1 and ≈ 0.60 under v2. `ablate.sweep` raises
+  if handed rows from both, and the widget renders one labelled section per profile with the
+  non-comparability stated in the copy.
+- **v1 is committed and still runnable, not remembered.** Its corpus ships in `corpus/v1/`, and
+  `tests/test_v1_retained.py` regenerates its four published scores — 2077.90 / 1300.12 / 1228.34
+  / 189.59 — on every run. That guard earns its keep because the two profiles share an engine:
+  training from files, `[UNK]`, `min_frequency=1` and Metaspace `prepend_scheme="never"` are all
+  v2 decisions, and every one of them moves v1's numbers, so `ablate._v1` pins all four rather
+  than inheriting them.
+
 ### Changed
 
-- **Exercise 02 now scores what the assignment actually grades.** The tokenizer is trained and
-  measured on committed **wiki-faithful Markdown** — Wikipedia's REST HTML with its links, URLs,
-  tables and categories intact — against a **faithful-unit** denominator (one run of
-  letters/marks/digits, or one visible punctuation character), with the Hindi penalty and adjusted
-  score computed everywhere. The earlier numbers were denominated in whitespace words over clipped
-  prose, which is a different measurement, not a worse one: a fertility of 0.60 and one of 2.13 can
-  describe the same tokenizer. The corpus ships in `corpus/`, so a fresh clone reproduces every
-  published figure with the network switched off.
+- **Exercise 02's graded numbers now come from the corpus and denominator the assignment
+  specifies.** The submission is trained and measured on committed **wiki-faithful Markdown** —
+  Wikipedia's REST HTML with its links, URLs, tables and categories intact — against a
+  **faithful-unit** denominator, with the Hindi penalty and adjusted score computed throughout.
+  Both corpora ship in the repo, so a fresh clone reproduces every published figure with the
+  network switched off.
 - **The reference recipe is now a correctness gate, reproduced to the last digit** — tokens
   111,390 / 51,190 / 24,428 / 4,258, spread 0.153786, score 6502.56 — and it runs as the first row
   of the ablation suite. Reaching it turned up a detail invisible in any config: HuggingFace splits
@@ -74,6 +88,10 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 - **Exercise 02's README and BRIEF no longer describe a denominator the code stopped using**, and
   the stale "connecting Vercel is the remaining one-time step" note is gone from both the exercise
   and the root README — the site has been live for some time.
+- **The tokenizer page no longer scrolls sideways on a phone.** Its two-column grid used a bare
+  `1fr` track, which refuses to shrink below its content's min-content width, so one long
+  unbreakable string pushed the whole page 18px wider than a 390px viewport. Tables now scroll
+  inside their own container instead of widening the page.
 
 ## [0.2.0] - 2026-08-06
 

@@ -19,7 +19,7 @@ from urllib.parse import quote, urljoin
 
 import requests
 
-from .config import Language
+from .config import EvalProfile, Language
 
 if TYPE_CHECKING:  # pragma: no cover - import-time typing only
     from bs4 import BeautifulSoup
@@ -28,24 +28,33 @@ _API = "https://{code}.wikipedia.org/w/api.php"
 _HEADERS = {"User-Agent": "llm-pretraining-tokenization-exercise/0.1 (learning project)"}
 
 
-def load_faithful(code: str, corpus_dir: Path) -> str:
-    """Return the committed wiki-faithful Markdown snapshot for language ``code``.
+def load(profile: EvalProfile, code: str, corpus_dir: Path) -> str:
+    """Return the committed snapshot of language ``code`` for an evaluation profile.
 
     Args:
+        profile: which measurement's corpus to read (:data:`~tokenization.config.V1` reads clipped
+            prose, :data:`~tokenization.config.V2` reads wiki-faithful Markdown).
         code: Wikipedia subdomain, e.g. ``"te"``.
-        corpus_dir: directory holding ``<code>.faithful.txt``.
+        corpus_dir: the ``corpus/`` root; the profile picks the subdirectory.
 
     Raises:
-        FileNotFoundError: if the snapshot is missing, with the command that regenerates it.
+        FileNotFoundError: if the snapshot is missing, naming the command that regenerates it.
     """
-    path = corpus_dir / f"{code}.faithful.txt"
+    path = corpus_dir / profile.subdir / f"{code}{profile.suffix}"
     if not path.exists():
-        msg = (
-            f"missing corpus snapshot {path}. Regenerate it with: "
+        how = (
             f"uv run python -m tokenization.corpus {code}"
+            if profile.name == "v2"
+            else "re-fetch it with corpus.fetch_article (v1's clipped-prose path)"
         )
+        msg = f"missing {profile.name} corpus snapshot {path}. Regenerate it with: {how}"
         raise FileNotFoundError(msg)
     return path.read_text(encoding="utf-8")
+
+
+def load_all(profile: EvalProfile, corpus_dir: Path) -> dict[str, str]:
+    """Every language in ``profile``, as ``{code: text}``."""
+    return {lang.code: load(profile, lang.code, corpus_dir) for lang in profile.languages}
 
 
 def fetch_article(lang: Language, cache_dir: Path) -> str:

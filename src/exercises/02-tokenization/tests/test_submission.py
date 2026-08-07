@@ -15,8 +15,8 @@ import math
 from pathlib import Path
 
 import pytest
-from tokenization.config import Config
-from tokenization.corpus import load_faithful
+from tokenization.config import V2, Config
+from tokenization.corpus import load
 from tokenization.metrics import (
     LangScore,
     adjusted_score,
@@ -52,8 +52,8 @@ def scores() -> list[LangScore]:
     cfg = Config()
     tok = Tokenizer.from_file(str(SHIPPED))
     out = []
-    for lang in cfg.languages:
-        text = load_faithful(lang.code, cfg.corpus_dir)
+    for lang in V2.languages:
+        text = load(V2, lang.code, cfg.corpus_dir)
         out.append(LangScore(lang.code, count_units(text), len(tok.encode(text).ids)))
     return out
 

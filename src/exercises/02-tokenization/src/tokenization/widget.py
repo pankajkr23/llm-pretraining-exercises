@@ -5,31 +5,39 @@ a static page that loads this file. Regenerate with::
 
     uv run python -m tokenization.widget
 
-The payload carries **ordered merges**, not just the vocabulary. A vocabulary alone cannot
-reproduce a score: without the merge order there is no way to encode text, so the widget could
-show a token list but never tokenize anything. The merges are what let the page's JavaScript
-encoder — and anyone who downloads the JSON — reproduce our token counts exactly.
+Two things this module is careful about:
+
+* **The payload carries ordered merges**, not just the vocabulary. A vocabulary alone cannot
+  reproduce a score — without the merge order there is no way to encode text, so the widget could
+  show a token list but never tokenize anything.
+* **Every config is tagged with its profile**, and the page renders one section per profile. v1
+  and v2 measure different corpora with different denominators, so a single ranked list across
+  them would be meaningless however it were sorted.
 """
 
 import json
 from pathlib import Path
 
-from .ablate import REFERENCE_WEIGHTS, SUBMISSION, Spec, measure, spec_weights, train_spec
+from .ablate import REFERENCE, REFERENCE_WEIGHTS, SUBMISSION, Spec, _v1, measure, train_spec
 from .bpe_scratch import UNK_TOKEN, WORD_PREFIX, ScratchBPE
-from .config import Config
-from .corpus import load_faithful
-from .metrics import (
-    adjusted_score,
-    count_units,
-    count_words,
-    hindi_penalty,
-    score,
-    spread,
-)
+from .config import PROFILES, V1, V2, Config, EvalProfile
+from .corpus import load_all
+from .metrics import count_denominator, hindi_penalty, mean_ratio, score, spread
 
-# Configs the reviewer can flip between in the widget. The submission leads; the rest are the
-# comparisons that justify it.
-FEATURED: list[Spec] = [
+# The configs a reviewer can flip between, per profile.
+#
+# v1 keeps the four the original widget shipped — the byte-level baseline it rejected, the
+# char-level BPE that fixed it, the hand-written BPE, and the Unigram that scored highest.
+FEATURED_V1: list[Spec] = [
+    _v1("unigram", "char", "NFKC", 10_000, "flat", "Unigram · char · NFKC"),
+    _v1("bpe-scratch", "char", "NFKC", 10_000, "flat", "BPE from scratch · char · NFKC"),
+    _v1("bpe", "char", "NFKC", 10_000, "flat", "BPE · char · NFKC"),
+    _v1("bpe", "byte", None, 10_000, "flat", "BPE · byte (baseline)"),
+]
+
+# v2 leads with the reference solution exactly as published, then our permutations on it.
+FEATURED_V2: list[Spec] = [
+    REFERENCE,
     SUBMISSION,
     Spec(
         algo="bpe-scratch",
@@ -49,18 +57,26 @@ FEATURED: list[Spec] = [
         label="Unigram (ablation)",
         weights=REFERENCE_WEIGHTS,
     ),
-    Spec(
-        algo="bpe",
-        level="byte",
-        normalization=None,
-        vocab_size=10_000,
-        weighting="manual",
-        label="byte-level BPE (what we rejected)",
-        weights=REFERENCE_WEIGHTS,
-    ),
 ]
 
+FEATURED: list[Spec] = [*FEATURED_V2, *FEATURED_V1]
+
 WEB_DIR = Path(__file__).resolve().parents[2] / "web"
+
+# What each section tells a reader it is. Kept next to the data so the copy cannot drift from it.
+SECTION_NOTES = {
+    "v1": (
+        "Our first pass at the problem, kept exactly as it was run: clipped article prose, scored "
+        "in tokens per whitespace word. This is where the finding came from — representation is "
+        "the dominant lever. Byte-level BPE rebuilds every Indic character out of three UTF-8 "
+        "bytes; moving to character level collapses the gap between languages."
+    ),
+    "v2": (
+        "The measurement the assignment grades: wiki-faithful Markdown — links, URLs, tables and "
+        "all — scored in tokens per faithful unit. The reference solution is shown exactly as "
+        "published; everything after it is ours."
+    ),
+}
 
 
 def extract_merges(tok: object) -> list[list[str]]:
@@ -75,8 +91,8 @@ def extract_merges(tok: object) -> list[list[str]]:
 def encoder_spec(spec: Spec, tok: object) -> dict:
     """Everything the page's JavaScript needs to reproduce this tokenizer's encoding.
 
-    ``kind`` selects the pre-tokenizer the JS must replicate. The two BPE kinds differ in exactly
-    one place — how raw text is cut into pre-tokens before the merge loop runs — and getting that
+    ``kind`` selects the pre-tokenizer the JS must replicate. The kinds differ in exactly one
+    place — how raw text is cut into pre-tokens before the merge loop runs — and getting that
     wrong is the classic way a "same" tokenizer in two languages produces different counts.
     """
     if isinstance(tok, ScratchBPE):
@@ -101,55 +117,75 @@ def encoder_spec(spec: Spec, tok: object) -> dict:
     return {"kind": "unsupported", "reason": f"{spec.algo}/{spec.level}"}
 
 
-def build_payload(cfg: Config, corpora: dict[str, str], units: dict[str, int]) -> dict:
-    """Train every featured config and assemble the widget's JSON payload."""
-    names = {lang.code: lang.name for lang in cfg.languages}
-    words = {c: count_words(t) for c, t in corpora.items()}
-    configs = []
-    for spec in FEATURED:
-        tok = train_spec(spec, corpora)
-        scores = sorted(measure(tok, corpora, units), key=lambda s: s.ratio)
-        vocab = tok.get_vocab()
-        configs.append(
+def build_config(spec: Spec, profile: EvalProfile, corpora: dict[str, str]) -> dict:
+    """Train one featured spec and assemble its entry in the payload."""
+    names = {lang.code: lang.name for lang in profile.languages}
+    counts = {c: count_denominator(t, profile.denominator) for c, t in corpora.items()}
+    tok = train_spec(spec, corpora)
+    scores = sorted(measure(tok, corpora, counts), key=lambda s: s.ratio)
+    penalty = hindi_penalty(scores) if profile.penalty else 1.0
+    vocab = tok.get_vocab()
+    return {
+        "label": spec.label,
+        "profile": profile.name,
+        "algo": spec.algo,
+        "level": spec.level,
+        "normalization": spec.normalization,
+        "denominator": profile.denominator,
+        "weights": dict(spec.weights) or dict.fromkeys(corpora, 1.0),
+        "is_submission": spec == SUBMISSION,
+        "is_reference": spec == REFERENCE,
+        "vocab_actual": tok.get_vocab_size(),
+        "languages": [
             {
-                "label": spec.label,
-                "algo": spec.algo,
-                "level": spec.level,
-                "normalization": spec.normalization,
-                "weights": spec_weights(spec, corpora),
-                "is_submission": spec == SUBMISSION,
-                "vocab_actual": tok.get_vocab_size(),
-                "languages": [
-                    {
-                        "code": s.code,
-                        "name": names.get(s.code, s.code),
-                        "units": s.units,
-                        "tokens": s.tokens,
-                        "words": words[s.code],
-                        "ratio": round(s.ratio, 6),
-                    }
-                    for s in scores
-                ],
-                "x_min": round(scores[0].ratio, 6),
-                "x_max": round(scores[-1].ratio, 6),
-                "spread": round(spread(scores), 6),
-                "score": round(score(scores), 2),
-                "penalty": round(hindi_penalty(scores), 6),
-                "adjusted": round(adjusted_score(scores), 2),
-                "encoder": encoder_spec(spec, tok),
-                "tokens": [t for t, _ in sorted(vocab.items(), key=lambda kv: kv[1])],
-                "merges": extract_merges(tok),
+                "code": s.code,
+                "name": names.get(s.code, s.code),
+                "units": s.units,
+                "tokens": s.tokens,
+                "ratio": round(s.ratio, 6),
             }
-        )
-    return {"target_vocab": cfg.vocab_size, "configs": configs}
+            for s in scores
+        ],
+        "x_min": round(scores[0].ratio, 6),
+        "x_max": round(scores[-1].ratio, 6),
+        "spread": round(spread(scores), 6),
+        "score": round(score(scores), 2),
+        "penalty": round(penalty, 6),
+        "adjusted": round(score(scores) / penalty, 2),
+        "total_tokens": sum(s.tokens for s in scores),
+        "mean_ratio": round(mean_ratio(scores), 6),
+        "encoder": encoder_spec(spec, tok),
+        "tokens": [t for t, _ in sorted(vocab.items(), key=lambda kv: kv[1])],
+        "merges": extract_merges(tok),
+    }
+
+
+def build_payload(cfg: Config) -> dict:
+    """Train every featured config in both profiles and assemble the widget's JSON payload."""
+    configs = []
+    for profile, specs in ((V2, FEATURED_V2), (V1, FEATURED_V1)):
+        corpora = load_all(profile, cfg.corpus_dir)
+        configs.extend(build_config(spec, profile, corpora) for spec in specs)
+    return {
+        "target_vocab": cfg.vocab_size,
+        "profiles": [
+            {
+                "name": p.name,
+                "title": p.title,
+                "denominator": p.denominator,
+                "languages": [lang.code for lang in p.languages],
+                "note": SECTION_NOTES[p.name],
+            }
+            for p in (PROFILES["v2"], PROFILES["v1"])
+        ],
+        "configs": configs,
+    }
 
 
 def main() -> None:
-    """Load the committed corpus, train the featured configs, and write the shipped bundle."""
+    """Train the featured configs in both profiles and write the shipped bundle."""
     cfg = Config()
-    corpora = {lang.code: load_faithful(lang.code, cfg.corpus_dir) for lang in cfg.languages}
-    units = {c: count_units(t) for c, t in corpora.items()}
-    payload = build_payload(cfg, corpora, units)
+    payload = build_payload(cfg)
     WEB_DIR.mkdir(parents=True, exist_ok=True)
 
     out = WEB_DIR / "data.json"
@@ -158,11 +194,12 @@ def main() -> None:
     # The submission tokenizer in HuggingFace's own format, tracked and served alongside the page,
     # so a grader can `Tokenizer.from_file(...)` it directly rather than reassembling one from the
     # widget's vocab + merges. `artifacts/` is gitignored by design; this is the deliverable.
-    submission = train_spec(SUBMISSION, corpora)
+    submission = train_spec(SUBMISSION, load_all(V2, cfg.corpus_dir))
     submission.save(str(WEB_DIR / "tokenizer.json"))
 
-    sizes = " · ".join(f"{c['label']}: {c['adjusted']}" for c in payload["configs"])
-    print(f"wrote {out} ({out.stat().st_size // 1024} KB) + tokenizer.json — {sizes}")
+    print(f"wrote {out} ({out.stat().st_size // 1024} KB) + tokenizer.json")
+    for c in payload["configs"]:
+        print(f"  [{c['profile']}] {c['label']:38} {c['adjusted']:>10.2f}")
 
 
 if __name__ == "__main__":

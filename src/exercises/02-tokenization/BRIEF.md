@@ -46,10 +46,12 @@ The brief is loosely worded, so we pin the terms down (see `src/tokenization/met
 - **score** = `1000 / (X_max − X_min)`, divided by a **Hindi penalty** `exp(max(0, X_hi/1.2 − 1))`
   that exists to stop you shrinking the spread by degrading the best-served language.
 
-> Earlier revisions of this exercise counted whitespace **words** over clipped prose. That is a
-> different measurement, not a worse one — the same tokenizer scores ≈ 0.60 in units and ≈ 2.13 in
-> words — so numbers from the two are never comparable. `count_words` is still computed and
-> reported next to the unit counts so the difference is visible rather than confusing.
+> Our first pass counted whitespace **words** over clipped prose. That is a different measurement,
+> not a worse one — the same tokenizer scores ≈ 0.60 in units and ≈ 2.13 in words — so numbers from
+> the two are never comparable. It is **retained in full** as the `v1` profile (`corpus/v1/`, its
+> own suite, its own regression test) because its finding is independent of the denominator:
+> representation is the dominant lever. The definitions above are the `v2` profile, which is what
+> the assignment grades and what the submission is scored on.
 
 ## What you're submitting
 

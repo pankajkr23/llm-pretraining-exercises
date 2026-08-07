@@ -11,7 +11,50 @@ penalty      = exp(max(0, X_hi / 1.2 − 1))
 final score  = raw score / penalty
 ```
 
-## Result
+## Two measurements, kept side by side
+
+This exercise has been measured two different ways, and **both are retained here** — not as old
+and new, but as two things that answer different questions:
+
+| | **v1** — our original experiments | **v2** — the graded measurement |
+| --- | --- | --- |
+| corpus | clipped article prose (`explaintext`) | wiki-faithful Markdown |
+| denominator | whitespace **words** | **faithful units** |
+| Hindi penalty | none (as designed) | yes |
+| languages | en · hi · te · **ta** | en · hi · te · **mai** |
+| lives in | `corpus/v1/` | `corpus/v2/` |
+
+**Their scores can never be ranked against each other.** The same tokenizer reads ≈ 2.13 under v1
+and ≈ 0.60 under v2 — four times as many atoms in the denominator, on a corpus four times the
+size. Every table, the report, and the widget keep them in separate labelled sections, and
+`ablate.sweep` raises if you try to sort rows from both at once.
+
+Both run from committed corpora, offline: `uv run python -m tokenization.ablate` prints both
+tables.
+
+## v1 — our original experiments (retained, still runnable)
+
+| experiment | spread | score |
+| --- | ---: | ---: |
+| Unigram · char · NFKC | 0.4813 | **2,077.90** |
+| **BPE from scratch · char · NFKC** (no library) | 0.7692 | **1,300.12** |
+| char BPE · NFKC (HuggingFace) | 0.8141 | 1,228.34 |
+| byte BPE (baseline) | 5.2744 | 189.59 |
+
+**The finding, which still stands:** *representation is the dominant lever*, not corpus weighting.
+Byte-level BPE spends its budget rebuilding every Indic character out of three UTF-8 bytes (Tamil
+≈ 6.5 tokens/word); char-level + NFKC drops every language to ~1.4–2.2 and cuts the spread ~11×.
+Weighting only bites while the vocabulary is scarce — at 2k it moves the score, at 10k it is
+inert — and it *over-corrects* at char level, where `balance` drags Telugu to 1.00 and pushes
+English and Tamil past 1.9.
+
+These numbers are regenerated from `corpus/v1/` on every run and pinned by
+[`tests/test_v1_retained.py`](./tests/test_v1_retained.py). That guard matters because v1 and v2
+share an engine: four settings v2 introduced (training from files, `[UNK]`, `min_frequency=1`,
+Metaspace `prepend_scheme="never"`) each move v1's numbers, so `ablate._v1` pins all four
+explicitly rather than inheriting them.
+
+## v2 — the graded measurement
 
 The submitted tokenizer, on the committed corpus:
 
@@ -62,9 +105,10 @@ trainer whole documents instead and it learns cross-line pairs, lowering every t
 ~0.6% and lifting the score to 6771 — same recipe, different number. It is not a rounding
 difference and it is not visible in the config; only the exact-match gate catches it.
 
-## Experiments
+### Experiments on the graded corpus
 
-All on the same corpus, so the recipe is the only thing that varies.
+All v2 rows share one corpus, so the recipe is the only thing that varies. The first row is the
+reference solution reproduced exactly; everything below it is ours.
 `uv run python -m tokenization.ablate` → [`artifacts/ablations.json`](./artifacts/).
 
 | experiment | spread | score | total tokens | corpus-wide X |
@@ -174,18 +218,31 @@ format rather than earned by the merges.
 by hand: NFKC-normalize, split on whitespace, prefix each word with `▁`, seed the vocab with base
 characters, then repeatedly merge the most frequent adjacent pair (pair statistics updated
 incrementally; ties broken lexicographically, so training is deterministic). It duck-types the
-slice of the HuggingFace API the pipeline uses, so it drops into the harness as `algo="bpe-scratch"`.
+slice of the HuggingFace API the pipeline uses, so it drops into the harness as `algo="bpe-scratch"`
+and appears in **both** profiles.
 
-It scores **6,175** — below the HuggingFace recipe. It also produces the **fewest total tokens of
-any configuration** (188,091), which is worth being precise about rather than proud of: it splits
-on *all* whitespace and discards newlines entirely, so it never spends a token on one. That is a
-real difference in what is being counted, not evidence of a better merge loop.
+Its two results say different things, which is a good illustration of why the profiles are kept
+apart:
+
+- **Under v1 it scores 1,300 — narrowly *beating* HuggingFace's own char-level BPE (1,228)** on the
+  same recipe, behind only the different Unigram algorithm.
+- **Under v2 it scores 6,175 — *below* the HuggingFace recipe (6,503).** It does produce the
+  fewest total tokens of any configuration (188,091), which is worth being precise about rather
+  than proud of: it splits on *all* whitespace and discards newlines entirely, so it never spends
+  a token on one. On clipped prose that costs almost nothing; on Markdown, where line structure
+  carries meaning, it is a real difference in what is being counted rather than a better merge
+  loop.
 
 ## Widget (the reviewer deliverable)
 
 [`web/index.html`](./web/index.html) renders `web/data.json`: the four fertilities, the score
 calculation with its penalty, the full searchable vocabulary, a **download** button, and a
 **paste-your-own-text encoder** that runs the real merge list in the browser.
+
+It opens on **v2** with the reference solution marked ★ and our submission ✓, and a second tab
+holds the **v1** tokenizers. Each section names the denominator it is scored in and says in words
+that its numbers do not travel to the other — a `units` column header over word counts is exactly
+how two measurements get quietly conflated.
 
 The download and the encoder are the point. *"A vocab list without the actual encoding algorithm is
 not enough to reproduce your score"* — so `data.json` carries the **ordered merges**, and
@@ -207,13 +264,14 @@ Vercel project (see [`deploy/`](../../../deploy/)).
 ## Layout
 
 ```text
-corpus/          # committed wiki-faithful Markdown snapshots + metadata (the scored corpus)
+corpus/v1/       # committed clipped-prose snapshots — what v1 was measured on
+corpus/v2/       # committed wiki-faithful Markdown + metadata — what v2 is graded on
 src/tokenization/
-  config.py         # languages, titles, vocab size, per-language weights
-  corpus.py         # load a snapshot; rebuild one from Wikipedia REST HTML
-  metrics.py        # units, fertility, spread, score, Hindi penalty, corpus-wide X
+  config.py         # the two EvalProfiles, languages, titles, vocab size, weights
+  corpus.py         # load a profile's snapshot; rebuild one from Wikipedia REST HTML
+  metrics.py        # units, words, fertility, spread, score, Hindi penalty, corpus-wide X
   faithfulness.py   # the round-trip rule as executable checks
-  ablate.py         # Spec / train_spec / run / sweep / SUITE — the one trainer
+  ablate.py         # Spec / train_spec / run / sweep / V1_SUITE + V2_SUITE — the one trainer
   holdout.py        # train on 80%, score the 20% never seen
   fourth_language.py# Maithili vs Tamil, same recipe
   bpe_scratch.py    # the same algorithm written by hand, no library
@@ -229,7 +287,7 @@ artifacts/       # gitignored run outputs
 ```bash
 uv sync --all-packages
 uv run python -m tokenization                  # train the submission, print + save the report
-uv run python -m tokenization.ablate           # the full experiment table
+uv run python -m tokenization.ablate           # both profiles' tables, side by side
 uv run python -m tokenization.holdout          # in-sample vs held-out
 uv run python -m tokenization.fourth_language  # Maithili vs Tamil
 uv run python -m tokenization.widget           # rebuild web/data.json

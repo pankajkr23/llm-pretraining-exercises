@@ -4,13 +4,26 @@ Component notes. Repo-wide conventions: root `AGENTS.md`.
 
 - **Python package** (src layout) at `src/tokenization/`, installed editable via the uv workspace.
   Run the pipeline: `uv run python -m tokenization`.
-- **The corpus is committed, not fetched.** `corpus/*.faithful.txt` are wiki-faithful Markdown
-  snapshots (Wikipedia REST HTML → `markdownify`), generated 2026-07-13 for en/hi/te/mai and
-  2026-08-06 for ta. Training, evaluation and every published number run offline from these files.
+- **Two evaluation profiles, both retained, never ranked together.** `config.V1` (clipped prose ·
+  whitespace words · no penalty · en/hi/te/**ta**) and `config.V2` (wiki-faithful Markdown ·
+  faithful units · Hindi penalty · en/hi/te/**mai**). v1 is *not* deprecated history — it is a
+  retained measurement with its own committed corpus and its own regression test. A profile
+  decides the corpus, the denominator and the penalty; nothing else may. `ablate.sweep` raises if
+  handed specs from both, and the widget renders one section per profile.
+  **The same tokenizer reads ≈ 2.13 under v1 and ≈ 0.60 under v2** — if you ever see the two in one
+  ranked list, that is a bug.
+- **v1's settings are pinned, not inherited** (`ablate._v1`): trained from whole **documents**,
+  unknown token `<unk>`, `min_frequency=0`, Metaspace `prepend_scheme="always"`. Each of those
+  four differs in v2 and each one moves v1's numbers. `tests/test_v1_retained.py` regenerates
+  2077.90 / 1300.12 / 1228.34 / 189.59 from `corpus/v1/` and fails if a v2-motivated change
+  quietly restates v1's history.
+- **The corpus is committed, not fetched.** `corpus/v1/*.txt` (clipped extracts) and
+  `corpus/v2/*.faithful.txt` (Wikipedia REST HTML → `markdownify`, generated 2026-07-13 for
+  en/hi/te/mai and 2026-08-06 for ta). Every published number runs offline from these files.
   Re-fetching is a separate explicit command (`python -m tokenization.corpus <code>`) because
   Wikipedia has drifted: refetch one article and it silently stops being comparable with the rest.
-  The clipped-prose fetcher (`corpus.fetch_article`) is retained for reference but **nothing scored
-  may come from it** — the assignment forbids reporting numbers from a clipped page.
+  The clipped-prose fetcher (`corpus.fetch_article`) is how `corpus/v1/` was built; **nothing in
+  v2 may come from it** — the assignment forbids grading numbers from a clipped page.
 - **`ablate.train_spec` is the only trainer.** Do not add a second one. Whether HuggingFace is
   handed *files* or *whole documents* silently changes every token count by ~0.6% (it splits files
   into lines, so no merge may span a newline), which is enough to move the score 6502 → 6771. That
@@ -30,9 +43,13 @@ Component notes. Repo-wide conventions: root `AGENTS.md`.
   (the round-trip rule as checks) · `ablate.py` (`Spec`/`train_spec`/`run`/`sweep`/`SUITE`) ·
   `holdout.py` · `fourth_language.py` · `bpe_scratch.py` (hand-written BPE) · `widget.py` ·
   `__main__.py`.
-- **Widget** (`web/index.html` + `web/encoder.js`, rendering `web/data.json`): exports the **ordered
-  merges**, not just the vocabulary — a vocab list cannot reproduce a score. `encoder.js` replays
-  them in the browser and `tests/test_js_encoder.py` asserts Python and `node` agree token-for-token.
+- **Widget** (`web/index.html` + `web/encoder.js`, rendering `web/data.json`): one labelled section
+  per profile, never one ranked list. Exports the **ordered merges**, not just the vocabulary — a
+  vocab list cannot reproduce a score. `encoder.js` replays them in the browser and
+  `tests/test_js_encoder.py` asserts Python and `node` produce identical **ids**. Compare ids, not
+  token strings: the three engines disagree about what to *call* an unknown symbol (HuggingFace
+  says `<unk>`, our scratch BPE and the JS keep the original character) while agreeing on its id,
+  and ids are what the score actually counts.
   Follows `docs/DESIGN.md`: Apple-style palette, `← Back` pill, light + dark. Edit its non-ASCII
   glyphs (`—`, `▁`, `Ġ`, subscripts) with Edit/Write, never byte-mode `perl`/`sed`.
 - **`src/solution/` is gitignored and must never be tracked** — it holds the course's reference

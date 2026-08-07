@@ -7,8 +7,8 @@ nobody has watched go red is not a guard — it is a comment that costs CPU.
 
 import pytest
 from tokenization.ablate import SUBMISSION, train_spec
-from tokenization.config import Config
-from tokenization.corpus import load_faithful
+from tokenization.config import V2, Config
+from tokenization.corpus import load_all
 from tokenization.faithfulness import (
     METASPACE,
     count_unk,
@@ -22,7 +22,7 @@ from tokenization.faithfulness import (
 @pytest.fixture(scope="module")
 def corpora() -> dict[str, str]:
     cfg = Config()
-    return {lang.code: load_faithful(lang.code, cfg.corpus_dir) for lang in cfg.languages}
+    return load_all(V2, cfg.corpus_dir)
 
 
 @pytest.fixture(scope="module")

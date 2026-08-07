@@ -26,12 +26,11 @@ from tokenizers.models import BPE, Unigram, WordPiece
 from tokenizers.trainers import BpeTrainer, UnigramTrainer, WordPieceTrainer
 
 from .bpe_scratch import ScratchBPE
-from .config import Config
-from .corpus import load_faithful
+from .config import PROFILES, V1, V2, Config, EvalProfile
+from .corpus import load_all
 from .metrics import (
     LangScore,
-    adjusted_score,
-    count_units,
+    count_denominator,
     hindi_penalty,
     mean_ratio,
     score,
@@ -52,6 +51,9 @@ class Spec:
         weighting: ``"flat"`` | ``"manual"`` (use ``weights``) | ``"balance"`` (equalize corpus
             chars) | ``"sqrt"`` (milder).
         label: human-readable name for the results table.
+        profile: which measurement this row belongs to — ``"v1"`` or ``"v2"``. Selects the corpus,
+            the denominator and whether the Hindi penalty applies. Rows from different profiles
+            are never ranked against each other.
         weights: language code -> upsampling weight, as ordered pairs; used by ``"manual"``.
         min_frequency: minimum pair frequency a merge must reach (HuggingFace trainers only).
         unk_token: spelling of the unknown-token symbol.
@@ -71,6 +73,7 @@ class Spec:
     unk_token: str = "[UNK]"
     prepend_scheme: str = "never"
     train_unit: str = "lines"
+    profile: str = "v2"
 
 
 @dataclass
@@ -78,6 +81,7 @@ class Result:
     """Outcome of running one :class:`Spec`."""
 
     label: str
+    profile: str
     spec: dict
     vocab_actual: int
     ratios: dict[str, float]
@@ -240,12 +244,20 @@ def measure(
 
 
 def run(spec: Spec, corpora: dict[str, str], units: dict[str, int]) -> Result:
-    """Train one tokenizer per ``spec`` and measure fertility, spread, score and penalty."""
+    """Train one tokenizer per ``spec`` and measure fertility, spread, score and penalty.
+
+    The Hindi penalty is applied only when the spec's profile defines one. v1 was designed and
+    reported without it, and retro-fitting it would silently restate numbers that were published
+    without it — so v1 rows carry ``penalty = 1.0`` and ``adjusted == score`` by construction.
+    """
+    profile = PROFILES[spec.profile]
     try:
         tok = train_spec(spec, corpora)
         scores = measure(tok, corpora, units)
+        penalty = hindi_penalty(scores) if profile.penalty else 1.0
         return Result(
             label=spec.label or f"{spec.algo}/{spec.level}",
+            profile=spec.profile,
             spec=asdict(spec),
             vocab_actual=tok.get_vocab_size(),
             ratios={s.code: round(s.ratio, 6) for s in scores},
@@ -253,13 +265,15 @@ def run(spec: Spec, corpora: dict[str, str], units: dict[str, int]) -> Result:
             units={s.code: s.units for s in scores},
             spread=round(spread(scores), 6),
             score=round(score(scores), 2),
-            penalty=round(hindi_penalty(scores), 6),
-            adjusted=round(adjusted_score(scores), 2),
+            penalty=round(penalty, 6),
+            adjusted=round(score(scores) / penalty, 2),
             total_tokens=sum(s.tokens for s in scores),
             mean_ratio=round(mean_ratio(scores), 6),
         )
     except Exception as exc:  # noqa: BLE001 — a bad spec shouldn't abort the whole sweep
-        return Result(spec.label, asdict(spec), 0, {}, error=f"{type(exc).__name__}: {exc}")
+        return Result(
+            spec.label, spec.profile, asdict(spec), 0, {}, error=f"{type(exc).__name__}: {exc}"
+        )
 
 
 # The published reference recipe, reproduced exactly: HF BPE · 10k · min_frequency=1 · NFKC only ·
@@ -305,12 +319,56 @@ def _documents(label: str, **weights: float) -> Spec:
     )
 
 
-# The curated sweep: the gate, then our experiments. Maithili sits at the *maximum* fertility and
-# is only ~1.1% of the weighted mix, so it wins almost no merges of its own and rides Hindi's
-# Devanagari. Spread is max − min, so the honest lever is pulling that maximum down; pushing the
-# minimum (Hindi) up would also shrink the spread but is exactly the exploit the penalty exists
-# to block — see ``metrics.degrades_best``.
-SUITE: list[Spec] = [
+def _v1(algo: str, level: str, norm: str | None, vocab: int, weighting: str, label: str) -> Spec:
+    """A v1 experiment, pinned to the settings its published numbers were produced with.
+
+    These are not stylistic defaults — they are what the original code did, and each one moves the
+    result: it trained from an in-memory iterator of whole **documents**, spelled the unknown token
+    ``<unk>``, left ``min_frequency`` at the trainer's own default of 0, and used HuggingFace's
+    default Metaspace, whose ``prepend_scheme`` is ``"always"`` rather than ``"never"``. Inheriting
+    v2's defaults here would quietly restate v1's history.
+    """
+    return Spec(
+        algo=algo,
+        level=level,
+        normalization=norm,
+        vocab_size=vocab,
+        weighting=weighting,
+        label=label,
+        min_frequency=0,
+        unk_token="<unk>",
+        prepend_scheme="always",
+        train_unit="documents",
+        profile="v1",
+    )
+
+
+# v1 — the original experiments, retained and still runnable. Clipped prose, whitespace words, no
+# Hindi penalty. Their finding stands on its own: **representation is the dominant lever**, not
+# corpus weighting. Byte-level BPE spends its budget rebuilding 3-byte UTF-8 Indic characters;
+# char-level + NFKC collapses the spread. Weighting only bites while the vocabulary is scarce
+# (compare the 2k rows to the 10k ones) and can over-correct at char level.
+V1_SUITE: list[Spec] = [
+    _v1("bpe", "byte", None, 10_000, "flat", "byte BPE · 10k · flat  (baseline)"),
+    _v1("bpe", "byte", None, 10_000, "balance", "byte BPE · 10k · balance  (saturates → inert)"),
+    _v1("bpe", "byte", None, 2_000, "flat", "byte BPE · 2k · flat  (scarce)"),
+    _v1("bpe", "byte", None, 2_000, "balance", "byte BPE · 2k · balance  (weighting bites)"),
+    _v1("bpe", "char", "NFC", 10_000, "flat", "char BPE · 10k · NFC · flat"),
+    _v1("bpe", "char", "NFC", 10_000, "balance", "char BPE · 10k · NFC · balance"),
+    _v1("bpe", "char", "NFKC", 10_000, "flat", "char BPE · 10k · NFKC · flat"),
+    _v1("unigram", "char", "NFKC", 10_000, "flat", "Unigram char · 10k · NFKC · flat"),
+    _v1("unigram", "char", "NFKC", 10_000, "balance", "Unigram char · 10k · NFKC · balance"),
+    _v1("unigram", "byte", None, 10_000, "flat", "Unigram byte · 10k · flat"),
+    _v1("bpe-scratch", "char", "NFKC", 10_000, "flat", "BPE from scratch · char · NFKC · flat"),
+    _v1("bpe-scratch", "char", "NFKC", 10_000, "balance", "BPE from scratch · char · balance"),
+]
+
+# v2 — the graded measurement: the reference recipe as the gate, then our permutations on its
+# corpus. Maithili sits at the *maximum* fertility and is only ~1.8% of the corpus, so it wins
+# almost no merges of its own and rides Hindi's Devanagari. Spread is max − min, so the honest
+# lever is pulling that maximum down; pushing the minimum (Hindi) up would also shrink the spread
+# but is exactly the exploit the penalty exists to block — see ``metrics.degrades_best``.
+V2_SUITE: list[Spec] = [
     REFERENCE,
     # E0 — the same recipe trained on whole documents instead of lines. Markdown repeats a lot of
     # cross-line structure (list scaffolding, table rows, reference blocks) that a line-split
@@ -372,13 +430,30 @@ SUBMISSION = _documents("submission · documents · mai ×6", en=3, hi=4, te=4, 
 
 
 def sweep(specs: list[Spec], corpora: dict[str, str], units: dict[str, int]) -> list[Result]:
-    """Run every spec and return results sorted by adjusted score (best first, failures last)."""
+    """Run every spec and return results sorted by adjusted score (best first, failures last).
+
+    Only ever call this with specs from a **single** profile. Sorting rows measured in different
+    denominators would produce a ranked list whose order means nothing.
+    """
+    profiles = {s.profile for s in specs}
+    if len(profiles) > 1:
+        msg = f"cannot rank across profiles {sorted(profiles)} — they are different measurements"
+        raise ValueError(msg)
     results = [run(s, corpora, units) for s in specs]
     return sorted(results, key=lambda r: (r.error is not None, -r.adjusted))
 
 
-def _print_table(results: list[Result]) -> None:
-    print(f"{'experiment':42} {'spread':>8} {'adj score':>10} {'tokens':>9} {'mean X':>7}  ratios")
+def run_profile(profile: EvalProfile, specs: list[Spec], cfg: Config) -> list[Result]:
+    """Load a profile's corpus and sweep its specs against the denominator it is scored in."""
+    corpora = load_all(profile, cfg.corpus_dir)
+    counts = {c: count_denominator(t, profile.denominator) for c, t in corpora.items()}
+    return sweep(specs, corpora, counts)
+
+
+def _print_table(profile: EvalProfile, results: list[Result]) -> None:
+    denom = profile.denominator
+    print(f"\n{profile.title}")
+    print(f"{'experiment':42} {'spread':>8} {'score':>10} {'tokens':>9} {'mean X':>7}  ratios")
     print("-" * 122)
     for r in results:
         if r.error:
@@ -389,18 +464,24 @@ def _print_table(results: list[Result]) -> None:
             f"{r.label:42} {r.spread:>8.4f} {r.adjusted:>10.2f} {r.total_tokens:>9} "
             f"{r.mean_ratio:>7.4f}  {ratios}"
         )
+    print(f"({len(results)} rows · X = tokens per {denom})")
 
 
 def main() -> None:
-    """Run the curated SUITE over the committed corpus, print a table, and dump JSON."""
+    """Run both profiles' suites and dump each to its own JSON, never into one ranked list."""
     cfg = Config()
-    corpora = {lang.code: load_faithful(lang.code, cfg.corpus_dir) for lang in cfg.languages}
-    units = {c: count_units(t) for c, t in corpora.items()}
-    results = sweep(SUITE, corpora, units)
-    _print_table(results)
     cfg.artifacts_dir.mkdir(parents=True, exist_ok=True)
+    everything: dict[str, list[dict]] = {}
+    for profile, specs in ((V1, V1_SUITE), (V2, V2_SUITE)):
+        results = run_profile(profile, specs, cfg)
+        _print_table(profile, results)
+        everything[profile.name] = [asdict(r) for r in results]
+    print(
+        "\nScores are not comparable across the two tables: different corpus, different "
+        "denominator. The same tokenizer reads ~2.1 under v1 and ~0.6 under v2."
+    )
     (cfg.artifacts_dir / "ablations.json").write_text(
-        json.dumps([asdict(r) for r in results], indent=2, ensure_ascii=False), encoding="utf-8"
+        json.dumps(everything, indent=2, ensure_ascii=False), encoding="utf-8"
     )
 
 

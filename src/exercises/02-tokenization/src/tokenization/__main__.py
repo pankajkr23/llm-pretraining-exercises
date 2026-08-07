@@ -15,8 +15,8 @@ Run with:  uv run python -m tokenization
 import json
 
 from .ablate import SUBMISSION, measure, train_spec
-from .config import Config
-from .corpus import load_faithful
+from .config import V2, Config
+from .corpus import load_all
 from .metrics import (
     adjusted_score,
     count_units,
@@ -30,8 +30,8 @@ from .metrics import (
 def main() -> None:
     """Train the submission tokenizer on the committed corpus and write its report."""
     cfg = Config()
-    names = {lang.code: lang.name for lang in cfg.languages}
-    corpora = {lang.code: load_faithful(lang.code, cfg.corpus_dir) for lang in cfg.languages}
+    names = {lang.code: lang.name for lang in V2.languages}
+    corpora = load_all(V2, cfg.corpus_dir)
     units = {c: count_units(t) for c, t in corpora.items()}
 
     tok = train_spec(SUBMISSION, corpora)

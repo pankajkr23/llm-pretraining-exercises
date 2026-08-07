@@ -21,8 +21,8 @@ a different problem from a tiny one sharing a script with Hindi.
 import json
 
 from .ablate import Spec, run
-from .config import REFERENCE_LANGUAGES, TAMIL, Config, Language
-from .corpus import load_faithful
+from .config import REFERENCE_LANGUAGES, TAMIL, V2, Config, Language
+from .corpus import load
 from .metrics import count_units
 
 MAITHILI_SET: tuple[Language, ...] = REFERENCE_LANGUAGES
@@ -57,7 +57,7 @@ def compare(cfg: Config | None = None) -> list[dict]:
     ]
     out = []
     for langs, spec in trials:
-        corpora = {lang.code: load_faithful(lang.code, cfg.corpus_dir) for lang in langs}
+        corpora = {lang.code: load(V2, lang.code, cfg.corpus_dir) for lang in langs}
         units = {c: count_units(t) for c, t in corpora.items()}
         result = run(spec, corpora, units)
         out.append(

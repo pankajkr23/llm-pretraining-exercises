@@ -76,9 +76,15 @@ def _page(width: int = 1500):
             browser.close()
 
 
+def _bundle() -> dict:
+    return json.loads((WEB / "data.json").read_text(encoding="utf-8"))
+
+
 def test_the_page_renders_the_score_and_every_language():
-    expected = len(json.loads((WEB / "data.json").read_text(encoding="utf-8"))["configs"])
-    assert expected, "no configs in the bundle, so this test proves nothing"
+    data = _bundle()
+    first = data["profiles"][0]["name"]
+    expected = sum(1 for c in data["configs"] if c["profile"] == first)
+    assert expected, "no configs in the opening section, so this test proves nothing"
 
     with _page() as (page, errors):
         assert not errors, f"the page threw: {errors[:3]}"
@@ -88,6 +94,40 @@ def test_the_page_renders_the_score_and_every_language():
         assert page.locator("tbody tr").count() == 4
         score = page.locator(".score").inner_text().replace(",", "")
         assert float(score) > 0, f"score panel reads {score!r}"
+
+
+def test_the_two_measurements_are_never_shown_as_one_ranked_list():
+    """v1 and v2 are denominated differently; one list across them would be meaningless."""
+    data = _bundle()
+    profiles = [p["name"] for p in data["profiles"]]
+    assert len(profiles) > 1, "only one profile exported, so this test proves nothing"
+
+    with _page() as (page, errors):
+        assert not errors, f"the page threw: {errors[:3]}"
+        assert page.locator("#profiles button").count() == len(profiles)
+        for name in profiles:
+            page.locator(f'#profiles button[data-p="{name}"]').click()
+            page.wait_for_timeout(300)
+            assert not errors, f"switching to {name} threw: {errors[:3]}"
+            shown = page.locator("#selector button").count()
+            expected = sum(1 for c in data["configs"] if c["profile"] == name)
+            assert shown == expected, f"{name} shows {shown} tabs, expected {expected}"
+            # Every section says, in words, that its numbers do not travel.
+            assert "cannot be compared" in page.locator("#profilenote").inner_text()
+
+
+def test_each_section_labels_the_denominator_it_is_scored_in():
+    """A column header reading `units` over word counts is how the two get conflated."""
+    data = _bundle()
+    with _page() as (page, errors):
+        for p in data["profiles"]:
+            page.locator(f'#profiles button[data-p="{p["name"]}"]').click()
+            page.wait_for_timeout(300)
+            assert not errors, f"the page threw on {p['name']}: {errors[:3]}"
+            headers = page.locator("thead th").all_inner_texts()
+            assert p["denominator"] in [h.strip().lower() for h in headers], (
+                f"{p['name']} table headers {headers} do not name its denominator"
+            )
 
 
 def test_the_paste_box_actually_tokenizes():

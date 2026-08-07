@@ -17,8 +17,8 @@ from pathlib import Path
 
 import pytest
 from tokenization.ablate import train_spec
-from tokenization.config import Config
-from tokenization.corpus import load_faithful
+from tokenization.config import PROFILES, Config
+from tokenization.corpus import load_all
 from tokenization.widget import FEATURED
 
 WEB = Path(__file__).resolve().parents[1] / "web"
@@ -37,13 +37,18 @@ PROBES = [
     "trailing punctuation!!! ...and — dashes",
 ]
 
+# Compare **ids**, not token strings. The three engines disagree about what to *call* an unknown
+# symbol — HuggingFace reports the unknown token, our from-scratch BPE reports the original
+# character, and the JS keeps the character so the page can show it in a chip — while all three
+# agree on its id. Ids are also the thing that actually reproduces a score, since the score is a
+# count of them, so this compares what matters rather than three spellings of the same fact.
 _RUNNER = """
 import { encode } from '%s';
 import { readFileSync } from 'node:fs';
 const data = JSON.parse(readFileSync(%s, 'utf8'));
 const config = data.configs.find((c) => c.label === %s);
 const probes = JSON.parse(readFileSync(%s, 'utf8'));
-console.log(JSON.stringify(probes.map((p) => encode(p, config).map((t) => t.text))));
+console.log(JSON.stringify(probes.map((p) => encode(p, config).map((t) => t.id))));
 """
 
 
@@ -84,18 +89,23 @@ def _js_tokens(node: str, tmp_path: Path, label: str, probes: list[str]) -> list
 @pytest.mark.integration
 @pytest.mark.parametrize("spec", [s for s in FEATURED if s.algo in {"bpe", "bpe-scratch"}])
 def test_js_encoder_matches_python_token_for_token(spec, payload, tmp_path):
+    """Both profiles, because they pre-tokenize differently.
+
+    v1's tokenizers use HuggingFace's default Metaspace ``prepend_scheme="always"`` and v2's pin
+    it to ``"never"`` — a one-character difference in the first pre-token that the JS has to
+    honour, and would otherwise silently get wrong for half the page.
+    """
     node = _node()
     config = next(c for c in payload["configs"] if c["label"] == spec.label)
     if config["encoder"]["kind"] == "unsupported":
         pytest.skip(f"no JS encoder for {config['encoder']['reason']}")
 
     cfg = Config()
-    corpora = {lang.code: load_faithful(lang.code, cfg.corpus_dir) for lang in cfg.languages}
-    tok = train_spec(spec, corpora)
+    tok = train_spec(spec, load_all(PROFILES[spec.profile], cfg.corpus_dir))
 
     js = _js_tokens(node, tmp_path, spec.label, PROBES)
-    for probe, js_tokens in zip(PROBES, js, strict=True):
-        assert tok.encode(probe).tokens == js_tokens, f"diverged on {probe!r}"
+    for probe, js_ids in zip(PROBES, js, strict=True):
+        assert tok.encode(probe).ids == js_ids, f"diverged on {probe!r} ({spec.profile})"
 
 
 @pytest.mark.integration
