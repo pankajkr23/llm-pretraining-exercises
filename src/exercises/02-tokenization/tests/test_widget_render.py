@@ -318,3 +318,28 @@ def test_the_explainer_never_scrolls_sideways(width: int):
             " return d.scrollWidth > d.clientWidth ? [d.scrollWidth, d.clientWidth] : null; }"
         )
         assert not overflow, f"{width}px scrolls sideways: {overflow[0]}px into {overflow[1]}px"
+
+
+def test_the_default_sample_makes_the_tokenizers_disagree():
+    """The paste box's default text must separate the tabs, not flatter them.
+
+    It used to be a plain sentence of common words, which every tokenizer here splits into exactly
+    16 tokens — because the frequent end of a 10,000-token vocabulary is identical across these
+    recipes and they only differ in the rare 2-12%. A reader switching tabs saw the same number
+    every time and reasonably concluded there was one tokenizer behind all five. There is not.
+    """
+    with _page() as (page, errors):
+        counts = []
+        buttons = page.locator("#selector button")
+        for i in range(buttons.count()):
+            buttons.nth(i).click()
+            page.wait_for_timeout(300)
+            assert not errors, f"tab {i} threw: {errors[:3]}"
+            text = page.locator("#pastecount").inner_text()
+            if "tokens" in text:
+                counts.append(int(text.split()[0]))
+        assert len(counts) >= 2, "fewer than two tabs could encode, so this proves nothing"
+        assert len(set(counts)) > 1, (
+            f"every tab tokenizes the default text into {counts[0]} tokens — the sample cannot "
+            "show that these are different tokenizers"
+        )

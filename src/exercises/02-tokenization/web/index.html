@@ -131,7 +131,13 @@
 
       const esc = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
       let DATA = null, cur = 0, tokQuery = '', profile = 'v2';
-      const SAMPLE = 'India is a country in South Asia. भारत एक देश है। భారతదేశం ఒక దేశం.';
+      // The default has to be text the tokenizers *disagree* on, or the box quietly argues they
+      // are all the same thing. A plain sentence of common words gives 16 tokens on every tab,
+      // because the frequent end of a 10,000-token vocabulary is identical across these recipes;
+      // they differ in the rare 2–12%. These two lines land there: the Maithili sentence splits
+      // 12/12/10/12 (the mai ×7 tokenizer learned `भारतक` whole) and the link splits 4/4/4/1 (the
+      // from-scratch pre-tokenizer never breaks on punctuation, so the whole URL is one token).
+      const SAMPLE = 'मैथिली भाषा भारतक एक प्रमुख भाषा थिक।\n[India](https://en.wikipedia.org/wiki/India)';
 
       fetch('./data.json')
         .then((r) => { if (!r.ok) throw new Error('data.json ' + r.status); return r.json(); })
@@ -268,6 +274,15 @@
                 <textarea class="search" id="paste" spellcheck="false">${esc(SAMPLE)}</textarea>
                 <div class="tokcount" id="pastecount"></div>
                 <div class="chips" id="chips"></div>
+                <p class="note">
+                  <b>Each tab is a separately trained tokenizer</b> — its own 10,000 tokens, its own
+                  merges. They share only 88–98% of their vocabulary with the benchmark, so switch
+                  tabs with this text and the chips move: the Maithili line takes <b>10</b> tokens
+                  under <em>more Telugu + Maithili</em> and <b>12</b> under the rest, and the link
+                  is <b>1</b> token for the from-scratch BPE against <b>4</b> for the others.
+                  Ordinary prose looks identical on every tab, because the common end of the
+                  vocabulary is the part they all agree on.
+                </p>
                 <p class="note">
                   Runs the real merge list in your browser. Characters the vocabulary has never seen
                   are shown as <span class="chip unk">[UNK]</span> rather than silently dropped —
