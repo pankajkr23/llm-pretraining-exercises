@@ -12,6 +12,127 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 _Nothing yet._
 
+## [0.3.0] - 2026-08-07
+
+Exercise 02 — the multilingual tokenizer, measured properly: the reference recipe reproduced to
+the last digit and then beaten on both evenness and compression, with a one-page explainer that
+lets a reader work out for themselves why the biggest number on the page is not the submitted
+one. The original word-denominated experiments are retained in full as a second profile rather
+than overwritten, and the widget can now tokenize text you paste into it.
+
+### Added
+
+- **Exercise 02 now carries two evaluation profiles, both retained and neither deprecated.**
+  **v1** is the original work — clipped article prose, scored in tokens per whitespace word, no
+  Hindi penalty, en/hi/te/ta — and **v2** is the measurement the assignment grades — wiki-faithful
+  Markdown, faithful units, Hindi penalty, en/hi/te/mai. Their scores can never be ranked against
+  each other: the same tokenizer reads ≈ 2.13 under v1 and ≈ 0.60 under v2. `ablate.sweep` raises
+  if handed rows from both, and the widget renders one labelled section per profile with the
+  non-comparability stated in the copy.
+- **v1 is committed and still runnable, not remembered.** Its corpus ships in `corpus/v1/`, and
+  `tests/test_v1_retained.py` regenerates its four published scores — 2077.90 / 1300.12 / 1228.34
+  / 189.59 — on every run. That guard earns its keep because the two profiles share an engine:
+  training from files, `[UNK]`, `min_frequency=1` and Metaspace `prepend_scheme="never"` are all
+  v2 decisions, and every one of them moves v1's numbers, so `ablate._v1` pins all four rather
+  than inheriting them.
+
+- **A one-page explainer at [`/02-tokenization/how-it-works.html`](src/exercises/02-tokenization/web/how-it-works.html)**, so the tokenizer page stays a tool and the argument gets its own room. Three figures. Fig. 0
+  shows the corpus: English's article is 32× Maithili's, and a weight of `×3` means that article
+  is fed to the trainer three times — taking Maithili from 1.1% to 1.6% of what it reads. Fig. 1
+  is a dial over ten real training runs: the score peaks and falls while total tokens climb the
+  whole way, so a reader can watch evenness being bought with compression. Fig. 2 lets them change
+  which fifth of the corpus is held back and see the ranking fail to hold still. It closes with
+  what was tested and how each result was checked. Every point is a measured run — 45 of them
+  behind the figures — never an interpolation, and the landing page links to it from the top.
+- **A submitted tokenizer that beats the reference on both axes**: score 6,503 → **11,250.51** with
+  *fewer* total tokens (191,266 → 189,785). Two independent changes — train on documents, and raise
+  Maithili's weight from 2 to 3 (it is 1.8% of the corpus and shares Devanagari with Hindi, so it
+  won almost no merges of its own and sat at the worst fertility).
+- **A held-out check that reports its own failure.** `tokenization.holdout` trains on 80% of each
+  article and scores the 20% never seen — across all five possible slices. Held out five different
+  ways, one recipe's score swings **9,421 points** while the three recipes' averages sit **648
+  apart**: the noise is more than ten times the difference being measured, so this test cannot rank
+  them. That is reported as the finding, including the inconvenient half — on those averages the
+  rejected recipe is slightly ahead. What rules that recipe out is total tokens (192,713 against
+  189,785), measured on the whole corpus, which does not move.
+- **Corpus-wide fertility reported beside every score.** `1000 / (X_max − X_min)` is maximised by
+  making every language equally mediocre, and the published Hindi penalty only fires above X = 1.2
+  while everything on this corpus sits near 0.6 — so the anti-exploit device is inert. Total
+  tokens / total units is the counterweight that makes flattening visible.
+- **The widget can now actually tokenize.** `web/data.json` carries the **ordered merges**, not
+  just the vocabulary, and `web/encoder.js` replays them in the browser: paste any text and watch
+  it split, with out-of-vocabulary characters rendered as a visible `[UNK]` chip instead of being
+  silently dropped. Plus a download button for the vocab + merges. A vocabulary list on its own
+  cannot reproduce a score.
+- **Python↔JavaScript parity is tested, not hoped for.** `tests/test_js_encoder.py` runs corpus
+  lines through both implementations under `node` and requires identical token streams — including
+  a line containing a literal `_`, which must never be confused with the `▁` metaspace marker.
+- **The faithfulness rule as executable checks**, run against all four real articles: round-trip
+  every visible character (baseline post-NFKC, since NFKC genuinely rewrites `″`→`′′` and friends),
+  assert zero `[UNK]`, and assert the corpus contains no raw `U+2581`. Each invariant is also run
+  against a deliberately broken tokenizer, so every guard is known to be able to fail.
+- **A fourth-language comparison.** Tamil fetched with the same pipeline and compared against
+  Maithili. The scores are not comparable — different corpora — but the structure is the finding:
+  Maithili is 5,808 units in a script Hindi already pays for, Tamil is 188,367 units (larger than
+  English) in a script nothing else uses, and swapping them moves which language is starved.
+- **The rejected experiment is on the page, labelled as rejected.** One configuration scores
+  35,604 — more than three times the submission — and the widget was quietly showing only the
+  submission. A reader had no way to know a bigger number was found and turned down, which is the
+  most interesting decision in the exercise. It now appears badged `rejected`, saying in its own
+  words that it reaches its evenness by making English and Hindi *worse*, and needs 192,713 tokens
+  for the same corpus against the submission's 189,785.
+- **Every tokenizer on the page explains itself** in three lines — what was changed, why it was
+  worth trying, what came of it — with a badge marking it as the reference, the submission, a
+  rejected experiment or an ablation. The render test fails if a config reaches the page without
+  an explanation: a row of numbers with no story is not a finding.
+- **The submitted tokenizer ships in the bundle**, in HuggingFace's own format at
+  `web/tokenizer.json` — `artifacts/` is gitignored by design, and the assignment asks for the exact
+  file. `tests/test_submission.py` trains nothing: it loads that file, scores it on the committed
+  corpus, and asserts the figures the README prints, so the artifact and the documentation cannot
+  drift apart unnoticed. It also pins the corpus unit counts, making a re-fetched snapshot loud.
+- **The widget is loaded in a browser, not just parsed** (`tests/test_widget_render.py`,
+  integration-marked, Playwright). `node --check` cannot tell you the page imports its encoder, that
+  the import resolves where it is served from, or that a handler calls a function that exists — all
+  valid syntax, all a blank panel.
+
+### Changed
+
+- **Exercise 02's graded numbers now come from the corpus and denominator the assignment
+  specifies.** The submission is trained and measured on committed **wiki-faithful Markdown** —
+  Wikipedia's REST HTML with its links, URLs, tables and categories intact — against a
+  **faithful-unit** denominator, with the Hindi penalty and adjusted score computed throughout.
+  Both corpora ship in the repo, so a fresh clone reproduces every published figure with the
+  network switched off.
+- **The reference recipe is now a correctness gate, reproduced to the last digit** — tokens
+  111,390 / 51,190 / 24,428 / 4,258, spread 0.153786, score 6502.56 — and it runs as the first row
+  of the ablation suite. Reaching it turned up a detail invisible in any config: HuggingFace splits
+  *files* into lines, so training from files means no merge may span a newline. Handing the same
+  trainer whole documents lowers every token count by ~0.6% and lifts the score to 6771. Same
+  recipe, different number; it is now an explicit `Spec` field rather than an accident, and there
+  is deliberately only one trainer in the package.
+
+### Fixed
+
+- **Exercise 02's README and BRIEF no longer describe a denominator the code stopped using**, and
+  the stale "connecting Vercel is the remaining one-time step" note is gone from both the exercise
+  and the root README — the site has been live for some time.
+- **The tokenizer page no longer scrolls sideways on a phone.** Its two-column grid used a bare
+  `1fr` track, which refuses to shrink below its content's min-content width, so one long
+  unbreakable string pushed the whole page 18px wider than a 390px viewport. Tables now scroll
+  inside their own container instead of widening the page.
+- **The fertility table no longer reshuffles between tokenizers.** It was sorted by fertility, so
+  the four languages appeared in a different order on every tab and the `X1…X4` tags attached to
+  whichever language happened to sit in that slot. Two tokenizers measured on identical languages
+  looked like they had been measured on different ones. Languages now appear in a fixed order on
+  every tab, with best and worst flagged instead of implied by position, and each non-benchmark
+  row carries a **vs benchmark** column showing exactly which languages it improved and which it
+  paid for — the rejected configuration's evenness is visibly bought by making English and Hindi
+  worse. A test asserts every tab in a section lists the same languages in the same order.
+- **Internal jargon removed from the public page.** Experiments were labelled with the codes they
+  carry in the sweep — `reference recipe (gate)`, `E2b · te ×6 · mai ×7` — which mean nothing to a
+  reader arriving cold. They now read `the reference solution (benchmark)` and `more Telugu +
+  Maithili (rejected)`, and the README table matches the labels the code actually emits.
+
 ## [0.2.0] - 2026-08-06
 
 Exercise 03 — the data-collection framework: a graded catalogue of 145 datasets behind one
@@ -596,5 +717,7 @@ First tagged release: two interactive exercises live on Vercel with a gated depl
 - **Tooling & conventions:** uv workspace (Python 3.12), ruff lint/format, pytest (unit +
   integration split), GitHub Actions CI, and a PR-only workflow documented in `AGENTS.md`.
 
-[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/pankajkr23/llm-pretraining-exercises/releases/tag/v0.1.0

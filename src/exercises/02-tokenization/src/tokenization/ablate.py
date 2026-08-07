@@ -5,23 +5,37 @@ corpus weighting). Run the curated suite with::
 
     uv run python -m tokenization.ablate
 
-Results (per-language fertility, spread, score) are printed as a table sorted by score and
-written to ``artifacts/ablations.json``. To add an experiment, append a :class:`Spec` to
-``SUITE`` — the two findings so far (10k byte BPE saturates → weighting is inert; a scarce
-vocab makes weighting matter) are already encoded as the first four rows.
+Every spec trains and is scored on the same committed wiki-faithful corpus, so the only thing
+varying across rows is the recipe. Results (per-language fertility, spread, raw score, Hindi
+penalty, adjusted score) are printed as a table sorted by adjusted score and written to
+``artifacts/ablations.json``.
+
+``SUITE`` opens with :data:`REFERENCE` — the published reference recipe, reproduced exactly. It
+is the correctness gate, not a result: if that row does not print 6502.56 the harness is wrong
+and no other row means anything. Everything after it is ours. To add an experiment, append a
+:class:`Spec`.
 """
 
 import json
-from dataclasses import asdict, dataclass
+import tempfile
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
 
 from tokenizers import Tokenizer, decoders, normalizers, pre_tokenizers
 from tokenizers.models import BPE, Unigram, WordPiece
 from tokenizers.trainers import BpeTrainer, UnigramTrainer, WordPieceTrainer
 
 from .bpe_scratch import ScratchBPE
-from .config import Config
-from .corpus import fetch_article
-from .metrics import LangScore, count_words, score, spread
+from .config import PROFILES, V1, V2, Config, EvalProfile
+from .corpus import load_all
+from .metrics import (
+    LangScore,
+    count_denominator,
+    hindi_penalty,
+    mean_ratio,
+    score,
+    spread,
+)
 
 
 @dataclass(frozen=True)
@@ -31,19 +45,35 @@ class Spec:
     Attributes:
         algo: ``"bpe"`` | ``"unigram"`` | ``"wordpiece"`` | ``"bpe-scratch"`` (our hand-written BPE;
             always char-level + word-boundary, so ``level`` is ignored for it).
-        level: ``"byte"`` (UTF-8 bytes) | ``"char"`` (Unicode codepoints).
+        level: ``"byte"`` (UTF-8 bytes) | ``"char"`` (Unicode codepoints, via Metaspace).
         normalization: ``None`` | ``"NFC"`` | ``"NFKC"``.
         vocab_size: shared vocabulary budget.
-        weighting: ``"flat"`` | ``"balance"`` (equalize corpus chars) | ``"sqrt"`` (milder).
+        weighting: ``"flat"`` | ``"manual"`` (use ``weights``) | ``"balance"`` (equalize corpus
+            chars) | ``"sqrt"`` (milder).
         label: human-readable name for the results table.
+        profile: which measurement this row belongs to — ``"v1"`` or ``"v2"``. Selects the corpus,
+            the denominator and whether the Hindi penalty applies. Rows from different profiles
+            are never ranked against each other.
+        weights: language code -> upsampling weight, as ordered pairs; used by ``"manual"``.
+        min_frequency: minimum pair frequency a merge must reach (HuggingFace trainers only).
+        unk_token: spelling of the unknown-token symbol.
+        prepend_scheme: Metaspace ``prepend_scheme`` — ``"never"`` | ``"always"`` | ``"first"``.
+        train_unit: ``"lines"`` (train from files, so no merge may span a newline — the reference
+            recipe) or ``"documents"`` (train from whole texts, allowing cross-line merges).
     """
 
     algo: str = "bpe"
-    level: str = "byte"
-    normalization: str | None = None
+    level: str = "char"
+    normalization: str | None = "NFKC"
     vocab_size: int = 10_000
     weighting: str = "flat"
     label: str = ""
+    weights: tuple[tuple[str, float], ...] = ()
+    min_frequency: int = 1
+    unk_token: str = "[UNK]"
+    prepend_scheme: str = "never"
+    train_unit: str = "lines"
+    profile: str = "v2"
 
 
 @dataclass
@@ -51,33 +81,46 @@ class Result:
     """Outcome of running one :class:`Spec`."""
 
     label: str
+    profile: str
     spec: dict
     vocab_actual: int
     ratios: dict[str, float]
-    spread: float
-    score: float
+    tokens: dict[str, int] = field(default_factory=dict)
+    units: dict[str, int] = field(default_factory=dict)
+    spread: float = 0.0
+    score: float = 0.0
+    penalty: float = 1.0
+    adjusted: float = 0.0
+    total_tokens: int = 0
+    mean_ratio: float = 0.0
     error: str | None = None
 
 
 def _build(spec: Spec) -> tuple[Tokenizer, object]:
     """Construct an (untrained tokenizer, trainer) pair for ``spec``."""
     if spec.algo == "bpe":
-        tok = Tokenizer(BPE(unk_token="<unk>"))
+        tok = Tokenizer(BPE(unk_token=spec.unk_token))
         trainer = BpeTrainer(
-            vocab_size=spec.vocab_size, special_tokens=["<unk>"], show_progress=False
+            vocab_size=spec.vocab_size,
+            min_frequency=spec.min_frequency,
+            special_tokens=[spec.unk_token],
+            show_progress=False,
         )
     elif spec.algo == "unigram":
         tok = Tokenizer(Unigram())
         trainer = UnigramTrainer(
             vocab_size=spec.vocab_size,
-            special_tokens=["<unk>"],
-            unk_token="<unk>",
+            special_tokens=[spec.unk_token],
+            unk_token=spec.unk_token,
             show_progress=False,
         )
     elif spec.algo == "wordpiece":
-        tok = Tokenizer(WordPiece(unk_token="<unk>"))
+        tok = Tokenizer(WordPiece(unk_token=spec.unk_token))
         trainer = WordPieceTrainer(
-            vocab_size=spec.vocab_size, special_tokens=["<unk>"], show_progress=False
+            vocab_size=spec.vocab_size,
+            min_frequency=spec.min_frequency,
+            special_tokens=[spec.unk_token],
+            show_progress=False,
         )
     else:
         msg = f"unknown algo {spec.algo!r}"
@@ -92,18 +135,35 @@ def _build(spec: Spec) -> tuple[Tokenizer, object]:
         tok.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
         tok.decoder = decoders.ByteLevel()
     elif spec.level == "char":
-        tok.pre_tokenizer = pre_tokenizers.Metaspace()
-        tok.decoder = decoders.Metaspace()
+        # Metaspace keeps every visible character — including punctuation, brackets and URL
+        # machinery — which the faithfulness rule requires and ByteLevel pays for in Indic bytes.
+        tok.pre_tokenizer = pre_tokenizers.Metaspace(
+            replacement="▁", prepend_scheme=spec.prepend_scheme
+        )
+        tok.decoder = decoders.Metaspace(replacement="▁", prepend_scheme=spec.prepend_scheme)
     else:
         msg = f"unknown level {spec.level!r}"
         raise ValueError(msg)
     return tok, trainer
 
 
-def compute_weights(corpora: dict[str, str], strategy: str) -> dict[str, float]:
-    """Corpus upsampling weights (min 1.0) for a weighting ``strategy``."""
+def compute_weights(
+    corpora: dict[str, str], strategy: str, manual: dict[str, float] | None = None
+) -> dict[str, float]:
+    """Corpus upsampling weights (min 1.0) for a weighting ``strategy``.
+
+    Args:
+        corpora: language code -> raw text.
+        strategy: ``"flat"``, ``"manual"``, ``"balance"`` or ``"sqrt"``.
+        manual: explicit per-language weights, required by the ``"manual"`` strategy.
+    """
     if strategy == "flat":
         return dict.fromkeys(corpora, 1.0)
+    if strategy == "manual":
+        if not manual:
+            msg = "weighting='manual' needs explicit weights"
+            raise ValueError(msg)
+        return {c: float(manual.get(c, 1.0)) for c in corpora}
     sizes = {c: max(1, len(t)) for c, t in corpora.items()}
     biggest = max(sizes.values())
     if strategy == "balance":
@@ -117,11 +177,46 @@ def compute_weights(corpora: dict[str, str], strategy: str) -> dict[str, float]:
     return {c: v / low for c, v in raw.items()}
 
 
-def _weighted_lines(corpora: dict[str, str], weights: dict[str, float]) -> list[str]:
-    lines: list[str] = []
-    for code, text in corpora.items():
-        lines.extend([text] * max(1, round(weights.get(code, 1.0))))
-    return lines
+def _repeat(corpora: dict[str, str], weights: dict[str, float]) -> list[str]:
+    """Language codes repeated ``round(weight)`` times — the recipe's file-repetition upsampling."""
+    order: list[str] = []
+    for code in corpora:
+        order.extend([code] * max(1, round(weights.get(code, 1.0))))
+    return order
+
+
+def _train_hf(
+    tok: Tokenizer,
+    trainer: object,
+    corpora: dict[str, str],
+    weights: dict[str, float],
+    train_unit: str,
+) -> None:
+    """Train a HuggingFace tokenizer, upsampling by repetition.
+
+    ``train_unit`` is load-bearing, not a detail. HuggingFace splits *files* into lines, so
+    training from files means no merge may span a newline. Handing the trainer whole *documents*
+    instead lets it learn cross-line pairs — worth ~0.6% of every token count on this corpus.
+    The reference recipe trains from files; ``"documents"`` is our variant, measured separately.
+    """
+    if train_unit == "documents":
+        tok.train_from_iterator([corpora[c] for c in _repeat(corpora, weights)], trainer)
+        return
+    if train_unit != "lines":
+        msg = f"unknown train_unit {train_unit!r}"
+        raise ValueError(msg)
+    with tempfile.TemporaryDirectory() as tmp:
+        paths: dict[str, str] = {}
+        for code, text in corpora.items():
+            path = Path(tmp) / f"{code}.txt"
+            path.write_text(text, encoding="utf-8")
+            paths[code] = str(path)
+        tok.train([paths[c] for c in _repeat(corpora, weights)], trainer)
+
+
+def spec_weights(spec: Spec, corpora: dict[str, str]) -> dict[str, float]:
+    """Resolve ``spec``'s weighting strategy against ``corpora``."""
+    return compute_weights(corpora, spec.weighting, dict(spec.weights))
 
 
 def train_spec(spec: Spec, corpora: dict[str, str]) -> Tokenizer | ScratchBPE:
@@ -131,89 +226,290 @@ def train_spec(spec: Spec, corpora: dict[str, str]) -> Tokenizer | ScratchBPE:
     HuggingFace API used downstream (``encode().ids``, ``get_vocab``, ``get_vocab_size``), so
     callers stay identical regardless of which engine trained the tokenizer.
     """
-    weights = compute_weights(corpora, spec.weighting)
+    weights = spec_weights(spec, corpora)
     if spec.algo == "bpe-scratch":
         tok = ScratchBPE(normalization=spec.normalization)
         tok.train(corpora, spec.vocab_size, weights)
         return tok
     hf_tok, trainer = _build(spec)
-    hf_tok.train_from_iterator(_weighted_lines(corpora, weights), trainer)
+    _train_hf(hf_tok, trainer, corpora, weights, spec.train_unit)
     return hf_tok
 
 
-def run(spec: Spec, corpora: dict[str, str], words: dict[str, int]) -> Result:
-    """Train one tokenizer per ``spec`` and measure per-language fertility, spread, and score."""
+def measure(
+    tok: Tokenizer | ScratchBPE, corpora: dict[str, str], units: dict[str, int]
+) -> list[LangScore]:
+    """Per-language :class:`~tokenization.metrics.LangScore` for a trained tokenizer."""
+    return [LangScore(c, units[c], len(tok.encode(t).ids)) for c, t in corpora.items()]
+
+
+def run(spec: Spec, corpora: dict[str, str], units: dict[str, int]) -> Result:
+    """Train one tokenizer per ``spec`` and measure fertility, spread, score and penalty.
+
+    The Hindi penalty is applied only when the spec's profile defines one. v1 was designed and
+    reported without it, and retro-fitting it would silently restate numbers that were published
+    without it — so v1 rows carry ``penalty = 1.0`` and ``adjusted == score`` by construction.
+    """
+    profile = PROFILES[spec.profile]
     try:
         tok = train_spec(spec, corpora)
-        scores = [LangScore(c, words[c], len(tok.encode(t).ids)) for c, t in corpora.items()]
+        scores = measure(tok, corpora, units)
+        penalty = hindi_penalty(scores) if profile.penalty else 1.0
         return Result(
             label=spec.label or f"{spec.algo}/{spec.level}",
+            profile=spec.profile,
             spec=asdict(spec),
             vocab_actual=tok.get_vocab_size(),
-            ratios={s.code: round(s.ratio, 3) for s in scores},
-            spread=round(spread(scores), 3),
+            ratios={s.code: round(s.ratio, 6) for s in scores},
+            tokens={s.code: s.tokens for s in scores},
+            units={s.code: s.units for s in scores},
+            spread=round(spread(scores), 6),
             score=round(score(scores), 2),
+            penalty=round(penalty, 6),
+            adjusted=round(score(scores) / penalty, 2),
+            total_tokens=sum(s.tokens for s in scores),
+            mean_ratio=round(mean_ratio(scores), 6),
         )
     except Exception as exc:  # noqa: BLE001 — a bad spec shouldn't abort the whole sweep
         return Result(
-            spec.label, asdict(spec), 0, {}, 0.0, 0.0, error=f"{type(exc).__name__}: {exc}"
+            spec.label, spec.profile, asdict(spec), 0, {}, error=f"{type(exc).__name__}: {exc}"
         )
 
 
-# The curated sweep. Rows 1-4 encode the findings so far; the rest probe the alternatives.
-SUITE: list[Spec] = [
-    Spec("bpe", "byte", None, 10_000, "flat", "byte BPE · 10k · flat  (baseline)"),
-    Spec("bpe", "byte", None, 10_000, "balance", "byte BPE · 10k · balance  (saturates → inert)"),
-    Spec("bpe", "byte", None, 2_000, "flat", "byte BPE · 2k · flat  (scarce)"),
-    Spec("bpe", "byte", None, 2_000, "balance", "byte BPE · 2k · balance  (weighting bites)"),
-    Spec("bpe", "char", "NFC", 10_000, "flat", "char BPE · 10k · NFC · flat"),
-    Spec("bpe", "char", "NFC", 10_000, "balance", "char BPE · 10k · NFC · balance"),
-    Spec("bpe", "char", "NFKC", 10_000, "flat", "char BPE · 10k · NFKC · flat"),
-    Spec("unigram", "char", "NFKC", 10_000, "flat", "Unigram char · 10k · NFKC · flat"),
-    Spec("unigram", "char", "NFKC", 10_000, "balance", "Unigram char · 10k · NFKC · balance"),
-    Spec("unigram", "byte", None, 10_000, "flat", "Unigram byte · 10k · flat"),
-    # Our from-scratch BPE (no HuggingFace), pinned to the winning char + NFKC recipe.
+# The published reference recipe, reproduced exactly: HF BPE · 10k · min_frequency=1 · NFKC only ·
+# Metaspace("▁", prepend_scheme="never") for both pre-tokenizer and decoder · unk "[UNK]" ·
+# weights en3/hi4/te4/mai2 applied by repetition. This row is the correctness gate.
+REFERENCE_WEIGHTS: tuple[tuple[str, float], ...] = (("en", 3), ("hi", 4), ("te", 4), ("mai", 2))
+
+REFERENCE = Spec(
+    algo="bpe",
+    level="char",
+    normalization="NFKC",
+    vocab_size=10_000,
+    weighting="manual",
+    label="the reference solution (benchmark)",
+    weights=REFERENCE_WEIGHTS,
+)
+
+
+def _reweighted(label: str, **weights: float) -> Spec:
+    """The reference recipe with different corpus weights — our one deliberate variable."""
+    return Spec(
+        algo="bpe",
+        level="char",
+        normalization="NFKC",
+        vocab_size=10_000,
+        weighting="manual",
+        label=label,
+        weights=tuple(weights.items()),
+    )
+
+
+# The highest-scoring configuration on the graded corpus, and the one we deliberately do not
+# submit. It reaches 0.028 spread by making English and Hindi worse — +0.020 and +0.010 against
+# the benchmark — and needs 192,713 tokens where the submission needs 189,785. Evenness bought by
+# compressing less well is exactly what a spread-only score fails to notice.
+#
+# Note what does NOT justify rejecting it: held-out scoring. Across five splits this recipe's
+# held-out average is the highest of the three (see ``tokenization.holdout``). That comparison is
+# meaningless in either direction — the between-split variance dwarfs it — so the case against
+# this row rests entirely on total tokens, which is measured on the whole corpus and does not move.
+OVERTUNED = Spec(
+    algo="bpe",
+    level="char",
+    normalization="NFKC",
+    vocab_size=10_000,
+    weighting="manual",
+    label="more Telugu + Maithili (rejected)",
+    weights=(("en", 3), ("hi", 4), ("te", 6), ("mai", 7)),
+)
+
+
+def _documents(label: str, **weights: float) -> Spec:
+    """The reference recipe trained on whole documents, so merges may span a newline."""
+    return Spec(
+        algo="bpe",
+        level="char",
+        normalization="NFKC",
+        vocab_size=10_000,
+        weighting="manual",
+        label=label,
+        weights=tuple(weights.items()),
+        train_unit="documents",
+    )
+
+
+def _v1(algo: str, level: str, norm: str | None, vocab: int, weighting: str, label: str) -> Spec:
+    """A v1 experiment, pinned to the settings its published numbers were produced with.
+
+    These are not stylistic defaults — they are what the original code did, and each one moves the
+    result: it trained from an in-memory iterator of whole **documents**, spelled the unknown token
+    ``<unk>``, left ``min_frequency`` at the trainer's own default of 0, and used HuggingFace's
+    default Metaspace, whose ``prepend_scheme`` is ``"always"`` rather than ``"never"``. Inheriting
+    v2's defaults here would quietly restate v1's history.
+    """
+    return Spec(
+        algo=algo,
+        level=level,
+        normalization=norm,
+        vocab_size=vocab,
+        weighting=weighting,
+        label=label,
+        min_frequency=0,
+        unk_token="<unk>",
+        prepend_scheme="always",
+        train_unit="documents",
+        profile="v1",
+    )
+
+
+# v1 — the original experiments, retained and still runnable. Clipped prose, whitespace words, no
+# Hindi penalty. Their finding stands on its own: **representation is the dominant lever**, not
+# corpus weighting. Byte-level BPE spends its budget rebuilding 3-byte UTF-8 Indic characters;
+# char-level + NFKC collapses the spread. Weighting only bites while the vocabulary is scarce
+# (compare the 2k rows to the 10k ones) and can over-correct at char level.
+V1_SUITE: list[Spec] = [
+    _v1("bpe", "byte", None, 10_000, "flat", "byte BPE · 10k · flat  (baseline)"),
+    _v1("bpe", "byte", None, 10_000, "balance", "byte BPE · 10k · balance  (saturates → inert)"),
+    _v1("bpe", "byte", None, 2_000, "flat", "byte BPE · 2k · flat  (scarce)"),
+    _v1("bpe", "byte", None, 2_000, "balance", "byte BPE · 2k · balance  (weighting bites)"),
+    _v1("bpe", "char", "NFC", 10_000, "flat", "char BPE · 10k · NFC · flat"),
+    _v1("bpe", "char", "NFC", 10_000, "balance", "char BPE · 10k · NFC · balance"),
+    _v1("bpe", "char", "NFKC", 10_000, "flat", "char BPE · 10k · NFKC · flat"),
+    _v1("unigram", "char", "NFKC", 10_000, "flat", "Unigram char · 10k · NFKC · flat"),
+    _v1("unigram", "char", "NFKC", 10_000, "balance", "Unigram char · 10k · NFKC · balance"),
+    _v1("unigram", "byte", None, 10_000, "flat", "Unigram byte · 10k · flat"),
+    _v1("bpe-scratch", "char", "NFKC", 10_000, "flat", "BPE from scratch · char · NFKC · flat"),
+    _v1("bpe-scratch", "char", "NFKC", 10_000, "balance", "BPE from scratch · char · balance"),
+]
+
+# v2 — the graded measurement: the reference recipe as the gate, then our permutations on its
+# corpus. Maithili sits at the *maximum* fertility and is only ~1.8% of the corpus, so it wins
+# almost no merges of its own and rides Hindi's Devanagari. Spread is max − min, so the honest
+# lever is pulling that maximum down; pushing the minimum (Hindi) up would also shrink the spread
+# but is exactly the exploit the penalty exists to block — see ``metrics.degrades_best``.
+V2_SUITE: list[Spec] = [
+    REFERENCE,
+    # E0 — the same recipe trained on whole documents instead of lines. Markdown repeats a lot of
+    # cross-line structure (list scaffolding, table rows, reference blocks) that a line-split
+    # trainer can never merge; letting merges span newlines is a genuine compression win, not a
+    # denominator trick, and it lowers all four fertilities rather than trading one against another.
+    _documents("documents, not lines", en=3, hi=4, te=4, mai=2),
+    # E1 — Maithili sits at the maximum fertility and is ~1.1% of the weighted mix, so it wins
+    # almost no merges of its own. Pulling the maximum down is the honest way to shrink a spread.
+    # The sweep overshoots on purpose: past ×6 Maithili becomes the new *minimum* and the spread
+    # widens again from the other end, which is the whole shape of the lever in three rows.
+    _reweighted("mai ×6 alone", en=3, hi=4, te=4, mai=6),
+    _reweighted("mai ×10 (overshoot)", en=3, hi=4, te=4, mai=10),
+    _reweighted("mai ×16 (overshoot)", en=3, hi=4, te=4, mai=16),
+    # E2 — with Maithili fixed, Telugu becomes the ceiling. Lift both, mildly. These score far
+    # higher in sample and are the trap this suite is built to expose: see ``holdout``.
+    _reweighted("te ×5 · mai ×6", en=3, hi=4, te=5, mai=6),
+    OVERTUNED,
+    # E5 — the two independent wins composed: documents and a mild Maithili upweight. The ×3 row
+    # is the submission. Sweeping ×3…×6 matters: the first coarse pass jumped 2 → 5 → 6 and missed
+    # that the peak sits at ×3, which is both the best score of the family and its best
+    # compression. A sweep with gaps in it will confidently report the wrong optimum.
+    _documents("documents · mai ×3  (submitted)", en=3, hi=4, te=4, mai=3),
+    _documents("documents · mai ×4", en=3, hi=4, te=4, mai=4),
+    _documents("documents · mai ×5", en=3, hi=4, te=4, mai=5),
+    _documents("documents · mai ×6", en=3, hi=4, te=4, mai=6),
+    # E3/E4 — algorithm ablations. The brief asks for BPE, so neither is the submission.
     Spec(
-        "bpe-scratch", "char", "NFKC", 10_000, "flat", "BPE from scratch · char · 10k · NFKC · flat"
+        algo="unigram",
+        level="char",
+        normalization="NFKC",
+        vocab_size=10_000,
+        weighting="manual",
+        label="Unigram (ablation)",
+        weights=REFERENCE_WEIGHTS,
     ),
     Spec(
-        "bpe-scratch",
-        "char",
-        "NFKC",
-        10_000,
-        "balance",
-        "BPE from scratch · char · 10k · NFKC · balance",
+        algo="bpe-scratch",
+        level="char",
+        normalization="NFKC",
+        vocab_size=10_000,
+        weighting="manual",
+        label="BPE from scratch, no library",
+        weights=REFERENCE_WEIGHTS,
     ),
 ]
 
 
-def sweep(specs: list[Spec], corpora: dict[str, str], words: dict[str, int]) -> list[Result]:
-    """Run every spec and return results sorted by score (best first, failures last)."""
-    results = [run(s, corpora, words) for s in specs]
-    return sorted(results, key=lambda r: (r.error is not None, -r.score))
+# The recipe we submit: two independent changes to the reference, each justified on its own.
+#
+#   documents  — train on whole articles rather than lines, so a merge may span a newline. Pure
+#                compression: fewer tokens for the same text, no denominator involved.
+#   mai ×3     — Maithili's article is 1.8% of the corpus and only ~1.1% of the weighted training
+#                mix, so it won almost no merges of its own and sat at the worst fertility.
+#                Feeding it three times instead of twice takes it to ~1.6% of the mix. Raising the
+#                *maximum* language is the honest direction to shrink a spread.
+#
+# Chosen on the two measurements that are stable: it is the best score in the honest family
+# (11250.51) *and* the best compression (189,785 tokens), while being the mildest change to the
+# reference. It is not the highest scorer overall — OVERTUNED reaches 35603 — but that one buys
+# its evenness by degrading English and Hindi and needs 192,713 tokens for the same corpus.
+#
+# Deliberately NOT chosen on held-out score. ``tokenization.holdout`` shows why: across five
+# different splits of the same corpus, one configuration's held-out score ranges from 3,687 to
+# 10,956. The variance between splits is larger than the variance between recipes, so held-out
+# cannot rank these and any ordering read off a single split is noise.
+SUBMISSION = _documents("submission · documents · mai ×3", en=3, hi=4, te=4, mai=3)
 
 
-def _print_table(results: list[Result]) -> None:
-    print(f"{'experiment':38} {'vocab':>6} {'spread':>7} {'score':>8}   ratios")
-    print("-" * 96)
+def sweep(specs: list[Spec], corpora: dict[str, str], units: dict[str, int]) -> list[Result]:
+    """Run every spec and return results sorted by adjusted score (best first, failures last).
+
+    Only ever call this with specs from a **single** profile. Sorting rows measured in different
+    denominators would produce a ranked list whose order means nothing.
+    """
+    profiles = {s.profile for s in specs}
+    if len(profiles) > 1:
+        msg = f"cannot rank across profiles {sorted(profiles)} — they are different measurements"
+        raise ValueError(msg)
+    results = [run(s, corpora, units) for s in specs]
+    return sorted(results, key=lambda r: (r.error is not None, -r.adjusted))
+
+
+def run_profile(profile: EvalProfile, specs: list[Spec], cfg: Config) -> list[Result]:
+    """Load a profile's corpus and sweep its specs against the denominator it is scored in."""
+    corpora = load_all(profile, cfg.corpus_dir)
+    counts = {c: count_denominator(t, profile.denominator) for c, t in corpora.items()}
+    return sweep(specs, corpora, counts)
+
+
+def _print_table(profile: EvalProfile, results: list[Result]) -> None:
+    denom = profile.denominator
+    print(f"\n{profile.title}")
+    print(f"{'experiment':42} {'spread':>8} {'score':>10} {'tokens':>9} {'mean X':>7}  ratios")
+    print("-" * 122)
     for r in results:
         if r.error:
-            print(f"{r.label:38} {'—':>6} {'—':>7} {'FAILED':>8}   {r.error}")
+            print(f"{r.label:42} {'—':>8} {'FAILED':>10} {'—':>9} {'—':>7}  {r.error}")
             continue
-        ratios = " ".join(f"{k}:{v:.2f}" for k, v in r.ratios.items())
-        print(f"{r.label:38} {r.vocab_actual:>6} {r.spread:>7.2f} {r.score:>8.1f}   {ratios}")
+        ratios = " ".join(f"{k}:{v:.3f}" for k, v in r.ratios.items())
+        print(
+            f"{r.label:42} {r.spread:>8.4f} {r.adjusted:>10.2f} {r.total_tokens:>9} "
+            f"{r.mean_ratio:>7.4f}  {ratios}"
+        )
+    print(f"({len(results)} rows · X = tokens per {denom})")
 
 
 def main() -> None:
-    """Run the curated SUITE over the cached corpora, print a table, and dump JSON."""
+    """Run both profiles' suites and dump each to its own JSON, never into one ranked list."""
     cfg = Config()
-    corpora = {lang.code: fetch_article(lang, cfg.data_dir) for lang in cfg.languages}
-    words = {c: count_words(t) for c, t in corpora.items()}
-    results = sweep(SUITE, corpora, words)
-    _print_table(results)
     cfg.artifacts_dir.mkdir(parents=True, exist_ok=True)
+    everything: dict[str, list[dict]] = {}
+    for profile, specs in ((V1, V1_SUITE), (V2, V2_SUITE)):
+        results = run_profile(profile, specs, cfg)
+        _print_table(profile, results)
+        everything[profile.name] = [asdict(r) for r in results]
+    print(
+        "\nScores are not comparable across the two tables: different corpus, different "
+        "denominator. The same tokenizer reads ~2.1 under v1 and ~0.6 under v2."
+    )
     (cfg.artifacts_dir / "ablations.json").write_text(
-        json.dumps([asdict(r) for r in results], indent=2, ensure_ascii=False), encoding="utf-8"
+        json.dumps(everything, indent=2, ensure_ascii=False), encoding="utf-8"
     )
 
 

@@ -1,0 +1,290 @@
+{
+ "corpus": [
+  {
+   "code": "en",
+   "name": "English",
+   "units": 186367,
+   "share": 0.588231,
+   "chars": 598265,
+   "weighted_share": {
+    "2": 0.522856,
+    "3": 0.520032,
+    "4": 0.517237,
+    "5": 0.514473,
+    "6": 0.511738,
+    "7": 0.509032,
+    "8": 0.506355,
+    "10": 0.501083,
+    "12": 0.49592,
+    "16": 0.485907
+   }
+  },
+  {
+   "code": "hi",
+   "name": "Hindi",
+   "units": 88359,
+   "share": 0.278888,
+   "chars": 266728,
+   "weighted_share": {
+    "2": 0.330524,
+    "3": 0.328738,
+    "4": 0.326972,
+    "5": 0.325224,
+    "6": 0.323496,
+    "7": 0.321785,
+    "8": 0.320092,
+    "10": 0.31676,
+    "12": 0.313496,
+    "16": 0.307167
+   }
+  },
+  {
+   "code": "te",
+   "name": "Telugu",
+   "units": 36292,
+   "share": 0.114549,
+   "chars": 113835,
+   "weighted_share": {
+    "2": 0.135757,
+    "3": 0.135024,
+    "4": 0.134298,
+    "5": 0.133581,
+    "6": 0.13287,
+    "7": 0.132168,
+    "8": 0.131473,
+    "10": 0.130104,
+    "12": 0.128763,
+    "16": 0.126164
+   }
+  },
+  {
+   "code": "mai",
+   "name": "Maithili",
+   "units": 5808,
+   "share": 0.018332,
+   "chars": 17919,
+   "weighted_share": {
+    "2": 0.010863,
+    "3": 0.016206,
+    "4": 0.021492,
+    "5": 0.026722,
+    "6": 0.031896,
+    "7": 0.037015,
+    "8": 0.042081,
+    "10": 0.052053,
+    "12": 0.06182,
+    "16": 0.080763
+   }
+  }
+ ],
+ "budget": [
+  {
+   "mai": 2,
+   "ratios": {
+    "en": 0.593877,
+    "hi": 0.575629,
+    "te": 0.663507,
+    "mai": 0.723313
+   },
+   "spread": 0.147684,
+   "score": 6771.23,
+   "total_tokens": 189822,
+   "mean_ratio": 0.599136,
+   "unseen_score": 3206.49,
+   "unseen_mean_ratio": 0.668321,
+   "is_submission": false
+  },
+  {
+   "mai": 3,
+   "ratios": {
+    "en": 0.595519,
+    "hi": 0.575697,
+    "te": 0.664582,
+    "mai": 0.656508
+   },
+   "spread": 0.088885,
+   "score": 11250.51,
+   "total_tokens": 189785,
+   "mean_ratio": 0.59902,
+   "unseen_score": 3687.11,
+   "unseen_mean_ratio": 0.667946,
+   "is_submission": true
+  },
+  {
+   "mai": 4,
+   "ratios": {
+    "en": 0.596141,
+    "hi": 0.575708,
+    "te": 0.664967,
+    "mai": 0.636708
+   },
+   "spread": 0.089259,
+   "score": 11203.31,
+   "total_tokens": 189801,
+   "mean_ratio": 0.59907,
+   "unseen_score": 3896.47,
+   "unseen_mean_ratio": 0.667538,
+   "is_submission": false
+  },
+  {
+   "mai": 5,
+   "ratios": {
+    "en": 0.598759,
+    "hi": 0.573773,
+    "te": 0.664802,
+    "mai": 0.601928
+   },
+   "spread": 0.091029,
+   "score": 10985.48,
+   "total_tokens": 189910,
+   "mean_ratio": 0.599414,
+   "unseen_score": 4072.33,
+   "unseen_mean_ratio": 0.667789,
+   "is_submission": false
+  },
+  {
+   "mai": 6,
+   "ratios": {
+    "en": 0.600294,
+    "hi": 0.573479,
+    "te": 0.66494,
+    "mai": 0.581267
+   },
+   "spread": 0.091461,
+   "score": 10933.59,
+   "total_tokens": 190055,
+   "mean_ratio": 0.599872,
+   "unseen_score": 4213.37,
+   "unseen_mean_ratio": 0.667413,
+   "is_submission": false
+  },
+  {
+   "mai": 7,
+   "ratios": {
+    "en": 0.602054,
+    "hi": 0.573762,
+    "te": 0.665298,
+    "mai": 0.557335
+   },
+   "spread": 0.107963,
+   "score": 9262.4,
+   "total_tokens": 190282,
+   "mean_ratio": 0.600588,
+   "unseen_score": 4185.7,
+   "unseen_mean_ratio": 0.66804,
+   "is_submission": false
+  },
+  {
+   "mai": 8,
+   "ratios": {
+    "en": 0.604318,
+    "hi": 0.574169,
+    "te": 0.665326,
+    "mai": 0.527032
+   },
+   "spread": 0.138294,
+   "score": 7230.97,
+   "total_tokens": 190565,
+   "mean_ratio": 0.601482,
+   "unseen_score": 4183.49,
+   "unseen_mean_ratio": 0.668854,
+   "is_submission": false
+  },
+  {
+   "mai": 10,
+   "ratios": {
+    "en": 0.60735,
+    "hi": 0.572483,
+    "te": 0.665463,
+    "mai": 0.506198
+   },
+   "spread": 0.159265,
+   "score": 6278.84,
+   "total_tokens": 190865,
+   "mean_ratio": 0.602428,
+   "unseen_score": 4594.91,
+   "unseen_mean_ratio": 0.670154,
+   "is_submission": false
+  },
+  {
+   "mai": 12,
+   "ratios": {
+    "en": 0.610398,
+    "hi": 0.575437,
+    "te": 0.669376,
+    "mai": 0.455406
+   },
+   "spread": 0.21397,
+   "score": 4673.56,
+   "total_tokens": 191541,
+   "mean_ratio": 0.604562,
+   "unseen_score": 4560.22,
+   "unseen_mean_ratio": 0.670028,
+   "is_submission": false
+  },
+  {
+   "mai": 16,
+   "ratios": {
+    "en": 0.612356,
+    "hi": 0.575414,
+    "te": 0.671553,
+    "mai": 0.434401
+   },
+   "spread": 0.237152,
+   "score": 4216.7,
+   "total_tokens": 191861,
+   "mean_ratio": 0.605572,
+   "unseen_score": 4601.85,
+   "unseen_mean_ratio": 0.672205,
+   "is_submission": false
+  }
+ ],
+ "holdout": [
+  {
+   "label": "the reference solution (benchmark)",
+   "role": "benchmark",
+   "splits": [
+    3167.94,
+    9319.92,
+    4897.5,
+    5538.82,
+    12588.94
+   ],
+   "mean": 7102.62,
+   "stdev": 3801.51,
+   "low": 3167.94,
+   "high": 12588.94
+  },
+  {
+   "label": "submission · documents · mai ×3",
+   "role": "submitted",
+   "splits": [
+    3687.11,
+    8013.34,
+    4981.49,
+    6800.14,
+    10956.4
+   ],
+   "mean": 6887.7,
+   "stdev": 2815.42,
+   "low": 3687.11,
+   "high": 10956.4
+  },
+  {
+   "label": "more Telugu + Maithili (rejected)",
+   "role": "rejected",
+   "splits": [
+    4103.07,
+    10310.51,
+    5997.79,
+    8144.26,
+    9125.31
+   ],
+   "mean": 7536.19,
+   "stdev": 2487.21,
+   "low": 4103.07,
+   "high": 10310.51
+  }
+ ],
+ "note": "Every point is a real training run on the committed corpus, not an interpolation."
+}

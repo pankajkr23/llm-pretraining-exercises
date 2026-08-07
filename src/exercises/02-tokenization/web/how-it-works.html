@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>How it works · One Vocabulary, Four Languages</title>
+    <meta name="description" content="Why a score that measures only fairness can be gamed, what forty-five training runs showed, and how the submitted tokenizer was chosen — with two figures you can drag." />
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+      .wrap { max-width: 860px; margin: 0 auto; padding: 56px 24px 96px; }
+      .home { display: inline-flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 500; color: var(--accent); text-decoration: none; margin: 0 0 28px; padding: 7px 15px 7px 12px; border-radius: 980px; background: var(--panel); box-shadow: var(--shadow); transition: background 0.18s, color 0.18s; }
+      .home:hover { background: var(--accent); color: #fff; }
+      .home .arrow { font-size: 16px; line-height: 1; }
+      .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin: 0 0 12px; }
+      h1 { font-weight: 600; font-size: clamp(2rem, 4.6vw, 3rem); line-height: 1.08; letter-spacing: -0.025em; margin: 0 0 18px; }
+      .lede { max-width: 66ch; color: var(--muted); font-size: 1.06rem; margin: 0 0 8px; }
+      .lede b { color: var(--ink); font-weight: 600; }
+
+      h2 { font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 600; letter-spacing: -0.02em; margin: 48px 0 14px; }
+      h3 { font-size: clamp(1.15rem, 2.4vw, 1.45rem); font-weight: 600; letter-spacing: -0.015em; margin: 0 0 10px; }
+      .pintro { max-width: 68ch; color: var(--muted); margin: 0 0 14px; }
+      .pintro b { color: var(--ink); font-weight: 600; }
+      .pintro.verdict { margin-top: 30px; }
+      .formula { font-family: var(--mono); font-size: 0.92em; background: var(--track); padding: 2px 8px; border-radius: 7px; color: var(--ink); }
+      .explainer { margin: 34px 0; }
+      .claim { max-width: 68ch; color: var(--muted); margin: 0 0 20px; }
+      .claim b { color: var(--ink); font-weight: 600; }
+      .tag { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+
+      table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+      th, td { text-align: right; padding: 8px; font-size: 14px; }
+      th { font-family: var(--mono); font-size: 11px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; border-bottom: 1px solid var(--line); }
+      td:first-child, th:first-child { text-align: left; }
+      tr.xhi td { color: var(--hi); font-weight: 600; }
+      .prose-table { display: block; overflow-x: auto; margin: 18px 0 8px; }
+      .prose-table td { text-align: left; font-size: 13.5px; color: var(--muted); vertical-align: top; border-bottom: 1px solid var(--line); }
+      .prose-table td:first-child { color: var(--ink); font-weight: 600; white-space: nowrap; }
+      .prose-table th { text-align: left; }
+
+      .ctl { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+      .ctl label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); font-weight: 600; }
+      .ctl input[type="range"] { flex: 1 1 240px; min-width: 0; accent-color: var(--accent); }
+      .ctl output { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--accent); min-width: 5.5ch; }
+      .seg2 { gap: 4px; background: var(--track); border-radius: 12px; padding: 4px; display: inline-flex; flex-wrap: wrap; max-width: 100%; }
+      .seg2 button { appearance: none; border: 0; background: transparent; cursor: pointer; font-family: var(--mono); font-size: 12.5px; color: var(--muted); padding: 8px 14px; border-radius: 9px; }
+      .seg2 button[aria-pressed="true"] { background: var(--panel); color: var(--ink); box-shadow: var(--shadow); }
+
+      /* `.fig` is hairlines above and below, never a card — the figure is part of the argument,
+         not a widget parked beside it. See docs/EXPLAINER_PATTERN.md §3. */
+      .fig { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 18px 0 20px; }
+      .fig-num { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); margin-bottom: 16px; }
+      .figrow { display: flex; gap: 32px; align-items: flex-end; flex-wrap: wrap; margin-top: 20px; }
+      .fig-big { font-family: var(--mono); font-size: clamp(1.9rem, 5vw, 2.9rem); font-weight: 600; line-height: 1; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; }
+      .fig-big.alt { color: var(--ink); font-size: clamp(1.4rem, 3.4vw, 1.9rem); }
+      .fig-sub { font-family: var(--mono); font-size: 11.5px; color: var(--faint); margin-top: 7px; }
+      .fig-verdict { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 5px 11px; border-radius: 7px; box-shadow: inset 0 0 0 1px currentColor; color: var(--muted); align-self: center; }
+      .fig-verdict.good { color: var(--accent); }
+      .fig-verdict.bad { color: var(--hi); }
+      .fig-note { font-size: 0.92rem; color: var(--muted); margin-top: 18px; max-width: 66ch; }
+      .fig-note b { color: var(--ink); font-weight: 600; }
+      .fig-rail { font-size: 0.85rem; color: var(--faint); margin-top: 12px; max-width: 66ch; }
+
+      .bars { display: grid; grid-template-columns: minmax(64px, auto) minmax(0, 1fr) auto; gap: 9px 12px; align-items: center; }
+      .bars .bname { font-size: 13.5px; color: var(--muted); }
+      .bars .btrack { background: var(--track); border-radius: 5px; height: 15px; overflow: hidden; }
+      .bars .bfill { height: 100%; background: var(--accent); border-radius: 5px; transition: width 200ms ease; }
+      .bars .bfill.worst { background: var(--hi); }
+      .bars .bval { font-family: var(--mono); font-size: 13px; color: var(--ink); font-variant-numeric: tabular-nums; }
+      .bars .bval .d { color: var(--faint); font-size: 11.5px; margin-left: 6px; }
+      /* Fig. 2 is a discrete toggle rather than a drag, so it morphs at the repo's ~550ms
+         (docs/DESIGN.md) instead of the 200ms used for dial response. */
+      .bars.slow .bfill { transition: width 550ms cubic-bezier(0.4, 0, 0.2, 1); }
+      @media (prefers-reduced-motion: reduce) { .bars .bfill { transition: none; } }
+
+      .cta { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 500; color: #fff; background: var(--accent); text-decoration: none; padding: 10px 20px; border-radius: 980px; margin-top: 12px; transition: opacity 0.18s; }
+      .cta:hover { opacity: 0.85; }
+      footer { margin-top: 48px; color: var(--faint); font-size: 0.85rem; font-family: var(--mono); }
+      .err { color: #b91c1c; font-family: var(--mono); }
+    </style>
+    <link rel="stylesheet" href="/_shared/tokens.css" />
+    <script>
+      try {
+        var t = localStorage.getItem('era5-theme');
+        if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div class="wrap">
+      <a class="home" href="./"><span class="arrow">←</span> Back to the tokenizer</a>
+      <p class="eyebrow">02 · Tokenization</p>
+      <h1>How this works, and how we got here</h1>
+      <p class="lede">
+        The tokenizer page shows five recipes and their scores. This one explains what those
+        numbers mean, why <b>the biggest one is the one we rejected</b>, and how forty-five
+        training runs settled the choice. Two of the figures below are draggable; every point in
+        them is a real training run.
+      </p>
+
+      <h2>A shorthand with a fixed budget</h2>
+      <p class="pintro">
+        A tokenizer is a shorthand. It gets to invent <b>10,000 symbols</b>, and all four languages
+        share them. Chunks of text that come up often earn a symbol of their own; everything else
+        has to be spelled out in smaller pieces. If English takes most of the symbols, English is
+        written compactly and Telugu gets spelled out bit by bit.
+      </p>
+      <p class="pintro">
+        <b>Fertility</b> is how many pieces it takes to write a given amount of text — lower is
+        better. And the assignment's score is
+        <span class="formula">1000 ÷ (worst fertility − best fertility)</span>, which measures only
+        <b>how close the four languages are to each other</b>. It never asks whether the shorthand
+        is any good. That gap between what is measured and what matters is where everything below
+        lives.
+      </p>
+
+      <section class="explainer" id="mix">
+        <h3>The four articles are nothing like the same size</h3>
+        <p class="claim">
+          Before any of it makes sense: this is the corpus. One Wikipedia article per language, and
+          <b>English is thirty-two times the size of Maithili</b>. A weight like <b>×3</b> means
+          that language's article is fed to the trainer three times over — which is how a 1.8%
+          article gets any say at all.
+        </p>
+        <div class="fig">
+          <div class="fig-num">Fig. 0 — corpus size, and share of the training mix at each weight</div>
+          <table class="mixtable">
+            <thead><tr><th>language</th><th>units</th><th>of corpus</th><th>weight</th><th>of training mix</th></tr></thead>
+            <tbody id="mixbody"></tbody>
+          </table>
+          <div class="fig-note" id="mixnote"></div>
+        </div>
+        <div class="fig-rail">
+          "Units" are the graded denominator: one run of letters or digits, or one visible
+          punctuation mark. Weights shown are the submitted recipe's.
+        </div>
+      </section>
+
+      <section class="explainer" id="budget">
+        <h3>The best setting depends on which text you score it on</h3>
+        <p class="claim">
+          The dial gives Maithili a bigger share of the 10,000 symbols. Watch <b>Maithili's bar</b>
+          shorten and <b>the other three</b> creep the wrong way — then watch the two scores
+          underneath, which <b>reach their best at different places</b>.
+        </p>
+        <div class="ctl">
+          <label for="maidial">Maithili's share</label>
+          <input type="range" id="maidial" min="0" max="9" step="1" value="0" aria-describedby="mainote" />
+          <output id="maiout"></output>
+        </div>
+        <div class="fig">
+          <div class="fig-num">Fig. 1 — fertility per language, one real training run per stop</div>
+          <div class="bars" id="maibars"></div>
+          <div class="figrow">
+            <div>
+              <div class="fig-big" id="maiscore"></div>
+              <div class="fig-sub">score on the articles it studied</div>
+            </div>
+            <div>
+              <div class="fig-big alt" id="maiunseen"></div>
+              <div class="fig-sub">held-out score — noisy, see Fig. 2</div>
+            </div>
+            <div>
+              <div class="fig-big alt" id="maitokens"></div>
+              <div class="fig-sub">total pieces for the whole corpus</div>
+            </div>
+            <div class="fig-verdict" id="maiverdict"></div>
+          </div>
+          <div class="fig-note" id="mainote"></div>
+        </div>
+        <div class="fig-rail">
+          Twenty real training runs sit behind this dial — one full and one held-out at each of the
+          ten stops. Nothing here is interpolated between two measured points.
+        </div>
+      </section>
+
+      <section class="explainer" id="surprise">
+        <h3>Hiding a fifth of the corpus does not settle it either</h3>
+        <p class="claim">
+          The usual answer to tuning-against-your-own-test is to hold text back. So: hide a fifth of
+          every article, train on the rest, score only the hidden part. Then change <b>which
+          fifth</b> you hide, and watch <b>the ranking rearrange itself</b>.
+        </p>
+        <div class="ctl seg2" id="examseg"></div>
+        <div class="fig">
+          <div class="fig-num">Fig. 2 — three recipes, five ways of holding text back</div>
+          <div class="bars" id="exambars"></div>
+          <div class="fig-note" id="examnote"></div>
+        </div>
+        <div class="fig-rail">
+          Fifteen training runs — three recipes × five slices. The corpus is four articles; a fifth
+          of that is too little text for a score built on the gap between the two extreme languages
+          to settle down.
+        </div>
+      </section>
+
+      <h2>What we tested, and how</h2>
+      <p class="pintro">
+        Four things can be varied, and we varied them one at a time, so each row of the results
+        table differs from the benchmark in a single nameable way.
+      </p>
+      <table class="prose-table">
+        <thead><tr><th>knob</th><th>what it means</th><th>values tried</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Corpus weights</td>
+            <td>How many times each language's article is fed to the trainer. The vocabulary is a fixed 10,000 slots shared by all four, so more copies wins more slots.</td>
+            <td>mai ×2…×16 · te ×5, ×6</td>
+          </tr>
+          <tr>
+            <td>Training unit</td>
+            <td>Whether the trainer is handed <em>files</em> — split into lines, so no symbol may cross a line break — or <em>whole documents</em>. Worth ~0.6% of every token count.</td>
+            <td>lines · documents</td>
+          </tr>
+          <tr>
+            <td>Algorithm</td>
+            <td>BPE merges character pairs upward; Unigram starts with a large vocabulary and prunes down. Our from-scratch BPE is the same algorithm with no library involved.</td>
+            <td>BPE · Unigram · from&#8209;scratch</td>
+          </tr>
+          <tr>
+            <td>Representation</td>
+            <td>Whether symbols are built from bytes or characters. Tested exhaustively in the earlier round, where it turned out to dominate everything else.</td>
+            <td>byte · char</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="pintro">
+        Each result is then checked three ways, in increasing order of how much they can actually
+        settle. <b>One:</b> the benchmark row must reproduce 6502.56 exactly, or the measuring
+        apparatus is wrong and nothing else counts. <b>Two:</b> every row reports its score
+        <em>and</em> its total token count — a row that improves the score while using more tokens
+        has bought fairness by getting worse, which is how the 35,604 recipe was caught.
+        <b>Three:</b> held-out scoring, which failed to settle anything, as Fig. 2 shows.
+      </p>
+
+      <h2>The three recipes, side by side</h2>
+      <table>
+        <thead><tr><th>recipe</th><th>score</th><th>total pieces</th><th>English</th><th>Hindi</th></tr></thead>
+        <tbody>
+          <tr><td>benchmark <span class="tag">not ours</span></td><td>6,503</td><td>191,266</td><td>0.598</td><td>0.579</td></tr>
+          <tr><td>submitted <span class="tag">mai ×3</span></td><td>11,251</td><td>189,785</td><td>0.596</td><td>0.576</td></tr>
+          <tr class="xhi"><td>rejected <span class="tag">te ×6 · mai ×7</span></td><td>35,604</td><td>192,713</td><td>0.617</td><td>0.589</td></tr>
+        </tbody>
+      </table>
+      <p class="pintro verdict">
+        So two of the three obvious ways to pick a winner do not work. The <b>score</b> can be
+        bought by making the tokenizer worse — the rejected recipe reaches near-perfect evenness by
+        degrading English and Hindi and needs 3,000 more pieces for the same corpus. And the
+        <b>held-out score</b> is too noisy here to rank anything; reported honestly, it mildly
+        favours the recipe we rejected. What is left is what does not move: the score on the whole
+        corpus, and the total number of pieces. On both, the submitted recipe is the best of the
+        honest family — <b>and it is not the biggest number on the page</b>. That one is still
+        there, labelled as rejected, so you can check the choice rather than take our word for it.
+      </p>
+
+      <h2>Two measurements, kept apart</h2>
+      <p class="pintro">
+        The tokenizer page has a <b>v1</b> tab as well. That is an earlier round of experiments on a
+        different corpus — clipped article prose rather than wiki-faithful Markdown — scored in
+        tokens per <em>whitespace word</em> rather than per unit. Its finding stands on its own:
+        representation is the dominant lever, and building symbols out of UTF-8 bytes wrecks Indic
+        scripts. But <b>its scores can never be compared with v2's</b>: the same tokenizer reads
+        about 2.1 under one and 0.6 under the other. That is why they live in separate tabs and are
+        never sorted into one list.
+      </p>
+
+      <a class="cta" href="./">Back to the tokenizer <span aria-hidden="true">→</span></a>
+      <p class="err" id="err"></p>
+
+      <footer>Every figure on this page is generated from real training runs — see <span class="tag">tokenization/explainer.py</span>.</footer>
+    </div>
+
+    <script type="module">
+      const esc = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+      const LANGS = [['en', 'English'], ['hi', 'Hindi'], ['te', 'Telugu'], ['mai', 'Maithili']];
+      const fmt = (n) => Math.round(n).toLocaleString();
+      const pct = (x) => (x * 100).toFixed(x < 0.02 ? 2 : 1) + '%';
+      let EX = null, examSplit = 0;
+
+      fetch('./explainer.json')
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error('explainer.json ' + r.status))))
+        .then((d) => { EX = d; initMix(); initBudget(); initExam(); })
+        .catch((e) => { document.getElementById('err').textContent = 'Could not load explainer.json — ' + e.message + ' (serve over http, not file://).'; });
+
+      function bars(host, rows, scale) {
+        host.innerHTML = rows.map((r) => `
+          <div class="bname">${esc(r.name)}</div>
+          <div class="btrack"><div class="bfill${r.worst ? ' worst' : ''}" style="width:${Math.max(2, (r.value / scale) * 100).toFixed(1)}%"></div></div>
+          <div class="bval">${r.text}${r.aside ? `<span class="d">${esc(r.aside)}</span>` : ''}</div>`).join('');
+      }
+
+      function initMix() {
+        const W = { en: 3, hi: 4, te: 4, mai: 3 };   // the submitted recipe's weights
+        const biggest = Math.max(...EX.corpus.map((c) => c.units));
+        const smallest = Math.min(...EX.corpus.map((c) => c.units));
+        document.getElementById('mixbody').innerHTML = EX.corpus.map((c) => `
+          <tr${c.code === 'mai' ? ' class="xhi"' : ''}>
+            <td>${esc(c.name)}</td>
+            <td>${c.units.toLocaleString()}</td>
+            <td>${pct(c.share)}</td>
+            <td>×${W[c.code]}</td>
+            <td>${pct(c.weighted_share[String(W[c.code])])}</td>
+          </tr>`).join('');
+        const mai = EX.corpus.find((c) => c.code === 'mai');
+        document.getElementById('mixnote').innerHTML =
+          `Maithili's article is <b>${Math.round(biggest / smallest)}× smaller than English's</b>. Even fed in three times it is <b>${pct(mai.weighted_share['3'])}</b> of what the trainer reads — up from ${pct(mai.weighted_share['2'])} at the benchmark's ×2. Everything the next figure does turns on that sliver.`;
+      }
+
+      function initBudget() {
+        const dial = document.getElementById('maidial');
+        dial.max = String(EX.budget.length - 1);
+        dial.value = String(Math.max(0, EX.budget.findIndex((b) => b.is_submission)));
+        dial.addEventListener('input', () => showBudget(+dial.value));
+        showBudget(+dial.value);
+      }
+
+      function showBudget(i) {
+        const b = EX.budget[i];
+        const base = EX.budget[0];
+        const worst = LANGS.reduce((a, [c]) => (b.ratios[c] > b.ratios[a] ? c : a), 'en');
+        document.getElementById('maiout').textContent = '×' + b.mai;
+        bars(
+          document.getElementById('maibars'),
+          LANGS.map(([code, name]) => ({
+            name,
+            value: b.ratios[code],
+            worst: code === worst,
+            text: b.ratios[code].toFixed(3),
+            aside: i === 0 ? '' : (b.ratios[code] - base.ratios[code] >= 0 ? '+' : '') + (b.ratios[code] - base.ratios[code]).toFixed(3),
+          })),
+          0.78,
+        );
+        document.getElementById('maiscore').textContent = fmt(b.score);
+        document.getElementById('maiunseen').textContent = fmt(b.unseen_score);
+        document.getElementById('maitokens').textContent = fmt(b.total_tokens);
+
+        const best = EX.budget.reduce((a, x) => (x.score > a.score ? x : a));
+        const leanest = EX.budget.reduce((a, x) => (x.total_tokens < a.total_tokens ? x : a));
+        const v = document.getElementById('maiverdict');
+        const note = document.getElementById('mainote');
+        if (b.is_submission) {
+          v.textContent = 'submitted'; v.className = 'fig-verdict good';
+          note.innerHTML = `<b>This is the setting we submitted</b>, and the only stop that is best on both stable measurements at once: the highest score of the ten, and the fewest total pieces. Note the middle number wobbling as you drag — that is the held-out score, and Fig. 2 is about why we ignored it.`;
+        } else if (b.mai < best.mai) {
+          v.textContent = 'starved'; v.className = 'fig-verdict';
+          note.innerHTML = `<b>Maithili is still starved.</b> At ×${b.mai} its article is barely more than one percent of what the trainer reads, so it wins almost no symbols of its own and stays the worst-served language by a distance — which is exactly what holds the gap open and the score down.`;
+        } else {
+          v.textContent = 'overshoot'; v.className = 'fig-verdict bad';
+          note.innerHTML = `<b>Past the peak, and paying twice.</b> Maithili is now cheaper than everything else, so it has flipped from worst-served to <em>best</em>-served and the gap reopens from the other end. And the total keeps climbing — <b>${fmt(b.total_tokens - leanest.total_tokens)} more pieces</b> than at ×${leanest.mai} to write exactly the same corpus. Evenness bought with compression.`;
+        }
+      }
+
+      function initExam() {
+        const n = EX.holdout[0].splits.length;
+        document.getElementById('examseg').innerHTML = Array.from({ length: n }, (_, i) =>
+          `<button type="button" data-split="${i}" aria-pressed="${i === 0}">hide slice ${i + 1}</button>`).join('');
+        document.querySelectorAll('#examseg button').forEach((btn) =>
+          btn.addEventListener('click', () => { examSplit = +btn.dataset.split; showExam(); }),
+        );
+        showExam();
+      }
+
+      function showExam() {
+        document.querySelectorAll('#examseg button').forEach((b) =>
+          b.setAttribute('aria-pressed', String(+b.dataset.split === examSplit)),
+        );
+        const rows = EX.holdout.map((r) => ({ ...r, value: r.splits[examSplit] }));
+        const top = Math.max(...EX.holdout.flatMap((r) => r.splits));
+        const leader = rows.reduce((a, r) => (r.value > a.value ? r : a));
+        const host = document.getElementById('exambars');
+        host.classList.add('slow');
+        bars(host, rows.map((r) => ({
+          name: r.role,
+          value: r.value,
+          worst: r.role === 'rejected',
+          text: fmt(r.value),
+          aside: r === leader ? 'wins this slice' : '',
+        })), top);
+
+        // The ranges are the point, not the ranking. Reported straight, including the part that
+        // is inconvenient for us: on this test the rejected recipe does perfectly well.
+        const widest = Math.max(...EX.holdout.map((r) => r.high - r.low));
+        const apart = Math.max(...EX.holdout.map((r) => r.mean)) - Math.min(...EX.holdout.map((r) => r.mean));
+        document.getElementById('examnote').innerHTML =
+          `Slice ${examSplit + 1} crowns <b>${esc(leader.role)}</b>, by ${fmt(leader.value - Math.min(...rows.map((r) => r.value)))} points over the last-placed one. Change nothing but the slice and those numbers move by up to <b>${fmt(widest)} points within a single recipe</b> — while the three recipes' five-slice averages sit just <b>${fmt(apart)} apart</b>. The wobble is more than ten times the difference being measured, so this test cannot rank these recipes. It does not rescue the submission either: on averages the rejected recipe comes out slightly ahead. The reason that one is not submitted is in Fig. 1 — it needs more pieces for the same text.`;
+      }
+    </script>
+    <script type="module">
+      import { mountThemePicker } from '/_shared/theme.js';
+      mountThemePicker(null);
+    </script>
+  </body>
+</html>

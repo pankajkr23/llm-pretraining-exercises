@@ -31,23 +31,41 @@ The levers you control:
 
 The brief is loosely worded, so we pin the terms down (see `src/tokenization/metrics.py`):
 
-- **words** = number of whitespace-separated words in the article (script-agnostic; a `\w+` regex
-  wrongly splits Indic words at combining vowel marks).
+- **corpus** = **wiki-faithful Markdown**: Wikipedia's REST HTML converted with `markdownify`,
+  keeping links, URLs, tables, references, image links, navboxes and categories. Explicitly *not*
+  clipped article prose — "do not report numbers from a clipped page".
+- **faithful unit** = one contiguous run of Unicode letters/marks/numbers, **or** one visible
+  non-space punctuation/symbol character. `भारत` is one unit; `](` is two; whitespace is never a
+  unit. The `\p{M}` class is load-bearing — it keeps Indic combining marks attached to their base
+  character instead of fragmenting every word at its matras.
 - **tokens** = number of BPE token ids the tokenizer emits for the article.
-- **ratio X** = `tokens / words` — the average tokens per word ("fertility"). Lower is better.
-  The brief literally writes `words / tokens`, but the "~1.2" target and its example ordering
-  (English as the *least*) only hold for `tokens / words`: with a decent BPE, English fertility is
-  ≈ 1.2 while Indic scripts are much higher. So we use `tokens / words`.
+- **ratio X** = `tokens / units` — fertility. Lower is better, and **below 1.0 is normal**, because
+  BPE merges frequent punctuation runs so one token can cover two or three units.
+  The brief literally writes the fraction the other way up, but its example ordering (English as
+  the *least*) only holds for `tokens / units`.
+- **score** = `1000 / (X_max − X_min)`, divided by a **Hindi penalty** `exp(max(0, X_hi/1.2 − 1))`
+  that exists to stop you shrinking the spread by degrading the best-served language.
+
+> Our first pass counted whitespace **words** over clipped prose. That is a different measurement,
+> not a worse one — the same tokenizer scores ≈ 0.60 in units and ≈ 2.13 in words — so numbers from
+> the two are never comparable. It is **retained in full** as the `v1` profile (`corpus/v1/`, its
+> own suite, its own regression test) because its finding is independent of the denominator:
+> representation is the dominant lever. The definitions above are the `v2` profile, which is what
+> the assignment grades and what the submission is scored on.
 
 ## What you're submitting
 
 1. A **widget** that shows the four ratios (X1…X4), token statistics, the calculations, and your
    self-score.
-2. The widget must let a reviewer **see your tokenizer** — the full list of all tokens in the vocab.
-3. A **Netlify URL** for that widget.
+2. The widget must let a reviewer **see your tokenizer** — the full list of all tokens in the vocab —
+   and **download and encode with it**. *"A vocab list without the actual encoding algorithm is not
+   enough to reproduce your score"*, so the ordered **merges** and a working encoder ship too.
+3. The exact tokenizer file, the build method, the corpus extraction process, per-language token
+   counts, the fertility ratios, and the score calculation.
+4. A public **URL** for that widget.
 
-> **Hosting note:** we're moving these demos to **Vercel**; the submitted link will be a Vercel URL.
-> Netlify will be **decommissioned** (not archived).
+> **Hosting note:** these demos are served from **Vercel**; the submitted link is a Vercel URL.
+> Netlify (the prior host) is decommissioned, not archived.
 
 The Python pipeline here (fetch → train → score, plus the ablation harness) is the *engine*; it
 exports the numbers and the full vocabulary that the widget renders.

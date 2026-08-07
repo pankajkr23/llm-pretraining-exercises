@@ -252,3 +252,6 @@ docs/sessions/**
 
 # Working handoff notes, wherever they are — a local scratchpad, like TODO.md above.
 HANDOFF.md
+
+# Worked solutions kept beside an exercise's code — local reference only, never tracked.
+**/src/solution/
