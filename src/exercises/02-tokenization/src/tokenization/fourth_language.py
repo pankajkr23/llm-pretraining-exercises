@@ -51,7 +51,7 @@ def compare(cfg: Config | None = None) -> list[dict]:
     cfg = cfg or Config()
     trials = [
         (MAITHILI_SET, _spec("mai · reference weights", en=3, hi=4, te=4, mai=2)),
-        (MAITHILI_SET, _spec("mai · tuned (mai ×6)", en=3, hi=4, te=4, mai=6)),
+        (MAITHILI_SET, _spec("mai · tuned (mai ×3)", en=3, hi=4, te=4, mai=3)),
         (TAMIL_SET, _spec("ta · reference weights", en=3, hi=4, te=4, ta=2)),
         (TAMIL_SET, _spec("ta · tuned (te ×6)", en=3, hi=4, te=6, ta=2)),
     ]

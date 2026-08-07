@@ -72,7 +72,7 @@ uv run pytest            # run every exercise's tests from the root
 | # | Exercise | Summary |
 | --- | --- | --- |
 | 01 | [Introductions](src/exercises/01-introductions/) | Four live, in-browser interactive proofs of *why neural nets work*. Static site, zero dependencies, deployed to Vercel. |
-| 02 | [Tokenization](src/exercises/02-tokenization/) | A single 10k BPE vocabulary balanced across India's Wikipedia article in four languages — scored on faithful units, with a held-out check separating a real gain from in-sample tuning, and a live in-browser encoder you can paste into. |
+| 02 | [Tokenization](src/exercises/02-tokenization/) | A single 10k BPE vocabulary balanced across India's Wikipedia article in four languages — scored on faithful units, with a one-page explainer showing why the biggest number on the page is the one we rejected, and a live in-browser encoder you can paste into. |
 | 03 | [Data collection framework](src/exercises/03-data-collection-framework/) | How you decide what an India-first 40B model trains on — one interactive page, thirteen chapters: how much text, what kind, **which datasets**, how to clean it, how to tokenise it, and how you would know it worked. 145 datasets graded on five checks, of which **4 are committable today**; five data-handling invariants enforced in CI, plus a browser suite that tests the rendered page. |
 
 More exercises are added each week.
@@ -113,7 +113,7 @@ committed wiki-faithful Markdown, so every number reproduces offline from a fres
 ```bash
 uv run python -m tokenization          # train the submission → print + save the report
 uv run python -m tokenization.ablate   # the full experiment table
-uv run python -m tokenization.holdout  # in-sample vs held-out
+uv run python -m tokenization.holdout  # why held-out cannot rank these recipes
 ```
 
 The earlier round of experiments — clipped prose scored in tokens per *word* — is **retained in
@@ -125,10 +125,13 @@ and ≈ 0.60 under the other.
 
 Two findings worth the detour. **Where the trainer's input is cut matters as much as the recipe:**
 HuggingFace splits files into lines, so training from files means no merge may span a newline —
-feed it whole documents instead and every token count drops ~0.6%. And **most of a weighting win is
-in-sample fit**: a configuration scoring 35,604 on the training corpus *loses* to the submitted one
-(10,934) on held-out text, which is why the submission is chosen on held-out numbers and why every
-table reports corpus-wide compression next to the score.
+feed it whole documents instead and every token count drops ~0.6%. And **a score that measures only
+evenness can be bought by getting worse**: one configuration reaches 35,604 against the submission's
+11,251 by making English and Hindi worse until all four languages are equally mediocre, needing
+3,000 more tokens for the same corpus. It is on the page, labelled as rejected. Holding text back
+does not settle it either — across the five possible splits, one recipe's held-out score swings
+9,421 points while the recipes' averages sit 648 apart, so that test is reported for what it cannot
+do rather than used to choose.
 
 A zero-dependency **widget** (`web/index.html`) shows the four fertilities, the score calculation
 with its penalty, the full searchable vocabulary, and a **paste-your-own-text encoder** that replays

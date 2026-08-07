@@ -91,7 +91,7 @@ def test_the_page_renders_the_score_and_every_language():
         assert page.locator("#err").inner_text().strip() == "", "the page showed its load error"
         assert page.locator("#selector button").count() == expected
         # Four languages, and a score that is a number rather than NaN/undefined.
-        assert page.locator("tbody tr").count() == 4
+        assert page.locator("#app tbody tr").count() == 4
         score = page.locator(".score").inner_text().replace(",", "")
         assert float(score) > 0, f"score panel reads {score!r}"
 
@@ -124,7 +124,7 @@ def test_each_section_labels_the_denominator_it_is_scored_in():
             page.locator(f'#profiles button[data-p="{p["name"]}"]').click()
             page.wait_for_timeout(300)
             assert not errors, f"the page threw on {p['name']}: {errors[:3]}"
-            headers = page.locator("thead th").all_inner_texts()
+            headers = page.locator("#app thead th").all_inner_texts()
             assert p["denominator"] in [h.strip().lower() for h in headers], (
                 f"{p['name']} table headers {headers} do not name its denominator"
             )
@@ -199,7 +199,11 @@ def test_the_rejected_experiment_is_labelled_as_rejected():
         assert not errors, f"the page threw: {errors[:3]}"
         assert page.locator(".badge.rej").count() == 1, "no rejected badge on the rejected config"
         blurb = page.locator(".blurb").first.inner_text().lower()
-        assert "held-out" in blurb or "overfitting" in blurb, f"no reason given: {blurb!r}"
+        # The reason has to be the durable one. An earlier version of this page rejected the row
+        # on held-out score, which five splits later turned out to be noise — so the copy must
+        # rest on total tokens, which is measured on the whole corpus and does not move.
+        assert "192,713" in blurb and "189,785" in blurb, f"no token comparison given: {blurb!r}"
+        assert "worse" in blurb, f"does not say what it degraded: {blurb!r}"
 
 
 def test_the_paste_box_actually_tokenizes():
@@ -230,7 +234,7 @@ def test_every_tokenizer_tab_renders():
             page.locator("#selector button").nth(i).click()
             page.wait_for_timeout(250)
             assert not errors, f"tab {i} threw: {errors[:3]}"
-            assert page.locator("tbody tr").count() == 4
+            assert page.locator("#app tbody tr").count() == 4
             assert page.locator("#pastecount").inner_text().strip() != ""
 
 

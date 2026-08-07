@@ -35,9 +35,15 @@ Component notes. Repo-wide conventions: root `AGENTS.md`.
   (corpus-wide tokens/units) beside it. Spread rewards convergence however it is bought, and the
   published Hindi penalty only fires above X = 1.2 while everything here sits near 0.6 — so the
   anti-exploit device is inert and the honest check is the compression number, not the penalty.
-- **Weight sweeping is in-sample tuning** (train corpus == eval corpus). `holdout.py` is the
-  antidote and must stay in the loop for any new weighting claim: the te×6/mai×7 row scores 3.3×
-  the submission in sample and *loses* to it out of sample. Choose configs on held-out numbers.
+- **Held-out scoring cannot rank recipes on this corpus, and `holdout.py` exists to say so.**
+  Across the five possible 80/20 splits, one recipe's held-out score swings 9,421 points while the
+  recipes' averages sit 648 apart. Four articles is too little text. Do **not** choose a config on
+  a held-out number, and do not quote one from a single split — an earlier version of this exercise
+  did exactly that and got the justification wrong twice. Choose on what does not move: score and
+  total tokens over the whole corpus.
+- **Sweep without gaps.** The first weight sweep went 2 → 5 → 6 and reported ×6 as the optimum;
+  filling in ×3 and ×4 moved it to ×3, which is both a better score and better compression. A
+  coarse sweep will confidently name the wrong winner.
 - Modules: `config.py` (languages, weights) · `corpus.py` (load + rebuild snapshots) ·
   `metrics.py` (units, fertility, spread, score, penalty, corpus-wide X) · `faithfulness.py`
   (the round-trip rule as checks) · `ablate.py` (`Spec`/`train_spec`/`run`/`sweep`/`SUITE`) ·

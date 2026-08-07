@@ -306,8 +306,14 @@ def _reweighted(label: str, **weights: float) -> Spec:
 
 
 # The highest-scoring configuration on the graded corpus, and the one we deliberately do not
-# submit. Maithili's article is 5,808 units; seven copies of it teaches the trainer that article's
-# particular phrases rather than more Maithili. ``tokenization.holdout`` is where that shows up.
+# submit. It reaches 0.028 spread by making English and Hindi worse — +0.020 and +0.010 against
+# the benchmark — and needs 192,713 tokens where the submission needs 189,785. Evenness bought by
+# compressing less well is exactly what a spread-only score fails to notice.
+#
+# Note what does NOT justify rejecting it: held-out scoring. Across five splits this recipe's
+# held-out average is the highest of the three (see ``tokenization.holdout``). That comparison is
+# meaningless in either direction — the between-split variance dwarfs it — so the case against
+# this row rests entirely on total tokens, which is measured on the whole corpus and does not move.
 OVERTUNED = Spec(
     algo="bpe",
     level="char",
@@ -400,11 +406,14 @@ V2_SUITE: list[Spec] = [
     # higher in sample and are the trap this suite is built to expose: see ``holdout``.
     _reweighted("te ×5 · mai ×6", en=3, hi=4, te=5, mai=6),
     OVERTUNED,
-    # E5 — the two independent wins composed: documents (E0) and Maithili ×6 (E1a). This is the
-    # submission. It is the only configuration that beats the reference on *both* axes at once,
-    # in sample and out of it: smaller spread and fewer total tokens.
-    _documents("documents · mai ×6  (submitted)", en=3, hi=4, te=4, mai=6),
+    # E5 — the two independent wins composed: documents and a mild Maithili upweight. The ×3 row
+    # is the submission. Sweeping ×3…×6 matters: the first coarse pass jumped 2 → 5 → 6 and missed
+    # that the peak sits at ×3, which is both the best score of the family and its best
+    # compression. A sweep with gaps in it will confidently report the wrong optimum.
+    _documents("documents · mai ×3  (submitted)", en=3, hi=4, te=4, mai=3),
+    _documents("documents · mai ×4", en=3, hi=4, te=4, mai=4),
     _documents("documents · mai ×5", en=3, hi=4, te=4, mai=5),
+    _documents("documents · mai ×6", en=3, hi=4, te=4, mai=6),
     # E3/E4 — algorithm ablations. The brief asks for BPE, so neither is the submission.
     Spec(
         algo="unigram",
@@ -431,16 +440,21 @@ V2_SUITE: list[Spec] = [
 #
 #   documents  — train on whole articles rather than lines, so a merge may span a newline. Pure
 #                compression: fewer tokens for the same text, no denominator involved.
-#   mai ×6     — Maithili is 1.1% of the weighted mix and sat at the worst fertility, so it won
-#                almost no merges of its own. Raising its weight pulls the *maximum* down, which
-#                is the honest direction to shrink a spread.
+#   mai ×3     — Maithili's article is 1.8% of the corpus and only ~1.1% of the weighted training
+#                mix, so it won almost no merges of its own and sat at the worst fertility.
+#                Feeding it three times instead of twice takes it to ~1.6% of the mix. Raising the
+#                *maximum* language is the honest direction to shrink a spread.
 #
-# It is not the highest in-sample scorer: OVERTUNED reaches 35603 to this one's 10934. That gap
-# is overfitting, and ``tokenization.holdout`` measures it: on text the trainer never saw, its
-# 3.3× in-sample lead is worth nothing (4103 vs 4213 adjusted, i.e. it is behind) and it
-# compresses worse. This configuration is the one that beats the reference on every axis both in
-# sample and out of it.
-SUBMISSION = _documents("submission · documents · mai ×6", en=3, hi=4, te=4, mai=6)
+# Chosen on the two measurements that are stable: it is the best score in the honest family
+# (11250.51) *and* the best compression (189,785 tokens), while being the mildest change to the
+# reference. It is not the highest scorer overall — OVERTUNED reaches 35603 — but that one buys
+# its evenness by degrading English and Hindi and needs 192,713 tokens for the same corpus.
+#
+# Deliberately NOT chosen on held-out score. ``tokenization.holdout`` shows why: across five
+# different splits of the same corpus, one configuration's held-out score ranges from 3,687 to
+# 10,956. The variance between splits is larger than the variance between recipes, so held-out
+# cannot rank these and any ordering read off a single split is noise.
+SUBMISSION = _documents("submission · documents · mai ×3", en=3, hi=4, te=4, mai=3)
 
 
 def sweep(specs: list[Spec], corpora: dict[str, str], units: dict[str, int]) -> list[Result]:

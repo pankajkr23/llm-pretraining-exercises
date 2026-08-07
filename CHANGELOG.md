@@ -15,9 +15,10 @@ _Nothing yet._
 ## [0.3.0] - 2026-08-07
 
 Exercise 02 — the multilingual tokenizer, measured properly: the reference recipe reproduced to
-the last digit, beaten on both spread and compression, and a held-out check showing how much of
-that win is real. The original word-denominated experiments are retained in full as a second
-profile rather than overwritten, and the widget can now actually tokenize text you paste into it.
+the last digit and then beaten on both evenness and compression, with a one-page explainer that
+lets a reader work out for themselves why the biggest number on the page is not the submitted
+one. The original word-denominated experiments are retained in full as a second profile rather
+than overwritten, and the widget can now tokenize text you paste into it.
 
 ### Added
 
@@ -35,33 +36,24 @@ profile rather than overwritten, and the widget can now actually tokenize text y
   v2 decisions, and every one of them moves v1's numbers, so `ablate._v1` pins all four rather
   than inheriting them.
 
-### Changed
-
-- **Exercise 02's graded numbers now come from the corpus and denominator the assignment
-  specifies.** The submission is trained and measured on committed **wiki-faithful Markdown** —
-  Wikipedia's REST HTML with its links, URLs, tables and categories intact — against a
-  **faithful-unit** denominator, with the Hindi penalty and adjusted score computed throughout.
-  Both corpora ship in the repo, so a fresh clone reproduces every published figure with the
-  network switched off.
-- **The reference recipe is now a correctness gate, reproduced to the last digit** — tokens
-  111,390 / 51,190 / 24,428 / 4,258, spread 0.153786, score 6502.56 — and it runs as the first row
-  of the ablation suite. Reaching it turned up a detail invisible in any config: HuggingFace splits
-  *files* into lines, so training from files means no merge may span a newline. Handing the same
-  trainer whole documents lowers every token count by ~0.6% and lifts the score to 6771. Same
-  recipe, different number; it is now an explicit `Spec` field rather than an accident, and there
-  is deliberately only one trainer in the package.
-
-### Added
-
-- **A submitted tokenizer that beats the reference on both axes**: score 6,503 → **10,934** with
-  *fewer* total tokens (191,266 → 190,055). Two independent changes — train on documents, and raise
-  Maithili's weight from 2 to 6 (it is 1.8% of the corpus and shares Devanagari with Hindi, so it
+- **A one-page explainer at the top of the tokenizer page**, in two interactive figures. Fig. 0
+  shows the corpus: English's article is 32× Maithili's, and a weight of `×3` means that article
+  is fed to the trainer three times — taking Maithili from 1.1% to 1.6% of what it reads. Fig. 1
+  is a dial over ten real training runs: the score peaks and falls while total tokens climb the
+  whole way, so a reader can watch evenness being bought with compression. Fig. 2 lets them change
+  which fifth of the corpus is held back and see the ranking fail to hold still. Every point is a
+  measured run — 45 of them behind the two figures — never an interpolation.
+- **A submitted tokenizer that beats the reference on both axes**: score 6,503 → **11,250.51** with
+  *fewer* total tokens (191,266 → 189,785). Two independent changes — train on documents, and raise
+  Maithili's weight from 2 to 3 (it is 1.8% of the corpus and shares Devanagari with Hindi, so it
   won almost no merges of its own and sat at the worst fertility).
-- **A held-out check, because train and eval share the same four files.** `tokenization.holdout`
-  trains on 80% of each article and scores the 20% never seen. It is what kept a much higher score
-  out of the submission: a te×6/mai×7 config reaches 35,604 in sample and *loses* to the submitted
-  one out of sample (4,103 vs 4,213) while compressing worse. The transferable gain over the
-  reference is +33%, not +68% — and the README says so.
+- **A held-out check that reports its own failure.** `tokenization.holdout` trains on 80% of each
+  article and scores the 20% never seen — across all five possible slices. Held out five different
+  ways, one recipe's score swings **9,421 points** while the three recipes' averages sit **648
+  apart**: the noise is more than ten times the difference being measured, so this test cannot rank
+  them. That is reported as the finding, including the inconvenient half — on those averages the
+  rejected recipe is slightly ahead. What rules that recipe out is total tokens (192,713 against
+  189,785), measured on the whole corpus, which does not move.
 - **Corpus-wide fertility reported beside every score.** `1000 / (X_max − X_min)` is maximised by
   making every language equally mediocre, and the published Hindi penalty only fires above X = 1.2
   while everything on this corpus sits near 0.6 — so the anti-exploit device is inert. Total
@@ -86,8 +78,8 @@ profile rather than overwritten, and the widget can now actually tokenize text y
   35,604 — more than three times the submission — and the widget was quietly showing only the
   submission. A reader had no way to know a bigger number was found and turned down, which is the
   most interesting decision in the exercise. It now appears badged `rejected`, saying in its own
-  words that its weights were chosen while watching the score on the very articles it trains on,
-  and that it loses to the submission on held-out text (4,103 against 4,213).
+  words that it reaches its evenness by making English and Hindi *worse*, and needs 192,713 tokens
+  for the same corpus against the submission's 189,785.
 - **Every tokenizer on the page explains itself** in three lines — what was changed, why it was
   worth trying, what came of it — with a badge marking it as the reference, the submission, a
   rejected experiment or an ablation. The render test fails if a config reaches the page without
@@ -101,6 +93,22 @@ profile rather than overwritten, and the widget can now actually tokenize text y
   integration-marked, Playwright). `node --check` cannot tell you the page imports its encoder, that
   the import resolves where it is served from, or that a handler calls a function that exists — all
   valid syntax, all a blank panel.
+
+### Changed
+
+- **Exercise 02's graded numbers now come from the corpus and denominator the assignment
+  specifies.** The submission is trained and measured on committed **wiki-faithful Markdown** —
+  Wikipedia's REST HTML with its links, URLs, tables and categories intact — against a
+  **faithful-unit** denominator, with the Hindi penalty and adjusted score computed throughout.
+  Both corpora ship in the repo, so a fresh clone reproduces every published figure with the
+  network switched off.
+- **The reference recipe is now a correctness gate, reproduced to the last digit** — tokens
+  111,390 / 51,190 / 24,428 / 4,258, spread 0.153786, score 6502.56 — and it runs as the first row
+  of the ablation suite. Reaching it turned up a detail invisible in any config: HuggingFace splits
+  *files* into lines, so training from files means no merge may span a newline. Handing the same
+  trainer whole documents lowers every token count by ~0.6% and lifts the score to 6771. Same
+  recipe, different number; it is now an explicit `Spec` field rather than an accident, and there
+  is deliberately only one trainer in the package.
 
 ### Fixed
 

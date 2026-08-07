@@ -32,11 +32,11 @@ WEB = Path(__file__).resolve().parents[1] / "web"
 SHIPPED = WEB / "tokenizer.json"
 
 # The published result. Change these only alongside the README, and only from a real run.
-PUBLISHED_TOKENS = {"en": 111875, "hi": 50672, "te": 24132, "mai": 3376}
+PUBLISHED_TOKENS = {"en": 110985, "hi": 50868, "te": 24119, "mai": 3813}
 PUBLISHED_UNITS = {"en": 186367, "hi": 88359, "te": 36292, "mai": 5808}
-PUBLISHED_SPREAD = 0.091461
-PUBLISHED_SCORE = 10933.59
-PUBLISHED_TOTAL_TOKENS = 190055
+PUBLISHED_SPREAD = 0.088885
+PUBLISHED_SCORE = 11250.51
+PUBLISHED_TOTAL_TOKENS = 189785
 
 # The reference recipe this work had to reproduce before improving on it.
 REFERENCE_SCORE = 6502.56

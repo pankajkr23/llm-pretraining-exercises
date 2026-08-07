@@ -100,15 +100,15 @@ BLURBS = {
         "digit. It is the yardstick, not a result of ours — if this row ever stops reading 6,503, "
         "our measuring apparatus is broken and no other number here can be trusted."
     ),
-    "submission · documents · mai ×6": (
+    "submission · documents · mai ×3": (
         "Two changes. Train on whole articles instead of line by line, so a merge may span a line "
-        "break; and give Maithili six copies instead of two, because it is 1.8% of the corpus and "
-        "was the worst-served language. Result: better evenness <em>and</em> fewer total tokens."
+        "break; and feed Maithili in three times instead of twice, taking it from 1.1% to 1.6% of "
+        "the training mix. Best score of the honest family <em>and</em> its best compression."
     ),
     "more Telugu + Maithili (rejected)": (
-        "Pushes Telugu and Maithili harder still and posts by far the biggest number on this page. "
-        "But those weights were chosen while watching the score on the very articles it trains on, "
-        "and on held-out text it falls behind the submission — 4,103 against 4,213. Overfitting."
+        "Pushes Telugu and Maithili harder still and posts by far the biggest number here — by "
+        "making English and Hindi <em>worse</em> until all four are equally mediocre. It needs "
+        "192,713 tokens for the same corpus against the submission's 189,785: evenness, bought."
     ),
     "BPE from scratch, no library": (
         "The same algorithm written out by hand — the merge loop, the tie-breaking, the encoder — "
