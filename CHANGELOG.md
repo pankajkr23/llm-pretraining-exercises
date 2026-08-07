@@ -111,6 +111,14 @@ profile rather than overwritten, and the widget can now actually tokenize text y
   `1fr` track, which refuses to shrink below its content's min-content width, so one long
   unbreakable string pushed the whole page 18px wider than a 390px viewport. Tables now scroll
   inside their own container instead of widening the page.
+- **The fertility table no longer reshuffles between tokenizers.** It was sorted by fertility, so
+  the four languages appeared in a different order on every tab and the `X1…X4` tags attached to
+  whichever language happened to sit in that slot. Two tokenizers measured on identical languages
+  looked like they had been measured on different ones. Languages now appear in a fixed order on
+  every tab, with best and worst flagged instead of implied by position, and each non-benchmark
+  row carries a **vs benchmark** column showing exactly which languages it improved and which it
+  paid for — the rejected configuration's evenness is visibly bought by making English and Hindi
+  worse. A test asserts every tab in a section lists the same languages in the same order.
 - **Internal jargon removed from the public page.** Experiments were labelled with the codes they
   carry in the sweep — `reference recipe (gate)`, `E2b · te ×6 · mai ×7` — which mean nothing to a
   reader arriving cold. They now read `the reference solution (benchmark)` and `more Telugu +

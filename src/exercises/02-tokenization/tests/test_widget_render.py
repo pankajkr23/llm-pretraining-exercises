@@ -130,6 +130,39 @@ def test_each_section_labels_the_denominator_it_is_scored_in():
             )
 
 
+def test_every_tokenizer_in_a_section_is_measured_on_the_same_languages():
+    """Apples to apples: same languages, in the same order, on every tab of a section.
+
+    They always *were* the same four languages — but the table used to be sorted by fertility, so
+    the rows reshuffled between tabs and two tokenizers measured identically looked like they had
+    been measured on different things. Order is part of the comparison, not decoration.
+    """
+    data = _bundle()
+    for name in {c["profile"] for c in data["configs"]}:
+        rows = [c for c in data["configs"] if c["profile"] == name]
+        orders = {tuple(lang["code"] for lang in c["languages"]) for c in rows}
+        assert len(orders) == 1, f"{name} shows languages in {len(orders)} different orders"
+        # And each row is flagged, so best/worst survive the fixed ordering.
+        for c in rows:
+            assert sum(lang["is_best"] for lang in c["languages"]) == 1
+            assert sum(lang["is_worst"] for lang in c["languages"]) == 1
+
+
+def test_non_benchmark_rows_show_what_they_moved_against_the_benchmark():
+    """A score alone cannot tell you which language paid for the improvement."""
+    data = _bundle()
+    v2 = [c for c in data["configs"] if c["profile"] == "v2"]
+    benchmark = next(c for c in v2 if c["is_reference"])
+    assert all(lang["delta"] is None for lang in benchmark["languages"])
+
+    submission = next(c for c in v2 if c["is_submission"])
+    deltas = {lang["code"]: lang["delta"] for lang in submission["languages"]}
+    assert all(d is not None for d in deltas.values()), "submission has no comparison to benchmark"
+    # Maithili is the language the submission set out to rescue, so its delta must be negative
+    # (fertility is tokens per unit — lower is better).
+    assert deltas["mai"] < 0, f"Maithili should have improved, got {deltas['mai']}"
+
+
 def test_every_tokenizer_explains_itself():
     """A row of numbers with no story is not a finding.
 

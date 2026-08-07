@@ -45,6 +45,8 @@
       td:first-child, th:first-child { text-align: left; }
       tr.xlo td { color: var(--lo); font-weight: 600; }
       tr.xhi td { color: var(--hi); font-weight: 600; }
+      td.better { color: var(--lo); font-weight: 600; }
+      td.worse { color: var(--hi); font-weight: 600; }
       .tag { font-family: var(--mono); font-size: 11px; color: var(--faint); }
 
       .stats { display: flex; gap: 22px; flex-wrap: wrap; font-family: var(--mono); font-size: 13px; color: var(--muted); margin-top: 4px; }
@@ -169,12 +171,20 @@
 
       function show(i) {
         const c = DATA.configs[i];
-        const langs = c.languages; // sorted ascending by fertility
+        // Fixed language order on every tab, so a row can be read straight across tokenizers.
+        const langs = c.languages;
         const total = langs.reduce((a, l) => a + l.tokens, 0);
         const units = langs.reduce((a, l) => a + l.units, 0);
-        const rows = langs.map((l, idx) => {
-          const cls = idx === 0 ? 'xlo' : idx === langs.length - 1 ? 'xhi' : '';
-          return `<tr class="${cls}"><td>${esc(l.name)} <span class="tag">X${idx + 1}</span></td><td>${l.units.toLocaleString()}</td><td>${l.tokens.toLocaleString()}</td><td>${l.ratio.toFixed(3)}</td></tr>`;
+        const hasDelta = langs.some((l) => l.delta !== null && l.delta !== undefined);
+        const rows = langs.map((l) => {
+          const cls = l.is_best ? 'xlo' : l.is_worst ? 'xhi' : '';
+          const mark = l.is_best ? ' <span class="tag">best</span>'
+            : l.is_worst ? ' <span class="tag">worst</span>' : '';
+          // Fertility is tokens per unit, so lower is better: a negative delta is an improvement.
+          const delta = !hasDelta ? ''
+            : l.delta === null || l.delta === undefined ? '<td>—</td>'
+            : `<td class="${l.delta < 0 ? 'better' : l.delta > 0 ? 'worse' : ''}">${l.delta > 0 ? '+' : ''}${l.delta.toFixed(3)}</td>`;
+          return `<tr class="${cls}"><td>${esc(l.name)}${mark}</td><td>${l.units.toLocaleString()}</td><td>${l.tokens.toLocaleString()}</td><td>${l.ratio.toFixed(3)}</td>${delta}</tr>`;
         }).join('');
         const penaltyLine = c.profile !== 'v2'
           ? `<div>No Hindi penalty — v1 was designed and reported without one</div>`
@@ -203,7 +213,7 @@
               <div class="panel">
                 <h3>Fertility · X = tokens / ${esc(c.denominator === 'words' ? 'word' : 'unit')}</h3>
                 <table>
-                  <thead><tr><th>language</th><th>${esc(c.denominator)}</th><th>tokens</th><th>X</th></tr></thead>
+                  <thead><tr><th>language</th><th>${esc(c.denominator)}</th><th>tokens</th><th>X</th>${hasDelta ? '<th>vs benchmark</th>' : ''}</tr></thead>
                   <tbody>${rows}</tbody>
                 </table>
                 <div class="stats" style="margin-top:16px">

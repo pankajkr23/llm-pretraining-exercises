@@ -181,12 +181,30 @@ def encoder_spec(spec: Spec, tok: object) -> dict:
     return {"kind": "unsupported", "reason": f"{spec.algo}/{spec.level}"}
 
 
-def build_config(spec: Spec, profile: EvalProfile, corpora: dict[str, str]) -> dict:
-    """Train one featured spec and assemble its entry in the payload."""
+def build_config(
+    spec: Spec,
+    profile: EvalProfile,
+    corpora: dict[str, str],
+    baseline: dict[str, float] | None = None,
+) -> dict:
+    """Train one featured spec and assemble its entry in the payload.
+
+    Languages are emitted in the profile's own fixed order — **never sorted by fertility**. Sorting
+    reorders the rows from one tokenizer to the next, so two tabs showing the identical four
+    languages look like they are showing different ones, and a reader cannot compare a row against
+    the same row on another tab. Best and worst are flagged instead, which is what the sort was
+    really for.
+
+    ``baseline`` is the benchmark's fertility per language, so every other config can show what it
+    moved. That is the apples-to-apples comparison the score alone cannot give you.
+    """
     names = {lang.code: lang.name for lang in profile.languages}
     counts = {c: count_denominator(t, profile.denominator) for c, t in corpora.items()}
     tok = train_spec(spec, corpora)
-    scores = sorted(measure(tok, corpora, counts), key=lambda s: s.ratio)
+    by_code = {s.code: s for s in measure(tok, corpora, counts)}
+    scores = [by_code[lang.code] for lang in profile.languages]
+    best = min(scores, key=lambda s: s.ratio).code
+    worst = max(scores, key=lambda s: s.ratio).code
     penalty = hindi_penalty(scores) if profile.penalty else 1.0
     vocab = tok.get_vocab()
     return {
@@ -209,11 +227,15 @@ def build_config(spec: Spec, profile: EvalProfile, corpora: dict[str, str]) -> d
                 "units": s.units,
                 "tokens": s.tokens,
                 "ratio": round(s.ratio, 6),
+                "is_best": s.code == best,
+                "is_worst": s.code == worst,
+                # How this language moved against the benchmark. None on the benchmark itself.
+                "delta": (None if baseline is None else round(s.ratio - baseline[s.code], 6)),
             }
             for s in scores
         ],
-        "x_min": round(scores[0].ratio, 6),
-        "x_max": round(scores[-1].ratio, 6),
+        "x_min": round(min(s.ratio for s in scores), 6),
+        "x_max": round(max(s.ratio for s in scores), 6),
         "spread": round(spread(scores), 6),
         "score": round(score(scores), 2),
         "penalty": round(penalty, 6),
@@ -231,7 +253,17 @@ def build_payload(cfg: Config) -> dict:
     configs = []
     for profile, specs in ((V2, FEATURED_V2), (V1, FEATURED_V1)):
         corpora = load_all(profile, cfg.corpus_dir)
-        configs.extend(build_config(spec, profile, corpora) for spec in specs)
+        # The benchmark is built first so every other row can be shown as a delta against it.
+        # Both suites lead with their baseline: v2's is the reference solution, v1's is the
+        # byte-level tokenizer everything else was an attempt to improve on.
+        baseline_spec = specs[0] if profile is V2 else specs[-1]
+        baseline_cfg = build_config(baseline_spec, profile, corpora)
+        baseline = {lang["code"]: lang["ratio"] for lang in baseline_cfg["languages"]}
+        for spec in specs:
+            if spec == baseline_spec:
+                configs.append(baseline_cfg)
+            else:
+                configs.append(build_config(spec, profile, corpora, baseline))
     return {
         "target_vocab": cfg.vocab_size,
         "profiles": [
