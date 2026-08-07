@@ -12,7 +12,7 @@ repeat than to describe.
 
 ## 1. The scoping error, and where it propagated
 
-The class brief (`docs/BRIEF.md:30`) scopes this exercise as:
+The topic brief scopes this exercise as:
 
 > Sourcing across the **full lifecycle: pre-training corpora, SFT, preference, safety, evaluation**
 
@@ -162,7 +162,7 @@ found wanting. The page never says so.
 
 ## 7. Over-build
 
-I optimised against a spec instead of a reader. `docs/EXPLAINER_PROMPT.md` supplies six topologies,
+I optimised against a spec instead of a reader. The explainer spec (local, gitignored) supplies six topologies,
 eight interaction families, a no-two-adjacent-families rule, a subtraction hierarchy and a visual
 register. I implemented all of it. The result:
 

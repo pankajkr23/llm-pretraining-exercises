@@ -10,7 +10,16 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
-_Nothing yet._
+### Removed
+
+- **The programme's schedule and internal authoring specs no longer ship on the remote.**
+  `docs/BRIEF.md` (course structure, 20-class syllabus, capstone staffing) and the two explainer
+  authoring specs — `docs/EXPLAINER_PROMPT.md`, `docs/EXPLAINER_PATTERN.md` — are untracked and
+  gitignored, and the root README's "About the program" section — duration, session times, format,
+  capstone — is gone with them. The files are unchanged on a working checkout; they simply stop
+  being published. This repo carries the engineering work; the course calendar is not part of it.
+  Every tracked link to them has been removed, because a link to an untracked file is dead for
+  everyone but us.
 
 ## [0.3.0] - 2026-08-07
 

@@ -50,7 +50,7 @@ Component notes. Repo-wide conventions: root `AGENTS.md`.
   would teach the same thing, write a paragraph instead. Anything that only draws a shape is
   unfinished. Read `../../../docs/EXPLAINER_PROMPT.md` (what to build, and when **not** to) and
   `../../../docs/EXPLAINER_PATTERN.md` (how — DOM, class names, state-and-render shape, voice)
-  before starting one. **The site is one page**: `web/index.html` is the shell and `web/chapters.js`
+  before starting one. Both are gitignored — present locally, absent from the remote. **The site is one page**: `web/index.html` is the shell and `web/chapters.js`
   holds **thirteen chapters plus an appendix**, one per reader question, each in three layers —
   headline, interaction, and a closed "The arithmetic". `web/report/` and `web/reasoning/` are redirect stubs from the two-page
   version. Reference implementation: the contamination gate (chapter 8), reader-supplied input,
