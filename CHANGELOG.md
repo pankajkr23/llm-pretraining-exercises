@@ -10,6 +10,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [0.3.0] - 2026-08-07
+
+Exercise 02 — the multilingual tokenizer, measured properly: the reference recipe reproduced to
+the last digit, beaten on both spread and compression, and a held-out check showing how much of
+that win is real. The original word-denominated experiments are retained in full as a second
+profile rather than overwritten, and the widget can now actually tokenize text you paste into it.
+
 ### Added
 
 - **Exercise 02 now carries two evaluation profiles, both retained and neither deprecated.**
@@ -677,5 +686,7 @@ First tagged release: two interactive exercises live on Vercel with a gated depl
 - **Tooling & conventions:** uv workspace (Python 3.12), ruff lint/format, pytest (unit +
   integration split), GitHub Actions CI, and a PR-only workflow documented in `AGENTS.md`.
 
-[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/pankajkr23/llm-pretraining-exercises/releases/tag/v0.1.0
