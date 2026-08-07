@@ -320,6 +320,28 @@ def test_the_explainer_never_scrolls_sideways(width: int):
         assert not overflow, f"{width}px scrolls sideways: {overflow[0]}px into {overflow[1]}px"
 
 
+def test_the_huggingface_download_is_only_offered_on_the_submission():
+    """A static link to tokenizer.json on every tab hands you the wrong tokenizer.
+
+    Only the submission is exported in HuggingFace format. The link used to sit on all five tabs,
+    so opening it from the rejected or from-scratch tab silently downloaded the submission's
+    vocabulary instead of the one on screen — five different tokenizers, one file, no warning.
+    """
+    with _page() as (page, errors):
+        buttons = page.locator("#selector button")
+        for i in range(buttons.count()):
+            buttons.nth(i).click()
+            page.wait_for_timeout(250)
+            assert not errors, f"tab {i} threw: {errors[:3]}"
+            label = buttons.nth(i).inner_text()
+            note = page.locator(".panel", has_text="Take it with you").inner_text().lower()
+            if "\u2713" in label:  # the submitted tab
+                assert "only the submitted tokenizer" in note
+            else:
+                # Every other tab must say the file is not this tokenizer.
+                assert "not the submission" in note, f"tab {label!r} does not disown tokenizer.json"
+
+
 def test_the_default_sample_makes_the_tokenizers_disagree():
     """The paste box's default text must separate the tabs, not flatter them.
 
