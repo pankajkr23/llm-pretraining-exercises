@@ -258,13 +258,12 @@
                   <b>encoder.js</b> on this page is the algorithm that replays them.
                 </p>
                 <div class="row">
-                  <button class="btn" id="dl">Download vocab + merges</button>
-                  <a class="btn ghost" href="./tokenizer.json" download>HuggingFace tokenizer.json</a>
+                  <button class="btn" id="dl">Download <b>${esc(c.label)}</b> — vocab + merges</button>
                   <a class="btn ghost" href="./encoder.js" download>encoder.js</a>
                 </div>
-                <p class="note">
-                  <b>tokenizer.json</b> is the submitted tokenizer in HuggingFace's own format —
-                  <span class="tag">Tokenizer.from_file(…)</span> and you have our exact counts.
+                <p class="note">${c.is_submission
+                  ? `Only the submitted tokenizer is also exported in HuggingFace's own format, at <a href="./tokenizer.json" download><b>tokenizer.json</b></a> — <span class="tag">Tokenizer.from_file(…)</span> and you have our exact counts.`
+                  : `The button gives you <b>this</b> tokenizer — its own 10,000-token vocabulary and its own merge list, which are <b>not the submission's</b>. Only the submitted tokenizer ships as a ready-made <a href="./tokenizer.json" download>HuggingFace tokenizer.json</a>; for this one, feed the downloaded vocab and merges to <b>encoder.js</b>.`}
                 </p>
               </div>
             </div>

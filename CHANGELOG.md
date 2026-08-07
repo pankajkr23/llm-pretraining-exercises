@@ -10,7 +10,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
-_Nothing yet._
+### Fixed
+
+- **The "HuggingFace tokenizer.json" link no longer appears on tokenizers it is not.** It was a
+  static `href` shown on all five tabs, so opening it from the rejected or from-scratch tab quietly
+  handed you the *submission's* vocabulary instead of the one on screen — five different
+  tokenizers, one file, no warning. Only the submission is exported in that format; every other tab
+  now says so and points at its own vocab-and-merges download, whose button is labelled with the
+  tokenizer it belongs to. A test clicks every tab and fails if a non-submission tab stops
+  disowning the file.
 
 ## [0.3.1] - 2026-08-07
 
