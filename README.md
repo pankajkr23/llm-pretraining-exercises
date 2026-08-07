@@ -72,7 +72,7 @@ uv run pytest            # run every exercise's tests from the root
 | # | Exercise | Summary |
 | --- | --- | --- |
 | 01 | [Introductions](src/exercises/01-introductions/) | Four live, in-browser interactive proofs of *why neural nets work*. Static site, zero dependencies, deployed to Vercel. |
-| 02 | [Tokenization](src/exercises/02-tokenization/) | A single 10k BPE vocabulary balanced across India's Wikipedia article in four languages, with an ablation harness that sweeps algorithm × representation × normalization × vocab × weighting. |
+| 02 | [Tokenization](src/exercises/02-tokenization/) | A single 10k BPE vocabulary balanced across India's Wikipedia article in four languages — scored on faithful units, with a held-out check separating a real gain from in-sample tuning, and a live in-browser encoder you can paste into. |
 | 03 | [Data collection framework](src/exercises/03-data-collection-framework/) | How you decide what an India-first 40B model trains on — one interactive page, thirteen chapters: how much text, what kind, **which datasets**, how to clean it, how to tokenise it, and how you would know it worked. 145 datasets graded on five checks, of which **4 are committable today**; five data-handling invariants enforced in CI, plus a browser suite that tests the rendered page. |
 
 More exercises are added each week.
@@ -104,34 +104,38 @@ Deploy: handled by the repo-wide **Vercel** project — `deploy/vercel/build.sh`
 ### 02 · Tokenization — one vocabulary, four languages
 
 A Python pipeline (`src/exercises/02-tokenization/src/tokenization/`) builds **one 10,000-token BPE
-vocabulary** shared across India's Wikipedia article in **English, Hindi, Telugu, and Tamil** (the 4th
-language is swappable in `config.py`), tuned so all four are tokenized about equally efficiently. The
-graded quantity is the **spread** between the best- and worst-served language; the self-score is
-`1000 / (max ratio − min ratio)`.
+vocabulary** shared across India's Wikipedia article in **English, Hindi, Telugu, and Maithili**,
+tuned so all four are tokenized about equally efficiently. Fertility X is tokens per *faithful unit*
+— one run of letters/marks/digits, or one visible punctuation character — and the score is
+`1000 / (X_max − X_min)`, divided by a penalty that fires if Hindi is degraded. The corpus is
+committed wiki-faithful Markdown, so every number reproduces offline from a fresh clone.
 
 ```bash
-uv run python -m tokenization          # fetch → train the shared 10k BPE → print + save the report
-uv run python -m tokenization.ablate   # sweep algorithm × representation × normalization × vocab × weighting
+uv run python -m tokenization          # train the submission → print + save the report
+uv run python -m tokenization.ablate   # the full experiment table
+uv run python -m tokenization.holdout  # in-sample vs held-out
 ```
 
-Headline finding from the ablation harness: **representation is the dominant lever**, not corpus
-weighting. Byte-level BPE explodes each Indic character into 3 UTF-8 bytes (Tamil ≈ 6.5 tokens/word);
-switching to char-level + Unigram + NFKC drops every language to ~1.7–2.2 tokens/word, cutting the
-spread ~11× (score 190 → 2078).
+Two findings worth the detour. **Where the trainer's input is cut matters as much as the recipe:**
+HuggingFace splits files into lines, so training from files means no merge may span a newline —
+feed it whole documents instead and every token count drops ~0.6%. And **most of a weighting win is
+in-sample fit**: a configuration scoring 35,604 on the training corpus *loses* to the submitted one
+(10,934) on held-out text, which is why the submission is chosen on held-out numbers and why every
+table reports corpus-wide compression next to the score.
 
-A zero-dependency **widget** (`web/index.html`, rendering the exported `web/data.json`) shows the four
-ratios, token stats, the score calculation, and the full searchable token list — the reviewer
-deliverable. Preview it locally:
+A zero-dependency **widget** (`web/index.html`) shows the four fertilities, the score calculation
+with its penalty, the full searchable vocabulary, and a **paste-your-own-text encoder** that replays
+the real merge list in the browser — a vocabulary list alone cannot reproduce a score, so the
+ordered merges, `encoder.js`, and the tokenizer in HuggingFace format all ship with it.
 
 ```bash
 cd src/exercises/02-tokenization/web
 python3 -m http.server 8000   # open http://localhost:8000
 ```
 
-> **Hosting:** the widget deploys via the repo-wide **Vercel** project at `/02-tokenization/` (see
-> [`deploy/`](deploy/)) — the single-project + routing setup serves every exercise, so this is no
-> longer blocked on multi-exercise publishing. Connecting the Vercel project to the repo is the
-> remaining one-time step.
+> **Hosting:** live at <https://llm-pretraining-demos.vercel.app/02-tokenization/>, deployed via the
+> repo-wide **Vercel** project (see [`deploy/`](deploy/)) — one project serves every exercise
+> under its slug.
 
 ### 03 · Data collection framework — deciding the mix
 

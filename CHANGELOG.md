@@ -59,6 +59,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   Maithili. The scores are not comparable — different corpora — but the structure is the finding:
   Maithili is 5,808 units in a script Hindi already pays for, Tamil is 188,367 units (larger than
   English) in a script nothing else uses, and swapping them moves which language is starved.
+- **The submitted tokenizer ships in the bundle**, in HuggingFace's own format at
+  `web/tokenizer.json` — `artifacts/` is gitignored by design, and the assignment asks for the exact
+  file. `tests/test_submission.py` trains nothing: it loads that file, scores it on the committed
+  corpus, and asserts the figures the README prints, so the artifact and the documentation cannot
+  drift apart unnoticed. It also pins the corpus unit counts, making a re-fetched snapshot loud.
+- **The widget is loaded in a browser, not just parsed** (`tests/test_widget_render.py`,
+  integration-marked, Playwright). `node --check` cannot tell you the page imports its encoder, that
+  the import resolves where it is served from, or that a handler calls a function that exists — all
+  valid syntax, all a blank panel.
+
+### Fixed
+
+- **Exercise 02's README and BRIEF no longer describe a denominator the code stopped using**, and
+  the stale "connecting Vercel is the remaining one-time step" note is gone from both the exercise
+  and the root README — the site has been live for some time.
 
 ## [0.2.0] - 2026-08-06
 
