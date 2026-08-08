@@ -1,6 +1,6 @@
 [project]
 name = "llm-pretraining-exercises"
-version = "0.3.1"
+version = "0.3.2"
 description = "LLM Pretraining exercises/examples and toy projects"
 readme = "README.md"
 requires-python = ">=3.12"
