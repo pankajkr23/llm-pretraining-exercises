@@ -44,11 +44,26 @@ Component notes. Repo-wide conventions: root `AGENTS.md`.
 - **Sweep without gaps.** The first weight sweep went 2 → 5 → 6 and reported ×6 as the optimum;
   filling in ×3 and ×4 moved it to ×3, which is both a better score and better compression. A
   coarse sweep will confidently name the wrong winner.
-- Modules: `config.py` (languages, weights) · `corpus.py` (load + rebuild snapshots) ·
-  `metrics.py` (units, fertility, spread, score, penalty, corpus-wide X) · `faithfulness.py`
-  (the round-trip rule as checks) · `ablate.py` (`Spec`/`train_spec`/`run`/`sweep`/`SUITE`) ·
-  `holdout.py` · `fourth_language.py` · `bpe_scratch.py` (hand-written BPE) · `widget.py` ·
+- Modules: `config.py` (the two `EvalProfile`s, languages, weights) · `corpus.py` (load a
+  profile's snapshot; rebuild one) · `metrics.py` (units, words, fertility, spread, score, penalty,
+  corpus-wide X) · `faithfulness.py` (the round-trip rule as checks) · `ablate.py`
+  (`Spec`/`train_spec`/`run`/`sweep`/`V1_SUITE`/`V2_SUITE`) · `holdout.py` · `fourth_language.py` ·
+  `bpe_scratch.py` (hand-written BPE) · `tokenizer.py` (save/count helpers only) · `widget.py`
+  (→ `web/data.json` + `web/tokenizer.json`) · `explainer.py` (→ `web/explainer.json`) ·
   `__main__.py`.
+- **Adding a module means updating everything that lists them.** `explainer.py` shipped and then
+  went missing from the README's *Run it*, the README's layout block and this list — three places,
+  none of which fail a test. Someone following the README would have regenerated `web/data.json`
+  without `web/explainer.json` and published a page whose figures argued for a recipe it no longer
+  submits.
+- **`corpus.snapshot_paths()` is the single definition of where a snapshot lives.** The reader and
+  the wiki-faithful builder once disagreed — reader on `corpus/v2/`, builder on `corpus/` — so
+  re-fetching an article reported success and wrote a file nothing would load. Never construct a
+  corpus path by hand; `tests/test_corpus_paths.py` fails if you do.
+- **Two pages, both tracked.** `web/index.html` is the tool (rendering `web/data.json`);
+  `web/how-it-works.html` is the long-form explainer (rendering `web/explainer.json`). `widget` and
+  `explainer` regenerate them separately and **both write tracked files** — change a recipe and run
+  both, or the tool and the figures disagree with nothing failing.
 - **Widget** (`web/index.html` + `web/encoder.js`, rendering `web/data.json`): one labelled section
   per profile, never one ranked list. Exports the **ordered merges**, not just the vocabulary — a
   vocab list cannot reproduce a score. `encoder.js` replays them in the browser and

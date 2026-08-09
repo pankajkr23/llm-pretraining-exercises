@@ -22,6 +22,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Changed
 
+- **`AGENTS.md` gains two more rules under *Reporting a measurement*,** both earned here: a new
+  module is not done until every list that names modules includes it (`explainer.py` was missing
+  from three, and no test checks any of them), and a Mermaid diagram must be rendered before it is
+  committed — a semicolon inside a `Note over` is a statement separator, and GitHub would have
+  shown a parse error where a diagram should be.
+- **Exercise 02's `CLAUDE.md` matches the package again** — it listed ten modules of twelve, named
+  a `SUITE` that is now `V1_SUITE`/`V2_SUITE`, and did not mention that `widget` and `explainer`
+  both write tracked files and must be run together.
 - **The tokenization exercise's README now says how to run it.** "Run it" was a bare list of
   commands: no inputs, no outputs, no runtimes, and it omitted `tokenization.explainer` entirely.
   Each command now states what it reads, what it writes, roughly how long it takes, and which of
