@@ -19,13 +19,27 @@ from urllib.parse import quote, urljoin
 
 import requests
 
-from .config import EvalProfile, Language
+from .config import V2, EvalProfile, Language
 
 if TYPE_CHECKING:  # pragma: no cover - import-time typing only
     from bs4 import BeautifulSoup
 
 _API = "https://{code}.wikipedia.org/w/api.php"
 _HEADERS = {"User-Agent": "llm-pretraining-tokenization-exercise/0.1 (learning project)"}
+
+
+def snapshot_paths(profile: EvalProfile, code: str, corpus_dir: Path) -> tuple[Path, Path]:
+    """Where a profile's snapshot for ``code`` lives: its ``(text, metadata)`` paths.
+
+    One definition, used by both the reader and the wiki-faithful builder. They disagreed once —
+    the builder wrote to ``corpus/`` while the reader looked in ``corpus/v2/`` — so re-fetching an
+    article appeared to succeed and then could not be found. ``tests/test_corpus_paths.py`` holds
+    them together.
+    """
+    return (
+        corpus_dir / profile.subdir / f"{code}{profile.suffix}",
+        corpus_dir / profile.subdir / f"{code}.meta.json",
+    )
 
 
 def load(profile: EvalProfile, code: str, corpus_dir: Path) -> str:
@@ -40,7 +54,7 @@ def load(profile: EvalProfile, code: str, corpus_dir: Path) -> str:
     Raises:
         FileNotFoundError: if the snapshot is missing, naming the command that regenerates it.
     """
-    path = corpus_dir / profile.subdir / f"{code}{profile.suffix}"
+    path, _ = snapshot_paths(profile, code, corpus_dir)
     if not path.exists():
         how = (
             f"uv run python -m tokenization.corpus {code}"
@@ -142,7 +156,7 @@ def build_faithful_markdown(lang: Language, corpus_dir: Path) -> dict:
 
     Args:
         lang: the language edition and article title to fetch.
-        corpus_dir: directory to write the snapshot into.
+        corpus_dir: the ``corpus/`` root; the snapshot lands in v2's subdirectory.
 
     Returns:
         The metadata dict that was written alongside the snapshot.
@@ -165,7 +179,10 @@ def build_faithful_markdown(lang: Language, corpus_dir: Path) -> dict:
         markdownify(str(body), heading_style="ATX", bullets="-", strip=["span"])
     )
 
-    (corpus_dir / f"{lang.code}.faithful.txt").write_text(markdown, encoding="utf-8")
+    # V2 by definition: wiki-faithful Markdown *is* the v2 corpus, so it goes where v2 is read.
+    text_path, meta_path = snapshot_paths(V2, lang.code, corpus_dir)
+    text_path.parent.mkdir(parents=True, exist_ok=True)
+    text_path.write_text(markdown, encoding="utf-8")
     meta = {
         "lang": lang.code,
         "title": lang.title,
@@ -179,9 +196,7 @@ def build_faithful_markdown(lang: Language, corpus_dir: Path) -> dict:
             "non-space punctuation/symbol character as one unit."
         ),
     }
-    (corpus_dir / f"{lang.code}.meta.json").write_text(
-        json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     return meta
 
 

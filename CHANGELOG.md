@@ -10,7 +10,24 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
-_Nothing yet._
+### Fixed
+
+- **Re-fetching a corpus snapshot wrote it where nothing would find it.** Splitting the corpus into
+  `corpus/v1/` and `corpus/v2/` moved the reader but not the builder, so
+  `python -m tokenization.corpus ta` reported success, wrote `corpus/ta.faithful.txt`, and left the
+  loader raising an error that told you to run the command you had just run. Both halves now derive
+  the path from one `snapshot_paths()` helper, and `tests/test_corpus_paths.py` fails if the builder
+  ever constructs a path by hand again. Never caught before because the builder needs the network
+  and so is never exercised by the suite — the new tests check the paths, not the fetch.
+
+### Changed
+
+- **The tokenization exercise's README now says how to run it.** "Run it" was a bare list of
+  commands: no inputs, no outputs, no runtimes, and it omitted `tokenization.explainer` entirely.
+  Each command now states what it reads, what it writes, roughly how long it takes, and which of
+  them write into tracked `web/` (so the output must be committed) versus gitignored `artifacts/`.
+  Plus the full expected artifact tree, and a "Tests" section naming what each test file holds
+  down and the two one-time setups whose absence makes the suite *skip* rather than fail.
 
 ## [0.3.2] - 2026-08-08
 
