@@ -342,31 +342,195 @@ src/tokenization/
   holdout.py        # train on 80%, score the 20% never seen
   fourth_language.py# Maithili vs Tamil, same recipe
   bpe_scratch.py    # the same algorithm written by hand, no library
-  widget.py         # exports web/data.json (vocab + ordered merges)
+  tokenizer.py      # save / count helpers (training lives in ablate, deliberately)
+  widget.py         # exports web/data.json + web/tokenizer.json
+  explainer.py      # exports web/explainer.json — the measured points behind the figures
   __main__.py       # train the submission, write tokenizer.json + report.json
-web/             # zero-dependency page (index.html + encoder.js + data.json)
-tests/           # metric math, faithfulness on the real corpus, Python↔JS parity
+web/             # zero-dependency pages, all tracked
+  index.html        # the tool: five tokenizers, fertilities, live encoder
+  how-it-works.html # the explainer: three figures, reads explainer.json
+  encoder.js        # the BPE encoder in JavaScript, parity-tested against Python
+tests/           # metric math, faithfulness on the real corpus, Python↔JS parity, both pages
 artifacts/       # gitignored run outputs
+```
+
+### Data flow
+
+Everything downstream of the two committed corpora. Solid arrows are what a normal run does;
+the dashed one needs the network and is deliberately manual.
+
+```mermaid
+flowchart LR
+    WP[("Wikipedia REST HTML")] -. "re-fetch: explicit, rare" .-> V2
+
+    subgraph inputs["committed corpora — the only inputs"]
+      V1[/"corpus/v1/*.txt<br/>clipped prose"/]
+      V2[/"corpus/v2/*.faithful.txt<br/>wiki-faithful Markdown"/]
+    end
+
+    subgraph engine["one trainer, one scorer"]
+      AB["ablate.train_spec<br/>BPE · Unigram · from-scratch"]
+      MET["metrics<br/>units · spread · score · penalty"]
+    end
+
+    V1 --> AB
+    V2 --> AB
+    AB --> MET
+
+    MET --> MAIN["__main__"]
+    MET --> SWEEPS["ablate<br/>holdout<br/>fourth_language"]
+    MET --> WID["widget"]
+    MET --> EXP["explainer"]
+
+    MAIN --> AR1[/"artifacts/tokenizer.json<br/>artifacts/report.json"/]
+    SWEEPS --> AR2[/"artifacts/ablations.json<br/>holdout.json<br/>fourth_language.json"/]
+    WID --> WB1[/"web/data.json<br/>web/tokenizer.json"/]
+    EXP --> WB2[/"web/explainer.json"/]
+
+    WB1 --> IDX["index.html<br/>the tool"]
+    WB2 --> HOW["how-it-works.html<br/>the explainer"]
+```
+
+`artifacts/` is **gitignored** — regenerate it freely. `web/` is **tracked**, so `widget` and
+`explainer` change files you must commit. Change a recipe and you have to run **both**, or the tool
+and the figures will disagree with nothing failing.
+
+### Sequence — one `uv run python -m tokenization`
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant CLI
+    participant Main as __main__
+    participant Cor as corpus
+    participant Abl as ablate.train_spec
+    participant HF as HuggingFace tokenizers
+    participant Met as metrics
+    participant Art as artifacts/
+
+    CLI->>Main: uv run python -m tokenization
+    Main->>Cor: load_all(V2, corpus/)
+    Cor-->>Main: four committed snapshots — no network
+    Main->>Met: count_units per language
+    Met-->>Main: 186367 / 88359 / 36292 / 5808 units
+    Main->>Abl: train_spec(SUBMISSION, corpora)
+    Note over Abl,HF: weights en3 hi4 te4 mai3, by file repetition
+    Note over Abl,HF: trained on whole documents, not lines
+    Abl->>HF: train(...)
+    HF-->>Abl: 10,000 tokens + 9,704 merges
+    Abl-->>Main: tokenizer
+    Main->>Met: tokens ÷ units, per language
+    Met-->>Main: spread 0.088885 / score 11250.51 / penalty 1.000
+    Main->>Art: tokenizer.json + report.json
+    Main-->>CLI: print the report
 ```
 
 ## Run it
 
 ```bash
-uv sync --all-packages
-uv run python -m tokenization                  # train the submission, print + save the report
-uv run python -m tokenization.ablate           # both profiles' tables, side by side
-uv run python -m tokenization.holdout          # in-sample vs held-out
-uv run python -m tokenization.fourth_language  # Maithili vs Tamil
-uv run python -m tokenization.widget           # rebuild web/data.json
+uv sync --all-packages        # once — installs this member into the shared .venv
 ```
 
-Re-fetching a corpus snapshot is deliberately a separate, explicit command
-(`uv run python -m tokenization.corpus ta`) — the committed snapshots date from 2026-07-13 and
-Wikipedia has moved on, so refetching one article silently makes it incomparable with the rest.
+Everything reads committed files and writes to gitignored `artifacts/` or tracked `web/`. **No
+command needs the network** except the corpus re-fetch at the bottom.
+
+### The submission
+
+```bash
+uv run python -m tokenization
+```
+
+Trains the submitted recipe and prints the graded report. **~40s.**
+
+| | |
+| --- | --- |
+| reads | `corpus/v2/{en,hi,te,mai}.faithful.txt` |
+| writes | `artifacts/tokenizer.json` · `artifacts/report.json` |
+| prints | per-language units, tokens, fertility, spread, **score 11250.51** |
+
+### The experiments
+
+```bash
+uv run python -m tokenization.ablate           # both profiles' tables      ~8 min
+uv run python -m tokenization.holdout          # five splits × three recipes ~9 min
+uv run python -m tokenization.fourth_language  # Maithili vs Tamil          ~3 min
+```
+
+| command | reads | writes |
+| --- | --- | --- |
+| `ablate` | `corpus/v1/` **and** `corpus/v2/` | `artifacts/ablations.json` |
+| `holdout` | `corpus/v2/` | `artifacts/holdout.json` |
+| `fourth_language` | `corpus/v2/` (incl. `ta`) | `artifacts/fourth_language.json` |
+
+`ablate` prints two tables, one per profile, and refuses to sort them into one — they are
+different measurements. `holdout` is not a ranking: it reports the spread between splits, which is
+wider than the gap between recipes, and that is its finding.
+
+### Rebuilding the site
+
+```bash
+uv run python -m tokenization.widget      # the five tokenizers the page shows   ~4 min
+uv run python -m tokenization.explainer   # the figures on how-it-works.html    ~12 min
+```
+
+| command | writes | why it is slow |
+| --- | --- | --- |
+| `widget` | `web/data.json` (2.8 MB) · `web/tokenizer.json` | trains 9 tokenizers, one per tab |
+| `explainer` | `web/explainer.json` | 20 training runs behind Fig. 1, 15 behind Fig. 2 |
+
+These two write into **tracked** `web/`, so their output is committed and a change shows up in
+`git status`. Run both after changing any recipe, or the page will keep serving the old numbers
+while the tests keep asserting the new ones.
+
+### Re-fetching a corpus snapshot — the only command that touches the network
+
+```bash
+uv run python -m tokenization.corpus ta        # writes corpus/v2/ta.faithful.txt + ta.meta.json
+```
+
+Deliberately separate and explicit. The committed snapshots date from 2026-07-13 and Wikipedia has
+moved on, so re-fetching one article silently makes it incomparable with the other three — and
+every published number with it.
+
+### Expected artifacts after a full run
+
+```text
+artifacts/            # gitignored — regenerate freely
+  tokenizer.json      # the submission, HuggingFace format
+  report.json         # the graded numbers
+  ablations.json      # {"v1": [...], "v2": [...]}
+  holdout.json        # per-recipe held-out scores across five splits
+  fourth_language.json
+web/                  # tracked — commit changes to these
+  data.json           # the five tokenizers the page renders
+  tokenizer.json      # the submission, served for download
+  explainer.json      # the measured points behind the figures
+```
 
 ## Tests
 
 ```bash
-uv run pytest -m "not integration"   # metric math (fast)
-uv run pytest                        # + faithfulness on the real corpus, Python↔JS parity
+uv run pytest -m "not integration"   # metric math and path wiring — ~1s
+uv run pytest                        # + real-corpus training and the browser — ~1 min
 ```
+
+Two one-time setups, and **the suite skips rather than fails without them**, which means it stops
+protecting you quietly:
+
+```bash
+uv run playwright install chromium   # for the browser tests
+node --version                       # for the Python↔JavaScript parity check
+```
+
+| file | what it holds down |
+| --- | --- |
+| `test_metrics.py` | the scoring maths, including that the Hindi penalty is inert here |
+| `test_submission.py` | the shipped `web/tokenizer.json` still scores 11250.51, and the corpus still counts 316,826 units — fast, trains nothing |
+| `test_v1_retained.py` | v1's four published scores regenerate from `corpus/v1/` |
+| `test_faithfulness.py` | `decode(encode(x))` keeps every visible character, zero `[UNK]`, no raw `U+2581` |
+| `test_js_encoder.py` | `encoder.js` and Python produce identical token **ids** |
+| `test_widget_render.py` | both pages load in a browser and the interactions work |
+| `test_corpus_paths.py` | the corpus builder writes where the loader reads |
+
+Every invariant is also run against something deliberately broken, so each guard is known to be
+able to fail. When you add one, break the thing on purpose and watch it go red first.
