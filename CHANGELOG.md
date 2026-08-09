@@ -27,7 +27,11 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   Each command now states what it reads, what it writes, roughly how long it takes, and which of
   them write into tracked `web/` (so the output must be committed) versus gitignored `artifacts/`.
   Plus the full expected artifact tree, and a "Tests" section naming what each test file holds
-  down and the two one-time setups whose absence makes the suite *skip* rather than fail.
+  down and the two one-time setups whose absence makes the suite *skip* rather than fail. It also gains a **data-flow diagram** and a
+  **sequence diagram** (Mermaid, rendered inline by GitHub), both checked through the real Mermaid
+  parser rather than eyeballed, and every number in them verified against the code. The module
+  listing was two short — `explainer.py` and `tokenizer.py` were missing, so the README described a
+  six-module package that has eight.
 
 ## [0.3.2] - 2026-08-08
 

@@ -342,11 +342,87 @@ src/tokenization/
   holdout.py        # train on 80%, score the 20% never seen
   fourth_language.py# Maithili vs Tamil, same recipe
   bpe_scratch.py    # the same algorithm written by hand, no library
-  widget.py         # exports web/data.json (vocab + ordered merges)
+  tokenizer.py      # save / count helpers (training lives in ablate, deliberately)
+  widget.py         # exports web/data.json + web/tokenizer.json
+  explainer.py      # exports web/explainer.json — the measured points behind the figures
   __main__.py       # train the submission, write tokenizer.json + report.json
-web/             # zero-dependency page (index.html + encoder.js + data.json)
-tests/           # metric math, faithfulness on the real corpus, Python↔JS parity
+web/             # zero-dependency pages, all tracked
+  index.html        # the tool: five tokenizers, fertilities, live encoder
+  how-it-works.html # the explainer: three figures, reads explainer.json
+  encoder.js        # the BPE encoder in JavaScript, parity-tested against Python
+tests/           # metric math, faithfulness on the real corpus, Python↔JS parity, both pages
 artifacts/       # gitignored run outputs
+```
+
+### Data flow
+
+Everything downstream of the two committed corpora. Solid arrows are what a normal run does;
+the dashed one needs the network and is deliberately manual.
+
+```mermaid
+flowchart LR
+    WP[("Wikipedia REST HTML")] -. "re-fetch: explicit, rare" .-> V2
+
+    subgraph inputs["committed corpora — the only inputs"]
+      V1[/"corpus/v1/*.txt<br/>clipped prose"/]
+      V2[/"corpus/v2/*.faithful.txt<br/>wiki-faithful Markdown"/]
+    end
+
+    subgraph engine["one trainer, one scorer"]
+      AB["ablate.train_spec<br/>BPE · Unigram · from-scratch"]
+      MET["metrics<br/>units · spread · score · penalty"]
+    end
+
+    V1 --> AB
+    V2 --> AB
+    AB --> MET
+
+    MET --> MAIN["__main__"]
+    MET --> SWEEPS["ablate<br/>holdout<br/>fourth_language"]
+    MET --> WID["widget"]
+    MET --> EXP["explainer"]
+
+    MAIN --> AR1[/"artifacts/tokenizer.json<br/>artifacts/report.json"/]
+    SWEEPS --> AR2[/"artifacts/ablations.json<br/>holdout.json<br/>fourth_language.json"/]
+    WID --> WB1[/"web/data.json<br/>web/tokenizer.json"/]
+    EXP --> WB2[/"web/explainer.json"/]
+
+    WB1 --> IDX["index.html<br/>the tool"]
+    WB2 --> HOW["how-it-works.html<br/>the explainer"]
+```
+
+`artifacts/` is **gitignored** — regenerate it freely. `web/` is **tracked**, so `widget` and
+`explainer` change files you must commit. Change a recipe and you have to run **both**, or the tool
+and the figures will disagree with nothing failing.
+
+### Sequence — one `uv run python -m tokenization`
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant CLI
+    participant Main as __main__
+    participant Cor as corpus
+    participant Abl as ablate.train_spec
+    participant HF as HuggingFace tokenizers
+    participant Met as metrics
+    participant Art as artifacts/
+
+    CLI->>Main: uv run python -m tokenization
+    Main->>Cor: load_all(V2, corpus/)
+    Cor-->>Main: four committed snapshots — no network
+    Main->>Met: count_units per language
+    Met-->>Main: 186367 / 88359 / 36292 / 5808 units
+    Main->>Abl: train_spec(SUBMISSION, corpora)
+    Note over Abl,HF: weights en3 hi4 te4 mai3, by file repetition
+    Note over Abl,HF: trained on whole documents, not lines
+    Abl->>HF: train(...)
+    HF-->>Abl: 10,000 tokens + 9,704 merges
+    Abl-->>Main: tokenizer
+    Main->>Met: tokens ÷ units, per language
+    Met-->>Main: spread 0.088885 / score 11250.51 / penalty 1.000
+    Main->>Art: tokenizer.json + report.json
+    Main-->>CLI: print the report
 ```
 
 ## Run it
