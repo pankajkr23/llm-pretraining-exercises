@@ -10,6 +10,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Exercise `04-data-cleaning-dedup` is scaffolded** — workspace member, `datacleaning` package
+  with the exercise's one `config.py` dataclass, and a `tests/` wiring guard that fails if the
+  member isn't installed or the package's idea of its own root drifts from the folder on disk.
+  No pipeline yet: the brief is pending, and `BRIEF.md`/`README.md` say so rather than describing
+  work that doesn't exist. The exercise is deliberately absent from the root README's table until
+  it has something to show.
+
 ### Fixed
 
 - **Re-fetching a corpus snapshot wrote it where nothing would find it.** Splitting the corpus into
