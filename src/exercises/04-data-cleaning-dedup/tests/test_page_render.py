@@ -260,6 +260,30 @@ def test_every_rail_label_matches_its_chapter_heading():
             assert label == title, f"rail says {label!r}, the chapter is titled {title!r}"
 
 
+def test_the_pinned_rail_is_vertically_centred():
+    """The shared stylesheet centres the rail with `.rail-inner { margin-block: auto }`.
+
+    Markup that omits that wrapper gets the rule and none of its effect: the list hangs off the top
+    edge with a screen of empty column beneath it. Asserted as a measurement rather than by looking
+    for the class, so the check survives a change of technique.
+    """
+    with _page(1500) as (page, _):
+        box = page.evaluate(
+            "() => { const r = document.getElementById('rail');"
+            "  const inner = r.querySelector('.rail-inner') || r;"
+            "  const a = r.getBoundingClientRect(), b = inner.getBoundingClientRect();"
+            "  return {above: b.top - a.top, below: a.bottom - b.bottom, rail: a.height,"
+            "          content: b.height}; }"
+        )
+        if box["content"] >= box["rail"] - 4:
+            pytest.skip("the rail fills its column; there is nothing to centre")
+
+        slack = box["above"] + box["below"]
+        assert abs(box["above"] - box["below"]) <= max(8, slack * 0.2), (
+            f"the rail is not centred: {box['above']:.0f}px above, {box['below']:.0f}px below"
+        )
+
+
 def test_the_rail_uses_the_shared_stylesheet_classes():
     """Bare <a> elements in the rail render as raw underlined links in the gutter.
 

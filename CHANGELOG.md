@@ -142,6 +142,12 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   rail never parses a heading back apart. The rail was also unstyled: bare `<a>` elements render as
   raw links in the gutter, because the shared stylesheet styles `.rail-list` and `.rail-link`.
 
+- **The pinned sidebar hung off the top edge** with a screen of empty column beneath it. The shared
+  stylesheet already centres it — `.rail-inner { margin-block: auto }`, with a comment explaining
+  that hanging the list off the top leaves the reader's eye travelling to a corner — but the markup
+  never created that wrapper, so the rule had nothing to apply to. The CSS was right; the markup was
+  not carrying it.
+
 - **Markup leaked into the rendered page in three places.** `rich()` handled `**bold**` and not
   `*italic*`, so a literal `*proves*` shipped. Its `[[term|key]]` pattern used a negated class that
   stops at the first `]`, so the glossary entry for `[UNK]` — written `[[[UNK]|unk]]` — appeared
