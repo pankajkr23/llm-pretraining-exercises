@@ -20,7 +20,17 @@ import logging
 import time
 from collections.abc import Callable
 
-from datacleaning import corpus, formats, langid, manifest, normalize, tokens
+from datacleaning import (
+    corpus,
+    decontaminate,
+    dedup,
+    formats,
+    langid,
+    manifest,
+    normalize,
+    quality,
+    tokens,
+)
 from datacleaning.config import Config
 from datacleaning.records import Document, PipelineResult, StageStat
 
@@ -82,6 +92,9 @@ IMPLEMENTED: dict[str, StageFn] = {
     "normalize": normalize.normalize_stage,
     "formats": formats.format_stage,
     "langid": langid.langid_stage,
+    "quality": quality.quality_stage,
+    "dedup": dedup.dedup_stage,
+    "decontaminate": decontaminate.decontaminate_stage,
 }
 
 
