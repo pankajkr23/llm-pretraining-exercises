@@ -25,6 +25,7 @@ src/exercises/NN-slug/            # one self-contained exercise per topic (works
   ├─ src/ | web/                  # the code
   ├─ artifacts/                   # generated outputs (git-ignored)
   └─ tests/                       # exercise tests, discovered from the root
+notebooks/SNN-slug.ipynb          # one Colab notebook per session — runs the shipped pipeline
 pyproject.toml                    # workspace root + ruff/pytest config
 AGENTS.md                         # repo conventions (imported by CLAUDE.md; pointed to by Cursor/Copilot)
 .github/workflows/ci.yml          # lint + tests + secret scan
