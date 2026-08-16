@@ -170,6 +170,8 @@ class Config:
         ("phone", "[PHONE]"),
         ("ipv4", "[IP]"),
         ("mac", "[MAC]"),
+        ("aadhaar", "[AADHAAR]"),
+        ("pan", "[PAN]"),
         ("name", "[NAME]"),
     )
     """Typed placeholders, as Dolma does it. A typed placeholder keeps the sentence's shape, so the
