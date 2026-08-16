@@ -179,8 +179,18 @@ def load_shard(
     # "14 of 14" — the fraction of the shard we consumed is the interesting part.
     groups_total = open_shard(spec, shard).num_row_groups
 
+    # The budget is checked *inside* each row group, not only between them. Sangraha's Telugu shard
+    # has row groups of tens of thousands of documents, so a between-groups check overshot a
+    # 3M-token
+    # budget twentyfold — 162,000 documents where 7,000 were asked for, and a smoke run that took
+    # seven minutes instead of two. Whatever a shard's internal chunking happens to be, the budget
+    # is the budget.
+    chunk = 200
+
     for _index, rows in iter_row_groups(spec, shard):
+        groups_read += 1
         batch: list[Document] = []
+
         for row in rows:
             text, turns = _text_from_row(spec, row)
             if not text:
@@ -197,9 +207,16 @@ def load_shard(
                     turns=turns,
                 )
             )
-        groups_read += 1
-        docs.extend(batch)
-        counted += tokens.count_many([d.text for d in batch], cfg).tokens
+            if len(batch) >= chunk:
+                docs.extend(batch)
+                counted += tokens.count_many([d.text for d in batch], cfg).tokens
+                batch = []
+                if counted >= budget_tokens:
+                    return docs, counted, groups_read, groups_total
+
+        if batch:
+            docs.extend(batch)
+            counted += tokens.count_many([d.text for d in batch], cfg).tokens
         if counted >= budget_tokens:
             break
 

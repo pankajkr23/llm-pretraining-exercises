@@ -12,6 +12,25 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Quality filtering, deduplication and decontamination are real.** Seven of exercise 04's eight
+  stages now do work; only PII scrubbing remains a pass-through.
+
+  **The quality cascade is run twice, and the gap is the finding.** Gopher's and C4's nine rules at
+  the session's thresholds, once with the published English settings and once script-aware. Three of
+  the nine turn out not to be language-neutral: terminal punctuation asks for `.`/`!`/`?` where
+  Devanagari ends a sentence with the danda; stop words asks for English function words; and
+  `mean_word_length` — see *Fixed* below. Applied unchanged to Indic text the rules do not filter
+  it, they delete it, while reporting a healthy-looking yield.
+
+  **Deduplication runs exact hashing then MinHash/LSH** at FineWeb's preset — `k=5`, 112
+  permutations as 14 bands of 8. The banding formula puts the threshold at **0.719**; the session
+  quotes the preset as "target ~0.75", and the code publishes what it computes. LSH proposes and the
+  true Jaccard decides, with rejected candidates published beside confirmed duplicates.
+
+  **Decontamination plants canary strings** and confirms the scanner recovers them, so the stage is
+  demonstrable on any machine rather than only where the gated benchmark index happens to exist.
+  Where no index is available the answer is **UNCHECKED**, never "clean".
+
 - **Exercise 04's first three cleaning stages are real.** Normalization, format discipline and
   language ID now do work instead of counting, and the notebook grows three sections to match.
 
@@ -82,6 +101,35 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   in the assignment is a **model** rather than a dataset, and what may and may not be published.
 
 ### Fixed
+
+- **A quality rule that looked language-neutral was deleting Hindi.** `mean_word_length` in
+  `[3, 10]` reads as a fact about words, but Python's `\w` and `str.isalnum` both skip Devanagari
+  vowel signs — a matra is Unicode category `Mn` — so every Devanagari word measured shorter than it
+  is. Well-formed Hindi prose scored **2.24** and failed a rule it should clear comfortably.
+  Counting letters *and* combining marks moves the same text to **3.56**. This is the same family of
+  defect as exercise 03's correction X16, and unlike the other two language biases it was invisible
+  in the rule text — only running it showed it.
+
+- **The canary pass reported success while doing nothing.** Canaries were generated five words long
+  and the scanner shingles at thirteen, so they produced no n-grams, the index was empty, and
+  recovery was 0 of 24 — while the stage note still read "the scanner is known to work". Canaries
+  are now built with `width + 2` words, and the note is conditional: below perfect recall it says
+  the result above it is meaningless.
+
+- **Shingle hashing was not reproducible across processes.** Python's built-in `hash()` on strings
+  is randomised per interpreter, so bucketing — and therefore which documents deduplication deletes
+  — would drift between runs, quietly voiding the reproducibility the manifest claims. Replaced with
+  blake2b, pinned by a test against a hard-coded digest.
+
+- **A dedup guard could not fail.** `test_lsh_proposes_and_the_true_jaccard_decides` used three
+  documents, LSH proposed no false candidates, and deleting the similarity check entirely left every
+  assertion green. Replaced with a graded family tuned so LSH genuinely over-proposes; removing the
+  check now turns two tests red.
+
+- **The `lite` profile overshot its budget twentyfold.** The token budget was checked between row
+  groups, and Sangraha's Telugu shard has row groups of tens of thousands of documents — so a
+  3M-token budget loaded 162,000 documents and a smoke run took seven minutes instead of two. The
+  budget is now checked inside each row group.
 
 - **Language ID published a limitation of our detector as a defect in the corpus.** Bodo is in the
   corpus and absent from FLORES-200, so it has no trained profile and every Bodo document was
