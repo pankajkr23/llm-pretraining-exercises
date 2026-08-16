@@ -1,11 +1,11 @@
 {
   "run": {
-    "run_id": "s04-lite-61813d9a6686",
-    "profile": "lite",
-    "generated": "2026-08-16T11:27:40Z",
-    "config_hash": "sha256:21c10468eeed12d4e7dad48859c54d5e17d2ba363963da2b95ea156d73e1629a",
-    "script_hash": "sha256:b1732fb1ee8b62279cec4d2225da8fa2e29a53bf2569a46ea63f2724d46793f9",
-    "content_hash": "sha256:fe0a217642c09014ddf5a9cef01cc96110c84731a566da90930d64f70a43de6a",
+    "run_id": "s04-full-212b79209dae",
+    "profile": "full",
+    "generated": "2026-08-16T12:52:13Z",
+    "config_hash": "sha256:7e4cf27b996a06822845d90181c07db6d106cfe92e100c670df98efa74186084",
+    "script_hash": "sha256:9f958909cd9063ded8372d02d7ae1e747d7fe1ad1d93b47f8313fba47d940c01",
+    "content_hash": "sha256:fdf8bd2e0d33f24c7e066a3d61a54d8498d29137e71fdcc3e62c5071ac36cb71",
     "tokenizer": "ours/s02-bpe-10000"
   },
   "strategies": [
@@ -112,16 +112,21 @@
       "shards_read": [
         {
           "path": "data/train-00005-of-00006.parquet",
-          "row_groups_read": 1,
+          "row_groups_read": 4,
+          "row_groups_total": 19
+        },
+        {
+          "path": "data/train-00004-of-00006.parquet",
+          "row_groups_read": 2,
           "row_groups_total": 19
         }
       ],
-      "docs": 800,
+      "docs": 5000,
       "tokens": {
-        "value": 3613745,
+        "value": 31502005,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (0.57% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.67% [UNK])"
       },
       "selection_rule": "row groups in file order until the token budget is met — no sampling, no seed"
     },
@@ -129,18 +134,28 @@
       "corpus": "indic",
       "shards_read": [
         {
+          "path": "verified/hin/data-31.parquet",
+          "row_groups_read": 1,
+          "row_groups_total": 1
+        },
+        {
           "path": "verified/tel/data-1.parquet",
           "row_groups_read": 1,
           "row_groups_total": 1
         },
         {
           "path": "verified/mai/data-0.parquet",
-          "row_groups_read": 1,
+          "row_groups_read": 5,
           "row_groups_total": 21
         },
         {
+          "path": "verified/gom/data-0.parquet",
+          "row_groups_read": 4,
+          "row_groups_total": 15
+        },
+        {
           "path": "verified/brx/data-0.parquet",
-          "row_groups_read": 1,
+          "row_groups_read": 3,
           "row_groups_total": 3
         },
         {
@@ -149,12 +164,12 @@
           "row_groups_total": 1
         }
       ],
-      "docs": 2454,
+      "docs": 21410,
       "tokens": {
-        "value": 2466383,
+        "value": 22869169,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (0.36% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.76% [UNK])"
       },
       "selection_rule": "row groups in file order until the token budget is met — no sampling, no seed"
     },
@@ -163,16 +178,26 @@
       "shards_read": [
         {
           "path": "data/serverfault.com/train-00001-of-00005.parquet",
-          "row_groups_read": 3,
+          "row_groups_read": 9,
           "row_groups_total": 24
+        },
+        {
+          "path": "data/superuser.com/train-00001-of-00006.parquet",
+          "row_groups_read": 9,
+          "row_groups_total": 27
+        },
+        {
+          "path": "data/askubuntu.com/train-00002-of-00005.parquet",
+          "row_groups_read": 7,
+          "row_groups_total": 22
         }
       ],
-      "docs": 2600,
+      "docs": 23200,
       "tokens": {
-        "value": 3276672,
+        "value": 30150701,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (0.05% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.07% [UNK])"
       },
       "selection_rule": "row groups in file order until the token budget is met — no sampling, no seed"
     },
@@ -180,17 +205,22 @@
       "corpus": "oov",
       "shards_read": [
         {
+          "path": "verified/mni/data-0.parquet",
+          "row_groups_read": 1,
+          "row_groups_total": 2
+        },
+        {
           "path": "verified/kas/data-0.parquet",
           "row_groups_read": 1,
           "row_groups_total": 1
         }
       ],
-      "docs": 200,
+      "docs": 400,
       "tokens": {
         "value": null,
         "unit": "tokens",
         "provenance": "unknown",
-        "source": "ours/s02-bpe-10000 cannot read this script: 63.8% of tokens are [UNK]"
+        "source": "ours/s02-bpe-10000 cannot read this script: 70.1% of tokens are [UNK]"
       },
       "selection_rule": "row groups in file order until the token budget is met — no sampling, no seed"
     }
@@ -201,23 +231,23 @@
       "id": "extract",
       "name": "Extract",
       "real": false,
-      "docs_in": 6054,
-      "docs_out": 6054,
+      "docs_in": 50010,
+      "docs_out": 50010,
       "tokens_in": {
-        "value": 9764931,
+        "value": 85691489,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (2.99% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (1.43% [UNK])"
       },
       "tokens_out": {
-        "value": 9764931,
+        "value": 85691489,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (2.99% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (1.43% [UNK])"
       },
       "rejections": {},
       "detail": {},
-      "runtime_s": 0.002,
+      "runtime_s": 0.009,
       "note": "Not implemented yet — counts only, changes nothing."
     },
     {
@@ -225,62 +255,71 @@
       "id": "normalize",
       "name": "Normalize",
       "real": true,
-      "docs_in": 6054,
-      "docs_out": 6054,
+      "docs_in": 50010,
+      "docs_out": 50010,
       "tokens_in": {
-        "value": 9764931,
+        "value": 85691489,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (2.99% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (1.43% [UNK])"
       },
       "tokens_out": {
-        "value": 9455604,
+        "value": 83142066,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (3.08% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (1.48% [UNK])"
       },
       "rejections": {},
       "detail": {
         "removed": {
-          "zero_width": 2,
-          "replacement": 49
+          "zero_width": 222,
+          "replacement": 694,
+          "bom": 2,
+          "c0c1": 1
         },
-        "joiners_kept": {},
-        "entities_expanded": 859,
-        "double_escaped": 7,
-        "whitespace_runs_collapsed": 149908,
-        "ghost_markers": {},
-        "chars_before": 20755806,
-        "chars_after": 20460837,
-        "chars_removed": 294969,
-        "hash_collisions_gained_by_cleaning": 0
+        "joiners_kept": {
+          "zwnj": 13,
+          "zwj": 266
+        },
+        "entities_expanded": 8402,
+        "double_escaped": 66,
+        "whitespace_runs_collapsed": 1250864,
+        "ghost_markers": {
+          "[USER]": 5
+        },
+        "chars_before": 185311590,
+        "chars_after": 182921900,
+        "chars_removed": 2389690,
+        "hash_collisions_gained_by_cleaning": 1
       },
-      "runtime_s": 3.739,
-      "note": "Removed 294,969 characters of noise and kept 0 Indic joiners. Hashing after cleaning collapsed 0 documents that raw hashing would have kept apart."
+      "runtime_s": 33.368,
+      "note": "Removed 2,389,690 characters of noise and kept 279 Indic joiners. Hashing after cleaning collapsed 1 documents that raw hashing would have kept apart."
     },
     {
       "n": "2b",
       "id": "formats",
       "name": "Format discipline",
       "real": true,
-      "docs_in": 6054,
-      "docs_out": 6054,
+      "docs_in": 50010,
+      "docs_out": 50010,
       "tokens_in": {
-        "value": 9455604,
+        "value": 83142066,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (3.08% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (1.48% [UNK])"
       },
       "tokens_out": {
-        "value": 9455604,
+        "value": 83142066,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (3.08% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (1.48% [UNK])"
       },
       "rejections": {},
       "detail": {
-        "markers_found_in_corpus": {},
-        "docs_with_markers": 0,
+        "markers_found_in_corpus": {
+          "[USER]": 5
+        },
+        "docs_with_markers": 3,
         "sampled_conversations": 500,
         "template_tokens": {
           "content": 2220147,
@@ -394,137 +433,150 @@
           "baseline": "content"
         }
       },
-      "runtime_s": 5.494,
-      "note": "The corpus carries 0 literal role markers in 0 documents — ghost tags are created by the renderer, not inherited from the data. Across 1,000 turns, rendering as chatml costs 18.0 extra tokens per turn. That is only 0.8% of this corpus because a reasoning trace averages 2,220 tokens per turn; on short chat turns the same markers are the double-digit waste the session describes."
+      "runtime_s": 5.954,
+      "note": "The corpus carries 5 literal role markers in 3 documents — ghost tags are created by the renderer, not inherited from the data. Across 1,000 turns, rendering as chatml costs 18.0 extra tokens per turn. That is only 0.8% of this corpus because a reasoning trace averages 2,220 tokens per turn; on short chat turns the same markers are the double-digit waste the session describes."
     },
     {
       "n": "3",
       "id": "langid",
       "name": "Language ID",
       "real": true,
-      "docs_in": 6054,
-      "docs_out": 6054,
+      "docs_in": 50010,
+      "docs_out": 50010,
       "tokens_in": {
-        "value": 9455604,
+        "value": 83142066,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (3.08% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (1.48% [UNK])"
       },
       "tokens_out": {
-        "value": 9455604,
+        "value": 83142066,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (3.08% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (1.48% [UNK])"
       },
       "rejections": {},
       "detail": {
         "detected": {
-          "en": 3623,
-          "mai": 903,
-          "te": 793,
-          "ne": 328,
-          "hne": 146,
-          "undecided": 73,
-          "awa": 61,
-          "bho": 47,
-          "hi": 40,
-          "mag": 25,
-          "sa": 13,
-          "mar": 2
+          "en": 29984,
+          "hi": 5477,
+          "te": 4954,
+          "mai": 4301,
+          "mar": 2473,
+          "ne": 1232,
+          "hne": 536,
+          "awa": 308,
+          "bho": 296,
+          "mni": 163,
+          "mag": 126,
+          "sa": 84,
+          "undecided": 76
         },
         "scripts": {
-          "Latin": 3623,
-          "Devanagari": 1565,
-          "Telugu": 793,
-          "Arabic": 72,
+          "Latin": 29984,
+          "Devanagari": 14833,
+          "Telugu": 4954,
+          "Bengali": 163,
+          "Arabic": 74,
+          "Cjk": 1,
           "Kannada": 1
         },
         "mismatches": {
-          "mai->en": 65,
-          "mai->awa": 49,
-          "mai->hne": 44,
-          "mai->bho": 44,
-          "mai->hi": 18,
-          "mai->sa": 13,
-          "mai->mag": 11,
-          "mai->ne": 9,
-          "te->en": 7,
-          "mai->mar": 2
+          "mai->en": 333,
+          "mai->bho": 282,
+          "mai->awa": 264,
+          "mai->hne": 246,
+          "mai->hi": 104,
+          "mai->mag": 80,
+          "mai->sa": 67,
+          "te->en": 46,
+          "mni->en": 37,
+          "hi->en": 32,
+          "mai->ne": 32,
+          "mai->mar": 19,
+          "hi->sa": 13,
+          "hi->awa": 13,
+          "hi->bho": 5,
+          "hi->mag": 3,
+          "hi->hne": 2,
+          "hi->ne": 1,
+          "hi->mai": 1
         },
         "mismatch_examples": [
           {
-            "doc_id": "indic-0000208",
-            "shard": "verified/tel/data-1.parquet",
-            "claimed": "te",
+            "doc_id": "indic-0000004",
+            "shard": "verified/hin/data-31.parquet",
+            "claimed": "hi",
             "detected": "en",
             "script": "Latin",
             "confidence": 1.0
           },
           {
-            "doc_id": "indic-0000224",
-            "shard": "verified/tel/data-1.parquet",
-            "claimed": "te",
+            "doc_id": "indic-0000050",
+            "shard": "verified/hin/data-31.parquet",
+            "claimed": "hi",
             "detected": "en",
             "script": "Latin",
             "confidence": 1.0
           },
           {
-            "doc_id": "indic-0000238",
-            "shard": "verified/tel/data-1.parquet",
-            "claimed": "te",
+            "doc_id": "indic-0000199",
+            "shard": "verified/hin/data-31.parquet",
+            "claimed": "hi",
             "detected": "en",
             "script": "Latin",
             "confidence": 1.0
           },
           {
-            "doc_id": "indic-0000290",
-            "shard": "verified/tel/data-1.parquet",
-            "claimed": "te",
+            "doc_id": "indic-0000219",
+            "shard": "verified/hin/data-31.parquet",
+            "claimed": "hi",
+            "detected": "sa",
+            "script": "Devanagari",
+            "confidence": 0.442
+          },
+          {
+            "doc_id": "indic-0000421",
+            "shard": "verified/hin/data-31.parquet",
+            "claimed": "hi",
             "detected": "en",
             "script": "Latin",
             "confidence": 1.0
           },
           {
-            "doc_id": "indic-0000315",
-            "shard": "verified/tel/data-1.parquet",
-            "claimed": "te",
+            "doc_id": "indic-0000465",
+            "shard": "verified/hin/data-31.parquet",
+            "claimed": "hi",
             "detected": "en",
             "script": "Latin",
             "confidence": 1.0
           },
           {
-            "doc_id": "indic-0000373",
-            "shard": "verified/tel/data-1.parquet",
-            "claimed": "te",
-            "detected": "en",
-            "script": "Latin",
-            "confidence": 1.0
-          },
-          {
-            "doc_id": "indic-0000572",
-            "shard": "verified/tel/data-1.parquet",
-            "claimed": "te",
-            "detected": "en",
-            "script": "Latin",
-            "confidence": 1.0
-          },
-          {
-            "doc_id": "indic-0000827",
-            "shard": "verified/mai/data-0.parquet",
-            "claimed": "mai",
+            "doc_id": "indic-0000754",
+            "shard": "verified/hin/data-31.parquet",
+            "claimed": "hi",
             "detected": "bho",
             "script": "Devanagari",
+            "confidence": 0.669
+          },
+          {
+            "doc_id": "indic-0001125",
+            "shard": "verified/hin/data-31.parquet",
+            "claimed": "hi",
+            "detected": "en",
+            "script": "Latin",
             "confidence": 1.0
           }
         ],
         "unadjudicable": {
-          "brx (no FLORES profile)": 800,
+          "gom (no FLORES profile)": 3598,
+          "brx (no FLORES profile)": 2956,
           "kas (no FLORES profile)": 128,
           "doi (no FLORES profile)": 53
         },
-        "unadjudicable_total": 981,
-        "undecided": 73,
-        "code_switched": 308,
+        "unadjudicable_total": 6735,
+        "undecided": 76,
+        "code_switched": 1246,
         "grading": {
           "coverage": "held-out",
           "protocol": "trained on FLORES-200 dev, graded on devtest — disjoint sentence sets",
@@ -639,38 +691,38 @@
           "note": "9 of these languages share the Devanagari script, so a script detector cannot separate them at all — its accuracy is the chance baseline, not a weak result."
         }
       },
-      "runtime_s": 6.686,
-      "note": "262 documents disagree with the language their folder claims. 73 were left undecided rather than guessed, and 981 are unadjudicable because their claimed language has no FLORES profile — a limit of the detector, not a defect in the corpus. Nothing is dropped here: a mislabelled document is a finding about the source, not a document to delete."
+      "runtime_s": 38.559,
+      "note": "1,580 documents disagree with the language their folder claims. 76 were left undecided rather than guessed, and 6,735 are unadjudicable because their claimed language has no FLORES profile — a limit of the detector, not a defect in the corpus. Nothing is dropped here: a mislabelled document is a finding about the source, not a document to delete."
     },
     {
       "n": "4",
       "id": "quality",
       "name": "Quality filter",
       "real": true,
-      "docs_in": 6054,
-      "docs_out": 4198,
+      "docs_in": 50010,
+      "docs_out": 37656,
       "tokens_in": {
-        "value": 9455604,
+        "value": 83142066,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (3.08% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (1.48% [UNK])"
       },
       "tokens_out": {
-        "value": 6686109,
+        "value": 61332137,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (1.20% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.42% [UNK])"
       },
       "rejections": {
-        "stop_words": 1394,
-        "mean_word_length": 306,
-        "word_count": 139,
-        "terminal_punctuation": 68,
-        "duplicate_lines": 59,
-        "ellipsis_lines": 42,
-        "bullet_lines": 8,
-        "symbol_to_word_ratio": 6,
-        "top_bigram": 2
+        "stop_words": 9516,
+        "mean_word_length": 1795,
+        "word_count": 537,
+        "ellipsis_lines": 372,
+        "duplicate_lines": 341,
+        "terminal_punctuation": 292,
+        "symbol_to_word_ratio": 72,
+        "bullet_lines": 9,
+        "top_bigram": 7
       },
       "detail": {
         "rules": [
@@ -720,124 +772,130 @@
             "language_sensitive": false
           }
         ],
-        "dropped_script_aware": 1856,
-        "dropped_english_thresholds": 2879,
-        "extra_dropped_by_english_rules": 1023,
+        "dropped_script_aware": 12354,
+        "dropped_english_thresholds": 23492,
+        "extra_dropped_by_english_rules": 11138,
         "per_rule_script_aware": {
-          "stop_words": 1394,
-          "mean_word_length": 306,
-          "word_count": 139,
-          "terminal_punctuation": 68,
-          "duplicate_lines": 59,
-          "ellipsis_lines": 42,
-          "bullet_lines": 8,
-          "symbol_to_word_ratio": 6,
-          "top_bigram": 2
+          "stop_words": 9516,
+          "mean_word_length": 1795,
+          "word_count": 537,
+          "ellipsis_lines": 372,
+          "duplicate_lines": 341,
+          "terminal_punctuation": 292,
+          "symbol_to_word_ratio": 72,
+          "bullet_lines": 9,
+          "top_bigram": 7
         },
         "per_rule_english": {
-          "stop_words": 2381,
-          "terminal_punctuation": 1326,
-          "mean_word_length": 306,
-          "word_count": 139,
-          "duplicate_lines": 59,
-          "ellipsis_lines": 42,
-          "bullet_lines": 8,
-          "symbol_to_word_ratio": 6,
-          "top_bigram": 2
+          "stop_words": 20424,
+          "terminal_punctuation": 9960,
+          "mean_word_length": 1795,
+          "word_count": 537,
+          "ellipsis_lines": 372,
+          "duplicate_lines": 341,
+          "symbol_to_word_ratio": 72,
+          "bullet_lines": 9,
+          "top_bigram": 7
         },
         "per_corpus_per_rule_script_aware": {
           "reasoning": {
-            "mean_word_length": 289
+            "mean_word_length": 1688,
+            "ellipsis_lines": 2,
+            "duplicate_lines": 1
           },
           "indic": {
-            "stop_words": 1306,
-            "duplicate_lines": 53,
-            "word_count": 91,
-            "ellipsis_lines": 7,
-            "symbol_to_word_ratio": 1,
-            "mean_word_length": 9,
-            "terminal_punctuation": 2
+            "stop_words": 9252,
+            "word_count": 457,
+            "terminal_punctuation": 20,
+            "duplicate_lines": 298,
+            "mean_word_length": 58,
+            "ellipsis_lines": 23,
+            "bullet_lines": 1,
+            "symbol_to_word_ratio": 6
           },
           "qa": {
-            "ellipsis_lines": 31,
-            "terminal_punctuation": 19,
-            "duplicate_lines": 6,
-            "mean_word_length": 8,
-            "symbol_to_word_ratio": 5,
-            "top_bigram": 2,
-            "stop_words": 1,
-            "word_count": 1
+            "ellipsis_lines": 343,
+            "terminal_punctuation": 225,
+            "duplicate_lines": 42,
+            "mean_word_length": 49,
+            "symbol_to_word_ratio": 66,
+            "top_bigram": 7,
+            "stop_words": 13,
+            "word_count": 31
           },
           "oov": {
+            "stop_words": 251,
+            "word_count": 49,
             "terminal_punctuation": 47,
-            "stop_words": 87,
-            "word_count": 47,
             "ellipsis_lines": 4,
             "bullet_lines": 8
           }
         },
         "per_corpus_per_rule_english": {
           "reasoning": {
-            "mean_word_length": 289
+            "mean_word_length": 1688,
+            "ellipsis_lines": 2,
+            "duplicate_lines": 1
           },
           "indic": {
-            "stop_words": 2271,
-            "terminal_punctuation": 1218,
-            "duplicate_lines": 53,
-            "word_count": 91,
-            "ellipsis_lines": 7,
-            "symbol_to_word_ratio": 1,
-            "mean_word_length": 9
+            "terminal_punctuation": 9495,
+            "stop_words": 20142,
+            "word_count": 457,
+            "duplicate_lines": 298,
+            "mean_word_length": 58,
+            "ellipsis_lines": 23,
+            "bullet_lines": 1,
+            "symbol_to_word_ratio": 6
           },
           "qa": {
-            "ellipsis_lines": 31,
-            "terminal_punctuation": 19,
-            "duplicate_lines": 6,
-            "mean_word_length": 8,
-            "symbol_to_word_ratio": 5,
-            "top_bigram": 2,
-            "stop_words": 1,
-            "word_count": 1
+            "ellipsis_lines": 343,
+            "terminal_punctuation": 225,
+            "duplicate_lines": 42,
+            "mean_word_length": 49,
+            "symbol_to_word_ratio": 66,
+            "top_bigram": 7,
+            "stop_words": 13,
+            "word_count": 31
           },
           "oov": {
-            "terminal_punctuation": 89,
-            "stop_words": 109,
-            "word_count": 47,
+            "terminal_punctuation": 240,
+            "stop_words": 269,
+            "word_count": 49,
             "ellipsis_lines": 4,
             "bullet_lines": 8
           }
         },
         "by_corpus": {
           "reasoning": {
-            "docs": 800,
-            "english": 289,
-            "aware": 289
+            "docs": 5000,
+            "english": 1690,
+            "aware": 1690
           },
           "indic": {
-            "docs": 2454,
-            "english": 2360,
-            "aware": 1371
+            "docs": 21410,
+            "english": 20751,
+            "aware": 9647
           },
           "qa": {
-            "docs": 2600,
-            "english": 67,
-            "aware": 67
+            "docs": 23200,
+            "english": 724,
+            "aware": 724
           },
           "oov": {
-            "docs": 200,
-            "english": 163,
-            "aware": 129
+            "docs": 400,
+            "english": 327,
+            "aware": 293
           }
         },
         "residual_bias": {
           "survival_by_corpus": {
-            "reasoning": 0.6387,
-            "indic": 0.4413,
-            "qa": 0.9742,
-            "oov": 0.355
+            "reasoning": 0.662,
+            "indic": 0.5494,
+            "qa": 0.9688,
+            "oov": 0.2675
           },
-          "english_mean": 0.8065,
-          "indic_mean": 0.3982,
+          "english_mean": 0.8154,
+          "indic_mean": 0.4084,
           "note": "Script-aware rules narrow the gap but do not close it. Two reasons, both worth naming: the Devanagari stop-word list is built from Hindi and under-serves Maithili and Bodo, which is the same bias one level down; and `mean_word_length` in [3, 10] was tuned on English web prose, so it also cuts agglutinative Telugu and LaTeX-heavy reasoning traces."
         },
         "classifier_gate": {
@@ -848,31 +906,31 @@
           "note": "No FineWeb-Edu model exists here. This is a transparent function of the rule outcomes, off by default, and never reported as measured."
         }
       },
-      "runtime_s": 7.395,
-      "note": "Dropped 1,856 documents on script-aware rules; the published English thresholds would have dropped 2,879 — 1,023 more, almost all well-formed Indic text failing rules that ask for English full stops and English stop words. Even script-aware, survival is uneven: 81% of English-language documents against 40% of Indic ones."
+      "runtime_s": 65.612,
+      "note": "Dropped 12,354 documents on script-aware rules; the published English thresholds would have dropped 23,492 — 11,138 more, almost all well-formed Indic text failing rules that ask for English full stops and English stop words. Even script-aware, survival is uneven: 82% of English-language documents against 41% of Indic ones."
     },
     {
       "n": "5",
       "id": "dedup",
       "name": "Deduplicate",
       "real": true,
-      "docs_in": 4198,
-      "docs_out": 4152,
+      "docs_in": 37656,
+      "docs_out": 36890,
       "tokens_in": {
-        "value": 6686109,
+        "value": 61332137,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (1.20% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.42% [UNK])"
       },
       "tokens_out": {
-        "value": 6589933,
+        "value": 59900963,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (1.22% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.43% [UNK])"
       },
       "rejections": {
-        "exact_duplicate": 0,
-        "near_duplicate": 46
+        "exact_duplicate": 85,
+        "near_duplicate": 681
       },
       "detail": {
         "params": {
@@ -886,119 +944,133 @@
           "note": "The session quotes this preset as target ~0.75; the banding approximation gives 0.719. We publish what the code computes."
         },
         "exact": {
-          "docs_removed": 0,
-          "clusters": 0
+          "docs_removed": 85,
+          "clusters": 3
         },
         "near": {
-          "docs_removed": 46,
-          "clusters": 38,
-          "candidate_pairs": 81,
-          "verified_pairs": 50,
-          "false_candidate_pairs": 31
+          "docs_removed": 681,
+          "clusters": 566,
+          "candidate_pairs": 1279,
+          "verified_pairs": 783,
+          "false_candidate_pairs": 496
         },
         "cluster_sizes": {
-          "2": 31,
-          "3": 6,
-          "4": 1
+          "2": 471,
+          "3": 80,
+          "4": 12,
+          "5": 2,
+          "7": 1
         },
-        "largest_cluster": 4,
+        "largest_cluster": 79,
         "by_corpus": {
           "reasoning": {
-            "in": 511,
-            "out": 511
+            "in": 3310,
+            "out": 3310
           },
           "indic": {
-            "in": 1083,
-            "out": 1083
+            "in": 11763,
+            "out": 11671
           },
           "qa": {
-            "in": 2533,
-            "out": 2487
+            "in": 22476,
+            "out": 21802
           },
           "oov": {
-            "in": 71,
-            "out": 71
+            "in": 107,
+            "out": 107
           }
         },
         "example_duplicates": [
           {
-            "a": "qa-0000035",
-            "b": "qa-0000036",
-            "jaccard": 0.7878,
+            "a": "indic-0000816",
+            "b": "indic-0002150",
+            "jaccard": 0.7796,
             "verdict": "duplicate"
           },
           {
-            "a": "qa-0000071",
-            "b": "qa-0000072",
-            "jaccard": 0.8274,
+            "a": "indic-0000816",
+            "b": "indic-0002712",
+            "jaccard": 0.7443,
             "verdict": "duplicate"
           },
           {
-            "a": "qa-0000168",
-            "b": "qa-0000169",
-            "jaccard": 0.8329,
+            "a": "indic-0000816",
+            "b": "indic-0002958",
+            "jaccard": 0.7778,
             "verdict": "duplicate"
           },
           {
-            "a": "qa-0000168",
-            "b": "qa-0000170",
-            "jaccard": 0.7674,
+            "a": "indic-0000816",
+            "b": "indic-0004215",
+            "jaccard": 0.7632,
             "verdict": "duplicate"
           },
           {
-            "a": "qa-0000169",
-            "b": "qa-0000170",
-            "jaccard": 0.7752,
+            "a": "indic-0000816",
+            "b": "indic-0004301",
+            "jaccard": 0.7592,
             "verdict": "duplicate"
           },
           {
-            "a": "qa-0000251",
-            "b": "qa-0000252",
-            "jaccard": 0.7603,
+            "a": "indic-0002150",
+            "b": "indic-0002712",
+            "jaccard": 0.8828,
             "verdict": "duplicate"
           },
           {
-            "a": "qa-0000252",
-            "b": "qa-0000253",
-            "jaccard": 0.7411,
+            "a": "indic-0002150",
+            "b": "indic-0002958",
+            "jaccard": 0.9755,
             "verdict": "duplicate"
           },
           {
-            "a": "qa-0000327",
-            "b": "qa-0000329",
-            "jaccard": 0.8196,
+            "a": "indic-0002150",
+            "b": "indic-0003416",
+            "jaccard": 0.8247,
             "verdict": "duplicate"
           },
           {
-            "a": "qa-0000358",
-            "b": "qa-0000359",
-            "jaccard": 0.7259,
+            "a": "indic-0002150",
+            "b": "indic-0004215",
+            "jaccard": 0.9516,
             "verdict": "duplicate"
           },
           {
-            "a": "qa-0000372",
-            "b": "qa-0000373",
-            "jaccard": 0.754,
+            "a": "indic-0002150",
+            "b": "indic-0004301",
+            "jaccard": 0.9055,
             "verdict": "duplicate"
           },
           {
-            "a": "qa-0000492",
-            "b": "qa-0000493",
-            "jaccard": 0.805,
+            "a": "indic-0002712",
+            "b": "indic-0002958",
+            "jaccard": 0.8612,
             "verdict": "duplicate"
           },
           {
-            "a": "qa-0000492",
-            "b": "qa-0000494",
-            "jaccard": 0.7825,
+            "a": "indic-0002712",
+            "b": "indic-0003416",
+            "jaccard": 0.765,
             "verdict": "duplicate"
           }
         ],
         "example_near_misses": [
           {
-            "a": "indic-0000985",
-            "b": "indic-0001212",
+            "a": "indic-0010585",
+            "b": "indic-0010812",
             "jaccard": 0.6629,
+            "verdict": "kept"
+          },
+          {
+            "a": "indic-0012024",
+            "b": "indic-0013720",
+            "jaccard": 0.6452,
+            "verdict": "kept"
+          },
+          {
+            "a": "indic-0012584",
+            "b": "indic-0014059",
+            "jaccard": 0.4857,
             "verdict": "kept"
           },
           {
@@ -1054,66 +1126,140 @@
             "b": "qa-0001339",
             "jaccard": 0.6939,
             "verdict": "kept"
-          },
-          {
-            "a": "qa-0001338",
-            "b": "qa-0001339",
-            "jaccard": 0.7054,
-            "verdict": "kept"
-          },
-          {
-            "a": "qa-0001410",
-            "b": "qa-0001412",
-            "jaccard": 0.6899,
-            "verdict": "kept"
           }
         ]
       },
-      "runtime_s": 2.985,
-      "note": "Removed 46 documents: 0 byte-identical and 46 near-duplicates at a similarity threshold of 0.719. LSH proposed 81 candidate pairs and the true Jaccard confirmed 50 — banding is a recall device, not a verdict."
+      "runtime_s": 30.625,
+      "note": "Removed 766 documents: 85 byte-identical and 681 near-duplicates at a similarity threshold of 0.719. LSH proposed 1,279 candidate pairs and the true Jaccard confirmed 783 — banding is a recall device, not a verdict."
     },
     {
       "n": "6",
       "id": "pii",
       "name": "PII scrub",
-      "real": false,
-      "docs_in": 4152,
-      "docs_out": 4152,
+      "real": true,
+      "docs_in": 36890,
+      "docs_out": 36890,
       "tokens_in": {
-        "value": 6589933,
+        "value": 59900963,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (1.22% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.43% [UNK])"
       },
       "tokens_out": {
-        "value": 6589933,
+        "value": 59861546,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (1.22% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.43% [UNK])"
       },
       "rejections": {},
-      "detail": {},
-      "runtime_s": 0.001,
-      "note": "Not implemented yet — counts only, changes nothing."
+      "detail": {
+        "by_kind": {
+          "ipv4": 11599,
+          "email": 1561,
+          "name": 827,
+          "mac": 647,
+          "phone": 186,
+          "aadhaar": 132
+        },
+        "docs_touched": 2591,
+        "by_corpus": {
+          "reasoning": 616,
+          "indic": 188,
+          "qa": 14140,
+          "oov": 8
+        },
+        "patterns": [
+          {
+            "kind": "email",
+            "why": "local-part, @, domain with a dot — near-perfect precision in practice",
+            "known_false_positives": [],
+            "layer": "regex",
+            "status": "real"
+          },
+          {
+            "kind": "phone",
+            "why": "requires a country code, separators, or an Indian mobile prefix",
+            "known_false_positives": [
+              "order numbers formatted with dashes"
+            ],
+            "layer": "regex",
+            "status": "real"
+          },
+          {
+            "kind": "ipv4",
+            "why": "four octets, each 0-255",
+            "known_false_positives": [
+              "2.6.21.7 — a Linux kernel version. Every octet is a legal byte, so no pattern can separate this from a real address. Only context could, and a regex has none."
+            ],
+            "layer": "regex",
+            "status": "real"
+          },
+          {
+            "kind": "mac",
+            "why": "six colon-separated hex pairs",
+            "known_false_positives": [],
+            "layer": "regex",
+            "status": "real"
+          },
+          {
+            "kind": "aadhaar",
+            "why": "twelve digits in three spaced groups",
+            "known_false_positives": [
+              "any 4-4-4 digit grouping, such as a spaced card number"
+            ],
+            "layer": "regex",
+            "status": "real"
+          },
+          {
+            "kind": "pan",
+            "why": "five letters, four digits, one letter — the Indian PAN shape",
+            "known_false_positives": [],
+            "layer": "regex",
+            "status": "real"
+          }
+        ],
+        "name_layer": {
+          "layer": "gazetteer",
+          "status": "illustrative",
+          "aggressiveness": 0.3,
+          "gazetteer_size": 24,
+          "precision": null,
+          "recall": null,
+          "provenance": "unknown",
+          "note": "No NER model has usable Maithili or Dogri support, so this is a declared stand-in rather than a model. No precision or recall is published: there is no gold set, and inventing one would be the same error as running a fake classifier."
+        },
+        "demo": {
+          "before": "From: Ananya Sharma <ananya.sharma@example.com>\nReply-To: r.iyer@example.org\nPosted from 203.0.113.47 (MAC ab:cd:ef:12:34:56) on the office wifi in Mysuru.\nCall me on +91 98450 12345 or 9845012345 if the build is still broken.\nPAN ABCDE1234F, Aadhaar 1234 5678 9012 — do not paste these into a ticket.\nThe kernel is 2.6.21.7 and the disk image is 10737418240 bytes, neither of which is anybody's personal information.",
+          "after": "From: [NAME] Sharma <[EMAIL]>\nReply-To: [EMAIL]\nPosted from [IP] (MAC [MAC]) on the office wifi in Mysuru.\nCall me on [PHONE] or [PHONE] if the build is still broken.\nPAN [PAN], Aadhaar [AADHAAR] — do not paste these into a ticket.\nThe kernel is [IP] and the disk image is 10737418240 bytes, neither of which is anybody's personal information.",
+          "spans": 10,
+          "note": "Hand-written with invented identifiers — RFC 2606 domains and the RFC 5737 documentation IP range. No real corpus text is ever shown here."
+        },
+        "false_positives_in_this_demo": {
+          "2.6.21.7": "a Linux kernel version, indistinguishable from an address by pattern",
+          "10737418240": "ten gibibytes in bytes — excluded because it lacks phone structure"
+        }
+      },
+      "runtime_s": 15.554,
+      "note": "Masked 14,952 identifiers across 2,591 documents, replacing each with a typed placeholder rather than deleting it. Structured identifiers are matched by shape and are real; the name layer is a declared stand-in and publishes no accuracy figure."
     },
     {
       "n": "7",
       "id": "decontaminate",
       "name": "Decontaminate",
       "real": true,
-      "docs_in": 4152,
-      "docs_out": 4152,
+      "docs_in": 36890,
+      "docs_out": 36890,
       "tokens_in": {
-        "value": 6589933,
+        "value": 59861546,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (1.22% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.43% [UNK])"
       },
       "tokens_out": {
-        "value": 6589933,
+        "value": 59861546,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (1.22% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.43% [UNK])"
       },
       "rejections": {},
       "detail": {
@@ -1122,44 +1268,44 @@
           "MILU"
         ],
         "index_grams": 124954,
-        "docs_scanned": 4152,
+        "docs_scanned": 36890,
         "docs_flagged": 0,
         "canaries_injected": 24,
         "canaries_recovered": 24,
         "canary_recall": 1.0,
         "examples": [],
-        "headline": "No overlap found across 4,152 documents",
+        "headline": "No overlap found across 36,890 documents",
         "note": "Coverage 'none' means UNCHECKED, not clean. The benchmark index needs a gated download, so a fresh clone cannot check against it — the canary pass proves the scanner works regardless.",
         "gram_width": 13
       },
-      "runtime_s": 1.999,
-      "note": "No overlap found across 4,152 documents. The canary pass recovered all 24 planted strings, so the scanner is known to work at 13-word width on this machine."
+      "runtime_s": 17.849,
+      "note": "No overlap found across 36,890 documents. The canary pass recovered all 24 planted strings, so the scanner is known to work at 13-word width on this machine."
     },
     {
       "n": "8",
       "id": "manifest",
       "name": "Manifest",
       "real": true,
-      "docs_in": 4152,
-      "docs_out": 4152,
+      "docs_in": 36890,
+      "docs_out": 36890,
       "tokens_in": {
-        "value": 6589933,
+        "value": 59861546,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (1.22% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.43% [UNK])"
       },
       "tokens_out": {
-        "value": 6589933,
+        "value": 59861546,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (1.22% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.43% [UNK])"
       },
       "rejections": {},
       "detail": {
-        "run_id": "s04-lite-61813d9a6686",
-        "content_hash": "sha256:fe0a217642c09014ddf5a9cef01cc96110c84731a566da90930d64f70a43de6a",
-        "script_hash": "sha256:b1732fb1ee8b62279cec4d2225da8fa2e29a53bf2569a46ea63f2724d46793f9",
-        "config_hash": "sha256:21c10468eeed12d4e7dad48859c54d5e17d2ba363963da2b95ea156d73e1629a"
+        "run_id": "s04-full-212b79209dae",
+        "content_hash": "sha256:fdf8bd2e0d33f24c7e066a3d61a54d8498d29137e71fdcc3e62c5071ac36cb71",
+        "script_hash": "sha256:9f958909cd9063ded8372d02d7ae1e747d7fe1ad1d93b47f8313fba47d940c01",
+        "config_hash": "sha256:7e4cf27b996a06822845d90181c07db6d106cfe92e100c670df98efa74186084"
       },
       "runtime_s": 0.0,
       "note": "Provenance stamped; the run id is derived from content, not the clock."
@@ -1178,37 +1324,37 @@
       "Manifest"
     ],
     "docs": [
-      6054,
-      6054,
-      6054,
-      6054,
-      4198,
-      4152,
-      4152,
-      4152,
-      4152
+      50010,
+      50010,
+      50010,
+      50010,
+      37656,
+      36890,
+      36890,
+      36890,
+      36890
     ],
     "tokens": [
-      9764931,
-      9455604,
-      9455604,
-      9455604,
-      6686109,
-      6589933,
-      6589933,
-      6589933,
-      6589933
+      85691489,
+      83142066,
+      83142066,
+      83142066,
+      61332137,
+      59900963,
+      59861546,
+      59861546,
+      59861546
     ],
     "share": [
       1.0,
-      0.9683,
-      0.9683,
-      0.9683,
-      0.6847,
-      0.6749,
-      0.6749,
-      0.6749,
-      0.6749
+      0.9702,
+      0.9702,
+      0.9702,
+      0.7157,
+      0.699,
+      0.6986,
+      0.6986,
+      0.6986
     ],
     "real": [
       false,
@@ -1217,7 +1363,7 @@
       true,
       true,
       true,
-      false,
+      true,
       true,
       true
     ],
@@ -1317,31 +1463,34 @@
     "as": 0.8222408680634755
   },
   "manifest": {
-    "run_id": "s04-lite-61813d9a6686",
-    "generated": "2026-08-16T11:27:40Z",
+    "run_id": "s04-full-212b79209dae",
+    "generated": "2026-08-16T12:52:13Z",
     "profile": {
-      "name": "lite",
-      "summary": "A smoke run of roughly 8M tokens. Deliberately below the assignment's 10M floor — it exists to surface bugs in minutes, not to be the published corpus."
+      "name": "full",
+      "summary": "The published corpus: roughly 90M tokens across three corpora, inside the assignment's 10-100M window."
     },
-    "config_hash": "sha256:21c10468eeed12d4e7dad48859c54d5e17d2ba363963da2b95ea156d73e1629a",
-    "script_hash": "sha256:b1732fb1ee8b62279cec4d2225da8fa2e29a53bf2569a46ea63f2724d46793f9",
-    "content_hash": "sha256:fe0a217642c09014ddf5a9cef01cc96110c84731a566da90930d64f70a43de6a",
+    "config_hash": "sha256:7e4cf27b996a06822845d90181c07db6d106cfe92e100c670df98efa74186084",
+    "script_hash": "sha256:9f958909cd9063ded8372d02d7ae1e747d7fe1ad1d93b47f8313fba47d940c01",
+    "content_hash": "sha256:fdf8bd2e0d33f24c7e066a3d61a54d8498d29137e71fdcc3e62c5071ac36cb71",
     "tokenizer": "ours/s02-bpe-10000",
     "tokens": {
-      "value": 6589933,
+      "value": 59861546,
       "unit": "tokens",
       "provenance": "measured",
-      "source": "counted with ours/s02-bpe-10000 (1.22% [UNK])"
+      "source": "counted with ours/s02-bpe-10000 (0.43% [UNK])"
     },
-    "unk_share": 0.01215,
-    "documents": 4152,
+    "unk_share": 0.00428,
+    "documents": 36890,
     "languages_claimed": {
-      "en": 2998,
-      "te": 570,
-      "mai": 473,
+      "en": 25112,
+      "hi": 5236,
+      "te": 3496,
+      "mai": 2559,
+      "gom": 286,
       "kas": 71,
-      "doi": 25,
-      "brx": 15
+      "brx": 69,
+      "mni": 36,
+      "doi": 25
     },
     "selections": [
       {
@@ -1349,16 +1498,21 @@
         "shards_read": [
           {
             "path": "data/train-00005-of-00006.parquet",
-            "row_groups_read": 1,
+            "row_groups_read": 4,
+            "row_groups_total": 19
+          },
+          {
+            "path": "data/train-00004-of-00006.parquet",
+            "row_groups_read": 2,
             "row_groups_total": 19
           }
         ],
-        "docs": 800,
+        "docs": 5000,
         "tokens": {
-          "value": 3613745,
+          "value": 31502005,
           "unit": "tokens",
           "provenance": "measured",
-          "source": "counted with ours/s02-bpe-10000 (0.57% [UNK])"
+          "source": "counted with ours/s02-bpe-10000 (0.67% [UNK])"
         },
         "selection_rule": "row groups in file order until the token budget is met — no sampling, no seed"
       },
@@ -1366,18 +1520,28 @@
         "corpus": "indic",
         "shards_read": [
           {
+            "path": "verified/hin/data-31.parquet",
+            "row_groups_read": 1,
+            "row_groups_total": 1
+          },
+          {
             "path": "verified/tel/data-1.parquet",
             "row_groups_read": 1,
             "row_groups_total": 1
           },
           {
             "path": "verified/mai/data-0.parquet",
-            "row_groups_read": 1,
+            "row_groups_read": 5,
             "row_groups_total": 21
           },
           {
+            "path": "verified/gom/data-0.parquet",
+            "row_groups_read": 4,
+            "row_groups_total": 15
+          },
+          {
             "path": "verified/brx/data-0.parquet",
-            "row_groups_read": 1,
+            "row_groups_read": 3,
             "row_groups_total": 3
           },
           {
@@ -1386,12 +1550,12 @@
             "row_groups_total": 1
           }
         ],
-        "docs": 2454,
+        "docs": 21410,
         "tokens": {
-          "value": 2466383,
+          "value": 22869169,
           "unit": "tokens",
           "provenance": "measured",
-          "source": "counted with ours/s02-bpe-10000 (0.36% [UNK])"
+          "source": "counted with ours/s02-bpe-10000 (0.76% [UNK])"
         },
         "selection_rule": "row groups in file order until the token budget is met — no sampling, no seed"
       },
@@ -1400,16 +1564,26 @@
         "shards_read": [
           {
             "path": "data/serverfault.com/train-00001-of-00005.parquet",
-            "row_groups_read": 3,
+            "row_groups_read": 9,
             "row_groups_total": 24
+          },
+          {
+            "path": "data/superuser.com/train-00001-of-00006.parquet",
+            "row_groups_read": 9,
+            "row_groups_total": 27
+          },
+          {
+            "path": "data/askubuntu.com/train-00002-of-00005.parquet",
+            "row_groups_read": 7,
+            "row_groups_total": 22
           }
         ],
-        "docs": 2600,
+        "docs": 23200,
         "tokens": {
-          "value": 3276672,
+          "value": 30150701,
           "unit": "tokens",
           "provenance": "measured",
-          "source": "counted with ours/s02-bpe-10000 (0.05% [UNK])"
+          "source": "counted with ours/s02-bpe-10000 (0.07% [UNK])"
         },
         "selection_rule": "row groups in file order until the token budget is met — no sampling, no seed"
       },
@@ -1417,17 +1591,22 @@
         "corpus": "oov",
         "shards_read": [
           {
+            "path": "verified/mni/data-0.parquet",
+            "row_groups_read": 1,
+            "row_groups_total": 2
+          },
+          {
             "path": "verified/kas/data-0.parquet",
             "row_groups_read": 1,
             "row_groups_total": 1
           }
         ],
-        "docs": 200,
+        "docs": 400,
         "tokens": {
           "value": null,
           "unit": "tokens",
           "provenance": "unknown",
-          "source": "ours/s02-bpe-10000 cannot read this script: 63.8% of tokens are [UNK]"
+          "source": "ours/s02-bpe-10000 cannot read this script: 70.1% of tokens are [UNK]"
         },
         "selection_rule": "row groups in file order until the token budget is met — no sampling, no seed"
       }
@@ -1447,6 +1626,12 @@
             "size_bytes": 152367227,
             "lang": "en",
             "note": ""
+          },
+          {
+            "path": "data/train-00004-of-00006.parquet",
+            "size_bytes": 154003137,
+            "lang": "en",
+            "note": ""
           }
         ]
       },
@@ -1460,15 +1645,27 @@
         "why": "Deduplication on a corpus that never had it, joiner preservation in Brahmic scripts, and language ID among eleven languages that share one script.",
         "shards": [
           {
+            "path": "verified/hin/data-31.parquet",
+            "size_bytes": 344059658,
+            "lang": "hi",
+            "note": ""
+          },
+          {
             "path": "verified/tel/data-1.parquet",
             "size_bytes": 336511785,
             "lang": "te",
-            "note": "the joiners live here"
+            "note": "273 ZWNJ per FLORES dev file"
           },
           {
             "path": "verified/mai/data-0.parquet",
             "size_bytes": 46936024,
             "lang": "mai",
+            "note": "S2 trained on Maithili"
+          },
+          {
+            "path": "verified/gom/data-0.parquet",
+            "size_bytes": 32496312,
+            "lang": "gom",
             "note": ""
           },
           {
@@ -1481,7 +1678,7 @@
             "path": "verified/doi/data-0.parquet",
             "size_bytes": 106101,
             "lang": "doi",
-            "note": "row 0 is plain English"
+            "note": "row 0 is plain English — the taught 'the folder lied' bug, in a real public corpus"
           }
         ]
       },
@@ -1499,6 +1696,18 @@
             "size_bytes": 36229431,
             "lang": "en",
             "note": ""
+          },
+          {
+            "path": "data/superuser.com/train-00001-of-00006.parquet",
+            "size_bytes": 41106468,
+            "lang": "en",
+            "note": ""
+          },
+          {
+            "path": "data/askubuntu.com/train-00002-of-00005.parquet",
+            "size_bytes": 34262754,
+            "lang": "en",
+            "note": ""
           }
         ]
       },
@@ -1511,6 +1720,12 @@
         "counts_toward_budget": false,
         "why": "What our 10k vocabulary cannot read, measured rather than asserted.",
         "shards": [
+          {
+            "path": "verified/mni/data-0.parquet",
+            "size_bytes": 4620611,
+            "lang": "mni",
+            "note": "Bengali script — 84% [UNK]"
+          },
           {
             "path": "verified/kas/data-0.parquet",
             "size_bytes": 793398,
@@ -1532,7 +1747,7 @@
     ],
     "determinism": {
       "rule": "run_id is derived from config, code and content — never from the clock",
-      "verify": "uv run python -m datacleaning --profile lite twice; run_id must not change"
+      "verify": "uv run python -m datacleaning --profile full twice; run_id must not change"
     }
   }
 }

@@ -60,6 +60,8 @@ uv run pytest            # run every exercise's tests from the root
 | 02 | [Tokenization](src/exercises/02-tokenization/) | A single 10k BPE vocabulary balanced across India's Wikipedia article in four languages — scored on faithful units, with a one-page explainer showing why the biggest number on the page is the one we rejected, and a live in-browser encoder you can paste into. |
 | 03 | [Data collection framework](src/exercises/03-data-collection-framework/) | How you decide what an India-first 40B model trains on — one interactive page, thirteen chapters: how much text, what kind, **which datasets**, how to clean it, how to tokenise it, and how you would know it worked. 145 datasets graded on five checks, of which **4 are committable today**; five data-handling invariants enforced in CI, plus a browser suite that tests the rendered page. |
 
+| 04 | [Data cleaning & deduplication](src/exercises/04-data-cleaning-dedup/) | Eight cleaning stages over three real corpora, counting tokens with **our own Session 2 tokenizer** rather than estimating them. Deduplication by MinHash/LSH, PII masking with its false positives on show, and the finding that **three of the nine standard quality rules are not language-neutral** — applied unchanged to Indic text they delete it rather than filter it. Ships a [Colab notebook](notebooks/S04-data-cleaning-dedup.ipynb). |
+
 More exercises are added each week.
 
 ### 01 · Introductions — four live proofs

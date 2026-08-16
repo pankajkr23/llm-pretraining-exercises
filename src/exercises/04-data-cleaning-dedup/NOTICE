@@ -1,0 +1,51 @@
+# NOTICE — third-party corpora used by 04-data-cleaning-dedup
+
+This exercise reads three public datasets and republishes, on its page, aggregate statistics plus a
+small bounded window of post-scrub excerpts. Two of the three licences require attribution, and
+this file is that attribution.
+
+No personal information is republished. Interactive demonstrations on the page and in the notebook
+run on a hand-written synthetic document whose identifiers use RFC 2606 reserved domains and the
+RFC 5737 documentation IP range, so they belong to nobody. Where corpus text appears at all it has
+already passed the PII scrubber, and a test scans every published byte to keep it that way.
+
+--------------------------------------------------------------------------------------------------
+
+## open-thoughts/OpenThoughts-114k
+
+Licence: Apache-2.0
+Attribution: OpenThoughts (open-thoughts/OpenThoughts-114k)
+https://huggingface.co/datasets/open-thoughts/OpenThoughts-114k
+
+Used as the reasoning-distillation corpus: the public analogue of the dataset the session's
+assignment points at.
+
+## ai4bharat/sangraha
+
+Licence: CC-BY-4.0
+Attribution: AI4Bharat, Sangraha / IndicLLMSuite (arXiv:2403.06350)
+https://huggingface.co/datasets/ai4bharat/sangraha
+
+Used as the Indic web corpus, Devanagari and Telugu shards, plus a small out-of-vocabulary probe
+that is excluded from the token budget.
+
+## HuggingFaceH4/stack-exchange-preferences
+
+Licence: CC-BY-SA-4.0
+Attribution: Stack Exchange contributors, via HuggingFaceH4 (CC-BY-SA-4.0)
+https://huggingface.co/datasets/HuggingFaceH4/stack-exchange-preferences
+
+Used as the English technical-QA corpus. Original Stack Exchange content is contributed by its
+authors under CC-BY-SA; this attribution carries that requirement forward.
+
+--------------------------------------------------------------------------------------------------
+
+## Also used
+
+- **FLORES-200** (Meta AI, CC-BY-SA-4.0) — parallel evaluation text, via exercise 03, for grading
+  language identification and measuring tokenizer fertility. Not part of the training corpus.
+- **Our own Session 2 tokenizer**, `src/exercises/02-tokenization/web/tokenizer.json`, produced in
+  this repository.
+
+Quality-filter thresholds are Gopher's (arXiv:2112.11446) and C4's (arXiv:1910.10683). The
+deduplication preset is FineWeb's.

@@ -5,9 +5,10 @@
 **Raw data is not training data.** Eight named stages stand between the two. This exercise runs all
 eight over three real corpora, counts what each one removes, and publishes the result.
 
-> **Status: the spine.** Corpora load, all eight stages fold, the manifest proves determinism, and
-> the bundle is written under budget. Seven stages are honest counting pass-throughs today and say
-> so in their own output — they arrive one at a time, each with its tests and its notebook section.
+**[Read the published page →](https://llm-pretraining-demos.vercel.app/04-data-cleaning-dedup/)**
+
+All eight stages are real. `Extract` is the one permanent pass-through: every corpus here ships
+already-extracted text, so claiming a yield for it would be inventing one.
 
 ## What
 
@@ -54,9 +55,13 @@ uv sync --all-packages
 
 uv run python -m datacleaning.fetch --profile lite   # reachability check, seconds
 uv run python -m datacleaning --profile lite         # smoke run, ~2 minutes
-uv run python -m datacleaning --profile full         # the published corpus, ~30-60 minutes
+uv run python -m datacleaning --profile full         # the published corpus
 
 uv run pytest src/exercises/04-data-cleaning-dedup   # the suite
+uv run playwright install chromium                   # one-time, for the browser tests
+uv run pytest src/exercises/04-data-cleaning-dedup -m integration
+
+cd src/exercises/04-data-cleaning-dedup/web && python3 -m http.server 8000   # preview locally
 ```
 
 `lite` is deliberately *below* the assignment's 10M-token floor — it exists to surface bugs in

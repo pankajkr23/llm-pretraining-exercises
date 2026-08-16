@@ -12,6 +12,39 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 04 is complete and published** at `/04-data-cleaning-dedup/`. All eight of the
+  session's cleaning stages run over three real corpora, and the page turns the result into
+  something a reader can operate rather than read: toggle each cleaning operation and watch the
+  content hash collapse two documents into one, drag the deduplication threshold until a real pair
+  from the corpus falls out of the candidate set, and turn the PII dial up until it masks a city as
+  a person.
+
+  **PII scrubbing** is two layers that are not the same kind of thing. Emails, phones, IPs, MACs,
+  Aadhaar and PAN numbers have shapes, so a regex finds them and each becomes a *typed* placeholder
+  — `[EMAIL]`, not deletion, so the sentence keeps its shape. Names have no shape, so the name layer
+  is a declared gazetteer that publishes **no precision or recall**: there is no gold set for
+  Maithili or Dogri names, and inventing one would be the same error as running a fake classifier.
+
+  **The false positives are published as the lesson.** `10737418240` is ten gibibytes and is
+  correctly left alone, because a phone number needs structure rather than merely digits.
+  `2.6.21.7` is a Linux kernel version and **is** masked as an address — every octet is a legal
+  byte, so no pattern can separate them. Only context could, and a regex has none.
+
+- **Two publication invariants**, each scanning every byte of `web/` and the notebook: no personal
+  information in any published artifact, and no corpus text beyond a bounded window of 12 excerpts
+  of 300 characters. Both have twins that plant a leak and confirm the scan names it.
+
+- **A JS↔Python agreement test.** The page duplicates six rules from the pipeline because it
+  recomputes them live as a reader drags a slider. The test rewrites `chapters.js` into a harness
+  beside itself and diffs both implementations over shared fixtures — and caught a real divergence
+  on its first run (see *Fixed*).
+
+- **A browser suite** that asserts what a reader sees rather than what parses: every chapter
+  renders, no headline reads as `0`, the page never scrolls sideways at 1500/900/390px, no label is
+  clipped, and — the ones that matter — the dedup sliders, the cleaning toggles, the PII dial and
+  the strategy switch all actually change what is on screen. A control that renders but does
+  nothing is identical in a screenshot.
+
 - **Quality filtering, deduplication and decontamination are real.** Seven of exercise 04's eight
   stages now do work; only PII scrubbing remains a pass-through.
 
@@ -101,6 +134,25 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   in the assignment is a **model** rather than a dataset, and what may and may not be published.
 
 ### Fixed
+
+- **The page and the pipeline cleaned text differently.** `chapters.js` protects the Indic joiners
+  during stripping by swapping them for sentinels — and its sentinels were control characters,
+  which live *inside* the noise class the same pass removes. So the sentinel was stripped along
+  with the noise and a joiner came back as a stray `B`. Python used private-use codepoints and was
+  correct; the JS mirror was not. Caught by the agreement test on its first run, which is the entire
+  reason that test exists.
+
+- **The page scrolled sideways by 312px.** Two causes, both invisible to `node --check`. Tooltips
+  were absolutely positioned and contributed their full width to the document's scroll width *even
+  while invisible*, so one term near the right edge pushed the whole page; they are now
+  `position: fixed`, placed by script and clamped to the viewport. And a wide table escaped its own
+  `overflow-x: auto` container, because a grid item defaults to `min-width: auto` and refuses to
+  shrink below its content — the overflow rule was correct and never got the chance to apply.
+
+- **Two test files collided with exercise 03's.** `test_invariants.py` and `test_render.py` already
+  existed there, and pytest cannot import two test modules sharing a basename without package
+  markers, so the whole suite failed at collection while each file passed alone. Renamed to
+  `test_publication_invariants.py` and `test_page_render.py`.
 
 - **A quality rule that looked language-neutral was deleting Hindi.** `mean_word_length` in
   `[3, 10]` reads as a fact about words, but Python's `\w` and `str.isalnum` both skip Devanagari

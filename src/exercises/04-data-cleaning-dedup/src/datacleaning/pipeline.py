@@ -28,6 +28,7 @@ from datacleaning import (
     langid,
     manifest,
     normalize,
+    pii,
     quality,
     tokens,
 )
@@ -94,6 +95,7 @@ IMPLEMENTED: dict[str, StageFn] = {
     "langid": langid.langid_stage,
     "quality": quality.quality_stage,
     "dedup": dedup.dedup_stage,
+    "pii": pii.pii_stage,
     "decontaminate": decontaminate.decontaminate_stage,
 }
 
