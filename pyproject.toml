@@ -24,6 +24,13 @@ addopts = "-q"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+# Session notebooks are teaching documents, and ruff lints .ipynb by default. Notebook idioms are
+# deliberate there — imports arrive with the concept that needs them rather than all in cell one,
+# and a plotting cell ends `plt.tight_layout(); plt.show()` — so E402/E401/E702 fire on exactly the
+# choices that make a notebook readable. They are held to a different standard instead: every code
+# cell is executed top to bottom before commit, and `tests/test_notebook.py` checks the structural
+# rules that matter (imports the package, no committed outputs, covers every stage).
+extend-exclude = ["notebooks/"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "N", "UP", "B", "SIM", "C4", "D"]

@@ -12,14 +12,64 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
-- **Exercise `04-data-cleaning-dedup` is scaffolded** — workspace member, `datacleaning` package
-  with the exercise's one `config.py` dataclass, and a `tests/` wiring guard that fails if the
-  member isn't installed or the package's idea of its own root drifts from the folder on disk.
-  No pipeline yet: the brief is pending, and `BRIEF.md`/`README.md` say so rather than describing
-  work that doesn't exist. The exercise is deliberately absent from the root README's table until
-  it has something to show.
+- **Every session now ships a Colab notebook, and `AGENTS.md` says so.** `notebooks/SNN-slug.ipynb`,
+  which imports the exercise's package rather than re-implementing it, defaults to a profile that
+  finishes in under ten minutes on a free tier, and carries no committed outputs. The import rule is
+  what stops a notebook drifting from the code it demonstrates; the outputs rule is what stops a
+  data exercise baking real PII into a tracked file. Both are enforced by tests, not remembered.
+
+- **Exercise `04-data-cleaning-dedup` has a runnable pipeline spine.** `uv run python -m datacleaning`
+  reads three corpora, folds all eight of the session's stages over them, stamps a manifest and
+  writes a budgeted bundle. Seven stages are counting pass-throughs today and *say so* in their own
+  output (`real: false`), so a stage nobody has written cannot be mistaken for a stage that found
+  nothing. Landing the skeleton first means the pipeline produces a valid, testable artifact from
+  the first commit and each later change replaces exactly one placeholder.
+
+- **`notebooks/S04-data-cleaning-dedup.ipynb`** walks the pipeline step by step, three layers deep
+  at every step: plain what-and-why, the runnable cell, then the arithmetic and caveats. Every code
+  cell was executed top to bottom before commit — which is how the Colab-detection bug below was
+  found.
+
+### Changed
+
+- **Token counts are counted, never estimated from a fertility ratio.** The first draft of this
+  exercise sized its corpus by multiplying words by `2.87 tokens/word`. That number is real —
+  exercise 03 measured it — but using *any* single ratio is wrong, because fertility is a property
+  of a **tokenizer**, not of a corpus: across the five tokenizers exercise 03 measured, Manipuri
+  swings **7.6×** (2.15 to 16.50 tokens/word) and Telugu 5.3×. Quoting one ratio silently smuggles a
+  tokenizer choice into what reads as a fact about the data. The pipeline now tokenizes with **our
+  own Session 2 vocabulary** and publishes the cross-tokenizer spread as a finding.
+
+- **A token count that is mostly `[UNK]` is no longer publishable as a number.** Our 10k vocabulary
+  was trained on English, Hindi, Telugu and Maithili, so Bengali script comes back **82–84% `[UNK]`**
+  — measured against FLORES-200. Rather than print a plausible-looking count beside that, `Figure`
+  now returns `value: null` with provenance `unknown` and the reason in `source`. This is
+  `AGENTS.md`'s "report the number the metric ignores", made structural rather than remembered.
+
+  The gate changed the corpus, not just the reporting: an earlier draft chose Sangraha's **Assamese**
+  shard for its narrative (the session names Sangraha as the corpus that got zero deduplication).
+  At 82% `[UNK]` that corpus cannot be measured with our tokenizer, so the Indic corpus is now
+  Sangraha's **Devanagari and Telugu** shards — the ones our tokenizer can actually read — and
+  Assamese and Manipuri are kept as a deliberate out-of-vocabulary probe, excluded from the token
+  budget and used only to produce the 84% figure.
+
+- **The exercise's `BRIEF.md` and `README.md` describe real work** rather than saying the brief is
+  pending. `BRIEF.md` carries the assignment verbatim plus a decision record: why the answer to
+  "how many strategies" is **8** when the session names two *different* eights, why the example link
+  in the assignment is a **model** rather than a dataset, and what may and may not be published.
 
 ### Fixed
+
+- **The notebook's Colab check crashed off Colab.** `importlib.util.find_spec('google.colab')`
+  *raises* `ModuleNotFoundError` when the parent `google` package is absent instead of returning
+  `None`, so cell 1 failed for every local reader. Caught by executing the notebook rather than
+  reading it, and now held down by a test that strips comments before asserting — the first version
+  of that test matched the comment explaining the bug and failed against its own fix.
+
+- **The pipeline re-tokenized the whole corpus once per stage.** A nine-stage run counted tokens
+  nine times over, measured at 316s of CPU for a 70s smoke run. Token counts are now memoized on the
+  text's hash — keyed on content rather than a document id, so editing a document correctly
+  invalidates it, which matters because every cleaning stage edits text. **316s → 23s.**
 
 - **Re-fetching a corpus snapshot wrote it where nothing would find it.** Splitting the corpus into
   `corpus/v1/` and `corpus/v2/` moved the reader but not the builder, so

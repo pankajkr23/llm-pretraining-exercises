@@ -1,0 +1,774 @@
+{
+  "run": {
+    "run_id": "s04-lite-89d359371474",
+    "profile": "lite",
+    "generated": "2026-08-16T06:04:20Z",
+    "config_hash": "sha256:a0cc3161139b944c3b95d59a7f04419dbfefeabbd46d96fd539488a1e75719b1",
+    "script_hash": "sha256:fc070cb7f0bb533d3f987467dc617c2c7d70f43d482f15324f40d08632843eb3",
+    "content_hash": "sha256:18e30154494ee5073d39b0a1f6cf0c5daa8b20ded3f62b3bb2047749a698908d",
+    "tokenizer": "ours/s02-bpe-10000"
+  },
+  "strategies": [
+    {
+      "n": "1",
+      "id": "extract",
+      "name": "Extract",
+      "summary": "Session 3's topic — Sangraha and the rest ship extracted text."
+    },
+    {
+      "n": "2",
+      "id": "normalize",
+      "name": "Normalize",
+      "summary": "Unicode, invisibles, entities, whitespace — joiners kept."
+    },
+    {
+      "n": "2b",
+      "id": "formats",
+      "name": "Format discipline",
+      "summary": "Ghost tags are created by rendering, not inherited."
+    },
+    {
+      "n": "3",
+      "id": "langid",
+      "name": "Language ID",
+      "summary": "Detect the language; never trust the folder it came from."
+    },
+    {
+      "n": "4",
+      "id": "quality",
+      "name": "Quality filter",
+      "summary": "Nine Gopher/C4 rules at the session's thresholds."
+    },
+    {
+      "n": "5",
+      "id": "dedup",
+      "name": "Deduplicate",
+      "summary": "Exact hashes, then MinHash/LSH for near-duplicates."
+    },
+    {
+      "n": "6",
+      "id": "pii",
+      "name": "PII scrub",
+      "summary": "Structured identifiers by regex; names by a declared stand-in."
+    },
+    {
+      "n": "7",
+      "id": "decontaminate",
+      "name": "Decontaminate",
+      "summary": "Canaries and n-grams against held-out evaluation."
+    },
+    {
+      "n": "8",
+      "id": "manifest",
+      "name": "Manifest",
+      "summary": "Provenance, hashes, and a run id that proves determinism."
+    }
+  ],
+  "corpora": [
+    {
+      "key": "reasoning",
+      "title": "Reasoning traces",
+      "repo_id": "open-thoughts/OpenThoughts-114k",
+      "licence": "Apache-2.0",
+      "licence_note": "",
+      "attribution": "OpenThoughts (open-thoughts/OpenThoughts-114k)",
+      "why": "Format discipline. Conversations are stored as structured role objects, not rendered strings — so ghost tags are not found here, they are created by naive rendering.",
+      "counts_toward_budget": true
+    },
+    {
+      "key": "indic",
+      "title": "Indic web crawl",
+      "repo_id": "ai4bharat/sangraha",
+      "licence": "CC-BY-4.0",
+      "licence_note": "",
+      "attribution": "AI4Bharat, Sangraha / IndicLLMSuite (arXiv:2403.06350)",
+      "why": "Deduplication on a corpus that never had it, joiner preservation in Brahmic scripts, and language ID among eleven languages that share one script.",
+      "counts_toward_budget": true
+    },
+    {
+      "key": "qa",
+      "title": "Technical Q&A",
+      "repo_id": "HuggingFaceH4/stack-exchange-preferences",
+      "licence": "CC-BY-SA-4.0",
+      "licence_note": "",
+      "attribution": "Stack Exchange contributors, via HuggingFaceH4 (CC-BY-SA-4.0)",
+      "why": "PII that is really there, alongside false positives that are really wrong; and raw HTML the Gopher/C4 heuristics can actually cut.",
+      "counts_toward_budget": true
+    },
+    {
+      "key": "oov",
+      "title": "Out-of-vocabulary probe",
+      "repo_id": "ai4bharat/sangraha",
+      "licence": "CC-BY-4.0",
+      "licence_note": "",
+      "attribution": "AI4Bharat, Sangraha / IndicLLMSuite (arXiv:2403.06350)",
+      "why": "What our 10k vocabulary cannot read, measured rather than asserted.",
+      "counts_toward_budget": false
+    }
+  ],
+  "selections": [
+    {
+      "corpus": "reasoning",
+      "shards_read": [
+        {
+          "path": "data/train-00005-of-00006.parquet",
+          "row_groups_read": 1,
+          "row_groups_total": 19
+        }
+      ],
+      "docs": 1000,
+      "tokens": {
+        "value": 4500303,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (0.57% [UNK])"
+      },
+      "selection_rule": "row groups in file order until the token budget is met — no sampling, no seed"
+    },
+    {
+      "corpus": "indic",
+      "shards_read": [
+        {
+          "path": "verified/mai/data-0.parquet",
+          "row_groups_read": 1,
+          "row_groups_total": 21
+        },
+        {
+          "path": "verified/brx/data-0.parquet",
+          "row_groups_read": 2,
+          "row_groups_total": 3
+        },
+        {
+          "path": "verified/doi/data-0.parquet",
+          "row_groups_read": 1,
+          "row_groups_total": 1
+        }
+      ],
+      "docs": 3054,
+      "tokens": {
+        "value": 2992131,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (0.28% [UNK])"
+      },
+      "selection_rule": "row groups in file order until the token budget is met — no sampling, no seed"
+    },
+    {
+      "corpus": "qa",
+      "shards_read": [
+        {
+          "path": "data/serverfault.com/train-00001-of-00005.parquet",
+          "row_groups_read": 3,
+          "row_groups_total": 24
+        }
+      ],
+      "docs": 3000,
+      "tokens": {
+        "value": 3730557,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (0.04% [UNK])"
+      },
+      "selection_rule": "row groups in file order until the token budget is met — no sampling, no seed"
+    },
+    {
+      "corpus": "oov",
+      "shards_read": [
+        {
+          "path": "verified/kas/data-0.parquet",
+          "row_groups_read": 1,
+          "row_groups_total": 1
+        }
+      ],
+      "docs": 297,
+      "tokens": {
+        "value": null,
+        "unit": "tokens",
+        "provenance": "unknown",
+        "source": "ours/s02-bpe-10000 cannot read this script: 65.6% of tokens are [UNK]"
+      },
+      "selection_rule": "row groups in file order until the token budget is met — no sampling, no seed"
+    }
+  ],
+  "stages": [
+    {
+      "n": "1",
+      "id": "extract",
+      "name": "Extract",
+      "real": false,
+      "docs_in": 7351,
+      "docs_out": 7351,
+      "tokens_in": {
+        "value": 11960936,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      },
+      "tokens_out": {
+        "value": 11960936,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      },
+      "rejections": {},
+      "detail": {},
+      "runtime_s": 0.002,
+      "note": "Not implemented yet — counts only, changes nothing."
+    },
+    {
+      "n": "2",
+      "id": "normalize",
+      "name": "Normalize",
+      "real": false,
+      "docs_in": 7351,
+      "docs_out": 7351,
+      "tokens_in": {
+        "value": 11960936,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      },
+      "tokens_out": {
+        "value": 11960936,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      },
+      "rejections": {},
+      "detail": {},
+      "runtime_s": 0.002,
+      "note": "Not implemented yet — counts only, changes nothing."
+    },
+    {
+      "n": "2b",
+      "id": "formats",
+      "name": "Format discipline",
+      "real": false,
+      "docs_in": 7351,
+      "docs_out": 7351,
+      "tokens_in": {
+        "value": 11960936,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      },
+      "tokens_out": {
+        "value": 11960936,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      },
+      "rejections": {},
+      "detail": {},
+      "runtime_s": 0.002,
+      "note": "Not implemented yet — counts only, changes nothing."
+    },
+    {
+      "n": "3",
+      "id": "langid",
+      "name": "Language ID",
+      "real": false,
+      "docs_in": 7351,
+      "docs_out": 7351,
+      "tokens_in": {
+        "value": 11960936,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      },
+      "tokens_out": {
+        "value": 11960936,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      },
+      "rejections": {},
+      "detail": {},
+      "runtime_s": 0.002,
+      "note": "Not implemented yet — counts only, changes nothing."
+    },
+    {
+      "n": "4",
+      "id": "quality",
+      "name": "Quality filter",
+      "real": false,
+      "docs_in": 7351,
+      "docs_out": 7351,
+      "tokens_in": {
+        "value": 11960936,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      },
+      "tokens_out": {
+        "value": 11960936,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      },
+      "rejections": {},
+      "detail": {},
+      "runtime_s": 0.002,
+      "note": "Not implemented yet — counts only, changes nothing."
+    },
+    {
+      "n": "5",
+      "id": "dedup",
+      "name": "Deduplicate",
+      "real": false,
+      "docs_in": 7351,
+      "docs_out": 7351,
+      "tokens_in": {
+        "value": 11960936,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      },
+      "tokens_out": {
+        "value": 11960936,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      },
+      "rejections": {},
+      "detail": {},
+      "runtime_s": 0.002,
+      "note": "Not implemented yet — counts only, changes nothing."
+    },
+    {
+      "n": "6",
+      "id": "pii",
+      "name": "PII scrub",
+      "real": false,
+      "docs_in": 7351,
+      "docs_out": 7351,
+      "tokens_in": {
+        "value": 11960936,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      },
+      "tokens_out": {
+        "value": 11960936,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      },
+      "rejections": {},
+      "detail": {},
+      "runtime_s": 0.002,
+      "note": "Not implemented yet — counts only, changes nothing."
+    },
+    {
+      "n": "7",
+      "id": "decontaminate",
+      "name": "Decontaminate",
+      "real": false,
+      "docs_in": 7351,
+      "docs_out": 7351,
+      "tokens_in": {
+        "value": 11960936,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      },
+      "tokens_out": {
+        "value": 11960936,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      },
+      "rejections": {},
+      "detail": {},
+      "runtime_s": 0.002,
+      "note": "Not implemented yet — counts only, changes nothing."
+    },
+    {
+      "n": "8",
+      "id": "manifest",
+      "name": "Manifest",
+      "real": true,
+      "docs_in": 7351,
+      "docs_out": 7351,
+      "tokens_in": {
+        "value": 11960936,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      },
+      "tokens_out": {
+        "value": 11960936,
+        "unit": "tokens",
+        "provenance": "measured",
+        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      },
+      "rejections": {},
+      "detail": {
+        "run_id": "s04-lite-89d359371474",
+        "content_hash": "sha256:18e30154494ee5073d39b0a1f6cf0c5daa8b20ded3f62b3bb2047749a698908d",
+        "script_hash": "sha256:fc070cb7f0bb533d3f987467dc617c2c7d70f43d482f15324f40d08632843eb3",
+        "config_hash": "sha256:a0cc3161139b944c3b95d59a7f04419dbfefeabbd46d96fd539488a1e75719b1"
+      },
+      "runtime_s": 0.0,
+      "note": "Provenance stamped; the run id is derived from content, not the clock."
+    }
+  ],
+  "yield": {
+    "labels": [
+      "Extract",
+      "Normalize",
+      "Format discipline",
+      "Language ID",
+      "Quality filter",
+      "Deduplicate",
+      "PII scrub",
+      "Decontaminate",
+      "Manifest"
+    ],
+    "docs": [
+      7351,
+      7351,
+      7351,
+      7351,
+      7351,
+      7351,
+      7351,
+      7351,
+      7351
+    ],
+    "tokens": [
+      11960936,
+      11960936,
+      11960936,
+      11960936,
+      11960936,
+      11960936,
+      11960936,
+      11960936,
+      11960936
+    ],
+    "share": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "real": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ],
+    "session_illustrative": [
+      100,
+      92,
+      88,
+      61,
+      44,
+      43,
+      42,
+      42
+    ],
+    "note": "The session's descent is illustrative and covers eight stages; ours is measured and covers nine rows, because format discipline is counted separately."
+  },
+  "tokenizer_spread": {
+    "tokenizers": [
+      "ours",
+      "tiktoken/cl100k_base",
+      "tiktoken/o200k_base",
+      "hf/google/gemma-4-31b",
+      "hf/sarvamai/sarvam-105b",
+      "hf/xlm-roberta-base"
+    ],
+    "rows": {
+      "en": {
+        "tiktoken/cl100k_base": 1.3462,
+        "tiktoken/o200k_base": 1.3241,
+        "hf/google/gemma-4-31b": 1.3777,
+        "hf/sarvamai/sarvam-105b": 1.3777,
+        "hf/xlm-roberta-base": 1.4996,
+        "ours": 2.0366
+      },
+      "hi": {
+        "tiktoken/cl100k_base": 5.3591,
+        "tiktoken/o200k_base": 1.757,
+        "hf/google/gemma-4-31b": 1.5194,
+        "hf/sarvamai/sarvam-105b": 1.5194,
+        "hf/xlm-roberta-base": 1.5625,
+        "ours": 2.1114
+      },
+      "mai": {
+        "tiktoken/cl100k_base": 6.3541,
+        "tiktoken/o200k_base": 2.3085,
+        "hf/google/gemma-4-31b": 2.1148,
+        "hf/sarvamai/sarvam-105b": 2.1148,
+        "hf/xlm-roberta-base": 2.197,
+        "ours": 2.5155
+      },
+      "te": {
+        "tiktoken/cl100k_base": 13.6533,
+        "tiktoken/o200k_base": 3.3008,
+        "hf/google/gemma-4-31b": 3.0986,
+        "hf/sarvamai/sarvam-105b": 2.6035,
+        "hf/xlm-roberta-base": 2.5737,
+        "ours": 3.7465
+      },
+      "as": {
+        "tiktoken/cl100k_base": 9.3314,
+        "tiktoken/o200k_base": 2.9736,
+        "hf/google/gemma-4-31b": 2.8693,
+        "hf/sarvamai/sarvam-105b": 2.8693,
+        "hf/xlm-roberta-base": 3.1199,
+        "ours": 6.6104
+      },
+      "mni": {
+        "tiktoken/cl100k_base": 16.4958,
+        "tiktoken/o200k_base": 16.4958,
+        "hf/google/gemma-4-31b": 12.1773,
+        "hf/sarvamai/sarvam-105b": 2.1866,
+        "hf/xlm-roberta-base": 2.1469,
+        "ours": 7.1663
+      }
+    },
+    "spread": {
+      "en": 1.54,
+      "hi": 3.53,
+      "mai": 3.0,
+      "te": 5.3,
+      "as": 3.25,
+      "mni": 7.68
+    },
+    "unk": {
+      "en": 0.0001,
+      "hi": 0.0003,
+      "mai": 0.0003,
+      "te": 0.003,
+      "as": 0.8222,
+      "mni": 0.8399
+    },
+    "provenance": "measured for ours; inherited from exercise 03 for the references",
+    "source": "references: 03-data-collection-framework/records/fertility.json @ IN22-Gen; ours: measured here @ FLORES-200 dev"
+  },
+  "unreadable": {
+    "mni": 0.839850157548199,
+    "bn": 0.8278450789988142,
+    "as": 0.8222408680634755
+  },
+  "manifest": {
+    "run_id": "s04-lite-89d359371474",
+    "generated": "2026-08-16T06:04:20Z",
+    "profile": {
+      "name": "lite",
+      "summary": "A smoke run of roughly 8M tokens. Deliberately below the assignment's 10M floor — it exists to surface bugs in minutes, not to be the published corpus."
+    },
+    "config_hash": "sha256:a0cc3161139b944c3b95d59a7f04419dbfefeabbd46d96fd539488a1e75719b1",
+    "script_hash": "sha256:fc070cb7f0bb533d3f987467dc617c2c7d70f43d482f15324f40d08632843eb3",
+    "content_hash": "sha256:18e30154494ee5073d39b0a1f6cf0c5daa8b20ded3f62b3bb2047749a698908d",
+    "tokenizer": "ours/s02-bpe-10000",
+    "tokens": {
+      "value": 11960936,
+      "unit": "tokens",
+      "provenance": "measured",
+      "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+    },
+    "unk_share": 0.04344,
+    "documents": 7351,
+    "languages_claimed": {
+      "en": 4000,
+      "brx": 2000,
+      "mai": 1000,
+      "kas": 297,
+      "doi": 54
+    },
+    "selections": [
+      {
+        "corpus": "reasoning",
+        "shards_read": [
+          {
+            "path": "data/train-00005-of-00006.parquet",
+            "row_groups_read": 1,
+            "row_groups_total": 19
+          }
+        ],
+        "docs": 1000,
+        "tokens": {
+          "value": 4500303,
+          "unit": "tokens",
+          "provenance": "measured",
+          "source": "counted with ours/s02-bpe-10000 (0.57% [UNK])"
+        },
+        "selection_rule": "row groups in file order until the token budget is met — no sampling, no seed"
+      },
+      {
+        "corpus": "indic",
+        "shards_read": [
+          {
+            "path": "verified/mai/data-0.parquet",
+            "row_groups_read": 1,
+            "row_groups_total": 21
+          },
+          {
+            "path": "verified/brx/data-0.parquet",
+            "row_groups_read": 2,
+            "row_groups_total": 3
+          },
+          {
+            "path": "verified/doi/data-0.parquet",
+            "row_groups_read": 1,
+            "row_groups_total": 1
+          }
+        ],
+        "docs": 3054,
+        "tokens": {
+          "value": 2992131,
+          "unit": "tokens",
+          "provenance": "measured",
+          "source": "counted with ours/s02-bpe-10000 (0.28% [UNK])"
+        },
+        "selection_rule": "row groups in file order until the token budget is met — no sampling, no seed"
+      },
+      {
+        "corpus": "qa",
+        "shards_read": [
+          {
+            "path": "data/serverfault.com/train-00001-of-00005.parquet",
+            "row_groups_read": 3,
+            "row_groups_total": 24
+          }
+        ],
+        "docs": 3000,
+        "tokens": {
+          "value": 3730557,
+          "unit": "tokens",
+          "provenance": "measured",
+          "source": "counted with ours/s02-bpe-10000 (0.04% [UNK])"
+        },
+        "selection_rule": "row groups in file order until the token budget is met — no sampling, no seed"
+      },
+      {
+        "corpus": "oov",
+        "shards_read": [
+          {
+            "path": "verified/kas/data-0.parquet",
+            "row_groups_read": 1,
+            "row_groups_total": 1
+          }
+        ],
+        "docs": 297,
+        "tokens": {
+          "value": null,
+          "unit": "tokens",
+          "provenance": "unknown",
+          "source": "ours/s02-bpe-10000 cannot read this script: 65.6% of tokens are [UNK]"
+        },
+        "selection_rule": "row groups in file order until the token budget is met — no sampling, no seed"
+      }
+    ],
+    "sources": [
+      {
+        "corpus": "reasoning",
+        "repo_id": "open-thoughts/OpenThoughts-114k",
+        "licence": "Apache-2.0",
+        "licence_note": "",
+        "attribution": "OpenThoughts (open-thoughts/OpenThoughts-114k)",
+        "counts_toward_budget": true,
+        "why": "Format discipline. Conversations are stored as structured role objects, not rendered strings — so ghost tags are not found here, they are created by naive rendering.",
+        "shards": [
+          {
+            "path": "data/train-00005-of-00006.parquet",
+            "size_bytes": 152367227,
+            "lang": "en",
+            "note": ""
+          }
+        ]
+      },
+      {
+        "corpus": "indic",
+        "repo_id": "ai4bharat/sangraha",
+        "licence": "CC-BY-4.0",
+        "licence_note": "",
+        "attribution": "AI4Bharat, Sangraha / IndicLLMSuite (arXiv:2403.06350)",
+        "counts_toward_budget": true,
+        "why": "Deduplication on a corpus that never had it, joiner preservation in Brahmic scripts, and language ID among eleven languages that share one script.",
+        "shards": [
+          {
+            "path": "verified/mai/data-0.parquet",
+            "size_bytes": 46936024,
+            "lang": "mai",
+            "note": ""
+          },
+          {
+            "path": "verified/brx/data-0.parquet",
+            "size_bytes": 4517574,
+            "lang": "brx",
+            "note": ""
+          },
+          {
+            "path": "verified/doi/data-0.parquet",
+            "size_bytes": 106101,
+            "lang": "doi",
+            "note": "row 0 is plain English"
+          }
+        ]
+      },
+      {
+        "corpus": "qa",
+        "repo_id": "HuggingFaceH4/stack-exchange-preferences",
+        "licence": "CC-BY-SA-4.0",
+        "licence_note": "",
+        "attribution": "Stack Exchange contributors, via HuggingFaceH4 (CC-BY-SA-4.0)",
+        "counts_toward_budget": true,
+        "why": "PII that is really there, alongside false positives that are really wrong; and raw HTML the Gopher/C4 heuristics can actually cut.",
+        "shards": [
+          {
+            "path": "data/serverfault.com/train-00001-of-00005.parquet",
+            "size_bytes": 36229431,
+            "lang": "en",
+            "note": ""
+          }
+        ]
+      },
+      {
+        "corpus": "oov",
+        "repo_id": "ai4bharat/sangraha",
+        "licence": "CC-BY-4.0",
+        "licence_note": "",
+        "attribution": "AI4Bharat, Sangraha / IndicLLMSuite (arXiv:2403.06350)",
+        "counts_toward_budget": false,
+        "why": "What our 10k vocabulary cannot read, measured rather than asserted.",
+        "shards": [
+          {
+            "path": "verified/kas/data-0.parquet",
+            "size_bytes": 793398,
+            "lang": "kas",
+            "note": "legacy-font mojibake"
+          }
+        ]
+      }
+    ],
+    "stages": [
+      "extract",
+      "normalize",
+      "formats",
+      "langid",
+      "quality",
+      "dedup",
+      "pii",
+      "decontaminate"
+    ],
+    "determinism": {
+      "rule": "run_id is derived from config, code and content — never from the clock",
+      "verify": "uv run python -m datacleaning --profile lite twice; run_id must not change"
+    }
+  }
+}

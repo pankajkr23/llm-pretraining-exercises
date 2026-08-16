@@ -20,6 +20,26 @@ folder under `src/exercises/`.
 - **Exercise folders:** `src/exercises/NN-slug/` — numeric, **zero-padded**, slugged (e.g. `01-introductions`). Zero-pad so lexical sort = numeric order.
 - **Identical skeleton per exercise:** `BRIEF.md` (assignment) · `README.md` (what/how) · `pyproject.toml` (member) · code in one place (`src/` or `web/`) · `artifacts/` (gitignored outputs).
 - **Shared code:** deferred — add `src/common/` (its own member) only when a 2nd exercise needs to reuse something. No premature abstraction.
+- **Notebooks:** top-level `notebooks/`, one per session — see below.
+
+## Every session ships a Colab notebook
+
+`notebooks/SNN-slug.ipynb`, zero-padded session id first (`S04-data-cleaning-dedup.ipynb`), so
+lexical sort = session order. **A session's work is not done until its notebook runs the shipped
+code end to end.** Four rules keep it from rotting:
+
+- **It imports the exercise's package; it never re-implements it.** A notebook that copies logic
+  drifts from the pipeline within a week and then teaches the wrong thing. Importing means it
+  cannot disagree with what ships.
+- **Colab-first.** Cell one clones the repo and installs the exercise; the badge at the top opens
+  it. It must run on a free tier with no local setup, because that is where it gets used.
+- **A `lite` profile finishes in under ten minutes**, with the full run one variable away. A
+  notebook nobody waits for is a notebook nobody runs.
+- **Outputs are stripped before commit.** Committed outputs bloat diffs, and on any exercise that
+  touches real data they can bake PII or licensed text into a tracked file.
+
+Write it to be read at two depths: plain what-and-why before each step, the arithmetic and caveats
+after it. It is the artifact people learn from and teach from, not a run log.
 
 ## Three data concerns — keep them physically separate
 
