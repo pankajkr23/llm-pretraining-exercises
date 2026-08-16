@@ -135,6 +135,36 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The published page's sidebar lost the first word of every entry.** `buildRail` stripped a
+  leading `\S+\s` from the heading's `textContent` to drop the chapter number — but `textContent`
+  runs the number and title together as `1How many…`, so it ate the first word and the sidebar read
+  *"many strategies are there?"*. The title is now recorded on the section at build time, so the
+  rail never parses a heading back apart. The rail was also unstyled: bare `<a>` elements render as
+  raw links in the gutter, because the shared stylesheet styles `.rail-list` and `.rail-link`.
+
+- **The pinned sidebar hung off the top edge** with a screen of empty column beneath it. The shared
+  stylesheet already centres it — `.rail-inner { margin-block: auto }`, with a comment explaining
+  that hanging the list off the top leaves the reader's eye travelling to a corner — but the markup
+  never created that wrapper, so the rule had nothing to apply to. The CSS was right; the markup was
+  not carrying it.
+
+- **Markup leaked into the rendered page in three places.** `rich()` handled `**bold**` and not
+  `*italic*`, so a literal `*proves*` shipped. Its `[[term|key]]` pattern used a negated class that
+  stops at the first `]`, so the glossary entry for `[UNK]` — written `[[[UNK]|unk]]` — appeared
+  verbatim. And table headers and cells bypassed `rich()` entirely, putting `[[Jaccard|jaccard]]`
+  into a table head.
+
+- **The browser suite was testing the wrong artifact.** It served `web/` directly, and the font
+  tokens live only in the site-root stylesheet — the per-exercise copy defines neither `--sans` nor
+  `--display`. Every render test therefore ran against a page in a serif fallback that no reader
+  will ever see, while production was correct all along. The harness now assembles and serves the
+  real site, building it when `public/` is absent, and a test asserts the shared sans stack applied.
+
+  Four guards came with the fix, each watched to fail: rail labels must equal their chapter titles,
+  the rail must use the shared classes, no unrendered markup may reach the reader, and the type
+  stack must be the shared one. Every previous test in that file asked whether an element *existed*
+  rather than whether it said the right thing — which is exactly how a truncated label ships.
+
 - **The page and the pipeline cleaned text differently.** `chapters.js` protects the Indic joiners
   during stripping by swapping them for sentinels — and its sentinels were control characters,
   which live *inside* the noise class the same pass removes. So the sentinel was stripped along
