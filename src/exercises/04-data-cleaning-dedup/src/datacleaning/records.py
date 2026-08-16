@@ -78,6 +78,15 @@ class Document:
     claimed_lang: str
     source_type: str = ""
     raw_words: int = 0
+    turns: int = 1
+    """Conversation turns, recorded at load time because cleaning destroys the evidence.
+
+    Stage 2 collapses every whitespace run to a single space, which erases the blank lines that
+    separated one speaker's turn from the next. Stage 2b needs the turn count to price a rendering
+    template — overhead is one marker per turn — so it is carried on the document rather than
+    re-derived from text that no longer contains it. Recovering it downstream silently returned 1
+    for every conversation, which made a real cost look like nothing.
+    """
 
     def replace_text(self, text: str) -> "Document":
         """Return a copy carrying new text, leaving every other field alone."""
@@ -89,6 +98,7 @@ class Document:
             claimed_lang=self.claimed_lang,
             source_type=self.source_type,
             raw_words=self.raw_words,
+            turns=self.turns,
         )
 
 

@@ -12,6 +12,29 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 04's first three cleaning stages are real.** Normalization, format discipline and
+  language ID now do work instead of counting, and the notebook grows three sections to match.
+
+  **Stage 2 turns on two orderings, both easy to get backwards.** Unescaping runs *first*, because
+  a zero-width space that arrived as the literal text `&#x200B;` is five ASCII characters until it
+  is unescaped — strip invisibles first and it survives. Hashing runs *last*, because hashing raw
+  text gives two documents differing only in invisible junk two different hashes, so deduplication
+  keeps both and the cleaning stage silently defeats the deduplication stage. Both orderings are
+  pinned by tests that fail against the wrong order.
+
+  **Stage 2b reframes the ghost-tag lesson.** The raw data contains no role markers at all —
+  OpenThoughts stores conversations as structured `{from, value}` objects, so there is no
+  `<|im_start|>` in the parquet. **Ghost tags are created by the renderer, not inherited from the
+  corpus.** Rendering the same conversations four ways prices the choice: ChatML costs 18 extra
+  tokens per turn against a content-only baseline.
+
+  **Stage 3 tells eleven Devanagari languages apart**, where a script detector scores chance.
+  Character n-gram profiles are trained on FLORES-200 `dev` and graded on `devtest`, and accuracy
+  is published at one, two and five sentences per document rather than as a single figure — five
+  sentences of professionally-translated prose is a great deal of evidence, and the one-sentence
+  number is the honest one for short web text. `undecided` is a real answer: below 40 characters,
+  or in a script with no trained profile, the detector declines rather than guessing.
+
 - **Every session now ships a Colab notebook, and `AGENTS.md` says so.** `notebooks/SNN-slug.ipynb`,
   which imports the exercise's package rather than re-implementing it, defaults to a profile that
   finishes in under ten minutes on a free tier, and carries no committed outputs. The import rule is
@@ -59,6 +82,25 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   in the assignment is a **model** rather than a dataset, and what may and may not be published.
 
 ### Fixed
+
+- **Language ID published a limitation of our detector as a defect in the corpus.** Bodo is in the
+  corpus and absent from FLORES-200, so it has no trained profile and every Bodo document was
+  assigned to its nearest Devanagari neighbour — roughly **1,900 fabricated "mismatches"** in the
+  lite profile alone. Unprofiled languages are now counted separately as `unadjudicable` and named
+  for what they are: documents we can neither confirm nor contradict. A test asserts that an
+  unprofiled language never appears as a mismatch, and its twin asserts that a genuine mismatch
+  still does.
+
+- **Stage 2 destroyed the evidence stage 2b needed.** Whitespace collapse erases the blank lines
+  that separate conversation turns, so recovering turns downstream silently returned 1 for every
+  conversation — and the measured format overhead came out near zero, which read as good news. The
+  turn count is now captured on the `Document` at load time, before any cleaning touches it.
+
+- **The format-overhead share was true and misleading.** Under 1% on this corpus, because a
+  reasoning trace averages ~2,200 tokens per turn and a fixed marker cost vanishes into it. The
+  per-turn cost is now the headline, with a projection onto shorter turns: the same markers are
+  over half of a fifteen-token turn. Reporting only the share would have suggested format
+  discipline is a solved problem, when it is merely invisible at this document length.
 
 - **The notebook's Colab check crashed off Colab.** `importlib.util.find_spec('google.colab')`
   *raises* `ModuleNotFoundError` when the parent `google` package is absent instead of returning

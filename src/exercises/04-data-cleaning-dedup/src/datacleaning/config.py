@@ -102,6 +102,14 @@ class Config:
     conversation formats and none used the tokenizer's real ids.
     """
 
+    format_sample_docs: int = 500
+    """Conversations priced across the chat templates in stage 2b.
+
+    Sampled rather than exhaustive: rendering every conversation five ways would tokenize the
+    reasoning corpus five times over for a ratio that is stable after a few hundred documents. The
+    sample size ships in the bundle, so the figure is never mistaken for a full-corpus count.
+    """
+
     # ---- stage 3 · language id ---------------------------------------------------------------
     min_script_share: float = 0.60
     """Share of letters that must belong to one script before we name it."""

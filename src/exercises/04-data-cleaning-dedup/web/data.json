@@ -1,11 +1,11 @@
 {
   "run": {
-    "run_id": "s04-lite-89d359371474",
+    "run_id": "s04-lite-9084eb2957f2",
     "profile": "lite",
-    "generated": "2026-08-16T06:04:20Z",
-    "config_hash": "sha256:a0cc3161139b944c3b95d59a7f04419dbfefeabbd46d96fd539488a1e75719b1",
-    "script_hash": "sha256:fc070cb7f0bb533d3f987467dc617c2c7d70f43d482f15324f40d08632843eb3",
-    "content_hash": "sha256:18e30154494ee5073d39b0a1f6cf0c5daa8b20ded3f62b3bb2047749a698908d",
+    "generated": "2026-08-16T07:30:27Z",
+    "config_hash": "sha256:21c10468eeed12d4e7dad48859c54d5e17d2ba363963da2b95ea156d73e1629a",
+    "script_hash": "sha256:4914841b4d055e3d37624b482049745096e8d28939645e9b5bc38a6f08e18951",
+    "content_hash": "sha256:b19377fbac10d46cd7982226a61e54f0951c74195e6f63f11a4aa6dbb180a83d",
     "tokenizer": "ours/s02-bpe-10000"
   },
   "strategies": [
@@ -129,27 +129,32 @@
       "corpus": "indic",
       "shards_read": [
         {
-          "path": "verified/mai/data-0.parquet",
+          "path": "verified/tel/data-1.parquet",
           "row_groups_read": 1,
-          "row_groups_total": 21
+          "row_groups_total": 1
+        },
+        {
+          "path": "verified/mai/data-0.parquet",
+          "row_groups_read": 0,
+          "row_groups_total": 0
         },
         {
           "path": "verified/brx/data-0.parquet",
-          "row_groups_read": 2,
-          "row_groups_total": 3
+          "row_groups_read": 0,
+          "row_groups_total": 0
         },
         {
           "path": "verified/doi/data-0.parquet",
-          "row_groups_read": 1,
-          "row_groups_total": 1
+          "row_groups_read": 0,
+          "row_groups_total": 0
         }
       ],
-      "docs": 3054,
+      "docs": 158055,
       "tokens": {
-        "value": 2992131,
+        "value": 156711626,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (0.28% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.31% [UNK])"
       },
       "selection_rule": "row groups in file order until the token budget is met — no sampling, no seed"
     },
@@ -196,119 +201,460 @@
       "id": "extract",
       "name": "Extract",
       "real": false,
-      "docs_in": 7351,
-      "docs_out": 7351,
+      "docs_in": 162352,
+      "docs_out": 162352,
       "tokens_in": {
-        "value": 11960936,
+        "value": 165680431,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
       },
       "tokens_out": {
-        "value": 11960936,
+        "value": 165680431,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
       },
       "rejections": {},
       "detail": {},
-      "runtime_s": 0.002,
+      "runtime_s": 0.043,
       "note": "Not implemented yet — counts only, changes nothing."
     },
     {
       "n": "2",
       "id": "normalize",
       "name": "Normalize",
-      "real": false,
-      "docs_in": 7351,
-      "docs_out": 7351,
+      "real": true,
+      "docs_in": 162352,
+      "docs_out": 162352,
       "tokens_in": {
-        "value": 11960936,
+        "value": 165680431,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
       },
       "tokens_out": {
-        "value": 11960936,
+        "value": 164631428,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
       },
       "rejections": {},
-      "detail": {},
-      "runtime_s": 0.002,
-      "note": "Not implemented yet — counts only, changes nothing."
+      "detail": {
+        "removed": {
+          "zero_width": 94,
+          "replacement": 146,
+          "c0c1": 66,
+          "bidi": 31
+        },
+        "joiners_kept": {
+          "zwnj": 144,
+          "zwj": 2
+        },
+        "entities_expanded": 1015,
+        "double_escaped": 7,
+        "whitespace_runs_collapsed": 576174,
+        "ghost_markers": {},
+        "chars_before": 340166585,
+        "chars_after": 339424205,
+        "chars_removed": 742380,
+        "hash_collisions_gained_by_cleaning": 0
+      },
+      "runtime_s": 51.144,
+      "note": "Removed 742,380 characters of noise and kept 146 Indic joiners. Hashing after cleaning collapsed 0 documents that raw hashing would have kept apart."
     },
     {
       "n": "2b",
       "id": "formats",
       "name": "Format discipline",
-      "real": false,
-      "docs_in": 7351,
-      "docs_out": 7351,
+      "real": true,
+      "docs_in": 162352,
+      "docs_out": 162352,
       "tokens_in": {
-        "value": 11960936,
+        "value": 164631428,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
       },
       "tokens_out": {
-        "value": 11960936,
+        "value": 164631428,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
       },
       "rejections": {},
-      "detail": {},
-      "runtime_s": 0.002,
-      "note": "Not implemented yet — counts only, changes nothing."
+      "detail": {
+        "markers_found_in_corpus": {},
+        "docs_with_markers": 0,
+        "sampled_conversations": 500,
+        "template_tokens": {
+          "content": 2220147,
+          "samvaad": 2225672,
+          "chatml": 2238151,
+          "alpaca": 2226971,
+          "header": 2221640
+        },
+        "template_overhead_share": {
+          "content": 0.0,
+          "samvaad": 0.0025,
+          "chatml": 0.008,
+          "alpaca": 0.0031,
+          "header": 0.0007
+        },
+        "template_overhead_per_turn": {
+          "content": 0.0,
+          "samvaad": 5.53,
+          "chatml": 18.0,
+          "alpaca": 6.82,
+          "header": 1.49
+        },
+        "turns_sampled": 1000,
+        "content_tokens_per_turn": 2220.1,
+        "projected_overhead_by_turn_length": {
+          "15": {
+            "content": 0.0,
+            "samvaad": 0.2694,
+            "chatml": 0.5455,
+            "alpaca": 0.3126,
+            "header": 0.0904
+          },
+          "50": {
+            "content": 0.0,
+            "samvaad": 0.0996,
+            "chatml": 0.2647,
+            "alpaca": 0.12,
+            "header": 0.0289
+          },
+          "200": {
+            "content": 0.0,
+            "samvaad": 0.0269,
+            "chatml": 0.0826,
+            "alpaca": 0.033,
+            "header": 0.0074
+          },
+          "2000": {
+            "content": 0.0,
+            "samvaad": 0.0028,
+            "chatml": 0.0089,
+            "alpaca": 0.0034,
+            "header": 0.0007
+          }
+        },
+        "templates": [
+          {
+            "key": "content",
+            "name": "Content only",
+            "note": "The words alone — the floor any format is measured against.",
+            "real_special_tokens": false
+          },
+          {
+            "key": "samvaad",
+            "name": "Samvaad-style",
+            "note": "Bracketed roles, as one of the four V4 sources used.",
+            "real_special_tokens": false
+          },
+          {
+            "key": "chatml",
+            "name": "ChatML",
+            "note": "The `<|im_start|>` convention, as literal text rather than tokens.",
+            "real_special_tokens": false
+          },
+          {
+            "key": "alpaca",
+            "name": "Alpaca",
+            "note": "Markdown headers — the most verbose of the four.",
+            "real_special_tokens": false
+          },
+          {
+            "key": "header",
+            "name": "Q/A header",
+            "note": "The lightest marking that still records who spoke.",
+            "real_special_tokens": false
+          }
+        ],
+        "worst_template": "chatml",
+        "example": {
+          "turns": 2,
+          "tokens": {
+            "content": 1639,
+            "samvaad": 1650,
+            "chatml": 1675,
+            "alpaca": 1652,
+            "header": 1641
+          },
+          "overhead_tokens": {
+            "content": 0,
+            "samvaad": 11,
+            "chatml": 36,
+            "alpaca": 13,
+            "header": 2
+          },
+          "overhead_share": {
+            "content": 0.0,
+            "samvaad": 0.0067,
+            "chatml": 0.0215,
+            "alpaca": 0.0079,
+            "header": 0.0012
+          },
+          "baseline": "content"
+        }
+      },
+      "runtime_s": 6.409,
+      "note": "The corpus carries 0 literal role markers in 0 documents — ghost tags are created by the renderer, not inherited from the data. Across 1,000 turns, rendering as chatml costs 18.0 extra tokens per turn. That is only 0.8% of this corpus because a reasoning trace averages 2,220 tokens per turn; on short chat turns the same markers are the double-digit waste the session describes."
     },
     {
       "n": "3",
       "id": "langid",
       "name": "Language ID",
-      "real": false,
-      "docs_in": 7351,
-      "docs_out": 7351,
+      "real": true,
+      "docs_in": 162352,
+      "docs_out": 162352,
       "tokens_in": {
-        "value": 11960936,
+        "value": 164631428,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
       },
       "tokens_out": {
-        "value": 11960936,
+        "value": 164631428,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
       },
       "rejections": {},
-      "detail": {},
-      "runtime_s": 0.002,
-      "note": "Not implemented yet — counts only, changes nothing."
+      "detail": {
+        "detected": {
+          "te": 156894,
+          "en": 5296,
+          "undecided": 115,
+          "hne": 21,
+          "hi": 12,
+          "awa": 11,
+          "bho": 3
+        },
+        "scripts": {
+          "Telugu": 156894,
+          "Latin": 5296,
+          "Arabic": 111,
+          "Devanagari": 47,
+          "Tamil": 2,
+          "Kannada": 1,
+          "Malayalam": 1
+        },
+        "mismatches": {
+          "te->en": 1157
+        },
+        "mismatch_examples": [
+          {
+            "doc_id": "indic-0000208",
+            "shard": "verified/tel/data-1.parquet",
+            "claimed": "te",
+            "detected": "en",
+            "script": "Latin",
+            "confidence": 1.0
+          },
+          {
+            "doc_id": "indic-0000224",
+            "shard": "verified/tel/data-1.parquet",
+            "claimed": "te",
+            "detected": "en",
+            "script": "Latin",
+            "confidence": 1.0
+          },
+          {
+            "doc_id": "indic-0000238",
+            "shard": "verified/tel/data-1.parquet",
+            "claimed": "te",
+            "detected": "en",
+            "script": "Latin",
+            "confidence": 1.0
+          },
+          {
+            "doc_id": "indic-0000290",
+            "shard": "verified/tel/data-1.parquet",
+            "claimed": "te",
+            "detected": "en",
+            "script": "Latin",
+            "confidence": 1.0
+          },
+          {
+            "doc_id": "indic-0000315",
+            "shard": "verified/tel/data-1.parquet",
+            "claimed": "te",
+            "detected": "en",
+            "script": "Latin",
+            "confidence": 1.0
+          },
+          {
+            "doc_id": "indic-0000373",
+            "shard": "verified/tel/data-1.parquet",
+            "claimed": "te",
+            "detected": "en",
+            "script": "Latin",
+            "confidence": 1.0
+          },
+          {
+            "doc_id": "indic-0000572",
+            "shard": "verified/tel/data-1.parquet",
+            "claimed": "te",
+            "detected": "en",
+            "script": "Latin",
+            "confidence": 1.0
+          },
+          {
+            "doc_id": "indic-0000995",
+            "shard": "verified/tel/data-1.parquet",
+            "claimed": "te",
+            "detected": "en",
+            "script": "Latin",
+            "confidence": 1.0
+          }
+        ],
+        "unadjudicable": {
+          "kas (no FLORES profile)": 186
+        },
+        "unadjudicable_total": 186,
+        "undecided": 115,
+        "code_switched": 6230,
+        "grading": {
+          "coverage": "held-out",
+          "protocol": "trained on FLORES-200 dev, graded on devtest — disjoint sentence sets",
+          "headline_sentences": 5,
+          "accuracy": 1.0,
+          "script_only_accuracy": 0.4286,
+          "languages": {
+            "en": {
+              "documents": 203,
+              "accuracy": 1.0
+            },
+            "hi": {
+              "documents": 203,
+              "accuracy": 1.0
+            },
+            "mai": {
+              "documents": 203,
+              "accuracy": 1.0
+            },
+            "mar": {
+              "documents": 203,
+              "accuracy": 1.0
+            },
+            "ne": {
+              "documents": 203,
+              "accuracy": 1.0
+            },
+            "sa": {
+              "documents": 203,
+              "accuracy": 1.0
+            },
+            "bho": {
+              "documents": 203,
+              "accuracy": 1.0
+            },
+            "awa": {
+              "documents": 203,
+              "accuracy": 1.0
+            },
+            "mag": {
+              "documents": 203,
+              "accuracy": 1.0
+            },
+            "hne": {
+              "documents": 203,
+              "accuracy": 1.0
+            },
+            "te": {
+              "documents": 203,
+              "accuracy": 1.0
+            },
+            "as": {
+              "documents": 203,
+              "accuracy": 1.0
+            },
+            "bn": {
+              "documents": 203,
+              "accuracy": 1.0
+            },
+            "mni": {
+              "documents": 203,
+              "accuracy": 1.0
+            }
+          },
+          "documents": 2842,
+          "by_document_length": {
+            "1": {
+              "accuracy": 0.9869,
+              "documents": 14168
+            },
+            "2": {
+              "accuracy": 0.9979,
+              "documents": 7084
+            },
+            "5": {
+              "accuracy": 1.0,
+              "documents": 2842
+            }
+          },
+          "devanagari_languages": [
+            "awa",
+            "bho",
+            "hi",
+            "hne",
+            "mag",
+            "mai",
+            "mar",
+            "ne",
+            "sa"
+          ],
+          "profiled_languages": [
+            "as",
+            "awa",
+            "bho",
+            "bn",
+            "en",
+            "hi",
+            "hne",
+            "mag",
+            "mai",
+            "mar",
+            "mni",
+            "ne",
+            "sa",
+            "te"
+          ],
+          "limits": [
+            "FLORES is clean, edited, single-language prose from one domain; web crawl is none of those, so this is an upper bound, not an estimate of field accuracy.",
+            "Only languages in FLORES-200 can be detected at all. Bodo (brx) is in our corpus and absent from FLORES, so its documents are unadjudicable rather than mislabelled.",
+            "Accuracy is reported per document length because the five-sentence figure flatters the detector; one sentence is the honest number for short web text."
+          ],
+          "note": "9 of these languages share the Devanagari script, so a script detector cannot separate them at all — its accuracy is the chance baseline, not a weak result."
+        }
+      },
+      "runtime_s": 75.661,
+      "note": "1,157 documents disagree with the language their folder claims. 115 were left undecided rather than guessed, and 186 are unadjudicable because their claimed language has no FLORES profile — a limit of the detector, not a defect in the corpus. Nothing is dropped here: a mislabelled document is a finding about the source, not a document to delete."
     },
     {
       "n": "4",
       "id": "quality",
       "name": "Quality filter",
       "real": false,
-      "docs_in": 7351,
-      "docs_out": 7351,
+      "docs_in": 162352,
+      "docs_out": 162352,
       "tokens_in": {
-        "value": 11960936,
+        "value": 164631428,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
       },
       "tokens_out": {
-        "value": 11960936,
+        "value": 164631428,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
       },
       "rejections": {},
       "detail": {},
-      "runtime_s": 0.002,
+      "runtime_s": 0.041,
       "note": "Not implemented yet — counts only, changes nothing."
     },
     {
@@ -316,23 +662,23 @@
       "id": "dedup",
       "name": "Deduplicate",
       "real": false,
-      "docs_in": 7351,
-      "docs_out": 7351,
+      "docs_in": 162352,
+      "docs_out": 162352,
       "tokens_in": {
-        "value": 11960936,
+        "value": 164631428,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
       },
       "tokens_out": {
-        "value": 11960936,
+        "value": 164631428,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
       },
       "rejections": {},
       "detail": {},
-      "runtime_s": 0.002,
+      "runtime_s": 0.036,
       "note": "Not implemented yet — counts only, changes nothing."
     },
     {
@@ -340,23 +686,23 @@
       "id": "pii",
       "name": "PII scrub",
       "real": false,
-      "docs_in": 7351,
-      "docs_out": 7351,
+      "docs_in": 162352,
+      "docs_out": 162352,
       "tokens_in": {
-        "value": 11960936,
+        "value": 164631428,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
       },
       "tokens_out": {
-        "value": 11960936,
+        "value": 164631428,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
       },
       "rejections": {},
       "detail": {},
-      "runtime_s": 0.002,
+      "runtime_s": 0.042,
       "note": "Not implemented yet — counts only, changes nothing."
     },
     {
@@ -364,23 +710,23 @@
       "id": "decontaminate",
       "name": "Decontaminate",
       "real": false,
-      "docs_in": 7351,
-      "docs_out": 7351,
+      "docs_in": 162352,
+      "docs_out": 162352,
       "tokens_in": {
-        "value": 11960936,
+        "value": 164631428,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
       },
       "tokens_out": {
-        "value": 11960936,
+        "value": 164631428,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
       },
       "rejections": {},
       "detail": {},
-      "runtime_s": 0.002,
+      "runtime_s": 0.039,
       "note": "Not implemented yet — counts only, changes nothing."
     },
     {
@@ -388,26 +734,26 @@
       "id": "manifest",
       "name": "Manifest",
       "real": true,
-      "docs_in": 7351,
-      "docs_out": 7351,
+      "docs_in": 162352,
+      "docs_out": 162352,
       "tokens_in": {
-        "value": 11960936,
+        "value": 164631428,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
       },
       "tokens_out": {
-        "value": 11960936,
+        "value": 164631428,
         "unit": "tokens",
         "provenance": "measured",
-        "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+        "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
       },
       "rejections": {},
       "detail": {
-        "run_id": "s04-lite-89d359371474",
-        "content_hash": "sha256:18e30154494ee5073d39b0a1f6cf0c5daa8b20ded3f62b3bb2047749a698908d",
-        "script_hash": "sha256:fc070cb7f0bb533d3f987467dc617c2c7d70f43d482f15324f40d08632843eb3",
-        "config_hash": "sha256:a0cc3161139b944c3b95d59a7f04419dbfefeabbd46d96fd539488a1e75719b1"
+        "run_id": "s04-lite-9084eb2957f2",
+        "content_hash": "sha256:b19377fbac10d46cd7982226a61e54f0951c74195e6f63f11a4aa6dbb180a83d",
+        "script_hash": "sha256:4914841b4d055e3d37624b482049745096e8d28939645e9b5bc38a6f08e18951",
+        "config_hash": "sha256:21c10468eeed12d4e7dad48859c54d5e17d2ba363963da2b95ea156d73e1629a"
       },
       "runtime_s": 0.0,
       "note": "Provenance stamped; the run id is derived from content, not the clock."
@@ -426,43 +772,43 @@
       "Manifest"
     ],
     "docs": [
-      7351,
-      7351,
-      7351,
-      7351,
-      7351,
-      7351,
-      7351,
-      7351,
-      7351
+      162352,
+      162352,
+      162352,
+      162352,
+      162352,
+      162352,
+      162352,
+      162352,
+      162352
     ],
     "tokens": [
-      11960936,
-      11960936,
-      11960936,
-      11960936,
-      11960936,
-      11960936,
-      11960936,
-      11960936,
-      11960936
+      165680431,
+      164631428,
+      164631428,
+      164631428,
+      164631428,
+      164631428,
+      164631428,
+      164631428,
+      164631428
     ],
     "share": [
       1.0,
-      1.0,
-      1.0,
-      1.0,
-      1.0,
-      1.0,
-      1.0,
-      1.0,
-      1.0
+      0.9937,
+      0.9937,
+      0.9937,
+      0.9937,
+      0.9937,
+      0.9937,
+      0.9937,
+      0.9937
     ],
     "real": [
       false,
-      false,
-      false,
-      false,
+      true,
+      true,
+      true,
       false,
       false,
       false,
@@ -565,30 +911,28 @@
     "as": 0.8222408680634755
   },
   "manifest": {
-    "run_id": "s04-lite-89d359371474",
-    "generated": "2026-08-16T06:04:20Z",
+    "run_id": "s04-lite-9084eb2957f2",
+    "generated": "2026-08-16T07:30:27Z",
     "profile": {
       "name": "lite",
       "summary": "A smoke run of roughly 8M tokens. Deliberately below the assignment's 10M floor — it exists to surface bugs in minutes, not to be the published corpus."
     },
-    "config_hash": "sha256:a0cc3161139b944c3b95d59a7f04419dbfefeabbd46d96fd539488a1e75719b1",
-    "script_hash": "sha256:fc070cb7f0bb533d3f987467dc617c2c7d70f43d482f15324f40d08632843eb3",
-    "content_hash": "sha256:18e30154494ee5073d39b0a1f6cf0c5daa8b20ded3f62b3bb2047749a698908d",
+    "config_hash": "sha256:21c10468eeed12d4e7dad48859c54d5e17d2ba363963da2b95ea156d73e1629a",
+    "script_hash": "sha256:4914841b4d055e3d37624b482049745096e8d28939645e9b5bc38a6f08e18951",
+    "content_hash": "sha256:b19377fbac10d46cd7982226a61e54f0951c74195e6f63f11a4aa6dbb180a83d",
     "tokenizer": "ours/s02-bpe-10000",
     "tokens": {
-      "value": 11960936,
+      "value": 164631428,
       "unit": "tokens",
       "provenance": "measured",
-      "source": "counted with ours/s02-bpe-10000 (4.34% [UNK])"
+      "source": "counted with ours/s02-bpe-10000 (0.60% [UNK])"
     },
-    "unk_share": 0.04344,
-    "documents": 7351,
+    "unk_share": 0.00602,
+    "documents": 162352,
     "languages_claimed": {
+      "te": 158055,
       "en": 4000,
-      "brx": 2000,
-      "mai": 1000,
-      "kas": 297,
-      "doi": 54
+      "kas": 297
     },
     "selections": [
       {
@@ -613,27 +957,32 @@
         "corpus": "indic",
         "shards_read": [
           {
-            "path": "verified/mai/data-0.parquet",
+            "path": "verified/tel/data-1.parquet",
             "row_groups_read": 1,
-            "row_groups_total": 21
+            "row_groups_total": 1
+          },
+          {
+            "path": "verified/mai/data-0.parquet",
+            "row_groups_read": 0,
+            "row_groups_total": 0
           },
           {
             "path": "verified/brx/data-0.parquet",
-            "row_groups_read": 2,
-            "row_groups_total": 3
+            "row_groups_read": 0,
+            "row_groups_total": 0
           },
           {
             "path": "verified/doi/data-0.parquet",
-            "row_groups_read": 1,
-            "row_groups_total": 1
+            "row_groups_read": 0,
+            "row_groups_total": 0
           }
         ],
-        "docs": 3054,
+        "docs": 158055,
         "tokens": {
-          "value": 2992131,
+          "value": 156711626,
           "unit": "tokens",
           "provenance": "measured",
-          "source": "counted with ours/s02-bpe-10000 (0.28% [UNK])"
+          "source": "counted with ours/s02-bpe-10000 (0.31% [UNK])"
         },
         "selection_rule": "row groups in file order until the token budget is met — no sampling, no seed"
       },
@@ -701,6 +1050,12 @@
         "counts_toward_budget": true,
         "why": "Deduplication on a corpus that never had it, joiner preservation in Brahmic scripts, and language ID among eleven languages that share one script.",
         "shards": [
+          {
+            "path": "verified/tel/data-1.parquet",
+            "size_bytes": 336511785,
+            "lang": "te",
+            "note": "the joiners live here"
+          },
           {
             "path": "verified/mai/data-0.parquet",
             "size_bytes": 46936024,

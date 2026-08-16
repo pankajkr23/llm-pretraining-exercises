@@ -141,7 +141,12 @@ INDIC = CorpusSpec(
             "row 0 is plain English — the taught 'the folder lied' bug, in a real public corpus",
         ),
     ),
+    # Telugu is in the lite profile despite its 336 MB shard, because row-group streaming makes the
+    # size irrelevant and because it is the *only* shard here that carries Indic joiners. Without
+    # it, `lite` reports zero ZWNJ and the joiner-preservation branch never runs on real data —
+    # leaving a guard that has never been seen to do anything.
     lite_shards=(
+        Shard("verified/tel/data-1.parquet", 336_511_785, "te", "the joiners live here"),
         Shard("verified/mai/data-0.parquet", 46_936_024, "mai"),
         Shard("verified/brx/data-0.parquet", 4_517_574, "brx"),
         Shard("verified/doi/data-0.parquet", 106_101, "doi", "row 0 is plain English"),
