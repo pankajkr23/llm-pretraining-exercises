@@ -10,6 +10,20 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-16
+
+Session 4's exercise, start to finish: eight cleaning stages over three real corpora, published as
+a page you can operate. The release is a minor rather than a patch because it adds an exercise and
+a repo-wide convention — every session now ships a maintained Colab notebook.
+
+Two findings are worth reading even if you skip the rest. **A token count is not a fact about a
+corpus** — it is a fact about a corpus *and a tokenizer*, and the same Manipuri text varies 7.6×
+across the five we measured; so the pipeline counts with our own Session 2 vocabulary and refuses
+to publish a count that is mostly `[UNK]`. And **three of the nine standard quality rules are not
+language-neutral**: applied unchanged to Indic text they do not filter it, they delete it, while
+reporting a healthy-looking yield. The third of those three was invisible in the rule text and only
+showed itself by running it.
+
 ### Added
 
 - **Exercise 04 is complete and published** at `/04-data-cleaning-dedup/`. All eight of the
@@ -1034,7 +1048,8 @@ First tagged release: two interactive exercises live on Vercel with a gated depl
 - **Tooling & conventions:** uv workspace (Python 3.12), ruff lint/format, pytest (unit +
   integration split), GitHub Actions CI, and a PR-only workflow documented in `AGENTS.md`.
 
-[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.2.0...v0.3.0
