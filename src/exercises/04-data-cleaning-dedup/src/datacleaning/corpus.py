@@ -81,17 +81,31 @@ def _text_from_qa(row: dict[str, object]) -> str:
     return "\n\n".join(parts)
 
 
-def _text_from_row(spec: CorpusSpec, row: dict[str, object]) -> str:
-    """Extract text from one row, however this corpus happens to store it."""
+def _text_from_row(spec: CorpusSpec, row: dict[str, object]) -> tuple[str, int]:
+    """Extract text from one row, and how many turns it was built from.
+
+    The turn count is returned here rather than recovered later because stage 2 collapses the blank
+    lines that separate turns — see `records.Document.turns`.
+
+    Args:
+        spec: The corpus, which decides how a row stores its text.
+        row: One parquet row.
+
+    Returns:
+        `(text, turns)`. Turns is 1 for anything that is not a conversation.
+    """
     if spec.kind == "conversations":
-        return _text_from_conversations(row)
+        text = _text_from_conversations(row)
+        raw = row.get("conversations") or row.get("messages") or []
+        turns = len(raw) if isinstance(raw, list) else 1
+        return text, max(turns, 1)
     if spec.kind == "qa":
-        return _text_from_qa(row)
+        return _text_from_qa(row), 1
     for column in spec.text_columns:
         value = row.get(column)
         if isinstance(value, str) and value.strip():
-            return value.strip()
-    return ""
+            return value.strip(), 1
+    return "", 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -168,7 +182,7 @@ def load_shard(
     for _index, rows in iter_row_groups(spec, shard):
         batch: list[Document] = []
         for row in rows:
-            text = _text_from_row(spec, row)
+            text, turns = _text_from_row(spec, row)
             if not text:
                 continue
             batch.append(
@@ -180,6 +194,7 @@ def load_shard(
                     claimed_lang=shard.lang,
                     source_type=str(row.get("type") or ""),
                     raw_words=len(text.split()),
+                    turns=turns,
                 )
             )
         groups_read += 1

@@ -20,7 +20,7 @@ import logging
 import time
 from collections.abc import Callable
 
-from datacleaning import corpus, manifest, tokens
+from datacleaning import corpus, formats, langid, manifest, normalize, tokens
 from datacleaning.config import Config
 from datacleaning.records import Document, PipelineResult, StageStat
 
@@ -78,7 +78,11 @@ def _passthrough(stage_id: str) -> StageFn:
 
 # Stages replace their pass-through here as each lands. `extract` is permanently a pass-through:
 # every corpus ships extracted text, so claiming a yield for it would be inventing one.
-IMPLEMENTED: dict[str, StageFn] = {}
+IMPLEMENTED: dict[str, StageFn] = {
+    "normalize": normalize.normalize_stage,
+    "formats": formats.format_stage,
+    "langid": langid.langid_stage,
+}
 
 
 def stage_fn(stage_id: str) -> StageFn:
