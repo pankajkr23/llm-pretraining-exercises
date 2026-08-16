@@ -16,6 +16,7 @@ and on a machine where `uv run playwright install chromium` has been run, and no
 
 import http.server
 import socketserver
+import subprocess
 import threading
 from contextlib import contextmanager
 
@@ -28,6 +29,37 @@ from playwright.sync_api import sync_playwright  # noqa: E402
 
 CFG = Config()
 WEB = CFG.web_dir
+
+# The site root, as assembled by `deploy/vercel/build.sh`. Tests serve **this** when it exists,
+# because it is what actually ships — and the difference is not cosmetic. Font tokens live only in
+# the site-root `_shared/tokens.css`; the per-exercise copy does not define `--sans` or `--display`.
+# Serving `web/` alone therefore resolves `/_shared/tokens.css` to the partial copy and renders the
+# whole page in a serif fallback that no reader will ever see. A suite that green-lights a page
+# rendering differently from production is testing the wrong artifact.
+REPO = CFG.web_dir.parents[3]
+PUBLIC = REPO / "public"
+SLUG = CFG.web_dir.parent.name
+BUILT = PUBLIC / SLUG
+
+
+def _root_and_path() -> tuple:
+    """Serve the built site, assembling it first if it is not there.
+
+    `public/` is git-ignored, so a fresh checkout and CI both start without it. Building it here —
+    the same one-second bash script the deploy runs — is what keeps these tests pointed at the
+    artifact that ships rather than at a bundle that renders differently.
+    """
+    if not (BUILT / "index.html").exists():
+        script = REPO / "deploy" / "vercel" / "build.sh"
+        if script.exists():
+            subprocess.run(  # noqa: S603 - fixed argv, no shell
+                ["bash", str(script)], cwd=REPO, capture_output=True, check=False, timeout=180
+            )
+    if (BUILT / "index.html").exists():
+        return PUBLIC, f"/{SLUG}/"
+    pytest.skip("the site could not be assembled; the page under test would not match production")
+    return WEB, "/"
+
 
 pytestmark = [
     pytest.mark.integration,
@@ -62,7 +94,9 @@ def _serve(root):
 @contextmanager
 def _page(width=1500):
     """Open the built page and collect anything it throws."""
-    with _serve(WEB) as base:
+    root, path = _root_and_path()
+    with _serve(root) as origin:
+        base = origin.rstrip("/") + path
         try:
             with sync_playwright() as pw:
                 browser = pw.chromium.launch()
@@ -182,6 +216,72 @@ def test_the_strategy_toggle_moves_a_row_between_lists():
             "the commitments list should include format discipline"
         )
         assert "Extract" not in active, "the commitments list should drop Extract"
+
+
+def test_the_page_uses_the_shared_sans_type_stack():
+    """`AGENTS.md`: one design language, system sans, no serif.
+
+    This failed silently for a while because the test harness served `web/` rather than the built
+    site, and the font tokens live only in the site-root stylesheet. The page looked serif under
+    test and sans in production — the suite was checking a different artifact from the one shipping.
+    """
+    with _page() as (page, _):
+        for selector in ("body", "h1", "h2"):
+            stack = page.evaluate(
+                f"() => getComputedStyle(document.querySelector('{selector}')).fontFamily"
+            )
+            assert "serif" not in stack.replace("sans-serif", ""), (
+                f"{selector} renders in a serif stack: {stack}"
+            )
+            assert "system-ui" in stack or "-apple-system" in stack, (
+                f"{selector} is not using the shared type tokens: {stack}"
+            )
+
+
+def test_every_rail_label_matches_its_chapter_heading():
+    """The sidebar shipped with the first word missing from every entry.
+
+    `buildRail` stripped a leading `\\S+\\s` off `h2.textContent` to drop the chapter number — but
+    textContent runs the number and title together as `1How many...`, so it ate the first word and
+    the sidebar read "many strategies are there?". Nothing in the suite noticed, because every other
+    test asked whether an element *existed* rather than whether it said the right thing.
+    """
+    with _page() as (page, _):
+        pairs = page.evaluate(
+            "() => [...document.querySelectorAll('#rail .rail-link')].map((a) => {"
+            "  const sec = document.querySelector(a.getAttribute('href'));"
+            "  return [a.querySelector('.rail-t')?.textContent?.trim(),"
+            "          sec?.dataset?.title?.trim()];"
+            "})"
+        )
+        assert pairs, "the rail rendered no links"
+        for label, title in pairs:
+            assert label and title, f"a rail entry has no label or no target: {label!r}/{title!r}"
+            assert label == title, f"rail says {label!r}, the chapter is titled {title!r}"
+
+
+def test_the_rail_uses_the_shared_stylesheet_classes():
+    """Bare <a> elements in the rail render as raw underlined links in the gutter.
+
+    The shared page.css styles `.rail-list` and `.rail-link`; markup that does not use them is
+    unstyled rather than differently styled, which is how the first version looked.
+    """
+    with _page() as (page, _):
+        assert page.locator("#rail nav.rail-list").count() == 1
+        assert page.locator("#rail a.rail-link").count() >= 12
+        assert page.locator("#rail .rail-head").count() == 1
+
+
+def test_no_markdown_syntax_leaks_into_the_rendered_text():
+    """A literal `*proves*` shipped because `rich()` handled `**bold**` and not `*italic*`."""
+    with _page() as (page, _):
+        text = page.locator("main").inner_text()
+        for marker in ("**", "[[", "]]"):
+            assert marker not in text, f"unrendered markup {marker!r} is visible to the reader"
+        import re as _re
+
+        leaked = _re.findall(r"(?<![\w*])\*[^*\s][^*]{0,60}\*(?![\w*])", text)
+        assert not leaked, f"unrendered italics visible: {leaked[:3]}"
 
 
 def test_glossary_terms_carry_a_definition():
