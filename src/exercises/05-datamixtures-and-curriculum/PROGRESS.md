@@ -96,6 +96,26 @@ plausible numbers nobody measured.
 | # | decision | overturned by |
 | --- | --- | --- |
 | D1 | Lane supply is the **itemised sum of named datasets**, not the session's slot headline. | A source for the missing 104B of STEM. Then the headline is right and the rows are incomplete. |
+| D2 | **Long-context is retired as a lane** and becomes a sequence-length schedule; its 6% moves to code. | Evidence that the 60B of repo-packed code is *not* drawn from the same corpora as the code lane. |
+| D3 | **Agentic stays at the 2% floor** even though supply cannot fund it; the gap is a declared generation bill. | Nothing in the supply arithmetic — this is a capability judgment. Cutting the share to 0.03% would satisfy the arithmetic and lose the capability. |
+| D4 | Sangraha's 162B "synthetic" row is filed as **translated (tier C)**, following the inventory's tag rather than its name. | Evidence that the component is model-generated rather than machine-translated. Note this moves the hole rather than filling it — see the dispute note in `lanes.py`. |
+| D5 | Indic tiers demanded at **A 45 / B 20 / C 20 / D 15**, against the session's 40/25/20/15. | A measurement showing tier-A repetition past 2.5 epochs costs more than the unverified crawl it displaced. |
+
+## The mixture
+
+| lane | V5 | session | Δ | demand @2T | supply | epochs | verdict |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| General web | 32% | 34% | −2 | 640B | 4.691T | 0.14 | surplus |
+| Code | 28% | 24% | +4 | 560B | 1.103T | 0.51 | covered |
+| Indic | 18% | 16% | +2 | 360B | 270.9B | 1.33 | repeat |
+| STEM / math | 12% | 12% | — | 240B | 146B | 1.64 | repeat |
+| Reasoning | 8% | 6% | +2 | 160B | 85.1B | 1.88 | repeat |
+| Agentic | 2% | 2% | — | 40B | 627M | 63.8 | **impossible → generate** |
+| Long-context | 0% | 6% | −6 | — | — | — | schedule, not a lane |
+
+Protected floor 14% (Indic 12 + agentic 2), under the 20% ceiling, leaving 6 points of Indic
+exposed to OPUS selection. Anneal reserve 39.9B = 1.99% of the run. Generation bill: **54B** of
+synthetic Indic (tier D) and **38.9B** of agentic trajectories.
 
 ---
 
