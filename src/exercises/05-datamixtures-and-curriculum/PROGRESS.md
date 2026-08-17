@@ -27,6 +27,24 @@ third-party packages were added: the exercise depends only on exercises 03 and 0
 workspace members already in the lockfile. Nothing was downloaded, and no external service was
 contacted.
 
+One sandbox note, recorded because it looks alarming and is not. Run inside the agent sandbox, the
+**browser suite reports 45 failures** — all of them `PermissionError: [Errno 1] Operation not
+permitted` on `socket.bind`, because the sandbox denies the tests' own localhost HTTP server. It is
+not a regression: this branch changes **no file under any `web/`** directory. Re-run with the
+sandbox off, the same suite is **81 passed, 1 skipped, 0 failed**. If you see the 45 figure, check
+whether the server could bind before believing it.
+
+### Final verification on this branch
+
+| check | result |
+| --- | --- |
+| `ruff check .` · `ruff format --check .` | clean, 105 files |
+| `uv run pytest -m "not integration"` | **547 passed** |
+| `uv run pytest -m integration` (sandbox off) | **81 passed, 1 skipped** |
+| mutation testing over the guards | **13/13 mutants killed** |
+| notebook code cells executed | **34/34 clean**, outputs stripped |
+| `uv run python -m mixture` | 0 errors, 0 warnings, buildable |
+
 ---
 
 ## Findings
@@ -91,6 +109,18 @@ plausible numbers nobody measured.
 ---
 
 ## Change log
+
+### 2026-08-18 (later)
+
+- **The session notebook**, `notebooks/S05-datamixtures-and-curriculum.ipynb` — 34 code cells, all
+  executed top to bottom before commit, outputs stripped. It imports the package rather than
+  re-implementing anything, and ends by breaching the protected floor, over-allocating a lane with
+  no generation bill, and building four reasoning bands of identical length, so a reader watches
+  three guards fire rather than only ever seeing "0 errors".
+- **`tools/build_notebook.py`** emits it. The notebook is never edited in place — a hand-edited
+  notebook accumulates execution counts and stray outputs that make every diff unreadable.
+- `test_mixture_notebook.py` caught a real gap: the notebook explained the floor without ever
+  naming it a *protected floor* or an *always-on lane*, which is how the assignment names it.
 
 ### 2026-08-18
 
