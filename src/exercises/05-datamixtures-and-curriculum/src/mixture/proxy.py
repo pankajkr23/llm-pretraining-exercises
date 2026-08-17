@@ -133,12 +133,24 @@ class Arm:
     shares: dict[str, float]
 
 
-def _renormalised(base: dict[str, float], overrides: dict[str, float]) -> dict[str, float]:
-    """Apply overrides and spread the freed share across the untouched lanes.
+# Lanes that may not absorb redistributed share. Agentic is the whole list and the reason is
+# supply, not symmetry: `supply.py` shows the lane already asks 3.9x more than its pool can ever be
+# worth, so handing it *more* share in an arm that is nominally about Indic would be allocating
+# tokens that do not exist. It also confounds the arm — arm D exists to answer one question about
+# the Indic share, and a version of it that quietly moved agentic too could not attribute its own
+# result to either change.
+_CANNOT_ABSORB = frozenset({"agentic"})
 
-    Redistribution is proportional to each untouched lane's existing share, so an arm differs from
-    the baseline in the way it is *described* as differing and not in three other ways as well.
-    An arm that changed several things at once could not attribute its own result.
+
+def _renormalised(base: dict[str, float], overrides: dict[str, float]) -> dict[str, float]:
+    """Apply overrides and spread the freed share across the lanes that can take it.
+
+    Redistribution is proportional to each recipient's existing share, so an arm differs from the
+    baseline in the way it is *described* as differing and not in three other ways as well.
+
+    Lanes in `_CANNOT_ABSORB` are held at their baseline value: they neither give up share nor
+    receive any. This was found by a test rather than by design — arm D, which is supposed to halve
+    Indic and change nothing else, was raising agentic from 2% to 2.22% as a side effect.
 
     Args:
         base: The baseline mixture.
@@ -148,11 +160,21 @@ def _renormalised(base: dict[str, float], overrides: dict[str, float]) -> dict[s
         A mixture summing to 1.
     """
     freed = sum(base[lane] - share for lane, share in overrides.items())
-    untouched = {lane: share for lane, share in base.items() if lane not in overrides}
-    total_untouched = sum(untouched.values())
+    recipients = {
+        lane: share
+        for lane, share in base.items()
+        if lane not in overrides and lane not in _CANNOT_ABSORB
+    }
+    total = sum(recipients.values())
+
     result = dict(overrides)
-    for lane, share in untouched.items():
-        result[lane] = share + freed * (share / total_untouched if total_untouched else 0.0)
+    for lane, share in base.items():
+        if lane in overrides:
+            continue
+        if lane in _CANNOT_ABSORB:
+            result[lane] = share
+        else:
+            result[lane] = share + freed * (share / total if total else 0.0)
     return result
 
 
