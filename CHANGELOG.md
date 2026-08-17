@@ -10,6 +10,61 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Exercise 05 — the V5 data mixture and curriculum**, as a specification written to be argued
+  with. [`SPEC.md`](src/exercises/05-datamixtures-and-curriculum/SPEC.md) is the deliverable and it
+  is **generated**: every number comes from the same code the tests pin, and a test regenerates it
+  and compares byte for byte, so a hand edit fails CI.
+
+  One decision produced everything else — **lane supply is summed from the datasets named in the
+  inventory, never quoted from a slot headline** — and three findings followed on the first run:
+
+  - The **STEM lane's supply is 146B, not the 250B quoted**, and no dataset carries the missing
+    104B. That is not a rounding difference: against a 240B demand the quoted figure says the lane
+    fits inside a single pass and the itemised figure says it needs repetition.
+  - The **2% agentic lane asks 3.9× more than infinite repetition of its pool could ever be
+    worth** — 40B against 627M, with a ceiling of 10.3B. It survives dropping every correction, so
+    a reviewer who rejects our supervision estimate still lands on impossible. The share stays at
+    the protected floor and the gap is priced as a generation bill rather than waved at.
+  - **60% of the long-context lane is repo-packed code already counted under code.** A 6% share
+    would have double-counted 60B of corpus, so long-context is retired as a lane and becomes a
+    sequence-length schedule that keeps its benchmark and holds no budget.
+
+  The spec publishes the judgment it is weakest on rather than hiding it: the inventory's largest
+  Indic row is named "synthetic" and tagged as translated, and which one wins decides which tier is
+  fundable. Both readings are worked through, and choosing the other one moves the hole rather than
+  filling it.
+
+- **Thirteen invariants enforced in CI**, each paired with a twin proving it fails when broken,
+  plus `tests/test_mixture_mutation.py`, which disables every guard in turn and requires the suite
+  to go red. 13 of 13 mutants killed — so no guard in this exercise is decorative.
+
+- **[`TOKENIZER.md`](src/exercises/05-datamixtures-and-curriculum/TOKENIZER.md)** records why
+  Session 2's 10k vocabulary stays as the measuring instrument and not as V5's vocabulary, built
+  entirely from exercises 03 and 04's measurements. The counter-intuitive one is worth the detour:
+  on Manipuri, `o200k_base` (16.50) and Gemma (12.18) are both **worse** than our 10k vocabulary
+  (7.17), so a bigger off-the-shelf vocabulary does not buy Indic coverage.
+
+- **The root README carries sections for exercises 04 and 05.** Section 04 was missing entirely,
+  and the exercises table was broken by a stray blank line that split it into two tables.
+
+### Changed
+
+- **Assignment briefs are no longer tracked, at any level.** `BRIEF.md` is gitignored by name
+  everywhere. A brief is the course's text and is input for whoever builds the exercise; it is not
+  the deliverable. The files remain on disk and in past commits — no history was rewritten.
+
+  Exercise 04's brief carried a **decision record** (D1–D7: why the answer is eight, why those
+  corpora, what may be published) that its README linked into three times. That record moves to a
+  tracked [`DECISIONS.md`](src/exercises/04-data-cleaning-dedup/DECISIONS.md) and every citation
+  now points there, so nothing published goes dark and no link 404s.
+
+### Fixed
+
+- **The exercises table in the root README** rendered as two separate tables, because a stray blank
+  line sat between exercise 03's row and exercise 04's.
+
 ## [0.4.0] - 2026-08-16
 
 Session 4's exercise, start to finish: eight cleaning stages over three real corpora, published as

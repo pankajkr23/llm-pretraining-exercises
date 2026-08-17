@@ -9,7 +9,23 @@ so the work can be picked up cold. Newest entries at the top of each section.
 
 ## Open items — for review
 
-Nothing blocking yet. Items land here as they are found, each with what it would take to close.
+**Track A (the specification) is complete.** All seven assignment items are answered in `SPEC.md`,
+126 tests pass, and every guard has been watched to fail. What is left is your call, not a blocker:
+
+| # | item | status | what it needs |
+| --- | --- | --- | --- |
+| O1 | **The proxy is declared, not run.** `SPEC.md` commits to the experiment and fixes its thresholds in advance; no arm has been trained. | open | Step 0 first — a free smoke test on the M4 Max that measures real throughput and proves the metric separates arms. Then the spend decision is arithmetic rather than a guess. `train.py` and `evaluate.py` do not exist yet. |
+| O2 | **The M4 Max throughput is unmeasured**, and `proxy.py` deliberately refuses to invent one. | open | Step 0. Until then the ladder shows `unmeasured` rather than a plausible number. |
+| O3 | **No interactive page.** Exercises 01–04 each ship one; this one does not. | open, optional | A mixture composer would let a reviewer drag shares and watch supply and floors go red. Track C in the plan — worth cutting before the proxy if time is short. |
+| O4 | **No Colab notebook yet**, which the standing mandate requires for every session. | open | `notebooks/S05-datamixtures-and-curriculum.ipynb`, importing `mixture` rather than re-implementing it. |
+| O5 | **Exercise 04's deduplication holds everything in memory.** Fine at 85.7M tokens, will not reach 1B. | noted, not touched | Sharded MinHash with a persistent cross-shard index. If it moves exercise 04's published numbers, those get corrected where they were published. |
+
+### Security and safety log
+
+Nothing in this work required network access, credentials, or an untrusted dependency. No new
+third-party packages were added: the exercise depends only on exercises 03 and 04, which are
+workspace members already in the lockfile. Nothing was downloaded, and no external service was
+contacted.
 
 ---
 
@@ -75,6 +91,29 @@ plausible numbers nobody measured.
 ---
 
 ## Change log
+
+### 2026-08-18
+
+- **`benchmarks.py`** — the derivation chain the session asks for, across 20 benchmarks. Each
+  records its loss map in three parts (supervised / masked / reward-only) rather than one token
+  figure, and the stage at which its capability is genuinely taught, so a pre-training share cannot
+  be claimed to buy an RLVR capability.
+- **`supply.py`** — demand against supply in three currencies, with two corrections that each carry
+  their own argument. Produced findings F4 and F5.
+- **`lanes.py`** — the mixture, Indic tiers, protected floor, anneal reserve, generation bill.
+  Three defects caught by running it, all recorded in `CLAUDE.md`.
+- **`curriculum.py`** — five stages, B0–B5, four reasoning-length bands counted with our own
+  vocabulary. The stage schedule integrates to the headline mixture to within 0.60pp.
+- **`proxy.py`** — four arms, three hypotheses with thresholds fixed in code, and a cost model that
+  returns *absent* rather than a plausible number for unmeasured hardware.
+- **`checks.py` + 126 tests** — thirteen invariants, each with a twin, plus mutation testing that
+  disables every guard in turn. 13/13 killed.
+- **`export.py`** — renders `SPEC.md` and `TOKENIZER.md`. Four rendering bugs found by reading the
+  output rather than trusting it.
+- **Root README** — repaired the exercises table (a stray blank line had split it in two), wrote
+  the missing `### 04` section and a new `### 05`.
+- **Briefs untracked repo-wide** at your request, with exercise 04's decision record relocated to a
+  tracked `DECISIONS.md` so nothing published went dark.
 
 ### 2026-08-17
 
