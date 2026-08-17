@@ -6,7 +6,7 @@ actually assemble the corpus from what survives. The answer is uncomfortable, wh
 **4 of 145 datasets are committable today**, covering 6.56T of a 16.8T budget, and the blocker is
 almost never quality.
 
-See [`BRIEF.md`](./BRIEF.md) for the assignment and [`docs/`](./docs/) for the full spec.
+See [`docs/`](./docs/) for the full spec.
 
 ## What it produces
 

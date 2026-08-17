@@ -15,7 +15,7 @@ already-extracted text, so claiming a yield for it would be inventing one.
 | | |
 |---|---|
 | **The question** | How many cleaning strategies does Session 4 list, and what do they do to a real corpus? |
-| **The answer** | **8** — and the session names two *different* eights. See [`BRIEF.md`](./BRIEF.md) §D1. |
+| **The answer** | **8** — and the session names two *different* eights. See [`DECISIONS.md`](./DECISIONS.md) §D1. |
 | **The corpus** | ~90M tokens across three datasets, counted with **our own Session 2 tokenizer** |
 | **The deliverable** | A published page, a Colab notebook, and a manifest per shard |
 
@@ -78,7 +78,7 @@ file. Colab is unaffected.
 ## Layout
 
 ```text
-BRIEF.md              # the assignment + the decision record (read this first)
+DECISIONS.md          # why the answer is 8, why these corpora, what may be published (read first)
 README.md             # this file
 pyproject.toml        # workspace member
 src/datacleaning/
@@ -112,10 +112,11 @@ data/                 # any cached shards (git-ignored)
 
 Nine rows, eight strategies: stage 1 is inherited from Session 3 and 2b is the one the session's
 pipeline map never numbers. Which eight you mean depends on which list you read — that ambiguity is
-a real reading result, and [`BRIEF.md`](./BRIEF.md) §D1 works through it.
+a real reading result, and [`DECISIONS.md`](./DECISIONS.md) §D1 works through it.
 
 ## Licences
 
 Corpus text is redistributed only in bounded, post-scrub excerpts, attributed in `NOTICE`. No raw
 PII is published anywhere — interactive demos run on hand-written synthetic documents, and a test
-scans every byte of the bundle and the notebook to keep it that way. See [`BRIEF.md`](./BRIEF.md) §D6.
+scans every byte of the bundle and the notebook to keep it that way. See
+[`DECISIONS.md`](./DECISIONS.md) §D6.

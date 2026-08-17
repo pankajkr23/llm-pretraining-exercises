@@ -18,7 +18,7 @@ folder under `src/exercises/`.
 ## Repo layout & naming
 
 - **Exercise folders:** `src/exercises/NN-slug/` — numeric, **zero-padded**, slugged (e.g. `01-introductions`). Zero-pad so lexical sort = numeric order.
-- **Identical skeleton per exercise:** `BRIEF.md` (assignment) · `README.md` (what/how) · `pyproject.toml` (member) · code in one place (`src/` or `web/`) · `artifacts/` (gitignored outputs).
+- **Identical skeleton per exercise:** `BRIEF.md` (assignment — **local only, gitignored**) · `README.md` (what/how) · `pyproject.toml` (member) · code in one place (`src/` or `web/`) · `artifacts/` (gitignored outputs). Long reasoning gets its own tracked `DECISIONS.md`.
 - **Shared code:** deferred — add `src/common/` (its own member) only when a 2nd exercise needs to reuse something. No premature abstraction.
 - **Notebooks:** top-level `notebooks/`, one per session — see below.
 
@@ -43,10 +43,13 @@ after it. It is the artifact people learn from and teach from, not a run log.
 
 ## Three data concerns — keep them physically separate
 
-- **Briefs/docs** → tracked per exercise (`<exercise>/BRIEF.md`). Programme-level material — the
-  schedule, the class list, the internal authoring specs — is **local only** and gitignored
-  (`docs/BRIEF.md`, `docs/SESSIONS.md`, `docs/EXPLAINER_*.md`). Never link to them from a tracked
-  file: the link is dead for everyone but us.
+- **Briefs → never tracked, at any level.** `BRIEF.md` is gitignored by name everywhere, as is
+  programme-level material — the schedule, the class list, the internal authoring specs
+  (`docs/BRIEF.md`, `docs/SESSIONS.md`, `docs/EXPLAINER_*.md`). A brief is the course's text and
+  is input for whoever builds the exercise; it is not the deliverable. **Never link to one from a
+  tracked file** — the link resolves on a working checkout and 404s for everyone else. What we
+  *decided*, and why, is published instead: `README.md`, and a tracked `DECISIONS.md` when the
+  reasoning needs room (see `04-data-cleaning-dedup/DECISIONS.md`).
 - **Datasets** → top-level `data/`, **gitignored** (+ a tracked manifest/download script).
 - **Outputs** (plots/checkpoints/logs) → `<exercise>/artifacts/`, **gitignored**.
 

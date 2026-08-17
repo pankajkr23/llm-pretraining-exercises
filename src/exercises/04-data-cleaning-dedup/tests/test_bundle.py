@@ -88,7 +88,7 @@ def test_the_yield_chain_can_actually_fail():
 
 
 def test_no_token_count_is_published_without_naming_its_tokenizer(bundle):
-    """A token count without a tokenizer is not a fact about a corpus (BRIEF.md §D3)."""
+    """A token count without a tokenizer is not a fact about a corpus (DECISIONS.md §D3)."""
     for stage in bundle["stages"]:
         for key in ("tokens_in", "tokens_out"):
             figure = stage[key]

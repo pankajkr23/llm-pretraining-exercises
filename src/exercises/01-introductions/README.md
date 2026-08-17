@@ -1,6 +1,6 @@
 # 01 · Introductions — Four Live Proofs
 
-Session 1 assignment (see [`BRIEF.md`](./BRIEF.md)). A small site that *proves* four foundational
+Session 1 assignment. A small site that *proves* four foundational
 ML claims by training tiny models **live in the browser** — no server, no pre-baked figures, and
 **no dependencies at all** (every page inlines its own CSS + JS; the neural nets are hand-written).
 

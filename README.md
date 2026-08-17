@@ -19,8 +19,8 @@ under `src/exercises/NN-slug/` (numeric, zero-padded so folders sort correctly),
 ```text
 docs/DESIGN.md                    # the shared web design system (palette, type, tone)
 src/exercises/NN-slug/            # one self-contained exercise per topic (workspace member)
-  ├─ BRIEF.md                     # the assignment
   ├─ README.md                    # what it is + how to run
+  ├─ DECISIONS.md                 # why it is the way it is (where the reasoning needs room)
   ├─ pyproject.toml               # workspace member
   ├─ src/ | web/                  # the code
   ├─ artifacts/                   # generated outputs (git-ignored)
@@ -179,7 +179,7 @@ Every exercise follows the same skeleton, so the repo stays predictable:
 
 ```bash
 mkdir -p src/exercises/03-slug/{src,tests}
-# add pyproject.toml (workspace member), BRIEF.md, README.md
+# add pyproject.toml (workspace member) and README.md
 uv sync --all-packages   # the members = ["src/exercises/[0-9][0-9]-*"] glob picks it up automatically
 ```
 

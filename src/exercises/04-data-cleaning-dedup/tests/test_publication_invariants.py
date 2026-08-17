@@ -107,8 +107,8 @@ def test_the_pii_stage_publishes_counts_and_not_matches():
 def test_corpus_excerpts_stay_inside_the_declared_window():
     """The dedup chapter needs real near-identical documents on screen; nothing else does.
 
-    `BRIEF.md` §D6 argues why this relaxes exercise 03's absolute rule. The relaxation is bounded,
-    and this is the bound.
+    `DECISIONS.md` §D6 argues why this relaxes exercise 03's absolute rule. The relaxation is
+    bounded, and this is the bound.
     """
     bundle = json.loads(DATA_JSON.read_text(encoding="utf-8"))
     excerpts = _collect_excerpts(bundle)

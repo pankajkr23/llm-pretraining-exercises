@@ -49,7 +49,7 @@ REFERENCE_TOKENIZERS: tuple[str, ...] = (
 """The five tokenizers exercise 03 measured, kept as the comparison set.
 
 Not decoration: Manipuri's fertility swings 7.6x across these, which is the evidence that a token
-count without a named tokenizer is not a fact about a corpus. See `BRIEF.md` §D3.
+count without a named tokenizer is not a fact about a corpus. See `DECISIONS.md` §D3.
 """
 
 
@@ -194,7 +194,7 @@ class Config:
     data_json_budget_kb: float = 100.0
     max_excerpts: int = 12
     max_excerpt_chars: int = 300
-    """Bounded window of post-scrub corpus text. Argued in `BRIEF.md` §D6 — the deduplication
+    """Bounded window of post-scrub corpus text. Argued in `DECISIONS.md` §D6 — the deduplication
     chapter is unconvincing without two near-identical documents on screen."""
 
     def fingerprint(self) -> str:

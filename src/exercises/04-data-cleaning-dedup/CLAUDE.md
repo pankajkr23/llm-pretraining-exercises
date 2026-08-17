@@ -1,7 +1,9 @@
 # CLAUDE.md — 04-data-cleaning-dedup
 
 Component notes. Repo-wide conventions: root `AGENTS.md`. The decision record — why the answer is
-8, why these corpora, what may be published — is `BRIEF.md`, and it is the thing to read first.
+8, why these corpora, what may be published — is `DECISIONS.md`, and it is the thing to read first.
+`BRIEF.md` is the assignment, and is gitignored: briefs are input for whoever builds an exercise,
+not part of the published work.
 
 ## The rules this exercise adds
 

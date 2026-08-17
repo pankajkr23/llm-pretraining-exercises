@@ -13,7 +13,7 @@ A pass-through is honest about itself: `StageStat.real` is False and its note sa
 that has not been written yet cannot be mistaken for a stage that found nothing.
 
 The stage list is the session's, and the numbering is the session's too — including `2b` for format
-discipline, which the pipeline map never numbers even though §14 counts it. See `BRIEF.md` §D1.
+discipline, which the pipeline map never numbers even though §14 counts it. See `DECISIONS.md` §D1.
 """
 
 import logging
@@ -55,7 +55,7 @@ STAGES: tuple[tuple[str, str, str, str], ...] = (
 
 Nine entries for eight strategies: `1 Extract` is inherited from Session 3 and `2b` is the
 never-numbered ninth. Both are rendered, neither is double-counted — the count is argued in
-`BRIEF.md` §D1.
+`DECISIONS.md` §D1.
 """
 
 
