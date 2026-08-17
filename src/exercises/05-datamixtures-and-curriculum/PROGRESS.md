@@ -39,6 +39,32 @@ Itemised **4.691T** against a supply check of **4.5T** (+4.2%). Immaterial — b
 the 680B demand — but it is the same class of error as F1 and is recorded so the STEM finding does
 not look cherry-picked.
 
+### F4 · The 2% agentic share cannot be funded, and the finding survives every objection to it
+
+At the session's own default mixture and a 2T run, the agentic lane asks for **40B tokens** against
+**627M** of itemised supply. That is **63.8 epochs** before any correction, against a repetition
+ceiling — `unique × 16.4`, from the fit in `dataframework.mix` — of **10.3B**. The demand is
+**3.9× more than infinite repetition of that pool could ever be worth.**
+
+Applying the loss-map discount of §6 (only the assistant's own tokens are supervised) makes it far
+worse — 588 epochs, 35.9× the ceiling — but the discount is deliberately **not** load-bearing. The
+lane fails the ceiling test on raw, uncorrected, unmasked tokens. A reviewer who rejects the
+supervision estimate entirely still lands on impossible.
+
+This is not a reason to drop the lane. It is the session's own point: agentic data *"must largely
+be built rather than collected"*. The spec keeps the 2% floor and states the generation bill.
+
+### F5 · The long-context lane is 60% re-counted code
+
+Its two rows are *Repo-packed code (32K+)* at 60B, which the inventory itself describes as *"packed
+from code corpora"*, and *Book-length corpora (packed)* at 40B. The first is the code lane's tokens
+rearranged into longer sequences, not additional text; counting it again inflates the corpus by
+60B. The second is genuinely new — the four web rows are all crawl (DCLM, FineWeb-Edu, D2, D1), so
+no other lane holds books.
+
+The consequence is structural, not arithmetic: a slot that is 60% re-counted is a **sequence-length
+schedule**, not a lane with a budget of its own.
+
 ### F3 · Two Indic rows carry no token count
 
 Samanantar and BPCC are listed with no figure. The slot headline (276B) exceeds the four rows that
