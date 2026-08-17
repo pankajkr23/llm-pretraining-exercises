@@ -66,8 +66,14 @@ src/mixture/
   proxy.py        the 1B/3B experiment, its metric, thresholds fixed before it runs
   checks.py       thirteen invariants
   export.py       renders SPEC.md and TOKENIZER.md
+tools/
+  build_notebook.py   emits the session notebook; edit this, never the .ipynb
 tests/            every invariant twice, plus mutation testing
 ```
+
+The session notebook is [`notebooks/S05-datamixtures-and-curriculum.ipynb`](../../../notebooks/S05-datamixtures-and-curriculum.ipynb)
+— it imports this package rather than re-implementing it, runs in seconds, and ends by breaking
+three invariants on purpose so a reader can watch the guards fire.
 
 ## Scope
 

@@ -72,6 +72,21 @@ itself while both halves look fine:
    (`INV-4`, `INV-4b`). A schedule-only lane counts as funded — long-context holds no budget but
    `long-eval` is still bought by the sequence-length schedule.
 
+## The notebook is generated too
+
+`notebooks/S05-datamixtures-and-curriculum.ipynb` is emitted by `tools/build_notebook.py` rather
+than edited in place. A notebook edited by hand accumulates execution counts, metadata and stray
+outputs that make every diff unreadable; this way the committed file is exactly what the builder
+emits, and the cells are diffable as Python.
+
+**The loop is: edit the builder → run it → execute every code cell → commit.** The middle step is
+not optional. `test_mixture_notebook.py` checks the structural rules (imports the package, no
+committed outputs, covers all seven assignment items, shows a guard failing) but it cannot tell you
+a cell raises.
+
+`tools/build_notebook.py` is excluded from ruff for the same reason `notebooks/` is — it is a
+notebook document in Python clothing, and one of its lines is a Colab badge URL that cannot wrap.
+
 ## Reusing rather than re-deriving
 
 - `dataframework.mix` — the repetition curve, its ceiling (`16.4×`), and the epoch thresholds, each
