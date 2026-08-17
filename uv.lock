@@ -8,6 +8,7 @@ members = [
     "exercise-02-tokenization",
     "exercise-03-data-collection-framework",
     "exercise-04-data-cleaning-dedup",
+    "exercise-05-datamixtures-and-curriculum",
     "llm-pretraining-exercises",
 ]
 
@@ -194,6 +195,21 @@ requires-dist = [
     { name = "pyarrow", specifier = ">=25.0.0" },
     { name = "tiktoken", specifier = ">=0.13.0" },
     { name = "tokenizers", specifier = ">=0.23.1" },
+]
+
+[[package]]
+name = "exercise-05-datamixtures-and-curriculum"
+version = "0.1.0"
+source = { editable = "src/exercises/05-datamixtures-and-curriculum" }
+dependencies = [
+    { name = "exercise-03-data-collection-framework" },
+    { name = "exercise-04-data-cleaning-dedup" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "exercise-03-data-collection-framework", editable = "src/exercises/03-data-collection-framework" },
+    { name = "exercise-04-data-cleaning-dedup", editable = "src/exercises/04-data-cleaning-dedup" },
 ]
 
 [[package]]
