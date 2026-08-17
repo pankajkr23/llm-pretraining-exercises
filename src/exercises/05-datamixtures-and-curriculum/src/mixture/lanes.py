@@ -387,6 +387,29 @@ RESERVE_FRACTIONS: dict[str, float] = {
     "stem": 0.05,
 }
 
+# Why each pool, and not another. Kept beside the fractions rather than in the renderer, so the
+# argument for a reservation and its size cannot drift apart.
+RESERVE_REASONS: dict[str, str] = {
+    "agentic": (
+        "§6 calls these Tier-A and reserves them for annealing; the lane cannot fund "
+        "pre-training anyway, so spending it early wastes it on the phase least able to use it"
+    ),
+    "indic": (
+        "verified-native only — reserving translated text would spend the highest-leverage "
+        "phase of the run on the lowest-provenance data available"
+    ),
+    "reasoning": "the long and ultra bands, which a main run would consume first",
+    "stem": "curated high-quality subsets",
+}
+
+# What fraction of each pool the reservation is expressed against, for the rendered table.
+RESERVE_BASIS: dict[str, str] = {
+    "agentic": "100% of the lane",
+    "indic": "30% of tier A",
+    "reasoning": "15% of the lane",
+    "stem": "5% of the lane",
+}
+
 # How far under the anneal stage's budget the reserve may land and still count as covering it.
 # See `Reserve.covers_anneal` for why this is a tolerance rather than an equality.
 RESERVE_TOLERANCE = 0.10
