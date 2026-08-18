@@ -658,28 +658,65 @@ would be noise wearing the costume of evidence.
 """)
 
 code("""
+def duration(hours):
+    if hours >= 48: return f'{hours/24:.0f} days'
+    if hours >= 1:  return f'{hours:.0f} h'
+    if hours*60 >= 1: return f'{hours*60:.0f} min'
+    return f'{hours*3600:.0f} s'
+
 for rung in proxy.ladder(CFG):
-    print(f\"{rung['rung']:<8}{rung['params']/1e9:g}B params x {rung['tokens']/1e9:g}B tokens \"
-          f\"x {rung['arms']} arms = {rung['flops']:.2g} FLOPs   ({rung['decides']})\")
+    print(f\"{rung['rung']:<14}{rung['params']/1e6:,.1f}M params x {rung['tokens']/1e6:,.1f}M \"
+          f\"tokens x {rung['arms']} runs = {rung['flops']:.2g} FLOPs\")
+    print(f\"               decides: {rung['decides']}\")
     for key, cost in rung['costs'].items():
-        if cost.knowable:
-            hrs = f'{cost.hours:.0f} h' if cost.hours >= 1 else f'{cost.hours*60:.0f} min'
-            usd = f'${cost.usd:.0f}' if cost.usd >= 1 else f'${cost.usd:.2f}'
-            print(f'    {key:<12}{hrs:>9}{usd:>9}')
-        else:
-            print(f'    {key:<12}{\"UNMEASURED\":>9}{\"--\":>9}   ({cost.hardware.source})')
+        prov = cost.hardware.provenance
+        if not cost.knowable:
+            print(f'    {key:<12}{\"UNMEASURED\":>10}{\"--\":>10}   ({prov})')
+            continue
+        # cost.usd is None for hardware we own -- that is the absence of a rental price,
+        # not a price of zero.
+        usd = '--' if cost.usd is None else (f'${cost.usd:,.0f}' if cost.usd >= 1 else f'${cost.usd:.2f}')
+        print(f'    {key:<12}{duration(cost.hours):>10}{usd:>10}   ({prov})')
     print()
 """)
 
 md("""
-**Notice the M4 Max row says `UNMEASURED`, not a number.**
+**Every rate carries a provenance, and they are not the same kind of number.** The local machine is
+`measured`; the rented ones are `estimated` — published peaks at an assumed utilisation.
 
-That is deliberate and it is the most important line in this section. A plausible figure there
-would decide whether money gets spent, on evidence nobody gathered. Published TFLOPS specs are for
-a different workload on a different framework — MPS has no FlashAttention, no fused optimizers, and
-only partial bf16, and the size of that gap is exactly what we do not know.
+The local row said `UNMEASURED` until Step 0 ran, and the refusal was the point: a plausible figure
+there would have decided whether money gets spent, on evidence nobody gathered. Published TFLOPS
+specs are for a different workload on a different framework.
 
-**Step 0 exists to measure it**, free, before any spend decision:
+**Measuring it changed the answer twice.** The estimate had been ~4 TFLOP/s; the machine sustains
+more. And the *measurement* was wrong the first time — one-off Metal shader compilation was charged
+to whichever run happened to be first, reporting **1.06 TFLOP/s** where the identical configuration
+sustains **3.01**. Warm-up steps are now trained but not timed.
+""")
+
+code("""
+local = proxy.hardware('m4-max')
+print('provenance :', local.provenance)
+print('measured   :', local.tflops, 'TFLOP/s')
+print('source     :', local.source)
+print()
+print('what it decides: the 1B rung takes',
+      f"{proxy.estimate('m4-max', 1e9, 2e9, 4).hours/24:,.0f} days locally against",
+      f"{proxy.estimate('h100-80gb', 1e9, 2e9, 4).hours:,.0f} h and",
+      f"${proxy.estimate('h100-80gb', 1e9, 2e9, 4).usd:,.0f} rented.")
+""")
+
+md("""
+Reproduce with `uv run python -m mixture.bench`, which sweeps six model sizes on every available
+device rather than quoting one point — because two points cannot locate a crossover, and on Apple
+silicon a small enough model really is faster on the CPU.
+
+**A warning worth more than the number.** Inside a sandbox that blocks the OS-version query,
+`torch.backends.mps.is_available()` returns `False` and the harness silently trains on CPU. The
+throughput would be a real measurement of the wrong device. Every run record prints the device it
+actually got — check that field before believing a rate.
+
+Step 0 also proved the harness and, importantly, was free:
 """)
 
 code("""
