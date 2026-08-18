@@ -18,7 +18,7 @@ specification commits to has been run and its numbers brought back. What remains
 | O2 | **Measure local throughput** | **done** | 5.281 TFLOP/s, measured by `mixture.bench` across six model sizes. `proxy.HARDWARE` no longer says `unknown`. |
 | O3 | **No interactive page** | open, optional | Exercises 01–04 each ship one. A mixture composer — drag shares, watch supply and floors go red — would help a reviewer push on numbers. Cut this before anything else if time is short. |
 | O4 | **Colab notebook** | **done** | `notebooks/S05-datamixtures-and-curriculum.ipynb`, 37 code cells, ends on the Step 0 results. |
-| O5 | **Exercise 04's dedup is in-memory** | open, not touched | Fine at 85.7M tokens, will not reach 1B. Needs sharded MinHash with a persistent cross-shard index. If it moves exercise 04's published numbers, correct them where they were published. |
+| O5 | **Exercise 04's dedup is in-memory** | **done** | `accumulate.py` — append-only shards, persistent signature index, cross-shard dedup. Measured: 40.5 GB vs 0.55 GB at the 1B gate. Exercise 04's published numbers are untouched; the store is a continuation, not a replacement. |
 | O6 | **The 1B rung has not been run** | open, needs your decision | Priced from the measurement at **~34 h and ~$98** on rented H100s, against **105 days** locally. This is the rung that would earn a claim about the mixture; Step 0 explicitly does not. |
 
 ### Security and safety log
@@ -87,6 +87,29 @@ with `uv run python -m mixture.inventory`.
 Itemised **4.691T** against a supply check of **4.5T** (+4.2%). Immaterial — both are far above
 the 680B demand — but it is the same class of error as F1 and is recorded so the STEM finding does
 not look cherry-picked.
+
+### F8 · Exercise 04's deduplication cannot reach a billion tokens, and by how much
+
+It holds a full shingle set per document. Measured on real prose from exercise 02's corpus:
+
+| document | distinct shingles | shingle set | signature | ratio |
+| ---: | ---: | ---: | ---: | ---: |
+| 100 words | 151 | 13.8 KB | 896 B | 15× |
+| 500 words | 918 | 65.8 KB | 896 B | **73×** |
+| 2,000 words | 3,548 | 258 KB | 896 B | 288× |
+| 10,000 words | 15,371 | 1.07 MB | 896 B | 1,199× |
+
+Exercise 04's full run holds ~2.4 GB resident. At Session 1's one-billion-token gate (~616k
+documents) it would need **40.5 GB**; the same corpus is **0.55 GB** of signatures, streamed from
+disk. `accumulate.py` is the store that does that, and it declares what it trades: cross-shard
+similarity is the MinHash *estimate*, not exact Jaccard, so its threshold is widened by one
+standard error rather than narrowed — a false keep costs compute, a false drop deletes text that
+never comes back.
+
+**The first version of this measurement said the opposite.** It used `sys.getsizeof` on a set,
+which reports the table and not its contents, over text that repeated one sentence — and shingles
+are a *set*, so repeated text has few distinct members. It concluded a signature was *larger* than
+the shingle set it replaces, which would have justified nothing.
 
 ### F6 · The measurement was wrong before the result was
 

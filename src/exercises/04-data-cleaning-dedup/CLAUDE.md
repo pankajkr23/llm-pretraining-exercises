@@ -63,6 +63,26 @@ stray letter. If you touch either side of a duplicated rule, this test is the re
   the right edge pushed the page 312px sideways. They are `position: fixed`, placed by script, and
   clamped to the viewport.
 
+## This deduplication does not scale past this exercise
+
+`dedup.py` holds a **full shingle set for every document** at once, and only ever sees one run's
+documents — so shard N is never compared with shard N-1. Both are fine here and neither reaches
+Session 1's one-billion-token gate.
+
+Measured on real prose: a 500-word document's shingle set is **73×** the size of its MinHash
+signature, and the gap widens with length (1,199× at 10,000 words). This exercise's full run holds
+~2.4 GB of shingle sets resident; at ~616k documents it would need **40.5 GB**.
+
+**The scalable path is `05-datamixtures-and-curriculum/src/mixture/accumulate.py`**, which persists
+signatures only, streams them from disk, and deduplicates each new shard against every earlier one.
+It buys that with accuracy: cross-shard pairs are judged by the MinHash *estimate* rather than exact
+Jaccard, so its threshold is widened by one standard error — a false keep leaves a duplicate, a
+false drop deletes text that never comes back. Within a shard it still uses this module's exact
+check.
+
+Nothing here is deprecated. Exercise 04's published numbers were produced by this code and stand;
+the store is the continuation, not a replacement.
+
 ## Layout
 
 `config.py` holds every threshold in one frozen dataclass, and its `fingerprint()` lands in the
