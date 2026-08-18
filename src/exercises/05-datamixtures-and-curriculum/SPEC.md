@@ -10,27 +10,23 @@ what happens to every share when it is checked against the data that actually ex
 
 ## The three findings the rest of this rests on
 
-**1 · Lane supply is summed from named datasets, never quoted from a slot headline.** That one
-choice changed a verdict immediately. The STEM lane's itemised supply is
-**146B** — D4 STEM 49B, peS2o 42B, proof-pile-2 55B — where the
-session's supply check prices it at **250B**. No dataset carries the missing 104B.
-Against a 240B demand, the quoted figure says the lane fits inside a single pass and the
-itemised figure says it needs repetition.
+**1 · Supply is summed from named datasets, never quoted from a slot headline.** That changed a
+verdict at once: STEM itemises to **146B** (D4 STEM 49B + peS2o 42B +
+proof-pile-2 55B) where the session's supply check says **250B**, with no dataset carrying
+the missing 104B. Against a 240B demand that is the difference between fitting in
+one pass and needing repetition.
 
-**2 · The 2% agentic lane cannot be funded, and the finding survives every objection to it.** It
-asks 40B of a 627M pool. The repetition ceiling —
-`unique × 16.4`, from the fit in `dataframework.mix` — caps that pool at
-10.3B, so the demand is **3.9× more than infinite repetition could
-ever be worth**, before any correction. Applying §6's loss mask makes it far worse, which is
-exactly why the mask is *not* the argument: a reviewer who rejects the supervision estimate
-entirely still lands on impossible. This is the session's own point rather than an objection to it
-— agentic data *"must largely be built rather than collected"*.
+**2 · The 2% agentic lane cannot be funded, and the finding survives every objection.** It asks
+40B of a 627M pool, which the repetition ceiling
+(`unique × 16.4`) caps at 10.3B — **3.9× short before any correction**. §6's loss mask
+makes it far worse, which is exactly why the mask is *not* the argument: reject the supervision
+estimate entirely and the lane is still impossible. That is the session's own point, not an
+objection to it — agentic data *"must largely be built rather than collected"*.
 
-**3 · Long-context is not a lane.** Of its 100B, 60B is repo-packed code the inventory itself
-describes as *"packed from code corpora"* — the code lane's tokens rearranged into longer
-sequences. Only the 40B of packed books is text no other lane holds. A 6% share would have
-double-counted 60B of corpus, so long-context becomes a **sequence-length schedule** with its own
-benchmark and no budget of its own.
+**3 · Long-context is not a lane.** 60B of its 100B is repo-packed code the inventory calls
+*"packed from code corpora"* — the code lane's tokens in longer sequences. A 6% share would
+double-count it, so long-context becomes a **sequence-length schedule**: its own benchmark, no
+budget.
 
 ---
 
@@ -53,40 +49,19 @@ in `supply.py`.
 
 Shares start from Session 5's own mixture; each departure carries its argument.
 
-**General web — 32%.** The only lane with a large surplus — 4.691T against a 640B demand, 0.14 epochs — so it is where the two points funding Indic and reasoning come from. It stays the largest lane because breadth of world knowledge is what MMLU and HLE measure and nothing else supplies it.
+**General web — 32%.** The only lane with real surplus — 4.691T against 640B, 0.14 epochs — so it funds the two points going to Indic and reasoning. It stays largest because breadth of world knowledge is what MMLU and HLE measure, and nothing else supplies it. *Buys* `Humanity's Last Exam`, `MMLU`. *From* DCLM-Baseline, FineWeb-Edu, D2 Web-Diverse, D1 Web-Foundation.
 
-*Buys:* `Humanity's Last Exam`, `MMLU`.  
-*Funded by:* DCLM-Baseline, FineWeb-Edu, D2 Web-Diverse, D1 Web-Foundation.
+**Code — 28%.** Half the stated target capability, and it absorbs the retired long-context slot — 60B of which was repo-packed code from these same corpora. At 560B against 1.103T it runs at 0.51 epochs, so the increase costs no repetition. *Buys* `SWE-bench Verified`, `SWE-bench Live / Pro`, `LiveCodeBench`, `Aider Polyglot`, `Codeforces`. *From* The Stack v2, D3 Code, CommitPack / CommitPackFT.
 
-**Code — 28%.** Half the stated target capability, and the lane that absorbs the retired long-context slot: 60B of that slot was repo-packed code from these same corpora. At 560B against 1.103T it still runs at 0.51 epochs, so the increase costs no repetition.
+**Indic — 18%.** The differentiator, and the reason the project exists. Two points above the session default buys headroom over the 12% floor rather than sitting on it, at 1.33 epochs — inside the band where repetition is near-free. *Buys* `MILU`, `IndicGenBench`. *From* Sangraha (verified), Sangraha (unverified), Sangraha (synthetic), IndicCorpV2, +2 more.
 
-*Buys:* `SWE-bench Verified`, `SWE-bench Live / Pro`, `LiveCodeBench`, `Aider Polyglot`, `Codeforces`.  
-*Funded by:* The Stack v2, D3 Code, CommitPack / CommitPackFT.
+**STEM / math — 12%.** Unchanged, but on 146B of itemised supply rather than the 250B the session's supply check quotes. That moves it from 0.96 epochs to 1.64 — still fundable, with no margin left to give away. *Buys* `AIME 2024 / 2025`, `FrontierMath`, `GPQA Diamond`, `Humanity's Last Exam`, `MMLU`. *From* D4 STEM, peS2o, proof-pile-2.
 
-**Indic — 18%.** The differentiator and the reason the project exists. Raised two points above the session default to put real headroom over the 12% protected floor rather than sitting on it, at a cost of 1.33 epochs — inside the band where repetition is near-free.
+**Reasoning traces — 8%.** Up two points because this lane reserves a *distribution* of trace lengths, not a quantity. 85.1B is the thinnest real pool in the mixture and 92% of it sits in one V4-lineage dataset, so the band structure has to be bought deliberately. *Buys* `LiveCodeBench`, `Codeforces`, `AIME 2024 / 2025`, `FrontierMath`, `GPQA Diamond`. *From* AON, OpenMathReasoning, OpenThoughts2, NuminaMath, +1 more.
 
-*Buys:* `MILU`, `IndicGenBench`.  
-*Funded by:* Sangraha (verified), Sangraha (unverified), Sangraha (synthetic), IndicCorpV2, Samanantar, BPCC (parallel).
+**Agentic / tool-use — 2%.** Held at the session's floor although supply cannot fund it: 40B against 627M is 3.9x more than infinite repetition could be worth. The share commits to *building* the data, not to holding it — priced in §8. *Buys* `SWE-bench Verified`, `SWE-bench Live / Pro`, `Terminal-Bench`, `tau-bench / tau2-bench`, `BFCL v3`. *From* SWE-Gym, SWE-smith, OpenHands rollouts, ToolBench, +5 more.
 
-**STEM / math — 12%.** Unchanged, but on a supply of 146B rather than the 250B the session's supply check quotes — the itemised rows do not reach it. That moves the lane from 0.96 epochs to 1.64: still fundable, with no margin left to give away.
-
-*Buys:* `AIME 2024 / 2025`, `FrontierMath`, `GPQA Diamond`, `Humanity's Last Exam`, `MMLU`.  
-*Funded by:* D4 STEM, peS2o, proof-pile-2.
-
-**Reasoning traces — 8%.** Raised two points because the lane must reserve a *distribution* of trace lengths, not a quantity: short, medium, long and ultra across maths, code and general problem solving. 85.1B is the thinnest real pool in the mixture and 92% of it sits in one V4-lineage dataset, so the band structure has to be bought deliberately.
-
-*Buys:* `LiveCodeBench`, `Codeforces`, `AIME 2024 / 2025`, `FrontierMath`, `GPQA Diamond`.  
-*Funded by:* AON, OpenMathReasoning, OpenThoughts2, NuminaMath, OpenR1-Math.
-
-**Agentic / tool-use — 2%.** Held at the session's floor although supply cannot fund it. 40B of demand against 627M is 3.9x more than infinite repetition could ever be worth, so the share is a commitment to *build* the data rather than a claim to hold it — see generation_bill().
-
-*Buys:* `SWE-bench Verified`, `SWE-bench Live / Pro`, `Terminal-Bench`, `tau-bench / tau2-bench`, `BFCL v3`.  
-*Funded by:* SWE-Gym, SWE-smith, OpenHands rollouts, ToolBench, ToolACE, Glaive function-calling v2, Nexus / NexusRaven, xLAM / APIGen, Hermes function-calling.
-
-**Long-context — 0%.** Retired as a lane, kept as a capability. 60 of its 100B is repo-packed code already counted under code, so a 6% share would have double-counted 60B of the corpus. It becomes a sequence-length schedule applied to code, books and web, keeps its own benchmark (long-eval), and holds no budget of its own.
-
-*Buys:* `GAIA`, `BrowseComp`, `long-eval`.  
-*Funded by:* Repo-packed code (32K+), Book-length corpora (packed).
+**Long-context — 0%.** Retired as a lane, kept as a capability. 60 of its 100B is repo-packed code already counted under code, so a 6% share would double-count it. It becomes a sequence-length schedule over code, books and web — its own benchmark, no budget. *Buys* `GAIA`, `BrowseComp`, `long-eval`. *From* Repo-packed code (32K+), Book-length corpora (packed).
 
 ---
 
@@ -194,23 +169,16 @@ Held back at composition time, spent in the final low-LR cooldown. **39.9B,
 | **Anneal** | 2% | 32k | 5% | 18% | 30% | 9% | 28% | 10% |
 | *run average* | *100%* | | *31.4%* | *28.4%* | *18.1%* | *12.2%* | *7.7%* | *2.2%* |
 
-The headline mixture is the run's **average**, not a constant, so the stages weighted by their
-durations must integrate back to it. Worst drift on any lane is
+The headline mixture is the run's **average**, not a constant — so the stages, weighted by their
+durations, must integrate back to it. Worst drift on any lane is
 **0.60%** against a declared 1%
-tolerance, checked by `INV-6b`.
+tolerance, checked by `INV-6b`. Without that check the two halves of this document could disagree
+by any amount and both look fine.
 
-Every seam carries a warmup band, because V4's mitigation was *never change the mixture in one
-hard step*:
-
-| seam | largest shift | band |
-| --- | ---: | ---: |
-| seed → general | web -14% | 3B |
-| general → reasoning | web -24% | 3B |
-| reasoning → long_context | web -4% | 3B |
-| long_context → anneal | reasoning +18% | 3B |
-
-The steepest is General → Reasoning. That is the shape of transition that cost V4 a **~150×**
-gradient-norm spike when a sharp Hindi cut met frozen embeddings.
+Every seam carries a **3B-token warmup band**, because V4's
+mitigation was *never change the mixture in one hard step*. The steepest is General → Reasoning,
+where web drops 24 points — the shape of transition that cost V4 a **~150×** gradient-norm spike
+against frozen embeddings. Per-seam detail: [`curriculum.py`](src/mixture/curriculum.py).
 
 ### Difficulty bands B0–B5
 
@@ -294,39 +262,23 @@ Full write-up: [`EXPERIMENTS.md`](EXPERIMENTS.md).
 | **1B** | 1B × 2B × 4 | 4.8e+19 | 105 days | 4 days · $139 | 34 h · $98 | rank the four arms |
 | **3B** | 3B × 2B × 2 | 7.2e+19 | 158 days | 7 days · $208 | 2 days · $147 | check the top two arms do not invert rank |
 
-Every rate carries its provenance, because a reader deciding whether to spend money needs to know
-which figures were observed and which were assumed. The local machine is **measured**; the rented
-ones are **estimated** — published dense bf16 peaks at an assumed 40% utilisation.
-
-**The local figure was `unknown` until Step 0 ran, and measuring it changed the answer twice.**
-First it replaced a guess: the plan had estimated ~4 TFLOP/s from published benchmarks, and the
-machine sustains **5.281 TFLOP/s** — the estimate was low, not high. Second, the
-measurement itself had to be fixed. The initial sweep charged one-off Metal shader compilation to
-whichever run happened to be first and reported **1.06 TFLOP/s** where the identical configuration
-sustains **3.01**; warm-up steps are now trained but not timed. A published figure off by 3× would
-have made the spend decision wrong in the direction hardest to notice — the safe one.
-
-Reproduce with `uv run python -m mixture.bench`, which sweeps six model sizes on every available
-device rather than quoting one point.
+The local rate is **measured** (5.281 TFLOP/s, six model sizes, `python -m mixture.bench`);
+the rented ones are **estimated** from published peaks at an assumed 40% utilisation, and say so.
+The field was `unknown` until Step 0 filled it. **The decision it buys:** the 1B rung is out of
+reach locally and cheap to rent, so it is a spending question with an answer rather than a guess.
 
 ### Does a 1B result say anything about 40B?
 
-**The assumption this whole experiment rests on, stated as one.** A mixture that ranks better at 1B
-parameters is assumed to rank better at 40B. That is an assumption, not a result. Asked whether a
-smaller model is a good proxy for the full one, the instructor's answer was blunt: *"Not at all.
-Weights are completely changed."* The remark was about OPUS's in-run scoring proxy rather than
-about scaled-down ablations, but it transfers, and pretending otherwise would be the same wishful
-accounting the supply section exists to prevent.
+**This is an assumption, not a result.** Asked whether a smaller model is a good proxy, the
+instructor's answer was *"Not at all. Weights are completely changed."* That was about OPUS's
+in-run scoring proxy rather than scaled-down ablations, but the concern transfers.
 
-**What would falsify it, and how we would see it.** Run the arms at both 1B and 3B. If any two arms
-change rank between the two scales, transfer has failed on our own data and no 1B result may be
-carried to 40B. That check is the reason the ladder goes 1B then 3B rather than 1B alone; a single
-scale cannot detect its own failure to transfer.
+**What would falsify it:** run the arms at both 1B and 3B, and if any two change rank between the
+scales, transfer has failed on our own data and no 1B result may be carried to 40B. A single scale
+cannot detect its own failure to transfer, which is why the ladder has two rungs.
 
-**What we will not claim.** That a 1B result predicts a 40B benchmark score. The strongest claim
-available is comparative and local: at this scale, on these held-out sets, this mixture reaches a
-lower bits-per-byte than that one.
-
+**What will not be claimed:** that a 1B result predicts a 40B benchmark score. The strongest claim
+available is comparative and local.
 
 ---
 
@@ -344,28 +296,16 @@ exists to prevent; a share whose gap is priced is a commitment.
 
 ## 9 · The invariants, enforced in CI
 
-0 errors,
-0 warnings.
-
-| invariant | rule | state |
-| --- | --- | --- |
-| `INV-1` | the mixture partitions one fixed budget | holds |
-| `INV-2` | no lane is funded past its repetition ceiling without a declared generation bill | holds |
-| `INV-3` | the protected floor holds and stays a minority of every batch | holds |
-| `INV-4` | every funded lane names a benchmark | holds |
-| `INV-4b` | every benchmark named is bought by a funded lane | holds |
-| `INV-5` | manufactured text stays under half the Indic lane | holds |
-| `INV-6a` | stage durations and per-stage shares each sum to 1 | holds |
-| `INV-6b` | the stage schedule integrates to the headline mixture | holds |
-| `INV-7` | the anneal reserve covers the stage it feeds | holds |
-| `INV-8` | every funded lane is funded out of named datasets | holds |
-| `INV-9` | the Indic tiers partition the Indic lane | holds |
-| `INV-10` | the reasoning bands partition the lane and differ in counted length | holds |
-| `INV-11` | every hypothesis states a threshold and what would refute it | holds |
+Thirteen rules hold this specification together — shares sum to one, no lane is funded past its
+repetition ceiling without a declared bill, the floor holds, the stage schedule integrates to the
+headline mixture, every funded lane names a benchmark and every benchmark has a funded lane.
+**0 errors,
+0 warnings** at the current mixture.
 
 Each is paired with a twin that proves it *fails* when broken, and
-`tests/test_mixture_mutation.py` disables each guard in turn and requires the suite to go red — a
-guard nobody has watched fail is not a guard.
+`tests/test_mixture_mutation.py` disables every guard in turn and requires the suite to go red —
+13 of 13 die. A guard nobody has watched fail is not a guard. Roster and current state:
+[`checks.py`](src/mixture/checks.py).
 
 ---
 

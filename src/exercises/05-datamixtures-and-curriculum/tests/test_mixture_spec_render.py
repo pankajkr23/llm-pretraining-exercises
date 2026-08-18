@@ -195,11 +195,25 @@ def test_the_generation_bill_is_published_with_both_gaps(spec: str):
         assert item.lane in section
 
 
-def test_the_invariant_table_reports_the_real_state(spec: str):
-    """A document that printed 'holds' unconditionally would be worse than one with no table."""
+def test_the_invariant_section_reports_the_real_counts(spec: str):
+    """A document that printed a clean bill unconditionally is worse than one with no claim.
+
+    This used to assert the full 13-row roster was on the page. The roster moved to `checks.py`
+    when the specification was tightened — it is CI's concern, not a reviewer's — so the assertion
+    moved to the part a reader acts on: the *counts*, which must match what the checker actually
+    returns, and the pointer to where the roster lives.
+    """
+    from mixture import checks
+
+    findings = checks.run_all(CFG)
+    errors = len([f for f in findings if f.level == checks.ERROR])
+    warnings = len(findings) - errors
+
     section = spec.split("## 9 · The invariants, enforced in CI")[1]
-    assert "INV-1" in section and "INV-11" in section
-    assert "holds" in section
+    assert f"{errors} errors" in section, f"the spec does not report its {errors} errors"
+    assert f"{warnings} warnings" in section
+    assert "checks.py" in section, "the roster is no longer reachable from the spec"
+    assert "13 of 13" in section, "the mutation result is the reason to believe the counts"
 
 
 # ---- the tokenizer document --------------------------------------------------------------

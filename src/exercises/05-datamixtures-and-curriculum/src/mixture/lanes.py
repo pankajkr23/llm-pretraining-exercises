@@ -77,10 +77,9 @@ LANES: tuple[Lane, ...] = (
         share=0.32,
         session_share=0.34,
         because=(
-            "the only lane with a large surplus — 4.691T against a 640B demand, 0.14 epochs — so "
-            "it is where the two points funding Indic and reasoning come from. It stays the "
-            "largest lane because breadth of world knowledge is what MMLU and HLE measure and "
-            "nothing else supplies it"
+            "the only lane with real surplus — 4.691T against 640B, 0.14 epochs — so it funds the "
+            "two points going to Indic and reasoning. It stays largest because breadth of world "
+            "knowledge is what MMLU and HLE measure, and nothing else supplies it"
         ),
         funded_by=("DCLM-Baseline", "FineWeb-Edu", "D2 Web-Diverse", "D1 Web-Foundation"),
     ),
@@ -90,9 +89,9 @@ LANES: tuple[Lane, ...] = (
         share=0.28,
         session_share=0.24,
         because=(
-            "half the stated target capability, and the lane that absorbs the retired long-context "
-            "slot: 60B of that slot was repo-packed code from these same corpora. At 560B against "
-            "1.103T it still runs at 0.51 epochs, so the increase costs no repetition"
+            "half the stated target capability, and it absorbs the retired long-context slot — 60B "
+            "of which was repo-packed code from these same corpora. At 560B against 1.103T it runs "
+            "at 0.51 epochs, so the increase costs no repetition"
         ),
         funded_by=("The Stack v2", "D3 Code", "CommitPack / CommitPackFT"),
     ),
@@ -102,9 +101,9 @@ LANES: tuple[Lane, ...] = (
         share=0.18,
         session_share=0.16,
         because=(
-            "the differentiator and the reason the project exists. Raised two points above the "
-            "session default to put real headroom over the 12% protected floor rather than sitting "
-            "on it, at a cost of 1.33 epochs — inside the band where repetition is near-free"
+            "the differentiator, and the reason the project exists. Two points above the session "
+            "default buys headroom over the 12% floor rather than sitting on it, at 1.33 epochs — "
+            "inside the band where repetition is near-free"
         ),
         funded_by=(
             "Sangraha (verified)",
@@ -121,9 +120,9 @@ LANES: tuple[Lane, ...] = (
         share=0.12,
         session_share=0.12,
         because=(
-            "unchanged, but on a supply of 146B rather than the 250B the session's supply check "
-            "quotes — the itemised rows do not reach it. That moves the lane from 0.96 epochs to "
-            "1.64: still fundable, with no margin left to give away"
+            "unchanged, but on 146B of itemised supply rather than the 250B the session's supply "
+            "check quotes. That moves it from 0.96 epochs to 1.64 — still fundable, with no margin "
+            "left to give away"
         ),
         funded_by=("D4 STEM", "peS2o", "proof-pile-2"),
     ),
@@ -133,9 +132,8 @@ LANES: tuple[Lane, ...] = (
         share=0.08,
         session_share=0.06,
         because=(
-            "raised two points because the lane must reserve a *distribution* of trace lengths, "
-            "not a quantity: short, medium, long and ultra across maths, code and general problem "
-            "solving. 85.1B is the thinnest real pool in the mixture and 92% of it sits in one "
+            "up two points because this lane reserves a *distribution* of trace lengths, not a "
+            "quantity. 85.1B is the thinnest real pool in the mixture and 92% of it sits in one "
             "V4-lineage dataset, so the band structure has to be bought deliberately"
         ),
         funded_by=(
@@ -152,9 +150,9 @@ LANES: tuple[Lane, ...] = (
         share=0.02,
         session_share=0.02,
         because=(
-            "held at the session's floor although supply cannot fund it. 40B of demand against "
-            "627M is 3.9x more than infinite repetition could ever be worth, so the share is a "
-            "commitment to *build* the data rather than a claim to hold it — see generation_bill()"
+            "held at the session's floor although supply cannot fund it: 40B against 627M is 3.9x "
+            "more than infinite repetition could be worth. The share commits to *building* the "
+            "data, not to holding it — priced in §8"
         ),
         funded_by=(
             "SWE-Gym",
@@ -175,9 +173,8 @@ LANES: tuple[Lane, ...] = (
         session_share=0.06,
         because=(
             "retired as a lane, kept as a capability. 60 of its 100B is repo-packed code already "
-            "counted under code, so a 6% share would have double-counted 60B of the corpus. It "
-            "becomes a sequence-length schedule applied to code, books and web, keeps its own "
-            "benchmark (long-eval), and holds no budget of its own"
+            "counted under code, so a 6% share would double-count it. It becomes a sequence-length "
+            "schedule over code, books and web — its own benchmark, no budget"
         ),
         funded_by=("Repo-packed code (32K+)", "Book-length corpora (packed)"),
         schedule_only=True,

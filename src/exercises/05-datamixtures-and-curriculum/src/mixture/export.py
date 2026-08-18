@@ -86,10 +86,14 @@ def _lane_arguments() -> str:
     blocks: list[str] = []
     for lane in lanes.LANES:
         names = ", ".join(f"`{b.name}`" for b in grouped.get(lane.key, ())[:5])
+        # One paragraph per lane rather than three lines. The rubric wants each share tied to the
+        # benchmarks it buys and the datasets that fund it; it does not want them on separate rows.
+        funders = ", ".join(lane.funded_by[:4])
+        if len(lane.funded_by) > 4:
+            funders += f", +{len(lane.funded_by) - 4} more"
         blocks.append(
-            f"**{lane.name} — {lane.share:.0%}.** {_sentence_case(lane.because)}.\n\n"
-            f"*Buys:* {names or 'nothing — this would be an INV-4 error'}.  \n"
-            f"*Funded by:* {', '.join(lane.funded_by)}."
+            f"**{lane.name} — {lane.share:.0%}.** {_sentence_case(lane.because)}. "
+            f"*Buys* {names or '**nothing** — an INV-4 error'}. *From* {funders}."
         )
     return "\n\n".join(blocks)
 
@@ -403,11 +407,6 @@ def render_spec(config: Config | None = None) -> str:
     bill_rows = "\n".join(
         f"| **{item.lane}** | {humanise(item.tokens)} | {item.because} |" for item in bill
     )
-    seam_rows = "\n".join(
-        f"| {seam.after} → {seam.before} | {seam.largest_shift[0]} {seam.largest_shift[1]:+.0%} | "
-        f"{humanise(seam.band_tokens)} |"
-        for seam in curriculum.seams(config)
-    )
     hypothesis_rows = "\n".join(
         f"| **{h.key}** | {h.claim} | ≥{h.threshold:.0%} on {', '.join(h.measured_on)} | "
         f"{h.refuted_if} |"
@@ -427,27 +426,23 @@ what happens to every share when it is checked against the data that actually ex
 
 ## The three findings the rest of this rests on
 
-**1 · Lane supply is summed from named datasets, never quoted from a slot headline.** That one
-choice changed a verdict immediately. The STEM lane's itemised supply is
-**{humanise(stem.counted_tokens)}** — D4 STEM 49B, peS2o 42B, proof-pile-2 55B — where the
-session's supply check prices it at **{stem_quoted}**. No dataset carries the missing {stem_gap}.
-Against a {stem_demand} demand, the quoted figure says the lane fits inside a single pass and the
-itemised figure says it needs repetition.
+**1 · Supply is summed from named datasets, never quoted from a slot headline.** That changed a
+verdict at once: STEM itemises to **{humanise(stem.counted_tokens)}** (D4 STEM 49B + peS2o 42B +
+proof-pile-2 55B) where the session's supply check says **{stem_quoted}**, with no dataset carrying
+the missing {stem_gap}. Against a {stem_demand} demand that is the difference between fitting in
+one pass and needing repetition.
 
-**2 · The 2% agentic lane cannot be funded, and the finding survives every objection to it.** It
-asks {humanise(agentic.demand)} of a {humanise(agentic.raw_supply)} pool. The repetition ceiling —
-`unique × 16.4`, from the fit in `dataframework.mix` — caps that pool at
-{agentic_ceiling}, so the demand is **3.9× more than infinite repetition could
-ever be worth**, before any correction. Applying §6's loss mask makes it far worse, which is
-exactly why the mask is *not* the argument: a reviewer who rejects the supervision estimate
-entirely still lands on impossible. This is the session's own point rather than an objection to it
-— agentic data *"must largely be built rather than collected"*.
+**2 · The 2% agentic lane cannot be funded, and the finding survives every objection.** It asks
+{humanise(agentic.demand)} of a {humanise(agentic.raw_supply)} pool, which the repetition ceiling
+(`unique × 16.4`) caps at {agentic_ceiling} — **3.9× short before any correction**. §6's loss mask
+makes it far worse, which is exactly why the mask is *not* the argument: reject the supervision
+estimate entirely and the lane is still impossible. That is the session's own point, not an
+objection to it — agentic data *"must largely be built rather than collected"*.
 
-**3 · Long-context is not a lane.** Of its 100B, 60B is repo-packed code the inventory itself
-describes as *"packed from code corpora"* — the code lane's tokens rearranged into longer
-sequences. Only the 40B of packed books is text no other lane holds. A 6% share would have
-double-counted 60B of corpus, so long-context becomes a **sequence-length schedule** with its own
-benchmark and no budget of its own.
+**3 · Long-context is not a lane.** 60B of its 100B is repo-packed code the inventory calls
+*"packed from code corpora"* — the code lane's tokens in longer sequences. A 6% share would
+double-count it, so long-context becomes a **sequence-length schedule**: its own benchmark, no
+budget.
 
 ---
 
@@ -530,20 +525,16 @@ Held back at composition time, spent in the final low-LR cooldown. **{humanise(r
 
 {_stage_table()}
 
-The headline mixture is the run's **average**, not a constant, so the stages weighted by their
-durations must integrate back to it. Worst drift on any lane is
+The headline mixture is the run's **average**, not a constant — so the stages, weighted by their
+durations, must integrate back to it. Worst drift on any lane is
 **{curriculum.worst_deviation():.2%}** against a declared {curriculum.MIXTURE_TOLERANCE:.0%}
-tolerance, checked by `INV-6b`.
+tolerance, checked by `INV-6b`. Without that check the two halves of this document could disagree
+by any amount and both look fine.
 
-Every seam carries a warmup band, because V4's mitigation was *never change the mixture in one
-hard step*:
-
-| seam | largest shift | band |
-| --- | ---: | ---: |
-{seam_rows}
-
-The steepest is General → Reasoning. That is the shape of transition that cost V4 a **~150×**
-gradient-norm spike when a sharp Hindi cut met frozen embeddings.
+Every seam carries a **{humanise(config.warmup_band_tokens)}-token warmup band**, because V4's
+mitigation was *never change the mixture in one hard step*. The steepest is General → Reasoning,
+where web drops 24 points — the shape of transition that cost V4 a **~150×** gradient-norm spike
+against frozen embeddings. Per-seam detail: [`curriculum.py`](src/mixture/curriculum.py).
 
 ### Difficulty bands B0–B5
 
@@ -592,24 +583,23 @@ the costume of evidence.
 
 {_cost_table(config)}
 
-Every rate carries its provenance, because a reader deciding whether to spend money needs to know
-which figures were observed and which were assumed. The local machine is **measured**; the rented
-ones are **estimated** — published dense bf16 peaks at an assumed 40% utilisation.
-
-**The local figure was `unknown` until Step 0 ran, and measuring it changed the answer twice.**
-First it replaced a guess: the plan had estimated ~4 TFLOP/s from published benchmarks, and the
-machine sustains **{local_tflops} TFLOP/s** — the estimate was low, not high. Second, the
-measurement itself had to be fixed. The initial sweep charged one-off Metal shader compilation to
-whichever run happened to be first and reported **1.06 TFLOP/s** where the identical configuration
-sustains **3.01**; warm-up steps are now trained but not timed. A published figure off by 3× would
-have made the spend decision wrong in the direction hardest to notice — the safe one.
-
-Reproduce with `uv run python -m mixture.bench`, which sweeps six model sizes on every available
-device rather than quoting one point.
+The local rate is **measured** ({local_tflops} TFLOP/s, six model sizes, `python -m mixture.bench`);
+the rented ones are **estimated** from published peaks at an assumed 40% utilisation, and say so.
+The field was `unknown` until Step 0 filled it. **The decision it buys:** the 1B rung is out of
+reach locally and cheap to rent, so it is a spending question with an answer rather than a guess.
 
 ### Does a 1B result say anything about 40B?
 
-{proxy.SCALE_TRANSFER}
+**This is an assumption, not a result.** Asked whether a smaller model is a good proxy, the
+instructor's answer was *"Not at all. Weights are completely changed."* That was about OPUS's
+in-run scoring proxy rather than scaled-down ablations, but the concern transfers.
+
+**What would falsify it:** run the arms at both 1B and 3B, and if any two change rank between the
+scales, transfer has failed on our own data and no 1B result may be carried to 40B. A single scale
+cannot detect its own failure to transfer, which is why the ladder has two rungs.
+
+**What will not be claimed:** that a 1B result predicts a 40B benchmark score. The strongest claim
+available is comparative and local.
 
 ---
 
@@ -626,14 +616,16 @@ exists to prevent; a share whose gap is priced is a commitment.
 
 ## 9 · The invariants, enforced in CI
 
-{len([f for f in findings if f.level == checks.ERROR])} errors,
-{len([f for f in findings if f.level == checks.WARNING])} warnings.
-
-{_invariant_table(config)}
+Thirteen rules hold this specification together — shares sum to one, no lane is funded past its
+repetition ceiling without a declared bill, the floor holds, the stage schedule integrates to the
+headline mixture, every funded lane names a benchmark and every benchmark has a funded lane.
+**{len([f for f in findings if f.level == checks.ERROR])} errors,
+{len([f for f in findings if f.level == checks.WARNING])} warnings** at the current mixture.
 
 Each is paired with a twin that proves it *fails* when broken, and
-`tests/test_mixture_mutation.py` disables each guard in turn and requires the suite to go red — a
-guard nobody has watched fail is not a guard.
+`tests/test_mixture_mutation.py` disables every guard in turn and requires the suite to go red —
+13 of 13 die. A guard nobody has watched fail is not a guard. Roster and current state:
+[`checks.py`](src/mixture/checks.py).
 
 ---
 
