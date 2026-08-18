@@ -22,7 +22,7 @@ from pathlib import Path
 from mixture import corpus, evaluate, lanes, proxy
 from mixture.config import Config
 from mixture.model import ModelConfig, pick_device
-from mixture.train import ARTIFACTS, RunRecord, TrainConfig, save_record, train
+from mixture.train import RunRecord, TrainConfig, save_record, train
 
 
 @dataclass
@@ -358,6 +358,9 @@ def run(
     }
 
 
+RESULTS_DIR = corpus.EXERCISE_ROOT / "results"
+
+
 def save(bundle: dict, name: str = "step0") -> Path:
     """Write an experiment bundle.
 
@@ -368,8 +371,12 @@ def save(bundle: dict, name: str = "step0") -> Path:
     Returns:
         The path written.
     """
-    ARTIFACTS.mkdir(parents=True, exist_ok=True)
-    path = ARTIFACTS / f"{name}.json"
+    # `results/`, which is TRACKED, not `artifacts/`, which is gitignored. This wrote to artifacts
+    # first, so a completed run left the committed evidence untouched: the documents kept
+    # rendering an older experiment while the terminal showed the new one, and nothing failed.
+    # The published result and the run that produced it have to be the same file.
+    path = RESULTS_DIR / f"{name}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(bundle, indent=1, default=str), encoding="utf-8")
     return path
 

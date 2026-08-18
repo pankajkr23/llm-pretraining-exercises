@@ -387,13 +387,13 @@ the costume of evidence.
 
 ### It has been run
 
-Step 0 ran on mps:apple-silicon: a 4-layer model, 500 steps, **5 seeds per arm**, over a 523,141-token corpus of committed text across three lanes.
+Step 0 ran on mps:apple-silicon: a 4-layer model, 500 steps, **5 seeds per arm**, over a 1,784,212-token corpus of committed text across three lanes.
 
 | | lane | effect | threshold | seed noise | verdict |
 | --- | --- | ---: | ---: | ---: | --- |
-| **H1** | weighted | +3.00% | 2% | 1.45% | **supported** |
-| **H2** | indic | +7.36% | 5% | 0.93% | **supported** |
-| **H3** | indic | +3.53% | 3% | 0.85% | **qualified** |
+| **H1** | weighted | +4.21% | 2% | 1.11% | **supported** |
+| **H2** | indic | +6.88% | 5% | 1.55% | **supported** |
+| **H3** | indic | +3.52% | 3% | 2.06% | **refuted** |
 
 Two things about that table matter more than the verdicts. Every effect is reported against **the spread the same arm shows against itself**, because exercise 02 learned that a held-out score can swing further across arbitrary choices than the recipes it is meant to separate. And **H3 is `qualified` rather than supported** because its declared refutation had a second clause — *"or the other lanes gain more than 1%"* — which the first implementation did not check and the results trip: halving Indic costs Indic 3.53% and gains code 1.20%, a gain that sits inside code's own 1.34% seed spread and so settles nothing.
 

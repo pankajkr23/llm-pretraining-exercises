@@ -666,212 +666,407 @@ export const BUNDLE = Object.freeze({
   },
   "corpus": {
    "web": {
+    "lane": "web",
     "train_tokens": 100661,
     "heldout_tokens": 10331,
     "heldout_bytes": 59861,
     "unk_share": 0.0,
-    "tokenizer": "ours/s02-bpe-10000"
+    "tokenizer": "ours/s02-bpe-10000",
+    "content_hash": "aaa7527ab35baea5",
+    "sources": [
+     "src/exercises/02-tokenization/corpus/v2/en.faithful.txt"
+    ]
    },
    "indic": {
+    "lane": "indic",
     "train_tokens": 70574,
     "heldout_tokens": 8228,
     "heldout_bytes": 66427,
     "unk_share": 0.0,
-    "tokenizer": "ours/s02-bpe-10000"
+    "tokenizer": "ours/s02-bpe-10000",
+    "content_hash": "3c2a6a1f3049ff13",
+    "sources": [
+     "src/exercises/02-tokenization/corpus/v2/hi.faithful.txt",
+     "src/exercises/02-tokenization/corpus/v2/te.faithful.txt",
+     "src/exercises/02-tokenization/corpus/v2/mai.faithful.txt"
+    ]
    },
    "code": {
-    "train_tokens": 351906,
-    "heldout_tokens": 37120,
-    "heldout_bytes": 77707,
-    "unk_share": 0.0016939872449700918,
-    "tokenizer": "ours/s02-bpe-10000"
+    "lane": "code",
+    "train_tokens": 352415,
+    "heldout_tokens": 37162,
+    "heldout_bytes": 77843,
+    "unk_share": 0.00169157830159378,
+    "tokenizer": "ours/s02-bpe-10000",
+    "content_hash": "f0b22a2b61027740",
+    "sources": [
+     "src/exercises/01-introductions/node_modules/flatted/python/flatted.py",
+     "src/exercises/01-introductions/tests/test_web_bundle.py",
+     "src/exercises/02-tokenization/src/tokenization/__init__.py",
+     "src/exercises/02-tokenization/src/tokenization/__main__.py",
+     "src/exercises/02-tokenization/src/tokenization/ablate.py",
+     "src/exercises/02-tokenization/src/tokenization/bpe_scratch.py",
+     "src/exercises/02-tokenization/src/tokenization/config.py",
+     "src/exercises/02-tokenization/src/tokenization/corpus.py",
+     "src/exercises/02-tokenization/src/tokenization/explainer.py",
+     "src/exercises/02-tokenization/src/tokenization/faithfulness.py",
+     "src/exercises/02-tokenization/src/tokenization/fourth_language.py",
+     "src/exercises/02-tokenization/src/tokenization/holdout.py",
+     "src/exercises/02-tokenization/src/tokenization/metrics.py",
+     "src/exercises/02-tokenization/src/tokenization/tokenizer.py",
+     "src/exercises/02-tokenization/src/tokenization/widget.py",
+     "src/exercises/02-tokenization/tests/test_ablate.py",
+     "src/exercises/02-tokenization/tests/test_bpe_scratch.py",
+     "src/exercises/02-tokenization/tests/test_corpus_paths.py",
+     "src/exercises/02-tokenization/tests/test_faithfulness.py",
+     "src/exercises/02-tokenization/tests/test_js_encoder.py",
+     "src/exercises/02-tokenization/tests/test_metrics.py",
+     "src/exercises/02-tokenization/tests/test_submission.py",
+     "src/exercises/02-tokenization/tests/test_tokenizer.py",
+     "src/exercises/02-tokenization/tests/test_v1_retained.py",
+     "src/exercises/02-tokenization/tests/test_widget_render.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/__init__.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/__main__.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/catalog.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/config.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/coverage.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/export.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/fertility.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/fetch_benchmarks.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/gotchas.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/grade.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/ingest.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/measure_fertility.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/milestones.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/mix.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/modalities.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/models.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/orphans.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/run_cost.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/shingles.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/sourcing.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/vocab_sweep.py",
+     "src/exercises/03-data-collection-framework/src/dataframework/vocab_trade.py",
+     "src/exercises/03-data-collection-framework/tests/test_catalog.py",
+     "src/exercises/03-data-collection-framework/tests/test_compute.py",
+     "src/exercises/03-data-collection-framework/tests/test_config.py",
+     "src/exercises/03-data-collection-framework/tests/test_gotchas.py",
+     "src/exercises/03-data-collection-framework/tests/test_ingest.py",
+     "src/exercises/03-data-collection-framework/tests/test_invariants.py",
+     "src/exercises/03-data-collection-framework/tests/test_models.py",
+     "src/exercises/03-data-collection-framework/tests/test_render.py",
+     "src/exercises/04-data-cleaning-dedup/src/datacleaning/__init__.py",
+     "src/exercises/04-data-cleaning-dedup/src/datacleaning/__main__.py",
+     "src/exercises/04-data-cleaning-dedup/src/datacleaning/config.py",
+     "src/exercises/04-data-cleaning-dedup/src/datacleaning/corpus.py",
+     "src/exercises/04-data-cleaning-dedup/src/datacleaning/decontaminate.py",
+     "src/exercises/04-data-cleaning-dedup/src/datacleaning/dedup.py",
+     "src/exercises/04-data-cleaning-dedup/src/datacleaning/export.py",
+     "src/exercises/04-data-cleaning-dedup/src/datacleaning/fetch.py",
+     "src/exercises/04-data-cleaning-dedup/src/datacleaning/formats.py",
+     "src/exercises/04-data-cleaning-dedup/src/datacleaning/langid.py",
+     "src/exercises/04-data-cleaning-dedup/src/datacleaning/manifest.py",
+     "src/exercises/04-data-cleaning-dedup/src/datacleaning/normalize.py",
+     "src/exercises/04-data-cleaning-dedup/src/datacleaning/pii.py",
+     "src/exercises/04-data-cleaning-dedup/src/datacleaning/pipeline.py",
+     "src/exercises/04-data-cleaning-dedup/src/datacleaning/quality.py",
+     "src/exercises/04-data-cleaning-dedup/src/datacleaning/records.py",
+     "src/exercises/04-data-cleaning-dedup/src/datacleaning/sources.py",
+     "src/exercises/04-data-cleaning-dedup/src/datacleaning/tokens.py",
+     "src/exercises/04-data-cleaning-dedup/tests/test_agreement.py",
+     "src/exercises/04-data-cleaning-dedup/tests/test_bundle.py",
+     "src/exercises/04-data-cleaning-dedup/tests/test_decontaminate.py",
+     "src/exercises/04-data-cleaning-dedup/tests/test_dedup.py",
+     "src/exercises/04-data-cleaning-dedup/tests/test_formats.py",
+     "src/exercises/04-data-cleaning-dedup/tests/test_langid.py",
+     "src/exercises/04-data-cleaning-dedup/tests/test_normalize.py",
+     "src/exercises/04-data-cleaning-dedup/tests/test_notebook.py",
+     "src/exercises/04-data-cleaning-dedup/tests/test_page_render.py",
+     "src/exercises/04-data-cleaning-dedup/tests/test_pii.py",
+     "src/exercises/04-data-cleaning-dedup/tests/test_publication_invariants.py",
+     "src/exercises/04-data-cleaning-dedup/tests/test_quality.py",
+     "src/exercises/04-data-cleaning-dedup/tests/test_tokens.py",
+     "src/exercises/04-data-cleaning-dedup/tests/test_wiring.py"
+    ]
+   },
+   "stem": {
+    "lane": "stem",
+    "train_tokens": 239401,
+    "heldout_tokens": 26532,
+    "heldout_bytes": 62545,
+    "unk_share": 0.00010153009615276142,
+    "tokenizer": "ours/s02-bpe-10000",
+    "content_hash": "3bf15d5dfad50f60",
+    "sources": [
+     "data/proxy/stem.txt"
+    ]
+   },
+   "reasoning": {
+    "lane": "reasoning",
+    "train_tokens": 558783,
+    "heldout_tokens": 61787,
+    "heldout_bytes": 138835,
+    "unk_share": 0.0020320061105211507,
+    "tokenizer": "ours/s02-bpe-10000",
+    "content_hash": "e94ee3b9f57bb84a",
+    "sources": [
+     "data/proxy/reasoning.txt"
+    ]
+   },
+   "agentic": {
+    "lane": "agentic",
+    "train_tokens": 462378,
+    "heldout_tokens": 50273,
+    "heldout_bytes": 117411,
+    "unk_share": 0.00011118696966741441,
+    "tokenizer": "ours/s02-bpe-10000",
+    "content_hash": "2fdbbefe6cda6b87",
+    "sources": [
+     "data/proxy/agentic.txt"
+    ]
    }
   },
   "arms": {
    "A": {
     "name": "V5 candidate",
     "effective_shares": {
-     "web": 0.41025641025641024,
-     "code": 0.358974358974359,
-     "indic": 0.23076923076923075
+     "web": 0.32,
+     "code": 0.28,
+     "indic": 0.18,
+     "stem": 0.12,
+     "reasoning": 0.08,
+     "agentic": 0.02
     },
-    "dropped_lanes": [
-     "agentic",
-     "reasoning",
-     "stem"
-    ],
+    "dropped_lanes": [],
     "per_seed": {
      "0": {
-      "web": 1.7877522599017848,
-      "indic": 1.323060448665315,
-      "code": 3.3979228908222896
+      "web": 1.8100504898975072,
+      "indic": 1.3417770825627302,
+      "code": 3.42611584817298,
+      "stem": 3.257834416634853,
+      "reasoning": 3.3124211386800795,
+      "agentic": 3.1777734457719164
      },
      "1": {
-      "web": 1.7894365427622798,
-      "indic": 1.3138913092355733,
-      "code": 3.3994666260064252
+      "web": 1.8128415517366445,
+      "indic": 1.3456441675855106,
+      "code": 3.432842058070126,
+      "stem": 3.2653903619892355,
+      "reasoning": 3.3300157786452753,
+      "agentic": 3.1926339409718203
      },
      "2": {
-      "web": 1.7959320566112564,
-      "indic": 1.3251192586749554,
-      "code": 3.410683492202899
+      "web": 1.8179532807420828,
+      "indic": 1.3278672705884418,
+      "code": 3.426395385386095,
+      "stem": 3.255488860838764,
+      "reasoning": 3.3406406441122183,
+      "agentic": 3.180011127529798
      },
      "3": {
-      "web": 1.7806932256648493,
-      "indic": 1.3155084842027427,
-      "code": 3.372882751435739
+      "web": 1.8061182037301566,
+      "indic": 1.33243104347266,
+      "code": 3.4121890243358837,
+      "stem": 3.2575447966188955,
+      "reasoning": 3.2957376908253697,
+      "agentic": 3.165308945394381
      },
      "4": {
-      "web": 1.79061503385194,
-      "indic": 1.3230704831891313,
-      "code": 3.3995403032979192
+      "web": 1.815249801823518,
+      "indic": 1.3316702364688826,
+      "code": 3.4338843682961473,
+      "stem": 3.2444317165242653,
+      "reasoning": 3.314243595840565,
+      "agentic": 3.1735056311576866
      }
     },
     "weighted": {
-     "0": 2.2585256581520112,
-     "1": 2.2576548520873483,
-     "2": 2.2669373108896225,
-     "3": 2.2448981150913494,
-     "4": 2.260283054782156
+     "0": 2.4995377591229553,
+     "1": 2.5056218075305203,
+     "2": 2.5016620038317177,
+     "3": 2.491078909600961,
+     "4": 2.5000096085441568
     }
    },
    "B": {
     "name": "Naive web-heavy",
     "effective_shares": {
-     "web": 0.7526881720430108,
-     "code": 0.21505376344086025,
-     "indic": 0.03225806451612903
+     "web": 0.7,
+     "code": 0.2,
+     "stem": 0.05,
+     "indic": 0.03,
+     "reasoning": 0.02
     },
-    "dropped_lanes": [
-     "reasoning",
-     "stem"
-    ],
+    "dropped_lanes": [],
     "per_seed": {
      "0": {
-      "web": 1.7708693225292647,
-      "indic": 1.4377510915207845,
-      "code": 3.5466251139445615
+      "web": 1.7887830784704013,
+      "indic": 1.4504801643627105,
+      "code": 3.5617667453240927,
+      "stem": 3.5575731572019875,
+      "reasoning": 3.669595271211853,
+      "agentic": 3.33267528251124
      },
      "1": {
-      "web": 1.7767178931076584,
-      "indic": 1.44809335222291,
-      "code": 3.5579163169450276
+      "web": 1.7777568008023978,
+      "indic": 1.4410888217738418,
+      "code": 3.5692266706563363,
+      "stem": 3.515669003300362,
+      "reasoning": 3.696844428685611,
+      "agentic": 3.3329191862386653
      },
      "2": {
-      "web": 1.7701652522877815,
-      "indic": 1.4301713625999513,
-      "code": 3.5446828315045558
+      "web": 1.7903993091118213,
+      "indic": 1.44039022895029,
+      "code": 3.565458931922957,
+      "stem": 3.54052820859942,
+      "reasoning": 3.641306726310666,
+      "agentic": 3.350552779018526
      },
      "3": {
-      "web": 1.7592282712759262,
-      "indic": 1.419755375754483,
-      "code": 3.505159854302673
+      "web": 1.768663818393679,
+      "indic": 1.436947715838558,
+      "code": 3.517956896809564,
+      "stem": 3.5404921877153286,
+      "reasoning": 3.6273542651175714,
+      "agentic": 3.302090324631512
      },
      "4": {
-      "web": 1.7622196680684032,
-      "indic": 1.4279228656895138,
-      "code": 3.5269112133631877
+      "web": 1.7679641920965525,
+      "indic": 1.4366852605780835,
+      "code": 3.531408519064637,
+      "stem": 3.5162591629327076,
+      "reasoning": 3.6116966569685527,
+      "agentic": 3.311256944159862
      }
     },
     "weighted": {
-     "0": 2.3314466815225425,
-     "1": 2.340286022998952,
-     "2": 2.328711434386355,
-     "3": 2.3076330431395533,
-     "4": 2.3185532683944796
+     "0": 2.617921609597974,
+     "1": 2.6119478503754987,
+     "2": 2.613705499782417,
+     "3": 2.5907401520714712,
+     "4": 2.5902582447056566
     }
    },
    "C": {
     "name": "No protected floor",
     "effective_shares": {
-     "indic": 0.05263157894736842,
-     "web": 0.5052631578947369,
-     "code": 0.4421052631578948
+     "indic": 0.04,
+     "web": 0.384,
+     "code": 0.336,
+     "stem": 0.144,
+     "reasoning": 0.096
     },
-    "dropped_lanes": [
-     "reasoning",
-     "stem"
-    ],
+    "dropped_lanes": [],
     "per_seed": {
      "0": {
-      "web": 1.7904760167988192,
-      "indic": 1.420191828822768,
-      "code": 3.3439360362228245
+      "web": 1.8265669232195632,
+      "indic": 1.4330988439504246,
+      "code": 3.4173343378542227,
+      "stem": 3.223669495748988,
+      "reasoning": 3.2809495984175654,
+      "agentic": 3.249663112260853
      },
      "1": {
-      "web": 1.7935049377808339,
-      "indic": 1.417449940759307,
-      "code": 3.3558779219602886
+      "web": 1.821096529216781,
+      "indic": 1.4390250909434863,
+      "code": 3.3982514238208075,
+      "stem": 3.207387459193881,
+      "reasoning": 3.294405021861099,
+      "agentic": 3.255675007535542
      },
      "2": {
-      "web": 1.7815872572431208,
-      "indic": 1.4090296754756728,
-      "code": 3.335359314143864
+      "web": 1.8145968465037505,
+      "indic": 1.4182586462259317,
+      "code": 3.370063228524527,
+      "stem": 3.2102695973409356,
+      "reasoning": 3.2723229457961316,
+      "agentic": 3.2415022233337862
      },
      "3": {
-      "web": 1.7876924174322806,
-      "indic": 1.4213203544945918,
-      "code": 3.3245628475039952
+      "web": 1.8153474876933922,
+      "indic": 1.4229197233023194,
+      "code": 3.385774919112633,
+      "stem": 3.198541462164138,
+      "reasoning": 3.2676981982087936,
+      "agentic": 3.2389918233827704
      },
      "4": {
-      "web": 1.7953181156219182,
-      "indic": 1.4187097676350617,
-      "code": 3.363285702329195
+      "web": 1.8100389600610731,
+      "indic": 1.425904304467091,
+      "code": 3.368226193092934,
+      "stem": 3.1693196033622835,
+      "reasoning": 3.2579855295148477,
+      "agentic": 3.234934927357591
      }
     },
     "weighted": {
-     "0": 2.262678134238604,
-     "1": 2.2675748558659268,
-     "2": 2.2533767587996176,
-     "3": 2.254842095754455,
-     "4": 2.271268656186538
+     "0": 2.51362239154902,
+     "1": 2.506838201391888,
+     "2": 2.491423483000014,
+     "3": 2.4950743913918956,
+     "4": 2.4846344694014553
     }
    },
    "D": {
     "name": "Indic halved",
     "effective_shares": {
-     "indic": 0.11881188118811882,
-     "web": 0.46996699669966996,
-     "code": 0.41122112211221123
+     "indic": 0.09,
+     "web": 0.356,
+     "code": 0.3115,
+     "stem": 0.1335,
+     "reasoning": 0.089,
+     "agentic": 0.02
     },
-    "dropped_lanes": [
-     "agentic",
-     "reasoning",
-     "stem"
-    ],
+    "dropped_lanes": [],
     "per_seed": {
      "0": {
-      "web": 1.7851267037308063,
-      "indic": 1.372441890714576,
-      "code": 3.3554416125145368
+      "web": 1.8161077758168607,
+      "indic": 1.3878305147031944,
+      "code": 3.39415182194841,
+      "stem": 3.214558271817917,
+      "reasoning": 3.2764075924625033,
+      "agentic": 3.1618387484903585
      },
      "1": {
-      "web": 1.7876512156985882,
-      "indic": 1.3698938971717807,
-      "code": 3.3755451467343986
+      "web": 1.8210876986977567,
+      "indic": 1.3988434798221367,
+      "code": 3.416404860196115,
+      "stem": 3.231671566475525,
+      "reasoning": 3.3094887076711825,
+      "agentic": 3.1868703068437596
      },
      "2": {
-      "web": 1.7823765391247053,
-      "indic": 1.3648863098729864,
-      "code": 3.3594218021741473
+      "web": 1.8143586681500405,
+      "indic": 1.3712883963848383,
+      "code": 3.3953506679117877,
+      "stem": 3.231191461660825,
+      "reasoning": 3.2976950746684723,
+      "agentic": 3.163960999888603
      },
      "3": {
-      "web": 1.776964913748534,
-      "indic": 1.363848959903524,
-      "code": 3.3299793398014104
+      "web": 1.8041124329016869,
+      "indic": 1.37860421713046,
+      "code": 3.3864899028402733,
+      "stem": 3.211658639220766,
+      "reasoning": 3.2668144386491846,
+      "agentic": 3.146007291294476
      },
      "4": {
-      "web": 1.7897690898410366,
-      "indic": 1.3625394303523697,
-      "code": 3.357187142658755
+      "web": 1.8108648438041213,
+      "indic": 1.377854494566988,
+      "code": 3.403356413530029,
+      "stem": 3.208694843411905,
+      "reasoning": 3.2813669725823016,
+      "agentic": 3.1602996157796612
      }
     },
     "weighted": {
-     "0": 2.2535945346494257,
-     "1": 2.2612588866667953,
-     "2": 2.2521514524433393,
-     "3": 2.2391228209314873,
-     "4": 2.253840520714115
+     "0": 2.4924228660384826,
+     "1": 2.5074303415338117,
+     "2": 2.492962673543133,
+     "3": 2.4833462480316153,
+     "4": 2.4911890861593906
     }
    }
   },
@@ -880,46 +1075,46 @@ export const BUNDLE = Object.freeze({
     "key": "H1",
     "claim": "arm A beats arm B on run-weighted held-out bits-per-byte",
     "lane": "weighted",
-    "baseline": 2.2576597982004976,
-    "challenger": 2.3253260900883768,
-    "effect": 0.029971872618635306,
+    "baseline": 2.499582017726062,
+    "challenger": 2.6049146713066036,
+    "effect": 0.042140106959308914,
     "threshold": 0.02,
-    "noise": 0.01446319763740542,
+    "noise": 0.01106719631367942,
     "verdict": "supported",
-    "note": "the challenger is 3.00% worse, past the declared 2%",
+    "note": "the challenger is 4.21% worse, past the declared 2%",
     "secondary": null
    },
    {
     "key": "H2",
     "claim": "removing the protected floor makes Indic materially worse",
     "lane": "indic",
-    "baseline": 1.3201299967935436,
-    "challenger": 1.4173403134374802,
-    "effect": 0.07363692733295224,
+    "baseline": 1.3358779601356452,
+    "challenger": 1.4278413217778507,
+    "effect": 0.06884113997424403,
     "threshold": 0.05,
-    "noise": 0.009310203577505068,
+    "noise": 0.015545166053526323,
     "verdict": "supported",
-    "note": "the challenger is 7.36% worse, past the declared 5%",
+    "note": "the challenger is 6.88% worse, past the declared 5%",
     "secondary": null
    },
    {
     "key": "H3",
     "claim": "halving Indic costs Indic more than it gains the other lanes",
     "lane": "indic",
-    "baseline": 1.3201299967935436,
-    "challenger": 1.3667220976030472,
-    "effect": 0.03529357027161787,
+    "baseline": 1.3358779601356452,
+    "challenger": 1.3828842205215235,
+    "effect": 0.03518754091961011,
     "threshold": 0.03,
-    "noise": 0.00850518469139676,
-    "verdict": "qualified",
-    "note": "the primary effect holds (+3.53%) and clears its noise, but the second clause of the declared refutation is triggered on the point estimate: code gains 1.20% against a 1% threshold. That gain is inside its own seed spread (1.34%), so these runs cannot settle it either way",
+    "noise": 0.020626946666969827,
+    "verdict": "refuted",
+    "note": "the primary effect holds (+3.52%), but stem gains 1.12%, past the 1% the refutation condition names, and that gain clears its own seed spread. arm D's Indic bits-per-byte is within 3% of arm A's, or the other lanes gain more than 1%. Then 18% is over-provisioned and the share should fall toward the 12% floor",
     "secondary": {
-     "lane": "code",
-     "gain": 0.011950240977649455,
-     "noise": 0.013417101232460836,
+     "lane": "stem",
+     "gain": 0.011235111552675522,
+     "noise": 0.007056433986596737,
      "threshold": 0.01,
      "triggered": true,
-     "clears_noise": false
+     "clears_noise": true
     }
    }
   ]

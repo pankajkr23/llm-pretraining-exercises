@@ -1,9 +1,25 @@
 {
- "device": "mps:apple-silicon",
- "throughput": {
-  "tflops_median": 3.4101530124525508,
-  "tokens_per_second_median": 98245.49521264991,
-  "runs": 20
+ "config": {
+  "run_tokens": 2000000000000.0,
+  "model_params": 40000000000.0,
+  "indic_floor": 0.12,
+  "agentic_floor": 0.02,
+  "protected_ceiling": 0.2,
+  "anneal_share": 0.02,
+  "max_synthetic_share_of_indic": 0.5,
+  "warmup_band_tokens": 3000000000.0,
+  "opus_keep_fraction": 0.4,
+  "tokenizer_id": "era5-s2-10k",
+  "proxy_params": 1000000000.0,
+  "proxy_tokens": 2000000000.0
+ },
+ "model": {
+  "vocab_size": 10000,
+  "context": 256,
+  "layers": 4,
+  "heads": 4,
+  "width": 256,
+  "seed": 0
  },
  "seeds": [
   0,
@@ -14,250 +30,3383 @@
  ],
  "steps": 500,
  "batch": 16,
- "model": {
-  "vocab_size": 10000,
-  "context": 256,
-  "layers": 4,
-  "heads": 4,
-  "width": 256,
-  "seed": 0
+ "device": "mps:apple-silicon",
+ "throughput": {
+  "tflops_median": 3.700385450637885,
+  "tokens_per_second_median": 106607.00553555062,
+  "runs": 20
  },
  "corpus": {
   "web": {
+   "lane": "web",
    "train_tokens": 100661,
    "heldout_tokens": 10331,
    "heldout_bytes": 59861,
    "unk_share": 0.0,
-   "tokenizer": "ours/s02-bpe-10000"
+   "tokenizer": "ours/s02-bpe-10000",
+   "content_hash": "aaa7527ab35baea5",
+   "sources": [
+    "src/exercises/02-tokenization/corpus/v2/en.faithful.txt"
+   ]
   },
   "indic": {
+   "lane": "indic",
    "train_tokens": 70574,
    "heldout_tokens": 8228,
    "heldout_bytes": 66427,
    "unk_share": 0.0,
-   "tokenizer": "ours/s02-bpe-10000"
+   "tokenizer": "ours/s02-bpe-10000",
+   "content_hash": "3c2a6a1f3049ff13",
+   "sources": [
+    "src/exercises/02-tokenization/corpus/v2/hi.faithful.txt",
+    "src/exercises/02-tokenization/corpus/v2/te.faithful.txt",
+    "src/exercises/02-tokenization/corpus/v2/mai.faithful.txt"
+   ]
   },
   "code": {
-   "train_tokens": 351906,
-   "heldout_tokens": 37120,
-   "heldout_bytes": 77707,
-   "unk_share": 0.0016939872449700918,
-   "tokenizer": "ours/s02-bpe-10000"
+   "lane": "code",
+   "train_tokens": 352415,
+   "heldout_tokens": 37162,
+   "heldout_bytes": 77843,
+   "unk_share": 0.00169157830159378,
+   "tokenizer": "ours/s02-bpe-10000",
+   "content_hash": "f0b22a2b61027740",
+   "sources": [
+    "src/exercises/01-introductions/node_modules/flatted/python/flatted.py",
+    "src/exercises/01-introductions/tests/test_web_bundle.py",
+    "src/exercises/02-tokenization/src/tokenization/__init__.py",
+    "src/exercises/02-tokenization/src/tokenization/__main__.py",
+    "src/exercises/02-tokenization/src/tokenization/ablate.py",
+    "src/exercises/02-tokenization/src/tokenization/bpe_scratch.py",
+    "src/exercises/02-tokenization/src/tokenization/config.py",
+    "src/exercises/02-tokenization/src/tokenization/corpus.py",
+    "src/exercises/02-tokenization/src/tokenization/explainer.py",
+    "src/exercises/02-tokenization/src/tokenization/faithfulness.py",
+    "src/exercises/02-tokenization/src/tokenization/fourth_language.py",
+    "src/exercises/02-tokenization/src/tokenization/holdout.py",
+    "src/exercises/02-tokenization/src/tokenization/metrics.py",
+    "src/exercises/02-tokenization/src/tokenization/tokenizer.py",
+    "src/exercises/02-tokenization/src/tokenization/widget.py",
+    "src/exercises/02-tokenization/tests/test_ablate.py",
+    "src/exercises/02-tokenization/tests/test_bpe_scratch.py",
+    "src/exercises/02-tokenization/tests/test_corpus_paths.py",
+    "src/exercises/02-tokenization/tests/test_faithfulness.py",
+    "src/exercises/02-tokenization/tests/test_js_encoder.py",
+    "src/exercises/02-tokenization/tests/test_metrics.py",
+    "src/exercises/02-tokenization/tests/test_submission.py",
+    "src/exercises/02-tokenization/tests/test_tokenizer.py",
+    "src/exercises/02-tokenization/tests/test_v1_retained.py",
+    "src/exercises/02-tokenization/tests/test_widget_render.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/__init__.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/__main__.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/catalog.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/config.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/coverage.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/export.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/fertility.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/fetch_benchmarks.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/gotchas.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/grade.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/ingest.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/measure_fertility.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/milestones.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/mix.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/modalities.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/models.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/orphans.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/run_cost.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/shingles.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/sourcing.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/vocab_sweep.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/vocab_trade.py",
+    "src/exercises/03-data-collection-framework/tests/test_catalog.py",
+    "src/exercises/03-data-collection-framework/tests/test_compute.py",
+    "src/exercises/03-data-collection-framework/tests/test_config.py",
+    "src/exercises/03-data-collection-framework/tests/test_gotchas.py",
+    "src/exercises/03-data-collection-framework/tests/test_ingest.py",
+    "src/exercises/03-data-collection-framework/tests/test_invariants.py",
+    "src/exercises/03-data-collection-framework/tests/test_models.py",
+    "src/exercises/03-data-collection-framework/tests/test_render.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/__init__.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/__main__.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/config.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/corpus.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/decontaminate.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/dedup.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/export.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/fetch.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/formats.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/langid.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/manifest.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/normalize.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/pii.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/pipeline.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/quality.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/records.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/sources.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/tokens.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_agreement.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_bundle.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_decontaminate.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_dedup.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_formats.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_langid.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_normalize.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_notebook.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_page_render.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_pii.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_publication_invariants.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_quality.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_tokens.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_wiring.py"
+   ]
+  },
+  "stem": {
+   "lane": "stem",
+   "train_tokens": 239401,
+   "heldout_tokens": 26532,
+   "heldout_bytes": 62545,
+   "unk_share": 0.00010153009615276142,
+   "tokenizer": "ours/s02-bpe-10000",
+   "content_hash": "3bf15d5dfad50f60",
+   "sources": [
+    "data/proxy/stem.txt"
+   ]
+  },
+  "reasoning": {
+   "lane": "reasoning",
+   "train_tokens": 558783,
+   "heldout_tokens": 61787,
+   "heldout_bytes": 138835,
+   "unk_share": 0.0020320061105211507,
+   "tokenizer": "ours/s02-bpe-10000",
+   "content_hash": "e94ee3b9f57bb84a",
+   "sources": [
+    "data/proxy/reasoning.txt"
+   ]
+  },
+  "agentic": {
+   "lane": "agentic",
+   "train_tokens": 462378,
+   "heldout_tokens": 50273,
+   "heldout_bytes": 117411,
+   "unk_share": 0.00011118696966741441,
+   "tokenizer": "ours/s02-bpe-10000",
+   "content_hash": "2fdbbefe6cda6b87",
+   "sources": [
+    "data/proxy/agentic.txt"
+   ]
   }
  },
  "arms": {
   "A": {
+   "arm": "A",
    "name": "V5 candidate",
-   "effective_shares": {
-    "web": 0.41025641025641024,
-    "code": 0.358974358974359,
-    "indic": 0.23076923076923075
+   "shares": {
+    "web": 0.32,
+    "code": 0.28,
+    "indic": 0.18,
+    "stem": 0.12,
+    "reasoning": 0.08,
+    "agentic": 0.02,
+    "long_context": 0.0
    },
-   "dropped_lanes": [
-    "agentic",
-    "reasoning",
-    "stem"
-   ],
+   "effective_shares": {
+    "web": 0.32,
+    "code": 0.28,
+    "indic": 0.18,
+    "stem": 0.12,
+    "reasoning": 0.08,
+    "agentic": 0.02
+   },
+   "dropped_lanes": [],
    "per_seed": {
     "0": {
-     "web": 1.7877522599017848,
-     "indic": 1.323060448665315,
-     "code": 3.3979228908222896
+     "web": 1.8100504898975072,
+     "indic": 1.3417770825627302,
+     "code": 3.42611584817298,
+     "stem": 3.257834416634853,
+     "reasoning": 3.3124211386800795,
+     "agentic": 3.1777734457719164
     },
     "1": {
-     "web": 1.7894365427622798,
-     "indic": 1.3138913092355733,
-     "code": 3.3994666260064252
+     "web": 1.8128415517366445,
+     "indic": 1.3456441675855106,
+     "code": 3.432842058070126,
+     "stem": 3.2653903619892355,
+     "reasoning": 3.3300157786452753,
+     "agentic": 3.1926339409718203
     },
     "2": {
-     "web": 1.7959320566112564,
-     "indic": 1.3251192586749554,
-     "code": 3.410683492202899
+     "web": 1.8179532807420828,
+     "indic": 1.3278672705884418,
+     "code": 3.426395385386095,
+     "stem": 3.255488860838764,
+     "reasoning": 3.3406406441122183,
+     "agentic": 3.180011127529798
     },
     "3": {
-     "web": 1.7806932256648493,
-     "indic": 1.3155084842027427,
-     "code": 3.372882751435739
+     "web": 1.8061182037301566,
+     "indic": 1.33243104347266,
+     "code": 3.4121890243358837,
+     "stem": 3.2575447966188955,
+     "reasoning": 3.2957376908253697,
+     "agentic": 3.165308945394381
     },
     "4": {
-     "web": 1.79061503385194,
-     "indic": 1.3230704831891313,
-     "code": 3.3995403032979192
+     "web": 1.815249801823518,
+     "indic": 1.3316702364688826,
+     "code": 3.4338843682961473,
+     "stem": 3.2444317165242653,
+     "reasoning": 3.314243595840565,
+     "agentic": 3.1735056311576866
     }
    },
    "weighted": {
-    "0": 2.2585256581520112,
-    "1": 2.2576548520873483,
-    "2": 2.2669373108896225,
-    "3": 2.2448981150913494,
-    "4": 2.260283054782156
+    "0": 2.4995377591229553,
+    "1": 2.5056218075305203,
+    "2": 2.5016620038317177,
+    "3": 2.491078909600961,
+    "4": 2.5000096085441568
    },
-   "final_loss": [
-    5.904225721359253,
-    5.939513254165649,
-    6.029375495910645,
-    5.89361572265625,
-    5.923887395858765
+   "records": [
+    {
+     "arm": "A-s0",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 0
+     },
+     "train": {
+      "arm": "A-s0",
+      "shares": {
+       "web": 0.32,
+       "code": 0.28,
+       "indic": 0.18,
+       "stem": 0.12,
+       "reasoning": 0.08,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 0,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "web": 0.32,
+      "code": 0.28,
+      "indic": 0.18,
+      "stem": 0.12,
+      "reasoning": 0.08,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 17.68522432021564,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 114644.85625338554,
+      "tflops": 3.9793834930391143
+     },
+     "final_loss": 5.816552801132202,
+     "loss_curve": [
+      [
+       0,
+       9.238933563232422
+      ],
+      [
+       62,
+       6.906603813171387
+      ],
+      [
+       124,
+       6.651556968688965
+      ],
+      [
+       186,
+       6.663663864135742
+      ],
+      [
+       248,
+       6.943324565887451
+      ],
+      [
+       310,
+       6.18634033203125
+      ],
+      [
+       372,
+       5.859230995178223
+      ],
+      [
+       434,
+       5.879982948303223
+      ],
+      [
+       496,
+       5.722781658172607
+      ],
+      [
+       499,
+       5.683703899383545
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       3.9305529594421387
+      ],
+      [
+       62,
+       0.7969614863395691
+      ],
+      [
+       124,
+       0.5898301005363464
+      ],
+      [
+       186,
+       0.546853244304657
+      ],
+      [
+       248,
+       0.7585136294364929
+      ],
+      [
+       310,
+       0.7265422344207764
+      ],
+      [
+       372,
+       0.7501665353775024
+      ],
+      [
+       434,
+       0.77736496925354
+      ],
+      [
+       496,
+       0.7392542362213135
+      ],
+      [
+       499,
+       0.7304642796516418
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 38912,
+      "code": 564480,
+      "indic": 380416,
+      "reasoning": 161280,
+      "stem": 241664,
+      "web": 661248
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "A-s1",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 1
+     },
+     "train": {
+      "arm": "A-s1",
+      "shares": {
+       "web": 0.32,
+       "code": 0.28,
+       "indic": 0.18,
+       "stem": 0.12,
+       "reasoning": 0.08,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 1,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "web": 0.32,
+      "code": 0.28,
+      "indic": 0.18,
+      "stem": 0.12,
+      "reasoning": 0.08,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 17.7185230445466,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 114429.40220821787,
+      "tflops": 3.971904969371608
+     },
+     "final_loss": 5.828266277313232,
+     "loss_curve": [
+      [
+       0,
+       9.249128341674805
+      ],
+      [
+       62,
+       7.2654242515563965
+      ],
+      [
+       124,
+       7.127833366394043
+      ],
+      [
+       186,
+       6.12594747543335
+      ],
+      [
+       248,
+       6.872198104858398
+      ],
+      [
+       310,
+       6.083944320678711
+      ],
+      [
+       372,
+       6.337217330932617
+      ],
+      [
+       434,
+       6.337652206420898
+      ],
+      [
+       496,
+       5.778181076049805
+      ],
+      [
+       499,
+       5.4506611824035645
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       1.9501101970672607
+      ],
+      [
+       62,
+       0.5396615266799927
+      ],
+      [
+       124,
+       0.5577259063720703
+      ],
+      [
+       186,
+       0.5405611395835876
+      ],
+      [
+       248,
+       0.6425124406814575
+      ],
+      [
+       310,
+       0.8508864641189575
+      ],
+      [
+       372,
+       0.7031456828117371
+      ],
+      [
+       434,
+       0.7137835025787354
+      ],
+      [
+       496,
+       0.8088175654411316
+      ],
+      [
+       499,
+       0.8018600344657898
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 36096,
+      "code": 577536,
+      "indic": 366336,
+      "reasoning": 162560,
+      "stem": 244480,
+      "web": 660992
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "A-s2",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 2
+     },
+     "train": {
+      "arm": "A-s2",
+      "shares": {
+       "web": 0.32,
+       "code": 0.28,
+       "indic": 0.18,
+       "stem": 0.12,
+       "reasoning": 0.08,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 2,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "web": 0.32,
+      "code": 0.28,
+      "indic": 0.18,
+      "stem": 0.12,
+      "reasoning": 0.08,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 17.74669258517679,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 114247.76702863039,
+      "tflops": 3.965600316384752
+     },
+     "final_loss": 5.832694082260132,
+     "loss_curve": [
+      [
+       0,
+       9.22896957397461
+      ],
+      [
+       62,
+       7.256712913513184
+      ],
+      [
+       124,
+       6.530727863311768
+      ],
+      [
+       186,
+       7.315859794616699
+      ],
+      [
+       248,
+       5.96405029296875
+      ],
+      [
+       310,
+       5.925483703613281
+      ],
+      [
+       372,
+       6.034882545471191
+      ],
+      [
+       434,
+       5.718989849090576
+      ],
+      [
+       496,
+       5.246336936950684
+      ],
+      [
+       499,
+       5.790733337402344
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       3.260920763015747
+      ],
+      [
+       62,
+       0.5626545548439026
+      ],
+      [
+       124,
+       0.67366623878479
+      ],
+      [
+       186,
+       0.6401599049568176
+      ],
+      [
+       248,
+       0.7185763120651245
+      ],
+      [
+       310,
+       0.8157239556312561
+      ],
+      [
+       372,
+       0.7117420434951782
+      ],
+      [
+       434,
+       0.7337417602539062
+      ],
+      [
+       496,
+       0.7959063649177551
+      ],
+      [
+       499,
+       0.7760789394378662
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 47872,
+      "code": 583424,
+      "indic": 363520,
+      "reasoning": 153856,
+      "stem": 242176,
+      "web": 657152
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "A-s3",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 3
+     },
+     "train": {
+      "arm": "A-s3",
+      "shares": {
+       "web": 0.32,
+       "code": 0.28,
+       "indic": 0.18,
+       "stem": 0.12,
+       "reasoning": 0.08,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 3,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "web": 0.32,
+      "code": 0.28,
+      "indic": 0.18,
+      "stem": 0.12,
+      "reasoning": 0.08,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 17.775148368265945,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 114064.87068314664,
+      "tflops": 3.9592518876637404
+     },
+     "final_loss": 5.836974191665649,
+     "loss_curve": [
+      [
+       0,
+       9.239526748657227
+      ],
+      [
+       62,
+       7.196637153625488
+      ],
+      [
+       124,
+       7.248218536376953
+      ],
+      [
+       186,
+       6.528174877166748
+      ],
+      [
+       248,
+       6.091666221618652
+      ],
+      [
+       310,
+       6.32280158996582
+      ],
+      [
+       372,
+       5.854828834533691
+      ],
+      [
+       434,
+       6.033297061920166
+      ],
+      [
+       496,
+       5.946723937988281
+      ],
+      [
+       499,
+       5.078803539276123
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       3.934934139251709
+      ],
+      [
+       62,
+       0.7160233855247498
+      ],
+      [
+       124,
+       0.6521638035774231
+      ],
+      [
+       186,
+       0.6032102704048157
+      ],
+      [
+       248,
+       0.6377679705619812
+      ],
+      [
+       310,
+       0.7484075427055359
+      ],
+      [
+       372,
+       0.6775230765342712
+      ],
+      [
+       434,
+       0.7966082692146301
+      ],
+      [
+       496,
+       0.7670315504074097
+      ],
+      [
+       499,
+       0.7453445792198181
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 44288,
+      "code": 574720,
+      "indic": 369664,
+      "reasoning": 158720,
+      "stem": 240384,
+      "web": 660224
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "A-s4",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 4
+     },
+     "train": {
+      "arm": "A-s4",
+      "shares": {
+       "web": 0.32,
+       "code": 0.28,
+       "indic": 0.18,
+       "stem": 0.12,
+       "reasoning": 0.08,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 4,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "web": 0.32,
+      "code": 0.28,
+      "indic": 0.18,
+      "stem": 0.12,
+      "reasoning": 0.08,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 17.73599657259183,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 114316.66620488699,
+      "tflops": 3.967991843171384
+     },
+     "final_loss": 5.827724714279174,
+     "loss_curve": [
+      [
+       0,
+       9.26109504699707
+      ],
+      [
+       62,
+       7.312989711761475
+      ],
+      [
+       124,
+       6.666958808898926
+      ],
+      [
+       186,
+       6.52371883392334
+      ],
+      [
+       248,
+       5.722402095794678
+      ],
+      [
+       310,
+       5.965620994567871
+      ],
+      [
+       372,
+       5.93441104888916
+      ],
+      [
+       434,
+       6.064266204833984
+      ],
+      [
+       496,
+       5.571830749511719
+      ],
+      [
+       499,
+       5.893324375152588
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       1.5181444883346558
+      ],
+      [
+       62,
+       0.652472198009491
+      ],
+      [
+       124,
+       0.5728350281715393
+      ],
+      [
+       186,
+       0.5549904108047485
+      ],
+      [
+       248,
+       0.6440421938896179
+      ],
+      [
+       310,
+       0.7711920142173767
+      ],
+      [
+       372,
+       0.8231473565101624
+      ],
+      [
+       434,
+       0.7664980888366699
+      ],
+      [
+       496,
+       0.7789326310157776
+      ],
+      [
+       499,
+       0.7461689710617065
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 43520,
+      "code": 560384,
+      "indic": 378112,
+      "reasoning": 162048,
+      "stem": 250368,
+      "web": 653568
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    }
    ]
   },
   "B": {
+   "arm": "B",
    "name": "Naive web-heavy",
-   "effective_shares": {
-    "web": 0.7526881720430108,
-    "code": 0.21505376344086025,
-    "indic": 0.03225806451612903
+   "shares": {
+    "web": 0.7,
+    "code": 0.2,
+    "stem": 0.05,
+    "indic": 0.03,
+    "reasoning": 0.02,
+    "agentic": 0.0,
+    "long_context": 0.0
    },
-   "dropped_lanes": [
-    "reasoning",
-    "stem"
-   ],
+   "effective_shares": {
+    "web": 0.7,
+    "code": 0.2,
+    "stem": 0.05,
+    "indic": 0.03,
+    "reasoning": 0.02
+   },
+   "dropped_lanes": [],
    "per_seed": {
     "0": {
-     "web": 1.7708693225292647,
-     "indic": 1.4377510915207845,
-     "code": 3.5466251139445615
+     "web": 1.7887830784704013,
+     "indic": 1.4504801643627105,
+     "code": 3.5617667453240927,
+     "stem": 3.5575731572019875,
+     "reasoning": 3.669595271211853,
+     "agentic": 3.33267528251124
     },
     "1": {
-     "web": 1.7767178931076584,
-     "indic": 1.44809335222291,
-     "code": 3.5579163169450276
+     "web": 1.7777568008023978,
+     "indic": 1.4410888217738418,
+     "code": 3.5692266706563363,
+     "stem": 3.515669003300362,
+     "reasoning": 3.696844428685611,
+     "agentic": 3.3329191862386653
     },
     "2": {
-     "web": 1.7701652522877815,
-     "indic": 1.4301713625999513,
-     "code": 3.5446828315045558
+     "web": 1.7903993091118213,
+     "indic": 1.44039022895029,
+     "code": 3.565458931922957,
+     "stem": 3.54052820859942,
+     "reasoning": 3.641306726310666,
+     "agentic": 3.350552779018526
     },
     "3": {
-     "web": 1.7592282712759262,
-     "indic": 1.419755375754483,
-     "code": 3.505159854302673
+     "web": 1.768663818393679,
+     "indic": 1.436947715838558,
+     "code": 3.517956896809564,
+     "stem": 3.5404921877153286,
+     "reasoning": 3.6273542651175714,
+     "agentic": 3.302090324631512
     },
     "4": {
-     "web": 1.7622196680684032,
-     "indic": 1.4279228656895138,
-     "code": 3.5269112133631877
+     "web": 1.7679641920965525,
+     "indic": 1.4366852605780835,
+     "code": 3.531408519064637,
+     "stem": 3.5162591629327076,
+     "reasoning": 3.6116966569685527,
+     "agentic": 3.311256944159862
     }
    },
    "weighted": {
-    "0": 2.3314466815225425,
-    "1": 2.340286022998952,
-    "2": 2.328711434386355,
-    "3": 2.3076330431395533,
-    "4": 2.3185532683944796
+    "0": 2.617921609597974,
+    "1": 2.6119478503754987,
+    "2": 2.613705499782417,
+    "3": 2.5907401520714712,
+    "4": 2.5902582447056566
    },
-   "final_loss": [
-    6.087186794281006,
-    6.164683246612549,
-    6.186644487380981,
-    6.0722312736511235,
-    6.047119817733765
+   "records": [
+    {
+     "arm": "B-s0",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 0
+     },
+     "train": {
+      "arm": "B-s0",
+      "shares": {
+       "web": 0.7,
+       "code": 0.2,
+       "stem": 0.05,
+       "indic": 0.03,
+       "reasoning": 0.02,
+       "agentic": 0.0,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 0,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "web": 0.7,
+      "code": 0.2,
+      "stem": 0.05,
+      "indic": 0.03,
+      "reasoning": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 17.770406873547472,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 114095.30543828511,
+      "tflops": 3.9603082940841476
+     },
+     "final_loss": 6.166398439407349,
+     "loss_curve": [
+      [
+       0,
+       9.231673240661621
+      ],
+      [
+       62,
+       7.4973931312561035
+      ],
+      [
+       124,
+       6.62545919418335
+      ],
+      [
+       186,
+       6.980685234069824
+      ],
+      [
+       248,
+       6.84619140625
+      ],
+      [
+       310,
+       6.608327865600586
+      ],
+      [
+       372,
+       6.4006781578063965
+      ],
+      [
+       434,
+       6.078388214111328
+      ],
+      [
+       496,
+       6.211458206176758
+      ],
+      [
+       499,
+       6.21366548538208
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       3.323550224304199
+      ],
+      [
+       62,
+       0.6903495192527771
+      ],
+      [
+       124,
+       0.762781023979187
+      ],
+      [
+       186,
+       0.5724206566810608
+      ],
+      [
+       248,
+       0.6596773862838745
+      ],
+      [
+       310,
+       0.7051710486412048
+      ],
+      [
+       372,
+       0.6938647627830505
+      ],
+      [
+       434,
+       0.7313612699508667
+      ],
+      [
+       496,
+       1.0091880559921265
+      ],
+      [
+       499,
+       0.7502690553665161
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 417024,
+      "indic": 54016,
+      "reasoning": 38144,
+      "stem": 96512,
+      "web": 1442304
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "B-s1",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 1
+     },
+     "train": {
+      "arm": "B-s1",
+      "shares": {
+       "web": 0.7,
+       "code": 0.2,
+       "stem": 0.05,
+       "indic": 0.03,
+       "reasoning": 0.02,
+       "agentic": 0.0,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 1,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "web": 0.7,
+      "code": 0.2,
+      "stem": 0.05,
+      "indic": 0.03,
+      "reasoning": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 17.721887211839203,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 114407.67993633907,
+      "tflops": 3.971150977845336
+     },
+     "final_loss": 6.136432132720947,
+     "loss_curve": [
+      [
+       0,
+       9.253747940063477
+      ],
+      [
+       62,
+       7.589419841766357
+      ],
+      [
+       124,
+       7.002052307128906
+      ],
+      [
+       186,
+       6.591143608093262
+      ],
+      [
+       248,
+       6.511388301849365
+      ],
+      [
+       310,
+       6.452316761016846
+      ],
+      [
+       372,
+       6.546693801879883
+      ],
+      [
+       434,
+       6.422066688537598
+      ],
+      [
+       496,
+       5.883735179901123
+      ],
+      [
+       499,
+       6.277646064758301
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       1.9147950410842896
+      ],
+      [
+       62,
+       0.44646701216697693
+      ],
+      [
+       124,
+       0.5188782811164856
+      ],
+      [
+       186,
+       0.645715057849884
+      ],
+      [
+       248,
+       0.6402225494384766
+      ],
+      [
+       310,
+       0.6163079738616943
+      ],
+      [
+       372,
+       0.7851698398590088
+      ],
+      [
+       434,
+       0.7711803913116455
+      ],
+      [
+       496,
+       0.7968926429748535
+      ],
+      [
+       499,
+       0.758619487285614
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 404480,
+      "indic": 63744,
+      "reasoning": 37120,
+      "stem": 108288,
+      "web": 1434368
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "B-s2",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 2
+     },
+     "train": {
+      "arm": "B-s2",
+      "shares": {
+       "web": 0.7,
+       "code": 0.2,
+       "stem": 0.05,
+       "indic": 0.03,
+       "reasoning": 0.02,
+       "agentic": 0.0,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 2,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "web": 0.7,
+      "code": 0.2,
+      "stem": 0.05,
+      "indic": 0.03,
+      "reasoning": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 18.037831406109035,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 112403.75599215999,
+      "tflops": 3.901593719671037
+     },
+     "final_loss": 6.199038906097412,
+     "loss_curve": [
+      [
+       0,
+       9.242450714111328
+      ],
+      [
+       62,
+       7.66152286529541
+      ],
+      [
+       124,
+       6.990436553955078
+      ],
+      [
+       186,
+       7.342134952545166
+      ],
+      [
+       248,
+       6.508925914764404
+      ],
+      [
+       310,
+       6.188193321228027
+      ],
+      [
+       372,
+       6.292848587036133
+      ],
+      [
+       434,
+       6.261539459228516
+      ],
+      [
+       496,
+       5.801116466522217
+      ],
+      [
+       499,
+       6.072516441345215
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       2.451569080352783
+      ],
+      [
+       62,
+       0.5478845238685608
+      ],
+      [
+       124,
+       0.5837207436561584
+      ],
+      [
+       186,
+       0.5727896094322205
+      ],
+      [
+       248,
+       0.6198690533638
+      ],
+      [
+       310,
+       0.669040322303772
+      ],
+      [
+       372,
+       0.7165870070457458
+      ],
+      [
+       434,
+       0.7126685380935669
+      ],
+      [
+       496,
+       0.7978571057319641
+      ],
+      [
+       499,
+       0.7643594145774841
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 421376,
+      "indic": 65536,
+      "reasoning": 37888,
+      "stem": 104704,
+      "web": 1418496
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "B-s3",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 3
+     },
+     "train": {
+      "arm": "B-s3",
+      "shares": {
+       "web": 0.7,
+       "code": 0.2,
+       "stem": 0.05,
+       "indic": 0.03,
+       "reasoning": 0.02,
+       "agentic": 0.0,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 3,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "web": 0.7,
+      "code": 0.2,
+      "stem": 0.05,
+      "indic": 0.03,
+      "reasoning": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 18.192169538117014,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 111450.1486890749,
+      "tflops": 3.8684935066762973
+     },
+     "final_loss": 6.112579946517944,
+     "loss_curve": [
+      [
+       0,
+       9.250027656555176
+      ],
+      [
+       62,
+       7.240464687347412
+      ],
+      [
+       124,
+       7.421859264373779
+      ],
+      [
+       186,
+       6.806178092956543
+      ],
+      [
+       248,
+       6.724208831787109
+      ],
+      [
+       310,
+       6.428945541381836
+      ],
+      [
+       372,
+       6.364057540893555
+      ],
+      [
+       434,
+       5.967059135437012
+      ],
+      [
+       496,
+       5.520419120788574
+      ],
+      [
+       499,
+       5.917634010314941
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       3.0187785625457764
+      ],
+      [
+       62,
+       0.5882129073143005
+      ],
+      [
+       124,
+       0.47503861784935
+      ],
+      [
+       186,
+       0.51864093542099
+      ],
+      [
+       248,
+       0.7671877145767212
+      ],
+      [
+       310,
+       0.9705032706260681
+      ],
+      [
+       372,
+       0.8237783908843994
+      ],
+      [
+       434,
+       0.8536624312400818
+      ],
+      [
+       496,
+       0.7240587472915649
+      ],
+      [
+       499,
+       0.8292906284332275
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 423936,
+      "indic": 65280,
+      "reasoning": 38400,
+      "stem": 95232,
+      "web": 1425152
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "B-s4",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 4
+     },
+     "train": {
+      "arm": "B-s4",
+      "shares": {
+       "web": 0.7,
+       "code": 0.2,
+       "stem": 0.05,
+       "indic": 0.03,
+       "reasoning": 0.02,
+       "agentic": 0.0,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 4,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "web": 0.7,
+      "code": 0.2,
+      "stem": 0.05,
+      "indic": 0.03,
+      "reasoning": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 18.728851798921824,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 108256.50294892715,
+      "tflops": 3.7576403767908184
+     },
+     "final_loss": 6.086456241607666,
+     "loss_curve": [
+      [
+       0,
+       9.259257316589355
+      ],
+      [
+       62,
+       7.1641621589660645
+      ],
+      [
+       124,
+       6.957014083862305
+      ],
+      [
+       186,
+       6.807974815368652
+      ],
+      [
+       248,
+       5.997499465942383
+      ],
+      [
+       310,
+       6.333414077758789
+      ],
+      [
+       372,
+       6.366459846496582
+      ],
+      [
+       434,
+       6.294804573059082
+      ],
+      [
+       496,
+       5.850796699523926
+      ],
+      [
+       499,
+       5.972817897796631
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       1.5230673551559448
+      ],
+      [
+       62,
+       0.5453614592552185
+      ],
+      [
+       124,
+       0.46910056471824646
+      ],
+      [
+       186,
+       0.5747601389884949
+      ],
+      [
+       248,
+       0.9186155200004578
+      ],
+      [
+       310,
+       0.7442994713783264
+      ],
+      [
+       372,
+       0.737970769405365
+      ],
+      [
+       434,
+       0.780432403087616
+      ],
+      [
+       496,
+       0.8184183835983276
+      ],
+      [
+       499,
+       0.7807294726371765
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 406784,
+      "indic": 55040,
+      "reasoning": 37376,
+      "stem": 102656,
+      "web": 1446144
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    }
    ]
   },
   "C": {
+   "arm": "C",
    "name": "No protected floor",
-   "effective_shares": {
-    "indic": 0.05263157894736842,
-    "web": 0.5052631578947369,
-    "code": 0.4421052631578948
+   "shares": {
+    "indic": 0.04,
+    "agentic": 0.0,
+    "web": 0.384,
+    "code": 0.336,
+    "stem": 0.144,
+    "reasoning": 0.096,
+    "long_context": 0.0
    },
-   "dropped_lanes": [
-    "reasoning",
-    "stem"
-   ],
+   "effective_shares": {
+    "indic": 0.04,
+    "web": 0.384,
+    "code": 0.336,
+    "stem": 0.144,
+    "reasoning": 0.096
+   },
+   "dropped_lanes": [],
    "per_seed": {
     "0": {
-     "web": 1.7904760167988192,
-     "indic": 1.420191828822768,
-     "code": 3.3439360362228245
+     "web": 1.8265669232195632,
+     "indic": 1.4330988439504246,
+     "code": 3.4173343378542227,
+     "stem": 3.223669495748988,
+     "reasoning": 3.2809495984175654,
+     "agentic": 3.249663112260853
     },
     "1": {
-     "web": 1.7935049377808339,
-     "indic": 1.417449940759307,
-     "code": 3.3558779219602886
+     "web": 1.821096529216781,
+     "indic": 1.4390250909434863,
+     "code": 3.3982514238208075,
+     "stem": 3.207387459193881,
+     "reasoning": 3.294405021861099,
+     "agentic": 3.255675007535542
     },
     "2": {
-     "web": 1.7815872572431208,
-     "indic": 1.4090296754756728,
-     "code": 3.335359314143864
+     "web": 1.8145968465037505,
+     "indic": 1.4182586462259317,
+     "code": 3.370063228524527,
+     "stem": 3.2102695973409356,
+     "reasoning": 3.2723229457961316,
+     "agentic": 3.2415022233337862
     },
     "3": {
-     "web": 1.7876924174322806,
-     "indic": 1.4213203544945918,
-     "code": 3.3245628475039952
+     "web": 1.8153474876933922,
+     "indic": 1.4229197233023194,
+     "code": 3.385774919112633,
+     "stem": 3.198541462164138,
+     "reasoning": 3.2676981982087936,
+     "agentic": 3.2389918233827704
     },
     "4": {
-     "web": 1.7953181156219182,
-     "indic": 1.4187097676350617,
-     "code": 3.363285702329195
+     "web": 1.8100389600610731,
+     "indic": 1.425904304467091,
+     "code": 3.368226193092934,
+     "stem": 3.1693196033622835,
+     "reasoning": 3.2579855295148477,
+     "agentic": 3.234934927357591
     }
    },
    "weighted": {
-    "0": 2.262678134238604,
-    "1": 2.2675748558659268,
-    "2": 2.2533767587996176,
-    "3": 2.254842095754455,
-    "4": 2.271268656186538
+    "0": 2.51362239154902,
+    "1": 2.506838201391888,
+    "2": 2.491423483000014,
+    "3": 2.4950743913918956,
+    "4": 2.4846344694014553
    },
-   "final_loss": [
-    5.727590274810791,
-    5.731791849136353,
-    5.730533208847046,
-    5.66706995010376,
-    5.729985065460205
+   "records": [
+    {
+     "arm": "C-s0",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 0
+     },
+     "train": {
+      "arm": "C-s0",
+      "shares": {
+       "indic": 0.04,
+       "agentic": 0.0,
+       "web": 0.384,
+       "code": 0.336,
+       "stem": 0.144,
+       "reasoning": 0.096,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 0,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "indic": 0.04,
+      "web": 0.384,
+      "code": 0.336,
+      "stem": 0.144,
+      "reasoning": 0.096
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 19.317531792388763,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 104957.5081221741,
+      "tflops": 3.6431305244849517
+     },
+     "final_loss": 5.608945751190186,
+     "loss_curve": [
+      [
+       0,
+       9.220470428466797
+      ],
+      [
+       62,
+       6.965423107147217
+      ],
+      [
+       124,
+       6.214358329772949
+      ],
+      [
+       186,
+       5.986241340637207
+      ],
+      [
+       248,
+       6.553780555725098
+      ],
+      [
+       310,
+       5.819710731506348
+      ],
+      [
+       372,
+       5.637746810913086
+      ],
+      [
+       434,
+       5.862654685974121
+      ],
+      [
+       496,
+       5.512909889221191
+      ],
+      [
+       499,
+       5.491464614868164
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       3.7643556594848633
+      ],
+      [
+       62,
+       0.5793329477310181
+      ],
+      [
+       124,
+       0.5889706015586853
+      ],
+      [
+       186,
+       0.5602295398712158
+      ],
+      [
+       248,
+       0.6968128085136414
+      ],
+      [
+       310,
+       0.7277891635894775
+      ],
+      [
+       372,
+       0.718730092048645
+      ],
+      [
+       434,
+       0.780688464641571
+      ],
+      [
+       496,
+       0.7562186121940613
+      ],
+      [
+       499,
+       0.7146159410476685
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 683008,
+      "indic": 79616,
+      "reasoning": 204800,
+      "stem": 294912,
+      "web": 785664
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "C-s1",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 1
+     },
+     "train": {
+      "arm": "C-s1",
+      "shares": {
+       "indic": 0.04,
+       "agentic": 0.0,
+       "web": 0.384,
+       "code": 0.336,
+       "stem": 0.144,
+       "reasoning": 0.096,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 1,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "indic": 0.04,
+      "web": 0.384,
+      "code": 0.336,
+      "stem": 0.144,
+      "reasoning": 0.096
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 19.882725449453574,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 101973.94744268931,
+      "tflops": 3.5395695579799957
+     },
+     "final_loss": 5.626699085235596,
+     "loss_curve": [
+      [
+       0,
+       9.223989486694336
+      ],
+      [
+       62,
+       7.227559566497803
+      ],
+      [
+       124,
+       6.754271984100342
+      ],
+      [
+       186,
+       6.146843433380127
+      ],
+      [
+       248,
+       6.419301986694336
+      ],
+      [
+       310,
+       5.8660478591918945
+      ],
+      [
+       372,
+       5.562973976135254
+      ],
+      [
+       434,
+       6.134517669677734
+      ],
+      [
+       496,
+       5.615438938140869
+      ],
+      [
+       499,
+       5.538540840148926
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       4.197505474090576
+      ],
+      [
+       62,
+       0.5591598749160767
+      ],
+      [
+       124,
+       0.4823227524757385
+      ],
+      [
+       186,
+       0.5835016965866089
+      ],
+      [
+       248,
+       0.629761815071106
+      ],
+      [
+       310,
+       0.9386209845542908
+      ],
+      [
+       372,
+       0.7430316805839539
+      ],
+      [
+       434,
+       0.7678608298301697
+      ],
+      [
+       496,
+       0.7741219997406006
+      ],
+      [
+       499,
+       0.8131868243217468
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 685312,
+      "indic": 78336,
+      "reasoning": 201216,
+      "stem": 295680,
+      "web": 787456
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "C-s2",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 2
+     },
+     "train": {
+      "arm": "C-s2",
+      "shares": {
+       "indic": 0.04,
+       "agentic": 0.0,
+       "web": 0.384,
+       "code": 0.336,
+       "stem": 0.144,
+       "reasoning": 0.096,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 2,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "indic": 0.04,
+      "web": 0.384,
+      "code": 0.336,
+      "stem": 0.144,
+      "reasoning": 0.096
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 20.24970977648627,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 100125.87945108887,
+      "tflops": 3.475422142211645
+     },
+     "final_loss": 5.6219270801544186,
+     "loss_curve": [
+      [
+       0,
+       9.234800338745117
+      ],
+      [
+       62,
+       7.2092084884643555
+      ],
+      [
+       124,
+       6.451233863830566
+      ],
+      [
+       186,
+       6.960543155670166
+      ],
+      [
+       248,
+       5.932985305786133
+      ],
+      [
+       310,
+       5.610036849975586
+      ],
+      [
+       372,
+       5.8241682052612305
+      ],
+      [
+       434,
+       5.589174270629883
+      ],
+      [
+       496,
+       5.393753528594971
+      ],
+      [
+       499,
+       5.542181015014648
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       3.090287685394287
+      ],
+      [
+       62,
+       0.6277605891227722
+      ],
+      [
+       124,
+       0.7667698860168457
+      ],
+      [
+       186,
+       0.7752043604850769
+      ],
+      [
+       248,
+       0.6564834713935852
+      ],
+      [
+       310,
+       0.7478801012039185
+      ],
+      [
+       372,
+       0.7429112195968628
+      ],
+      [
+       434,
+       0.737510621547699
+      ],
+      [
+       496,
+       0.9413740634918213
+      ],
+      [
+       499,
+       0.7617465853691101
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 707072,
+      "indic": 79360,
+      "reasoning": 195584,
+      "stem": 273920,
+      "web": 792064
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "C-s3",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 3
+     },
+     "train": {
+      "arm": "C-s3",
+      "shares": {
+       "indic": 0.04,
+       "agentic": 0.0,
+       "web": 0.384,
+       "code": 0.336,
+       "stem": 0.144,
+       "reasoning": 0.096,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 3,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "indic": 0.04,
+      "web": 0.384,
+      "code": 0.336,
+      "stem": 0.144,
+      "reasoning": 0.096
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 20.580223948229104,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 98517.87838171046,
+      "tflops": 3.4196075760689557
+     },
+     "final_loss": 5.581006622314453,
+     "loss_curve": [
+      [
+       0,
+       9.238964080810547
+      ],
+      [
+       62,
+       7.119603633880615
+      ],
+      [
+       124,
+       6.4508957862854
+      ],
+      [
+       186,
+       6.4683685302734375
+      ],
+      [
+       248,
+       5.784991264343262
+      ],
+      [
+       310,
+       6.131313800811768
+      ],
+      [
+       372,
+       5.157126426696777
+      ],
+      [
+       434,
+       5.811530113220215
+      ],
+      [
+       496,
+       5.247433662414551
+      ],
+      [
+       499,
+       5.256540298461914
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       5.3536152839660645
+      ],
+      [
+       62,
+       0.6225683093070984
+      ],
+      [
+       124,
+       0.5450754165649414
+      ],
+      [
+       186,
+       0.5259150266647339
+      ],
+      [
+       248,
+       0.7515811920166016
+      ],
+      [
+       310,
+       0.7234230637550354
+      ],
+      [
+       372,
+       0.8774938583374023
+      ],
+      [
+       434,
+       0.7538687586784363
+      ],
+      [
+       496,
+       0.7840620875358582
+      ],
+      [
+       499,
+       0.6812395453453064
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 691712,
+      "indic": 81152,
+      "reasoning": 197376,
+      "stem": 290816,
+      "web": 786944
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "C-s4",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 4
+     },
+     "train": {
+      "arm": "C-s4",
+      "shares": {
+       "indic": 0.04,
+       "agentic": 0.0,
+       "web": 0.384,
+       "code": 0.336,
+       "stem": 0.144,
+       "reasoning": 0.096,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 4,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "indic": 0.04,
+      "web": 0.384,
+      "code": 0.336,
+      "stem": 0.144,
+      "reasoning": 0.096
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 20.926299629732966,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 96888.60600653994,
+      "tflops": 3.3630546716709726
+     },
+     "final_loss": 5.625771656036377,
+     "loss_curve": [
+      [
+       0,
+       9.259856224060059
+      ],
+      [
+       62,
+       6.79198694229126
+      ],
+      [
+       124,
+       6.576937675476074
+      ],
+      [
+       186,
+       6.354914665222168
+      ],
+      [
+       248,
+       5.653628349304199
+      ],
+      [
+       310,
+       5.898987293243408
+      ],
+      [
+       372,
+       5.775426864624023
+      ],
+      [
+       434,
+       5.908107280731201
+      ],
+      [
+       496,
+       5.618413925170898
+      ],
+      [
+       499,
+       5.729287147521973
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       1.6744502782821655
+      ],
+      [
+       62,
+       0.548915684223175
+      ],
+      [
+       124,
+       0.5320846438407898
+      ],
+      [
+       186,
+       0.5922111868858337
+      ],
+      [
+       248,
+       0.6517730355262756
+      ],
+      [
+       310,
+       0.7254518866539001
+      ],
+      [
+       372,
+       0.8451394438743591
+      ],
+      [
+       434,
+       0.7968437075614929
+      ],
+      [
+       496,
+       0.9317373037338257
+      ],
+      [
+       499,
+       0.8158133625984192
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 678400,
+      "indic": 83712,
+      "reasoning": 202752,
+      "stem": 301056,
+      "web": 782080
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    }
    ]
   },
   "D": {
+   "arm": "D",
    "name": "Indic halved",
-   "effective_shares": {
-    "indic": 0.11881188118811882,
-    "web": 0.46996699669966996,
-    "code": 0.41122112211221123
+   "shares": {
+    "indic": 0.09,
+    "web": 0.356,
+    "code": 0.3115,
+    "stem": 0.1335,
+    "reasoning": 0.089,
+    "agentic": 0.02,
+    "long_context": 0.0
    },
-   "dropped_lanes": [
-    "agentic",
-    "reasoning",
-    "stem"
-   ],
+   "effective_shares": {
+    "indic": 0.09,
+    "web": 0.356,
+    "code": 0.3115,
+    "stem": 0.1335,
+    "reasoning": 0.089,
+    "agentic": 0.02
+   },
+   "dropped_lanes": [],
    "per_seed": {
     "0": {
-     "web": 1.7851267037308063,
-     "indic": 1.372441890714576,
-     "code": 3.3554416125145368
+     "web": 1.8161077758168607,
+     "indic": 1.3878305147031944,
+     "code": 3.39415182194841,
+     "stem": 3.214558271817917,
+     "reasoning": 3.2764075924625033,
+     "agentic": 3.1618387484903585
     },
     "1": {
-     "web": 1.7876512156985882,
-     "indic": 1.3698938971717807,
-     "code": 3.3755451467343986
+     "web": 1.8210876986977567,
+     "indic": 1.3988434798221367,
+     "code": 3.416404860196115,
+     "stem": 3.231671566475525,
+     "reasoning": 3.3094887076711825,
+     "agentic": 3.1868703068437596
     },
     "2": {
-     "web": 1.7823765391247053,
-     "indic": 1.3648863098729864,
-     "code": 3.3594218021741473
+     "web": 1.8143586681500405,
+     "indic": 1.3712883963848383,
+     "code": 3.3953506679117877,
+     "stem": 3.231191461660825,
+     "reasoning": 3.2976950746684723,
+     "agentic": 3.163960999888603
     },
     "3": {
-     "web": 1.776964913748534,
-     "indic": 1.363848959903524,
-     "code": 3.3299793398014104
+     "web": 1.8041124329016869,
+     "indic": 1.37860421713046,
+     "code": 3.3864899028402733,
+     "stem": 3.211658639220766,
+     "reasoning": 3.2668144386491846,
+     "agentic": 3.146007291294476
     },
     "4": {
-     "web": 1.7897690898410366,
-     "indic": 1.3625394303523697,
-     "code": 3.357187142658755
+     "web": 1.8108648438041213,
+     "indic": 1.377854494566988,
+     "code": 3.403356413530029,
+     "stem": 3.208694843411905,
+     "reasoning": 3.2813669725823016,
+     "agentic": 3.1602996157796612
     }
    },
    "weighted": {
-    "0": 2.2535945346494257,
-    "1": 2.2612588866667953,
-    "2": 2.2521514524433393,
-    "3": 2.2391228209314873,
-    "4": 2.253840520714115
+    "0": 2.4924228660384826,
+    "1": 2.5074303415338117,
+    "2": 2.492962673543133,
+    "3": 2.4833462480316153,
+    "4": 2.4911890861593906
    },
-   "final_loss": [
-    5.813526391983032,
-    5.821182889938354,
-    5.894225540161133,
-    5.753399801254273,
-    5.81505672454834
+   "records": [
+    {
+     "arm": "D-s0",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 0
+     },
+     "train": {
+      "arm": "D-s0",
+      "shares": {
+       "indic": 0.09,
+       "web": 0.356,
+       "code": 0.3115,
+       "stem": 0.1335,
+       "reasoning": 0.089,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 0,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "indic": 0.09,
+      "web": 0.356,
+      "code": 0.3115,
+      "stem": 0.1335,
+      "reasoning": 0.089,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 21.220695044263266,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 95544.46712376243,
+      "tflops": 3.3163989013444355
+     },
+     "final_loss": 5.6807732582092285,
+     "loss_curve": [
+      [
+       0,
+       9.236082077026367
+      ],
+      [
+       62,
+       6.94983434677124
+      ],
+      [
+       124,
+       6.755882263183594
+      ],
+      [
+       186,
+       6.6164374351501465
+      ],
+      [
+       248,
+       6.802496910095215
+      ],
+      [
+       310,
+       5.740418910980225
+      ],
+      [
+       372,
+       5.666327476501465
+      ],
+      [
+       434,
+       5.79471492767334
+      ],
+      [
+       496,
+       5.632721424102783
+      ],
+      [
+       499,
+       5.225289344787598
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       3.9551405906677246
+      ],
+      [
+       62,
+       0.7700331211090088
+      ],
+      [
+       124,
+       0.6235533356666565
+      ],
+      [
+       186,
+       0.584774374961853
+      ],
+      [
+       248,
+       0.8347549438476562
+      ],
+      [
+       310,
+       0.7387852668762207
+      ],
+      [
+       372,
+       0.7746984958648682
+      ],
+      [
+       434,
+       0.8011527061462402
+      ],
+      [
+       496,
+       0.7729223966598511
+      ],
+      [
+       499,
+       0.734016478061676
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 38912,
+      "code": 633088,
+      "indic": 187136,
+      "reasoning": 182784,
+      "stem": 267776,
+      "web": 738304
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "D-s1",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 1
+     },
+     "train": {
+      "arm": "D-s1",
+      "shares": {
+       "indic": 0.09,
+       "web": 0.356,
+       "code": 0.3115,
+       "stem": 0.1335,
+       "reasoning": 0.089,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 1,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "indic": 0.09,
+      "web": 0.356,
+      "code": 0.3115,
+      "stem": 0.1335,
+      "reasoning": 0.089,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 22.228642061178107,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 91212.04949991185,
+      "tflops": 3.166018398104076
+     },
+     "final_loss": 5.709120931625367,
+     "loss_curve": [
+      [
+       0,
+       9.223403930664062
+      ],
+      [
+       62,
+       7.261201858520508
+      ],
+      [
+       124,
+       6.888021945953369
+      ],
+      [
+       186,
+       6.148344993591309
+      ],
+      [
+       248,
+       6.604585647583008
+      ],
+      [
+       310,
+       5.793464660644531
+      ],
+      [
+       372,
+       6.050778388977051
+      ],
+      [
+       434,
+       6.034998893737793
+      ],
+      [
+       496,
+       5.657710552215576
+      ],
+      [
+       499,
+       5.573528289794922
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       3.9895143508911133
+      ],
+      [
+       62,
+       0.5575664639472961
+      ],
+      [
+       124,
+       0.6141452193260193
+      ],
+      [
+       186,
+       0.7564297914505005
+      ],
+      [
+       248,
+       0.6343379020690918
+      ],
+      [
+       310,
+       1.152226448059082
+      ],
+      [
+       372,
+       0.7746154069900513
+      ],
+      [
+       434,
+       0.7684947848320007
+      ],
+      [
+       496,
+       0.817182719707489
+      ],
+      [
+       499,
+       0.8032472133636475
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 36096,
+      "code": 640512,
+      "indic": 174848,
+      "reasoning": 188416,
+      "stem": 277248,
+      "web": 730880
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "D-s2",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 2
+     },
+     "train": {
+      "arm": "D-s2",
+      "shares": {
+       "indic": 0.09,
+       "web": 0.356,
+       "code": 0.3115,
+       "stem": 0.1335,
+       "reasoning": 0.089,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 2,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "indic": 0.09,
+      "web": 0.356,
+      "code": 0.3115,
+      "stem": 0.1335,
+      "reasoning": 0.089,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 21.367334588372614,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 94888.76544776476,
+      "tflops": 3.293639149960071
+     },
+     "final_loss": 5.708446531295777,
+     "loss_curve": [
+      [
+       0,
+       9.232297897338867
+      ],
+      [
+       62,
+       7.107166290283203
+      ],
+      [
+       124,
+       6.623674392700195
+      ],
+      [
+       186,
+       7.098135471343994
+      ],
+      [
+       248,
+       6.203313827514648
+      ],
+      [
+       310,
+       5.642908096313477
+      ],
+      [
+       372,
+       6.099726676940918
+      ],
+      [
+       434,
+       5.8770928382873535
+      ],
+      [
+       496,
+       5.197898864746094
+      ],
+      [
+       499,
+       5.878087043762207
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       3.156240940093994
+      ],
+      [
+       62,
+       0.5600700378417969
+      ],
+      [
+       124,
+       0.6402215957641602
+      ],
+      [
+       186,
+       0.6169715523719788
+      ],
+      [
+       248,
+       0.6764542460441589
+      ],
+      [
+       310,
+       0.6961516737937927
+      ],
+      [
+       372,
+       0.731598973274231
+      ],
+      [
+       434,
+       0.7407804727554321
+      ],
+      [
+       496,
+       0.8152710199356079
+      ],
+      [
+       499,
+       0.7462421655654907
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 47872,
+      "code": 651264,
+      "indic": 174848,
+      "reasoning": 178432,
+      "stem": 266240,
+      "web": 729344
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "D-s3",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 3
+     },
+     "train": {
+      "arm": "D-s3",
+      "shares": {
+       "indic": 0.09,
+       "web": 0.356,
+       "code": 0.3115,
+       "stem": 0.1335,
+       "reasoning": 0.089,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 3,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "indic": 0.09,
+      "web": 0.356,
+      "code": 0.3115,
+      "stem": 0.1335,
+      "reasoning": 0.089,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 20.926233163278084,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 96888.91374669124,
+      "tflops": 3.3630653534941106
+     },
+     "final_loss": 5.654635744094849,
+     "loss_curve": [
+      [
+       0,
+       9.24293327331543
+      ],
+      [
+       62,
+       7.049889087677002
+      ],
+      [
+       124,
+       6.764496326446533
+      ],
+      [
+       186,
+       6.450700759887695
+      ],
+      [
+       248,
+       5.788328170776367
+      ],
+      [
+       310,
+       6.259389877319336
+      ],
+      [
+       372,
+       5.343252182006836
+      ],
+      [
+       434,
+       5.743711471557617
+      ],
+      [
+       496,
+       5.241308212280273
+      ],
+      [
+       499,
+       5.2229719161987305
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       4.642147541046143
+      ],
+      [
+       62,
+       0.7383646965026855
+      ],
+      [
+       124,
+       0.5897013545036316
+      ],
+      [
+       186,
+       0.6256493330001831
+      ],
+      [
+       248,
+       0.7962396740913391
+      ],
+      [
+       310,
+       0.7764142751693726
+      ],
+      [
+       372,
+       0.8011319041252136
+      ],
+      [
+       434,
+       0.8672773241996765
+      ],
+      [
+       496,
+       0.8060120940208435
+      ],
+      [
+       499,
+       0.7994905114173889
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 44288,
+      "code": 638720,
+      "indic": 182272,
+      "reasoning": 185856,
+      "stem": 262656,
+      "web": 734208
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "D-s4",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 4
+     },
+     "train": {
+      "arm": "D-s4",
+      "shares": {
+       "indic": 0.09,
+       "web": 0.356,
+       "code": 0.3115,
+       "stem": 0.1335,
+       "reasoning": 0.089,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 4,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5
+     },
+     "effective_shares": {
+      "indic": 0.09,
+      "web": 0.356,
+      "code": 0.3115,
+      "stem": 0.1335,
+      "reasoning": 0.089,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 20.461753829498775,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 99088.28035439548,
+      "tflops": 3.4394065297130942
+     },
+     "final_loss": 5.751061153411865,
+     "loss_curve": [
+      [
+       0,
+       9.26469898223877
+      ],
+      [
+       62,
+       7.1399946212768555
+      ],
+      [
+       124,
+       6.619419097900391
+      ],
+      [
+       186,
+       6.658535480499268
+      ],
+      [
+       248,
+       5.677325248718262
+      ],
+      [
+       310,
+       6.105388641357422
+      ],
+      [
+       372,
+       6.092281818389893
+      ],
+      [
+       434,
+       5.770667552947998
+      ],
+      [
+       496,
+       5.52924919128418
+      ],
+      [
+       499,
+       5.791146278381348
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       1.5697516202926636
+      ],
+      [
+       62,
+       0.6244720816612244
+      ],
+      [
+       124,
+       0.5574185252189636
+      ],
+      [
+       186,
+       0.5709376931190491
+      ],
+      [
+       248,
+       0.6696987748146057
+      ],
+      [
+       310,
+       0.7505017518997192
+      ],
+      [
+       372,
+       0.8351710438728333
+      ],
+      [
+       434,
+       0.7935770153999329
+      ],
+      [
+       496,
+       0.8350225687026978
+      ],
+      [
+       499,
+       0.7978185415267944
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 43520,
+      "code": 622592,
+      "indic": 196096,
+      "reasoning": 182528,
+      "stem": 275712,
+      "web": 727552
+     },
+     "platform": "macOS-26.6.1-arm64-arm-64bit"
+    }
    ]
   }
  },
@@ -266,46 +3415,46 @@
    "key": "H1",
    "claim": "arm A beats arm B on run-weighted held-out bits-per-byte",
    "lane": "weighted",
-   "baseline": 2.2576597982004976,
-   "challenger": 2.3253260900883768,
-   "effect": 0.029971872618635306,
+   "baseline": 2.499582017726062,
+   "challenger": 2.6049146713066036,
+   "effect": 0.042140106959308914,
    "threshold": 0.02,
-   "noise": 0.01446319763740542,
+   "noise": 0.01106719631367942,
    "verdict": "supported",
-   "note": "the challenger is 3.00% worse, past the declared 2%",
+   "note": "the challenger is 4.21% worse, past the declared 2%",
    "secondary": null
   },
   {
    "key": "H2",
    "claim": "removing the protected floor makes Indic materially worse",
    "lane": "indic",
-   "baseline": 1.3201299967935436,
-   "challenger": 1.4173403134374802,
-   "effect": 0.07363692733295224,
+   "baseline": 1.3358779601356452,
+   "challenger": 1.4278413217778507,
+   "effect": 0.06884113997424403,
    "threshold": 0.05,
-   "noise": 0.009310203577505068,
+   "noise": 0.015545166053526323,
    "verdict": "supported",
-   "note": "the challenger is 7.36% worse, past the declared 5%",
+   "note": "the challenger is 6.88% worse, past the declared 5%",
    "secondary": null
   },
   {
    "key": "H3",
    "claim": "halving Indic costs Indic more than it gains the other lanes",
    "lane": "indic",
-   "baseline": 1.3201299967935436,
-   "challenger": 1.3667220976030472,
-   "effect": 0.03529357027161787,
+   "baseline": 1.3358779601356452,
+   "challenger": 1.3828842205215235,
+   "effect": 0.03518754091961011,
    "threshold": 0.03,
-   "noise": 0.00850518469139676,
-   "verdict": "qualified",
-   "note": "the primary effect holds (+3.53%) and clears its noise, but the second clause of the declared refutation is triggered on the point estimate: code gains 1.20% against a 1% threshold. That gain is inside its own seed spread (1.34%), so these runs cannot settle it either way",
+   "noise": 0.020626946666969827,
+   "verdict": "refuted",
+   "note": "the primary effect holds (+3.52%), but stem gains 1.12%, past the 1% the refutation condition names, and that gain clears its own seed spread. arm D's Indic bits-per-byte is within 3% of arm A's, or the other lanes gain more than 1%. Then 18% is over-provisioned and the share should fall toward the 12% floor",
    "secondary": {
-    "lane": "code",
-    "gain": 0.011950240977649455,
-    "noise": 0.013417101232460836,
+    "lane": "stem",
+    "gain": 0.011235111552675522,
+    "noise": 0.007056433986596737,
     "threshold": 0.01,
     "triggered": true,
-    "clears_noise": false
+    "clears_noise": true
    }
   }
  ]

@@ -62,6 +62,15 @@ class TrainConfig:
         seed: Seed for initialisation and sampling.
         checkpoint_every: Steps between checkpoints; 0 disables.
         log_every: Steps between progress lines.
+        shares_after: The mixture on the far side of a stage seam, or None for a single-stage run.
+        seam_at: Step at which `shares_after` is fully in effect.
+        band_steps: Width of the warmup band. 0 is a hard switch -- the mixture changes between one
+            step and the next, which is what V4 did at the Hindi seam that spiked its gradient norm
+            ~150x. Above 0 the two mixtures are blended linearly across that many steps ending at
+            `seam_at`, which is the fix the specification schedules at every seam.
+        unique_fraction: Fraction of each lane's training tokens the sampler may draw from.
+            1.0 is the whole corpus; 1/16 makes the model re-read a sixteenth of it for the same
+            number of steps, which is how the repetition curve is measured.
         timing_warmup: Steps excluded from the throughput measurement.
 
             Not excluded from *training* -- the model learns from them. They are excluded from the
@@ -85,6 +94,10 @@ class TrainConfig:
     checkpoint_every: int = 0
     log_every: int = 25
     timing_warmup: int = 5
+    unique_fraction: float = 1.0
+    shares_after: dict[str, float] | None = None
+    seam_at: int = 0
+    band_steps: int = 0
 
 
 @dataclass
@@ -204,6 +217,33 @@ def effective_shares(
     return {lane: share / total for lane, share in kept.items()}, dropped
 
 
+def seam_shares(config: "TrainConfig", before: dict[str, float], step: int) -> dict[str, float]:
+    """The mixture in force at `step`, blending across the warmup band.
+
+    Args:
+        config: Carries `shares_after`, `seam_at` and `band_steps`.
+        before: The mixture on the near side of the seam, already renormalised.
+        step: Current optimiser step.
+
+    Returns:
+        Lane to share. Identical to `before` well before the band and to the far-side mixture
+        after it; a linear interpolation between them inside it.
+    """
+    after = config.shares_after or {}
+    band = max(0, config.band_steps)
+    start = config.seam_at - band
+    if step >= config.seam_at:
+        blend = 1.0
+    elif step <= start:
+        blend = 0.0
+    else:
+        blend = (step - start) / band
+    keys = set(before) | set(after)
+    return {
+        lane: (1 - blend) * before.get(lane, 0.0) + blend * after.get(lane, 0.0) for lane in keys
+    }
+
+
 class MixtureSampler:
     """Draws batches lane by lane, in the arm's proportions.
 
@@ -212,13 +252,22 @@ class MixtureSampler:
     report a better loss for having done so.
     """
 
-    def __init__(self, shares: dict[str, float], context: int, seed: int) -> None:
+    def __init__(
+        self,
+        shares: dict[str, float],
+        context: int,
+        seed: int,
+        unique_fraction: float = 1.0,
+    ) -> None:
         """Build the sampler.
 
         Args:
             shares: Lane to share, summing to 1.
             context: Sequence length.
             seed: Seed for the lane draw and the offsets.
+            unique_fraction: Fraction of each lane's tokens to draw from, taken from the start.
+                Below 1.0 the model re-reads a smaller pool for the same number of steps, which is
+                what makes the value of repeated data measurable.
 
         Raises:
             ValueError: If a lane's corpus is shorter than one training sequence.
@@ -228,7 +277,16 @@ class MixtureSampler:
         self.weights /= self.weights.sum()
         self.context = context
         self.rng = np.random.default_rng(seed)
-        self.data = {lane: corpus.load(lane, "train") for lane in self.lanes}
+        # `unique_fraction` keeps only the first slice of each lane, leaving the training budget
+        # untouched. That is what makes the repetition curve measurable: the model does the same
+        # amount of work either way, over less distinct text, so any change in held-out loss is
+        # the price of re-reading rather than the price of training less.
+        self.data = {}
+        for lane in self.lanes:
+            array = corpus.load(lane, "train")
+            if unique_fraction < 1.0:
+                array = array[: max(context + 1, int(array.size * unique_fraction))]
+            self.data[lane] = array
         self.drawn: dict[str, int] = dict.fromkeys(self.lanes, 0)
 
         for lane, array in self.data.items():
@@ -274,6 +332,22 @@ class MixtureSampler:
         """
         return {"rng": self.rng.bit_generator.state, "drawn": dict(self.drawn)}
 
+    def set_shares(self, shares: dict[str, float]) -> None:
+        """Change the mixture without disturbing the draw stream.
+
+        Only the weights move; the generator, the lane arrays and the draw counts are untouched, so
+        a seam is a change in *what* is sampled rather than a restart of the sampling. A restart
+        would re-draw offsets the run had already used and confound the seam it is meant to measure.
+
+        Args:
+            shares: Lane to share over this sampler's existing lanes; renormalised.
+        """
+        weights = np.array([shares.get(lane, 0.0) for lane in self.lanes], dtype=np.float64)
+        total = weights.sum()
+        if total <= 0:
+            raise ValueError(f"shares {shares} give no weight to any of {self.lanes}")
+        self.weights = weights / total
+
     def load_state(self, state: dict) -> None:
         """Restore a sampler's position.
 
@@ -310,7 +384,7 @@ def train(
     optimiser = torch.optim.AdamW(
         model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
     )
-    sampler = MixtureSampler(shares, model_config.context, config.seed)
+    sampler = MixtureSampler(shares, model_config.context, config.seed, config.unique_fraction)
 
     start_step = 0
     if resume is not None and Path(resume).exists():
@@ -333,6 +407,9 @@ def train(
         )
         for group in optimiser.param_groups:
             group["lr"] = learning_rate
+
+        if config.shares_after is not None:
+            sampler.set_shares(seam_shares(config, shares, step))
 
         inputs, targets = sampler.batch(config.batch, target)
 

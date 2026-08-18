@@ -23,18 +23,45 @@ torch = pytest.importorskip("torch", reason="torch is an optional extra: uv sync
 # ---- the corpus, and what may be trained on ------------------------------------------------
 
 
-def test_the_corpus_builds_from_committed_text_only():
-    """Every source must be a tracked file, or the experiment is not reproducible from a clone."""
+def test_every_corpus_source_exists_on_this_checkout():
+    """A lane that names a missing file would fail at build time with a worse message."""
     for source in corpus.sources():
         assert source.paths, f"lane {source.lane} has no sources"
         for path in source.paths:
             assert path.exists(), f"{path} is missing from the checkout"
 
 
-def test_the_corpus_funds_three_lanes_and_says_which_it_cannot():
-    """The spec has seven lanes; committed text funds three. That gap is stated, not hidden."""
+COMMITTED_LANES = {"web", "indic", "code"}
+FETCHABLE_LANES = {"stem", "reasoning", "agentic"}
+
+
+def test_committed_text_always_funds_the_same_three_lanes():
+    """Those three come from tracked files, so they are present on any checkout, always."""
     funded = {source.lane for source in corpus.sources()}
-    assert funded == {"web", "indic", "code"}
+    assert funded >= COMMITTED_LANES, f"a committed lane went missing: {COMMITTED_LANES - funded}"
+
+
+def test_the_only_extra_lanes_are_the_declared_fetched_ones():
+    """The corpus may grow, but only by the three lanes `fetch_proxy_corpus.py` declares.
+
+    Long-context must never appear: the specification retired it as a lane, so a corpus offering it
+    would be funding something the mixture deliberately holds no budget for. And a lane arriving by
+    any route other than the fetch script would be text nobody recorded a licence for.
+    """
+    funded = {source.lane for source in corpus.sources()}
+    assert funded <= COMMITTED_LANES | FETCHABLE_LANES, (
+        f"unexpected lane in the corpus: {funded - COMMITTED_LANES - FETCHABLE_LANES}"
+    )
+
+
+def test_fetched_lanes_declare_that_they_are_fetched_and_under_what_licence():
+    """A stand-in that does not say it is one is the accounting this exercise argues against."""
+    for source in corpus.sources():
+        if source.lane in FETCHABLE_LANES:
+            assert "stand-in" in source.description, f"{source.lane} does not declare a stand-in"
+            assert "fetched, not committed" in source.licence_note, (
+                f"{source.lane} does not say its text is fetched rather than tracked"
+            )
 
 
 def test_tamil_is_excluded_by_measurement_not_preference():

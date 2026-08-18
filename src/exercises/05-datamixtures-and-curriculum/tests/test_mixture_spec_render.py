@@ -91,6 +91,44 @@ def test_the_readme_answers_all_seven_required_items():
         assert item in readme, f"the README never covers: {item}"
 
 
+def test_the_root_readme_section_matches_what_the_code_renders():
+    """The root README is the submitted document, so its generated block is pinned too.
+
+    The brief is specific about this: the submission is a link to the repository's root README, so
+    it "has to carry the reader to `SPEC.md` without a detour". Its exercise-05 block is generated
+    between markers; the surrounding prose stays hand-written.
+    """
+    body = export.ROOT_README.read_text(encoding="utf-8")
+    start, end = body.find(export.ROOT_BEGIN), body.find(export.ROOT_END)
+    assert start != -1 and end > start, "the root README lost its generated exercise-05 markers"
+    block = body[start : end + len(export.ROOT_END)]
+    assert block == export.render_root_section(CFG), (
+        "the root README's 05 section is stale — run `uv run python -m mixture`"
+    )
+
+
+def test_the_root_readme_carries_the_shares_and_the_curriculum():
+    """The two requirements the front door used to omit entirely.
+
+    Before this, the root section carried the three findings and the proxy verdicts but neither the
+    share table (requirement 1) nor a word of the curriculum (requirement 6) — so a reviewer
+    following the submitted link could not see the recipe without opening another file.
+    """
+    section = export.render_root_section(CFG)
+    assert "| General web |" in section, "the share table is missing from the front door"
+    assert "**Seed**" in section and "**Anneal**" in section, "the curriculum stages are missing"
+    assert "SPEC.md" in section, "the front door must carry the reader to the deliverable"
+
+
+def test_writing_refuses_a_root_readme_with_no_markers(tmp_path, monkeypatch):
+    """The twin: splicing must fail loudly rather than append a second copy of the section."""
+    decoy = tmp_path / "README.md"
+    decoy.write_text("# repo\n\nno markers here\n", encoding="utf-8")
+    monkeypatch.setattr(export, "ROOT_README", decoy)
+    with pytest.raises(ValueError, match="no generated exercise-05 block"):
+        export.write_root_section(CFG)
+
+
 def test_rendering_is_deterministic():
     """Two builds of the same config must be byte-identical, or every diff is noise."""
     assert export.render_spec(CFG) == export.render_spec(CFG)

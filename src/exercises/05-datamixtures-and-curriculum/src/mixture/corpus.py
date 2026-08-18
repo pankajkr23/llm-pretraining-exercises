@@ -55,6 +55,10 @@ HELDOUT_SHARE = 0.10
 
 _WIKI = REPO_ROOT / "src/exercises/02-tokenization/corpus/v2"
 
+# Fetched, not committed. `tools/fetch_proxy_corpus.py` writes these; the directory is gitignored,
+# so a fresh clone has none of them and the corpus falls back to the three committed lanes.
+_FETCHED = REPO_ROOT / "data" / "proxy"
+
 
 @dataclass(frozen=True)
 class LaneSource:
@@ -99,13 +103,53 @@ def _repo_python() -> tuple[Path, ...]:
     )
 
 
-def sources() -> tuple[LaneSource, ...]:
-    """Every lane the committed corpus can fund.
+def _fetched_sources() -> tuple[LaneSource, ...]:
+    """The three lanes no committed text can fund, if they have been fetched.
 
-    Three of the seven. The spec's other four lanes -- STEM, reasoning, agentic and the retired
-    long-context -- have no committed text behind them, and inventing some would be exactly the
-    accounting this exercise argues against. Step 0's arms therefore differ only in the web / indic
-    / code proportions, which is where hypotheses H2 and H3 live anyway.
+    STEM, reasoning and agentic carry the specification's most contested findings and Step 0 could
+    not test any of them, because this repository tracks no text of those kinds. Rather than invent
+    some -- which is the accounting this whole exercise argues against -- `fetch_proxy_corpus.py`
+    downloads a small fixed slice of openly-licensed **stand-in** text, and this picks it up when
+    it is there.
+
+    Absent, they are simply not returned, so a clone with no network reproduces the original
+    three-lane corpus exactly and Step 0's committed numbers stay reproducible.
+
+    Returns:
+        One entry per fetched lane, in a fixed order; empty when nothing has been fetched.
+    """
+    described = {
+        "stem": (
+            "worked mathematics (GSM8K, MIT) — a stand-in for D4 STEM / peS2o / proof-pile-2",
+            "MIT; fetched, not committed",
+        ),
+        "reasoning": (
+            "long chain-of-thought traces (OpenThoughts-114k, Apache-2.0) — a stand-in for the "
+            "V4-lineage trace collections",
+            "Apache-2.0; fetched, not committed",
+        ),
+        "agentic": (
+            "tool-call trajectories (Glaive function calling v2, Apache-2.0) — a stand-in for "
+            "SWE-Gym / SWE-smith / OpenHands rollouts",
+            "Apache-2.0; fetched, not committed",
+        ),
+    }
+    out = []
+    for lane, (description, licence) in described.items():
+        path = _FETCHED / f"{lane}.txt"
+        if path.exists():
+            out.append(
+                LaneSource(lane=lane, description=description, paths=(path,), licence_note=licence)
+            )
+    return tuple(out)
+
+
+def sources() -> tuple[LaneSource, ...]:
+    """Every lane the corpus can fund.
+
+    Three come from text this repository already tracks. Three more appear once
+    `tools/fetch_proxy_corpus.py` has been run — see `_fetched_sources`. Long-context is absent by
+    design rather than by scarcity: the specification retired it as a lane.
 
     Returns:
         One entry per fundable lane.
@@ -133,6 +177,7 @@ def sources() -> tuple[LaneSource, ...]:
             paths=_repo_python(),
             licence_note="this project's own source",
         ),
+        *_fetched_sources(),
     )
 
 

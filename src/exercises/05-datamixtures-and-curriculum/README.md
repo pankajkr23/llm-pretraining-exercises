@@ -52,6 +52,26 @@ inventory, never quoted from a slot headline.** It is a boring rule and it chang
 repetition curve (Muennighoff et al., JMLR v26 2025, Eq. 18) says value decays with each pass and
 caps any pool's worth at **unique × 16.4**, which is what separates *expensive* from *impossible*.
 
+### Why each share is the number it is
+
+Every share below is a change from, or a deliberate hold at, the session's own default — and each
+one is argued from supply rather than preference. `Buys` names the benchmark the lane exists to
+move; `From` names the datasets that fund it.
+
+**General web — 32%.** The only lane with real surplus — 4.691T against 640B, 0.14 epochs — so it funds the two points going to Indic and reasoning. It stays largest because breadth of world knowledge is what MMLU and HLE measure, and nothing else supplies it. *Buys* `Humanity's Last Exam`, `MMLU`. *From* DCLM-Baseline, FineWeb-Edu, D2 Web-Diverse, D1 Web-Foundation.
+
+**Code — 28%.** Half the stated target capability, and it absorbs the retired long-context slot — 60B of which was repo-packed code from these same corpora. At 560B against 1.103T it runs at 0.51 epochs, so the increase costs no repetition. *Buys* `SWE-bench Verified`, `SWE-bench Live / Pro`, `LiveCodeBench`, `Aider Polyglot`, `Codeforces`. *From* The Stack v2, D3 Code, CommitPack / CommitPackFT.
+
+**Indic — 18%.** The differentiator, and the reason the project exists. Two points above the session default buys headroom over the 12% floor rather than sitting on it, at 1.33 epochs — inside the band where repetition is near-free. *Buys* `MILU`, `IndicGenBench`. *From* Sangraha (verified), Sangraha (unverified), Sangraha (synthetic), IndicCorpV2, Samanantar, BPCC (parallel).
+
+**STEM / math — 12%.** Unchanged, but on 146B of itemised supply rather than the 250B the session's supply check quotes. That moves it from 0.96 epochs to 1.64 — still fundable, with no margin left to give away. *Buys* `AIME 2024 / 2025`, `FrontierMath`, `GPQA Diamond`, `Humanity's Last Exam`, `MMLU`. *From* D4 STEM, peS2o, proof-pile-2.
+
+**Reasoning traces — 8%.** Up two points because this lane reserves a *distribution* of trace lengths, not a quantity. 85.1B is the thinnest real pool in the mixture and 92% of it sits in one V4-lineage dataset, so the band structure has to be bought deliberately. *Buys* `LiveCodeBench`, `Codeforces`, `AIME 2024 / 2025`, `FrontierMath`, `GPQA Diamond`. *From* AON, OpenMathReasoning, OpenThoughts2, NuminaMath, OpenR1-Math.
+
+**Agentic / tool-use — 2%.** Held at the session's floor although supply cannot fund it: 40B against 627M is 3.9x more than infinite repetition could be worth. The share commits to *building* the data, not to holding it — priced in §8. *Buys* `SWE-bench Verified`, `SWE-bench Live / Pro`, `Terminal-Bench`, `tau-bench / tau2-bench`, `BFCL v3`. *From* SWE-Gym, SWE-smith, OpenHands rollouts, ToolBench, ToolACE, Glaive function-calling v2, Nexus / NexusRaven, xLAM / APIGen, Hermes function-calling.
+
+**Long-context — 0%.** Retired as a lane, kept as a capability. 60 of its 100B is repo-packed code already counted under code, so a 6% share would double-count it. It becomes a sequence-length schedule over code, books and web — its own benchmark, no budget. *Buys* `GAIA`, `BrowseComp`, `long-eval`. *From* Repo-packed code (32K+), Book-length corpora (packed).
+
 **Three findings, in the order they hurt.**
 
 **1 · STEM is short by 104B.** Itemised, the lane holds 146B;
@@ -209,13 +229,13 @@ Token counts are measured with the Session 2 vocabulary, not estimated.
 
 ## What the proxy ran
 
-Step 0 ran on mps:apple-silicon: a 4-layer model, 500 steps, **5 seeds per arm**, over a 523,141-token corpus of committed text across three lanes.
+Step 0 ran on mps:apple-silicon: a 4-layer model, 500 steps, **5 seeds per arm**, over a 1,784,212-token corpus of committed text across three lanes.
 
 | | lane | effect | threshold | seed noise | verdict |
 | --- | --- | ---: | ---: | ---: | --- |
-| **H1** | weighted | +3.00% | 2% | 1.45% | **supported** |
-| **H2** | indic | +7.36% | 5% | 0.93% | **supported** |
-| **H3** | indic | +3.53% | 3% | 0.85% | **qualified** |
+| **H1** | weighted | +4.21% | 2% | 1.11% | **supported** |
+| **H2** | indic | +6.88% | 5% | 1.55% | **supported** |
+| **H3** | indic | +3.52% | 3% | 2.06% | **refuted** |
 
 Two things about that table matter more than the verdicts. Every effect is reported against **the spread the same arm shows against itself**, because exercise 02 learned that a held-out score can swing further across arbitrary choices than the recipes it is meant to separate. And **H3 is `qualified` rather than supported** because its declared refutation had a second clause — *"or the other lanes gain more than 1%"* — which the first implementation did not check and the results trip: halving Indic costs Indic 3.53% and gains code 1.20%, a gain that sits inside code's own 1.34% seed spread and so settles nothing.
 
@@ -227,7 +247,7 @@ Full write-up: [`EXPERIMENTS.md`](EXPERIMENTS.md).
 
 This is the honest boundary, and it is stated here rather than left for a reviewer to find.
 
-- **The corpus is 523,141 tokens.** Three orders of magnitude below the scale a mixture
+- **The corpus is 1,784,212 tokens.** Three orders of magnitude below the scale a mixture
   decision is made at. Every effect above inherits that.
 - **Three lanes were dropped** — stem, reasoning and agentic — because the committed corpus holds
   no text for them. The lanes carrying the most contested findings are the ones the proxy could not
@@ -286,5 +306,5 @@ web/              the page
 ## Scope
 
 This specifies the recipe and tests it at proxy scale. It does not train V5, and it does not claim
-the mixture is validated at 40B — `EXPERIMENTS.md` says exactly what 523,141 tokens
+the mixture is validated at 40B — `EXPERIMENTS.md` says exactly what 1,784,212 tokens
 license.
