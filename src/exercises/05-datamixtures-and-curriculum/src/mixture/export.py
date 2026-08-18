@@ -836,11 +836,18 @@ def render_tokenizer(config: Config | None = None) -> str:
     divider = "| --- |" + " ---: |" * len(names)
     rows = [header, divider]
     for language, scores in table["rows"].items():
-        best = min(scores.values())
+        # A language can be missing from any single tokenizer's reference table, and `ours` is
+        # missing entirely without the FLORES corpus on disk. Render the gap rather than indexing
+        # into it, and pick the best from what is actually there.
+        present = [v for v in (scores.get(name) for name in names) if v is not None]
+        best = min(present) if present else None
         cells = []
         for name in names:
-            value = scores[name]
-            cells.append(f"**{value:.2f}**" if value == best else f"{value:.2f}")
+            value = scores.get(name)
+            if value is None:
+                cells.append("—")
+            else:
+                cells.append(f"**{value:.2f}**" if value == best else f"{value:.2f}")
         rows.append(f"| {language} | " + " | ".join(cells) + " |")
     fertility_table = "\n".join(rows)
 

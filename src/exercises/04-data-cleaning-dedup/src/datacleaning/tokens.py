@@ -268,8 +268,13 @@ def spread_table(langs: tuple[str, ...] = ("en", "hi", "mai", "te", "as", "mni")
         vals = [v for v in row.values() if v]
         spreads[lang] = round(max(vals) / min(vals), 2) if len(vals) > 1 else None
 
+    # Only claim the column when something is behind it. `flores_fertility` returns {} on a fresh
+    # clone by design, and a header that promises `ours` over rows that have no `ours` key is a
+    # contract this function cannot keep — exercise 05's renderer indexed it and raised KeyError.
+    measured_ours = any("ours" in row for row in rows.values())
+
     return {
-        "tokenizers": ["ours", *REFERENCE_TOKENIZERS],
+        "tokenizers": [*(["ours"] if measured_ours else []), *REFERENCE_TOKENIZERS],
         "rows": rows,
         "spread": spreads,
         "unk": {lang: round(c.unk_share, 4) for lang, c in ours.items()},

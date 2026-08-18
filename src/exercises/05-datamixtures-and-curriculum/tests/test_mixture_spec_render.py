@@ -15,6 +15,7 @@ modules, not merely checked for being present.
 import re
 
 import pytest
+from datacleaning.config import Config as DataCleaningConfig
 from mixture import curriculum, export, lanes, proxy
 from mixture.config import Config
 
@@ -48,6 +49,16 @@ def test_the_committed_spec_matches_what_the_code_renders(spec: str):
 
 
 def test_the_committed_tokenizer_doc_matches_what_the_code_renders(tokenizer_doc: str):
+    """The committed file is the current build — where the measurement behind it exists.
+
+    Unlike `SPEC.md`, this document is rendered from a *measurement*: per-language fertility over
+    FLORES-200, which lives under the gitignored `data/`. Without that corpus the renderer honestly
+    drops the `ours` column, so the rebuild differs from the committed file and this test would
+    fail for the one reason that is not a defect. It therefore skips on a machine that cannot
+    reproduce the measurement — which means **it guards the author's checkout, not CI**.
+    """
+    if not DataCleaningConfig().flores_dir.exists():
+        pytest.skip("FLORES-200 is not on disk; TOKENIZER.md cannot be re-measured here")
     assert tokenizer_doc == export.render_tokenizer(CFG)
 
 
