@@ -75,6 +75,20 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   on Manipuri, `o200k_base` (16.50) and Gemma (12.18) are both **worse** than our 10k vocabulary
   (7.17), so a bigger off-the-shelf vocabulary does not buy Indic coverage.
 
+- **An interactive page**, live at `/05-datamixtures-and-curriculum/`. Five chapters, each making
+  one claim the interaction *proves* rather than illustrates: drag a lane's share and the others
+  move because the budget is fixed; drag the passes over a pool and watch what you pay for come
+  apart from what you get; hunt for an agentic share where the arithmetic works and find it is far
+  too small to teach the capability; flip the contested Indic row between "translated" and
+  "synthetic" and watch the hole move rather than close; hide the seed spread on the proxy results
+  and watch one verdict stop looking decisive.
+
+  Three rules now live in Python and JavaScript both, because the page recomputes them per frame.
+  `tests/test_mixture_agreement.py` runs the page's own functions under node against the Python
+  ones — and mutation testing confirms it catches drift in all three. `tests/test_mixture_page_render.py`
+  loads the **built** site in Chromium, since the palette lives in the site-root stylesheet and
+  serving `web/` directly would test a page with no colours at all.
+
 - **The root README carries sections for exercises 04 and 05.** Section 04 was missing entirely,
   and the exercises table was broken by a stray blank line that split it into two tables.
 

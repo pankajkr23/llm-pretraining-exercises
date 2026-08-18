@@ -16,10 +16,29 @@ specification commits to has been run and its numbers brought back. What remains
 | --- | --- | --- | --- |
 | O1 | **Run the proxy** | **done** | 4 arms × 5 seeds × 500 steps on MPS. 2 supported, 1 qualified. `EXPERIMENTS.md`. |
 | O2 | **Measure local throughput** | **done** | 5.281 TFLOP/s, measured by `mixture.bench` across six model sizes. `proxy.HARDWARE` no longer says `unknown`. |
-| O3 | **No interactive page** | open, optional | Exercises 01–04 each ship one. A mixture composer — drag shares, watch supply and floors go red — would help a reviewer push on numbers. Cut this before anything else if time is short. |
+| O3 | **Interactive page** | **done** | Five chapters at `/05-datamixtures-and-curriculum/`. 19 browser tests, 8 agreement tests, both mutation-checked. |
 | O4 | **Colab notebook** | **done** | `notebooks/S05-datamixtures-and-curriculum.ipynb`, 37 code cells, ends on the Step 0 results. |
 | O5 | **Exercise 04's dedup is in-memory** | **done** | `accumulate.py` — append-only shards, persistent signature index, cross-shard dedup. Measured: 40.5 GB vs 0.55 GB at the 1B gate. Exercise 04's published numbers are untouched; the store is a continuation, not a replacement. |
 | O6 | **The 1B rung has not been run** | open, needs your decision | Priced from the measurement at **~34 h and ~$98** on rented H100s, against **105 days** locally. This is the rung that would earn a claim about the mixture; Step 0 explicitly does not. |
+
+### F9 · Two guards that could not fail, both found by mutation rather than by review
+
+The browser suite passed 19/19 on its first run, which is when it is least trustworthy. Breaking
+the page on purpose killed two mutants and let one through: **a stylesheet referencing an undefined
+colour token**. The test asserted that `--grade-x` *was defined*, which stays true when a usage is
+swapped for `var(--nonexistent)` — so it checked the one thing that could not go wrong. It now
+reads every `var(--…)` reference out of the stylesheet and resolves each against the page, and it
+kills that mutant.
+
+The same exercise on the agreement harness killed all three drift mutants: an off-by-one epoch in
+the repetition curve, a verdict that skips its ceiling test, and a renormaliser that stops holding
+agentic fixed.
+
+**And the palette is not where it looks.** The per-exercise `web/_shared/tokens.css` holds
+component styles; the colours live in the *site-root* `/_shared/tokens.css`, which only exists once
+`deploy/vercel/build.sh` has run. `--good`, `--warn` and `--bad` do not exist anywhere — the real
+semantic names are `--grade-a` … `--grade-x`. Because an undefined custom property fails silently,
+the first version of the page rendered every verdict badge with no colour while looking fine.
 
 ### Security and safety log
 

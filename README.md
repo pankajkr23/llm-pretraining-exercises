@@ -239,8 +239,13 @@ implementation did not check. [`EXPERIMENTS.md`](src/exercises/05-datamixtures-a
 says plainly what a 523k-token corpus does and does not license — it does not validate the mixture
 at 40B, and is not offered as doing so.
 
+> **Hosting:** live at <https://llm-pretraining-demos.vercel.app/05-datamixtures-and-curriculum/> —
+> drag the lane shares and watch supply, floors and verdicts respond. Three rules live in both
+> Python and JavaScript so the page can recompute per frame; a node harness diffs them and fails on
+> disagreement.
+
 ```bash
-uv run python -m mixture              # rebuild SPEC.md and EXPERIMENTS.md from measured data
+uv run python -m mixture              # rebuild SPEC.md, EXPERIMENTS.md and the page's data
 uv run python -m mixture.inventory    # lane supplies, itemised vs the session's headlines
 uv run python -m mixture.checks       # the invariants
 uv run python -m mixture.bench        # measure this machine's throughput

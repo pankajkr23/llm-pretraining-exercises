@@ -1,0 +1,917 @@
+{
+ "config": {
+  "run_tokens": 2000000000000.0,
+  "indic_floor": 0.12,
+  "agentic_floor": 0.02,
+  "protected_ceiling": 0.2,
+  "worth_ceiling": 16.4,
+  "epochs_near_free": 4,
+  "epochs_worthless": 40,
+  "repetition_decay": 15.4,
+  "fingerprint": "cf555d4cb965",
+  "tokenizer": "era5-s2-10k"
+ },
+ "lanes": [
+  {
+   "key": "web",
+   "name": "General web",
+   "share": 0.32,
+   "session_share": 0.34,
+   "because": "the only lane with a large surplus \u2014 4.691T against a 640B demand, 0.14 epochs \u2014 so it is where the two points funding Indic and reasoning come from. It stays the largest lane because breadth of world knowledge is what MMLU and HLE measure and nothing else supplies it",
+   "schedule_only": false,
+   "raw_supply": 4691000000000.0,
+   "supply": 4691000000000.0,
+   "epochs": 0.13643146450650182,
+   "verdict": "surplus",
+   "ceiling": 76932400000000.0,
+   "funded_by": [
+    "DCLM-Baseline",
+    "FineWeb-Edu",
+    "D2 Web-Diverse",
+    "D1 Web-Foundation"
+   ],
+   "benchmarks": [
+    "Humanity's Last Exam",
+    "MMLU"
+   ],
+   "corrections": []
+  },
+  {
+   "key": "code",
+   "name": "Code",
+   "share": 0.28,
+   "session_share": 0.24,
+   "because": "half the stated target capability, and the lane that absorbs the retired long-context slot: 60B of that slot was repo-packed code from these same corpora. At 560B against 1.103T it still runs at 0.51 epochs, so the increase costs no repetition",
+   "schedule_only": false,
+   "raw_supply": 1103000000000.0,
+   "supply": 1103000000000.0,
+   "epochs": 0.5077062556663645,
+   "verdict": "covered",
+   "ceiling": 18089200000000.0,
+   "funded_by": [
+    "The Stack v2",
+    "D3 Code",
+    "CommitPack / CommitPackFT"
+   ],
+   "benchmarks": [
+    "SWE-bench Verified",
+    "SWE-bench Live / Pro",
+    "LiveCodeBench",
+    "Aider Polyglot",
+    "Codeforces"
+   ],
+   "corrections": []
+  },
+  {
+   "key": "indic",
+   "name": "Indic",
+   "share": 0.18,
+   "session_share": 0.16,
+   "because": "the differentiator and the reason the project exists. Raised two points above the session default to put real headroom over the 12% protected floor rather than sitting on it, at a cost of 1.33 epochs \u2014 inside the band where repetition is near-free",
+   "schedule_only": false,
+   "raw_supply": 270900000000.0,
+   "supply": 270900000000.0,
+   "epochs": 1.3289036544850499,
+   "verdict": "repeat",
+   "ceiling": 4442760000000.0,
+   "funded_by": [
+    "Sangraha (verified)",
+    "Sangraha (unverified)",
+    "Sangraha (synthetic)",
+    "IndicCorpV2",
+    "Samanantar",
+    "BPCC (parallel)"
+   ],
+   "benchmarks": [
+    "MILU",
+    "IndicGenBench"
+   ],
+   "corrections": []
+  },
+  {
+   "key": "stem",
+   "name": "STEM / math",
+   "share": 0.12,
+   "session_share": 0.12,
+   "because": "unchanged, but on a supply of 146B rather than the 250B the session's supply check quotes \u2014 the itemised rows do not reach it. That moves the lane from 0.96 epochs to 1.64: still fundable, with no margin left to give away",
+   "schedule_only": false,
+   "raw_supply": 146000000000.0,
+   "supply": 146000000000.0,
+   "epochs": 1.643835616438356,
+   "verdict": "repeat",
+   "ceiling": 2394400000000.0,
+   "funded_by": [
+    "D4 STEM",
+    "peS2o",
+    "proof-pile-2"
+   ],
+   "benchmarks": [
+    "AIME 2024 / 2025",
+    "FrontierMath",
+    "GPQA Diamond",
+    "Humanity's Last Exam",
+    "MMLU"
+   ],
+   "corrections": []
+  },
+  {
+   "key": "reasoning",
+   "name": "Reasoning traces",
+   "share": 0.08,
+   "session_share": 0.06,
+   "because": "raised two points because the lane must reserve a *distribution* of trace lengths, not a quantity: short, medium, long and ultra across maths, code and general problem solving. 85.1B is the thinnest real pool in the mixture and 92% of it sits in one V4-lineage dataset, so the band structure has to be bought deliberately",
+   "schedule_only": false,
+   "raw_supply": 85100000000.0,
+   "supply": 85100000000.0,
+   "epochs": 1.8801410105757932,
+   "verdict": "repeat",
+   "ceiling": 1395640000000.0,
+   "funded_by": [
+    "AON",
+    "OpenMathReasoning",
+    "OpenThoughts2",
+    "NuminaMath",
+    "OpenR1-Math"
+   ],
+   "benchmarks": [
+    "LiveCodeBench",
+    "Codeforces",
+    "AIME 2024 / 2025",
+    "FrontierMath",
+    "GPQA Diamond",
+    "Humanity's Last Exam"
+   ],
+   "corrections": []
+  },
+  {
+   "key": "agentic",
+   "name": "Agentic / tool-use",
+   "share": 0.02,
+   "session_share": 0.02,
+   "because": "held at the session's floor although supply cannot fund it. 40B of demand against 627M is 3.9x more than infinite repetition could ever be worth, so the share is a commitment to *build* the data rather than a claim to hold it \u2014 see generation_bill()",
+   "schedule_only": false,
+   "raw_supply": 627000000.0,
+   "supply": 67925000.0,
+   "epochs": 588.8847994111152,
+   "verdict": "impossible",
+   "ceiling": 1113970000.0,
+   "funded_by": [
+    "SWE-Gym",
+    "SWE-smith",
+    "OpenHands rollouts",
+    "ToolBench",
+    "ToolACE",
+    "Glaive function-calling v2",
+    "Nexus / NexusRaven",
+    "xLAM / APIGen",
+    "Hermes function-calling"
+   ],
+   "benchmarks": [
+    "SWE-bench Verified",
+    "SWE-bench Live / Pro",
+    "Terminal-Bench",
+    "tau-bench / tau2-bench",
+    "BFCL v3",
+    "GAIA",
+    "BrowseComp",
+    "WebArena / WorkArena",
+    "OSWorld"
+   ],
+   "corrections": [
+    {
+     "kind": "supervision",
+     "factor": 0.10833333333333334,
+     "because": "only the assistant's own tokens are supervised (\u00a76); at 0.3%-10.8% supervised per trajectory, derived from the token-per-sample counts of SWE-smith, OpenHands rollouts, SWE-Gym against the session's 'few hundred supervised tokens'. The generous end is applied, and the lane is impossible without the discount anyway",
+     "provenance": "estimated"
+    }
+   ]
+  },
+  {
+   "key": "long_context",
+   "name": "Long-context",
+   "share": 0.0,
+   "session_share": 0.06,
+   "because": "retired as a lane, kept as a capability. 60 of its 100B is repo-packed code already counted under code, so a 6% share would have double-counted 60B of the corpus. It becomes a sequence-length schedule applied to code, books and web, keeps its own benchmark (long-eval), and holds no budget of its own",
+   "schedule_only": true,
+   "raw_supply": 100000000000.0,
+   "supply": 40000000000.0,
+   "epochs": 0.0,
+   "verdict": "surplus",
+   "ceiling": 656000000000.0,
+   "funded_by": [
+    "Repo-packed code (32K+)",
+    "Book-length corpora (packed)"
+   ],
+   "benchmarks": [
+    "GAIA",
+    "BrowseComp",
+    "long-eval"
+   ],
+   "corrections": [
+    {
+     "kind": "double-count",
+     "factor": 0.4,
+     "because": "60B of the slot's 100B is repo-packed code, which the inventory says is packed from the code corpora already counted in the code lane; only the 40B of packed books is text no other lane holds",
+     "provenance": "derived"
+    }
+   ]
+  }
+ ],
+ "floor": {
+  "per_lane": {
+   "indic": 0.12,
+   "agentic": 0.02
+  },
+  "total": 0.13999999999999999,
+  "ceiling": 0.2
+ },
+ "indic_tiers": [
+  {
+   "tier": "A",
+   "name": "verified native",
+   "share": 0.45,
+   "supply": 64000000000.0,
+   "rows": [
+    "Sangraha (verified)"
+   ]
+  },
+  {
+   "tier": "B",
+   "name": "unverified crawl",
+   "share": 0.2,
+   "supply": 44900000000.0,
+   "rows": [
+    "Sangraha (unverified)",
+    "IndicCorpV2"
+   ]
+  },
+  {
+   "tier": "C",
+   "name": "translated",
+   "share": 0.2,
+   "supply": 167100000000.0,
+   "rows": [
+    "Sangraha (synthetic)",
+    "Samanantar",
+    "BPCC (parallel)"
+   ]
+  },
+  {
+   "tier": "D",
+   "name": "synthetic",
+   "share": 0.15,
+   "supply": 0.0,
+   "rows": []
+  }
+ ],
+ "tier_dispute": "The inventory's largest Indic row is named \"Sangraha (synthetic)\" and tagged tier **C**, which is\nthe *translated* tier. The name and the tag cannot both be honoured, and which one wins decides\nwhich tier is fundable.\n\nFiled as **translated** (what this spec does): C holds 167.1B against a 72B demand and is covered;\nD holds nothing against 54B, so 54B of Indic must be generated.\n\nFiled as **synthetic**: D holds 162B and is covered; C holds only the 5.1B residual of Samanantar\nand BPCC against 72B, so ~67B of translated Indic must be produced instead.\n\nEither way a hole of roughly the same size opens; filing it under the name rather than the tag\nmoves the hole, it does not fill it. The tag is followed because the tier ladder asks *how was this\ntext produced*, and AI4Bharat's own description of that component is machine translation and\ntransliteration of existing Wikimedia content \u2014 a translation pipeline, not a generative one.\nTier D is reserved for model-generated novel text, of which the inventory lists none.\n",
+ "reserve": {
+  "total": 39892000000.0,
+  "share_of_run": 0.019946,
+  "per_lane": {
+   "agentic": 627000000.0,
+   "indic": 19200000000.0,
+   "reasoning": 12765000000.0,
+   "stem": 7300000000.0
+  }
+ },
+ "generation_bill": [
+  {
+   "lane": "indic-D",
+   "tokens": 54000000000.0,
+   "because": "the synthetic Indic tier has no supply at all: the inventory's one row named 'synthetic' is tagged as translated and is counted in tier C. Tier D is the long-tail language coverage no native corpus provides, so it is generated or the tier is dropped"
+  },
+  {
+   "lane": "agentic",
+   "tokens": 38886030000.0,
+   "because": "627M of real trajectories cap at 1.1B under infinite repetition, against a 40B share. The existing pool is committed whole to the anneal reserve (627M), so the pre-training share is a commitment to synthesise trajectories and verify them with executable checks"
+  }
+ ],
+ "inventory": [
+  {
+   "name": "The Stack v2",
+   "source": "BigCode / Software Heritage",
+   "lane": "code",
+   "samples": 600000000.0,
+   "tokens": 900000000000.0,
+   "licence": "permissive + opt-out",
+   "tier": "B",
+   "provenance": "approximate"
+  },
+  {
+   "name": "D3 Code",
+   "source": "V4 run (confirmed)",
+   "lane": "code",
+   "samples": 250000000.0,
+   "tokens": 199000000000.0,
+   "licence": "V4 lineage",
+   "tier": null,
+   "provenance": "confirmed"
+  },
+  {
+   "name": "CommitPack / CommitPackFT",
+   "source": "BigCode",
+   "lane": "code",
+   "samples": 4000000.0,
+   "tokens": 4000000000.0,
+   "licence": "mixed / permissive",
+   "tier": null,
+   "provenance": "approximate"
+  },
+  {
+   "name": "ToolBench",
+   "source": "OpenBMB",
+   "lane": "agentic",
+   "samples": 120000.0,
+   "tokens": 80000000.0,
+   "licence": "Apache-2.0",
+   "tier": "D",
+   "provenance": "approximate"
+  },
+  {
+   "name": "Glaive function-calling v2",
+   "source": "Glaive",
+   "lane": "agentic",
+   "samples": 113000.0,
+   "tokens": 50000000.0,
+   "licence": null,
+   "tier": null,
+   "provenance": "approximate"
+  },
+  {
+   "name": "ToolACE",
+   "source": "ToolACE",
+   "lane": "agentic",
+   "samples": 110000.0,
+   "tokens": 60000000.0,
+   "licence": null,
+   "tier": "A/D",
+   "provenance": "approximate"
+  },
+  {
+   "name": "xLAM / APIGen",
+   "source": "Salesforce",
+   "lane": "agentic",
+   "samples": 60000.0,
+   "tokens": 25000000.0,
+   "licence": "CC-BY (mixed)",
+   "tier": null,
+   "provenance": "approximate"
+  },
+  {
+   "name": "Nexus / NexusRaven",
+   "source": "Nexusflow",
+   "lane": "agentic",
+   "samples": 40000.0,
+   "tokens": 30000000.0,
+   "licence": "CC-BY-4.0",
+   "tier": "A",
+   "provenance": "approximate"
+  },
+  {
+   "name": "SWE-smith",
+   "source": "SWE-smith",
+   "lane": "agentic",
+   "samples": 26000.0,
+   "tokens": 120000000.0,
+   "licence": "task licenses",
+   "tier": null,
+   "provenance": "approximate"
+  },
+  {
+   "name": "Hermes function-calling",
+   "source": "NousResearch",
+   "lane": "agentic",
+   "samples": 15000.0,
+   "tokens": 22000000.0,
+   "licence": null,
+   "tier": null,
+   "provenance": "approximate"
+  },
+  {
+   "name": "OpenHands rollouts",
+   "source": "All-Hands / OpenHands",
+   "lane": "agentic",
+   "samples": 10000.0,
+   "tokens": 90000000.0,
+   "licence": "mixed",
+   "tier": null,
+   "provenance": "approximate"
+  },
+  {
+   "name": "SWE-Gym",
+   "source": "SWE-Gym",
+   "lane": "agentic",
+   "samples": 2400.0,
+   "tokens": 150000000.0,
+   "licence": null,
+   "tier": null,
+   "provenance": "approximate"
+  },
+  {
+   "name": "AON",
+   "source": "V4 corpus",
+   "lane": "reasoning",
+   "samples": 40000000.0,
+   "tokens": 78000000000.0,
+   "licence": null,
+   "tier": null,
+   "provenance": "confirmed"
+  },
+  {
+   "name": "OpenMathReasoning",
+   "source": "NVIDIA",
+   "lane": "reasoning",
+   "samples": 3200000.0,
+   "tokens": 2000000000.0,
+   "licence": null,
+   "tier": null,
+   "provenance": "approximate"
+  },
+  {
+   "name": "OpenThoughts2",
+   "source": "OpenThoughts",
+   "lane": "reasoning",
+   "samples": 1100000.0,
+   "tokens": 3000000000.0,
+   "licence": null,
+   "tier": null,
+   "provenance": "approximate"
+  },
+  {
+   "name": "NuminaMath",
+   "source": "Numina",
+   "lane": "reasoning",
+   "samples": 860000.0,
+   "tokens": 500000000.0,
+   "licence": "Apache / CC-BY",
+   "tier": null,
+   "provenance": "approximate"
+  },
+  {
+   "name": "OpenR1-Math",
+   "source": "Hugging Face",
+   "lane": "reasoning",
+   "samples": 220000.0,
+   "tokens": 1600000000.0,
+   "licence": null,
+   "tier": null,
+   "provenance": "approximate"
+  },
+  {
+   "name": "Repo-packed code (32K+)",
+   "source": "packed from code corpora",
+   "lane": "long_context",
+   "samples": 1500000.0,
+   "tokens": 60000000000.0,
+   "licence": "permissive",
+   "tier": null,
+   "provenance": "approximate"
+  },
+  {
+   "name": "Book-length corpora (packed)",
+   "source": "books + long docs",
+   "lane": "long_context",
+   "samples": 400000.0,
+   "tokens": 40000000000.0,
+   "licence": "mixed / public-domain",
+   "tier": null,
+   "provenance": "approximate"
+  },
+  {
+   "name": "Sangraha (synthetic)",
+   "source": "AI4Bharat",
+   "lane": "indic",
+   "samples": null,
+   "tokens": 162000000000.0,
+   "licence": null,
+   "tier": "C",
+   "provenance": "confirmed"
+  },
+  {
+   "name": "Samanantar",
+   "source": "AI4Bharat",
+   "lane": "indic",
+   "samples": 49700000.0,
+   "tokens": null,
+   "licence": "CC0 / CC-BY",
+   "tier": null,
+   "provenance": "unstated"
+  },
+  {
+   "name": "Sangraha (verified)",
+   "source": "AI4Bharat",
+   "lane": "indic",
+   "samples": null,
+   "tokens": 64000000000.0,
+   "licence": null,
+   "tier": null,
+   "provenance": "confirmed"
+  },
+  {
+   "name": "BPCC (parallel)",
+   "source": "AI4Bharat",
+   "lane": "indic",
+   "samples": null,
+   "tokens": null,
+   "licence": null,
+   "tier": null,
+   "provenance": "unstated"
+  },
+  {
+   "name": "Sangraha (unverified)",
+   "source": "AI4Bharat",
+   "lane": "indic",
+   "samples": 15000000.0,
+   "tokens": 24000000000.0,
+   "licence": null,
+   "tier": null,
+   "provenance": "confirmed"
+  },
+  {
+   "name": "IndicCorpV2",
+   "source": "AI4Bharat",
+   "lane": "indic",
+   "samples": 10000000.0,
+   "tokens": 20900000000.0,
+   "licence": "CC-BY / mixed",
+   "tier": null,
+   "provenance": "confirmed"
+  },
+  {
+   "name": "DCLM-Baseline",
+   "source": "DataComp-LM",
+   "lane": "web",
+   "samples": 2600000000.0,
+   "tokens": 2600000000000.0,
+   "licence": "mixed / CommonCrawl",
+   "tier": null,
+   "provenance": "approximate"
+  },
+  {
+   "name": "FineWeb-Edu",
+   "source": "FineWeb-Edu",
+   "lane": "web",
+   "samples": 1300000000.0,
+   "tokens": 1300000000000.0,
+   "licence": "ODC-By",
+   "tier": null,
+   "provenance": "approximate"
+  },
+  {
+   "name": "D2 Web-Diverse",
+   "source": "V4 corpus",
+   "lane": "web",
+   "samples": 780000000.0,
+   "tokens": 627000000000.0,
+   "licence": null,
+   "tier": null,
+   "provenance": "confirmed"
+  },
+  {
+   "name": "D1 Web-Foundation",
+   "source": "V4 corpus",
+   "lane": "web",
+   "samples": 200000000.0,
+   "tokens": 164000000000.0,
+   "licence": null,
+   "tier": null,
+   "provenance": "confirmed"
+  },
+  {
+   "name": "D4 STEM",
+   "source": "V4 corpus",
+   "lane": "stem",
+   "samples": null,
+   "tokens": 49000000000.0,
+   "licence": null,
+   "tier": null,
+   "provenance": "confirmed"
+  },
+  {
+   "name": "peS2o",
+   "source": "AI2",
+   "lane": "stem",
+   "samples": null,
+   "tokens": 42000000000.0,
+   "licence": null,
+   "tier": null,
+   "provenance": "approximate"
+  },
+  {
+   "name": "proof-pile-2",
+   "source": "EleutherAI",
+   "lane": "stem",
+   "samples": 5000000.0,
+   "tokens": 55000000000.0,
+   "licence": null,
+   "tier": null,
+   "provenance": "approximate"
+  }
+ ],
+ "headline_disagreements": [
+  {
+   "lane": "web",
+   "itemised": 4691000000000.0,
+   "supply_check": 4500000000000.0,
+   "slot_headline": null,
+   "gap": 191000000000.0,
+   "relative": 0.042444444444444444
+  },
+  {
+   "lane": "stem",
+   "itemised": 146000000000.0,
+   "supply_check": 250000000000.0,
+   "slot_headline": null,
+   "gap": -104000000000.0,
+   "relative": -0.416
+  }
+ ],
+ "supply_check": {
+  "code": 1100000000000.0,
+  "agentic": 630000000.0,
+  "reasoning": 85000000000.0,
+  "long_context": 100000000000.0,
+  "indic": 276000000000.0,
+  "web": 4500000000000.0,
+  "stem": 250000000000.0
+ },
+ "experiment": {
+  "device": "mps:apple-silicon",
+  "steps": 500,
+  "seeds": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "model": {
+   "vocab_size": 10000,
+   "context": 256,
+   "layers": 4,
+   "heads": 4,
+   "width": 256,
+   "seed": 0
+  },
+  "corpus": {
+   "web": {
+    "train_tokens": 100661,
+    "heldout_tokens": 10331,
+    "heldout_bytes": 59861,
+    "unk_share": 0.0,
+    "tokenizer": "ours/s02-bpe-10000"
+   },
+   "indic": {
+    "train_tokens": 70574,
+    "heldout_tokens": 8228,
+    "heldout_bytes": 66427,
+    "unk_share": 0.0,
+    "tokenizer": "ours/s02-bpe-10000"
+   },
+   "code": {
+    "train_tokens": 351906,
+    "heldout_tokens": 37120,
+    "heldout_bytes": 77707,
+    "unk_share": 0.0016939872449700918,
+    "tokenizer": "ours/s02-bpe-10000"
+   }
+  },
+  "arms": {
+   "A": {
+    "name": "V5 candidate",
+    "effective_shares": {
+     "web": 0.41025641025641024,
+     "code": 0.358974358974359,
+     "indic": 0.23076923076923075
+    },
+    "dropped_lanes": [
+     "agentic",
+     "reasoning",
+     "stem"
+    ],
+    "per_seed": {
+     "0": {
+      "web": 1.7877522599017848,
+      "indic": 1.323060448665315,
+      "code": 3.3979228908222896
+     },
+     "1": {
+      "web": 1.7894365427622798,
+      "indic": 1.3138913092355733,
+      "code": 3.3994666260064252
+     },
+     "2": {
+      "web": 1.7959320566112564,
+      "indic": 1.3251192586749554,
+      "code": 3.410683492202899
+     },
+     "3": {
+      "web": 1.7806932256648493,
+      "indic": 1.3155084842027427,
+      "code": 3.372882751435739
+     },
+     "4": {
+      "web": 1.79061503385194,
+      "indic": 1.3230704831891313,
+      "code": 3.3995403032979192
+     }
+    },
+    "weighted": {
+     "0": 2.2585256581520112,
+     "1": 2.2576548520873483,
+     "2": 2.2669373108896225,
+     "3": 2.2448981150913494,
+     "4": 2.260283054782156
+    }
+   },
+   "B": {
+    "name": "Naive web-heavy",
+    "effective_shares": {
+     "web": 0.7526881720430108,
+     "code": 0.21505376344086025,
+     "indic": 0.03225806451612903
+    },
+    "dropped_lanes": [
+     "reasoning",
+     "stem"
+    ],
+    "per_seed": {
+     "0": {
+      "web": 1.7708693225292647,
+      "indic": 1.4377510915207845,
+      "code": 3.5466251139445615
+     },
+     "1": {
+      "web": 1.7767178931076584,
+      "indic": 1.44809335222291,
+      "code": 3.5579163169450276
+     },
+     "2": {
+      "web": 1.7701652522877815,
+      "indic": 1.4301713625999513,
+      "code": 3.5446828315045558
+     },
+     "3": {
+      "web": 1.7592282712759262,
+      "indic": 1.419755375754483,
+      "code": 3.505159854302673
+     },
+     "4": {
+      "web": 1.7622196680684032,
+      "indic": 1.4279228656895138,
+      "code": 3.5269112133631877
+     }
+    },
+    "weighted": {
+     "0": 2.3314466815225425,
+     "1": 2.340286022998952,
+     "2": 2.328711434386355,
+     "3": 2.3076330431395533,
+     "4": 2.3185532683944796
+    }
+   },
+   "C": {
+    "name": "No protected floor",
+    "effective_shares": {
+     "indic": 0.05263157894736842,
+     "web": 0.5052631578947369,
+     "code": 0.4421052631578948
+    },
+    "dropped_lanes": [
+     "reasoning",
+     "stem"
+    ],
+    "per_seed": {
+     "0": {
+      "web": 1.7904760167988192,
+      "indic": 1.420191828822768,
+      "code": 3.3439360362228245
+     },
+     "1": {
+      "web": 1.7935049377808339,
+      "indic": 1.417449940759307,
+      "code": 3.3558779219602886
+     },
+     "2": {
+      "web": 1.7815872572431208,
+      "indic": 1.4090296754756728,
+      "code": 3.335359314143864
+     },
+     "3": {
+      "web": 1.7876924174322806,
+      "indic": 1.4213203544945918,
+      "code": 3.3245628475039952
+     },
+     "4": {
+      "web": 1.7953181156219182,
+      "indic": 1.4187097676350617,
+      "code": 3.363285702329195
+     }
+    },
+    "weighted": {
+     "0": 2.262678134238604,
+     "1": 2.2675748558659268,
+     "2": 2.2533767587996176,
+     "3": 2.254842095754455,
+     "4": 2.271268656186538
+    }
+   },
+   "D": {
+    "name": "Indic halved",
+    "effective_shares": {
+     "indic": 0.11881188118811882,
+     "web": 0.46996699669966996,
+     "code": 0.41122112211221123
+    },
+    "dropped_lanes": [
+     "agentic",
+     "reasoning",
+     "stem"
+    ],
+    "per_seed": {
+     "0": {
+      "web": 1.7851267037308063,
+      "indic": 1.372441890714576,
+      "code": 3.3554416125145368
+     },
+     "1": {
+      "web": 1.7876512156985882,
+      "indic": 1.3698938971717807,
+      "code": 3.3755451467343986
+     },
+     "2": {
+      "web": 1.7823765391247053,
+      "indic": 1.3648863098729864,
+      "code": 3.3594218021741473
+     },
+     "3": {
+      "web": 1.776964913748534,
+      "indic": 1.363848959903524,
+      "code": 3.3299793398014104
+     },
+     "4": {
+      "web": 1.7897690898410366,
+      "indic": 1.3625394303523697,
+      "code": 3.357187142658755
+     }
+    },
+    "weighted": {
+     "0": 2.2535945346494257,
+     "1": 2.2612588866667953,
+     "2": 2.2521514524433393,
+     "3": 2.2391228209314873,
+     "4": 2.253840520714115
+    }
+   }
+  },
+  "comparisons": [
+   {
+    "key": "H1",
+    "claim": "arm A beats arm B on run-weighted held-out bits-per-byte",
+    "lane": "weighted",
+    "baseline": 2.2576597982004976,
+    "challenger": 2.3253260900883768,
+    "effect": 0.029971872618635306,
+    "threshold": 0.02,
+    "noise": 0.01446319763740542,
+    "verdict": "supported",
+    "note": "the challenger is 3.00% worse, past the declared 2%",
+    "secondary": null
+   },
+   {
+    "key": "H2",
+    "claim": "removing the protected floor makes Indic materially worse",
+    "lane": "indic",
+    "baseline": 1.3201299967935436,
+    "challenger": 1.4173403134374802,
+    "effect": 0.07363692733295224,
+    "threshold": 0.05,
+    "noise": 0.009310203577505068,
+    "verdict": "supported",
+    "note": "the challenger is 7.36% worse, past the declared 5%",
+    "secondary": null
+   },
+   {
+    "key": "H3",
+    "claim": "halving Indic costs Indic more than it gains the other lanes",
+    "lane": "indic",
+    "baseline": 1.3201299967935436,
+    "challenger": 1.3667220976030472,
+    "effect": 0.03529357027161787,
+    "threshold": 0.03,
+    "noise": 0.00850518469139676,
+    "verdict": "qualified",
+    "note": "the primary effect holds (+3.53%) and clears its noise, but the second clause of the declared refutation is triggered on the point estimate: code gains 1.20% against a 1% threshold. That gain is inside its own seed spread (1.34%), so these runs cannot settle it either way",
+    "secondary": {
+     "lane": "code",
+     "gain": 0.011950240977649455,
+     "noise": 0.013417101232460836,
+     "threshold": 0.01,
+     "triggered": true,
+     "clears_noise": false
+    }
+   }
+  ]
+ }
+}

@@ -784,6 +784,10 @@ def write(config: Config | None = None) -> dict[str, Path]:
         path = EXERCISE_ROOT / name
         path.write_text(body, encoding="utf-8")
         written[name] = path
+
+    # The page reads the same numbers these documents do, from one bundle, for the same reason the
+    # documents are generated: two hand-maintained copies of a figure disagree eventually.
+    written["web/data.json"] = write_web(config)
     return written
 
 
@@ -1053,3 +1057,152 @@ looked better here would still be an arm that looked better on a corpus small en
 The next rung is the one that would earn a claim: 1B parameters × 2B tokens × 4 arms, which the
 measurement prices at **34 hours and about $98** on rented H100s against **105 days** locally.
 """
+
+
+WEB = EXERCISE_ROOT / "web"
+
+
+def web_bundle(config: Config | None = None) -> dict:
+    """Everything the page needs, computed here so the browser cannot disagree with the spec.
+
+    The page recomputes some arithmetic live -- a reader dragging a share needs an answer per
+    frame, not a round trip -- so a few rules exist twice, once in Python and once in JavaScript.
+    That duplication shipped a wrong figure in exercise 03 once, where the bundle was right and the
+    page ignored it. `tests/test_mixture_agreement.py` runs the browser's own functions against
+    this bundle and fails on disagreement, which is what makes the duplication safe.
+
+    Args:
+        config: Thresholds and run size; defaults to `Config()`.
+
+    Returns:
+        The bundle, small enough to inline and provenance-typed where it matters.
+    """
+    config = config or Config()
+    verdicts = supply.evaluate(lanes.shares(), config)
+    floor = lanes.protected_floor()
+    reserve = lanes.anneal_reserve(config)
+    grouped = benchmarks.by_lane()
+
+    bundle: dict = {
+        "config": {
+            "run_tokens": config.run_tokens,
+            "indic_floor": config.indic_floor,
+            "agentic_floor": config.agentic_floor,
+            "protected_ceiling": config.protected_ceiling,
+            "worth_ceiling": 16.4,
+            "epochs_near_free": 4,
+            "epochs_worthless": 40,
+            "repetition_decay": 15.4,
+            "fingerprint": config.fingerprint(),
+            "tokenizer": config.tokenizer_id,
+        },
+        "lanes": [
+            {
+                "key": lane.key,
+                "name": lane.name,
+                "share": lane.share,
+                "session_share": lane.session_share,
+                "because": lane.because,
+                "schedule_only": lane.schedule_only,
+                "raw_supply": verdicts[lane.key].raw_supply,
+                "supply": verdicts[lane.key].supply,
+                "epochs": verdicts[lane.key].epochs,
+                "verdict": verdicts[lane.key].verdict,
+                "ceiling": verdicts[lane.key].ceiling,
+                "funded_by": list(lane.funded_by),
+                "benchmarks": [b.name for b in grouped.get(lane.key, ())],
+                "corrections": [
+                    {
+                        "kind": c.kind,
+                        "factor": c.factor,
+                        "because": c.because,
+                        "provenance": c.provenance,
+                    }
+                    for c in verdicts[lane.key].corrections
+                ],
+            }
+            for lane in lanes.LANES
+        ],
+        "floor": {
+            "per_lane": floor.per_lane,
+            "total": floor.total,
+            "ceiling": floor.ceiling,
+        },
+        "indic_tiers": [
+            {
+                "tier": tier.tier,
+                "name": tier.name,
+                "share": tier.share,
+                "supply": tier.supply,
+                "rows": list(tier.rows),
+            }
+            for tier in lanes.indic_tiers(config).values()
+        ],
+        "tier_dispute": lanes.TIER_C_DISPUTE,
+        "reserve": {
+            "total": reserve.total,
+            "share_of_run": reserve.share_of_run,
+            "per_lane": reserve.per_lane,
+        },
+        "generation_bill": [
+            {"lane": item.lane, "tokens": item.tokens, "because": item.because}
+            for item in lanes.generation_bill(config)
+        ],
+        "inventory": [
+            {
+                "name": row.name,
+                "source": row.source,
+                "lane": row.lane,
+                "samples": row.samples,
+                "tokens": row.tokens,
+                "licence": row.licence,
+                "tier": row.tier,
+                "provenance": row.provenance,
+            }
+            for row in inventory.DATASETS
+        ],
+        "headline_disagreements": inventory.headline_disagreements(),
+        "supply_check": inventory.SESSION_SUPPLY_CHECK,
+    }
+
+    if RESULTS.exists():
+        import json
+
+        results = json.loads(RESULTS.read_text(encoding="utf-8"))
+        bundle["experiment"] = {
+            "device": results["device"],
+            "steps": results["steps"],
+            "seeds": results["seeds"],
+            "model": results["model"],
+            "corpus": results["corpus"],
+            "arms": {
+                key: {
+                    "name": arm["name"],
+                    "effective_shares": arm["effective_shares"],
+                    "dropped_lanes": arm["dropped_lanes"],
+                    "per_seed": arm["per_seed"],
+                    "weighted": arm["weighted"],
+                }
+                for key, arm in results["arms"].items()
+            },
+            "comparisons": results["comparisons"],
+        }
+
+    return bundle
+
+
+def write_web(config: Config | None = None) -> Path:
+    """Write the page's data bundle.
+
+    Args:
+        config: Thresholds and run size; defaults to `Config()`.
+
+    Returns:
+        The path written.
+    """
+    import json
+
+    WEB.mkdir(parents=True, exist_ok=True)
+    path = WEB / "data.json"
+    path.write_text(json.dumps(web_bundle(config), indent=1), encoding="utf-8")
+    return path

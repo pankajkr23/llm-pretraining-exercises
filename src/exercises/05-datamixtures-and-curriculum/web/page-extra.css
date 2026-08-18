@@ -1,0 +1,249 @@
+/* Page-specific styling for exercise 05.
+ *
+ * Everything structural — the shell, type scale, colour tokens, the theme picker, the rail — comes
+ * from `_shared/`. Only what this page adds lives here: the composer rows, the repetition bars,
+ * the verdict badges and the tier toggle. Nothing here redefines a colour; every value is a token
+ * from the site-root `/_shared/tokens.css`, so a palette decision is still made in one file.
+ *
+ * Two things about that file are worth knowing before editing this one. The colour tokens are NOT
+ * in the per-exercise `./_shared/tokens.css` — that copy holds component styles, and the palette
+ * lives at the site root, which is why index.html links both. And the semantic names are
+ * `--grade-a` … `--grade-x`, not `--good`/`--warn`/`--bad`: this file used the invented names
+ * first, and because an undefined custom property fails silently, every verdict badge rendered
+ * with no colour at all while looking perfectly fine.
+ */
+
+/* ------------------------------------------------------------------------------- big number */
+
+.bignum {
+  border-top: 1.5px solid var(--ink);
+  padding-top: 12px;
+  margin: 22px 0 26px;
+  max-width: 46ch;
+}
+.bignum-v {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.bignum-s {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 8px;
+  line-height: 1.5;
+  max-width: 44ch;
+}
+
+/* ------------------------------------------------------------------------------ the composer */
+
+.compose-rows {
+  display: grid;
+  gap: 4px;
+  margin: 20px 0 6px;
+}
+
+.compose-row {
+  display: grid;
+  grid-template-columns: minmax(0, 190px) minmax(120px, 200px) minmax(0, 1fr);
+  grid-template-areas: 'name slider nums';
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  /* `min-width: 0` on the row and its children: a grid item defaults to min-content width, which
+   * lets a long cell push the whole page sideways instead of scrolling inside its own container. */
+  min-width: 0;
+  transition: background 160ms ease;
+}
+.compose-row:hover { background: var(--panel); }
+.compose-row.breached { background: color-mix(in srgb, var(--grade-x) 9%, transparent); }
+
+.compose-name { grid-area: name; min-width: 0; }
+.compose-lane {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.compose-floor {
+  display: block;
+  font-size: 11px;
+  color: var(--faint);
+  font-family: var(--mono);
+  margin-top: 2px;
+}
+.compose-row.breached .compose-floor { color: var(--grade-x); font-weight: 600; }
+
+.compose-row input[type='range'] {
+  grid-area: slider;
+  width: 100%;
+  min-width: 0;
+  accent-color: var(--accent);
+}
+
+.compose-track { display: none; }
+
+.compose-nums {
+  grid-area: nums;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  min-width: 0;
+}
+.compose-share { font-weight: 700; font-size: 13px; min-width: 3.6em; }
+.compose-num { color: var(--ink); }
+.compose-k { color: var(--faint); font-size: 11px; }
+
+.compose-controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px; }
+.compose-summary { margin-top: 10px; }
+.compose-summary p { margin: 6px 0; max-width: 66ch; }
+
+/* ------------------------------------------------------------------------------- verdicts */
+
+.verdict {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.v-surplus,
+.v-covered { background: color-mix(in srgb, var(--grade-a) 16%, transparent); color: var(--grade-a); }
+.v-repeat { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.v-strained,
+.v-worthless,
+.v-qualified { background: color-mix(in srgb, var(--grade-b) 18%, transparent); color: var(--grade-b); }
+.v-impossible,
+.v-refuted { background: color-mix(in srgb, var(--grade-x) 15%, transparent); color: var(--grade-x); }
+.v-supported { background: color-mix(in srgb, var(--grade-a) 16%, transparent); color: var(--grade-a); }
+.v-inconclusive { background: var(--panel); color: var(--muted); }
+
+/* ------------------------------------------------------------------------ repetition chart */
+
+.rep-chart { margin: 20px 0 10px; display: grid; gap: 4px; }
+.rep-label { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+.rep-bar {
+  height: 16px;
+  border-radius: 4px;
+  /* The morph, not an instant redraw: a bar that jumps between values reads as two states rather
+   * than as one quantity changing. */
+  transition: width 550ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  min-width: 2px;
+}
+.rep-bar.seen { background: color-mix(in srgb, var(--faint) 45%, transparent); }
+.rep-bar.worth { background: var(--accent); }
+.rep-out { margin-top: 12px; }
+.rep-out p { margin: 6px 0; max-width: 66ch; }
+
+section > input[type='range'] { width: min(100%, 460px); accent-color: var(--accent); }
+
+/* --------------------------------------------------------------------------------- toggles */
+
+.btn {
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.btn.ghost { background: transparent; color: var(--accent); border-color: var(--line); }
+.btn.ghost:hover { border-color: var(--accent); filter: none; }
+.btn.ghost.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.toggle { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 6px; }
+.tier-out { margin-top: 12px; }
+
+/* ---------------------------------------------------------------------------------- tables */
+
+/* The table scrolls inside its own container. Without `min-width: 0` on the ancestors a wide
+ * table escapes the container and the page body scrolls sideways instead. */
+.tblwrap { overflow-x: auto; margin: 16px 0; max-width: 100%; min-width: 0; }
+.tbl {
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 100%;
+}
+.tbl th,
+.tbl td {
+  text-align: left;
+  padding: 7px 12px 7px 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  white-space: nowrap;
+}
+.tbl th {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--faint);
+  font-weight: 600;
+}
+.tbl td:nth-child(n + 2) { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.tbl td:first-child { white-space: normal; }
+
+/* ------------------------------------------------------------------------------- emphasis */
+
+p.warn {
+  border-left: 2px solid var(--grade-b);
+  padding-left: 12px;
+  color: var(--ink);
+}
+p.good { border-left: 2px solid var(--grade-a); padding-left: 12px; }
+p.note { color: var(--muted); font-size: 13.5px; }
+.warn-t { color: var(--grade-x); }
+
+/* --------------------------------------------------------------------------------- tooltip */
+
+.term {
+  border-bottom: 1px dotted var(--faint);
+  cursor: help;
+}
+.term:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* `fixed`, and placed by script. See the note in chapters.js: an absolutely-positioned tooltip
+ * contributes to scroll width even while invisible. */
+.tip {
+  position: fixed;
+  z-index: 50;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 18%);
+  pointer-events: none;
+}
+
+/* ----------------------------------------------------------------------------- narrow width */
+
+@media (max-width: 720px) {
+  .compose-row {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'name'
+      'slider'
+      'nums';
+    gap: 6px;
+    padding: 10px;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+  }
+  .compose-nums { font-size: 11.5px; }
+}

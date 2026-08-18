@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Out of what? — designing a training mixture</title>
+    <meta
+      name="description"
+      content="Anyone can write seven percentages that add to 100. The work is answering 'out of what?' for each one — and three of them stop being affordable when you do."
+    />
+    <!-- Inline so it costs no request; a missing favicon is a 404 in every reader's console. -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230071e3'/%3E%3Cg fill='%23fff'%3E%3Crect x='5' y='7' width='22' height='5' rx='2'/%3E%3Crect x='5' y='14' width='14' height='5' rx='2' opacity='.6'/%3E%3Crect x='5' y='21' width='6' height='5' rx='2' opacity='.32'/%3E%3C/g%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/_shared/tokens.css" />
+    <link rel="stylesheet" href="./_shared/tokens.css" />
+    <link rel="stylesheet" href="./_shared/explainer.css" />
+    <link rel="stylesheet" href="./_shared/page.css" />
+    <link rel="stylesheet" href="./page-extra.css" />
+    <!--
+      Applied before first paint, on purpose. Reading the stored theme from a module would leave
+      the page rendering system colours for a frame and then repainting, which is the flash every
+      theme switcher is judged by.
+    -->
+    <script>
+      try {
+        var t = localStorage.getItem('era5-theme');
+        if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        /* Private mode or blocked storage: the system theme is a fine answer. */
+      }
+    </script>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="shellbar">
+        <a class="back" href="../"><span aria-hidden="true">←</span> Back</a>
+        <div class="themepick">
+          <label for="theme">Theme</label>
+          <select id="theme">
+            <option value="system">System</option>
+            <option value="soft-light">Soft light</option>
+            <option value="tinted-dark">Tinted dark</option>
+            <option value="high-contrast">High contrast</option>
+            <option value="neon">Neon</option>
+          </select>
+        </div>
+      </div>
+      <p class="eyebrow">05 · Data mixtures</p>
+      <h1>Out of what?</h1>
+      <p class="lede">
+        A language model becomes what it reads. Deciding <em>how much</em> of each kind of text it
+        reads looks like choosing seven percentages that add to 100 — and anyone can do that. The
+        work is answering one question for each of them: <b>out of what?</b> Do it honestly and
+        <b data-fact="failing">some of those numbers stop being affordable</b>: one lane here asks
+        for <b data-fact="agentic">more than any amount of re-reading could ever be worth</b>, and
+        another turns out to be
+        <b data-fact="longctx">counting the same text twice</b>.
+      </p>
+      <p class="lede-actions">
+        <a class="jump" href="#composer">Try it yourself <span aria-hidden="true">→</span></a>
+        <a class="jump ghost" href="#results">Skip to what happened when we ran it</a>
+      </p>
+      <div id="legend"></div>
+      <aside id="rail" class="rail"></aside>
+      <main id="main"><p class="lede">Loading…</p></main>
+      <footer id="foot"></footer>
+    </div>
+
+    <script type="module">
+      import { buildPage } from './chapters.js';
+
+      const fail = (message) => {
+        document.getElementById('main').innerHTML =
+          `<p class="err">Could not load the data — ${message}. Serve over http, not file://.</p>`;
+      };
+      fetch('./data.json')
+        .then((r) => {
+          if (!r.ok) throw new Error(`data.json: ${r.status}`);
+          return r.json();
+        })
+        .then((data) => buildPage(data))
+        .catch((e) => fail(e.message));
+
+      /* The picker. The head script already applied the stored choice; this only keeps the control
+       * in step with it and writes changes back. "system" removes the attribute rather than setting
+       * a value, because that is what lets prefers-color-scheme take over again. */
+      const picker = document.getElementById('theme');
+      const stored = (() => {
+        try {
+          return localStorage.getItem('era5-theme');
+        } catch {
+          return null;
+        }
+      })();
+      picker.value = stored || 'system';
+      picker.addEventListener('change', () => {
+        const v = picker.value;
+        if (v === 'system') document.documentElement.removeAttribute('data-theme');
+        else document.documentElement.setAttribute('data-theme', v);
+        try {
+          localStorage.setItem('era5-theme', v);
+        } catch {
+          /* nothing to do */
+        }
+      });
+    </script>
+  </body>
+</html>
