@@ -14,6 +14,20 @@ dependencies = [
     "exercise-04-data-cleaning-dedup",
 ]
 
+# The proxy runs are an OPTIONAL extra, deliberately.
+#
+# CI runs `uv sync --all-packages` on every push, and torch's default Linux wheel bundles CUDA --
+# roughly 2.5GB that the lint-and-test job would download to run arithmetic over a dataset
+# inventory. Nothing in the specification, the invariants or the rendered documents needs torch;
+# only `train.py` and `evaluate.py` do, and they import it lazily with a message saying how to get
+# it. So it lives here, out of the default resolution:
+#
+#     uv sync --all-packages --extra proxy
+[project.optional-dependencies]
+proxy = [
+    "torch>=2.6",
+]
+
 [tool.uv.sources]
 exercise-03-data-collection-framework = { workspace = true }
 exercise-04-data-cleaning-dedup = { workspace = true }
