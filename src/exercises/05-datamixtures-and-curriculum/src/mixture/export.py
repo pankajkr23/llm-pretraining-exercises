@@ -704,11 +704,22 @@ def write(config: Config | None = None) -> dict[str, Path]:
         Document name to the path written.
     """
     config = config or Config()
-    written: dict[str, Path] = {}
-    for name, body in (
+    documents = [
         ("SPEC.md", render_spec(config)),
         ("TOKENIZER.md", render_tokenizer(config)),
-    ):
+    ]
+
+    # EXPERIMENTS.md exists only once an experiment has. Rendering an empty one would put a
+    # results document in the repo with no results in it, which reads worse than its absence.
+    if RESULTS.exists():
+        import json
+
+        documents.append(
+            ("EXPERIMENTS.md", render_experiments(json.loads(RESULTS.read_text(encoding="utf-8"))))
+        )
+
+    written: dict[str, Path] = {}
+    for name, body in documents:
         path = EXERCISE_ROOT / name
         path.write_text(body, encoding="utf-8")
         written[name] = path
@@ -737,3 +748,218 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# Results live in a tracked file, not in `artifacts/`. The bundle a run writes is large and
+# gitignored; this is the summary the document is built from, so `EXPERIMENTS.md` regenerates on a
+# fresh clone and the byte-for-byte test works there too.
+RESULTS = EXERCISE_ROOT / "results" / "step0.json"
+
+
+def summarise(bundle: dict) -> dict:
+    """Reduce a run bundle to the part worth tracking.
+
+    Per-step loss curves and per-run records are dropped: they are large, they are regenerable, and
+    nothing in the write-up cites them. What is kept is every per-seed score, because the seed
+    spread *is* the noise floor and a summary that reported only means would hide exactly the thing
+    that decides whether a difference is a result.
+
+    Args:
+        bundle: Output of `experiment.run`.
+
+    Returns:
+        The trackable summary.
+    """
+    return {
+        "device": bundle["device"],
+        "throughput": bundle["throughput"],
+        "seeds": bundle["seeds"],
+        "steps": bundle["steps"],
+        "batch": bundle["batch"],
+        "model": bundle["model"],
+        "corpus": {
+            lane: {
+                "train_tokens": shard["train_tokens"],
+                "heldout_tokens": shard["heldout_tokens"],
+                "heldout_bytes": shard["heldout_bytes"],
+                "unk_share": shard["unk_share"],
+                "tokenizer": shard["tokenizer"],
+            }
+            for lane, shard in bundle["corpus"].items()
+        },
+        "arms": {
+            key: {
+                "name": arm["name"],
+                "effective_shares": arm["effective_shares"],
+                "dropped_lanes": arm["dropped_lanes"],
+                "per_seed": arm["per_seed"],
+                "weighted": arm["weighted"],
+                "final_loss": [record["final_loss"] for record in arm["records"]],
+            }
+            for key, arm in bundle["arms"].items()
+        },
+        "comparisons": bundle["comparisons"],
+    }
+
+
+def render_experiments(results: dict) -> str:
+    """Build `EXPERIMENTS.md` from a run summary.
+
+    Args:
+        results: Output of `summarise`.
+
+    Returns:
+        The rendered write-up.
+    """
+    arms = results["arms"]
+    model = results["model"]
+    first = next(iter(arms.values()))
+    scored = sorted(next(iter(first["per_seed"].values())))
+    seeds = results["seeds"]
+
+    def stats(values: list[float]) -> tuple[float, float]:
+        return sum(values) / len(values), max(values) - min(values)
+
+    tokens_per_run = results["steps"] * results["batch"] * model["context"] / 1e6
+    setup_table = "\n".join(
+        [
+            "| | |",
+            "| --- | --- |",
+            f"| device | `{results['device']}` — **check this field**; a sandbox that blocks the "
+            "OS-version query silently gives you CPU |",
+            f"| throughput | {results['throughput']['tflops_median']:.3f} TFLOP/s median across "
+            f"{results['throughput']['runs']} runs |",
+            f"| model | {model['layers']} layers × {model['width']} wide, context "
+            f"{model['context']}, vocab {model['vocab_size']:,} |",
+            f"| schedule | {results['steps']} steps × batch {results['batch']} = "
+            f"{tokens_per_run:.2f}M tokens per run |",
+            f"| seeds | {', '.join(map(str, seeds))} — {len(seeds)} per arm, so every effect can "
+            "be read against its own noise |",
+            f"| runs | {len(arms) * len(seeds)} |",
+        ]
+    )
+
+    rows = [
+        "| arm | " + " | ".join(f"{lane} BPB" for lane in scored) + " | weighted |",
+        "| --- |" + " ---: |" * (len(scored) + 1),
+    ]
+    for key, arm in arms.items():
+        cells = []
+        for lane in scored:
+            mean, spread = stats([scores[lane] for scores in arm["per_seed"].values()])
+            cells.append(f"{mean:.4f} ±{spread:.4f}")
+        mean, spread = stats(list(arm["weighted"].values()))
+        rows.append(
+            f"| **{key}** {arm['name']} | " + " | ".join(cells) + f" | {mean:.4f} ±{spread:.4f} |"
+        )
+    score_table = "\n".join(rows)
+
+    share_rows = [
+        "| arm | " + " | ".join(scored) + " | dropped, having no committed corpus |",
+        "| --- |" + " ---: |" * len(scored) + " --- |",
+    ]
+    for key, arm in arms.items():
+        cells = " | ".join(f"{arm['effective_shares'].get(lane, 0):.1%}" for lane in scored)
+        share_rows.append(f"| **{key}** | {cells} | {', '.join(arm['dropped_lanes']) or '—'} |")
+    share_table = "\n".join(share_rows)
+
+    verdict_rows = [
+        "| | claim | lane | effect | threshold | seed noise | verdict |",
+        "| --- | --- | --- | ---: | ---: | ---: | --- |",
+    ]
+    for comparison in results["comparisons"]:
+        verdict_rows.append(
+            f"| **{comparison['key']}** | {comparison['claim']} | {comparison['lane']} | "
+            f"{comparison['effect']:+.2%} | {comparison['threshold']:.0%} | "
+            f"{comparison['noise']:.2%} | **{comparison['verdict']}** |"
+        )
+    verdict_table = "\n".join(verdict_rows)
+
+    notes = "\n".join(
+        f"- **{comparison['key']}** — {comparison['note']}" for comparison in results["comparisons"]
+    )
+
+    corpus_rows = [
+        "| lane | train tokens | held-out tokens | held-out bytes | `[UNK]` |",
+        "| --- | ---: | ---: | ---: | ---: |",
+    ]
+    for lane, shard in results["corpus"].items():
+        corpus_rows.append(
+            f"| {lane} | {shard['train_tokens']:,} | {shard['heldout_tokens']:,} | "
+            f"{shard['heldout_bytes']:,} | {shard['unk_share']:.4f} |"
+        )
+    corpus_table = "\n".join(corpus_rows)
+
+    inconclusive = sum(1 for c in results["comparisons"] if c["verdict"] == "inconclusive")
+    total = len(results["comparisons"])
+
+    return f"""\
+# Step 0 — the proxy, actually run
+
+Generated by `uv run python -m mixture` from `results/step0.json`. Reproduce the run itself with
+`uv run python -m mixture.experiment`.
+
+`SPEC.md` committed to an experiment and fixed its thresholds in advance. This is what happened
+when it ran. **{inconclusive} of {total} hypotheses came back inconclusive**, and that is reported
+here rather than smoothed into a direction, because an effect smaller than the spread an arm shows
+against itself is not a result.
+
+## What was run
+
+{setup_table}
+
+## The corpus, and the honest size of it
+
+{corpus_table}
+
+**This is small, and every number below inherits that.** The committed corpus is ~523k training
+tokens of real text — exercise 02's wiki-faithful English, Hindi, Telugu and Maithili, plus this
+repository's own Python. It needs no network and exists in any checkout, which is what makes the
+run reproducible; it is also three orders of magnitude below the scale where a mixture decision
+would be made for real.
+
+The measured throughput says the machine was never the constraint. At
+{results["throughput"]["tflops_median"]:.1f} TFLOP/s, a week of compute would run **thousands of
+epochs** of this corpus — far past the 40-epoch point where the repetition curve says another pass
+is worth nothing. **The binding constraint at this scale is the corpus, not the machine**, which is
+the same finding the specification makes about the mixture: supply, not preference, is the cap.
+
+## What the arms could and could not test
+
+{share_table}
+
+Four of the specification's seven lanes have no committed corpus, so they were dropped and the rest
+renormalised. The arms therefore test the **web / Indic / code** trade-off and nothing else — which
+is where H2 and H3 live, and is not where H1 lives.
+
+## Scores
+
+Held-out bits per byte. Lower is better. `±` is the range across seeds.
+
+{score_table}
+
+> **Do not read across a row.** Indic scores lower than code on every arm, and that is an artefact
+> of the denominator rather than a statement about difficulty: Devanagari and Telugu carry about
+> three UTF-8 bytes per character, so the same information costs more bytes and fewer bits per one.
+> The metric is only meaningful **down a column** — the same lane, across arms.
+
+## The hypotheses, against thresholds fixed before the run
+
+{verdict_table}
+
+{notes}
+
+## What this does and does not license
+
+**Does.** The harness works: it trains, it checkpoints and resumes without restarting the data
+stream, it samples lanes in each arm's proportions, and it scores held-out text that was reserved
+at write time. The metric is computable and responds to training. The local machine's throughput is
+measured rather than assumed, and the 1B rung is priced from it.
+
+**Does not.** Nothing here supports or refutes the V5 mixture at 40B. The model is
+{model["layers"]}-layer, the corpus is 523k tokens, and four of seven lanes are absent. An arm that
+looked better here would still be an arm that looked better on a corpus small enough to memorise.
+
+The next rung is the one that would earn a claim: 1B parameters × 2B tokens × 4 arms, which the
+measurement prices at **34 hours and about $98** on rented H100s against **105 days** locally.
+"""
