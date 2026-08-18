@@ -221,7 +221,39 @@ def test_an_inversion_inside_the_noise_ranks_nothing():
             _rung_at(30_000_000, ["B", "A"], {"A": 2.01, "B": 2.00}, sd=0.5),
         ]
     )
-    assert reading["verdict"] == "unstable but inside noise"
+    assert reading["verdict"] == "order moves, inside noise"
+    assert reading["real_inversions"] == []
+
+
+def test_a_swap_needs_to_clear_noise_at_both_ends_to_count():
+    """Separated at one end and buried in noise at the other is not an inversion.
+
+    The first version of this check only compared the winning arm at each end, and reported
+    "inside noise" without testing any noise when the winner happened not to change — an
+    unverified claim in the shape of a careful one.
+    """
+    reading = scale._read(
+        [
+            _rung_at(1_700_000, ["A", "B"], {"A": 2.00, "B": 2.01}, sd=0.5),
+            _rung_at(30_000_000, ["B", "A"], {"A": 2.30, "B": 2.00}, sd=0.01),
+        ]
+    )
+    assert reading["swapped_pairs"], "the swap must still be recorded"
+    assert reading["real_inversions"] == [], "one noisy end is not an inversion"
+    assert reading["verdict"] == "order moves, inside noise"
+
+
+def test_a_middle_pair_swapping_is_reported_even_when_the_winner_holds():
+    """What this experiment actually produced: D best everywhere, A and C trading places."""
+    reading = scale._read(
+        [
+            _rung_at(1_700_000, ["D", "C", "A"], {"D": 2.0, "C": 2.10, "A": 2.11}, sd=0.5),
+            _rung_at(30_000_000, ["D", "A", "C"], {"D": 2.0, "A": 2.10, "C": 2.11}, sd=0.5),
+        ]
+    )
+    assert reading["winner_changed"] is False
+    assert [item["pair"] for item in reading["swapped_pairs"]] == [["C", "A"]]
+    assert "the best arm is D at every size" in reading["note"]
 
 
 # ---- the save path, exercised before an expensive run relies on it ----------------------------

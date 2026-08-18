@@ -397,7 +397,7 @@ Step 0 ran on mps:apple-silicon: a 4-layer model, 500 steps, **5 seeds per arm**
 
 Every effect is reported against **the spread the same arm shows against itself**, and a refutation condition with more than one clause is checked on every clause. Both rules can only cost this specification marks; neither can earn it any.
 
-**H3 is refuted, and that is the most important line in this specification.** Its declared refutation had a second clause, and the results trip it: the primary effect holds (+3.52%), but stem gains 1.12%, past the 1% the refutation condition names, and that gain clears its own seed spread. arm D's Indic bits-per-byte is within 3% of arm A's, or the other lanes gain more than 1%. Then 18% is over-provisioned and the share should fall toward the 12% floor
+**H3 is refuted, and that is the most important line in this specification.** Its declared refutation had a second clause, and the results trip it: the primary effect holds (+3.52%), but stem gains 1.12%, past the 1% the refutation condition names, and that gain clears its own seed spread. The condition was declared before the run as: arm D's Indic bits-per-byte is within 3% of arm A's, or the other lanes gain more than 1%. Then 18% is over-provisioned and the share should fall toward the 12% floor.
 
 That consequence was fixed in advance, so it is owed rather than negotiable.
 

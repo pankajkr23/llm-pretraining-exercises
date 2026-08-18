@@ -111,7 +111,14 @@ def run(seeds: tuple[int, ...] = SEEDS, steps: int = STEPS, batch: int = BATCH) 
 
 
 def _read(rungs: list[dict]) -> dict:
-    """Say whether the ranking held, and whether any inversion clears the noise.
+    """Say whether the ranking held, and check every pair that moved against its own noise.
+
+    An earlier version compared only the *winning* arm at each end and, when the winner was
+    unchanged, reported "unstable but inside noise" without checking any noise at all. That is an
+    unverified claim dressed as a careful one — the exact failure this file exists to avoid. Every
+    pair whose relative order differs is now tested, and a pair only counts as a real inversion if
+    it is separated by more than its own seed spread **at both ends**: a swap that is noise at
+    either end is a swap this experiment cannot see.
 
     Args:
         rungs: One entry per model size, smallest first.
@@ -119,42 +126,65 @@ def _read(rungs: list[dict]) -> dict:
     Returns:
         The verdict and what it rests on.
     """
-    smallest, largest = rungs[0]["ranking"], rungs[-1]["ranking"]
-    stable = all(rung["ranking"] == smallest for rung in rungs)
+    smallest, largest = rungs[0], rungs[-1]
+    order_small, order_large = smallest["ranking"], largest["ranking"]
+    stable = all(rung["ranking"] == order_small for rung in rungs)
 
-    # An inversion inside the seed spread is not an inversion. Compare the two arms that swapped
-    # against the spread they each show at the largest size.
-    inversion_clears_noise = None
-    if not stable:
-        top_small, top_large = smallest[0], largest[0]
-        if top_small != top_large:
-            arms = rungs[-1]["arms"]
-            gap = abs(arms[top_small]["weighted_mean"] - arms[top_large]["weighted_mean"])
-            noise = max(arms[top_small]["weighted_sd"], arms[top_large]["weighted_sd"])
-            inversion_clears_noise = gap > noise
+    def _separated(rung: dict, left: str, right: str) -> bool:
+        arms = rung["arms"]
+        gap = abs(arms[left]["weighted_mean"] - arms[right]["weighted_mean"])
+        return gap > max(arms[left]["weighted_sd"], arms[right]["weighted_sd"])
+
+    swapped, real = [], []
+    for i, left in enumerate(order_small):
+        for right in order_small[i + 1 :]:
+            if order_large.index(left) > order_large.index(right):
+                pair = {
+                    "pair": [left, right],
+                    "separated_at_smallest": _separated(smallest, left, right),
+                    "separated_at_largest": _separated(largest, left, right),
+                }
+                pair["is_real_inversion"] = (
+                    pair["separated_at_smallest"] and pair["separated_at_largest"]
+                )
+                swapped.append(pair)
+                if pair["is_real_inversion"]:
+                    real.append(pair)
+
+    winner_changed = order_small[0] != order_large[0]
 
     if stable:
         verdict = "assumption survives"
         note = (
-            f"the ranking {' < '.join(smallest)} is identical at every size from "
-            f"{rungs[0]['params']:,} to {rungs[-1]['params']:,} parameters"
+            f"the ranking {' < '.join(order_small)} is identical at every size from "
+            f"{smallest['params']:,} to {largest['params']:,} parameters"
         )
-    elif inversion_clears_noise:
+    elif real:
         verdict = "falsified at this scale"
+        pairs = ", ".join(f"{a} vs {b}" for a, b in (item["pair"] for item in real))
         note = (
-            f"the best arm changes from {smallest[0]} at {rungs[0]['params']:,} params to "
-            f"{largest[0]} at {rungs[-1]['params']:,}, by more than the seed spread — this is the "
-            "rank inversion SPEC.md names as its falsifier"
+            f"the order of {pairs} reverses between {smallest['params']:,} and "
+            f"{largest['params']:,} parameters, and each of those arms is separated by more than "
+            "its own seed spread at both ends — this is the rank inversion §7 names as its "
+            "falsifier"
+        )
+    elif swapped:
+        verdict = "order moves, inside noise"
+        pairs = ", ".join(f"{a}/{b}" for a, b in (item["pair"] for item in swapped))
+        held = "" if winner_changed else f", and the best arm is {order_small[0]} at every size"
+        note = (
+            f"{len(swapped)} pair(s) change places ({pairs}), but none is separated by more than "
+            f"its own seed spread at both ends, so the movement ranks nothing{held}"
         )
     else:
-        verdict = "unstable but inside noise"
-        note = (
-            "the ordering moves between sizes, but the arms that swapped are separated by less "
-            "than their own seed spread, so this ranks nothing either way"
-        )
+        verdict = "assumption survives"
+        note = "no pair reverses between the smallest and largest model"
 
     return {
         "rankings": {str(rung["params"]): rung["ranking"] for rung in rungs},
+        "swapped_pairs": swapped,
+        "real_inversions": real,
+        "winner_changed": winner_changed,
         "verdict": verdict,
         "note": note,
         "caveat": (

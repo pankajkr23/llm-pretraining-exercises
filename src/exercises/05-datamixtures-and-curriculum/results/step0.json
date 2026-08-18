@@ -3447,7 +3447,7 @@
    "threshold": 0.03,
    "noise": 0.020626946666969827,
    "verdict": "refuted",
-   "note": "the primary effect holds (+3.52%), but stem gains 1.12%, past the 1% the refutation condition names, and that gain clears its own seed spread. arm D's Indic bits-per-byte is within 3% of arm A's, or the other lanes gain more than 1%. Then 18% is over-provisioned and the share should fall toward the 12% floor",
+   "note": "the primary effect holds (+3.52%), but stem gains 1.12%, past the 1% the refutation condition names, and that gain clears its own seed spread. The condition was declared before the run as: arm D's Indic bits-per-byte is within 3% of arm A's, or the other lanes gain more than 1%. Then 18% is over-provisioned and the share should fall toward the 12% floor.",
    "secondary": {
     "lane": "stem",
     "gain": 0.011235111552675522,
