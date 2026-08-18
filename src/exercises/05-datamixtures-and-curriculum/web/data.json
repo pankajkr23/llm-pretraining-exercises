@@ -34,7 +34,8 @@
     "Humanity's Last Exam",
     "MMLU"
    ],
-   "corrections": []
+   "corrections": [],
+   "supply_provenance": "estimated"
   },
   {
    "key": "code",
@@ -60,7 +61,8 @@
     "Aider Polyglot",
     "Codeforces"
    ],
-   "corrections": []
+   "corrections": [],
+   "supply_provenance": "estimated"
   },
   {
    "key": "indic",
@@ -86,7 +88,8 @@
     "MILU",
     "IndicGenBench"
    ],
-   "corrections": []
+   "corrections": [],
+   "supply_provenance": "unknown"
   },
   {
    "key": "stem",
@@ -112,7 +115,8 @@
     "Humanity's Last Exam",
     "MMLU"
    ],
-   "corrections": []
+   "corrections": [],
+   "supply_provenance": "estimated"
   },
   {
    "key": "reasoning",
@@ -141,7 +145,8 @@
     "GPQA Diamond",
     "Humanity's Last Exam"
    ],
-   "corrections": []
+   "corrections": [],
+   "supply_provenance": "estimated"
   },
   {
    "key": "agentic",
@@ -184,7 +189,8 @@
      "because": "only the assistant's own tokens are supervised (\u00a76); at 0.3%-10.8% supervised per trajectory, derived from the token-per-sample counts of SWE-smith, OpenHands rollouts, SWE-Gym against the session's 'few hundred supervised tokens'. The generous end is applied, and the lane is impossible without the discount anyway",
      "provenance": "estimated"
     }
-   ]
+   ],
+   "supply_provenance": "estimated"
   },
   {
    "key": "long_context",
@@ -214,7 +220,8 @@
      "because": "60B of the slot's 100B is repo-packed code, which the inventory says is packed from the code corpora already counted in the code lane; only the 40B of packed books is text no other lane holds",
      "provenance": "derived"
     }
-   ]
+   ],
+   "supply_provenance": "estimated"
   }
  ],
  "floor": {

@@ -134,9 +134,11 @@
 .rep-bar {
   height: 16px;
   border-radius: 4px;
-  /* The morph, not an instant redraw: a bar that jumps between values reads as two states rather
-   * than as one quantity changing. */
-  transition: width 550ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  /* 180ms, not the 550ms this had first. EXPLAINER_PROMPT §4 caps control responses at 200ms
+   * because "the reader is comparing, and animation between states destroys comparison" — and
+   * these two bars exist precisely to be compared. AGENTS.md's ~550ms is for canvas *morphs*,
+   * which is a different case; applying it here was my mistake, not a conflict between the two. */
+  transition: width 180ms cubic-bezier(0.22, 0.61, 0.36, 1);
   min-width: 2px;
 }
 .rep-bar.seen { background: color-mix(in srgb, var(--faint) 45%, transparent); }
@@ -246,4 +248,77 @@ p.note { color: var(--muted); font-size: 13.5px; }
     border-radius: 0;
   }
   .compose-nums { font-size: 11.5px; }
+}
+
+/* ------------------------------------------------------------------------------ provenance */
+
+/* §6: every displayed number carries how well it is known, and the mark is in the geometry
+ * rather than in a footnote. §13 calls the absence of this the limit that "matters most" — a page
+ * where a confirmed figure and a guess render identically has hidden the work that told them
+ * apart. The three marks are deliberately legible in monochrome and to a colour-blind reader:
+ * they differ by underline and weight, never by hue alone. */
+
+.num[data-provenance='measured'] {
+  border-bottom: 1px solid currentColor;
+}
+.num[data-provenance='estimated'] {
+  border-bottom: 1px dotted currentColor;
+}
+.num[data-provenance='unknown'] {
+  opacity: 0.62;
+  font-style: italic;
+}
+
+.prov-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 16px;
+  margin: 12px 0 2px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.prov-legend-k {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--faint);
+}
+.prov-item { display: inline-flex; align-items: baseline; gap: 6px; }
+.prov-item .num { font-family: var(--mono); font-size: 11px; }
+.prov-why { color: var(--faint); }
+
+/* --------------------------------------------------------------------------- takeaway pill */
+
+/* §7's checklist: the reader leaves each chapter with one number. */
+.takeaway {
+  display: inline-block;
+  margin: 18px 0 4px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------------------ reduced motion */
+
+/* §6: `prefers-reduced-motion: reduce` renders the complete end state, with no transition to it.
+ * The page has to be as informative standing still as it is moving, because for some readers it
+ * never moves. */
+@media (prefers-reduced-motion: reduce) {
+  .rep-bar,
+  .compose-row,
+  .btn {
+    transition: none !important;
+  }
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
 }

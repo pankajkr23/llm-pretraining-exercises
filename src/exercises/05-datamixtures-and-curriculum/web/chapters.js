@@ -70,6 +70,25 @@ const $ = (tag, cls, text) => {
 };
 const pct = (x, digits = 0) => `${(x * 100).toFixed(digits)}%`;
 
+/** A number that shows how well it is known.
+ *
+ * `EXPLAINER_PROMPT.md` §6: every displayed number carries `data-provenance`, and the mark lives in
+ * the geometry rather than a footnote — estimated is underlined with dots, unknown is faded and
+ * italic. §13 calls the absence of this the limit that "matters most", because a page where a
+ * confirmed figure and a guess look identical has hidden the work that told them apart.
+ */
+export function num(text, provenance = 'measured') {
+  const el = $('span', 'num');
+  el.dataset.provenance = provenance;
+  el.textContent = text;
+  el.title = {
+    measured: 'measured — counted from named datasets',
+    estimated: 'estimated — the inventory calls these figures approximate',
+    unknown: 'unknown — at least one contributing dataset carries no token count',
+  }[provenance] || provenance;
+  return el;
+}
+
 /** Read a token count at the scale it makes sense at. */
 const tok = (v) => {
   if (v === null || v === undefined) return '—';
@@ -130,7 +149,7 @@ const richP = (text, cls) => {
   return p;
 };
 
-const chapter = ({ id, n, title, claim, big, bigSub, body, arithmetic }) => {
+const chapter = ({ id, n, title, claim, big, bigSub, body, arithmetic, pill }) => {
   const sec = $('section');
   sec.id = id;
   /* The rail reads this rather than parsing the heading back apart: `h2.textContent` runs the
@@ -156,6 +175,9 @@ const chapter = ({ id, n, title, claim, big, bigSub, body, arithmetic }) => {
   }
 
   (body || []).forEach((node) => sec.append(node));
+
+  // The takeaway pill: one number the reader leaves with, per the §7 checklist.
+  if (pill) sec.append($('div', 'takeaway', pill));
 
   if (arithmetic) {
     const det = $('details', 'arithmetic');
@@ -298,7 +320,8 @@ function chapterComposer(data) {
     const demandEl = $('span', 'compose-num');
     const epochsEl = $('span', 'compose-num');
     const badgeEl = badge('surplus');
-    const supplyEl = $('span', 'compose-num', tok(supplyOf[lane.key]));
+    const supplyEl = num(tok(supplyOf[lane.key]), lane.supply_provenance || 'measured');
+    supplyEl.classList.add('compose-num');
 
     const nums = $('div', 'compose-nums');
     nums.append(
@@ -321,6 +344,16 @@ function chapterComposer(data) {
     };
   });
 
+  const legend = $('div', 'prov-legend');
+  legend.append($('span', 'prov-legend-k', 'supply is'));
+  [['measured', 'counted from named datasets'],
+   ['estimated', 'the inventory calls it approximate'],
+   ['unknown', 'a contributing dataset has no token count']].forEach(([kind, why]) => {
+    const item = $('span', 'prov-item');
+    item.append(num(kind, kind), $('span', 'prov-why', why));
+    legend.append(item);
+  });
+
   const controls = $('div', 'compose-controls');
   const reset = $('button', 'btn', 'Reset to the V5 mixture');
   reset.addEventListener('click', () => {
@@ -338,6 +371,7 @@ function chapterComposer(data) {
 
   return chapter({
     id: 'composer',
+    pill: `${failing(baseline)} of 7 lanes cannot be funded from the data that exists`,
     n: '1',
     title: 'Out of what?',
     claim:
@@ -347,7 +381,7 @@ function chapterComposer(data) {
       'watch Indic and agentic collapse, which is exactly what an unprotected selector does to them.',
     big: `${failing(baseline)}`,
     bigSub: 'lanes that cannot be funded at the V5 mixture, however much you repeat their data',
-    body: [rowsEl, controls, summaryEl],
+    body: [rowsEl, legend, controls, summaryEl],
     arithmetic: [
       richP(
         `Demand is share × the run size (**${tok(cfg.run_tokens)}** tokens). Supply is summed from ` +
@@ -420,6 +454,7 @@ function chapterRepetition(data) {
 
   return chapter({
     id: 'repetition',
+    pill: `Repetition is capped at ${cfg.worth_ceiling}\u00d7 the pool, whatever you spend`,
     n: '2',
     title: 'Reading it twice is not having twice as much',
     claim:
@@ -489,6 +524,7 @@ function chapterAgentic(data) {
 
   return chapter({
     id: 'agentic',
+    pill: 'The agentic lane is short by 3.9\u00d7 what any amount of re-reading could give',
     n: '3',
     title: 'The lane that cannot be bought at any price',
     claim:
@@ -584,6 +620,7 @@ function chapterTiers(data) {
 
   return chapter({
     id: 'tiers',
+    pill: '162B of Indic text changes tier depending on one word in its name',
     n: '4',
     title: 'The judgment we are weakest on',
     claim:
@@ -678,6 +715,7 @@ function chapterResults(data) {
 
   return chapter({
     id: 'results',
+    pill: `${exp.seeds.length} seeds per arm; one verdict did not survive its own noise`,
     n: '5',
     title: 'An effect inside the noise is not a result',
     claim:

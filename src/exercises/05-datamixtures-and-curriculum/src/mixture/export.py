@@ -1254,6 +1254,30 @@ measurement prices at **34 hours and about $98** on rented H100s against **105 d
 WEB = EXERCISE_ROOT / "web"
 
 
+def _lane_provenance(lane: str) -> str:
+    """How well a lane's supply is known, from the rows that make it up.
+
+    The inventory types each row `confirmed`, `approximate` or `unstated`. A lane inherits the
+    **weakest** of its rows, because a total is only as sound as its softest component -- averaging
+    would let one confirmed dataset launder eight approximate ones.
+
+    Args:
+        lane: Lane key.
+
+    Returns:
+        `measured`, `estimated` or `unknown` -- the three marks the page renders.
+    """
+    rows = [row for row in inventory.DATASETS if row.lane == lane]
+    if not rows:
+        return "unknown"
+    kinds = {row.provenance for row in rows}
+    if "unstated" in kinds:
+        return "unknown"
+    if "approximate" in kinds:
+        return "estimated"
+    return "measured"
+
+
 def web_bundle(config: Config | None = None) -> dict:
     """Everything the page needs, computed here so the browser cannot disagree with the spec.
 
@@ -1312,6 +1336,12 @@ def web_bundle(config: Config | None = None) -> dict:
                     }
                     for c in verdicts[lane.key].corrections
                 ],
+                # How well the lane's supply figure is known, from the rows behind it.
+                # EXPLAINER_PROMPT.md §6 requires every displayed number to carry this, and §13
+                # names "certainty is the only available mode" as the limit that matters most:
+                # a page where a confirmed figure and an approximate one look identical has
+                # hidden the thing the inventory work was for.
+                "supply_provenance": _lane_provenance(lane.key),
             }
             for lane in lanes.LANES
         ],

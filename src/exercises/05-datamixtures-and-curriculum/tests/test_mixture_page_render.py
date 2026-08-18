@@ -290,3 +290,92 @@ def test_the_qualified_verdict_is_on_the_page_with_its_reason(page):
     text = page.inner_text("#results")
     assert "qualified" in text.lower()
     assert "second clause" in text.lower()
+
+
+# ---- docs/EXPLAINER_PROMPT.md conformance ----------------------------------------------------
+
+
+def test_every_number_that_claims_a_provenance_renders_its_mark(page):
+    """§6 requires `data-provenance` on displayed numbers; §13 calls the absence of it the limit
+    that "matters most", because a confirmed figure and a guess otherwise look identical.
+
+    Checked on the rendered element rather than the stylesheet: the mark has to be *visible*, so
+    an estimated number must differ from a measured one in its computed style.
+    """
+    marks = page.query_selector_all("[data-provenance]")
+    assert marks, "no number on the page carries a provenance"
+
+    kinds = {el.get_attribute("data-provenance") for el in marks}
+    assert kinds <= {"measured", "estimated", "unknown"}, f"unexpected provenance: {kinds}"
+
+    styles = {}
+    for kind in kinds:
+        el = page.query_selector(f"[data-provenance='{kind}']")
+        styles[kind] = page.evaluate(
+            "el => { const s = getComputedStyle(el);"
+            " return [s.borderBottomStyle, s.fontStyle, s.opacity].join('|'); }",
+            el,
+        )
+    assert len(set(styles.values())) == len(styles), (
+        f"two provenance kinds render identically, so the mark carries no information: {styles}"
+    )
+
+
+def test_the_provenance_legend_explains_the_marks(page):
+    """A mark nobody can decode is decoration."""
+    legend = page.query_selector(".prov-legend")
+    assert legend, "the provenance marks have no legend"
+    text = legend.inner_text().lower()
+    for kind in ("measured", "estimated", "unknown"):
+        assert kind in text
+
+
+def test_a_lane_whose_supply_has_an_uncounted_row_is_marked_unknown(page):
+    """Indic carries two datasets with no token count, so its total cannot be `measured`.
+
+    This is the case the mark exists for: the number looks as solid as any other until it says so.
+    """
+    row = page.query_selector("#composer .compose-row.indic, #composer .compose-row")
+    assert row is not None
+    marks = {
+        el.get_attribute("data-provenance")
+        for el in page.query_selector_all("#composer [data-provenance]")
+    }
+    assert "unknown" in marks, f"no lane is marked unknown; found {marks}"
+
+
+def test_no_control_response_animates_for_longer_than_the_reader_can_compare(page):
+    """§4 caps control responses at 200ms: "the reader is comparing, and animation between states
+    destroys comparison". The repetition bars exist to be compared, and had 550ms.
+    """
+    bar = page.query_selector(".rep-bar")
+    assert bar, "no repetition bar rendered"
+    duration = page.evaluate("el => getComputedStyle(el).transitionDuration", bar)
+    seconds = max(float(d.rstrip("s")) for d in duration.replace("ms", "e-3s").split(", "))
+    assert seconds <= 0.2, f"a control response animates for {seconds}s"
+
+
+def test_every_chapter_leaves_the_reader_with_one_number(page):
+    """§7's checklist: a takeaway pill stating one number."""
+    pills = page.query_selector_all(".takeaway")
+    sections = page.query_selector_all("section")
+    assert len(pills) >= len(sections) - 1, f"{len(pills)} pills for {len(sections)} chapters"
+    for pill in pills:
+        assert any(ch.isdigit() for ch in pill.inner_text()), (
+            f"a takeaway pill states no number: {pill.inner_text()!r}"
+        )
+
+
+def test_the_page_declares_a_reduced_motion_end_state(page):
+    """§6: `prefers-reduced-motion: reduce` renders the complete end state.
+
+    For some readers the page never moves, so it has to be as informative standing still.
+    """
+    css = (export.EXERCISE_ROOT / "web" / "page-extra.css").read_text(encoding="utf-8")
+    # Match the @media *rule*, not the comment above it explaining why the rule is there — the
+    # first version of this test split on the bare phrase and landed inside the prose.
+    match = re.search(r"@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{(.*?)\n\}", css, re.S)
+    assert match, "no prefers-reduced-motion rule in the stylesheet"
+    block = match.group(1)
+    assert ".rep-bar" in block, "the animated element is not covered by the reduced-motion block"
+    assert "transition: none" in block
