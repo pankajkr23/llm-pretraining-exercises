@@ -222,3 +222,84 @@ def test_the_tokenizer_doc_shows_a_big_vocabulary_is_not_the_fix(tokenizer_doc: 
 
 def test_the_tokenizer_doc_names_the_cost_of_adopting_a_bigger_vocabulary(tokenizer_doc: str):
     assert "3.21%" in tokenizer_doc and "1.28B" in tokenizer_doc
+
+
+# ---- claims this exercise makes about exercise 02 -------------------------------------------
+
+EX02_README = export.EXERCISE_ROOT.parents[0] / "02-tokenization" / "README.md"
+
+
+def _ablation_rows() -> list[tuple[int, float, str]]:
+    """Exercise 02's graded-corpus table, as (total tokens, score, name).
+
+    Read from that exercise's README rather than copied here, so a claim `TOKENIZER.md` makes about
+    a neighbouring exercise cannot quietly go stale when the neighbour is re-run.
+    """
+    lines = EX02_README.read_text(encoding="utf-8").splitlines()
+    start = next(
+        i
+        for i, line in enumerate(lines)
+        if line.startswith("| experiment | spread | score | total")
+    )
+    rows = []
+    for line in lines[start + 2 :]:
+        if not line.startswith("|"):
+            break
+        cells = [c.strip().replace("**", "") for c in line.strip("|").split("|")]
+        rows.append((int(cells[3].replace(",", "")), float(cells[2].replace(",", "")), cells[0]))
+    return rows
+
+
+@pytest.mark.skipif(not EX02_README.exists(), reason="exercise 02 is not present")
+def test_the_tokenizer_doc_does_not_overclaim_about_the_session_2_submission(tokenizer_doc: str):
+    """The claim in TOKENIZER.md §3, checked against exercise 02's own table.
+
+    An earlier draft said the submission had "the lowest total token count in the whole table". It
+    does not — `BPE from scratch, no library` uses 188,091 against the submission's 189,785. The
+    two claims that *are* true are checked here, so neither can drift back into an overclaim.
+    """
+    rows = _ablation_rows()
+    submitted = next(r for r in rows if "submitted" in r[2])
+    reference = next(r for r in rows if "reference solution" in r[2])
+
+    # 1. It beats the reference on both numbers at once.
+    assert submitted[1] > reference[1], "the submission does not out-score the reference"
+    assert submitted[0] < reference[0], (
+        "the submission does not use fewer tokens than the reference"
+    )
+    assert "beats the reference solution on both" in tokenizer_doc
+
+    # 2. Of the rows that out-score the reference, it uses the fewest tokens.
+    better = [r for r in rows if r[1] > reference[1]]
+    assert submitted[0] == min(r[0] for r in better), "a higher-scoring row uses fewer tokens"
+
+    # 3. And the claim it must NOT make.
+    assert "lowest total token count in the whole table" not in tokenizer_doc
+    assert min(r[0] for r in rows) < submitted[0], (
+        "if the submission really were the table minimum, the wording above should be revisited"
+    )
+
+
+@pytest.mark.skipif(not EX02_README.exists(), reason="exercise 02 is not present")
+def test_the_rejected_row_is_described_the_way_exercise_02_describes_it(tokenizer_doc: str):
+    """It was caught by a protocol, not by the metric failing.
+
+    Exercise 02 requires every row to report both its score and its total token count, and rules
+    the 35,604 configuration out "by tokens". Saying the metric "can be bought" inverts that: the
+    methodology worked.
+    """
+    rejected = next(r for r in _ablation_rows() if "rejected" in r[2])
+    assert rejected[1] == pytest.approx(35604)
+    assert "caught and rejected by that rule" in tokenizer_doc
+
+    # The document *quotes* the wrong phrasing in order to retract it, so a flat ban on the words
+    # would fire on the correction itself — which is what happened when this guard was first
+    # written. What must not come back is the phrase used as an assertion, so it is required to be
+    # accompanied by the retraction.
+    if "can be bought by getting worse" in tokenizer_doc:
+        assert "That was a misreading" in tokenizer_doc, (
+            "the mischaracterisation of exercise 02's metric is stated without being retracted"
+        )
+        assert tokenizer_doc.count("can be bought by getting worse") == 1, (
+            "the phrase appears more than once; one of them is not the retraction"
+        )

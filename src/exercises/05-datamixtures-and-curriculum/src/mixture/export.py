@@ -689,7 +689,11 @@ re-counted by exercise 04, never annotated.
 ## The decision
 
 **Session 2's 10,000-token vocabulary stays as the measuring instrument. It is not V5's
-vocabulary.** Three measurements decide it, and none of them is an opinion.
+vocabulary.**
+
+Two measurements decide that, and neither is a criticism of the Session 2 work — which reproduced
+the reference recipe exactly, then beat it on both of the numbers it reports. What follows is about
+**scope**: a vocabulary built to balance four languages is being asked to carry twenty-nine.
 
 ### 1 · It cannot read three of the scripts the Indic lane needs
 
@@ -707,7 +711,10 @@ IndicGenBench covers **29 languages across 13 scripts**. Our vocabulary reads a 
 
 ### 2 · Its fertility is an order of magnitude off the frontier on Indic
 
-Tokens per faithful unit; **lower is better**, best in each row in bold.
+Tokens per faithful unit; **lower is better**, best in each row in bold. `ours` is **this
+project's own Session 2 submission** — the 10,000-token vocabulary at
+`02-tokenization/web/tokenizer.json`, read in place — not the reference `tokenizer.json` that ships
+with the assignment solution.
 
 {fertility_table}
 
@@ -722,14 +729,30 @@ Two things a reviewer should take from this table, both of which cut against eas
   **{table["rows"]["mni"]["hf/sarvamai/sarvam-105b"]:.2f}**, roughly a third of ours and an eighth
   of `o200k_base`.
 
-### 3 · Session 2's score rewards the wrong thing for this purpose
+### 3 · Session 2 optimised a different objective, and optimised it well
 
-The score there is `1000 / (X_max − X_min)` — it rewards *equalising* fertility across languages,
-not *minimising* it. Exercise 02's own table contains a configuration scoring **35,604** against
-the submission's **11,250**, reached by making English and Hindi worse until all four languages
-were equally mediocre, at a cost of 3,000 extra tokens for the same corpus. It is on that page,
-labelled as rejected. A metric that can be bought by getting worse is a fine instrument for the
-question Session 2 asked and the wrong objective for V5.
+Session 2's score is `1000 / (X_max − X_min)`: it rewards *evenness* across four named languages.
+V5 needs *low* fertility across 29. Those are different objectives, and the second is not a
+correction of the first — it is a different question asked at a different scope.
+
+**This is a statement about scope, not a defect.** An earlier draft of this file argued that the
+S2 metric "can be bought by getting worse", citing the configuration in exercise 02's table that
+scores **35,604** against the submission's **11,251**. That was a misreading, and it inverted what
+happened: exercise 02's protocol requires every row to report **two** numbers, its score *and* its
+total token count, precisely so a row cannot buy evenness with compression. The 35,604 row needed
+~3,000 more tokens for the same corpus and was **caught and rejected by that rule** — as exercise
+02 puts it, ruled out "by tokens, not by held-out performance". The metric was not bought; the
+methodology worked.
+
+The submission is stronger than that draft implied. It **beats the reference solution on both of
+the numbers exercise 02 reports at once** — score 11,251 against 6,503, and 189,785 total tokens
+against 191,266 — having first reproduced that reference exactly at 6502.56, on the same four
+languages its recipe uses. And of every configuration in that table scoring above the reference,
+the submission is the one that uses the fewest tokens: it did not buy its score.
+
+So nothing here is a reason to distrust the Session 2 work. The reasons to train a new vocabulary
+for V5 are the two above: three scripts it cannot read, and a vocabulary an order of magnitude too
+small for 13 scripts.
 
 ## What V5's vocabulary should be, and what it costs
 

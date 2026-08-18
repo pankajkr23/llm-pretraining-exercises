@@ -85,6 +85,44 @@ whether the server could bind before believing it.
 
 ---
 
+## Corrections
+
+A published claim that turns out to be wrong is corrected where it was made, and what changed is
+stated. A quietly amended number is worse than the original error.
+
+### C1 · `TOKENIZER.md` §3 mischaracterised exercise 02's scoring protocol
+
+**What it said.** That Session 2's score "rewards equalising rather than minimising" and that "a
+metric that can be bought by getting worse is the wrong objective for V5", citing the 35,604
+configuration as evidence.
+
+**Why that was wrong.** It described the score *used alone*, which exercise 02 never does. That
+exercise's protocol requires every row to report **two** numbers — its score *and* its total token
+count — precisely so evenness cannot be bought with compression. The 35,604 row needed ~3,000 more
+tokens for the same corpus and was ruled out by that rule, "by tokens, not by held-out
+performance". **The metric was not bought; the protocol caught the row.** Framing it as a defect
+inverted what happened.
+
+**A second overclaim, in the correction itself.** The first rewrite called the submission "the
+lowest total token count in the whole table". It is not: `BPE from scratch, no library` uses
+188,091 against the submission's 189,785. What is true, and now stated, is that the submission
+beats the reference solution on **both** numbers at once (11,251 vs 6,503; 189,785 vs 191,266) and
+uses the fewest tokens of any row that out-scores the reference.
+
+**What replaces it.** §3 is now a statement about **scope**: S2 optimised evenness across four
+languages and did it well; V5 needs low fertility across 29. The reasons to train a new vocabulary
+are the two measurements either side of it — three unreadable scripts, and 10k being an order of
+magnitude small for 13 scripts. Neither is a criticism of the Session 2 work.
+
+**Guards added.** `test_mixture_spec_render.py` now reads exercise 02's ablation table and checks
+both surviving claims against it, and requires the retracted phrasing to appear only alongside its
+retraction. Both were mutation-tested.
+
+**Left alone.** The root `README.md`'s exercise 02 section makes the same observation and is
+*correct* there: it says a score measuring **only** evenness can be bought, notes the row was
+rejected, and quotes 11,251 favourably. That is exercise 02's own finding, not this exercise's
+misreading of it.
+
 ## Findings
 
 Measured or derived, each traceable to a file. These are the things a reviewer would push on.
