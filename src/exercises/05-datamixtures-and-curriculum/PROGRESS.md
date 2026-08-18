@@ -26,6 +26,39 @@ and is O8 below. What remains is your call.
 | O8 | **H3 is refuted, and the Indic share has not moved** | **open, and the largest question in the spec** | Halving Indic gains STEM 1.12%, past the 1% second clause of its own pre-declared refutation and clear of its 0.71% spread. The declared consequence is that 18% is over-provisioned. Not acted on: the evidence is a 4-layer model and a stand-in lane, and §7 says a proxy this size cannot settle the mixture. O6 decides it. |
 | O9 | **E1/E2/E3 — the free experiments** | **done** | Repetition curve, seam warmup band, scale transfer. All local, all $0. See `EXPERIMENTS.md`. |
 
+### F10 · A missing lane was reading as a passing hypothesis
+
+Step 0 first ran on three lanes, because those are the ones this repository tracks text for. STEM,
+reasoning and agentic were dropped — and they are the three lanes carrying the specification's most
+contested findings, so the experiment was silent exactly where it mattered most. I had recorded
+that as a limit of the corpus. It was a limit of not having looked: exercise 03's own catalogue
+names openly-licensed datasets for all three.
+
+With the lanes funded, **H3 moved from `qualified` to `refuted`**. Its declared refutation has a
+second clause — *"or the other lanes gain more than 1%"* — and STEM gains 1.12%, past that
+threshold and clear of its own 0.71% seed spread. With no STEM lane there had been nothing for the
+clause to observe.
+
+| | three lanes (523k tokens) | six lanes (1.78M tokens) |
+| --- | --- | --- |
+| H1 | +3.00%, supported | +4.21%, supported |
+| H2 | +7.36%, supported | +6.88%, supported |
+| H3 | +3.53%, **qualified** | +3.52%, **refuted** |
+
+The effect sizes barely moved. What changed is that the second clause finally had a lane to fire
+on. **A missing lane does not make a hypothesis safer — it makes it untestable, and untestable was
+reading as passing.**
+
+The declared consequence is that 18% Indic is over-provisioned and should fall toward its 12%
+floor. It has **not** been applied. The gain arrives through a lane whose text is a declared
+stand-in (GSM8K, not peS2o) on a 4-layer model, and §7 says a proxy this size cannot settle the
+mixture — a rule that does not stop applying when the result is inconvenient. Recorded as O8, for
+the 1B rung to decide.
+
+E3 points the same way independently of the clause: **arm D wins at all four model sizes**, 1.7M to
+30.5M. That is the strongest evidence in this exercise and the easiest to overstate, because both
+results share a corpus, a tokenizer and the same stand-in lane. Two views of one measurement.
+
 ### F9 · Two guards that could not fail, both found by mutation rather than by review
 
 The browser suite passed 19/19 on its first run, which is when it is least trustworthy. Breaking
@@ -86,7 +119,10 @@ whether the server could bind before believing it.
 | CI simulated with torch absent | fast suite green, proxy suite skips with a reason |
 | `uv run python -m mixture` | 0 errors, 0 warnings, buildable |
 | `uv run python -m mixture.bench` | 5.281 TFLOP/s measured, six sizes, two devices |
-| `uv run python -m mixture.experiment` | 20 runs · 2 supported, 1 qualified |
+| `uv run python -m mixture.experiment` | 20 runs over six lanes · 2 supported, **1 refuted** |
+| `uv run python -m mixture.repetition` | 15 runs · re-reading costs loss; curve not monotone |
+| `uv run python -m mixture.seam` | 10 runs · **inconclusive**, and more seeds cannot change it |
+| `uv run python -m mixture.scale` | 48 runs · endpoints agree across 17.8×; middle wobbles |
 
 ---
 
@@ -189,6 +225,11 @@ the estimate was low rather than high.
 
 ### F7 · Step 0 ran, and one hypothesis came back qualified rather than supported
 
+> **Superseded on 2026-08-18 by F10.** This entry records the three-lane run. Once STEM, reasoning
+> and agentic were funded, H3's second clause had something to fire on and the verdict became
+> **refuted**. The numbers below are the ones this run produced and are left as they were; they are
+> no longer the current result.
+
 | | lane | effect | threshold | seed noise | verdict |
 | --- | --- | ---: | ---: | ---: | --- |
 | H1 | weighted | +3.00% | 2% | 1.45% | supported |
@@ -240,12 +281,14 @@ plausible numbers nobody measured.
 
 ### 2026-08-18 (proxy)
 
-- **The harness**: `corpus.py` (three real lanes from committed text, 523k tokens, zero network),
+- **The harness**: `corpus.py` (then three lanes from committed text, 523k tokens, zero network;
+  six lanes and 1.78M tokens after the fetcher landed later the same day),
   `model.py`, `train.py`, `evaluate.py`, `experiment.py`, `bench.py`. torch is an optional extra so
   CI never pulls it.
 - **Throughput measured** across six model sizes on two devices. Found and fixed a 3× error in the
   measurement itself before trusting it (F6).
-- **Step 0 run**: 4 arms × 5 seeds × 500 steps. 2 supported, 1 qualified (F7).
+- **Step 0 run**: 4 arms × 5 seeds × 500 steps. 2 supported, 1 qualified (F7) — **rerun later
+  the same day over six lanes, where H3 became refuted (F10)**.
 - **`EXPERIMENTS.md`** rendered from a tracked `results/step0.json`, written to stop a reader
   over-claiming from a 523k-token corpus.
 - **31 new tests**, including three for the two-clause refutation the results exposed.
