@@ -166,17 +166,27 @@ def test_the_contested_judgment_is_on_the_page(spec: str):
     assert "moves the hole, it does not fill it" in spec
 
 
-def test_the_unmeasured_hardware_is_marked_unmeasured_not_priced(spec: str):
-    """The refusal that keeps the spend decision honest has to survive into the document."""
+def test_every_hardware_figure_in_the_spec_carries_its_provenance(spec: str):
+    """A measured rate and an estimated one must not read identically.
+
+    This test used to assert the local machine was marked `unmeasured`. Step 0 measured it, so the
+    assertion moved up a level rather than being deleted: whatever the provenance is, the document
+    has to state it, because a reader deciding whether to spend money needs to know which figures
+    were observed and which were assumed.
+    """
     cost_section = spec.split("### Cost, and the one number we refuse to invent")[1]
-    # One per rung in the table, plus the paragraph below it that explains the refusal.
-    assert cost_section.count("**unmeasured**") >= len(proxy.ladder(CFG))
     assert "M4 Max" in cost_section
-    # And the refusal must be a refusal: no dollar figure may appear in the M4 Max column.
-    for row in cost_section.splitlines():
-        if row.startswith("|") and "unmeasured" in row:
-            m4_cell = row.strip("|").split("|")[3]
-            assert "$" not in m4_cell, f"a price was invented for unmeasured hardware: {m4_cell}"
+    for machine in proxy.HARDWARE:
+        assert machine.provenance in cost_section, (
+            f"{machine.key} is priced at provenance {machine.provenance!r}, which the spec never "
+            "states"
+        )
+
+
+def test_the_local_measurement_is_published_with_what_reproduces_it(spec: str):
+    local = proxy.hardware("m4-max")
+    assert f"{local.tflops:.3g}" in spec or f"{local.tflops}" in spec
+    assert "mixture.bench" in spec
 
 
 def test_the_generation_bill_is_published_with_both_gaps(spec: str):

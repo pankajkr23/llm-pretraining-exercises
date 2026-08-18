@@ -243,19 +243,48 @@ def test_every_arm_states_the_question_it_answers():
     assert all(arm.question.strip() for arm in proxy.arms())
 
 
-def test_no_throughput_is_invented_for_unmeasured_hardware():
-    """The rule that keeps the spend decision honest.
+def test_the_refusal_mechanism_still_works_for_unmeasured_hardware():
+    """The rule that keeps the spend decision honest, tested on the mechanism rather than on a
+    particular device.
 
-    A plausible number here would decide whether money is spent, on evidence nobody gathered.
+    The local machine's entry was `None` until Step 0 measured it. Deleting this test at that point
+    would have removed the only proof that an absent measurement produces an absent cost rather
+    than a plausible one -- so it is tested against a hypothetical device instead, and stays true
+    however many entries get measured.
     """
-    local = proxy.hardware("m4-max")
-    assert local.tflops is None
-    assert local.provenance == "unknown"
+    from dataclasses import replace
 
-    cost = proxy.estimate("m4-max")
-    assert not cost.knowable
-    assert cost.hours is None and cost.usd is None
-    assert proxy.tokens_for_budget("m4-max", hours=168, params=1e9) is None
+    unmeasured = replace(
+        proxy.hardware("a100-40gb"),
+        key="hypothetical",
+        tflops=None,
+        provenance="unknown",
+        source="never measured",
+    )
+    original = proxy.HARDWARE
+    try:
+        proxy.HARDWARE = original + (unmeasured,)
+        cost = proxy.estimate("hypothetical")
+        assert not cost.knowable
+        assert cost.hours is None and cost.usd is None
+        assert proxy.tokens_for_budget("hypothetical", hours=168, params=1e9) is None
+    finally:
+        proxy.HARDWARE = original
+
+
+def test_the_local_machine_is_measured_and_says_how():
+    """Step 0's deliverable. A measured figure has to carry the command that produces it again."""
+    local = proxy.hardware("m4-max")
+    assert local.provenance == "measured"
+    assert local.tflops and local.tflops > 0
+    assert "mixture.bench" in local.source, "a measurement must name what would reproduce it"
+    assert proxy.estimate("m4-max").knowable
+
+
+def test_the_measured_rate_makes_the_local_1b_run_clearly_infeasible():
+    """The arithmetic the measurement was for. Before it, the spend question was a guess."""
+    cost = proxy.estimate("m4-max", params=1e9, tokens=2e9, arm_count=4)
+    assert cost.hours / 24 > 30, f"local 1B run is {cost.hours / 24:.0f} days"
 
 
 def test_estimated_hardware_says_it_is_estimated():

@@ -321,3 +321,51 @@ def save(bundle: dict, name: str = "step0") -> Path:
     path = ARTIFACTS / f"{name}.json"
     path.write_text(json.dumps(bundle, indent=1, default=str), encoding="utf-8")
     return path
+
+
+def main() -> None:
+    """Run Step 0 and print what it found.
+
+    The scale is chosen from two measurements rather than from preference. `bench.py` says this
+    machine sustains about 5.3 TFLOP/s, which turns out not to be the binding constraint: the
+    committed corpus is ~523k tokens, so a week of compute would run thousands of epochs of it.
+    **The corpus is the limit** -- the same lesson the specification draws about the mixture, that
+    supply rather than preference is the hard cap. So the run is sized at roughly four epochs, the
+    point past which the repetition curve says another pass stops being near-free.
+    """
+    bundle = run(seeds=(0, 1, 2, 3, 4), steps=500, batch=16)
+    path = save(bundle)
+
+    print(f"device {bundle['device']} · {bundle['throughput']['tflops_median']:.3f} TFLOP/s median")
+    print(f"{bundle['steps']} steps x batch {bundle['batch']} x {len(bundle['seeds'])} seeds\n")
+
+    first_arm = next(iter(bundle["arms"].values()))
+    scored_lanes = sorted(next(iter(first_arm["per_seed"].values())))
+
+    print(f"{'arm':<24}" + "".join(f"{lane:>18}" for lane in scored_lanes) + f"{'weighted':>18}")
+    for key, arm in bundle["arms"].items():
+        cells = ""
+        for lane in scored_lanes:
+            values = [scores[lane] for scores in arm["per_seed"].values()]
+            mean = sum(values) / len(values)
+            cells += f"{mean:>11.4f}±{max(values) - min(values):>6.4f}"
+        weights = list(arm["weighted"].values())
+        mean = sum(weights) / len(weights)
+        print(
+            f"{key + ' ' + arm['name']:<24}{cells}{mean:>11.4f}±{max(weights) - min(weights):>6.4f}"
+        )
+
+    print("\nhypotheses, against thresholds declared before the run:")
+    for comparison in bundle["comparisons"]:
+        print(
+            f"  {comparison['key']} on {comparison['lane']:<9} effect {comparison['effect']:>+8.2%}"
+            f"  threshold {comparison['threshold']:>4.0%}  noise {comparison['noise']:>6.2%}"
+            f"  -> {comparison['verdict'].upper()}"
+        )
+        print(f"      {comparison['note']}")
+
+    print(f"\nwrote {path.name}")
+
+
+if __name__ == "__main__":
+    main()

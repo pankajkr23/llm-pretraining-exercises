@@ -16,9 +16,11 @@ parameters — a benchmark number at 1B would be noise wearing the costume of ev
 
 **No throughput is asserted for hardware that has not been measured.** `HARDWARE` carries a
 provenance on every figure, and `estimate()` returns `None` rather than a plausible number when the
-throughput is unknown. This is the whole point of running Step 0 first: the local machine's real
-rate decides whether any money is spent, and an estimate dressed as a measurement would make that
-decision for us on false evidence.
+throughput is unknown. The local machine's entry began as exactly that absence; Step 0 has since
+replaced it with a **measured** 5.281 TFLOP/s, and the rented entries are still `estimated` --
+published peaks at an assumed utilisation -- and still say so. The rule is unchanged and the
+mechanism is still tested: a device with no measurement produces an absent cost, not a plausible
+one.
 
 The objection this module has to answer is the instructor's own. Asked whether a smaller model is
 a good proxy, the answer was *"Not at all. Weights are completely changed."* That was about OPUS's
@@ -63,15 +65,25 @@ HARDWARE: tuple[Hardware, ...] = (
     Hardware(
         key="m4-max",
         name="Apple M4 Max (local, MPS)",
-        # Deliberately None. A number here would decide the spend question before Step 0 answers
-        # it, and every figure available to us is a published benchmark of a different workload on
-        # a different framework. MPS lacks FlashAttention and fused optimizers and is only
-        # partially bf16, so the gap between a marketing TFLOPS figure and this workload is large
-        # and unknown in size.
-        tflops=None,
-        provenance="unknown",
-        usd_per_hour=0.0,
-        source="not measured — Step 0 exists to measure it",
+        # This was `None` until Step 0 ran, on the argument that a plausible number here would
+        # decide the spend question on evidence nobody gathered. It is now a measurement, and the
+        # measuring was worth doing twice: the first sweep charged one-off Metal shader compilation
+        # to whichever run happened to be first and reported 1.06 TFLOP/s where the same
+        # configuration sustains 3.01. Warm-up steps are now trained but not timed.
+        #
+        # 5.281 is the plateau at the top of the swept range (55.8M and 92.9M parameters both
+        # measure ~5.28), not a peak picked from one point. It is a rate for *this* workload --
+        # dense transformer, batch 16, context 256, fp32 -- and quoting it for another would be
+        # exactly the borrowing this field exists to prevent.
+        tflops=5.281,
+        provenance="measured",
+        # None, not 0.0: the field means *rental* cost, and 0.0 rendered as "$0.00" in every cell,
+        # which reads as a price rather than as the absence of one.
+        usd_per_hour=None,
+        source=(
+            "measured by `python -m mixture.bench` on macOS 26.6 / torch 2.13, sweeping six model "
+            "sizes from 1.7M to 92.9M parameters; artifacts/runs/throughput.json"
+        ),
     ),
     Hardware(
         key="a100-40gb",
@@ -451,7 +463,11 @@ def ladder(config: Config | None = None) -> list[dict[str, object]]:
     """
     config = config or Config()
     rungs = [
-        ("step-0", 20e6, 200e6, 4, "prove the harness and measure local throughput"),
+        # What Step 0 actually was, not what it was originally sketched as. The sketch assumed
+        # 200M tokens per arm; the committed corpus holds 523k, so the real run was sized at ~4
+        # epochs of it. The binding constraint at this scale turned out to be the corpus rather
+        # than the machine, which is the same lesson the mixture draws about supply.
+        ("step-0 (run)", 5.785e6, 2.05e6, 20, "prove the harness and measure local throughput"),
         ("1B", config.proxy_params, config.proxy_tokens, 4, "rank the four arms"),
         ("3B", 3e9, config.proxy_tokens, 2, "check the top two arms do not invert rank"),
     ]

@@ -177,10 +177,37 @@ def _arms_table() -> str:
     return "\n".join(rows)
 
 
+def _duration(hours: float) -> str:
+    """Format a wall-clock duration at a scale a reader can act on.
+
+    A four-minute run and a 105-day run belong in the same column, and one significant figure in
+    hours renders the first as "0 h" -- which reads as free rather than as short.
+
+    Args:
+        hours: Duration in hours.
+
+    Returns:
+        A short string in days, hours, minutes or seconds.
+    """
+    if hours >= 48:
+        return f"{hours / 24:.0f} days"
+    if hours >= 1:
+        return f"{hours:.0f} h"
+    if hours * 60 >= 1:
+        return f"{hours * 60:.0f} min"
+    return f"{hours * 3600:.0f} s"
+
+
 def _cost_table(config: Config) -> str:
     """The escalation ladder, with absent figures where nothing was measured."""
+    labels = {
+        machine.key: f"{machine.name.split(' (')[0]}<br><sub>{machine.provenance}</sub>"
+        for machine in proxy.HARDWARE
+    }
     rows = [
-        "| rung | scale | FLOPs | M4 Max | A100 40GB | H100 80GB | decides |",
+        "| rung | scale | FLOPs | "
+        + " | ".join(labels[key] for key in ("m4-max", "a100-40gb", "h100-80gb"))
+        + " | decides |",
         "| --- | --- | ---: | ---: | ---: | ---: | --- |",
     ]
     for rung in proxy.ladder(config):
@@ -190,15 +217,15 @@ def _cost_table(config: Config) -> str:
             cost = costs[key]
             if not cost.knowable:
                 cells.append("**unmeasured**")
-            elif cost.usd is None:
-                cells.append(f"{cost.hours:.0f} h")
-            else:
-                # Step 0 rounds to "0 h · $0" at one significant figure, which reads as free when
-                # it is merely cheap. Sub-unit values get their own formatting rather than a zero.
-                hours = f"{cost.hours:.0f} h" if cost.hours >= 1 else f"{cost.hours * 60:.0f} min"
-                usd = f"${cost.usd:.0f}" if cost.usd >= 1 else f"${cost.usd:.2f}"
-                cells.append(f"{hours} · {usd}")
-        scale = f"{rung['params'] / 1e9:g}B × {rung['tokens'] / 1e9:g}B × {rung['arms']}"
+                continue
+            # Every duration goes through the same formatter. A separate branch for owned hardware
+            # printed "0 h" for a four-minute run, because it skipped the sub-hour handling that
+            # the priced branch had.
+            cell = _duration(cost.hours)
+            if cost.usd is not None:
+                cell += f" · ${cost.usd:.0f}" if cost.usd >= 1 else f" · ${cost.usd:.2f}"
+            cells.append(cell)
+        scale = f"{humanise(rung['params'])} × {humanise(rung['tokens'])} × {rung['arms']}"
         rows.append(
             f"| **{rung['rung']}** | {scale} | {rung['flops']:.2g} | "
             + " | ".join(cells)
@@ -312,6 +339,7 @@ def render_spec(config: Config | None = None) -> str:
     stem_gap = humanise(inventory.SESSION_SUPPLY_CHECK["stem"] - stem.counted_tokens)
     stem_demand = humanise(lanes.get("stem").share * config.run_tokens)
     agentic_ceiling = humanise(agentic.raw_supply * 16.4)
+    local_tflops = f"{proxy.hardware('m4-max').tflops:g}"
     indic_demand = humanise(lanes.get("indic").share * config.run_tokens)
     protected_total = lanes.get("indic").share + lanes.get("agentic").share
 
@@ -503,11 +531,20 @@ the costume of evidence.
 
 {_cost_table(config)}
 
-The local machine's throughput is **unmeasured**, and no figure is entered for it. A plausible
-number there would decide whether money is spent, on evidence nobody gathered. Step 0 exists to
-measure it — free, four tiny arms — and it also proves the harness trains, checkpoints and resumes,
-and that the metric separates two deliberately different mixtures at all. If it cannot separate
-them at tiny scale it will not at 1B either, **and that null result is reportable.**
+Every rate carries its provenance, because a reader deciding whether to spend money needs to know
+which figures were observed and which were assumed. The local machine is **measured**; the rented
+ones are **estimated** — published dense bf16 peaks at an assumed 40% utilisation.
+
+**The local figure was `unknown` until Step 0 ran, and measuring it changed the answer twice.**
+First it replaced a guess: the plan had estimated ~4 TFLOP/s from published benchmarks, and the
+machine sustains **{local_tflops} TFLOP/s** — the estimate was low, not high. Second, the
+measurement itself had to be fixed. The initial sweep charged one-off Metal shader compilation to
+whichever run happened to be first and reported **1.06 TFLOP/s** where the identical configuration
+sustains **3.01**; warm-up steps are now trained but not timed. A published figure off by 3× would
+have made the spend decision wrong in the direction hardest to notice — the safe one.
+
+Reproduce with `uv run python -m mixture.bench`, which sweeps six model sizes on every available
+device rather than quoting one point.
 
 ### Does a 1B result say anything about 40B?
 

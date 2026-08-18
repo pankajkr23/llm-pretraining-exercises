@@ -272,17 +272,26 @@ the costume of evidence.
 
 ### Cost, and the one number we refuse to invent
 
-| rung | scale | FLOPs | M4 Max | A100 40GB | H100 80GB | decides |
+| rung | scale | FLOPs | Apple M4 Max<br><sub>measured</sub> | NVIDIA A100 40GB<br><sub>estimated</sub> | NVIDIA H100 80GB<br><sub>estimated</sub> | decides |
 | --- | --- | ---: | ---: | ---: | ---: | --- |
-| **step-0** | 0.02B × 0.2B × 4 | 9.6e+16 | **unmeasured** | 13 min · $0.28 | 4 min · $0.20 | prove the harness and measure local throughput |
-| **1B** | 1B × 2B × 4 | 4.8e+19 | **unmeasured** | 107 h · $139 | 34 h · $98 | rank the four arms |
-| **3B** | 3B × 2B × 2 | 7.2e+19 | **unmeasured** | 160 h · $208 | 51 h · $147 | check the top two arms do not invert rank |
+| **step-0 (run)** | 5.79M × 2.05M × 20 | 1.4e+15 | 4 min | 11 s · $0.00 | 4 s · $0.00 | prove the harness and measure local throughput |
+| **1B** | 1B × 2B × 4 | 4.8e+19 | 105 days | 4 days · $139 | 34 h · $98 | rank the four arms |
+| **3B** | 3B × 2B × 2 | 7.2e+19 | 158 days | 7 days · $208 | 2 days · $147 | check the top two arms do not invert rank |
 
-The local machine's throughput is **unmeasured**, and no figure is entered for it. A plausible
-number there would decide whether money is spent, on evidence nobody gathered. Step 0 exists to
-measure it — free, four tiny arms — and it also proves the harness trains, checkpoints and resumes,
-and that the metric separates two deliberately different mixtures at all. If it cannot separate
-them at tiny scale it will not at 1B either, **and that null result is reportable.**
+Every rate carries its provenance, because a reader deciding whether to spend money needs to know
+which figures were observed and which were assumed. The local machine is **measured**; the rented
+ones are **estimated** — published dense bf16 peaks at an assumed 40% utilisation.
+
+**The local figure was `unknown` until Step 0 ran, and measuring it changed the answer twice.**
+First it replaced a guess: the plan had estimated ~4 TFLOP/s from published benchmarks, and the
+machine sustains **5.281 TFLOP/s** — the estimate was low, not high. Second, the
+measurement itself had to be fixed. The initial sweep charged one-off Metal shader compilation to
+whichever run happened to be first and reported **1.06 TFLOP/s** where the identical configuration
+sustains **3.01**; warm-up steps are now trained but not timed. A published figure off by 3× would
+have made the spend decision wrong in the direction hardest to notice — the safe one.
+
+Reproduce with `uv run python -m mixture.bench`, which sweeps six model sizes on every available
+device rather than quoting one point.
 
 ### Does a 1B result say anything about 40B?
 
