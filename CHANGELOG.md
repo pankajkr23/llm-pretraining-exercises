@@ -10,6 +10,17 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- **Exercise 05's page no longer fetches its own data.** The bundle is a generated ES module
+  (`web/data.js`) the page imports statically, replacing `web/data.json` and the fetch that read
+  it. This removes a failure mode rather than handling one: the page used to paint, then request,
+  then either render or show an error, and it carried a "Loading…" state and a catch block for the
+  gap. Two browser tests hold the line — one reads the browser's own resource timeline and requires
+  zero script-initiated requests, the other requires the static import in the served HTML — and
+  both go red when the fetch is put back. Exercises 02–04 keep their fetch; exercise 02's bundle is
+  2.8 MB, where inlining would block first paint for no gain.
+
 ### Added
 
 - **Exercise 05 — the V5 data mixture and curriculum**, as a specification written to be argued

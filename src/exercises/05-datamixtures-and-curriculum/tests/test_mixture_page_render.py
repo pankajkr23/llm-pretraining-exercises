@@ -366,6 +366,44 @@ def test_every_chapter_leaves_the_reader_with_one_number(page):
         )
 
 
+def test_the_page_fetches_nothing(page) -> None:
+    """No script-initiated request leaves the page — the data is in the module graph.
+
+    EXPLAINER_PROMPT §6 asks for the data precomputed and inlined, and names fetching as the thing
+    not to do. The reason is a failure mode, not a preference: a fetch can 404, be blocked, or fail
+    on a `file://` open *after* the page has already painted, so the page needs a loading state and
+    an error path for a gap that need not exist. This asserts the gap is gone at runtime, by
+    reading the browser's own resource timeline rather than grepping the source for `fetch`.
+
+    Resource Timing rather than a second browser on purpose: the module-scoped `page` fixture holds
+    a `sync_playwright()` context open for this file, and starting a second one in the same thread
+    hangs until the timeout — which reads as "the page renders nothing" and sends you after the
+    wrong bug.
+    """
+    initiators = page.evaluate(
+        "performance.getEntriesByType('resource')"
+        ".filter(e => e.initiatorType === 'fetch' || e.initiatorType === 'xmlhttprequest')"
+        ".map(e => e.name)"
+    )
+    assert initiators == [], f"the page issued data requests after loading: {initiators}"
+
+
+def test_the_bundle_is_a_module_the_page_imports() -> None:
+    """The served bundle is importable JS, and the page imports it statically.
+
+    The served copy, not `web/`: `build.sh` appends a `?v=<hash>` cache-buster to every local
+    script, so the assertion has to tolerate one or it only ever passes on the unbuilt source.
+    """
+    html = (PUBLIC / SLUG / "index.html").read_text(encoding="utf-8")
+    assert "fetch(" not in html, "the page still fetches its data"
+    assert re.search(r"import \{ BUNDLE \} from '\./data\.js(\?v=[0-9a-f]+)?'", html), (
+        "no static bundle import"
+    )
+    assert not (PUBLIC / SLUG / "data.json").exists(), "the superseded JSON bundle is still shipped"
+    bundle = (PUBLIC / SLUG / "data.js").read_text(encoding="utf-8")
+    assert bundle.startswith("/*") and "export const BUNDLE = Object.freeze({" in bundle
+
+
 def test_the_page_declares_a_reduced_motion_end_state(page):
     """§6: `prefers-reduced-motion: reduce` renders the complete end state.
 

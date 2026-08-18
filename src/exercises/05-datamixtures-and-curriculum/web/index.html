@@ -64,24 +64,19 @@
       </p>
       <div id="legend"></div>
       <aside id="rail" class="rail"></aside>
-      <main id="main"><p class="lede">Loading…</p></main>
+      <main id="main"></main>
       <footer id="foot"></footer>
     </div>
 
     <script type="module">
+      /* The bundle is imported, not fetched. EXPLAINER_PROMPT §6: the data is precomputed and
+       * inlined into the script. That removes a whole failure mode rather than handling it — the
+       * page used to paint, then fetch, then either render or show an error, and it carried a
+       * "Loading…" state and a catch block for the gap. There is no gap now. */
       import { buildPage } from './chapters.js';
+      import { BUNDLE } from './data.js';
 
-      const fail = (message) => {
-        document.getElementById('main').innerHTML =
-          `<p class="err">Could not load the data — ${message}. Serve over http, not file://.</p>`;
-      };
-      fetch('./data.json')
-        .then((r) => {
-          if (!r.ok) throw new Error(`data.json: ${r.status}`);
-          return r.json();
-        })
-        .then((data) => buildPage(data))
-        .catch((e) => fail(e.message));
+      buildPage(BUNDLE);
 
       /* The picker. The head script already applied the stored choice; this only keeps the control
        * in step with it and writes changes back. "system" removes the attribute rather than setting

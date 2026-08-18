@@ -32,6 +32,27 @@ only, gitignored).
   `None` and `estimate()` returns absent hours and cost. A plausible number there would decide a
   spending question on evidence nobody gathered.
 
+## The page imports its data; it does not fetch it
+
+`export.write_web` emits `web/data.js` — `export const BUNDLE = Object.freeze({…})` — and
+`index.html` imports it statically. `EXPLAINER_PROMPT.md` §6 asks for this, and it earns its place:
+a fetch fails *after* the page has painted, so the page has to carry a loading state and an error
+path for a gap that need not exist. Adding a `fetch` back breaks two tests in
+`test_mixture_page_render.py`.
+
+The rule has a size limit. Exercise 02's bundle is 2.8 MB, where inlining would block first paint
+and lose HTTP caching; 02, 03 and 04 fetch, correctly. This one is ~23 KB.
+
+Two things that cost time here:
+
+- **`build.sh` appends `?v=<hash>` to every local script.** Any assertion about an import in the
+  *served* HTML has to tolerate the suffix, or it only ever passes against the unbuilt source.
+- **Only one `sync_playwright()` context per thread.** The module-scoped `page` fixture holds one
+  open for the whole file; opening a second inside a test hangs until the selector times out, which
+  reads as "the page renders nothing" and sends you after a bug that is not there. Assert on the
+  fixture's page — `performance.getEntriesByType('resource')` answers the no-fetch question without
+  a second browser.
+
 ## Every guard has been watched to fail
 
 `checks.py`'s thirteen guards take **explicit arguments** rather than reading module globals. That

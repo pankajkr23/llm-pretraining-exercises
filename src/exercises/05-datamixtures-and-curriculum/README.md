@@ -55,7 +55,7 @@ directly tests a page with no colours, which exercise 04 did for a while without
 ## Run it
 
 ```bash
-uv run python -m mixture              # rebuild SPEC.md, EXPERIMENTS.md and web/data.json
+uv run python -m mixture              # rebuild SPEC.md, EXPERIMENTS.md and web/data.js
 uv run python -m mixture.inventory    # lane supplies, itemised vs the session's two headlines
 uv run python -m mixture.checks       # the invariants, with their current state
 
@@ -78,7 +78,7 @@ src/mixture/
   curriculum.py   stages, difficulty bands B0–B5, reasoning-length bands, warmup bands
   proxy.py        the 1B/3B experiment, its metric, thresholds fixed before it runs
   checks.py       thirteen invariants
-  export.py       renders SPEC.md, TOKENIZER.md, EXPERIMENTS.md and web/data.json
+  export.py       renders SPEC.md, TOKENIZER.md, EXPERIMENTS.md and web/data.js
   corpus.py       three real lanes from committed text; held-out splits reserved at write time
   model.py        a deliberately ordinary transformer, so an arm can only win on its data
   train.py        mixture-weighted sampling, checkpoint and resume, measured throughput
@@ -86,7 +86,7 @@ src/mixture/
   experiment.py   runs the arms, and refuses a direction inside the seed spread
   bench.py        measures this machine rather than quoting a spec sheet
   accumulate.py   append-only shards, deduplicated against every earlier one
-web/              the page — generated data.json, hand-written chapters.js
+web/              the page — generated data.js, hand-written chapters.js
 tools/
   build_notebook.py   emits the session notebook; edit this, never the .ipynb
 tests/            every invariant twice, plus mutation testing
