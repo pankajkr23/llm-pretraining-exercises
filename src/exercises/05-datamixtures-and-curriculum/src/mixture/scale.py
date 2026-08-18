@@ -20,20 +20,26 @@ import json
 import logging
 import statistics
 
-from mixture import corpus, experiment, proxy
-from mixture.model import ModelConfig
-from mixture.train import pick_device
+from mixture import corpus, proxy
+
+# `evaluate`, `model` and `train` import torch at module scope, and torch is an optional extra this
+# repository deliberately keeps out of CI. Importing them here would make the whole module
+# unimportable without it -- and the parts worth running in CI are the readings below, which are
+# pure functions over numbers and need no torch at all. So the training imports are deferred into
+# `run`, and `_read` stays collectable everywhere.
 
 logger = logging.getLogger(__name__)
 
 RESULTS = corpus.EXERCISE_ROOT / "results" / "scale.json"
 
 # From `bench.py`'s measured sweep, stopping where a run still takes seconds rather than minutes.
+# Plain shapes rather than `ModelConfig` instances, because building one at module scope would
+# pull torch in at import time and put this module out of reach of a CI run that has none.
 SIZES = (
-    ModelConfig(layers=2, width=128, heads=4, context=256),
-    ModelConfig(layers=4, width=256, heads=4, context=256),
-    ModelConfig(layers=6, width=384, heads=6, context=256),
-    ModelConfig(layers=8, width=512, heads=8, context=256),
+    {"layers": 2, "width": 128, "heads": 4, "context": 256},
+    {"layers": 4, "width": 256, "heads": 4, "context": 256},
+    {"layers": 6, "width": 384, "heads": 6, "context": 256},
+    {"layers": 8, "width": 512, "heads": 8, "context": 256},
 )
 
 SEEDS = (0, 1, 2)
@@ -41,18 +47,18 @@ STEPS = 400
 BATCH = 16
 
 
-def _params(config: ModelConfig) -> int:
+def _params(shape: dict) -> int:
     """Parameter count for a model shape.
 
     Args:
-        config: The shape.
+        shape: Keyword arguments for `ModelConfig`.
 
     Returns:
         Total parameters, including the biases and norms an earlier count dropped.
     """
-    from mixture.model import TinyGPT
+    from mixture.model import ModelConfig, TinyGPT
 
-    return sum(p.numel() for p in TinyGPT(config).parameters())
+    return sum(p.numel() for p in TinyGPT(ModelConfig(**shape)).parameters())
 
 
 def run(seeds: tuple[int, ...] = SEEDS, steps: int = STEPS, batch: int = BATCH) -> dict:
@@ -66,20 +72,25 @@ def run(seeds: tuple[int, ...] = SEEDS, steps: int = STEPS, batch: int = BATCH) 
     Returns:
         The result bundle.
     """
+    from mixture import experiment
+    from mixture.model import ModelConfig
+    from mixture.train import pick_device
+
     device = pick_device(None)
     rungs = []
     for shape in SIZES:
         params = _params(shape)
+        model_config = ModelConfig(**shape)
         results = {
-            arm.key: experiment.run_arm(arm, seeds, steps, shape, batch, device)
+            arm.key: experiment.run_arm(arm, seeds, steps, model_config, batch, device)
             for arm in proxy.arms()
         }
         ranking = sorted(results, key=lambda key: statistics.fmean(results[key].weighted.values()))
         rungs.append(
             {
                 "params": params,
-                "layers": shape.layers,
-                "width": shape.width,
+                "layers": shape["layers"],
+                "width": shape["width"],
                 "arms": {
                     key: {
                         "name": result.name,

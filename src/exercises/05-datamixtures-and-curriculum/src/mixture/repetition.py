@@ -26,9 +26,13 @@ import statistics
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from mixture import corpus, evaluate, lanes, proxy
-from mixture.model import ModelConfig
-from mixture.train import TrainConfig, pick_device, train
+from mixture import corpus, lanes, proxy
+
+# `evaluate`, `model` and `train` import torch at module scope, and torch is an optional extra this
+# repository deliberately keeps out of CI. Importing them here would make the whole module
+# unimportable without it -- and the parts worth running in CI are the readings below, which are
+# pure functions over numbers and need no torch at all. So the training imports are deferred into
+# `run`, and `_read` stays collectable everywhere.
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +106,10 @@ def run(seeds: tuple[int, ...] = SEEDS, steps: int = STEPS, batch: int = BATCH) 
     Returns:
         The result bundle.
     """
+    from mixture import evaluate
+    from mixture.model import ModelConfig
+    from mixture.train import TrainConfig, pick_device, train
+
     device = pick_device(None)
     model_config = ModelConfig()
     shares = lanes.shares()

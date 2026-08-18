@@ -64,8 +64,18 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
   reasoning needs room (see `04-data-cleaning-dedup/DECISIONS.md`).
 - **Session notebooks** → top-level `notebooks/`, **gitignored** except the tracked
   `hello.ipynb` sample (+ the `tools/build_notebook.py` that regenerates each one).
-- **Datasets** → top-level `data/`, **gitignored** (+ a tracked manifest/download script).
+- **Datasets** → top-level `data/`, **gitignored** (+ a tracked manifest/download script). A
+  fetcher **verifies the licence at fetch time from the source itself**, not from our own
+  catalogue, and refuses anything that declares none — an unverifiable licence is not a permissive
+  one. It also records what each dataset *stands in for* when it is a proxy for something else.
+  See `05-datamixtures-and-curriculum/tools/fetch_proxy_corpus.py`.
 - **Outputs** (plots/checkpoints/logs) → `<exercise>/artifacts/`, **gitignored**.
+- **Measured evidence a document renders** → `<exercise>/results/`, **tracked**. This is the
+  exception to the line above and it matters: if a published figure comes from a run, the run's
+  output has to survive a clone or the document cannot be rebuilt or checked. Exercise 05 writes
+  `results/step0.json` and renders `EXPERIMENTS.md` from it. **A run that writes only to
+  `artifacts/` leaves the committed evidence untouched and nothing fails** — the documents keep
+  rendering the previous experiment while the terminal shows the new one.
 
 ## Python style (enforced by ruff — see `pyproject.toml`)
 
@@ -90,6 +100,7 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
   is written twice — once against the real spine, once against a deliberately broken fixture — and
   when you add one, break the thing on purpose and watch it go red before you commit.
 - The ML-native integration test: **overfit a single batch for a few steps and assert loss collapses** (+ shape/checkpoint round-trip tests).
+- **Test the last line of a long job first.** Three experiments in exercise 05 trained to completion and then died writing their results, because the bundle carried a `torch.device` and `json` cannot encode one — one run lost fifteen trained models to its final statement. A two-step run that exercises `save()` costs seconds and would have caught all three. The same applies to any expensive job: the write, the upload, the commit at the end are the parts least covered and most costly to get wrong.
 - **Data-handling invariants are enforced in CI, not in review.** `03-data-collection-framework` defines five that any agent touching a data pipeline should know exist (`tests/test_invariants.py`, full table in that exercise's `docs/README.md`): training never touches eval data · nothing excluded may enter a commercial mix · every judgment carries its reasoning and confidence · a measurement must name what produced it · no source content is silently dropped. Each is paired with a test proving it *fails* when broken — a guard nobody has watched fail is not a guard.
 
 ## Reporting a measurement
@@ -101,6 +112,10 @@ Three rules, each learned by getting it wrong in `02-tokenization` (see that exe
 - **Report the number the metric ignores.** Any score that rewards a *ratio* or a *gap* can be improved by making the denominator worse. Print the absolute quantity next to it — there, total tokens beside the fairness score — so buying the metric is visible rather than inferred.
 
 When one of these overturns a published claim, correct it where the claim was made and say what changed. A quietly amended number is worse than the original error.
+
+- **Prose that states a number is generated too, or it goes stale while the table beside it stays right.** This is the failure that has cost this repo the most edits. A generated table under a hand-written sentence looks maintained, and only the sentence is wrong — so a reader believes the sentence. Session 5 shipped documents reading "across three lanes", "H3 came back qualified", "Thirteen invariants" and "one verdict did not survive its own noise", every one of them contradicting a correct table directly above or below it, and no test failed. If a sentence contains a count, a verdict or a size, derive it from the same source the table uses. Where prose genuinely must stay hand-written — a row in the root README's exercise table — a test asserts the number in it.
+
+- **An experiment that cannot see a lane is not evidence about that lane.** Exercise 05's proxy dropped the three lanes it had no text for, and one hypothesis read `qualified` for two weeks because the lane its refutation clause tested was absent. Funding the lane flipped it to `refuted` with the effect size essentially unchanged. **A missing input does not make a hypothesis safer, it makes it untestable — and untestable reads as passing.** Before trusting a result, list what the measurement was blind to.
 
 Two more that cost this repo real defects:
 
