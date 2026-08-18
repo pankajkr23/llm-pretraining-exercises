@@ -55,13 +55,14 @@ Two things that cost time here:
 
 ## Every guard has been watched to fail
 
-`checks.py`'s thirteen guards take **explicit arguments** rather than reading module globals. That
+`checks.py`'s sixteen guards take **explicit arguments** rather than reading module globals. That
 shape is the whole design: a check that reaches for `lanes.LANES` itself cannot be handed a broken
 mixture, so no test can watch it fail, so nobody learns whether it works.
 
 `tests/test_mixture_mutation.py` (integration-marked) rewrites each guard in turn to return no
 findings, reruns the fast suite, and requires the mutant to die. **Run it after touching
-`checks.py`.** 13 of 13 are currently killed; a survivor means the guard it disabled is decorative.
+`checks.py`.** The roster is discovered from `checks.py`'s source by regex, so a new guard is covered
+the moment it is written; a survivor means the guard it disabled is decorative.
 
 ## Things that bit, so they do not bite again
 

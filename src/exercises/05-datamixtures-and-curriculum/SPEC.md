@@ -476,9 +476,9 @@ held-out splits and the anneal reserve both flagged at write time.
 
 ## 9 · The invariants, enforced in CI
 
-Thirteen rules hold this specification together — shares sum to one, no lane is funded past its
-repetition ceiling without a declared bill, the floor holds, the stage schedule integrates to the
-headline mixture, every funded lane names a benchmark and every benchmark has a funded lane.
+16 rules hold this specification together — shares sum to one, no lane is funded
+past its repetition ceiling without a declared bill, the floor holds, the stage schedule integrates
+to the headline mixture, every funded lane names a benchmark and every benchmark has a funded lane.
 **0 errors,
 0 warnings** at the current mixture.
 

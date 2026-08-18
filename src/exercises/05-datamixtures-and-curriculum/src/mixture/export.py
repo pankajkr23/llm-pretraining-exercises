@@ -637,6 +637,7 @@ def render_spec(config: Config | None = None) -> str:
     agentic = supply.evaluate_lane("agentic", lanes.get("agentic").share, config)
     stem = inventory.lane_supply("stem")
     findings = checks.run_all(config)
+    invariant_count = len([n for n in dir(checks) if n.startswith("check_")])
 
     run_size = humanise(config.run_tokens)
     stem_quoted = humanise(inventory.SESSION_SUPPLY_CHECK["stem"])
@@ -942,9 +943,9 @@ held-out splits and the anneal reserve both flagged at write time.
 
 ## 9 · The invariants, enforced in CI
 
-Thirteen rules hold this specification together — shares sum to one, no lane is funded past its
-repetition ceiling without a declared bill, the floor holds, the stage schedule integrates to the
-headline mixture, every funded lane names a benchmark and every benchmark has a funded lane.
+{invariant_count} rules hold this specification together — shares sum to one, no lane is funded
+past its repetition ceiling without a declared bill, the floor holds, the stage schedule integrates
+to the headline mixture, every funded lane names a benchmark and every benchmark has a funded lane.
 **{len([f for f in findings if f.level == checks.ERROR])} errors,
 {len([f for f in findings if f.level == checks.WARNING])} warnings** at the current mixture.
 

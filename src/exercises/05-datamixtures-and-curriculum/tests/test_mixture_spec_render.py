@@ -16,7 +16,7 @@ import re
 
 import pytest
 from datacleaning.config import Config as DataCleaningConfig
-from mixture import curriculum, export, lanes, proxy
+from mixture import checks, curriculum, export, lanes, proxy
 from mixture.config import Config
 
 CFG = Config()
@@ -127,6 +127,30 @@ def test_writing_refuses_a_root_readme_with_no_markers(tmp_path, monkeypatch):
     monkeypatch.setattr(export, "ROOT_README", decoy)
     with pytest.raises(ValueError, match="no generated exercise-05 block"):
         export.write_root_section(CFG)
+
+
+def test_no_document_states_a_stale_invariant_count():
+    """Counting things in prose is how a document goes wrong quietly.
+
+    Both READMEs and `SPEC.md` said **thirteen** invariants while `checks.py` had grown to sixteen.
+    Nothing failed: the table below the sentence was generated and correct, and only the sentence
+    was wrong. `SPEC.md` and the exercise README compute it now; the root README's exercise-table
+    row is hand-written prose outside the generated block, so it is checked here instead.
+    """
+    import re
+
+    actual = len([name for name in dir(checks) if name.startswith("check_")])
+    words = {13: "thirteen", 14: "fourteen", 15: "fifteen", 16: "sixteen", 17: "seventeen"}
+    row = next(
+        line
+        for line in export.ROOT_README.read_text(encoding="utf-8").splitlines()
+        if line.startswith("| 05 |")
+    )
+    stated = re.search(r"(\w+) invariants", row)
+    assert stated, "the exercise-table row no longer states an invariant count"
+    assert stated.group(1).lower() == words[actual], (
+        f"the root README says {stated.group(1)!r} invariants; checks.py defines {actual}"
+    )
 
 
 def test_rendering_is_deterministic():
