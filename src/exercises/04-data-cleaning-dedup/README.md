@@ -1,6 +1,5 @@
 # 04 · Data Cleaning & Deduplication
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/S04-data-cleaning-dedup.ipynb)
 
 **Raw data is not training data.** Eight named stages stand between the two. This exercise runs all
 eight over three real corpora, counts what each one removes, and publishes the result.
@@ -17,7 +16,7 @@ already-extracted text, so claiming a yield for it would be inventing one.
 | **The question** | How many cleaning strategies does Session 4 list, and what do they do to a real corpus? |
 | **The answer** | **8** — and the session names two *different* eights. See [`DECISIONS.md`](./DECISIONS.md) §D1. |
 | **The corpus** | ~90M tokens across three datasets, counted with **our own Session 2 tokenizer** |
-| **The deliverable** | A published page, a Colab notebook, and a manifest per shard |
+| **The deliverable** | A published page and a manifest per shard |
 
 ## Why these three corpora
 
@@ -67,9 +66,10 @@ cd src/exercises/04-data-cleaning-dedup/web && python3 -m http.server 8000   # p
 `lite` is deliberately *below* the assignment's 10M-token floor — it exists to surface bugs in
 minutes. The published corpus is `full`.
 
-**Prefer the notebook.** [`notebooks/S04-data-cleaning-dedup.ipynb`](../../../notebooks/S04-data-cleaning-dedup.ipynb)
+**Prefer the notebook.** `notebooks/S04-data-cleaning-dedup.ipynb` — built locally by
+`tools/build_notebook.py` and not tracked, so regenerate it rather than looking for it in a clone
 runs this same package step by step, with plain-English explanation before each step and the
-arithmetic after it. Open it in Colab from the badge above; no local setup needed.
+arithmetic after it. Upload it to Colab to run it with no local setup.
 
 **Local network note.** Python verifies TLS against `certifi/cacert.pem`, which Claude Code's
 sandbox denies by default. `.claude/settings.local.json` carries a narrow read-allow for that one

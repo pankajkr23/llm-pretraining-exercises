@@ -10,20 +10,30 @@ doing it — which is the same drift `test_mixture_spec_render.py` guards `SPEC.
 """
 
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
 from mixture import export
 
 REPO_ROOT = export.EXERCISE_ROOT.parents[2]
-NOTEBOOK = REPO_ROOT / "notebooks" / "S05-datamixtures-and-curriculum.ipynb"
+NOTEBOOKS = REPO_ROOT / "notebooks"
+NOTEBOOK = NOTEBOOKS / "S05-datamixtures-and-curriculum.ipynb"
+# Tracked, stdlib-only, and the only notebook a fresh clone or CI ever sees.
+SAMPLE = NOTEBOOKS / "hello.ipynb"
 
 
 @pytest.fixture(scope="module")
 def nb() -> dict:
-    """The committed notebook."""
+    """The session notebook, when there is one.
+
+    Skips rather than fails when absent. Session notebooks are gitignored, so a fresh clone and CI
+    genuinely do not have one, and a hard failure there would be reporting the design as a defect.
+    The rules below therefore protect the author's checkout, not the pipeline — which is why
+    `notebooks/hello.ipynb` is tracked and executed instead: see `test_the_sample_notebook_runs`.
+    """
     if not NOTEBOOK.exists():
-        pytest.fail(f"the session notebook is missing at {NOTEBOOK}; AGENTS.md requires one")
+        pytest.skip(f"no session notebook at {NOTEBOOK}; they are local-only and gitignored")
     return json.loads(NOTEBOOK.read_text(encoding="utf-8"))
 
 
@@ -148,12 +158,38 @@ def test_the_notebook_declares_the_stand_ins_it_uses(nb):
     assert "UNMEASURED" in text or "unmeasured" in text, "the throughput refusal must be visible"
 
 
-def test_every_notebook_in_the_repo_follows_the_naming_rule():
-    """The rule is repo-wide, so it is checked repo-wide rather than for this session alone."""
-    for path in Path(NOTEBOOK).parent.glob("*.ipynb"):
+def test_every_session_notebook_follows_the_naming_rule():
+    """The rule is repo-wide, so it is checked repo-wide rather than for this session alone.
+
+    `hello.ipynb` is exempt by name. It is not a session notebook — it is the tracked sample, and
+    the `SNN-` rule exists so that lexical sort equals session order, which a sample has no part in.
+    """
+    for path in NOTEBOOKS.glob("*.ipynb"):
+        if path.name == SAMPLE.name:
+            continue
         assert path.name[0] == "S" and path.name[1:3].isdigit(), (
             f"{path.name} does not start with a zero-padded session id (SNN-)"
         )
+
+
+def test_the_sample_notebook_is_present_and_tracked():
+    """The sample is the only notebook a fresh clone gets, so its absence must be loud.
+
+    Session notebooks are gitignored, which means every rule in this file that reads one skips in
+    CI. The sample is what stops that from adding up to no coverage at all — so it is checked for
+    existence, for being tracked, and (below) for actually running.
+    """
+    assert SAMPLE.exists(), f"the tracked sample notebook is missing at {SAMPLE}"
+    tracked = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", str(SAMPLE)],
+        capture_output=True,
+        cwd=REPO_ROOT,
+    )
+    assert tracked.returncode == 0, f"{SAMPLE.name} exists but is not tracked; CI will not get it"
+
+    book = json.loads(SAMPLE.read_text(encoding="utf-8"))
+    dirty = [i for i, c in enumerate(book["cells"]) if c.get("outputs") or c.get("execution_count")]
+    assert not dirty, f"the sample carries committed outputs in cells {dirty}"
 
 
 # ---- it actually runs -------------------------------------------------------------------------
@@ -199,13 +235,31 @@ def _execute(path: Path) -> list[tuple[int, str, str]]:
 
 
 @pytest.mark.integration
-def test_the_notebook_runs_end_to_end() -> None:
+def test_the_sample_notebook_runs() -> None:
+    """The tracked sample executes top to bottom.
+
+    This is the one execution guard that runs in CI, because it is the one notebook CI has. It
+    proves the harness — that a notebook in this repo opens, runs every cell, and finishes — which
+    is exactly what the session notebooks stop proving once they are untracked.
+    """
+    pytest.importorskip("nbclient", reason="nbclient is not installed")
+    pytest.importorskip("ipykernel", reason="no kernel to run the notebook in")
+    failures = _execute(SAMPLE)
+    assert not failures, "the sample notebook raised: " + "; ".join(
+        f"cell {i}: {name}: {value}" for i, name, value in failures
+    )
+
+
+@pytest.mark.integration
+def test_the_session_notebook_runs_end_to_end() -> None:
     """Every code cell executes without raising.
 
     AGENTS.md: "a session's work is not done until its notebook runs the shipped code end to end."
     This proves only that — no cell raises. It does not check that any printed number is right;
     that is what the module tests and `test_mixture_spec_render.py` are for.
     """
+    if not NOTEBOOK.exists():
+        pytest.skip("no session notebook; they are local-only and gitignored")
     pytest.importorskip("nbclient", reason="nbclient is not installed")
     pytest.importorskip("ipykernel", reason="no kernel to run the notebook in")
     failures = _execute(NOTEBOOK)
@@ -224,7 +278,7 @@ def test_a_raising_cell_is_actually_caught(tmp_path: Path) -> None:
     pytest.importorskip("nbclient", reason="nbclient is not installed")
     pytest.importorskip("ipykernel", reason="no kernel to run the notebook in")
 
-    book = json.loads(NOTEBOOK.read_text(encoding="utf-8"))
+    book = json.loads(SAMPLE.read_text(encoding="utf-8"))
     book["cells"].append(
         {
             "cell_type": "code",
@@ -234,7 +288,7 @@ def test_a_raising_cell_is_actually_caught(tmp_path: Path) -> None:
             "source": ["raise RuntimeError('deliberate')"],
         }
     )
-    broken = tmp_path / NOTEBOOK.name
+    broken = tmp_path / SAMPLE.name
     broken.write_text(json.dumps(book), encoding="utf-8")
 
     failures = _execute(broken)

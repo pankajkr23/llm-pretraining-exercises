@@ -92,7 +92,8 @@ tools/
 tests/            every invariant twice, plus mutation testing
 ```
 
-The session notebook is [`notebooks/S05-datamixtures-and-curriculum.ipynb`](../../../notebooks/S05-datamixtures-and-curriculum.ipynb)
+The session notebook is `notebooks/S05-datamixtures-and-curriculum.ipynb` — regenerate it with
+`uv run python src/exercises/05-datamixtures-and-curriculum/tools/build_notebook.py`, as it is not tracked
 — it imports this package rather than re-implementing it, runs in seconds, and ends by breaking
 three invariants on purpose so a reader can watch the guards fire.
 

@@ -93,10 +93,11 @@ itself while both halves look fine:
    (`INV-4`, `INV-4b`). A schedule-only lane counts as funded — long-context holds no budget but
    `long-eval` is still bought by the sequence-length schedule.
 
-## The notebook is generated too
+## The notebook is generated, and it is not tracked
 
-`notebooks/S05-datamixtures-and-curriculum.ipynb` is emitted by `tools/build_notebook.py` rather
-than edited in place. A notebook edited by hand accumulates execution counts, metadata and stray
+`notebooks/S05-datamixtures-and-curriculum.ipynb` is **gitignored** — regenerate it with
+`uv run python tools/build_notebook.py` rather than looking for it in a clone. It is emitted by
+that builder rather than edited in place. A notebook edited by hand accumulates execution counts, metadata and stray
 outputs that make every diff unreadable; this way the committed file is exactly what the builder
 emits, and the cells are diffable as Python.
 
@@ -105,7 +106,12 @@ not optional. `test_mixture_notebook.py` checks the structural rules (imports th
 committed outputs, covers all seven assignment items, shows a guard failing) *and* now executes it:
 `test_the_notebook_runs_end_to_end` runs all 37 code cells through nbclient, and its twin appends a
 raising cell and requires the runner to catch it. `nbclient` and `ipykernel` are in the root `dev`
-group precisely so CI runs this rather than skipping it.
+group so the runner is installed there.
+
+Since the notebook is untracked, **every test in that file skips in CI** — it has nothing to read.
+The tracked `notebooks/hello.ipynb` is what keeps the harness under test: stdlib-only, executed by
+`test_the_sample_notebook_runs`, and it proves a notebook in this repo opens and runs. It cannot
+prove this one is right. That check belongs to whoever has the notebook, before the PR.
 
 It proves one thing only — **no cell raises**. It does not check that a printed number is right;
 that is `test_mixture_spec_render.py`'s job. It also runs in about two seconds, because the

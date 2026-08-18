@@ -59,7 +59,10 @@ def code(text: str) -> None:
 md("""
 # Session 5 — Data Mixtures and Curriculum
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/S05-datamixtures-and-curriculum.ipynb)
+*Not in the repository.* Session notebooks are built locally and gitignored, so the usual
+"Open in Colab" badge would point at a path GitHub returns a 404 for. To run this on Colab,
+upload the file (**File → Upload notebook**); cell one clones the repo and installs the packages,
+so nothing else is needed.
 
 **A corpus does not decide what a model becomes. The mixture does.** Same clean data, same compute
 budget, different proportions — and you get a different model. This notebook builds the V5 mixture

@@ -22,7 +22,7 @@ folder under `src/exercises/`.
 - **Shared code:** deferred — add `src/common/` (its own member) only when a 2nd exercise needs to reuse something. No premature abstraction.
 - **Notebooks:** top-level `notebooks/`, one per session — see below.
 
-## Every session ships a Colab notebook
+## Every session builds a Colab notebook — locally, never tracked
 
 `notebooks/SNN-slug.ipynb`, zero-padded session id first (`S04-data-cleaning-dedup.ipynb`), so
 lexical sort = session order. **A session's work is not done until its notebook runs the shipped
@@ -35,11 +35,23 @@ code end to end.** Four rules keep it from rotting:
   it. It must run on a free tier with no local setup, because that is where it gets used.
 - **A `lite` profile finishes in under ten minutes**, with the full run one variable away. A
   notebook nobody waits for is a notebook nobody runs.
-- **Outputs are stripped before commit.** Committed outputs bloat diffs, and on any exercise that
-  touches real data they can bake PII or licensed text into a tracked file.
+- **Outputs are stripped, always.** Executed outputs bloat diffs, and on any exercise that touches
+  real data they bake PII or licensed text into the file.
 
 Write it to be read at two depths: plain what-and-why before each step, the arithmetic and caveats
 after it. It is the artifact people learn from and teach from, not a run log.
+
+**They are gitignored** (`notebooks/S[0-9][0-9]-*.ipynb`) — built from the exercise's
+`tools/build_notebook.py`, kept on a working checkout, never versioned. A notebook is derived from
+the package it imports, so tracking it means versioning a second copy of numbers the modules
+already own, and the one that drifts is the one nobody regenerates.
+
+The cost is real and worth naming: every rule above is checked by tests that read the notebook,
+and on a fresh clone there is nothing for them to read, so **they all skip**. A rule that only
+skips is not a rule. What stops that from adding up to no coverage is `notebooks/hello.ipynb` — a
+tracked, stdlib-only sample that CI executes top to bottom. It cannot check that a session notebook
+is correct; it checks that a notebook in this repo opens and runs, which is the part CI can still
+see. Anything stronger has to be run by whoever has the notebook, before the PR.
 
 ## Three data concerns — keep them physically separate
 
@@ -50,6 +62,8 @@ after it. It is the artifact people learn from and teach from, not a run log.
   tracked file** — the link resolves on a working checkout and 404s for everyone else. What we
   *decided*, and why, is published instead: `README.md`, and a tracked `DECISIONS.md` when the
   reasoning needs room (see `04-data-cleaning-dedup/DECISIONS.md`).
+- **Session notebooks** → top-level `notebooks/`, **gitignored** except the tracked
+  `hello.ipynb` sample (+ the `tools/build_notebook.py` that regenerates each one).
 - **Datasets** → top-level `data/`, **gitignored** (+ a tracked manifest/download script).
 - **Outputs** (plots/checkpoints/logs) → `<exercise>/artifacts/`, **gitignored**.
 
