@@ -184,16 +184,49 @@ def _read(rungs: list[Rung]) -> dict:
             }
         )
 
+    # Monotonicity is not decoration here. The curve this experiment is testing is monotone by
+    # construction -- more re-reading should never help -- so an inversion is either evidence
+    # against the shape or evidence that the grid is finer than the noise. Exercise 02 paid for
+    # this lesson twice: a coarse sweep names the wrong optimum, and a readability score was
+    # rejected as a difficulty rule for exactly this failure. Report it either way.
+    inversions = []
+    for lower, higher in zip(rungs, rungs[1:], strict=False):
+        # `rungs` runs from most-repeated to least, so loss should fall along it.
+        if higher.bpb_mean > lower.bpb_mean:
+            gap = higher.bpb_mean - lower.bpb_mean
+            inversions.append(
+                {
+                    "between_epochs": [round(lower.epochs, 2), round(higher.epochs, 2)],
+                    "gap_bpb": round(gap, 5),
+                    "clears_noise": gap > noise,
+                }
+            )
+
     hurts = [s for s in steps_out if s["beyond_noise"]]
     verdict = (
         "repetition measurably costs held-out loss at this scale"
         if hurts
         else "no repetition level tested is distinguishable from the full corpus"
     )
+    if not inversions:
+        shape = "monotone across every rung: less re-reading, lower loss, no exceptions"
+    elif any(item["clears_noise"] for item in inversions):
+        shape = (
+            "**not monotone**, and the inversion clears the seed spread — the curve does not have "
+            "the shape the borrowed constant assumes, at least in this regime"
+        )
+    else:
+        shape = (
+            f"not monotone — {len(inversions)} adjacent pair(s) run the wrong way, but by less "
+            "than the seed spread, so the grid is finer than this experiment can resolve there"
+        )
+
     return {
         "noise_bpb": round(noise, 5),
         "reference_epochs": round(best.epochs, 2),
         "rungs": steps_out,
+        "inversions": inversions,
+        "shape": shape,
         "verdict": verdict,
         "caveat": (
             "Fixed compute, shrinking unique pool. This measures the price of re-reading in this "

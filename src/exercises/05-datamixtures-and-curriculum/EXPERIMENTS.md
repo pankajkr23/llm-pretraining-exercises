@@ -92,7 +92,23 @@ Held-out bits per byte. Lower is better. `±` is the range across seeds.
 
 ## The follow-on experiments, all of them free
 
-None of the follow-up experiments has run yet. Each costs local GPU time and no money; `mixture.repetition`, `mixture.seam` and `mixture.scale` run them.
+### E1 · What a re-read token is actually worth
+
+The supply analysis borrows one constant — a pool's lifetime worth is capped at **unique × 16.4** — and that constant is what makes the agentic lane *impossible* rather than merely expensive. It had never been checked on our own tokenizer, text and model. A small corpus is the only place it is cheap to check, because reaching a high epoch count costs minutes.
+
+The training budget is held fixed and the unique pool is shrunk, so every rung does identical work over less distinct text. Any difference is the price of re-reading.
+
+| unique tokens | epochs | held-out bpb | ±sd | excess over full corpus |
+| ---: | ---: | ---: | ---: | ---: |
+| 111,509 | 18.37 | 2.6722 | 0.0072 | +6.79% |
+| 223,023 | 9.18 | 2.6286 | 0.0158 | +5.05% |
+| 446,050 | 4.59 | 2.5738 | 0.0057 | +2.86% |
+| 892,104 | 2.30 | 2.5884 | 0.0130 | +3.44% |
+| 1,784,212 | 1.15 | 2.5023 | 0.0031 | +0.00% |
+
+**Repetition measurably costs held-out loss at this scale**, against a seed spread of 0.01578 bpb. The curve is not monotone — 1 adjacent pair(s) run the wrong way, but by less than the seed spread, so the grid is finer than this experiment can resolve there.
+
+At the most-repeated rung the pool is re-read 18.4 times and costs 6.8% — worse, but nowhere near worthless, which is what the borrowed curve predicts for this range. Fixed compute, shrinking unique pool. This measures the price of re-reading in this regime; it cannot refute a constant fitted far above it.
 
 ## What this does and does not license
 

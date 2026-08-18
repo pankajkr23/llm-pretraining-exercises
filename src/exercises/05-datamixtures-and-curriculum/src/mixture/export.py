@@ -495,7 +495,12 @@ def _followups() -> str:
             "identical work over less distinct text. Any difference is the price of re-reading.\n\n"
             + "\n".join(rows)
             + f"\n\n**{_sentence_case(reading['verdict'])}**, against a seed spread of "
-            f"{reading['noise_bpb']:.5f} bpb. {reading['caveat']}"
+            f"{reading['noise_bpb']:.5f} bpb. The curve is {reading['shape']}.\n\n"
+            f"At the most-repeated rung the pool is re-read "
+            f"{data['rungs'][0]['epochs']:.1f} times and costs "
+            f"{(data['rungs'][0]['bpb_mean'] - reference) / reference * 100:.1f}% — worse, but "
+            "nowhere near worthless, which is what the borrowed curve predicts for this range. "
+            f"{reading['caveat']}"
         )
 
     if SEAM_RESULTS.exists():

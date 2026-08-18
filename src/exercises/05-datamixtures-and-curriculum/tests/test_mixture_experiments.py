@@ -118,6 +118,39 @@ def test_repetition_inside_the_noise_is_not_claimed_as_an_effect():
     assert reading["verdict"].startswith("no repetition level")
 
 
+def test_a_monotone_curve_is_reported_as_monotone():
+    """More re-reading should never help. When the measurement agrees, say so plainly."""
+    reading = repetition._read(
+        [_rung(0.25, 400_000, 2.40), _rung(0.5, 800_000, 2.20), _rung(1.0, 1_600_000, 2.00)]
+    )
+    assert reading["inversions"] == []
+    assert reading["shape"].startswith("monotone")
+
+
+def test_an_inversion_inside_the_noise_is_flagged_without_being_claimed():
+    """The case this experiment actually produced, and the one easiest to skip past.
+
+    A rung that scores worse than a more-repeated one contradicts the curve's premise. Inside the
+    seed spread it settles nothing — but it must still be visible, because the alternative is a
+    reader spotting it in the table and wondering what else went unmentioned.
+    """
+    reading = repetition._read(
+        [_rung(0.25, 400_000, 2.30, sd=0.05), _rung(0.5, 800_000, 2.32, sd=0.05)]
+    )
+    assert len(reading["inversions"]) == 1
+    assert reading["inversions"][0]["clears_noise"] is False
+    assert "not monotone" in reading["shape"] and "less than the seed spread" in reading["shape"]
+
+
+def test_an_inversion_beyond_the_noise_challenges_the_borrowed_shape():
+    """The twin that matters: an inversion this large is evidence against the curve, not noise."""
+    reading = repetition._read(
+        [_rung(0.25, 400_000, 2.30, sd=0.001), _rung(0.5, 800_000, 2.60, sd=0.001)]
+    )
+    assert reading["inversions"][0]["clears_noise"] is True
+    assert "does not have the shape" in reading["shape"]
+
+
 def test_the_repetition_reading_keeps_its_caveat():
     """It must never read as a refutation of a constant fitted in another regime."""
     reading = repetition._read([_rung(0.5, 800_000, 2.2), _rung(1.0, 1_600_000, 2.0)])
