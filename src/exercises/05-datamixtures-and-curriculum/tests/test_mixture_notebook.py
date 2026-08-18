@@ -111,12 +111,20 @@ def test_the_notebook_can_detect_colab_without_crashing_off_colab(nb):
     assert "except ImportError" in source
 
 
-def test_the_notebook_carries_a_colab_badge_pointing_at_itself(nb):
+def test_the_notebook_says_how_to_open_it_on_colab(nb):
+    """It must not carry an "Open in Colab" badge, and must say what to do instead.
+
+    The badge is a link to a blob path on GitHub. Session notebooks are gitignored, so that path
+    404s — and a badge that looks right and goes nowhere is worse than no badge, because a reader
+    blames their setup. The replacement is the upload route, which needs no repository copy.
+    """
     text = "\n".join(
         "".join(cell["source"]) for cell in nb["cells"] if cell["cell_type"] == "markdown"
     )
-    assert "colab.research.google.com" in text
-    assert NOTEBOOK.name in text, "the badge must point at this notebook, not another"
+    assert "colab.research.google.com" not in text, (
+        "the Colab badge points at a gitignored path; GitHub returns 404 for it"
+    )
+    assert "Upload notebook" in text, "the notebook must say how to open it on Colab instead"
 
 
 def test_the_notebook_is_named_with_its_session_id():
