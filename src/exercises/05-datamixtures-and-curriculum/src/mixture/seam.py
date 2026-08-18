@@ -188,9 +188,19 @@ def _read(arms: list[SeamArm]) -> dict:
 
     if abs(difference) <= noise:
         verdict = "inconclusive"
+        direction = "the band's way" if difference > 0 else "against the band"
         note = (
             f"the {difference:+.3f} difference in peak ratio sits inside the {noise:.3f} spread "
-            "the conditions show against themselves, so this cannot rank them"
+            "the conditions show against themselves, so this cannot rank them. The difference "
+            f"points {direction}, which is worth nothing on its own and is reported only so the "
+            "next run knows which way to look.\n\n**More seeds would not settle this**, and that "
+            "is a property of the rule rather than of the budget: the comparison is against the "
+            "*sample spread*, which does not shrink with n, not against a standard error, which "
+            "does. That rule is deliberately conservative and is used everywhere in this "
+            "repository. Resolving this would need a lower-variance statistic — the peak is a "
+            "maximum over a window, which is about the noisiest summary available — and swapping "
+            "the statistic after seeing the result would be changing the test rather than "
+            "gathering more evidence for it. So it stands as inconclusive."
         )
     elif difference > 0:
         verdict = "supported"

@@ -9,17 +9,22 @@ so the work can be picked up cold. Newest entries at the top of each section.
 
 ## Open items — for review
 
-**Tracks A and B are done.** All seven assignment items are specified, and the proxy the
-specification commits to has been run and its numbers brought back. What remains is your call.
+**Tracks A and B are done.** All seven assignment items are specified, the proxy the
+specification commits to has been run over every funded lane, and three further experiments have
+run at no cost. One hypothesis came back **refuted**, which is the most useful line in the results
+and is O8 below. What remains is your call.
 
 | # | item | status | note |
 | --- | --- | --- | --- |
-| O1 | **Run the proxy** | **done** | 4 arms × 5 seeds × 500 steps on MPS. 2 supported, 1 qualified. `EXPERIMENTS.md`. |
+| O1 | **Run the proxy** | **done** | 4 arms × 5 seeds × 500 steps on MPS, over all six funded lanes. **2 supported, 1 refuted** — see O8. `EXPERIMENTS.md`. |
 | O2 | **Measure local throughput** | **done** | 5.281 TFLOP/s, measured by `mixture.bench` across six model sizes. `proxy.HARDWARE` no longer says `unknown`. |
 | O3 | **Interactive page** | **done** | Five chapters at `/05-datamixtures-and-curriculum/`. 19 browser tests, 8 agreement tests, both mutation-checked. |
-| O4 | **Colab notebook** | **done** | `notebooks/S05-datamixtures-and-curriculum.ipynb`, 37 code cells, ends on the Step 0 results. |
+| O4 | **Colab notebook** | **done** | `notebooks/S05-datamixtures-and-curriculum.ipynb`, 37 code cells, executed end to end in CI's place. **Not tracked** — session notebooks are gitignored; rebuild with `tools/build_notebook.py`. |
 | O5 | **Exercise 04's dedup is in-memory** | **done** | `accumulate.py` — append-only shards, persistent signature index, cross-shard dedup. Measured: 40.5 GB vs 0.55 GB at the 1B gate. Exercise 04's published numbers are untouched; the store is a continuation, not a replacement. |
-| O6 | **The 1B rung has not been run** | open, needs your decision | Priced from the measurement at **~34 h and ~$98** on rented H100s, against **105 days** locally. This is the rung that would earn a claim about the mixture; Step 0 explicitly does not. |
+| O6 | **The 1B rung has not been run** | open, needs your decision | Priced from the measurement at **~34 h and ~$98** on rented H100s, against **105 days** locally. Now carrying a second job: it is what decides O8. |
+| O7 | **The proxy corpus funds all six lanes** | **done** | `tools/fetch_proxy_corpus.py` — 523k → **1,784,212 tokens**. STEM, reasoning and agentic are openly-licensed **stand-ins**, declared as such. Three candidate sources refused on licence grounds. |
+| O8 | **H3 is refuted, and the Indic share has not moved** | **open, and the largest question in the spec** | Halving Indic gains STEM 1.12%, past the 1% second clause of its own pre-declared refutation and clear of its 0.71% spread. The declared consequence is that 18% is over-provisioned. Not acted on: the evidence is a 4-layer model and a stand-in lane, and §7 says a proxy this size cannot settle the mixture. O6 decides it. |
+| O9 | **E1/E2/E3 — the free experiments** | **done** | Repetition curve, seam warmup band, scale transfer. All local, all $0. See `EXPERIMENTS.md`. |
 
 ### F9 · Two guards that could not fail, both found by mutation rather than by review
 

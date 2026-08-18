@@ -77,6 +77,29 @@ def test_a_gap_inside_the_noise_is_inconclusive_however_large_it_looks():
     assert reading["verdict"] == "inconclusive"
 
 
+def test_an_inconclusive_seam_says_why_more_seeds_will_not_help():
+    """The rule compares against sample spread, which does not shrink with n.
+
+    Worth stating because the obvious response to an inconclusive result is "run more seeds", and
+    here that would burn GPU time for a verdict that cannot move. Anything that *would* move it is
+    a change to the test, not more evidence for it.
+    """
+    reading = seam._read([_arm("hard", 3.0, 2.0), _arm("banded", 1.5, 2.0)])
+    assert reading["verdict"] == "inconclusive"
+    assert "More seeds would not settle this" in reading["note"]
+    assert "sample spread" in reading["note"]
+
+
+def test_an_inconclusive_seam_still_reports_which_way_it_leaned():
+    """A direction inside the noise ranks nothing, but tells the next run where to look."""
+    assert (
+        "the band's way" in seam._read([_arm("hard", 3.0, 2.0), _arm("banded", 1.5, 2.0)])["note"]
+    )
+    assert (
+        "against the band" in seam._read([_arm("hard", 1.5, 2.0), _arm("banded", 3.0, 2.0)])["note"]
+    )
+
+
 def test_a_band_that_spikes_more_is_reported_as_refuted():
     """The result that would cost the specification a scheduled band. It must be sayable."""
     reading = seam._read([_arm("hard", 1.2, 0.05), _arm("banded", 2.4, 0.05)])

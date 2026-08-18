@@ -110,6 +110,21 @@ The training budget is held fixed and the unique pool is shrunk, so every rung d
 
 At the most-repeated rung the pool is re-read 18.4 times and costs 6.8% — worse, but nowhere near worthless, which is what the borrowed curve predicts for this range. Fixed compute, shrinking unique pool. This measures the price of re-reading in this regime; it cannot refute a constant fitted far above it.
 
+### E2 · Does the warmup band at a seam do anything?
+
+Every stage boundary in the curriculum carries a warmup band, scheduled on the strength of one number from the session: V4 spiked its gradient norm ~150× at a Hindi seam. This specification says plainly that the proxy cannot reproduce that spike — wrong scale, no frozen embeddings — but *can* test the weaker claim that a seam with a band spikes less than the same seam without one. That test was written down and never run.
+
+Both conditions are identical apart from the band: same seeds, same steps, the same General → Reasoning mixture change at step 240. Gradient norm is logged every step, so the seam is observed rather than sampled around.
+
+| condition | band | peak gradient ratio | ±sd | held-out bpb | ±sd |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| **hard** | 0 steps | 1.519 | 0.175 | 2.6161 | 0.0148 |
+| **banded** | 60 steps | 1.405 | 0.151 | 2.6115 | 0.0157 |
+
+**Inconclusive** — the +0.114 difference in peak ratio sits inside the 0.175 spread the conditions show against themselves, so this cannot rank them. The difference points the band's way, which is worth nothing on its own and is reported only so the next run knows which way to look.
+
+**More seeds would not settle this**, and that is a property of the rule rather than of the budget: the comparison is against the *sample spread*, which does not shrink with n, not against a standard error, which does. That rule is deliberately conservative and is used everywhere in this repository. Resolving this would need a lower-variance statistic — the peak is a maximum over a window, which is about the noisiest summary available — and swapping the statistic after seeing the result would be changing the test rather than gathering more evidence for it. So it stands as inconclusive.. Not V4's 150x: different scale, no frozen embeddings, and a band sized to be measurable at 400 steps rather than scaled from the specification's ~0.15% of run.
+
 ## What this does and does not license
 
 **Does.** The harness works: it trains, it checkpoints and resumes without restarting the data

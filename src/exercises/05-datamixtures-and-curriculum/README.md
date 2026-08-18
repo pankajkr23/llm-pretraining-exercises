@@ -249,6 +249,19 @@ That consequence was fixed in advance, so it is owed rather than negotiable.
 
 Full write-up: [`EXPERIMENTS.md`](EXPERIMENTS.md).
 
+## Three more experiments, at no cost
+
+The 1B rung needs money. These did not, and each one tests something the specification asserts:
+
+| | question | why it needed asking |
+| --- | --- | --- |
+| **E1** | what is a re-read token actually worth? | the supply analysis borrows a `x16.4` ceiling whose shape was never checked on our own data |
+| **E2** | does a warmup band at a stage seam calm the gradient? | §6 schedules one at every seam; this document promised the test and had not run it |
+| **E3** | does the arm ranking survive a change of scale? | §7 names a rank inversion as its own falsifier, and naming one without testing it is cheap |
+
+Results, with what each does and does not settle, are in
+[`EXPERIMENTS.md`](EXPERIMENTS.md).
+
 ## What it cannot tell you
 
 This is the honest boundary, and it is stated here rather than left for a reviewer to find.

@@ -1005,6 +1005,19 @@ def render_readme(config: Config | None = None) -> str:
     reserve = lanes.anneal_reserve(config)
     tier_d = lanes.indic_tiers(config)["D"]
 
+    extra_experiments = "\n".join(
+        [
+            "| | question | why it needed asking |",
+            "| --- | --- | --- |",
+            "| **E1** | what is a re-read token actually worth? | the supply analysis borrows a "
+            "`x16.4` ceiling whose shape was never checked on our own data |",
+            "| **E2** | does a warmup band at a stage seam calm the gradient? | §6 schedules one "
+            "at every seam; this document promised the test and had not run it |",
+            "| **E3** | does the arm ranking survive a change of scale? | §7 names a rank "
+            "inversion as its own falsifier, and naming one without testing it is cheap |",
+        ]
+    )
+
     run_size = humanise(config.run_tokens)
     stem_quoted = humanise(inventory.SESSION_SUPPLY_CHECK["stem"])
     stem_gap = humanise(inventory.SESSION_SUPPLY_CHECK["stem"] - stem.counted_tokens)
@@ -1174,6 +1187,15 @@ Token counts are measured with the Session 2 vocabulary, not estimated.
 ## What the proxy ran
 
 {_step_zero_summary()}
+
+## Three more experiments, at no cost
+
+The 1B rung needs money. These did not, and each one tests something the specification asserts:
+
+{extra_experiments}
+
+Results, with what each does and does not settle, are in
+[`EXPERIMENTS.md`](EXPERIMENTS.md).
 
 ## What it cannot tell you
 
