@@ -270,6 +270,22 @@ the costume of evidence.
 | **H2** | removing the protected floor makes Indic materially worse | ≥5% on indic | arm C's Indic bits-per-byte is within 5% of arm A's. Then the floor is ceremony at this scale and its justification rests on V4's selector behaviour alone, which the spec must then state as its only evidence |
 | **H3** | halving Indic costs Indic more than it gains the other lanes | ≥3% on indic | arm D's Indic bits-per-byte is within 3% of arm A's, or the other lanes gain more than 1%. Then 18% is over-provisioned and the share should fall toward the 12% floor |
 
+### It has been run
+
+Step 0 ran on mps:apple-silicon: a 4-layer model, 500 steps, **5 seeds per arm**, over a 523,141-token corpus of committed text across three lanes.
+
+| | lane | effect | threshold | seed noise | verdict |
+| --- | --- | ---: | ---: | ---: | --- |
+| **H1** | weighted | +3.00% | 2% | 1.45% | **supported** |
+| **H2** | indic | +7.36% | 5% | 0.93% | **supported** |
+| **H3** | indic | +3.53% | 3% | 0.85% | **qualified** |
+
+Two things about that table matter more than the verdicts. Every effect is reported against **the spread the same arm shows against itself**, because exercise 02 learned that a held-out score can swing further across arbitrary choices than the recipes it is meant to separate. And **H3 is `qualified` rather than supported** because its declared refutation had a second clause — *"or the other lanes gain more than 1%"* — which the first implementation did not check and the results trip: halving Indic costs Indic 3.53% and gains code 1.20%, a gain that sits inside code's own 1.34% seed spread and so settles nothing.
+
+**This does not validate the mixture at 40B and is not offered as doing so.** The corpus is three orders of magnitude too small, four of the seven lanes have no committed text and were dropped, and a restricted H1 over three lanes is a weaker claim than the one declared. What Step 0 establishes is that the harness works, the metric responds, and the local machine's rate is measured, so the next rung is priced from evidence.
+
+Full write-up: [`EXPERIMENTS.md`](EXPERIMENTS.md).
+
 ### Cost, and the one number we refuse to invent
 
 | rung | scale | FLOPs | Apple M4 Max<br><sub>measured</sub> | NVIDIA A100 40GB<br><sub>estimated</sub> | NVIDIA H100 80GB<br><sub>estimated</sub> | decides |

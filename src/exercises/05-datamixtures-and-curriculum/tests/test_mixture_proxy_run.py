@@ -390,3 +390,73 @@ def test_a_clean_effect_past_its_threshold_is_supported():
     verdicts = {c.key: c for c in compare(results)}
     assert verdicts["H2"].verdict == "supported"
     assert verdicts["H2"].effect >= verdicts["H2"].threshold
+
+
+def test_a_two_clause_refutation_is_checked_on_both_clauses():
+    """H3's declared refutation is *"within 3% ... **or the other lanes gain more than 1%**"*.
+
+    The first implementation checked only the first clause and reported a clean `supported` for a
+    hypothesis whose own condition its results partly trip. This is the guard against that: a
+    challenger that improves another lane past the second threshold cannot come back `supported`.
+    """
+    from mixture.experiment import ArmResult, compare
+
+    def arm(key: str, indic: list[float], code: list[float]) -> ArmResult:
+        result = ArmResult(key, key, {}, {}, [])
+        for seed, (i, c) in enumerate(zip(indic, code, strict=True)):
+            result.per_seed[seed] = {"indic": i, "code": c}
+            result.weighted[seed] = i
+        return result
+
+    # D is 5% worse on Indic (past H3's 3%) and 4% better on code (past the 1% second clause),
+    # with both effects far outside their seed spreads.
+    results = {
+        "A": arm("A", [1.000, 1.001], [2.000, 2.001]),
+        "D": arm("D", [1.050, 1.051], [1.920, 1.921]),
+    }
+    h3 = next(c for c in compare(results) if c.key == "H3")
+    assert h3.verdict == "refuted", "a triggered second clause that clears its noise refutes"
+    assert h3.secondary and h3.secondary["lane"] == "code"
+    assert h3.secondary["triggered"] and h3.secondary["clears_noise"]
+
+
+def test_a_second_clause_inside_its_own_noise_qualifies_rather_than_refutes():
+    """The verdict Step 0 actually produced.
+
+    A point estimate past a threshold, with a seed spread wide enough to contain it, settles
+    nothing in either direction — so it neither supports nor refutes, and the document says so.
+    """
+    from mixture.experiment import ArmResult, compare
+
+    def arm(key: str, indic: list[float], code: list[float]) -> ArmResult:
+        result = ArmResult(key, key, {}, {}, [])
+        for seed, (i, c) in enumerate(zip(indic, code, strict=True)):
+            result.per_seed[seed] = {"indic": i, "code": c}
+            result.weighted[seed] = i
+        return result
+
+    # Indic 5% worse and tight; code 1.5% better but swinging 3% across seeds.
+    results = {
+        "A": arm("A", [1.000, 1.001], [2.00, 2.03]),
+        "D": arm("D", [1.050, 1.051], [1.97, 2.00]),
+    }
+    h3 = next(c for c in compare(results) if c.key == "H3")
+    assert h3.verdict == "qualified"
+    assert h3.secondary["triggered"] and not h3.secondary["clears_noise"]
+
+
+def test_hypotheses_without_a_second_clause_carry_none():
+    """H1 and H2 declare one condition each; inventing a second would be moving the goalposts."""
+    from mixture.experiment import ArmResult, compare
+
+    def arm(key: str, value: float) -> ArmResult:
+        result = ArmResult(key, key, {}, {}, [])
+        for seed in (0, 1):
+            result.per_seed[seed] = {"indic": value + seed * 0.0001, "code": value}
+            result.weighted[seed] = value + seed * 0.0001
+        return result
+
+    results = {"A": arm("A", 1.0), "B": arm("B", 1.2), "C": arm("C", 1.2)}
+    by_key = {c.key: c for c in compare(results)}
+    assert by_key["H1"].secondary is None
+    assert by_key["H2"].secondary is None

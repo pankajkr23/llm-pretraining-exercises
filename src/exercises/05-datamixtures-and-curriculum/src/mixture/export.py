@@ -317,6 +317,62 @@ def _invariant_table(config: Config) -> str:
     return "\n".join(rows)
 
 
+def _step_zero_summary() -> str:
+    """What Step 0 found, or a statement that it has not run.
+
+    Kept short here on purpose: `EXPERIMENTS.md` is the write-up, and repeating it would give the
+    specification two places to disagree with itself about the same numbers.
+
+    Returns:
+        A paragraph and a verdict table, or a note that no arm has been trained.
+    """
+    if not RESULTS.exists():
+        return (
+            "**Not yet.** No arm has been trained, so every claim above is a commitment rather "
+            "than a result, and the specification is asking to be graded on its reasoning."
+        )
+
+    import json
+
+    results = json.loads(RESULTS.read_text(encoding="utf-8"))
+    rows = [
+        "| | lane | effect | threshold | seed noise | verdict |",
+        "| --- | --- | ---: | ---: | ---: | --- |",
+    ]
+    for comparison in results["comparisons"]:
+        rows.append(
+            f"| **{comparison['key']}** | {comparison['lane']} | {comparison['effect']:+.2%} | "
+            f"{comparison['threshold']:.0%} | {comparison['noise']:.2%} | "
+            f"**{comparison['verdict']}** |"
+        )
+    table = "\n".join(rows)
+    model = results["model"]
+    seeds = len(results["seeds"])
+
+    tokens = sum(shard["train_tokens"] for shard in results["corpus"].values())
+    return f"""Step 0 ran on {results["device"]}: a {model["layers"]}-layer model, \
+{results["steps"]} steps, **{seeds} seeds per arm**, over a {tokens:,}-token corpus of \
+committed text across three lanes.
+
+{table}
+
+Two things about that table matter more than the verdicts. Every effect is reported against **the \
+spread the same arm shows against itself**, because exercise 02 learned that a held-out score can \
+swing further across arbitrary choices than the recipes it is meant to separate. And **H3 is \
+`qualified` rather than supported** because its declared refutation had a second clause — *"or the \
+other lanes gain more than 1%"* — which the first implementation did not check and the results \
+trip: halving Indic costs Indic 3.53% and gains code 1.20%, a gain that sits inside code's own \
+1.34% seed spread and so settles nothing.
+
+**This does not validate the mixture at 40B and is not offered as doing so.** The corpus is three \
+orders of magnitude too small, four of the seven lanes have no committed text and were \
+dropped, and a restricted H1 over three lanes is a weaker claim than the one declared. What Step 0 \
+establishes is that the harness works, the metric responds, and the local machine's rate is \
+measured, so the next rung is priced from evidence.
+
+Full write-up: [`EXPERIMENTS.md`](EXPERIMENTS.md)."""
+
+
 def render_spec(config: Config | None = None) -> str:
     """Build `SPEC.md`.
 
@@ -342,6 +398,7 @@ def render_spec(config: Config | None = None) -> str:
     local_tflops = f"{proxy.hardware('m4-max').tflops:g}"
     indic_demand = humanise(lanes.get("indic").share * config.run_tokens)
     protected_total = lanes.get("indic").share + lanes.get("agentic").share
+    run_summary = _step_zero_summary()
 
     bill_rows = "\n".join(
         f"| **{item.lane}** | {humanise(item.tokens)} | {item.because} |" for item in bill
@@ -526,6 +583,10 @@ the costume of evidence.
 | | claim | threshold | refuted if |
 | --- | --- | --- | --- |
 {hypothesis_rows}
+
+### It has been run
+
+{run_summary}
 
 ### Cost, and the one number we refuse to invent
 
@@ -875,9 +936,24 @@ def render_experiments(results: dict) -> str:
         )
     verdict_table = "\n".join(verdict_rows)
 
-    notes = "\n".join(
-        f"- **{comparison['key']}** — {comparison['note']}" for comparison in results["comparisons"]
-    )
+    lines = []
+    for comparison in results["comparisons"]:
+        lines.append(f"- **{comparison['key']}** — {comparison['note']}")
+        secondary = comparison.get("secondary")
+        if secondary:
+            lines.append(
+                f"  - *Second clause:* `{secondary['lane']}` gains "
+                f"{secondary['gain']:+.2%} against a {secondary['threshold']:.0%} threshold, with "
+                f"a seed spread of {secondary['noise']:.2%}. "
+                + (
+                    "Triggered, and inside its own noise."
+                    if secondary["triggered"] and not secondary["clears_noise"]
+                    else "Triggered, and clears its noise."
+                    if secondary["triggered"]
+                    else "Not triggered."
+                )
+            )
+    notes = "\n".join(lines)
 
     corpus_rows = [
         "| lane | train tokens | held-out tokens | held-out bytes | `[UNK]` |",
@@ -890,8 +966,11 @@ def render_experiments(results: dict) -> str:
         )
     corpus_table = "\n".join(corpus_rows)
 
-    inconclusive = sum(1 for c in results["comparisons"] if c["verdict"] == "inconclusive")
-    total = len(results["comparisons"])
+    counts: dict[str, int] = {}
+    for comparison in results["comparisons"]:
+        counts[comparison["verdict"]] = counts.get(comparison["verdict"], 0) + 1
+    tally = ", ".join(f"{count} {verdict}" for verdict, count in sorted(counts.items()))
+    tally = f"{tally} of {len(results['comparisons'])} hypotheses"
 
     return f"""\
 # Step 0 — the proxy, actually run
@@ -900,9 +979,12 @@ Generated by `uv run python -m mixture` from `results/step0.json`. Reproduce the
 `uv run python -m mixture.experiment`.
 
 `SPEC.md` committed to an experiment and fixed its thresholds in advance. This is what happened
-when it ran. **{inconclusive} of {total} hypotheses came back inconclusive**, and that is reported
-here rather than smoothed into a direction, because an effect smaller than the spread an arm shows
-against itself is not a result.
+when it ran: **{tally}**.
+
+Two rules decide those verdicts, and both can only cost the specification marks rather than earn
+them. An effect smaller than the spread an arm shows against itself is reported as
+`inconclusive`, however large it looks. And a refutation condition with two clauses is checked on
+both — which is how H3 came back `qualified` rather than supported.
 
 ## What was run
 
@@ -929,8 +1011,16 @@ the same finding the specification makes about the mixture: supply, not preferen
 {share_table}
 
 Four of the specification's seven lanes have no committed corpus, so they were dropped and the rest
-renormalised. The arms therefore test the **web / Indic / code** trade-off and nothing else — which
-is where H2 and H3 live, and is not where H1 lives.
+renormalised. The arms therefore test the **web / Indic / code** trade-off and nothing else.
+
+That lands differently on each hypothesis, and it is worth being precise about which. **H2 and H3
+are about the Indic share**, so they are tested here in the form they were declared. **H1 is not**:
+it asks whether a composed mixture beats crawling what is cheap, and the weighted score it is
+judged on is computed over three lanes rather than seven. A restricted H1 is a weaker H1, and its
+`supported` verdict should be read that way.
+
+Every arm's shares are also renormalised, so no arm is asked to sample a lane that does not exist —
+which is why arm B shows 3.2% Indic here rather than the 3% its declared mixture names.
 
 ## Scores
 

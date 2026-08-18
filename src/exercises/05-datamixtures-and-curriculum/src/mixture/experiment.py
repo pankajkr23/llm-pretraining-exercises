@@ -103,8 +103,10 @@ class Comparison:
         effect: Relative difference, positive when the challenger is worse.
         threshold: The effect required, declared before the run.
         noise: The larger of the two arms' seed spreads, as a relative figure.
-        verdict: `supported`, `refuted`, or `inconclusive`.
+        verdict: `supported`, `qualified`, `refuted`, or `inconclusive`.
         note: What the verdict means for the specification.
+        secondary: The second clause of a refutation condition, where one was declared, with the
+            lane that triggered it. None where the hypothesis has only one clause.
     """
 
     key: str
@@ -117,6 +119,7 @@ class Comparison:
     noise: float
     verdict: str
     note: str
+    secondary: dict | None = None
 
 
 def _relative(baseline: float, challenger: float) -> float:
@@ -205,6 +208,13 @@ def compare(results: dict[str, ArmResult]) -> list[Comparison]:
 
     plan = {"H1": ("B", "weighted"), "H2": ("C", "indic"), "H3": ("D", "indic")}
 
+    # H3's refutation condition, declared before the run, has two clauses: "arm D's Indic
+    # bits-per-byte is within 3% of arm A's, **or the other lanes gain more than 1%**". The first
+    # implementation checked only the first, which would have reported a clean `supported` for a
+    # hypothesis its own declared condition partly refutes. Implementing the second clause now is
+    # honouring what was written in advance, not adding a threshold after seeing results.
+    secondary_clauses = {"H3": 0.01}
+
     for hypothesis in proxy.HYPOTHESES:
         arm_key, lane = plan.get(hypothesis.key, (None, None))
         challenger = results.get(arm_key or "")
@@ -238,6 +248,46 @@ def compare(results: dict[str, ArmResult]) -> list[Comparison]:
             verdict = "refuted"
             note = hypothesis.refuted_if
 
+        # The second clause, where one exists: did any *other* lane improve enough to matter?
+        secondary: dict | None = None
+        clause = secondary_clauses.get(hypothesis.key)
+        if clause is not None and lane != "weighted":
+            others = [
+                key for key in baseline.per_seed[next(iter(baseline.per_seed))] if key != lane
+            ]
+            gains = []
+            for other in others:
+                gain = -_relative(baseline.mean(other), challenger.mean(other))
+                other_noise = max(baseline.spread(other), challenger.spread(other)) / baseline.mean(
+                    other
+                )
+                gains.append({"lane": other, "gain": gain, "noise": other_noise})
+            best = max(gains, key=lambda item: item["gain"])
+            secondary = {
+                **best,
+                "threshold": clause,
+                "triggered": best["gain"] > clause,
+                # A gain inside its own seed spread is a point estimate, not a gain.
+                "clears_noise": best["gain"] > best["noise"],
+            }
+            if secondary["triggered"] and verdict == "supported":
+                if secondary["clears_noise"]:
+                    verdict = "refuted"
+                    note = (
+                        f"the primary effect holds ({effect:+.2%}), but {best['lane']} gains "
+                        f"{best['gain']:.2%}, past the {clause:.0%} the refutation condition "
+                        "names, and that gain clears its own seed spread. " + hypothesis.refuted_if
+                    )
+                else:
+                    verdict = "qualified"
+                    note = (
+                        f"the primary effect holds ({effect:+.2%}) and clears its noise, but the "
+                        f"second clause of the declared refutation is triggered on the point "
+                        f"estimate: {best['lane']} gains {best['gain']:.2%} against a "
+                        f"{clause:.0%} threshold. That gain is inside its own seed spread "
+                        f"({best['noise']:.2%}), so these runs cannot settle it either way"
+                    )
+
         comparisons.append(
             Comparison(
                 key=hypothesis.key,
@@ -250,6 +300,7 @@ def compare(results: dict[str, ArmResult]) -> list[Comparison]:
                 noise=noise,
                 verdict=verdict,
                 note=note,
+                secondary=secondary,
             )
         )
     return comparisons
