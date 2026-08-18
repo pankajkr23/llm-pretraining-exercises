@@ -10,6 +10,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **The session notebook is now executed in CI, not just parsed.** `test_mixture_notebook.py` runs
+  all 37 code cells through `nbclient` and fails if any raises — the one failure a reader meets
+  first, and the one the structural tests could never see. Its twin appends a deliberately raising
+  cell and requires the runner to catch it. `nbclient` and `ipykernel` join the root `dev` group so
+  the guard actually runs instead of skipping.
+
 ### Changed
 
 - **Exercise 05's page no longer fetches its own data.** The bundle is a generated ES module

@@ -102,8 +102,15 @@ emits, and the cells are diffable as Python.
 
 **The loop is: edit the builder → run it → execute every code cell → commit.** The middle step is
 not optional. `test_mixture_notebook.py` checks the structural rules (imports the package, no
-committed outputs, covers all seven assignment items, shows a guard failing) but it cannot tell you
-a cell raises.
+committed outputs, covers all seven assignment items, shows a guard failing) *and* now executes it:
+`test_the_notebook_runs_end_to_end` runs all 37 code cells through nbclient, and its twin appends a
+raising cell and requires the runner to catch it. `nbclient` and `ipykernel` are in the root `dev`
+group precisely so CI runs this rather than skipping it.
+
+It proves one thing only — **no cell raises**. It does not check that a printed number is right;
+that is `test_mixture_spec_render.py`'s job. It also runs in about two seconds, because the
+notebook reads the proxy results from the tracked `results/step0.json` rather than training
+anything, so do not read a fast pass as a shallow one.
 
 `tools/build_notebook.py` is excluded from ruff for the same reason `notebooks/` is — it is a
 notebook document in Python clothing, and one of its lines is a Colab badge URL that cannot wrap.

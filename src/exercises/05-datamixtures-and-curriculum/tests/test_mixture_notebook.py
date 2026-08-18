@@ -154,3 +154,88 @@ def test_every_notebook_in_the_repo_follows_the_naming_rule():
         assert path.name[0] == "S" and path.name[1:3].isdigit(), (
             f"{path.name} does not start with a zero-padded session id (SNN-)"
         )
+
+
+# ---- it actually runs -------------------------------------------------------------------------
+
+# The structural tests above read the notebook. None of them can tell you a cell raises, which is
+# the one failure a reader meets first and the exercise's own CLAUDE.md names as the gap. Executing
+# it is the only check that closes it.
+
+
+def _execute(path: Path) -> list[tuple[int, str, str]]:
+    """Run every code cell in `path` and return `(index, exception, message)` for those that raise.
+
+    `allow_errors=True` so one bad cell does not hide the state of the cells after it: a reader
+    fixing a notebook wants the whole list, not the first entry. Outputs are never written back —
+    the committed file stays output-free, which `test_the_notebook_carries_no_outputs` enforces.
+    """
+    import nbformat
+    from nbclient import NotebookClient
+
+    book = nbformat.read(path, as_version=4)
+    NotebookClient(
+        book,
+        timeout=600,
+        kernel_name="python3",
+        allow_errors=True,
+        resources={"metadata": {"path": str(path.parent)}},
+    ).execute()
+
+    unrun = [
+        i
+        for i, cell in enumerate(book.cells)
+        if cell.cell_type == "code" and cell.source.strip() and not cell.get("execution_count")
+    ]
+    assert not unrun, f"cells {unrun} never ran; a notebook that no-ops would pass silently"
+
+    return [
+        (i, out.ename, out.evalue)
+        for i, cell in enumerate(book.cells)
+        if cell.cell_type == "code"
+        for out in cell.get("outputs", [])
+        if out.output_type == "error"
+    ]
+
+
+@pytest.mark.integration
+def test_the_notebook_runs_end_to_end() -> None:
+    """Every code cell executes without raising.
+
+    AGENTS.md: "a session's work is not done until its notebook runs the shipped code end to end."
+    This proves only that — no cell raises. It does not check that any printed number is right;
+    that is what the module tests and `test_mixture_spec_render.py` are for.
+    """
+    pytest.importorskip("nbclient", reason="nbclient is not installed")
+    pytest.importorskip("ipykernel", reason="no kernel to run the notebook in")
+    failures = _execute(NOTEBOOK)
+    assert not failures, "cells raised: " + "; ".join(
+        f"cell {i}: {name}: {value}" for i, name, value in failures
+    )
+
+
+@pytest.mark.integration
+def test_a_raising_cell_is_actually_caught(tmp_path: Path) -> None:
+    """The twin. A runner that reported success on a broken notebook would be worse than none.
+
+    Appending a cell that raises is the cheapest way to be sure the check above is watching, and
+    the repo's rule is that no guard is trusted until it has been seen to fail.
+    """
+    pytest.importorskip("nbclient", reason="nbclient is not installed")
+    pytest.importorskip("ipykernel", reason="no kernel to run the notebook in")
+
+    book = json.loads(NOTEBOOK.read_text(encoding="utf-8"))
+    book["cells"].append(
+        {
+            "cell_type": "code",
+            "metadata": {},
+            "execution_count": None,
+            "outputs": [],
+            "source": ["raise RuntimeError('deliberate')"],
+        }
+    )
+    broken = tmp_path / NOTEBOOK.name
+    broken.write_text(json.dumps(book), encoding="utf-8")
+
+    failures = _execute(broken)
+    assert [(name, value) for _, name, value in failures] == [("RuntimeError", "deliberate")]

@@ -11,6 +11,11 @@ members = ["src/exercises/[0-9][0-9]-*"]
 
 [dependency-groups]
 dev = [
+    # Executing the session notebooks, not just parsing them. `test_mixture_notebook.py` skips
+    # without these, and a guard that always skips protects nothing — so they are in the default
+    # group CI syncs, and they are small: no CUDA wheel hides in here.
+    "ipykernel>=6",
+    "nbclient>=0.10",
     "playwright>=1.62.0",
     "pytest>=8",
     "ruff>=0.6",
