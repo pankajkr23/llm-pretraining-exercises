@@ -56,6 +56,8 @@ EXPECTED_INVARIANTS = {
     "INV-10",
     "INV-11",
     "INV-12",
+    "INV-13",
+    "INV-14",
 }
 
 
@@ -444,3 +446,23 @@ def test_inv12_twin_reaches_run_all_through_the_real_wiring():
     finally:
         curriculum.BAND_MIX = original
         assert checks.is_buildable(checks.run_all(CFG)), "the fixture must be restored"
+
+
+# ---- INV-14 · the context ladder ---------------------------------------------------------------
+
+
+def test_inv14_the_real_ladder_doubles():
+    assert checks.check_sequence_ladder(curriculum.sequence_schedule(CFG)) == []
+
+
+def test_inv14_twin_a_skipped_rung_is_caught():
+    """8K straight to 32K: the coarse sweep that names the wrong optimum."""
+    rows = [{"length": 32768, "stage": "long_context", "multiple": 4.0}]
+    findings = errors(checks.check_sequence_ladder(rows))
+    assert findings and "skipping" in findings[0].message
+
+
+def test_inv14_twin_a_shortened_context_is_caught():
+    rows = [{"length": 4096, "stage": "anneal", "multiple": 0.5}]
+    findings = errors(checks.check_sequence_ladder(rows))
+    assert findings and "walking back" in findings[0].message

@@ -100,6 +100,61 @@ transliteration of existing Wikimedia content — a translation pipeline, not a 
 Tier D is reserved for model-generated novel text, of which the inventory lists none.
 
 
+### Which languages, and when
+
+The session asks this by name — *"when am I going to train on Sanskrit if ever, or Urdu?"* — and a
+plan that answers "Indic 18%" has not answered it. The tier split above divides the lane by
+**provenance**; this divides it by **language and time**.
+
+**The gate is measured, not chosen.** Every South Asian language in FLORES-200 was tokenised with
+our own Session 2 vocabulary. A language above 5% `[UNK]` is not scheduled at all,
+because those tokens would train the unknown-token id rather than the language — the wishful
+accounting this document argues against, applied to languages.
+
+| language | script | `[UNK]` | tok/word | enters | share of Indic | why |
+| --- | --- | ---: | ---: | --- | ---: | --- |
+| **Hindi** | Deva | 0.0% | 2.13 | seed | 42% | the largest verified-native pool in Sangraha and the language MILU weights most |
+| **Telugu** | Telu | 0.2% | 3.77 | seed | 20% | the only non-Devanagari script the vocabulary reads, and exercise 04's Indic corpus is Devanagari and Telugu for exactly that reason |
+| **Maithili** | Deva | 0.0% | 2.56 | seed | 6% | carried from Session 2, where it was up-weighted x3 because it shares Devanagari with Hindi and won almost no merges of its own |
+| **Marathi** | Deva | 0.6% | 3.63 | general | 12% | readable at 0.6% and the largest Devanagari language after Hindi |
+| **Nepali** | Deva | 0.0% | 3.36 | general | 7% | readable at 0.0%; arrives free with the script |
+| **Bhojpuri** | Deva | 0.0% | 2.29 | general | 5% | readable at 0.0%; arrives free with the script |
+| **Chhattisgarhi** | Deva | 0.0% | 2.41 | general | 3% | readable at 0.0%; arrives free with the script |
+| **Magahi** | Deva | 0.1% | 2.43 | general | 3% | readable at 0.1%; arrives free with the script |
+| **Kashmiri (Devanagari)** | Deva | 0.0% | 2.94 | general | 1% | readable at 0.0% in Devanagari, while the same language in Perso-Arabic is at 80.4% -- the clearest evidence that the gate is about script, not language |
+| **Sanskrit** | Deva | 0.1% | 4.00 | general | 1% | **the session asks about this one by name.** Readable at 0.1% because it is Devanagari, so it can enter; held to 1% because its supply is thin and its fertility is the worst of the readable set at 4.00 tokens per word |
+
+**Blocked until the vocabulary is retrained** — 14 languages, none scheduled, no share:
+
+| language | script | `[UNK]` | tok/word |
+| --- | --- | ---: | ---: |
+| Assamese | Beng | **82%** | 6.66 |
+| Bengali | Beng | **83%** | 6.69 |
+| Gujarati | Gujr | **82%** | 6.03 |
+| Kannada | Knda | **85%** | 8.36 |
+| Kashmiri (Perso-Arabic) | Arab | **80%** | 5.51 |
+| Malayalam | Mlym | **88%** | 9.60 |
+| Manipuri | Beng | **84%** | 7.18 |
+| Odia | Orya | **83%** | 6.81 |
+| Punjabi | Guru | **78%** | 5.14 |
+| Santali | Olck | **82%** | 5.81 |
+| Sinhala | Sinh | **81%** | 6.26 |
+| Sindhi | Arab | **78%** | 4.66 |
+| Tamil | Taml | **87%** | 8.96 |
+| Urdu | Arab | **78%** | 4.64 |
+
+**The split is by script, not by language, and one row proves it.** Kashmiri measures **0.0%** in
+Devanagari and **80.4%** in Perso-Arabic. Same language, same speakers, opposite verdicts. Nine
+Devanagari languages arrived free with Hindi; fourteen are shut out by a script the vocabulary was
+never trained on.
+
+So: **Sanskrit yes**, entering with the general wave at 1% — it reads at 0.1% because it is
+Devanagari, and it is held small because its supply is thin and its fertility is the worst of the
+readable set at 4.00 tokens per word. **Urdu no**, at 77.7%, until the retokenisation
+[`TOKENIZER.md`](TOKENIZER.md) argues for. That is the single strongest argument in this
+specification for spending the vocabulary budget, and it was reached by measuring rather than
+asserting.
+
 ---
 
 ## 3 · Agentic, reasoning and long-context, named and pointed at datasets
@@ -187,7 +242,7 @@ Held back at composition time, spent in the final low-LR cooldown. **39.9B,
 | **Seed** | 3% | 4k | 60% | 12% | 14% | 8% | 4% | 2% |
 | **General** | 40% | 4k | 46% | 22% | 18% | 9% | 3% | 2% |
 | **Reasoning** | 30% | 8k | 22% | 33% | 18% | 14% | 11% | 2% |
-| **Long-context** | 25% | 32k | 18% | 36% | 18% | 16% | 10% | 2% |
+| **Long-context** | 25% | 16k | 18% | 36% | 18% | 16% | 10% | 2% |
 | **Anneal** | 2% | 32k | 5% | 18% | 30% | 9% | 28% | 10% |
 | *run average* | *100%* | | *31.4%* | *28.4%* | *18.1%* | *12.2%* | *7.7%* | *2.2%* |
 
@@ -196,6 +251,28 @@ durations, must integrate back to it. Worst drift on any lane is
 **0.60%** against a declared 1%
 tolerance, checked by `INV-6b`. Without that check the two halves of this document could disagree
 by any amount and both look fine.
+
+### The context-length ladder
+
+| context | stage | from | to | step |
+| --- | --- | ---: | ---: | ---: |
+| **4K** | seed | 0 | 60B | — |
+| **4K** | general | 60B | 860B | x1 |
+| **8K** | reasoning | 860B | 1.46T | x2 |
+| **16K** | long_context | 1.46T | 1.71T | x2 |
+| **32K** | long_context | 1.71T | 1.96T | x2 |
+| **32K** | anneal | 1.96T | 2T | x1 |
+
+Three rules from the session govern it, none of them ours and all of them binding on Session 6's
+dataloader. **One length per batch** — *"in a batch all examples have the same length"* — so this
+is a schedule of batch shapes, not a filter on documents. **No padding short samples up** —
+*"shorter one is a loss of compute for us"* — they are packed instead. And **the model is trained
+at every length it is claimed to support**: *"when you say 100k context, you have to train on
+100k."*
+
+It doubles at every step, checked by `INV-14`. An earlier version jumped 8K straight to 32K, which
+is the same coarse sweep exercise 02 was caught by when 2 → 5 → 6 named the wrong optimum — and it
+hides the rung where generalisation actually stops.
 
 Every seam carries a **3B-token warmup band**, because V4's
 mitigation was *never change the mixture in one hard step*. The steepest is General → Reasoning,
@@ -361,6 +438,33 @@ available is comparative and local.
 
 Naming these is the point. A share whose gap is undeclared is the *wishful accounting* the session
 exists to prevent; a share whose gap is priced is a commitment.
+
+---
+
+## 10 · The cleaning continues, aimed at the starved slots
+
+The assignment's closing instruction. The mixture above is what says which slots are starved, so
+this is its output rather than a separate exercise — ranked by how hard each lane is leaning on
+repetition.
+
+| priority | lane | epochs | shortfall | what the cleaning should target |
+| --- | --- | ---: | ---: | --- |
+| 1 | Agentic / tool-use | 588.88 | 38.9B | nothing to clean — this lane is generated, not collected. The bill is in §8 |
+| 2 | Reasoning traces | 1.88 | — | the thinnest real pool, and 92% of it is one V4-lineage set; new sources here reduce a single point of failure as much as they add tokens |
+| 3 | STEM / math | 1.64 | — | the 104B the session's supply check claims and no dataset carries. Either find it or the lane runs at 1.64 epochs |
+| 4 | Indic | 1.33 | — | verified-native text in the ten scheduled languages, which is what tier A is short of; nothing in a blocked script until the vocabulary is retrained |
+| 5 | Code | 0.51 | — | no action — 0.51 epochs with 1.1T behind it |
+| 6 | General web | 0.14 | — | no action — 0.14 epochs with 4.69T behind it |
+
+**Two of these are not cleaning problems.** Agentic cannot be cleaned into existence at any
+volume; §8 prices it as generation. And the Indic shortfall is bounded by the vocabulary before it
+is bounded by the crawler: fourteen languages are unreachable until retokenisation, so cleaning
+Bengali or Tamil today produces tokens the model would read as `[UNK]`.
+
+**The gate this feeds.** Session 1 asks for a billion clean tokens with documented provenance per
+shard before a mixture is trusted. `accumulate.py` is the store that reaches it: append-only
+shards, a persistent signature index so shard N is deduplicated against every earlier one, and
+held-out splits and the anneal reserve both flagged at write time.
 
 ---
 

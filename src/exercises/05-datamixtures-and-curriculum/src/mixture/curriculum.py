@@ -147,7 +147,7 @@ STAGES: tuple[Stage, ...] = (
             "reasoning": 0.10,
             "agentic": 0.02,
         },
-        sequence_length=32768,
+        sequence_length=16384,
         purpose=(
             "stretch the context after the model already knows how to read and reason, so it "
             "learns to hold information across a long window rather than learning both at once"
@@ -278,6 +278,89 @@ def seams(config: Config | None = None) -> tuple[Seam, ...]:
             )
         )
     return tuple(found)
+
+
+# ------------------------------------------------------------------- the sequence-length ladder
+
+# Three rules from the session, none of them ours, all of them binding on Session 6's dataloader.
+#
+#   * **One length per batch.** *"In a batch all examples have the same length."* So a run does not
+#     mix 4K and 8K samples; it moves between homogeneous batches, and the ladder is a schedule of
+#     batch shapes rather than a filter on documents.
+#   * **No padding short samples up.** *"Shorter one is a loss of compute for us. So we don't make
+#     a shorter one."* Short documents are packed, never padded to the rung.
+#   * **You must train at the length you claim.** *"When you say 100k context, you have to train on
+#     100k."* A model that only ever saw 8K does not acquire 32K by being asked at inference.
+#
+# V4's own ladder is the precedent: it trained at 4K "because it was fast", then moved to 8K, and
+# the session's answer to going further was 16K. Doubling is the step, so this ladder doubles --
+# an earlier version of this file jumped 8K to 32K and skipped a rung, which is the same coarse
+# sweep exercise 02 was caught by when it went 2 -> 5 -> 6 and named the wrong optimum.
+SEQUENCE_LADDER: tuple[tuple[int, str], ...] = (
+    (4096, "seed"),
+    (4096, "general"),
+    (8192, "reasoning"),
+    (16384, "long_context"),
+    (32768, "long_context"),
+    (32768, "anneal"),
+)
+
+PACKING_RULES: tuple[str, ...] = (
+    "one sequence length per batch; a batch never mixes rungs",
+    "short documents are packed, never padded up to the rung",
+    "the model is trained at every length it is claimed to support",
+)
+
+
+def sequence_schedule(config: "Config | None" = None) -> list[dict[str, object]]:
+    """Where each rung of the ladder sits in the run.
+
+    A stage may span two rungs -- long-context climbs 16K to 32K inside its own duration -- so the
+    schedule is expressed in tokens rather than in stages.
+
+    Args:
+        config: Thresholds and run size; defaults to `Config()`.
+
+    Returns:
+        One row per rung with the token window it occupies and its multiple of the previous rung.
+    """
+    config = config or Config()
+    by_stage: dict[str, list[int]] = {}
+    for length, stage in SEQUENCE_LADDER:
+        by_stage.setdefault(stage, []).append(length)
+
+    rows: list[dict[str, object]] = []
+    position = 0.0
+    previous: int | None = None
+    for stage in STAGES:
+        lengths = by_stage.get(stage.key, [])
+        if not lengths:
+            position += stage.duration
+            continue
+        span = stage.duration / len(lengths)
+        for length in lengths:
+            rows.append(
+                {
+                    "length": length,
+                    "stage": stage.key,
+                    "from_tokens": position * config.run_tokens,
+                    "to_tokens": (position + span) * config.run_tokens,
+                    "share": span,
+                    "multiple": None if previous is None else length / previous,
+                }
+            )
+            previous = length
+            position += span
+    return rows
+
+
+def ladder_doubles() -> bool:
+    """Whether every change of length in the ladder is a doubling.
+
+    Returns:
+        True when no rung multiplies the previous by anything but 1 or 2.
+    """
+    return all(row["multiple"] in (None, 1.0, 2.0) for row in sequence_schedule())
 
 
 # ---------------------------------------------------------------------------- difficulty bands

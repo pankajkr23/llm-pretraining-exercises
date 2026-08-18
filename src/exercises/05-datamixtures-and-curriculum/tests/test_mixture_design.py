@@ -438,3 +438,47 @@ def test_the_bands_overlap_rather_than_switching_at_a_line():
     boundary, this blends the *difficulty distribution* at a band boundary.
     """
     assert curriculum.BAND_OVERLAP_TOKENS > 0
+
+
+# ---- the context-length ladder ---------------------------------------------------------
+
+
+def test_the_sequence_ladder_doubles_at_every_step():
+    """V4 went 4K then 8K, and the session's answer to going further was 16K.
+
+    An earlier version of this ladder jumped 8K to 32K. Skipping a rung is the same coarse sweep
+    exercise 02 was caught by at 2 -> 5 -> 6, and it hides where generalisation stops.
+    """
+    assert curriculum.ladder_doubles()
+    lengths = [row["length"] for row in curriculum.sequence_schedule(CFG)]
+    assert 16384 in lengths, "the 16K rung is missing"
+    assert lengths == sorted(lengths), "the context length goes backwards"
+
+
+def test_the_ladder_covers_the_whole_run_without_gaps():
+    rows = curriculum.sequence_schedule(CFG)
+    assert rows[0]["from_tokens"] == pytest.approx(0.0)
+    assert rows[-1]["to_tokens"] == pytest.approx(CFG.run_tokens)
+    # Not `strict=True`: this zips consecutive pairs, so the second argument is one shorter by
+    # construction — the same mistake `curriculum.seams()` was written with once.
+    for earlier, later in zip(rows, rows[1:], strict=False):
+        assert earlier["to_tokens"] == pytest.approx(later["from_tokens"]), "a gap in the ladder"
+
+
+def test_the_packing_rules_the_session_states_are_recorded():
+    """All three are constraints on Session 6's dataloader, not preferences of ours."""
+    rules = " ".join(curriculum.PACKING_RULES).lower()
+    assert "one sequence length per batch" in rules
+    assert "never padded" in rules
+    assert "trained at every length" in rules
+
+
+def test_each_stage_agrees_with_the_ladder_it_sits_on():
+    """A stage that advertised one length while the ladder ran another would mislead Session 6."""
+    by_stage: dict[str, list[int]] = {}
+    for length, stage in curriculum.SEQUENCE_LADDER:
+        by_stage.setdefault(stage, []).append(length)
+    for stage in curriculum.STAGES:
+        assert stage.sequence_length in by_stage[stage.key], (
+            f"{stage.key} declares {stage.sequence_length}, ladder runs {by_stage[stage.key]}"
+        )

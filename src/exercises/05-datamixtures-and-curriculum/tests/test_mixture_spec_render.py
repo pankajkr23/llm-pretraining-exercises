@@ -92,15 +92,22 @@ def test_no_none_or_nan_leaks_into_a_table_cell(name: str):
 def test_no_headline_figure_reads_as_nothing(spec: str):
     """Exercise 04's lesson: a headline reading 0 is a wrong question, not a caption problem.
 
-    Only two zeros belong in this document — the long-context lane's retired share, and the agentic
-    lane's headroom above its floor — and both are decisions rather than missing measurements.
+    Four zeros belong in this document, and each is a decision or a fact rather than an absent
+    measurement:
+
+    * the long-context lane's retired share, twice (its row and the capability table);
+    * the agentic lane's headroom above its floor, which is zero because the share *is* the floor;
+    * the context ladder's first rung, which starts at token zero because the run does.
+
+    The count is asserted rather than the threshold loosened, so a fifth zero appearing is a
+    failure that someone has to look at.
     """
     zero_cells = [
         cell.strip().strip("*` ")
         for cell in re.findall(r"\|([^|\n]*)\|", spec)
         if cell.strip().strip("*` ") in {"0%", "0", "0B", "0.00"}
     ]
-    assert len(zero_cells) <= 3, f"unexpected zeros in the spec: {zero_cells}"
+    assert len(zero_cells) <= 4, f"unexpected zeros in the spec: {zero_cells}"
 
 
 def test_every_markdown_table_has_consistent_columns(spec: str):

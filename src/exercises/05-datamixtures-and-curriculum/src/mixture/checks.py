@@ -24,7 +24,7 @@ from typing import Any
 
 from dataframework.mix import WORTH_CEILING_MULTIPLE
 
-from mixture import benchmarks, curriculum, inventory, lanes, proxy
+from mixture import benchmarks, curriculum, inventory, lanes, languages, proxy
 from mixture.config import Config
 
 ERROR = "error"
@@ -435,6 +435,92 @@ def check_difficulty_bands(
     return findings
 
 
+def check_language_schedule(entries: tuple, gate: float, tolerance: float = 1e-9) -> list[Finding]:
+    """INV-13 · No language gets a budget the tokenizer cannot spend.
+
+    The session asks when each language enters. Two ways to answer that badly, and both look fine
+    on a page: give the languages shares that do not sum to the lane, or give a share to a language
+    the vocabulary cannot encode. The second is the wishful accounting of this whole exercise
+    applied to languages -- a budget written in a script the model would only ever see as the
+    unknown-token id.
+
+    Args:
+        entries: The per-language plan.
+        gate: Maximum `[UNK]` share at which a language may be trained on.
+        tolerance: Floating-point slack.
+
+    Returns:
+        Findings, empty when the schedule is spendable.
+    """
+    findings: list[Finding] = []
+    for entry in entries:
+        if entry.share_of_indic > 0 and entry.unk > gate:
+            findings.append(
+                Finding(
+                    "INV-13",
+                    ERROR,
+                    f"{entry.name} is given {entry.share_of_indic:.0%} of the Indic lane at "
+                    f"{entry.unk:.0%} [UNK] -- above the {gate:.0%} gate, so those tokens would "
+                    "train the unknown-token id rather than the language",
+                )
+            )
+        if entry.share_of_indic > 0 and entry.wave == "blocked":
+            findings.append(Finding("INV-13", ERROR, f"{entry.name} is blocked yet holds a share"))
+
+    total = sum(e.share_of_indic for e in entries)
+    if abs(total - 1.0) > tolerance:
+        findings.append(
+            Finding(
+                "INV-13",
+                ERROR,
+                f"per-language shares cover {total:.4f} of the Indic lane, not 1; the lane's tier "
+                "split and its language split would then describe different budgets",
+            )
+        )
+    return findings
+
+
+def check_sequence_ladder(rows: list[dict]) -> list[Finding]:
+    """INV-14 · The context length doubles, and never goes backwards.
+
+    Two ways to get this wrong. Skipping a rung -- 8K straight to 32K -- is the coarse sweep
+    exercise 02 was caught by, and it hides where the model stops generalising. Shortening it
+    mid-run wastes the longer batches already paid for, since a model that has seen 32K does not
+    need to be walked back to 8K.
+
+    Args:
+        rows: Output of `curriculum.sequence_schedule`.
+
+    Returns:
+        Findings, empty when every step is a doubling or a hold.
+    """
+    findings: list[Finding] = []
+    for row in rows:
+        multiple = row["multiple"]
+        if multiple is None:
+            continue
+        if multiple < 1:
+            findings.append(
+                Finding(
+                    "INV-14",
+                    ERROR,
+                    f"context drops to {row['length']} in the {row['stage']} stage; a model that "
+                    "has seen the longer rung does not need walking back",
+                )
+            )
+        elif multiple not in (1.0, 2.0):
+            findings.append(
+                Finding(
+                    "INV-14",
+                    ERROR,
+                    f"context jumps {multiple:.0f}x to {row['length']} in {row['stage']}, "
+                    "skipping a rung -- the ladder must double so the run can see where "
+                    "generalisation stops",
+                )
+            )
+    return findings
+
+
 def check_hypotheses_are_falsifiable(hypotheses: tuple) -> list[Finding]:
     """INV-11 · Every hypothesis states a threshold and what would refute it.
 
@@ -506,6 +592,8 @@ def run_all(config: Config | None = None) -> list[Finding]:
     findings += check_tier_shares({tier: t.share for tier, t in tiers.items()})
     findings += check_reasoning_bands(curriculum.measure_reasoning_bands())
     findings += check_difficulty_bands(curriculum.band_shares(), curriculum.BAND_MIX)
+    findings += check_language_schedule(languages.plan(), languages.UNK_GATE)
+    findings += check_sequence_ladder(curriculum.sequence_schedule(config))
     findings += check_hypotheses_are_falsifiable(proxy.HYPOTHESES)
 
     return sorted(findings, key=lambda finding: finding.level != ERROR)

@@ -12,7 +12,7 @@ from pathlib import Path
 
 from datacleaning.tokens import spread_table, unreadable_languages
 
-from mixture import benchmarks, checks, curriculum, inventory, lanes, proxy, supply
+from mixture import benchmarks, checks, curriculum, inventory, lanes, languages, proxy, supply
 from mixture.config import Config
 
 EXERCISE_ROOT = Path(__file__).resolve().parents[2]
@@ -410,6 +410,68 @@ measured, so the next rung is priced from evidence.
 Full write-up: [`EXPERIMENTS.md`](EXPERIMENTS.md)."""
 
 
+def _language_tables() -> tuple[str, str]:
+    """The per-language schedule, split into what is scheduled and what the vocabulary blocks."""
+    sched = [
+        "| language | script | `[UNK]` | tok/word | enters | share of Indic | why |",
+        "| --- | --- | ---: | ---: | --- | ---: | --- |",
+    ]
+    for entry in languages.scheduled():
+        sched.append(
+            f"| **{entry.name}** | {entry.script} | {entry.unk:.1%} | {entry.fertility:.2f} | "
+            f"{entry.wave} | {entry.share_of_indic:.0%} | {entry.because} |"
+        )
+    blocked = ["| language | script | `[UNK]` | tok/word |", "| --- | --- | ---: | ---: |"]
+    for entry in languages.blocked():
+        blocked.append(
+            f"| {entry.name} | {entry.script} | **{entry.unk:.0%}** | {entry.fertility:.2f} |"
+        )
+    return "\n".join(sched), "\n".join(blocked)
+
+
+def _sequence_table(config: Config) -> str:
+    """The context-length ladder, with the token window each rung occupies."""
+    rows = ["| context | stage | from | to | step |", "| --- | --- | ---: | ---: | ---: |"]
+    for row in curriculum.sequence_schedule(config):
+        step = "—" if row["multiple"] is None else f"x{row['multiple']:.0f}"
+        rows.append(
+            f"| **{row['length'] // 1024}K** | {row['stage']} | "
+            f"{humanise(row['from_tokens'])} | {humanise(row['to_tokens'])} | {step} |"
+        )
+    return "\n".join(rows)
+
+
+def _clean_next_table(config: Config) -> str:
+    """Which lanes the mixture shows to be starved, worst first."""
+    verdicts = supply.evaluate(lanes.shares(), config)
+    ranked = sorted(
+        (v for k, v in verdicts.items() if v.share > 0),
+        key=lambda v: -v.epochs,
+    )
+    rows = [
+        "| priority | lane | epochs | shortfall | what the cleaning should target |",
+        "| --- | --- | ---: | ---: | --- |",
+    ]
+    targets = {
+        "agentic": "nothing to clean — this lane is generated, not collected. The bill is in §8",
+        "reasoning": "the thinnest real pool, and 92% of it is one V4-lineage set; new sources "
+        "here reduce a single point of failure as much as they add tokens",
+        "stem": "the 104B the session's supply check claims and no dataset carries. Either find "
+        "it or the lane runs at 1.64 epochs",
+        "indic": "verified-native text in the ten scheduled languages, which is what tier A is "
+        "short of; nothing in a blocked script until the vocabulary is retrained",
+        "code": "no action — 0.51 epochs with 1.1T behind it",
+        "web": "no action — 0.14 epochs with 4.69T behind it",
+    }
+    for index, verdict in enumerate(ranked, 1):
+        short = humanise(verdict.shortfall) if verdict.shortfall else "—"
+        rows.append(
+            f"| {index} | {lanes.get(verdict.lane).name} | {verdict.epochs:.2f} | {short} | "
+            f"{targets.get(verdict.lane, '—')} |"
+        )
+    return "\n".join(rows)
+
+
 def render_spec(config: Config | None = None) -> str:
     """Build `SPEC.md`.
 
@@ -437,6 +499,9 @@ def render_spec(config: Config | None = None) -> str:
     protected_total = lanes.get("indic").share + lanes.get("agentic").share
     run_summary = _step_zero_summary()
     readability = curriculum.READABILITY_REJECTED
+    scheduled_languages, blocked_languages = _language_tables()
+    blocked_count = len(languages.blocked())
+    unk_gate = languages.UNK_GATE
 
     bill_rows = "\n".join(
         f"| **{item.lane}** | {humanise(item.tokens)} | {item.because} |" for item in bill
@@ -510,6 +575,35 @@ from exercise 03, not a measured limit, and is labelled as such wherever it is u
 
 {lanes.TIER_C_DISPUTE}
 
+### Which languages, and when
+
+The session asks this by name — *"when am I going to train on Sanskrit if ever, or Urdu?"* — and a
+plan that answers "Indic 18%" has not answered it. The tier split above divides the lane by
+**provenance**; this divides it by **language and time**.
+
+**The gate is measured, not chosen.** Every South Asian language in FLORES-200 was tokenised with
+our own Session 2 vocabulary. A language above {unk_gate:.0%} `[UNK]` is not scheduled at all,
+because those tokens would train the unknown-token id rather than the language — the wishful
+accounting this document argues against, applied to languages.
+
+{scheduled_languages}
+
+**Blocked until the vocabulary is retrained** — {blocked_count} languages, none scheduled, no share:
+
+{blocked_languages}
+
+**The split is by script, not by language, and one row proves it.** Kashmiri measures **0.0%** in
+Devanagari and **80.4%** in Perso-Arabic. Same language, same speakers, opposite verdicts. Nine
+Devanagari languages arrived free with Hindi; fourteen are shut out by a script the vocabulary was
+never trained on.
+
+So: **Sanskrit yes**, entering with the general wave at 1% — it reads at 0.1% because it is
+Devanagari, and it is held small because its supply is thin and its fertility is the worst of the
+readable set at 4.00 tokens per word. **Urdu no**, at 77.7%, until the retokenisation
+[`TOKENIZER.md`](TOKENIZER.md) argues for. That is the single strongest argument in this
+specification for spending the vocabulary budget, and it was reached by measuring rather than
+asserting.
+
 ---
 
 ## 3 · Agentic, reasoning and long-context, named and pointed at datasets
@@ -569,6 +663,21 @@ durations, must integrate back to it. Worst drift on any lane is
 **{curriculum.worst_deviation():.2%}** against a declared {curriculum.MIXTURE_TOLERANCE:.0%}
 tolerance, checked by `INV-6b`. Without that check the two halves of this document could disagree
 by any amount and both look fine.
+
+### The context-length ladder
+
+{_sequence_table(config)}
+
+Three rules from the session govern it, none of them ours and all of them binding on Session 6's
+dataloader. **One length per batch** — *"in a batch all examples have the same length"* — so this
+is a schedule of batch shapes, not a filter on documents. **No padding short samples up** —
+*"shorter one is a loss of compute for us"* — they are packed instead. And **the model is trained
+at every length it is claimed to support**: *"when you say 100k context, you have to train on
+100k."*
+
+It doubles at every step, checked by `INV-14`. An earlier version jumped 8K straight to 32K, which
+is the same coarse sweep exercise 02 was caught by when 2 → 5 → 6 named the wrong optimum — and it
+hides the rung where generalisation actually stops.
 
 Every seam carries a **{humanise(config.warmup_band_tokens)}-token warmup band**, because V4's
 mitigation was *never change the mixture in one hard step*. The steepest is General → Reasoning,
@@ -659,6 +768,26 @@ available is comparative and local.
 
 Naming these is the point. A share whose gap is undeclared is the *wishful accounting* the session
 exists to prevent; a share whose gap is priced is a commitment.
+
+---
+
+## 10 · The cleaning continues, aimed at the starved slots
+
+The assignment's closing instruction. The mixture above is what says which slots are starved, so
+this is its output rather than a separate exercise — ranked by how hard each lane is leaning on
+repetition.
+
+{_clean_next_table(config)}
+
+**Two of these are not cleaning problems.** Agentic cannot be cleaned into existence at any
+volume; §8 prices it as generation. And the Indic shortfall is bounded by the vocabulary before it
+is bounded by the crawler: fourteen languages are unreachable until retokenisation, so cleaning
+Bengali or Tamil today produces tokens the model would read as `[UNK]`.
+
+**The gate this feeds.** Session 1 asks for a billion clean tokens with documented provenance per
+shard before a mixture is trusted. `accumulate.py` is the store that reaches it: append-only
+shards, a persistent signature index so shard N is deduplicated against every earlier one, and
+held-out splits and the anneal reserve both flagged at write time.
 
 ---
 
