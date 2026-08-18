@@ -8,6 +8,9 @@ Every verdict is checked twice: once on numbers that should produce it, once on 
 not. A reader who only ever sees "supported" has no way to tell a working test from a broken one.
 """
 
+import json
+from pathlib import Path
+
 import pytest
 from mixture import repetition, scale, seam
 from mixture.train import TrainConfig, seam_shares
@@ -163,3 +166,38 @@ def test_an_inversion_inside_the_noise_ranks_nothing():
         ]
     )
     assert reading["verdict"] == "unstable but inside noise"
+
+
+# ---- the save path, exercised before an expensive run relies on it ----------------------------
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("module", [repetition, seam, scale])
+def test_each_experiment_can_write_its_own_results(module, tmp_path, monkeypatch):
+    """A one-step run of each experiment, purely to prove its bundle can be written.
+
+    This exists because all three could not. `pick_device` returns a `torch.device`, which the
+    bundles carried straight into `json.dumps`, and `json` cannot encode it — so every experiment
+    trained to completion and then died on the last line, throwing the whole run away. Fifteen
+    trained models were lost to a serialisation bug that one step would have caught.
+
+    The lesson generalises past this bug: **the last line of a long job is the one to test first.**
+    """
+    torch = pytest.importorskip("torch", reason="the proxy harness is an optional extra")
+    assert torch  # the import is the point
+
+    monkeypatch.setattr(module, "RESULTS", tmp_path / "out.json", raising=False)
+    if hasattr(module, "FRACTIONS"):
+        monkeypatch.setattr(module, "FRACTIONS", (1.0,))
+    if hasattr(module, "SIZES"):
+        monkeypatch.setattr(module, "SIZES", module.SIZES[:1])
+    if hasattr(module, "SEAM_AT"):
+        monkeypatch.setattr(module, "SEAM_AT", 1)
+
+    bundle = module.run(seeds=(0,), steps=2, batch=2)
+    path = module.save(bundle)
+
+    written = json.loads(Path(path).read_text(encoding="utf-8"))
+    assert written["device"], "the bundle must record which device produced it"
+    assert isinstance(written["device"], str), "device must be serialised as a string"
+    assert written["reading"], "an experiment that reports no reading has decided nothing"

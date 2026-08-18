@@ -247,8 +247,9 @@ Flesch-Kincaid was measured and **rejected for not being monotone** across our o
 39.9B (2.0%) is held back for the anneal, reserved at
 write time so the ordinary sampler cannot see it.
 
-**And the proxy it commits to has been run.** Four arms × five seeds over a corpus built entirely
-from text this repo already tracks, scored on held-out bits per byte:
+**And the proxy it commits to has been run.** Four arms × 5 seeds over
+1,784,212 tokens across 6 lanes, scored on held-out bits per byte, with every
+threshold fixed before the run:
 
 | arm | web | Code | Indic | STEM | traces | Agentic | the question it answers |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
@@ -257,10 +258,17 @@ from text this repo already tracks, scored on held-out bits per byte:
 | **C** No protected floor | 38% | 34% | 4% | 14% | 10% | 0% | does the floor buy anything, or is it ceremony? this is what an English-heavy selector left unchecked would produce |
 | **D** Indic halved | 36% | 31% | 9% | 13% | 9% | 2% | is 18% defensible, or would 9% have bought the same thing? |
 
-Every effect is quoted against the spread its own arm shows against itself, and **H3 is qualified
-rather than supported** because its declared refutation had a second clause the first implementation
-did not check. [`EXPERIMENTS.md`](src/exercises/05-datamixtures-and-curriculum/EXPERIMENTS.md) says plainly what a small corpus does and does
-not license: it does not validate the mixture at 40B, and is not offered as doing so.
+| | claim | effect | threshold | seed noise | verdict |
+| --- | --- | ---: | ---: | ---: | --- |
+| **H1** | arm A beats arm B on run-weighted held-out bits-per-byte | +4.21% | 2% | 1.11% | **supported** |
+| **H2** | removing the protected floor makes Indic materially worse | +6.88% | 5% | 1.55% | **supported** |
+| **H3** | halving Indic costs Indic more than it gains the other lanes | +3.52% | 3% | 2.06% | **refuted** |
+
+**H3 is refuted**, on a second clause of its own declared refutation — and it reads `refuted` only because the corpus grew. The lane that trips the clause had no text in the first run, so there was nothing to observe it on. A missing lane did not make the hypothesis safer; it made it untestable, and untestable was reading as passing. What the refutation obliges, and why the share has not moved on a stand-in lane at this scale, is argued in `SPEC.md` §7.
+
+Every effect is quoted against the spread its own arm shows against itself.
+[`EXPERIMENTS.md`](src/exercises/05-datamixtures-and-curriculum/EXPERIMENTS.md) says plainly what this does and does not license: it does not
+validate the mixture at 40B, and is not offered as doing so.
 
 > **Live:** <https://llm-pretraining-demos.vercel.app/05-datamixtures-and-curriculum/> — drag the
 > lane shares and watch supply, floors and verdicts respond.

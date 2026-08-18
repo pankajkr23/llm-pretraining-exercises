@@ -1276,6 +1276,43 @@ def render_root_section(config: Config | None = None) -> str:
     agentic_ceiling = humanise(agentic.raw_supply * 16.4)
     stem_quoted = humanise(inventory.SESSION_SUPPLY_CHECK["stem"])
 
+    import json
+
+    step_zero = json.loads(RESULTS.read_text(encoding="utf-8")) if RESULTS.exists() else None
+    if step_zero:
+        seed_count = len(step_zero["seeds"])
+        lane_count = len(step_zero["corpus"])
+        proxy_tokens = f"{sum(s['train_tokens'] for s in step_zero['corpus'].values()):,}"
+        verdict_rows = [
+            "| | claim | effect | threshold | seed noise | verdict |",
+            "| --- | --- | ---: | ---: | ---: | --- |",
+        ]
+        for comparison in step_zero["comparisons"]:
+            verdict_rows.append(
+                f"| **{comparison['key']}** | {comparison['claim']} | "
+                f"{comparison['effect']:+.2%} | {comparison['threshold']:.0%} | "
+                f"{comparison['noise']:.2%} | **{comparison['verdict']}** |"
+            )
+        verdict_table = "\n".join(verdict_rows)
+        refuted = [c for c in step_zero["comparisons"] if c["verdict"] == "refuted"]
+        if refuted:
+            headline_verdict = (
+                f"**{refuted[0]['key']} is refuted**, on a second clause of its own declared "
+                "refutation — and it reads `refuted` only because the corpus grew. The lane that "
+                "trips the clause had no text in the first run, so there was nothing to observe "
+                "it on. A missing lane did not make the hypothesis safer; it made it untestable, "
+                "and untestable was reading as passing. What the refutation obliges, and why the "
+                "share has not moved on a stand-in lane at this scale, is argued in `SPEC.md` §7."
+            )
+        else:
+            headline_verdict = (
+                "No hypothesis was refuted, and each verdict is reported against its own noise."
+            )
+    else:
+        seed_count, lane_count, proxy_tokens = 0, 0, "0"
+        verdict_table = "_The proxy has not run._"
+        headline_verdict = ""
+
     findings_table = "\n".join(
         [
             "| | finding | why it changes something |",
@@ -1326,15 +1363,19 @@ Flesch-Kincaid was measured and **rejected for not being monotone** across our o
 {humanise(reserve.total)} ({reserve.share_of_run:.1%}) is held back for the anneal, reserved at
 write time so the ordinary sampler cannot see it.
 
-**And the proxy it commits to has been run.** Four arms × five seeds over a corpus built entirely
-from text this repo already tracks, scored on held-out bits per byte:
+**And the proxy it commits to has been run.** Four arms × {seed_count} seeds over
+{proxy_tokens} tokens across {lane_count} lanes, scored on held-out bits per byte, with every
+threshold fixed before the run:
 
 {_arms_table()}
 
-Every effect is quoted against the spread its own arm shows against itself, and **H3 is qualified
-rather than supported** because its declared refutation had a second clause the first implementation
-did not check. [`EXPERIMENTS.md`]({EXPERIMENTS_LINK}) says plainly what a small corpus does and does
-not license: it does not validate the mixture at 40B, and is not offered as doing so.
+{verdict_table}
+
+{headline_verdict}
+
+Every effect is quoted against the spread its own arm shows against itself.
+[`EXPERIMENTS.md`]({EXPERIMENTS_LINK}) says plainly what this does and does not license: it does not
+validate the mixture at 40B, and is not offered as doing so.
 
 > **Live:** <https://llm-pretraining-demos.vercel.app/05-datamixtures-and-curriculum/> — drag the
 > lane shares and watch supply, floors and verdicts respond.

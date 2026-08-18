@@ -145,7 +145,7 @@ def run(seeds: tuple[int, ...] = SEEDS, steps: int = STEPS, batch: int = BATCH) 
         )
 
     return {
-        "device": device,
+        "device": str(device),
         "steps": steps,
         "batch": batch,
         "seeds": list(seeds),
@@ -213,7 +213,7 @@ def save(bundle: dict, path: Path = RESULTS) -> Path:
         The path written.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(bundle, indent=1) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(bundle, indent=1, default=str) + "\n", encoding="utf-8")
     return path
 
 

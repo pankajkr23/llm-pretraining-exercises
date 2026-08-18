@@ -101,7 +101,7 @@ def run(seeds: tuple[int, ...] = SEEDS, steps: int = STEPS, batch: int = BATCH) 
         logger.info("%s params: ranking %s", f"{params:,}", " < ".join(ranking))
 
     return {
-        "device": device,
+        "device": str(device),
         "steps": steps,
         "batch": batch,
         "seeds": list(seeds),
@@ -174,7 +174,7 @@ def save(bundle: dict) -> object:
         The path written.
     """
     RESULTS.parent.mkdir(parents=True, exist_ok=True)
-    RESULTS.write_text(json.dumps(bundle, indent=1) + "\n", encoding="utf-8")
+    RESULTS.write_text(json.dumps(bundle, indent=1, default=str) + "\n", encoding="utf-8")
     return RESULTS
 
 

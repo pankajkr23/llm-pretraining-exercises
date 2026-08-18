@@ -128,6 +128,43 @@ notebook document in Python clothing, and one of its lines is a Colab badge URL 
 - `datacleaning.tokens` — counts the reasoning-band traces with the Session 2 vocabulary, and
   supplies the fertility and `[UNK]` tables `TOKENIZER.md` is built from.
 
+## The corpus has six lanes, and three of them are fetched
+
+`corpus.sources()` returns three lanes from tracked text (web, indic, code) and three more —
+**stem, reasoning, agentic** — only when `data/proxy/` exists. `tools/fetch_proxy_corpus.py` writes
+it: a tracked download script over a gitignored cache, which is the convention `AGENTS.md` already
+sets for datasets. A clone without the cache builds the original three-lane corpus and Step 0 stays
+reproducible.
+
+Rules that are easy to erode:
+
+- **The fetcher verifies the licence at fetch time, from the dataset card**, not from exercise 03's
+  catalogue, which records what a human read once. Three candidates were refused on that basis:
+  `open-web-math` declares no licence, `competition_math` is gated, `xlam` is CC-BY-NC on some
+  releases. An unverifiable licence is not a permissive one.
+- **They are stand-ins and must keep saying so.** GSM8K is not peS2o. The manifest records
+  `stands_in_for` per lane and a test fails if a fetched lane stops declaring it.
+- **Do not commit the cache.** It is other people's text; the manifest and the script are what get
+  versioned.
+
+**Why this mattered more than it looks.** With no STEM lane there was nothing to observe the second
+clause of H3's refutation on, so H3 read `qualified`. With the lane funded, the clause fires and H3
+is **refuted**. A missing lane does not make a hypothesis safer — it makes it untestable, and
+untestable was reading as passing. Before trusting what an experiment reports, check what it is
+unable to see.
+
+## Two bugs in the plumbing, both silent
+
+- **`experiment.save` wrote to `artifacts/`, which is gitignored, while the tracked evidence is in
+  `results/`.** A finished run left the committed result untouched: the documents kept rendering an
+  older experiment while the terminal showed the new one, and nothing failed. It writes to
+  `results/` now, and that is the single source the documents render from.
+- **`json` cannot encode a `torch.device`.** All three follow-on experiments built their bundle with
+  `{"device": device}` and died on the final line *after* training everything — fifteen trained
+  models thrown away by the last statement in the program. `test_each_experiment_can_write_its_own
+  _results` now runs each for two steps purely to exercise the save path. **The last line of a long
+  job is the one to test first.**
+
 ## The proxy harness
 
 `corpus.py` · `model.py` · `train.py` · `evaluate.py` · `experiment.py` · `bench.py`. Rules that
