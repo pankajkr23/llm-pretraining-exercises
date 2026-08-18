@@ -895,6 +895,56 @@ largest open question, for the 1B rung to decide.
 million tokens and half its lanes are stand-ins. Step 0's job was to prove the harness, measure the
 machine, and price the next rung — which it did.
 
+
+---
+## Three more experiments, and none of them cost anything
+
+The 1B rung needs money. These did not — they run on a laptop GPU — and each one tests something
+this specification *asserts* rather than something it measured.
+
+- **E1** · what is a re-read token actually worth? The supply analysis borrows a `×16.4` ceiling and
+  that constant is what makes the agentic lane impossible rather than merely expensive.
+- **E2** · does the warmup band at a stage seam calm the gradient? The spec schedules one at every
+  seam, promised this test, and had not run it.
+- **E3** · does the arm ranking survive a change of scale? §7 names a rank inversion as its own
+  falsifier, and naming a falsifier without testing it is cheap.
+"""), code("""
+import json
+from pathlib import Path
+
+from mixture import corpus
+
+results = corpus.EXERCISE_ROOT / 'results'
+for name in ('repetition', 'seam', 'scale'):
+    path = results / f'{name}.json'
+    if not path.exists():
+        print(f'{name}: not run on this checkout')
+        continue
+    reading = json.loads(path.read_text(encoding='utf-8'))['reading']
+    print(f"{name}: {reading['verdict']}")
+    detail = reading.get('note') or reading.get('shape') or ''
+    print('   ', detail.splitlines()[0][:180])
+    print()
+"""), md("""
+**Read the verdicts, not the direction.** Two of these came back without a finding, and that is the
+useful part of running them.
+
+E1 does show something: re-reading measurably costs held-out loss, and at eighteen passes the pool
+scores about 7% worse than at one. That is the direction the borrowed curve predicts. It is *not* a
+confirmation of `×16.4` — that constant was fitted far above a 4-layer model on under two million
+tokens — and the curve we measured is not even monotone, though the one inversion sits inside the
+seed spread.
+
+E2 could not separate the banded seam from the hard one. The band still trends the right way, and
+that is worth exactly nothing on its own. Worth knowing: **more seeds would not fix it**, because
+the rule compares against the sample spread, which does not shrink with `n`. What *would* fix it is
+a less noisy statistic than a maximum over a window — and swapping the statistic after seeing the
+result is how a null quietly becomes a finding. So it stands.
+
+That is the habit worth taking from this notebook. An experiment that reports nothing has still
+told you something: that your instrument is too blunt for the question, which is a fact about the
+instrument and not about the world.
+
 ---
 ## What to take away
 
