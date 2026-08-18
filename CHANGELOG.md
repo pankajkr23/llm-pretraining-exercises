@@ -36,6 +36,35 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   fundable. Both readings are worked through, and choosing the other one moves the hole rather than
   filling it.
 
+- **The proxy is no longer a commitment — it has been run.** Four arms × five seeds × 500 steps
+  over a 523k-token corpus built entirely from text this repository already tracks (exercise 02's
+  wiki-faithful English, Hindi, Telugu and Maithili, plus this repo's own Python), so the
+  experiment reproduces from a fresh clone with no network. Scored on held-out bits per byte:
+
+  | | claim | effect | threshold | seed noise | verdict |
+  | --- | --- | ---: | ---: | ---: | --- |
+  | H1 | a composed mixture beats crawling what is cheap | +3.00% | 2% | 1.45% | supported |
+  | H2 | removing the protected floor hurts Indic | +7.36% | 5% | 0.93% | supported |
+  | H3 | halving Indic costs Indic more than it gains others | +3.53% | 3% | 0.85% | **qualified** |
+
+  Every effect is quoted against the spread the same arm shows against itself, which is the only
+  reason these read as results rather than as three numbers. **H3 is qualified** because writing
+  the evaluator exposed that its declared refutation had two clauses — *"within 3% ... or the other
+  lanes gain more than 1%"* — and only the first was implemented. Halving Indic costs Indic 3.53%
+  and gains code 1.20%, past the second threshold; that gain sits inside code's own 1.34% seed
+  spread, so the honest verdict settles it in neither direction.
+
+  [`EXPERIMENTS.md`](src/exercises/05-datamixtures-and-curriculum/EXPERIMENTS.md) is written to stop
+  a reader over-claiming from it, and says plainly that nothing here validates the mixture at 40B.
+
+- **The local machine's throughput is measured, not guessed.** `proxy.HARDWARE` carried `unknown`
+  on the argument that a plausible figure would decide a spending question on evidence nobody
+  gathered. `mixture.bench` now sweeps six model sizes on every available device: **5.281 TFLOP/s**,
+  which prices the 1B rung at ~34 hours and ~$98 rented against **105 days** locally. The
+  measurement was itself wrong the first time — one-off Metal shader compilation was charged to
+  whichever run happened to be first, reporting 1.06 TFLOP/s where the same configuration sustains
+  3.01 — so warm-up steps are now trained but not timed.
+
 - **Thirteen invariants enforced in CI**, each paired with a twin proving it fails when broken,
   plus `tests/test_mixture_mutation.py`, which disables every guard in turn and requires the suite
   to go red. 13 of 13 mutants killed — so no guard in this exercise is decorative.

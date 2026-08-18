@@ -817,6 +817,68 @@ print(spec[:1500])
 
 md("""
 ---
+## 14 · Step 0 actually ran
+
+Everything above is a specification. This is what happened when the experiment it commits to was
+run: **4 arms × 5 seeds × 500 steps** on the committed corpus.
+""")
+
+code("""
+import json, pathlib
+from mixture import export
+
+results = json.loads(export.RESULTS.read_text(encoding='utf-8'))
+scored = sorted(next(iter(next(iter(results['arms'].values()))['per_seed'].values())))
+
+print(f\"device {results['device']} · {results['throughput']['tflops_median']:.3f} TFLOP/s median\")
+print(f\"{results['steps']} steps x batch {results['batch']} x {len(results['seeds'])} seeds\\n\")
+print(f\"{'arm':<24}\" + ''.join(f'{l:>18}' for l in scored) + f\"{'weighted':>18}\")
+for key, arm in results['arms'].items():
+    cells = ''
+    for lane in scored:
+        v = [s[lane] for s in arm['per_seed'].values()]
+        cells += f'{sum(v)/len(v):>11.4f}±{max(v)-min(v):>6.4f}'
+    w = list(arm['weighted'].values())
+    print(f\"{key + ' ' + arm['name']:<24}{cells}{sum(w)/len(w):>11.4f}±{max(w)-min(w):>6.4f}\")
+""")
+
+md("""
+**Read down a column, never across a row.** Indic scores lower than code on every arm because
+Devanagari carries about three UTF-8 bytes per character — the same information costs more bytes,
+so fewer bits per one. That is a fact about the denominator, not about difficulty.
+
+Now the verdicts, against thresholds fixed before any of this ran:
+""")
+
+code("""
+for c in results['comparisons']:
+    print(f\"{c['key']} on {c['lane']:<9} effect {c['effect']:>+7.2%}  \"
+          f\"threshold {c['threshold']:>4.0%}  seed noise {c['noise']:>6.2%}  -> {c['verdict'].upper()}\")
+    if c.get('secondary'):
+        s = c['secondary']
+        print(f\"    second clause: {s['lane']} gains {s['gain']:+.2%} vs {s['threshold']:.0%}, \"
+              f\"noise {s['noise']:.2%}, triggered={s['triggered']}, clears noise={s['clears_noise']}\")
+    print(f\"    {c['note']}\\n\")
+""")
+
+md("""
+**H3 is `qualified`, and that is the most useful line in the table.**
+
+Its declared refutation had two clauses: *"arm D's Indic bits-per-byte is within 3% of arm A's, **or
+the other lanes gain more than 1%**"*. The first implementation of the comparison checked only the
+first clause, and would have reported a clean `supported` for a hypothesis its own results partly
+trip — halving Indic costs Indic 3.53% and gains code 1.20%.
+
+Implementing the second clause was honouring what had been written down in advance, not adding a
+threshold after seeing the answer. And the honest verdict is still not a clean refutation: that
+1.20% gain sits inside code's own 1.34% seed spread, so these runs settle it in neither direction.
+
+**What this does not license.** Nothing here validates the mixture at 40B. The corpus is 523k
+tokens, four of the seven lanes have no committed text and were dropped, and an H1 restricted to
+three lanes is a weaker claim than the one declared. Step 0's job was to prove the harness, measure
+the machine, and price the next rung — which it did.
+
+---
 ## What to take away
 
 1. **"Out of what?"** is the whole exercise. Summing named datasets instead of quoting slot totals
@@ -825,19 +887,24 @@ md("""
    that is *impossible*, and the distinction changes what you do about it.
 3. **State the version of a finding that survives its own corrections.** The agentic lane fails on
    raw, unmasked tokens — so attacking our estimate does not rescue it.
-4. **Refuse to invent the number you most want.** No throughput figure for hardware nobody
-   measured, even though it would make the cost table look complete.
-5. **A guard nobody has watched fail is not a guard.**
+4. **Refuse to invent the number you most want** — and then go and measure it. The throughput field
+   was empty on purpose; Step 0 filled it, and filling it revealed the *measurement* was wrong too,
+   by a factor of three, until warm-up steps stopped being timed.
+5. **Establish the noise floor before ranking anything.** Every effect above is quoted against the
+   spread its own arm shows against itself.
+6. **A guard nobody has watched fail is not a guard** — and a refutation condition nobody checks
+   both clauses of is not a refutation condition.
 
 ### Where this goes next
 
-The proxy is **declared, not run**. Step 0 — a free smoke test that measures real local throughput
-and proves the metric separates arms — is the next piece of work, and the spend decision after it
-is arithmetic rather than a guess.
+Step 0 is done. The rung that would earn a real claim is **1B parameters × 2B tokens × 4 arms**,
+which the measured throughput prices at about **34 hours and $98** on rented H100s against **105
+days** locally. That decision is now arithmetic rather than a guess, which was the point.
 
 **Full specification:** [`SPEC.md`](../src/exercises/05-datamixtures-and-curriculum/SPEC.md) ·
-**vocabulary decision:** [`TOKENIZER.md`](../src/exercises/05-datamixtures-and-curriculum/TOKENIZER.md) ·
-**running log:** [`PROGRESS.md`](../src/exercises/05-datamixtures-and-curriculum/PROGRESS.md)
+**results:** [`EXPERIMENTS.md`](../src/exercises/05-datamixtures-and-curriculum/EXPERIMENTS.md) ·
+**vocabulary:** [`TOKENIZER.md`](../src/exercises/05-datamixtures-and-curriculum/TOKENIZER.md) ·
+**log:** [`PROGRESS.md`](../src/exercises/05-datamixtures-and-curriculum/PROGRESS.md)
 """)
 
 notebook = {

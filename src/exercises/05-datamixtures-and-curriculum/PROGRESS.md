@@ -9,16 +9,17 @@ so the work can be picked up cold. Newest entries at the top of each section.
 
 ## Open items — for review
 
-**Track A (the specification) is complete.** All seven assignment items are answered in `SPEC.md`,
-126 tests pass, and every guard has been watched to fail. What is left is your call, not a blocker:
+**Tracks A and B are done.** All seven assignment items are specified, and the proxy the
+specification commits to has been run and its numbers brought back. What remains is your call.
 
-| # | item | status | what it needs |
+| # | item | status | note |
 | --- | --- | --- | --- |
-| O1 | **The proxy is declared, not run.** `SPEC.md` commits to the experiment and fixes its thresholds in advance; no arm has been trained. | open | Step 0 first — a free smoke test on the M4 Max that measures real throughput and proves the metric separates arms. Then the spend decision is arithmetic rather than a guess. `train.py` and `evaluate.py` do not exist yet. |
-| O2 | **The M4 Max throughput is unmeasured**, and `proxy.py` deliberately refuses to invent one. | open | Step 0. Until then the ladder shows `unmeasured` rather than a plausible number. |
-| O3 | **No interactive page.** Exercises 01–04 each ship one; this one does not. | open, optional | A mixture composer would let a reviewer drag shares and watch supply and floors go red. Track C in the plan — worth cutting before the proxy if time is short. |
-| O4 | **No Colab notebook yet**, which the standing mandate requires for every session. | open | `notebooks/S05-datamixtures-and-curriculum.ipynb`, importing `mixture` rather than re-implementing it. |
-| O5 | **Exercise 04's deduplication holds everything in memory.** Fine at 85.7M tokens, will not reach 1B. | noted, not touched | Sharded MinHash with a persistent cross-shard index. If it moves exercise 04's published numbers, those get corrected where they were published. |
+| O1 | **Run the proxy** | **done** | 4 arms × 5 seeds × 500 steps on MPS. 2 supported, 1 qualified. `EXPERIMENTS.md`. |
+| O2 | **Measure local throughput** | **done** | 5.281 TFLOP/s, measured by `mixture.bench` across six model sizes. `proxy.HARDWARE` no longer says `unknown`. |
+| O3 | **No interactive page** | open, optional | Exercises 01–04 each ship one. A mixture composer — drag shares, watch supply and floors go red — would help a reviewer push on numbers. Cut this before anything else if time is short. |
+| O4 | **Colab notebook** | **done** | `notebooks/S05-datamixtures-and-curriculum.ipynb`, 37 code cells, ends on the Step 0 results. |
+| O5 | **Exercise 04's dedup is in-memory** | open, not touched | Fine at 85.7M tokens, will not reach 1B. Needs sharded MinHash with a persistent cross-shard index. If it moves exercise 04's published numbers, correct them where they were published. |
+| O6 | **The 1B rung has not been run** | open, needs your decision | Priced from the measurement at **~34 h and ~$98** on rented H100s, against **105 days** locally. This is the rung that would earn a claim about the mixture; Step 0 explicitly does not. |
 
 ### Security and safety log
 
@@ -27,7 +28,19 @@ third-party packages were added: the exercise depends only on exercises 03 and 0
 workspace members already in the lockfile. Nothing was downloaded, and no external service was
 contacted.
 
-One sandbox note, recorded because it looks alarming and is not. Run inside the agent sandbox, the
+**Two sandbox notes**, both recorded because they look alarming and are not.
+
+**The sandbox will lie to you about the training device.** It blocks the OS-version query torch
+uses, so `torch.backends.mps.is_available()` returns `False` and the harness silently trains on
+CPU. The throughput would be a real measurement of the wrong device — which is why every run record
+prints the device it actually got, and why `mixture.bench` and `mixture.experiment` were run with
+the sandbox off. Check that field before believing a rate.
+
+The one new dependency is **torch, from PyPI**, and it is an *optional extra* so CI never pulls it.
+No other package, dataset or network resource was added: the proxy corpus is built entirely from
+text this repository already tracks.
+
+And the older one. Run inside the agent sandbox, the
 **browser suite reports 45 failures** — all of them `PermissionError: [Errno 1] Operation not
 permitted` on `socket.bind`, because the sandbox denies the tests' own localhost HTTP server. It is
 not a regression: this branch changes **no file under any `web/`** directory. Re-run with the
@@ -38,12 +51,14 @@ whether the server could bind before believing it.
 
 | check | result |
 | --- | --- |
-| `ruff check .` · `ruff format --check .` | clean, 105 files |
-| `uv run pytest -m "not integration"` | **547 passed** |
+| `ruff check .` · `ruff format --check .` | clean, 112 files |
+| `uv run pytest -m "not integration"` | **575 passed** |
 | `uv run pytest -m integration` (sandbox off) | **81 passed, 1 skipped** |
 | mutation testing over the guards | **13/13 mutants killed** |
-| notebook code cells executed | **34/34 clean**, outputs stripped |
+| notebook code cells executed | **37/37 clean**, outputs stripped |
 | `uv run python -m mixture` | 0 errors, 0 warnings, buildable |
+| `uv run python -m mixture.bench` | 5.281 TFLOP/s measured, six sizes, two devices |
+| `uv run python -m mixture.experiment` | 20 runs · 2 supported, 1 qualified |
 
 ---
 
@@ -72,6 +87,30 @@ with `uv run python -m mixture.inventory`.
 Itemised **4.691T** against a supply check of **4.5T** (+4.2%). Immaterial — both are far above
 the 680B demand — but it is the same class of error as F1 and is recorded so the STEM finding does
 not look cherry-picked.
+
+### F6 · The measurement was wrong before the result was
+
+The first throughput sweep charged one-off Metal shader compilation to whichever run happened to be
+first, reporting **1.06 TFLOP/s** where the identical configuration sustains **3.01**. Warm-up
+steps are now trained but not timed. A published figure 3× low would have made the spend decision
+wrong in the direction hardest to notice — the cautious one.
+
+Measured peak: **5.281 TFLOP/s** at the top of a six-point sweep. The plan had *estimated* ~4, so
+the estimate was low rather than high.
+
+### F7 · Step 0 ran, and one hypothesis came back qualified rather than supported
+
+| | lane | effect | threshold | seed noise | verdict |
+| --- | --- | ---: | ---: | ---: | --- |
+| H1 | weighted | +3.00% | 2% | 1.45% | supported |
+| H2 | indic | +7.36% | 5% | 0.93% | supported |
+| H3 | indic | +3.53% | 3% | 0.85% | **qualified** |
+
+H3's declared refutation had **two** clauses — *"within 3% ... **or the other lanes gain more than
+1%**"* — and the first version of the comparison checked only one. It would have printed a clean
+`supported` for a hypothesis its own results partly trip: halving Indic costs Indic 3.53% and gains
+code 1.20%. The gain sits inside code's own 1.34% seed spread, so the honest verdict is that these
+runs settle it in neither direction. `EXPERIMENTS.md` carries the whole thing.
 
 ### F4 · The 2% agentic share cannot be funded, and the finding survives every objection to it
 
@@ -109,6 +148,21 @@ plausible numbers nobody measured.
 ---
 
 ## Change log
+
+### 2026-08-18 (proxy)
+
+- **The harness**: `corpus.py` (three real lanes from committed text, 523k tokens, zero network),
+  `model.py`, `train.py`, `evaluate.py`, `experiment.py`, `bench.py`. torch is an optional extra so
+  CI never pulls it.
+- **Throughput measured** across six model sizes on two devices. Found and fixed a 3× error in the
+  measurement itself before trusting it (F6).
+- **Step 0 run**: 4 arms × 5 seeds × 500 steps. 2 supported, 1 qualified (F7).
+- **`EXPERIMENTS.md`** rendered from a tracked `results/step0.json`, written to stop a reader
+  over-claiming from a 523k-token corpus.
+- **31 new tests**, including three for the two-clause refutation the results exposed.
+- Notebook extended with a Step 0 section; its earlier claim that the M4 Max row said `UNMEASURED`
+  had been made false by measuring it.
+
 
 ### 2026-08-18 (later)
 

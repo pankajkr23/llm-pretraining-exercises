@@ -31,9 +31,10 @@ AGENTS.md                         # repo conventions (imported by CLAUDE.md; poi
 .github/workflows/ci.yml          # lint + tests + secret scan
 ```
 
-**Data conventions** — three concerns kept physically separate: briefs/docs are tracked; datasets live
-in a top-level `data/` (git-ignored, with a tracked manifest); per-exercise outputs go to `artifacts/`
-(git-ignored).
+**Data conventions** — three concerns kept physically separate: assignment briefs are **never
+tracked** (`BRIEF.md` is gitignored everywhere — a brief is the course's text and is input for
+whoever builds the exercise, not the deliverable); datasets live in a top-level `data/` (git-ignored,
+with a tracked manifest); per-exercise outputs go to `artifacts/` (git-ignored).
 
 ## Tech stack
 
@@ -60,7 +61,7 @@ uv run pytest            # run every exercise's tests from the root
 | 02 | [Tokenization](src/exercises/02-tokenization/) | A single 10k BPE vocabulary balanced across India's Wikipedia article in four languages — scored on faithful units, with a one-page explainer showing why the biggest number on the page is the one we rejected, and a live in-browser encoder you can paste into. |
 | 03 | [Data collection framework](src/exercises/03-data-collection-framework/) | How you decide what an India-first 40B model trains on — one interactive page, thirteen chapters: how much text, what kind, **which datasets**, how to clean it, how to tokenise it, and how you would know it worked. 145 datasets graded on five checks, of which **4 are committable today**; five data-handling invariants enforced in CI, plus a browser suite that tests the rendered page. |
 | 04 | [Data cleaning & deduplication](src/exercises/04-data-cleaning-dedup/) | Eight cleaning stages over three real corpora, counting tokens with **our own Session 2 tokenizer** rather than estimating them. Deduplication by MinHash/LSH, PII masking with its false positives on show, and the finding that **three of the nine standard quality rules are not language-neutral** — applied unchanged to Indic text they delete it rather than filter it. Ships a [Colab notebook](notebooks/S04-data-cleaning-dedup.ipynb). |
-| 05 | [Data mixtures & curriculum](src/exercises/05-datamixtures-and-curriculum/) | The V5 training recipe as a **[specification you can argue with](src/exercises/05-datamixtures-and-curriculum/SPEC.md)** — a defended share for every capability lane, sized against the datasets that actually exist. Summing supply from named datasets instead of quoting slot totals found a **104B hole in the STEM lane** and showed the 2% agentic lane asks **3.9× more than infinite repetition could ever be worth**. Thirteen invariants in CI, each disabled on purpose to prove it fails. |
+| 05 | [Data mixtures & curriculum](src/exercises/05-datamixtures-and-curriculum/) | The V5 training recipe as a **[specification you can argue with](src/exercises/05-datamixtures-and-curriculum/SPEC.md)** — a defended share for every capability lane, sized against the datasets that actually exist. Summing supply from named datasets instead of quoting slot totals found a **104B hole in the STEM lane** and showed the 2% agentic lane asks **3.9× more than infinite repetition could ever be worth**. Thirteen invariants in CI, each disabled on purpose to prove it fails — and **the proxy it commits to has been run**: four arms × five seeds, two hypotheses supported and one qualified by its own declared refutation clause. |
 
 More exercises are added each week.
 
@@ -223,10 +224,27 @@ than filling it, and the spec shows both.
 `tests/test_mixture_mutation.py` disables every guard in turn and requires the suite to go red, so
 none of them is decorative.
 
+**And the proxy it commits to has been run.** Four arms × five seeds over a corpus built entirely
+from text this repo already tracks, scored on held-out bits per byte:
+
+| | claim | effect | threshold | seed noise | verdict |
+| --- | --- | ---: | ---: | ---: | --- |
+| H1 | a composed mixture beats crawling what is cheap | +3.00% | 2% | 1.45% | supported |
+| H2 | removing the protected floor hurts Indic | +7.36% | 5% | 0.93% | supported |
+| H3 | halving Indic costs Indic more than it gains others | +3.53% | 3% | 0.85% | **qualified** |
+
+Every effect is quoted against the spread its own arm shows against itself, and **H3 is qualified
+rather than supported** because its declared refutation had a second clause the first
+implementation did not check. [`EXPERIMENTS.md`](src/exercises/05-datamixtures-and-curriculum/EXPERIMENTS.md)
+says plainly what a 523k-token corpus does and does not license — it does not validate the mixture
+at 40B, and is not offered as doing so.
+
 ```bash
-uv run python -m mixture              # rebuild SPEC.md from measured supply
+uv run python -m mixture              # rebuild SPEC.md and EXPERIMENTS.md from measured data
 uv run python -m mixture.inventory    # lane supplies, itemised vs the session's headlines
 uv run python -m mixture.checks       # the invariants
+uv run python -m mixture.bench        # measure this machine's throughput
+uv run python -m mixture.experiment   # run the four arms
 ```
 
 ## Development
