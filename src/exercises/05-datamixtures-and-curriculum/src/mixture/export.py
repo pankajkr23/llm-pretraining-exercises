@@ -388,27 +388,170 @@ def _step_zero_summary() -> str:
     seeds = len(results["seeds"])
 
     tokens = sum(shard["train_tokens"] for shard in results["corpus"].values())
+    lane_keys = list(results["corpus"])
+    funded = [lane for lane, share in lanes.shares().items() if share > 0]
+    missing = [lane for lane in funded if lane not in lane_keys]
+
+    refuted = [c for c in results["comparisons"] if c["verdict"] == "refuted"]
+    qualified = [c for c in results["comparisons"] if c["verdict"] == "qualified"]
+
+    if refuted:
+        first = refuted[0]
+        consequence = (
+            f"**{first['key']} is refuted, and that is the most important line in this "
+            f"specification.** Its declared refutation had a second clause, and the results trip "
+            f"it: {first['note']}\n\nThat consequence was fixed in advance, so it is owed rather "
+            "than negotiable.\n\n**It has not been moved yet, and here is exactly "
+            "why.** The gain arrives through the STEM lane, whose proxy text is a *declared "
+            f"stand-in* (GSM8K, not peS2o), measured on a {model['layers']}-layer model. This "
+            "document's own §7 says a proxy this size cannot settle the mixture, and that rule "
+            "does not stop applying when the result is inconvenient. Moving a headline share on "
+            "evidence the specification says is insufficient would be the same error in the "
+            "opposite direction. **The 1B rung decides it**, and until then this is the "
+            "specification's largest open question rather than a number quietly kept."
+        )
+    elif qualified:
+        consequence = (
+            f"**{qualified[0]['key']} is `qualified` rather than supported**: "
+            f"{qualified[0]['note']}"
+        )
+    else:
+        consequence = (
+            "No hypothesis was refuted. Every effect is reported against **the spread the same arm "
+            "shows against itself**, because exercise 02 learned that a held-out score can swing "
+            "further across arbitrary choices than the recipes it is meant to separate."
+        )
+
+    if missing:
+        coverage = (
+            f"{len(missing)} funded lanes had no corpus and were dropped ({', '.join(missing)}), "
+            "so every weighted claim is a restricted one"
+        )
+    else:
+        coverage = (
+            f"all {len(lane_keys)} funded lanes are present, three of them from openly-licensed "
+            "**stand-in** text rather than the datasets the specification funds them from"
+        )
+
     return f"""Step 0 ran on {results["device"]}: a {model["layers"]}-layer model, \
-{results["steps"]} steps, **{seeds} seeds per arm**, over a {tokens:,}-token corpus of \
-committed text across three lanes.
+{results["steps"]} steps, **{seeds} seeds per arm**, over a {tokens:,}-token corpus across \
+{len(lane_keys)} lanes.
 
 {table}
 
-Two things about that table matter more than the verdicts. Every effect is reported against **the \
-spread the same arm shows against itself**, because exercise 02 learned that a held-out score can \
-swing further across arbitrary choices than the recipes it is meant to separate. And **H3 is \
-`qualified` rather than supported** because its declared refutation had a second clause — *"or the \
-other lanes gain more than 1%"* — which the first implementation did not check and the results \
-trip: halving Indic costs Indic 3.53% and gains code 1.20%, a gain that sits inside code's own \
-1.34% seed spread and so settles nothing.
+Every effect is reported against **the spread the same arm shows against itself**, and a \
+refutation condition with more than one clause is checked on every clause. Both rules can only \
+cost this specification marks; neither can earn it any.
+
+{consequence}
 
 **This does not validate the mixture at 40B and is not offered as doing so.** The corpus is three \
-orders of magnitude too small, four of the seven lanes have no committed text and were \
-dropped, and a restricted H1 over three lanes is a weaker claim than the one declared. What Step 0 \
-establishes is that the harness works, the metric responds, and the local machine's rate is \
-measured, so the next rung is priced from evidence.
+orders of magnitude too small, {coverage}, and an arm that looks better here would still be an arm \
+that looks better on a corpus small enough to memorise.
 
 Full write-up: [`EXPERIMENTS.md`](EXPERIMENTS.md)."""
+
+
+REPETITION_RESULTS = EXERCISE_ROOT / "results" / "repetition.json"
+SEAM_RESULTS = EXERCISE_ROOT / "results" / "seam.json"
+SCALE_RESULTS = EXERCISE_ROOT / "results" / "scale.json"
+
+
+def _followups() -> str:
+    """Render E1, E2 and E3 — the experiments that cost nothing but a local GPU.
+
+    Each renders only if it has run. A heading with no results under it reads as a promise, and
+    this exercise already carries one of those in the 1B rung; it does not need three more.
+
+    Returns:
+        Markdown for whichever follow-ups have results, or a note that none have run.
+    """
+    import json
+
+    sections: list[str] = []
+
+    if REPETITION_RESULTS.exists():
+        data = json.loads(REPETITION_RESULTS.read_text(encoding="utf-8"))
+        reading = data["reading"]
+        rows = [
+            "| unique tokens | epochs | held-out bpb | ±sd | excess over full corpus |",
+            "| ---: | ---: | ---: | ---: | ---: |",
+        ]
+        reference = data["rungs"][-1]["bpb_mean"]
+        for rung in data["rungs"]:
+            excess = (rung["bpb_mean"] - reference) / reference * 100
+            rows.append(
+                f"| {rung['unique_tokens']:,} | {rung['epochs']:.2f} | {rung['bpb_mean']:.4f} | "
+                f"{rung['bpb_sd']:.4f} | {excess:+.2f}% |"
+            )
+        sections.append(
+            "### E1 · What a re-read token is actually worth\n\n"
+            "The supply analysis borrows one constant — a pool's lifetime worth is capped at "
+            "**unique × 16.4** — and that constant is what makes the agentic lane *impossible* "
+            "rather than merely expensive. It had never been checked on our own tokenizer, text "
+            "and model. A small corpus is the only place it is cheap to check, because reaching a "
+            "high epoch count costs minutes.\n\n"
+            "The training budget is held fixed and the unique pool is shrunk, so every rung does "
+            "identical work over less distinct text. Any difference is the price of re-reading.\n\n"
+            + "\n".join(rows)
+            + f"\n\n**{_sentence_case(reading['verdict'])}**, against a seed spread of "
+            f"{reading['noise_bpb']:.5f} bpb. {reading['caveat']}"
+        )
+
+    if SEAM_RESULTS.exists():
+        data = json.loads(SEAM_RESULTS.read_text(encoding="utf-8"))
+        reading = data["reading"]
+        rows = [
+            "| condition | band | peak gradient ratio | ±sd | held-out bpb | ±sd |",
+            "| --- | ---: | ---: | ---: | ---: | ---: |",
+        ]
+        for arm in data["arms"]:
+            rows.append(
+                f"| **{arm['key']}** | {arm['band_steps']} steps | {arm['peak_ratio_mean']:.3f} | "
+                f"{arm['peak_ratio_sd']:.3f} | {arm['bpb_mean']:.4f} | {arm['bpb_sd']:.4f} |"
+            )
+        sections.append(
+            "### E2 · Does the warmup band at a seam do anything?\n\n"
+            "Every stage boundary in the curriculum carries a warmup band, scheduled on the "
+            "strength of one number from the session: V4 spiked its gradient norm ~150× at a Hindi "
+            "seam. This specification says plainly that the proxy cannot reproduce that spike — "
+            "wrong scale, no frozen embeddings — but *can* test the weaker claim that a seam with "
+            "a band spikes less than the same seam without one. That test was written down and "
+            "never run.\n\nBoth conditions are identical apart from the band: same seeds, same "
+            f"steps, the same {data['between']['before']} → {data['between']['after']} mixture "
+            f"change at step {data['seam_at']}. Gradient norm is logged every step, so the seam is "
+            "observed rather than sampled around.\n\n"
+            + "\n".join(rows)
+            + f"\n\n**{_sentence_case(reading['verdict'])}** — {reading['note']}. "
+            f"{reading['caveat']}"
+        )
+
+    if SCALE_RESULTS.exists():
+        data = json.loads(SCALE_RESULTS.read_text(encoding="utf-8"))
+        reading = data["reading"]
+        arms = list(data["rungs"][0]["arms"])
+        header = "| parameters | " + " | ".join(arms) + " | ranking |"
+        rows = [header, "| ---: |" + " ---: |" * len(arms) + " --- |"]
+        for rung in data["rungs"]:
+            cells = " | ".join(f"{rung['arms'][key]['weighted_mean']:.4f}" for key in arms)
+            rows.append(f"| {rung['params']:,} | {cells} | {' < '.join(rung['ranking'])} |")
+        sections.append(
+            "### E3 · Does the ranking survive a change of scale?\n\n"
+            "§7 admits that *mixture rankings transfer across scale* is an assumption rather than "
+            "a result, and names its falsifier: a rank inversion between the smallest and largest "
+            "arm. Naming a falsifier and never testing it is cheaper than it looks honest, so "
+            "here it is tested across the range this machine reaches.\n\n"
+            + "\n".join(rows)
+            + f"\n\n**{_sentence_case(reading['verdict'])}** — {reading['note']}. "
+            f"{reading['caveat']}"
+        )
+
+    if not sections:
+        return (
+            "None of the follow-up experiments has run yet. Each costs local GPU time and no "
+            "money; `mixture.repetition`, `mixture.seam` and `mixture.scale` run them."
+        )
+    return "\n\n".join(sections)
 
 
 def _language_tables() -> tuple[str, str]:
@@ -1589,6 +1732,7 @@ def render_experiments(results: dict) -> str:
     tally = ", ".join(f"{count} {verdict}" for verdict, count in sorted(counts.items()))
 
     lane_keys = list(results["corpus"])
+    followups = _followups()
     corpus_tokens = f"{sum(lane['train_tokens'] for lane in results['corpus'].values()):,}"
     spec_lanes = [lane for lane, share in lanes.shares().items() if share > 0]
     missing = [lane for lane in spec_lanes if lane not in lane_keys]
@@ -1673,6 +1817,10 @@ Held-out bits per byte. Lower is better. `±` is the range across seeds.
 {verdict_table}
 
 {notes}
+
+## The follow-on experiments, all of them free
+
+{followups}
 
 ## What this does and does not license
 

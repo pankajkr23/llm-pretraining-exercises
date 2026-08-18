@@ -276,7 +276,8 @@ def compare(results: dict[str, ArmResult]) -> list[Comparison]:
                     note = (
                         f"the primary effect holds ({effect:+.2%}), but {best['lane']} gains "
                         f"{best['gain']:.2%}, past the {clause:.0%} the refutation condition "
-                        "names, and that gain clears its own seed spread. " + hypothesis.refuted_if
+                        "names, and that gain clears its own seed spread. The condition was "
+                        f"declared before the run as: {hypothesis.refuted_if.rstrip('.')}."
                     )
                 else:
                     verdict = "qualified"

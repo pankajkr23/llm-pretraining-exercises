@@ -90,6 +90,10 @@ Held-out bits per byte. Lower is better. `±` is the range across seeds.
 - **H3** — the primary effect holds (+3.52%), but stem gains 1.12%, past the 1% the refutation condition names, and that gain clears its own seed spread. arm D's Indic bits-per-byte is within 3% of arm A's, or the other lanes gain more than 1%. Then 18% is over-provisioned and the share should fall toward the 12% floor
   - *Second clause:* `stem` gains +1.12% against a 1% threshold, with a seed spread of 0.71%. Triggered, and clears its noise.
 
+## The follow-on experiments, all of them free
+
+None of the follow-up experiments has run yet. Each costs local GPU time and no money; `mixture.repetition`, `mixture.seam` and `mixture.scale` run them.
+
 ## What this does and does not license
 
 **Does.** The harness works: it trains, it checkpoints and resumes without restarting the data

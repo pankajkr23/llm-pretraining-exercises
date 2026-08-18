@@ -36,6 +36,45 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **The proxy corpus now funds all six lanes, not three.** `tools/fetch_proxy_corpus.py` fetches a
+  small fixed slice of openly-licensed stand-in text for STEM, reasoning and agentic — the three
+  lanes carrying the specification's most contested findings, and the three the experiment could
+  previously say nothing about. Tracked download script, gitignored cache, per-lane manifest
+  recording licence, content hash and what each stands in for. 523k → **1,784,212 training
+  tokens**. A clone without the cache still builds the original three-lane corpus, so Step 0 stays
+  reproducible. Three candidate sources were refused: one declares no licence, one is gated, one is
+  non-commercial on some releases.
+- **Three follow-on experiments, all $0 and local.** `mixture.repetition` measures what a re-read
+  token is worth against the ×16.4 ceiling the whole supply analysis borrows; `mixture.seam` tests
+  whether the warmup band at a stage boundary calms the gradient, which `SPEC.md` promised and never
+  ran; `mixture.scale` tests the rank-inversion falsifier §7 names for its own core assumption.
+  Each verdict is checked twice in tests — once on numbers that should produce it, once on numbers
+  that must not.
+
+### Changed
+
+- **H3 is now refuted, not qualified.** With the STEM lane funded, the second clause of its declared
+  refutation fires: halving Indic costs Indic 3.52% but gains STEM 1.12%, past the 1% threshold and
+  clear of its own 0.71% seed spread. With no STEM lane there was nothing for that clause to observe
+  — the hypothesis was not safer, it was untestable, and an untestable hypothesis had been reading
+  as a passing one. The declared consequence is that 18% Indic is over-provisioned. The share has
+  **not** been moved: that evidence comes from a 5.8M-parameter model through a lane whose text is a
+  declared stand-in, and `SPEC.md` says a proxy this size cannot settle the mixture. It is recorded
+  as the specification's largest open question, to be decided at the 1B rung.
+
+### Fixed
+
+- **A completed experiment left the committed result untouched.** `experiment.save` wrote to the
+  gitignored `artifacts/`, while the tracked evidence lives in `results/`, so the documents kept
+  rendering an older run while the terminal showed the new one — and nothing failed. It writes to
+  `results/` now.
+- **Narrative that could not go stale.** The prose in `EXPERIMENTS.md` and `SPEC.md` describing the
+  run ("across three lanes", "H3 came back qualified", "four of seven lanes dropped") was
+  hand-written beside generated tables and survived a run that made all of it false. It is computed
+  from the result bundle now.
+
+### Added
+
 - **The session notebook is now executed in CI, not just parsed.** `test_mixture_notebook.py` runs
   all 37 code cells through `nbclient` and fails if any raises — the one failure a reader meets
   first, and the one the structural tests could never see. Its twin appends a deliberately raising

@@ -387,7 +387,7 @@ the costume of evidence.
 
 ### It has been run
 
-Step 0 ran on mps:apple-silicon: a 4-layer model, 500 steps, **5 seeds per arm**, over a 1,784,212-token corpus of committed text across three lanes.
+Step 0 ran on mps:apple-silicon: a 4-layer model, 500 steps, **5 seeds per arm**, over a 1,784,212-token corpus across 6 lanes.
 
 | | lane | effect | threshold | seed noise | verdict |
 | --- | --- | ---: | ---: | ---: | --- |
@@ -395,9 +395,15 @@ Step 0 ran on mps:apple-silicon: a 4-layer model, 500 steps, **5 seeds per arm**
 | **H2** | indic | +6.88% | 5% | 1.55% | **supported** |
 | **H3** | indic | +3.52% | 3% | 2.06% | **refuted** |
 
-Two things about that table matter more than the verdicts. Every effect is reported against **the spread the same arm shows against itself**, because exercise 02 learned that a held-out score can swing further across arbitrary choices than the recipes it is meant to separate. And **H3 is `qualified` rather than supported** because its declared refutation had a second clause — *"or the other lanes gain more than 1%"* — which the first implementation did not check and the results trip: halving Indic costs Indic 3.53% and gains code 1.20%, a gain that sits inside code's own 1.34% seed spread and so settles nothing.
+Every effect is reported against **the spread the same arm shows against itself**, and a refutation condition with more than one clause is checked on every clause. Both rules can only cost this specification marks; neither can earn it any.
 
-**This does not validate the mixture at 40B and is not offered as doing so.** The corpus is three orders of magnitude too small, four of the seven lanes have no committed text and were dropped, and a restricted H1 over three lanes is a weaker claim than the one declared. What Step 0 establishes is that the harness works, the metric responds, and the local machine's rate is measured, so the next rung is priced from evidence.
+**H3 is refuted, and that is the most important line in this specification.** Its declared refutation had a second clause, and the results trip it: the primary effect holds (+3.52%), but stem gains 1.12%, past the 1% the refutation condition names, and that gain clears its own seed spread. arm D's Indic bits-per-byte is within 3% of arm A's, or the other lanes gain more than 1%. Then 18% is over-provisioned and the share should fall toward the 12% floor
+
+That consequence was fixed in advance, so it is owed rather than negotiable.
+
+**It has not been moved yet, and here is exactly why.** The gain arrives through the STEM lane, whose proxy text is a *declared stand-in* (GSM8K, not peS2o), measured on a 4-layer model. This document's own §7 says a proxy this size cannot settle the mixture, and that rule does not stop applying when the result is inconvenient. Moving a headline share on evidence the specification says is insufficient would be the same error in the opposite direction. **The 1B rung decides it**, and until then this is the specification's largest open question rather than a number quietly kept.
+
+**This does not validate the mixture at 40B and is not offered as doing so.** The corpus is three orders of magnitude too small, all 6 funded lanes are present, three of them from openly-licensed **stand-in** text rather than the datasets the specification funds them from, and an arm that looks better here would still be an arm that looks better on a corpus small enough to memorise.
 
 Full write-up: [`EXPERIMENTS.md`](EXPERIMENTS.md).
 

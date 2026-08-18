@@ -865,21 +865,35 @@ for c in results['comparisons']:
 """)
 
 md("""
-**H3 is `qualified`, and that is the most useful line in the table.**
+**H3 is refuted, and that is the most useful line in the table.**
 
 Its declared refutation had two clauses: *"arm D's Indic bits-per-byte is within 3% of arm A's, **or
-the other lanes gain more than 1%**"*. The first implementation of the comparison checked only the
-first clause, and would have reported a clean `supported` for a hypothesis its own results partly
-trip — halving Indic costs Indic 3.53% and gains code 1.20%.
+the other lanes gain more than 1%**"*. Halving Indic does cost Indic — the primary effect holds —
+but STEM *gains* past the 1% the second clause names, by more than its own seed spread. So the
+hypothesis fails on a condition fixed before the run.
 
-Implementing the second clause was honouring what had been written down in advance, not adding a
-threshold after seeing the answer. And the honest verdict is still not a clean refutation: that
-1.20% gain sits inside code's own 1.34% seed spread, so these runs settle it in neither direction.
+**The part worth pausing on: this verdict changed because the corpus grew.**
 
-**What this does not license.** Nothing here validates the mixture at 40B. The corpus is 523k
-tokens, four of the seven lanes have no committed text and were dropped, and an H1 restricted to
-three lanes is a weaker claim than the one declared. Step 0's job was to prove the harness, measure
-the machine, and price the next rung — which it did.
+The first version of this experiment trained on three lanes, because those were the only ones this
+repository tracked text for. STEM was one of the lanes it could not fund — so there was nothing for
+the second clause to observe, and H3 read `qualified`. Fetching openly-licensed stand-in text for
+STEM, reasoning and agentic did not make the hypothesis harder. It made it *testable*, and it
+promptly failed.
+
+**A missing lane does not make a hypothesis safer. It makes it untestable — and an untestable
+hypothesis had been reading as a passing one.** That is the most transferable thing in this
+notebook: check what your experiment cannot see before you trust what it reports.
+
+**What the refutation obliges, and what has not been done.** The declared consequence is that 18%
+Indic is over-provisioned and should fall toward its 12% floor. The share has *not* been moved. The
+gain arrives through a lane whose text is a declared stand-in (GSM8K, not peS2o) on a 4-layer
+model, and the specification's own §7 says a proxy this size cannot settle the mixture — a rule
+that does not stop applying when the result is inconvenient. It is recorded as the specification's
+largest open question, for the 1B rung to decide.
+
+**What this does not license.** Nothing here validates the mixture at 40B. The corpus is under two
+million tokens and half its lanes are stand-ins. Step 0's job was to prove the harness, measure the
+machine, and price the next rung — which it did.
 
 ---
 ## What to take away
