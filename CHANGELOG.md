@@ -10,6 +10,30 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- **Session notebooks are no longer tracked.** `notebooks/S[0-9][0-9]-*.ipynb` is gitignored; each
+  is built locally from its exercise's `tools/build_notebook.py`. The files are untouched on
+  existing checkouts and history is unchanged — they simply stop being versioned. A notebook is
+  derived from the package it imports, so tracking one versions a second copy of numbers the
+  modules already own.
+- **`notebooks/hello.ipynb` is tracked in their place**, and CI executes it. Every notebook rule is
+  checked by reading a notebook, so on a fresh clone all of them now skip — and a rule that only
+  skips is not a rule. The sample is stdlib-only on purpose: one that imported an exercise package
+  would go red whenever that exercise changed. It proves a notebook in this repo opens and runs; it
+  cannot prove a session notebook is correct, and `AGENTS.md` now says so.
+- **Dead Colab badges removed** from exercise 04's README, the root README, and — least visible —
+  from the notebook `build_notebook.py` generates, all of which pointed at paths GitHub now 404s.
+
+### Fixed
+
+- **`TOKENIZER.md` could not be rendered on a checkout without FLORES-200**, which is every fresh
+  clone and CI. `spread_table` advertised an `ours` column filled from a measurement that returns
+  empty when the corpus is absent, and exercise 05's renderer indexed it and raised
+  `KeyError: 'ours'`. The table no longer names a column with nothing behind it, the renderer draws
+  a gap rather than indexing into one, and the byte-comparison test skips where the measurement
+  cannot be reproduced. No published number changes.
+
 ### Added
 
 - **The session notebook is now executed in CI, not just parsed.** `test_mixture_notebook.py` runs
