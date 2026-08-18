@@ -44,6 +44,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   tokens**. A clone without the cache still builds the original three-lane corpus, so Step 0 stays
   reproducible. Three candidate sources were refused: one declares no licence, one is gated, one is
   non-commercial on some releases.
+- **Three follow-on experiments, all $0 and local, and all three have run.** E1: re-reading
+  measurably costs held-out loss — 18.4 epochs scores 6.79% worse than 1.15 — though the curve is
+  not monotone and one inversion sits inside the seed spread. E2: **inconclusive**, and more seeds
+  cannot change that, because the rule compares against sample spread rather than standard error.
+  E3: the ranking's endpoints agree across a 17.8× parameter range, so §7's named falsifier does
+  not fire — but two intermediate sizes order the middle of the field differently, which is
+  reported rather than smoothed over. **Arm D wins at every size**, the same direction H3's
+  refutation points; the write-up says plainly that the two are not independent evidence, since
+  they share a corpus, a tokenizer and the same stand-in STEM lane.
 - **Three follow-on experiments, all $0 and local.** `mixture.repetition` measures what a re-read
   token is worth against the ×16.4 ceiling the whole supply analysis borrows; `mixture.seam` tests
   whether the warmup band at a stage boundary calms the gradient, which `SPEC.md` promised and never

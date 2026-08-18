@@ -203,6 +203,37 @@ def test_a_stable_ranking_is_reported_as_the_assumption_surviving():
     assert reading["verdict"] == "assumption survives"
 
 
+def test_agreeing_endpoints_still_report_a_wobbling_middle():
+    """What E3 produced: 1.7M and 30.5M rank identically, the two sizes between them do not.
+
+    §7's falsifier is specifically an inversion between the smallest and largest arm, so it has not
+    fired — but "assumption survives" on its own would let a reader believe the ordering never
+    moved, which the table plainly contradicts.
+    """
+    same = ["D", "C", "A"]
+    reading = scale._read(
+        [
+            _rung_at(1_700_000, same, {"D": 2.0, "C": 2.1, "A": 2.2}),
+            _rung_at(5_700_000, ["D", "A", "C"], {"D": 2.0, "A": 2.1, "C": 2.2}),
+            _rung_at(30_000_000, same, {"D": 2.0, "C": 2.1, "A": 2.2}),
+        ]
+    )
+    assert reading["verdict"] == "assumption survives"
+    assert "not** identical all the way through" in reading["note"]
+    assert "5,700,000" in reading["note"]
+
+
+def test_endpoints_agreeing_with_a_steady_middle_says_nothing_extra():
+    """The twin: when the ordering really is stable throughout, no caveat is invented."""
+    same = ["D", "C", "A"]
+    means = {"D": 2.0, "C": 2.1, "A": 2.2}
+    reading = scale._read(
+        [_rung_at(size, same, means) for size in (1_700_000, 5_700_000, 30_000_000)]
+    )
+    assert reading["verdict"] == "assumption survives"
+    assert "not** identical" not in reading["note"]
+
+
 def test_a_rank_inversion_beyond_noise_is_the_named_falsifier():
     reading = scale._read(
         [

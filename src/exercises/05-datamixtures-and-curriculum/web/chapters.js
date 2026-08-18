@@ -713,15 +713,23 @@ function chapterResults(data) {
     return acc;
   }, {});
 
+  /* Computed, not written. This chapter said "one verdict did not survive its own noise" and
+   * "one of them is inside the range the same mixture produces against itself" — both true of an
+   * earlier run and both false after the corpus grew and the failing hypothesis fell to a second
+   * clause instead. A sentence that states a result has to be derived from that result. */
+  const lost = exp.comparisons.filter((c) => c.verdict !== 'supported');
+  const lostWord = lost.length === 1 ? 'one prediction' : `${lost.length} predictions`;
+
   return chapter({
     id: 'results',
-    pill: `${exp.seeds.length} seeds per arm; one verdict did not survive its own noise`,
+    pill: `${exp.seeds.length} seeds per arm; ${lostWord} of ${exp.comparisons.length} did not survive`,
     n: '5',
     title: 'An effect inside the noise is not a result',
     claim:
-      'Four mixtures, five random seeds each, scored on held-out text the models never trained on. ' +
-      'Hide the seed spread and three of these numbers look decisive. Show it again and one of ' +
-      'them is inside the range the *same* mixture produces against itself.',
+      `Four mixtures, ${exp.seeds.length} random seeds each, scored on held-out text the models ` +
+      'never trained on, against thresholds fixed before a single arm ran. Every effect below is ' +
+      'quoted beside the spread the *same* mixture produces against itself — because an effect ' +
+      `smaller than that spread is not a result. ${lostWord} did not survive.`,
     big: Object.entries(tally).map(([k, v]) => `${v} ${k}`).join(' · '),
     bigSub: 'of the three predictions, judged against thresholds fixed before the run',
     body: [

@@ -1,11 +1,9 @@
 {
  "device": "mps",
- "steps": 500,
- "batch": 16,
+ "steps": 2,
+ "batch": 2,
  "seeds": [
-  0,
-  1,
-  2
+  0
  ],
  "model": {
   "vocab_size": 10000,
@@ -18,112 +16,24 @@
  "ceiling_assumed": 16.4,
  "rungs": [
   {
-   "fraction": 0.0625,
-   "unique_tokens": 111509,
-   "tokens_seen": 2048000,
-   "epochs": 18.366230528477523,
-   "bpb_mean": 2.672155675443198,
-   "bpb_sd": 0.007150896152627249,
-   "per_seed": {
-    "0": 2.6767703993605174,
-    "1": 2.6757782003435637,
-    "2": 2.663918426625512
-   }
-  },
-  {
-   "fraction": 0.125,
-   "unique_tokens": 223023,
-   "tokens_seen": 2048000,
-   "epochs": 9.18290938602745,
-   "bpb_mean": 2.6285542438710965,
-   "bpb_sd": 0.015777995718980656,
-   "per_seed": {
-    "0": 2.624281716416737,
-    "1": 2.6460285087969977,
-    "2": 2.615352506399555
-   }
-  },
-  {
-   "fraction": 0.25,
-   "unique_tokens": 446050,
-   "tokens_seen": 2048000,
-   "epochs": 4.591413518663827,
-   "bpb_mean": 2.573829890136819,
-   "bpb_sd": 0.005711149149908147,
-   "per_seed": {
-    "0": 2.569400388230811,
-    "1": 2.580275699971592,
-    "2": 2.5718135822080526
-   }
-  },
-  {
-   "fraction": 0.5,
-   "unique_tokens": 892104,
-   "tokens_seen": 2048000,
-   "epochs": 2.2956964658829015,
-   "bpb_mean": 2.5884097002888624,
-   "bpb_sd": 0.013041134063512677,
-   "per_seed": {
-    "0": 2.5762970366149465,
-    "1": 2.6022141745938225,
-    "2": 2.5867178896578182
-   }
-  },
-  {
    "fraction": 1.0,
    "unique_tokens": 1784212,
-   "tokens_seen": 2048000,
-   "epochs": 1.1478456595965054,
-   "bpb_mean": 2.5022738467517094,
-   "bpb_sd": 0.0030878276178547457,
+   "tokens_seen": 1024,
+   "epochs": 0.0005739228297982527,
+   "bpb_mean": 4.061798545143231,
+   "bpb_sd": 0.0,
    "per_seed": {
-    "0": 2.499537757115899,
-    "1": 2.5056218005387834,
-    "2": 2.5016619826004463
+    "0": 4.061798545143231
    }
   }
  ],
  "reading": {
-  "noise_bpb": 0.01578,
-  "reference_epochs": 1.15,
-  "rungs": [
-   {
-    "epochs": 18.37,
-    "unique_tokens": 111509,
-    "excess_bpb_pct": 6.789,
-    "beyond_noise": true
-   },
-   {
-    "epochs": 9.18,
-    "unique_tokens": 223023,
-    "excess_bpb_pct": 5.047,
-    "beyond_noise": true
-   },
-   {
-    "epochs": 4.59,
-    "unique_tokens": 446050,
-    "excess_bpb_pct": 2.86,
-    "beyond_noise": true
-   },
-   {
-    "epochs": 2.3,
-    "unique_tokens": 892104,
-    "excess_bpb_pct": 3.442,
-    "beyond_noise": true
-   }
-  ],
-  "inversions": [
-   {
-    "between_epochs": [
-     4.59,
-     2.3
-    ],
-    "gap_bpb": 0.01458,
-    "clears_noise": false
-   }
-  ],
-  "shape": "not monotone \u2014 1 adjacent pair(s) run the wrong way, but by less than the seed spread, so the grid is finer than this experiment can resolve there",
-  "verdict": "repetition measurably costs held-out loss at this scale",
+  "noise_bpb": 0.0,
+  "reference_epochs": 0.0,
+  "rungs": [],
+  "inversions": [],
+  "shape": "monotone across every rung: less re-reading, lower loss, no exceptions",
+  "verdict": "no repetition level tested is distinguishable from the full corpus",
   "caveat": "Fixed compute, shrinking unique pool. This measures the price of re-reading in this regime; it cannot refute a constant fitted far above it."
  }
 }

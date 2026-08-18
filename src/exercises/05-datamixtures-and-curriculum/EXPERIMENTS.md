@@ -108,7 +108,9 @@ The training budget is held fixed and the unique pool is shrunk, so every rung d
 
 **Repetition measurably costs held-out loss at this scale**, against a seed spread of 0.01578 bpb. The curve is not monotone — 1 adjacent pair(s) run the wrong way, but by less than the seed spread, so the grid is finer than this experiment can resolve there.
 
-At the most-repeated rung the pool is re-read 18.4 times and costs 6.8% — worse, but nowhere near worthless, which is what the borrowed curve predicts for this range. Fixed compute, shrinking unique pool. This measures the price of re-reading in this regime; it cannot refute a constant fitted far above it.
+At the most-repeated rung the pool is re-read 18.4 times and costs 6.8% — worse, but nowhere near worthless, which is what the borrowed curve predicts for this range.
+
+*Fixed compute, shrinking unique pool. This measures the price of re-reading in this regime; it cannot refute a constant fitted far above it.*
 
 ### E2 · Does the warmup band at a seam do anything?
 
@@ -123,7 +125,28 @@ Both conditions are identical apart from the band: same seeds, same steps, the s
 
 **Inconclusive** — the +0.114 difference in peak ratio sits inside the 0.175 spread the conditions show against themselves, so this cannot rank them. The difference points the band's way, which is worth nothing on its own and is reported only so the next run knows which way to look.
 
-**More seeds would not settle this**, and that is a property of the rule rather than of the budget: the comparison is against the *sample spread*, which does not shrink with n, not against a standard error, which does. That rule is deliberately conservative and is used everywhere in this repository. Resolving this would need a lower-variance statistic — the peak is a maximum over a window, which is about the noisiest summary available — and swapping the statistic after seeing the result would be changing the test rather than gathering more evidence for it. So it stands as inconclusive.. Not V4's 150x: different scale, no frozen embeddings, and a band sized to be measurable at 400 steps rather than scaled from the specification's ~0.15% of run.
+**More seeds would not settle this**, and that is a property of the rule rather than of the budget: the comparison is against the *sample spread*, which does not shrink with n, not against a standard error, which does. That rule is deliberately conservative and is used everywhere in this repository. Resolving this would need a lower-variance statistic — the peak is a maximum over a window, which is about the noisiest summary available — and swapping the statistic after seeing the result would be changing the test rather than gathering more evidence for it. So it stands as inconclusive.
+
+*Not V4's 150x: different scale, no frozen embeddings, and a band sized to be measurable at 400 steps rather than scaled from the specification's ~0.15% of run.*
+
+### E3 · Does the ranking survive a change of scale?
+
+§7 admits that *mixture rankings transfer across scale* is an assumption rather than a result, and names its falsifier: a rank inversion between the smallest and largest arm. Naming a falsifier and never testing it is cheaper than it looks honest, so here it is tested across the range this machine reaches.
+
+| parameters | A | B | C | D | ranking |
+| ---: | ---: | ---: | ---: | ---: | --- |
+| 1,709,568 | 2.8279 | 2.9103 | 2.8236 | 2.8188 | D < C < A < B |
+| 5,785,088 | 2.5974 | 2.7203 | 2.6064 | 2.5957 | D < A < C < B |
+| 14,585,856 | 2.4933 | 2.6024 | 2.4969 | 2.4875 | D < A < C < B |
+| 30,471,168 | 2.4446 | 2.5532 | 2.4342 | 2.4295 | D < C < A < B |
+
+**Assumption survives** — no pair reverses between the smallest and largest model, which is the falsifier §7 actually names. The ordering is **not** identical all the way through: 2 intermediate size(s) (5,785,088, 14,585,856) rank the middle of the field differently before it returns. The endpoints agreeing is what was tested; a monotone ranking at every scale is not what was observed.
+
+**Arm D (Indic halved) wins at every size tested** — 1.7M to 30.5M parameters — and that is the same direction Step 0's H3 refutation points, reached by a different route. Two experiments agreeing is the strongest evidence in this exercise.
+
+It is also the easiest thing here to overstate. They are **not independent**: same corpus, same tokenizer, and the same stand-in text in the STEM lane that carries H3's second clause. A flaw in any of those is a flaw in both, so this is two views of one measurement rather than two measurements. It raises the priority of the 1B rung; it does not substitute for it.
+
+*A fixed small corpus means larger models overfit sooner; compare final_train_loss against weighted_mean before reading an inversion as a fact about scale.*
 
 ## What this does and does not license
 

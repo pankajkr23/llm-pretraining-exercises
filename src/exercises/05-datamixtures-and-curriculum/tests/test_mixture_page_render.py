@@ -14,6 +14,7 @@ means it protects the page silently or not at all: `uv run playwright install ch
 """
 
 import http.server
+import json
 import re
 import socket
 import subprocess
@@ -285,11 +286,65 @@ def test_the_results_chapter_shows_the_seed_spread_by_default(page):
     assert "±" not in page.inner_text("#results table"), "hiding the spread did nothing"
 
 
-def test_the_qualified_verdict_is_on_the_page_with_its_reason(page):
-    """The result that cost the specification a clean sweep has to be visible, not buried."""
-    text = page.inner_text("#results")
-    assert "qualified" in text.lower()
-    assert "second clause" in text.lower()
+def test_the_verdict_that_went_against_us_is_on_the_page_with_its_reason(page):
+    """The result that cost the specification a clean sweep has to be visible, not buried.
+
+    Written against whatever the bundle says rather than against a hard-coded word: this test
+    asserted `qualified` until the corpus grew and the same hypothesis came back `refuted`, at
+    which point it failed for describing the old run rather than for anything being wrong. The
+    guard that matters is *a losing verdict is shown, with the clause that produced it* — not which
+    particular verdict it happened to be.
+    """
+    bundle = json.loads(
+        (PUBLIC / SLUG / "data.js")
+        .read_text(encoding="utf-8")
+        .split("Object.freeze(", 1)[1]
+        .rsplit(");", 1)[0]
+    )
+    losing = [
+        c["verdict"]
+        for c in bundle["experiment"]["comparisons"]
+        if c["verdict"] in {"qualified", "refuted", "inconclusive"}
+    ]
+    assert losing, "no hypothesis lost; this test is watching for something that did not happen"
+
+    # The badge, not just the prose. Blanking the badge left the word elsewhere in the section, so
+    # an earlier version of this test passed against a table with an empty verdict column.
+    badges = {
+        element.inner_text().strip().lower()
+        for element in page.query_selector_all("#results .verdict")
+    }
+    for verdict in losing:
+        assert verdict in badges, f"the {verdict} verdict has no badge in the results table"
+    assert "second clause" in page.inner_text("#results").lower(), (
+        "the reason the verdict turned must be shown beside it"
+    )
+
+
+def test_the_results_takeaway_counts_the_same_verdicts_the_table_does(page):
+    """The chapter's one-line takeaway must agree with the verdicts beside it.
+
+    It used to be a hand-written sentence — "one verdict did not survive its own noise" — that was
+    true of an earlier run and survived the one that replaced it. It is computed now, and this is
+    what stops it drifting again: the number in the pill is checked against the badges rendered
+    below it, so the summary cannot disagree with what it summarises.
+
+    **What it does not catch**, said plainly rather than implied: this guards the *count*, not the
+    wording. Appending "(all fine)" after a correct count survives it. Guarding arbitrary prose is
+    not something a test can do; guarding the number it states is.
+    """
+    badges = [
+        element.inner_text().strip().lower()
+        for element in page.query_selector_all("#results .verdict")
+    ]
+    lost = [verdict for verdict in badges if verdict != "supported"]
+    pill = page.inner_text("#results .takeaway").lower()
+
+    expected = "one prediction" if len(lost) == 1 else f"{len(lost)} predictions"
+    assert expected in pill, (
+        f"the takeaway says {pill!r} but {len(lost)} verdicts are not supported"
+    )
+    assert f"of {len(badges)}" in pill, "the takeaway must say how many predictions there were"
 
 
 # ---- docs/EXPLAINER_PROMPT.md conformance ----------------------------------------------------

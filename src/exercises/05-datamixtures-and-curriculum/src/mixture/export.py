@@ -499,8 +499,8 @@ def _followups() -> str:
             f"At the most-repeated rung the pool is re-read "
             f"{data['rungs'][0]['epochs']:.1f} times and costs "
             f"{(data['rungs'][0]['bpb_mean'] - reference) / reference * 100:.1f}% — worse, but "
-            "nowhere near worthless, which is what the borrowed curve predicts for this range. "
-            f"{reading['caveat']}"
+            "nowhere near worthless, which is what the borrowed curve predicts for this range."
+            f"\n\n*{reading['caveat']}*"
         )
 
     if SEAM_RESULTS.exists():
@@ -527,8 +527,8 @@ def _followups() -> str:
             f"change at step {data['seam_at']}. Gradient norm is logged every step, so the seam is "
             "observed rather than sampled around.\n\n"
             + "\n".join(rows)
-            + f"\n\n**{_sentence_case(reading['verdict'])}** — {reading['note']}. "
-            f"{reading['caveat']}"
+            + f"\n\n**{_sentence_case(reading['verdict'])}** — {reading['note'].rstrip('.')}."
+            f"\n\n*{reading['caveat']}*"
         )
 
     if SCALE_RESULTS.exists():
@@ -547,8 +547,9 @@ def _followups() -> str:
             "arm. Naming a falsifier and never testing it is cheaper than it looks honest, so "
             "here it is tested across the range this machine reaches.\n\n"
             + "\n".join(rows)
-            + f"\n\n**{_sentence_case(reading['verdict'])}** — {reading['note']}. "
-            f"{reading['caveat']}"
+            + f"\n\n**{_sentence_case(reading['verdict'])}** — {reading['note'].rstrip('.')}."
+            f"\n\n{_scale_convergence(data)}"
+            f"\n\n*{reading['caveat']}*"
         )
 
     if not sections:
@@ -557,6 +558,41 @@ def _followups() -> str:
             "money; `mixture.repetition`, `mixture.seam` and `mixture.scale` run them."
         )
     return "\n\n".join(sections)
+
+
+def _scale_convergence(data: dict) -> str:
+    """Note where the scale sweep agrees with Step 0, and where that agreement is not independent.
+
+    Two experiments pointing the same way is the strongest evidence in this exercise, and also the
+    easiest thing to overstate: they share a corpus, a tokenizer and a stand-in STEM lane, so they
+    can be wrong together. Say both halves.
+
+    Args:
+        data: The scale bundle.
+
+    Returns:
+        A paragraph, or an empty string when the winner is not stable across sizes.
+    """
+    winners = {rung["ranking"][0] for rung in data["rungs"]}
+    if len(winners) != 1:
+        return ""
+    winner = winners.pop()
+    name = data["rungs"][-1]["arms"][winner]["name"]
+    if winner != "D":
+        return (
+            f"**Arm {winner} ({name}) wins at every size tested**, which is worth recording "
+            "whatever else the ordering does."
+        )
+    return (
+        f"**Arm D ({name}) wins at every size tested** — 1.7M to 30.5M parameters — and that is "
+        "the same direction Step 0's H3 refutation points, reached by a different route. Two "
+        "experiments agreeing is the strongest evidence in this exercise.\n\n"
+        "It is also the easiest thing here to overstate. They are **not independent**: same "
+        "corpus, same tokenizer, and the same stand-in text in the STEM lane that carries H3's "
+        "second clause. A flaw in any of those is a flaw in both, so this is two views of one "
+        "measurement rather than two measurements. It raises the priority of the 1B rung; it does "
+        "not substitute for it."
+    )
 
 
 def _language_tables() -> tuple[str, str]:

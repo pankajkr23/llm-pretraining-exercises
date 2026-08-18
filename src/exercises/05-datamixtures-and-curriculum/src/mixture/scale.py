@@ -177,8 +177,20 @@ def _read(rungs: list[dict]) -> dict:
             f"its own seed spread at both ends, so the movement ranks nothing{held}"
         )
     else:
+        # The declared falsifier is specifically an inversion between the SMALLEST and LARGEST arm,
+        # and it has not fired. But the ordering can still move in between, and a reader looking at
+        # the table will see that immediately -- so say it here rather than let them find it.
+        moved = [rung["params"] for rung in rungs[1:-1] if rung["ranking"] != order_small]
         verdict = "assumption survives"
         note = "no pair reverses between the smallest and largest model"
+        if moved:
+            middle = ", ".join(f"{count:,}" for count in moved)
+            note += (
+                f", which is the falsifier §7 actually names. The ordering is **not** identical "
+                f"all the way through: {len(moved)} intermediate size(s) ({middle}) rank the "
+                "middle of the field differently before it returns. The endpoints agreeing is "
+                "what was tested; a monotone ranking at every scale is not what was observed"
+            )
 
     return {
         "rankings": {str(rung["params"]): rung["ranking"] for rung in rungs},
