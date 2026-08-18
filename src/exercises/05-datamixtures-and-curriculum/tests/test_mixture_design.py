@@ -122,7 +122,7 @@ def test_every_difficulty_band_carries_a_concrete_example():
     """The assignment asks for 'a concrete example for each' — a label is not an example."""
     for band in curriculum.DIFFICULTY_BANDS:
         assert len(band.example.split()) >= 10, f"{band.key}'s example is a label, not an example"
-        assert band.lanes, f"{band.key} draws from no lane"
+        assert band.datasets, f"{band.key} draws from no dataset"
 
 
 def test_the_difficulty_examples_are_all_different():
@@ -344,3 +344,97 @@ def test_the_fingerprint_moves_when_a_threshold_moves():
     assert base.fingerprint() == Config().fingerprint()
     assert base.fingerprint() != replace(base, run_tokens=5e12).fingerprint()
     assert base.fingerprint() != replace(base, indic_floor=0.10).fingerprint()
+
+
+# ---- the difficulty ladder is a budget, and its examples are what they claim ------------
+
+
+def test_the_difficulty_bands_partition_the_run():
+    """Six adjectives are not a curriculum. The ladder has to be a budget that sums.
+
+    The reasoning-length bands have carried this since they were written; the difficulty bands
+    did not, and could name a level without saying how much of the run it received.
+    """
+    shares = curriculum.band_shares()
+    assert sum(shares.values()) == pytest.approx(1.0)
+    assert all(share > 0 for share in shares.values())
+    for stage, mix in curriculum.BAND_MIX.items():
+        assert sum(mix.values()) == pytest.approx(1.0), f"stage {stage} mix does not sum to 1"
+
+
+def test_the_band_shares_are_the_integral_of_the_stage_mix_not_typed_in():
+    """Same discipline the lane shares are held to: the schedule produces the shares."""
+    for band in curriculum.DIFFICULTY_BANDS:
+        expected = sum(
+            stage.duration * curriculum.BAND_MIX.get(stage.key, {}).get(band.key, 0.0)
+            for stage in curriculum.STAGES
+        )
+        assert band.share_of_run == pytest.approx(expected)
+
+
+def test_every_difficulty_band_names_inventory_datasets():
+    """A band that names no dataset cannot be filled, and a reviewer cannot check it."""
+    from mixture import inventory
+
+    known = {row.name for row in inventory.DATASETS}
+    for band in curriculum.DIFFICULTY_BANDS:
+        assert band.datasets, f"{band.key} names no dataset"
+        unknown = set(band.datasets) - known
+        assert not unknown, f"{band.key} names datasets not in the inventory: {unknown}"
+
+
+def test_every_difficulty_band_states_how_a_document_is_assigned_to_it():
+    for band in curriculum.DIFFICULTY_BANDS:
+        assert len(band.assigned_by.split()) >= 6, f"{band.key} has no assignment rule"
+
+
+def test_every_example_marked_real_is_verbatim_in_the_file_it_names():
+    """The guard this exercise needed most.
+
+    Three separate drafts marked an example `real` when it was not: an invented sentence for B1, a
+    *paraphrase* for B2, and a B3 code excerpt that skipped a docstring and so was not contiguous.
+    Each looked fine in the rendered document. The evaluation asks for a real example at each
+    level, so a claim of realness has to be checkable, and this checks it.
+    """
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    for band in curriculum.DIFFICULTY_BANDS:
+        if not band.example_is_real:
+            continue
+        match = re.search(r"([0-9A-Za-z_./-]+\.(?:txt|md|py|html))", band.example_source)
+        assert match, f"{band.key} claims a real excerpt but names no file"
+        path = next((c for c in (root / match.group(1), Path(match.group(1))) if c.exists()), None)
+        assert path is not None, f"{band.key} names a file that does not exist: {match.group(1)}"
+
+        def squeeze(text: str) -> str:
+            return " ".join(text.split())
+
+        assert squeeze(band.example) in squeeze(
+            path.read_text(encoding="utf-8", errors="ignore")
+        ), f"{band.key}'s example is marked real but is not verbatim in {path}"
+
+
+def test_authored_examples_say_so_rather_than_pretending():
+    """Two bands have no real text available. Marking them is the honest option, not hiding them."""
+    authored = [b for b in curriculum.DIFFICULTY_BANDS if not b.example_is_real]
+    assert authored, "if every example became real, this test should be revisited, not deleted"
+    for band in authored:
+        assert len(band.example_source.split()) >= 8, f"{band.key} does not say why it is authored"
+
+
+def test_readability_is_rejected_with_the_measurement_that_rejects_it():
+    """The rule is source-derived because a measurement ruled the alternative out, not by taste."""
+    text = curriculum.READABILITY_REJECTED
+    assert "Flesch" in text and "not monotone" in text
+    assert "14.2" in text and "21.1" in text, "the numbers that make the case must be quoted"
+
+
+def test_the_bands_overlap_rather_than_switching_at_a_line():
+    """§9: *'you need to have a band overlap as well... diffusion of the band B1 and B2'*.
+
+    Distinct from the stage-seam warmup in `seams()`: that blends the *lane mixture* at a stage
+    boundary, this blends the *difficulty distribution* at a band boundary.
+    """
+    assert curriculum.BAND_OVERLAP_TOKENS > 0

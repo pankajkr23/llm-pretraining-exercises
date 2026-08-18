@@ -53,13 +53,13 @@ Shares start from Session 5's own mixture; each departure carries its argument.
 
 **Code — 28%.** Half the stated target capability, and it absorbs the retired long-context slot — 60B of which was repo-packed code from these same corpora. At 560B against 1.103T it runs at 0.51 epochs, so the increase costs no repetition. *Buys* `SWE-bench Verified`, `SWE-bench Live / Pro`, `LiveCodeBench`, `Aider Polyglot`, `Codeforces`. *From* The Stack v2, D3 Code, CommitPack / CommitPackFT.
 
-**Indic — 18%.** The differentiator, and the reason the project exists. Two points above the session default buys headroom over the 12% floor rather than sitting on it, at 1.33 epochs — inside the band where repetition is near-free. *Buys* `MILU`, `IndicGenBench`. *From* Sangraha (verified), Sangraha (unverified), Sangraha (synthetic), IndicCorpV2, +2 more.
+**Indic — 18%.** The differentiator, and the reason the project exists. Two points above the session default buys headroom over the 12% floor rather than sitting on it, at 1.33 epochs — inside the band where repetition is near-free. *Buys* `MILU`, `IndicGenBench`. *From* Sangraha (verified), Sangraha (unverified), Sangraha (synthetic), IndicCorpV2, Samanantar, BPCC (parallel).
 
 **STEM / math — 12%.** Unchanged, but on 146B of itemised supply rather than the 250B the session's supply check quotes. That moves it from 0.96 epochs to 1.64 — still fundable, with no margin left to give away. *Buys* `AIME 2024 / 2025`, `FrontierMath`, `GPQA Diamond`, `Humanity's Last Exam`, `MMLU`. *From* D4 STEM, peS2o, proof-pile-2.
 
-**Reasoning traces — 8%.** Up two points because this lane reserves a *distribution* of trace lengths, not a quantity. 85.1B is the thinnest real pool in the mixture and 92% of it sits in one V4-lineage dataset, so the band structure has to be bought deliberately. *Buys* `LiveCodeBench`, `Codeforces`, `AIME 2024 / 2025`, `FrontierMath`, `GPQA Diamond`. *From* AON, OpenMathReasoning, OpenThoughts2, NuminaMath, +1 more.
+**Reasoning traces — 8%.** Up two points because this lane reserves a *distribution* of trace lengths, not a quantity. 85.1B is the thinnest real pool in the mixture and 92% of it sits in one V4-lineage dataset, so the band structure has to be bought deliberately. *Buys* `LiveCodeBench`, `Codeforces`, `AIME 2024 / 2025`, `FrontierMath`, `GPQA Diamond`. *From* AON, OpenMathReasoning, OpenThoughts2, NuminaMath, OpenR1-Math.
 
-**Agentic / tool-use — 2%.** Held at the session's floor although supply cannot fund it: 40B against 627M is 3.9x more than infinite repetition could be worth. The share commits to *building* the data, not to holding it — priced in §8. *Buys* `SWE-bench Verified`, `SWE-bench Live / Pro`, `Terminal-Bench`, `tau-bench / tau2-bench`, `BFCL v3`. *From* SWE-Gym, SWE-smith, OpenHands rollouts, ToolBench, +5 more.
+**Agentic / tool-use — 2%.** Held at the session's floor although supply cannot fund it: 40B against 627M is 3.9x more than infinite repetition could be worth. The share commits to *building* the data, not to holding it — priced in §8. *Buys* `SWE-bench Verified`, `SWE-bench Live / Pro`, `Terminal-Bench`, `tau-bench / tau2-bench`, `BFCL v3`. *From* SWE-Gym, SWE-smith, OpenHands rollouts, ToolBench, ToolACE, Glaive function-calling v2, Nexus / NexusRaven, xLAM / APIGen, Hermes function-calling.
 
 **Long-context — 0%.** Retired as a lane, kept as a capability. 60 of its 100B is repo-packed code already counted under code, so a 6% share would double-count it. It becomes a sequence-length schedule over code, books and web — its own benchmark, no budget. *Buys* `GAIA`, `BrowseComp`, `long-eval`. *From* Repo-packed code (32K+), Book-length corpora (packed).
 
@@ -114,6 +114,28 @@ count is not what it costs to train for, its **supervised** token count is.
 | **Agentic** | 2% | 627M across 9 datasets | unfundable by 3.9×; the share is a commitment to build, priced in §8 |
 | **Reasoning** | 8% | 85.1B across 5 | thinnest real pool in the mixture, and 92% of it sits in one V4-lineage dataset |
 | **Long-context** | 0% | 40B genuinely unique | retired as a lane; delivered as a sequence-length schedule |
+
+Every dataset behind those three slots, with the tokens the inventory gives it — because a slot
+sized as "across 9 datasets" is a headline number, and this clause is the one that asks for names:
+
+| slot | dataset | tokens | licence | tier |
+| --- | --- | ---: | --- | --- |
+| agentic | SWE-Gym | 150M | — | — |
+| agentic | SWE-smith | 120M | task licenses | — |
+| agentic | OpenHands rollouts | 90M | mixed | — |
+| agentic | ToolBench | 80M | Apache-2.0 | D |
+| agentic | ToolACE | 60M | — | A/D |
+| agentic | Glaive function-calling v2 | 50M | — | — |
+| agentic | Nexus / NexusRaven | 30M | CC-BY-4.0 | A |
+| agentic | xLAM / APIGen | 25M | CC-BY (mixed) | — |
+| agentic | Hermes function-calling | 22M | — | — |
+| reasoning | AON | 78B | — | — |
+| reasoning | OpenThoughts2 | 3B | — | — |
+| reasoning | OpenMathReasoning | 2B | — | — |
+| reasoning | OpenR1-Math | 1.6B | — | — |
+| reasoning | NuminaMath | 500M | Apache / CC-BY | — |
+| long_context | Repo-packed code (32K+) | 60B | permissive | — |
+| long_context | Book-length corpora (packed) | 40B | mixed / public-domain | — |
 
 Benchmarks are also tagged by the stage at which their capability is genuinely taught, so a share
 cannot be claimed to buy something pre-training does not build. `WebArena` and `OSWorld` are scored
@@ -182,18 +204,66 @@ against frozen embeddings. Per-seam detail: [`curriculum.py`](src/mixture/curric
 
 ### Difficulty bands B0–B5
 
-| band | level | example | enters |
-| --- | --- | --- | --- |
-| **B0** | Nursery | The cat sat on the mat. The mat was red. The cat was small and grey. | seed |
-| **B1** | Grade-school | Plants make their own food from sunlight, water and air. This is called photosynthesis, and it is why leaves are green. | seed |
-| **B2** | High-school | A projectile launched at angle t with speed v travels a horizontal distance of v^2 sin(2t) / g before returning to its launch height. The range is greatest at t = 45 degrees, where sin(2t) = 1. This ignores air resistance. | general |
-| **B3** | Undergraduate | For a linear map T from V to W between finite-dimensional vector spaces, rank(T) + nullity(T) = dim(V). The hypothesis that V is finite-dimensional is necessary: the shift operator on infinite sequences has trivial kernel and is not surjective. | reasoning |
-| **B4** | Graduate | Under regularity conditions -- identifiability, a twice-differentiable log-likelihood, and a true parameter interior to the parameter space -- the maximum-likelihood estimator is consistent and asymptotically normal, with covariance given by the inverse Fisher information. The conditions are not decorative: on the boundary the limiting distribution is a mixture, not a normal. | reasoning |
-| **B5** | Research / PhD | We show the excess risk of the minimum-norm interpolating estimator decays as n^(-2a/(2a+d)) under a source condition of order a, matching the minimax rate over the corresponding Sobolev ball up to logarithmic factors. The bound is vacuous when a <= d/2, which is the regime where interpolation is known to fail. | anneal |
+| band | level | share | tokens | datasets from the inventory | assigned by |
+| --- | --- | ---: | ---: | --- | --- |
+| **B0** | Nursery | 0.9% | 18B | FineWeb-Edu, DCLM-Baseline | the lowest educational-quality scores in FineWeb-Edu, which ships a 0-5 score per document from its own classifier -- the one published ordinal signal in the inventory |
+| **B1** | Grade-school | 13.4% | 267B | FineWeb-Edu, DCLM-Baseline, IndicCorpV2 | FineWeb-Edu educational score in the lower band; general crawl by the same |
+| **B2** | High-school | 31.2% | 625B | FineWeb-Edu, DCLM-Baseline, D2 Web-Diverse, Sangraha (verified) | encyclopaedic and mid-score educational web; verified native Indic prose |
+| **B3** | Undergraduate | 32.4% | 648B | The Stack v2, D3 Code, peS2o, OpenThoughts2, NuminaMath | repository and file-level code, academic papers at survey or textbook level, and competition-math traces at the easier contest tiers |
+| **B4** | Graduate | 17.3% | 346B | peS2o, proof-pile-2, AON, OpenR1-Math, D4 STEM | academic papers in peS2o with a research venue, formal mathematics in proof-pile-2, and the harder contest tiers of the reasoning corpora |
+| **B5** | Research / PhD | 4.8% | 96B | proof-pile-2, peS2o, AON | the research tail of peS2o and proof-pile-2, and the longest verified traces in AON. No ordinal signal separates B5 from B4 inside these corpora today; the split is made at ingest by venue and proof length, and that rule is declared rather than measured |
 
-> These examples are **authored illustrations of each level, not samples from our corpus.**
-> Assigning real documents to bands at scale needs a classifier and we have not built one;
-> exercise 04's rule is to declare a stand-in and never publish an accuracy for it.
+The shares are not chosen; they are the duration-weighted integral of a per-stage band mix, the
+same discipline the lane shares are held to, and `INV-12` fails if they do not sum to one.
+
+**Why the assignment rule is source-derived, and not a readability score.** Flesch-Kincaid Grade Level, computed over these bands' own examples, is not monotone: B5 scores
+**14.2** against B4's **21.1**. On real documents it inverts -- research-framing prose in this
+repository scores **8.3** where encyclopaedic Wikipedia text scores **9.4**. FKGL is a function of
+sentence and word length, so clearly written research measures as easy prose. Difficulty bands are
+therefore assigned from the **source**, not from a readability score.
+
+
+### A real example at each level
+
+**B0 · Nursery** — **authored**, no dataset in the inventory targets this level and this repository holds no text at it; the simplest real text measured here is exercise 01's explainer copy at FKGL 6.8.
+
+> The cat sat on the mat. The mat was red. The cat was small and grey.
+
+**B1 · Grade-school** — **real excerpt**, verbatim from 01-introductions/web/index.html. An earlier draft put an invented sentence here and marked it real; the test below now checks every such claim.
+
+> Trained only to predict the next token, the model pulls related words into clusters. Similarity is never supplied — it emerges from pure statistics.
+
+**B2 · High-school** — **real excerpt**, verbatim from 02-tokenization/corpus/v2/en.faithful.txt, the committed Wikipedia corpus measured at FKGL 9.4. An earlier draft marked a *paraphrase* of this file as a real excerpt, which it is not.
+
+> The Tibetan Plateau lies behind these mountains, as does the part of the Indus-Yarlung suture zone, the contour along which the Indian Plate has welded to the Eurasian plate.
+
+**B3 · Undergraduate** — **real excerpt**, verbatim from 03-data-collection-framework/src/dataframework/mix.py, the body of the kind The Stack v2 supplies, and the same function this specification's repetition arithmetic uses.
+
+```
+    if epochs <= 1:
+        return unique_tokens * max(epochs, 0)
+    repetitions = epochs - 1
+    decayed = REPETITION_DECAY * (1 - math.exp(-repetitions / REPETITION_DECAY))
+    return unique_tokens * (1 + decayed)
+```
+
+**B4 · Graduate** — **real excerpt**, verbatim from 03-data-collection-framework/src/dataframework/mix.py, quoting Muennighoff et al., 'Scaling Data-Constrained Language Models', JMLR v26 (2025), Eq. 18 -- a published asymptotic result carrying its own conditions.
+
+```
+Four passes are worth 3.73x the pool, not 4x; sixteen are worth 10.6x, not 16x; and no number of
+passes exceeds `WORTH_CEILING_MULTIPLE`. Measured on English web text (C4, OSCAR) at up to 9B
+parameters and 900B tokens, so it is the best available number and not a measurement of this
+corpus
+```
+
+**B5 · Research / PhD** — **authored**, written in the register of a statistics abstract. This repository holds no research-level mathematics, and inventing a citation for one would be worse than saying so.
+
+> We show the excess risk of the minimum-norm interpolating estimator decays as n^(-2a/(2a+d)) under a source condition of order a, matching the minimax rate over the corresponding Sobolev ball up to logarithmic factors. The bound is vacuous when a <= d/2, which is the regime where interpolation is known to fail.
+
+
+Four of the six are verbatim excerpts. **B0 and B5 are authored and say so**: this repository holds
+no nursery text and no research mathematics, and inventing a citation for one would be worse than
+marking it.
 
 ### Reasoning-length bands
 

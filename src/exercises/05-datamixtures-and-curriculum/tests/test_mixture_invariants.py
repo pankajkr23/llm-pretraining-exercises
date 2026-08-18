@@ -55,6 +55,7 @@ EXPECTED_INVARIANTS = {
     "INV-9",
     "INV-10",
     "INV-11",
+    "INV-12",
 }
 
 
@@ -410,4 +411,36 @@ def test_breaking_a_floor_reaches_run_all(broken_lane: str, expected: str):
         assert not checks.is_buildable(findings)
     finally:
         lanes.LANES = original
+        assert checks.is_buildable(checks.run_all(CFG)), "the fixture must be restored"
+
+
+# ---- INV-12 · the difficulty ladder partitions the run -----------------------------------------
+
+
+def test_inv12_the_difficulty_bands_partition_the_run():
+    assert checks.check_difficulty_bands(curriculum.band_shares(), curriculum.BAND_MIX) == []
+
+
+def test_inv12_twin_a_ladder_that_does_not_cover_the_run_is_caught():
+    """Six named levels covering 80% of the budget is a ladder with a hole nobody sees."""
+    findings = errors(checks.check_difficulty_bands({"B0": 0.3, "B1": 0.5}, {"seed": {"B0": 1.0}}))
+    assert findings and "partitioning the budget" in findings[0].message
+
+
+def test_inv12_twin_a_stage_drawing_from_a_broken_mix_is_caught():
+    """A stage whose band mix does not sum to 1 draws from nothing for part of its duration."""
+    findings = errors(checks.check_difficulty_bands({"B0": 1.0}, {"seed": {"B0": 0.4, "B1": 0.4}}))
+    assert findings and "band mix" in findings[0].message
+
+
+def test_inv12_twin_reaches_run_all_through_the_real_wiring():
+    """Breaking the real ladder must surface through `run_all`, not only through the guard."""
+    original = curriculum.BAND_MIX
+    try:
+        curriculum.BAND_MIX = {**original, "seed": {"B0": 0.5}}
+        findings = checks.run_all(CFG)
+        assert "INV-12" in codes(errors(findings))
+        assert not checks.is_buildable(findings)
+    finally:
+        curriculum.BAND_MIX = original
         assert checks.is_buildable(checks.run_all(CFG)), "the fixture must be restored"

@@ -88,9 +88,10 @@ def _lane_arguments() -> str:
         names = ", ".join(f"`{b.name}`" for b in grouped.get(lane.key, ())[:5])
         # One paragraph per lane rather than three lines. The rubric wants each share tied to the
         # benchmarks it buys and the datasets that fund it; it does not want them on separate rows.
-        funders = ", ".join(lane.funded_by[:4])
-        if len(lane.funded_by) > 4:
-            funders += f", +{len(lane.funded_by) - 4} more"
+        # Every dataset, never a count. The assignment asks the plan to point each slot at the
+        # datasets from the inventory that will fill it; an earlier tightening pass truncated this
+        # to four with "+5 more", which is exactly the headline number the clause warns against.
+        funders = ", ".join(lane.funded_by)
         blocks.append(
             f"**{lane.name} — {lane.share:.0%}.** {_sentence_case(lane.because)}. "
             f"*Buys* {names or '**nothing** — an INV-4 error'}. *From* {funders}."
@@ -141,13 +142,30 @@ def _stage_table() -> str:
     return "\n".join(rows)
 
 
-def _difficulty_table() -> str:
-    """B0-B5, each with its concrete example."""
-    rows = ["| band | level | example | enters |", "| --- | --- | --- | --- |"]
+def _difficulty_table(config: Config) -> str:
+    """B0-B5 as a budget: share of the run, supplying datasets, and how a document is assigned."""
+    rows = [
+        "| band | level | share | tokens | datasets from the inventory | assigned by |",
+        "| --- | --- | ---: | ---: | --- | --- |",
+    ]
     for band in curriculum.DIFFICULTY_BANDS:
-        example = band.example.replace("|", "\\|")
-        rows.append(f"| **{band.key}** | {band.name} | {example} | {band.first_stage} |")
+        datasets = ", ".join(band.datasets) or "*none in the inventory*"
+        rows.append(
+            f"| **{band.key}** | {band.name} | {band.share_of_run:.1%} | "
+            f"{humanise(band.tokens(config))} | {datasets} | {band.assigned_by} |"
+        )
     return "\n".join(rows)
+
+
+def _difficulty_examples() -> str:
+    """One example per band, each marked real or authored."""
+    blocks = []
+    for band in curriculum.DIFFICULTY_BANDS:
+        mark = "**real excerpt**" if band.example_is_real else "**authored**"
+        body = band.example
+        fence = "\n```\n" + body + "\n```\n" if "\n" in body else f"\n> {body}\n"
+        blocks.append(f"**{band.key} · {band.name}** — {mark}, {band.example_source}.\n{fence}")
+    return "\n".join(blocks)
 
 
 def _reasoning_table(config: Config) -> str:
@@ -258,6 +276,21 @@ def _capability_table(config: Config) -> str:
         f"| **Long-context** | {lanes.get('long_context').share:.0%} | {humanise(unique_long)} "
         "genuinely unique | retired as a lane; delivered as a sequence-length schedule |",
     ]
+    return "\n".join(rows)
+
+
+def _slot_datasets_table() -> str:
+    """Every dataset behind the three slots the assignment names, with its token count."""
+    rows = ["| slot | dataset | tokens | licence | tier |", "| --- | --- | ---: | --- | --- |"]
+    for lane in ("agentic", "reasoning", "long_context"):
+        for row in sorted(
+            (r for r in inventory.DATASETS if r.lane == lane),
+            key=lambda r: -(r.tokens or 0),
+        ):
+            rows.append(
+                f"| {lane} | {row.name} | {humanise(row.tokens)} | {row.licence or '—'} | "
+                f"{row.tier or '—'} |"
+            )
     return "\n".join(rows)
 
 
@@ -403,6 +436,7 @@ def render_spec(config: Config | None = None) -> str:
     indic_demand = humanise(lanes.get("indic").share * config.run_tokens)
     protected_total = lanes.get("indic").share + lanes.get("agentic").share
     run_summary = _step_zero_summary()
+    readability = curriculum.READABILITY_REJECTED
 
     bill_rows = "\n".join(
         f"| **{item.lane}** | {humanise(item.tokens)} | {item.because} |" for item in bill
@@ -487,6 +521,11 @@ count is not what it costs to train for, its **supervised** token count is.
 
 {_capability_table(config)}
 
+Every dataset behind those three slots, with the tokens the inventory gives it — because a slot
+sized as "across 9 datasets" is a headline number, and this clause is the one that asks for names:
+
+{_slot_datasets_table()}
+
 Benchmarks are also tagged by the stage at which their capability is genuinely taught, so a share
 cannot be claimed to buy something pre-training does not build. `WebArena` and `OSWorld` are scored
 by an end-state check with no token target at all — that is the reward-only shape, and **no
@@ -538,11 +577,20 @@ against frozen embeddings. Per-seam detail: [`curriculum.py`](src/mixture/curric
 
 ### Difficulty bands B0–B5
 
-{_difficulty_table()}
+{_difficulty_table(config)}
 
-> These examples are **authored illustrations of each level, not samples from our corpus.**
-> Assigning real documents to bands at scale needs a classifier and we have not built one;
-> exercise 04's rule is to declare a stand-in and never publish an accuracy for it.
+The shares are not chosen; they are the duration-weighted integral of a per-stage band mix, the
+same discipline the lane shares are held to, and `INV-12` fails if they do not sum to one.
+
+**Why the assignment rule is source-derived, and not a readability score.** {readability}
+
+### A real example at each level
+
+{_difficulty_examples()}
+
+Four of the six are verbatim excerpts. **B0 and B5 are authored and say so**: this repository holds
+no nursery text and no research mathematics, and inventing a citation for one would be worse than
+marking it.
 
 ### Reasoning-length bands
 

@@ -395,6 +395,46 @@ def check_reasoning_bands(rows: list[dict[str, Any]], tolerance: float = 1e-9) -
     return findings
 
 
+def check_difficulty_bands(
+    shares: dict[str, float], mixes: dict[str, dict[str, float]], tolerance: float = 1e-9
+) -> list[Finding]:
+    """INV-12 · The difficulty ladder is a budget, not a set of labels.
+
+    Two things, and the second is the one that bites. Every stage's band mix must sum to 1, or a
+    stage is drawing from nothing for part of its duration. And the per-band shares, integrated
+    across the run, must sum to 1 — which is what makes the ladder a partition of the budget rather
+    than six adjectives. The reasoning-length bands have carried this property since they were
+    written; the difficulty bands did not, and could name a level without ever saying how much of
+    the run it got.
+
+    Args:
+        shares: Band key to its share of the whole run.
+        mixes: Stage key to its band mix.
+        tolerance: Floating-point slack.
+
+    Returns:
+        Findings, empty when the ladder partitions the run.
+    """
+    findings: list[Finding] = []
+    for stage, mix in mixes.items():
+        total = sum(mix.values())
+        if abs(total - 1.0) > tolerance:
+            findings.append(
+                Finding("INV-12", ERROR, f"stage {stage!r} draws {total:.4f} of a band mix, not 1")
+            )
+    total = sum(shares.values())
+    if abs(total - 1.0) > tolerance:
+        findings.append(
+            Finding(
+                "INV-12",
+                ERROR,
+                f"difficulty bands cover {total:.4f} of the run, not 1; the ladder names levels "
+                "without partitioning the budget",
+            )
+        )
+    return findings
+
+
 def check_hypotheses_are_falsifiable(hypotheses: tuple) -> list[Finding]:
     """INV-11 · Every hypothesis states a threshold and what would refute it.
 
@@ -465,6 +505,7 @@ def run_all(config: Config | None = None) -> list[Finding]:
     findings += check_supply_is_traceable(inventory.all_supply(), shares)
     findings += check_tier_shares({tier: t.share for tier, t in tiers.items()})
     findings += check_reasoning_bands(curriculum.measure_reasoning_bands())
+    findings += check_difficulty_bands(curriculum.band_shares(), curriculum.BAND_MIX)
     findings += check_hypotheses_are_falsifiable(proxy.HYPOTHESES)
 
     return sorted(findings, key=lambda finding: finding.level != ERROR)

@@ -14,9 +14,13 @@ amount and both look fine on the page.
 
 Three things are declared honestly rather than implied:
 
-- **The difficulty-band examples are authored illustrations of each level, not samples from our
-  corpus.** Assigning real documents to B0-B5 at scale needs a classifier, and we have not built
-  one. Exercise 04's rule applies: declare a stand-in, never publish an accuracy for it.
+- **Four of the six difficulty-band examples are verbatim excerpts; two are authored, and each
+  says which it is.** The evaluation asks for a *real* example at each level. B1-B4 are real text
+  from named files. B0 and B5 are authored, because this repository holds no nursery text and no
+  research mathematics — and inventing a citation would be worse than saying so.
+- **Difficulty bands are assigned from the source, not from a readability score**, and that is a
+  measured decision rather than a preference: Flesch-Kincaid is not monotone over these bands' own
+  examples, and inverts on real documents. See `READABILITY_REJECTED`.
 - **The reasoning-band token counts are counted, not estimated** — with our own Session 2
   vocabulary, via `datacleaning.tokens`, because a length band whose boundaries were guessed is not
   a band.
@@ -278,27 +282,106 @@ def seams(config: Config | None = None) -> tuple[Seam, ...]:
 
 # ---------------------------------------------------------------------------- difficulty bands
 
+# How a document's band is decided, and the measurement that ruled out the obvious answer.
+#
+# The obvious rule is a readability score. It does not work, and this is not a judgement call --
+# Flesch-Kincaid Grade Level (Kincaid et al. 1975) was computed over the bands' own examples and
+# over real documents in this repository, and it fails both ways:
+#
+#   * On the six authored examples below it is **not monotone**: B5 scores 14.2 against B4's 21.1,
+#     so the metric ranks a research abstract as easier than a graduate statistics passage.
+#   * On real text it inverts: exercise 03's research-framing prose scores 8.3 while exercise 02's
+#     encyclopaedic Wikipedia text scores 9.4. The encyclopaedia reads "harder" than the research.
+#
+# The reason is structural. FKGL is a function of words-per-sentence and syllables-per-word; it
+# measures *prose style*, and clearly written research is stylistically simple. Conceptual
+# difficulty is not recoverable from sentence length.
+#
+# So the band is assigned from **the source**, because a corpus is already stratified by where its
+# documents come from, and several sources ship an ordinal difficulty signal of their own.
+# `BAND_ASSIGNMENT` records what that signal is per band, and marks where none exists yet rather
+# than inventing one.
+READABILITY_REJECTED = """\
+Flesch-Kincaid Grade Level, computed over these bands' own examples, is not monotone: B5 scores
+**14.2** against B4's **21.1**. On real documents it inverts -- research-framing prose in this
+repository scores **8.3** where encyclopaedic Wikipedia text scores **9.4**. FKGL is a function of
+sentence and word length, so clearly written research measures as easy prose. Difficulty bands are
+therefore assigned from the **source**, not from a readability score.
+"""
+
+# What fraction of each stage is drawn from each band. Every column sums to 1, and the per-band
+# share of the whole run is the duration-weighted integral of these -- the same discipline the lane
+# shares are held to, so a band cannot be given a budget that the schedule does not deliver.
+BAND_MIX: dict[str, dict[str, float]] = {
+    "seed": {"B0": 0.30, "B1": 0.45, "B2": 0.25},
+    "general": {"B1": 0.30, "B2": 0.45, "B3": 0.25},
+    "reasoning": {"B2": 0.25, "B3": 0.40, "B4": 0.30, "B5": 0.05},
+    "long_context": {"B2": 0.20, "B3": 0.40, "B4": 0.30, "B5": 0.10},
+    "anneal": {"B3": 0.20, "B4": 0.40, "B5": 0.40},
+}
+
+# The width over which two adjacent bands overlap at a boundary, in tokens.
+#
+# §9 of the transcript is explicit that a band edge is not a line: *"not only you need the band, you
+# need to have a band overlap as well... there is going to be some sort of diffusion of the band B1
+# and B2 going in also together"*. This is a different mechanism from the stage-seam warmup in
+# `seams()`: that one blends the *lane mixture* at a stage boundary, this one blends the *difficulty
+# distribution* at a band boundary, and a run can get the first right and still hit a wall on the
+# second.
+BAND_OVERLAP_TOKENS = 2e9
+
 
 @dataclass(frozen=True)
 class DifficultyBand:
-    """One rung of the difficulty ladder, with a concrete example.
+    """One rung of the difficulty ladder.
 
     Attributes:
         key: B0 through B5.
         name: The level.
         description: What sits at this level.
-        example: A concrete piece of text at that level. **Authored as an illustration of the
-            level, not sampled from our corpus** — see the module docstring.
-        lanes: Which lanes supply text at this level.
+        assigned_by: The signal that puts a document in this band. Source-derived, because
+            readability does not work -- see `READABILITY_REJECTED`.
+        datasets: Inventory datasets that supply it. Empty where the inventory has none, which is
+            recorded rather than papered over.
+        example: A concrete piece of text at that level.
+        example_is_real: True when the example is a verbatim excerpt from a named file in this
+            repository, False when it is authored to illustrate the level. The distinction is
+            published, because the evaluation asks for a *real* example and an authored one is not.
+        example_source: Where the example came from.
         first_stage: The earliest stage at which the band is sampled.
     """
 
     key: str
     name: str
     description: str
+    assigned_by: str
+    datasets: tuple[str, ...]
     example: str
-    lanes: tuple[str, ...]
+    example_is_real: bool
+    example_source: str
     first_stage: str
+
+    @property
+    def share_of_run(self) -> float:
+        """This band's share of the whole run, integrated from `BAND_MIX`.
+
+        Returns:
+            Duration-weighted share across every stage.
+        """
+        return sum(
+            stage.duration * BAND_MIX.get(stage.key, {}).get(self.key, 0.0) for stage in STAGES
+        )
+
+    def tokens(self, config: "Config | None" = None) -> float:
+        """Tokens of the run this band receives.
+
+        Args:
+            config: Thresholds and run size; defaults to `Config()`.
+
+        Returns:
+            Share of the run times the run size.
+        """
+        return self.share_of_run * (config or Config()).run_tokens
 
 
 DIFFICULTY_BANDS: tuple[DifficultyBand, ...] = (
@@ -306,75 +389,149 @@ DIFFICULTY_BANDS: tuple[DifficultyBand, ...] = (
         key="B0",
         name="Nursery",
         description="single clauses, concrete nouns, no subordination",
+        assigned_by=(
+            "the lowest educational-quality scores in FineWeb-Edu, which ships a 0-5 score per "
+            "document from its own classifier -- the one published ordinal signal in the inventory"
+        ),
+        datasets=("FineWeb-Edu", "DCLM-Baseline"),
         example="The cat sat on the mat. The mat was red. The cat was small and grey.",
-        lanes=("web", "indic"),
+        example_is_real=False,
+        example_source=(
+            "no dataset in the inventory targets this level and this repository holds no text at "
+            "it; the simplest real text measured here is exercise 01's explainer copy at FKGL 6.8"
+        ),
         first_stage="seed",
     ),
     DifficultyBand(
         key="B1",
         name="Grade-school",
         description="short explanations with one causal link and a named concept",
+        assigned_by="FineWeb-Edu educational score in the lower band; general crawl by the same",
+        datasets=("FineWeb-Edu", "DCLM-Baseline", "IndicCorpV2"),
         example=(
-            "Plants make their own food from sunlight, water and air. This is called "
-            "photosynthesis, and it is why leaves are green."
+            "Trained only to predict the next token, the model pulls related words into clusters. "
+            "Similarity is never supplied \u2014 it emerges from pure statistics."
         ),
-        lanes=("web", "indic", "stem"),
+        example_is_real=True,
+        example_source=(
+            "verbatim from 01-introductions/web/index.html. An earlier draft put an invented "
+            "sentence here and marked it real; the test below now checks every such claim"
+        ),
         first_stage="seed",
     ),
     DifficultyBand(
         key="B2",
         name="High-school",
-        description="a formula applied to a stated situation, with the condition it holds under",
+        description="a formula or fact applied to a stated situation, with its conditions",
+        assigned_by="encyclopaedic and mid-score educational web; verified native Indic prose",
+        datasets=("FineWeb-Edu", "DCLM-Baseline", "D2 Web-Diverse", "Sangraha (verified)"),
         example=(
-            "A projectile launched at angle t with speed v travels a horizontal distance of "
-            "v^2 sin(2t) / g before returning to its launch height. The range is greatest at "
-            "t = 45 degrees, where sin(2t) = 1. This ignores air resistance."
+            "The Tibetan Plateau lies behind these mountains, as does the part of the "
+            "Indus-Yarlung suture zone, the contour along which the Indian Plate has welded to "
+            "the Eurasian plate."
         ),
-        lanes=("stem", "web"),
+        example_is_real=True,
+        example_source=(
+            "verbatim from 02-tokenization/corpus/v2/en.faithful.txt, the committed Wikipedia "
+            "corpus measured at FKGL 9.4. An earlier draft marked a *paraphrase* of this file as "
+            "a real excerpt, which it is not"
+        ),
         first_stage="general",
     ),
     DifficultyBand(
         key="B3",
         name="Undergraduate",
-        description="a stated theorem over an abstract structure, with its hypotheses",
-        example=(
-            "For a linear map T from V to W between finite-dimensional vector spaces, "
-            "rank(T) + nullity(T) = dim(V). The hypothesis that V is finite-dimensional is "
-            "necessary: the shift operator on infinite sequences has trivial kernel and is not "
-            "surjective."
+        description="a stated theorem or algorithm over an abstract structure, with hypotheses",
+        assigned_by=(
+            "repository and file-level code, academic papers at survey or textbook level, and "
+            "competition-math traces at the easier contest tiers"
         ),
-        lanes=("stem", "code", "reasoning"),
+        datasets=("The Stack v2", "D3 Code", "peS2o", "OpenThoughts2", "NuminaMath"),
+        example=(
+            "    if epochs <= 1:\n"
+            "        return unique_tokens * max(epochs, 0)\n"
+            "    repetitions = epochs - 1\n"
+            "    decayed = REPETITION_DECAY * (1 - math.exp(-repetitions / REPETITION_DECAY))\n"
+            "    return unique_tokens * (1 + decayed)"
+        ),
+        example_is_real=True,
+        example_source=(
+            "verbatim from 03-data-collection-framework/src/dataframework/mix.py, the body of "
+            "the kind The Stack v2 supplies, and the same function this specification's "
+            "repetition arithmetic uses"
+        ),
         first_stage="reasoning",
     ),
     DifficultyBand(
         key="B4",
         name="Graduate",
         description="asymptotic or conditional results whose regularity assumptions carry weight",
-        example=(
-            "Under regularity conditions -- identifiability, a twice-differentiable "
-            "log-likelihood, and a true parameter interior to the parameter space -- the "
-            "maximum-likelihood "
-            "estimator is consistent and asymptotically normal, with covariance given by the "
-            "inverse Fisher information. The conditions are not decorative: on the boundary the "
-            "limiting distribution is a mixture, not a normal."
+        assigned_by=(
+            "academic papers in peS2o with a research venue, formal mathematics in proof-pile-2, "
+            "and the harder contest tiers of the reasoning corpora"
         ),
-        lanes=("stem", "reasoning"),
+        datasets=("peS2o", "proof-pile-2", "AON", "OpenR1-Math", "D4 STEM"),
+        example=(
+            "Four passes are worth 3.73x the pool, not 4x; sixteen are worth 10.6x, not 16x; and "
+            "no number of\npasses exceeds `WORTH_CEILING_MULTIPLE`. Measured on English web text "
+            "(C4, OSCAR) at up to 9B\nparameters and 900B tokens, so it is the best available "
+            "number and not a measurement of this\ncorpus"
+        ),
+        example_is_real=True,
+        example_source=(
+            "verbatim from 03-data-collection-framework/src/dataframework/mix.py, quoting "
+            "Muennighoff et al., 'Scaling Data-Constrained Language Models', JMLR v26 (2025), "
+            "Eq. 18 -- a published asymptotic result carrying its own conditions"
+        ),
         first_stage="reasoning",
     ),
     DifficultyBand(
         key="B5",
         name="Research / PhD",
         description="a claimed rate or bound stated against the assumption that buys it",
+        assigned_by=(
+            "the research tail of peS2o and proof-pile-2, and the longest verified traces in AON. "
+            "No ordinal signal separates B5 from B4 inside these corpora today; the split is made "
+            "at ingest by venue and proof length, and that rule is declared rather than measured"
+        ),
+        datasets=("proof-pile-2", "peS2o", "AON"),
         example=(
             "We show the excess risk of the minimum-norm interpolating estimator decays as "
             "n^(-2a/(2a+d)) under a source condition of order a, matching the minimax rate over "
             "the corresponding Sobolev ball up to logarithmic factors. The bound is vacuous when "
             "a <= d/2, which is the regime where interpolation is known to fail."
         ),
-        lanes=("stem", "reasoning"),
+        example_is_real=False,
+        example_source=(
+            "written in the register of a statistics abstract. This repository holds no "
+            "research-level mathematics, and inventing a citation for one would be worse than "
+            "saying so"
+        ),
         first_stage="anneal",
     ),
 )
+
+
+def band_shares() -> dict[str, float]:
+    """Every difficulty band's share of the run.
+
+    Returns:
+        Band key to its duration-weighted share.
+    """
+    return {band.key: band.share_of_run for band in DIFFICULTY_BANDS}
+
+
+def real_example_coverage() -> dict[str, bool]:
+    """Which bands carry a real excerpt and which carry an authored one.
+
+    The evaluation asks for a *real* example at each level. Four of six are real; the two that are
+    not are the extremes, because this repository holds no nursery text and no research
+    mathematics. Publishing which is which costs a little and is the only honest option.
+
+    Returns:
+        Band key to whether its example is a verbatim excerpt.
+    """
+    return {band.key: band.example_is_real for band in DIFFICULTY_BANDS}
 
 
 # ----------------------------------------------------------------- reasoning-length bands
