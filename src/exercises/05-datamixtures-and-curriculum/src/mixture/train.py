@@ -62,6 +62,14 @@ class TrainConfig:
         seed: Seed for initialisation and sampling.
         checkpoint_every: Steps between checkpoints; 0 disables.
         log_every: Steps between progress lines.
+        timing_warmup: Steps excluded from the throughput measurement.
+
+            Not excluded from *training* -- the model learns from them. They are excluded from the
+            clock because the first steps on an accelerator pay one-off costs the rest of the run
+            does not: on Metal, shader compilation and buffer allocation. Measured with them
+            included, a 5.8M-parameter model reported 1.2 TFLOP/s on MPS; measured without them it
+            reports 3.8. The first number is not a slower machine, it is a warm-up charged to the
+            whole run.
     """
 
     arm: str
@@ -76,6 +84,7 @@ class TrainConfig:
     seed: int = 0
     checkpoint_every: int = 0
     log_every: int = 25
+    timing_warmup: int = 5
 
 
 @dataclass
@@ -87,7 +96,8 @@ class Throughput:
         seconds: Wall-clock training time, excluding setup and evaluation.
         tokens: Tokens processed.
         params: Model parameters.
-        steps: Optimiser steps completed.
+        steps: Optimiser steps counted toward the measurement.
+        warmup_excluded: Steps trained but not timed.
     """
 
     device: str
@@ -95,6 +105,7 @@ class Throughput:
     tokens: int
     params: int
     steps: int
+    warmup_excluded: int = 0
 
     @property
     def tokens_per_second(self) -> float:
@@ -338,9 +349,11 @@ def train(
             torch.mps.synchronize()
         elif target.type == "cuda":
             torch.cuda.synchronize()
-        elapsed += time.perf_counter() - began
+        # Steps inside the warm-up are trained but not timed; see `TrainConfig.timing_warmup`.
+        if step - start_step >= config.timing_warmup:
+            elapsed += time.perf_counter() - began
+            tokens += config.batch * model_config.context
 
-        tokens += config.batch * model_config.context
         value = float(loss.item())
         recent.append(value)
         if step % config.log_every == 0 or step == config.steps - 1:
@@ -356,7 +369,8 @@ def train(
         seconds=elapsed,
         tokens=tokens,
         params=model.parameters_count(),
-        steps=config.steps - start_step,
+        steps=max(0, config.steps - start_step - config.timing_warmup),
+        warmup_excluded=min(config.timing_warmup, config.steps - start_step),
     )
     record = RunRecord(
         arm=config.arm,

@@ -94,8 +94,35 @@ notebook document in Python clothing, and one of its lines is a Colab badge URL 
 - `datacleaning.tokens` — counts the reasoning-band traces with the Session 2 vocabulary, and
   supplies the fertility and `[UNK]` tables `TOKENIZER.md` is built from.
 
-## Not done yet
+## The proxy harness
 
-The proxy is **declared, not run**. `SPEC.md` commits to it and fixes its thresholds in advance;
-no arm has been trained. `train.py` and `evaluate.py` do not exist. Step 0 — the free smoke test
-that measures local throughput — is the next piece of work, and `PROGRESS.md` tracks it.
+`corpus.py` · `model.py` · `train.py` · `evaluate.py` · `experiment.py` · `bench.py`. Rules that
+are easy to break and hard to notice breaking:
+
+- **The corpus is committed text only.** Three lanes, no network, reproducible from a clone. A lane
+  is admitted by measurement, not preference: Tamil is excluded because our vocabulary reads it at
+  **77.7% `[UNK]`**, the same gate exercise 04 used to select its corpora.
+- **Held-out splits are reserved at write time.** The evaluator *cannot* score a model on training
+  text, because that text is in a different array on disk. A test checks a 32-token held-out
+  n-gram does not appear in the training split.
+- **Exercise 05's own source is excluded from the code lane.** A corpus that moves when you edit
+  the experiment measuring it is not a fixed corpus.
+- **The sampler draws each batch's lane from the arm's mixture.** Concatenating the lanes would
+  make every arm the same run in a different order.
+- **A checkpoint carries the sampler position.** A resume that restarts the data stream re-trains
+  on tokens already seen and reports a better loss for it.
+- **Throughput excludes warm-up steps.** They are trained, not timed. Measured with them included,
+  a 5.8M-parameter model reported **1.2 TFLOP/s** on MPS; without them, **3.8**. Same machine, same
+  model — the first number charges Metal shader compilation to the whole run.
+- **`experiment.py` refuses to report a direction inside the seed spread.** Exercise 02's lesson:
+  establish the noise floor before ranking anything.
+
+torch is an **optional extra** (`uv sync --all-packages --extra proxy`). CI must never pull it —
+nothing in the specification, the invariants or the rendered documents needs it.
+
+### The sandbox will lie to you about the device
+
+Inside a sandbox that blocks the OS-version query, `torch.backends.mps.is_available()` returns
+`False` and the harness silently trains on CPU. The throughput would be a real measurement of the
+wrong device. `describe_device()` records what it actually got and every record prints it — **check
+that field before believing a throughput number.**
