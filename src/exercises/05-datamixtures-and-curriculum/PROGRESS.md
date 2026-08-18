@@ -70,11 +70,15 @@ whether the server could bind before believing it.
 
 | check | result |
 | --- | --- |
-| `ruff check .` · `ruff format --check .` | clean, 112 files |
-| `uv run pytest -m "not integration"` | **575 passed** |
-| `uv run pytest -m integration` (sandbox off) | **81 passed, 1 skipped** |
-| mutation testing over the guards | **13/13 mutants killed** |
+| `ruff check .` · `ruff format --check .` | clean, 116 files |
+| `uv run pytest -m "not integration"` | **602 passed** |
+| `uv run pytest -m integration` (sandbox off) | **105 passed, 1 skipped** |
+| mutation testing — the 13 spec guards | **13/13 killed** |
+| mutation testing — the browser suite | **3/3 killed** (one guard rewritten after surviving) |
+| mutation testing — the JS↔Python harness | **3/3 killed** |
 | notebook code cells executed | **37/37 clean**, outputs stripped |
+| `node --check` on every web JS | passes |
+| CI simulated with torch absent | fast suite green, proxy suite skips with a reason |
 | `uv run python -m mixture` | 0 errors, 0 warnings, buildable |
 | `uv run python -m mixture.bench` | 5.281 TFLOP/s measured, six sizes, two devices |
 | `uv run python -m mixture.experiment` | 20 runs · 2 supported, 1 qualified |
