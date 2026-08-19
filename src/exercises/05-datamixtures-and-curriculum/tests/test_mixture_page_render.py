@@ -617,6 +617,69 @@ def test_the_answer_is_reachable_without_playing(page):
     assert "actual" in page.inner_text("#results .predict-out")
 
 
+def test_the_page_defines_the_words_it_uses(page):
+    """A reader meeting `arm`, `held-out` or `seed spread` must be able to find out what they mean.
+
+    The results chapter used all of these as if they were common knowledge. They are not: `arm` in
+    particular means something specific here — one training run with one mixture — and a table
+    headed `arm` teaches a reader nothing without it.
+    """
+    defined = page.evaluate(
+        """() => Object.fromEntries([...document.querySelectorAll('.term')]
+            .map(t => [t.textContent.trim().toLowerCase(), (t.dataset.def || '').length]))"""
+    )
+    for term in ("arms", "held-out", "seed spread", "proxy model", "bits per byte"):
+        assert term in defined, f"the page uses {term!r} without defining it"
+        assert defined[term] > 40, f"{term!r} has a definition too short to be one"
+
+
+def test_the_page_says_what_the_metric_measures_not_just_its_name(page):
+    """ "Held-out BPB, lower is better" names a metric without explaining it.
+
+    A reader cannot judge the table without knowing that it measures surprise, and that it is per
+    byte specifically so it survives the tokenizer change this specification plans.
+    """
+    # Scoped to the caption itself. Searching all of #results passed against a mutant that gutted
+    # the explanation, because "tokenizer" also appears in the collapsed block below — a guard is
+    # only as tight as the element it reads.
+    caption = page.evaluate(
+        """() => {
+            const p = [...document.querySelectorAll('#results p')]
+                .find(el => el.textContent.includes('bits per byte'));
+            return p ? p.textContent : '';
+        }"""
+    )
+    assert caption, "the results table has no metric caption at all"
+    assert "surprised" in caption, "the metric is named but never explained"
+    # NOT `"per byte" in caption` — the term itself is "bits per byte", so that assertion is
+    # satisfied by the name and would pass against a caption that explains nothing.
+    assert "rather than" in caption and "per token" in caption, (
+        "the caption never says the metric is per byte *rather than* per token"
+    )
+    assert "tokenizer" in caption, (
+        "the reason it is measured per byte is the part that justifies the choice"
+    )
+
+
+def test_the_page_states_the_scale_of_the_model_in_the_open(page):
+    """The proxy is ~7,000x smaller than the specification's subject, and that governs every claim.
+
+    It was previously stated only inside the collapsed `under the hood` block, which is precisely
+    where a reader who is deciding how much to trust the table will not look.
+    """
+    visible = page.inner_text("#results")
+    assert "7,000" in visible, "the page does not say how much smaller the proxy is"
+    assert "smaller" in visible
+
+
+def test_the_page_points_somewhere_for_the_full_explanation(page):
+    """Tooltips answer a word. Somebody who wants the whole apparatus needs a destination."""
+    pointer = page.inner_text(".summary-more")
+    assert "METHOD.md" in pointer
+    href = page.eval_on_selector(".summary-more a", "el => el.href")
+    assert href.endswith("METHOD.md"), f"the pointer does not resolve to the document: {href}"
+
+
 # ---- docs/EXPLAINER_PROMPT.md conformance ----------------------------------------------------
 
 

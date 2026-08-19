@@ -112,6 +112,15 @@ const GLOSSARY = {
   bpb: 'Bits per byte. How surprised the model is by held-out text, measured per byte so it stays comparable if the tokenizer changes.',
   anneal: 'A short final phase on a small reserve of the best data, at a low learning rate.',
   minhash: 'A short fingerprint of a document. Comparing fingerprints stands in for comparing the documents themselves.',
+  /* The terms chapter 5 used without ever defining. A reader who arrives at a table headed `arm`
+   * has no way to know the word means one training run with one mixture, and this page is the
+   * artefact most people open first. */
+  arm: 'One training run with one mixture. Four arms means the same model trained four times on four sets of proportions, with nothing else different.',
+  hypothesis: 'A claim about the mixture, written down with its pass mark before any arm ran. Fixing the threshold first is what stops you picking the one that flatters the result.',
+  seedspread: 'The same recipe scores slightly differently each time it runs. The spread across those runs is the noise floor, and an effect smaller than it is not a result.',
+  heldout: 'Text set aside before training and never trained on. Scoring on anything else would measure memory rather than learning.',
+  standin: 'Text used in place of a dataset too large or too restricted to use here. The same kind of text, not the same text — so a finding resting on it rests on the substitution too.',
+  proxy: 'A model small enough to train in seconds, used to compare mixtures. Not a small version of the real model; an instrument for ranking recipes.',
 };
 
 /** Wrap every glossary term found in `text` with a definition tooltip.
@@ -891,8 +900,10 @@ function chapterResults(data) {
     scoreEl.replaceChildren(
       table(['arm', ...lanesScored, 'weighted'], rows),
       richP(
-        'Every cell is held-out [[BPB|bpb]], lower is better; **±** is the spread across ' +
-          `${exp.seeds.length} seeds of the same arm.`,
+        'Every cell is **[[bits per byte|bpb]]** on held-out text — how surprised the model ' +
+          'is by writing it has never seen, lower being better. Measured per *byte* rather than ' +
+          'per token so the number survives a change of tokenizer, which this specification ' +
+          `plans. **±** is the spread across ${exp.seeds.length} seeds of the same arm.`,
         'note',
       ),
     );
@@ -907,7 +918,7 @@ function chapterResults(data) {
   render();
 
   const verdicts = table(
-    ['', 'lane', 'effect', 'threshold', 'seed noise', 'verdict'],
+    ['[[prediction|hypothesis]]', 'lane', 'effect', 'threshold', 'seed noise', 'verdict'],
     exp.comparisons.map((c) => [
       `**${c.key}**`,
       c.lane,
@@ -949,10 +960,12 @@ function chapterResults(data) {
     n: '5',
     title: 'An effect inside the noise is not a result',
     claim:
-      `Four mixtures, ${exp.seeds.length} random seeds each, scored on held-out text the models ` +
-      'never trained on, against thresholds fixed before a single arm ran. Every effect below is ' +
-      'quoted beside the spread the *same* mixture produces against itself — because an effect ' +
-      'smaller than that spread is not a result. ' +
+      `Four mixtures — four **[[arms|arm]]** — each trained ${exp.seeds.length} times from a ` +
+      `different random start, on a ${exp.model.layers}-layer **[[proxy model|proxy]]** roughly ` +
+      '7,000× smaller than the one this recipe is written for. Each is scored on ' +
+      '**[[held-out|heldout]]** text against thresholds fixed before a single arm ran, and every ' +
+      'effect is quoted beside the **[[seed spread|seedspread]]** the *same* mixture produces ' +
+      'against itself — because an effect smaller than that is not a result. ' +
       `${lostWord[0].toUpperCase()}${lostWord.slice(1)} did not survive.`,
     big: Object.entries(tally).map(([k, v]) => `${v} ${k}`).join(' · '),
     bigSub: 'of the three predictions, judged against thresholds fixed before the run',
@@ -1171,6 +1184,28 @@ function buildSummary(data) {
       'note',
     ),
   );
+
+  /* Terms on this page are defined on hover, but a reader who wants the whole apparatus — the
+   * metric derived from the code, both architecture diagrams, and what each experiment was for —
+   * needs somewhere to go. That is METHOD.md, and saying so is cheaper than explaining it twice. */
+  const more = $('p', 'note summary-more');
+  more.append(document.createTextNode('New to this? Hover any '));
+  const sample = $('span', 'term', 'underlined term');
+  sample.dataset.def = GLOSSARY.arm;
+  sample.tabIndex = 0;
+  more.append(sample);
+  more.append(document.createTextNode(' for its definition, or read '));
+  const link = $('a', null, 'METHOD.md');
+  link.href =
+    'https://github.com/pankajkr23/llm-pretraining-exercises/blob/main/' +
+    'src/exercises/05-datamixtures-and-curriculum/METHOD.md';
+  more.append(link);
+  more.append(
+    document.createTextNode(
+      ' — the metric, the model, the pipeline and every experiment, from scratch.',
+    ),
+  );
+  wrap.append(more);
   return wrap;
 }
 

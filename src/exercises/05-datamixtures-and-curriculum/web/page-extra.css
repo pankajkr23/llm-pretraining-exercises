@@ -407,3 +407,7 @@ p.note { color: var(--muted); font-size: 13.5px; }
 @media (max-width: 720px) {
   .predict-line { grid-template-columns: 4.5em minmax(0, 1fr) 4.5em; gap: 7px; }
 }
+
+/* The pointer out to METHOD.md, under the summary strip. */
+.summary-more { margin: 10px 0 0; }
+.summary-more a { color: var(--accent); }
