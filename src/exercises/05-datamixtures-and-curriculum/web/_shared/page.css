@@ -485,7 +485,12 @@ tr.cardrow .gatecard { margin-top: 4px; }
 }
 @media (min-width: 701px) { .rail { min-height: 420px; } }
 
-.rail-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 0 34px; }
+/* `min(310px, 100%)` and not a bare `310px`: an `auto-fit` track cannot shrink below its own
+   minimum, so at 320px the list stayed 310px wide inside a 272px container and pushed the whole
+   page sideways. The `min()` lets the track give up its preferred width when there is not room
+   for it, which is the only difference between two columns on a laptop and a broken page on a
+   small phone. */
+.rail-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(310px, 100%), 1fr)); gap: 0 34px; }
 .rail-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
 .rail-title {
   font-family: var(--mono);

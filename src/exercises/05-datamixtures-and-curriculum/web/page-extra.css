@@ -338,7 +338,10 @@ p.note { color: var(--muted); font-size: 13.5px; }
 .summary-lede { margin: 0 0 14px; max-width: 68ch; }
 .summary-steps {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  /* `min(260px, 100%)` for the same reason as `.rail-list` in the shared stylesheet: an auto-fit
+   * track cannot shrink below its own minimum, so a bare 260px stayed 260px inside a 272px
+   * container that also carries a list indent, and pushed the page sideways at 320px. */
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
   gap: 8px 26px;
   margin: 0;
   padding-left: 1.1em;

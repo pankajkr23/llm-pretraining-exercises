@@ -10,6 +10,17 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The page scrolled sideways on a 320px phone.** Two `auto-fit` grids held a fixed minimum track
+  — the shared rail list at 310px and exercise 05's summary strip at 260px — and an `auto-fit`
+  track cannot shrink below its own minimum, so each stayed at its preferred width inside a 272px
+  container and pushed the document 14px wide. Both now use `minmax(min(310px, 100%), 1fr)`, which
+  lets the track give up its preferred width when there is not room for it. The browser suite
+  checked 1500, 900 and 390 and stopped there, which is exactly why this shipped; **320 is now in
+  the parametrised set**, and reverting either fix turns it red. The rail-list rule is shared, so
+  exercises 03 and 04 are fixed with it.
+
 ## [0.6.0] - 2026-08-19
 
 ### Added
