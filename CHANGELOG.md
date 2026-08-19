@@ -10,15 +10,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
-### Changed
-
-- **`AGENTS.md` now says who documentation is for.** Exercise 05 shipped every graded item, a proxy
-  run and four experiments, and its own contributor could not tell from any file what `H1`, `E2`,
-  *arm* or *bits per byte* meant — everything correct, nothing legible. The convention names three
-  readers (meeting it for the first time, changing it, deciding whether to believe it) and what
-  each needs, and the rules that follow: define shorthand in one findable place, explain a metric
-  rather than naming it, state scale and limits in the open text rather than behind a disclosure,
-  and give the artefact people open first the same grounding as the documents.
+## [0.6.0] - 2026-08-19
 
 ### Added
 
@@ -42,6 +34,16 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   integration test puts both diagrams through `mermaid-cli`. Breaking one the way this repo broke a
   diagram before — a semicolon inside a `Note over`, which terminates the note mid-sentence — is
   caught by the renderer.
+
+### Changed
+
+- **`AGENTS.md` now says who documentation is for.** Exercise 05 shipped every graded item, a proxy
+  run and four experiments, and its own contributor could not tell from any file what `H1`, `E2`,
+  *arm* or *bits per byte* meant — everything correct, nothing legible. The convention names three
+  readers (meeting it for the first time, changing it, deciding whether to believe it) and what
+  each needs, and the rules that follow: define shorthand in one findable place, explain a metric
+  rather than naming it, state scale and limits in the open text rather than behind a disclosure,
+  and give the artefact people open first the same grounding as the documents.
 
 ## [0.5.1] - 2026-08-19
 
@@ -1303,7 +1305,8 @@ First tagged release: two interactive exercises live on Vercel with a gated depl
 - **Tooling & conventions:** uv workspace (Python 3.12), ruff lint/format, pytest (unit +
   integration split), GitHub Actions CI, and a PR-only workflow documented in `AGENTS.md`.
 
-[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.3.2...v0.4.0
