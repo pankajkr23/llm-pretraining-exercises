@@ -460,6 +460,78 @@ def test_the_rail_titles_are_readable_rather_than_one_word_per_line(page):
         assert box["height"] < 70, f"rail title {box['text']!r} wraps to {box['height']:.0f}px tall"
 
 
+def test_the_results_chapter_describes_the_run_that_actually_happened(page):
+    """Chapter 5's prose must match the corpus the bundle records.
+
+    Three claims here were stale on production: the corpus was "built entirely from text this
+    repository already tracks" months after three lanes became fetched stand-ins, and "four of the
+    seven lanes have no committed text at all, so they were dropped" after all six were funded.
+    Both sat beneath a correct, generated table.
+    """
+    bundle = json.loads(
+        (PUBLIC / SLUG / "data.js")
+        .read_text(encoding="utf-8")
+        .split("Object.freeze(", 1)[1]
+        .rsplit(");", 1)[0]
+    )
+    corpus = bundle["experiment"]["corpus"]
+    stand_ins = [
+        lane
+        for lane, shard in corpus.items()
+        if any(str(s).startswith("data/proxy/") for s in shard.get("sources", []))
+    ]
+    dropped = {
+        lane for arm in bundle["experiment"]["arms"].values() for lane in arm["dropped_lanes"]
+    }
+    # `textContent`, not `inner_text`: the arithmetic block lives inside a collapsed <details>
+    # ("under the hood"), and inner_text omits what is not rendered. The claim is still on the page
+    # and still wrong when it is wrong, so the guard has to be able to read it.
+    text = page.eval_on_selector("#results", "el => el.textContent")
+
+    assert "built entirely from text this repository already tracks" not in text, (
+        "the page claims a committed-only corpus while the bundle records fetched stand-ins"
+    )
+    for lane in stand_ins:
+        assert lane in text, f"the {lane} lane is a stand-in and the page never says so"
+    assert "stand-ins" in text, "the page must declare that some lanes are stand-ins"
+
+    if not dropped:
+        assert "were dropped" not in text, (
+            "the page says lanes were dropped; the bundle records none"
+        )
+
+
+def test_the_second_clause_sentence_agrees_with_its_own_verdict(page):
+    """A gain that clears its spread must not be described as sitting inside it.
+
+    This sentence asserted "sits inside its own X% seed spread … settles it in neither direction"
+    unconditionally. That was true while the verdict was `qualified`; once the gain cleared its
+    noise the paragraph directly contradicted the `refuted` badge above it.
+    """
+    bundle = json.loads(
+        (PUBLIC / SLUG / "data.js")
+        .read_text(encoding="utf-8")
+        .split("Object.freeze(", 1)[1]
+        .rsplit(");", 1)[0]
+    )
+    withsecond = [c for c in bundle["experiment"]["comparisons"] if c.get("secondary")]
+    if not withsecond:
+        pytest.skip("no hypothesis has a second clause in this bundle")
+
+    text = page.inner_text("#results").lower()
+    for comparison in withsecond:
+        clears = comparison["secondary"]["clears_noise"]
+        says_clears = "clears its own" in text
+        assert says_clears == clears, (
+            f"{comparison['key']}'s second clause clears_noise={clears}, and the prose says "
+            "otherwise"
+        )
+        if clears:
+            assert "settle it in neither direction" not in text, (
+                "the gain clears its spread, so these runs do settle it"
+            )
+
+
 # ---- docs/EXPLAINER_PROMPT.md conformance ----------------------------------------------------
 
 

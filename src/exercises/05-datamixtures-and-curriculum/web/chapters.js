@@ -742,6 +742,19 @@ function chapterResults(data) {
    * "one of them is inside the range the same mixture produces against itself" — both true of an
    * earlier run and both false after the corpus grew and the failing hypothesis fell to a second
    * clause instead. A sentence that states a result has to be derived from that result. */
+  /* Derived from the run, not remembered. Every claim below used to be a hand-written sentence
+   * that outlived the run it described: the corpus was "built entirely from text this repository
+   * already tracks" long after three lanes became fetched stand-ins, and "four of the seven lanes
+   * were dropped" long after all six were funded. */
+  const lanesInCorpus = Object.keys(exp.corpus);
+  const corpusTokens = Object.values(exp.corpus).reduce((sum, l) => sum + l.train_tokens, 0);
+  const standIns = lanesInCorpus.filter((lane) =>
+    (exp.corpus[lane].sources || []).some((s) => s.startsWith('data/proxy/')),
+  );
+  const droppedLanes = [
+    ...new Set(Object.values(exp.arms).flatMap((a) => a.dropped_lanes || [])),
+  ];
+
   const lost = exp.comparisons.filter((c) => c.verdict !== 'supported');
   const lostWord = lost.length === 1 ? 'one prediction' : `${lost.length} predictions`;
 
@@ -775,9 +788,18 @@ function chapterResults(data) {
             `**${c.key} is ${c.verdict}.** Its refutation had a second clause — *“or the other ` +
               `lanes gain more than ${pct(c.secondary.threshold)}”* — which the first version of ` +
               `the comparison did not check. \`${c.secondary.lane}\` gains ` +
-              `${(c.secondary.gain * 100).toFixed(2)}%, past that bar, and sits inside its own ` +
-              `${(c.secondary.noise * 100).toFixed(2)}% seed spread. These runs settle it in ` +
-              'neither direction, and saying so costs the specification a clean result it did not earn.',
+              `${(c.secondary.gain * 100).toFixed(2)}%, past that bar, and ` +
+              /* Branch on the measurement instead of asserting one. This read "sits inside its own
+               * spread … settles it in neither direction" unconditionally — true when the verdict
+               * was `qualified`, and flatly contradicted by the `refuted` badge rendered directly
+               * above it once the gain cleared its noise. */
+              (c.secondary.clears_noise
+                ? `**clears** its own ${(c.secondary.noise * 100).toFixed(2)}% seed spread. ` +
+                  'So the clause fires and the hypothesis fails on a condition fixed before the ' +
+                  'run — which costs the specification a clean sweep it did not earn.'
+                : `sits inside its own ${(c.secondary.noise * 100).toFixed(2)}% seed spread. ` +
+                  'These runs settle it in neither direction, and saying so costs the ' +
+                  'specification a clean result it did not earn.'),
             'warn',
           ),
         ),
@@ -785,14 +807,21 @@ function chapterResults(data) {
     arithmetic: [
       richP(
         `Ran on \`${exp.device}\`: a ${exp.model.layers}-layer model, ${exp.steps} steps, ` +
-          `${exp.seeds.length} seeds per arm, over a corpus built entirely from text this ` +
-          'repository already tracks — so it reproduces from a fresh clone with no network.',
+          `${exp.seeds.length} seeds per arm, over ${tok(corpusTokens)} tokens across ` +
+          `${lanesInCorpus.length} lanes` +
+          (standIns.length
+            ? ` — ${standIns.length} of them (${standIns.join(', ')}) **openly-licensed stand-ins** ` +
+              'rather than the datasets the specification funds those lanes from.'
+            : ' , all from text this repository already tracks.'),
       ),
       richP(
         '**This does not validate the mixture at scale, and is not offered as doing so.** The ' +
-          'corpus is three orders of magnitude too small and four of the seven lanes have no ' +
-          'committed text at all, so they were dropped. What it establishes is that the harness ' +
-          'works and the metric responds — which is what makes the next, larger run worth paying for.',
+          'corpus is three orders of magnitude too small' +
+          (droppedLanes.length
+            ? `, and ${droppedLanes.length} funded lanes (${droppedLanes.join(', ')}) had no text ` +
+              'here at all, so no result speaks to them.'
+            : ', and a finding that rests on a stand-in rests on the stand-in too.') +
+          ' What it establishes is that the harness works and the metric responds.',
       ),
     ],
   });
