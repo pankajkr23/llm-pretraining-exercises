@@ -10,29 +10,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
-### Changed
-
-- **Session notebooks are no longer tracked.** `notebooks/S[0-9][0-9]-*.ipynb` is gitignored; each
-  is built locally from its exercise's `tools/build_notebook.py`. The files are untouched on
-  existing checkouts and history is unchanged — they simply stop being versioned. A notebook is
-  derived from the package it imports, so tracking one versions a second copy of numbers the
-  modules already own.
-- **`notebooks/hello.ipynb` is tracked in their place**, and CI executes it. Every notebook rule is
-  checked by reading a notebook, so on a fresh clone all of them now skip — and a rule that only
-  skips is not a rule. The sample is stdlib-only on purpose: one that imported an exercise package
-  would go red whenever that exercise changed. It proves a notebook in this repo opens and runs; it
-  cannot prove a session notebook is correct, and `AGENTS.md` now says so.
-- **Dead Colab badges removed** from exercise 04's README, the root README, and — least visible —
-  from the notebook `build_notebook.py` generates, all of which pointed at paths GitHub now 404s.
-
-### Fixed
-
-- **`TOKENIZER.md` could not be rendered on a checkout without FLORES-200**, which is every fresh
-  clone and CI. `spread_table` advertised an `ours` column filled from a measurement that returns
-  empty when the corpus is absent, and exercise 05's renderer indexed it and raised
-  `KeyError: 'ours'`. The table no longer names a column with nothing behind it, the renderer draws
-  a gap rather than indexing into one, and the byte-comparison test skips where the measurement
-  cannot be reproduced. No published number changes.
+## [0.5.0] - 2026-08-19
 
 ### Added
 
@@ -60,48 +38,11 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   Each verdict is checked twice in tests — once on numbers that should produce it, once on numbers
   that must not.
 
-### Changed
-
-- **H3 is now refuted, not qualified.** With the STEM lane funded, the second clause of its declared
-  refutation fires: halving Indic costs Indic 3.52% but gains STEM 1.12%, past the 1% threshold and
-  clear of its own 0.71% seed spread. With no STEM lane there was nothing for that clause to observe
-  — the hypothesis was not safer, it was untestable, and an untestable hypothesis had been reading
-  as a passing one. The declared consequence is that 18% Indic is over-provisioned. The share has
-  **not** been moved: that evidence comes from a 5.8M-parameter model through a lane whose text is a
-  declared stand-in, and `SPEC.md` says a proxy this size cannot settle the mixture. It is recorded
-  as the specification's largest open question, to be decided at the 1B rung.
-
-### Fixed
-
-- **A completed experiment left the committed result untouched.** `experiment.save` wrote to the
-  gitignored `artifacts/`, while the tracked evidence lives in `results/`, so the documents kept
-  rendering an older run while the terminal showed the new one — and nothing failed. It writes to
-  `results/` now.
-- **Narrative that could not go stale.** The prose in `EXPERIMENTS.md` and `SPEC.md` describing the
-  run ("across three lanes", "H3 came back qualified", "four of seven lanes dropped") was
-  hand-written beside generated tables and survived a run that made all of it false. It is computed
-  from the result bundle now.
-
-### Added
-
 - **The session notebook is now executed in CI, not just parsed.** `test_mixture_notebook.py` runs
   all 37 code cells through `nbclient` and fails if any raises — the one failure a reader meets
   first, and the one the structural tests could never see. Its twin appends a deliberately raising
   cell and requires the runner to catch it. `nbclient` and `ipykernel` join the root `dev` group so
   the guard actually runs instead of skipping.
-
-### Changed
-
-- **Exercise 05's page no longer fetches its own data.** The bundle is a generated ES module
-  (`web/data.js`) the page imports statically, replacing `web/data.json` and the fetch that read
-  it. This removes a failure mode rather than handling one: the page used to paint, then request,
-  then either render or show an error, and it carried a "Loading…" state and a catch block for the
-  gap. Two browser tests hold the line — one reads the browser's own resource timeline and requires
-  zero script-initiated requests, the other requires the static import in the served HTML — and
-  both go red when the fetch is put back. Exercises 02–04 keep their fetch; exercise 02's bundle is
-  2.8 MB, where inlining would block first paint for no gain.
-
-### Added
 
 - **Exercise 05 — the V5 data mixture and curriculum**, as a specification written to be argued
   with. [`SPEC.md`](src/exercises/05-datamixtures-and-curriculum/SPEC.md) is the deliverable and it
@@ -185,6 +126,37 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Changed
 
+- **Session notebooks are no longer tracked.** `notebooks/S[0-9][0-9]-*.ipynb` is gitignored; each
+  is built locally from its exercise's `tools/build_notebook.py`. The files are untouched on
+  existing checkouts and history is unchanged — they simply stop being versioned. A notebook is
+  derived from the package it imports, so tracking one versions a second copy of numbers the
+  modules already own.
+- **`notebooks/hello.ipynb` is tracked in their place**, and CI executes it. Every notebook rule is
+  checked by reading a notebook, so on a fresh clone all of them now skip — and a rule that only
+  skips is not a rule. The sample is stdlib-only on purpose: one that imported an exercise package
+  would go red whenever that exercise changed. It proves a notebook in this repo opens and runs; it
+  cannot prove a session notebook is correct, and `AGENTS.md` now says so.
+- **Dead Colab badges removed** from exercise 04's README, the root README, and — least visible —
+  from the notebook `build_notebook.py` generates, all of which pointed at paths GitHub now 404s.
+
+- **H3 is now refuted, not qualified.** With the STEM lane funded, the second clause of its declared
+  refutation fires: halving Indic costs Indic 3.52% but gains STEM 1.12%, past the 1% threshold and
+  clear of its own 0.71% seed spread. With no STEM lane there was nothing for that clause to observe
+  — the hypothesis was not safer, it was untestable, and an untestable hypothesis had been reading
+  as a passing one. The declared consequence is that 18% Indic is over-provisioned. The share has
+  **not** been moved: that evidence comes from a 5.8M-parameter model through a lane whose text is a
+  declared stand-in, and `SPEC.md` says a proxy this size cannot settle the mixture. It is recorded
+  as the specification's largest open question, to be decided at the 1B rung.
+
+- **Exercise 05's page no longer fetches its own data.** The bundle is a generated ES module
+  (`web/data.js`) the page imports statically, replacing `web/data.json` and the fetch that read
+  it. This removes a failure mode rather than handling one: the page used to paint, then request,
+  then either render or show an error, and it carried a "Loading…" state and a catch block for the
+  gap. Two browser tests hold the line — one reads the browser's own resource timeline and requires
+  zero script-initiated requests, the other requires the static import in the served HTML — and
+  both go red when the fetch is put back. Exercises 02–04 keep their fetch; exercise 02's bundle is
+  2.8 MB, where inlining would block first paint for no gain.
+
 - **Assignment briefs are no longer tracked, at any level.** `BRIEF.md` is gitignored by name
   everywhere. A brief is the course's text and is input for whoever builds the exercise; it is not
   the deliverable. The files remain on disk and in past commits — no history was rewritten.
@@ -195,6 +167,22 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   now points there, so nothing published goes dark and no link 404s.
 
 ### Fixed
+
+- **`TOKENIZER.md` could not be rendered on a checkout without FLORES-200**, which is every fresh
+  clone and CI. `spread_table` advertised an `ours` column filled from a measurement that returns
+  empty when the corpus is absent, and exercise 05's renderer indexed it and raised
+  `KeyError: 'ours'`. The table no longer names a column with nothing behind it, the renderer draws
+  a gap rather than indexing into one, and the byte-comparison test skips where the measurement
+  cannot be reproduced. No published number changes.
+
+- **A completed experiment left the committed result untouched.** `experiment.save` wrote to the
+  gitignored `artifacts/`, while the tracked evidence lives in `results/`, so the documents kept
+  rendering an older run while the terminal showed the new one — and nothing failed. It writes to
+  `results/` now.
+- **Narrative that could not go stale.** The prose in `EXPERIMENTS.md` and `SPEC.md` describing the
+  run ("across three lanes", "H3 came back qualified", "four of seven lanes dropped") was
+  hand-written beside generated tables and survived a run that made all of it false. It is computed
+  from the result bundle now.
 
 - **The exercises table in the root README** rendered as two separate tables, because a stray blank
   line sat between exercise 03's row and exercise 04's.
@@ -1237,7 +1225,8 @@ First tagged release: two interactive exercises live on Vercel with a gated depl
 - **Tooling & conventions:** uv workspace (Python 3.12), ruff lint/format, pytest (unit +
   integration split), GitHub Actions CI, and a PR-only workflow documented in `AGENTS.md`.
 
-[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.3.0...v0.3.1
