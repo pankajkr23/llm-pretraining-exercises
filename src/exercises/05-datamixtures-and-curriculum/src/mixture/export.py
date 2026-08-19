@@ -1018,6 +1018,121 @@ def _proxy_corpus_tokens() -> int:
     return sum(lane["train_tokens"] for lane in corpus.values())
 
 
+def _followup_outcomes() -> dict[str, str]:
+    """One line per follow-on experiment, read from its results rather than remembered.
+
+    The deliverable listed the three questions and not one of their answers, so a reader had to
+    open another file to learn whether anything was found. A result nobody states is a result
+    nobody has.
+
+    Returns:
+        `{"e1": ..., "e2": ..., "e3": ...}`, each a short phrase or "not run".
+    """
+    import json
+
+    out = {"e1": "not run", "e2": "not run", "e3": "not run"}
+
+    if REPETITION_RESULTS.exists():
+        data = json.loads(REPETITION_RESULTS.read_text(encoding="utf-8"))
+        worst, best = data["rungs"][0], data["rungs"][-1]
+        excess = (worst["bpb_mean"] - best["bpb_mean"]) / best["bpb_mean"] * 100
+        shape = "not monotone" if data["reading"]["inversions"] else "monotone"
+        out["e1"] = (
+            f"re-reading **costs** loss — {worst['epochs']:.1f} epochs is {excess:.1f}% worse "
+            f"than {best['epochs']:.2f}; curve {shape}"
+        )
+
+    if SEAM_RESULTS.exists():
+        data = json.loads(SEAM_RESULTS.read_text(encoding="utf-8"))
+        reading = data["reading"]
+        out["e2"] = (
+            f"**{reading['verdict']}** — {reading['peak_ratio_hard']:.2f} vs "
+            f"{reading['peak_ratio_banded']:.2f}, inside a {reading['noise']:.2f} spread"
+        )
+
+    if SCALE_RESULTS.exists():
+        data = json.loads(SCALE_RESULTS.read_text(encoding="utf-8"))
+        rungs = data["rungs"]
+        span = rungs[-1]["params"] / rungs[0]["params"]
+        winner = rungs[0]["ranking"][0]
+        out["e3"] = (
+            f"**{data['reading']['verdict']}** across {span:.0f}x — arm {winner} wins at every "
+            "size, the same direction H3 points"
+        )
+
+    return out
+
+
+def _proxy_limits(corpus_tokens: str) -> str:
+    """The honest boundary on the proxy, derived from what actually ran.
+
+    Hand-written, this said "three lanes were dropped — stem, reasoning and agentic" and called
+    scale transfer untested, months after both stopped being true. Both sat under correct generated
+    tables. Anything here that states a fact about the run is now read from the run.
+
+    Args:
+        corpus_tokens: Formatted training-token count.
+
+    Returns:
+        A bulleted list.
+    """
+    import json
+
+    bullets = [
+        f"- **The corpus is {corpus_tokens} tokens.** Three orders of magnitude below the scale a "
+        "mixture decision is made at. Every effect above inherits that."
+    ]
+
+    if RESULTS.exists():
+        results = json.loads(RESULTS.read_text(encoding="utf-8"))
+        present = list(results["corpus"])
+        funded = [lane for lane, share in lanes.shares().items() if share > 0]
+        missing = [lane for lane in funded if lane not in present]
+        stand_ins = [lane for lane in ("stem", "reasoning", "agentic") if lane in present]
+        if missing:
+            bullets.append(
+                f"- **{len(missing)} funded lanes have no text here** ({', '.join(missing)}), so "
+                "no result speaks to them."
+            )
+        if stand_ins:
+            bullets.append(
+                f"- **{len(stand_ins)} of the {len(present)} lanes are stand-ins** "
+                f"({', '.join(stand_ins)}) — openly-licensed text of the right *kind*, not the "
+                "datasets the specification funds those lanes from. GSM8K is not peS2o, and any "
+                "finding resting on one of these rests on the stand-in too."
+            )
+        refuted = [c for c in results["comparisons"] if c["verdict"] == "refuted"]
+        if refuted:
+            bullets.append(
+                f"- **{refuted[0]['key']} is refuted and the share has not moved.** The declared "
+                "consequence is that the Indic lane is over-provisioned; acting on it would mean "
+                "changing a headline number on evidence this document calls insufficient. It is "
+                "the specification's largest open question, and the 1B rung decides it."
+            )
+
+    if SCALE_RESULTS.exists():
+        data = json.loads(SCALE_RESULTS.read_text(encoding="utf-8"))
+        rungs = data["rungs"]
+        bullets.append(
+            f"- **Scale transfer is tested but not settled.** E3 ran every arm from "
+            f"{rungs[0]['params']:,} to {rungs[-1]['params']:,} parameters and the endpoints rank "
+            "identically, so §7's falsifier does not fire — but two intermediate sizes order the "
+            "middle of the field differently, and 30M is still five orders of magnitude short of "
+            "40B."
+        )
+    else:
+        bullets.append(
+            "- **Scale transfer is an assumption, not a result.** §7 names what would falsify it: "
+            "a rank inversion between the smallest and largest arm."
+        )
+
+    bullets.append(
+        "- **The 1B/3B rung has not been run.** It is priced from a measurement rather than a "
+        "guess, and it remains a commitment. Step 0 is not offered as a substitute for it."
+    )
+    return "\n".join(bullets)
+
+
 def render_readme(config: Config | None = None) -> str:
     """Build the exercise `README.md` — the document the submission links to.
 
@@ -1042,16 +1157,17 @@ def render_readme(config: Config | None = None) -> str:
     reserve = lanes.anneal_reserve(config)
     tier_d = lanes.indic_tiers(config)["D"]
 
+    outcomes = _followup_outcomes()
     extra_experiments = "\n".join(
         [
-            "| | question | why it needed asking |",
-            "| --- | --- | --- |",
-            "| **E1** | what is a re-read token actually worth? | the supply analysis borrows a "
-            "`x16.4` ceiling whose shape was never checked on our own data |",
-            "| **E2** | does a warmup band at a stage seam calm the gradient? | §6 schedules one "
-            "at every seam; this document promised the test and had not run it |",
-            "| **E3** | does the arm ranking survive a change of scale? | §7 names a rank "
-            "inversion as its own falsifier, and naming one without testing it is cheap |",
+            "| | question | why it needed asking | what came back |",
+            "| --- | --- | --- | --- |",
+            f"| **E1** | what is a re-read token actually worth? | the supply analysis borrows "
+            f"a `x16.4` ceiling whose shape was never checked on our own data | {outcomes['e1']} |",
+            f"| **E2** | does a warmup band at a stage seam calm the gradient? | §6 schedules one "
+            f"at every seam; this document promised the test and never ran it | {outcomes['e2']} |",
+            f"| **E3** | does the arm ranking survive a change of scale? | §7 names a rank "
+            f"inversion as its own falsifier | {outcomes['e3']} |",
         ]
     )
 
@@ -1061,6 +1177,7 @@ def render_readme(config: Config | None = None) -> str:
     agentic_ceiling = humanise(agentic.raw_supply * 16.4)
     invariant_count = len([n for n in dir(checks) if n.startswith("check_")])
     corpus_tokens = f"{_proxy_corpus_tokens():,}"
+    limits = _proxy_limits(corpus_tokens)
 
     return f"""\
 # 05 · Data mixtures and curriculum
@@ -1238,16 +1355,7 @@ Results, with what each does and does not settle, are in
 
 This is the honest boundary, and it is stated here rather than left for a reviewer to find.
 
-- **The corpus is {corpus_tokens} tokens.** Three orders of magnitude below the scale a mixture
-  decision is made at. Every effect above inherits that.
-- **Three lanes were dropped** — stem, reasoning and agentic — because the committed corpus holds
-  no text for them. The lanes carrying the most contested findings are the ones the proxy could not
-  test.
-- **Scale transfer is an assumption, not a result.** That mixture rankings hold from a 5.8M-param
-  proxy to a 40B run is asserted, and `SPEC.md` §7 names what would falsify it: a rank inversion
-  between the smallest and largest arm.
-- **The 1B/3B rung has not been run.** It is priced from a measurement rather than a guess, and it
-  remains a commitment. Step 0 is not offered as a substitute for it.
+{limits}
 
 ## The guards
 

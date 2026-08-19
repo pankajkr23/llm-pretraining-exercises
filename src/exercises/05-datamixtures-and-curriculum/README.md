@@ -253,11 +253,11 @@ Full write-up: [`EXPERIMENTS.md`](EXPERIMENTS.md).
 
 The 1B rung needs money. These did not, and each one tests something the specification asserts:
 
-| | question | why it needed asking |
-| --- | --- | --- |
-| **E1** | what is a re-read token actually worth? | the supply analysis borrows a `x16.4` ceiling whose shape was never checked on our own data |
-| **E2** | does a warmup band at a stage seam calm the gradient? | §6 schedules one at every seam; this document promised the test and had not run it |
-| **E3** | does the arm ranking survive a change of scale? | §7 names a rank inversion as its own falsifier, and naming one without testing it is cheap |
+| | question | why it needed asking | what came back |
+| --- | --- | --- | --- |
+| **E1** | what is a re-read token actually worth? | the supply analysis borrows a `x16.4` ceiling whose shape was never checked on our own data | re-reading **costs** loss — 18.4 epochs is 6.8% worse than 1.15; curve not monotone |
+| **E2** | does a warmup band at a stage seam calm the gradient? | §6 schedules one at every seam; this document promised the test and never ran it | **inconclusive** — 1.52 vs 1.41, inside a 0.18 spread |
+| **E3** | does the arm ranking survive a change of scale? | §7 names a rank inversion as its own falsifier | **assumption survives** across 18x — arm D wins at every size, the same direction H3 points |
 
 Results, with what each does and does not settle, are in
 [`EXPERIMENTS.md`](EXPERIMENTS.md).
@@ -266,16 +266,11 @@ Results, with what each does and does not settle, are in
 
 This is the honest boundary, and it is stated here rather than left for a reviewer to find.
 
-- **The corpus is 1,784,212 tokens.** Three orders of magnitude below the scale a mixture
-  decision is made at. Every effect above inherits that.
-- **Three lanes were dropped** — stem, reasoning and agentic — because the committed corpus holds
-  no text for them. The lanes carrying the most contested findings are the ones the proxy could not
-  test.
-- **Scale transfer is an assumption, not a result.** That mixture rankings hold from a 5.8M-param
-  proxy to a 40B run is asserted, and `SPEC.md` §7 names what would falsify it: a rank inversion
-  between the smallest and largest arm.
-- **The 1B/3B rung has not been run.** It is priced from a measurement rather than a guess, and it
-  remains a commitment. Step 0 is not offered as a substitute for it.
+- **The corpus is 1,784,212 tokens.** Three orders of magnitude below the scale a mixture decision is made at. Every effect above inherits that.
+- **3 of the 6 lanes are stand-ins** (stem, reasoning, agentic) — openly-licensed text of the right *kind*, not the datasets the specification funds those lanes from. GSM8K is not peS2o, and any finding resting on one of these rests on the stand-in too.
+- **H3 is refuted and the share has not moved.** The declared consequence is that the Indic lane is over-provisioned; acting on it would mean changing a headline number on evidence this document calls insufficient. It is the specification's largest open question, and the 1B rung decides it.
+- **Scale transfer is tested but not settled.** E3 ran every arm from 1,709,568 to 30,471,168 parameters and the endpoints rank identically, so §7's falsifier does not fire — but two intermediate sizes order the middle of the field differently, and 30M is still five orders of magnitude short of 40B.
+- **The 1B/3B rung has not been run.** It is priced from a measurement rather than a guess, and it remains a commitment. Step 0 is not offered as a substitute for it.
 
 ## The guards
 
