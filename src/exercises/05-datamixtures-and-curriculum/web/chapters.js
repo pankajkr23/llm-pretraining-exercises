@@ -700,8 +700,16 @@ function chapterResults(data) {
       cells.push(showSpread ? `${mean(w).toFixed(4)} ±${spread(w).toFixed(4)}` : mean(w).toFixed(4));
       return [`**${key}** ${arm.name}`, ...cells];
     });
+    /* The unit is stated once, under the table, rather than repeated in all seven column
+     * headers. Every cell is the same measure, so repeating it added no information and cost the
+     * reader the lane names, which are the part that differs between columns. */
     scoreEl.replaceChildren(
-      table(['arm', ...lanesScored.map((l) => `${l} [[BPB|bpb]]`), 'weighted'], rows),
+      table(['arm', ...lanesScored, 'weighted'], rows),
+      richP(
+        'Every cell is held-out [[BPB|bpb]], lower is better; **±** is the spread across ' +
+          `${exp.seeds.length} seeds of the same arm.`,
+        'note',
+      ),
     );
   }
 
@@ -746,7 +754,8 @@ function chapterResults(data) {
       `Four mixtures, ${exp.seeds.length} random seeds each, scored on held-out text the models ` +
       'never trained on, against thresholds fixed before a single arm ran. Every effect below is ' +
       'quoted beside the spread the *same* mixture produces against itself — because an effect ' +
-      `smaller than that spread is not a result. ${lostWord} did not survive.`,
+      'smaller than that spread is not a result. ' +
+      `${lostWord[0].toUpperCase()}${lostWord.slice(1)} did not survive.`,
     big: Object.entries(tally).map(([k, v]) => `${v} ${k}`).join(' · '),
     bigSub: 'of the three predictions, judged against thresholds fixed before the run',
     body: [
@@ -889,9 +898,70 @@ function buildFooter(data) {
 }
 
 /** Render the whole page. */
+
+/* A reader arriving cold needs to know what this is and how the numbers were produced before the
+ * first chapter argues with them. Six steps, each carrying the one figure it produced, all read
+ * from the bundle so the strip cannot describe a pipeline that no longer runs. */
+function buildSummary(data) {
+  const exp = data.experiment;
+  const lanes = data.lanes.filter((l) => l.share > 0);
+  const corpusTokens = exp
+    ? Object.values(exp.corpus).reduce((sum, lane) => sum + lane.train_tokens, 0)
+    : 0;
+  const verdicts = exp ? exp.comparisons.map((c) => c.verdict) : [];
+  const supported = verdicts.filter((v) => v === 'supported').length;
+
+  const steps = [
+    ['Inventory', `${data.inventory.length} datasets, each with a named token count`],
+    ['Supply', `summed per lane from those rows — never from a slot headline`],
+    ['Mixture', `${lanes.length} funded lanes, every share argued against its own supply`],
+    ['Curriculum', `5 stages, 6 difficulty bands, a 4K→32K context ladder`],
+    ['Invariants', `checked in CI, each paired with a test that proves it can fail`],
+    [
+      'Proxy',
+      exp
+        ? `${Object.keys(exp.arms).length} arms × ${exp.seeds.length} seeds over ` +
+          `${(corpusTokens / 1e6).toFixed(1)}M tokens — ${supported} supported, ` +
+          `${verdicts.length - supported} not`
+        : 'not yet run',
+    ],
+  ];
+
+  const wrap = $('section', 'summary');
+  wrap.id = 'how';
+  wrap.dataset.title = 'How this was built';
+  wrap.dataset.n = '0';
+  wrap.append(
+    richP(
+      '**What this is.** A training recipe for a 40B model: how much of each kind of text it ' +
+        'reads, and in what order. **How it was built.** Every share is composed backward from a ' +
+        'benchmark, then checked against the data that actually exists — and three of them did ' +
+        'not survive that check.',
+      'summary-lede',
+    ),
+  );
+  const list = $('ol', 'summary-steps');
+  steps.forEach(([name, detail]) => {
+    const li = $('li');
+    li.append($('span', 'summary-step', name), rich(detail));
+    list.append(li);
+  });
+  wrap.append(list);
+  wrap.append(
+    richP(
+      'Nothing below is typed by hand. Every figure is computed from the same modules the tests ' +
+        'pin, and the documents are regenerated from them — so the prose cannot disagree with ' +
+        'the table beside it.',
+      'note',
+    ),
+  );
+  return wrap;
+}
+
 export function buildPage(data) {
   const main = document.getElementById('main');
   main.replaceChildren();
+  main.append(buildSummary(data));
   CHAPTERS.forEach((fn) => {
     try {
       main.append(fn(data));

@@ -15,6 +15,7 @@ Run: ``uv run pytest -m integration``
 
 import http.server
 import json
+import os
 import socketserver
 import threading
 from collections.abc import Iterator
@@ -64,6 +65,11 @@ def _page(width: int = 1500, path: str = ""):
         try:
             browser = pw.chromium.launch()
         except PlaywrightError as exc:  # pragma: no cover - environment, not logic
+            # Skipping keeps a fresh checkout working. On CI it would turn "the browser
+            # never launched" into a green run with no rendering coverage at all, which is
+            # what this suite exists to prevent. CI has no excuse for a missing browser.
+            if os.environ.get("CI"):
+                pytest.fail(f"chromium did not launch on CI: {exc}")
             pytest.skip(f"no chromium available: {exc}")
         page = browser.new_page(viewport={"width": width, "height": 1000})
         errors: list[str] = []

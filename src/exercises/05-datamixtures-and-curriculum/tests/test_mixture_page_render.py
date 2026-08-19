@@ -15,6 +15,7 @@ means it protects the page silently or not at all: `uv run playwright install ch
 
 import http.server
 import json
+import os
 import re
 import socket
 import subprocess
@@ -80,6 +81,11 @@ def page(site):
         try:
             browser = play.chromium.launch()
         except Exception as exc:  # noqa: BLE001
+            # Skipping keeps a fresh checkout working. On CI it would turn "the browser
+            # never launched" into a green run with no rendering coverage at all, which is
+            # what this suite exists to prevent. CI has no excuse for a missing browser.
+            if os.environ.get("CI"):
+                pytest.fail(f"chromium did not launch on CI: {exc}")
             pytest.skip(f"no chromium available: {exc}")
         context = browser.new_context(viewport={"width": 1280, "height": 900})
         p = context.new_page()
