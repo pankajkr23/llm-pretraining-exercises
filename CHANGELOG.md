@@ -26,6 +26,16 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   lesson itself stays in always-visible prose, so a reader who declines to guess — and every print
   and reduced-motion reader — still gets it.
 
+### Fixed
+
+- **Exercise 05's results chapter described a run that had stopped happening.** Three claims were
+  wrong on the deployed page: the corpus was "built entirely from text this repository already
+  tracks" after three of its six lanes became fetched stand-ins, "four of the seven lanes… were
+  dropped" after all six were funded, and — worst — `stem` gains were said to **sit inside** their
+  own seed spread when they clear it, which is precisely why H3 reads `refuted` on the badge
+  rendered directly above that sentence. All three are computed from the run now, and the
+  second-clause sentence branches on `clears_noise` rather than asserting an outcome.
+
 ## [0.5.0] - 2026-08-19
 
 ### Added

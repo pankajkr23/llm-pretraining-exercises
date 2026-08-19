@@ -32,6 +32,29 @@ only, gitignored).
   `None` and `estimate()` returns absent hours and cost. A plausible number there would decide a
   spending question on evidence nobody gathered.
 
+## The page carries the blind spots and the corrections, not just the findings
+
+`EXPLAINER_PROMPT.md` §13 names three things as this work's distinguishing content — the
+**confidence ledger, the blind spots and the corrections log** — and warns that the reference
+widget format can express none of them. All three are now on the page, and the rules that keep them
+there:
+
+- **Blind spots live in the open text, never inside the collapsed `under the hood` details.** A
+  limitation a reader has to open a drawer to find is a limitation the page is hiding. There is a
+  test for this specifically, separate from the one that checks the content exists.
+- **An interaction must not be the only route to a lesson.** The predict-before-reveal block was
+  written with its transferable point inside the reveal, so a reader who declined to guess never
+  saw it — and neither would any print or reduced-motion reader. The point now sits in
+  always-visible prose and the reveal carries the numbers.
+- **One predict-before-reveal on the page, and only one.** §14.1 caps it at three because "effort
+  spent is a budget", and this page spends its one on the correction that teaches the transferable
+  lesson rather than on a fact about our own mixture.
+
+**Testing the collapsed half:** `page.inner_text()` cannot see inside a closed `<details>`, so a
+guard written with it silently skips the `under the hood` block where several claims live. Use
+`page.eval_on_selector("#results", "el => el.textContent")` when the assertion is about content
+that may be collapsed, and `inner_text` only when the point *is* that something is visible.
+
 ## The page imports its data; it does not fetch it
 
 `export.write_web` emits `web/data.js` — `export const BUNDLE = Object.freeze({…})` — and
