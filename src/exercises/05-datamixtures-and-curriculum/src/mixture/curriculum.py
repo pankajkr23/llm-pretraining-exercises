@@ -774,3 +774,44 @@ def exclusive_answer() -> int:
         Integers in 1..999 divisible by 3 or 5.
     """
     return sum(1 for n in range(1, 1000) if n % 3 == 0 or n % 5 == 0)
+
+
+def seam_blend(
+    before: dict[str, float],
+    after: dict[str, float] | None,
+    seam_at: int,
+    band_steps: int,
+    step: int,
+) -> dict[str, float]:
+    """The mixture in force at `step`, blending across a seam's warmup band.
+
+    Lives here rather than in `train.py`, for a reason CI found the hard way: this is arithmetic
+    over two dicts and needs no torch, while `train.py` imports torch at module scope. Anything
+    wanting to *test* the blend had to pull torch in to do it, which put the test out of reach of a
+    CI run that deliberately has none.
+
+    Args:
+        before: The mixture on the near side of the seam, already renormalised.
+        after: The mixture on the far side, or None for a single-stage run.
+        seam_at: Step at which `after` is fully in force.
+        band_steps: Width of the band. 0 is a hard switch — the mixture changes between one step
+            and the next, which is what V4 did at the Hindi seam that spiked its gradient norm.
+        step: Current optimiser step.
+
+    Returns:
+        Lane to share: `before` well ahead of the band, `after` from the seam on, and a linear
+        interpolation between them inside it.
+    """
+    far = after or {}
+    band = max(0, band_steps)
+    start = seam_at - band
+    if step >= seam_at:
+        blend = 1.0
+    elif step <= start:
+        blend = 0.0
+    else:
+        blend = (step - start) / band
+    return {
+        lane: (1 - blend) * before.get(lane, 0.0) + blend * far.get(lane, 0.0)
+        for lane in set(before) | set(far)
+    }

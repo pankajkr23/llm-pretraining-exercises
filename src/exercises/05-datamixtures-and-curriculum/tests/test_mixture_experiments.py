@@ -12,44 +12,35 @@ import json
 from pathlib import Path
 
 import pytest
-from mixture import repetition, scale, seam
-from mixture.train import TrainConfig, seam_shares
+from mixture import curriculum, repetition, scale, seam
 
 # ---- the seam blend ---------------------------------------------------------------------------
 
 
-def _config(band: int) -> TrainConfig:
-    return TrainConfig(
-        arm="t",
-        shares={"web": 1.0},
-        shares_after={"indic": 1.0},
-        seam_at=100,
-        band_steps=band,
-    )
+def _blend(band: int, step: int) -> dict[str, float]:
+    """The mixture at `step` for a web -> indic seam at 100 with the given band."""
+    return curriculum.seam_blend({"web": 1.0}, {"indic": 1.0}, 100, band, step)
 
 
 def test_a_hard_switch_changes_between_one_step_and_the_next():
     """Band 0 is a step change — the thing V4 did, and the control this experiment needs."""
-    config = _config(0)
-    assert seam_shares(config, {"web": 1.0}, 99)["web"] == 1.0
-    assert seam_shares(config, {"web": 1.0}, 100)["indic"] == 1.0
+    assert _blend(0, 99)["web"] == 1.0
+    assert _blend(0, 100)["indic"] == 1.0
 
 
 def test_a_band_blends_linearly_and_lands_exactly_on_the_seam():
     """Half way through the band is half the mixture, and the seam step is fully across."""
-    config = _config(20)
-    midpoint = seam_shares(config, {"web": 1.0}, 90)
+    midpoint = _blend(20, 90)
     assert midpoint["web"] == pytest.approx(0.5)
     assert midpoint["indic"] == pytest.approx(0.5)
-    assert seam_shares(config, {"web": 1.0}, 100)["indic"] == pytest.approx(1.0)
-    assert seam_shares(config, {"web": 1.0}, 80)["web"] == pytest.approx(1.0)
+    assert _blend(20, 100)["indic"] == pytest.approx(1.0)
+    assert _blend(20, 80)["web"] == pytest.approx(1.0)
 
 
 def test_the_blend_always_sums_to_one():
     """A seam that quietly renormalises to something else changes the run's effective batch mix."""
-    config = _config(40)
     for step in range(0, 140, 7):
-        assert sum(seam_shares(config, {"web": 1.0}, step).values()) == pytest.approx(1.0)
+        assert sum(_blend(40, step).values()) == pytest.approx(1.0)
 
 
 # ---- the seam verdict -------------------------------------------------------------------------

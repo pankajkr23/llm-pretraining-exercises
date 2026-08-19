@@ -34,7 +34,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from mixture import corpus
+from mixture import corpus, curriculum
 from mixture.model import ModelConfig, TinyGPT, cosine_schedule, pick_device
 
 ARTIFACTS = corpus.EXERCISE_ROOT / "artifacts" / "runs"
@@ -217,33 +217,6 @@ def effective_shares(
     return {lane: share / total for lane, share in kept.items()}, dropped
 
 
-def seam_shares(config: "TrainConfig", before: dict[str, float], step: int) -> dict[str, float]:
-    """The mixture in force at `step`, blending across the warmup band.
-
-    Args:
-        config: Carries `shares_after`, `seam_at` and `band_steps`.
-        before: The mixture on the near side of the seam, already renormalised.
-        step: Current optimiser step.
-
-    Returns:
-        Lane to share. Identical to `before` well before the band and to the far-side mixture
-        after it; a linear interpolation between them inside it.
-    """
-    after = config.shares_after or {}
-    band = max(0, config.band_steps)
-    start = config.seam_at - band
-    if step >= config.seam_at:
-        blend = 1.0
-    elif step <= start:
-        blend = 0.0
-    else:
-        blend = (step - start) / band
-    keys = set(before) | set(after)
-    return {
-        lane: (1 - blend) * before.get(lane, 0.0) + blend * after.get(lane, 0.0) for lane in keys
-    }
-
-
 class MixtureSampler:
     """Draws batches lane by lane, in the arm's proportions.
 
@@ -409,7 +382,11 @@ def train(
             group["lr"] = learning_rate
 
         if config.shares_after is not None:
-            sampler.set_shares(seam_shares(config, shares, step))
+            sampler.set_shares(
+                curriculum.seam_blend(
+                    shares, config.shares_after, config.seam_at, config.band_steps, step
+                )
+            )
 
         inputs, targets = sampler.batch(config.batch, target)
 
