@@ -268,7 +268,8 @@ threshold fixed before the run:
 
 Every effect is quoted against the spread its own arm shows against itself.
 [`EXPERIMENTS.md`](src/exercises/05-datamixtures-and-curriculum/EXPERIMENTS.md) says plainly what this does and does not license: it does not
-validate the mixture at 40B, and is not offered as doing so.
+validate the mixture at 40B, and is not offered as doing so. [`METHOD.md`](src/exercises/05-datamixtures-and-curriculum/METHOD.md) explains
+the apparatus from scratch — the vocabulary, the model, the metric, and what each experiment tested.
 
 > **Live:** <https://llm-pretraining-demos.vercel.app/05-datamixtures-and-curriculum/> — drag the
 > lane shares and watch supply, floors and verdicts respond.

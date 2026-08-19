@@ -106,7 +106,7 @@ The training budget is held fixed and the unique pool is shrunk, so every rung d
 | 892,104 | 2.30 | 2.5884 | 0.0130 | +3.44% |
 | 1,784,212 | 1.15 | 2.5023 | 0.0031 | +0.00% |
 
-**Repetition measurably costs held-out loss at this scale**, against a seed spread of 0.01578 bpb. The curve is not monotone — 1 adjacent pair(s) run the wrong way, but by less than the seed spread, so the grid is finer than this experiment can resolve there.
+**Repetition measurably costs held-out loss at this scale**, against a seed spread of 0.01578 bpb. The curve is not monotone — one adjacent pair runs the wrong way, but by less than the seed spread, so the grid is finer than this experiment can resolve there.
 
 At the most-repeated rung the pool is re-read 18.4 times and costs 6.8% — worse, but nowhere near worthless, which is what the borrowed curve predicts for this range.
 

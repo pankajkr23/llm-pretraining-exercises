@@ -276,7 +276,7 @@ That consequence was fixed in advance, so it is owed rather than negotiable.
 
 **This does not validate the mixture at 40B and is not offered as doing so.** The corpus is three orders of magnitude too small, all 6 funded lanes are present, three of them from openly-licensed **stand-in** text rather than the datasets the specification funds them from, and an arm that looks better here would still be an arm that looks better on a corpus small enough to memorise.
 
-Full write-up: [`EXPERIMENTS.md`](EXPERIMENTS.md).
+Full write-up: [`EXPERIMENTS.md`](EXPERIMENTS.md). **If `H3`, `arm` or `bits per byte` are not familiar, [`METHOD.md`](METHOD.md) explains the whole apparatus from scratch** — the vocabulary, the model, the metric, both diagrams, and what each experiment was for.
 
 ## Three more experiments, at no cost
 
@@ -289,7 +289,9 @@ The 1B rung needs money. These did not, and each one tests something the specifi
 | **E3** | does the arm ranking survive a change of scale? | §7 names a rank inversion as its own falsifier | **assumption survives** across 18x — arm D wins at every size, the same direction H3 points |
 
 Results, with what each does and does not settle, are in
-[`EXPERIMENTS.md`](EXPERIMENTS.md).
+[`EXPERIMENTS.md`](EXPERIMENTS.md). **[`METHOD.md`](METHOD.md) is the one to read first if any of
+this is unfamiliar** — what an *arm* is, what *bits per byte* measures and why it is per byte, how
+the pipeline runs end to end, and a catalogue of every experiment with what it was for.
 
 ## What it cannot tell you
 

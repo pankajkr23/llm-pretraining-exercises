@@ -462,7 +462,9 @@ cost this specification marks; neither can earn it any.
 orders of magnitude too small, {coverage}, and an arm that looks better here would still be an arm \
 that looks better on a corpus small enough to memorise.
 
-Full write-up: [`EXPERIMENTS.md`](EXPERIMENTS.md)."""
+Full write-up: [`EXPERIMENTS.md`](EXPERIMENTS.md). **If `H3`, `arm` or `bits per byte` are not \
+familiar, [`METHOD.md`](METHOD.md) explains the whole apparatus from scratch** — the vocabulary, \
+the model, the metric, both diagrams, and what each experiment was for."""
 
 
 REPETITION_RESULTS = EXERCISE_ROOT / "results" / "repetition.json"
@@ -1505,7 +1507,9 @@ The 1B rung needs money. These did not, and each one tests something the specifi
 {extra_experiments}
 
 Results, with what each does and does not settle, are in
-[`EXPERIMENTS.md`](EXPERIMENTS.md).
+[`EXPERIMENTS.md`](EXPERIMENTS.md). **[`METHOD.md`](METHOD.md) is the one to read first if any of
+this is unfamiliar** — what an *arm* is, what *bits per byte* measures and why it is per byte, how
+the pipeline runs end to end, and a catalogue of every experiment with what it was for.
 
 ## What it cannot tell you
 
@@ -1570,6 +1574,7 @@ _EX = "src/exercises/05-datamixtures-and-curriculum"
 SPEC_LINK = f"{_EX}/SPEC.md"
 EXPERIMENTS_LINK = f"{_EX}/EXPERIMENTS.md"
 EXERCISE_LINK = f"{_EX}/README.md"
+METHOD_LINK = f"{_EX}/METHOD.md"
 
 
 ROOT_README = REPO_ROOT / "README.md"
@@ -1703,12 +1708,435 @@ threshold fixed before the run:
 
 Every effect is quoted against the spread its own arm shows against itself.
 [`EXPERIMENTS.md`]({EXPERIMENTS_LINK}) says plainly what this does and does not license: it does not
-validate the mixture at 40B, and is not offered as doing so.
+validate the mixture at 40B, and is not offered as doing so. [`METHOD.md`]({METHOD_LINK}) explains
+the apparatus from scratch — the vocabulary, the model, the metric, and what each experiment tested.
 
 > **Live:** <https://llm-pretraining-demos.vercel.app/05-datamixtures-and-curriculum/> — drag the
 > lane shares and watch supply, floors and verdicts respond.
 
 {ROOT_END}"""
+
+
+def _method_verdicts(run: dict | None) -> str:
+    """What the three hypotheses returned, with the arithmetic that decided each.
+
+    Args:
+        run: The Step 0 bundle, or None if it has not run.
+
+    Returns:
+        Markdown.
+    """
+    if not run:
+        return "_The arms have not been run on this checkout._"
+
+    rows = [
+        "| | measured on | effect | threshold | seed spread | verdict |",
+        "| --- | --- | ---: | ---: | ---: | --- |",
+    ]
+    for comparison in run["comparisons"]:
+        rows.append(
+            f"| **{comparison['key']}** | `{comparison['lane']}` | {comparison['effect']:+.2%} | "
+            f"{comparison['threshold']:.0%} | {comparison['noise']:.2%} | "
+            f"**{comparison['verdict']}** |"
+        )
+    table = "\n".join(rows)
+
+    notes = []
+    for comparison in run["comparisons"]:
+        if comparison["verdict"] != "supported":
+            notes.append(f"**{comparison['key']} — {comparison['verdict']}.** {comparison['note']}")
+
+    body = (
+        "**Two rules decide these, and both can only cost this specification marks.** An effect "
+        "smaller than the spread the same arm shows against itself is reported as `inconclusive`, "
+        "however large it looks — that is what the *seed spread* column is for. And a refutation "
+        "condition with more than one clause is checked on every clause, not just the convenient "
+        "one."
+    )
+    return f"## What they returned\n\n{table}\n\n{body}" + (
+        "\n\n" + "\n\n".join(notes) if notes else ""
+    )
+
+
+def _method_experiments() -> str:
+    """A catalogue of E1 to E4: the question, the method, the answer, and the limit.
+
+    Each is a separate run with its own results file, which is why they are numbered apart from the
+    hypotheses. A reader meeting `E2` in another document should be able to come here and find out
+    what it was in one place.
+
+    Returns:
+        Markdown.
+    """
+    import json
+
+    entries = [
+        (
+            "E1",
+            "What is a re-read token actually worth?",
+            "`mixture.repetition`",
+            REPETITION_RESULTS,
+            "The whole supply analysis borrows a ceiling — a pool is never worth more than "
+            "`unique x 16.4` — and that constant is what makes a lane *impossible* rather than "
+            "merely expensive. It had never been checked on our own data.",
+            "Hold the training budget fixed and shrink the unique pool: every rung does identical "
+            "work over less distinct text, so any difference is the price of re-reading rather "
+            "than the price of training less.",
+        ),
+        (
+            "E2",
+            "Does a warmup band at a stage seam calm the gradient?",
+            "`mixture.seam`",
+            SEAM_RESULTS,
+            "The curriculum puts a warmup band at every stage boundary on the strength of one "
+            "number from the session — V4 spiked its gradient norm ~150x at a Hindi seam. This "
+            "specification promised the weaker test it *could* run, and had not run it.",
+            "Two identical runs — same seeds, same steps, same mixtures either side — where one "
+            "changes mixture between one step and the next and the other blends across a band. "
+            "Gradient norm is logged every step so the seam is observed rather than sampled near.",
+        ),
+        (
+            "E3",
+            "Does the arm ranking survive a change of scale?",
+            "`mixture.scale`",
+            SCALE_RESULTS,
+            "`SPEC.md` §7 admits that *mixture rankings transfer across scale* is an assumption "
+            "and names its falsifier: a rank inversion between the smallest and largest arm. "
+            "Naming a falsifier and never testing it is cheaper than it looks honest.",
+            "Every arm at four model sizes, from 1.7M to 30.5M parameters, with the ordering "
+            "compared end to end.",
+        ),
+        (
+            "E4",
+            "Is the refutation real, or an artefact of one dataset?",
+            "`MIXTURE_STEM=alt`",
+            SENSITIVITY_RESULTS,
+            "H3 fails on its second clause, and everything that clause sees arrives through the "
+            "STEM lane — whose text is GSM8K standing in for peS2o. With the 1B rung "
+            "deprioritised, this is the cheapest question still worth asking.",
+            "The same arms, seeds, steps and thresholds, with only the STEM lane's text replaced "
+            "by a deliberately different stand-in: Stack Exchange mathematics instead of "
+            "grade-school word problems.",
+        ),
+    ]
+
+    out = []
+    for key, question, how, path, why, method in entries:
+        if path.exists():
+            data = json.loads(path.read_text(encoding="utf-8"))
+            reading = data.get("reading")
+            if reading:
+                detail = (reading.get("note") or reading.get("shape") or "").strip()
+                # One sentence, then the detail as its own. Joined with a dash these read as a
+                # single run-on clause with two subjects.
+                answer = f"**{_sentence_case(reading['verdict'])}.** " + _sentence_case(detail)
+                if not answer.rstrip().endswith("."):
+                    answer = answer.rstrip() + "."
+            else:
+                comparison = data["comparisons"][0]
+                answer = (
+                    f"**{_sentence_case(comparison['verdict'])}** — the same verdict as the "
+                    f"headline run, with the second clause gaining "
+                    f"{comparison['secondary']['gain']:.2%} against its "
+                    f"{comparison['secondary']['noise']:.2%} spread."
+                )
+        else:
+            answer = "_Not run on this checkout._"
+
+        out.append(
+            f"### {key} · {question}\n\n"
+            f"**Why it was asked.** {why}\n\n"
+            f"**How.** {method}\n\n"
+            f"**What came back.** {answer}\n\n"
+            f"**Run it:** `uv run python -m {how.strip('`')}`"
+            if not how.startswith("`MIXTURE")
+            else f"### {key} · {question}\n\n"
+            f"**Why it was asked.** {why}\n\n"
+            f"**How.** {method}\n\n"
+            f"**What came back.** {answer}\n\n"
+            f"**Run it:** see §9."
+        )
+    return "\n\n".join(out)
+
+
+def render_method(config: Config | None = None) -> str:
+    """Build `METHOD.md` — how the whole thing works, for a reader who has not seen it before.
+
+    Deliberately NOT part of `SPEC.md`. The specification is graded adversarially and its brief
+    says a tightly argued short plan scores well while padding earns nothing, so architecture
+    diagrams and a glossary belong beside it rather than inside it. `SPEC.md` links here.
+
+    Written in three layers, because three different people need this file: someone who wants to
+    know what was done and why (§1-§3), a contributor who has to change it (§4-§6), and a reviewer
+    checking whether the numbers mean anything (§7-§8).
+
+    Args:
+        config: Thresholds and run size; defaults to `Config()`.
+
+    Returns:
+        The rendered document.
+    """
+    import json
+
+    config = config or Config()
+    run = json.loads(RESULTS.read_text(encoding="utf-8")) if RESULTS.exists() else None
+
+    if run:
+        model = run["model"]
+        params = "5.8M"
+        lanes_here = list(run["corpus"])
+        corpus_total = sum(s["train_tokens"] for s in run["corpus"].values())
+        corpus_rows = "\n".join(
+            f"| `{lane}` | {shard['train_tokens']:,} | {shard['heldout_tokens']:,} | "
+            f"{shard['heldout_bytes']:,} | {shard['unk_share']:.2%} |"
+            for lane, shard in run["corpus"].items()
+        )
+        seeds = len(run["seeds"])
+        steps = run["steps"]
+        batch = run["batch"]
+        tokens_seen = steps * batch * model["context"]
+        device = run["device"]
+    else:
+        model = {"layers": 4, "width": 256, "heads": 4, "context": 256, "vocab_size": 10000}
+        params, lanes_here, corpus_total, corpus_rows = "5.8M", [], 0, ""
+        seeds, steps, batch, tokens_seen, device = 5, 500, 16, 0, "not run"
+
+    glossary = "\n".join(
+        [
+            "| term | what it means |",
+            "| --- | --- |",
+            "| **lane** | One kind of text. Seven here: general web, code, Indic, STEM, "
+            "reasoning, agentic, long-context. A *share* is the fraction of the budget it gets. |",
+            "| **arm** | One training run with one mixture. Four arms = the same model trained "
+            "four times on four sets of proportions, nothing else different. |",
+            "| **epoch** | One full pass over a lane's text. `1.33 epochs` means read it once, "
+            "then a third of it again. |",
+            "| **seed** | The random number fixing initial weights and data order. The *same* "
+            "recipe at two seeds scores slightly differently, and that gap is the noise floor. |",
+            "| **held-out** | Text reserved before training and never trained on. Scores use only "
+            "this, because a model asked about text it memorised tells you nothing. |",
+            "| **stand-in** | Text used in place of a dataset too large or too restricted to use "
+            "here. GSM8K stands in for peS2o — same *kind* of text, not the same text. |",
+        ]
+    )
+
+    model_table = "\n".join(
+        [
+            "| | |",
+            "| --- | --- |",
+            f"| model | {model['layers']}-layer transformer, {model['width']} wide, "
+            f"{model['heads']} heads, **~{params} parameters** |",
+            f"| context | {model['context']} tokens |",
+            f"| vocabulary | {model['vocab_size']:,} tokens, the Session 2 tokenizer |",
+            f"| schedule | {steps} steps x batch {batch} = **{tokens_seen:,} tokens seen per "
+            "run** |",
+            f"| repeats | {seeds} seeds per arm |",
+            f"| hardware | `{device}` |",
+        ]
+    )
+
+    hypotheses = "\n".join(
+        f"| **{h.key}** | {h.claim} | ≥{h.threshold:.0%} on {', '.join(h.measured_on)} | "
+        f"{h.refuted_if} |"
+        for h in proxy.HYPOTHESES
+    )
+    arms = "\n".join(f"| **{arm.key}** | {arm.name} | {arm.question} |" for arm in proxy.arms())
+
+    return f"""\
+# How this was measured
+
+Generated by `uv run python -m mixture`. Every figure here comes from the same modules the tests
+pin — if a number in this document is wrong, a test is wrong with it.
+
+**Start here if the words `H1`, `E2`, `arm` or `bits per byte` have appeared without explanation.**
+`SPEC.md` is the decision; this is the machinery behind it.
+
+---
+
+# 1 · The problem, in one paragraph
+
+We are choosing what a 40-billion-parameter model reads. The budget is {humanise(config.run_tokens)}
+tokens, and the deliverable is a set of percentages: how much general web, how much code, how much
+Indic, and so on. Those percentages cannot be tested at 40B — a single attempt costs months and a
+large amount of money. So we test them on a model small enough to train in seconds, and we are
+explicit about what that does and does not prove.
+
+# 2 · The vocabulary, once
+
+Six words do all the work in these documents.
+
+{glossary}
+
+# 3 · What we actually trained
+
+{model_table}
+
+**That model is roughly 7,000× smaller than the one the specification is about.** It is not a small
+version of V5. It is an instrument for comparing mixtures, and every claim made from it is stated
+with that limit attached.
+
+## The corpus it read
+
+{corpus_rows or "_Not built on this checkout._"}
+
+Total: **{corpus_total:,} training tokens** across {len(lanes_here)} lanes. `[UNK]` is the share of
+text the vocabulary cannot represent; above 5% a lane is refused, because a count that is mostly
+unknown-token is not a count.
+
+---
+
+# 4 · The pipeline, end to end
+
+```mermaid
+flowchart TD
+  A["inventory.py<br/>32 datasets + token counts"] --> B["supply.py<br/>demand vs supply"]
+  B --> C["lanes.py<br/>the shares, and the floor"]
+  C --> D["curriculum.py<br/>stages, bands, context ladder"]
+  C --> E["checks.py<br/>16 invariants"]
+  D --> E
+  E --> F["export.py<br/>SPEC.md, this file, the page"]
+  C --> G["corpus.py<br/>build the proxy corpus"]
+  G --> H["train.py<br/>train one arm at one seed"]
+  H --> I["evaluate.py<br/>held-out bits per byte"]
+  I --> J["experiment.py<br/>compare arms, judge hypotheses"]
+  J --> K["results/step0.json"]
+  K --> F
+```
+
+Everything above the dotted line is arithmetic over a dataset inventory and needs no GPU. Only
+`train.py` and `evaluate.py` need torch, which is why it is an optional extra and CI never installs
+it.
+
+## What one run looks like
+
+```mermaid
+sequenceDiagram
+  participant E as experiment.py
+  participant C as corpus.py
+  participant T as train.py
+  participant V as evaluate.py
+  E->>C: build()
+  C-->>E: six lanes, tokenised, held-out split reserved at write time
+  loop each arm, each seed
+    E->>T: train(shares, seed)
+    T->>T: sample batches lane by lane, in the arm's proportions
+    T-->>E: trained model plus a run record
+    E->>V: score_all(model)
+    V-->>E: bits per byte, per lane
+  end
+  E->>E: compare arms against thresholds fixed before the run
+  E->>E: write results/step0.json
+```
+
+The held-out split is reserved **when the corpus is written**, not when it is evaluated. That is
+what makes it impossible for the evaluator to score a model on text it trained on: the two live in
+different arrays on disk.
+
+---
+
+# 5 · Bits per byte, properly
+
+This is the number every comparison is made on, so it is worth understanding rather than trusting.
+
+**What it measures: how surprised the model is by text it has never seen.** Lower is better.
+
+The model reads held-out text one token at a time and, at each position, produces a probability for
+what comes next. If it says the next token is 25% likely and it is right, it was moderately
+surprised. If it says 0.1%, it was very surprised. Sum that surprise across the passage and you
+have the total.
+
+The arithmetic, exactly as `evaluate.py` does it:
+
+```
+nats      = sum over positions of  -ln P(actual next token)
+bits      = nats / ln(2)
+bits/byte = bits / (UTF-8 bytes of the held-out passage)
+```
+
+**Why per byte and not per token.** A token is an arbitrary unit — change the tokenizer and every
+token count changes, so a per-token score cannot be compared across vocabularies. A byte is fixed.
+This matters here because the specification openly plans to replace the tokenizer, and a metric
+that moved when it did would be worthless.
+
+**Why not perplexity**, which is what most people recognise. Perplexity is per *token*, so it has
+exactly the problem above. `evaluate.py` computes it and reports it beside the score, but it is
+never used to rank arms.
+
+**One trap, and it is on the page.** Indic scores lower than code on every arm. That is not Indic
+being easier. Devanagari costs about three bytes per character in UTF-8, so the same information is
+spread over more bytes and each byte carries fewer bits. **Read down a column, never across a row.**
+
+---
+
+# 6 · The three hypotheses — H1, H2, H3
+
+A hypothesis is a claim about the mixture, written down **with its threshold, before any arm ran**.
+That ordering is the whole point: pick the threshold afterwards and you will pick the one that
+flatters the result.
+
+| | claim | supported if | refuted if |
+| --- | --- | --- | --- |
+{hypotheses}
+
+And the four arms they are judged across:
+
+| | mixture | the question it answers |
+| --- | --- | --- |
+{arms}
+
+Every arm is scored with **the candidate's weights**, not its own. Weighting each arm by its own
+mixture would let an arm win by caring only about what it chose to train on.
+
+{_method_verdicts(run)}
+
+---
+
+# 7 · The four follow-up experiments — E1 to E4
+
+The hypotheses test the *mixture*. These four test the *assumptions the specification leans on*.
+They are separate runs, not extra arms.
+
+{_method_experiments()}
+
+---
+
+# 8 · What this cannot establish
+
+Stated here as well as in `EXPERIMENTS.md`, because it is the part most easily lost:
+
+- The corpus is **{corpus_total:,} tokens** and the model is **~{params} parameters**. Both are
+  three orders of magnitude below where a mixture decision is really made.
+- Three of the lanes are **stand-ins**. A finding that arrives through one of them rests on that
+  substitution — which is why E4 exists.
+- Two experiments agreeing is not two pieces of evidence when they share a corpus, a tokenizer and
+  the same stand-in.
+- **The 1B rung has not been run and is not scheduled.** It is priced in `SPEC.md` §7 and stated as
+  an unrun commitment rather than quietly dropped.
+
+# 9 · Reproducing any of it
+
+```bash
+uv sync --all-packages --extra proxy      # torch, only needed for the training parts
+
+uv run python -m mixture                  # rebuild every generated document
+uv run python -m mixture.corpus           # build the proxy corpus
+uv run python -m mixture.experiment       # the four arms and the three hypotheses
+uv run python -m mixture.repetition       # E1
+uv run python -m mixture.seam             # E2
+uv run python -m mixture.scale            # E3
+```
+
+E4 is the same experiment as the headline run with a different STEM stand-in:
+
+```bash
+uv run python src/exercises/05-datamixtures-and-curriculum/tools/fetch_proxy_corpus.py --alt-stem
+MIXTURE_STEM=alt uv run python -m mixture.experiment
+```
+
+**Check the `device` field in any result before believing a throughput number.** A sandbox that
+blocks the OS-version query makes `torch.backends.mps.is_available()` return `False`, and the
+harness then trains on CPU without saying so.
+"""
 
 
 def render_tokenizer(config: Config | None = None) -> str:
@@ -1864,6 +2292,10 @@ def write(config: Config | None = None) -> dict[str, Path]:
         # reason SPEC.md is: a hand-maintained front door disagrees with the specification behind
         # it within a week, and the disagreement is invisible until a reviewer finds it.
         ("README.md", render_readme(config)),
+        # Not part of SPEC.md on purpose: the specification is graded adversarially and padding
+        # earns nothing there, while a glossary and two architecture diagrams are exactly what a
+        # first-time reader and a future contributor both need.
+        ("METHOD.md", render_method(config)),
     ]
 
     # EXPERIMENTS.md exists only once an experiment has. Rendering an empty one would put a

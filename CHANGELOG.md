@@ -10,6 +10,22 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **`METHOD.md` — how the whole thing works, for someone who has not seen it before.** `H1`, `E2`,
+  *arm* and *bits per byte* were used as shorthand across every document and defined in none of
+  them. This is the one place they are: a six-word glossary, what was actually trained (a 4-layer,
+  ~5.8M-parameter model — roughly 7,000× smaller than the specification's subject), the corpus it
+  read, bits-per-byte derived rather than asserted, a catalogue of E1–E4 with why each was asked,
+  and a pipeline and sequence diagram. Written in three layers for three readers: someone who wants
+  to know what was done, a contributor who has to change it, and a reviewer checking whether the
+  numbers mean anything. Generated like the rest, so its figures cannot drift, and linked from
+  `SPEC.md` and both READMEs.
+- **The mermaid diagrams are rendered in CI, not just read.** A structural check runs everywhere; an
+  integration test puts both diagrams through `mermaid-cli`. Breaking one the way this repo broke a
+  diagram before — a semicolon inside a `Note over`, which terminates the note mid-sentence — is
+  caught by the renderer.
+
 ## [0.5.1] - 2026-08-19
 
 ### Added

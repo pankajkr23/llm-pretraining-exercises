@@ -1160,7 +1160,7 @@ export const BUNDLE = Object.freeze({
       "clears_noise": false
      }
     ],
-    "shape": "not monotone \u2014 1 adjacent pair(s) run the wrong way, but by less than the seed spread, so the grid is finer than this experiment can resolve there",
+    "shape": "not monotone \u2014 one adjacent pair runs the wrong way, but by less than the seed spread, so the grid is finer than this experiment can resolve there",
     "verdict": "repetition measurably costs held-out loss at this scale",
     "caveat": "Fixed compute, shrinking unique pool. This measures the price of re-reading in this regime; it cannot refute a constant fitted far above it."
    },
