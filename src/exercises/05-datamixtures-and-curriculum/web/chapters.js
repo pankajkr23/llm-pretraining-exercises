@@ -158,6 +158,84 @@ const richP = (text, cls) => {
   return p;
 };
 
+
+/* EXPLAINER_PROMPT §14.1 — predict before you reveal.
+ *
+ * The reader commits to a number, then the answer appears WITH their guess still pinned and the
+ * gap labelled. The gap is the lesson: nobody forgets a number they were wrong about, and being
+ * told the same number teaches far less than being wrong about it first.
+ *
+ * §14.1 also caps this at three uses per page, because it demands effort and effort is a budget.
+ * This page spends exactly one, on the correction that carries the transferable lesson.
+ *
+ * Degrades honestly: `Reveal` is available without guessing, so a reader who does not want to play
+ * is never locked out of the answer, and print/reduced-motion readers still get the end state.
+ */
+function predictReveal({ question, min, max, step, initial, actual, format, verdict }) {
+  const wrap = $('div', 'predict');
+  wrap.append(richP(question, 'predict-q'));
+
+  const row = $('div', 'predict-row');
+  const slider = $('input');
+  slider.type = 'range';
+  slider.min = String(min);
+  slider.max = String(max);
+  slider.step = String(step);
+  slider.value = String(initial);
+  slider.setAttribute('aria-label', question.replace(/\*\*/g, ''));
+  const readout = $('span', 'predict-guess', format(initial));
+  const button = $('button', 'btn', 'Reveal');
+  row.append(slider, readout, button);
+  wrap.append(row);
+
+  const out = $('div', 'predict-out');
+  wrap.append(out);
+
+  let revealed = false;
+  slider.addEventListener('input', () => {
+    readout.textContent = format(Number(slider.value));
+    if (revealed) render();
+  });
+
+  function render() {
+    const guess = Number(slider.value);
+    const gap = Math.abs(guess - actual);
+    out.replaceChildren();
+    const bar = $('div', 'predict-bars');
+    const scale = (v) => `${Math.max(1, (Math.abs(v) / Math.max(max, 0.0001)) * 100)}%`;
+    const line = (cls, label, value) => {
+      const el = $('div', 'predict-line');
+      el.append($('span', 'predict-label', label));
+      const track = $('span', 'predict-track');
+      const fill = $('span', `predict-fill ${cls}`);
+      fill.style.width = scale(value);
+      track.append(fill);
+      el.append(track, $('span', 'predict-value', format(value)));
+      return el;
+    };
+    bar.append(line('is-guess', 'your guess', guess), line('is-actual', 'actual', actual));
+    out.append(bar);
+    out.append(
+      richP(
+        gap < step
+          ? `**You had it.** ${verdict}`
+          : `You were out by **${format(gap)}**. ${verdict}`,
+        'predict-verdict',
+      ),
+    );
+    slider.disabled = false;
+  }
+
+  button.addEventListener('click', () => {
+    revealed = true;
+    button.textContent = 'Revealed';
+    button.disabled = true;
+    render();
+  });
+
+  return wrap;
+}
+
 const chapter = ({ id, n, title, claim, big, bigSub, body, arithmetic, pill }) => {
   const sec = $('section');
   sec.id = id;
@@ -571,6 +649,113 @@ function chapterAgentic(data) {
   });
 }
 
+
+/* §13: "the distinguishing content of this research is its confidence ledger, blind spots and
+ * corrections log — and the reference format has no way to express any of it." The confidence
+ * ledger arrived earlier as the provenance marks. These two are the other halves, and until now
+ * they lived only in the documents, which is to say not on the artefact anyone actually opens. */
+function blindSpots(data) {
+  const exp = data.experiment;
+  if (!exp) return [];
+  const lanes = Object.keys(exp.corpus);
+  const standIns = lanes.filter((lane) =>
+    (exp.corpus[lane].sources || []).some((s) => s.startsWith('data/proxy/')),
+  );
+  const tokens = Object.values(exp.corpus).reduce((sum, l) => sum + l.train_tokens, 0);
+  const scale = data.followups && data.followups.scale;
+
+  const items = [
+    /* Not `tok()` here: it rounds 1,784,760 to "2M", and a suspiciously round number in the
+     * sentence that admits how small the corpus is undercuts the admission. */
+    `**The corpus is ${(tokens / 1e6).toFixed(2)}M tokens.** Three orders of magnitude below the ` +
+      'scale a ' +
+      'mixture decision is made at. Every effect above inherits that.',
+    standIns.length
+      ? `**${standIns.length} of the ${lanes.length} lanes are stand-ins** — ${standIns.join(', ')} ` +
+        'are openly-licensed text of the right *kind*, not the datasets the specification funds ' +
+        'those lanes from. Any finding resting on one of them rests on the stand-in too.'
+      : '',
+    scale
+      ? '**The arms agree across scale, and that is not independent evidence.** The ranking holds ' +
+        'from the smallest model to the largest, pointing the same way as H3 — but both share a ' +
+        'corpus, a tokenizer and the same stand-in lane, so they can be wrong together.'
+      : '',
+    '**The run that would settle this has not happened.** A 1B rung is priced and stated in the ' +
+      'specification, and it is not scheduled. Nothing here is offered as validating the mixture ' +
+      'at 40B.',
+  ].filter(Boolean);
+
+  const list = $('ul', 'blind-list');
+  items.forEach((item) => {
+    const li = $('li');
+    li.append(rich(item));
+    list.append(li);
+  });
+  const head = richP('**What these runs could not see.**', 'blind-head');
+  return [head, list];
+}
+
+function corrections(data) {
+  const sensitivity = data.sensitivity;
+  if (!sensitivity) return [];
+  const now = data.experiment.comparisons.find((c) => c.secondary);
+  const alt = sensitivity.comparisons[0];
+  if (!now || !alt) return [];
+
+  /* The numbers the reader is asked to predict against. The first run of this experiment had no
+   * STEM text at all, so H3's second clause had nothing to fire on and the verdict read
+   * `qualified`; the effect size was +3.53%. Funding the lane moved it to what it is now. */
+  const before = 3.53;
+  const after = now.effect * 100;
+
+  const widget = predictReveal({
+    question:
+      '**Predict first.** The first version of this experiment had no STEM text, so the second ' +
+      'clause had nothing to fire on and this hypothesis read `qualified` — at an effect size of ' +
+      `**${before.toFixed(2)}%**. Then the missing lane was funded and it was re-run. By how many ` +
+      'percentage points do you think the effect size moved?',
+    min: 0,
+    max: 3,
+    step: 0.01,
+    initial: 1.5,
+    actual: Math.abs(after - before),
+    format: (v) => `${v.toFixed(2)} pts`,
+    /* The gap carries the numbers. The LESSON stays in the always-visible prose below, because a
+     * reader who declines to guess — and every print and reduced-motion reader — would otherwise
+     * never see it. An interaction may earn a point more vividly; it must not be the only way to
+     * reach it. */
+    verdict:
+      `The effect barely moved — ${before.toFixed(2)}% to ${after.toFixed(2)}% — and the verdict ` +
+      `flipped to \`${now.verdict}\` anyway. Nothing about the hypothesis got harder: it became ` +
+      '**testable**, and failed immediately.',
+  });
+
+  const lesson = richP(
+    '**A missing input does not make a claim safer; it makes it unfalsifiable, and unfalsifiable ' +
+      'reads exactly like passing.** The lane that trips this hypothesis had no text in the first ' +
+      'run, so the clause testing it had nothing to fire on. Before trusting any result here, the ' +
+      'question is what the measurement was unable to see.',
+    'warn',
+  );
+
+  const after2 = richP(
+    'Then the same question was put to a **second, deliberately different** stand-in for that ' +
+      `lane (${sensitivity.stem_stand_in}) — Stack Exchange mathematics instead of grade-school ` +
+      `word problems. Refuted again, and the gain was *larger*: ` +
+      `${(now.secondary.gain * 100).toFixed(2)}% then ` +
+      `${(alt.secondary.gain * 100).toFixed(2)}%. So the result is not an artefact of the one ` +
+      'dataset it happened to be measured through.',
+    'note',
+  );
+
+  return [
+    richP('**What we got wrong, and how we found out.**', 'blind-head'),
+    widget,
+    lesson,
+    after2,
+  ];
+}
+
 /* ------------------------------------------------------------------ 4 · the contested judgment */
 
 function chapterTiers(data) {
@@ -781,6 +966,8 @@ function chapterResults(data) {
         'note',
       ),
       verdicts,
+      ...blindSpots(data),
+      ...corrections(data),
       ...exp.comparisons
         .filter((c) => c.secondary)
         .map((c) =>
