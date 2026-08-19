@@ -407,8 +407,21 @@ def _step_zero_summary() -> str:
             "document's own §7 says a proxy this size cannot settle the mixture, and that rule "
             "does not stop applying when the result is inconvenient. Moving a headline share on "
             "evidence the specification says is insufficient would be the same error in the "
-            "opposite direction. **The 1B rung decides it**, and until then this is the "
-            "specification's largest open question rather than a number quietly kept."
+            "opposite direction.\n\n**And the experiment that was going to decide it is not "
+            'scheduled.** The 1B rung is deprioritised, so "we will settle this at 1B" is no '
+            "longer a plan, it is a way of not answering. What replaced it is the cheapest "
+            "question that could still be asked: **is the refutation a fact about the mixture, or "
+            "about the one dataset standing in for STEM?** Re-running it with a second, "
+            "deliberately different stand-in — Stack Exchange mathematics in place of grade-school "
+            "word problems — returns `refuted` again, with the second clause clearing its noise "
+            "both times. The finding is not an artefact of the substitution.\n\n**The share still "
+            "does not move, and this is now a decision rather than a deferral.** 18% stands for "
+            "V5, because every measurement behind the refutation is proxy-scale and this document "
+            "does not let a 4-layer model set a 40B share — a rule that does not change because "
+            "the deciding run was cancelled. What the refutation buys instead is a standing "
+            "instruction: **treat 18% as an upper bound rather than a target.** The first run at "
+            "real scale instruments the Indic lane against its 12% floor, and the burden of proof "
+            "has moved — 18% is now the number that has to justify itself."
         )
     elif qualified:
         consequence = (
@@ -455,6 +468,7 @@ Full write-up: [`EXPERIMENTS.md`](EXPERIMENTS.md)."""
 REPETITION_RESULTS = EXERCISE_ROOT / "results" / "repetition.json"
 SEAM_RESULTS = EXERCISE_ROOT / "results" / "seam.json"
 SCALE_RESULTS = EXERCISE_ROOT / "results" / "scale.json"
+SENSITIVITY_RESULTS = EXERCISE_ROOT / "results" / "stem_sensitivity.json"
 
 
 def _followups() -> str:
@@ -550,6 +564,42 @@ def _followups() -> str:
             + f"\n\n**{_sentence_case(reading['verdict'])}** — {reading['note'].rstrip('.')}."
             f"\n\n{_scale_convergence(data)}"
             f"\n\n*{reading['caveat']}*"
+        )
+
+    if SENSITIVITY_RESULTS.exists() and RESULTS.exists():
+        alt = json.loads(SENSITIVITY_RESULTS.read_text(encoding="utf-8"))
+        base = json.loads(RESULTS.read_text(encoding="utf-8"))
+        first = next(c for c in base["comparisons"] if c["key"] == "H3")
+        second = alt["comparisons"][0]
+        rows = [
+            "| | first stand-in (GSM8K, MIT) | second stand-in (StackMathQA, CC-BY-4.0) |",
+            "| --- | --- | --- |",
+            f"| H3 verdict | **{first['verdict']}** | **{second['verdict']}** |",
+            f"| primary effect | {first['effect']:+.2%} | {second['effect']:+.2%} |",
+            f"| STEM gain (second clause) | {first['secondary']['gain']:.2%} | "
+            f"{second['secondary']['gain']:.2%} |",
+            f"| its own seed spread | {first['secondary']['noise']:.2%} | "
+            f"{second['secondary']['noise']:.2%} |",
+            f"| clears that spread | {first['secondary']['clears_noise']} | "
+            f"{second['secondary']['clears_noise']} |",
+        ]
+        sections.append(
+            "### E4 · Does the refutation survive a different stand-in?\n\n"
+            "H3 is the one result that went against this specification, and everything it rests "
+            "on arrives through the STEM lane — a lane whose proxy text is **GSM8K standing in "
+            "for peS2o and proof-pile-2**. The 1B rung that was to settle it is deprioritised and "
+            "not scheduled, so the question worth asking became the cheapest one still available: "
+            "is this a fact about the mixture, or a fact about that one substitution?\n\n"
+            "Same arms, same seeds, same steps, same thresholds. The only change is the STEM "
+            "lane's text — Stack Exchange mathematics, discursive prose with LaTeX, in place of "
+            "grade-school word problems.\n\n"
+            + "\n".join(rows)
+            + "\n\n**Refuted both times, and the second clause clears its own noise in both.** "
+            "The gain is larger with the second stand-in, not smaller. So the refutation is not "
+            "an artefact of GSM8K's phrasing — which is the strongest thing that can be said "
+            "about it without spending money.\n\n"
+            "*What it still cannot do: both runs are 4-layer models over ~2M tokens, and both "
+            "STEM lanes are stand-ins. Agreeing with each other is not the same as being right.*"
         )
 
     if not sections:
@@ -1107,7 +1157,11 @@ def _proxy_limits(corpus_tokens: str) -> str:
                 f"- **{refuted[0]['key']} is refuted and the share has not moved.** The declared "
                 "consequence is that the Indic lane is over-provisioned; acting on it would mean "
                 "changing a headline number on evidence this document calls insufficient. It is "
-                "the specification's largest open question, and the 1B rung decides it."
+                "the specification's largest open question. The 1B rung that was to decide it "
+                "is deprioritised, so the finding was instead re-tested against a second, "
+                "deliberately different STEM stand-in and came back refuted again. 18% therefore "
+                "stands as an **upper bound rather than a target**, to be instrumented against "
+                "its 12% floor at real scale."
             )
 
     if SCALE_RESULTS.exists():

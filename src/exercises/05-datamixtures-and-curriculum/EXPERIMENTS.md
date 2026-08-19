@@ -148,6 +148,24 @@ It is also the easiest thing here to overstate. They are **not independent**: sa
 
 *A fixed small corpus means larger models overfit sooner; compare final_train_loss against weighted_mean before reading an inversion as a fact about scale.*
 
+### E4 · Does the refutation survive a different stand-in?
+
+H3 is the one result that went against this specification, and everything it rests on arrives through the STEM lane — a lane whose proxy text is **GSM8K standing in for peS2o and proof-pile-2**. The 1B rung that was to settle it is deprioritised and not scheduled, so the question worth asking became the cheapest one still available: is this a fact about the mixture, or a fact about that one substitution?
+
+Same arms, same seeds, same steps, same thresholds. The only change is the STEM lane's text — Stack Exchange mathematics, discursive prose with LaTeX, in place of grade-school word problems.
+
+| | first stand-in (GSM8K, MIT) | second stand-in (StackMathQA, CC-BY-4.0) |
+| --- | --- | --- |
+| H3 verdict | **refuted** | **refuted** |
+| primary effect | +3.52% | +3.75% |
+| STEM gain (second clause) | 1.12% | 1.72% |
+| its own seed spread | 0.71% | 1.52% |
+| clears that spread | True | True |
+
+**Refuted both times, and the second clause clears its own noise in both.** The gain is larger with the second stand-in, not smaller. So the refutation is not an artefact of GSM8K's phrasing — which is the strongest thing that can be said about it without spending money.
+
+*What it still cannot do: both runs are 4-layer models over ~2M tokens, and both STEM lanes are stand-ins. Agreeing with each other is not the same as being right.*
+
 ## What this does and does not license
 
 **Does.** The harness works: it trains, it checkpoints and resumes without restarting the data
