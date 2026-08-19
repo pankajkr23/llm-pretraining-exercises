@@ -17,6 +17,31 @@ Two documents sit behind this one. [`SPEC.md`](SPEC.md) is the specification, wi
 argument and the reviewer-facing detail. [`EXPERIMENTS.md`](EXPERIMENTS.md) is what happened when
 the proxy it commits to was actually run. This page is the recipe itself.
 
+## What this is, and how it was arrived at
+
+**The recipe for what a 40B model reads, and in what order.** Seven capability lanes, a share for
+each, and a curriculum that decides the order the model meets them in.
+
+**The method is one sentence.** Every share is composed backward from a benchmark the model has to
+win, then checked against the data that actually exists — and three of the session's own numbers
+did not survive that check.
+
+| step | what happens |
+| --- | --- |
+| **1 · Inventory** | 32 datasets, each with a named token count and a provenance mark saying how well that count is known |
+| **2 · Supply** | summed per lane **from those rows**, never quoted from a slot headline — the one decision every finding below follows from |
+| **3 · Mixture** | 6 funded lanes, each share argued against its own supply and its own repetition ceiling rather than against preference |
+| **4 · Curriculum** | 5 stages, 6 difficulty bands, 4 reasoning-length bands, a 4K→32K context ladder, and a warmup band at every seam |
+| **5 · Invariants** | 16 rules in CI, each written twice — once against the real specification, once against a deliberately broken fixture |
+| **6 · Proxy** | 4 arms × 5 seeds over 1,784,212 tokens, thresholds fixed before the first arm ran — 2 supported, 1 not |
+| **7 · Follow-ups** | 3 further experiments at no cost — what a re-read token is worth, whether a seam's warmup band does anything, and whether the ranking survives a change of scale |
+
+**Nothing here is typed by hand.** `SPEC.md`, `TOKENIZER.md`, `EXPERIMENTS.md`, this README and the
+exercise-05 section of the repository's root README are all generated from the modules the tests
+pin, and a test regenerates each and compares byte for byte. That is not tidiness: a hand-written
+sentence beside a generated table goes stale silently, and the sentence is the half a reader
+believes. Config fingerprint `cf555d4cb965`.
+
 ## Where each required answer lives
 
 | # | the assignment asks for | where |

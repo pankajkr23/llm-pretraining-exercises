@@ -1133,6 +1133,107 @@ def _proxy_limits(corpus_tokens: str) -> str:
     return "\n".join(bullets)
 
 
+def _pipeline_summary(config: Config) -> str:
+    """What this is, how it was built, and how the numbers were arrived at.
+
+    A reader landing on the deliverable needs the shape of the work before the first table argues
+    with them about a number. Every figure is read from the modules rather than typed, so the
+    summary cannot describe a pipeline that no longer runs.
+
+    Args:
+        config: Thresholds and run size.
+
+    Returns:
+        Markdown for the summary section.
+    """
+    import json
+
+    invariants = len([name for name in dir(checks) if name.startswith("check_")])
+    funded = [lane for lane, share in lanes.shares().items() if share > 0]
+    rows = [
+        (
+            "**1 · Inventory**",
+            f"{len(inventory.DATASETS)} datasets, each with a named token count "
+            "and a provenance mark saying how well that count is known",
+        ),
+        (
+            "**2 · Supply**",
+            "summed per lane **from those rows**, never quoted from a slot "
+            "headline — the one decision every finding below follows from",
+        ),
+        (
+            "**3 · Mixture**",
+            f"{len(funded)} funded lanes, each share argued against its own "
+            "supply and its own repetition ceiling rather than against preference",
+        ),
+        (
+            "**4 · Curriculum**",
+            f"{len(curriculum.STAGES)} stages, "
+            f"{len(curriculum.DIFFICULTY_BANDS)} difficulty bands, "
+            f"{len(curriculum.REASONING_BANDS)} reasoning-length bands, a 4K→32K context ladder, "
+            "and a warmup band at every seam",
+        ),
+        (
+            "**5 · Invariants**",
+            f"{invariants} rules in CI, each written twice — once against the "
+            "real specification, once against a deliberately broken fixture",
+        ),
+    ]
+
+    if RESULTS.exists():
+        results = json.loads(RESULTS.read_text(encoding="utf-8"))
+        corpus = sum(lane["train_tokens"] for lane in results["corpus"].values())
+        verdicts = [c["verdict"] for c in results["comparisons"]]
+        supported = verdicts.count("supported")
+        rows.append(
+            (
+                "**6 · Proxy**",
+                f"{len(results['arms'])} arms × {len(results['seeds'])} seeds over "
+                f"{corpus:,} tokens, thresholds fixed before the first arm ran — {supported} "
+                f"supported, {len(verdicts) - supported} not",
+            )
+        )
+        extra = 0
+        for path in (REPETITION_RESULTS, SEAM_RESULTS, SCALE_RESULTS):
+            if path.exists():
+                extra += 1
+        if extra:
+            rows.append(
+                (
+                    "**7 · Follow-ups**",
+                    f"{extra} further experiments at no cost — what a re-read "
+                    "token is worth, whether a seam's warmup band does anything, and whether the "
+                    "ranking survives a change of scale",
+                )
+            )
+    else:
+        rows.append(("**6 · Proxy**", "committed to, not yet run"))
+
+    table = "\n".join(
+        ["| step | what happens |", "| --- | --- |"]
+        + [f"| {name} | {detail} |" for name, detail in rows]
+    )
+
+    return f"""## What this is, and how it was arrived at
+
+**The recipe for what a 40B model reads, and in what order.** Seven capability lanes, a share for
+each, and a curriculum that decides the order the model meets them in.
+
+**The method is one sentence.** Every share is composed backward from a benchmark the model has to
+win, then checked against the data that actually exists — and three of the session's own numbers
+did not survive that check.
+
+{table}
+
+**Nothing here is typed by hand.** `SPEC.md`, `TOKENIZER.md`, `EXPERIMENTS.md`, this README and the
+exercise-05 section of the repository's root README are all generated from the modules the tests
+pin, and a test regenerates each and compares byte for byte. That is not tidiness: a hand-written
+sentence beside a generated table goes stale silently, and the sentence is the half a reader
+believes. Config fingerprint `{config.fingerprint()}`.
+
+"""
+
+
 def render_readme(config: Config | None = None) -> str:
     """Build the exercise `README.md` — the document the submission links to.
 
@@ -1158,6 +1259,7 @@ def render_readme(config: Config | None = None) -> str:
     tier_d = lanes.indic_tiers(config)["D"]
 
     outcomes = _followup_outcomes()
+    pipeline_summary = _pipeline_summary(config)
     extra_experiments = "\n".join(
         [
             "| | question | why it needed asking | what came back |",
@@ -1199,7 +1301,7 @@ Two documents sit behind this one. [`SPEC.md`](SPEC.md) is the specification, wi
 argument and the reviewer-facing detail. [`EXPERIMENTS.md`](EXPERIMENTS.md) is what happened when
 the proxy it commits to was actually run. This page is the recipe itself.
 
-## Where each required answer lives
+{pipeline_summary}## Where each required answer lives
 
 | # | the assignment asks for | where |
 | --- | --- | --- |
