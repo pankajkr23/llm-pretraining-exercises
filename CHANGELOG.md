@@ -10,6 +10,8 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-08-19
+
 ### Added
 
 - **Exercise 05's page states its blind spots and its corrections log.** `EXPLAINER_PROMPT.md` §13
@@ -1268,7 +1270,8 @@ First tagged release: two interactive exercises live on Vercel with a gated depl
 - **Tooling & conventions:** uv workspace (Python 3.12), ruff lint/format, pytest (unit +
   integration split), GitHub Actions CI, and a PR-only workflow documented in `AGENTS.md`.
 
-[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.3.1...v0.3.2
