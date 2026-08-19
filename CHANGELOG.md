@@ -10,27 +10,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
-### Added
-
-- **E4 — a sensitivity check that replaces the 1B rung.** H3 is the one result that went against
-  the specification, and all of it arrives through a STEM lane whose text is GSM8K standing in for
-  peS2o. With the 1B rung deprioritised, the finding was re-tested against a second, deliberately
-  different stand-in (Stack Exchange mathematics, CC-BY-4.0) — same arms, seeds, steps and
-  thresholds, only the STEM text changed. **Refuted both times**, with the second clause clearing
-  its own spread in both and the gain *larger* under the second stand-in (1.12% → 1.72%). The
-  refutation is not an artefact of the substitution.
-- **`MIXTURE_STEM=alt`** swaps the STEM lane for that second stand-in, so the comparison is
-  reproducible rather than a one-off.
-
-### Changed
-
-- **The Indic share decision is now a decision, not a deferral.** Three documents said the 1B rung
-  would settle whether 18% is over-provisioned; that rung is not scheduled, so "we will settle it
-  at 1B" had become a way of not answering. 18% stands for V5 — every measurement behind the
-  refutation is proxy-scale, and this specification does not let a 4-layer model set a 40B share —
-  but it stands as an **upper bound rather than a target**, to be instrumented against its 12%
-  floor at real scale. The burden of proof has moved onto 18%.
-
 ## [0.5.0] - 2026-08-19
 
 ### Added
@@ -145,6 +124,16 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 - **The root README carries sections for exercises 04 and 05.** Section 04 was missing entirely,
   and the exercises table was broken by a stray blank line that split it into two tables.
 
+- **E4 — a sensitivity check that replaces the 1B rung.** H3 is the one result that went against
+  the specification, and all of it arrives through a STEM lane whose text is GSM8K standing in for
+  peS2o. With the 1B rung deprioritised, the finding was re-tested against a second, deliberately
+  different stand-in (Stack Exchange mathematics, CC-BY-4.0) — same arms, seeds, steps and
+  thresholds, only the STEM text changed. **Refuted both times**, with the second clause clearing
+  its own spread in both and the gain *larger* under the second stand-in (1.12% → 1.72%). The
+  refutation is not an artefact of the substitution.
+- **`MIXTURE_STEM=alt`** swaps the STEM lane for that second stand-in, so the comparison is
+  reproducible rather than a one-off.
+
 ### Changed
 
 - **Session notebooks are no longer tracked.** `notebooks/S[0-9][0-9]-*.ipynb` is gitignored; each
@@ -186,6 +175,13 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   corpora, what may be published) that its README linked into three times. That record moves to a
   tracked [`DECISIONS.md`](src/exercises/04-data-cleaning-dedup/DECISIONS.md) and every citation
   now points there, so nothing published goes dark and no link 404s.
+
+- **The Indic share decision is now a decision, not a deferral.** Three documents said the 1B rung
+  would settle whether 18% is over-provisioned; that rung is not scheduled, so "we will settle it
+  at 1B" had become a way of not answering. 18% stands for V5 — every measurement behind the
+  refutation is proxy-scale, and this specification does not let a 4-layer model set a 40B share —
+  but it stands as an **upper bound rather than a target**, to be instrumented against its 12%
+  floor at real scale. The burden of proof has moved onto 18%.
 
 ### Fixed
 
