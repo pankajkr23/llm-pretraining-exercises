@@ -10,6 +10,22 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Exercise 05's page states its blind spots and its corrections log.** `EXPLAINER_PROMPT.md` §13
+  names the confidence ledger, blind spots and corrections log as the distinguishing content of
+  this work, and warns that the reference widget format has no way to express any of it. Only the
+  first was ever built. The page now says what the runs could not see — corpus size, which lanes
+  are stand-ins, that the scale sweep and H3 are **not** independent evidence, and that the
+  deciding run is not scheduled — in the open text rather than behind a disclosure, because a
+  limitation a reader must open a drawer to find is a limitation the page is hiding.
+- **One predict-before-reveal, per §14.1.** The reader guesses how far the effect size moved when
+  the missing STEM lane was funded, then sees their guess pinned beside the answer with the gap
+  labelled: it moved **0.01 points** and the verdict flipped anyway. §14.1 caps this at three uses
+  per page; this page spends one, on the correction that carries the transferable lesson. The
+  lesson itself stays in always-visible prose, so a reader who declines to guess — and every print
+  and reduced-motion reader — still gets it.
+
 ### Fixed
 
 - **Exercise 05's results chapter described a run that had stopped happening.** Three claims were

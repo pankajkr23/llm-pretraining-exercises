@@ -532,6 +532,91 @@ def test_the_second_clause_sentence_agrees_with_its_own_verdict(page):
             )
 
 
+def test_the_page_states_its_blind_spots(page):
+    """§13: the blind spots are distinguishing content, and the reference format hides them.
+
+    Every one of these lived only in the documents. The page — the artefact a reviewer actually
+    opens — carried the findings and none of the limits, which is the format hiding the best
+    material exactly as §13 warns.
+    """
+    text = page.eval_on_selector("#results", "el => el.textContent")
+    bundle = json.loads(
+        (PUBLIC / SLUG / "data.js")
+        .read_text(encoding="utf-8")
+        .split("Object.freeze(", 1)[1]
+        .rsplit(");", 1)[0]
+    )
+    stand_ins = [
+        lane
+        for lane, shard in bundle["experiment"]["corpus"].items()
+        if any(str(s).startswith("data/proxy/") for s in shard.get("sources", []))
+    ]
+    assert "could not see" in text, "the page never says what the runs were blind to"
+    for lane in stand_ins:
+        assert lane in text, f"{lane} is a stand-in and the blind spots never name it"
+    assert "not scheduled" in text, "the page must say the deciding run is not scheduled"
+    assert "not independent" in text, (
+        "two agreeing proxies must be declared non-independent, or agreement reads as corroboration"
+    )
+
+
+def test_the_blind_spots_are_not_hidden_behind_a_disclosure(page):
+    """A limitation a reader must open a drawer to find is a limitation the page is hiding."""
+    visible = page.inner_text("#results")
+    assert "could not see" in visible, (
+        "the blind-spot block is inside a collapsed <details>; it must be in the open text"
+    )
+
+
+def test_the_corrections_log_is_on_the_page(page):
+    """§13's third piece: what we got wrong, and how we found out.
+
+    The strongest material in the exercise — a verdict that flipped because a lane that had been
+    missing was funded, with the effect size essentially unchanged — appeared nowhere on the page.
+    """
+    text = page.eval_on_selector("#results", "el => el.textContent")
+    assert "What we got wrong" in text
+    assert "unfalsifiable" in text, "the transferable lesson must be stated, not just the anecdote"
+    assert "Stack Exchange" in text, "the second stand-in check is what makes the finding hold up"
+
+
+def test_the_prediction_is_asked_before_the_answer_is_shown(page):
+    """§14.1: the reader commits, then the answer appears with their guess pinned.
+
+    Revealing on load would make it a caption. The output must be empty until asked for, and the
+    guess must survive the reveal — the gap is the whole lesson.
+    """
+    predicts = page.query_selector_all("#results .predict")
+    assert len(predicts) == 1, (
+        f"{len(predicts)} predict blocks; §14.1 caps this at three per page and one is what this "
+        "page spends"
+    )
+
+    out = page.query_selector("#results .predict-out")
+    assert out.inner_text().strip() == "", "the answer is on screen before the reader has guessed"
+
+    page.eval_on_selector(
+        "#results .predict input[type=range]",
+        "el => { el.value = '1.80'; el.dispatchEvent(new Event('input', {bubbles: true})); }",
+    )
+    page.click("#results .predict .btn")
+    page.wait_for_timeout(150)
+
+    revealed = page.inner_text("#results .predict-out")
+    assert "your guess" in revealed and "actual" in revealed, "the guess is not pinned beside it"
+    assert "1.80" in revealed, "the reader's own guess was discarded on reveal"
+    assert "out by" in revealed, "the gap is the lesson and it is not labelled"
+
+
+def test_the_answer_is_reachable_without_playing(page):
+    """Reveal must not require a guess first: a reader who will not play is not locked out."""
+    page.reload(wait_until="load")
+    page.wait_for_selector("#results .predict")
+    page.click("#results .predict .btn")
+    page.wait_for_timeout(150)
+    assert "actual" in page.inner_text("#results .predict-out")
+
+
 # ---- docs/EXPLAINER_PROMPT.md conformance ----------------------------------------------------
 
 

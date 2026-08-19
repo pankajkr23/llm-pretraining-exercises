@@ -2368,6 +2368,29 @@ def web_bundle(config: Config | None = None) -> dict:
             "comparisons": results["comparisons"],
         }
 
+    # The page's best material is its blind spots and its corrections log (EXPLAINER_PROMPT §13),
+    # and neither can be rendered from a bundle that ships only the headline run. These are small
+    # -- a reading and a handful of numbers each -- and they are what lets the page say what it
+    # could not see and what it got wrong, instead of only what it found.
+    followups: dict[str, dict] = {}
+    for key, path in (
+        ("repetition", REPETITION_RESULTS),
+        ("seam", SEAM_RESULTS),
+        ("scale", SCALE_RESULTS),
+    ):
+        if path.exists():
+            data = json.loads(path.read_text(encoding="utf-8"))
+            followups[key] = {"reading": data["reading"], "seeds": data["seeds"]}
+    if followups:
+        bundle["followups"] = followups
+
+    if SENSITIVITY_RESULTS.exists() and RESULTS.exists():
+        alternative = json.loads(SENSITIVITY_RESULTS.read_text(encoding="utf-8"))
+        bundle["sensitivity"] = {
+            "stem_stand_in": alternative["stem_stand_in"],
+            "comparisons": alternative["comparisons"],
+        }
+
     return bundle
 
 

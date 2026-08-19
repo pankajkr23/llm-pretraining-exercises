@@ -1118,5 +1118,141 @@ export const BUNDLE = Object.freeze({
     }
    }
   ]
+ },
+ "followups": {
+  "repetition": {
+   "reading": {
+    "noise_bpb": 0.01578,
+    "reference_epochs": 1.15,
+    "rungs": [
+     {
+      "epochs": 18.37,
+      "unique_tokens": 111509,
+      "excess_bpb_pct": 6.789,
+      "beyond_noise": true
+     },
+     {
+      "epochs": 9.18,
+      "unique_tokens": 223023,
+      "excess_bpb_pct": 5.047,
+      "beyond_noise": true
+     },
+     {
+      "epochs": 4.59,
+      "unique_tokens": 446050,
+      "excess_bpb_pct": 2.86,
+      "beyond_noise": true
+     },
+     {
+      "epochs": 2.3,
+      "unique_tokens": 892104,
+      "excess_bpb_pct": 3.442,
+      "beyond_noise": true
+     }
+    ],
+    "inversions": [
+     {
+      "between_epochs": [
+       4.59,
+       2.3
+      ],
+      "gap_bpb": 0.01458,
+      "clears_noise": false
+     }
+    ],
+    "shape": "not monotone \u2014 1 adjacent pair(s) run the wrong way, but by less than the seed spread, so the grid is finer than this experiment can resolve there",
+    "verdict": "repetition measurably costs held-out loss at this scale",
+    "caveat": "Fixed compute, shrinking unique pool. This measures the price of re-reading in this regime; it cannot refute a constant fitted far above it."
+   },
+   "seeds": [
+    0,
+    1,
+    2
+   ]
+  },
+  "seam": {
+   "reading": {
+    "claim": "a stage seam with a warmup band spikes gradient norm less than one without",
+    "peak_ratio_hard": 1.5189,
+    "peak_ratio_banded": 1.4054,
+    "noise": 0.1753,
+    "verdict": "inconclusive",
+    "note": "the +0.114 difference in peak ratio sits inside the 0.175 spread the conditions show against themselves, so this cannot rank them. The difference points the band's way, which is worth nothing on its own and is reported only so the next run knows which way to look.\n\n**More seeds would not settle this**, and that is a property of the rule rather than of the budget: the comparison is against the *sample spread*, which does not shrink with n, not against a standard error, which does. That rule is deliberately conservative and is used everywhere in this repository. Resolving this would need a lower-variance statistic \u2014 the peak is a maximum over a window, which is about the noisiest summary available \u2014 and swapping the statistic after seeing the result would be changing the test rather than gathering more evidence for it. So it stands as inconclusive.",
+    "caveat": "Not V4's 150x: different scale, no frozen embeddings, and a band sized to be measurable at 400 steps rather than scaled from the specification's ~0.15% of run."
+   },
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
+  },
+  "scale": {
+   "reading": {
+    "rankings": {
+     "1709568": [
+      "D",
+      "C",
+      "A",
+      "B"
+     ],
+     "5785088": [
+      "D",
+      "A",
+      "C",
+      "B"
+     ],
+     "14585856": [
+      "D",
+      "A",
+      "C",
+      "B"
+     ],
+     "30471168": [
+      "D",
+      "C",
+      "A",
+      "B"
+     ]
+    },
+    "swapped_pairs": [],
+    "real_inversions": [],
+    "winner_changed": false,
+    "verdict": "assumption survives",
+    "note": "no pair reverses between the smallest and largest model, which is the falsifier \u00a77 actually names. The ordering is **not** identical all the way through: 2 intermediate size(s) (5,785,088, 14,585,856) rank the middle of the field differently before it returns. The endpoints agreeing is what was tested; a monotone ranking at every scale is not what was observed",
+    "caveat": "A fixed small corpus means larger models overfit sooner; compare final_train_loss against weighted_mean before reading an inversion as a fact about scale."
+   },
+   "seeds": [
+    0,
+    1,
+    2
+   ]
+  }
+ },
+ "sensitivity": {
+  "stem_stand_in": "math-ai/StackMathQA (cc-by-4.0)",
+  "comparisons": [
+   {
+    "key": "H3",
+    "claim": "halving Indic costs Indic more than it gains the other lanes",
+    "lane": "indic",
+    "baseline": 1.330642400572209,
+    "challenger": 1.3805214465644045,
+    "effect": 0.03748493657705945,
+    "threshold": 0.03,
+    "noise": 0.020499679763793077,
+    "verdict": "refuted",
+    "note": "the primary effect holds (+3.75%), but stem gains 1.72%, past the 1% the refutation condition names, and that gain clears its own seed spread. The condition was declared before the run as: arm D's Indic bits-per-byte is within 3% of arm A's, or the other lanes gain more than 1%. Then 18% is over-provisioned and the share should fall toward the 12% floor.",
+    "secondary": {
+     "lane": "stem",
+     "gain": 0.017156772874345208,
+     "noise": 0.015235553228882504,
+     "threshold": 0.01,
+     "triggered": true,
+     "clears_noise": true
+    }
+   }
+  ]
  }
 });
