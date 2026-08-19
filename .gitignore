@@ -259,7 +259,19 @@ HANDOFF.md
 # Programme material — the schedule, the class list, and the internal authoring specs. The public
 # repo carries the engineering work; the course's own calendar and playbooks stay local.
 docs/BRIEF.md
+# Assignment briefs, at every level. A brief is input for the people and agents building an
+# exercise, not public reading, and it is the course's text rather than ours. What we decided and
+# why is published instead — each exercise's README.md, and DECISIONS.md where the reasoning is
+# long enough to need its own file. Never link to a brief from a tracked file: the link resolves
+# on a working checkout and 404s for everyone else.
+BRIEF.md
 docs/EXPLAINER_PROMPT.md
 docs/EXPLAINER_PATTERN.md
 # Self-critique of a shipped build — useful to us, not part of the published work.
 **/docs/DESIGN_CRITIQUE.md
+
+# Session notebooks are local-only. They are built from `tools/build_notebook.py`, they are the
+# course's own material rather than this repo's deliverable, and executing one bakes real corpus
+# text into a tracked file. `notebooks/hello.ipynb` is deliberately NOT matched: it is the tracked
+# sample that keeps the notebook harness under test on a fresh clone.
+notebooks/S[0-9][0-9]-*.ipynb

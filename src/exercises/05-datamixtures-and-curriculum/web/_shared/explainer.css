@@ -1,0 +1,527 @@
+/* The explainer pattern, shared across both surfaces.
+ *
+ * Spec: docs/EXPLAINER_PROMPT.md (what an explainer must be) and docs/EXPLAINER_PATTERN.md (how one
+ * is built). These rules were extracted from the reference implementation — report §1, the gate —
+ * when the second explainer landed, exactly as EXPLAINER_PATTERN.md §7 said they should be.
+ *
+ * One vocabulary, used by every chapter on the one page.
+ *
+ * Three colours only: --accent for the live thing, --grade-x for the excluded thing, greyscale for
+ * everything else. --grade-b marks a known-unknown inside .fig-rail. Nothing here introduces a
+ * colour that is not already a token in tokens.css.
+ */
+
+/* ------------------------------------------------------------------ scrollytelling (§17) */
+
+/* Two columns: prose the reader travels, and a figure that does not scroll away. */
+.scrolly {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 296px;
+  gap: 34px;
+  align-items: start;
+}
+
+/* A chart needs more room than a single number does. */
+.scrolly.wide { grid-template-columns: minmax(0, 1fr) 384px; }
+/* The prose column is capped at a reading measure and the figure column takes whatever is left, so
+   a wider window grows the chart rather than the line length. */
+@media (min-width: 1081px) {
+  .scrolly { grid-template-columns: minmax(0, 62ch) minmax(360px, 1fr); gap: 44px; }
+  .scrolly.wide { grid-template-columns: minmax(0, 60ch) minmax(430px, 1fr); gap: 48px; }
+}
+
+/* The reader's own input spans both columns — it governs the whole widget, not one side. */
+.qbox { grid-column: 1 / -1; }
+.qbox label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 6px;
+}
+.qinput {
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+.qinput:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* One state per step, tall enough to own the viewport centre as the reader passes it.
+ *
+ * The inactive state is NOT dimmed with opacity. An earlier version used 0.34, which measured
+ * 1.57:1 — and opacity cannot be tuned into compliance here, because it degrades the already-quiet
+ * --muted and --faint text faster than it fades anything else: even 0.8 fails. The affordance is
+ * carried by the rule and the label instead, both of which stay legible at every state. */
+.step {
+  /* Tall enough to read as its own screen, with real air between states: at 30vh and no margin the
+   * steps ran together and the active one abutted the next heading. */
+  min-height: 34vh;
+  margin-bottom: 7vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-left: 2px solid var(--track);
+  padding-left: 18px;
+  transition: border-color 0.18s;
+}
+.step:last-child { margin-bottom: 0; }
+.step.on { border-left-color: var(--accent); border-left-width: 3px; padding-left: 17px; }
+.step.on .marg { color: var(--accent); }
+/* Deleting the control row (§18.2) deletes what a keyboard would land on, so focus walks states. */
+.step:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 3px; }
+.step .marg {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 7px;
+}
+.step p { margin: 0; max-width: 44ch; }
+.step .shard {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  max-width: 44ch;
+  margin-top: 11px;
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+/* Hidden on screen because the pinned figure already says it; shown where scrolling cannot happen. */
+.step .inline { display: none; font-family: var(--mono); font-size: 11px; margin-top: 8px; }
+
+/* ------------------------------------------------------------------ the pinned figure */
+
+.sticky { position: sticky; top: 11vh; }
+
+/* Hairline rules instead of a card (§15). No border, no shadow, no rounded panel. */
+.fig { border-top: 1.5px solid var(--ink); border-bottom: 1px solid var(--line); padding: 12px 0 14px; }
+.fig-num {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+/* Exactly one number per explainer is oversized. Hierarchy is the whole point of §15's density row. */
+.fig-big {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 3.3rem;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  margin: 12px 0 3px;
+}
+.fig-big.hit { color: var(--grade-x); }
+/* Slot for a chart, when the figure is a shape rather than a number. */
+.fig-extra:not(:empty) { margin-top: 14px; }
+.fig-extra svg { display: block; width: 100%; height: auto; overflow: visible; }
+.fig-sub { font-size: 12px; color: var(--muted); max-width: 30ch; }
+.fig-verdict {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border: 1px solid currentColor;
+  border-radius: 5px;
+  padding: 2px 8px;
+  margin-top: 13px;
+  color: var(--faint);
+}
+.fig-verdict.hit { color: var(--grade-x); }
+/* Interprets the current state, so it must differ between states or it is decoration. */
+.fig-note { font-size: 11.5px; color: var(--muted); margin-top: 12px; }
+/* The standing limitation. Always visible, never state-dependent. */
+.fig-rail {
+  margin-top: 13px;
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.fig-rail b { color: var(--grade-b); font-weight: 700; }
+.pill {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: 980px;
+  padding: 3px 12px;
+  /* Solid rather than a tint: accent text on a 10% accent wash measured under 4.5:1, and white on
+     the accent clears 5.38:1. */
+  background: var(--accent);
+  color: var(--on-accent);
+  margin-top: 14px;
+}
+
+/* One mark per unit; red is only ever the excluded thing. */
+.strip { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 15px; }
+.fig-tick { width: 9px; height: 19px; border-radius: 2px; background: var(--track); transition: background 0.18s; }
+.fig-tick.reg { background: var(--accent); }
+.fig-tick.hit { background: var(--grade-x); }
+/* A strip of 145 has to fit the figure column without dropping any of them. */
+.strip.dense { gap: 2px; }
+.strip.dense .fig-tick { width: 7px; height: 15px; border-radius: 2px; }
+.strip.denser { gap: 2px; }
+.strip.denser .fig-tick { width: 5px; height: 12px; border-radius: 1px; }
+
+
+
+
+
+/* ------------------------------------------------------------------ narrow, reduced-motion */
+
+@media (max-width: 760px) {
+  .scrolly, .scrolly.wide { grid-template-columns: 1fr; gap: 0; }
+  .sticky { position: sticky; top: 0; order: -1; background: var(--bg); padding: 10px 0 6px; z-index: 3; }
+  .step { min-height: 30vh; margin-bottom: 5vh; }
+}
+
+/* The complete end state: every step and its verdict, with nothing left to scroll for. */
+@media (prefers-reduced-motion: reduce) {
+  .step { min-height: 0; margin-bottom: 22px; }
+  .step .inline { display: block; }
+  .sticky { position: static; }
+}
+
+/* ------------------------------------------------------------------ small multiples (§18.1)
+ *
+ * Every unit on screen at once, so comparison is free rather than a memory exercise across
+ * clicks. Interaction highlights; it never hides.
+ */
+.tierbars { display: grid; gap: 5px; }
+/* A chart label wraps; it does not get cut.
+ *
+ * These were 104px with an ellipsis, and fourteen labels across the page were losing text — up to
+ * 82px of it. "natural Indic we h…" is not a label, and unlike a row in the dataset register there
+ * is nothing here to click to see the rest, so the information is simply gone. An ellipsis is an
+ * honest answer only when the full text is reachable some other way.
+ *
+ * Wrapping rather than widening, because widening to fit the longest label would take the column to
+ * 190px and eat the bar the row exists to draw. Two short lines cost a few pixels of height and lose
+ * nothing. `align-items: center` keeps the bar centred against a label of any height. */
+.tierrow { display: grid; grid-template-columns: minmax(0, 116px) minmax(0, 1fr) 52px; gap: 8px; align-items: center; font-size: 11px; }
+.tiername { color: var(--muted); line-height: 1.25; overflow-wrap: anywhere; }
+.tiertrack { background: var(--track); border-radius: 4px; height: 13px; overflow: hidden; }
+.tierfill { height: 100%; border-radius: 4px; background: var(--faint); transition: width 0.18s, background 0.18s, opacity 0.18s; }
+.tierval { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 10.5px; }
+.tierfill.lane { background: var(--accent); }
+.tierfill.natural { background: var(--accent); }
+.tierfill.synth { background: var(--gotcha-composition); }
+.tierfill.dim { opacity: 0.32; }
+/* The only red: a tier scheduled against a corpus that does not exist. */
+.tierfill.missing { background: repeating-linear-gradient(45deg, var(--grade-x), var(--grade-x) 4px, transparent 4px, transparent 7px); }
+/* A zero-length bar still has to be visible — the gap row is the point of the figure. */
+.tierrow .tiertrack:has(.tierfill.missing) { outline: 1px dashed var(--grade-x); outline-offset: -1px; }
+
+/* An ordered list of stages: a sequence with attributes, and no magnitude to draw. */
+.stagelist { display: grid; gap: 1px; }
+.stagerow {
+  display: grid;
+  grid-template-columns: 18px 168px minmax(0, 1fr) minmax(0, 148px);
+  gap: 10px;
+  align-items: baseline;
+  font-size: 11.5px;
+  padding: 5px 7px;
+  border-radius: 5px;
+  border-left: 2px solid transparent;
+  transition: background 0.3s, opacity 0.3s, border-color 0.3s;
+}
+/* Sized for the ordinals it was built for — "1" through "9". The evaluation chapter reuses the row
+ * for tier shares, and "15.0%" does not fit in 18px: it ran straight over the tier name beside it.
+ * A modifier rather than a wider column everywhere, because padding the ordinal list to fit a string
+ * it never contains would leave a visible gutter in the chapter that reads correctly today. */
+.stagen { font-family: var(--mono); font-size: 10px; color: var(--faint); }
+.stagelist.shares .stagerow { grid-template-columns: 40px 168px minmax(0, 1fr) minmax(0, 148px); }
+.stagelist.shares .stagen { text-align: right; }
+.stagename { color: var(--ink); font-weight: 600; }
+/* Same reasoning: this is the sentence saying what a stage does, so cutting it removes the point. */
+.stageplain { color: var(--muted); line-height: 1.3; overflow-wrap: anywhere; }
+/* Wraps, for the same reason `.tiername` does and one more: there is no tools register in the
+ * appendix, so a tool's name appears on this page only here. Truncating it deletes the answer to
+ * the question the chapter asks — which tool is assigned to which stage. */
+.stagetools { font-family: var(--mono); font-size: 10px; color: var(--accent); text-align: right; line-height: 1.3; overflow-wrap: anywhere; }
+.stagerow.dim { opacity: 0.4; }
+.stagerow.natural { background: color-mix(in srgb, var(--accent) 9%, transparent); border-left-color: var(--accent); }
+.stagerow.missing { background: color-mix(in srgb, var(--grade-x) 12%, transparent); border-left-color: var(--grade-x); }
+.stagerow.missing .stagetools { color: var(--grade-x); }
+/* The rows collapse when their own column is narrow, not when the viewport is.
+ *
+ * A viewport media query cannot express this. The figure column is 384px between 761 and 1080px,
+ * and narrow *again* above 1180px where the fixed rail takes 260px of the wrapper — so the same
+ * squeeze recurs at a width where a media query says there is plenty of room. Chasing it with
+ * breakpoints fixed one band and left another: `.stageplain` was 4px at 900px and 28px at 1180px,
+ * both stacking letters vertically, which is worse than the truncation this replaced.
+ *
+ * A container query asks the only question that matters — is there room in *this box* — so it holds
+ * at every width, including ones nobody thought to test. */
+/* The figure has to fit the screen, or `position: sticky` silently stops working.
+ *
+ * Sticky can only hold an element shorter than its scrollport. The growth figure grew — bars, then
+ * the named-datasets register, then the analogy block — until it exceeded the viewport, at which
+ * point it scrolled away and the fourth stage had no figure beside it at all. Capping the height
+ * and letting the figure scroll inside itself keeps it pinned at any content length, so adding to
+ * it later cannot break it again. */
+.sticky {
+  container-type: inline-size;
+  container-name: figure;
+  max-height: 86vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+@container figure (max-width: 470px) {
+  .stagerow,
+  .stagelist.shares .stagerow { grid-template-columns: 16px minmax(0, 1fr); }
+  .stagename { grid-column: 2; }
+  .stageplain, .stagetools { grid-column: 2; text-align: left; }
+}
+
+/* The phone case, where the figure is full-width but the viewport is not. */
+@media (max-width: 640px) {
+  .stagerow,
+  .stagelist.shares .stagerow { grid-template-columns: 16px minmax(0, 1fr); }
+  .stagename { grid-column: 2; }
+  .stageplain, .stagetools { grid-column: 2; text-align: left; }
+}
+
+/* ------------------------------------------------------------------ single canvas (§17)
+ *
+ * One coordinate space every unit lives in. Controls change the ENCODING — colour, order — never
+ * which units are visible, so moving between licence, caveat and grade views is a re-encoding
+ * rather than a page change, and the reader never loses the object they were looking at.
+ */
+.canvas { display: flex; flex-wrap: wrap; gap: 1px; margin-top: 4px; }
+.canvas:has(span.unit) { gap: 3px; }
+/* 24x24 hit area with a 14px mark inside it: `background-clip: content-box` paints only the
+   padding box, so the target meets the minimum without the grid growing to match. An interactive
+   13px square is a target most people miss. */
+.unit {
+  width: 24px; height: 24px; padding: 5px; border: 0; border-radius: 8px;
+  background: var(--track); background-clip: content-box; cursor: pointer;
+  transition: background 0.18s, opacity 0.18s;
+}
+/* Non-interactive marks are decoration beside text that says the same thing, so they stay small. */
+span.unit { width: 13px; height: 13px; padding: 0; border-radius: 3px; background-clip: border-box; }
+.unit:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.unit.on { background: var(--accent); }
+.unit.mid { background: var(--grade-b); }
+.unit.ok { background: var(--grade-a); }
+/* The only red: a dataset excluded from a commercial mix. */
+.unit.out { background: var(--grade-x); }
+.unit.dim { opacity: 0.28; }
+.unit.sel { outline: 2px solid var(--ink); outline-offset: 2px; }
+/* Not a figure: an item whose cost was never priced. It must not wear .num, which would make it
+   look like a number nobody typed a provenance for. */
+.unpriced { font-family: var(--mono); font-size: 11.5px; color: var(--faint); font-style: italic; }
+
+/* Footer disclaimer: present on every page, quiet enough not to compete with the content. */
+.disclaim { margin-top: 8px; font-family: var(--sans); font-size: 11.5px; line-height: 1.5; color: var(--faint); max-width: 72ch; }
+.disclaim a { color: inherit; }
+
+
+/* A prediction the reader committed to, pinned beside the answer. It must be visible the moment it
+   is typed and stay visible through every state — a commitment device that acknowledges nothing
+   reads as a broken input, which is exactly how it was reported. */
+.fig-guess {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--line);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.fig-guess .g-val { font-size: 1.15rem; font-variant-numeric: tabular-nums; color: var(--ink); }
+.fig-guess .g-gap { color: var(--grade-b); font-weight: 700; }
+/* The reader's mark on the strip, so the guess sits against the units it was a guess about. */
+.fig-tick.guess { box-shadow: inset 0 0 0 2px var(--grade-b); }
+
+/* ------------------------------------------------------------------ layer 3
+ *
+ * The arithmetic, closed. A reader who never opens it has still been told the truth by layers 1
+ * and 2; a reader who does gets the derivation, the sources and the caveats. This is what lets one
+ * page serve someone meeting the subject today and someone who trains models for a living.
+ */
+details.arithmetic {
+  /* Pulled close to the chapter it belongs to. At 18px, with the chapter separator only 34px
+     below it, this block sat almost equidistant between two chapters and read as the opening of
+     the next one rather than the close of its own. */
+  margin-top: 32px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+details.arithmetic > summary {
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+details.arithmetic > summary::-webkit-details-marker { display: none; }
+details.arithmetic > summary::before { content: '▸ '; }
+details.arithmetic[open] > summary::before { content: '▾ '; }
+details.arithmetic > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.arithmetic-body { margin-top: 12px; font-size: 13px; color: var(--muted); max-width: 74ch; }
+.arithmetic-body p { margin: 0 0 10px; }
+.arithmetic-body table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+.arithmetic-body th, .arithmetic-body td { text-align: left; padding: 4px 10px 4px 0; border-bottom: 1px solid var(--line); }
+.arithmetic-body th { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); font-weight: 600; }
+.arithmetic-body td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+.arithmetic-body code { font-family: var(--mono); font-size: 11.5px; }
+
+/* Printed, the detail should be open — paper has no affordance for a disclosure triangle. */
+@media print { details.arithmetic > div { display: block !important; } }
+
+/* The stage register — the datasets a growth stage would actually read, named.
+ *
+ * Sits under the bars in the figure column, which is narrow, so it is a three-column list rather
+ * than a table: name, tier, size. Each group's heading counts and sums the rows printed beneath it,
+ * computed from the same array, so a reader can add the column up and get the heading back.
+ */
+.stagereg { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+.stagereg-cap {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 8px;
+}
+/* The curriculum strip: what a stage teaches, before what it would read to do it.
+   One hue per modality, ordered the way the curriculum introduces them — language and knowledge in
+   the accent, then symbols, then the procedural things — so the shift across the four stages reads
+   as a progression rather than as four unrelated pie charts. */
+.modintro { display: flex; gap: 10px; align-items: baseline; margin: 0 0 8px; }
+.modintro-l { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
+.modintro-v { font-family: var(--mono); font-size: 11px; color: var(--ink); }
+.modstrip { display: flex; height: 9px; border-radius: 5px; overflow: hidden; gap: 1px; margin-bottom: 7px; }
+.modseg { min-width: 2px; background: var(--faint); }
+.modseg[data-modality='general_text'] { background: var(--accent); }
+.modseg[data-modality='structured_knowledge'] { background: color-mix(in srgb, var(--accent) 55%, var(--panel)); }
+.modseg[data-modality='math'] { background: var(--grade-b); }
+.modseg[data-modality='code'] { background: var(--grade-a); }
+.modseg[data-modality='research_papers'] { background: color-mix(in srgb, var(--grade-b) 55%, var(--panel)); }
+.modseg[data-modality='cot_reasoning'] { background: color-mix(in srgb, var(--grade-a) 55%, var(--panel)); }
+.modseg[data-modality='agentic_traces'] { background: var(--ink); }
+.modkey { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 8px; }
+.modkey-i { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--muted); }
+.modkey-d { width: 8px; height: 8px; border-radius: 2px; flex: none; background: var(--faint); }
+.modkey-d[data-modality='general_text'] { background: var(--accent); }
+.modkey-d[data-modality='structured_knowledge'] { background: color-mix(in srgb, var(--accent) 55%, var(--panel)); }
+.modkey-d[data-modality='math'] { background: var(--grade-b); }
+.modkey-d[data-modality='code'] { background: var(--grade-a); }
+.modkey-d[data-modality='research_papers'] { background: color-mix(in srgb, var(--grade-b) 55%, var(--panel)); }
+.modkey-d[data-modality='cot_reasoning'] { background: color-mix(in srgb, var(--grade-a) 55%, var(--panel)); }
+.modkey-d[data-modality='agentic_traces'] { background: var(--ink); }
+.stagereg-note { font-size: 11.5px; line-height: 1.55; color: var(--muted); margin: 0 0 14px; }
+
+/* Coverage status. Only the absent state is coloured as a problem: a domain a crawl carries is a
+   measurement gap, not a sourcing one, and colouring the two alike would overstate the second. */
+.covstat { font-family: var(--mono); font-size: 10.5px; }
+.covstat[data-status='isolated'] { color: var(--grade-a); }
+.covstat[data-status='inside-a-crawl'] { color: var(--grade-b); }
+.covstat[data-status='absent'] { color: var(--grade-x); }
+
+.stagereg-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin: 10px 0 4px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--line);
+}
+.stagereg-h.ok .stagereg-lab { color: var(--grade-a); }
+.stagereg-h.wait .stagereg-lab { color: var(--grade-b); }
+.stagereg-sum { font-family: var(--mono); font-size: 10.5px; font-weight: 400; color: var(--muted); }
+/* `minmax(0, 1fr) auto 58px` starved the first column to nothing.
+ *
+ * Grid satisfies `auto` — whose growth limit is the whole string on one line — before it hands the
+ * remainder to `1fr`, and `minmax(0, …)` waives the flexible track's min-content floor. So the name
+ * column got whatever was left after a 57-character sentence had taken what it wanted, which in the
+ * narrow figure band was zero pixels. The middle column is capped and the first is given a floor,
+ * so neither can eat the other. */
+.stagereg-r {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) minmax(0, 40%) 58px;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 11.5px;
+  padding: 3px 0;
+}
+.stagereg-n { color: var(--ink); line-height: 1.3; overflow-wrap: anywhere; }
+.stagereg-t { overflow-wrap: anywhere; }
+.stagereg-t { font-family: var(--mono); font-size: 10px; color: var(--faint); }
+.stagereg-v { font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: right; }
+
+/* The register's two closing bands: what the catalogue can actually reach against this stage's
+ * budget, and the analogy the budget was set by. Supply sits above analogy on purpose — one is
+ * measured on this page, the other is read off somebody else's model card. */
+.stagereg-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+.stagereg-foot .stagereg-lab { color: var(--ink); }
+.stagereg-foot.short .stagereg-lab { color: var(--grade-x); }
+.stagereg-an { margin-top: 12px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.stagereg-an .stagereg-cap { margin-bottom: 4px; }
+
+/* A cost shown as an order of magnitude. Same monospace weight as a figure would carry, because it
+ * occupies the same slot and means the same kind of thing — just at the precision the estimate
+ * actually supports. */
+.costband { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+
+/* How a dataset relates to the others, beside its name.
+ *
+ * Four kinds with different standing, so they read differently: a stated containment is a fact and
+ * gets the strongest treatment, a shared upstream source is real but unquantified, an unmeasured
+ * overlap is an admission, and independent is the reassuring one — worth showing, because "these do
+ * not overlap" is as much a finding as the reverse. */
+.derivbadge {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.03em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+  cursor: help;
+}
+.derivbadge.contained_by { color: var(--grade-x); }
+.derivbadge.shares_source { color: var(--grade-b); }
+.derivbadge.unknown { color: var(--grade-b); }
+.derivbadge.additional_to { color: var(--muted); }
+.derivbadge.independent { color: var(--grade-a); }
+
+/* The verified-split marker. A dataset whose published headline is bigger than the figure this page
+ * uses says so here, because otherwise a reader who opens the dataset card finds a number four
+ * times larger and no explanation for the gap. */
+.derivbadge.headline { color: var(--muted); border-style: dashed; }

@@ -1,61 +1,11 @@
-# 04 · Data Cleaning & Deduplication
+# 04 · Decision record
 
-## The assignment
+Decisions the code cannot explain about itself. Each was a fork where a different choice was
+defensible; the reasoning is here so a later reader can disagree with the reasoning rather than
+guess at it.
 
-> Work with your agent, and find in total "how many strategies" are listed in this session. Then
-> find a 10-100M dataset like [this](https://huggingface.co/lordx64/Qwen3.6-35B-A3B-Claude-4.7-Opus-Reasoning-Distilled),
-> and then apply these cleanups. Find interested datasets, specially from the Session 3 that you
-> may have come across. Finally create a widget that talks about:
->
-> - how many strategies were there, and what are they (describe)
-> - what dataset was picked by you
-> - what was cleaned, why and how
-> - any other strategy or concern was cleaned up?
-> - final statistics
->
-> Upload to Netlify and then share the link.
-
-Two amendments to the text above, both from the session itself:
-
-- **The example dataset is not to be used.** It was shown as an illustration of *how to find* a
-  dataset, not as the dataset to take. We use it only as a shape reference — see below.
-- **Netlify is deactivated in this repo.** The published host is Vercel; the deactivated Netlify
-  config is retained under `deploy/netlify/` pending decommission. The deliverable ships to
-  `/04-data-cleaning-dedup/`.
-
-Sizing, from the session: the corpus needs **10–100M tokens**, and the fertility ratio used to get
-there is our own decision to make and defend.
-
-## The core claim
-
-Raw data is not training data. Eight named stages stand between the two, and every one of them is
-load-bearing engineering rather than housekeeping — a corpus that skipped deduplication, or that
-stripped the joiners out of a Brahmic script, is not "slightly worse", it is broken in a way that
-only shows up as a worse model months later.
-
-## Deliverables
-
-1. A reproducible pipeline (`src/datacleaning/`) running all eight stages over three corpora.
-2. A published page at `/04-data-cleaning-dedup/` answering the assignment's five questions.
-3. `notebooks/S04-data-cleaning-dedup.ipynb` — a Colab notebook that runs the shipped pipeline
-   step by step, built to learn from and to teach from.
-4. A manifest per shard, and a statistics bundle that the page and the tests both read.
-
-## Definition of done
-
-- `uv run python -m datacleaning --profile full` reproduces every number on the page.
-- The same input yields the same output: identical hashes and identifiers on a re-run.
-- Every guard has been *watched to fail* against a deliberately broken fixture before being trusted.
-- No raw PII and no unbounded corpus text reaches any published artifact.
-- The notebook runs top to bottom in Colab from its badge.
-
----
-
-# Decision record
-
-The rest of this file records decisions that the code cannot explain about itself. Each one was a
-fork where a different choice was defensible; the reasoning is here so a later reader can disagree
-with the reasoning rather than guess at it.
+The assignment these answer is `BRIEF.md`, which is a local working file — briefs are input for
+the people and agents building an exercise, not public reading.
 
 ## D1 · How many strategies? Eight — and the session names two different eights
 

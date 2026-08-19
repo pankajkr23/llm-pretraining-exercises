@@ -19,21 +19,22 @@ under `src/exercises/NN-slug/` (numeric, zero-padded so folders sort correctly),
 ```text
 docs/DESIGN.md                    # the shared web design system (palette, type, tone)
 src/exercises/NN-slug/            # one self-contained exercise per topic (workspace member)
-  ├─ BRIEF.md                     # the assignment
   ├─ README.md                    # what it is + how to run
+  ├─ DECISIONS.md                 # why it is the way it is (where the reasoning needs room)
   ├─ pyproject.toml               # workspace member
   ├─ src/ | web/                  # the code
   ├─ artifacts/                   # generated outputs (git-ignored)
   └─ tests/                       # exercise tests, discovered from the root
-notebooks/SNN-slug.ipynb          # one Colab notebook per session — runs the shipped pipeline
+notebooks/hello.ipynb            # tracked sample; session notebooks are built locally, not versioned
 pyproject.toml                    # workspace root + ruff/pytest config
 AGENTS.md                         # repo conventions (imported by CLAUDE.md; pointed to by Cursor/Copilot)
 .github/workflows/ci.yml          # lint + tests + secret scan
 ```
 
-**Data conventions** — three concerns kept physically separate: briefs/docs are tracked; datasets live
-in a top-level `data/` (git-ignored, with a tracked manifest); per-exercise outputs go to `artifacts/`
-(git-ignored).
+**Data conventions** — three concerns kept physically separate: assignment briefs are **never
+tracked** (`BRIEF.md` is gitignored everywhere — a brief is the course's text and is input for
+whoever builds the exercise, not the deliverable); datasets live in a top-level `data/` (git-ignored,
+with a tracked manifest); per-exercise outputs go to `artifacts/` (git-ignored).
 
 ## Tech stack
 
@@ -59,8 +60,8 @@ uv run pytest            # run every exercise's tests from the root
 | 01 | [Introductions](src/exercises/01-introductions/) | Four live, in-browser interactive proofs of *why neural nets work*. Static site, zero dependencies, deployed to Vercel. |
 | 02 | [Tokenization](src/exercises/02-tokenization/) | A single 10k BPE vocabulary balanced across India's Wikipedia article in four languages — scored on faithful units, with a one-page explainer showing why the biggest number on the page is the one we rejected, and a live in-browser encoder you can paste into. |
 | 03 | [Data collection framework](src/exercises/03-data-collection-framework/) | How you decide what an India-first 40B model trains on — one interactive page, thirteen chapters: how much text, what kind, **which datasets**, how to clean it, how to tokenise it, and how you would know it worked. 145 datasets graded on five checks, of which **4 are committable today**; five data-handling invariants enforced in CI, plus a browser suite that tests the rendered page. |
-
-| 04 | [Data cleaning & deduplication](src/exercises/04-data-cleaning-dedup/) | Eight cleaning stages over three real corpora, counting tokens with **our own Session 2 tokenizer** rather than estimating them. Deduplication by MinHash/LSH, PII masking with its false positives on show, and the finding that **three of the nine standard quality rules are not language-neutral** — applied unchanged to Indic text they delete it rather than filter it. Ships a [Colab notebook](notebooks/S04-data-cleaning-dedup.ipynb). |
+| 04 | [Data cleaning & deduplication](src/exercises/04-data-cleaning-dedup/) | Eight cleaning stages over three real corpora, counting tokens with **our own Session 2 tokenizer** rather than estimating them. Deduplication by MinHash/LSH, PII masking with its false positives on show, and the finding that **three of the nine standard quality rules are not language-neutral** — applied unchanged to Indic text they delete it rather than filter it. |
+| 05 | [Data mixtures & curriculum](src/exercises/05-datamixtures-and-curriculum/) | The V5 training recipe as a **[specification you can argue with](src/exercises/05-datamixtures-and-curriculum/SPEC.md)** — a defended share for every capability lane, sized against the datasets that actually exist. Summing supply from named datasets instead of quoting slot totals found a **104B hole in the STEM lane** and showed the 2% agentic lane asks **3.9× more than infinite repetition could ever be worth**. Sixteen invariants in CI, each disabled on purpose to prove it fails — and **the proxy it commits to has been run**, over every funded lane, plus three further experiments that cost nothing. One hypothesis came back **refuted**; the section below says on what, and what has not been changed as a result. |
 
 More exercises are added each week.
 
@@ -167,6 +168,113 @@ uv run pytest -m "not integration"      # the invariants, and the proofs they ca
 > **Scope:** a coursework exercise, not a proposal to anyone — see
 > [`NOTICE`](src/exercises/03-data-collection-framework/NOTICE).
 
+### 04 · Data cleaning & deduplication — what survives
+
+A Python pipeline (`src/exercises/04-data-cleaning-dedup/src/datacleaning/`) runs **eight named
+cleaning stages** over **three real corpora** — reasoning traces, Indic web text, and Q&A — and
+counts what each stage removes. Of **85.7M tokens** in, **69.86%** survive (50,010 documents down
+to 36,890); the stages that cut hardest were not the expected ones.
+
+Two things make it more than a filter chain:
+
+- **Tokens are counted, never estimated.** Fertility is a property of a *tokenizer*, not of a
+  corpus — Manipuri swings 7.6× across the five tokenizers exercise 03 measured. Every count here
+  is produced by our own Session 2 vocabulary, and a count that is more than 5% `[UNK]` is not
+  published as a count at all. That rule *selected the corpus*: Bengali script measures **82–84%
+  `[UNK]`**, which is why the Indic corpus is Devanagari and Telugu.
+- **Three of the nine standard quality rules turned out not to be language-neutral.** Applied
+  unchanged to Indic text they delete it rather than filter it. Python's `\w` and `isalnum` skip
+  Devanagari vowel signs, so mean-word-length measured every Devanagari word short and scored
+  well-formed Hindi at **2.24** against a floor of 3.0. Counting letters *and* marks moves it to
+  **3.56**.
+
+```bash
+uv run python -m datacleaning --profile lite    # smoke run, ~2 minutes
+uv run python -m datacleaning --profile full    # the published corpus
+```
+
+> **Hosting:** live at <https://llm-pretraining-demos.vercel.app/04-data-cleaning-dedup/>.
+> Ships a
+> [decision record](src/exercises/04-data-cleaning-dedup/DECISIONS.md).
+
+<!-- BEGIN 05 · generated by `uv run python -m mixture` — do not edit by hand -->
+### 05 · Data mixtures & curriculum — the recipe, and what it costs to defend it
+
+**→ [`SPEC.md`](src/exercises/05-datamixtures-and-curriculum/SPEC.md) is the deliverable.** The V5 recipe: how much of each kind of data the
+model sees, in what order. [The exercise README](src/exercises/05-datamixtures-and-curriculum/README.md) is the same argument at reading
+length; this is the shape of it.
+
+Every number is computed rather than typed — the documents are generated from the code the tests
+pin, and a test regenerates them and compares byte for byte.
+
+**The shares, and what happened when each was checked against real supply:**
+
+| lane | share | session | Δ | demand | supply | epochs | verdict |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| General web | **32%** | 34% | -2% | 640B | 4.69T | 0.14 | surplus |
+| Code | **28%** | 24% | +4% | 560B | 1.1T | 0.51 | covered |
+| Indic | **18%** | 16% | +2% | 360B | 271B | 1.33 | repeat |
+| STEM / math | **12%** | 12% | — | 240B | 146B | 1.64 | repeat |
+| Reasoning traces | **8%** | 6% | +2% | 160B | 85.1B | 1.88 | repeat |
+| Agentic / tool-use | **2%** | 2% | — | 40B | 67.9M | 588.88 | impossible |
+| Long-context | **0%** | 6% | -6% | — | — | — | schedule, not a lane |
+
+One rule produced every finding: **a lane's supply is summed from the datasets named in the
+inventory, never quoted from a slot headline.** Three verdicts changed.
+
+| | finding | why it changes something |
+| --- | --- | --- |
+| **1** | STEM itemises to 146B, not the 250B quoted, and no dataset carries the missing 104B. | The quoted figure says the lane fits in one pass; the itemised one says it needs repetition. |
+| **2** | The 2% agentic lane asks 40B of a 627M pool, which the repetition ceiling caps at 10.3B — **3.9x short**. | It survives dropping every correction, so a reviewer who rejects our estimates still lands on impossible. The share stays; the gap is priced as a generation bill. |
+| **3** | 60% of the long-context lane is repo-packed code already counted under code. | A 6% share would have double-counted 60B. It becomes a sequence-length schedule holding no budget. |
+
+**The curriculum — five stages, each seam carrying a warmup band:**
+
+| stage | of run | seq | General web | Code | Indic | STEM / math | Reasoning traces | Agentic / tool-use |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **Seed** | 3% | 4k | 60% | 12% | 14% | 8% | 4% | 2% |
+| **General** | 40% | 4k | 46% | 22% | 18% | 9% | 3% | 2% |
+| **Reasoning** | 30% | 8k | 22% | 33% | 18% | 14% | 11% | 2% |
+| **Long-context** | 25% | 16k | 18% | 36% | 18% | 16% | 10% | 2% |
+| **Anneal** | 2% | 32k | 5% | 18% | 30% | 9% | 28% | 10% |
+| *run average* | *100%* | | *31.4%* | *28.4%* | *18.1%* | *12.2%* | *7.7%* | *2.2%* |
+
+The *run average* row is an enforced invariant: durations × per-stage shares must integrate back to
+the headline mixture, or the plan would state two different recipes in two places. Alongside it run
+a context ladder (4K → 32K), six difficulty bands **B0–B5** with a labelled example each, and four
+reasoning-length bands. Difficulty comes from dataset signals, not readability —
+Flesch-Kincaid was measured and **rejected for not being monotone** across our own bands.
+39.9B (2.0%) is held back for the anneal, reserved at
+write time so the ordinary sampler cannot see it.
+
+**And the proxy it commits to has been run.** Four arms × 5 seeds over
+1,784,212 tokens across 6 lanes, scored on held-out bits per byte, with every
+threshold fixed before the run:
+
+| arm | web | Code | Indic | STEM | traces | Agentic | the question it answers |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| **A** V5 candidate | 32% | 28% | 18% | 12% | 8% | 2% | does the composed mixture do what the spec claims? |
+| **B** Naive web-heavy | 70% | 20% | 3% | 5% | 2% | 0% | does composing a mixture beat crawling whatever is cheapest? if not, every argument in this spec is decoration |
+| **C** No protected floor | 38% | 34% | 4% | 14% | 10% | 0% | does the floor buy anything, or is it ceremony? this is what an English-heavy selector left unchecked would produce |
+| **D** Indic halved | 36% | 31% | 9% | 13% | 9% | 2% | is 18% defensible, or would 9% have bought the same thing? |
+
+| | claim | effect | threshold | seed noise | verdict |
+| --- | --- | ---: | ---: | ---: | --- |
+| **H1** | arm A beats arm B on run-weighted held-out bits-per-byte | +4.21% | 2% | 1.11% | **supported** |
+| **H2** | removing the protected floor makes Indic materially worse | +6.88% | 5% | 1.55% | **supported** |
+| **H3** | halving Indic costs Indic more than it gains the other lanes | +3.52% | 3% | 2.06% | **refuted** |
+
+**H3 is refuted**, on a second clause of its own declared refutation — and it reads `refuted` only because the corpus grew. The lane that trips the clause had no text in the first run, so there was nothing to observe it on. A missing lane did not make the hypothesis safer; it made it untestable, and untestable was reading as passing. What the refutation obliges, and why the share has not moved on a stand-in lane at this scale, is argued in `SPEC.md` §7.
+
+Every effect is quoted against the spread its own arm shows against itself.
+[`EXPERIMENTS.md`](src/exercises/05-datamixtures-and-curriculum/EXPERIMENTS.md) says plainly what this does and does not license: it does not
+validate the mixture at 40B, and is not offered as doing so.
+
+> **Live:** <https://llm-pretraining-demos.vercel.app/05-datamixtures-and-curriculum/> — drag the
+> lane shares and watch supply, floors and verdicts respond.
+
+<!-- END 05 -->
+
 ## Development
 
 - **Tests:** `uv run pytest` (fast unit) · `uv run pytest -m integration` (slower end-to-end). Each exercise owns its `tests/`.
@@ -179,7 +287,7 @@ Every exercise follows the same skeleton, so the repo stays predictable:
 
 ```bash
 mkdir -p src/exercises/03-slug/{src,tests}
-# add pyproject.toml (workspace member), BRIEF.md, README.md
+# add pyproject.toml (workspace member) and README.md
 uv sync --all-packages   # the members = ["src/exercises/[0-9][0-9]-*"] glob picks it up automatically
 ```
 

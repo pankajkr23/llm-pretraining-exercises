@@ -1,0 +1,89 @@
+{
+ "device": "mps",
+ "steps": 400,
+ "batch": 16,
+ "seeds": [
+  0,
+  1,
+  2,
+  3,
+  4
+ ],
+ "seam_at": 240,
+ "band_steps": 60,
+ "between": {
+  "before": "General",
+  "after": "Reasoning"
+ },
+ "arms": [
+  {
+   "key": "hard",
+   "band_steps": 0,
+   "peak_ratio_mean": 1.518923833409487,
+   "peak_ratio_sd": 0.17534132007699077,
+   "bpb_mean": 2.616067129825178,
+   "bpb_sd": 0.014845002982269633,
+   "per_seed": {
+    "0": {
+     "peak_ratio": 1.5275943860809758,
+     "bpb": 2.6236462552256516
+    },
+    "1": {
+     "peak_ratio": 1.5683519743624998,
+     "bpb": 2.635429017622738
+    },
+    "2": {
+     "peak_ratio": 1.2531388744179215,
+     "bpb": 2.6176107811731413
+    },
+    "3": {
+     "peak_ratio": 1.5039150463221136,
+     "bpb": 2.5972916035005262
+    },
+    "4": {
+     "peak_ratio": 1.7416188858639245,
+     "bpb": 2.606357991603832
+    }
+   }
+  },
+  {
+   "key": "banded",
+   "band_steps": 60,
+   "peak_ratio_mean": 1.405393501729813,
+   "peak_ratio_sd": 0.1508861514131602,
+   "bpb_mean": 2.6115118086102984,
+   "bpb_sd": 0.015671128806982137,
+   "per_seed": {
+    "0": {
+     "peak_ratio": 1.2847394652785042,
+     "bpb": 2.6189790454968924
+    },
+    "1": {
+     "peak_ratio": 1.489076625417564,
+     "bpb": 2.632405041416578
+    },
+    "2": {
+     "peak_ratio": 1.2470973117654418,
+     "bpb": 2.612972710923346
+    },
+    "3": {
+     "peak_ratio": 1.390368372580798,
+     "bpb": 2.591950372194977
+    },
+    "4": {
+     "peak_ratio": 1.615685733606757,
+     "bpb": 2.6012518730196987
+    }
+   }
+  }
+ ],
+ "reading": {
+  "claim": "a stage seam with a warmup band spikes gradient norm less than one without",
+  "peak_ratio_hard": 1.5189,
+  "peak_ratio_banded": 1.4054,
+  "noise": 0.1753,
+  "verdict": "inconclusive",
+  "note": "the +0.114 difference in peak ratio sits inside the 0.175 spread the conditions show against themselves, so this cannot rank them. The difference points the band's way, which is worth nothing on its own and is reported only so the next run knows which way to look.\n\n**More seeds would not settle this**, and that is a property of the rule rather than of the budget: the comparison is against the *sample spread*, which does not shrink with n, not against a standard error, which does. That rule is deliberately conservative and is used everywhere in this repository. Resolving this would need a lower-variance statistic \u2014 the peak is a maximum over a window, which is about the noisiest summary available \u2014 and swapping the statistic after seeing the result would be changing the test rather than gathering more evidence for it. So it stands as inconclusive.",
+  "caveat": "Not V4's 150x: different scale, no frozen embeddings, and a band sized to be measurable at 400 steps rather than scaled from the specification's ~0.15% of run."
+ }
+}

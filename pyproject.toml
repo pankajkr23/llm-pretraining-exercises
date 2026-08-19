@@ -11,6 +11,11 @@ members = ["src/exercises/[0-9][0-9]-*"]
 
 [dependency-groups]
 dev = [
+    # Executing the session notebooks, not just parsing them. `test_mixture_notebook.py` skips
+    # without these, and a guard that always skips protects nothing — so they are in the default
+    # group CI syncs, and they are small: no CUDA wheel hides in here.
+    "ipykernel>=6",
+    "nbclient>=0.10",
     "playwright>=1.62.0",
     "pytest>=8",
     "ruff>=0.6",
@@ -30,7 +35,11 @@ target-version = "py312"
 # choices that make a notebook readable. They are held to a different standard instead: every code
 # cell is executed top to bottom before commit, and `tests/test_notebook.py` checks the structural
 # rules that matter (imports the package, no committed outputs, covers every stage).
-extend-exclude = ["notebooks/"]
+# The same reasoning covers a notebook *builder*: `tools/build_notebook.py` is a notebook document
+# in Python clothing — its long lines are markdown prose and cell source, and one of them is a
+# Colab badge URL that cannot be wrapped at all. It is held to the notebook standard instead:
+# every cell is executed before commit, and `test_mixture_notebook.py` checks the structural rules.
+extend-exclude = ["notebooks/", "**/tools/build_notebook.py"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "N", "UP", "B", "SIM", "C4", "D"]

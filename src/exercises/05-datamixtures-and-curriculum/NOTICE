@@ -1,0 +1,64 @@
+NOTICE — 05-datamixtures-and-curriculum
+=======================================
+
+WHAT THIS IS
+
+A coursework exercise: a specification for the data mixture and curriculum of a
+hypothetical India-first language model. It is a study of a decision, not a
+product, not a proposal to any organisation, and not a plan anybody has committed
+to. No model has been trained on this recipe.
+
+NO AFFILIATION
+
+This work is not affiliated with, endorsed by, sponsored by, or produced on behalf
+of any company, government body, research institute, university, or funding
+programme. Every organisation named here — dataset publishers, model developers,
+benchmark owners — is named because their public work is the evidence being
+examined. Naming them is citation, not association, and none of them has reviewed
+or approved anything here.
+
+WHERE THE DATASET FIGURES COME FROM
+
+The inventory in src/mixture/inventory.py is transcribed from the Session 5 course
+material, which states of its own figures that "dataset sizes are approximate and
+being verified". That caveat is carried through: every row is typed `confirmed`,
+`approximate` or `unstated`, and rows with no token count are recorded as having
+none rather than estimated.
+
+Two figures in the source material disagree with each other, and this exercise
+follows the itemised datasets rather than the slot headline in both cases. Those
+disagreements are published in SPEC.md and PROGRESS.md rather than silently
+resolved. They are a reading of the material by the author of this exercise; they
+may be wrong, and the arithmetic is included so anyone can check.
+
+NO DATASET IS REDISTRIBUTED
+
+This exercise sizes datasets; it does not host, mirror, or redistribute them. Each
+dataset's own licence governs its use. Where the inventory records a licence, that
+record is a reading of public material and may be out of date.
+
+WHAT IS MEASURED AND WHAT IS NOT
+
+- MEASURED: the reasoning-band token counts (counted with this project's own
+  Session 2 vocabulary), the tokenizer fertility and [UNK] tables (measured in
+  exercises 03 and 04), and every arithmetic result derived from the inventory.
+
+- ESTIMATED, AND LABELLED SO: the supervised-token ratio for agentic trajectories,
+  which converts a phrase in the course material into a range. It is deliberately
+  applied at its most generous end, and the conclusion it supports does not depend
+  on it — the agentic lane fails its repetition ceiling on raw, uncorrected tokens.
+
+- NOT MEASURED, AND SAID SO: the throughput of the local machine the proxy runs
+  would use. No figure is entered for it and the cost model returns an absent value
+  rather than a plausible one, because a number there would decide a spending
+  question on evidence nobody gathered.
+
+- ILLUSTRATIVE, AND SAID SO: the difficulty-band examples (B0–B5) are authored to
+  illustrate each level. They are not samples from any corpus, and no classifier
+  assigns real documents to bands here.
+
+THE PROXY HAS NOT BEEN RUN
+
+SPEC.md commits to an experiment and declares its thresholds in advance. At the
+time of writing, no arm has been trained and no result is reported. Any statement
+about what the mixture achieves is a hypothesis, and the specification says so.

@@ -11,7 +11,7 @@ exercise 03 found that prose in the bundle is what blows it. So prose lives in `
 has no budget, and `data.json` carries numbers.
 
 Two rules govern what corpus text may leave this module, and they are separate rules for separate
-reasons (`BRIEF.md` §D6):
+reasons (`DECISIONS.md` §D6):
 
 1. **No real PII, ever.** Interactive demos use hand-written synthetic documents. From the real
    corpus only aggregates are published, and any text shown is post-scrub.

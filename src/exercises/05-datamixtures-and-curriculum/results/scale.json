@@ -1,0 +1,194 @@
+{
+ "device": "mps",
+ "steps": 400,
+ "batch": 16,
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "rungs": [
+  {
+   "params": 1709568,
+   "layers": 2,
+   "width": 128,
+   "arms": {
+    "A": {
+     "name": "V5 candidate",
+     "weighted_mean": 2.827917058620679,
+     "weighted_sd": 0.0085432279282781,
+     "final_train_loss": 6.620602317651112
+    },
+    "B": {
+     "name": "Naive web-heavy",
+     "weighted_mean": 2.9103466959982147,
+     "weighted_sd": 0.006676903050201888,
+     "final_train_loss": 6.947071472803752
+    },
+    "C": {
+     "name": "No protected floor",
+     "weighted_mean": 2.823553466487604,
+     "weighted_sd": 0.010677545713198568,
+     "final_train_loss": 6.408766329288483
+    },
+    "D": {
+     "name": "Indic halved",
+     "weighted_mean": 2.8188242099605603,
+     "weighted_sd": 0.012981911416124677,
+     "final_train_loss": 6.462013749281565
+    }
+   },
+   "ranking": [
+    "D",
+    "C",
+    "A",
+    "B"
+   ]
+  },
+  {
+   "params": 5785088,
+   "layers": 4,
+   "width": 256,
+   "arms": {
+    "A": {
+     "name": "V5 candidate",
+     "weighted_mean": 2.597363907282803,
+     "weighted_sd": 0.005361382676049885,
+     "final_train_loss": 6.092833137512208
+    },
+    "B": {
+     "name": "Naive web-heavy",
+     "weighted_mean": 2.7203378592445255,
+     "weighted_sd": 0.004170143544065874,
+     "final_train_loss": 6.478383187452952
+    },
+    "C": {
+     "name": "No protected floor",
+     "weighted_mean": 2.606378730441547,
+     "weighted_sd": 0.013518908299439728,
+     "final_train_loss": 5.90216984351476
+    },
+    "D": {
+     "name": "Indic halved",
+     "weighted_mean": 2.5957195377893014,
+     "weighted_sd": 0.010661395168170624,
+     "final_train_loss": 5.946911748250326
+    }
+   },
+   "ranking": [
+    "D",
+    "A",
+    "C",
+    "B"
+   ]
+  },
+  {
+   "params": 14585856,
+   "layers": 6,
+   "width": 384,
+   "arms": {
+    "A": {
+     "name": "V5 candidate",
+     "weighted_mean": 2.4932664915002425,
+     "weighted_sd": 0.004695932790593037,
+     "final_train_loss": 5.833050529162089
+    },
+    "B": {
+     "name": "Naive web-heavy",
+     "weighted_mean": 2.6024455900348595,
+     "weighted_sd": 0.004008685012930457,
+     "final_train_loss": 6.163628737131755
+    },
+    "C": {
+     "name": "No protected floor",
+     "weighted_mean": 2.49685981905948,
+     "weighted_sd": 0.0068572087065413585,
+     "final_train_loss": 5.628173049290975
+    },
+    "D": {
+     "name": "Indic halved",
+     "weighted_mean": 2.487498587713055,
+     "weighted_sd": 0.005456069976519321,
+     "final_train_loss": 5.683441881338755
+    }
+   },
+   "ranking": [
+    "D",
+    "A",
+    "C",
+    "B"
+   ]
+  },
+  {
+   "params": 30471168,
+   "layers": 8,
+   "width": 512,
+   "arms": {
+    "A": {
+     "name": "V5 candidate",
+     "weighted_mean": 2.444621414287944,
+     "weighted_sd": 0.010313479403153946,
+     "final_train_loss": 5.7022969126701355
+    },
+    "B": {
+     "name": "Naive web-heavy",
+     "weighted_mean": 2.5532071062422013,
+     "weighted_sd": 0.022246909728166887,
+     "final_train_loss": 6.000974766413371
+    },
+    "C": {
+     "name": "No protected floor",
+     "weighted_mean": 2.434182708086494,
+     "weighted_sd": 0.01009787500051084,
+     "final_train_loss": 5.457992128531139
+    },
+    "D": {
+     "name": "Indic halved",
+     "weighted_mean": 2.429526269760348,
+     "weighted_sd": 0.00942894634432223,
+     "final_train_loss": 5.531900389989217
+    }
+   },
+   "ranking": [
+    "D",
+    "C",
+    "A",
+    "B"
+   ]
+  }
+ ],
+ "reading": {
+  "rankings": {
+   "1709568": [
+    "D",
+    "C",
+    "A",
+    "B"
+   ],
+   "5785088": [
+    "D",
+    "A",
+    "C",
+    "B"
+   ],
+   "14585856": [
+    "D",
+    "A",
+    "C",
+    "B"
+   ],
+   "30471168": [
+    "D",
+    "C",
+    "A",
+    "B"
+   ]
+  },
+  "swapped_pairs": [],
+  "real_inversions": [],
+  "winner_changed": false,
+  "verdict": "assumption survives",
+  "note": "no pair reverses between the smallest and largest model, which is the falsifier \u00a77 actually names. The ordering is **not** identical all the way through: 2 intermediate size(s) (5,785,088, 14,585,856) rank the middle of the field differently before it returns. The endpoints agreeing is what was tested; a monotone ranking at every scale is not what was observed",
+  "caveat": "A fixed small corpus means larger models overfit sooner; compare final_train_loss against weighted_mean before reading an inversion as a fact about scale."
+ }
+}

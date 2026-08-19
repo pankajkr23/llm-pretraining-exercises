@@ -7,7 +7,7 @@ dependencies = [
     # Row-group streaming: a 344 MB shard costs only the row groups we consume.
     "pyarrow>=25.0.0",
     "huggingface-hub>=1.22.0",
-    # Token counts are counted, never estimated from a fertility ratio (BRIEF.md §D3).
+    # Token counts are counted, never estimated from a fertility ratio (DECISIONS.md §D3).
     # `tokenizers` loads our own Session 2 vocabulary; `tiktoken` covers two of the references.
     "tokenizers>=0.23.1",
     "tiktoken>=0.13.0",

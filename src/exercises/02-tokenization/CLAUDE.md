@@ -85,4 +85,5 @@ Component notes. Repo-wide conventions: root `AGENTS.md`.
   punctuation (`\p{M}` is load-bearing — it keeps Devanagari matras attached), `ratio =
   tokens/units` (fertility; lower is better; below 1.0 is normal because merges span punctuation).
   `count_words` is retained and reported for contrast but **nothing is scored on it**.
-  Keep BRIEF.md and metrics.py in sync.
+  Keep the local `BRIEF.md` (gitignored — the assignment, not part of the published work),
+  `README.md` and `metrics.py` in sync.

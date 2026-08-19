@@ -10,6 +10,195 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- **Session notebooks are no longer tracked.** `notebooks/S[0-9][0-9]-*.ipynb` is gitignored; each
+  is built locally from its exercise's `tools/build_notebook.py`. The files are untouched on
+  existing checkouts and history is unchanged — they simply stop being versioned. A notebook is
+  derived from the package it imports, so tracking one versions a second copy of numbers the
+  modules already own.
+- **`notebooks/hello.ipynb` is tracked in their place**, and CI executes it. Every notebook rule is
+  checked by reading a notebook, so on a fresh clone all of them now skip — and a rule that only
+  skips is not a rule. The sample is stdlib-only on purpose: one that imported an exercise package
+  would go red whenever that exercise changed. It proves a notebook in this repo opens and runs; it
+  cannot prove a session notebook is correct, and `AGENTS.md` now says so.
+- **Dead Colab badges removed** from exercise 04's README, the root README, and — least visible —
+  from the notebook `build_notebook.py` generates, all of which pointed at paths GitHub now 404s.
+
+### Fixed
+
+- **`TOKENIZER.md` could not be rendered on a checkout without FLORES-200**, which is every fresh
+  clone and CI. `spread_table` advertised an `ours` column filled from a measurement that returns
+  empty when the corpus is absent, and exercise 05's renderer indexed it and raised
+  `KeyError: 'ours'`. The table no longer names a column with nothing behind it, the renderer draws
+  a gap rather than indexing into one, and the byte-comparison test skips where the measurement
+  cannot be reproduced. No published number changes.
+
+### Added
+
+- **The proxy corpus now funds all six lanes, not three.** `tools/fetch_proxy_corpus.py` fetches a
+  small fixed slice of openly-licensed stand-in text for STEM, reasoning and agentic — the three
+  lanes carrying the specification's most contested findings, and the three the experiment could
+  previously say nothing about. Tracked download script, gitignored cache, per-lane manifest
+  recording licence, content hash and what each stands in for. 523k → **1,784,212 training
+  tokens**. A clone without the cache still builds the original three-lane corpus, so Step 0 stays
+  reproducible. Three candidate sources were refused: one declares no licence, one is gated, one is
+  non-commercial on some releases.
+- **Three follow-on experiments, all $0 and local, and all three have run.** E1: re-reading
+  measurably costs held-out loss — 18.4 epochs scores 6.79% worse than 1.15 — though the curve is
+  not monotone and one inversion sits inside the seed spread. E2: **inconclusive**, and more seeds
+  cannot change that, because the rule compares against sample spread rather than standard error.
+  E3: the ranking's endpoints agree across a 17.8× parameter range, so §7's named falsifier does
+  not fire — but two intermediate sizes order the middle of the field differently, which is
+  reported rather than smoothed over. **Arm D wins at every size**, the same direction H3's
+  refutation points; the write-up says plainly that the two are not independent evidence, since
+  they share a corpus, a tokenizer and the same stand-in STEM lane.
+- **Three follow-on experiments, all $0 and local.** `mixture.repetition` measures what a re-read
+  token is worth against the ×16.4 ceiling the whole supply analysis borrows; `mixture.seam` tests
+  whether the warmup band at a stage boundary calms the gradient, which `SPEC.md` promised and never
+  ran; `mixture.scale` tests the rank-inversion falsifier §7 names for its own core assumption.
+  Each verdict is checked twice in tests — once on numbers that should produce it, once on numbers
+  that must not.
+
+### Changed
+
+- **H3 is now refuted, not qualified.** With the STEM lane funded, the second clause of its declared
+  refutation fires: halving Indic costs Indic 3.52% but gains STEM 1.12%, past the 1% threshold and
+  clear of its own 0.71% seed spread. With no STEM lane there was nothing for that clause to observe
+  — the hypothesis was not safer, it was untestable, and an untestable hypothesis had been reading
+  as a passing one. The declared consequence is that 18% Indic is over-provisioned. The share has
+  **not** been moved: that evidence comes from a 5.8M-parameter model through a lane whose text is a
+  declared stand-in, and `SPEC.md` says a proxy this size cannot settle the mixture. It is recorded
+  as the specification's largest open question, to be decided at the 1B rung.
+
+### Fixed
+
+- **A completed experiment left the committed result untouched.** `experiment.save` wrote to the
+  gitignored `artifacts/`, while the tracked evidence lives in `results/`, so the documents kept
+  rendering an older run while the terminal showed the new one — and nothing failed. It writes to
+  `results/` now.
+- **Narrative that could not go stale.** The prose in `EXPERIMENTS.md` and `SPEC.md` describing the
+  run ("across three lanes", "H3 came back qualified", "four of seven lanes dropped") was
+  hand-written beside generated tables and survived a run that made all of it false. It is computed
+  from the result bundle now.
+
+### Added
+
+- **The session notebook is now executed in CI, not just parsed.** `test_mixture_notebook.py` runs
+  all 37 code cells through `nbclient` and fails if any raises — the one failure a reader meets
+  first, and the one the structural tests could never see. Its twin appends a deliberately raising
+  cell and requires the runner to catch it. `nbclient` and `ipykernel` join the root `dev` group so
+  the guard actually runs instead of skipping.
+
+### Changed
+
+- **Exercise 05's page no longer fetches its own data.** The bundle is a generated ES module
+  (`web/data.js`) the page imports statically, replacing `web/data.json` and the fetch that read
+  it. This removes a failure mode rather than handling one: the page used to paint, then request,
+  then either render or show an error, and it carried a "Loading…" state and a catch block for the
+  gap. Two browser tests hold the line — one reads the browser's own resource timeline and requires
+  zero script-initiated requests, the other requires the static import in the served HTML — and
+  both go red when the fetch is put back. Exercises 02–04 keep their fetch; exercise 02's bundle is
+  2.8 MB, where inlining would block first paint for no gain.
+
+### Added
+
+- **Exercise 05 — the V5 data mixture and curriculum**, as a specification written to be argued
+  with. [`SPEC.md`](src/exercises/05-datamixtures-and-curriculum/SPEC.md) is the deliverable and it
+  is **generated**: every number comes from the same code the tests pin, and a test regenerates it
+  and compares byte for byte, so a hand edit fails CI.
+
+  One decision produced everything else — **lane supply is summed from the datasets named in the
+  inventory, never quoted from a slot headline** — and three findings followed on the first run:
+
+  - The **STEM lane's supply is 146B, not the 250B quoted**, and no dataset carries the missing
+    104B. That is not a rounding difference: against a 240B demand the quoted figure says the lane
+    fits inside a single pass and the itemised figure says it needs repetition.
+  - The **2% agentic lane asks 3.9× more than infinite repetition of its pool could ever be
+    worth** — 40B against 627M, with a ceiling of 10.3B. It survives dropping every correction, so
+    a reviewer who rejects our supervision estimate still lands on impossible. The share stays at
+    the protected floor and the gap is priced as a generation bill rather than waved at.
+  - **60% of the long-context lane is repo-packed code already counted under code.** A 6% share
+    would have double-counted 60B of corpus, so long-context is retired as a lane and becomes a
+    sequence-length schedule that keeps its benchmark and holds no budget.
+
+  The spec publishes the judgment it is weakest on rather than hiding it: the inventory's largest
+  Indic row is named "synthetic" and tagged as translated, and which one wins decides which tier is
+  fundable. Both readings are worked through, and choosing the other one moves the hole rather than
+  filling it.
+
+- **The proxy is no longer a commitment — it has been run.** Four arms × five seeds × 500 steps
+  over a 523k-token corpus built entirely from text this repository already tracks (exercise 02's
+  wiki-faithful English, Hindi, Telugu and Maithili, plus this repo's own Python), so the
+  experiment reproduces from a fresh clone with no network. Scored on held-out bits per byte:
+
+  | | claim | effect | threshold | seed noise | verdict |
+  | --- | --- | ---: | ---: | ---: | --- |
+  | H1 | a composed mixture beats crawling what is cheap | +3.00% | 2% | 1.45% | supported |
+  | H2 | removing the protected floor hurts Indic | +7.36% | 5% | 0.93% | supported |
+  | H3 | halving Indic costs Indic more than it gains others | +3.53% | 3% | 0.85% | **qualified** |
+
+  Every effect is quoted against the spread the same arm shows against itself, which is the only
+  reason these read as results rather than as three numbers. **H3 is qualified** because writing
+  the evaluator exposed that its declared refutation had two clauses — *"within 3% ... or the other
+  lanes gain more than 1%"* — and only the first was implemented. Halving Indic costs Indic 3.53%
+  and gains code 1.20%, past the second threshold; that gain sits inside code's own 1.34% seed
+  spread, so the honest verdict settles it in neither direction.
+
+  [`EXPERIMENTS.md`](src/exercises/05-datamixtures-and-curriculum/EXPERIMENTS.md) is written to stop
+  a reader over-claiming from it, and says plainly that nothing here validates the mixture at 40B.
+
+- **The local machine's throughput is measured, not guessed.** `proxy.HARDWARE` carried `unknown`
+  on the argument that a plausible figure would decide a spending question on evidence nobody
+  gathered. `mixture.bench` now sweeps six model sizes on every available device: **5.281 TFLOP/s**,
+  which prices the 1B rung at ~34 hours and ~$98 rented against **105 days** locally. The
+  measurement was itself wrong the first time — one-off Metal shader compilation was charged to
+  whichever run happened to be first, reporting 1.06 TFLOP/s where the same configuration sustains
+  3.01 — so warm-up steps are now trained but not timed.
+
+- **Thirteen invariants enforced in CI**, each paired with a twin proving it fails when broken,
+  plus `tests/test_mixture_mutation.py`, which disables every guard in turn and requires the suite
+  to go red. 13 of 13 mutants killed — so no guard in this exercise is decorative.
+
+- **[`TOKENIZER.md`](src/exercises/05-datamixtures-and-curriculum/TOKENIZER.md)** records why
+  Session 2's 10k vocabulary stays as the measuring instrument and not as V5's vocabulary, built
+  entirely from exercises 03 and 04's measurements. The counter-intuitive one is worth the detour:
+  on Manipuri, `o200k_base` (16.50) and Gemma (12.18) are both **worse** than our 10k vocabulary
+  (7.17), so a bigger off-the-shelf vocabulary does not buy Indic coverage.
+
+- **An interactive page**, live at `/05-datamixtures-and-curriculum/`. Five chapters, each making
+  one claim the interaction *proves* rather than illustrates: drag a lane's share and the others
+  move because the budget is fixed; drag the passes over a pool and watch what you pay for come
+  apart from what you get; hunt for an agentic share where the arithmetic works and find it is far
+  too small to teach the capability; flip the contested Indic row between "translated" and
+  "synthetic" and watch the hole move rather than close; hide the seed spread on the proxy results
+  and watch one verdict stop looking decisive.
+
+  Three rules now live in Python and JavaScript both, because the page recomputes them per frame.
+  `tests/test_mixture_agreement.py` runs the page's own functions under node against the Python
+  ones — and mutation testing confirms it catches drift in all three. `tests/test_mixture_page_render.py`
+  loads the **built** site in Chromium, since the palette lives in the site-root stylesheet and
+  serving `web/` directly would test a page with no colours at all.
+
+- **The root README carries sections for exercises 04 and 05.** Section 04 was missing entirely,
+  and the exercises table was broken by a stray blank line that split it into two tables.
+
+### Changed
+
+- **Assignment briefs are no longer tracked, at any level.** `BRIEF.md` is gitignored by name
+  everywhere. A brief is the course's text and is input for whoever builds the exercise; it is not
+  the deliverable. The files remain on disk and in past commits — no history was rewritten.
+
+  Exercise 04's brief carried a **decision record** (D1–D7: why the answer is eight, why those
+  corpora, what may be published) that its README linked into three times. That record moves to a
+  tracked [`DECISIONS.md`](src/exercises/04-data-cleaning-dedup/DECISIONS.md) and every citation
+  now points there, so nothing published goes dark and no link 404s.
+
+### Fixed
+
+- **The exercises table in the root README** rendered as two separate tables, because a stray blank
+  line sat between exercise 03's row and exercise 04's.
+
 ## [0.4.0] - 2026-08-16
 
 Session 4's exercise, start to finish: eight cleaning stages over three real corpora, published as

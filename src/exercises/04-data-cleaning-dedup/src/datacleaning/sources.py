@@ -3,7 +3,7 @@
 Three corpora, because no single one exercises all eight stages. Format discipline never fires on
 web crawl; the Indic joiner branch never fires on English; PII regexes find nothing worth finding
 in reasoning traces. Each corpus below is here to make a stage bite that the others cannot — the
-rationale per corpus is argued in `BRIEF.md` §D5.
+rationale per corpus is argued in `DECISIONS.md` §D5.
 
 Every shard path and byte size in this file was read from the HuggingFace tree API rather than
 guessed, on 2026-08-16. Sizes are recorded so a shard being silently replaced upstream is visible
@@ -87,8 +87,8 @@ class CorpusSpec:
 # A · Reasoning-distilled chat.
 #
 # The assignment points at a model whose training data is ~7,800 Claude Opus 4.7 reasoning traces
-# reformatted as SFT conversations (BRIEF.md §D2). This is the public corpus of that shape, and the
-# only one of the three with chat structure, so stage 2b has something to act on at all.
+# reformatted as SFT conversations (DECISIONS.md §D2). This is the public corpus of that shape,
+# and the only one of the three with chat structure, so stage 2b has something to act on at all.
 # --------------------------------------------------------------------------------------------
 REASONING = CorpusSpec(
     key="reasoning",
@@ -113,8 +113,8 @@ REASONING = CorpusSpec(
 # B · Indic web crawl.
 #
 # Devanagari and Telugu only: our Session 2 tokenizer reads these at 0-0.6% [UNK] and cannot read
-# Bengali script at all (BRIEF.md §D4). The session names Sangraha as the corpus that received zero
-# deduplication, and its card claims nothing to the contrary.
+# Bengali script at all (DECISIONS.md §D4). The session names Sangraha as the corpus that received
+# zero deduplication, and its card claims nothing to the contrary.
 # --------------------------------------------------------------------------------------------
 INDIC = CorpusSpec(
     key="indic",
