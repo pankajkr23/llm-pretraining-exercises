@@ -42,7 +42,13 @@ Write it to be read at two depths: plain what-and-why before each step, the arit
 after it. It is the artifact people learn from and teach from, not a run log.
 
 **They are gitignored** (`notebooks/S[0-9][0-9]-*.ipynb`) — built from the exercise's
-`tools/build_notebook.py`, kept on a working checkout, never versioned. A notebook is derived from
+`tools/build_notebook.py`, kept on a working checkout, never versioned.
+
+**An exercise that untracks its notebook needs that builder first.** Exercise 05 has one; exercise
+04 does not, so when its notebook left the working tree on a branch switch there was nothing to
+rebuild it from and it had to be recovered out of git history (`68abb44^`). Untracking a file whose
+only copy is the one in front of you is not a workflow, it is a countdown. Write the builder, then
+untrack. A notebook is derived from
 the package it imports, so tracking it means versioning a second copy of numbers the modules
 already own, and the one that drifts is the one nobody regenerates.
 
