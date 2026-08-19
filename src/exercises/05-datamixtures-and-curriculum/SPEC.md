@@ -409,7 +409,7 @@ That consequence was fixed in advance, so it is owed rather than negotiable.
 
 **This does not validate the mixture at 40B and is not offered as doing so.** The corpus is three orders of magnitude too small, all 6 funded lanes are present, three of them from openly-licensed **stand-in** text rather than the datasets the specification funds them from, and an arm that looks better here would still be an arm that looks better on a corpus small enough to memorise.
 
-Full write-up: [`EXPERIMENTS.md`](EXPERIMENTS.md).
+Full write-up: [`EXPERIMENTS.md`](EXPERIMENTS.md). **If `H3`, `arm` or `bits per byte` are not familiar, [`METHOD.md`](METHOD.md) explains the whole apparatus from scratch** — the vocabulary, the model, the metric, both diagrams, and what each experiment was for.
 
 ### Cost, and the one number we refuse to invent
 

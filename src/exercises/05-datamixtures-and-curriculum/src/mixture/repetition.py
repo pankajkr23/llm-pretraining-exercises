@@ -224,9 +224,11 @@ def _read(rungs: list[Rung]) -> dict:
             "the shape the borrowed constant assumes, at least in this regime"
         )
     else:
+        count = len(inversions)
+        noun = "one adjacent pair runs" if count == 1 else f"{count} adjacent pairs run"
         shape = (
-            f"not monotone — {len(inversions)} adjacent pair(s) run the wrong way, but by less "
-            "than the seed spread, so the grid is finer than this experiment can resolve there"
+            f"not monotone — {noun} the wrong way, but by less than the seed spread, so the grid "
+            "is finer than this experiment can resolve there"
         )
 
     return {

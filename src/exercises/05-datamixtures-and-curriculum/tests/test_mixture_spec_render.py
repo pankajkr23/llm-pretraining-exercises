@@ -153,6 +153,59 @@ def test_no_document_states_a_stale_invariant_count():
     )
 
 
+def test_the_committed_method_doc_matches_what_the_code_renders():
+    """`METHOD.md` is generated too, so its figures cannot drift from the run they describe."""
+    method = (export.EXERCISE_ROOT / "METHOD.md").read_text(encoding="utf-8")
+    assert method == export.render_method(CFG), (
+        "METHOD.md is stale — run `uv run python -m mixture`"
+    )
+
+
+def test_the_method_doc_explains_the_vocabulary_it_uses_elsewhere():
+    """Every term the other documents use as shorthand has to be defined in one findable place.
+
+    `H1`, `E2`, `arm`, `lane`, `bits per byte` and `seed spread` appear across `SPEC.md`,
+    `EXPERIMENTS.md` and the page with no definition anywhere. This is that place, and the guard
+    exists because an explainer is exactly the kind of document that quietly stops covering the
+    thing it was written for.
+    """
+    method = export.render_method(CFG)
+    for term in ("**lane**", "**arm**", "**epoch**", "**seed**", "**held-out**", "**stand-in**"):
+        assert term in method, f"the glossary never defines {term}"
+
+    for section in ("Bits per byte", "H1, H2, H3", "E1 to E4"):
+        assert section in method, f"METHOD.md has no section on {section}"
+
+    # The metric's definition, not just its name: per byte and why, and the trap it creates.
+    assert "nats / ln(2)" in method or "nats / ln(2)" in method.replace("`", "")
+    assert "Read down a column" in method, (
+        "the bytes-per-character trap must be stated where the metric is explained"
+    )
+
+    for key in ("E1", "E2", "E3", "E4"):
+        assert f"### {key} ·" in method, f"{key} has no catalogue entry"
+        assert method.count("**Why it was asked.**") >= 4
+
+
+def test_the_method_doc_diagrams_are_parseable_mermaid():
+    """A mermaid block is not verified by reading it.
+
+    Full rendering needs a browser and belongs in the integration suite; this is the cheap
+    structural half — a fenced block that opens, closes, declares a diagram type and is not empty.
+    A semicolon inside a `Note over` has terminated a diagram mid-sentence in this repo before.
+    """
+    import re
+
+    blocks = re.findall(r"```mermaid\n(.*?)```", export.render_method(CFG), re.S)
+    assert len(blocks) >= 2, f"expected the pipeline and sequence diagrams, found {len(blocks)}"
+    for block in blocks:
+        first = block.strip().splitlines()[0].strip()
+        assert first.split()[0] in {"flowchart", "sequenceDiagram", "graph"}, (
+            f"mermaid block does not declare a diagram type: {first!r}"
+        )
+        assert len(block.strip().splitlines()) > 2, "mermaid block has no body"
+
+
 def test_rendering_is_deterministic():
     """Two builds of the same config must be byte-identical, or every diff is noise."""
     assert export.render_spec(CFG) == export.render_spec(CFG)
@@ -426,3 +479,48 @@ def test_the_rejected_row_is_described_the_way_exercise_02_describes_it(tokenize
         assert tokenizer_doc.count("can be bought by getting worse") == 1, (
             "the phrase appears more than once; one of them is not the retraction"
         )
+
+
+@pytest.mark.integration
+def test_the_method_doc_diagrams_actually_render(tmp_path):
+    """Run the diagrams through mermaid, because reading one proves nothing.
+
+    AGENTS.md carries this rule from a real defect: a semicolon inside a `Note over` is a statement
+    separator, so the note terminated mid-sentence and GitHub would have rendered a parse error
+    where a diagram should be. The structural test above cannot see that; only the renderer can.
+
+    Skips when the CLI or a browser is unavailable, which keeps a fresh checkout working — and is
+    the reason the structural check exists alongside it rather than instead of it.
+    """
+    import re
+    import shutil
+    import subprocess
+
+    if not shutil.which("npx"):
+        pytest.skip("npx is not available; cannot render mermaid")
+
+    blocks = re.findall(r"```mermaid\n(.*?)```", export.render_method(CFG), re.S)
+    assert blocks, "no mermaid blocks to render"
+
+    for index, block in enumerate(blocks, start=1):
+        source = tmp_path / f"diagram-{index}.mmd"
+        source.write_text(block, encoding="utf-8")
+        result = subprocess.run(
+            [
+                "npx",
+                "--yes",
+                "@mermaid-js/mermaid-cli",
+                "-i",
+                str(source),
+                "-o",
+                str(tmp_path / f"diagram-{index}.svg"),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+        if not (tmp_path / f"diagram-{index}.svg").exists():
+            combined = f"{result.stdout}\n{result.stderr}"
+            if "Failed to launch the browser" in combined or "bootstrap_check_in" in combined:
+                pytest.skip("mermaid's browser could not start in this environment")
+            pytest.fail(f"diagram {index} did not render:\n{combined[-600:]}")
