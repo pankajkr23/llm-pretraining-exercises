@@ -194,7 +194,10 @@ def test_verdict_badges_are_actually_coloured(page):
 # ---- layout ----------------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("width,height", [(1500, 900), (900, 800), (390, 844)])
+# 320 is the narrowest phone still in use, and it is where this page actually broke: the rail
+# list held a 310px minimum track inside a 272px container and pushed the page 14px sideways.
+# The suite stopped at 390, which is why that shipped.
+@pytest.mark.parametrize("width,height", [(1500, 900), (900, 800), (390, 844), (320, 568)])
 def test_the_page_never_scrolls_sideways(page, width, height):
     """A page that scrolls horizontally on a phone is broken, and it is easy not to notice.
 
