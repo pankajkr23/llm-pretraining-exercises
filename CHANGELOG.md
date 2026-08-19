@@ -21,6 +21,13 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   to know what was done, a contributor who has to change it, and a reviewer checking whether the
   numbers mean anything. Generated like the rest, so its figures cannot drift, and linked from
   `SPEC.md` and both READMEs.
+- **The page teaches its own vocabulary.** `arm`, `held-out`, `seed spread`, `proxy model` and
+  `bits per byte` were used on the results chapter as if they were common knowledge — `arm` in
+  particular means something specific here, and a table headed `arm` teaches nothing without it.
+  Each is now a defined term on the page, the metric caption says what bits per byte *measures*
+  and why it is per byte rather than per token, the proxy's scale (~7,000× smaller than the
+  specification's subject) is stated in the open rather than inside a collapsed block, and a
+  pointer sends anyone who wants the whole apparatus to `METHOD.md`.
 - **The mermaid diagrams are rendered in CI, not just read.** A structural check runs everywhere; an
   integration test puts both diagrams through `mermaid-cli`. Breaking one the way this repo broke a
   diagram before — a semicolon inside a `Note over`, which terminates the note mid-sentence — is
