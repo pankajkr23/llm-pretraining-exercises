@@ -10,6 +10,16 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- **`AGENTS.md` now says who documentation is for.** Exercise 05 shipped every graded item, a proxy
+  run and four experiments, and its own contributor could not tell from any file what `H1`, `E2`,
+  *arm* or *bits per byte* meant — everything correct, nothing legible. The convention names three
+  readers (meeting it for the first time, changing it, deciding whether to believe it) and what
+  each needs, and the rules that follow: define shorthand in one findable place, explain a metric
+  rather than naming it, state scale and limits in the open text rather than behind a disclosure,
+  and give the artefact people open first the same grounding as the documents.
+
 ### Added
 
 - **`METHOD.md` — how the whole thing works, for someone who has not seen it before.** `H1`, `E2`,
