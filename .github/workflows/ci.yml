@@ -7,6 +7,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # The default is six hours. Nothing here legitimately takes more than a few minutes, so a hang
+    # should fail fast instead of holding a runner for an afternoon.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
 
@@ -27,10 +30,30 @@ jobs:
       - name: Unit tests
         run: uv run pytest -m "not integration"
 
-      # The rendering tests need a real browser. Cached by setup-uv's own cache key via the lock
-      # file, so this is a download on dependency changes rather than on every run.
+      # The rendering tests need a real browser.
+      #
+      # This step used to run `playwright install --with-deps`, and the comment above it claimed
+      # setup-uv's cache covered it. Both were wrong. setup-uv caches the Python environment, not
+      # `~/.cache/ms-playwright` where browsers live, and `--with-deps` shells out to apt, which on
+      # a GitHub runner spends twenty minutes negotiating Azure mirrors for libraries the
+      # ubuntu-latest image already ships. One observed run sat at 20m and was still going.
+      #
+      # So: cache the browser by the resolved Playwright version, and skip apt. If a library really
+      # is missing the browser fails to launch, and the fixtures turn that into a hard failure on
+      # CI rather than a silent skip — see `test_mixture_page_render.py`.
+      - name: Resolve the Playwright version (for the cache key)
+        id: pw
+        run: echo "version=$(uv run python -c 'import playwright; print(playwright.__version__)')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache the Playwright browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
       - name: Install chromium (for the rendering tests)
-        run: uv run playwright install --with-deps chromium
+        timeout-minutes: 6
+        run: uv run playwright install chromium
 
       - name: Integration tests
         run: |

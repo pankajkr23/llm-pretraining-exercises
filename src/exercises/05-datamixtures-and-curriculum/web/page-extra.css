@@ -322,3 +322,31 @@ p.note { color: var(--muted); font-size: 13.5px; }
     scroll-behavior: auto !important;
   }
 }
+
+/* --------------------------------------------------------------------------------- summary */
+
+/* The "what this is / how it was built" strip. A reader arriving cold gets the shape of the work
+ * before the first chapter starts arguing with them about a number. */
+.summary {
+  margin: 8px 0 40px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+}
+.summary-lede { margin: 0 0 14px; max-width: 68ch; }
+.summary-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 8px 26px;
+  margin: 0;
+  padding-left: 1.1em;
+}
+.summary-steps li { margin: 3px 0; font-size: 13.5px; line-height: 1.5; color: var(--muted); }
+.summary-step {
+  display: inline;
+  font-weight: 700;
+  color: var(--ink);
+}
+.summary-step::after { content: ' — '; font-weight: 400; color: var(--faint); }
+.summary .note { margin: 14px 0 0; font-size: 12.5px; }

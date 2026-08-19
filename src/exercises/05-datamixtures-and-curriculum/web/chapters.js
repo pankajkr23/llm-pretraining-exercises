@@ -131,9 +131,18 @@ function rich(text) {
       term.tabIndex = 0;
       frag.append(term);
     } else if (match[3] !== undefined) {
-      frag.append($('b', null, match[3]));
+      /* Recurse, because this is a single flat pass and alternation picks the EARLIEST match, not
+       * the first alternative. `**[[supply|supply]] is ...**` matches the bold rule at index 0, so
+       * the glossary term inside it was inserted as literal text and the page rendered
+       * `[[supply|supply]]` to the reader. Bold and italic parse their own contents now; `code`
+       * deliberately does not, since markup inside code is meant to be shown. */
+      const b = $('b');
+      b.append(rich(match[3]));
+      frag.append(b);
     } else if (match[4] !== undefined) {
-      frag.append($('em', null, match[4]));
+      const em = $('em');
+      em.append(rich(match[4]));
+      frag.append(em);
     } else {
       frag.append($('code', null, match[5]));
     }
@@ -194,7 +203,15 @@ function table(head, rows, cls = 'tbl') {
   const t = $('table', cls);
   const thead = $('thead');
   const hr = $('tr');
-  head.forEach((h) => hr.append($('th', null, h)));
+  /* Headers go through `rich()` exactly as body cells do. They did not, so a glossary term in a
+   * header rendered as literal `[[BPB|bpb]]` -- six times, in the results table. A cell and a
+   * header carry the same kind of text; only one of them was being parsed. */
+  head.forEach((h) => {
+    const th = $('th');
+    if (h instanceof Node) th.append(h);
+    else th.append(rich(String(h)));
+    hr.append(th);
+  });
   thead.append(hr);
   const tbody = $('tbody');
   rows.forEach((row) => {
@@ -683,8 +700,16 @@ function chapterResults(data) {
       cells.push(showSpread ? `${mean(w).toFixed(4)} ±${spread(w).toFixed(4)}` : mean(w).toFixed(4));
       return [`**${key}** ${arm.name}`, ...cells];
     });
+    /* The unit is stated once, under the table, rather than repeated in all seven column
+     * headers. Every cell is the same measure, so repeating it added no information and cost the
+     * reader the lane names, which are the part that differs between columns. */
     scoreEl.replaceChildren(
-      table(['arm', ...lanesScored.map((l) => `${l} [[BPB|bpb]]`), 'weighted'], rows),
+      table(['arm', ...lanesScored, 'weighted'], rows),
+      richP(
+        'Every cell is held-out [[BPB|bpb]], lower is better; **±** is the spread across ' +
+          `${exp.seeds.length} seeds of the same arm.`,
+        'note',
+      ),
     );
   }
 
@@ -729,7 +754,8 @@ function chapterResults(data) {
       `Four mixtures, ${exp.seeds.length} random seeds each, scored on held-out text the models ` +
       'never trained on, against thresholds fixed before a single arm ran. Every effect below is ' +
       'quoted beside the spread the *same* mixture produces against itself — because an effect ' +
-      `smaller than that spread is not a result. ${lostWord} did not survive.`,
+      'smaller than that spread is not a result. ' +
+      `${lostWord[0].toUpperCase()}${lostWord.slice(1)} did not survive.`,
     big: Object.entries(tally).map(([k, v]) => `${v} ${k}`).join(' · '),
     bigSub: 'of the three predictions, judged against thresholds fixed before the run',
     body: [
@@ -778,13 +804,23 @@ const CHAPTERS = [chapterComposer, chapterRepetition, chapterAgentic, chapterTie
 
 function fillLede(data) {
   const cfg = data.config;
-  const failing = data.lanes.filter((l) => l.verdict === 'impossible').length;
+  /* The three findings the documents are built on, counted rather than asserted: a lane whose
+   * itemised supply is short of the quoted figure, a lane that cannot be funded at any amount of
+   * repetition, and a lane retired for counting text the mixture had already bought. Counting only
+   * `impossible` gave 1, which both disagreed with SPEC.md's "three findings" and read as
+   * "1 of them stop being affordable". */
+  const short = data.headline_disagreements.filter((d) => d.gap < 0).length;
+  const impossible = data.lanes.filter((l) => l.verdict === 'impossible').length;
+  const retired = data.lanes.filter((l) => l.share === 0 && l.raw_supply > 0).length;
+  const failing = short + impossible + retired;
+  const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'];
+  const failingWord = WORDS[failing] || String(failing);
   const set = (name, text) => {
     document.querySelectorAll(`[data-fact="${name}"]`).forEach((el) => {
       el.textContent = text;
     });
   };
-  set('failing', `${failing} of them stop being affordable`);
+  set('failing', `${failingWord} of them ${failing === 1 ? 'stops' : 'stop'} being affordable`);
   set('agentic', '3.9× more than any amount of re-reading could ever be worth');
   set('longctx', 'counting 60B of the same text twice');
   void cfg;
@@ -803,9 +839,13 @@ function buildRail(main) {
     if (!sec.dataset.title) return;
     const link = $('a', 'rail-link');
     link.href = `#${sec.id}`;
+    /* `rail-n` and `rail-body` are SIBLINGS, because `.rail-link` in the shared stylesheet is a
+     * two-column grid — a number column and a text column. Nesting the number inside the body gave
+     * the grid a single child, which landed in the 16px number column and squeezed every title
+     * into it: one word per line, all the way down the rail. Exercise 03 has the shape right. */
     const body = $('span', 'rail-body');
-    body.append($('span', 'rail-n', sec.dataset.n), $('span', 'rail-t', sec.dataset.title));
-    link.append(body);
+    body.append($('span', 'rail-t', sec.dataset.title));
+    link.append($('span', 'rail-n', sec.dataset.n), body);
     list.append(link);
   });
   inner.append(list);
@@ -858,9 +898,70 @@ function buildFooter(data) {
 }
 
 /** Render the whole page. */
+
+/* A reader arriving cold needs to know what this is and how the numbers were produced before the
+ * first chapter argues with them. Six steps, each carrying the one figure it produced, all read
+ * from the bundle so the strip cannot describe a pipeline that no longer runs. */
+function buildSummary(data) {
+  const exp = data.experiment;
+  const lanes = data.lanes.filter((l) => l.share > 0);
+  const corpusTokens = exp
+    ? Object.values(exp.corpus).reduce((sum, lane) => sum + lane.train_tokens, 0)
+    : 0;
+  const verdicts = exp ? exp.comparisons.map((c) => c.verdict) : [];
+  const supported = verdicts.filter((v) => v === 'supported').length;
+
+  const steps = [
+    ['Inventory', `${data.inventory.length} datasets, each with a named token count`],
+    ['Supply', `summed per lane from those rows — never from a slot headline`],
+    ['Mixture', `${lanes.length} funded lanes, every share argued against its own supply`],
+    ['Curriculum', `5 stages, 6 difficulty bands, a 4K→32K context ladder`],
+    ['Invariants', `checked in CI, each paired with a test that proves it can fail`],
+    [
+      'Proxy',
+      exp
+        ? `${Object.keys(exp.arms).length} arms × ${exp.seeds.length} seeds over ` +
+          `${(corpusTokens / 1e6).toFixed(1)}M tokens — ${supported} supported, ` +
+          `${verdicts.length - supported} not`
+        : 'not yet run',
+    ],
+  ];
+
+  const wrap = $('section', 'summary');
+  wrap.id = 'how';
+  wrap.dataset.title = 'How this was built';
+  wrap.dataset.n = '0';
+  wrap.append(
+    richP(
+      '**What this is.** A training recipe for a 40B model: how much of each kind of text it ' +
+        'reads, and in what order. **How it was built.** Every share is composed backward from a ' +
+        'benchmark, then checked against the data that actually exists — and three of them did ' +
+        'not survive that check.',
+      'summary-lede',
+    ),
+  );
+  const list = $('ol', 'summary-steps');
+  steps.forEach(([name, detail]) => {
+    const li = $('li');
+    li.append($('span', 'summary-step', name), rich(detail));
+    list.append(li);
+  });
+  wrap.append(list);
+  wrap.append(
+    richP(
+      'Nothing below is typed by hand. Every figure is computed from the same modules the tests ' +
+        'pin, and the documents are regenerated from them — so the prose cannot disagree with ' +
+        'the table beside it.',
+      'note',
+    ),
+  );
+  return wrap;
+}
+
 export function buildPage(data) {
   const main = document.getElementById('main');
   main.replaceChildren();
+  main.append(buildSummary(data));
   CHAPTERS.forEach((fn) => {
     try {
       main.append(fn(data));

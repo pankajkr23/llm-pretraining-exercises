@@ -26,6 +26,46 @@ and is O8 below. What remains is your call.
 | O8 | **H3 is refuted, and the Indic share has not moved** | **open, and the largest question in the spec** | Halving Indic gains STEM 1.12%, past the 1% second clause of its own pre-declared refutation and clear of its 0.71% spread. The declared consequence is that 18% is over-provisioned. Not acted on: the evidence is a 4-layer model and a stand-in lane, and §7 says a proxy this size cannot settle the mixture. O6 decides it. |
 | O9 | **E1/E2/E3 — the free experiments** | **done** | Repetition curve, seam warmup band, scale transfer. All local, all $0. See `EXPERIMENTS.md`. |
 
+### F11 · The two lessons to carry into every later session
+
+Both cost real time here, both are now in the root `AGENTS.md`, and both are recorded again in this
+log because a convention file is read once and a log is read when something goes wrong.
+
+**1 · Prose that states a number has to be generated too, or it goes stale while the table beside
+it stays right.**
+
+This is the most expensive failure of the session, measured in edits. Every stale claim shipped
+sat *directly above or below a correct, generated table*:
+
+| the sentence said | the table said | who was wrong |
+| --- | --- | --- |
+| "across three lanes" | six lanes | the sentence |
+| "H3 came back `qualified`" | `refuted` | the sentence |
+| "Thirteen invariants" | sixteen `check_` functions | the sentence |
+| "one verdict did not survive its own noise" | it fell to a second clause | the sentence |
+| "built entirely from text this repo already tracks" | half of it was fetched | the sentence |
+
+**No test failed for any of them.** The generated table made the section look maintained, and a
+reader believes the sentence, because the sentence is the part written in English. If a sentence
+contains a count, a verdict or a size, derive it from the same source the table uses. Where prose
+must stay hand-written — a row in the root README's exercise table — a test asserts the number in
+it, and breaking it back to "Thirteen" is watched going red.
+
+**2 · A missing input reads as a passing result.**
+
+H3 sat at `qualified` because the second clause of its declared refutation had no lane to fire on:
+the proxy had no STEM text. Funding that lane moved the effect size by **0.01 points** — +3.53% to
++3.52% — and flipped the verdict to `refuted`.
+
+Nothing about the hypothesis got harder. It became *testable*, and it immediately failed. **A
+missing input does not make a claim safer; it makes it unfalsifiable, and unfalsifiable reads
+exactly like passing.** The same shape appeared twice more in one day: a monotonicity check over a
+single rung reported "monotone, no exceptions" because it iterated an empty list, and a scale
+reading reported "inside noise" down a branch that never looked at a standard deviation.
+
+Before trusting a result, write down what the measurement was blind to. If that list is empty, you
+have not looked hard enough at it.
+
 ### F10 · A missing lane was reading as a passing hypothesis
 
 Step 0 first ran on three lanes, because those are the ones this repository tracks text for. STEM,

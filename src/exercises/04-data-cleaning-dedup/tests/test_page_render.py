@@ -15,6 +15,7 @@ and on a machine where `uv run playwright install chromium` has been run, and no
 """
 
 import http.server
+import os
 import socketserver
 import subprocess
 import threading
@@ -111,6 +112,11 @@ def _page(width=1500):
                 finally:
                     browser.close()
         except PlaywrightError as exc:
+            # Skipping keeps a fresh checkout working. On CI it would turn "the browser
+            # never launched" into a green run with no rendering coverage at all, which is
+            # what this suite exists to prevent. CI has no excuse for a missing browser.
+            if os.environ.get("CI"):
+                pytest.fail(f"chromium did not launch on CI: {exc}")
             pytest.skip(f"no chromium available: {exc}")
 
 
