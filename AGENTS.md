@@ -128,6 +128,29 @@ Two more that cost this repo real defects:
 - **A new module is not done until every list that names modules includes it.** `explainer.py` shipped and stayed missing from three places — the README's *Run it*, the README's layout block, and the exercise's `CLAUDE.md` — none of which any test checks. The consequence was not cosmetic: a reader regenerating the site would have run `widget` without `explainer` and published a page whose figures contradicted its own tool.
 - **Render a diagram before committing it.** A Mermaid block is not verified by reading it. A semicolon inside a `Note over` is a statement separator, so the note terminated mid-sentence and GitHub would have rendered a parse error where a diagram should be — caught only by running it through `npx @mermaid-js/mermaid-cli`. The same applies to every number inside one: read them back from the code.
 
+## Documentation is written for more than one reader
+
+A document that only makes sense to whoever built it is not documentation, it is a note to self.
+Exercise 05 shipped every graded item, a proxy run and four experiments, and its own contributor
+could not tell from any file what `H1`, `E2`, *arm* or *bits per byte* meant. Everything was
+correct and nothing was legible.
+
+**Write for three readers, and say which one each section is for.**
+
+| reader | what they need |
+| --- | --- |
+| **Meeting it for the first time** | What problem this solves, in plain words, before any table. What the jargon means. What was actually done — not the abstraction, the concrete thing: which model, how big, which data, how measured. |
+| **A contributor who has to change it** | How the pieces fit and in what order. Where a number comes from. Which module to edit for which effect. Diagrams, because a pipeline described in prose has to be reassembled in the reader's head every time. |
+| **A reviewer deciding whether to believe it** | The measurement, its noise floor, what it could not see, and what would falsify it. Limits stated where the numbers are, not in a closing paragraph. |
+
+The rules that follow from it:
+
+- **Every term used as shorthand is defined in exactly one findable place, and everything else links there.** `SPEC.md` is the decision; `METHOD.md` is the apparatus. Splitting them is deliberate — an adversarially-graded specification cannot carry a glossary and two architecture diagrams without paying for it, and a first-time reader cannot do without them.
+- **Explain the metric, not just its name.** "Held-out BPB, lower is better" names a measure. What it measures, what it is divided by, and why *that* denominator, is the part that lets a reader judge the table.
+- **State the scale and the limits in the open text.** Not inside a collapsed disclosure. A qualifier a reader has to go looking for is a qualifier the document is hiding — and the scale of a proxy is the most important thing on the page it appears on.
+- **The artefact people open first needs the grounding too.** A deployed page is read far more often than a specification. If its vocabulary is only defined in a Markdown file, it is not defined.
+- **Render every diagram before committing it, and test that it renders.** A mermaid block is not verified by reading it.
+
 ## Git workflow
 
 - **Every change lands on `main` via a pull request.** Branch → push → open a PR → merge. **Never push, merge, or force-push directly to `main`** — it's the protected branch that production is promoted from, and the base every PR previews against.
