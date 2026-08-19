@@ -87,6 +87,28 @@ class Source:
     why: str
 
 
+# A SECOND stand-in for the STEM lane, deliberately different in register from the first.
+#
+# H3's refutation rests entirely on the STEM lane gaining 1.12%, and that lane's text is GSM8K
+# standing in for peS2o and proof-pile-2. With the 1B rung deprioritised there is no experiment
+# coming that would settle it, so the next best question is whether the finding is a fact about the
+# mixture or an artefact of that one substitution. StackMathQA is Stack Exchange mathematics --
+# discursive prose with LaTeX, closer to a paper than a grade-school word problem -- so if the
+# gain survives the swap it is not a property of GSM8K's phrasing.
+ALTERNATIVE_STEM = Source(
+    lane="stem",
+    dataset="math-ai/StackMathQA",
+    config="stackmathqa100k",
+    split="train",
+    rows=700,
+    fields=("Q", "A"),
+    stands_in_for="D4 STEM, peS2o, proof-pile-2",
+    why=(
+        "mathematics written as discussion rather than as exercises, which is the register the "
+        "real STEM lane is made of; used to test whether H3 depends on the first stand-in"
+    ),
+)
+
 SOURCES = (
     Source(
         lane="stem",
@@ -308,9 +330,45 @@ def fetch(force: bool = False) -> dict:
     return manifest
 
 
+def fetch_alternative_stem() -> Path:
+    """Fetch the second STEM stand-in, to its own file.
+
+    Written as `stem-alt.txt` rather than over `stem.txt`, so the published corpus is untouched and
+    the two can be compared. `corpus.py` picks it up only when `MIXTURE_STEM` says to.
+
+    Returns:
+        The path written.
+    """
+    licence = _licence(ALTERNATIVE_STEM.dataset)
+    text = "\n\n".join(_rows(ALTERNATIVE_STEM)).strip() + "\n"
+    path = OUT / "stem-alt.txt"
+    path.write_text(text, encoding="utf-8")
+    entry = {
+        "lane": "stem-alt",
+        "dataset": ALTERNATIVE_STEM.dataset,
+        "config": ALTERNATIVE_STEM.config,
+        "split": ALTERNATIVE_STEM.split,
+        "rows_requested": ALTERNATIVE_STEM.rows,
+        "licence": licence,
+        "characters": len(text),
+        "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        "stands_in_for": ALTERNATIVE_STEM.stands_in_for,
+        "why_defensible": ALTERNATIVE_STEM.why,
+        "provenance": "stand-in",
+    }
+    existing = [e for e in _read_manifest().values() if e["lane"] != "stem-alt"]
+    _write_manifest([*existing, entry])
+    print(f"  {'stem-alt':<10} {len(text):>9,} chars  {licence:<12} {ALTERNATIVE_STEM.dataset}")
+    return path
+
+
 def main() -> None:
     """Fetch the proxy corpus and report what landed."""
     logging.basicConfig(level=logging.INFO, format="%(message)s")
+    if "--alt-stem" in sys.argv:
+        print(f"fetching the alternative STEM stand-in -> {OUT}")
+        fetch_alternative_stem()
+        return
     print(f"fetching stand-in text for three lanes -> {OUT}")
     fetch(force="--force" in sys.argv)
     print(f"\nwrote {OUT}/manifest.json")

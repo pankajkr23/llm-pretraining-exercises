@@ -31,6 +31,7 @@ Three rules carried forward from earlier sessions:
 
 import hashlib
 import json
+import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -134,9 +135,15 @@ def _fetched_sources() -> tuple[LaneSource, ...]:
             "Apache-2.0; fetched, not committed",
         ),
     }
+    # `MIXTURE_STEM=alt` swaps the STEM lane for its second stand-in. That exists to answer one
+    # question: H3's refutation rests entirely on the STEM lane gaining 1.12%, and that lane is
+    # GSM8K standing in for peS2o. If the finding is a fact about the mixture it survives a
+    # different substitution; if it is a fact about GSM8K's phrasing it does not.
+    stem_file = "stem-alt" if os.environ.get("MIXTURE_STEM") == "alt" else "stem"
+
     out = []
     for lane, (description, licence) in described.items():
-        path = _FETCHED / f"{lane}.txt"
+        path = _FETCHED / f"{stem_file if lane == 'stem' else lane}.txt"
         if path.exists():
             out.append(
                 LaneSource(lane=lane, description=description, paths=(path,), licence_note=licence)
