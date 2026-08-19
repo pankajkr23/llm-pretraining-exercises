@@ -347,6 +347,113 @@ def test_the_results_takeaway_counts_the_same_verdicts_the_table_does(page):
     assert f"of {len(badges)}" in pill, "the takeaway must say how many predictions there were"
 
 
+def test_no_markup_reaches_the_reader_unrendered(page):
+    """Nothing on the page may show `[[term|label]]`, `**bold**` or a stray backtick.
+
+    Three of these shipped. `rich()` is a single flat pass and regex alternation picks the
+    *earliest* match, not the first alternative — so `**[[supply|supply]] is ...**` matched the
+    bold rule first and its contents went in as literal text. And table headers never called
+    `rich()` at all, while body cells always did, so `[[BPB|bpb]]` rendered six times in one table.
+
+    Asserted against the rendered text rather than the source, because the source is correct in
+    both bugs; only the rendering is wrong.
+    """
+    leftovers = page.evaluate(
+        r"""() => {
+            const found = [];
+            const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            let node;
+            while ((node = walk.nextNode())) {
+                const text = node.textContent;
+                if (/\[\[|\*\*|`/.test(text)) {
+                    found.push(node.parentElement.tagName + ': ' + text.trim().slice(0, 70));
+                }
+            }
+            return found;
+        }"""
+    )
+    assert leftovers == [], f"unrendered markup reached the reader: {leftovers}"
+
+
+def test_a_glossary_term_inside_bold_still_becomes_a_term(page):
+    """The specific nesting that failed, pinned so the flat-parse regression cannot return."""
+    terms = page.evaluate(
+        "() => [...document.querySelectorAll('.term')].map(t => t.textContent.trim())"
+    )
+    assert "supply" in terms, "the glossary term inside a bold span did not render as a term"
+    bolded = page.evaluate("() => [...document.querySelectorAll('b .term')].length")
+    assert bolded > 0, "no glossary term is nested inside bold; the parser is not being exercised"
+
+
+def test_the_lede_count_agrees_with_the_findings_it_introduces(page):
+    """The lede states a count and then lists the findings. They have to be the same number.
+
+    It said "1 of them stop being affordable" — wrong in two ways at once. The number counted only
+    lanes with an `impossible` verdict, while `SPEC.md` is built on three findings, and the verb
+    did not agree with the number it had just computed.
+    """
+    lede = page.inner_text(".lede")
+    words = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5}
+    stated = next((n for word, n in words.items() if f"{word} of them" in lede), None)
+    assert stated is not None, f"the lede states no count: {lede[:160]!r}"
+
+    assert ("stops being affordable" in lede) == (stated == 1), (
+        "the verb does not agree with the count the lede just stated"
+    )
+
+    bundle = json.loads(
+        (PUBLIC / SLUG / "data.js")
+        .read_text(encoding="utf-8")
+        .split("Object.freeze(", 1)[1]
+        .rsplit(");", 1)[0]
+    )
+    short = len([d for d in bundle["headline_disagreements"] if d["gap"] < 0])
+    impossible = len([lane for lane in bundle["lanes"] if lane["verdict"] == "impossible"])
+    retired = len([lane for lane in bundle["lanes"] if lane["share"] == 0 and lane["raw_supply"]])
+    assert stated == short + impossible + retired, (
+        f"the lede says {stated} but the data carries {short + impossible + retired} findings"
+    )
+
+
+def test_the_rail_titles_are_readable_rather_than_one_word_per_line(page):
+    """The rail's text must actually get the rail's text column.
+
+    It did not. `.rail-link` is a two-column grid in the shared stylesheet — a number column and a
+    text column — and this page nested the number *inside* the body, so the grid saw a single child
+    and put it in the 16px number column. Every title then wrapped one word per line down the whole
+    rail. Twenty-seven browser tests passed while it looked like that, because all of them asked
+    whether things were present and none asked whether they were legible.
+
+    Measured, not inspected: a title box narrower than its own number column cannot be right.
+    """
+    page.set_viewport_size({"width": 1400, "height": 900})
+    page.wait_for_selector("#rail .rail-link")
+
+    children = page.eval_on_selector(
+        "#rail .rail-link", "el => [...el.children].map(c => c.className)"
+    )
+    assert children == ["rail-n", "rail-body"], (
+        f"the rail link's children are {children}; the shared grid expects the number and the body "
+        "as siblings"
+    )
+
+    boxes = page.evaluate(
+        """() => [...document.querySelectorAll('#rail .rail-t')].map(t => ({
+            width: t.getBoundingClientRect().width,
+            height: t.getBoundingClientRect().height,
+            text: t.textContent.trim(),
+        }))"""
+    )
+    assert boxes, "the rail rendered no titles"
+    for box in boxes:
+        assert box["width"] > 100, (
+            f"rail title {box['text']!r} is only {box['width']:.0f}px wide — it is being squeezed "
+            "into the number column"
+        )
+        # Roughly three lines at this width; more means the text is wrapping far too early.
+        assert box["height"] < 70, f"rail title {box['text']!r} wraps to {box['height']:.0f}px tall"
+
+
 # ---- docs/EXPLAINER_PROMPT.md conformance ----------------------------------------------------
 
 

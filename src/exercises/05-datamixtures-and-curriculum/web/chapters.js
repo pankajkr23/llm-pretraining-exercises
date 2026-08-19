@@ -131,9 +131,18 @@ function rich(text) {
       term.tabIndex = 0;
       frag.append(term);
     } else if (match[3] !== undefined) {
-      frag.append($('b', null, match[3]));
+      /* Recurse, because this is a single flat pass and alternation picks the EARLIEST match, not
+       * the first alternative. `**[[supply|supply]] is ...**` matches the bold rule at index 0, so
+       * the glossary term inside it was inserted as literal text and the page rendered
+       * `[[supply|supply]]` to the reader. Bold and italic parse their own contents now; `code`
+       * deliberately does not, since markup inside code is meant to be shown. */
+      const b = $('b');
+      b.append(rich(match[3]));
+      frag.append(b);
     } else if (match[4] !== undefined) {
-      frag.append($('em', null, match[4]));
+      const em = $('em');
+      em.append(rich(match[4]));
+      frag.append(em);
     } else {
       frag.append($('code', null, match[5]));
     }
@@ -194,7 +203,15 @@ function table(head, rows, cls = 'tbl') {
   const t = $('table', cls);
   const thead = $('thead');
   const hr = $('tr');
-  head.forEach((h) => hr.append($('th', null, h)));
+  /* Headers go through `rich()` exactly as body cells do. They did not, so a glossary term in a
+   * header rendered as literal `[[BPB|bpb]]` -- six times, in the results table. A cell and a
+   * header carry the same kind of text; only one of them was being parsed. */
+  head.forEach((h) => {
+    const th = $('th');
+    if (h instanceof Node) th.append(h);
+    else th.append(rich(String(h)));
+    hr.append(th);
+  });
   thead.append(hr);
   const tbody = $('tbody');
   rows.forEach((row) => {
@@ -778,13 +795,23 @@ const CHAPTERS = [chapterComposer, chapterRepetition, chapterAgentic, chapterTie
 
 function fillLede(data) {
   const cfg = data.config;
-  const failing = data.lanes.filter((l) => l.verdict === 'impossible').length;
+  /* The three findings the documents are built on, counted rather than asserted: a lane whose
+   * itemised supply is short of the quoted figure, a lane that cannot be funded at any amount of
+   * repetition, and a lane retired for counting text the mixture had already bought. Counting only
+   * `impossible` gave 1, which both disagreed with SPEC.md's "three findings" and read as
+   * "1 of them stop being affordable". */
+  const short = data.headline_disagreements.filter((d) => d.gap < 0).length;
+  const impossible = data.lanes.filter((l) => l.verdict === 'impossible').length;
+  const retired = data.lanes.filter((l) => l.share === 0 && l.raw_supply > 0).length;
+  const failing = short + impossible + retired;
+  const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'];
+  const failingWord = WORDS[failing] || String(failing);
   const set = (name, text) => {
     document.querySelectorAll(`[data-fact="${name}"]`).forEach((el) => {
       el.textContent = text;
     });
   };
-  set('failing', `${failing} of them stop being affordable`);
+  set('failing', `${failingWord} of them ${failing === 1 ? 'stops' : 'stop'} being affordable`);
   set('agentic', '3.9× more than any amount of re-reading could ever be worth');
   set('longctx', 'counting 60B of the same text twice');
   void cfg;
@@ -803,9 +830,13 @@ function buildRail(main) {
     if (!sec.dataset.title) return;
     const link = $('a', 'rail-link');
     link.href = `#${sec.id}`;
+    /* `rail-n` and `rail-body` are SIBLINGS, because `.rail-link` in the shared stylesheet is a
+     * two-column grid — a number column and a text column. Nesting the number inside the body gave
+     * the grid a single child, which landed in the 16px number column and squeezed every title
+     * into it: one word per line, all the way down the rail. Exercise 03 has the shape right. */
     const body = $('span', 'rail-body');
-    body.append($('span', 'rail-n', sec.dataset.n), $('span', 'rail-t', sec.dataset.title));
-    link.append(body);
+    body.append($('span', 'rail-t', sec.dataset.title));
+    link.append($('span', 'rail-n', sec.dataset.n), body);
     list.append(link);
   });
   inner.append(list);
