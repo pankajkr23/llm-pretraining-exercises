@@ -243,16 +243,24 @@ def _read(rungs: list[Rung]) -> dict:
     }
 
 
-def save(bundle: dict, path: Path = RESULTS) -> Path:
+def save(bundle: dict, path: Path | None = None) -> Path:
     """Write the bundle.
+
+    `None` rather than `path: Path = RESULTS`, and the difference is not cosmetic. A default
+    argument is bound **once, at import**, so the old signature captured the real results path and
+    kept writing to it no matter what `RESULTS` was later set to. A test that redirected the module
+    global therefore redirected nothing — and the two-step smoke run added to prove `save()` works
+    overwrote a fifteen-run measurement with a one-rung stub, which was then committed. The
+    experiment that exists to make results trustworthy destroyed the results.
 
     Args:
         bundle: What `run` returned.
-        path: Destination.
+        path: Destination; defaults to `RESULTS` **as it is at call time**.
 
     Returns:
         The path written.
     """
+    path = path or RESULTS
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(bundle, indent=1, default=str) + "\n", encoding="utf-8")
     return path

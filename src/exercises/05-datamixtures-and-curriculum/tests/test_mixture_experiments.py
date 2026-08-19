@@ -305,7 +305,11 @@ def test_each_experiment_can_write_its_own_results(module, tmp_path, monkeypatch
     torch = pytest.importorskip("torch", reason="the proxy harness is an optional extra")
     assert torch  # the import is the point
 
-    monkeypatch.setattr(module, "RESULTS", tmp_path / "out.json", raising=False)
+    destination = tmp_path / "out.json"
+    # Both, deliberately. Patching the global is what a reader expects to be enough, and it is not:
+    # `repetition.save` had `path: Path = RESULTS` as a default, bound at import, so this line alone
+    # left it writing to the real results file. Passing the path explicitly is what actually holds.
+    monkeypatch.setattr(module, "RESULTS", destination, raising=False)
     if hasattr(module, "FRACTIONS"):
         monkeypatch.setattr(module, "FRACTIONS", (1.0,))
     if hasattr(module, "SIZES"):
@@ -314,9 +318,44 @@ def test_each_experiment_can_write_its_own_results(module, tmp_path, monkeypatch
         monkeypatch.setattr(module, "SEAM_AT", 1)
 
     bundle = module.run(seeds=(0,), steps=2, batch=2)
-    path = module.save(bundle)
+    path = module.save(bundle, destination) if module is repetition else module.save(bundle)
 
     written = json.loads(Path(path).read_text(encoding="utf-8"))
     assert written["device"], "the bundle must record which device produced it"
     assert isinstance(written["device"], str), "device must be serialised as a string"
     assert written["reading"], "an experiment that reports no reading has decided nothing"
+
+
+# ---- the committed evidence must come from a real run -----------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("name", "min_steps", "min_seeds"),
+    [("step0", 100, 5), ("repetition", 100, 3), ("seam", 100, 3), ("scale", 100, 3)],
+)
+def test_tracked_results_describe_a_real_run(name: str, min_steps: int, min_seeds: int) -> None:
+    """A results file in `results/` is published evidence, so it must not be a smoke-test stub.
+
+    This exists because one was. The two-step run added to prove `save()` works wrote over
+    `repetition.json` — fifteen trained models replaced by a single rung at two steps — and it was
+    committed, because nothing looked at what the file contained. `EXPERIMENTS.md` rendered the
+    stub perfectly happily: a correct table of meaningless numbers.
+
+    The thresholds are deliberately far below any real run and far above any smoke test, so this
+    catches the accident without pinning the experiment's design.
+    """
+    from mixture import corpus
+
+    path = corpus.EXERCISE_ROOT / "results" / f"{name}.json"
+    if not path.exists():
+        pytest.skip(f"{name}.json has not been produced on this checkout")
+
+    bundle = json.loads(path.read_text(encoding="utf-8"))
+    assert bundle["steps"] >= min_steps, (
+        f"{name}.json reports {bundle['steps']} steps — that is a smoke test, not a measurement"
+    )
+    assert len(bundle["seeds"]) >= min_seeds, (
+        f"{name}.json has {len(bundle['seeds'])} seed(s); an effect cannot be read against its own "
+        "spread without several"
+    )
+    assert bundle["batch"] >= 8, f"{name}.json ran at batch {bundle['batch']}"
