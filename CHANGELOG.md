@@ -10,6 +10,19 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Exercise 02's explainer scrolled sideways on a 320px phone**, by 57px — three tables sat
+  directly in the flow with no scrolling box of their own, where every other table in the repo sits
+  inside a `.tblwrap`. All three are wrapped now.
+
+### Changed
+
+- **Every browser suite now tests 320px, not just down to 390.** The sideways-scroll guard already
+  existed in exercises 02, 03, 04 and 05 — it simply never ran at a width narrow enough to fail,
+  which is why exercise 05 shipped a 14px overflow and exercise 02 a 57px one. Widening the
+  parametrised set found the second bug immediately.
+
 ## [0.6.1] - 2026-08-19
 
 ### Fixed

@@ -35,7 +35,11 @@ pytestmark = [
     pytest.mark.skipif(not (WEB / "data.json").exists(), reason="web/data.json not built"),
 ]
 
-WIDTHS = (1500, 900, 390)
+# 320 is the narrowest phone still in real use, and the width where exercise 05 actually broke:
+# an `auto-fit` grid track with a fixed minimum cannot shrink below itself, so it sat 310px wide in
+# a 272px container and pushed the whole document sideways. Every suite here stopped at 390, so the
+# guard existed and could not fail. It runs at 320 now.
+WIDTHS = (1500, 900, 390, 320)
 
 
 @contextmanager

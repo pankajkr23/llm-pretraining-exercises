@@ -46,7 +46,11 @@ pytestmark = [
 
 # The widths that have actually broken. 1500 is the design target, 900 is where the figure column
 # gets narrow enough to starve a flexible grid track, and 390 is the smallest phone worth serving.
-WIDTHS = (1500, 900, 390)
+# 320 is the narrowest phone still in real use, and the width where exercise 05 actually broke:
+# an `auto-fit` grid track with a fixed minimum cannot shrink below itself, so it sat 310px wide in
+# a 272px container and pushed the whole document sideways. Every suite here stopped at 390, so the
+# guard existed and could not fail. It runs at 320 now.
+WIDTHS = (1500, 900, 390, 320)
 
 
 @contextmanager
