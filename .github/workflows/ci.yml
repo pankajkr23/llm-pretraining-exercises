@@ -1,8 +1,19 @@
 name: CI
 
 on:
+  # `push` without a branch filter alongside `pull_request` ran this job TWICE for every commit on
+  # a PR branch -- same commit, same steps, same result, twice the wall-clock and twice the runner
+  # minutes. Restricting push to `main` keeps the post-merge run and leaves branches to the PR
+  # event, which is the one whose checks a PR actually reports.
   push:
+    branches: [main]
   pull_request:
+
+# A newer push to the same branch makes the in-flight run obsolete. Cancelling it frees the runner
+# immediately instead of finishing a report nobody will read.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
