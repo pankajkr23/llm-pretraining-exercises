@@ -22,7 +22,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["src"]
+testpaths = ["src", "tests"]
 markers = ["integration: slower end-to-end tests (tiny train runs, browser rendering)"]
 addopts = "-q"
 

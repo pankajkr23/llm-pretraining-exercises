@@ -3,7 +3,8 @@
 A running log of what was built, what was measured, what changed and what is still open. Written
 so the work can be picked up cold. Newest entries at the top of each section.
 
-**Branch:** `feat/05-data-mixtures` · local commits only, nothing pushed.
+**Branch:** merged to `main` through v0.6.1; v0.6.2 and the README split are open as PRs #54 and #55.
+The submission link is the repository's root `README.md`; the deliverable it routes to is [`SPEC.md`](SPEC.md).
 
 ---
 
@@ -318,6 +319,28 @@ plausible numbers nobody measured.
 ---
 
 ## Change log
+
+### 2026-08-24 (documentation architecture)
+
+- **The root README went back to being a map.** It had reached 307 lines, **211 of them five
+  per-exercise deep-dives** — and measuring first turned up the part that mattered: none of that
+  prose existed in the exercise READMEs. The root was not summarising the exercises, it was the
+  only place four of them were described. So the sections were **moved**, not cut, into the
+  exercise each describes; exercise 05's block is generated, so that one was slimmed at the
+  renderer into a signpost plus a four-row routing table. Root **307 → 124 lines**.
+- **The exercise table's rows were the same failure in a narrower column** — 40–90 words each, and
+  row 05 restated the generated block printed directly beneath it. One sentence each now. Nine
+  facts were cut and all nine were checked to still exist in the README the row links to.
+- **Row 05 keeps "sixteen invariants" on purpose.** `AGENTS.md` permits that row to stay
+  hand-written *on the condition that a test asserts the number in it*, and that test reads this
+  row — dropping the count would have retired the guard rather than satisfied it.
+- **A guard written for the split survived its own mutant.** It asserted `"SPEC.md" in section`,
+  which a front door that names the deliverable and never links it satisfies. It asserts the
+  markdown link now, and both mutants die. That is the **second** time this session an assertion
+  was satisfied by the very string it was meant to be checking the meaning of — the first was
+  `"per byte" in caption`. Recorded here because the pattern, not the instance, is the lesson:
+  **assert the thing that would break, not a word that appears near it.**
+
 
 ### 2026-08-18 (proxy)
 

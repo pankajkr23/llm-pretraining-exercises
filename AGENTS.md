@@ -44,11 +44,18 @@ after it. It is the artifact people learn from and teach from, not a run log.
 **They are gitignored** (`notebooks/S[0-9][0-9]-*.ipynb`) — built from the exercise's
 `tools/build_notebook.py`, kept on a working checkout, never versioned.
 
-**An exercise that untracks its notebook needs that builder first.** Exercise 05 has one; exercise
-04 does not, so when its notebook left the working tree on a branch switch there was nothing to
-rebuild it from and it had to be recovered out of git history (`68abb44^`). Untracking a file whose
-only copy is the one in front of you is not a workflow, it is a countdown. Write the builder, then
-untrack. A notebook is derived from
+**An exercise that untracks its notebook needs that builder first.** Exercise 04's notebook left
+the working tree on a branch switch, there was nothing to rebuild it from, and it had to be
+recovered out of git history (`68abb44^`). Untracking a file whose only copy is the one in front of
+you is not a workflow, it is a countdown. Write the builder, then untrack. **All five exercises now
+have one**, and `tests/test_notebook_builders.py` runs every builder in CI — into a temporary path
+via `NOTEBOOK_OUT`, because a test that wrote to the real location would destroy the developer's
+notebook, which is the same loss arriving by a different route.
+
+**An exercise with no Python package still gets a notebook, and it still must not re-implement.**
+Exercise 01's proofs are hand-written browser JavaScript; rebuilding them in numpy would be a
+second implementation that drifts from the site and then teaches what the site does not do. Its
+notebook embeds the shipped pages themselves and runs the exercise's own test suite instead. A notebook is derived from
 the package it imports, so tracking it means versioning a second copy of numbers the modules
 already own, and the one that drifts is the one nobody regenerates.
 
@@ -127,6 +134,38 @@ Two more that cost this repo real defects:
 
 - **A new module is not done until every list that names modules includes it.** `explainer.py` shipped and stayed missing from three places — the README's *Run it*, the README's layout block, and the exercise's `CLAUDE.md` — none of which any test checks. The consequence was not cosmetic: a reader regenerating the site would have run `widget` without `explainer` and published a page whose figures contradicted its own tool.
 - **Render a diagram before committing it.** A Mermaid block is not verified by reading it. A semicolon inside a `Note over` is a statement separator, so the note terminated mid-sentence and GitHub would have rendered a parse error where a diagram should be — caught only by running it through `npx @mermaid-js/mermaid-cli`. The same applies to every number inside one: read them back from the code.
+
+## The root README is a map; each exercise's README is the guide
+
+Two documents, two jobs, and the failure is always the same one: the root grows a deep-dive per
+exercise until two thirds of it is detail that belongs one directory down. It reached 307 lines
+that way, 211 of them per-exercise sections whose content existed **nowhere else** — so the root
+was not summarising the exercises, it was the only place they were described.
+
+- **Root:** what the repo is, how it is laid out, how to run it, a one-row-per-exercise table, and
+  for the exercise under submission a short block that says what it is, what it found, and which
+  file to open. High-level, and it should stay short enough to read in a minute.
+- **Exercise:** everything end to end — the argument, the numbers, how to reproduce, what it cannot
+  establish. This is where a reader who wants depth is sent, and it must reward the trip.
+
+The root's job is **routing, not retelling**. Where the brief requires the root to reach a
+deliverable "without a detour", that is a property of its links, not of how much it repeats — and
+the test for it should assert the *link*, since asserting the filename passes against a front door
+that names the file and never links it.
+
+**The root's one per-exercise block is a submission affordance, and it is why the exercise README
+has to be complete.** The brief for the exercise under submission says the root README *is* the
+front door — a grader lands there and nowhere else — so that exercise gets a short block saying
+what it is, what it found, and which file to open. It moves to the next exercise when that one is
+submitted. Because it is the only per-exercise detail the root carries, **everything else has to be
+one directory down**: if the exercise README is not the complete end-to-end guide, nothing is.
+
+Every exercise README therefore carries a **`## How to read this`** reading path naming all three
+readers — first time · changing the code · deciding whether to believe it — plus a runnable command
+and a section stating what the work *cannot* establish. `tests/test_readme_structure.py` enforces
+all three, and `tests/test_readme_links.py` checks that every relative link and in-page anchor
+resolves **from the directory of the file containing it** (three links broke silently when prose
+moved out of the root, because a path correct from the repo root is wrong two levels down).
 
 ## Documentation is written for more than one reader
 

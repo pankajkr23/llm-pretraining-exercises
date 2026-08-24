@@ -48,7 +48,10 @@ WHAT IS MEASURED AND WHAT IS NOT
 
 Most figures on these pages are estimates or values read from other people's
 published work, and each carries its provenance in the data. A small number are
-measured. Several load-bearing quantities — the size of the deduplicated Indic
-web, and per-language tokenizer fertility — have not been measured by anyone,
-including here, and the pages say so where those numbers would otherwise appear.
+measured. One load-bearing quantity has not been measured by anyone,
+including here: the size of the deduplicated Indic web. What the pages carry
+instead is a range derived from an assumed 20-40% cross-corpus survival, and
+they say so where the number would otherwise appear. Per-language tokenizer
+fertility was in this list and no longer is - all 22 languages have since been
+measured on our own runs and ship marked "measured".
 The confidence ledger on the atlas page lists what would fall over first.

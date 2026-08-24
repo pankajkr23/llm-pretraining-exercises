@@ -10,6 +10,55 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- **The root README is a map again, not five deep-dives.** It had reached 307 lines, **211 of them
+  per-exercise sections** — and none of that prose existed in the exercise READMEs, so the root was
+  not summarising them, it was the only place they were described. Each section moved into the
+  exercise it describes, and exercise 05's generated block became a short signpost with a routing
+  table. Root: 307 → **128 lines**; the four exercise READMEs grew by exactly what they gained.
+  Every fact from the old root is still reachable, each from at least two linked documents.
+  `AGENTS.md` records the split so it does not drift back.
+- **Three README links broke in that move and nothing noticed.** A path correct from the repository
+  root is wrong two directories down, so `[`deploy/`](deploy/)` and two others pointed at
+  files that do not exist once the prose lived inside an exercise. Markdown has no link checker and
+  GitHub renders a dead link exactly like a live one. Fixed, and a new repo-wide guard
+  (`tests/test_readme_links.py`) now resolves every relative link in every README **from the
+  directory of the file containing it** — checking from the root would pass the very bug it exists
+  to catch.
+- **Exercise 01's moved section was a duplicate, so it was removed rather than kept.** The root's
+  block repeated the table already in that README, in less detail (it dropped the filenames), plus
+  Preview and Deploy paragraphs that were already sections there. Exercise 02's and 04's opened by
+  restating their own lede; those openings now start at what they add.
+- **Every exercise README is now the low-level end-to-end guide the root routes to.** Each carries
+  a `## How to read this` path naming all three readers, a runnable command, and a section stating
+  what the work cannot establish. **Exercise 01 grew from 43 lines to 154** — it named four demos
+  and explained none; it now states the model, data and what to watch for each, and says plainly
+  that its suite never opens a browser, so those pages are verified by being used and not by CI.
+  Exercise 03 gained its limits (the deduplicated Indic web is a **1.31T–2.62T** range from an
+  assumed 20–40% survival, and 120 catalogue values are `unknown`); exercise 04 gained a Tests
+  section and its limits; 02 and 05 gained reading paths.
+- **The root README's layout block and Development section now name the repo-wide `tests/`.** The
+  repo's own rule is that a new module is not done until every list naming modules includes it, and
+  this one had shipped in neither list.
+- **Every exercise now has a tracked notebook builder, and sessions 1-3 have notebooks at all.**
+  `AGENTS.md` has mandated one per session for a while; `git log --all` showed **zero** commits ever
+  touching S01, S02 or S03, and exercise 04 had a notebook with no builder — the exact countdown the
+  conventions describe, already paid once. S04's builder was generated *from* its notebook and
+  reproduces it with every cell source, metadata and nbformat identical. S01, S02 and S03 are new
+  and every cell was executed before committing. `tests/test_notebook_builders.py` runs all five
+  builders in CI.
+
+### Fixed
+
+- **`package.json` described exercise 01 as "four live TensorFlow.js proofs".** There is no
+  TensorFlow.js in it — no external script, no CDN, nothing fetched. The README's "no dependencies
+  at all" was right; the package description was a leftover from an earlier plan.
+- **Exercise 03's `NOTICE` said per-language tokenizer fertility had "not been measured by anyone,
+  including here".** The published bundle carries 34 fertility values marked `measured` against one
+  `estimated`, and that one is a parity *target*. Corrected, keeping the half that still holds: the
+  size of the deduplicated Indic web really is unmeasured.
+
 ## [0.6.2] - 2026-08-24
 
 ### Changed
