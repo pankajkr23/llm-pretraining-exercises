@@ -13,11 +13,18 @@ still works before committing.
 """
 
 import json
+import os
 from pathlib import Path
 
 # .../05-datamixtures-and-curriculum/tools/build_notebook.py -> repo root is five levels up.
 REPO = Path(__file__).resolve().parents[4]
-OUT = REPO / "notebooks" / "S05-datamixtures-and-curriculum.ipynb"
+#: Where the notebook is written. `NOTEBOOK_OUT` overrides it so tests can build into a
+#: temporary directory instead of overwriting the copy a developer has open -- the notebook
+#: is gitignored, so clobbering it is exactly the loss this builder exists to prevent.
+OUT = Path(
+    os.environ.get("NOTEBOOK_OUT")
+    or (REPO / "notebooks" / "S05-datamixtures-and-curriculum.ipynb")
+)
 
 cells: list[dict] = []
 
