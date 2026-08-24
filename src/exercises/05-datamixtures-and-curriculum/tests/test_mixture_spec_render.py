@@ -107,17 +107,35 @@ def test_the_root_readme_section_matches_what_the_code_renders():
     )
 
 
-def test_the_root_readme_carries_the_shares_and_the_curriculum():
-    """The two requirements the front door used to omit entirely.
+def test_the_root_readme_routes_to_the_deliverable_without_a_detour():
+    """The root README is the submitted link, so it must reach `SPEC.md` in one hop.
 
-    Before this, the root section carried the three findings and the proxy verdicts but neither the
-    share table (requirement 1) nor a word of the curriculum (requirement 6) — so a reviewer
-    following the submitted link could not see the recipe without opening another file.
+    This used to assert the root carried the share table and the curriculum stages itself. It no
+    longer should: the root is the high-level map and each exercise's own README is the detailed
+    guide, so duplicating a generated table in two places was two things to keep in step. What has
+    to survive that split is the brief's actual requirement — *"the root README is the front door,
+    and it has to carry the reader to `SPEC.md` without a detour"* — which is a routing property,
+    not a content one.
     """
     section = export.render_root_section(CFG)
-    assert "| General web |" in section, "the share table is missing from the front door"
-    assert "**Seed**" in section and "**Anneal**" in section, "the curriculum stages are missing"
-    assert "SPEC.md" in section, "the front door must carry the reader to the deliverable"
+    # The LINK, not the filename. `"SPEC.md" in section` is satisfied by a bare mention, so it
+    # passes against a front door that names the deliverable and never links it — which is the
+    # detour the brief rules out.
+    assert "the deliverable" in section, "nothing tells a reader which of the four files to open"
+    for name in ("SPEC.md", "METHOD.md", "EXPERIMENTS.md", "README.md"):
+        assert f"]({export._EX}/{name})" in section, f"the routing table does not link {name}"
+
+    # It must still say what the work IS and what it found, or the link is unmotivated.
+    assert "curriculum" in section.lower()
+    assert "refuted" in section, "the result that went against us belongs on the front door"
+
+
+def test_the_exercise_readme_is_where_the_detail_lives():
+    """The counterpart: what left the root has to be findable in the exercise's own README."""
+    readme = export.render_readme(CFG)
+    assert "| General web |" in readme, "the share table is not in the exercise README"
+    assert "**Seed**" in readme and "**Anneal**" in readme, "the curriculum stages are missing"
+    assert "Difficulty bands" in readme
 
 
 def test_writing_refuses_a_root_readme_with_no_markers(tmp_path, monkeypatch):

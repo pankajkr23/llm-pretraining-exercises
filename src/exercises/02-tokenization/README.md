@@ -11,6 +11,52 @@ penalty      = exp(max(0, X_hi / 1.2 − 1))
 final score  = raw score / penalty
 ```
 
+## Tokenization — one vocabulary, four languages
+
+A Python pipeline (`src/exercises/02-tokenization/src/tokenization/`) builds **one 10,000-token BPE
+vocabulary** shared across India's Wikipedia article in **English, Hindi, Telugu, and Maithili**,
+tuned so all four are tokenized about equally efficiently. Fertility X is tokens per *faithful unit*
+— one run of letters/marks/digits, or one visible punctuation character — and the score is
+`1000 / (X_max − X_min)`, divided by a penalty that fires if Hindi is degraded. The corpus is
+committed wiki-faithful Markdown, so every number reproduces offline from a fresh clone.
+
+```bash
+uv run python -m tokenization          # train the submission → print + save the report
+uv run python -m tokenization.ablate   # the full experiment table
+uv run python -m tokenization.holdout  # why held-out cannot rank these recipes
+```
+
+The earlier round of experiments — clipped prose scored in tokens per *word* — is **retained in
+full** as a second profile rather than overwritten, with its own committed corpus and a test that
+regenerates its four published scores. Its finding stands on its own: representation is the
+dominant lever, and byte-level BPE wastes the budget rebuilding Indic characters from UTF-8 bytes.
+The two profiles are never ranked against each other; the same tokenizer reads ≈ 2.13 under one
+and ≈ 0.60 under the other.
+
+Two findings worth the detour. **Where the trainer's input is cut matters as much as the recipe:**
+HuggingFace splits files into lines, so training from files means no merge may span a newline —
+feed it whole documents instead and every token count drops ~0.6%. And **a score that measures only
+evenness can be bought by getting worse**: one configuration reaches 35,604 against the submission's
+11,251 by making English and Hindi worse until all four languages are equally mediocre, needing
+3,000 more tokens for the same corpus. It is on the page, labelled as rejected. Holding text back
+does not settle it either — across the five possible splits, one recipe's held-out score swings
+9,421 points while the recipes' averages sit 648 apart, so that test is reported for what it cannot
+do rather than used to choose.
+
+A zero-dependency **widget** (`web/index.html`) shows the four fertilities, the score calculation
+with its penalty, the full searchable vocabulary, and a **paste-your-own-text encoder** that replays
+the real merge list in the browser — a vocabulary list alone cannot reproduce a score, so the
+ordered merges, `encoder.js`, and the tokenizer in HuggingFace format all ship with it.
+
+```bash
+cd src/exercises/02-tokenization/web
+python3 -m http.server 8000   # open http://localhost:8000
+```
+
+> **Hosting:** live at <https://llm-pretraining-demos.vercel.app/02-tokenization/>, deployed via the
+> repo-wide **Vercel** project (see [`deploy/`](deploy/)) — one project serves every exercise
+> under its slug.
+
 ## Two measurements, kept side by side
 
 This exercise has been measured two different ways, and **both are retained here** — not as old

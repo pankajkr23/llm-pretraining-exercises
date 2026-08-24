@@ -128,6 +128,24 @@ Two more that cost this repo real defects:
 - **A new module is not done until every list that names modules includes it.** `explainer.py` shipped and stayed missing from three places — the README's *Run it*, the README's layout block, and the exercise's `CLAUDE.md` — none of which any test checks. The consequence was not cosmetic: a reader regenerating the site would have run `widget` without `explainer` and published a page whose figures contradicted its own tool.
 - **Render a diagram before committing it.** A Mermaid block is not verified by reading it. A semicolon inside a `Note over` is a statement separator, so the note terminated mid-sentence and GitHub would have rendered a parse error where a diagram should be — caught only by running it through `npx @mermaid-js/mermaid-cli`. The same applies to every number inside one: read them back from the code.
 
+## The root README is a map; each exercise's README is the guide
+
+Two documents, two jobs, and the failure is always the same one: the root grows a deep-dive per
+exercise until two thirds of it is detail that belongs one directory down. It reached 307 lines
+that way, 211 of them per-exercise sections whose content existed **nowhere else** — so the root
+was not summarising the exercises, it was the only place they were described.
+
+- **Root:** what the repo is, how it is laid out, how to run it, a one-row-per-exercise table, and
+  for the exercise under submission a short block that says what it is, what it found, and which
+  file to open. High-level, and it should stay short enough to read in a minute.
+- **Exercise:** everything end to end — the argument, the numbers, how to reproduce, what it cannot
+  establish. This is where a reader who wants depth is sent, and it must reward the trip.
+
+The root's job is **routing, not retelling**. Where the brief requires the root to reach a
+deliverable "without a detour", that is a property of its links, not of how much it repeats — and
+the test for it should assert the *link*, since asserting the filename passes against a front door
+that names the file and never links it.
+
 ## Documentation is written for more than one reader
 
 A document that only makes sense to whoever built it is not documentation, it is a note to self.

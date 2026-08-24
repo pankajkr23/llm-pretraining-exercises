@@ -9,6 +9,35 @@ eight over three real corpora, counts what each one removes, and publishes the r
 All eight stages are real. `Extract` is the one permanent pass-through: every corpus here ships
 already-extracted text, so claiming a yield for it would be inventing one.
 
+## Data cleaning & deduplication — what survives
+
+A Python pipeline (`src/exercises/04-data-cleaning-dedup/src/datacleaning/`) runs **eight named
+cleaning stages** over **three real corpora** — reasoning traces, Indic web text, and Q&A — and
+counts what each stage removes. Of **85.7M tokens** in, **69.86%** survive (50,010 documents down
+to 36,890); the stages that cut hardest were not the expected ones.
+
+Two things make it more than a filter chain:
+
+- **Tokens are counted, never estimated.** Fertility is a property of a *tokenizer*, not of a
+  corpus — Manipuri swings 7.6× across the five tokenizers exercise 03 measured. Every count here
+  is produced by our own Session 2 vocabulary, and a count that is more than 5% `[UNK]` is not
+  published as a count at all. That rule *selected the corpus*: Bengali script measures **82–84%
+  `[UNK]`**, which is why the Indic corpus is Devanagari and Telugu.
+- **Three of the nine standard quality rules turned out not to be language-neutral.** Applied
+  unchanged to Indic text they delete it rather than filter it. Python's `\w` and `isalnum` skip
+  Devanagari vowel signs, so mean-word-length measured every Devanagari word short and scored
+  well-formed Hindi at **2.24** against a floor of 3.0. Counting letters *and* marks moves it to
+  **3.56**.
+
+```bash
+uv run python -m datacleaning --profile lite    # smoke run, ~2 minutes
+uv run python -m datacleaning --profile full    # the published corpus
+```
+
+> **Hosting:** live at <https://llm-pretraining-demos.vercel.app/04-data-cleaning-dedup/>.
+> Ships a
+> [decision record](src/exercises/04-data-cleaning-dedup/DECISIONS.md).
+
 ## What
 
 | | |

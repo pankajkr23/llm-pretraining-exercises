@@ -10,6 +10,16 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- **The root README is a map again, not five deep-dives.** It had reached 307 lines, **211 of them
+  per-exercise sections** — and none of that prose existed in the exercise READMEs, so the root was
+  not summarising them, it was the only place they were described. Each section moved into the
+  exercise it describes, and exercise 05's generated block became a short signpost with a routing
+  table. Root: 307 → **128 lines**; the four exercise READMEs grew by exactly what they gained.
+  Every fact from the old root is still reachable, each from at least two linked documents.
+  `AGENTS.md` records the split so it does not drift back.
+
 ## [0.6.2] - 2026-08-24
 
 ### Changed

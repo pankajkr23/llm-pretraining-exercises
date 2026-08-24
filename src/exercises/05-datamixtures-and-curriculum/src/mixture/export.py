@@ -728,10 +728,10 @@ def render_spec(config: Config | None = None) -> str:
     invariant_count = len([n for n in dir(checks) if n.startswith("check_")])
 
     run_size = humanise(config.run_tokens)
-    stem_quoted = humanise(inventory.SESSION_SUPPLY_CHECK["stem"])
     stem_gap = humanise(inventory.SESSION_SUPPLY_CHECK["stem"] - stem.counted_tokens)
-    stem_demand = humanise(lanes.get("stem").share * config.run_tokens)
     agentic_ceiling = humanise(agentic.raw_supply * 16.4)
+    stem_quoted = humanise(inventory.SESSION_SUPPLY_CHECK["stem"])
+    stem_demand = humanise(lanes.get("stem").share * config.run_tokens)
     local_tflops = f"{proxy.hardware('m4-max').tflops:g}"
     indic_demand = humanise(lanes.get("indic").share * config.run_tokens)
     protected_total = lanes.get("indic").share + lanes.get("agentic").share
@@ -1602,12 +1602,8 @@ def render_root_section(config: Config | None = None) -> str:
     """
     config = config or Config()
     stem = inventory.lane_supply("stem")
-    agentic = supply.evaluate_lane("agentic", lanes.get("agentic").share, config)
-    reserve = lanes.anneal_reserve(config)
 
     stem_gap = humanise(inventory.SESSION_SUPPLY_CHECK["stem"] - stem.counted_tokens)
-    agentic_ceiling = humanise(agentic.raw_supply * 16.4)
-    stem_quoted = humanise(inventory.SESSION_SUPPLY_CHECK["stem"])
 
     import json
 
@@ -1615,105 +1611,53 @@ def render_root_section(config: Config | None = None) -> str:
     if step_zero:
         seed_count = len(step_zero["seeds"])
         lane_count = len(step_zero["corpus"])
-        proxy_tokens = f"{sum(s['train_tokens'] for s in step_zero['corpus'].values()):,}"
-        verdict_rows = [
-            "| | claim | effect | threshold | seed noise | verdict |",
-            "| --- | --- | ---: | ---: | ---: | --- |",
-        ]
-        for comparison in step_zero["comparisons"]:
-            verdict_rows.append(
-                f"| **{comparison['key']}** | {comparison['claim']} | "
-                f"{comparison['effect']:+.2%} | {comparison['threshold']:.0%} | "
-                f"{comparison['noise']:.2%} | **{comparison['verdict']}** |"
-            )
-        verdict_table = "\n".join(verdict_rows)
-        refuted = [c for c in step_zero["comparisons"] if c["verdict"] == "refuted"]
-        if refuted:
-            headline_verdict = (
-                f"**{refuted[0]['key']} is refuted**, on a second clause of its own declared "
-                "refutation — and it reads `refuted` only because the corpus grew. The lane that "
-                "trips the clause had no text in the first run, so there was nothing to observe "
-                "it on. A missing lane did not make the hypothesis safer; it made it untestable, "
-                "and untestable was reading as passing. What the refutation obliges, and why the "
-                "share has not moved on a stand-in lane at this scale, is argued in `SPEC.md` §7."
-            )
-        else:
-            headline_verdict = (
-                "No hypothesis was refuted, and each verdict is reported against its own noise."
-            )
     else:
-        seed_count, lane_count, proxy_tokens = 0, 0, "0"
-        verdict_table = "_The proxy has not run._"
-        headline_verdict = ""
+        seed_count, lane_count = 0, 0
 
-    findings_table = "\n".join(
-        [
-            "| | finding | why it changes something |",
-            "| --- | --- | --- |",
-            f"| **1** | STEM itemises to {humanise(stem.counted_tokens)}, not the {stem_quoted} "
-            f"quoted, and no dataset carries the missing {stem_gap}. | The quoted figure says the "
-            "lane fits in one pass; the itemised one says it needs repetition. |",
-            f"| **2** | The 2% agentic lane asks {humanise(agentic.demand)} of a "
-            f"{humanise(agentic.raw_supply)} pool, which the repetition ceiling caps at "
-            f"{agentic_ceiling} — **3.9x short**. | It survives dropping every correction, so a "
-            "reviewer who rejects our estimates still lands on impossible. The share stays; the "
-            "gap is priced as a generation bill. |",
-            "| **3** | 60% of the long-context lane is repo-packed code already counted under "
-            "code. | A 6% share would have double-counted 60B. It becomes a sequence-length "
-            "schedule holding no budget. |",
-        ]
+    agentic_multiple = "3.9x"
+    tally = (
+        ", ".join(
+            f"{count} {verdict}"
+            for verdict, count in sorted(
+                {
+                    c["verdict"]: sum(
+                        1 for x in step_zero["comparisons"] if x["verdict"] == c["verdict"]
+                    )
+                    for c in step_zero["comparisons"]
+                }.items()
+            )
+        )
+        if step_zero
+        else "not yet run"
     )
 
     return f"""\
 {ROOT_BEGIN}
 ### 05 · Data mixtures & curriculum — the recipe, and what it costs to defend it
 
-**→ [`SPEC.md`]({SPEC_LINK}) is the deliverable.** The V5 recipe: how much of each kind of data the
-model sees, in what order. [The exercise README]({EXERCISE_LINK}) is the same argument at reading
-length; this is the shape of it.
-
-Every number is computed rather than typed — the documents are generated from the code the tests
-pin, and a test regenerates them and compares byte for byte.
-
-**The shares, and what happened when each was checked against real supply:**
-
-{_mixture_table(config)}
+**The V5 training recipe: how much of each kind of data the model sees, in what order.** Seven
+capability lanes, a defended share for each, and a curriculum deciding the order they arrive in.
 
 One rule produced every finding: **a lane's supply is summed from the datasets named in the
-inventory, never quoted from a slot headline.** Three verdicts changed.
+inventory, never quoted from a slot headline.** Three of the session's own numbers stopped being
+affordable when checked that way — STEM short by {stem_gap}, the agentic lane asking
+{agentic_multiple} more than infinite repetition could ever be worth, and long-context counting
+text the mixture had already bought.
 
-{findings_table}
+**The proxy it commits to has been run**, over {lane_count} funded lanes at
+{seed_count} seeds per arm, with every threshold fixed beforehand: {tally}. The one that failed did
+so on a clause of its own declared refutation — and it reads `refuted` only because the corpus grew
+enough to test it.
 
-**The curriculum — five stages, each seam carrying a warmup band:**
-
-{_stage_table()}
-
-The *run average* row is an enforced invariant: durations × per-stage shares must integrate back to
-the headline mixture, or the plan would state two different recipes in two places. Alongside it run
-a context ladder (4K → 32K), six difficulty bands **B0–B5** with a labelled example each, and four
-reasoning-length bands. Difficulty comes from dataset signals, not readability —
-Flesch-Kincaid was measured and **rejected for not being monotone** across our own bands.
-{humanise(reserve.total)} ({reserve.share_of_run:.1%}) is held back for the anneal, reserved at
-write time so the ordinary sampler cannot see it.
-
-**And the proxy it commits to has been run.** Four arms × {seed_count} seeds over
-{proxy_tokens} tokens across {lane_count} lanes, scored on held-out bits per byte, with every
-threshold fixed before the run:
-
-{_arms_table()}
-
-{verdict_table}
-
-{headline_verdict}
-
-Every effect is quoted against the spread its own arm shows against itself.
-[`EXPERIMENTS.md`]({EXPERIMENTS_LINK}) says plainly what this does and does not license: it does not
-validate the mixture at 40B, and is not offered as doing so. [`METHOD.md`]({METHOD_LINK}) explains
-the apparatus from scratch — the vocabulary, the model, the metric, and what each experiment tested.
+| read this | for |
+| --- | --- |
+| [`SPEC.md`]({SPEC_LINK}) | **the deliverable** — all seven required items, every number computed |
+| [`README.md`]({EXERCISE_LINK}) | the same argument at reading length, plus how to run it |
+| [`METHOD.md`]({METHOD_LINK}) | the apparatus from scratch — model, metric, experiments |
+| [`EXPERIMENTS.md`]({EXPERIMENTS_LINK}) | what the runs showed, and what they cannot establish |
 
 > **Live:** <https://llm-pretraining-demos.vercel.app/05-datamixtures-and-curriculum/> — drag the
 > lane shares and watch supply, floors and verdicts respond.
-
 {ROOT_END}"""
 
 
