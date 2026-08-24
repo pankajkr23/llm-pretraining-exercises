@@ -44,11 +44,18 @@ after it. It is the artifact people learn from and teach from, not a run log.
 **They are gitignored** (`notebooks/S[0-9][0-9]-*.ipynb`) — built from the exercise's
 `tools/build_notebook.py`, kept on a working checkout, never versioned.
 
-**An exercise that untracks its notebook needs that builder first.** Exercise 05 has one; exercise
-04 does not, so when its notebook left the working tree on a branch switch there was nothing to
-rebuild it from and it had to be recovered out of git history (`68abb44^`). Untracking a file whose
-only copy is the one in front of you is not a workflow, it is a countdown. Write the builder, then
-untrack. A notebook is derived from
+**An exercise that untracks its notebook needs that builder first.** Exercise 04's notebook left
+the working tree on a branch switch, there was nothing to rebuild it from, and it had to be
+recovered out of git history (`68abb44^`). Untracking a file whose only copy is the one in front of
+you is not a workflow, it is a countdown. Write the builder, then untrack. **All five exercises now
+have one**, and `tests/test_notebook_builders.py` runs every builder in CI — into a temporary path
+via `NOTEBOOK_OUT`, because a test that wrote to the real location would destroy the developer's
+notebook, which is the same loss arriving by a different route.
+
+**An exercise with no Python package still gets a notebook, and it still must not re-implement.**
+Exercise 01's proofs are hand-written browser JavaScript; rebuilding them in numpy would be a
+second implementation that drifts from the site and then teaches what the site does not do. Its
+notebook embeds the shipped pages themselves and runs the exercise's own test suite instead. A notebook is derived from
 the package it imports, so tracking it means versioning a second copy of numbers the modules
 already own, and the one that drifts is the one nobody regenerates.
 

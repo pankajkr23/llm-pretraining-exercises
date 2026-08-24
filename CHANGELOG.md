@@ -41,6 +41,13 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 - **The root README's layout block and Development section now name the repo-wide `tests/`.** The
   repo's own rule is that a new module is not done until every list naming modules includes it, and
   this one had shipped in neither list.
+- **Every exercise now has a tracked notebook builder, and sessions 1-3 have notebooks at all.**
+  `AGENTS.md` has mandated one per session for a while; `git log --all` showed **zero** commits ever
+  touching S01, S02 or S03, and exercise 04 had a notebook with no builder — the exact countdown the
+  conventions describe, already paid once. S04's builder was generated *from* its notebook and
+  reproduces it with every cell source, metadata and nbformat identical. S01, S02 and S03 are new
+  and every cell was executed before committing. `tests/test_notebook_builders.py` runs all five
+  builders in CI.
 
 ### Fixed
 
