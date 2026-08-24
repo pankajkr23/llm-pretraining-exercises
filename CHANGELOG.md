@@ -10,6 +10,25 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- **CI ran twice for every commit on a PR.** The workflow declared both `push` and `pull_request`
+  with no branch filter, so each commit on a branch triggered two identical jobs — same commit,
+  same steps, same result, twice the wall-clock and twice the runner minutes. `push` is restricted
+  to `main` now, which keeps the post-merge run and leaves branches to the PR event whose checks a
+  PR actually reports. A `concurrency` group also cancels an in-flight run when a newer commit
+  arrives, instead of finishing a report nobody will read.
+
+- **The programme's name no longer appears in published output.** The tokenizer was labelled
+  `era5-s2-10k`, which put a course name in front of every reader of the page, `SPEC.md`,
+  `README.md` and `TOKENIZER.md` — and was a second name for a vocabulary that already had one.
+  It is `s02-bpe-10000` now, matching what the tokenizer reports for itself. The proxy fetcher's
+  HTTP User-Agent carried the same name to every dataset host and no longer does. The page's
+  provenance footnote also says what the build fingerprint is *for* — tracing a figure back to the
+  run that produced it — rather than printing it as a bare token. Internal `localStorage` keys keep
+  their prefix: they are invisible to readers, and renaming them would silently reset every
+  visitor's saved theme.
+
 ### Fixed
 
 - **Exercise 02's explainer scrolled sideways on a 320px phone**, by 57px — three tables sat

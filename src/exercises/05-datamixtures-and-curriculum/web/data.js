@@ -11,8 +11,8 @@ export const BUNDLE = Object.freeze({
   "epochs_near_free": 4,
   "epochs_worthless": 40,
   "repetition_decay": 15.4,
-  "fingerprint": "cf555d4cb965",
-  "tokenizer": "era5-s2-10k"
+  "fingerprint": "740cb808dbf2",
+  "tokenizer": "s02-bpe-10000"
  },
  "lanes": [
   {

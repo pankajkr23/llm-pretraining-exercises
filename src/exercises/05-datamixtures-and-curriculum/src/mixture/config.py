@@ -53,7 +53,11 @@ class Config:
     warmup_band_tokens: float = 3e9
     opus_keep_fraction: float = 0.40
 
-    tokenizer_id: str = "era5-s2-10k"
+    # `s02-bpe-10000`, matching what `datacleaning.tokens.tokenizer_name()` reports for the same
+    # vocabulary (it prefixes `ours/`). This was `era5-s2-10k`, which put the programme's name in
+    # front of every reader of the page and the specification, and was a second name for a
+    # tokenizer that already had one.
+    tokenizer_id: str = "s02-bpe-10000"
 
     proxy_params: float = 1e9
     proxy_tokens: float = 2e9
