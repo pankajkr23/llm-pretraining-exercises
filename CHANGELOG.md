@@ -10,6 +10,8 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-08-24
+
 ### Changed
 
 - **CI ran twice for every commit on a PR.** The workflow declared both `push` and `pull_request`
@@ -29,18 +31,16 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   their prefix: they are invisible to readers, and renaming them would silently reset every
   visitor's saved theme.
 
+- **Every browser suite now tests 320px, not just down to 390.** The sideways-scroll guard already
+  existed in exercises 02, 03, 04 and 05 — it simply never ran at a width narrow enough to fail,
+  which is why exercise 05 shipped a 14px overflow and exercise 02 a 57px one. Widening the
+  parametrised set found the second bug immediately.
+
 ### Fixed
 
 - **Exercise 02's explainer scrolled sideways on a 320px phone**, by 57px — three tables sat
   directly in the flow with no scrolling box of their own, where every other table in the repo sits
   inside a `.tblwrap`. All three are wrapped now.
-
-### Changed
-
-- **Every browser suite now tests 320px, not just down to 390.** The sideways-scroll guard already
-  existed in exercises 02, 03, 04 and 05 — it simply never ran at a width narrow enough to fail,
-  which is why exercise 05 shipped a 14px overflow and exercise 02 a 57px one. Widening the
-  parametrised set found the second bug immediately.
 
 ## [0.6.1] - 2026-08-19
 
@@ -1350,7 +1350,8 @@ First tagged release: two interactive exercises live on Vercel with a gated depl
 - **Tooling & conventions:** uv workspace (Python 3.12), ruff lint/format, pytest (unit +
   integration split), GitHub Actions CI, and a PR-only workflow documented in `AGENTS.md`.
 
-[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.5.0...v0.5.1
