@@ -12,6 +12,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Changed
 
+- **The root README no longer carries a generated section for exercise 05.** The brief says the
+  root is the front door and must reach `SPEC.md` "without a detour", and the obvious reading was
+  that the front door should therefore summarise the exercise under submission. It should not: the
+  block grew back into exactly the retelling the root/exercise split exists to prevent — the claim,
+  the rule behind it, three findings, the proxy result and a four-row routing table, all of which
+  already lived one directory down. **Root README: 124 → 97 lines.**
+- **The requirement is met by the table row instead**, which links `SPEC.md` and the exercise's own
+  guide directly — one hop from the line the reader is already on. `render_root_section()` and
+  `write_root_section()` are gone from `mixture.export`, so nothing generates into the root any
+  more, and the routing guard now asserts the row rather than a generated block. Three mutants
+  confirmed failing: a row that names `SPEC.md` without linking it, one that drops the exercise
+  guide, and one that hides the refuted result.
+
+### Changed
+
 - **The root README is a map again, not five deep-dives.** It had reached 307 lines, **211 of them
   per-exercise sections** — and none of that prose existed in the exercise READMEs, so the root was
   not summarising them, it was the only place they were described. Each section moved into the
