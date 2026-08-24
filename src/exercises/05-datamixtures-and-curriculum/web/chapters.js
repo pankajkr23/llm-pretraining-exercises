@@ -1119,9 +1119,10 @@ function buildFooter(data) {
   if (!foot) return;
   foot.replaceChildren(
     richP(
-      `Built from config \`${data.config.fingerprint}\`, token counts in ` +
-        `\`${data.config.tokenizer}\`. Every figure on this page is produced by the code in this ` +
-        'repository; nothing is typed by hand.',
+      'Every figure on this page is produced by the code in this repository; nothing is typed ' +
+        `by hand. Token counts are denominated in the \`${data.config.tokenizer}\` vocabulary, ` +
+        `and this build is \`${data.config.fingerprint}\` — the fingerprint of the settings that ` +
+        'produced these numbers, so a figure can be traced back to the run that made it.',
     ),
   );
 }

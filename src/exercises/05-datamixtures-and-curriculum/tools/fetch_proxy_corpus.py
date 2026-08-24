@@ -50,7 +50,7 @@ OUT = REPO_ROOT / "data" / "proxy"
 # The sandbox this repo is developed in blocks the system trust store, so requests fail with an
 # unhelpful CERTIFICATE_VERIFY_FAILED unless the CA bundle is named explicitly.
 CONTEXT = ssl.create_default_context(cafile=certifi.where())
-AGENT = "era5-llm-pretraining-exercises/proxy-corpus (educational, small fixed sample)"
+AGENT = "llm-pretraining-exercises/proxy-corpus (educational, small fixed sample)"
 
 # Verified at fetch time against the dataset card. A licence we cannot read is a licence we do not
 # have, so anything outside this set is refused rather than downloaded and sorted out later.

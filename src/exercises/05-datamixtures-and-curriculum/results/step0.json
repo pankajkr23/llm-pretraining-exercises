@@ -9,7 +9,7 @@
   "max_synthetic_share_of_indic": 0.5,
   "warmup_band_tokens": 3000000000.0,
   "opus_keep_fraction": 0.4,
-  "tokenizer_id": "era5-s2-10k",
+  "tokenizer_id": "s02-bpe-10000",
   "proxy_params": 1000000000.0,
   "proxy_tokens": 2000000000.0
  },

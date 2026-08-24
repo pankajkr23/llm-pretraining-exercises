@@ -97,7 +97,7 @@ compute and +1.28B parameters at 40B scale.** That is the trade to argue, not th
 ## Consequence for the specification
 
 - Shares are stated as fractions of the budget, which are tokenizer-independent.
-- Every token figure names the vocabulary that produced it (`era5-s2-10k`).
+- Every token figure names the vocabulary that produced it (`s02-bpe-10000`).
 - The proxy's metric is **bits per byte**, not per token, so changing the vocabulary later does not
   invalidate any arm measured before it. This is not a stylistic choice — it is what makes the
   experiment survive the decision above.
