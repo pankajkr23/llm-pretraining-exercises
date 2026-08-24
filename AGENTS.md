@@ -15,6 +15,46 @@ folder under `src/exercises/`.
 - `uv sync --all-packages` — install every workspace member + its deps into the shared `.venv` (plain `uv sync` installs only the root). `uv run <cmd>` — run inside the env. `uv add <pkg>` — add a dep (never hand-edit `uv.lock`).
 - Each exercise is a workspace member matched by `members = ["src/exercises/[0-9][0-9]-*"]`.
 
+## MANDATORY — never remove anything under `notebooks/` or any `tools/`
+
+**Nothing in `notebooks/` or in any `src/exercises/*/tools/` directory may be deleted, moved,
+renamed, or overwritten — locally or on the remote — without PK's explicit prior permission naming
+the file.** This is not a style preference and it does not yield to a tidy-up, a "stale" file, or a
+rule elsewhere in this document. If something there looks wrong, **say so and stop.**
+
+These are the only files in the repo with **no second copy**. Both are gitignored, so git cannot
+restore them: `notebooks/S[0-9][0-9]-*.ipynb` and `src/exercises/*/tools/build_notebook.py`. A
+deletion here is permanent in a way that no other deletion in this repo is.
+
+**Prohibited without permission, on these paths:** `rm` · `git clean` · `git checkout -- ` ·
+`git restore` · `git reset --hard` · `git stash` (it removes untracked files with `-u`) · moving or
+renaming · writing over an existing notebook from anything other than a deliberate builder run.
+
+**It has already happened once, and not by anyone deciding to delete anything.** After the builders
+were untracked, an ordinary `git checkout main && git pull` destroyed all five: `checkout` restored
+them as tracked files from the pre-merge `main`, then the fast-forward applied the commit that
+removed them from the index, so git deleted the working-tree copies. Recovered from the removal
+commit's parent (`db9b288^`). **So the danger is routine git operations, not carelessness** — after
+any branch switch, pull, merge, rebase or stash, verify:
+
+```bash
+ls notebooks/*.ipynb src/exercises/*/tools/build_notebook.py
+```
+
+and if anything is missing, restore it before doing anything else:
+
+```bash
+git checkout "$(git log --all --diff-filter=D --format=%H -1 -- 'src/exercises/*/tools/build_notebook.py')^" \
+  -- 'src/exercises/*/tools/build_notebook.py'
+```
+
+That recovery works only while the removal commit is still reachable. **Keep a backup outside the
+repo** — it is the real safety net.
+
+**Tests must never write to the real paths.** `tests/test_notebook_builders.py` builds through
+`NOTEBOOK_OUT` into a temporary directory for exactly this reason: a test that wrote to
+`notebooks/` would destroy the only copy that exists.
+
 ## Repo layout & naming
 
 - **Exercise folders:** `src/exercises/NN-slug/` — numeric, **zero-padded**, slugged (e.g. `01-introductions`). Zero-pad so lexical sort = numeric order.
