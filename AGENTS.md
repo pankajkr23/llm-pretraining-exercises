@@ -142,9 +142,9 @@ exercise until two thirds of it is detail that belongs one directory down. It re
 that way, 211 of them per-exercise sections whose content existed **nowhere else** — so the root
 was not summarising the exercises, it was the only place they were described.
 
-- **Root:** what the repo is, how it is laid out, how to run it, a one-row-per-exercise table, and
-  for the exercise under submission a short block that says what it is, what it found, and which
-  file to open. High-level, and it should stay short enough to read in a minute.
+- **Root:** what the repo is, how it is laid out, how to run it, and a one-row-per-exercise table.
+  **No per-exercise section, not even for the exercise under submission.** High-level, and short
+  enough to read in a minute.
 - **Exercise:** everything end to end — the argument, the numbers, how to reproduce, what it cannot
   establish. This is where a reader who wants depth is sent, and it must reward the trip.
 
@@ -153,12 +153,20 @@ deliverable "without a detour", that is a property of its links, not of how much
 the test for it should assert the *link*, since asserting the filename passes against a front door
 that names the file and never links it.
 
-**The root's one per-exercise block is a submission affordance, and it is why the exercise README
-has to be complete.** The brief for the exercise under submission says the root README *is* the
-front door — a grader lands there and nowhere else — so that exercise gets a short block saying
-what it is, what it found, and which file to open. It moves to the next exercise when that one is
-submitted. Because it is the only per-exercise detail the root carries, **everything else has to be
-one directory down**: if the exercise README is not the complete end-to-end guide, nothing is.
+**"Without a detour" is satisfied by a link, not by a section.** The brief for the exercise under
+submission says the root README *is* the front door — a grader lands there and nowhere else — and
+the obvious reading is that the root should therefore carry a summary block for that exercise. It
+should not. That block was tried and it grew back into the retelling the split exists to prevent:
+what the work is, the rule behind it, three findings, the proxy result, a routing table. All of it
+already existed one directory down, and the root became the second place to keep it correct.
+
+What the requirement actually needs is that **the exercise's own table row links `SPEC.md`
+directly**. That is one hop from the line the reader is already on, which is what "without a
+detour" means. The row is hand-written prose that states counts, so a test asserts both the links
+and the numbers in it.
+
+Because the row is the *only* per-exercise detail the root carries, **everything else has to be one
+directory down**: if the exercise README is not the complete end-to-end guide, nothing is.
 
 Every exercise README therefore carries a **`## How to read this`** reading path naming all three
 readers — first time · changing the code · deciding whether to believe it — plus a runnable command

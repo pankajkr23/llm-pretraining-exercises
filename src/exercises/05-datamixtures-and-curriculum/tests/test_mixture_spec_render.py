@@ -91,43 +91,30 @@ def test_the_readme_answers_all_seven_required_items():
         assert item in readme, f"the README never covers: {item}"
 
 
-def test_the_root_readme_section_matches_what_the_code_renders():
-    """The root README is the submitted document, so its generated block is pinned too.
-
-    The brief is specific about this: the submission is a link to the repository's root README, so
-    it "has to carry the reader to `SPEC.md` without a detour". Its exercise-05 block is generated
-    between markers; the surrounding prose stays hand-written.
-    """
-    body = export.ROOT_README.read_text(encoding="utf-8")
-    start, end = body.find(export.ROOT_BEGIN), body.find(export.ROOT_END)
-    assert start != -1 and end > start, "the root README lost its generated exercise-05 markers"
-    block = body[start : end + len(export.ROOT_END)]
-    assert block == export.render_root_section(CFG), (
-        "the root README's 05 section is stale — run `uv run python -m mixture`"
-    )
-
-
 def test_the_root_readme_routes_to_the_deliverable_without_a_detour():
     """The root README is the submitted link, so it must reach `SPEC.md` in one hop.
 
-    This used to assert the root carried the share table and the curriculum stages itself. It no
-    longer should: the root is the high-level map and each exercise's own README is the detailed
-    guide, so duplicating a generated table in two places was two things to keep in step. What has
-    to survive that split is the brief's actual requirement — *"the root README is the front door,
-    and it has to carry the reader to `SPEC.md` without a detour"* — which is a routing property,
-    not a content one.
+    It has been narrowed twice. First it asserted the root carried the share table and the
+    curriculum stages; then it asserted a generated per-exercise block routed to the four
+    documents. Both were the root retelling the exercise. The root is a map now — one table row per
+    exercise, no generated section — so what is checked is the row, and the brief's actual
+    requirement: *"the root README is the front door, and it has to carry the reader to `SPEC.md`
+    without a detour"*. That is a routing property, not a content one.
     """
-    section = export.render_root_section(CFG)
-    # The LINK, not the filename. `"SPEC.md" in section` is satisfied by a bare mention, so it
-    # passes against a front door that names the deliverable and never links it — which is the
-    # detour the brief rules out.
-    assert "the deliverable" in section, "nothing tells a reader which of the four files to open"
-    for name in ("SPEC.md", "METHOD.md", "EXPERIMENTS.md", "README.md"):
-        assert f"]({export._EX}/{name})" in section, f"the routing table does not link {name}"
+    row = next(
+        line
+        for line in export.ROOT_README.read_text(encoding="utf-8").splitlines()
+        if line.startswith("| 05 |")
+    )
+    # The LINK, not the filename. `"SPEC.md" in row` is satisfied by a bare mention, so it passes
+    # against a front door that names the deliverable and never links it — the detour the brief
+    # rules out. One hop from the row a reader is already reading is what "without a detour" means.
+    assert f"]({export.SPEC_LINK})" in row, "the exercise table row does not link SPEC.md"
+    assert f"]({export.EXERCISE_LINK})" in row, "the row does not link the exercise's own guide"
 
     # It must still say what the work IS and what it found, or the link is unmotivated.
-    assert "curriculum" in section.lower()
-    assert "refuted" in section, "the result that went against us belongs on the front door"
+    assert "curriculum" in row.lower()
+    assert "refuted" in row, "the result that went against us belongs on the front door"
 
 
 def test_the_exercise_readme_is_where_the_detail_lives():
@@ -136,15 +123,6 @@ def test_the_exercise_readme_is_where_the_detail_lives():
     assert "| General web |" in readme, "the share table is not in the exercise README"
     assert "**Seed**" in readme and "**Anneal**" in readme, "the curriculum stages are missing"
     assert "Difficulty bands" in readme
-
-
-def test_writing_refuses_a_root_readme_with_no_markers(tmp_path, monkeypatch):
-    """The twin: splicing must fail loudly rather than append a second copy of the section."""
-    decoy = tmp_path / "README.md"
-    decoy.write_text("# repo\n\nno markers here\n", encoding="utf-8")
-    monkeypatch.setattr(export, "ROOT_README", decoy)
-    with pytest.raises(ValueError, match="no generated exercise-05 block"):
-        export.write_root_section(CFG)
 
 
 def test_no_document_states_a_stale_invariant_count():
