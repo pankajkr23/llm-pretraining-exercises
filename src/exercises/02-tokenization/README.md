@@ -56,6 +56,22 @@ python3 -m http.server 8000   # open http://localhost:8000
 > repo-wide **Vercel** project (see [`deploy/`](../../../deploy/)) — one project serves every exercise
 > under its slug.
 
+## How to read this
+
+This is the longest README in the repo, because the measurement it defends changed twice. Do not
+read it top to bottom on a first pass — pick your row.
+
+| you are | start here | then |
+| --- | --- | --- |
+| **Meeting this for the first time** | [What it builds, and what it found](#what-it-builds-and-what-it-found), then paste your own text into the [live encoder](https://llm-pretraining-demos.vercel.app/02-tokenization/) | [What a "unit" is, and why it is not a word](#what-a-unit-is-and-why-it-is-not-a-word) — the denominator is the whole argument |
+| **Changing the code** | [Layout](#layout) — it carries a data-flow diagram and a sequence for one `uv run python -m tokenization` | [Run it](#run-it), then [Tests](#tests) |
+| **Deciding whether to believe it** | [v2 — the graded measurement](#v2--the-graded-measurement) | [A criticism of the metric we just optimized](#a-criticism-of-the-metric-we-just-optimized), then [Faithfulness](#faithfulness) |
+
+**The one thing to know before reading any table:** there are **two profiles**, v1 and v2, they use
+different denominators, and they are never ranked against each other — the same tokenizer scores
+≈ 2.13 under one and ≈ 0.60 under the other. [Two measurements, kept side by side](#two-measurements-kept-side-by-side)
+explains why both are retained instead of the older one being overwritten.
+
 ## Two measurements, kept side by side
 
 This exercise has been measured two different ways, and **both are retained here** — not as old

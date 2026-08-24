@@ -1290,6 +1290,40 @@ believes. Config fingerprint `{config.fingerprint()}`.
 """
 
 
+#: The reading path at the top of the exercise README.
+#:
+#: Built from short literals rather than written inline, because each markdown table row has to be
+#: one output line and ruff caps a *source* line at 100 characters. Concatenating adjacent string
+#: literals keeps both true at once.
+_READING_PATH = (
+    "## How to read this\n"
+    "\n"
+    "Four documents, and the right one depends on what you came for. Start with your row.\n"
+    "\n"
+    "| you are | start here | then |\n"
+    "| --- | --- | --- |\n"
+    "| **Meeting this for the first time** | [`METHOD.md`](METHOD.md) — the glossary and the"
+    " apparatus from scratch: what a *lane* and an *arm* are, what **bits per byte** measures,"
+    " what it is divided by and why that denominator, and how big the model actually is"
+    " | this page, top to bottom — it is the recipe in reading order |\n"
+    "| **Changing the code** | [Layout](#layout) and [Reproduce](#reproduce) — which module owns"
+    " which number | [The guards](#the-guards), then the pipeline diagrams in"
+    " [`METHOD.md`](METHOD.md) |\n"
+    "| **Deciding whether to believe it** | [`SPEC.md`](SPEC.md) — the deliverable, every share"
+    " argued against its own supply | [What the proxy ran](#what-the-proxy-ran) and"
+    " [What it cannot tell you](#what-it-cannot-tell-you), then"
+    " [`EXPERIMENTS.md`](EXPERIMENTS.md) |\n"
+    "\n"
+    "**Two things to know before reading any table below.** Every number on this page is"
+    " *generated* from the modules the tests pin — if a sentence states a count, it was computed"
+    " rather than typed. And every measurement here is **proxy-scale**: a 4-layer model over"
+    " 1.78M tokens, three orders of magnitude below the scale these shares are for."
+    " [What it cannot tell you](#what-it-cannot-tell-you) is not a footnote — read it beside the"
+    " results, not after them.\n"
+    "\n"
+)
+
+
 def render_readme(config: Config | None = None) -> str:
     """Build the exercise `README.md` — the document the submission links to.
 
@@ -1357,7 +1391,7 @@ Two documents sit behind this one. [`SPEC.md`](SPEC.md) is the specification, wi
 argument and the reviewer-facing detail. [`EXPERIMENTS.md`](EXPERIMENTS.md) is what happened when
 the proxy it commits to was actually run. This page is the recipe itself.
 
-{pipeline_summary}## Where each required answer lives
+{_READING_PATH}{pipeline_summary}## Where each required answer lives
 
 | # | the assignment asks for | where |
 | --- | --- | --- |

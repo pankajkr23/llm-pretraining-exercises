@@ -37,6 +37,14 @@ uv run python -m datacleaning --profile full    # the published corpus
 > Ships a
 > [decision record](DECISIONS.md).
 
+## How to read this
+
+| you are | start here | then |
+| --- | --- | --- |
+| **Meeting this for the first time** | [What](#what) and [Why these three corpora](#why-these-three-corpora) — what was cleaned and why those three | [The eight strategies](#the-eight-strategies), then the [live page](https://llm-pretraining-demos.vercel.app/04-data-cleaning-dedup/) |
+| **Changing the code** | [Layout](#layout) — one module per stage, one `config.py` holding every threshold | [Run it](#run-it), then [Tests](#tests) |
+| **Deciding whether to believe it** | [How: three decisions worth knowing](#how-three-decisions-worth-knowing) — especially why counts are never estimated | [What it cannot tell you](#what-it-cannot-tell-you), then [`DECISIONS.md`](./DECISIONS.md) |
+
 ## What
 
 | | |
@@ -141,6 +149,52 @@ data/                 # any cached shards (git-ignored)
 Nine rows, eight strategies: stage 1 is inherited from Session 3 and 2b is the one the session's
 pipeline map never numbers. Which eight you mean depends on which list you read — that ambiguity is
 a real reading result, and [`DECISIONS.md`](./DECISIONS.md) §D1 works through it.
+
+## Tests
+
+```bash
+uv run pytest src/exercises/04-data-cleaning-dedup -m "not integration"   # fast
+uv run playwright install chromium                                        # one-time
+uv run pytest src/exercises/04-data-cleaning-dedup -m integration         # the browser suite
+```
+
+One file per stage — `test_normalize`, `test_langid`, `test_quality`, `test_dedup`, `test_pii`,
+`test_decontaminate` — plus three groups that guard the things a stage test cannot see:
+
+- **`test_publication_invariants.py`** is the one to read first. It scans **every byte** of the
+  published bundle *and* the notebook for personal information, checks that the PII stage publishes
+  counts rather than matches, that corpus excerpts stay inside the declared window, and that no raw
+  shard ships. Three of its eight tests exist only to prove the other five *can fail* —
+  `test_the_bundle_scan_can_actually_fail` and `test_the_excerpt_bound_can_actually_fail` run the
+  same scan against a deliberately poisoned fixture and assert it goes red.
+- **`test_agreement.py`** runs the browser's own functions against the real bundle, because several
+  rules exist twice — once in Python for the data, once in JavaScript for the page — and a shipped
+  bug has come from exactly that gap before.
+- **`test_page_render.py`** (integration) loads the built page in Chromium and asserts what a reader
+  actually sees. Without a browser installed it **skips rather than fails**, so it protects you
+  silently or not at all; CI installs one.
+
+## What it cannot tell you
+
+- **The token counts are our 10k vocabulary's, not a universal measure.** Fertility is a property of
+  a tokenizer. Every count here is reproducible and none is portable — a different tokenizer gives
+  different numbers for the same text, which is the finding, not a caveat about it.
+- **It says nothing about Bengali or Assamese.** Those scripts come back **82–84% `[UNK]`** against
+  our vocabulary, so they were excluded rather than reported. The Indic results are **Devanagari and
+  Telugu only**, and the out-of-vocabulary probe (Manipuri, Kashmiri) is excluded from the token
+  budget entirely — it exists to produce one number.
+- **Name detection is a declared stand-in, not a NER model.** Structured identifiers are found by
+  regex, which is why the page shows the false positives instead of hiding them. Do not read the
+  PII stage as a measure of how much PII a corpus contains.
+- **Three corpora is not a sample.** They were chosen because between them they are the smallest set
+  that fires all eight stages — no single corpus does. Yields are properties of these three, at
+  these thresholds, and generalise no further.
+- **`lite` is deliberately below the assignment's 10M-token floor.** It exists to surface bugs in
+  minutes. Only `full` produced the published numbers; a `lite` run reproduces the *pipeline*, not
+  the results.
+- **"Eight strategies" is itself a reading.** The session names two different eights. Which one you
+  mean changes the table — [`DECISIONS.md`](./DECISIONS.md) §D1 works through it rather than
+  picking silently.
 
 ## Licences
 

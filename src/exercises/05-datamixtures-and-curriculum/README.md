@@ -17,6 +17,18 @@ Two documents sit behind this one. [`SPEC.md`](SPEC.md) is the specification, wi
 argument and the reviewer-facing detail. [`EXPERIMENTS.md`](EXPERIMENTS.md) is what happened when
 the proxy it commits to was actually run. This page is the recipe itself.
 
+## How to read this
+
+Four documents, and the right one depends on what you came for. Start with your row.
+
+| you are | start here | then |
+| --- | --- | --- |
+| **Meeting this for the first time** | [`METHOD.md`](METHOD.md) — the glossary and the apparatus from scratch: what a *lane* and an *arm* are, what **bits per byte** measures, what it is divided by and why that denominator, and how big the model actually is | this page, top to bottom — it is the recipe in reading order |
+| **Changing the code** | [Layout](#layout) and [Reproduce](#reproduce) — which module owns which number | [The guards](#the-guards), then the pipeline diagrams in [`METHOD.md`](METHOD.md) |
+| **Deciding whether to believe it** | [`SPEC.md`](SPEC.md) — the deliverable, every share argued against its own supply | [What the proxy ran](#what-the-proxy-ran) and [What it cannot tell you](#what-it-cannot-tell-you), then [`EXPERIMENTS.md`](EXPERIMENTS.md) |
+
+**Two things to know before reading any table below.** Every number on this page is *generated* from the modules the tests pin — if a sentence states a count, it was computed rather than typed. And every measurement here is **proxy-scale**: a 4-layer model over 1.78M tokens, three orders of magnitude below the scale these shares are for. [What it cannot tell you](#what-it-cannot-tell-you) is not a footnote — read it beside the results, not after them.
+
 ## What this is, and how it was arrived at
 
 **The recipe for what a 40B model reads, and in what order.** Seven capability lanes, a share for

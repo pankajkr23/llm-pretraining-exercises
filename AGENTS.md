@@ -146,6 +146,20 @@ deliverable "without a detour", that is a property of its links, not of how much
 the test for it should assert the *link*, since asserting the filename passes against a front door
 that names the file and never links it.
 
+**The root's one per-exercise block is a submission affordance, and it is why the exercise README
+has to be complete.** The brief for the exercise under submission says the root README *is* the
+front door — a grader lands there and nowhere else — so that exercise gets a short block saying
+what it is, what it found, and which file to open. It moves to the next exercise when that one is
+submitted. Because it is the only per-exercise detail the root carries, **everything else has to be
+one directory down**: if the exercise README is not the complete end-to-end guide, nothing is.
+
+Every exercise README therefore carries a **`## How to read this`** reading path naming all three
+readers — first time · changing the code · deciding whether to believe it — plus a runnable command
+and a section stating what the work *cannot* establish. `tests/test_readme_structure.py` enforces
+all three, and `tests/test_readme_links.py` checks that every relative link and in-page anchor
+resolves **from the directory of the file containing it** (three links broke silently when prose
+moved out of the root, because a path correct from the repo root is wrong two levels down).
+
 ## Documentation is written for more than one reader
 
 A document that only makes sense to whoever built it is not documentation, it is a note to self.

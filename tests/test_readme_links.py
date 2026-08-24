@@ -91,8 +91,10 @@ def _anchors(doc: Path) -> set[str]:
         if not line.startswith("#"):
             continue
         title = line.lstrip("#").strip()
+        # GitHub's rule: lowercase, drop punctuation except - and _, then map EACH space to a
+        # hyphen. It does not collapse runs, so "v1 - our" (em dash removed) becomes "v1--our".
         slug = re.sub(r"[^\w\s-]", "", title.lower()).strip()
-        slugs.add(re.sub(r"[\s]+", "-", slug))
+        slugs.add(slug.replace(" ", "-"))
     return slugs
 
 
