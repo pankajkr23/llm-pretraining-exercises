@@ -3,8 +3,12 @@
 A running log of what was built, what was measured, what changed and what is still open. Written
 so the work can be picked up cold. Newest entries at the top of each section.
 
-**Branch:** merged to `main` through v0.6.1; v0.6.2 and the README split are open as PRs #54 and #55.
-The submission link is the repository's root `README.md`; the deliverable it routes to is [`SPEC.md`](SPEC.md).
+**Where the work lives:** on `main`. This line used to name the in-flight PR numbers and was stale
+within a day both times — `git log` and `gh pr list` answer that question correctly and this file
+cannot, so it no longer tries.
+
+**Submission:** the repository's root `README.md`. It is a map, not a summary: the exercise-05 row
+links [`SPEC.md`](SPEC.md) — the deliverable — directly, which is the brief's "without a detour".
 
 ---
 
