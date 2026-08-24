@@ -102,8 +102,8 @@ cd src/exercises/04-data-cleaning-dedup/web && python3 -m http.server 8000   # p
 `lite` is deliberately *below* the assignment's 10M-token floor — it exists to surface bugs in
 minutes. The published corpus is `full`.
 
-**Prefer the notebook.** `notebooks/S04-data-cleaning-dedup.ipynb` — built locally by
-`tools/build_notebook.py` and not tracked, so regenerate it rather than looking for it in a clone
+**Prefer the notebook.** `notebooks/S04-data-cleaning-dedup.ipynb` — **not in a clone.** It and
+the `tools/build_notebook.py` that emits it are both local-only, so a fresh checkout has neither
 runs this same package step by step, with plain-English explanation before each step and the
 arithmetic after it. Upload it to Colab to run it with no local setup.
 

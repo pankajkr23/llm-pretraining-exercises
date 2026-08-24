@@ -1,14 +1,20 @@
-"""Every exercise ships a notebook builder, and every builder still runs.
+"""The notebook builders still run — checked on whoever has them, because CI does not.
 
-`AGENTS.md` requires a Colab notebook per session, gitignored, rebuilt from a tracked
-`tools/build_notebook.py`. The rule exists because the alternative was tried: exercise 04's
-notebook left the working tree on a branch switch, nothing could rebuild it, and it had to be
-recovered out of git history (`68abb44^`). Untracking a file whose only copy is in front of you is
-not a workflow, it is a countdown.
+`AGENTS.md` requires a Colab notebook per session. Both the notebook and the
+`tools/build_notebook.py` that generates it are local-only: a generator is the notebook in another
+form, so versioning it would keep the same course material in the repo as Python.
 
-A tracked builder is only worth having if it still works, and nothing else in the suite runs one --
-the notebooks themselves are absent from a fresh clone, so every test that reads one skips. These
-run the builders, which is the part CI can still see.
+**Say plainly what that costs.** On a fresh clone there are no builders, so every test here skips,
+and a suite that only skips protects nothing. Two things are gone that used to be enforced: CI can
+no longer check that an exercise *has* a builder, and it can no longer check that a builder still
+runs against the package it imports. Those are now the responsibility of whoever holds the working
+checkout, before opening a PR:
+
+    uv run pytest tests/test_notebook_builders.py
+
+The remaining automated coverage is `notebooks/hello.ipynb`, a tracked stdlib-only sample CI
+executes. It cannot tell you a session notebook is correct; it tells you a notebook in this repo
+opens and runs, which is the part CI can still see.
 """
 
 import json
@@ -21,19 +27,33 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EXERCISES = sorted(p for p in (REPO_ROOT / "src" / "exercises").glob("[0-9][0-9]-*") if p.is_dir())
-BUILDERS = [p / "tools" / "build_notebook.py" for p in EXERCISES]
+
+#: Only the builders actually present. A fresh clone has none and every test below skips.
+BUILDERS = [
+    p / "tools" / "build_notebook.py"
+    for p in EXERCISES
+    if (p / "tools" / "build_notebook.py").is_file()
+]
+
+pytestmark = pytest.mark.skipif(
+    not BUILDERS,
+    reason="no notebook builders on this checkout — they are local-only (see the module docstring)",
+)
 
 
 def _ids(path: Path) -> str:
     return path.parents[1].name
 
 
-@pytest.mark.parametrize("builder", BUILDERS, ids=_ids)
-def test_every_exercise_has_a_notebook_builder(builder: Path) -> None:
-    """The builder is the tracked copy; without it the notebook is one branch switch from gone."""
-    assert builder.is_file(), (
-        f"{builder.parents[1].name} has no tools/build_notebook.py — its session notebook is "
-        f"gitignored, so nothing tracked can rebuild it"
+def test_the_checkout_that_has_builders_has_one_for_every_exercise() -> None:
+    """A partial set means an exercise's notebook cannot be rebuilt on this machine.
+
+    Skipped entirely on a clone with none, which is the honest state; run where they live.
+    """
+    missing = [p.name for p in EXERCISES if not (p / "tools" / "build_notebook.py").is_file()]
+    assert not missing, (
+        f"this checkout has builders for some exercises but not {missing} — those notebooks "
+        f"cannot be rebuilt here, and nothing tracked can restore them"
     )
 
 
@@ -42,12 +62,9 @@ def test_every_builder_emits_a_clean_notebook(builder: Path, tmp_path: Path) -> 
     """Run the builder for real, into a temporary file.
 
     `NOTEBOOK_OUT` redirects the output. Without it this test would overwrite the notebook the
-    developer currently has open — the same data loss the builders exist to prevent, arriving by a
-    different route.
+    developer currently has open — and since neither the notebook nor the builder is in git, that
+    copy is now the only one there is.
     """
-    if not builder.is_file():
-        pytest.skip("covered by test_every_exercise_has_a_notebook_builder")
-
     out = tmp_path / "built.ipynb"
     result = subprocess.run(
         [sys.executable, str(builder)],
@@ -74,12 +91,7 @@ def test_every_builder_emits_a_clean_notebook(builder: Path, tmp_path: Path) -> 
 
 @pytest.mark.parametrize("builder", BUILDERS, ids=_ids)
 def test_every_notebook_installs_the_exercise_rather_than_copying_it(builder: Path) -> None:
-    """A notebook that re-implements the pipeline teaches something the pipeline does not do.
-
-    Checked on the builder's source because the notebook itself is not in a fresh clone.
-    """
-    if not builder.is_file():
-        pytest.skip("covered by test_every_exercise_has_a_notebook_builder")
+    """A notebook that re-implements the pipeline teaches something the pipeline does not do."""
     source = builder.read_text(encoding="utf-8")
     # The clone is spawned as an argument list -- `['git', 'clone', ...]` -- so the literal
     # "git clone" never appears. Asserting that string passed against nothing and failed against
