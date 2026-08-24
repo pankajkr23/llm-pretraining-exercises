@@ -120,7 +120,7 @@ itself while both halves look fine:
 ## The notebook is generated, and it is not tracked
 
 `notebooks/S05-datamixtures-and-curriculum.ipynb` is **gitignored** — regenerate it with
-`uv run python tools/build_notebook.py` rather than looking for it in a clone. It is emitted by
+`uv run python tools/build_notebook.py` — **on a checkout that has it.** Neither the notebook nor the builder is tracked, so a fresh clone has neither. It is emitted by
 that builder rather than edited in place. A notebook edited by hand accumulates execution counts, metadata and stray
 outputs that make every diff unreadable; this way the committed file is exactly what the builder
 emits, and the cells are diffable as Python.

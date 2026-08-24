@@ -41,16 +41,28 @@ code end to end.** Four rules keep it from rotting:
 Write it to be read at two depths: plain what-and-why before each step, the arithmetic and caveats
 after it. It is the artifact people learn from and teach from, not a run log.
 
-**They are gitignored** (`notebooks/S[0-9][0-9]-*.ipynb`) — built from the exercise's
-`tools/build_notebook.py`, kept on a working checkout, never versioned.
+**Both the notebook and its builder are gitignored** — `notebooks/S[0-9][0-9]-*.ipynb` and
+`src/exercises/*/tools/build_notebook.py`. A generator is the notebook in another form, so tracking
+it would keep the same course material in the repo as Python, which is what untracking the notebook
+was for. Every exercise has a builder; they live on a working checkout and are never pushed.
 
-**An exercise that untracks its notebook needs that builder first.** Exercise 04's notebook left
-the working tree on a branch switch, there was nothing to rebuild it from, and it had to be
-recovered out of git history (`68abb44^`). Untracking a file whose only copy is the one in front of
-you is not a workflow, it is a countdown. Write the builder, then untrack. **All five exercises now
-have one**, and `tests/test_notebook_builders.py` runs every builder in CI — into a temporary path
-via `NOTEBOOK_OUT`, because a test that wrote to the real location would destroy the developer's
-notebook, which is the same loss arriving by a different route.
+**Name the cost, because it is the whole trade.** The builder used to be the recoverable copy — it
+is why exercise 04's notebook could be rebuilt after it left the working tree on a branch switch
+(recovered from `68abb44^`). Now nothing tracked can restore either one. **Back up
+`tools/build_notebook.py` outside the repo**, and treat losing a working tree as losing the
+notebooks.
+
+**CI can no longer see them.** It cannot check that an exercise has a builder, nor that a builder
+still runs against the package it imports. `tests/test_notebook_builders.py` skips entirely on a
+fresh clone and is a *local* gate — run it on the checkout that has the builders, before opening a
+PR:
+
+```bash
+uv run pytest tests/test_notebook_builders.py
+```
+
+It builds through `NOTEBOOK_OUT` into a temporary path, because a test that wrote to the real
+location would destroy the only copy of the notebook that exists.
 
 **An exercise with no Python package still gets a notebook, and it still must not re-implement.**
 Exercise 01's proofs are hand-written browser JavaScript; rebuilding them in numpy would be a
@@ -76,7 +88,11 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
   *decided*, and why, is published instead: `README.md`, and a tracked `DECISIONS.md` when the
   reasoning needs room (see `04-data-cleaning-dedup/DECISIONS.md`).
 - **Session notebooks** → top-level `notebooks/`, **gitignored** except the tracked
-  `hello.ipynb` sample (+ the `tools/build_notebook.py` that regenerates each one).
+  `hello.ipynb` sample. Their generators (`*/tools/build_notebook.py`) are gitignored too — a
+  generator is the same material in another form. Keep a backup outside the repo; nothing tracked
+  can rebuild either. This does **not** extend to other `tools/` scripts: a dataset fetcher such as
+  `05-…/tools/fetch_proxy_corpus.py` stays tracked, because a corpus needs a tracked way to fetch
+  and licence-check it.
 - **Datasets** → top-level `data/`, **gitignored** (+ a tracked manifest/download script). A
   fetcher **verifies the licence at fetch time from the source itself**, not from our own
   catalogue, and refuses anything that declares none — an unverifiable licence is not a permissive

@@ -270,8 +270,17 @@ docs/EXPLAINER_PATTERN.md
 # Self-critique of a shipped build — useful to us, not part of the published work.
 **/docs/DESIGN_CRITIQUE.md
 
-# Session notebooks are local-only. They are built from `tools/build_notebook.py`, they are the
-# course's own material rather than this repo's deliverable, and executing one bakes real corpus
-# text into a tracked file. `notebooks/hello.ipynb` is deliberately NOT matched: it is the tracked
-# sample that keeps the notebook harness under test on a fresh clone.
+# Session notebooks are local-only. They are the course's own material rather than this repo's
+# deliverable, and executing one bakes real corpus text into a tracked file. `notebooks/hello.ipynb`
+# is deliberately NOT matched: it is the tracked sample that keeps the notebook harness under test
+# on a fresh clone.
 notebooks/S[0-9][0-9]-*.ipynb
+
+# ...and so is the script that generates one. A generator is the notebook in another form -- keeping
+# it would version the same course material as Python, which is the thing the rule above exists to
+# prevent. Both stay on a working checkout and neither is pushed.
+#
+# The cost is real and is named here rather than discovered later: the builder was the recoverable
+# copy, so a lost working tree now loses the notebook AND the means to rebuild it, and CI can no
+# longer check that a builder exists or still runs. Back these up outside the repo.
+src/exercises/*/tools/build_notebook.py

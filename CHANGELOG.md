@@ -12,6 +12,24 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Changed
 
+- **The notebook builders are untracked too.** `src/exercises/*/tools/build_notebook.py` now
+  follows the notebooks it generates out of version control. A generator is the notebook in another
+  form, so keeping it versioned the same course material as Python — which is what untracking the
+  notebook was meant to prevent. All five stay on a working checkout; none is pushed.
+- **The cost is stated rather than discovered.** The builder used to be the recoverable copy — it is
+  why exercise 04's notebook could be rebuilt after a branch switch lost it (`68abb44^`). Nothing
+  tracked can restore either now, so `AGENTS.md` and the `.gitignore` both say to back the builders
+  up outside the repo.
+- **`tests/test_notebook_builders.py` is a local gate, not a CI one.** With no builders in a clone
+  it skips entirely, so CI can no longer check that an exercise has a builder or that a builder
+  still runs. Run it on the checkout that holds them before opening a PR. `notebooks/hello.ipynb`
+  remains the tracked sample CI executes.
+- **Scope is narrow on purpose:** only `build_notebook.py`. Other `tools/` scripts stay tracked —
+  `05-…/tools/fetch_proxy_corpus.py` is still versioned, because a corpus needs a tracked way to
+  fetch and licence-check it.
+
+### Changed
+
 - **The root README no longer carries a generated section for exercise 05.** The brief says the
   root is the front door and must reach `SPEC.md` "without a detour", and the obvious reading was
   that the front door should therefore summarise the exercise under submission. It should not: the
