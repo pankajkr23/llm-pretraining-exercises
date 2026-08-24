@@ -41,6 +41,17 @@ uv run pytest -m "not integration"      # the invariants, and the proofs they ca
 > **Scope:** a coursework exercise, not a proposal to anyone — see
 > [`NOTICE`](NOTICE).
 
+## How to read this
+
+| you are | start here | then |
+| --- | --- | --- |
+| **Meeting this for the first time** | [What it builds, and what it found](#what-it-builds-and-what-it-found), then the [live page](https://llm-pretraining-demos.vercel.app/03-data-collection-framework/) — thirteen chapters in the order a reader asks them | [What it produces](#what-it-produces) for the headline counts |
+| **Changing the code** | [Layout](#layout) and [Run it](#run-it) — note `ingest` is a **separate stage**, and skipping it rebuilds from a stale catalogue | [Two rules worth knowing before you change anything](#two-rules-worth-knowing-before-you-change-anything), then [Tests](#tests) |
+| **Deciding whether to believe it** | [What it cannot tell you](#what-it-cannot-tell-you) | [Tests](#tests) for which guards exist, and [`NOTICE`](NOTICE) for scope and affiliation |
+
+The deep material is in [`docs/`](./docs/) — `ATLAS.md` is the source research, `FRAMEWORK.md` the
+method, `DECISIONS.md` the resolved answers, `OPEN.md` what was deliberately left open.
+
 ## What it produces
 
 One interactive page — **thirteen chapters plus an appendix**, one per reader question — built from a
@@ -132,6 +143,28 @@ cannot tell you the type is *right*, so a separate guard checks that no token su
 the page. That duplication has caused a shipped bug once (correction X28), so the invariant suite
 runs the browser's own functions against the real bundle and fails on any disagreement. If you change
 `blockers()`, `tier_of()` or the containment filter, change both halves in the same commit.
+
+## What it cannot tell you
+
+State these before quoting any figure above.
+
+- **Most numbers here are other people's, not ours.** The catalogue is a reading of publishers'
+  public material, and each figure carries its provenance in the data. `estimated` is the common
+  case; only a minority are `measured` on our own runs, the tokenizer tax being the main exception.
+- **120 provenance-typed values are `unknown`**, mostly `size_tokens` for datasets whose publisher
+  never stated one. The page prints `unknown` rather than a plausible substitute, which is why the
+  committable total is a floor and not an estimate.
+- **The size of the deduplicated Indic web has not been measured by anyone, including here.** What
+  the pages carry is a range — **1.31T–2.62T**, from an assumed **20–40%** cross-corpus survival.
+  Every budget that consumes it inherits that assumption, and measuring it would move more of this
+  framework than any other single quantity.
+- **No dataset reaches grade A, and that is about coverage, not quality.** 14 B · 116 C · 15 X.
+  Reading the grades as a quality ranking misreads what the gates test.
+- **The licensing material is not legal advice.** It is a summary written by a non-lawyer for a
+  coursework exercise. Several catalogued datasets forbid commercial use outright; the catalogue
+  records that and does not grant permission to ignore it.
+- **This is a study of a decision, not a proposal to anyone**, and not affiliated with or endorsed
+  by any organisation named. [`NOTICE`](NOTICE) is the authoritative statement of scope.
 
 ## Status
 
