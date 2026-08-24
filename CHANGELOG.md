@@ -19,6 +19,17 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   table. Root: 307 → **128 lines**; the four exercise READMEs grew by exactly what they gained.
   Every fact from the old root is still reachable, each from at least two linked documents.
   `AGENTS.md` records the split so it does not drift back.
+- **Three README links broke in that move and nothing noticed.** A path correct from the repository
+  root is wrong two directories down, so `[`deploy/`](deploy/)` and two others pointed at
+  files that do not exist once the prose lived inside an exercise. Markdown has no link checker and
+  GitHub renders a dead link exactly like a live one. Fixed, and a new repo-wide guard
+  (`tests/test_readme_links.py`) now resolves every relative link in every README **from the
+  directory of the file containing it** — checking from the root would pass the very bug it exists
+  to catch.
+- **Exercise 01's moved section was a duplicate, so it was removed rather than kept.** The root's
+  block repeated the table already in that README, in less detail (it dropped the filenames), plus
+  Preview and Deploy paragraphs that were already sections there. Exercise 02's and 04's opened by
+  restating their own lede; those openings now start at what they add.
 
 ## [0.6.2] - 2026-08-24
 

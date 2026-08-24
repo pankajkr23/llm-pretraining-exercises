@@ -11,11 +11,10 @@ penalty      = exp(max(0, X_hi / 1.2 − 1))
 final score  = raw score / penalty
 ```
 
-## Tokenization — one vocabulary, four languages
+## What it builds, and what it found
 
-A Python pipeline (`src/exercises/02-tokenization/src/tokenization/`) builds **one 10,000-token BPE
-vocabulary** shared across India's Wikipedia article in **English, Hindi, Telugu, and Maithili**,
-tuned so all four are tokenized about equally efficiently. Fertility X is tokens per *faithful unit*
+The pipeline lives in `src/exercises/02-tokenization/src/tokenization/`, and the fourth language is
+**Maithili**. Fertility X is tokens per *faithful unit*
 — one run of letters/marks/digits, or one visible punctuation character — and the score is
 `1000 / (X_max − X_min)`, divided by a penalty that fires if Hindi is degraded. The corpus is
 committed wiki-faithful Markdown, so every number reproduces offline from a fresh clone.
@@ -54,7 +53,7 @@ python3 -m http.server 8000   # open http://localhost:8000
 ```
 
 > **Hosting:** live at <https://llm-pretraining-demos.vercel.app/02-tokenization/>, deployed via the
-> repo-wide **Vercel** project (see [`deploy/`](deploy/)) — one project serves every exercise
+> repo-wide **Vercel** project (see [`deploy/`](../../../deploy/)) — one project serves every exercise
 > under its slug.
 
 ## Two measurements, kept side by side

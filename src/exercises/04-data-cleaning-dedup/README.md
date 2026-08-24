@@ -9,11 +9,10 @@ eight over three real corpora, counts what each one removes, and publishes the r
 All eight stages are real. `Extract` is the one permanent pass-through: every corpus here ships
 already-extracted text, so claiming a yield for it would be inventing one.
 
-## Data cleaning & deduplication — what survives
+## What it builds, and what it found
 
-A Python pipeline (`src/exercises/04-data-cleaning-dedup/src/datacleaning/`) runs **eight named
-cleaning stages** over **three real corpora** — reasoning traces, Indic web text, and Q&A — and
-counts what each stage removes. Of **85.7M tokens** in, **69.86%** survive (50,010 documents down
+The pipeline lives in `src/exercises/04-data-cleaning-dedup/src/datacleaning/`, and the three
+corpora are reasoning traces, Indic web text and Q&A. Of **85.7M tokens** in, **69.86%** survive (50,010 documents down
 to 36,890); the stages that cut hardest were not the expected ones.
 
 Two things make it more than a filter chain:
@@ -36,7 +35,7 @@ uv run python -m datacleaning --profile full    # the published corpus
 
 > **Hosting:** live at <https://llm-pretraining-demos.vercel.app/04-data-cleaning-dedup/>.
 > Ships a
-> [decision record](src/exercises/04-data-cleaning-dedup/DECISIONS.md).
+> [decision record](DECISIONS.md).
 
 ## What
 

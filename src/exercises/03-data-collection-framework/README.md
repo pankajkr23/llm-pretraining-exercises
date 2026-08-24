@@ -8,7 +8,7 @@ almost never quality.
 
 See [`docs/`](./docs/) for the full spec.
 
-## Data collection framework — deciding the mix
+## What it builds, and what it found
 
 A Python pipeline (`src/exercises/03-data-collection-framework/src/dataframework/`) turns a research
 atlas into a **graded catalogue of 145 datasets and 31 benchmarks**, then publishes **one page** that
@@ -39,7 +39,7 @@ uv run pytest -m "not integration"      # the invariants, and the proofs they ca
 
 > **Hosting:** deploys via the repo-wide Vercel project at `/03-data-collection-framework/`.
 > **Scope:** a coursework exercise, not a proposal to anyone — see
-> [`NOTICE`](src/exercises/03-data-collection-framework/NOTICE).
+> [`NOTICE`](NOTICE).
 
 ## What it produces
 

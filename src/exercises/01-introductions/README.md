@@ -12,30 +12,6 @@ ML claims by training tiny models **live in the browser** — no server, no pre-
 | `s3.html` — **Meaning from company** | Embeddings learn similarity from next-token alone | A next-token model on a toy grammar; tokens migrate into animal/fruit/verb clusters. Click a token to see why (its next-token distribution). |
 | `s4.html` — **Memorise, or generalise** | Data closes the generalization gap | Drag the dataset-size slider (20→2000) and watch the memorised boundary smooth out and the train→test gap close. |
 
-## Introductions — four live proofs
-
-A small site (`src/exercises/01-introductions/web/`) that **proves** four foundational ML claims by
-training tiny models **live in the browser** — no server, no pre-baked figures, no libraries. Each of
-the four pages inlines its own CSS + JS; the neural nets (forward pass, backprop, Adam) are hand-written.
-
-| Page | Claim | The interactive |
-| --- | --- | --- |
-| **The bend** | Activations exist for a reason | Rotate a 3-D neuron surface across none/ReLU/tanh/GELU; then train linear vs a ReLU layer on two rings (~55% vs ~99%). |
-| **Five maps, one matrix** | Depth without nonlinearity is a lie | Watch N linear layers collapse into one matrix (gap ≈ 1e-16), then flip on ReLU and it breaks. |
-| **Meaning from company** | Embeddings learn similarity from next-token alone | A next-token model on a toy grammar; tokens migrate into animal/fruit/verb clusters. |
-| **Memorise, or generalise** | Data closes the generalization gap | Drag the dataset size (20→2000) and watch the memorised boundary smooth out and the gap close. |
-
-Preview locally:
-
-```bash
-cd src/exercises/01-introductions/web
-python3 -m http.server 8000   # open http://localhost:8000
-```
-
-Deploy: handled by the repo-wide **Vercel** project — `deploy/vercel/build.sh` serves this exercise's
-`web/` at `/01-introductions/`; previews auto-deploy per PR, production is on-demand. See [`deploy/`](deploy/).
-(The prior Netlify config is deactivated in `deploy/netlify/`, pending decommission.)
-
 ## Layout
 
 ```text
