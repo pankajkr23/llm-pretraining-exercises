@@ -10,6 +10,19 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **A mandatory rule: nothing under `notebooks/` or any `tools/` may be removed without explicit
+  prior permission** — locally or on the remote, and it does not yield to a tidy-up or to any other
+  rule in `AGENTS.md`. These are the only files with no second copy: both the session notebooks and
+  the `build_notebook.py` generators are gitignored, so git cannot restore them.
+- **The rule is written around how they were actually lost.** All five builders were destroyed by an
+  ordinary `git checkout main && git pull` immediately after the untracking merge — `checkout`
+  restored them as tracked files from the pre-merge `main`, then the fast-forward applied the commit
+  removing them from the index and git deleted the working copies. Nobody deleted anything.
+  Recovered from `db9b288^`. `AGENTS.md` now lists the git operations that can do this and the
+  post-branch-switch check that catches it.
+
 ### Changed
 
 - **The notebook builders are untracked too.** `src/exercises/*/tools/build_notebook.py` now
