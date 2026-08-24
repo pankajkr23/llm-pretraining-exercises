@@ -38,6 +38,9 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   Exercise 03 gained its limits (the deduplicated Indic web is a **1.31T–2.62T** range from an
   assumed 20–40% survival, and 120 catalogue values are `unknown`); exercise 04 gained a Tests
   section and its limits; 02 and 05 gained reading paths.
+- **The root README's layout block and Development section now name the repo-wide `tests/`.** The
+  repo's own rule is that a new module is not done until every list naming modules includes it, and
+  this one had shipped in neither list.
 
 ### Fixed
 

@@ -25,6 +25,7 @@ src/exercises/NN-slug/            # one self-contained exercise per topic (works
   ├─ src/ | web/                  # the code
   ├─ artifacts/                   # generated outputs (git-ignored)
   └─ tests/                       # exercise tests, discovered from the root
+tests/                            # repo-wide guards (README links, anchors, exercise structure)
 notebooks/hello.ipynb            # tracked sample; session notebooks are built locally, not versioned
 pyproject.toml                    # workspace root + ruff/pytest config
 AGENTS.md                         # repo conventions (imported by CLAUDE.md; pointed to by Cursor/Copilot)
@@ -95,7 +96,7 @@ enough to test it.
 
 ## Development
 
-- **Tests:** `uv run pytest` (fast unit) · `uv run pytest -m integration` (slower end-to-end). Each exercise owns its `tests/`.
+- **Tests:** `uv run pytest` (fast unit) · `uv run pytest -m integration` (slower end-to-end). Each exercise owns its `tests/`; the root `tests/` holds the repo-wide guards that no single exercise can own — every README's relative links and in-page anchors resolve, and every exercise README carries a reading path, a runnable command and a statement of what it cannot establish.
 - **Lint / format:** `uv run ruff check --fix .` and `uv run ruff format .`. The enforceable style spec (PEP 8/257, modern typing, line length 100) lives in `pyproject.toml`.
 - **CI** (`.github/workflows/ci.yml`, on every push & PR): `uv sync --all-packages` → `ruff check` → `ruff format --check` → unit tests → integration tests → `node --check` on web JS, plus a parallel **gitleaks** secret scan.
 
