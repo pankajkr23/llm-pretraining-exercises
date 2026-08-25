@@ -10,6 +10,53 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Exercise 06 stage 5 — masks for packed sequences.** Block-diagonal attention so document B
+  cannot see document A, position ids that **restart per document**, and loss masks that exclude
+  padding, context spans and each document's final token (next-token prediction has no target for
+  it). Numpy-only, so CI verifies them without torch.
+- **The failure this guards has no symptom** — cross-document attention does not crash and does not
+  spoil the loss curve, it just teaches the model that unrelated text continues naturally. So every
+  claim is asserted on the mask itself, never on a downstream number. Eight mutants, eight killed.
+
+- **Exercise 06 stage 4 — the plan.** `flat = step·B + rank·(A·M) + accum·M + seq` is a mixed-radix
+  odometer, so it decodes back to exactly one coordinate — which is what lets a rank compute its own
+  work with **no coordination**. A digit outside its place would carry and alias two coordinates
+  onto one index, so it is refused with a message saying why.
+- **Disjointness is asserted on DATA, not coordinates.** A coordinate bijection is arithmetic and
+  proves nothing about which tokens a rank reads. Measured on the real shards: 525 spans,
+  **0 overlapping pairs** across 20 steps × 64 slots.
+- **The order is derived from a key, not an RNG** — same key, same order across calls, processes and
+  machines. `PlanKey.planner_version` exists so an algorithm change cannot silently produce a
+  different plan under an unchanged key. A second pass over the corpus is visible via `pass_number`
+  rather than silently averaged into the first.
+
+- **Exercise 06 stage 3 — the two-sided evaluation firewall.** The shard's manifest carries its
+  split **and** a registry is asked independently, because relying on either alone leaves a single
+  point of failure for the one mistake that makes every benchmark score fiction. A test asserts
+  both sides refuse *independently*.
+- **It stores no evaluation text.** Benchmark items are 8-byte truncated digests of 13-word
+  shingles; a test greps the written registry for benchmark words. Every question is logged whether
+  allowed or refused, because "was this ever consumed?" can only be answered by a record of asking.
+- **The honest limit is a test, not a footnote.** A paraphrase evades the gate — n-gram
+  decontamination catches copies, not knowledge — and the suite goes red if that stops being true,
+  so the claim cannot quietly rot. Likewise, text shorter than one window yields an empty result
+  that means *could not check*, never *clean*.
+
+- **Exercise 06 stage 2 — immutable shards and manifests.** A shard's **id is its content hash**, so
+  a modified shard is a *different* shard by construction rather than by convention. Three
+  overlapping defences, and the notebook demonstrates why only one counts: `0444` on disk and a
+  read-only memmap both protect the *handle*, and neither survives a shell — **re-hashing on read**
+  is what catches a tampered file, so every ledger entry will carry the shard's hash and replay will
+  re-verify before reading.
+- **The admission gate refuses on a missing hash, not only a failing one.** The lecture's minimum is
+  dedup + PII + eval-overlap; an unanswered question is not a pass. Every reason is reported rather
+  than the first, so one call says everything wrong with a shard.
+- Proven end to end on real corpus text: 600k chars → **269,439 tokens** → 5 sealed shards, all
+  verifying; an evaluation shard refused with both its reasons; one flipped bit turning `verify()`
+  false and changing the id.
+
 ### Fixed
 
 - **All four of exercises 01–04's `BRIEF.md` files had been destroyed and are restored.** They were

@@ -80,10 +80,10 @@ Each ends in something you can run and see. Nothing advances until the previous 
 | stage | you will be able to | status |
 | --- | --- | --- |
 | 1 | read the settings, the fingerprint, and why the sentinels sit outside the vocabulary | **done** |
-| 2 | build shards, print a manifest, watch a tampered shard get rejected | — |
-| 3 | offer an evaluation shard to the loader and watch it blocked | — |
-| 4 | ask "what is slot (step 3, rank 2)?" and get token spans back | — |
-| 5 | pack a window and **see** the block-diagonal attention mask | — |
+| 2 | build shards, print a manifest, watch a tampered shard get rejected | **done** |
+| 3 | offer an evaluation shard to the loader and watch it blocked | **done** |
+| 4 | ask "what is slot (step 3, rank 2)?" and get token spans back | **done** |
+| 5 | pack a window and **see** the block-diagonal attention mask | **done** |
 | 6 | train, then read the consumption ledger back line by line | — |
 | 7 | crash it on purpose, resume, and watch the batch ids line up | — |
 | 8 | replay an interval, fork a branch, run the auditor | — |
@@ -99,6 +99,11 @@ NOTICE           # scope, affiliation, third-party credit and licences
 src/trainingdata/
   spec.py        # constants the producer AND the auditor share — facts, never logic
   config.py      # one frozen dataclass, every knob, plus the run fingerprint
+  shards.py      # immutable uint16 shards, content-addressed, tamper-detecting
+  manifest.py    # the 20-field manifest and the admission gate
+  firewall.py    # the eval registry — data we know about so we can refuse it
+  plan.py        # the odometer: which rank trains on which tokens, uncoordinated
+  masks.py       # block-diagonal attention, per-document positions, loss masks
 tests/           # discovered by `uv run pytest` from the repo root
 tools/           # the notebook builder (local-only, gitignored — back it up)
 artifacts/       # heavy regenerable output (gitignored)

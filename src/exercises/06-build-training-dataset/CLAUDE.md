@@ -4,9 +4,10 @@ Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is the
 `submission_artifacts/` bundle, the reasoning is `DECISIONS.md`, the running log is `PROGRESS.md`,
 and `BRIEF.md` is the assignment (local only, gitignored).
 
-**Status: stage 1 of 8.** Only `config.py` and `spec.py` exist. Do not describe this exercise as
-having shards, ledgers or replay until it does — the README carries a stage table for exactly this
-reason.
+**Status: stage 4 of 8.** `config.py`, `spec.py`, `shards.py`, `manifest.py`, `firewall.py`,
+`plan.py` and `masks.py` exist. Do not
+describe this exercise as having packing, ledgers or replay until it does — the README carries a
+stage table for exactly this reason.
 
 ## The rules this exercise adds
 
@@ -45,6 +46,35 @@ reason.
   negation there is inert while `git add -A` reports success. `run.log` is trackable only because
   `*.log` is a **file** pattern. `tests/test_submission_bundle.py` pins both halves; do not "tidy"
   either.
+
+- **The cross-document attention leak has no symptom.** If document B can attend to document A
+  nothing crashes and the loss curve looks fine; the model just learns that unrelated text is a
+  natural continuation. So the mask invariants are asserted on the **mask itself**, never on a
+  downstream number, and `masks.py` stays numpy-only so CI can run them without torch.
+
+- **Position ids restart per document, and that is not cosmetic.** Continuous positions would tell
+  the model a document beginning at offset 400 is 400 tokens into something — it is not, and at
+  inference it will be at 0. Restarting is what makes packing invisible to the model.
+
+- **The additive mask uses a large finite negative, never `-inf`.** A fully-masked row of `-inf`
+  becomes `nan` after softmax, and one `nan` poisons every gradient it touches.
+
+- **Disjointness is asserted on DATA, never on coordinates.** A coordinate bijection is arithmetic
+  and says nothing about which tokens a rank reads — two ranks can hold different coordinates that
+  point at the same span. `test_no_two_ranks_touch_overlapping_spans_in_a_step` is the only version
+  of that claim that could ever fail; keep it that way.
+
+- **`PlanKey.planner_version` is bumped by hand when the planning algorithm changes.** Without it a
+  code change silently produces a different plan under an unchanged key, and the ledger becomes the
+  only evidence anything moved.
+
+- **The firewall is two-sided on purpose, and both sides must stay.** The manifest carries the
+  split *and* the registry is asked independently. The instructor's reason: *"who knows maybe a
+  mistake in copying or something may still happen."* Removing either side leaves a single point of
+  failure for the one mistake that makes every benchmark score fiction.
+
+- **The firewall stores no evaluation text, ever.** Benchmark items are 8-byte truncated digests of
+  13-word shingles. A test greps the written registry for benchmark words; keep it that way.
 
 - **Two of the four OPUS statuses are ours, and the docs must keep saying so.** `accept` and
   `reject` are the selector's. `defer` and `floor_override` appear in **none** of the OPUS paper,

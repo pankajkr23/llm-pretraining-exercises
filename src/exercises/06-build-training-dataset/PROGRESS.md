@@ -15,14 +15,19 @@ re-checked by a second that reads only the artifacts.
 
 ## Open items — for review
 
-**Stage 1 of 8 is done.** The settings, the shared constants and the vocabulary problem are in
-place and under test. Nothing else is built, and no document here claims otherwise.
+**Stage 5 of 8 is done.** Settings, shared constants, the vocabulary problem, immutable shards
+with manifests and an admission gate, the two-sided evaluation firewall, the plan, and packed-sequence
+masks. Nothing else is built,
+and no document here claims otherwise.
 
 | # | item | status | note |
 | --- | --- | --- | --- |
 | O1 | **Exercise skeleton** | **done** | `BRIEF.md` (local), `README.md`, `CLAUDE.md`, `DECISIONS.md`, `PROGRESS.md`, `NOTICE`, `pyproject.toml`, `src/`, `tests/`, `tools/`, `artifacts/`. |
 | O2 | **Stage 1 — config and spec** | **done** | Frozen `Config` + fingerprint, `spec.py` behind the producer/auditor wall, 19 tests. |
-| O3 | **Stage 2 — shards and manifests** | next | Immutable `uint16` shards, content-addressed ids, 16-field manifests, tamper detection. |
+| O3 | **Stage 2 — shards and manifests** | **done** | Immutable `uint16` shards sealed `0444`, content-addressed ids, append-only manifests, admission gate. Proven on real corpus text: 600k chars → 269,439 tokens → 5 shards, all sealed and verifying; one flipped bit turns `verify()` false and changes the id. |
+| O3b | **Stage 3 — the evaluation firewall** | **done** | Two-sided: the manifest carries the split *and* the registry is asked independently. Stores no evaluation text — 8-byte digests of 13-word shingles. A paraphrase evades it, and a test asserts that rather than leaving it to be discovered. |
+| O3c | **Stage 4 — the plan** | **done** | Mixed-radix odometer, bijection round-tripped over every coordinate; keyed permutation derived from the key alone; disjointness asserted on spans rather than coordinates. Verified on the real shards: 525 spans, **0 overlapping pairs** across 20 steps × 64 slots. |
+| O3d | **Stage 5 — masks** | **done** | Block-diagonal attention, per-document position ids, loss masks. Eight mutants, eight killed — including the two that would pass review: cross-document attention, and position ids running continuously. |
 | O4 | **Corpus** | not started | ~40–60 MB across S5's six lanes, licence verified **at fetch time from the source itself**. |
 | O5 | **OPUS** | decided, not built | Port the criterion (~300 lines) from the MIT reference as a spec. Not installable: its `train.py` fails at import on `torch.empty(1, device="cuda")` and needs NCCL. |
 | O6 | **The web explainer** | not started | In scope, after the system works. |
@@ -81,6 +86,60 @@ every shard manifest pins, so the sentinels are assigned **out of vocabulary** �
 ---
 
 ## Change log
+
+### 2026-08-25 (stage 5 — packed-sequence masks)
+
+- **The leak with no symptom.** Cross-document attention does not crash and does not spoil the loss
+  curve; it teaches the model that unrelated text continues naturally. Every claim is therefore
+  asserted on the mask itself rather than on a downstream number.
+- **A third redundant-looking guard turned out to be load-bearing.** Removing the `PAD`-token check
+  from the loss mask survived mutation, because `segments >= 0` already excludes padding
+  *positions*. It is not redundant: a `PAD` id sitting **inside** a document — from a packing bug or
+  a corrupt shard — would be graded. A test now covers exactly that, and the mutant dies. Unlike the
+  two genuinely redundant guards found earlier, this one was worth keeping.
+- **`-inf` is deliberately avoided** in the additive mask: a fully-masked row becomes `nan` after
+  softmax and one `nan` poisons every gradient it touches.
+
+### 2026-08-25 (stage 4 — the plan)
+
+- **An odometer, not a shuffle.** `flat = step·B + rank·(A·M) + accum·M + seq` is a mixed-radix
+  number, so it decodes back to exactly one coordinate — which is what lets a rank compute its own
+  work with **no coordination**. A digit outside its place would carry and alias two coordinates
+  onto one index; that is refused with a message saying why.
+- **Disjointness is checked on spans, not coordinates.** The bijection is arithmetic and proves
+  nothing about tokens. Measured on the real shards: 525 spans, **0 overlapping pairs** across
+  20 steps × 64 slots.
+- **The permutation is derived from a key, not an RNG.** Same key, same order — across calls,
+  processes and machines. `planner_version` exists so an algorithm change cannot silently produce a
+  different plan under an unchanged key.
+- **Seven mutants, seven killed**, including the two that would be invisible in review: rank using
+  the wrong place value, and the permutation quietly becoming the identity.
+
+### 2026-08-25 (stage 3 — the evaluation firewall)
+
+- **Two-sided, deliberately redundant.** The manifest refuses a non-`train` split; the registry
+  refuses by shard id without consulting that manifest. A test asserts *both* sides refuse
+  independently, because relying on either alone leaves one point of failure for the mistake that
+  makes every benchmark score fiction.
+- **Every question is logged, allowed or not.** When a score jumps the question is "was this ever
+  consumed?", and only a record of the asking can answer it.
+- **The honest limit is a test, not a footnote.** A paraphrase evades the gate — n-gram
+  decontamination catches copies, not knowledge — and `test_a_paraphrase_is_not_detected` will go
+  red if that ever stops being true, so the claim in the docs cannot quietly rot.
+- **A second redundant guard found by mutation.** The short-text early return in `shingles()` is a
+  fast path, not a correctness guard: `range(len(words) - n + 1)` is already empty. Documented in
+  place rather than left to imply coverage — the same shape as `is_dir()` in the skeleton guard.
+
+### 2026-08-25 (stage 2 — shards and manifests)
+
+- **Shards are immutable three ways over**, deliberately: the id *is* the content hash so a change
+  renames the file; `0444` plus `mode="r"` memmap makes a careless write raise; and every read
+  re-verifies the hash. Only the third survives a shell, which is why it exists.
+- **The admission gate refuses on a missing hash, not only a failing one.** The lecture's minimum is
+  dedup + PII + eval-overlap, and an unanswered question is not a pass.
+- **A mutation survived and was fixed.** The refusal tests parametrize over `REQUIRED_HASHES`, so
+  deleting an entry made them test *fewer cases* and stay green — a guard derived from the thing it
+  guards. A twin now pins the three by name.
 
 ### 2026-08-25 (skeleton and stage 1)
 
