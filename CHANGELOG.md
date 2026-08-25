@@ -10,6 +10,20 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **All four of exercises 01–04's `BRIEF.md` files had been destroyed and are restored.** They were
+  tracked until `18015b1` untracked them; the *next* branch switch across that commit then deleted
+  the working copies, because git removes a file that was tracked at the old HEAD and is not at the
+  new one. Nobody deleted anything. Recovered from `18015b1^`.
+- **The local-only tripwire now covers `BRIEF.md`**, alongside the notebooks and builders, and
+  carries the recovery command in its failure message. `AGENTS.md` explains the mechanism — that
+  *untracking* is what makes a file fragile — rather than leaving it to be rediscovered.
+- **The skeleton guard required `tools/`, which no fresh clone has.** For most exercises its only
+  content is the gitignored `build_notebook.py`, and git does not track empty directories, so the
+  guard passed locally and failed CI. Same shape as requiring `artifacts/` would be: write the
+  guard for what a clone has.
+
 ### Added
 
 - **Exercise 06 has the full exercise skeleton**, which it should have had before any code was

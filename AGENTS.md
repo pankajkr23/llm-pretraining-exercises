@@ -26,6 +26,26 @@ These are the only files in the repo with **no second copy**. Both are gitignore
 restore them: `notebooks/S[0-9][0-9]-*.ipynb` and `src/exercises/*/tools/build_notebook.py`. A
 deletion here is permanent in a way that no other deletion in this repo is.
 
+**This now covers `BRIEF.md` too.** All four of exercises 01–04's briefs were destroyed by an
+ordinary branch switch after the commit that untracked them, and were recoverable only because
+`18015b1^` was still reachable. A brief written *after* the untracking convention has no such
+safety net.
+
+**Untracking a file is what makes it fragile, and the mechanism is worth understanding.** `git rm
+--cached` plus a `.gitignore` entry leaves the working copy in place — but the *next* `checkout` or
+`pull` that crosses the untracking commit sees a file that was tracked at the old HEAD and is not at
+the new one, and deletes it. Nobody deleted anything. So:
+
+- **Back up every local-only file outside the repo.** That is the only real safety net:
+  `notebooks/S*.ipynb`, `src/exercises/*/tools/build_notebook.py`, `src/exercises/*/BRIEF.md`.
+- **After any branch switch, pull, merge, rebase or stash, run the tripwire** —
+  `uv run pytest tests/test_local_only_files_present.py`. It fails when *some* of these files are
+  present and others gone, and skips when all are absent (a clone, not a loss).
+- **Recovery, while the removal commit is still reachable:**
+  ```bash
+  git show <untracking-commit>^:<path> > <path>      # e.g. 18015b1^ for the briefs
+  ```
+
 **Prohibited without permission, on these paths:** `rm` · `git clean` · `git checkout -- ` ·
 `git restore` · `git reset --hard` · `git stash` (it removes untracked files with `-u`) · moving or
 renaming · writing over an existing notebook from anything other than a deliberate builder run.

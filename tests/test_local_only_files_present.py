@@ -34,6 +34,10 @@ EXPECTED_NOTEBOOKS = [
 ]
 EXPECTED_BUILDERS = [p / "tools" / "build_notebook.py" for p in EXERCISES]
 
+#: The assignment text for each exercise. Gitignored by name everywhere, so a clone has none and a
+#: healthy working checkout has one per exercise.
+EXPECTED_BRIEFS = [p / "BRIEF.md" for p in EXERCISES]
+
 
 def _partial(paths: list[Path]) -> bool:
     """True when some but not all exist — a clone has none, a healthy checkout has all."""
@@ -135,3 +139,24 @@ def test_a_file_named_like_an_exercise_is_not_an_exercise(tmp_path: Path) -> Non
     (root / "07-notes.md").write_text("not a directory", encoding="utf-8")
 
     assert exercises_in(root) == []
+
+
+def test_no_brief_has_gone_missing() -> None:
+    """Briefs are local-only, so nothing tracked can restore one.
+
+    This is not hypothetical. All four of exercises 01-04's briefs were destroyed by an ordinary
+    branch switch after the commit that untracked them, and were only recoverable because
+    `18015b1^` was still reachable. They had existed in git once; a brief written *after* the
+    untracking convention would not have that safety net at all.
+    """
+    present = [p for p in EXPECTED_BRIEFS if p.is_file()]
+    if not present:
+        pytest.skip("no briefs here — a fresh clone has none (they are gitignored)")
+    missing = [f"{p.parent.name}/BRIEF.md" for p in EXPECTED_BRIEFS if not p.is_file()]
+    assert not missing, (
+        f"{len(present)} briefs are present but {missing} are gone. Nothing tracked can restore "
+        f"a brief written since the untracking convention. If these were lost to a branch switch, "
+        f"recover them with:\n"
+        f"  git show 18015b1^:src/exercises/<slug>/BRIEF.md > src/exercises/<slug>/BRIEF.md\n"
+        f"and keep a backup outside the repo (see AGENTS.md)."
+    )

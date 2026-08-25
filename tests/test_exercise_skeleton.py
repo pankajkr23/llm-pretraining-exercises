@@ -21,7 +21,15 @@ EXERCISES = exercises_in(REPO_ROOT / "src" / "exercises")
 
 #: Present in every exercise, without exception.
 REQUIRED = ("README.md", "CLAUDE.md", "pyproject.toml")
-REQUIRED_DIRS = ("tests", "tools")
+
+#: Directories a FRESH CLONE has.
+#:
+#: `tools/` is deliberately NOT here. For most exercises its only content is the gitignored
+#: `build_notebook.py`, and git does not track empty directories — so `tools/` exists on a working
+#: checkout and not in a clone. Requiring it passed locally and failed CI, which is the same
+#: mistake in the same shape as requiring `artifacts/` would be: **write the guard for what a clone
+#: has, not for what your machine has.**
+REQUIRED_DIRS = ("tests",)
 
 
 def _ids(path: Path) -> str:
