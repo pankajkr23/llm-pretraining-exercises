@@ -303,8 +303,8 @@ def test_the_model_overfits_a_single_batch() -> None:
         loss.backward()
         optimizer.step()
         if step == 0:
-            first = float(loss)
-        last = float(loss)
+            first = float(loss.detach())
+        last = float(loss.detach())
 
     # 9.21 is ln(10_002): an untrained model is uniform over its vocabulary, and starting anywhere
     # below that would mean the test began from a model that already knew something.
