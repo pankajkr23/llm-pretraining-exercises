@@ -10,6 +10,28 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- **CI's test job runs in parallel: ~276s → an expected ~90s.** The integration step was **255s of
+  276s — 92% of the job** — and the slow tests are CPU-bound (a 40s JS-encoder parity check, a 16s
+  training experiment, a 15s mutation suite), not browser-bound, so they parallelise. Measured
+  locally: integration **229s → 65s**, unit **28s → 13.5s**, identical results in both modes.
+- **`--dist loadfile` is a correctness requirement, not a tuning knob.** Several suites write a JS
+  harness *beside* the module under test — a fixed path, deleted in a `finally` — because ES module
+  imports resolve against the importing file's directory. Plain `-n auto` splits a file across
+  workers, so one deletes the harness another is running: **4 errors, reproducibly.**
+- **The site is assembled once, before the parallel run.** Two `site` fixtures fall back to running
+  `deploy/vercel/build.sh` when `public/` is missing, and that script begins with `rm -rf public/` —
+  two workers would delete each other's site mid-test. Both fixtures now **fail loudly** under `-n`
+  when the site is absent rather than racing.
+
+### Added
+
+- **`tests/test_parallel_safety.py`** pins the proviso the speedup rests on: no two test files write
+  the same fixed harness path, and CI still passes `--dist loadfile`. Both mutants confirmed failing.
+  The guard caught two bugs in itself first — it flagged `tmp_path/probes.json` (pytest's own
+  per-test directory) and counted one file declaring a path twice as a collision.
+
 ## [0.7.0] - 2026-08-25
 
 ### Added

@@ -50,6 +50,14 @@ def _root_and_path() -> tuple:
     the same one-second bash script the deploy runs — is what keeps these tests pointed at the
     artifact that ships rather than at a bundle that renders differently.
     """
+    # `build.sh` starts with `rm -rf public/`, so two xdist workers both finding `public/` absent
+    # would delete each other's site mid-test. Fail loudly instead of racing: CI assembles it once
+    # up front (see `.github/workflows/ci.yml`), and locally the fix is one command.
+    if os.environ.get("PYTEST_XDIST_WORKER") and not (BUILT / "index.html").exists():
+        pytest.fail(
+            "running under -n with no assembled site. `build.sh` would race across workers "
+            "(it begins `rm -rf public/`). Run `bash deploy/vercel/build.sh` first."
+        )
     if not (BUILT / "index.html").exists():
         script = REPO / "deploy" / "vercel" / "build.sh"
         if script.exists():

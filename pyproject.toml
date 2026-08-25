@@ -18,6 +18,7 @@ dev = [
     "nbclient>=0.10",
     "playwright>=1.62.0",
     "pytest>=8",
+    "pytest-xdist>=3.6",
     "ruff>=0.6",
 ]
 
