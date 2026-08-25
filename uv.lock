@@ -830,6 +830,7 @@ dev = [
     { name = "playwright" },
     { name = "pytest" },
     { name = "pytest-xdist" },
+    { name = "pyyaml" },
     { name = "ruff" },
 ]
 
@@ -842,6 +843,7 @@ dev = [
     { name = "playwright", specifier = ">=1.62.0" },
     { name = "pytest", specifier = ">=8" },
     { name = "pytest-xdist", specifier = ">=3.6" },
+    { name = "pyyaml", specifier = ">=6" },
     { name = "ruff", specifier = ">=0.6" },
 ]
 

@@ -91,7 +91,10 @@ def test_ci_runs_the_suite_with_dist_loadfile() -> None:
     like a harmless simplification in a diff.
     """
     ci = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
-    runs = [line for line in ci.splitlines() if "pytest" in line and "-n auto" in line]
+    # An INVOCATION, not a mention. Matching any line containing "pytest" and "-n auto" also
+    # matched a diagnostic that *prints* the words "pytest -n auto will use N workers" -- a false
+    # positive this guard produced against its own workflow the first time it ran.
+    runs = [line for line in ci.splitlines() if "uv run pytest" in line and "-n auto" in line]
     assert runs, "CI no longer runs pytest in parallel; this module's premise has changed"
     missing = [line.strip() for line in runs if "--dist loadfile" not in line]
     assert not missing, (

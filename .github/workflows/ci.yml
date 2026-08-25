@@ -47,17 +47,67 @@ jobs:
       - name: Unit tests
         run: uv run pytest -m "not integration" -n auto --dist loadfile
 
-      # The rendering tests need a real browser.
-      #
-      # This step used to run `playwright install --with-deps`, and the comment above it claimed
-      # setup-uv's cache covered it. Both were wrong. setup-uv caches the Python environment, not
-      # `~/.cache/ms-playwright` where browsers live, and `--with-deps` shells out to apt, which on
-      # a GitHub runner spends twenty minutes negotiating Azure mirrors for libraries the
-      # ubuntu-latest image already ships. One observed run sat at 20m and was still going.
-      #
-      # So: cache the browser by the resolved Playwright version, and skip apt. If a library really
-      # is missing the browser fails to launch, and the fixtures turn that into a hard failure on
-      # CI rather than a silent skip — see `test_mixture_page_render.py`.
+      # `find` rather than a glob: the previous pattern was web/js/*.js, which matched nothing —
+      # exercise 01 inlines its JS and exercise 03 keeps shared modules in web/_shared/, so the
+      # step silently checked zero files.
+      - name: Web bundle syntax (node --check)
+        run: |
+          found=0
+          while IFS= read -r f; do
+            echo "checking $f"
+            node --check "$f"
+            found=$((found + 1))
+          done < <(find src/exercises -path '*/web/*' -name '*.js' -type f | sort)
+          echo "checked $found file(s)"
+
+  # Integration is ~227s of work and the fast job above is ~15s, so this is where the wall clock
+  # lives. Two levels of parallelism, because one is not enough:
+  #
+  #   * ACROSS runners -- this matrix. `--dist loadfile` keeps a file on one worker (it must; see
+  #     tests/test_parallel_safety.py), so the SLOWEST SINGLE FILE is a hard floor no number of
+  #     workers can beat. Measured: 02's test_js_encoder.py alone is 55s. Sharding lets that file
+  #     overlap with the other exercises instead of queueing behind them.
+  #   * WITHIN a runner -- `-n auto`.
+  #
+  # Shards are balanced on measured cost, not on tidiness:
+  #   02 = 116s   05 = 57s   04 = 34s   03 = 14s   01/06/root = ~1s
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      # One shard failing should not hide the others' results.
+      fail-fast: false
+      matrix:
+        include:
+          - name: tokenization
+            paths: src/exercises/02-tokenization
+          - name: mixtures
+            paths: src/exercises/05-datamixtures-and-curriculum
+          - name: rest
+            paths: >-
+              src/exercises/01-introductions
+              src/exercises/03-data-collection-framework
+              src/exercises/04-data-cleaning-dedup
+              src/exercises/06-build-training-dataset
+              tests
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+
+      - name: Sync workspace (all members + dev group)
+        run: uv sync --all-packages
+
+      # Recorded so a future slowdown can be told apart from a smaller runner. `-n auto` follows
+      # the core count, and without this the two are indistinguishable in a log.
+      - name: Record the runner's size
+        run: |
+          echo "cores: $(nproc)"
+          uv run python -c "import os; print('pytest -n auto will use', os.cpu_count(), 'workers')"
+
       - name: Resolve the Playwright version (for the cache key)
         id: pw
         run: echo "version=$(uv run python -c 'import playwright; print(playwright.__version__)')" >> "$GITHUB_OUTPUT"
@@ -72,35 +122,18 @@ jobs:
         timeout-minutes: 6
         run: uv run playwright install chromium
 
-      # Assembled ONCE, here, on purpose. Two exercises' `site` fixtures fall back to running
-      # `deploy/vercel/build.sh` when `public/` is missing — and that script begins with
-      # `rm -rf public/`. Under `-n` two workers can both find it missing, both build, and one
-      # deletes the other's site mid-test. Building up front means the fallback never fires.
-      - name: Assemble the site (once, before the parallel run)
+      # Assembled ONCE per shard, before the parallel run. Two `site` fixtures fall back to running
+      # `deploy/vercel/build.sh` when `public/` is missing, and that script begins with
+      # `rm -rf public/` -- two workers would delete each other's site mid-test.
+      - name: Assemble the site
         run: bash deploy/vercel/build.sh
 
-      # `--dist loadfile` keeps every test in a file on one worker. The browser `page` and `site`
-      # fixtures are module-scoped, so splitting a file across workers would relaunch chromium per
-      # worker and buy nothing. Measured locally: 229s serial -> 65s, same 141 passed / 1 skipped.
-      - name: Integration tests
+      - name: Integration tests (${{ matrix.name }})
         run: |
-          uv run pytest -m integration -n auto --dist loadfile || code=$?
-          # exit 5 = "no tests collected" — fine until the first integration test lands
-          if [ "${code:-0}" = "5" ]; then echo "no integration tests yet"; exit 0; fi
+          uv run pytest -m integration -n auto --dist loadfile ${{ matrix.paths }} || code=$?
+          # exit 5 = "no tests collected" — a shard with no integration tests is fine
+          if [ "${code:-0}" = "5" ]; then echo "no integration tests in this shard"; exit 0; fi
           exit "${code:-0}"
-
-      # `find` rather than a glob: the previous pattern was web/js/*.js, which matched nothing —
-      # exercise 01 inlines its JS and exercise 03 keeps shared modules in web/_shared/, so the
-      # step silently checked zero files.
-      - name: Web bundle syntax (node --check)
-        run: |
-          found=0
-          while IFS= read -r f; do
-            echo "checking $f"
-            node --check "$f"
-            found=$((found + 1))
-          done < <(find src/exercises -path '*/web/*' -name '*.js' -type f | sort)
-          echo "checked $found file(s)"
 
   security:
     runs-on: ubuntu-latest
