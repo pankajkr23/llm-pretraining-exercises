@@ -401,6 +401,8 @@ def save_checkpoint(
     segments: dict[int, int],
     plan_digest: str,
     config_fingerprint: str,
+    parent_branch_id: str | None = None,
+    forked_at_step: int | None = None,
 ) -> checkpoint.Checkpoint:
     """Write weights, optimizer state and the cut vector.
 
@@ -423,6 +425,8 @@ def save_checkpoint(
         segments: Rank to segment number, from `gather_cut`.
         plan_digest: The plan these weights were trained under.
         config_fingerprint: The settings they were trained under.
+        parent_branch_id: The branch this one forked from, if any.
+        forked_at_step: The last step shared with that parent.
 
     Returns:
         The checkpoint's metadata.
@@ -447,6 +451,8 @@ def save_checkpoint(
         plan_digest=plan_digest,
         config_fingerprint=config_fingerprint,
         environment=environment(),
+        parent_branch_id=parent_branch_id,
+        forked_at_step=forked_at_step,
     )
     checkpoint.write_atomically(
         checkpoint.sidecar_path(directory, identifier),
