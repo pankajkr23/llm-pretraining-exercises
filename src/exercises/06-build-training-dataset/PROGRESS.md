@@ -141,6 +141,87 @@ every shard manifest pins, so the sentinels are assigned **out of vocabulary** �
   deleting an entry made them test *fewer cases* and stay green — a guard derived from the thing it
   guards. A twin now pins the three by name.
 
+### 2026-08-25 (stage 7 — crash, resume, and the ids lining up)
+
+**What landed.** `checkpoint.py` and `resume.py`, plus the crash and resume paths in `runner.py`.
+The drill runs golden → crash → resume and compares.
+
+**Measured, on four gloo ranks, 12 steps, checkpoint every 4, crash at step 8:**
+
+| | |
+| --- | ---: |
+| golden run | 144 events (12 × 4 × 3) |
+| ranks at the crash | 24 / 25 / 26 / 27 events |
+| checkpoint restored | `ckpt-main-000007`, cut `{0: 24, 1: 24, 2: 24, 3: 24}` |
+| discarded by the cut | 0 / 1 / 2 / 3 → **6 microbatches re-executed** |
+| after resume | 144 events, **every** `(step, rank, accum, flat, microbatch_hash)` equal to golden |
+| events carrying `replayed_from` | 6 |
+
+**A claim I had to correct while building it.** The cut is a vector, and I had written that it is a
+vector *because the four values differ*. They do not — a synchronous checkpoint lands every rank on
+the same event count, and the drill above shows `{24, 24, 24, 24}`. What is already ragged is how
+much each rank wrote **after** the checkpoint. The vector is structurally necessary (the cut is
+applied to four separate files, and per-rank selection will make the values diverge for real), but
+the drill does not exercise the non-uniform case and the documents now say so.
+`test_each_rank_is_cut_to_its_own_number` covers it directly instead.
+
+**Five mutation survivors, each a different kind of gap:**
+
+| what survived | what it turned out to be |
+| --- | --- |
+| `os.replace` → copy-then-delete | atomicity is only observable through a handle opened *before* the write. Test now holds one open and asserts it still reads the old file |
+| `latest` keyed on id instead of step | ids pad to six digits, so below a million steps the orders agree. At a million they diverge and a resume silently redoes a thousand steps. Test moved to that scale |
+| `os._exit` → `raise SystemExit(137)` | still exits 137, still truncates the ledger, passes every other assertion. Workers now write an exit marker from `finally`, so its **absence** is the record of an abrupt end |
+| the restore digest check | no test ever built a mismatched `.pt`/`.json` pair — the state a directory copied mid-run produces |
+| `all_gather` → copy my own number | undetectable in the drill, because the cut is uniform. Tested directly instead, out of process, with three ranks holding 1 / 2 / 3 events |
+
+**And one that was my harness, not the code.** Two of those five kept surviving after the tests
+existed, because the mutation script's test list did not include the file the new tests were in. A
+mutation harness that does not run the relevant tests reports everything as surviving *or* as
+killed, depending on which way you are wrong — worth checking before believing either.
+
+**24/24 mutations killed.** 251 tests in the exercise.
+
+### 2026-08-25 (stage 6 — the ledger, the model, and four real processes)
+
+**What landed.** `ledger.py`, `pack.py`, `feed.py`, `model.py`, `train.py`, `runner.py`. A
+four-process `gloo` run writes four chained ledger segments over disjoint data, and the loss falls.
+219 tests, 4.46 s.
+
+**Six defects the mutation harness found that reading did not.** Each is a test that did not exist,
+not dead code — which is the useful outcome and the reason the harness is run at all.
+
+| what survived | why it mattered |
+| --- | --- |
+| `verify_chain`'s `seq` check removed | the chain is not a signature; a tamperer can delete an event and repair every link behind it, and only the sequence numbers expose them |
+| `is_causal=True` instead of the block-diagonal mask | causality already stops document A seeing B, so a leak test that checks A's logits proves nothing — the leak is B reading back into A |
+| `ascontiguousarray` in `hash_array` | genuinely dead: `tobytes` already copies in the requested order. Removed rather than documented, leaving `order="C"` as the single mechanism |
+| `order="A"` after that | a 1-D strided view is neither C- nor F-contiguous, so "A" falls back to C and the test could not tell them apart. Only a Fortran-ordered 2-D array — a transposed microbatch — separates them |
+| the per-fragment graded count read from the wrong slice | every window-level total still added up while each fragment was attributed the wrong number, and the learning ledger attributes loss through those counts |
+| `flat` naming the wrong sequence | nothing else in an event repeats the number, so the ledger stayed internally consistent while pointing replay at the wrong window |
+
+**Two bugs in the modules themselves, both caught by tests written before the code was trusted.**
+`append` opened in `"a"` mode, so a writer that never called `open()` bypassed the `O_EXCL` claim
+entirely. And `drop_torn_tail` returned early when the last line parsed, without scanning the
+earlier ones — so corruption in the middle of a file read as "nothing to repair".
+
+**One thing found by asking the right question rather than by a test.** `nn.Linear.__init__` calls
+`reset_parameters`, which draws from the **global** RNG — before our explicit generator runs. Every
+value is overwritten a moment later, so it is invisible in the model's own weights and surfaces as
+the next `torch.randn` anywhere in the process returning different numbers because a model was
+built. `fork_rng` around construction fixes it; a test asserts the global stream is untouched.
+
+**Measured, not assumed.** Four `gloo` ranks end a run **bit-identical** (`b2:e1e220eb…` on all
+four, 8 steps). That is what the replica-sync test asserts. If a future backend ever rounds
+differently per rank the repair is a tight `allclose`, never deleting the check — the failure it
+catches is unbounded divergence, not a last-digit disagreement.
+
+**Open, and needing a decision.** The torch tests — model, training step, four-rank run — `skip` in
+CI, because CI runs `uv sync --all-packages` with no extras. They are run locally before every PR,
+but *a rule that only skips is not a rule*. Adding torch to one of the three integration shards
+would cost that runner an install and run in parallel with the others; that is a CI-time trade-off
+to decide deliberately rather than by default.
+
 ### 2026-08-25 (skeleton and stage 1)
 
 - **Exercise skeleton completed** to match every other exercise: `BRIEF.md` (local, gitignored),

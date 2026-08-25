@@ -12,6 +12,95 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Pre-commit hooks, so the gates CI enforces also run before a commit exists.** gitleaks,
+  `ruff check --fix` and `ruff format` — the ruff ones through `uv run`, so it is the version
+  pinned in `pyproject.toml` rather than a second copy that can drift from CI's. Plus
+  merge-conflict, private-key, large-file, YAML and TOML checks. `uv run pre-commit install`.
+  Verified by staging a fake credential and confirming the commit was refused.
+- **No hook rewrites repository content, and that is enforced by a test.** `end-of-file-fixer` and
+  `trailing-whitespace` were in the first draft; run once over the repo they rewrote
+  `02-tokenization/web/tokenizer.json` — the frozen tokenizer whose bytes are hashed and whose hash
+  every shard manifest in exercise 06 pins. A cosmetic newline would have voided that hash and
+  invalidated every manifest, and the diff would have read as tidying.
+
+### Fixed
+
+- **CI's secret scan failed on exercise 06's test fixtures, and none of them was a secret.**
+  gitleaks' `generic-api-key` rule fires on an identifier containing "key" beside a high-entropy
+  value, so a placeholder field named `plan_key_digest` holding sixteen hex characters read as a
+  leaked credential. Verified
+  with gitleaks rather than guessed — `plan_digest`, `microbatch_hash`, `weight_digest`,
+  `tokenizer_sha256` and a complete real ledger line all pass — so the field was **renamed** and no
+  rule is weakened anywhere. This mattered beyond the tests: the submission bundle commits a real
+  ledger in which every event carries that field, and under the old name each line would have
+  tripped the scanner.
+
+- **Exercise 06 stage 7 — crash, resume, and the batch ids lining up.** A checkpoint records a
+  position in the *data*, not only in the loss curve: weights, optimizer state (AdamW's moments are
+  half its behaviour — restoring without them spikes the loss at every resume) and the ledger cut
+  each rank must be truncated to. The crash is a real child process killed with `os._exit(137)`,
+  and **a crash phase that exits 0 is a failure**, because otherwise deleting the drill makes the
+  demo look healthier.
+- **Measured: 144 events golden, ranks stopping at 24/25/26/27, six microbatches re-executed, and
+  every `(step, rank, accum, flat, microbatch_hash)` after the resume equal to the run that never
+  crashed.** Inputs only — losses and weights move with thread count and library version, and
+  byte-identity over them is not a claim this system can keep.
+- **The re-execution is published rather than hidden.** "No skipped or repeated batches" is true of
+  the effective post-cut ledger and never of the device; each re-executed event carries
+  `replayed_from` naming the discarded event it repeats.
+- **The sidecar is torch-free by design** — `verify.py` audits from artifacts alone and must not
+  need the producer's dependencies. The `.pt` is renamed into place first and the `.json` last, so
+  the sidecar's existence is the commit and an interrupted save reads as absent.
+- **24 mutants across the new modules, 24 killed** — five only after the tests they exposed were
+  written, including `os._exit` → `SystemExit`, which still exits 137 and passed every other
+  assertion until workers began recording a clean-exit marker whose *absence* is the evidence.
+
+### Changed
+
+- **Corrected a claim about the cut vector before it shipped.** It had been written as a vector
+  "because the four ranks stop at different points"; at a synchronous checkpoint they do not, and
+  the drill measures `{24, 24, 24, 24}`. It is a vector because it is applied to four separate
+  files and because per-rank selection will make the values diverge — the non-uniform case is now
+  tested directly rather than claimed of a drill that does not produce it.
+
+- **Exercise 06 stage 6 — the consumption ledger, and a training step to fill it.** One event per
+  microbatch, one file per `(branch, rank, segment)`, each event carrying the previous one's hash.
+  Four ranks writing one file corrupt it, so there is no shared writer and therefore no lock to be
+  holding when a process dies. Written *before* the optimizer steps: "consumed" means fed to the
+  model, and whether that work counts is the checkpoint cut's decision on resume.
+- **The chain's claim is bounded, and stated as such.** It is not a signature — anyone who can edit
+  the file can recompute every hash after their edit. What it buys is that tampering can never be
+  local, and `seq` is what exposes a re-chained file with an event removed.
+- **A crash can tear the last line, and only the last line is repaired.** `append` fsyncs, so a
+  completed event has landed, but the kill can arrive mid-`write`. An unparseable line anywhere
+  earlier is corruption, not an interrupted write, and repairing it would hide real damage.
+- **Packing, and the window edge the naive version gets wrong.** Concat-and-chop means most windows
+  *open* mid-document; numbering that fragment from 0 tells the model the middle of a document is
+  its start. Fragments carry their true offset, found by binary search over each shard's `EOS`
+  positions rather than a per-window backward scan.
+- **TinyGPT (5,774,080 parameters) uses RoPE for a data-system reason, not a modelling one.** A
+  5,000-token document chopped into 512-token windows reaches position 4,999, which no learned table
+  sized to the window can hold; RoPE's attention depends on the *difference* between positions.
+- **Real worker processes over `gloo`, not a loop pretending to be four.** `spawn` everywhere so a
+  Linux grader hits nothing macOS hid, and a file rendezvous rather than a TCP port so there is no
+  port to collide on a shared runner. Four ranks were measured to end a run **bit-identical**;
+  per-rank telemetry records a weight digest so that is checked rather than assumed.
+- **The gradient is token-weighted.** Backward on the summed loss, all-reduce gradients and counts,
+  divide once. Averaging per-slot averages weights a 60-token slot as heavily as a 500-token one,
+  and the loss curve looks entirely normal while it happens.
+- **47 mutants across the five new modules, 47 killed** — six of them only after the tests they
+  exposed were written. The sharpest: replacing the block-diagonal mask with plain `is_causal=True`
+  survived the whole model suite, because causality already stops document A from seeing document B
+  and the leak test only checked A.
+
+### Fixed
+
+- **Exercise 06's README claimed "stage 1 of 8" directly above a table marking five stages done.**
+  The exact sentence-versus-table drift `AGENTS.md` warns about, now caught by a test that reads the
+  status line and the table and requires them to agree — along with one asserting every module in
+  the package is named by both the README and the exercise's `CLAUDE.md`, which failed on its first
+  run against six modules.
+
 - **Exercise 06 stage 5 — masks for packed sequences.** Block-diagonal attention so document B
   cannot see document A, position ids that **restart per document**, and loss masks that exclude
   padding, context spans and each document's final token (next-token prediction has no target for

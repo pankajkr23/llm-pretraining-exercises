@@ -4,10 +4,11 @@ Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is the
 `submission_artifacts/` bundle, the reasoning is `DECISIONS.md`, the running log is `PROGRESS.md`,
 and `BRIEF.md` is the assignment (local only, gitignored).
 
-**Status: stage 4 of 8.** `config.py`, `spec.py`, `shards.py`, `manifest.py`, `firewall.py`,
-`plan.py` and `masks.py` exist. Do not
-describe this exercise as having packing, ledgers or replay until it does — the README carries a
-stage table for exactly this reason.
+**Status: stage 7 of 8.** `spec.py`, `config.py`, `shards.py`, `manifest.py`, `firewall.py`,
+`plan.py`, `masks.py`, `pack.py`, `feed.py`, `ledger.py`, `model.py`, `train.py`, `runner.py`,
+`checkpoint.py` and `resume.py` exist. Replay, fork, the auditor and the evidence bundle do **not**.
+Do not describe this exercise as having them until it does — the README carries a stage table for
+exactly this reason, and `tests/test_trainingdata_docs.py` asserts the header agrees with it.
 
 ## The rules this exercise adds
 
@@ -85,6 +86,95 @@ stage table for exactly this reason.
   preconditioned gradient inner product, minus a redundancy penalty the lecture never mentions.
   `DECISIONS.md` D7.
 
+- **The ledger is a chain, and that is a bounded claim.** Each event carries the previous event's
+  hash, so tampering can never be *local*. It is not a signature: anyone who can edit the file can
+  recompute every hash after their edit. What exposes them then is `seq`, which is why the sequence
+  check in `verify_chain` is **not** redundant with the `prev` check — a mutation removing it
+  survived thirty-one tests before the re-chaining test existed.
+
+- **`append` refuses to run before `open`.** `open` claims the segment with `O_EXCL`; `append` uses
+  `"a"` mode, which would happily create the file and bypass that claim. Two processes interleaving
+  into one segment produce a record no one can read.
+
+- **Only the LAST line of a segment may be repaired.** A torn tail is an interrupted write; an
+  unparseable line anywhere earlier is corruption, and repairing it would hide real damage behind a
+  routine crash-recovery path. `drop_torn_tail` validates the earlier lines *first* — an early
+  return on a healthy tail let mid-file damage read as "nothing to repair".
+
+- **A window usually OPENS mid-document, and numbering it from 0 is the silent error.**
+  Concat-and-chop cuts every `sequence_length` tokens with no regard for documents. `pack.py` gives
+  a continuation fragment its true offset; `masks.position_ids` takes those offsets. This is why the
+  model uses **RoPE and not a learned position table**: a 5,000-token document reaches position
+  4,999, which no table sized to the window can hold, and clamping would corrupt exactly the
+  continuations the offsets exist to fix.
+
+- **The leak runs from the LATER document to the earlier one.** Causality already stops document A
+  from seeing document B, so a test that checks A's logits passes even with the block-diagonal mask
+  replaced by plain `is_causal=True`. Assert on B. Both directions are tested; only one can fail.
+
+- **`fork_rng` around module construction is load-bearing.** `nn.Linear.__init__` calls
+  `reset_parameters`, which draws from the **global** RNG before our explicit generator runs. Every
+  value is overwritten a moment later, so it is invisible in the model and surfaces as the next
+  `torch.randn` in the process returning different numbers because a model was built.
+
+- **The reduction is built from sums, never from means of means.** Packing is ragged, so
+  accumulation slots and ranks have different graded-token counts. Backward on the summed loss,
+  all-reduce the gradients and the counts, divide **once**. Averaging per-slot averages weights a
+  60-token slot as heavily as a 500-token one, and the loss curve looks entirely normal.
+
+- **Ranks must end every step bit-identical.** Four gloo ranks were measured to do so. A rank that
+  steps on its own unreduced gradient diverges immediately, with no error and a healthy-looking
+  loss — the run is then four different models and the checkpoint is whichever one rank 0 held.
+  `write_telemetry` records a weight digest per rank so that is checkable rather than assumed.
+
+- **`spawn`, always, and a file rendezvous, never a port.** macOS defaults to `spawn` and Linux to
+  `fork`; code written under `fork` works by accident and fails on a grader's machine. A TCP port
+  that is free on a laptop may not be on a shared runner, and the failure is an intermittent hang.
+
+- **The torch tests skip in CI and that is stated, not hidden.** CI runs `uv sync --all-packages`
+  with no extras, so `model`, `train` and `runner` are verified locally before each PR and nowhere
+  else. `gloo` additionally needs loopback, so the multi-rank tests skip again inside a sandbox that
+  blocks it — `_loopback_available()` probes for that rather than letting it hang.
+
+- **The cut is a vector, and be precise about why.** Today its four values *coincide*, because a
+  synchronous checkpoint lands every rank on the same event count. What is already ragged is how
+  much each rank wrote **after** the checkpoint before it died, which `resume.plan_resume` computes
+  per rank. A scalar would be correct only while every rank writes the same number of events per
+  step — per-rank selection breaks that the moment a rank rejects a candidate. Do not "simplify" it
+  to a scalar, and do not claim the drill exercises the non-uniform case: it does not, and
+  `test_each_rank_is_cut_to_its_own_number` covers that directly.
+
+- **The sidecar is the commit.** `<id>.pt` is renamed into place first, `<id>.json` last, so an
+  interrupted save leaves tensors with no sidecar and reads as *absent*. Every write is
+  rename-into-place: a reader holding the old file must keep seeing the old file, whole.
+
+- **`latest` orders by step, never by id.** Ids pad to six digits, so below a million steps lexical
+  order agrees and a `max` over ids looks right. At a million they diverge —
+  `"ckpt-main-1000000"` sorts before `"ckpt-main-999999"` — and a resume would silently redo a
+  thousand steps.
+
+- **`os._exit`, never `sys.exit`, and the marker proves which was used.** `sys.exit` raises
+  `SystemExit`, so `finally` runs, `atexit` runs and buffers flush; that is a shutdown, and a drill
+  built on it proves nothing. Each worker writes an exit marker from `finally`, so its **absence**
+  is the record of an abrupt end — swapping the drill to `SystemExit` still exits 137 and still
+  leaves a truncated ledger, and only that marker notices.
+
+- **The barrier before the crash makes the drill deterministic, not gentle.** Without it the first
+  rank to die makes the parent `SIGTERM` the survivors, and how much each wrote becomes a race —
+  measured at 24/25/25/25 events where the offsets asked for 24/25/26/27.
+
+- **Resume checks every rank before cutting any of them.** Half-applied is worse than the crash: a
+  run whose ranks disagree about which checkpoint they belong to. `apply_cut` runs a dry pass first.
+
+- **Repair the torn tail before measuring the cut, and use one scan for both.** A torn line is not
+  an event; counting it puts the cut one event too far and under-reports what was re-executed.
+
+- **What the resume claim covers, exactly.** *Inputs*: `(step, rank, accum, flat,
+  microbatch_hash)` match a run that never crashed. **Not** losses and **not** weights — those move
+  with thread count and library version. And "the next batch" means the batch after the
+  *checkpoint*, not after the crash; the microbatches between them are re-executed, carry
+  `replayed_from` naming the discarded event each repeats, and the count is published.
+
 ## Naming
 
 Test modules are prefixed `test_trainingdata_*`. pytest imports test modules by **basename**, so a
@@ -96,7 +186,8 @@ second `test_config.py` anywhere in the repo aborts *collection* rather than fai
 ```bash
 uv sync --all-packages                                   # the data system
 uv sync --all-packages --extra train                     # ...plus torch, for the training step
-uv run pytest src/exercises/06-build-training-dataset
+uv run pytest src/exercises/06-build-training-dataset    # unit + integration
+uv run pytest src/exercises/06-build-training-dataset -m "not integration"
 ```
 
 Heavy output goes to gitignored `artifacts/`; the tracked bundle is capped at 2 MiB and the cap is

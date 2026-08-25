@@ -294,6 +294,37 @@ The rules that follow from it:
 - **Changelog:** record every user-facing change under `CHANGELOG.md`'s `[Unreleased]` section **in the same PR** (Keep a Changelog + SemVer).
 - **Commit & PR messages** carry no AI co-author or session-link trailers — keep the public history clean.
 
+## Local gates before a commit exists
+
+`.pre-commit-config.yaml` runs the three gates CI fails on — **gitleaks**, `ruff check`, `ruff
+format` — plus merge-conflict, private-key, large-file, YAML and TOML checks. Install once per
+clone:
+
+```bash
+uv sync --all-packages && uv run pre-commit install     # needs gitleaks: brew install gitleaks
+uv run pre-commit run --all-files                        # over everything, not just staged
+```
+
+- **This is a feedback loop, not the enforcement point.** A hook is skippable with `--no-verify` and
+  is absent on a fresh clone, so **CI still decides**. What it buys is finding a problem in two
+  seconds on your machine instead of two minutes inside a pull request.
+- **The secret scan fails when gitleaks is missing; it never skips.** A scan that quietly does not
+  run is worse than none, because it reads as coverage.
+- **No hook may rewrite repository content, and this is not a style preference.** `end-of-file-fixer`
+  and `trailing-whitespace` were in the config's first draft; run once, they rewrote
+  `02-tokenization/web/tokenizer.json` — the **frozen tokenizer whose bytes are hashed and whose
+  hash every shard manifest in exercise 06 pins**. A cosmetic newline would have voided that hash
+  and invalidated every manifest, and the diff would have read as tidying. They also rewrote the
+  tokenization corpus, which is data. `tests/test_precommit_config.py` asserts neither can return.
+- **A digest field must not be named like a credential.** gitleaks' `generic-api-key` rule fires on
+  an identifier containing *key*, *token*, *secret* or *api* next to a high-entropy value — so a
+  field named `plan_key_digest` holding sixteen hex characters reads as a leaked credential, while
+  the same value under `plan_digest` does not. Content
+  digests are public by construction and a committed ledger is full of them; name them
+  `*_digest`/`*_hash` and the scanner stays at full strength. **Never reach for a broad allowlist**
+  — `.gitleaksignore` takes `<commit>:<path>:<rule>:<line>` fingerprints, which silence exactly one
+  line of one commit and expire when it changes.
+
 ## CI/CD
 
 - CI (`.github/workflows/ci.yml`): `uv sync --all-packages` → `ruff check` → `ruff format --check` → unit → install chromium → integration → `node --check` on every `web/**/*.js`.

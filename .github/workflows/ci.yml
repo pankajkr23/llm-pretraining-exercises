@@ -146,3 +146,6 @@ jobs:
         uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Pinned so a scan that passes locally means something. The same scanner runs in
+          # `.pre-commit-config.yaml`; an unpinned CI could start flagging what the hook cleared.
+          GITLEAKS_VERSION: 8.30.1
