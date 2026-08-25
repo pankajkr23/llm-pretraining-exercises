@@ -275,7 +275,7 @@ class LaneResult:
         return self.tokens >= self.target_tokens
 
 
-def _get(url: str, tries: int = 6) -> dict:
+def _get(url: str, tries: int = 10) -> dict:
     """GET a JSON document, retrying transient failures only.
 
     Args:
@@ -307,6 +307,10 @@ def _get(url: str, tries: int = 6) -> dict:
                 continue
         except Exception as error:  # noqa: BLE001 - IncompleteRead, timeouts, resets
             last = error
+        # Logged on EVERY retry, not only on 429. The first version logged rate limits alone, so a
+        # run stuck retrying `IncompleteRead` produced no output at all for ten minutes and was
+        # indistinguishable from a hang. A retry nobody can see is a retry nobody can diagnose.
+        logger.info("retry %d/%d after %s: %s", attempt + 1, tries, type(last).__name__, last)
         time.sleep(3 * (attempt + 1))
     raise RuntimeError(f"{url} failed after {tries} attempts: {last}")
 
@@ -339,11 +343,12 @@ def verify_licence(dataset: str) -> str:
 
 
 def _rows(source: Source, offset: int, length: int) -> list[dict]:
-    """One page of rows, asking for only the columns this source uses.
+    """One page of rows.
 
-    The column list is not an optimisation. The egress proxy truncates large bodies, and a
-    full-width row from a corpus dataset is large — asking for two columns instead of eleven is
-    what keeps the request inside the limit.
+    **`columns` is sent and the endpoint ignores it** — measured: a 50-row fineweb-edu request
+    asking for `text` alone still returns all ten columns and 212 KB. It is left in because it is
+    the documented parameter and costs nothing if it starts working; it is not load-bearing, and
+    nothing here may assume responses are small because of it.
 
     Args:
         source: Which lane's source.
@@ -513,8 +518,16 @@ def main() -> int:
         logger.info("--- %s: target %s tokens ---", lane, f"{targets[lane]:,}")
         result, documents = fetch_lane(lane, targets[lane], tokenizer, dry_run=args.dry_run)
         if not args.dry_run and documents:
-            path = args.out / f"{lane}.txt"
-            payload = "\n".join(documents)
+            # JSONL, one encoded string per line — NOT newline-joined text.
+            #
+            # The first version joined documents with "\n" and the shard builder split on "\n".
+            # Measured on the first real fetch: 2,174 FineWeb articles came back as 47,456
+            # "documents", because every article is multi-paragraph. Each paragraph would then get
+            # its own EOS, and the block-diagonal mask would wall off paragraphs of the SAME
+            # article from each other — corrupting the exact boundary claim this exercise is built
+            # on, while every count still looked plausible.
+            path = args.out / f"{lane}.jsonl"
+            payload = "".join(json.dumps(d, ensure_ascii=False) + "\n" for d in documents)
             path.write_text(payload, encoding="utf-8")
             result.bytes_written = len(payload.encode("utf-8"))
         results.append(result)
