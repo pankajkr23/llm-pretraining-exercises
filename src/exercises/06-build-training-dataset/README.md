@@ -123,8 +123,10 @@ src/trainingdata/
 tests/           # discovered by `uv run pytest` from the repo root
 tools/
   fetch_corpus.py   # TRACKED — a corpus needs a tracked way to fetch and licence-check it
+  build_corpus.py   # TRACKED — fetched text to sealed shards, with the guards that matter
   build_notebook.py # local-only, gitignored — back it up
 artifacts/       # heavy regenerable output (gitignored)
+results/         # TRACKED — measured evidence a document renders; it must survive a clone
 ```
 
 ## Run it
