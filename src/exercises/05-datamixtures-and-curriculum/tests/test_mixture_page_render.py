@@ -43,6 +43,14 @@ def site() -> str:
     without one, and a suite that skipped in that case would protect nothing on the machine that
     matters most.
     """
+    # `build.sh` starts with `rm -rf public/`, so two xdist workers both finding `public/` absent
+    # would delete each other's site mid-test. Fail loudly instead of racing: CI assembles it once
+    # up front (see `.github/workflows/ci.yml`), and locally the fix is one command.
+    if os.environ.get("PYTEST_XDIST_WORKER") and not (PUBLIC / SLUG / "index.html").exists():
+        pytest.fail(
+            "running under -n with no assembled site. `build.sh` would race across workers "
+            "(it begins `rm -rf public/`). Run `bash deploy/vercel/build.sh` first."
+        )
     if not (PUBLIC / SLUG / "index.html").exists():
         script = REPO / "deploy" / "vercel" / "build.sh"
         if not script.exists():

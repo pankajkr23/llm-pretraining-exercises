@@ -38,8 +38,14 @@ jobs:
       - name: Format check (ruff)
         run: uv run ruff format --check .
 
+      # `--dist loadfile` is a CORRECTNESS requirement here, not a tuning knob. Several suites
+      # write a JS harness beside the module under test — a fixed path, deleted in a `finally` —
+      # because ES module imports resolve against the importing file's own directory. Plain
+      # `-n auto` splits a file across workers, so one worker deletes the harness another is
+      # running: 4 errors, every time. Keeping a file on one worker removes the collision.
+      # No two test files share a harness path, so this is sufficient.
       - name: Unit tests
-        run: uv run pytest -m "not integration"
+        run: uv run pytest -m "not integration" -n auto --dist loadfile
 
       # The rendering tests need a real browser.
       #
@@ -66,9 +72,19 @@ jobs:
         timeout-minutes: 6
         run: uv run playwright install chromium
 
+      # Assembled ONCE, here, on purpose. Two exercises' `site` fixtures fall back to running
+      # `deploy/vercel/build.sh` when `public/` is missing — and that script begins with
+      # `rm -rf public/`. Under `-n` two workers can both find it missing, both build, and one
+      # deletes the other's site mid-test. Building up front means the fallback never fires.
+      - name: Assemble the site (once, before the parallel run)
+        run: bash deploy/vercel/build.sh
+
+      # `--dist loadfile` keeps every test in a file on one worker. The browser `page` and `site`
+      # fixtures are module-scoped, so splitting a file across workers would relaunch chromium per
+      # worker and buy nothing. Measured locally: 229s serial -> 65s, same 141 passed / 1 skipped.
       - name: Integration tests
         run: |
-          uv run pytest -m integration || code=$?
+          uv run pytest -m integration -n auto --dist loadfile || code=$?
           # exit 5 = "no tests collected" — fine until the first integration test lands
           if [ "${code:-0}" = "5" ]; then echo "no integration tests yet"; exit 0; fi
           exit "${code:-0}"
