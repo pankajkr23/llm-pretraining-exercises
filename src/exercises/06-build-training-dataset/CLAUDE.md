@@ -146,14 +146,27 @@ it denied `replay.py` existed while the module carried 340 lines and 14 tests.
   loss — the run is then four different models and the checkpoint is whichever one rank 0 held.
   `write_telemetry` records a weight digest per rank so that is checkable rather than assumed.
 
+- **Pin gloo to loopback, and never assume the hostname resolves somewhere sane.** gloo picks its
+  interface by resolving the machine's hostname. On a laptop that is a WiFi address, so four
+  processes on ONE machine talk over WiFi — and when the network moves, `init_process_group` dies
+  with `uv_accept: invalid argument` and `SIGABRT`, naming nothing to do with networking. The same
+  drill passed an hour earlier on identical code, which is the signature of an environmental
+  dependency rather than a bug. `runner.pin_gloo_to_loopback()` sets `GLOO_SOCKET_IFNAME` with
+  `setdefault` semantics, so a real multi-node run can still name its own interface. **Anything
+  that creates a process group must call it** — including the out-of-process test probe, which
+  failed for exactly this reason until it did.
+
 - **`spawn`, always, and a file rendezvous, never a port.** macOS defaults to `spawn` and Linux to
   `fork`; code written under `fork` works by accident and fails on a grader's machine. A TCP port
   that is free on a laptop may not be on a shared runner, and the failure is an intermittent hang.
 
-- **The torch tests skip in CI and that is stated, not hidden.** CI runs `uv sync --all-packages`
-  with no extras, so `model`, `train` and `runner` are verified locally before each PR and nowhere
-  else. `gloo` additionally needs loopback, so the multi-rank tests skip again inside a sandbox that
-  blocks it — `_loopback_available()` probes for that rather than letting it hang.
+- **The torch tests run in CI now, in their own job, and the reason that took a rewrite matters.**
+  A module-level `importorskip` skips an ENTIRE file, and a file that collects nothing is
+  indistinguishable from a file with nothing in it — so 46 tests and all 20 integration tests ran
+  nowhere while every gate reported green. The `train` job installs `--extra train` with CPU-only
+  wheels and runs exactly the gated files. Do not delete it and do not drop the extra:
+  `tests/test_ci_shards_cover_everything.py` fails on either. `gloo` still needs loopback, so the
+  multi-rank tests skip in a sandbox that blocks it.
 
 - **The cut is a vector, and be precise about why.** Today its four values *coincide*, because a
   synchronous checkpoint lands every rank on the same event count. What is already ragged is how

@@ -10,6 +10,43 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **CI now runs the torch-gated tests, in a job of their own.** They were invisible: a module-level
+  `pytest.importorskip("torch")` skips an ENTIRE file, `uv sync --all-packages` installs no extras,
+  and a file that collects nothing looks exactly like a file with nothing in it — so **46 of
+  exercise 06's 272 tests and all 20 of its integration tests ran nowhere**, plus exercise 05's
+  proxy run, with every gate green. `ci.yml` compounded it by treating pytest's exit code 5 as
+  success.
+- **CPU-only torch wheels, pinned by a Linux-scoped index.** **191.8 MB** instead of the 2.7 GB
+  CUDA build, and **19 fewer packages** in the lock. Nothing here trains on a GPU — the graded run
+  is CPU + gloo precisely so it behaves the same on a grader's machine — so the CUDA payload bought
+  nothing and made "torch in CI" look unaffordable when it was not. Scoped by marker because macOS
+  arm64 has no CUDA build, and pinning an index there would only add a way for the platforms to
+  disagree. The job asserts `+cpu` in `torch.__version__`: if the pin regresses, the CUDA wheel
+  installs silently and the only symptom is a slower job. Measured at **28.2s** for all 78 tests,
+  against a 164s critical path.
+
+### Fixed
+
+- **Multi-rank training depended on what the machine's hostname resolved to.** gloo picks its
+  network interface that way, and on a laptop the hostname resolves to a **WiFi** address — so
+  four processes on one machine were talking over WiFi. When the network moved,
+  `init_process_group` began dying with `uv_accept: invalid argument` and `SIGABRT`, naming nothing
+  to do with networking; the same drill had passed an hour earlier on identical code. This is
+  exactly the "works on my machine" class that forcing `spawn` and using a file rendezvous was
+  meant to remove, and a grader on a VPN would have hit it. `GLOO_SOCKET_IFNAME` is now defaulted
+  to loopback, with `setdefault` semantics so a real multi-node run can still name its own
+  interface.
+- **The shard guard could not see the hole it existed for.** It detected "file in no shard" but not
+  "file in a shard that collects zero", because it derived ownership from a collection run in the
+  same environment that was missing the dependency. It is now **lexical** — the filesystem and each
+  file's `importorskip` line are facts about the source rather than about what happens to be
+  installed, which is the property a coverage guard needs since the environment is what it is
+  making claims about. It keeps a tracked ledger that fails in **both** directions and asserts every
+  gated file is reachable by a job that installs what it needs. Both mutants confirmed: deleting the
+  job goes red, dropping the extra goes red.
+
 ## [0.8.0] - 2026-08-25
 
 Session 6's exercise through stage 7 of 8: a training-data execution system that plans its own

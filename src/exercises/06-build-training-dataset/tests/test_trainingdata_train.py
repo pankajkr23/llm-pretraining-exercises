@@ -10,6 +10,7 @@ torch is an optional extra, so this file skips without it.
 
 import dataclasses
 import json
+import os
 import socket
 import subprocess
 import sys
@@ -467,12 +468,15 @@ def test_the_cut_is_gathered_from_every_rank_not_just_this_one(tmp_path) -> None
         import json, sys
         from pathlib import Path
         import torch
-        from trainingdata import ledger, train
+        from trainingdata import ledger, runner, train
 
         ROOT = Path({str(tmp_path)!r})
         WORLD = 3
 
         def worker(rank, rendezvous):
+            # Same reason the real worker does it: gloo otherwise binds whatever the hostname
+            # resolves to, which is a WiFi address on a laptop and fails when the network moves.
+            runner.pin_gloo_to_loopback()
             torch.distributed.init_process_group(
                 backend="gloo", init_method=rendezvous, rank=rank, world_size=WORLD)
             writer = ledger.LedgerWriter(
@@ -503,3 +507,35 @@ def test_the_cut_is_gathered_from_every_rank_not_just_this_one(tmp_path) -> None
             f"rank {rank} did not see the other ranks' lengths: {seen['cut']}"
         )
         assert {int(k): v for k, v in seen["segments"].items()} == {0: 5, 1: 6, 2: 7}
+
+
+def test_gloo_is_pinned_to_loopback_but_never_overrides_a_real_choice(monkeypatch) -> None:
+    """**A single-machine run must not depend on what the hostname resolves to.**
+
+    gloo picks its interface by resolving the machine's hostname. On a laptop that is a WiFi
+    address, so four processes talking to each other on one machine go out over WiFi — and when
+    the network changes underneath them, `init_process_group` dies with `uv_accept: invalid
+    argument` and `SIGABRT`, with nothing in the message pointing at networking. The same drill
+    passed an hour earlier on identical code, which is the signature of an environmental
+    dependency rather than a bug in the run.
+
+    `setdefault` semantics matter as much as the pin: a genuine multi-node run has to be able to
+    name its real interface, and this only supplies a default for the single-machine case.
+    """
+    monkeypatch.delenv("GLOO_SOCKET_IFNAME", raising=False)
+    pinned = runner.pin_gloo_to_loopback()
+    assert pinned in {"lo0", "lo"}, f"no loopback interface was found: {pinned!r}"
+    assert os.environ["GLOO_SOCKET_IFNAME"] == pinned
+
+    monkeypatch.setenv("GLOO_SOCKET_IFNAME", "eth7")
+    assert runner.pin_gloo_to_loopback() is None, "an explicit interface was overridden"
+    assert os.environ["GLOO_SOCKET_IFNAME"] == "eth7"
+
+
+def test_the_loopback_lookup_finds_a_real_interface() -> None:
+    """The twin. A helper that returned a hardcoded string would pass the test above on any
+    machine, including one where that interface does not exist."""
+    import socket as socket_module
+
+    names = {name for _, name in socket_module.if_nameindex()}
+    assert runner.loopback_interface() in names
