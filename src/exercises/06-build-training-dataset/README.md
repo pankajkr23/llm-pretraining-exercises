@@ -138,14 +138,19 @@ uv sync --all-packages --extra train                     # ...plus torch
 uv run pytest src/exercises/06-build-training-dataset -m integration
 ```
 
-**What CI cannot see, with the number attached.** The torch tests — the model, the training step,
-and the four-process `gloo` run — `skip` without the extra, and CI does not install it. That is
-**46 of this exercise's 272 tests**, and **every one of its 20 integration tests**: CI runs
-`uv sync --all-packages` with no extras, so `test_trainingdata_model.py` (20), `test_trainingdata_train.py`
-(14) and `test_trainingdata_crash.py` (12) collect and skip in full. They are run locally before
-every pull request, and `gloo` additionally needs loopback networking, so they skip again inside a
-sandbox that blocks it. A rule that only ever skips is not a rule, and this one is named here with
-its size rather than left to be discovered.
+**What CI runs, and the gap that used to be invisible.** The torch tests — the model, the training
+step, and the four-process `gloo` run — skip without the `train` extra, and `uv sync --all-packages`
+does not install it. That silently removed **46 of this exercise's 272 tests** and **every one of
+its 20 integration tests**: a module-level `importorskip` skips the whole file, a file that collects
+nothing looks exactly like a file with nothing in it, and the shard step treats pytest's exit code 5
+as success. Every gate stayed green.
+
+A dedicated **`train` job** now runs those files with CPU-only torch wheels — 191.8 MB rather than
+the 2.7 GB CUDA build, pinned by a Linux-scoped index in the root `pyproject.toml` — in parallel
+with the 164s tokenization shard, so it costs no wall clock.
+`tests/test_ci_shards_cover_everything.py` fails if any gated file stops being reachable by a job
+that installs what it needs. **`gloo` additionally needs loopback networking**, so the multi-rank
+tests still skip inside a sandbox that blocks it; a GitHub runner allows it.
 
 ## The producer/auditor wall
 

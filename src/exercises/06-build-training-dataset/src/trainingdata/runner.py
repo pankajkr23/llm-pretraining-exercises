@@ -29,6 +29,7 @@ confirming the bytes still hash to what the manifest says.
 import dataclasses
 import json
 import os
+import socket
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -143,6 +144,47 @@ def build_plan(spec: RunSpec) -> plan_module.Plan:
     )
 
 
+def loopback_interface() -> str | None:
+    """The loopback interface name on this machine, or None if there is not one.
+
+    Returns:
+        `"lo0"` on macOS, `"lo"` on Linux.
+    """
+    try:
+        names = {name for _, name in socket.if_nameindex()}
+    except OSError:  # pragma: no cover - if_nameindex is unavailable on some platforms
+        return None
+    return next((candidate for candidate in ("lo0", "lo") if candidate in names), None)
+
+
+def pin_gloo_to_loopback() -> str | None:
+    """Point gloo's transport at loopback instead of whatever the hostname resolves to.
+
+    **The failure this prevents, observed rather than imagined.** gloo picks its network interface
+    by resolving the machine's hostname. On this laptop that is `Pankajs-MacBook-Pro.local`, which
+    resolves to a **WiFi** address — so every rank binds the WiFi interface to talk to a process on
+    the same machine. It works until the network changes underneath it, and then
+    `init_process_group` dies with `uv_accept: invalid argument` and `SIGABRT`, with nothing in the
+    message connecting it to networking. The same drill passed an hour earlier on the same code.
+
+    That is precisely the class of "works on my machine" breakage that forcing `spawn` and using a
+    file rendezvous was meant to remove — a grader on a VPN, a runner with an unusual interface, or
+    a laptop that changed networks would all hit it.
+
+    `setdefault`, not an assignment: a genuine multi-node run has to be able to name its real
+    interface, and this only supplies a default for the single-machine case.
+
+    Returns:
+        The interface pinned, or None when none was found or one was already set.
+    """
+    if os.environ.get("GLOO_SOCKET_IFNAME"):
+        return None
+    interface = loopback_interface()
+    if interface:
+        os.environ["GLOO_SOCKET_IFNAME"] = interface
+    return interface
+
+
 def worker(rank: int, spec: RunSpec, rendezvous: str) -> None:
     """One worker process: join the group, train, leave.
 
@@ -155,6 +197,7 @@ def worker(rank: int, spec: RunSpec, rendezvous: str) -> None:
     world_size = spec.config.ranks
 
     if world_size > 1:
+        pin_gloo_to_loopback()
         torch.distributed.init_process_group(
             backend="gloo", init_method=rendezvous, rank=rank, world_size=world_size
         )

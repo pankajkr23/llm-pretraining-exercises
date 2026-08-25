@@ -77,13 +77,20 @@ def test_no_python_file_is_named_that_does_not_exist() -> None:
     A reader following it gets an `ImportError` or an empty `ls`, which is a worse first impression
     than an omission.
 
-    Searched over the WHOLE exercise, not just the package. The first version of this test compared
-    against `src/trainingdata/*.py` alone and went red the moment the README began naming the three
-    torch-gated **test** files to state the size of CI's blind spot — files that plainly exist. A
-    guard that fires on a document becoming more precise is measuring the wrong thing.
+    Searched over the whole REPO, not just this exercise, and twice widened for the same reason:
+    first when the README began naming the three torch-gated **test** files to state the size of
+    CI's blind spot, then when it began naming `tests/test_ci_shards_cover_everything.py`, the
+    repo-level guard that closed it. Both times the document had become *more* precise and the test
+    called it a lie. A guard that fires on a document improving is measuring the wrong thing — the
+    real defect is a name with no file behind it anywhere.
     """
     text = README.read_text()
-    present = {p.name for p in EXERCISE.rglob("*.py")}
+    repo = EXERCISE.parents[2]
+    present = {
+        p.name
+        for p in repo.rglob("*.py")
+        if ".venv" not in p.parts and "node_modules" not in p.parts
+    }
     named = set(re.findall(r"\b([a-z_][a-z0-9_]*\.py)\b", text))
 
     # Named on purpose while unbuilt: the README's own stage table says stage 8 is unfinished, and

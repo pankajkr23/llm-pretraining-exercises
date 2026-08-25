@@ -204,19 +204,29 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
   is written twice — once against the real spine, once against a deliberately broken fixture — and
   when you add one, break the thing on purpose and watch it go red before you commit.
 
-- **A coverage guard can be blind to the case it exists for.** `tests/test_ci_shards_cover_everything.py`
-  reads the shard paths out of `ci.yml` and proves no integration file falls outside every shard —
-  the failure it was written for. It is blind to the adjacent one: a file that *is* inside a shard
-  and **collects zero tests there**, because its tests are gated on a dependency CI does not install.
-  Exercise 06 sits in the `rest` shard and contributes **0 integration tests to CI**, since all 20 of
-  them need torch and CI runs `uv sync --all-packages` with no extras — 46 of its 272 tests never
-  execute on a runner. The shard check is green throughout. When a suite is gated on an optional
-  extra, **state the skipped count in the exercise's README**; nothing in CI can.
-- **Whether CI installs torch is a decision, not a default — and the wheel size is the whole
-  argument.** The default Linux torch wheel is ~2,722.7 MB because it bundles CUDA; the CPU-only
-  wheel is **191.8 MB**. Adding the CPU wheel to one integration shard costs that runner an install
-  and runs in parallel with the others, against a critical path currently set by the tokenization
-  shard. Decide it deliberately.
+- **A coverage guard must ask whether a test can RUN, not whether it is listed.**
+  `tests/test_ci_shards_cover_everything.py` was written for the obvious failure — a file outside
+  every shard is never run and CI is green — and was blind to the adjacent one: a file that *is*
+  inside a shard and **collects zero tests there**, because a module-level `pytest.importorskip`
+  skips the whole file when the dependency is absent. A file that collects nothing is
+  indistinguishable from a file with nothing in it, and `ci.yml` treats pytest's exit code 5 as
+  success, so **46 of exercise 06's 272 tests and all 20 of its integration tests ran nowhere for a
+  week with every gate green** — plus exercise 05's proxy run. The guard is now **lexical**: it
+  reads the filesystem and each file's `importorskip` line, which are facts about the source rather
+  than about whatever happens to be installed — the property a coverage guard needs, since the
+  environment is precisely what it is making claims about. It keeps a tracked
+  `OPTIONAL_DEPENDENCY_GATES` ledger that fails in **both** directions, and asserts every gated file
+  is reachable by a job that installs what it needs.
+- **An optional heavy dependency is a decision, and the wheel size is usually the whole argument.**
+  The default Linux torch wheel is **2,722.7 MB** because it bundles CUDA; the CPU-only build is
+  **191.8 MB** and drops 19 packages from the lock. Nothing here trains on a GPU, so the CUDA
+  payload bought nothing and made "torch in CI" look unaffordable when it was not. Pin it with a
+  platform-scoped index (`[[tool.uv.index]]` + `[tool.uv.sources]` with a `sys_platform == 'linux'`
+  marker) rather than a global one: macOS arm64 has no CUDA build, so its PyPI wheel is already CPU
+  and pinning there only adds a way for the platforms to disagree. `uv sync` has no
+  `--torch-backend` flag — that is `uv pip install` only — so the index is the reproducible route.
+  Assert the result (`+cpu` in `torch.__version__`) in the job: if the pin regresses, the CUDA wheel
+  installs silently and the only symptom is a slower job.
 - The ML-native integration test: **overfit a single batch for a few steps and assert loss collapses** (+ shape/checkpoint round-trip tests).
 - **Test the last line of a long job first.** Three experiments in exercise 05 trained to completion and then died writing their results, because the bundle carried a `torch.device` and `json` cannot encode one — one run lost fifteen trained models to its final statement. A two-step run that exercises `save()` costs seconds and would have caught all three. The same applies to any expensive job: the write, the upload, the commit at the end are the parts least covered and most costly to get wrong.
 - **Data-handling invariants are enforced in CI, not in review.** `03-data-collection-framework` defines five that any agent touching a data pipeline should know exist (`tests/test_invariants.py`, full table in that exercise's `docs/README.md`): training never touches eval data · nothing excluded may enter a commercial mix · every judgment carries its reasoning and confidence · a measurement must name what produced it · no source content is silently dropped. Each is paired with a test proving it *fails* when broken — a guard nobody has watched fail is not a guard.
@@ -376,7 +386,10 @@ uv run pre-commit run --all-files                        # over everything, not 
 
 ## CI/CD
 
-- CI (`.github/workflows/ci.yml`) is **three concurrent jobs, not one chain**. `test`: `uv sync --all-packages` → `ruff check` → `ruff format --check` → `pytest -m "not integration" -n auto --dist loadfile` → `node --check` over `find src/exercises -path '*/web/*' -name '*.js'`. `integration`: a **three-shard matrix** (`tokenization` · `mixtures` · `rest`), each shard syncing, caching and installing chromium, running `deploy/vercel/build.sh` once, then `pytest -m integration`. `security`: gitleaks over the full history. `push` is filtered to `main` — branches are covered by the `pull_request` event, because an unfiltered `push` ran every PR commit twice. **CI never installs torch**, so anything gated on it collects and skips.
+- CI (`.github/workflows/ci.yml`) is **three concurrent jobs, not one chain**. `test`: `uv sync --all-packages` → `ruff check` → `ruff format --check` → `pytest -m "not integration" -n auto --dist loadfile` → `node --check` over `find src/exercises -path '*/web/*' -name '*.js'`. `integration`: a **three-shard matrix** (`tokenization` · `mixtures` · `rest`), each shard syncing, caching and installing chromium, running `deploy/vercel/build.sh` once, then `pytest -m integration`. `security`: gitleaks over the full history. `push` is filtered to `main` — branches are covered by the `pull_request` event, because an unfiltered `push` ran every PR commit twice. `train`: `uv sync --all-packages --extra train` with **CPU-only wheels** (a Linux-scoped
+  `pytorch-cpu` index in the root `pyproject.toml` — 191.8 MB instead of 2.7 GB, and 19 fewer
+  packages in the lock), running only the files whose module-level `importorskip` would otherwise
+  skip them entirely.
 - CD: **Vercel**, gated. **Previews auto-deploy per PR**; **production never auto-deploys** (`vercel.json` → `git.deploymentEnabled.main: false`). One project serves every exercise's static `web/` under its slug (`/NN-slug/`) via `deploy/vercel/build.sh` → `public/`. (Netlify was the prior host — deactivated config retained in `deploy/netlify/`, pending decommission.)
 - Production deploys go through the reusable `deploy-production.yml` (single source of truth, gated by the `production` environment), invoked two ways: **`deploy.yml`** (`workflow_dispatch`) for an ad-hoc deploy of `main`, and **`release.yml`** for a versioned release.
 - **Releasing:** move `CHANGELOG.md`'s `[Unreleased]` → `[X.Y.Z]` (dated) and merge, then `git tag vX.Y.Z && git push origin vX.Y.Z`. `release.yml` creates a GitHub Release from that changelog section and deploys the tagged commit to production.

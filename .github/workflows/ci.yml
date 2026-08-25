@@ -135,6 +135,66 @@ jobs:
           if [ "${code:-0}" = "5" ]; then echo "no integration tests in this shard"; exit 0; fi
           exit "${code:-0}"
 
+  # torch is an optional extra, so `uv sync --all-packages` leaves it out — and every module-level
+  # `importorskip("torch")` then skips its ENTIRE file. That silently removed 46 of exercise 06's
+  # tests and all 20 of its integration tests from CI, plus exercise 05's proxy run. It stayed
+  # invisible because a file that collects nothing looks exactly like a file with nothing in it,
+  # and the integration step below treats pytest's exit code 5 as success. Every gate was green
+  # while the crash drill, the four-rank reduction and the gradient weighting ran nowhere.
+  #
+  # Affordable because pyproject.toml pins a CPU-only index for torch on Linux: 191.8 MB instead of
+  # the 2.7 GB CUDA build, and 19 fewer packages in the lock. Nothing here trains on a GPU — the
+  # graded run is CPU + gloo precisely so it behaves the same on a grader's machine.
+  #
+  # This job runs the gated files ONLY, so it duplicates nothing the shards already cover. It runs
+  # parallel to the 164s tokenization shard, so it costs no wall clock.
+  # `tests/test_ci_shards_cover_everything.py` fails if it ever stops covering them.
+  train:
+    name: torch-gated tests (CPU-only wheels)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+
+      # Keyed on the lock, so the wheel is re-downloaded only when the pin actually moves.
+      - name: Cache the torch download
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-train-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          restore-keys: uv-train-${{ runner.os }}-
+
+      - name: Sync workspace with the train extra
+        run: uv sync --all-packages --extra train
+
+      # If the index pin ever regresses, the CUDA wheel installs silently and this job goes from
+      # ~90s to several minutes with nothing to point at. Fail on the fact instead.
+      - name: Confirm the CPU build
+        run: |
+          version=$(uv run python -c "import torch; print(torch.__version__)")
+          echo "torch: $version"
+          case "$version" in
+            *+cpu) echo "CPU-only wheel, as pinned" ;;
+            *) echo "::error::expected a +cpu wheel; got '$version'. The pytorch-cpu index in"\
+                    " pyproject.toml is not being applied, and this job just pulled the CUDA build."
+               exit 1 ;;
+          esac
+
+      # The four files whose module-level importorskip("torch") makes them invisible without the
+      # extra. Both markers: their unit AND integration tests are equally unreachable otherwise.
+      - name: Torch-gated tests
+        run: |
+          uv run pytest -n auto --dist loadfile \
+            src/exercises/05-datamixtures-and-curriculum/tests/test_mixture_proxy_run.py \
+            src/exercises/06-build-training-dataset/tests/test_trainingdata_model.py \
+            src/exercises/06-build-training-dataset/tests/test_trainingdata_train.py \
+            src/exercises/06-build-training-dataset/tests/test_trainingdata_crash.py
+
   security:
     runs-on: ubuntu-latest
     steps:

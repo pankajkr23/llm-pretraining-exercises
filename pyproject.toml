@@ -56,3 +56,20 @@ convention = "google"
 
 [tool.ruff.format]
 docstring-code-format = true
+
+# --- PyTorch: CPU-only wheels on Linux ------------------------------------------------------------
+# torch is an optional extra (`--extra train`), needed by exercise 05's proxy run and exercise 06's
+# model, training and crash tests. On PyPI the Linux wheel bundles CUDA and pulls ~2.7 GB of nvidia-*
+# packages; the CPU build is 191.8 MB. Nothing in this repo trains on a GPU — the graded run is
+# CPU + gloo precisely so it behaves the same on a grader's machine — so the CUDA payload buys
+# nothing and made installing torch in CI look unaffordable.
+#
+# Scoped to Linux by marker: macOS arm64 has no CUDA build, so its PyPI wheel is already CPU-only
+# and pinning an index there would only add a way for the two platforms to disagree.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
