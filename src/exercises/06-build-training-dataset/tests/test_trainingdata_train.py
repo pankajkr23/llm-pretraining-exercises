@@ -31,6 +31,7 @@ _FIELDS = {
     "flat": 0,
     "checkpoint_id": None,
     "samples": (),
+    "sequence_length": 8,
     "tokens": 8,
     "loss_tokens": 7,
     "pad_tokens": 0,

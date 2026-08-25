@@ -61,6 +61,7 @@ def _segment(directory, rank: int, count: int, *, segment: int = 0, torn: bool =
             flat=i,
             checkpoint_id=None,
             samples=(ledger.PackedSample("s", 0, 8, "web", 7),),
+            sequence_length=8,
             tokens=8,
             loss_tokens=7,
             pad_tokens=0,

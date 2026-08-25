@@ -28,6 +28,7 @@ def _fields(**overrides) -> dict:
         "flat": 0,
         "checkpoint_id": None,
         "samples": (ledger.PackedSample("shardA", 0, 512, "web", 511),),
+        "sequence_length": 512,
         "tokens": 512,
         "loss_tokens": 511,
         "pad_tokens": 0,
