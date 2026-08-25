@@ -24,9 +24,10 @@ import sys
 from pathlib import Path
 
 import pytest
+from _exercises import exercises_in
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-EXERCISES = sorted(p for p in (REPO_ROOT / "src" / "exercises").glob("[0-9][0-9]-*") if p.is_dir())
+EXERCISES = exercises_in(REPO_ROOT / "src" / "exercises")
 
 #: Only the builders actually present. A fresh clone has none and every test below skips.
 BUILDERS = [

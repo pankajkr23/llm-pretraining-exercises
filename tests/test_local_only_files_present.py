@@ -21,9 +21,12 @@ pull, merge, rebase or stash.
 from pathlib import Path
 
 import pytest
+from _exercises import exercises_in
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-EXERCISES = sorted(p for p in (REPO_ROOT / "src" / "exercises").glob("[0-9][0-9]-*") if p.is_dir())
+
+
+EXERCISES = exercises_in(REPO_ROOT / "src" / "exercises")
 
 #: One notebook and one builder per exercise, by convention.
 EXPECTED_NOTEBOOKS = [
@@ -80,3 +83,55 @@ def test_the_tripwire_distinguishes_a_clone_from_a_loss() -> None:
     here, gone = Path(__file__), REPO_ROOT / "does-not-exist-xyz"
     assert _partial([here, gone]), "a mixed set is a loss and must be flagged"
     assert not _partial([here]), "a complete set is healthy"
+
+
+def test_a_bare_scaffold_directory_is_not_yet_an_exercise(tmp_path: Path) -> None:
+    """The regression this filter exists for, pinned.
+
+    An empty `06-build-training-dataset/` appeared before exercise 06 had any content, and both
+    guards below reported a *loss* -- 5 notebooks present, 1 "gone" -- when nothing had been lost.
+    A guard that cries wolf gets ignored, so the false positive is as much a defect as a miss.
+    """
+    root = tmp_path / "exercises"
+    real = root / "01-real"
+    real.mkdir(parents=True)
+    (real / "pyproject.toml").write_text("[project]\nname = 'x'\n", encoding="utf-8")
+    (root / "06-scaffold-only").mkdir()
+
+    found = [p.name for p in exercises_in(root)]
+    assert found == ["01-real"], f"the bare scaffold was counted as an exercise: {found}"
+
+
+def test_the_filter_still_counts_a_real_exercise(tmp_path: Path) -> None:
+    """The twin: narrowing the filter must not narrow it to nothing.
+
+    Without this, deleting the glob entirely would make every guard in this file vacuously pass.
+    """
+    root = tmp_path / "exercises"
+    for name in ("01-a", "02-b", "03-c"):
+        d = root / name
+        d.mkdir(parents=True)
+        (d / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
+
+    assert [p.name for p in exercises_in(root)] == ["01-a", "02-b", "03-c"]
+
+
+def test_the_filter_ignores_directories_that_do_not_match_the_naming_rule(tmp_path: Path) -> None:
+    """`NN-slug` is the convention; `docs/`, `common/` and `9-x` are not exercises."""
+    root = tmp_path / "exercises"
+    root.mkdir(parents=True)
+    for name in ("common", "docs", "9-single-digit", "abc-not-numeric"):
+        d = root / name
+        d.mkdir()
+        (d / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
+
+    assert exercises_in(root) == []
+
+
+def test_a_file_named_like_an_exercise_is_not_an_exercise(tmp_path: Path) -> None:
+    """`is_dir()` matters: a stray `07-notes.md` must not be scanned for a notebook."""
+    root = tmp_path / "exercises"
+    root.mkdir(parents=True)
+    (root / "07-notes.md").write_text("not a directory", encoding="utf-8")
+
+    assert exercises_in(root) == []

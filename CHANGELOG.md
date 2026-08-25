@@ -10,6 +10,8 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-08-25
+
 ### Added
 
 - **A mandatory rule: nothing under `notebooks/` or any `tools/` may be removed without explicit
@@ -41,7 +43,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   `05-…/tools/fetch_proxy_corpus.py` is still versioned, because a corpus needs a tracked way to
   fetch and licence-check it.
 
-### Changed
 
 - **The root README no longer carries a generated section for exercise 05.** The brief says the
   root is the front door and must reach `SPEC.md` "without a detour", and the obvious reading was
@@ -56,7 +57,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   confirmed failing: a row that names `SPEC.md` without linking it, one that drops the exercise
   guide, and one that hides the refuted result.
 
-### Changed
 
 - **The root README is a map again, not five deep-dives.** It had reached 307 lines, **211 of them
   per-exercise sections** — and none of that prose existed in the exercise READMEs, so the root was
@@ -104,6 +104,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   including here".** The published bundle carries 34 fertility values marked `measured` against one
   `estimated`, and that one is a parity *target*. Corrected, keeping the half that still holds: the
   size of the deduplicated Indic web really is unmeasured.
+
+
+- **A bare scaffold directory was reported as a lost notebook.** Creating an empty
+  `src/exercises/06-build-training-dataset/` turned both notebook tripwires red — "5 session
+  notebooks are present but `['S06-…ipynb']` are gone" — when nothing had been lost. An exercise is
+  now a directory that is a **workspace member** (`NN-slug` with a `pyproject.toml`); the rule lives
+  in `tests/_exercises.py`, shared by both guards, with four edge cases pinned. For a tripwire a
+  false positive is as much a defect as a miss.
 
 ## [0.6.2] - 2026-08-24
 
