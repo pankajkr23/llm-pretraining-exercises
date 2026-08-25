@@ -215,6 +215,12 @@ When one of these overturns a published claim, correct it where the claim was ma
 
 Two more that cost this repo real defects:
 
+- **Registering a new exercise: three lists, two of them automatic.** `deploy/vercel/build.sh`
+  publishes any `src/exercises/*/web/` on its own, and the workspace glob picks up any
+  `NN-slug/pyproject.toml` on its own. The two that are **hand-maintained** are the root README's
+  exercise table and the cards in `deploy/vercel/index.html` — an exercise can be deployed and
+  reachable while being invisible to anyone arriving at the site root. Both are now checked:
+  `tests/test_deploy_registration.py` and the root README row test.
 - **A new module is not done until every list that names modules includes it.** `explainer.py` shipped and stayed missing from three places — the README's *Run it*, the README's layout block, and the exercise's `CLAUDE.md` — none of which any test checks. The consequence was not cosmetic: a reader regenerating the site would have run `widget` without `explainer` and published a page whose figures contradicted its own tool.
 - **Render a diagram before committing it.** A Mermaid block is not verified by reading it. A semicolon inside a `Note over` is a statement separator, so the note terminated mid-sentence and GitHub would have rendered a parse error where a diagram should be — caught only by running it through `npx @mermaid-js/mermaid-cli`. The same applies to every number inside one: read them back from the code.
 
