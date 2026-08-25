@@ -14,9 +14,11 @@ documents -> tokenized shards -> manifests -> mixture schedule -> packing -> bat
 
 > **Status: stage 7 of 8.** The system trains on four real processes, writes a chain-hashed
 > consumption ledger, survives a genuine crash and resumes onto the same batch ids a run that never
-> crashed would have consumed. Replay, fork, the auditor and the evidence bundle are **not** built
-> yet, and this file says so rather than describing a system that does not exist. The stage table
-> is [below](#the-stages).
+> crashed would have consumed. Stage 8 is part-landed: `replay.py` re-derives a recorded interval
+> from the immutable shards alone — 32/32 microbatches re-derived, and one flipped bit in one shard
+> turns exactly 1 of those 32 red. Fork, the auditor (`verify.py`) and the evidence bundle are
+> **not** built yet, and this file says so rather than describing a system that does not exist. The
+> stage table is [below](#the-stages).
 
 ## How to read this
 
@@ -87,7 +89,7 @@ Each ends in something you can run and see. Nothing advances until the previous 
 | 5 | pack a window and **see** the block-diagonal attention mask | **done** |
 | 6 | train, then read the consumption ledger back line by line | **done** |
 | 7 | crash it on purpose, resume, and watch the batch ids line up | **done** |
-| 8 | replay an interval, fork a branch, run the auditor | — |
+| 8 | replay an interval, fork a branch, run the auditor | **part** — replay lands; fork and audit do not |
 
 ## Layout
 
@@ -113,6 +115,7 @@ src/trainingdata/
   runner.py      # real worker processes over gloo, spawned, with a file rendezvous
   checkpoint.py  # weights, optimizer state, and the ledger cut that belongs with them
   resume.py      # bringing a ledger back into agreement with a checkpoint, after a crash
+  replay.py      # re-deriving a recorded interval from the shards alone — never from the planner
 tests/           # discovered by `uv run pytest` from the repo root
 tools/           # the notebook builder (local-only, gitignored — back it up)
 artifacts/       # heavy regenerable output (gitignored)
@@ -128,18 +131,21 @@ uv run python -c "from trainingdata.config import Config; c=Config(); print(c.fi
 
 The training step needs torch, which is an **optional extra** so CI never pulls a multi-gigabyte
 wheel to run arithmetic. Everything above — shards, manifests, the firewall, the plan, packing, the
-feeder and the ledger — is numpy, which is what lets CI verify almost the whole system:
+feeder, the ledger and replay — is numpy, which is what lets CI verify almost the whole system:
 
 ```bash
 uv sync --all-packages --extra train                     # ...plus torch
 uv run pytest src/exercises/06-build-training-dataset -m integration
 ```
 
-**What CI cannot see.** The torch tests — the model, the training step, and the four-process `gloo`
-run — `skip` without the extra, and CI does not install it. They are run locally before every pull
-request, and `gloo` additionally needs loopback networking, so they skip again inside a sandbox that
-blocks it. A rule that only ever skips is not a rule, and this one is named here rather than left to
-be discovered.
+**What CI cannot see, with the number attached.** The torch tests — the model, the training step,
+and the four-process `gloo` run — `skip` without the extra, and CI does not install it. That is
+**46 of this exercise's 272 tests**, and **every one of its 20 integration tests**: CI runs
+`uv sync --all-packages` with no extras, so `test_trainingdata_model.py` (20), `test_trainingdata_train.py`
+(14) and `test_trainingdata_crash.py` (12) collect and skip in full. They are run locally before
+every pull request, and `gloo` additionally needs loopback networking, so they skip again inside a
+sandbox that blocks it. A rule that only ever skips is not a rule, and this one is named here with
+its size rather than left to be discovered.
 
 ## The producer/auditor wall
 
@@ -151,6 +157,16 @@ producer it would inherit the producer's bugs and agree with itself.
 `spec.py` is the one deliberate exception: shared **facts** (the nine evidence rows, the thirteen
 log events, the sentinel ids), never shared **logic**. A test parses its source and fails if it ever
 imports from the rest of the package.
+
+**Replay is not the auditor, and the difference is the wall.** `replay.py` is a *producer-side*
+tool: it deliberately imports `ledger`, `masks`, `pack` and `shards`, because its job is to rebuild
+a microbatch the same way the run built it and check the shards still hold what was fed. What it may
+not import is `plan.py` — recomputing the plan instead of reading the record would make the
+measurement circular in exactly the way this session is about — and torch.
+`test_replay_cannot_reach_the_planner_or_torch` walks the transitive closure for both, and
+`test_the_closure_check_would_notice_a_new_import` is the twin that fails when the walker stops
+seeing anything. The auditor's wall is stricter and still unbuilt: `verify.py` will import nothing
+from `trainingdata` except `spec.py`.
 
 ## What it cannot establish
 

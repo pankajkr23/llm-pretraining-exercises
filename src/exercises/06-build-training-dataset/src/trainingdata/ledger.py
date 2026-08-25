@@ -70,6 +70,15 @@ class PackedSample:
 
     `pass_no` is what lets the learning ledger tell a re-read from a first exposure. Without it a
     second epoch is invisible, and the repeated-pass effect cannot be measured at all.
+
+    Attributes:
+        shard_id: Which shard the tokens came from.
+        start: First token position in the shard.
+        end: One past the last.
+        lane: The shard's data lane.
+        loss_tokens: How many of this fragment's positions were graded.
+        pass_no: 1 on first exposure, 2 on the first re-read.
+        window: Which window of the microbatch this fragment sits in.
     """
 
     shard_id: str
@@ -78,6 +87,11 @@ class PackedSample:
     lane: str
     loss_tokens: int
     pass_no: int = 1
+    #: Which window of the microbatch this fragment sits in. Without it the fragment list is a flat
+    #: sequence and replay cannot tell where one packed window ends and the next begins — it would
+    #: have to infer the boundaries from the token counts, which only works while every window
+    #: happens to be full.
+    window: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,6 +123,10 @@ class ConsumeEvent:
 
     # -- what was fed --------------------------------------------------------------------------
     samples: tuple[PackedSample, ...]
+    #: Window size. Recorded rather than looked up, because replay must be able to rebuild the
+    #: microbatch from the event alone — an event that needs the producer's config to be understood
+    #: is not a self-describing record.
+    sequence_length: int
     tokens: int
     loss_tokens: int
     pad_tokens: int

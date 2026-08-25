@@ -137,6 +137,26 @@ class DocIndex:
             raise ValueError(f"position {position} is outside a shard of {self.length} tokens")
         return int(np.searchsorted(self._ends, position, side="right"))
 
+    def document_start(self, doc: int) -> int:
+        """Where a document begins in the shard.
+
+        Replay needs this to recover a fragment's offset within its own document, which is what
+        keeps positions continuous across a window edge on the way back in as well as on the way
+        out.
+
+        Args:
+            doc: The document index.
+
+        Returns:
+            The first token position of that document.
+
+        Raises:
+            IndexError: If there is no such document.
+        """
+        if not 0 <= doc < self.count:
+            raise IndexError(f"document {doc} does not exist in a shard of {self.count}")
+        return int(self._starts[doc])
+
     def fragments(self, start: int, end: int) -> list[Fragment]:
         """Every document fragment covering `[start, end)`.
 

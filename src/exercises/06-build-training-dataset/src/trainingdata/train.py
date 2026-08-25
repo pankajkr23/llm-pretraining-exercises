@@ -199,6 +199,7 @@ def consume(
         ),
         checkpoint_id=checkpoint_id,
         samples=tuple(ledger.PackedSample(**s) for s in batch.samples),
+        sequence_length=schedule.config.sequence_length,
         tokens=batch.token_count,
         loss_tokens=batch.loss_token_count,
         pad_tokens=batch.pad_token_count,

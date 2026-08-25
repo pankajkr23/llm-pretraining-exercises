@@ -71,15 +71,25 @@ def test_every_module_is_named_in_the_documents_that_list_modules(document: str)
     assert not missing, f"{document} does not mention {missing}"
 
 
-def test_no_module_is_named_that_does_not_exist() -> None:
-    """The other direction: a document promising a module that was renamed or never written.
+def test_no_python_file_is_named_that_does_not_exist() -> None:
+    """The other direction: a document promising a file that was renamed or never written.
 
-    A reader following it gets an `ImportError`, which is a worse first impression than an omission.
+    A reader following it gets an `ImportError` or an empty `ls`, which is a worse first impression
+    than an omission.
+
+    Searched over the WHOLE exercise, not just the package. The first version of this test compared
+    against `src/trainingdata/*.py` alone and went red the moment the README began naming the three
+    torch-gated **test** files to state the size of CI's blind spot — files that plainly exist. A
+    guard that fires on a document becoming more precise is measuring the wrong thing.
     """
     text = README.read_text()
-    present = {p.name for p in MODULES.glob("*.py")}
-    named = set(re.findall(r"\b([a-z_]+\.py)\b", text))
-    # Files that live outside the package are named on purpose and are not modules of it.
-    external = {"run_demo.py", "verify.py", "build_notebook.py", "fetch_proxy_corpus.py"}
-    phantom = sorted(named - present - external)
-    assert not phantom, f"the README names modules that do not exist: {phantom}"
+    present = {p.name for p in EXERCISE.rglob("*.py")}
+    named = set(re.findall(r"\b([a-z_][a-z0-9_]*\.py)\b", text))
+
+    # Named on purpose while unbuilt: the README's own stage table says stage 8 is unfinished, and
+    # the producer/auditor section has to name the two commands the assignment will be graded on.
+    # When they land, they land in the exercise root and this allowlist stops mattering.
+    planned = {"run_demo.py", "verify.py"}
+
+    phantom = sorted(named - present - planned)
+    assert not phantom, f"the README names Python files that do not exist: {phantom}"

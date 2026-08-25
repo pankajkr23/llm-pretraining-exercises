@@ -38,10 +38,13 @@ The School of AI.
 WHAT IS MEASURED AND WHAT IS NOT
 
 Every performance figure published by this exercise is measured on one Apple
-Silicon laptop, on a model of roughly 5.9 million parameters over a corpus of
-tens of millions of tokens. The design is ABOUT the mechanics of a run three
-orders of magnitude larger. It was never run at that scale, and any figure
-describing that scale is labelled as modelled rather than measured.
+Silicon laptop, on a model of 5,774,080 parameters over a corpus of 2,185,575
+tokens -- which a full run of 10,485,760 token positions crosses about 4.8
+times, and which is shaped to session 5's mixture into roughly 30 epochs of
+web against 0.41 of an epoch of agentic. The design is ABOUT the mechanics of a
+run four orders of magnitude larger in tokens. It was never run at that scale,
+and any figure describing that scale is labelled as modelled rather than
+measured.
 
 Efficiency figures quoted from the OPUS paper (4.7% overhead) and from
 LightningLM (3.2%) are theirs. They are not reproduced here and are not claimed.

@@ -145,7 +145,7 @@ tracked, stdlib-only sample that CI executes top to bottom. It cannot check that
 is correct; it checks that a notebook in this repo opens and runs, which is the part CI can still
 see. Anything stronger has to be run by whoever has the notebook, before the PR.
 
-## Three data concerns — keep them physically separate
+## Five data concerns — keep them physically separate
 
 - **Briefs → never tracked, at any level.** `BRIEF.md` is gitignored by name everywhere, as is
   programme-level material — the schedule, the class list, the internal authoring specs
@@ -154,6 +154,12 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
   tracked file** — the link resolves on a working checkout and 404s for everyone else. What we
   *decided*, and why, is published instead: `README.md`, and a tracked `DECISIONS.md` when the
   reasoning needs room (see `04-data-cleaning-dedup/DECISIONS.md`).
+
+  **And `BRIEF.md` is not the authority on what submission requires.** It is the course's text and
+  it can be truncated, reformatted or pasted short; the submission platform's own field list is what
+  grades. Check the platform before calling a session done, and record the required *shape* — not
+  the brief's wording — in the exercise's `PROGRESS.md`. A deliverable specified as a **public URL**
+  is not satisfied by a file in the repo, however correct that file is.
 - **Session notebooks** → top-level `notebooks/`, **gitignored** except the tracked
   `hello.ipynb` sample. Their generators (`*/tools/build_notebook.py`) are gitignored too — a
   generator is the same material in another form. Keep a backup outside the repo; nothing tracked
@@ -165,6 +171,8 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
   catalogue, and refuses anything that declares none — an unverifiable licence is not a permissive
   one. It also records what each dataset *stands in for* when it is a proxy for something else.
   See `05-datamixtures-and-curriculum/tools/fetch_proxy_corpus.py`.
+
+
 - **Outputs** (plots/checkpoints/logs) → `<exercise>/artifacts/`, **gitignored**.
 - **Measured evidence a document renders** → `<exercise>/results/`, **tracked**. This is the
   exception to the line above and it matters: if a published figure comes from a run, the run's
@@ -195,9 +203,26 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
 - **A guard that cannot fail is worse than no guard**, because it reads as coverage. Every invariant
   is written twice — once against the real spine, once against a deliberately broken fixture — and
   when you add one, break the thing on purpose and watch it go red before you commit.
+
+- **A coverage guard can be blind to the case it exists for.** `tests/test_ci_shards_cover_everything.py`
+  reads the shard paths out of `ci.yml` and proves no integration file falls outside every shard —
+  the failure it was written for. It is blind to the adjacent one: a file that *is* inside a shard
+  and **collects zero tests there**, because its tests are gated on a dependency CI does not install.
+  Exercise 06 sits in the `rest` shard and contributes **0 integration tests to CI**, since all 20 of
+  them need torch and CI runs `uv sync --all-packages` with no extras — 46 of its 272 tests never
+  execute on a runner. The shard check is green throughout. When a suite is gated on an optional
+  extra, **state the skipped count in the exercise's README**; nothing in CI can.
+- **Whether CI installs torch is a decision, not a default — and the wheel size is the whole
+  argument.** The default Linux torch wheel is ~2,722.7 MB because it bundles CUDA; the CPU-only
+  wheel is **191.8 MB**. Adding the CPU wheel to one integration shard costs that runner an install
+  and runs in parallel with the others, against a critical path currently set by the tokenization
+  shard. Decide it deliberately.
 - The ML-native integration test: **overfit a single batch for a few steps and assert loss collapses** (+ shape/checkpoint round-trip tests).
 - **Test the last line of a long job first.** Three experiments in exercise 05 trained to completion and then died writing their results, because the bundle carried a `torch.device` and `json` cannot encode one — one run lost fifteen trained models to its final statement. A two-step run that exercises `save()` costs seconds and would have caught all three. The same applies to any expensive job: the write, the upload, the commit at the end are the parts least covered and most costly to get wrong.
 - **Data-handling invariants are enforced in CI, not in review.** `03-data-collection-framework` defines five that any agent touching a data pipeline should know exist (`tests/test_invariants.py`, full table in that exercise's `docs/README.md`): training never touches eval data · nothing excluded may enter a commercial mix · every judgment carries its reasoning and confidence · a measurement must name what produced it · no source content is silently dropped. Each is paired with a test proving it *fails* when broken — a guard nobody has watched fail is not a guard.
+
+- **A tested feature with no caller is dead code wearing a test.** `masks.loss_mask(context_spans=...)` in exercise 06 is implemented, documented, covered by two passing tests and taught in the session notebook — and `grep -rn context_spans` finds **zero** callers in the pipeline: `feed.py` builds every microbatch with the default mask. The tests are green, so the capability reads as a behaviour of the run, and the documents describing prompt/tool-observation masking describe something that never happens. The test proves the function works; only a caller proves the system uses it. When you add a keyword-only option to a library function, either wire it through the one path that would exercise it in a real run, or state in the module docstring that it is offered and unused — and put the same sentence wherever the feature is described to a reader.
+- **A coverage guard built on `--collect-only` is blind to a file that collects nothing.** `tests/test_ci_shards_cover_everything.py` catches an integration file in no CI shard, and an integration file in two. It cannot catch the third case: **in a shard, and contributing zero tests.** A module-level `pytest.importorskip("torch")` raises during *collection*, so `pytest --collect-only -q` prints no `path: count` line for that file at all — I verified this with a throwaway module importorskipping an absent package: output was `no tests collected`, exit 0. The file is therefore absent from `everything` and from `owners` alike, `missing` is empty, and `covered == sum(everything.values())` holds trivially. The consequence is live: all 20 of exercise 06's integration tests (`crash` 11, `model` 3, `train` 6) sit behind `importorskip("torch")`, CI never installs the `train` extra, and CI's integration step maps exit 5 to success — so the `rest` shard runs **zero** of them, reports green, and the coverage guard agrees. A guard must count what the job was *supposed* to run, from a list it does not derive from the same run it is auditing.
 
 ## Reporting a measurement
 
@@ -209,9 +234,27 @@ Three rules, each learned by getting it wrong in `02-tokenization` (see that exe
 
 When one of these overturns a published claim, correct it where the claim was made and say what changed. A quietly amended number is worse than the original error.
 
-- **Prose that states a number is generated too, or it goes stale while the table beside it stays right.** This is the failure that has cost this repo the most edits. A generated table under a hand-written sentence looks maintained, and only the sentence is wrong — so a reader believes the sentence. Session 5 shipped documents reading "across three lanes", "H3 came back qualified", "Thirteen invariants" and "one verdict did not survive its own noise", every one of them contradicting a correct table directly above or below it, and no test failed. If a sentence contains a count, a verdict or a size, derive it from the same source the table uses. Where prose genuinely must stay hand-written — a row in the root README's exercise table — a test asserts the number in it.
+- **Prose that states a number is generated too, or it goes stale while the table beside it stays right.** This is the failure that has cost this repo the most edits. A generated table under a hand-written sentence looks maintained, and only the sentence is wrong — so a reader believes the sentence. Session 5 shipped documents reading "across three lanes", "H3 came back qualified", "Thirteen invariants" and "one verdict did not survive its own noise", every one of them contradicting a correct table directly above or below it, and no test failed. If a sentence contains a count, a verdict or a size, derive it from the same source the table uses. Where prose genuinely must stay hand-written — a row in the root README's exercise table — the number in it has **no test**, and the row for exercise 06 has read *"Stage 1 of 8"* since the exercise reached stage 7. Writing that test is outstanding work; until it lands, the row is verified by hand on every PR that advances an exercise.
 
 - **An experiment that cannot see a lane is not evidence about that lane.** Exercise 05's proxy dropped the three lanes it had no text for, and one hypothesis read `qualified` for two weeks because the lane its refutation clause tested was absent. Funding the lane flipped it to `refuted` with the effect size essentially unchanged. **A missing input does not make a hypothesis safer, it makes it untestable — and untestable reads as passing.** Before trusting a result, list what the measurement was blind to.
+
+- **Size a proxy corpus against the RUN, not against the mixture's ratios.** Getting the
+  proportions right and the total wrong does not shrink the experiment, it changes what the
+  experiment is: the run stops measuring a mixture and starts measuring repetition. Exercise 06
+  consumes `ranks × accumulation × microbatch × sequence_length × steps` =
+  `4 × 2 × 8 × 512 × 320` = **10,485,760** token positions (read it from `Config.total_tokens`,
+  never from memory) against **2,185,575** tokens on disk — **4.8 epochs flat**, and once shaped to
+  session 5's lane weights, **30.2 epochs of the web lane against 0.41 of the agentic lane**. The
+  lane the mixture funds most heavily is the one the model sees thirty times over, while the lane it
+  funds least is not seen through even once. No mixture claim survives that, and nothing in the
+  pipeline fails: the shards read fine and the loss curve looks normal.
+  **So before a run, print `total_tokens ÷ corpus_tokens` per lane and put it next to the mixture
+  table.** A lane above ~1 epoch is measuring memorisation; a lane below 1.0 was never fully read.
+  Fix it by fetching more text or by cutting `steps` — never by leaving the ratio unstated. A
+  fetcher records `rows_requested`, so the corpus size is a decision someone made, which means it is
+  a decision someone can be shown.
+
+- **A quantity that is pinned to a constant by construction is not a measurement, and recording it as one is worse than omitting it.** Exercise 06's telemetry writes `pack_util` for every microbatch, and it is always exactly `1.0` — not because packing is perfect but because `feed.py` calls `pack.build_window(index, tokens, span.start, span.end)` with no `window=`, so the window size *is* the span length, `packed[: end - start]` fills the array end to end, no `PAD` is ever written, and `masks.utilization` counts `segments >= 0` over the whole row. The number cannot move. A reader sees a per-batch float in a ledger and reads it as evidence the packer is efficient; the arithmetic says only that the code passed one argument and not another. Before publishing a derived number, ask what input would change it — if none of the run's inputs can, either give it a denominator that varies or delete the field. The same test applies to any ratio whose numerator and denominator are computed from the same object.
 
 Two more that cost this repo real defects:
 
@@ -220,8 +263,13 @@ Two more that cost this repo real defects:
   `NN-slug/pyproject.toml` on its own. The two that are **hand-maintained** are the root README's
   exercise table and the cards in `deploy/vercel/index.html` — an exercise can be deployed and
   reachable while being invisible to anyone arriving at the site root. Both are now checked:
-  `tests/test_deploy_registration.py` and the root README row test.
-- **A new module is not done until every list that names modules includes it.** `explainer.py` shipped and stayed missing from three places — the README's *Run it*, the README's layout block, and the exercise's `CLAUDE.md` — none of which any test checks. The consequence was not cosmetic: a reader regenerating the site would have run `widget` without `explainer` and published a page whose figures contradicted its own tool.
+  `tests/test_deploy_registration.py`. **The root README row is NOT checked — that test does not
+  exist.** `grep -l README tests/*.py` returns only the link and structure guards, neither of which
+  reads the exercise table. The cost is already on the page: exercise 06's row reads *"Stage 1 of
+  8 — in progress"* while its own README and stage table say **stage 7 of 8**, six stages stale,
+  and nothing is red. Until that test is written, treat the row as hand-verified on every PR that
+  moves an exercise forward.
+- **A new module is not done until every list that names modules includes it.** `explainer.py` shipped and stayed missing from three places — the README's *Run it*, the README's layout block, and the exercise's `CLAUDE.md`. Exercise 06 now checks two of those three: `tests/test_trainingdata_docs.py::test_every_module_is_named_in_the_documents_that_list_modules` asserts every `src/trainingdata/*.py` is named somewhere in **both** README.md and CLAUDE.md, and it is **red right now** — `replay.py` shipped and the README never learned about it. Copy that guard into any exercise that grows past a handful of modules. Note its limit: it checks the *document*, not the *list*, so a module named once in prose satisfies it while the layout block a reader actually follows stays wrong. The consequence was not cosmetic: a reader regenerating the site would have run `widget` without `explainer` and published a page whose figures contradicted its own tool.
 - **Render a diagram before committing it.** A Mermaid block is not verified by reading it. A semicolon inside a `Note over` is a statement separator, so the note terminated mid-sentence and GitHub would have rendered a parse error where a diagram should be — caught only by running it through `npx @mermaid-js/mermaid-cli`. The same applies to every number inside one: read them back from the code.
 
 ## The root README is a map; each exercise's README is the guide
@@ -251,8 +299,9 @@ already existed one directory down, and the root became the second place to keep
 
 What the requirement actually needs is that **the exercise's own table row links `SPEC.md`
 directly**. That is one hop from the line the reader is already on, which is what "without a
-detour" means. The row is hand-written prose that states counts, so a test asserts both the links
-and the numbers in it.
+detour" means. The row is hand-written prose that states counts. `tests/test_readme_links.py` checks the
+links resolve; **nothing checks the numbers**, and exercise 06's row has been six stages stale as a
+result. Do not rely on a guard here.
 
 Because the row is the *only* per-exercise detail the root carries, **everything else has to be one
 directory down**: if the exercise README is not the complete end-to-end guide, nothing is.
@@ -327,7 +376,7 @@ uv run pre-commit run --all-files                        # over everything, not 
 
 ## CI/CD
 
-- CI (`.github/workflows/ci.yml`): `uv sync --all-packages` → `ruff check` → `ruff format --check` → unit → install chromium → integration → `node --check` on every `web/**/*.js`.
+- CI (`.github/workflows/ci.yml`) is **three concurrent jobs, not one chain**. `test`: `uv sync --all-packages` → `ruff check` → `ruff format --check` → `pytest -m "not integration" -n auto --dist loadfile` → `node --check` over `find src/exercises -path '*/web/*' -name '*.js'`. `integration`: a **three-shard matrix** (`tokenization` · `mixtures` · `rest`), each shard syncing, caching and installing chromium, running `deploy/vercel/build.sh` once, then `pytest -m integration`. `security`: gitleaks over the full history. `push` is filtered to `main` — branches are covered by the `pull_request` event, because an unfiltered `push` ran every PR commit twice. **CI never installs torch**, so anything gated on it collects and skips.
 - CD: **Vercel**, gated. **Previews auto-deploy per PR**; **production never auto-deploys** (`vercel.json` → `git.deploymentEnabled.main: false`). One project serves every exercise's static `web/` under its slug (`/NN-slug/`) via `deploy/vercel/build.sh` → `public/`. (Netlify was the prior host — deactivated config retained in `deploy/netlify/`, pending decommission.)
 - Production deploys go through the reusable `deploy-production.yml` (single source of truth, gated by the `production` environment), invoked two ways: **`deploy.yml`** (`workflow_dispatch`) for an ad-hoc deploy of `main`, and **`release.yml`** for a versioned release.
 - **Releasing:** move `CHANGELOG.md`'s `[Unreleased]` → `[X.Y.Z]` (dated) and merge, then `git tag vX.Y.Z && git push origin vX.Y.Z`. `release.yml` creates a GitHub Release from that changelog section and deploys the tagged commit to production.

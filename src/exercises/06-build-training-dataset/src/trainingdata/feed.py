@@ -219,6 +219,7 @@ def build_microbatch(
                     "lane": handle.lane,
                     "loss_tokens": graded,
                     "pass_no": pass_no,
+                    "window": seq,
                 }
             )
             at += fragment.length
