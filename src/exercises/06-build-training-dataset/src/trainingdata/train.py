@@ -210,7 +210,7 @@ def consume(
         pack_policy="concat-and-chop",
         opus_decision_id=None,
         tokenizer_sha256=tokenizer_sha256,
-        plan_key_digest=schedule.key.digest(),
+        plan_digest=schedule.key.digest(),
         replayed_from=replayed_from,
         **batch.hashes(),
     )
@@ -396,7 +396,7 @@ def save_checkpoint(
     step: int,
     cut: dict[int, int],
     segments: dict[int, int],
-    plan_key_digest: str,
+    plan_digest: str,
     config_fingerprint: str,
 ) -> checkpoint.Checkpoint:
     """Write weights, optimizer state and the cut vector.
@@ -418,7 +418,7 @@ def save_checkpoint(
         step: The last step whose update these weights include.
         cut: Rank to ledger length, from `gather_cut`.
         segments: Rank to segment number, from `gather_cut`.
-        plan_key_digest: The plan these weights were trained under.
+        plan_digest: The plan these weights were trained under.
         config_fingerprint: The settings they were trained under.
 
     Returns:
@@ -441,7 +441,7 @@ def save_checkpoint(
         cut=cut,
         segments=segments,
         weight_digest=weight_digest(state.net),
-        plan_key_digest=plan_key_digest,
+        plan_digest=plan_digest,
         config_fingerprint=config_fingerprint,
         environment=environment(),
     )

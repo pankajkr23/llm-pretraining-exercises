@@ -46,7 +46,7 @@ _FIELDS = {
     "position_ids_hash": "b2:" + "c" * 32,
     "segment_ids_hash": "b2:" + "d" * 32,
     "tokenizer_sha256": "sha256:" + "e" * 64,
-    "plan_key_digest": "0123456789abcdef",
+    "plan_digest": "0123456789abcdef",
 }
 
 TINY = model_module.ModelConfig(d_model=32, n_layer=2, n_head=2, d_ff=64)
@@ -160,7 +160,7 @@ def test_every_event_carries_the_plan_key_that_produced_it(tmp_path) -> None:
     train.run_step(state, schedule, handles, 0, 0, tokenizer_sha256="sha256:" + "a" * 64)
 
     for event in ledger.read_segment(state.writer.path):
-        assert event.plan_key_digest == schedule.key.digest()
+        assert event.plan_digest == schedule.key.digest()
         assert event.tokenizer_sha256 == "sha256:" + "a" * 64
 
 
@@ -434,7 +434,7 @@ def test_restoring_from_a_mismatched_sidecar_is_refused(tmp_path) -> None:
         step=0,
         cut={0: state.writer.length},
         segments={0: 0},
-        plan_key_digest=schedule.key.digest(),
+        plan_digest=schedule.key.digest(),
         config_fingerprint=schedule.config.fingerprint(),
     )
     train.restore(state, directory, record)  # the matching pair restores cleanly

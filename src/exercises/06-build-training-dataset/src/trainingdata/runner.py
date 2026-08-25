@@ -205,7 +205,7 @@ def worker(rank: int, spec: RunSpec, rendezvous: str) -> None:
                         step=step,
                         cut=cut,
                         segments=segments,
-                        plan_key_digest=schedule.key.digest(),
+                        plan_digest=schedule.key.digest(),
                         config_fingerprint=spec.config.fingerprint(),
                     )
                 if world_size > 1:

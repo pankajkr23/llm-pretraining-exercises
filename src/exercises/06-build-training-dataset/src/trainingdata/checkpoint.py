@@ -58,7 +58,7 @@ class Checkpoint:
         cut: Rank to ledger length. **A vector, not a scalar.**
         segments: Rank to the segment number its cut refers to.
         weight_digest: What the weights hashed to when saved.
-        plan_key_digest: The plan these weights were trained under.
+        plan_digest: The plan these weights were trained under.
         config_fingerprint: The settings they were trained under.
         environment: Device, threads and library versions.
     """
@@ -72,7 +72,7 @@ class Checkpoint:
     cut: dict[int, int]
     segments: dict[int, int]
     weight_digest: str
-    plan_key_digest: str
+    plan_digest: str
     config_fingerprint: str
     environment: dict = field(default_factory=dict)
 

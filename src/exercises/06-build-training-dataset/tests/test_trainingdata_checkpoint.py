@@ -29,7 +29,7 @@ def _record(**overrides) -> checkpoint.Checkpoint:
         "cut": {0: 24, 1: 24},
         "segments": {0: 0, 1: 0},
         "weight_digest": "b2:" + "a" * 32,
-        "plan_key_digest": "0123456789abcdef",
+        "plan_digest": "0123456789abcdef",
         "config_fingerprint": "a72bf6053187",
         "environment": {"device": "cpu"},
     }
@@ -76,7 +76,7 @@ def _segment(directory, rank: int, count: int, *, segment: int = 0, torn: bool =
             position_ids_hash="b2:" + "c" * 32,
             segment_ids_hash="b2:" + "d" * 32,
             tokenizer_sha256="sha256:" + "e" * 64,
-            plan_key_digest="0123456789abcdef",
+            plan_digest="0123456789abcdef",
         )
     if torn:
         with writer.path.open("a", encoding="utf-8") as handle:

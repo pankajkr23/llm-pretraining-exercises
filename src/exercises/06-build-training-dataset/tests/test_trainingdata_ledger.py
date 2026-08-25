@@ -43,7 +43,7 @@ def _fields(**overrides) -> dict:
         "position_ids_hash": "b2:" + "c" * 32,
         "segment_ids_hash": "b2:" + "d" * 32,
         "tokenizer_sha256": "sha256:" + "e" * 64,
-        "plan_key_digest": "0123456789abcdef",
+        "plan_digest": "0123456789abcdef",
     }
     return {**base, **overrides}
 

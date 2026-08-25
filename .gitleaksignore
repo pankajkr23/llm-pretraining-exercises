@@ -1,0 +1,26 @@
+# gitleaks false positives, pinned by exact fingerprint.
+#
+# Each line is <commit>:<path>:<rule>:<line> — the narrowest form gitleaks offers. An entry here
+# silences ONE finding in ONE line of ONE commit; it cannot hide anything else, and it stops
+# applying the moment that line changes. Never add a path- or rule-level ignore: that would
+# disable the scanner for everything matching, which is how a real credential gets through.
+#
+# Every entry needs a reason. An ignore file nobody can audit is worse than a failing scan.
+#
+# ---------------------------------------------------------------------------------------------
+# 2026-08-25 — exercise 06, `plan_key_digest` test placeholders.
+#
+# NOT a secret. The value is the literal string "0123456789abcdef" — the first sixteen hex digits
+# in order — used as a placeholder in test fixtures. gitleaks' `generic-api-key` rule fires on it
+# because the *field name* contains "key": the field held `PlanKey.digest()`, a public content
+# digest of the run's plan, which every ledger event carries so two runs under different plans
+# cannot be silently compared.
+#
+# The field has been renamed `plan_digest` (verified: gitleaks flags `plan_key_digest` and passes
+# `plan_digest`, `microbatch_hash`, `tokenizer_sha256` and a full real ledger line). So no future
+# commit can reproduce this. These four entries cover only the two commits already pushed, which
+# are not rewritten because this repo does not rewrite published history.
+4c43dd3acc8bdb270db12af2e2bef03c0988c68f:src/exercises/06-build-training-dataset/tests/test_trainingdata_ledger.py:generic-api-key:46
+1d9d0b050cf974cd9cd260a296c29b098203c49e:src/exercises/06-build-training-dataset/tests/test_trainingdata_checkpoint.py:generic-api-key:32
+1d9d0b050cf974cd9cd260a296c29b098203c49e:src/exercises/06-build-training-dataset/tests/test_trainingdata_checkpoint.py:generic-api-key:79
+1d9d0b050cf974cd9cd260a296c29b098203c49e:src/exercises/06-build-training-dataset/tests/test_trainingdata_train.py:generic-api-key:49

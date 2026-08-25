@@ -132,7 +132,7 @@ class ConsumeEvent:
 
     # -- provenance of the meaning of the ids --------------------------------------------------
     tokenizer_sha256: str
-    plan_key_digest: str
+    plan_digest: str
 
     #: Set when this event re-executes a parent after a resume. `None` on the happy path. Published
     #: rather than hidden: "no skipped or repeated batches" is true of the effective post-cut
