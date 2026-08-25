@@ -12,6 +12,29 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Pre-commit hooks, so the gates CI enforces also run before a commit exists.** gitleaks,
+  `ruff check --fix` and `ruff format` — the ruff ones through `uv run`, so it is the version
+  pinned in `pyproject.toml` rather than a second copy that can drift from CI's. Plus
+  merge-conflict, private-key, large-file, YAML and TOML checks. `uv run pre-commit install`.
+  Verified by staging a fake credential and confirming the commit was refused.
+- **No hook rewrites repository content, and that is enforced by a test.** `end-of-file-fixer` and
+  `trailing-whitespace` were in the first draft; run once over the repo they rewrote
+  `02-tokenization/web/tokenizer.json` — the frozen tokenizer whose bytes are hashed and whose hash
+  every shard manifest in exercise 06 pins. A cosmetic newline would have voided that hash and
+  invalidated every manifest, and the diff would have read as tidying.
+
+### Fixed
+
+- **CI's secret scan failed on exercise 06's test fixtures, and none of them was a secret.**
+  gitleaks' `generic-api-key` rule fires on an identifier containing "key" beside a high-entropy
+  value, so a placeholder field named `plan_key_digest` holding sixteen hex characters read as a
+  leaked credential. Verified
+  with gitleaks rather than guessed — `plan_digest`, `microbatch_hash`, `weight_digest`,
+  `tokenizer_sha256` and a complete real ledger line all pass — so the field was **renamed** and no
+  rule is weakened anywhere. This mattered beyond the tests: the submission bundle commits a real
+  ledger in which every event carries that field, and under the old name each line would have
+  tripped the scanner.
+
 - **Exercise 06 stage 7 — crash, resume, and the batch ids lining up.** A checkpoint records a
   position in the *data*, not only in the loss curve: weights, optimizer state (AdamW's moments are
   half its behaviour — restoring without them spikes the loss at every resume) and the ledger cut

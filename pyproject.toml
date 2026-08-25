@@ -17,6 +17,7 @@ dev = [
     "ipykernel>=6",
     "nbclient>=0.10",
     "playwright>=1.62.0",
+    "pre-commit>=4.6.2",
     "pytest>=8",
     "pytest-xdist>=3.6",
     "pyyaml>=6",
