@@ -113,7 +113,17 @@ def test_the_token_targets_include_the_held_out_reserve() -> None:
     training_only = mixture.token_targets(config, include_heldout=False)
     with_reserve = mixture.token_targets(config, include_heldout=True)
 
-    assert sum(training_only.values()) == config.total_tokens
+    # The unfloored lanes sum to exactly the run; the floored ones carry FLOOR_HEADROOM on top,
+    # because a lane supplied at precisely its floor breaches it on any rounding at all.
+    unfloored = sum(v for lane, v in training_only.items() if lane not in mixture.FLOORS)
+    planned_unfloored = sum(
+        int(round(count * config.sequence_length))
+        for lane, count in mixture.sequence_targets(config).items()
+        if lane not in mixture.FLOORS
+    )
+    assert unfloored == planned_unfloored
+    for lane in mixture.FLOORS:
+        assert training_only[lane] > config.total_tokens * mixture.LANE_SHARES[lane]
     assert sum(with_reserve.values()) > sum(training_only.values())
     assert with_reserve["web"] == pytest.approx(
         training_only["web"] / (1 - config.heldout_share), rel=1e-3

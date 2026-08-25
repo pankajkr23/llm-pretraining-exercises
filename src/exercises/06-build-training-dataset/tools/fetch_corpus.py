@@ -404,22 +404,37 @@ def _local_documents(text: str, local: LocalSource) -> list[str]:
     return found or ([text.strip()] if text.strip() else [])
 
 
-def _document(row: dict, source: Source) -> str | None:
-    """One row rendered as a document, or None when it should be skipped.
+def _document(row: dict, source: Source) -> list[str] | None:
+    r"""One row rendered as a document's PARTS, or None when it should be skipped.
+
+    **The parts are kept, not pre-joined, and that is the whole point.** The first version returned
+    `"\n\n".join(parts)` and the boundary between them was gone one line after it was known. It
+    cannot be recovered afterwards: measured on the fetched reasoning lane, **81.9% of documents
+    contain more than one blank line**, so "split on the first `\n\n`" resolves confidently and
+    lands inside the problem statement. And even a correct character index would not survive the
+    frozen BPE — **10.8% of separator sites are absorbed into a longer token**, so no token boundary
+    exists there at all.
+
+    Keeping the parts lets the builder tokenise each separately, which makes the boundary exact by
+    construction rather than recovered by guesswork.
+
+    The convention downstream: **everything but the last part is context**. For `(problem,
+    solution)` the problem is context and only the solution earns loss; for a single-part document
+    nothing is context and everything is graded.
 
     Args:
         row: A raw row.
         source: Which lane's source.
 
     Returns:
-        The text, or None.
+        The parts in order, or None.
     """
     if source.licence_column:
         declared = str(row.get(source.licence_column) or "").lower()
         if declared not in PERMISSIVE_CODE_FILES:
             return None
     parts = [str(row[name]) for name in source.fields if row.get(name)]
-    return "\n\n".join(parts) if parts else None
+    return parts or None
 
 
 def fetch_lane(
@@ -448,11 +463,20 @@ def fetch_lane(
         if not text:
             logger.warning("%s: %s is missing; the lane will be short", lane, local.path)
             continue
-        found = _local_documents(text, local)
-        for document in found:
-            counted, unknown = _measure(document, tokenizer)
+        # Stop at the token target here too. The first version read a local file in FULL while the
+        # remote loop below stopped on target, so the agentic lane supplied 512,327 tokens against
+        # a 233,244 budget — 4.23% of the corpus against a 2.00% plan, which put the mixture out of
+        # tolerance on the high side. Availability is not the mixture: the plan draws uniformly
+        # over spans, so a lane with twice its budget on disk takes twice its share of the run.
+        kept: list[list[str]] = []
+        for document in _local_documents(text, local):
+            if tokens_so_far >= target_tokens:
+                break
+            counted, unknown = _measure([document], tokenizer)
             tokens_so_far += counted
             unknown_so_far += unknown
+            kept.append([document])
+        found = kept
         documents.extend(found)
         result.licences.append(local.licence)
         result.sources.append({**{k: str(v) for k, v in asdict(local).items()}, "rows": len(found)})
@@ -502,7 +526,7 @@ def fetch_lane(
     return result, documents
 
 
-def _measure(document: str, tokenizer) -> tuple[int, int]:
+def _measure(document: "str | list[str]", tokenizer) -> tuple[int, int]:
     """Token count and `[UNK]` count for one document, including its EOS terminator.
 
     `[UNK]` is id **0** in the frozen tokenizer, so the unknown share is computable straight from
@@ -518,8 +542,13 @@ def _measure(document: str, tokenizer) -> tuple[int, int]:
         target that ignored it would come up short by one token per document — about 16,000 tokens
         on the agentic lane alone.
     """
-    ids = tokenizer.encode(document).ids
-    return len(ids) + 1, sum(1 for i in ids if i == 0)
+    parts = [document] if isinstance(document, str) else document
+    tokens, unknown = 1, 0  # the EOS the shard builder terminates every document with
+    for part in parts:
+        ids = tokenizer.encode(part).ids
+        tokens += len(ids)
+        unknown += sum(1 for i in ids if i == 0)
+    return tokens, unknown
 
 
 def main() -> int:
@@ -560,7 +589,12 @@ def main() -> int:
             # article from each other — corrupting the exact boundary claim this exercise is built
             # on, while every count still looked plausible.
             path = args.out / f"{lane}.jsonl"
-            payload = "".join(json.dumps(d, ensure_ascii=False) + "\n" for d in documents)
+            # A single-part document is written as a bare JSON string and a multi-part one as an
+            # array. Both are valid JSONL and the builder normalises them, so adding structure to
+            # two lanes does not invalidate the four already on disk.
+            payload = "".join(
+                json.dumps(d[0] if len(d) == 1 else d, ensure_ascii=False) + "\n" for d in documents
+            )
             path.write_text(payload, encoding="utf-8")
             result.bytes_written = len(payload.encode("utf-8"))
         results.append(result)
