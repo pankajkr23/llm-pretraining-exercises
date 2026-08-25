@@ -4,20 +4,39 @@ Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is the
 `submission_artifacts/` bundle, the reasoning is `DECISIONS.md`, the running log is `PROGRESS.md`,
 and `BRIEF.md` is the assignment (local only, gitignored).
 
-**Status: stage 7 of 8.** `spec.py`, `config.py`, `shards.py`, `manifest.py`, `firewall.py`,
-`plan.py`, `masks.py`, `pack.py`, `feed.py`, `ledger.py`, `model.py`, `train.py`, `runner.py`,
-`checkpoint.py` and `resume.py` exist. Replay, fork, the auditor and the evidence bundle do **not**.
-Do not describe this exercise as having them until it does — the README carries a stage table for
-exactly this reason, and `tests/test_trainingdata_docs.py` asserts the header agrees with it.
+**Status: stage 7 done, stage 8 partial.** Shipped: `spec.py`, `config.py`, `shards.py`,
+`manifest.py`, `firewall.py`, `plan.py`, `masks.py`, `pack.py`, `feed.py`, `ledger.py`, `model.py`,
+`train.py`, `runner.py`, `checkpoint.py`, `resume.py` and `replay.py` — sixteen modules.
+
+**Not shipped, and do not describe the exercise as having them:** `fork`, `verify.py`,
+`run_demo.py`, `opus`, the metrics/throughput module, the evidence writer (`evidence.json` /
+`evidence.md`), a corpus fetcher under `tools/`, and any `web/` bundle. There is also no tracked
+`results/` directory, so no document here yet renders a committed measurement.
+
+**Stage 7 is proven, not asserted.** Golden run 144 events; ranks stopped at 24/25/26/27; resumed
+from `ckpt-main-000007`; 6 microbatches re-executed; every `(step, rank, accum, flat,
+microbatch_hash)` after resume equals the golden run.
+
+**Stage 8 is one third done.** Replay landed — 32/32 events re-derived, and one flipped shard bit
+turns exactly 1 of the 32 red, which is the property that makes the check worth running. Fork and
+the auditor have not.
+
+`tests/test_trainingdata_docs.py` guards **README.md's** status line against **README.md's** stage
+table, and separately asserts every module is named in both README.md and CLAUDE.md. It does *not*
+read this header — so this paragraph is hand-maintained and goes stale silently. It already did:
+it denied `replay.py` existed while the module carried 340 lines and 14 tests.
 
 ## The rules this exercise adds
 
 - **Replay reads the ledger. It never recomputes.** This is the session's whole thesis, and the
   reason is not stylistic: once OPUS scores depend on the current checkpoint, the plan stops being a
-  pure function of position, so re-deriving it can never be bit-identical. `replay.py` must keep an
-  import closure with **no torch and no model code**, and a test will assert that. Measured on the
-  prototype: change one planner line and recompute → 96/96 slots differ; read the ledger → 96/96
-  match.
+  pure function of position, so re-deriving it can never be bit-identical. `replay.py` keeps an
+  import closure with **no torch and no planner**, and `test_replay_cannot_reach_the_planner_or_torch`
+  asserts it transitively — with a twin (`test_the_closure_check_would_notice_a_new_import`) that
+  goes red when the walker stops seeing new imports. Measured on the prototype: change one planner
+  line and recompute → 96/96 slots differ; read the ledger → 96/96 match. Measured on the shipped
+  module: 32/32 microbatches re-derived over a recorded interval, and one flipped shard bit turns
+  exactly 1 of the 32 red.
 
 - **The data system is torch-free. Only training imports torch.** Shards, manifests, packing, masks,
   the schedule, the ledgers, replay, fork and audit are pure Python and numpy. CI runs
@@ -175,7 +194,67 @@ exactly this reason, and `tests/test_trainingdata_docs.py` asserts the header ag
   *checkpoint*, not after the crash; the microbatches between them are re-executed, carry
   `replayed_from` naming the discarded event each repeats, and the count is published.
 
+- **Replay must read the POLICY out of the event, not hardcode the reconstruction.** This is the
+  half of "run the ledger, don't calculate it" that `replay.py` has not finished. `rebuild()`
+  correctly reads the spans, the shard ids and `sequence_length` from the event — and then calls
+  `masks.segment_ids`, `masks.position_ids` and `masks.loss_mask(segments[row], tokens[row])`
+  hardcoded, ignoring the three policy fields the event carries for exactly this purpose:
+  `attention_policy`, `position_policy`, `pack_policy`. `grep -n "_policy" replay.py` returns
+  nothing. Today every run writes the same three strings so nothing diverges; the failure appears
+  the first time a run masks a prompt as context or changes the window rule, and it appears in the
+  **worst possible disguise** — `loss_mask_hash` mismatches, the verdict goes red, and the report
+  blames the shard when the shard is fine. Either dispatch on the recorded policy, or assert it
+  equals the single value this build implements and fail loudly with "this replay cannot rebuild
+  policy X" — never re-derive silently under an assumption the event contradicts.
+  There is also **no `loss_policy` field**, so `context_spans` masking is not recordable at all: add
+  the field before adding the caller, or replay is unfixable by construction. And nothing validates
+  the strings — `tests/test_trainingdata_ledger.py:39` writes `"restart-per-document"` where
+  `train.py:210` writes `"restart-per-document-continue-across-window"`. **A policy string nothing
+  reads and nothing validates is a label, not a contract.**
+
+- **`masks.loss_mask(context_spans=...)` has zero callers, and the docs must stop implying
+  otherwise.** It is implemented, tested (`test_context_spans_are_excluded_from_loss`) and taught in
+  the notebook; `feed.build_microbatch` never passes it. So the SFT-prompt / tool-observation
+  masking this exercise explains is a **capability, not a behaviour of the run** — the shipped run
+  grades every non-pad token that is not a document's last. The agentic lane is the one that makes
+  this concrete, and it is exactly the lane the corpus under-feeds. Either wire it through `feed.py`
+  *and* record the spans in the event, or say plainly in the README which of the two it is.
+
+- **`pack_util` in the telemetry is arithmetic, not a measurement — it is always `1.0`.**
+  `feed.py:207` calls `pack.build_window(handle.index, handle.tokens, span.start, span.end)` with no
+  `window=`, so `size = end - start`, `packed[: end - start]` fills the array end to end, no `PAD`
+  is written, and `masks.utilization` can only return 1.0. `train.py:206` records it per microbatch
+  and `ledger.ConsumeEvent` carries it into the committed bundle, where a reader will take it as
+  evidence the packer is efficient. Fix it by passing `window=cfg.sequence_length` so a short tail
+  can show, or delete the field — do not leave a constant in the ledger dressed as a statistic.
+
+- **The corpus is 4.8 epochs, and the mixture claim does not survive that unstated.** The run
+  consumes `Config.total_tokens` = 10,485,760 positions; the corpus on disk holds 2,185,575 tokens.
+  Shaped to session 5's weights that is **30.2 epochs of web against 0.41 of agentic** — the
+  heaviest-funded lane memorised thirty times over, the lightest never read through once. Nothing
+  fails; shards read fine and the loss curve looks normal. Print the per-lane epoch count next to
+  any mixture-compliance figure this exercise publishes, and treat `mixture_compliance` in
+  `spec.REQUIREMENTS` as unmet until it does. `data/proxy/manifest.json` funds four lanes
+  (`stem`, `reasoning`, `agentic`, `stem-alt`) and this exercise ships **no fetcher of its own** —
+  `tools/` holds only the notebook builder.
+
+- **Three of the deliverables are PUBLIC URLS, not repo files.** The platform totals **1,150** =
+  1,000 rubric (the repo link) + 3 × 50 for `run.log`, `evidence.json` and `evidence.md` published
+  at **three separate public URLs**. `BRIEF.md` truncates before those fields, so the brief is not
+  the authority here — the platform's field list is. `tests/test_submission_bundle.py` proves the
+  three files are *committable*; committing them is not publishing them, and the exercise is not
+  done until all three resolve.
+
 ## Naming
+
+- **Two shipped helpers currently have no caller, and that is worth knowing before trusting them.**
+  `masks.loss_mask(context_spans=...)` is implemented, tested (`test_context_spans_are_excluded_from_loss`)
+  and taught in the notebook, but **nothing in the pipeline passes `context_spans`** — the agentic
+  loss-mask argument is demonstrated, not exercised. And `pack_utilization` is arithmetically pinned
+  to `1.0` because `feed.py` never passes `window=`, so the `pack_util` field `train.py` writes into
+  every ledger event is a constant, not a measurement. Neither is a bug; both are claims the evidence
+  bundle must not overstate.
+
 
 Test modules are prefixed `test_trainingdata_*`. pytest imports test modules by **basename**, so a
 second `test_config.py` anywhere in the repo aborts *collection* rather than failing a test.

@@ -10,7 +10,32 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-08-25
+
+Session 6's exercise through stage 7 of 8: a training-data execution system that plans its own
+work without coordination, feeds four real worker processes, records every microbatch it consumes,
+and — after a real crash — resumes on the same batch ids. The release is a minor rather than a
+patch because it adds an exercise and a repo-wide gate (pre-commit), and a minor rather than a
+major because the exercise is not finished: stage 8 has landed replay but not `fork` or the audit
+report, and the demo runner, the sidecar auditor and the published evidence bundle are still to
+come.
+
+Two findings are worth reading even if you skip the rest. **A checkpoint is a position in the
+data, not only in the loss curve** — weights and optimizer state alone leave the ledger cut each
+rank must be truncated to undecided, and a run that quietly repeats or skips work has a loss curve
+that looks entirely normal while it happens. And **"no skipped or repeated batches" is a claim
+about the effective ledger, never about the device**: the resume really does re-execute six
+microbatches, so each re-executed event names the discarded event it repeats rather than the drill
+being edited until the claim comes out true.
+
 ### Added
+
+- **Exercise 06 stage 8, in part — replay reads the ledger, re-derives the hashes, and never
+  recomputes.** An auditor takes each event's shard, span and microbatch hash, re-reads exactly the
+  bytes those coordinates name, and re-derives the hash from them: **32 of 32 re-derived**. One
+  flipped bit in a shard turns exactly **1 of 32** red rather than the whole run, so the damage is
+  localised to the microbatch that read the damaged bytes. `fork` and the audit report have **not**
+  landed, so stage 8 is partial and this release does not claim it whole.
 
 - **Pre-commit hooks, so the gates CI enforces also run before a commit exists.** gitleaks,
   `ruff check --fix` and `ruff format` — the ruff ones through `uv run`, so it is the version
@@ -22,18 +47,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   `02-tokenization/web/tokenizer.json` — the frozen tokenizer whose bytes are hashed and whose hash
   every shard manifest in exercise 06 pins. A cosmetic newline would have voided that hash and
   invalidated every manifest, and the diff would have read as tidying.
-
-### Fixed
-
-- **CI's secret scan failed on exercise 06's test fixtures, and none of them was a secret.**
-  gitleaks' `generic-api-key` rule fires on an identifier containing "key" beside a high-entropy
-  value, so a placeholder field named `plan_key_digest` holding sixteen hex characters read as a
-  leaked credential. Verified
-  with gitleaks rather than guessed — `plan_digest`, `microbatch_hash`, `weight_digest`,
-  `tokenizer_sha256` and a complete real ledger line all pass — so the field was **renamed** and no
-  rule is weakened anywhere. This mattered beyond the tests: the submission bundle commits a real
-  ledger in which every event carries that field, and under the old name each line would have
-  tripped the scanner.
 
 - **Exercise 06 stage 7 — crash, resume, and the batch ids lining up.** A checkpoint records a
   position in the *data*, not only in the loss curve: weights, optimizer state (AdamW's moments are
@@ -54,14 +67,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 - **24 mutants across the new modules, 24 killed** — five only after the tests they exposed were
   written, including `os._exit` → `SystemExit`, which still exits 137 and passed every other
   assertion until workers began recording a clean-exit marker whose *absence* is the evidence.
-
-### Changed
-
-- **Corrected a claim about the cut vector before it shipped.** It had been written as a vector
-  "because the four ranks stop at different points"; at a synchronous checkpoint they do not, and
-  the drill measures `{24, 24, 24, 24}`. It is a vector because it is applied to four separate
-  files and because per-rank selection will make the values diverge — the non-uniform case is now
-  tested directly rather than claimed of a drill that does not produce it.
 
 - **Exercise 06 stage 6 — the consumption ledger, and a training step to fill it.** One event per
   microbatch, one file per `(branch, rank, segment)`, each event carrying the previous one's hash.
@@ -92,14 +97,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   exposed were written. The sharpest: replacing the block-diagonal mask with plain `is_causal=True`
   survived the whole model suite, because causality already stops document A from seeing document B
   and the leak test only checked A.
-
-### Fixed
-
-- **Exercise 06's README claimed "stage 1 of 8" directly above a table marking five stages done.**
-  The exact sentence-versus-table drift `AGENTS.md` warns about, now caught by a test that reads the
-  status line and the table and requires them to agree — along with one asserting every module in
-  the package is named by both the README and the exercise's `CLAUDE.md`, which failed on its first
-  run against six modules.
 
 - **Exercise 06 stage 5 — masks for packed sequences.** Block-diagonal attention so document B
   cannot see document A, position ids that **restart per document**, and loss masks that exclude
@@ -146,22 +143,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   verifying; an evaluation shard refused with both its reasons; one flipped bit turning `verify()`
   false and changing the id.
 
-### Fixed
-
-- **All four of exercises 01–04's `BRIEF.md` files had been destroyed and are restored.** They were
-  tracked until `18015b1` untracked them; the *next* branch switch across that commit then deleted
-  the working copies, because git removes a file that was tracked at the old HEAD and is not at the
-  new one. Nobody deleted anything. Recovered from `18015b1^`.
-- **The local-only tripwire now covers `BRIEF.md`**, alongside the notebooks and builders, and
-  carries the recovery command in its failure message. `AGENTS.md` explains the mechanism — that
-  *untracking* is what makes a file fragile — rather than leaving it to be rediscovered.
-- **The skeleton guard required `tools/`, which no fresh clone has.** For most exercises its only
-  content is the gitignored `build_notebook.py`, and git does not track empty directories, so the
-  guard passed locally and failed CI. Same shape as requiring `artifacts/` would be: write the
-  guard for what a clone has.
-
-### Added
-
 - **Exercise 06 has the full exercise skeleton**, which it should have had before any code was
   written: `BRIEF.md` (local, gitignored — the assignment), `CLAUDE.md` (rules for whoever changes
   the code), `PROGRESS.md` (the running log), `NOTICE` (scope, affiliation and third-party credit
@@ -175,32 +156,10 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   verified with `git ls-files` rather than by reading `.gitignore`, because a file already in the
   index stays tracked no matter what the ignore rules say afterwards.
 
-### Changed
-
-- **Integration runs as three parallel CI jobs.** The previous change parallelised *within* a
-  runner and bought less than expected: 255s → 207s on CI against 229s → 65s locally. The reason is
-  structural — `--dist loadfile` keeps a file on one worker (it must), so **the slowest single file
-  is a hard floor** no number of workers can beat, and `02/test_js_encoder.py` alone is 55s.
-  Sharding lets that file overlap with the other exercises instead of queueing behind them. Shards
-  are balanced on measured cost: 02 = 116s · 05 = 57s · everything else = 49s.
-- **The workflow records the runner's core count.** `-n auto` follows it, so without this a future
-  slowdown and a smaller runner are indistinguishable in a log.
-
-### Added
-
 - **`tests/test_ci_shards_cover_everything.py`** — sharding has one dangerous failure mode: a file
   outside every shard is never run and **CI is green**. This reads the shard paths out of `ci.yml`
   itself rather than restating them, and asserts every integration test is in exactly one shard.
   Verified: **142 of 142, none missed, none duplicated.**
-
-### Fixed
-
-- **The parallel-safety guard matched a mention rather than an invocation.** It flagged a
-  diagnostic line that *prints* the words "pytest -n auto" — a false positive against its own
-  workflow. It now matches `uv run pytest`, and still catches a real dropped `--dist loadfile`.
-- **`pyyaml` was used but never declared**, resolving only transitively. Added to the dev group.
-
-### Added
 
 - **Exercise 06 — the training data execution system — is scaffolded.** Stage 1 of 8: the frozen
   `Config` with a run fingerprint, `spec.py` (the constants the producer and auditor share),
@@ -215,13 +174,27 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 - **`tests/test_module_names.py`** — no two test modules may share a basename. pytest imports them
   by basename, so a second `test_config.py` aborts *collection* rather than failing a test.
 
-### Fixed
-
-- **A second `test_config.py` broke collection.** Exercise 03 already had one. Renamed to
-  `test_trainingdata_*`, following exercise 05's `test_mixture_*` convention — now checkable rather
-  than remembered.
+- **`tests/test_parallel_safety.py`** pins the proviso the speedup rests on: no two test files write
+  the same fixed harness path, and CI still passes `--dist loadfile`. Both mutants confirmed failing.
+  The guard caught two bugs in itself first — it flagged `tmp_path/probes.json` (pytest's own
+  per-test directory) and counted one file declaring a path twice as a collision.
 
 ### Changed
+
+- **Corrected a claim about the cut vector before it shipped.** It had been written as a vector
+  "because the four ranks stop at different points"; at a synchronous checkpoint they do not, and
+  the drill measures `{24, 24, 24, 24}`. It is a vector because it is applied to four separate
+  files and because per-rank selection will make the values diverge — the non-uniform case is now
+  tested directly rather than claimed of a drill that does not produce it.
+
+- **Integration runs as three parallel CI jobs.** The previous change parallelised *within* a
+  runner and bought less than expected: 255s → 207s on CI against 229s → 65s locally. The reason is
+  structural — `--dist loadfile` keeps a file on one worker (it must), so **the slowest single file
+  is a hard floor** no number of workers can beat, and `02/test_js_encoder.py` alone is 55s.
+  Sharding lets that file overlap with the other exercises instead of queueing behind them. Shards
+  are balanced on measured cost: 02 = 116s · 05 = 57s · everything else = 49s.
+- **The workflow records the runner's core count.** `-n auto` follows it, so without this a future
+  slowdown and a smaller runner are indistinguishable in a log.
 
 - **CI's test job runs in parallel: ~276s → an expected ~90s.** The integration step was **255s of
   276s — 92% of the job** — and the slow tests are CPU-bound (a 40s JS-encoder parity check, a 16s
@@ -236,12 +209,44 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   two workers would delete each other's site mid-test. Both fixtures now **fail loudly** under `-n`
   when the site is absent rather than racing.
 
-### Added
+### Fixed
 
-- **`tests/test_parallel_safety.py`** pins the proviso the speedup rests on: no two test files write
-  the same fixed harness path, and CI still passes `--dist loadfile`. Both mutants confirmed failing.
-  The guard caught two bugs in itself first — it flagged `tmp_path/probes.json` (pytest's own
-  per-test directory) and counted one file declaring a path twice as a collision.
+- **CI's secret scan failed on exercise 06's test fixtures, and none of them was a secret.**
+  gitleaks' `generic-api-key` rule fires on an identifier containing "key" beside a high-entropy
+  value, so a placeholder field named `plan_key_digest` holding sixteen hex characters read as a
+  leaked credential. Verified
+  with gitleaks rather than guessed — `plan_digest`, `microbatch_hash`, `weight_digest`,
+  `tokenizer_sha256` and a complete real ledger line all pass — so the field was **renamed** and no
+  rule is weakened anywhere. This mattered beyond the tests: the submission bundle commits a real
+  ledger in which every event carries that field, and under the old name each line would have
+  tripped the scanner.
+
+- **Exercise 06's README claimed "stage 1 of 8" directly above a table marking five stages done.**
+  The exact sentence-versus-table drift `AGENTS.md` warns about, now caught by a test that reads the
+  status line and the table and requires them to agree — along with one asserting every module in
+  the package is named by both the README and the exercise's `CLAUDE.md`, which failed on its first
+  run against six modules.
+
+- **All four of exercises 01–04's `BRIEF.md` files had been destroyed and are restored.** They were
+  tracked until `18015b1` untracked them; the *next* branch switch across that commit then deleted
+  the working copies, because git removes a file that was tracked at the old HEAD and is not at the
+  new one. Nobody deleted anything. Recovered from `18015b1^`.
+- **The local-only tripwire now covers `BRIEF.md`**, alongside the notebooks and builders, and
+  carries the recovery command in its failure message. `AGENTS.md` explains the mechanism — that
+  *untracking* is what makes a file fragile — rather than leaving it to be rediscovered.
+- **The skeleton guard required `tools/`, which no fresh clone has.** For most exercises its only
+  content is the gitignored `build_notebook.py`, and git does not track empty directories, so the
+  guard passed locally and failed CI. Same shape as requiring `artifacts/` would be: write the
+  guard for what a clone has.
+
+- **The parallel-safety guard matched a mention rather than an invocation.** It flagged a
+  diagnostic line that *prints* the words "pytest -n auto" — a false positive against its own
+  workflow. It now matches `uv run pytest`, and still catches a real dropped `--dist loadfile`.
+- **`pyyaml` was used but never declared**, resolving only transitively. Added to the dev group.
+
+- **A second `test_config.py` broke collection.** Exercise 03 already had one. Renamed to
+  `test_trainingdata_*`, following exercise 05's `test_mixture_*` convention — now checkable rather
+  than remembered.
 
 ## [0.7.0] - 2026-08-25
 
@@ -1686,7 +1691,9 @@ First tagged release: two interactive exercises live on Vercel with a gated depl
 - **Tooling & conventions:** uv workspace (Python 3.12), ruff lint/format, pytest (unit +
   integration split), GitHub Actions CI, and a PR-only workflow documented in `AGENTS.md`.
 
-[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.6.2...HEAD
+[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.5.1...v0.6.0
