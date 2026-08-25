@@ -30,6 +30,10 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   written: `BRIEF.md` (local, gitignored — the assignment), `CLAUDE.md` (rules for whoever changes
   the code), `PROGRESS.md` (the running log), `NOTICE` (scope, affiliation and third-party credit
   with both OPUS copyright lines), and `artifacts/`. It is now in the root README's exercise table.
+- **`tests/test_deploy_registration.py`** — every exercise with a `web/` has a card on the site's
+  landing page, and no card points at an exercise with none. `build.sh` publishes any `web/`
+  automatically but the cards are hand-maintained, so an exercise could be deployed and reachable
+  while invisible to anyone arriving at the site root, with nothing failing.
 - **`tests/test_exercise_skeleton.py`** makes the skeleton checkable instead of remembered. It
   requires the genuinely universal files only, and asserts **no `BRIEF.md` is ever tracked** —
   verified with `git ls-files` rather than by reading `.gitignore`, because a file already in the
