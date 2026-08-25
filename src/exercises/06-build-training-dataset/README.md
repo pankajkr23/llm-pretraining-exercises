@@ -12,10 +12,11 @@ documents -> tokenized shards -> manifests -> mixture schedule -> packing -> bat
           -> crash -> resume -> replay -> audit
 ```
 
-> **Status: stage 1 of 8.** The settings, the shared constants and the vocabulary are in place and
-> under test. Shards, packing, ledgers, crash recovery and replay are not built yet, and this file
-> says so rather than describing a system that does not exist. The stage table is
-> [below](#the-stages).
+> **Status: stage 6 of 8.** Shards, manifests, the firewall, the plan, packing, the model, the
+> training step and the consumption ledger are in place and under test, and a four-process `gloo`
+> run writes a ledger that verifies. Crash recovery, resume, replay, fork and the audit are **not**
+> built yet, and this file says so rather than describing a system that does not exist. The stage
+> table is [below](#the-stages).
 
 ## How to read this
 
@@ -84,7 +85,7 @@ Each ends in something you can run and see. Nothing advances until the previous 
 | 3 | offer an evaluation shard to the loader and watch it blocked | **done** |
 | 4 | ask "what is slot (step 3, rank 2)?" and get token spans back | **done** |
 | 5 | pack a window and **see** the block-diagonal attention mask | **done** |
-| 6 | train, then read the consumption ledger back line by line | — |
+| 6 | train, then read the consumption ledger back line by line | **done** |
 | 7 | crash it on purpose, resume, and watch the batch ids line up | — |
 | 8 | replay an interval, fork a branch, run the auditor | — |
 
@@ -104,6 +105,12 @@ src/trainingdata/
   firewall.py    # the eval registry — data we know about so we can refuse it
   plan.py        # the odometer: which rank trains on which tokens, uncoordinated
   masks.py       # block-diagonal attention, per-document positions, loss masks
+  pack.py        # documents out of a span, and the window edge the naive version gets wrong
+  feed.py        # a coordinate becomes a microbatch AND its ledger record, from one object
+  ledger.py      # the deliverable: append-only, chain-hashed, one file per rank per segment
+  model.py       # TinyGPT — RoPE, SwiGLU, tied head. The only place torch is required
+  train.py       # one optimizer step, and the token-weighted reduction across ranks
+  runner.py      # real worker processes over gloo, spawned, with a file rendezvous
 tests/           # discovered by `uv run pytest` from the repo root
 tools/           # the notebook builder (local-only, gitignored — back it up)
 artifacts/       # heavy regenerable output (gitignored)
@@ -117,12 +124,20 @@ uv run pytest src/exercises/06-build-training-dataset    # the suite
 uv run python -c "from trainingdata.config import Config; c=Config(); print(c.fingerprint(), c.total_tokens)"
 ```
 
-The training step will need torch, which is an **optional extra** so CI never pulls a 2.5 GB CUDA
-wheel to run arithmetic:
+The training step needs torch, which is an **optional extra** so CI never pulls a multi-gigabyte
+wheel to run arithmetic. Everything above — shards, manifests, the firewall, the plan, packing, the
+feeder and the ledger — is numpy, which is what lets CI verify almost the whole system:
 
 ```bash
-uv sync --all-packages --extra train
+uv sync --all-packages --extra train                     # ...plus torch
+uv run pytest src/exercises/06-build-training-dataset -m integration
 ```
+
+**What CI cannot see.** The torch tests — the model, the training step, and the four-process `gloo`
+run — `skip` without the extra, and CI does not install it. They are run locally before every pull
+request, and `gloo` additionally needs loopback networking, so they skip again inside a sandbox that
+blocks it. A rule that only ever skips is not a rule, and this one is named here rather than left to
+be discovered.
 
 ## The producer/auditor wall
 

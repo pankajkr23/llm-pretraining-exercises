@@ -4,10 +4,11 @@ Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is the
 `submission_artifacts/` bundle, the reasoning is `DECISIONS.md`, the running log is `PROGRESS.md`,
 and `BRIEF.md` is the assignment (local only, gitignored).
 
-**Status: stage 4 of 8.** `config.py`, `spec.py`, `shards.py`, `manifest.py`, `firewall.py`,
-`plan.py` and `masks.py` exist. Do not
-describe this exercise as having packing, ledgers or replay until it does — the README carries a
-stage table for exactly this reason.
+**Status: stage 6 of 8.** `spec.py`, `config.py`, `shards.py`, `manifest.py`, `firewall.py`,
+`plan.py`, `masks.py`, `pack.py`, `feed.py`, `ledger.py`, `model.py`, `train.py` and `runner.py`
+exist. Crash recovery, resume, replay, fork and the audit do **not**. Do not describe this exercise
+as having them until it does — the README carries a stage table for exactly this reason, and
+`tests/test_trainingdata_docs.py` now asserts the header agrees with it.
 
 ## The rules this exercise adds
 
@@ -85,6 +86,56 @@ stage table for exactly this reason.
   preconditioned gradient inner product, minus a redundancy penalty the lecture never mentions.
   `DECISIONS.md` D7.
 
+- **The ledger is a chain, and that is a bounded claim.** Each event carries the previous event's
+  hash, so tampering can never be *local*. It is not a signature: anyone who can edit the file can
+  recompute every hash after their edit. What exposes them then is `seq`, which is why the sequence
+  check in `verify_chain` is **not** redundant with the `prev` check — a mutation removing it
+  survived thirty-one tests before the re-chaining test existed.
+
+- **`append` refuses to run before `open`.** `open` claims the segment with `O_EXCL`; `append` uses
+  `"a"` mode, which would happily create the file and bypass that claim. Two processes interleaving
+  into one segment produce a record no one can read.
+
+- **Only the LAST line of a segment may be repaired.** A torn tail is an interrupted write; an
+  unparseable line anywhere earlier is corruption, and repairing it would hide real damage behind a
+  routine crash-recovery path. `drop_torn_tail` validates the earlier lines *first* — an early
+  return on a healthy tail let mid-file damage read as "nothing to repair".
+
+- **A window usually OPENS mid-document, and numbering it from 0 is the silent error.**
+  Concat-and-chop cuts every `sequence_length` tokens with no regard for documents. `pack.py` gives
+  a continuation fragment its true offset; `masks.position_ids` takes those offsets. This is why the
+  model uses **RoPE and not a learned position table**: a 5,000-token document reaches position
+  4,999, which no table sized to the window can hold, and clamping would corrupt exactly the
+  continuations the offsets exist to fix.
+
+- **The leak runs from the LATER document to the earlier one.** Causality already stops document A
+  from seeing document B, so a test that checks A's logits passes even with the block-diagonal mask
+  replaced by plain `is_causal=True`. Assert on B. Both directions are tested; only one can fail.
+
+- **`fork_rng` around module construction is load-bearing.** `nn.Linear.__init__` calls
+  `reset_parameters`, which draws from the **global** RNG before our explicit generator runs. Every
+  value is overwritten a moment later, so it is invisible in the model and surfaces as the next
+  `torch.randn` in the process returning different numbers because a model was built.
+
+- **The reduction is built from sums, never from means of means.** Packing is ragged, so
+  accumulation slots and ranks have different graded-token counts. Backward on the summed loss,
+  all-reduce the gradients and the counts, divide **once**. Averaging per-slot averages weights a
+  60-token slot as heavily as a 500-token one, and the loss curve looks entirely normal.
+
+- **Ranks must end every step bit-identical.** Four gloo ranks were measured to do so. A rank that
+  steps on its own unreduced gradient diverges immediately, with no error and a healthy-looking
+  loss — the run is then four different models and the checkpoint is whichever one rank 0 held.
+  `write_telemetry` records a weight digest per rank so that is checkable rather than assumed.
+
+- **`spawn`, always, and a file rendezvous, never a port.** macOS defaults to `spawn` and Linux to
+  `fork`; code written under `fork` works by accident and fails on a grader's machine. A TCP port
+  that is free on a laptop may not be on a shared runner, and the failure is an intermittent hang.
+
+- **The torch tests skip in CI and that is stated, not hidden.** CI runs `uv sync --all-packages`
+  with no extras, so `model`, `train` and `runner` are verified locally before each PR and nowhere
+  else. `gloo` additionally needs loopback, so the multi-rank tests skip again inside a sandbox that
+  blocks it — `_loopback_available()` probes for that rather than letting it hang.
+
 ## Naming
 
 Test modules are prefixed `test_trainingdata_*`. pytest imports test modules by **basename**, so a
@@ -96,7 +147,8 @@ second `test_config.py` anywhere in the repo aborts *collection* rather than fai
 ```bash
 uv sync --all-packages                                   # the data system
 uv sync --all-packages --extra train                     # ...plus torch, for the training step
-uv run pytest src/exercises/06-build-training-dataset
+uv run pytest src/exercises/06-build-training-dataset    # unit + integration
+uv run pytest src/exercises/06-build-training-dataset -m "not integration"
 ```
 
 Heavy output goes to gitignored `artifacts/`; the tracked bundle is capped at 2 MiB and the cap is

@@ -12,6 +12,44 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 06 stage 6 — the consumption ledger, and a training step to fill it.** One event per
+  microbatch, one file per `(branch, rank, segment)`, each event carrying the previous one's hash.
+  Four ranks writing one file corrupt it, so there is no shared writer and therefore no lock to be
+  holding when a process dies. Written *before* the optimizer steps: "consumed" means fed to the
+  model, and whether that work counts is the checkpoint cut's decision on resume.
+- **The chain's claim is bounded, and stated as such.** It is not a signature — anyone who can edit
+  the file can recompute every hash after their edit. What it buys is that tampering can never be
+  local, and `seq` is what exposes a re-chained file with an event removed.
+- **A crash can tear the last line, and only the last line is repaired.** `append` fsyncs, so a
+  completed event has landed, but the kill can arrive mid-`write`. An unparseable line anywhere
+  earlier is corruption, not an interrupted write, and repairing it would hide real damage.
+- **Packing, and the window edge the naive version gets wrong.** Concat-and-chop means most windows
+  *open* mid-document; numbering that fragment from 0 tells the model the middle of a document is
+  its start. Fragments carry their true offset, found by binary search over each shard's `EOS`
+  positions rather than a per-window backward scan.
+- **TinyGPT (5,774,080 parameters) uses RoPE for a data-system reason, not a modelling one.** A
+  5,000-token document chopped into 512-token windows reaches position 4,999, which no learned table
+  sized to the window can hold; RoPE's attention depends on the *difference* between positions.
+- **Real worker processes over `gloo`, not a loop pretending to be four.** `spawn` everywhere so a
+  Linux grader hits nothing macOS hid, and a file rendezvous rather than a TCP port so there is no
+  port to collide on a shared runner. Four ranks were measured to end a run **bit-identical**;
+  per-rank telemetry records a weight digest so that is checked rather than assumed.
+- **The gradient is token-weighted.** Backward on the summed loss, all-reduce gradients and counts,
+  divide once. Averaging per-slot averages weights a 60-token slot as heavily as a 500-token one,
+  and the loss curve looks entirely normal while it happens.
+- **47 mutants across the five new modules, 47 killed** — six of them only after the tests they
+  exposed were written. The sharpest: replacing the block-diagonal mask with plain `is_causal=True`
+  survived the whole model suite, because causality already stops document A from seeing document B
+  and the leak test only checked A.
+
+### Fixed
+
+- **Exercise 06's README claimed "stage 1 of 8" directly above a table marking five stages done.**
+  The exact sentence-versus-table drift `AGENTS.md` warns about, now caught by a test that reads the
+  status line and the table and requires them to agree — along with one asserting every module in
+  the package is named by both the README and the exercise's `CLAUDE.md`, which failed on its first
+  run against six modules.
+
 - **Exercise 06 stage 5 — masks for packed sequences.** Block-diagonal attention so document B
   cannot see document A, position ids that **restart per document**, and loss masks that exclude
   padding, context spans and each document's final token (next-token prediction has no target for
