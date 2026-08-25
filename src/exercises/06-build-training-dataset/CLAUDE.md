@@ -4,9 +4,9 @@ Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is the
 `submission_artifacts/` bundle, the reasoning is `DECISIONS.md`, the running log is `PROGRESS.md`,
 and `BRIEF.md` is the assignment (local only, gitignored).
 
-**Status: stage 1 of 8.** Only `config.py` and `spec.py` exist. Do not describe this exercise as
-having shards, ledgers or replay until it does — the README carries a stage table for exactly this
-reason.
+**Status: stage 2 of 8.** `config.py`, `spec.py`, `shards.py` and `manifest.py` exist. Do not
+describe this exercise as having packing, ledgers or replay until it does — the README carries a
+stage table for exactly this reason.
 
 ## The rules this exercise adds
 

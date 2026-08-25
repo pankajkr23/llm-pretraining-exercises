@@ -15,14 +15,14 @@ re-checked by a second that reads only the artifacts.
 
 ## Open items — for review
 
-**Stage 1 of 8 is done.** The settings, the shared constants and the vocabulary problem are in
-place and under test. Nothing else is built, and no document here claims otherwise.
+**Stage 2 of 8 is done.** Settings, shared constants, the vocabulary problem, and immutable shards
+with manifests and an admission gate. Nothing else is built, and no document here claims otherwise.
 
 | # | item | status | note |
 | --- | --- | --- | --- |
 | O1 | **Exercise skeleton** | **done** | `BRIEF.md` (local), `README.md`, `CLAUDE.md`, `DECISIONS.md`, `PROGRESS.md`, `NOTICE`, `pyproject.toml`, `src/`, `tests/`, `tools/`, `artifacts/`. |
 | O2 | **Stage 1 — config and spec** | **done** | Frozen `Config` + fingerprint, `spec.py` behind the producer/auditor wall, 19 tests. |
-| O3 | **Stage 2 — shards and manifests** | next | Immutable `uint16` shards, content-addressed ids, 16-field manifests, tamper detection. |
+| O3 | **Stage 2 — shards and manifests** | **done** | Immutable `uint16` shards sealed `0444`, content-addressed ids, append-only manifests, admission gate. Proven on real corpus text: 600k chars → 269,439 tokens → 5 shards, all sealed and verifying; one flipped bit turns `verify()` false and changes the id. |
 | O4 | **Corpus** | not started | ~40–60 MB across S5's six lanes, licence verified **at fetch time from the source itself**. |
 | O5 | **OPUS** | decided, not built | Port the criterion (~300 lines) from the MIT reference as a spec. Not installable: its `train.py` fails at import on `torch.empty(1, device="cuda")` and needs NCCL. |
 | O6 | **The web explainer** | not started | In scope, after the system works. |
@@ -81,6 +81,17 @@ every shard manifest pins, so the sentinels are assigned **out of vocabulary** �
 ---
 
 ## Change log
+
+### 2026-08-25 (stage 2 — shards and manifests)
+
+- **Shards are immutable three ways over**, deliberately: the id *is* the content hash so a change
+  renames the file; `0444` plus `mode="r"` memmap makes a careless write raise; and every read
+  re-verifies the hash. Only the third survives a shell, which is why it exists.
+- **The admission gate refuses on a missing hash, not only a failing one.** The lecture's minimum is
+  dedup + PII + eval-overlap, and an unanswered question is not a pass.
+- **A mutation survived and was fixed.** The refusal tests parametrize over `REQUIRED_HASHES`, so
+  deleting an entry made them test *fewer cases* and stay green — a guard derived from the thing it
+  guards. A twin now pins the three by name.
 
 ### 2026-08-25 (skeleton and stage 1)
 

@@ -10,6 +10,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Exercise 06 stage 2 — immutable shards and manifests.** A shard's **id is its content hash**, so
+  a modified shard is a *different* shard by construction rather than by convention. Three
+  overlapping defences, and the notebook demonstrates why only one counts: `0444` on disk and a
+  read-only memmap both protect the *handle*, and neither survives a shell — **re-hashing on read**
+  is what catches a tampered file, so every ledger entry will carry the shard's hash and replay will
+  re-verify before reading.
+- **The admission gate refuses on a missing hash, not only a failing one.** The lecture's minimum is
+  dedup + PII + eval-overlap; an unanswered question is not a pass. Every reason is reported rather
+  than the first, so one call says everything wrong with a shard.
+- Proven end to end on real corpus text: 600k chars → **269,439 tokens** → 5 sealed shards, all
+  verifying; an evaluation shard refused with both its reasons; one flipped bit turning `verify()`
+  false and changing the id.
+
 ### Fixed
 
 - **All four of exercises 01–04's `BRIEF.md` files had been destroyed and are restored.** They were
