@@ -153,6 +153,62 @@ every shard manifest pins, so the sentinels are assigned **out of vocabulary** �
   deleting an entry made them test *fewer cases* and stay green — a guard derived from the thing it
   guards. A twin now pins the three by name.
 
+### 2026-08-25 (milestone 3 — the corpus, measured)
+
+**The problem, restated with the number.** The run consumes **10,485,760** token positions. The
+corpus on disk held **2,185,575** — 4.8 epochs short, and shaped to session 5's weights, **30.2
+epochs of web against 0.41 of agentic**. Mixture compliance and the protected-floor requirement
+would have been measured on thirty re-reads of the same text: the H3 failure session 5 already paid
+for once.
+
+**Fetched, licence-verified at download time, sized in tokens:**
+
+| lane | dataset | licence | docs | train tokens | shards | [UNK] |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| web | HuggingFaceFW/fineweb-edu | odc-by | 2,173 | 3,360,009 | 17 | 0.053% |
+| code | codeparrot/github-code-clean | apache-2.0 | 769 | 3,009,455 | 16 | 0.553% |
+| indic | ai4bharat/sangraha (hin·tel·mai) | cc-by-4.0 | 2,283 | 1,858,440 | 10 | 0.081% |
+| stem | math-ai/StackMathQA | cc-by-4.0 | 2,223 | 1,259,198 | 7 | 0.196% |
+| reasoning | open-r1/OpenR1-Math-220k | apache-2.0 | 1,443 | 840,510 | 5 | 0.086% |
+| agentic | session 5 proxy | apache-2.0 | 6,872 | 306,140 | 2 | 0.007% |
+| **total** | | | **15,763** | **10,633,752** | **57** | |
+
+**57 shards, all hash-verified on open, all 57 admitted by the gate. 1.01 epochs of supply.**
+
+**Mixture compliance, measured rather than asserted** — every lane inside the one-point tolerance
+and every floor held: agentic +0.0088 · code +0.0030 · indic −0.0052 · reasoning −0.0010 ·
+stem −0.0016 · web −0.0040.
+
+**Three defects found by running it, none of which anything would have caught by reading it.**
+
+| what | how it presented |
+| --- | --- |
+| the fetcher joined documents with `\n`, the builder split on `\n` | 2,174 FineWeb articles read back as **47,456 documents**; the code lane's 775 files carry **155,778 newlines**, so they would have shattered into ~156,553 fragments — a 200× inflation. Every count stayed plausible and the block-diagonal mask would have walled off consecutive lines of the same function. Now JSONL, refused on both sides if it is not |
+| the held-out split counted **documents**, not tokens | code's longest file is 282,355 characters, so 10% of documents withheld **16.1%** of its tokens. That put the lane 1.59 points under its planned share and the whole mixture **out of compliance** — with nothing failing, because every number was internally consistent. Splitting by tokens at a document boundary moved it to +0.0030 |
+| `_count` re-encoded every document to test the stopping condition | O(n²); at a few thousand documents the difference between a fetch and a hang |
+
+**And one that was mine, not the code's.** The first fetch logged only rate limits, so a run stuck
+retrying `IncompleteRead` produced **no output for ten minutes** and was indistinguishable from a
+hang. It had to be diagnosed by probing the endpoint by hand. Every retry now logs. That probe also
+established the cause: **5/5 requests succeed outside the sandbox** against intermittent failures
+inside it — the egress proxy truncates bodies, not HuggingFace — and that the `columns=` parameter
+is **ignored** by the API, so nothing may assume responses are small because of it.
+
+**Three datasets rejected on licence grounds, and one restriction that saved a rebuild.**
+`the-stack-smol` is gated *and* declares nothing; `the-stack-smol-xs` is ungated and declares
+nothing at all; `peS2o` is odc-by and ungated but has no dataset viewer — script-based, no parquet
+export, so `/rows` 404s. The indic lane is Devanagari and Telugu only: Bengali, Kannada, Gujarati
+and Tamil all measure **above 80% [UNK]** under the frozen vocabulary and would have passed every
+structural check before failing the 5% gate mid-build, after the download. Measured result: 0.081%.
+
+**The code lane is licence-filtered per FILE**, not per dataset — `github-code-clean` is Apache-2.0
+as *packaging* and mixes GPL/AGPL/LGPL source with permissive. **468 of 1,243 rows dropped**, 38%.
+
+**Open:** the corpus is fetched but nothing consumes it yet — `run_demo.py` does not exist, so the
+shards are built by a script rather than by the pipeline. Dedup removed **59% of the agentic lane**
+(16,753 documents to 6,872), which is worth understanding before that lane carries a protected
+floor in a real run.
+
 ### 2026-08-25 (stage 7 — crash, resume, and the ids lining up)
 
 **What landed.** `checkpoint.py` and `resume.py`, plus the crash and resume paths in `runner.py`.

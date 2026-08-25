@@ -277,3 +277,48 @@ def test_a_manifest_naming_a_lane_with_no_text_is_skipped(tmp_path) -> None:
     and report success."""
     _fetch_manifest(tmp_path, [{"lane": "web", "sources": [{"licence": "odc-by"}]}])
     assert corpus.lanes_from_fetch(tmp_path) == []
+
+
+def test_the_held_out_split_is_taken_by_tokens_not_by_document_count(tmp_path) -> None:
+    """**Counting documents looks equivalent to counting tokens and is not.**
+
+    Document sizes are wildly skewed: the code lane's longest file is 282,355 characters. Measured
+    on the first real build, a 10%-of-documents split withheld **16.1%** of that lane's tokens,
+    which pushed it 1.59 points below its planned share and put the whole mixture out of
+    compliance — with nothing failing, because every count was internally consistent.
+
+    The fixture here is deliberately lopsided in the same way: one enormous document last.
+    """
+    from datacleaning.config import OUR_TOKENIZER
+    from datacleaning.tokens import load_tokenizer
+
+    documents = [f"Small document {i}." for i in range(40)]
+    documents.append("Enormous. " * 4000)  # the last 2.4% of documents, most of the tokens
+
+    source = tmp_path / "corpus" / "code.jsonl"
+    source.parent.mkdir(parents=True)
+    _jsonl(source, documents)
+
+    config = Config(sequence_length=64)
+    result = corpus.build_lane(
+        corpus.LaneText(
+            lane="code",
+            path=source,
+            licence="apache-2.0",
+            language="python",
+            provenance_tier="B",
+            dataset="test",
+        ),
+        tmp_path / "shards",
+        config,
+        load_tokenizer(str(OUR_TOKENIZER)),
+        tokenizer_sha256="sha256:" + "a" * 64,
+        tokens_per_shard=4000,
+    )
+
+    total = result.train_tokens + result.heldout_tokens
+    share = result.heldout_tokens / total
+    assert share < 0.5, (
+        f"{share:.1%} of the tokens were withheld from a 10% split — the split is counting "
+        f"documents, and one huge document has taken the whole held-out budget with it"
+    )

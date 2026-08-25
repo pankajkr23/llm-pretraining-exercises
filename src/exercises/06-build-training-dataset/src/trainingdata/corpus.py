@@ -102,11 +102,12 @@ def read_documents(path: Path) -> list[str]:
     """The fetched text — one JSON-encoded document per line.
 
     **JSONL, not newline-joined text, and the difference is not cosmetic.** Documents contain
-    newlines: measured on a real fetch, 2,174 FineWeb articles read back as 47,456 "documents"
-    under a plain `splitlines()`. Every paragraph would get its own `EOS`, and the block-diagonal
-    mask would then wall off paragraphs of the same article from each other — which is precisely
-    the boundary the mask exists to draw, drawn in the wrong place, with every count still looking
-    plausible.
+    newlines. Measured on real fetches: 2,174 FineWeb articles read back as 47,456 "documents"
+    under a plain `splitlines()`, and the code lane is far worse — 775 Python files carry
+    **155,778 newlines between them**, so every file would have shattered into its individual
+    lines, a 200x inflation. Each fragment would then get its own `EOS`, and the block-diagonal
+    mask would wall off consecutive lines of the *same function* from each other — precisely the
+    boundary the mask exists to draw, drawn in the wrong place, with every count still plausible.
 
     Args:
         path: The lane's `.jsonl` file.
@@ -195,6 +196,22 @@ def clean(documents: list[str], lane: str) -> tuple[list[str], dict[str, str], d
     return [doc.text for doc in docs], hashes, removals
 
 
+def _flatten(encoded: list[list[int]]) -> np.ndarray:
+    """One flat EOS-separated stream from per-document id lists.
+
+    Args:
+        encoded: Token ids per document.
+
+    Returns:
+        A flat `int64` array, each document followed by `spec.EOS`.
+    """
+    ids: list[int] = []
+    for document in encoded:
+        ids.extend(document)
+        ids.append(spec.EOS)
+    return np.asarray(ids, dtype=np.int64)
+
+
 def _encode(documents: list[str], tokenizer) -> np.ndarray:
     """Tokenise documents into one flat EOS-separated stream.
 
@@ -244,13 +261,28 @@ def build_lane(
     result.documents_kept = len(kept)
     result.stage_removals = removals
 
-    # Split at a DOCUMENT boundary, before tokenising: a token from one side landing in the other
-    # would make the two overlap in the only sense that matters.
-    cut = max(1, int(round(len(kept) * (1.0 - config.heldout_share))))
-    train_docs, heldout_docs = kept[:cut], kept[cut:]
+    # Split at a document boundary, by TOKENS rather than by document count.
+    #
+    # Counting documents looks equivalent and is not: document sizes are wildly skewed on some
+    # lanes — the code lane's longest file is 282,355 characters — so the last 10% of documents can
+    # be far more than 10% of the tokens. Measured on the first real build, a 10% document split
+    # withheld **16.1%** of the code lane's tokens, which pushed that lane 1.59 points below its
+    # planned share and put the whole mixture out of compliance. The boundary is still a document
+    # boundary; only the thing being counted changed.
+    encoded = [tokenizer.encode(document).ids for document in kept]
+    total = sum(len(ids) + 1 for ids in encoded)  # +1 for the EOS each document is terminated with
+    want_train = total * (1.0 - config.heldout_share)
 
-    train = _encode(train_docs, tokenizer)
-    heldout = _encode(heldout_docs, tokenizer)
+    running, cut = 0, len(encoded)
+    for index, ids in enumerate(encoded):
+        running += len(ids) + 1
+        if running >= want_train:
+            cut = index + 1
+            break
+    cut = min(max(cut, 1), len(encoded))  # never withhold everything, never withhold nothing
+
+    train = _flatten(encoded[:cut])
+    heldout = _flatten(encoded[cut:])
     result.train_tokens = int(train.size)
     result.heldout_tokens = int(heldout.size)
     result.unk_share = float((train == 0).mean()) if train.size else 0.0

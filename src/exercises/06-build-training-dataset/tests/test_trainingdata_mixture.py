@@ -120,16 +120,16 @@ def test_the_token_targets_include_the_held_out_reserve() -> None:
     )
 
 
-def test_the_corpus_on_disk_today_would_not_cover_one_epoch() -> None:
-    """**The measurement that justifies fetching anything at all.**
+def test_the_run_size_is_what_the_corpus_was_sized_against() -> None:
+    """The number the fetcher's targets are derived from.
 
-    Kept as a test rather than a comment because it is the number the milestone exists to change,
-    and a stale claim about it would be worse than none.
+    It was `10,485,760` against `2,185,575` tokens on disk — **4.8 epochs short**, and under
+    session 5's weights, 30.2 epochs of web against 0.41 of agentic. The fetched corpus now
+    supplies 10,633,752 training tokens, or **1.01 epochs**, with every lane inside a one-point
+    tolerance. That measurement lives in `PROGRESS.md`; what belongs here is the run size it was
+    measured against, because if that changes the corpus is the wrong size again.
     """
-    config = Config()
-    on_disk = 2_185_575  # measured across data/proxy + the in-repo lanes
-    assert config.total_tokens == 10_485_760
-    assert config.total_tokens / on_disk > 4, "the corpus is no longer 4.8x short; update this test"
+    assert Config().total_tokens == 10_485_760
 
 
 # --- compliance ------------------------------------------------------------------------------
