@@ -119,6 +119,7 @@ src/trainingdata/
   mixture.py     # session 5's recipe as data — lane shares, floors, and the token targets
   corpus.py      # fetched text to sealed, admitted shards, with a checkable lineage
   fork.py        # branching from an earlier checkpoint, with the lineage made a fact
+  metrics.py     # throughput and packing efficiency, derived from the ledger
 tests/           # discovered by `uv run pytest` from the repo root
 tools/
   fetch_corpus.py   # TRACKED — a corpus needs a tracked way to fetch and licence-check it
