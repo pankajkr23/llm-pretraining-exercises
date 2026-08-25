@@ -15,8 +15,9 @@ re-checked by a second that reads only the artifacts.
 
 ## Open items — for review
 
-**Stage 4 of 8 is done.** Settings, shared constants, the vocabulary problem, immutable shards
-with manifests and an admission gate, the two-sided evaluation firewall, and the plan. Nothing else is built,
+**Stage 5 of 8 is done.** Settings, shared constants, the vocabulary problem, immutable shards
+with manifests and an admission gate, the two-sided evaluation firewall, the plan, and packed-sequence
+masks. Nothing else is built,
 and no document here claims otherwise.
 
 | # | item | status | note |
@@ -26,6 +27,7 @@ and no document here claims otherwise.
 | O3 | **Stage 2 — shards and manifests** | **done** | Immutable `uint16` shards sealed `0444`, content-addressed ids, append-only manifests, admission gate. Proven on real corpus text: 600k chars → 269,439 tokens → 5 shards, all sealed and verifying; one flipped bit turns `verify()` false and changes the id. |
 | O3b | **Stage 3 — the evaluation firewall** | **done** | Two-sided: the manifest carries the split *and* the registry is asked independently. Stores no evaluation text — 8-byte digests of 13-word shingles. A paraphrase evades it, and a test asserts that rather than leaving it to be discovered. |
 | O3c | **Stage 4 — the plan** | **done** | Mixed-radix odometer, bijection round-tripped over every coordinate; keyed permutation derived from the key alone; disjointness asserted on spans rather than coordinates. Verified on the real shards: 525 spans, **0 overlapping pairs** across 20 steps × 64 slots. |
+| O3d | **Stage 5 — masks** | **done** | Block-diagonal attention, per-document position ids, loss masks. Eight mutants, eight killed — including the two that would pass review: cross-document attention, and position ids running continuously. |
 | O4 | **Corpus** | not started | ~40–60 MB across S5's six lanes, licence verified **at fetch time from the source itself**. |
 | O5 | **OPUS** | decided, not built | Port the criterion (~300 lines) from the MIT reference as a spec. Not installable: its `train.py` fails at import on `torch.empty(1, device="cuda")` and needs NCCL. |
 | O6 | **The web explainer** | not started | In scope, after the system works. |
@@ -84,6 +86,19 @@ every shard manifest pins, so the sentinels are assigned **out of vocabulary** �
 ---
 
 ## Change log
+
+### 2026-08-25 (stage 5 — packed-sequence masks)
+
+- **The leak with no symptom.** Cross-document attention does not crash and does not spoil the loss
+  curve; it teaches the model that unrelated text continues naturally. Every claim is therefore
+  asserted on the mask itself rather than on a downstream number.
+- **A third redundant-looking guard turned out to be load-bearing.** Removing the `PAD`-token check
+  from the loss mask survived mutation, because `segments >= 0` already excludes padding
+  *positions*. It is not redundant: a `PAD` id sitting **inside** a document — from a packing bug or
+  a corrupt shard — would be graded. A test now covers exactly that, and the mutant dies. Unlike the
+  two genuinely redundant guards found earlier, this one was worth keeping.
+- **`-inf` is deliberately avoided** in the additive mask: a fully-masked row becomes `nan` after
+  softmax and one `nan` poisons every gradient it touches.
 
 ### 2026-08-25 (stage 4 — the plan)
 

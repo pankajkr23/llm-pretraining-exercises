@@ -12,6 +12,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 06 stage 5 — masks for packed sequences.** Block-diagonal attention so document B
+  cannot see document A, position ids that **restart per document**, and loss masks that exclude
+  padding, context spans and each document's final token (next-token prediction has no target for
+  it). Numpy-only, so CI verifies them without torch.
+- **The failure this guards has no symptom** — cross-document attention does not crash and does not
+  spoil the loss curve, it just teaches the model that unrelated text continues naturally. So every
+  claim is asserted on the mask itself, never on a downstream number. Eight mutants, eight killed.
+
 - **Exercise 06 stage 4 — the plan.** `flat = step·B + rank·(A·M) + accum·M + seq` is a mixed-radix
   odometer, so it decodes back to exactly one coordinate — which is what lets a rank compute its own
   work with **no coordination**. A digit outside its place would carry and alias two coordinates

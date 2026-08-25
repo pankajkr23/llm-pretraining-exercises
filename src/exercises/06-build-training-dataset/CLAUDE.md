@@ -4,8 +4,8 @@ Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is the
 `submission_artifacts/` bundle, the reasoning is `DECISIONS.md`, the running log is `PROGRESS.md`,
 and `BRIEF.md` is the assignment (local only, gitignored).
 
-**Status: stage 4 of 8.** `config.py`, `spec.py`, `shards.py`, `manifest.py`, `firewall.py` and
-`plan.py` exist. Do not
+**Status: stage 4 of 8.** `config.py`, `spec.py`, `shards.py`, `manifest.py`, `firewall.py`,
+`plan.py` and `masks.py` exist. Do not
 describe this exercise as having packing, ledgers or replay until it does — the README carries a
 stage table for exactly this reason.
 
@@ -46,6 +46,18 @@ stage table for exactly this reason.
   negation there is inert while `git add -A` reports success. `run.log` is trackable only because
   `*.log` is a **file** pattern. `tests/test_submission_bundle.py` pins both halves; do not "tidy"
   either.
+
+- **The cross-document attention leak has no symptom.** If document B can attend to document A
+  nothing crashes and the loss curve looks fine; the model just learns that unrelated text is a
+  natural continuation. So the mask invariants are asserted on the **mask itself**, never on a
+  downstream number, and `masks.py` stays numpy-only so CI can run them without torch.
+
+- **Position ids restart per document, and that is not cosmetic.** Continuous positions would tell
+  the model a document beginning at offset 400 is 400 tokens into something — it is not, and at
+  inference it will be at 0. Restarting is what makes packing invisible to the model.
+
+- **The additive mask uses a large finite negative, never `-inf`.** A fully-masked row of `-inf`
+  becomes `nan` after softmax, and one `nan` poisons every gradient it touches.
 
 - **Disjointness is asserted on DATA, never on coordinates.** A coordinate bijection is arithmetic
   and says nothing about which tokens a rank reads — two ranks can hold different coordinates that
