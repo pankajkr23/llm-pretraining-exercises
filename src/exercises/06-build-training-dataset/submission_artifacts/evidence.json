@@ -4,22 +4,22 @@
   "of": 9,
   "requirements": [
     {
-      "claim": "all 58 shard manifests pin one tokenizer digest, so every token id in the run has the same defined meaning",
+      "claim": "all 60 shard manifests pin one tokenizer digest, so every token id in the run has the same defined meaning",
       "evidence": "submission_artifacts/manifests/*.jsonl \u2014 the `tokenizer_sha256` field",
       "numbers": {
         "distinct_digests": [
           "sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae"
         ],
-        "manifests": 58
+        "manifests": 60
       },
       "requirement": "tokenizer_integrity",
       "status": "met"
     },
     {
-      "claim": "1 shard(s) were refused admission and none of them appears in any loss-bearing batch",
+      "claim": "3 shard(s) were refused admission and none of them appears in any loss-bearing batch",
       "evidence": "submission_artifacts/manifests/ and the ledger's per-event `samples`",
       "numbers": {
-        "blocked": 1,
+        "blocked": 3,
         "blocked_shards_consumed": [],
         "trainable": 57
       },
@@ -144,18 +144,18 @@
       "status": "met"
     },
     {
-      "claim": "60,551 loss-bearing tokens/s against 60,714 tokens/s over 5 steps on 4 rank(s); the gap is padding and ungraded positions",
+      "claim": "61,777 loss-bearing tokens/s against 61,944 tokens/s over 5 steps on 4 rank(s); the gap is padding and ungraded positions",
       "evidence": "submission_artifacts/performance.json, recomputable from the ledger + telemetry",
       "numbers": {
         "loss_tokens": 130719,
-        "loss_tokens_per_second": 60550.955608873584,
+        "loss_tokens_per_second": 61776.81659457538,
         "loss_utilization": 0.9973068237304688,
         "pack_utilization": 1.0,
         "ranks": 4,
-        "seconds": 2.1588263750018086,
+        "seconds": 2.1159879580372944,
         "steps": 5,
         "tokens": 131072,
-        "tokens_per_second": 60714.4703797174
+        "tokens_per_second": 61943.6417405594
       },
       "requirement": "throughput",
       "status": "met"

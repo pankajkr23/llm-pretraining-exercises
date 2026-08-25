@@ -8,7 +8,7 @@ and `BRIEF.md` is the assignment (local only, gitignored).
 `manifest.py`, `firewall.py`, `plan.py`, `masks.py`, `pack.py`, `feed.py`, `ledger.py`, `model.py`,
 `train.py`, `runner.py`, `checkpoint.py`, `resume.py`, `replay.py`, `mixture.py`,
 `corpus.py`, `fork.py`, `metrics.py` and `evidence.py` — twenty-one modules, plus
-`run_demo.py` at the exercise root. `tools/fetch_corpus.py` is **tracked**, unlike the notebook builder.
+`run_demo.py` and `verify.py` at the exercise root. `tools/fetch_corpus.py` is **tracked**, unlike the notebook builder.
 
 **Not shipped, and do not describe the exercise as having them:** `fork`, `verify.py`,
 `run_demo.py`, `opus`, the metrics/throughput module, the evidence writer (`evidence.json` /
@@ -259,6 +259,28 @@ it denied `replay.py` existed while the module carried 340 lines and 14 tests.
   the authority here — the platform's field list is. `tests/test_submission_bundle.py` proves the
   three files are *committable*; committing them is not publishing them, and the exercise is not
   done until all three resolve.
+
+- **`verify.py` may import `spec` and nothing else, and a test asserts it transitively.** One
+  convenient `from trainingdata import metrics` turns every number check into the producer's
+  arithmetic checked against the producer's arithmetic — agreeing with itself whatever either got
+  wrong — and **the output looks identical**. That is why it is a test rather than a rule. The
+  chain hash is re-implemented in `verify.py` with `hashlib` for the same reason: a check that
+  called `ledger._digest` would confirm only that it is deterministic.
+
+- **`run_demo.py` never logs an event it did not produce.** Two of the thirteen — `OPUS decisions
+  recorded` and `audit completed` — are written `[SKIP]` with the reason, and the auditor reports
+  them as NOT PRODUCED. A verdict per line is what lets a reader tell "the run did not do this"
+  from "the run did not mention it"; only the second is a hole in the record.
+
+- **A short demo cannot speak for the mixture, and the evidence row says which it measured.** No
+  lane's share divides evenly into a 64-sequence step, so a run covering 1.2% of the plan drifts by
+  up to 2.1 points. The row reports its coverage, the sample drift, and separately whether the
+  *corpus* is compliant — the thing a short run cannot tell you about.
+
+- **A fork inherits its parent's history; it does not copy it.** So `common_prefix` between parent
+  and child is legitimately **zero**, which reads as a failure and is the opposite of one. Use
+  `fork.verify_fork`: the parent covers the shared steps, the child begins after them, and the
+  child re-ran none of them.
 
 ## Naming
 

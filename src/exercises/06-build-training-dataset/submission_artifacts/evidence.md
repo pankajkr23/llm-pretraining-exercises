@@ -6,29 +6,29 @@ Run `s06-demo` · config `eec26b710dbf`
 
 | requirement | status | claim | evidence |
 | --- | --- | --- | --- |
-| `tokenizer_integrity` | **met** | all 58 shard manifests pin one tokenizer digest, so every token id in the run has the same defined meaning | submission_artifacts/manifests/*.jsonl — the `tokenizer_sha256` field |
-| `evaluation_firewall` | **met** | 1 shard(s) were refused admission and none of them appears in any loss-bearing batch | submission_artifacts/manifests/ and the ledger's per-event `samples` |
+| `tokenizer_integrity` | **met** | all 60 shard manifests pin one tokenizer digest, so every token id in the run has the same defined meaning | submission_artifacts/manifests/*.jsonl — the `tokenizer_sha256` field |
+| `evaluation_firewall` | **met** | 3 shard(s) were refused admission and none of them appears in any loss-bearing batch | submission_artifacts/manifests/ and the ledger's per-event `samples` |
 | `packing_correctness` | **met** | 64 microbatches packed; 130,719 of 131,072 positions earned gradient (99.7%), the rest padding, document-final tokens and 0 context-masked batches | the ledger's per-event `tokens`, `loss_tokens`, `pad_tokens` and `loss_policy` |
 | `mixture_compliance` | **met** | the CORPUS is compliant — every funded lane within 1% of plan, both floors held. This run consumed 1.2% of the plan, and over a sample that small the realised mixture drifts by up to 2.1%: the schedule is exact over the run, never per step | the ledger's per-event `lane_mix` summed and compared with `spec.LANE_SHARES`; the corpus figure from results/corpus_build.json |
 | `opus_audit_trail` | not built | OPUS is not built. Every event records `opus_decision_id: null`, so this run has no candidate decisions to audit and says so rather than omitting the row. | — |
 | `crash_recovery` | **met** | after a real crash and resume, every (step, rank, accum, flat, microbatch_hash) matches a run that never crashed; 21 microbatches were re-executed and each names the discarded event it repeats | submission_artifacts/run.log and the ledger's `replayed_from` |
 | `replay` | **met** | 32/32 microbatches in steps [0, 4] were re-derived from the recorded spans and the immutable shards — read, never recomputed | the ledger's spans and hashes, re-derived against the shard bytes |
 | `learning_trace` | **met** | loss recorded for 20 step-reports, each linked to the lanes that produced it through the ledger's per-event `lane_mix` | submission_artifacts/telemetry/*.json joined to the ledger by step |
-| `throughput` | **met** | 60,551 loss-bearing tokens/s against 60,714 tokens/s over 5 steps on 4 rank(s); the gap is padding and ungraded positions | submission_artifacts/performance.json, recomputable from the ledger + telemetry |
+| `throughput` | **met** | 61,777 loss-bearing tokens/s against 61,944 tokens/s over 5 steps on 4 rank(s); the gap is padding and ungraded positions | submission_artifacts/performance.json, recomputable from the ledger + telemetry |
 
 ## Numbers
 
 ```json
 {
   "tokenizer_integrity": {
-    "manifests": 58,
+    "manifests": 60,
     "distinct_digests": [
       "sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae"
     ]
   },
   "evaluation_firewall": {
     "trainable": 57,
-    "blocked": 1,
+    "blocked": 3,
     "blocked_shards_consumed": []
   },
   "packing_correctness": {
@@ -114,11 +114,11 @@ Run `s06-demo` · config `eec26b710dbf`
   },
   "throughput": {
     "steps": 5,
-    "seconds": 2.1588263750018086,
+    "seconds": 2.1159879580372944,
     "tokens": 131072,
     "loss_tokens": 130719,
-    "tokens_per_second": 60714.4703797174,
-    "loss_tokens_per_second": 60550.955608873584,
+    "tokens_per_second": 61943.6417405594,
+    "loss_tokens_per_second": 61776.81659457538,
     "loss_utilization": 0.9973068237304688,
     "pack_utilization": 1.0,
     "ranks": 4

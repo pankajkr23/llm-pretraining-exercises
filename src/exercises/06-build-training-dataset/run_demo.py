@@ -302,6 +302,12 @@ def main() -> int:
     )
     golden = ledger.read_branch(golden_root / "ledger", "main")
     log.event("batches packed", f"{len(golden)} microbatches over {args.steps} steps")
+    log.event(
+        "OPUS decisions recorded",
+        "OPUS is not built; every event records opus_decision_id: null. Logging this as produced "
+        "would fabricate the evidence the brief inspects for",
+        produced=False,
+    )
 
     crash_spec = dataclasses.replace(
         base,
@@ -404,28 +410,20 @@ def main() -> int:
     )
     fork_report = {**dataclasses.asdict(forked), **dataclasses.asdict(checked)}
 
-    # -- the two this run cannot produce ----------------------------------------------------------
+    # -- performance ------------------------------------------------------------------------------
     log.event(
-        "OPUS decisions recorded",
-        "OPUS is not built; every event records opus_decision_id: null. Logging this as produced "
-        "would fabricate the evidence the brief inspects for",
+        "audit completed",
+        "run `uv run python verify.py` — the auditor is a separate command by design, so the "
+        "producer cannot mark its own work",
         produced=False,
     )
 
-    # -- performance ------------------------------------------------------------------------------
     telemetry = metrics.read_telemetry(args.work / "artifacts", "main")
     rate = metrics.throughput(after, telemetry)
     log.event(
         "performance measured",
         f"{rate.loss_tokens_per_second:,.0f} loss-bearing tok/s of {rate.tokens_per_second:,.0f} "
         f"tok/s over {rate.steps} steps on {rate.ranks} ranks",
-    )
-
-    log.event(
-        "audit completed",
-        "run `uv run python verify.py` — the auditor is a separate command by design, so the "
-        "producer cannot mark its own work",
-        produced=False,
     )
 
     # -- the bundle -------------------------------------------------------------------------------

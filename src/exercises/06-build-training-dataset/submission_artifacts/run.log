@@ -1,16 +1,16 @@
-[PASS] shards created — 57 shards, 10,649,549 tokens, every one re-hashed on open
-[PASS] manifests validated — 57 admitted of 57; the gate refuses a missing lineage hash, not only a failing one
+[PASS] shards created — 58 shards, 10,653,645 tokens, every one re-hashed on open
+[PASS] manifests validated — 57 admitted of 58; the gate refuses a missing lineage hash, not only a failing one
 [PASS] evaluation data blocked — shard 10767e14fed0a365 written with split=eval; the manifest gate refused it (2 reasons) and the registry refused it independently (registered to benchmark 'demo-benchmark': never-train)
 [PASS] mixture compiled — 6 funded lanes, 20,765 spans, plan digest 59266a34314900d2
        lane token targets: {'agentic': 2688, 'code': 36864, 'indic': 24730, 'reasoning': 10240, 'stem': 15872, 'web': 41984}
 [PASS] batches packed — 64 microbatches over 8 steps
+[SKIP] OPUS decisions recorded — OPUS is not built; every event records opus_decision_id: null. Logging this as produced would fabricate the evidence the brief inspects for
 [PASS] checkpoint saved — every 3 steps; tensors renamed into place before the sidecar, so the sidecar's existence is the commit
 [PASS] crash simulated — os._exit(137) in every rank at step 5; ProcessExitedException
 [PASS] run resumed — from ckpt-main-000002; 21 microbatches re-executed; batch ids match the uncrashed run: True
 [PASS] historical stream replayed — main steps [0, 4): 32/32 microbatches re-derived, all match
 [PASS] branch forked — fork-a from ckpt-main-000002 at step 2; it inherits 24 parent events, wrote 40 of its own, and re-ran 0 of the shared history — computed from the ledgers, not claimed
-[SKIP] OPUS decisions recorded — OPUS is not built; every event records opus_decision_id: null. Logging this as produced would fabricate the evidence the brief inspects for
-[PASS] performance measured — 60,551 loss-bearing tok/s of 60,714 tok/s over 5 steps on 4 ranks
 [SKIP] audit completed — run `uv run python verify.py` — the auditor is a separate command by design, so the producer cannot mark its own work
-       bundle 224,110 bytes of 2,097,152 allowed
-       wall clock 15.2s
+[PASS] performance measured — 61,777 loss-bearing tok/s of 61,944 tok/s over 5 steps on 4 ranks
+       bundle 225,067 bytes of 2,097,152 allowed
+       wall clock 15.4s
