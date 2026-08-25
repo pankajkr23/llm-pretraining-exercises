@@ -15,8 +15,8 @@ re-checked by a second that reads only the artifacts.
 
 ## Open items — for review
 
-**Stage 3 of 8 is done.** Settings, shared constants, the vocabulary problem, immutable shards
-with manifests and an admission gate, and the two-sided evaluation firewall. Nothing else is built,
+**Stage 4 of 8 is done.** Settings, shared constants, the vocabulary problem, immutable shards
+with manifests and an admission gate, the two-sided evaluation firewall, and the plan. Nothing else is built,
 and no document here claims otherwise.
 
 | # | item | status | note |
@@ -25,6 +25,7 @@ and no document here claims otherwise.
 | O2 | **Stage 1 — config and spec** | **done** | Frozen `Config` + fingerprint, `spec.py` behind the producer/auditor wall, 19 tests. |
 | O3 | **Stage 2 — shards and manifests** | **done** | Immutable `uint16` shards sealed `0444`, content-addressed ids, append-only manifests, admission gate. Proven on real corpus text: 600k chars → 269,439 tokens → 5 shards, all sealed and verifying; one flipped bit turns `verify()` false and changes the id. |
 | O3b | **Stage 3 — the evaluation firewall** | **done** | Two-sided: the manifest carries the split *and* the registry is asked independently. Stores no evaluation text — 8-byte digests of 13-word shingles. A paraphrase evades it, and a test asserts that rather than leaving it to be discovered. |
+| O3c | **Stage 4 — the plan** | **done** | Mixed-radix odometer, bijection round-tripped over every coordinate; keyed permutation derived from the key alone; disjointness asserted on spans rather than coordinates. Verified on the real shards: 525 spans, **0 overlapping pairs** across 20 steps × 64 slots. |
 | O4 | **Corpus** | not started | ~40–60 MB across S5's six lanes, licence verified **at fetch time from the source itself**. |
 | O5 | **OPUS** | decided, not built | Port the criterion (~300 lines) from the MIT reference as a spec. Not installable: its `train.py` fails at import on `torch.empty(1, device="cuda")` and needs NCCL. |
 | O6 | **The web explainer** | not started | In scope, after the system works. |
@@ -83,6 +84,21 @@ every shard manifest pins, so the sentinels are assigned **out of vocabulary** �
 ---
 
 ## Change log
+
+### 2026-08-25 (stage 4 — the plan)
+
+- **An odometer, not a shuffle.** `flat = step·B + rank·(A·M) + accum·M + seq` is a mixed-radix
+  number, so it decodes back to exactly one coordinate — which is what lets a rank compute its own
+  work with **no coordination**. A digit outside its place would carry and alias two coordinates
+  onto one index; that is refused with a message saying why.
+- **Disjointness is checked on spans, not coordinates.** The bijection is arithmetic and proves
+  nothing about tokens. Measured on the real shards: 525 spans, **0 overlapping pairs** across
+  20 steps × 64 slots.
+- **The permutation is derived from a key, not an RNG.** Same key, same order — across calls,
+  processes and machines. `planner_version` exists so an algorithm change cannot silently produce a
+  different plan under an unchanged key.
+- **Seven mutants, seven killed**, including the two that would be invisible in review: rank using
+  the wrong place value, and the permutation quietly becoming the identity.
 
 ### 2026-08-25 (stage 3 — the evaluation firewall)
 

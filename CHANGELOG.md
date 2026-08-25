@@ -12,6 +12,18 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 06 stage 4 — the plan.** `flat = step·B + rank·(A·M) + accum·M + seq` is a mixed-radix
+  odometer, so it decodes back to exactly one coordinate — which is what lets a rank compute its own
+  work with **no coordination**. A digit outside its place would carry and alias two coordinates
+  onto one index, so it is refused with a message saying why.
+- **Disjointness is asserted on DATA, not coordinates.** A coordinate bijection is arithmetic and
+  proves nothing about which tokens a rank reads. Measured on the real shards: 525 spans,
+  **0 overlapping pairs** across 20 steps × 64 slots.
+- **The order is derived from a key, not an RNG** — same key, same order across calls, processes and
+  machines. `PlanKey.planner_version` exists so an algorithm change cannot silently produce a
+  different plan under an unchanged key. A second pass over the corpus is visible via `pass_number`
+  rather than silently averaged into the first.
+
 - **Exercise 06 stage 3 — the two-sided evaluation firewall.** The shard's manifest carries its
   split **and** a registry is asked independently, because relying on either alone leaves a single
   point of failure for the one mistake that makes every benchmark score fiction. A test asserts

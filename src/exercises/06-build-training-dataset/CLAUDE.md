@@ -4,7 +4,8 @@ Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is the
 `submission_artifacts/` bundle, the reasoning is `DECISIONS.md`, the running log is `PROGRESS.md`,
 and `BRIEF.md` is the assignment (local only, gitignored).
 
-**Status: stage 3 of 8.** `config.py`, `spec.py`, `shards.py`, `manifest.py` and `firewall.py` exist. Do not
+**Status: stage 4 of 8.** `config.py`, `spec.py`, `shards.py`, `manifest.py`, `firewall.py` and
+`plan.py` exist. Do not
 describe this exercise as having packing, ledgers or replay until it does — the README carries a
 stage table for exactly this reason.
 
@@ -45,6 +46,15 @@ stage table for exactly this reason.
   negation there is inert while `git add -A` reports success. `run.log` is trackable only because
   `*.log` is a **file** pattern. `tests/test_submission_bundle.py` pins both halves; do not "tidy"
   either.
+
+- **Disjointness is asserted on DATA, never on coordinates.** A coordinate bijection is arithmetic
+  and says nothing about which tokens a rank reads — two ranks can hold different coordinates that
+  point at the same span. `test_no_two_ranks_touch_overlapping_spans_in_a_step` is the only version
+  of that claim that could ever fail; keep it that way.
+
+- **`PlanKey.planner_version` is bumped by hand when the planning algorithm changes.** Without it a
+  code change silently produces a different plan under an unchanged key, and the ledger becomes the
+  only evidence anything moved.
 
 - **The firewall is two-sided on purpose, and both sides must stay.** The manifest carries the
   split *and* the registry is asked independently. The instructor's reason: *"who knows maybe a
