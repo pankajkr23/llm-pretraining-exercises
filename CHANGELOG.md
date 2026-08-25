@@ -12,6 +12,34 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 06 stage 7 — crash, resume, and the batch ids lining up.** A checkpoint records a
+  position in the *data*, not only in the loss curve: weights, optimizer state (AdamW's moments are
+  half its behaviour — restoring without them spikes the loss at every resume) and the ledger cut
+  each rank must be truncated to. The crash is a real child process killed with `os._exit(137)`,
+  and **a crash phase that exits 0 is a failure**, because otherwise deleting the drill makes the
+  demo look healthier.
+- **Measured: 144 events golden, ranks stopping at 24/25/26/27, six microbatches re-executed, and
+  every `(step, rank, accum, flat, microbatch_hash)` after the resume equal to the run that never
+  crashed.** Inputs only — losses and weights move with thread count and library version, and
+  byte-identity over them is not a claim this system can keep.
+- **The re-execution is published rather than hidden.** "No skipped or repeated batches" is true of
+  the effective post-cut ledger and never of the device; each re-executed event carries
+  `replayed_from` naming the discarded event it repeats.
+- **The sidecar is torch-free by design** — `verify.py` audits from artifacts alone and must not
+  need the producer's dependencies. The `.pt` is renamed into place first and the `.json` last, so
+  the sidecar's existence is the commit and an interrupted save reads as absent.
+- **24 mutants across the new modules, 24 killed** — five only after the tests they exposed were
+  written, including `os._exit` → `SystemExit`, which still exits 137 and passed every other
+  assertion until workers began recording a clean-exit marker whose *absence* is the evidence.
+
+### Changed
+
+- **Corrected a claim about the cut vector before it shipped.** It had been written as a vector
+  "because the four ranks stop at different points"; at a synchronous checkpoint they do not, and
+  the drill measures `{24, 24, 24, 24}`. It is a vector because it is applied to four separate
+  files and because per-rank selection will make the values diverge — the non-uniform case is now
+  tested directly rather than claimed of a drill that does not produce it.
+
 - **Exercise 06 stage 6 — the consumption ledger, and a training step to fill it.** One event per
   microbatch, one file per `(branch, rank, segment)`, each event carrying the previous one's hash.
   Four ranks writing one file corrupt it, so there is no shared writer and therefore no lock to be

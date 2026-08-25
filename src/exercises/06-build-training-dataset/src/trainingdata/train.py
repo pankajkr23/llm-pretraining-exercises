@@ -32,11 +32,12 @@ import os
 import platform
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import numpy as np
 import torch
 
-from . import feed, ledger
+from . import checkpoint, feed, ledger
 from . import model as model_module
 from . import plan as plan_module
 
@@ -136,6 +137,86 @@ def _reduce(tensor: torch.Tensor, world_size: int) -> torch.Tensor:
     return tensor
 
 
+def consume(
+    state: RankState,
+    schedule: plan_module.Plan,
+    handles: dict[str, feed.ShardHandle],
+    step: int,
+    rank: int,
+    accum: int,
+    *,
+    checkpoint_id: str | None = None,
+    stage: str = "main",
+    tokenizer_sha256: str = "",
+    attempt: int = 0,
+    replayed_from: int | None = None,
+) -> tuple[float, int, int]:
+    """Feed one microbatch, accumulate its gradient, and write it down.
+
+    The unit of consumption, and so the unit the ledger records. A whole step is not: a process that
+    dies mid-accumulation has still fed the model everything up to the point it died.
+
+    A full step and a crashed partial step both go through here, so the two cannot drift apart. A
+    separate crash path that assembled its own batches would be a second implementation of the thing
+    the crash drill is supposed to be testing.
+
+    Args:
+        state: This rank's model, optimizer and ledger writer.
+        schedule: The run's plan.
+        handles: Every open shard, by id.
+        step: Which optimizer step.
+        rank: This worker.
+        accum: Which accumulation slot.
+        checkpoint_id: The checkpoint this continues from, if any.
+        stage: Curriculum stage name.
+        tokenizer_sha256: Provenance of what the token ids mean.
+        attempt: Which attempt at this run this is.
+        replayed_from: The step this one re-executes, when resuming past a checkpoint.
+
+    Returns:
+        `(summed loss, graded tokens, total tokens)` for this microbatch.
+    """
+    batch = feed.build_microbatch(schedule, handles, step, rank, accum)
+
+    logits = state.net(
+        torch.from_numpy(batch.tokens),
+        torch.from_numpy(batch.additive),
+        torch.from_numpy(batch.positions),
+    )
+    summed, graded = model_module.cross_entropy(
+        logits, torch.from_numpy(batch.tokens), torch.from_numpy(batch.loss)
+    )
+    # Backward on the SUM, never the mean. See the module docstring: the division happens once,
+    # after the counts are reduced, or ragged microbatches silently reweight each other.
+    summed.backward()
+
+    state.writer.append(
+        attempt=attempt,
+        global_step=step,
+        accum=accum,
+        flat=plan_module.flat(
+            plan_module.Coordinate(step=step, rank=rank, accum=accum, seq=0), schedule.config
+        ),
+        checkpoint_id=checkpoint_id,
+        samples=tuple(ledger.PackedSample(**s) for s in batch.samples),
+        tokens=batch.token_count,
+        loss_tokens=batch.loss_token_count,
+        pad_tokens=batch.pad_token_count,
+        pack_util=round(batch.pack_utilization, 6),
+        stage=stage,
+        lane_mix=batch.lane_mix,
+        attention_policy="block-diagonal-causal",
+        position_policy="restart-per-document-continue-across-window",
+        pack_policy="concat-and-chop",
+        opus_decision_id=None,
+        tokenizer_sha256=tokenizer_sha256,
+        plan_key_digest=schedule.key.digest(),
+        replayed_from=replayed_from,
+        **batch.hashes(),
+    )
+    return float(summed.detach()), graded, batch.token_count
+
+
 def run_step(
     state: RankState,
     schedule: plan_module.Plan,
@@ -149,7 +230,8 @@ def run_step(
     stage: str = "main",
     tokenizer_sha256: str = "",
     attempt: int = 0,
-    replayed_from: int | None = None,
+    replay_budget: int = 0,
+    replay_base: int = 0,
 ) -> StepResult:
     """Run one optimizer step, writing one ledger event per microbatch.
 
@@ -165,7 +247,10 @@ def run_step(
         stage: Curriculum stage name, recorded per event.
         tokenizer_sha256: Provenance of what the token ids mean.
         attempt: Which attempt at this run this is. Non-zero after a resume.
-        replayed_from: The step this one re-executes, when resuming past a checkpoint.
+        replay_budget: How many events of this attempt's segment re-execute discarded ones. From
+            the resume plan's per-rank dropped count.
+        replay_base: The cut this attempt resumed from, so a re-executed event can name the exact
+            discarded event it repeats rather than merely being flagged.
 
     Returns:
         What the step did.
@@ -177,48 +262,25 @@ def run_step(
     local_sum, local_count, local_tokens = 0.0, 0, 0
 
     for accum in range(config.accumulation):
-        batch = feed.build_microbatch(schedule, handles, step, rank, accum)
-
-        logits = state.net(
-            torch.from_numpy(batch.tokens),
-            torch.from_numpy(batch.additive),
-            torch.from_numpy(batch.positions),
-        )
-        summed, graded = model_module.cross_entropy(
-            logits, torch.from_numpy(batch.tokens), torch.from_numpy(batch.loss)
-        )
-        # Backward on the SUM, never the mean. See the module docstring: the division happens once,
-        # after the counts are reduced, or ragged microbatches silently reweight each other.
-        summed.backward()
-
-        local_sum += float(summed.detach())
-        local_count += graded
-        local_tokens += batch.token_count
-
-        state.writer.append(
-            attempt=attempt,
-            global_step=step,
-            accum=accum,
-            flat=plan_module.flat(
-                plan_module.Coordinate(step=step, rank=rank, accum=accum, seq=0), config
-            ),
+        # The event about to be written sits at this index in the new segment. If it is inside the
+        # replay budget it repeats a discarded event, and it says which one.
+        index = state.writer.length
+        summed, graded, tokens = consume(
+            state,
+            schedule,
+            handles,
+            step,
+            rank,
+            accum,
             checkpoint_id=checkpoint_id,
-            samples=tuple(ledger.PackedSample(**s) for s in batch.samples),
-            tokens=batch.token_count,
-            loss_tokens=batch.loss_token_count,
-            pad_tokens=batch.pad_token_count,
-            pack_util=round(batch.pack_utilization, 6),
             stage=stage,
-            lane_mix=batch.lane_mix,
-            attention_policy="block-diagonal-causal",
-            position_policy="restart-per-document-continue-across-window",
-            pack_policy="concat-and-chop",
-            opus_decision_id=None,
             tokenizer_sha256=tokenizer_sha256,
-            plan_key_digest=schedule.key.digest(),
-            replayed_from=replayed_from,
-            **batch.hashes(),
+            attempt=attempt,
+            replayed_from=replay_base + index if index < replay_budget else None,
         )
+        local_sum += summed
+        local_count += graded
+        local_tokens += tokens
 
     totals = _reduce(torch.tensor([local_sum, float(local_count), float(local_tokens)]), world_size)
     global_sum, global_count, global_tokens = (float(t) for t in totals)
@@ -291,3 +353,128 @@ def build_state(
         optimizer=torch.optim.AdamW(net.parameters(), lr=learning_rate),
         writer=writer,
     )
+
+
+def gather_cut(
+    state: RankState, rank: int, world_size: int
+) -> tuple[dict[int, int], dict[int, int]]:
+    """Collect every rank's ledger position, so the checkpoint can carry a vector.
+
+    This is the collective that makes the cut correct. Rank 0 knows only its own position, and the
+    kill lands where it lands — *"you give the kill command at 3,000 and it might get killed at
+    3,005"* — so four ranks routinely sit at four different offsets. A checkpoint recording rank 0's
+    number and applying it to all four would truncate three ledgers to the wrong place: some ranks
+    lose events they really consumed, others keep events these weights never saw.
+
+    Args:
+        state: This rank's state.
+        rank: This worker.
+        world_size: How many ranks.
+
+    Returns:
+        `(cut, segments)` — rank to ledger length, and rank to the segment that length refers to.
+    """
+    mine = torch.tensor([state.writer.length, state.writer.segment], dtype=torch.long)
+    if world_size == 1:
+        return {rank: int(mine[0])}, {rank: int(mine[1])}
+
+    collected = [torch.zeros_like(mine) for _ in range(world_size)]
+    torch.distributed.all_gather(collected, mine)
+    return (
+        {r: int(t[0]) for r, t in enumerate(collected)},
+        {r: int(t[1]) for r, t in enumerate(collected)},
+    )
+
+
+def save_checkpoint(
+    state: RankState,
+    directory: Path,
+    *,
+    run_id: str,
+    branch_id: str,
+    attempt: int,
+    step: int,
+    cut: dict[int, int],
+    segments: dict[int, int],
+    plan_key_digest: str,
+    config_fingerprint: str,
+) -> checkpoint.Checkpoint:
+    """Write weights, optimizer state and the cut vector.
+
+    The tensors are renamed into place **before** the sidecar is written, so the sidecar's existence
+    is the commit. An interrupted save leaves tensors with no sidecar, which `load` reports as
+    absent rather than restoring from.
+
+    The optimizer state is saved too, and that is not optional: AdamW's moments are half the
+    optimizer's behaviour, and restoring weights without them restarts the moment estimates from
+    zero — a visible loss spike at every resume that is easy to mistake for a data problem.
+
+    Args:
+        state: The rank saving. Only rank 0 should call this.
+        directory: Where checkpoints go.
+        run_id: Which run.
+        branch_id: Which branch.
+        attempt: Which attempt is writing.
+        step: The last step whose update these weights include.
+        cut: Rank to ledger length, from `gather_cut`.
+        segments: Rank to segment number, from `gather_cut`.
+        plan_key_digest: The plan these weights were trained under.
+        config_fingerprint: The settings they were trained under.
+
+    Returns:
+        The checkpoint's metadata.
+    """
+    identifier = checkpoint.checkpoint_id(run_id, branch_id, step)
+    checkpoint.write_atomically(
+        checkpoint.tensor_path(directory, identifier),
+        lambda staging: torch.save(
+            {"model": state.net.state_dict(), "optimizer": state.optimizer.state_dict()}, staging
+        ),
+    )
+    record = checkpoint.Checkpoint(
+        v=checkpoint.VERSION,
+        checkpoint_id=identifier,
+        run_id=run_id,
+        branch_id=branch_id,
+        attempt=attempt,
+        step=step,
+        cut=cut,
+        segments=segments,
+        weight_digest=weight_digest(state.net),
+        plan_key_digest=plan_key_digest,
+        config_fingerprint=config_fingerprint,
+        environment=environment(),
+    )
+    checkpoint.write_atomically(
+        checkpoint.sidecar_path(directory, identifier),
+        lambda staging: staging.write_text(record.to_json(), encoding="utf-8"),
+    )
+    return record
+
+
+def restore(state: RankState, directory: Path, record: checkpoint.Checkpoint) -> None:
+    """Load weights and optimizer state back into a rank.
+
+    Args:
+        state: The rank restoring.
+        directory: Where checkpoints live.
+        record: Which checkpoint, already read from its sidecar.
+
+    Raises:
+        ValueError: If the restored weights do not hash to what the checkpoint recorded — which
+            means the tensor file and the sidecar are not from the same save.
+    """
+    blob = torch.load(
+        checkpoint.tensor_path(directory, record.checkpoint_id),
+        weights_only=True,
+        map_location="cpu",
+    )
+    state.net.load_state_dict(blob["model"])
+    state.optimizer.load_state_dict(blob["optimizer"])
+
+    restored = weight_digest(state.net)
+    if restored != record.weight_digest:
+        raise ValueError(
+            f"{record.checkpoint_id}: restored weights hash to {restored}, the sidecar records "
+            f"{record.weight_digest} — the tensor file and the sidecar are not from one save"
+        )

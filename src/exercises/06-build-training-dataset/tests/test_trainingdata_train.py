@@ -8,8 +8,12 @@ Two things are worth testing here and the rest is plumbing:
 torch is an optional extra, so this file skips without it.
 """
 
+import dataclasses
 import json
 import socket
+import subprocess
+import sys
+import textwrap
 
 import numpy as np
 import pytest
@@ -19,6 +23,31 @@ torch = pytest.importorskip("torch", reason="torch is the `train` extra, not a b
 from trainingdata import config as config_module  # noqa: E402
 from trainingdata import feed, ledger, plan, runner, shards, spec, train  # noqa: E402
 from trainingdata import model as model_module  # noqa: E402
+
+_FIELDS = {
+    "attempt": 0,
+    "global_step": 0,
+    "accum": 0,
+    "flat": 0,
+    "checkpoint_id": None,
+    "samples": (),
+    "tokens": 8,
+    "loss_tokens": 7,
+    "pad_tokens": 0,
+    "pack_util": 1.0,
+    "stage": "main",
+    "lane_mix": {},
+    "attention_policy": "block-diagonal-causal",
+    "position_policy": "restart-per-document-continue-across-window",
+    "pack_policy": "concat-and-chop",
+    "opus_decision_id": None,
+    "microbatch_hash": "b2:" + "a" * 32,
+    "loss_mask_hash": "b2:" + "b" * 32,
+    "position_ids_hash": "b2:" + "c" * 32,
+    "segment_ids_hash": "b2:" + "d" * 32,
+    "tokenizer_sha256": "sha256:" + "e" * 64,
+    "plan_key_digest": "0123456789abcdef",
+}
 
 TINY = model_module.ModelConfig(d_model=32, n_layer=2, n_head=2, d_ff=64)
 
@@ -379,3 +408,97 @@ def test_the_ranks_never_diverge_from_each_other(tmp_path) -> None:
 
     assert {report["steps"][-1]["loss"] for report in reports} == {reports[0]["steps"][-1]["loss"]}
     assert all(report["ledger_length"] == 4 * 2 for report in reports)
+
+
+@pytest.mark.integration
+def test_restoring_from_a_mismatched_sidecar_is_refused(tmp_path) -> None:
+    """**A tensor file and a sidecar that are not from one save.**
+
+    It happens: a checkpoint directory copied while a run was writing, a `.pt` restored from backup
+    beside a newer `.json`. The weights would load without complaint and the run would continue from
+    a model that is not the one the ledger cut belongs to — every later claim silently about a
+    different training history.
+    """
+    handles, _ = _corpus(tmp_path)
+    schedule = plan.build([(h.shard_id, h.tokens.size) for h in handles.values()], _config())
+    state = train.build_state(schedule, tmp_path / "ledger", "r", "main", 0, model_config=TINY)
+    train.run_step(state, schedule, handles, 0, 0)
+
+    directory = tmp_path / "checkpoints"
+    record = train.save_checkpoint(
+        state,
+        directory,
+        run_id="r",
+        branch_id="main",
+        attempt=0,
+        step=0,
+        cut={0: state.writer.length},
+        segments={0: 0},
+        plan_key_digest=schedule.key.digest(),
+        config_fingerprint=schedule.config.fingerprint(),
+    )
+    train.restore(state, directory, record)  # the matching pair restores cleanly
+
+    impostor = dataclasses.replace(record, weight_digest="b2:" + "f" * 32)
+    with pytest.raises(ValueError, match="not from one save"):
+        train.restore(state, directory, impostor)
+
+
+@pytest.mark.integration
+def test_the_cut_is_gathered_from_every_rank_not_just_this_one(tmp_path) -> None:
+    """**The collective the whole vector design rests on.**
+
+    The crash drill cannot test this: a synchronous checkpoint lands every rank on the same event
+    count, so replacing the `all_gather` with "copy my own number" produces an identical result and
+    survives the entire drill. Here the ranks are given deliberately different ledger lengths, which
+    is the state per-rank selection and rank-local retries will produce for real.
+
+    Run out of process because it needs a real `gloo` group; a script on disk rather than a helper
+    in this module, because `spawn` re-imports the caller and re-importing a pytest test module is
+    not something to rely on.
+    """
+    if not _loopback_available():
+        pytest.skip("gloo binds a loopback socket; local networking is blocked here")
+
+    script = tmp_path / "gather_probe.py"
+    script.write_text(
+        textwrap.dedent(f"""
+        import json, sys
+        from pathlib import Path
+        import torch
+        from trainingdata import ledger, train
+
+        ROOT = Path({str(tmp_path)!r})
+        WORLD = 3
+
+        def worker(rank, rendezvous):
+            torch.distributed.init_process_group(
+                backend="gloo", init_method=rendezvous, rank=rank, world_size=WORLD)
+            writer = ledger.LedgerWriter(
+                directory=ROOT / "ledger", run_id="r", branch_id="main",
+                rank=rank, segment=rank + 5)
+            writer.open()
+            for _ in range(rank + 1):          # 1, 2, 3 events -- deliberately unequal
+                writer.append(**{_FIELDS!r})
+            state = train.RankState(net=None, optimizer=None, writer=writer)
+            cut, segments = train.gather_cut(state, rank, WORLD)
+            seen = {{"cut": cut, "segments": segments}}
+            (ROOT / f"seen-{{rank}}.json").write_text(json.dumps(seen))
+            torch.distributed.destroy_process_group()
+
+        if __name__ == "__main__":
+            torch.multiprocessing.start_processes(
+                worker, args=(f"file://{{ROOT}}/rendezvous",), nprocs=WORLD, start_method="spawn")
+        """)
+    )
+    finished = subprocess.run(
+        [sys.executable, str(script)], capture_output=True, text=True, check=False
+    )
+    assert finished.returncode == 0, finished.stderr[-2000:]
+
+    for rank in range(3):
+        seen = json.loads((tmp_path / f"seen-{rank}.json").read_text())
+        assert {int(k): v for k, v in seen["cut"].items()} == {0: 1, 1: 2, 2: 3}, (
+            f"rank {rank} did not see the other ranks' lengths: {seen['cut']}"
+        )
+        assert {int(k): v for k, v in seen["segments"].items()} == {0: 5, 1: 6, 2: 7}

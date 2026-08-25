@@ -311,6 +311,47 @@ def read_segment(path: Path) -> list[ConsumeEvent]:
     return events
 
 
+def scan_segment(path: Path) -> tuple[int, bool]:
+    """How many complete events a segment holds, and whether its last line is torn.
+
+    Read-only. `drop_torn_tail` repairs using this, and a resume's dry run measures using it — one
+    implementation of "what does this file actually contain", so a check and the repair that follows
+    it cannot disagree.
+
+    Args:
+        path: The segment file.
+
+    Returns:
+        `(complete lines, last line is an interrupted write)`.
+
+    Raises:
+        LedgerCorruptionError: If a line other than the last fails to parse. That cannot be an
+            interrupted write — only the last line can be — so it is corruption, and repairing it
+            would hide real damage behind a routine crash-recovery path.
+    """
+    if not path.is_file():
+        return 0, False
+    lines = [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    if not lines:
+        return 0, False
+
+    for i, line in enumerate(lines[:-1]):
+        try:
+            json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise LedgerCorruptionError(
+                f"{path.name} line {i + 1} does not parse, and it is not the last line — this is "
+                f"corruption, not an interrupted write, and repairing it would hide the damage: "
+                f"{exc}"
+            ) from exc
+
+    try:
+        json.loads(lines[-1])
+    except json.JSONDecodeError:
+        return len(lines) - 1, True
+    return len(lines), False
+
+
 def drop_torn_tail(path: Path) -> bool:
     """Remove a trailing line the writing process did not finish.
 
@@ -324,9 +365,6 @@ def drop_torn_tail(path: Path) -> bool:
     field, so it is a complete event that merely lacks its newline. The check is therefore exact in
     both directions rather than a heuristic.
 
-    Only the **last** line is ever dropped. A parse failure anywhere earlier is corruption, not a
-    torn write, and it is raised rather than silently repaired.
-
     Args:
         path: The segment file.
 
@@ -336,35 +374,11 @@ def drop_torn_tail(path: Path) -> bool:
     Raises:
         LedgerCorruptionError: If a line other than the last fails to parse.
     """
-    if not path.is_file():
+    complete, torn = scan_segment(path)
+    if not torn:
         return False
-    lines = path.read_text(encoding="utf-8").splitlines()
-    if not lines:
-        return False
-    # Everything but the last line is checked FIRST. Returning early on a healthy tail would let
-    # damage in the middle of the file pass as "nothing to repair", which is the exact opposite of
-    # what this function is for.
-    kept = lines[:-1]
-    for i, line in enumerate(kept):
-        if not line.strip():
-            continue
-        try:
-            json.loads(line)
-        except json.JSONDecodeError as exc:
-            raise LedgerCorruptionError(
-                f"{path.name} line {i + 1} does not parse, and it is not the last line — this is "
-                f"corruption, not an interrupted write, and repairing it would hide the damage: "
-                f"{exc}"
-            ) from exc
-
-    try:
-        json.loads(lines[-1])
-    except json.JSONDecodeError:
-        pass
-    else:
-        return False
-
-    path.write_text("".join(line + "\n" for line in kept), encoding="utf-8")
+    lines = [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    path.write_text("".join(line + "\n" for line in lines[:complete]), encoding="utf-8")
     return True
 
 

@@ -141,6 +141,47 @@ every shard manifest pins, so the sentinels are assigned **out of vocabulary** �
   deleting an entry made them test *fewer cases* and stay green — a guard derived from the thing it
   guards. A twin now pins the three by name.
 
+### 2026-08-25 (stage 7 — crash, resume, and the ids lining up)
+
+**What landed.** `checkpoint.py` and `resume.py`, plus the crash and resume paths in `runner.py`.
+The drill runs golden → crash → resume and compares.
+
+**Measured, on four gloo ranks, 12 steps, checkpoint every 4, crash at step 8:**
+
+| | |
+| --- | ---: |
+| golden run | 144 events (12 × 4 × 3) |
+| ranks at the crash | 24 / 25 / 26 / 27 events |
+| checkpoint restored | `ckpt-main-000007`, cut `{0: 24, 1: 24, 2: 24, 3: 24}` |
+| discarded by the cut | 0 / 1 / 2 / 3 → **6 microbatches re-executed** |
+| after resume | 144 events, **every** `(step, rank, accum, flat, microbatch_hash)` equal to golden |
+| events carrying `replayed_from` | 6 |
+
+**A claim I had to correct while building it.** The cut is a vector, and I had written that it is a
+vector *because the four values differ*. They do not — a synchronous checkpoint lands every rank on
+the same event count, and the drill above shows `{24, 24, 24, 24}`. What is already ragged is how
+much each rank wrote **after** the checkpoint. The vector is structurally necessary (the cut is
+applied to four separate files, and per-rank selection will make the values diverge for real), but
+the drill does not exercise the non-uniform case and the documents now say so.
+`test_each_rank_is_cut_to_its_own_number` covers it directly instead.
+
+**Five mutation survivors, each a different kind of gap:**
+
+| what survived | what it turned out to be |
+| --- | --- |
+| `os.replace` → copy-then-delete | atomicity is only observable through a handle opened *before* the write. Test now holds one open and asserts it still reads the old file |
+| `latest` keyed on id instead of step | ids pad to six digits, so below a million steps the orders agree. At a million they diverge and a resume silently redoes a thousand steps. Test moved to that scale |
+| `os._exit` → `raise SystemExit(137)` | still exits 137, still truncates the ledger, passes every other assertion. Workers now write an exit marker from `finally`, so its **absence** is the record of an abrupt end |
+| the restore digest check | no test ever built a mismatched `.pt`/`.json` pair — the state a directory copied mid-run produces |
+| `all_gather` → copy my own number | undetectable in the drill, because the cut is uniform. Tested directly instead, out of process, with three ranks holding 1 / 2 / 3 events |
+
+**And one that was my harness, not the code.** Two of those five kept surviving after the tests
+existed, because the mutation script's test list did not include the file the new tests were in. A
+mutation harness that does not run the relevant tests reports everything as surviving *or* as
+killed, depending on which way you are wrong — worth checking before believing either.
+
+**24/24 mutations killed.** 251 tests in the exercise.
+
 ### 2026-08-25 (stage 6 — the ledger, the model, and four real processes)
 
 **What landed.** `ledger.py`, `pack.py`, `feed.py`, `model.py`, `train.py`, `runner.py`. A

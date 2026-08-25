@@ -4,11 +4,11 @@ Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is the
 `submission_artifacts/` bundle, the reasoning is `DECISIONS.md`, the running log is `PROGRESS.md`,
 and `BRIEF.md` is the assignment (local only, gitignored).
 
-**Status: stage 6 of 8.** `spec.py`, `config.py`, `shards.py`, `manifest.py`, `firewall.py`,
-`plan.py`, `masks.py`, `pack.py`, `feed.py`, `ledger.py`, `model.py`, `train.py` and `runner.py`
-exist. Crash recovery, resume, replay, fork and the audit do **not**. Do not describe this exercise
-as having them until it does — the README carries a stage table for exactly this reason, and
-`tests/test_trainingdata_docs.py` now asserts the header agrees with it.
+**Status: stage 7 of 8.** `spec.py`, `config.py`, `shards.py`, `manifest.py`, `firewall.py`,
+`plan.py`, `masks.py`, `pack.py`, `feed.py`, `ledger.py`, `model.py`, `train.py`, `runner.py`,
+`checkpoint.py` and `resume.py` exist. Replay, fork, the auditor and the evidence bundle do **not**.
+Do not describe this exercise as having them until it does — the README carries a stage table for
+exactly this reason, and `tests/test_trainingdata_docs.py` asserts the header agrees with it.
 
 ## The rules this exercise adds
 
@@ -135,6 +135,45 @@ as having them until it does — the README carries a stage table for exactly th
   with no extras, so `model`, `train` and `runner` are verified locally before each PR and nowhere
   else. `gloo` additionally needs loopback, so the multi-rank tests skip again inside a sandbox that
   blocks it — `_loopback_available()` probes for that rather than letting it hang.
+
+- **The cut is a vector, and be precise about why.** Today its four values *coincide*, because a
+  synchronous checkpoint lands every rank on the same event count. What is already ragged is how
+  much each rank wrote **after** the checkpoint before it died, which `resume.plan_resume` computes
+  per rank. A scalar would be correct only while every rank writes the same number of events per
+  step — per-rank selection breaks that the moment a rank rejects a candidate. Do not "simplify" it
+  to a scalar, and do not claim the drill exercises the non-uniform case: it does not, and
+  `test_each_rank_is_cut_to_its_own_number` covers that directly.
+
+- **The sidecar is the commit.** `<id>.pt` is renamed into place first, `<id>.json` last, so an
+  interrupted save leaves tensors with no sidecar and reads as *absent*. Every write is
+  rename-into-place: a reader holding the old file must keep seeing the old file, whole.
+
+- **`latest` orders by step, never by id.** Ids pad to six digits, so below a million steps lexical
+  order agrees and a `max` over ids looks right. At a million they diverge —
+  `"ckpt-main-1000000"` sorts before `"ckpt-main-999999"` — and a resume would silently redo a
+  thousand steps.
+
+- **`os._exit`, never `sys.exit`, and the marker proves which was used.** `sys.exit` raises
+  `SystemExit`, so `finally` runs, `atexit` runs and buffers flush; that is a shutdown, and a drill
+  built on it proves nothing. Each worker writes an exit marker from `finally`, so its **absence**
+  is the record of an abrupt end — swapping the drill to `SystemExit` still exits 137 and still
+  leaves a truncated ledger, and only that marker notices.
+
+- **The barrier before the crash makes the drill deterministic, not gentle.** Without it the first
+  rank to die makes the parent `SIGTERM` the survivors, and how much each wrote becomes a race —
+  measured at 24/25/25/25 events where the offsets asked for 24/25/26/27.
+
+- **Resume checks every rank before cutting any of them.** Half-applied is worse than the crash: a
+  run whose ranks disagree about which checkpoint they belong to. `apply_cut` runs a dry pass first.
+
+- **Repair the torn tail before measuring the cut, and use one scan for both.** A torn line is not
+  an event; counting it puts the cut one event too far and under-reports what was re-executed.
+
+- **What the resume claim covers, exactly.** *Inputs*: `(step, rank, accum, flat,
+  microbatch_hash)` match a run that never crashed. **Not** losses and **not** weights — those move
+  with thread count and library version. And "the next batch" means the batch after the
+  *checkpoint*, not after the crash; the microbatches between them are re-executed, carry
+  `replayed_from` naming the discarded event each repeats, and the count is published.
 
 ## Naming
 

@@ -12,11 +12,11 @@ documents -> tokenized shards -> manifests -> mixture schedule -> packing -> bat
           -> crash -> resume -> replay -> audit
 ```
 
-> **Status: stage 6 of 8.** Shards, manifests, the firewall, the plan, packing, the model, the
-> training step and the consumption ledger are in place and under test, and a four-process `gloo`
-> run writes a ledger that verifies. Crash recovery, resume, replay, fork and the audit are **not**
-> built yet, and this file says so rather than describing a system that does not exist. The stage
-> table is [below](#the-stages).
+> **Status: stage 7 of 8.** The system trains on four real processes, writes a chain-hashed
+> consumption ledger, survives a genuine crash and resumes onto the same batch ids a run that never
+> crashed would have consumed. Replay, fork, the auditor and the evidence bundle are **not** built
+> yet, and this file says so rather than describing a system that does not exist. The stage table
+> is [below](#the-stages).
 
 ## How to read this
 
@@ -86,7 +86,7 @@ Each ends in something you can run and see. Nothing advances until the previous 
 | 4 | ask "what is slot (step 3, rank 2)?" and get token spans back | **done** |
 | 5 | pack a window and **see** the block-diagonal attention mask | **done** |
 | 6 | train, then read the consumption ledger back line by line | **done** |
-| 7 | crash it on purpose, resume, and watch the batch ids line up | — |
+| 7 | crash it on purpose, resume, and watch the batch ids line up | **done** |
 | 8 | replay an interval, fork a branch, run the auditor | — |
 
 ## Layout
@@ -111,6 +111,8 @@ src/trainingdata/
   model.py       # TinyGPT — RoPE, SwiGLU, tied head. The only place torch is required
   train.py       # one optimizer step, and the token-weighted reduction across ranks
   runner.py      # real worker processes over gloo, spawned, with a file rendezvous
+  checkpoint.py  # weights, optimizer state, and the ledger cut that belongs with them
+  resume.py      # bringing a ledger back into agreement with a checkpoint, after a crash
 tests/           # discovered by `uv run pytest` from the repo root
 tools/           # the notebook builder (local-only, gitignored — back it up)
 artifacts/       # heavy regenerable output (gitignored)
