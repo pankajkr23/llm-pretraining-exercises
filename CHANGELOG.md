@@ -12,6 +12,33 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Session 5's recipe is now data, in one place.** `mixture.py` holds the lane shares (web .32 ·
+  code .28 · indic .18 · stem .12 · reasoning .08 · agentic .02 · long_context **0**), the
+  protected floors (indic .12, agentic .02) and the per-lane token targets derived from the run
+  size. Nothing restates them: a fetcher sizing a download and a compliance report checking against
+  a second copy would drift, and the report would become a measurement of itself.
+- **`long_context` is deliberately zero and a test says so.** It is a schedule over the other
+  lanes, not a corpus — session 5 retired it on its own evidence, 60 of its 100B being repo-packed
+  code already counted under `code`. A fetcher that gave it tokens would invent a lane and
+  double-count another.
+- **A tracked corpus fetcher, sized in TOKENS rather than rows.** Bytes per token under the frozen
+  vocabulary ranges from **1.98 (code) to 8.81 (indic)** — a 4.4x spread — so a row-counting
+  fetcher lands nowhere near the mixture it is reproducing. Licences are verified from each
+  dataset's own card at fetch time, before a byte is downloaded, and a dataset declaring none is
+  refused: an unverifiable licence is not a permissive one.
+- **The code lane's licence is checked per FILE, not per dataset.** `codeparrot/github-code-clean`
+  is Apache-2.0 as *packaging* and mixes GPL/AGPL/LGPL source with permissive; the dataset tag
+  would wave all of it through. Rows outside a narrower per-file set are dropped, and that set
+  deliberately excludes `odc-by` — a fine licence for a data collection and a meaningless one for
+  somebody's `.py`.
+- **Every candidate dataset was probed live rather than remembered**, and three were rejected on
+  licence grounds: `bigcode/the-stack-smol` (gated *and* declares nothing),
+  `the-stack-smol-xs` (ungated, declares nothing at all), `peS2o` (odc-by and ungated, but has no
+  dataset viewer — script-based with no parquet export, so it cannot be sampled through the public
+  API). The indic lane is restricted to Devanagari and Telugu because Bengali, Kannada, Gujarati
+  and Tamil all measure **above 80% `[UNK]`** under the frozen vocabulary and would pass every
+  structural check before failing the 5% publication gate mid-build.
+
 - **CI now runs the torch-gated tests, in a job of their own.** They were invisible: a module-level
   `pytest.importorskip("torch")` skips an ENTIRE file, `uv sync --all-packages` installs no extras,
   and a file that collects nothing looks exactly like a file with nothing in it — so **46 of
