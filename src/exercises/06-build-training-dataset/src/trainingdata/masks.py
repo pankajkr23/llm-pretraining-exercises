@@ -58,22 +58,38 @@ def segment_ids(lengths: list[int], window: int) -> np.ndarray:
     return out
 
 
-def position_ids(segments: np.ndarray) -> np.ndarray:
+def position_ids(segments: np.ndarray, *, offsets: list[int] | None = None) -> np.ndarray:
     """Position of each token **within its own document**.
+
+    `offsets` is what makes this correct at a window edge. Concat-and-chop cuts every
+    `sequence_length` tokens without regard for documents, so a window usually opens part-way
+    through one. Numbering that leading fragment from 0 tells the model it is the start of a
+    document when it is not — the same error restarting positions exists to prevent, reintroduced
+    at the seam. Passing the fragment's true offset continues the numbering instead.
 
     Args:
         segments: As returned by `segment_ids`.
+        offsets: How far into its own document each segment's first token sits. Defaults to zero
+            for every segment, which is right only when each segment is a whole document.
 
     Returns:
         `(window,)` of `int32`. Padding positions are `0`, which is arbitrary and unused — nothing
         attends to them and nothing is graded on them.
+
+    Raises:
+        ValueError: If `offsets` does not have one entry per segment. Silently zero-filling a short
+            list would restart exactly the fragments the argument exists to fix.
     """
     out = np.zeros_like(segments, dtype=np.int32)
-    for seg in np.unique(segments):
-        if seg < 0:
-            continue
+    present = [int(s) for s in np.unique(segments) if s >= 0]
+    if offsets is not None and len(offsets) != len(present):
+        raise ValueError(
+            f"{len(offsets)} offsets for {len(present)} segments — one per segment, in order"
+        )
+    for i, seg in enumerate(present):
         where = np.flatnonzero(segments == seg)
-        out[where] = np.arange(where.size, dtype=np.int32)
+        base = 0 if offsets is None else offsets[i]
+        out[where] = base + np.arange(where.size, dtype=np.int32)
     return out
 
 
