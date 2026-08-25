@@ -1,0 +1,40 @@
+[project]
+name = "exercise-06-build-training-dataset"
+version = "0.1.0"
+description = "Session 6 — the training data execution system: shards, ledgers, replay, audit"
+requires-python = ">=3.12"
+dependencies = [
+    # Content hashing, script hashing and content-derived run ids already exist and are already
+    # tested. A second implementation of "what is this shard's identity" is exactly the kind of
+    # duplicate this repo has been bitten by — and here the hash IS the deliverable.
+    "exercise-04-data-cleaning-dedup",
+    # The frozen tokenizer is loaded through `datacleaning.tokens`, and the [UNK] gate that refuses
+    # to publish a count that is mostly unknown applies here too: a shard whose tokens are mostly
+    # [UNK] is not a shard we can train on or make claims about.
+    "exercise-05-datamixtures-and-curriculum",
+    "numpy>=2",
+]
+
+# torch is an OPTIONAL extra, exactly as in exercise 05, and for a sharper reason here.
+#
+# The whole data system -- shards, manifests, packing, masks, the mixture schedule, the ledgers,
+# replay, fork and audit -- is pure Python and numpy. Only the training step needs torch. CI runs
+# `uv sync --all-packages` with no extras, so keeping that boundary means CI verifies almost the
+# entire system rather than almost none of it.
+#
+#     uv sync --all-packages --extra train
+[project.optional-dependencies]
+train = [
+    "torch>=2.6",
+]
+
+[tool.uv.sources]
+exercise-04-data-cleaning-dedup = { workspace = true }
+exercise-05-datamixtures-and-curriculum = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/trainingdata"]

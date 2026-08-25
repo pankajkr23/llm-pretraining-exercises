@@ -1,0 +1,68 @@
+"""Constants the producer and the auditor must agree on — and nothing else.
+
+`verify.py` re-derives every published claim from the artifacts alone. For that to mean anything it
+must not import the code that produced them, or it would inherit the producer's bugs and agree with
+itself. This module is the one deliberate exception: shared *facts*, no shared *logic*.
+
+Keep it free of imports from the rest of the package. A test asserts the auditor's import closure
+contains nothing else from `trainingdata`.
+"""
+
+from typing import Final
+
+#: The nine rows `evidence.md` must carry, in the order the assignment lists them.
+REQUIREMENTS: Final[tuple[str, ...]] = (
+    "tokenizer_integrity",
+    "evaluation_firewall",
+    "packing_correctness",
+    "mixture_compliance",
+    "opus_audit_trail",
+    "crash_recovery",
+    "replay",
+    "learning_trace",
+    "throughput",
+)
+
+#: The event sequence `run.log` must contain, in order. The assignment names these verbatim.
+REQUIRED_SEQUENCE: Final[tuple[str, ...]] = (
+    "shards created",
+    "manifests validated",
+    "evaluation data blocked",
+    "mixture compiled",
+    "batches packed",
+    "OPUS decisions recorded",
+    "checkpoint saved",
+    "crash simulated",
+    "run resumed",
+    "historical stream replayed",
+    "branch forked",
+    "audit completed",
+    "performance measured",
+)
+
+#: Sentinel token ids.
+#:
+#: The frozen Session 2 tokenizer has **no EOS, no BOS and no PAD** — its vocabulary is contiguous
+#: `0..9999` with no `post_processor`. Adding them to the file would change its bytes and void the
+#: tokenizer hash that every shard manifest pins, so the sentinels are assigned **out of
+#: vocabulary** and materialised into the shard at tokenize time instead.
+#:
+#: No BOS: it creates an ambiguous "which document owns position 0" case in packed sequences, and
+#: nothing here needs it.
+EOS: Final[int] = 10_000
+PAD: Final[int] = 10_001
+
+#: Vocabulary the model is built with — the tokenizer's 10,000 plus the two sentinels above.
+MODEL_VOCAB_SIZE: Final[int] = 10_002
+
+#: The tracked deliverable must stay small enough to live in git. Checked *before* a run writes,
+#: not after, so a run that would blow the budget fails early rather than leaving a mess.
+TRACKED_BUDGET_BYTES: Final[int] = 2 * 1024 * 1024
+
+#: Statuses an OPUS candidate can end in.
+#:
+#: `accept` and `reject` are the selector's own. `defer` and `floor_override` are **ours** — three
+#: independent sources (the paper, the reference implementation, and LightningLM) contain zero
+#: occurrences of either concept, and in both implementations the decision is strictly binary and
+#: stateless. See `DECISIONS.md`.
+DECISIONS: Final[tuple[str, ...]] = ("accept", "reject", "defer", "floor_override")

@@ -284,3 +284,11 @@ notebooks/S[0-9][0-9]-*.ipynb
 # copy, so a lost working tree now loses the notebook AND the means to rebuild it, and CI can no
 # longer check that a builder exists or still runs. Back these up outside the repo.
 src/exercises/*/tools/build_notebook.py
+
+# ...but the submission bundle IS the deliverable, and the assignment names `run.log` specifically.
+#
+# This negation WORKS because `*.log` (line 59) is a FILE pattern. The same trick under
+# `artifacts/` would be inert: `**/artifacts/` is a DIRECTORY pattern, and git cannot re-include a
+# file whose parent directory is excluded -- `git add -A` would report success and stage nothing.
+# `tests/test_submission_bundle.py` asserts both halves of that.
+!src/exercises/*/submission_artifacts/run.log

@@ -9,6 +9,7 @@ members = [
     "exercise-03-data-collection-framework",
     "exercise-04-data-cleaning-dedup",
     "exercise-05-datamixtures-and-curriculum",
+    "exercise-06-build-training-dataset",
     "llm-pretraining-exercises",
 ]
 
@@ -453,6 +454,30 @@ requires-dist = [
     { name = "torch", marker = "extra == 'proxy'", specifier = ">=2.6" },
 ]
 provides-extras = ["proxy"]
+
+[[package]]
+name = "exercise-06-build-training-dataset"
+version = "0.1.0"
+source = { editable = "src/exercises/06-build-training-dataset" }
+dependencies = [
+    { name = "exercise-04-data-cleaning-dedup" },
+    { name = "exercise-05-datamixtures-and-curriculum" },
+    { name = "numpy" },
+]
+
+[package.optional-dependencies]
+train = [
+    { name = "torch" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "exercise-04-data-cleaning-dedup", editable = "src/exercises/04-data-cleaning-dedup" },
+    { name = "exercise-05-datamixtures-and-curriculum", editable = "src/exercises/05-datamixtures-and-curriculum" },
+    { name = "numpy", specifier = ">=2" },
+    { name = "torch", marker = "extra == 'train'", specifier = ">=2.6" },
+]
+provides-extras = ["train"]
 
 [[package]]
 name = "fastjsonschema"

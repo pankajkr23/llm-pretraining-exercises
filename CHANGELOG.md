@@ -10,6 +10,27 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Exercise 06 — the training data execution system — is scaffolded.** Stage 1 of 8: the frozen
+  `Config` with a run fingerprint, `spec.py` (the constants the producer and auditor share),
+  `DECISIONS.md` recording seven decisions with what would overturn each, a README that says
+  plainly it describes stage 1 rather than a finished system, and a notebook builder whose notebook
+  executes end to end.
+- **`tests/test_submission_bundle.py`** pins the split the deliverable rests on: everything the
+  assignment names is trackable under `submission_artifacts/`, and heavy output stays ignored under
+  `artifacts/`. It also pins *why* the bundle is not simply called `artifacts/` — `**/artifacts/` is
+  a **directory** pattern, and git cannot re-include a file whose parent is excluded, so a negation
+  there is inert while `git add -A` reports success.
+- **`tests/test_module_names.py`** — no two test modules may share a basename. pytest imports them
+  by basename, so a second `test_config.py` aborts *collection* rather than failing a test.
+
+### Fixed
+
+- **A second `test_config.py` broke collection.** Exercise 03 already had one. Renamed to
+  `test_trainingdata_*`, following exercise 05's `test_mixture_*` convention — now checkable rather
+  than remembered.
+
 ### Changed
 
 - **CI's test job runs in parallel: ~276s → an expected ~90s.** The integration step was **255s of
