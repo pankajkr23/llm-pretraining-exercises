@@ -12,6 +12,68 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Context masking is a behaviour of the run, not a capability.** `masks.loss_mask(context_spans=)`
+  was implemented, tested and taught in the notebook with **zero callers** — the pipeline
+  demonstrably did not do what its own documentation showed. The spans now travel from the shard
+  manifest through `ShardHandle` to `build_window`, which clips and **translates** them to window
+  coordinates before the mask sees them. Handing a shard-relative range straight through would mask
+  the wrong positions, and on a window from the middle of a shard would usually mask nothing and
+  look like it worked.
+- **The ledger carries the loss policy and the spans on the EVENT**, not a pointer to the manifest,
+  so replay re-materialises from the shards and the record alone. Needing a second file to agree
+  with would make it an audit of two documents rather than of the run.
+- **The policy is derived from what the microbatch did, never declared.** A run that says
+  `context-masked` and masked nothing is claiming a behaviour it lacked — which is exactly how the
+  feature sat unused while every document said the pipeline used it.
+- **Measured on the real corpus:** the reasoning lane carries **1,286 context spans** across five
+  shards and web carries **0** (single-part documents, correctly). One microbatch grades **73.8% of
+  positions against 99.6% unmasked**. Four training steps graded 2,896–3,568 of 4,096 tokens,
+  varying per batch. **Replay of that interval: 8/8 re-derived, all match** — and stripping the
+  spans out of the record produces a *different* `loss_mask_hash`, so they are load-bearing rather
+  than decoration.
+- **An honest packing-efficiency number, for the first time.** `pack_util` is pinned to **1.0 by
+  construction** — the plan drops each shard's tail, so a span is always exactly one sequence — and
+  was a constant dressed as a statistic. Loss utilisation genuinely varies: 73.8% on masked
+  reasoning against 99.6% on web.
+- **`spec.py` gains the policy vocabularies** — `PACK_POLICIES`, `POSITION_POLICIES`,
+  `ATTENTION_POLICIES`, `LOSS_POLICIES` — pinned by name with the same twin `DECISIONS` has.
+
+### Changed
+
+- **`document-boundary` packing is named and deliberately NOT implemented**, with the measurement
+  as the reason. Across all 57 shards the median document *exceeds* the 512-token window on five of
+  six lanes (code 1,428 · web 970 · indic 652 · stem 550 · reasoning 508), so it produces
+  all-padding windows for **85% of spans on reasoning through 98.6% on code**, at a mean
+  utilisation of **0.005** against concat-and-chop's 1.000. Naming it without building it is what
+  lets `replay.rebuild` refuse it by name.
+
+### Fixed
+
+- **Replay refuses a policy it cannot rebuild.** Every reconstruction is concat-and-chop with
+  per-document positions; handed an event from another policy it would have rebuilt the wrong
+  window, hashed it, and reported a mismatch — the signal reserved for *a shard whose bytes moved*.
+  It would have blamed the data for a difference in the reader. It also refuses an event claiming
+  `context-masked` while recording no spans, because the mask it was graded under is then
+  unrecoverable.
+- **The local-lane fetch split on lines, reintroducing a bug already fixed for the remote lanes**
+  a hundred lines below the comment explaining it. The agentic proxy's **500 conversations became
+  16,753 line-fragments**, median 32 characters. Deduplication then removed 59% of them as
+  near-identical, which had been recorded as a finding about the data and was an artifact of the
+  split. It also inverted the measurement it fed: at line granularity agentic looked like the best
+  lane for whole-document packing (100% under 512 tokens); at conversation granularity it is nearly
+  the worst (10.0%, carrying 4.4% of its tokens).
+- **`--lane X` rewrote the whole fetch manifest**, destroying the provenance of the lanes it had not
+  touched. Their text survived; the record of which dataset and licence produced it did not. The
+  rebuild reported a one-lane corpus at 0.04 epochs with indic's floor breached, which is how it
+  surfaced. The manifest now merges.
+- **A local lane was read in full while remote lanes stopped on target**, so agentic supplied 4.23%
+  of the corpus against a 2.00% plan. Availability is not the mixture: the plan draws uniformly over
+  spans, so a lane with twice its budget takes twice its share.
+- **A protected lane supplied at exactly its floor breaches it.** Fixing the above produced the
+  opposite failure — agentic at 1.99% against a 2.00% floor, one ten-thousandth under, because that
+  lane's floor *equals* its share and has no headroom. Protected lanes now carry 5% headroom, so the
+  floor is satisfiable rather than knife-edge.
+
 - **Session 5's recipe is now data, in one place.** `mixture.py` holds the lane shares (web .32 ·
   code .28 · indic .18 · stem .12 · reasoning .08 · agentic .02 · long_context **0**), the
   protected floors (indic .12, agentic .02) and the per-lane token targets derived from the run
