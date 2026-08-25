@@ -157,6 +157,18 @@ class ConsumeEvent:
     #: ledger, never of the device, and the count of re-executions is the honest version of that.
     replayed_from: int | None = None
 
+    #: Which loss rule produced the mask. Defaulted so an event written before the field existed
+    #: still loads under schema v1.
+    loss_policy: str = "grade-all-but-document-final"
+
+    #: `(window, start, end)` triples, window-relative, that earned no loss.
+    #:
+    #: Carried on the EVENT rather than looked up from the manifest, so replay stays self-contained:
+    #: it re-materialises from the shards and the record alone, and needs no second file to agree
+    #: with. Without these, the first masked microbatch would make `loss_mask_hash` mismatch and the
+    #: report would blame the shard.
+    context_spans: tuple[tuple[int, int, int], ...] = ()
+
     def canonical(self) -> str:
         """The event as canonical JSON, with `prev` included and the chain hash excluded.
 
@@ -166,6 +178,7 @@ class ConsumeEvent:
         """
         payload = asdict(self)
         payload["samples"] = [asdict(s) for s in self.samples]
+        payload["context_spans"] = [list(span) for span in self.context_spans]
         return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
     def chain_hash(self) -> str:
@@ -197,6 +210,9 @@ class ConsumeEvent:
         data = dict(payload)
         data["samples"] = tuple(PackedSample(**s) for s in data.get("samples", []))
         data["lane_mix"] = dict(data.get("lane_mix") or {})
+        data["context_spans"] = tuple(
+            tuple(int(value) for value in span) for span in data.get("context_spans") or ()
+        )
         return cls(**data)
 
 

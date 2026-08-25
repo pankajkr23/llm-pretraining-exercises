@@ -38,6 +38,7 @@ class ShardHandle:
         tokens: The token stream, read-only.
         index: Document boundaries within it.
         content_hash: Re-derived at open time, not copied from the manifest.
+        context_spans: Shard-relative ranges excluded from the loss.
     """
 
     shard_id: str
@@ -45,9 +46,19 @@ class ShardHandle:
     tokens: np.ndarray
     index: pack.DocIndex
     content_hash: str
+    #: Shard-relative ranges that condition the model without earning loss. From the manifest —
+    #: a shard is a flat token stream and cannot carry them itself.
+    context_spans: tuple[tuple[int, int], ...] = ()
 
 
-def open_shard(shard_id: str, path, lane: str, *, expected_hash: str | None = None) -> ShardHandle:
+def open_shard(
+    shard_id: str,
+    path,
+    lane: str,
+    *,
+    expected_hash: str | None = None,
+    context_spans: tuple[tuple[int, int], ...] = (),
+) -> ShardHandle:
     """Open a shard, verify it, and index its documents.
 
     Args:
@@ -55,6 +66,7 @@ def open_shard(shard_id: str, path, lane: str, *, expected_hash: str | None = No
         path: Where its tokens live.
         lane: Which data lane it came from.
         expected_hash: What the manifest recorded. Verified when given.
+        context_spans: Shard-relative ranges that earn no loss, from the manifest.
 
     Returns:
         The handle.
@@ -77,6 +89,7 @@ def open_shard(shard_id: str, path, lane: str, *, expected_hash: str | None = No
         tokens=tokens,
         index=pack.DocIndex(np.asarray(tokens), shard_id=shard_id, lane=lane),
         content_hash=content_hash,
+        context_spans=tuple(context_spans),
     )
 
 
@@ -154,6 +167,34 @@ class Microbatch:
             counts[sample["lane"]] += sample["end"] - sample["start"]
         return dict(sorted(counts.items()))
 
+    @property
+    def context_spans(self) -> tuple[tuple[int, int, int], ...]:
+        """Ranges that conditioned the model without earning loss, as `(window, start, end)`.
+
+        Flat triples rather than a list per window, so the ledger event stays a single sequence of
+        integers that replay can apply without knowing the microbatch's shape in advance.
+
+        Returns:
+            The triples, window-relative.
+        """
+        return tuple(
+            (index, start, end)
+            for index, window in enumerate(self.windows)
+            for start, end in window.context_spans
+        )
+
+    @property
+    def loss_policy(self) -> str:
+        """Which loss rule produced this microbatch's mask.
+
+        Derived from whether anything was actually excluded, not declared: a run that says
+        `context-masked` and masked nothing is claiming a behaviour it did not have.
+
+        Returns:
+            A member of `spec.LOSS_POLICIES`.
+        """
+        return "context-masked" if self.context_spans else "grade-all-but-document-final"
+
     def hashes(self) -> dict[str, str]:
         """Content hashes of everything replay must reproduce.
 
@@ -204,7 +245,13 @@ def build_microbatch(
                 f"seq {seq}, but that shard was never opened"
             )
         handle = handles[span.shard_id]
-        window = pack.build_window(handle.index, handle.tokens, span.start, span.end)
+        window = pack.build_window(
+            handle.index,
+            handle.tokens,
+            span.start,
+            span.end,
+            context_spans=handle.context_spans,
+        )
         windows.append(window)
 
         pass_no = schedule.pass_number(coord)

@@ -257,3 +257,54 @@ def test_no_two_ranks_read_the_same_token_in_a_step(tmp_path) -> None:
                     owner[key] = rank
 
     assert owner, "no tokens were read at all"
+
+
+def test_the_loss_policy_is_derived_from_behaviour_not_declared(tmp_path) -> None:
+    """**A run that says `context-masked` and masked nothing is claiming a behaviour it lacked.**
+
+    So the policy is read off what the microbatch actually did, never set by a flag. Getting this
+    backwards is how `context_spans` sat implemented, tested and taught with zero callers while
+    every document claimed to be doing the thing.
+    """
+    handles = _corpus(tmp_path, lanes=("web",))
+    schedule = _plan(handles, ranks=1, microbatch=2, accumulation=1)
+
+    plain = feed.build_microbatch(schedule, handles, 0, 0, 0)
+    assert plain.loss_policy == "grade-all-but-document-final"
+    assert plain.context_spans == ()
+
+    masked_handles = {
+        key: feed.ShardHandle(
+            handle.shard_id,
+            handle.lane,
+            handle.tokens,
+            handle.index,
+            handle.content_hash,
+            # The WHOLE shard, because the plan permutes spans: a narrow shard-relative range may
+            # land in no window at all, and the test would then pass or fail on where the
+            # permutation happened to put it rather than on whether masking works.
+            ((0, int(handle.tokens.size)),),
+        )
+        for key, handle in handles.items()
+    }
+    masked = feed.build_microbatch(schedule, masked_handles, 0, 0, 0)
+    assert masked.loss_policy == "context-masked"
+    assert masked.context_spans, "the spans did not reach the microbatch"
+    assert masked.loss_token_count < plain.loss_token_count, "masking removed no graded tokens"
+
+
+def test_the_context_spans_reaching_the_ledger_are_window_relative(tmp_path) -> None:
+    """Flat `(window, start, end)` triples, so replay can apply them without knowing the
+    microbatch's shape in advance."""
+    handles = _corpus(tmp_path, lanes=("web",))
+    schedule = _plan(handles, ranks=1, microbatch=2, accumulation=1)
+    masked = {
+        key: feed.ShardHandle(
+            h.shard_id, h.lane, h.tokens, h.index, h.content_hash, ((0, int(h.tokens.size)),)
+        )
+        for key, h in handles.items()
+    }
+    batch = feed.build_microbatch(schedule, masked, 0, 0, 0)
+    for window, start, end in batch.context_spans:
+        assert 0 <= window < len(batch.windows)
+        assert 0 <= start < end <= schedule.config.sequence_length

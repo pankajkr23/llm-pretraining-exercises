@@ -465,3 +465,49 @@ def test_the_refusal_is_reported_as_an_error_not_as_a_mismatch(tmp_path) -> None
     assert not verdict.ok
     assert verdict.error and "document-boundary" in verdict.error
     assert not source.tampered, "a policy this replay does not know is not a tampered shard"
+
+
+def test_replay_rebuilds_a_context_masked_window_from_the_event_alone(tmp_path) -> None:
+    """**Re-derive, never echo — for the new policy too.**
+
+    The spans come off the event, not the manifest. Replay re-materialises from the shards and the
+    record alone; needing a second file to agree with would make it an audit of two documents
+    rather than of the run.
+    """
+    from trainingdata import pack
+
+    shard_id, path, tokens = _shard(tmp_path, doc_lengths=(300,))
+    index = pack.DocIndex(tokens)
+    produced = pack.build_window(index, tokens, 0, 64, context_spans=((10, 30),))
+    assert produced.context_spans == ((10, 30),)
+
+    event = dataclasses.replace(
+        _event(shard_id, _spans_of(produced, 0)),
+        loss_policy="context-masked",
+        context_spans=((0, 10, 30),),
+    )
+    rebuilt = replay.rebuild(event, replay.ShardSource({shard_id: path}))
+    assert np.array_equal(rebuilt.loss[0], produced.loss)
+    assert rebuilt.hashes()["loss_mask_hash"] == pack.hash_array(produced.loss[None, :])
+
+
+def test_a_context_masked_event_with_no_spans_is_refused(tmp_path) -> None:
+    """**The mask it was graded under would be unrecoverable.**
+
+    Rebuilding it as unmasked would produce a `loss_mask_hash` mismatch, and a mismatch is the
+    signal reserved for a shard whose bytes moved. The report would blame the data.
+    """
+    shard_id, path, _ = _shard(tmp_path)
+    event = dataclasses.replace(
+        _event(shard_id, [(0, 64, 0)]), loss_policy="context-masked", context_spans=()
+    )
+    with pytest.raises(ValueError, match="records no context spans"):
+        replay.rebuild(event, replay.ShardSource({shard_id: path}))
+
+
+def test_an_unknown_loss_policy_is_refused(tmp_path) -> None:
+    """Same rule as the pack and position policies: refuse, do not guess."""
+    shard_id, path, _ = _shard(tmp_path)
+    event = dataclasses.replace(_event(shard_id, [(0, 64, 0)]), loss_policy="grade-nothing")
+    with pytest.raises(ValueError, match="cannot rebuild"):
+        replay.rebuild(event, replay.ShardSource({shard_id: path}))

@@ -174,6 +174,18 @@ def rebuild(event: ledger.ConsumeEvent, source: ShardSource) -> Rebuilt:
                 f"would read as a tampered shard."
             )
 
+    if event.loss_policy not in ("grade-all-but-document-final", "context-masked"):
+        raise ValueError(
+            f"event seq {event.seq} was produced under loss_policy={event.loss_policy!r}; this "
+            f"replay cannot rebuild it. Refusing rather than reporting a hash mismatch."
+        )
+    if event.loss_policy == "context-masked" and not event.context_spans:
+        raise ValueError(
+            f"event seq {event.seq} claims loss_policy='context-masked' but records no context "
+            f"spans. The mask it was graded under is unrecoverable, and rebuilding it as unmasked "
+            f"would report a mismatch that reads as a tampered shard."
+        )
+
     windows = sorted({sample.window for sample in event.samples})
     size = event.sequence_length
     tokens = np.full((len(windows), size), spec.PAD, dtype=np.int64)
@@ -196,7 +208,11 @@ def rebuild(event: ledger.ConsumeEvent, source: ShardSource) -> Rebuilt:
 
         segments[row] = masks.segment_ids(lengths, size)
         positions[row] = masks.position_ids(segments[row], offsets=offsets)
-        loss[row] = masks.loss_mask(segments[row], tokens[row])
+        # The spans come off the EVENT, not the manifest. Replay re-materialises from the shards
+        # and the record alone; needing a second file to agree with would make it an audit of two
+        # documents rather than of the run.
+        excluded = [(start, end) for index, start, end in event.context_spans if index == window]
+        loss[row] = masks.loss_mask(segments[row], tokens[row], context_spans=excluded or None)
 
     return Rebuilt(tokens=tokens, segments=segments, positions=positions, loss=loss)
 

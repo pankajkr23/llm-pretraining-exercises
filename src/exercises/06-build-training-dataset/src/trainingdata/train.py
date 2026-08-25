@@ -209,6 +209,8 @@ def consume(
         attention_policy="block-diagonal-causal",
         position_policy="restart-per-document-continue-across-window",
         pack_policy="concat-and-chop",
+        loss_policy=batch.loss_policy,
+        context_spans=batch.context_spans,
         opus_decision_id=None,
         tokenizer_sha256=tokenizer_sha256,
         plan_digest=schedule.key.digest(),
