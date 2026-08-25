@@ -89,9 +89,10 @@ def plan_fork(checkpoint_dir: Path, parent_branch_id: str, branch_id: str, at_st
 def common_prefix(ledger_dir: Path, first: str, second: str) -> int:
     """How many events two branches genuinely share, computed from their ledgers.
 
-    Not from the fork record — that is the *claim*. This is the check: two branches that forked at
-    step 80 must agree on every event up to it and diverge after, and a fork whose child re-ran the
-    shared steps would show a shorter prefix than it claims.
+    Not from any record — those are the *claims*. Note this is the right question for two branches
+    that each hold their own copy of a shared history, and the WRONG one for a fork as built here:
+    a fork inherits rather than copies, so its ledger holds nothing before the fork point and this
+    correctly returns zero. Use `verify_fork` for that.
 
     Args:
         ledger_dir: Where segment files live.
@@ -116,6 +117,57 @@ def common_prefix(ledger_dir: Path, first: str, second: str) -> int:
             break
         shared += 1
     return shared
+
+
+@dataclass(frozen=True, slots=True)
+class ForkCheck:
+    """Whether a fork's ledgers actually match the lineage it claims.
+
+    Attributes:
+        inherited: Parent events at or before the fork point — the child's history, held once.
+        child_events: Events the child wrote itself.
+        child_starts_after: Whether the child's first event is past the fork point.
+        overlap: Child events at or before the fork point. Non-zero means the child RE-RAN history
+            its parent already holds, which is a second recording of the same run.
+        ok: Whether the lineage holds.
+    """
+
+    inherited: int
+    child_events: int
+    child_starts_after: bool
+    overlap: int
+    ok: bool
+
+
+def verify_fork(ledger_dir: Path, plan: Fork) -> ForkCheck:
+    """Check a fork's ledgers against the lineage it claims.
+
+    **A fork inherits its parent's history; it does not copy it.** So the child's ledger correctly
+    holds *nothing* before the fork point, and looking for a shared prefix between the two finds
+    zero — which reads as a failure and is the opposite of one. What must hold is that the parent
+    covers the shared steps, the child begins after them, and the child re-ran none of them.
+
+    Args:
+        ledger_dir: Where segment files live.
+        plan: The fork.
+
+    Returns:
+        What the ledgers say.
+    """
+    parent = ledger.read_branch(ledger_dir, plan.parent_branch_id)
+    child = ledger.read_branch(ledger_dir, plan.branch_id)
+
+    inherited = sum(1 for event in parent if event.global_step <= plan.at_step)
+    overlap = sum(1 for event in child if event.global_step <= plan.at_step)
+    starts_after = bool(child) and min(e.global_step for e in child) > plan.at_step
+
+    return ForkCheck(
+        inherited=inherited,
+        child_events=len(child),
+        child_starts_after=starts_after,
+        overlap=overlap,
+        ok=bool(inherited) and bool(child) and starts_after and overlap == 0,
+    )
 
 
 def lineage(checkpoint_dir: Path, branch_id: str) -> list[str]:

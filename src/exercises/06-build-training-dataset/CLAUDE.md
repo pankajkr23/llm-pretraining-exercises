@@ -7,7 +7,8 @@ and `BRIEF.md` is the assignment (local only, gitignored).
 **Status: stage 7 done, stage 8 partial.** Shipped: `spec.py`, `config.py`, `shards.py`,
 `manifest.py`, `firewall.py`, `plan.py`, `masks.py`, `pack.py`, `feed.py`, `ledger.py`, `model.py`,
 `train.py`, `runner.py`, `checkpoint.py`, `resume.py`, `replay.py`, `mixture.py`,
-`corpus.py`, `fork.py` and `metrics.py` — twenty modules. `tools/fetch_corpus.py` is **tracked**, unlike the notebook builder.
+`corpus.py`, `fork.py`, `metrics.py` and `evidence.py` — twenty-one modules, plus
+`run_demo.py` at the exercise root. `tools/fetch_corpus.py` is **tracked**, unlike the notebook builder.
 
 **Not shipped, and do not describe the exercise as having them:** `fork`, `verify.py`,
 `run_demo.py`, `opus`, the metrics/throughput module, the evidence writer (`evidence.json` /

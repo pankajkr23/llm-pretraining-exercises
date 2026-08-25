@@ -1,0 +1,11 @@
+{
+  "loss_tokens": 130719,
+  "loss_tokens_per_second": 60550.955608873584,
+  "loss_utilization": 0.9973068237304688,
+  "pack_utilization": 1.0,
+  "ranks": 4,
+  "seconds": 2.1588263750018086,
+  "steps": 5,
+  "tokens": 131072,
+  "tokens_per_second": 60714.4703797174
+}

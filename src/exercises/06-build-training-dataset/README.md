@@ -94,6 +94,7 @@ Each ends in something you can run and see. Nothing advances until the previous 
 ## Layout
 
 ```text
+run_demo.py      # ONE command: regenerates the whole submission bundle, no interaction
 BRIEF.md         # the assignment — LOCAL ONLY, gitignored, never the deliverable
 CLAUDE.md        # rules specific to this exercise, for whoever changes the code
 DECISIONS.md     # what was chosen, and what would overturn each choice
@@ -120,6 +121,7 @@ src/trainingdata/
   corpus.py      # fetched text to sealed, admitted shards, with a checkable lineage
   fork.py        # branching from an earlier checkpoint, with the lineage made a fact
   metrics.py     # throughput and packing efficiency, derived from the ledger
+  evidence.py    # the nine requirement rows, computed from artifacts rather than memory
 tests/           # discovered by `uv run pytest` from the repo root
 tools/
   fetch_corpus.py   # TRACKED — a corpus needs a tracked way to fetch and licence-check it
@@ -127,6 +129,7 @@ tools/
   build_notebook.py # local-only, gitignored — back it up
 artifacts/       # heavy regenerable output (gitignored)
 results/         # TRACKED — measured evidence a document renders; it must survive a clone
+submission_artifacts/  # TRACKED — the deliverable: run.log, evidence.json/md, manifests, ledger
 ```
 
 ## Run it

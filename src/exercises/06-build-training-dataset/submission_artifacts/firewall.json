@@ -1,0 +1,11 @@
+{
+  "manifest_reasons": [
+    "split is 'eval', which is never loss-bearing",
+    "overlaps benchmarks ['demo-benchmark'] \u2014 training on it would make those scores meaningless"
+  ],
+  "manifest_refused": true,
+  "registry_allowed": false,
+  "registry_reason": "registered to benchmark 'demo-benchmark': never-train",
+  "shard_id": "10767e14fed0a365",
+  "two_sided": true
+}

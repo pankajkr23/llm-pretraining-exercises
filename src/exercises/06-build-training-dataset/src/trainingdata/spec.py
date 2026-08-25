@@ -99,3 +99,26 @@ ATTENTION_POLICIES: Final[tuple[str, ...]] = ("block-diagonal-causal", "causal")
 #: each document's last token, which has no target. `context-masked` additionally excludes a span
 #: that provides context but earns no loss — an instruction, a question, a tool observation.
 LOSS_POLICIES: Final[tuple[str, ...]] = ("grade-all-but-document-final", "context-masked")
+
+
+#: Session 5's headline mixture, and the floors that protect two of its lanes.
+#:
+#: These live here rather than in `mixture.py` because the **auditor** needs them. `verify.py`
+#: re-derives the mixture from a run's ledger and has to compare it against the plan — and it may
+#: not import the producer to find out what the plan was, or it would be checking the producer's
+#: arithmetic against the producer's own numbers. Shared facts, no shared logic.
+LANE_SHARES: Final[dict[str, float]] = {
+    "web": 0.32,
+    "code": 0.28,
+    "indic": 0.18,
+    "stem": 0.12,
+    "reasoning": 0.08,
+    "agentic": 0.02,
+    "long_context": 0.0,
+}
+
+#: The minimum share of every batch a lane keeps, whatever a selector would prefer.
+FLOORS: Final[dict[str, float]] = {"indic": 0.12, "agentic": 0.02}
+
+#: How far a lane may drift from its planned share before it is out of compliance.
+MIXTURE_TOLERANCE: Final[float] = 0.01

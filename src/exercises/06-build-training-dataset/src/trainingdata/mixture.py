@@ -27,28 +27,26 @@ counted under `code`.
 
 from typing import Final
 
+from . import spec
 from .config import Config
 
-#: Session 5's headline mixture. Verbatim, and the only place these numbers appear.
+#: Session 5's headline mixture, re-exported from `spec.py`.
+#:
+#: **Declared there, not here**, because the auditor needs them too and may not import this module
+#: to get them — `verify.py` re-derives a run's mixture and compares it against the plan, and a
+#: comparison against the producer's own copy of the plan would check nothing. `spec.py` is the one
+#: place both sides may read: shared facts, no shared logic.
 #:
 #: `long_context` is deliberately **zero**. It is a schedule over the other lanes, not a corpus, and
 #: a fetcher that gives it tokens is inventing a lane session 5 explicitly retired.
-LANE_SHARES: Final[dict[str, float]] = {
-    "web": 0.32,
-    "code": 0.28,
-    "indic": 0.18,
-    "stem": 0.12,
-    "reasoning": 0.08,
-    "agentic": 0.02,
-    "long_context": 0.0,
-}
+LANE_SHARES: Final[dict[str, float]] = spec.LANE_SHARES
 
 #: The minimum share of every batch a lane keeps, whatever a selector would prefer.
 #:
 #: A floor is a **minimum, not the lane's share**: `indic` runs at 18% of which only 12 points are
 #: protected, leaving 6 exposed. `agentic` sits *exactly* on its floor with zero headroom, which is
 #: why any floor breach there is immediately visible rather than absorbed.
-FLOORS: Final[dict[str, float]] = {"indic": 0.12, "agentic": 0.02}
+FLOORS: Final[dict[str, float]] = spec.FLOORS
 
 #: Protected lanes may not claim more than this between them. Session 5's number.
 FLOOR_CEILING: Final[float] = 0.20
@@ -167,7 +165,9 @@ def realised_shares(consumed: dict[str, int]) -> dict[str, float]:
     return {lane: count / total for lane, count in sorted(consumed.items())}
 
 
-def compliance(consumed: dict[str, int], *, tolerance: float = 0.01) -> dict[str, dict]:
+def compliance(
+    consumed: dict[str, int], *, tolerance: float = spec.MIXTURE_TOLERANCE
+) -> dict[str, dict]:
     """Planned versus actual share, per lane, with the floors checked.
 
     Args:
