@@ -10,6 +10,31 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- **Integration runs as three parallel CI jobs.** The previous change parallelised *within* a
+  runner and bought less than expected: 255s → 207s on CI against 229s → 65s locally. The reason is
+  structural — `--dist loadfile` keeps a file on one worker (it must), so **the slowest single file
+  is a hard floor** no number of workers can beat, and `02/test_js_encoder.py` alone is 55s.
+  Sharding lets that file overlap with the other exercises instead of queueing behind them. Shards
+  are balanced on measured cost: 02 = 116s · 05 = 57s · everything else = 49s.
+- **The workflow records the runner's core count.** `-n auto` follows it, so without this a future
+  slowdown and a smaller runner are indistinguishable in a log.
+
+### Added
+
+- **`tests/test_ci_shards_cover_everything.py`** — sharding has one dangerous failure mode: a file
+  outside every shard is never run and **CI is green**. This reads the shard paths out of `ci.yml`
+  itself rather than restating them, and asserts every integration test is in exactly one shard.
+  Verified: **142 of 142, none missed, none duplicated.**
+
+### Fixed
+
+- **The parallel-safety guard matched a mention rather than an invocation.** It flagged a
+  diagnostic line that *prints* the words "pytest -n auto" — a false positive against its own
+  workflow. It now matches `uv run pytest`, and still catches a real dropped `--dist loadfile`.
+- **`pyyaml` was used but never declared**, resolving only transitively. Added to the dev group.
+
 ### Added
 
 - **Exercise 06 — the training data execution system — is scaffolded.** Stage 1 of 8: the frozen
