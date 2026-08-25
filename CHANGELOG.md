@@ -12,6 +12,18 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 06 stage 3 — the two-sided evaluation firewall.** The shard's manifest carries its
+  split **and** a registry is asked independently, because relying on either alone leaves a single
+  point of failure for the one mistake that makes every benchmark score fiction. A test asserts
+  both sides refuse *independently*.
+- **It stores no evaluation text.** Benchmark items are 8-byte truncated digests of 13-word
+  shingles; a test greps the written registry for benchmark words. Every question is logged whether
+  allowed or refused, because "was this ever consumed?" can only be answered by a record of asking.
+- **The honest limit is a test, not a footnote.** A paraphrase evades the gate — n-gram
+  decontamination catches copies, not knowledge — and the suite goes red if that stops being true,
+  so the claim cannot quietly rot. Likewise, text shorter than one window yields an empty result
+  that means *could not check*, never *clean*.
+
 - **Exercise 06 stage 2 — immutable shards and manifests.** A shard's **id is its content hash**, so
   a modified shard is a *different* shard by construction rather than by convention. Three
   overlapping defences, and the notebook demonstrates why only one counts: `0444` on disk and a

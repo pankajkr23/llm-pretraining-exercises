@@ -15,14 +15,16 @@ re-checked by a second that reads only the artifacts.
 
 ## Open items — for review
 
-**Stage 2 of 8 is done.** Settings, shared constants, the vocabulary problem, and immutable shards
-with manifests and an admission gate. Nothing else is built, and no document here claims otherwise.
+**Stage 3 of 8 is done.** Settings, shared constants, the vocabulary problem, immutable shards
+with manifests and an admission gate, and the two-sided evaluation firewall. Nothing else is built,
+and no document here claims otherwise.
 
 | # | item | status | note |
 | --- | --- | --- | --- |
 | O1 | **Exercise skeleton** | **done** | `BRIEF.md` (local), `README.md`, `CLAUDE.md`, `DECISIONS.md`, `PROGRESS.md`, `NOTICE`, `pyproject.toml`, `src/`, `tests/`, `tools/`, `artifacts/`. |
 | O2 | **Stage 1 — config and spec** | **done** | Frozen `Config` + fingerprint, `spec.py` behind the producer/auditor wall, 19 tests. |
 | O3 | **Stage 2 — shards and manifests** | **done** | Immutable `uint16` shards sealed `0444`, content-addressed ids, append-only manifests, admission gate. Proven on real corpus text: 600k chars → 269,439 tokens → 5 shards, all sealed and verifying; one flipped bit turns `verify()` false and changes the id. |
+| O3b | **Stage 3 — the evaluation firewall** | **done** | Two-sided: the manifest carries the split *and* the registry is asked independently. Stores no evaluation text — 8-byte digests of 13-word shingles. A paraphrase evades it, and a test asserts that rather than leaving it to be discovered. |
 | O4 | **Corpus** | not started | ~40–60 MB across S5's six lanes, licence verified **at fetch time from the source itself**. |
 | O5 | **OPUS** | decided, not built | Port the criterion (~300 lines) from the MIT reference as a spec. Not installable: its `train.py` fails at import on `torch.empty(1, device="cuda")` and needs NCCL. |
 | O6 | **The web explainer** | not started | In scope, after the system works. |
@@ -81,6 +83,21 @@ every shard manifest pins, so the sentinels are assigned **out of vocabulary** �
 ---
 
 ## Change log
+
+### 2026-08-25 (stage 3 — the evaluation firewall)
+
+- **Two-sided, deliberately redundant.** The manifest refuses a non-`train` split; the registry
+  refuses by shard id without consulting that manifest. A test asserts *both* sides refuse
+  independently, because relying on either alone leaves one point of failure for the mistake that
+  makes every benchmark score fiction.
+- **Every question is logged, allowed or not.** When a score jumps the question is "was this ever
+  consumed?", and only a record of the asking can answer it.
+- **The honest limit is a test, not a footnote.** A paraphrase evades the gate — n-gram
+  decontamination catches copies, not knowledge — and `test_a_paraphrase_is_not_detected` will go
+  red if that ever stops being true, so the claim in the docs cannot quietly rot.
+- **A second redundant guard found by mutation.** The short-text early return in `shingles()` is a
+  fast path, not a correctness guard: `range(len(words) - n + 1)` is already empty. Documented in
+  place rather than left to imply coverage — the same shape as `is_dir()` in the skeleton guard.
 
 ### 2026-08-25 (stage 2 — shards and manifests)
 

@@ -4,7 +4,7 @@ Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is the
 `submission_artifacts/` bundle, the reasoning is `DECISIONS.md`, the running log is `PROGRESS.md`,
 and `BRIEF.md` is the assignment (local only, gitignored).
 
-**Status: stage 2 of 8.** `config.py`, `spec.py`, `shards.py` and `manifest.py` exist. Do not
+**Status: stage 3 of 8.** `config.py`, `spec.py`, `shards.py`, `manifest.py` and `firewall.py` exist. Do not
 describe this exercise as having packing, ledgers or replay until it does — the README carries a
 stage table for exactly this reason.
 
@@ -45,6 +45,14 @@ stage table for exactly this reason.
   negation there is inert while `git add -A` reports success. `run.log` is trackable only because
   `*.log` is a **file** pattern. `tests/test_submission_bundle.py` pins both halves; do not "tidy"
   either.
+
+- **The firewall is two-sided on purpose, and both sides must stay.** The manifest carries the
+  split *and* the registry is asked independently. The instructor's reason: *"who knows maybe a
+  mistake in copying or something may still happen."* Removing either side leaves a single point of
+  failure for the one mistake that makes every benchmark score fiction.
+
+- **The firewall stores no evaluation text, ever.** Benchmark items are 8-byte truncated digests of
+  13-word shingles. A test greps the written registry for benchmark words; keep it that way.
 
 - **Two of the four OPUS statuses are ours, and the docs must keep saying so.** `accept` and
   `reject` are the selector's. `defer` and `floor_override` appear in **none** of the OPUS paper,

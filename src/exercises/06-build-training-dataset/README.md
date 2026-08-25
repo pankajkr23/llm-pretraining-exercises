@@ -81,7 +81,7 @@ Each ends in something you can run and see. Nothing advances until the previous 
 | --- | --- | --- |
 | 1 | read the settings, the fingerprint, and why the sentinels sit outside the vocabulary | **done** |
 | 2 | build shards, print a manifest, watch a tampered shard get rejected | **done** |
-| 3 | offer an evaluation shard to the loader and watch it blocked | — |
+| 3 | offer an evaluation shard to the loader and watch it blocked | **done** |
 | 4 | ask "what is slot (step 3, rank 2)?" and get token spans back | — |
 | 5 | pack a window and **see** the block-diagonal attention mask | — |
 | 6 | train, then read the consumption ledger back line by line | — |
@@ -101,6 +101,7 @@ src/trainingdata/
   config.py      # one frozen dataclass, every knob, plus the run fingerprint
   shards.py      # immutable uint16 shards, content-addressed, tamper-detecting
   manifest.py    # the 20-field manifest and the admission gate
+  firewall.py    # the eval registry — data we know about so we can refuse it
 tests/           # discovered by `uv run pytest` from the repo root
 tools/           # the notebook builder (local-only, gitignored — back it up)
 artifacts/       # heavy regenerable output (gitignored)
