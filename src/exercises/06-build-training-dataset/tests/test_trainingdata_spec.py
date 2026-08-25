@@ -8,6 +8,7 @@ assignment explicitly refuses. Shared *facts* are fine; shared *logic* is not.
 import ast
 from pathlib import Path
 
+import pytest
 from trainingdata import spec
 
 SPEC_FILE = Path(spec.__file__)
@@ -76,3 +77,37 @@ def test_the_four_opus_statuses_are_all_present() -> None:
 def test_the_tracked_budget_is_small_enough_to_live_in_git() -> None:
     """Checked before a run writes, so a run that would bloat the repo fails early."""
     assert spec.TRACKED_BUDGET_BYTES == 2 * 1024 * 1024
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("PACK_POLICIES", ("concat-and-chop", "document-boundary")),
+        (
+            "POSITION_POLICIES",
+            ("restart-per-document-continue-across-window", "restart-per-window"),
+        ),
+        ("ATTENTION_POLICIES", ("block-diagonal-causal", "causal")),
+        ("LOSS_POLICIES", ("grade-all-but-document-final", "context-masked")),
+    ],
+)
+def test_the_policy_vocabularies_are_pinned_by_name(name: str, expected: tuple[str, ...]) -> None:
+    """**Pinned by name, not derived — the same twin `DECISIONS` has.**
+
+    A test that read the tuple and asserted its own contents would pass against any edit. These are
+    the strings a ledger event carries and a future auditor reads back, so renaming one silently
+    would make every existing event unrecognisable to the thing meant to check it.
+    """
+    assert getattr(spec, name) == expected
+
+
+def test_only_one_pack_policy_is_actually_implemented() -> None:
+    """`document-boundary` is named and deliberately not built.
+
+    The measurement is the reason: the median document exceeds a 512-token window on five of six
+    lanes, so it yields all-padding windows for 85% (reasoning) to 99% (code) of spans, at a mean
+    utilisation of 0.005 against concat-and-chop's 1.000. Naming it without building it is what
+    lets `replay.rebuild` refuse it by name instead of rebuilding it wrongly.
+    """
+    assert "document-boundary" in spec.PACK_POLICIES
+    assert spec.PACK_POLICIES[0] == "concat-and-chop", "the implemented policy must come first"

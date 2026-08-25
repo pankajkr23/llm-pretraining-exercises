@@ -33,6 +33,7 @@ Run it::
 import argparse
 import json
 import logging
+import re
 import ssl
 import sys
 import time
@@ -128,6 +129,9 @@ class LocalSource:
     provenance_tier: str
     stands_in_for: str
     why: str
+    #: Regex marking where one document starts. Documents are found by SPLITTING ON THIS, never by
+    #: lines — see `_local_documents` for what splitting on lines cost the first time.
+    document_start: str = r"(?=(?:^|\n)SYSTEM:)"
 
 
 #: Every source, with its licence to be verified live rather than trusted from this table.
@@ -370,6 +374,36 @@ def _rows(source: Source, offset: int, length: int) -> list[dict]:
     return [entry["row"] for entry in _get(url)["rows"]]
 
 
+def _local_documents(text: str, local: LocalSource) -> list[str]:
+    """Split a local file into documents at its own document boundary.
+
+    **Not on lines, and the first version of this got it wrong.** It read one document per
+    non-empty line — the exact bug the JSONL writer a hundred lines below exists to prevent,
+    reintroduced on the local path where that fix did not reach. Measured: the agentic proxy's
+    **500 conversations became 16,753 line-fragments**, median 32 characters, thousands of them a
+    bare `{` or `    "type": "string",`. Deduplication then removed 59% of them as near-identical,
+    which read as a data-quality finding and was an artifact of the split.
+
+    The consequence was not cosmetic. Every fragment became its own `EOS`-terminated document, so
+    the block-diagonal mask walled a tool call off from the request that produced it — and the lane
+    then measured as the *best* candidate for whole-document packing when at conversation
+    granularity it is nearly the worst: 10.0% of conversations fit a 512-token window, not 100%.
+
+    `SYSTEM:` is the boundary because a conversation begins with a system turn: the source carries
+    exactly 500 of them and this rule yields exactly 500 documents. Splitting on runs of four or
+    more newlines yields 552, because some conversations contain such a run internally.
+
+    Args:
+        text: The whole file.
+        local: The source, carrying its own boundary pattern.
+
+    Returns:
+        Documents, in file order.
+    """
+    found = [part.strip() for part in re.split(local.document_start, text) if part.strip()]
+    return found or ([text.strip()] if text.strip() else [])
+
+
 def _document(row: dict, source: Source) -> str | None:
     """One row rendered as a document, or None when it should be skipped.
 
@@ -414,8 +448,7 @@ def fetch_lane(
         if not text:
             logger.warning("%s: %s is missing; the lane will be short", lane, local.path)
             continue
-        # One document per non-empty line, matching how session 5 wrote the file.
-        found = [line for line in text.splitlines() if line.strip()]
+        found = _local_documents(text, local)
         for document in found:
             counted, unknown = _measure(document, tokenizer)
             tokens_so_far += counted
@@ -543,7 +576,19 @@ def main() -> int:
         )
 
     if not args.dry_run:
-        (args.out / "manifest.json").write_text(
+        # MERGE, never replace. `--lane agentic` rewrote the whole manifest once and destroyed the
+        # provenance of the five lanes it had not touched. Their text was still on disk, but the
+        # record of which dataset and which licence produced it was gone — and building from files
+        # whose licence nobody recorded is precisely what this fetcher exists to prevent. The
+        # rebuild that followed reported a one-lane corpus at 0.04 epochs, which is how it surfaced.
+        manifest_path = args.out / "manifest.json"
+        keep: dict[str, dict] = {}
+        if manifest_path.is_file():
+            previous = json.loads(manifest_path.read_text(encoding="utf-8"))
+            keep = {entry["lane"]: entry for entry in previous.get("lanes", [])}
+        keep.update({r.lane: asdict(r) for r in results})
+
+        manifest_path.write_text(
             json.dumps(
                 {
                     "note": (
@@ -554,7 +599,7 @@ def main() -> int:
                     ),
                     "config_fingerprint": config.fingerprint(),
                     "total_tokens_needed": config.total_tokens,
-                    "lanes": [asdict(r) for r in results],
+                    "lanes": [keep[lane] for lane in sorted(keep)],
                 },
                 indent=2,
                 sort_keys=True,

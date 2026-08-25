@@ -153,6 +153,27 @@ def rebuild(event: ledger.ConsumeEvent, source: ShardSource) -> Rebuilt:
     if not event.samples:
         raise ValueError(f"event seq {event.seq} records no samples; there is nothing to rebuild")
 
+    # **Refuse a policy this code cannot rebuild, rather than rebuilding it the one way it knows.**
+    #
+    # Every reconstruction below is concat-and-chop with per-document positions and no context
+    # mask. Fed an event produced under a different policy, it would happily rebuild the wrong
+    # window, hash it, and report a mismatch — and a mismatch is the signal reserved for *a shard
+    # whose bytes moved*. The report would blame the data for a difference in the reader.
+    #
+    # `replay_interval` catches this and records it as the verdict's `error`, so the report names
+    # the policy instead of implying corruption.
+    for name, value, implemented in (
+        ("pack_policy", event.pack_policy, "concat-and-chop"),
+        ("position_policy", event.position_policy, "restart-per-document-continue-across-window"),
+        ("attention_policy", event.attention_policy, "block-diagonal-causal"),
+    ):
+        if value != implemented:
+            raise ValueError(
+                f"event seq {event.seq} was produced under {name}={value!r}; this replay only "
+                f"rebuilds {implemented!r}. Refusing rather than reporting a hash mismatch that "
+                f"would read as a tampered shard."
+            )
+
     windows = sorted({sample.window for sample in event.samples})
     size = event.sequence_length
     tokens = np.full((len(windows), size), spec.PAD, dtype=np.int64)

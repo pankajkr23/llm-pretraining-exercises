@@ -390,3 +390,78 @@ def test_the_interval_bounds_are_half_open(tmp_path) -> None:
     second = replay.replay_interval(directory, "main", 2, 4, source)
     assert [v.step for v in first.verdicts] == [0, 1]
     assert [v.step for v in second.verdicts] == [2, 3]
+
+
+# --- policies replay cannot rebuild ---------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("pack_policy", "document-boundary"),
+        ("position_policy", "restart-per-window"),
+        ("attention_policy", "causal"),
+    ],
+)
+def test_replay_refuses_a_policy_it_cannot_rebuild(tmp_path, field: str, value: str) -> None:
+    """**A mismatch is the signal reserved for a shard whose bytes moved.**
+
+    Every reconstruction in `rebuild` is concat-and-chop with per-document positions and no context
+    mask. Handed an event produced under a different policy it would rebuild the wrong window quite
+    happily, hash it, and report a mismatch — blaming the data for a difference in the reader.
+
+    Refusing instead means the report names the policy. This is the guard that has to land *before*
+    a second policy ships, not with it.
+    """
+    shard_id, path, _ = _shard(tmp_path)
+    event = dataclasses.replace(_event(shard_id, [(0, 64, 0)]), **{field: value})
+    with pytest.raises(ValueError, match="Refusing rather than"):
+        replay.rebuild(event, replay.ShardSource({shard_id: path}))
+
+
+def test_the_refusal_is_reported_as_an_error_not_as_a_mismatch(tmp_path) -> None:
+    """The twin, and the point of the whole change.
+
+    A refused event must surface with its reason attached, so a reader can tell "this replay does
+    not know that policy" from "this shard no longer holds what it did".
+    """
+    shard_id, path, _ = _shard(tmp_path, doc_lengths=(300,) * 6)
+    source = replay.ShardSource({shard_id: path})
+
+    directory = tmp_path / "ledger"
+    writer = ledger.LedgerWriter(
+        directory=directory, run_id="r", branch_id="main", rank=0, segment=0
+    )
+    writer.open()
+    draft = _event(shard_id, [(0, 64, 0)])
+    writer.append(
+        attempt=0,
+        global_step=0,
+        accum=0,
+        flat=0,
+        checkpoint_id=None,
+        samples=draft.samples,
+        sequence_length=64,
+        tokens=64,
+        loss_tokens=63,
+        pad_tokens=0,
+        pack_util=1.0,
+        stage="main",
+        lane_mix={"web": 64},
+        attention_policy="block-diagonal-causal",
+        position_policy="restart-per-document-continue-across-window",
+        pack_policy="document-boundary",  # a policy that does not exist yet
+        opus_decision_id=None,
+        tokenizer_sha256="sha256:" + "e" * 64,
+        plan_digest="0123456789abcdef",
+        microbatch_hash="b2:" + "0" * 32,
+        loss_mask_hash="b2:" + "0" * 32,
+        position_ids_hash="b2:" + "0" * 32,
+        segment_ids_hash="b2:" + "0" * 32,
+    )
+
+    report = replay.replay_interval(directory, "main", 0, 1, source)
+    (verdict,) = report.verdicts
+    assert not verdict.ok
+    assert verdict.error and "document-boundary" in verdict.error
+    assert not source.tampered, "a policy this replay does not know is not a tampered shard"
