@@ -294,3 +294,91 @@ def build_lane(
         logger.info("%s: shard %s, %d tokens -> %s", text.lane, shard_id, piece.size, path.name)
 
     return result
+
+
+def lanes_from_fetch(corpus_dir: Path) -> list[LaneText]:
+    """Read the fetcher's manifest and describe each lane it wrote.
+
+    The provenance comes from the fetch, not from a second table here: the licence was verified
+    against the dataset's own card at download time, and re-declaring it in this module would let
+    the two drift — with the manifest confidently recording a licence nobody checked.
+
+    Args:
+        corpus_dir: Where the fetcher wrote.
+
+    Returns:
+        One entry per lane that has text on disk.
+
+    Raises:
+        FileNotFoundError: If the fetch manifest is absent. Building from loose files whose
+            provenance nobody recorded is how an unlicensed corpus gets trained on.
+    """
+    path = corpus_dir / "manifest.json"
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"no fetch manifest at {path}. Run tools/fetch_corpus.py first — building from loose "
+            f"files would produce shards whose licence and provenance nobody recorded."
+        )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    found: list[LaneText] = []
+    for entry in payload["lanes"]:
+        lane = entry["lane"]
+        text_path = corpus_dir / f"{lane}.jsonl"
+        if not text_path.is_file():
+            logger.warning("%s: manifest lists the lane but %s is absent", lane, text_path.name)
+            continue
+        sources = entry.get("sources") or []
+        if not sources:
+            logger.warning("%s: no source recorded; skipping rather than guessing", lane)
+            continue
+        # A lane may be fed by several sources (indic is three Sangraha splits). They share a
+        # licence by construction — the fetcher refuses anything outside PERMISSIVE — so the first
+        # is representative, and the manifest keeps the full list either way.
+        first = sources[0]
+        found.append(
+            LaneText(
+                lane=lane,
+                path=text_path,
+                licence=first.get("licence") or first.get("license") or "",
+                language=first.get("language", "und"),
+                provenance_tier=first.get("provenance_tier", "C"),
+                dataset=first.get("dataset", "unknown"),
+            )
+        )
+    return found
+
+
+def build(
+    corpus_dir: Path,
+    out_dir: Path,
+    config: Config,
+    tokenizer,
+    *,
+    tokenizer_sha256: str,
+    tokens_per_shard: int = PROXY_TOKENS_PER_SHARD,
+) -> dict[str, LaneBuild]:
+    """Build every fetched lane into sealed, manifested shards.
+
+    Args:
+        corpus_dir: Where the fetcher wrote.
+        out_dir: Where shard directories go.
+        config: The run shape.
+        tokenizer: The frozen tokenizer.
+        tokenizer_sha256: Digest of the tokenizer file.
+        tokens_per_shard: Shard size.
+
+    Returns:
+        Lane name to what was built.
+    """
+    return {
+        text.lane: build_lane(
+            text,
+            out_dir,
+            config,
+            tokenizer,
+            tokenizer_sha256=tokenizer_sha256,
+            tokens_per_shard=tokens_per_shard,
+        )
+        for text in lanes_from_fetch(corpus_dir)
+    }
