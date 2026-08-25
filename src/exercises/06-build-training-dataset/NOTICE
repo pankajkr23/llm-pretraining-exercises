@@ -1,0 +1,69 @@
+NOTICE — 06-build-training-dataset
+==================================
+
+WHAT THIS IS
+
+A coursework exercise: a small but complete training data execution system --
+tokenized shards, manifests, a mixture schedule, packing, ledgers, checkpoints,
+crash recovery, replay and audit. It is a study of how such a system is built and
+proved, not a product, not a proposal to any organisation, and not infrastructure
+anybody operates. No large model has been trained with it.
+
+NO AFFILIATION
+
+This work is not affiliated with, endorsed by, sponsored by, or produced on
+behalf of any company, government body, research institute, university, or
+funding programme. Every organisation, paper and repository named here is named
+because their public work is the evidence being examined or the code being
+credited. Naming them is citation, not association, and none of them has reviewed
+or approved anything here.
+
+THIRD-PARTY WORK, AND HOW IT IS USED
+
+The data selection method is OPUS -- Optimizer-induced Projected Utility
+Selection -- Wang, Ouyang, Xu et al., arXiv:2602.05400, licensed CC BY 4.0.
+
+Where this exercise implements that criterion it follows the authors' reference
+implementation at https://github.com/gszfwsb/OPUS, which is MIT licensed and
+carries a DUAL copyright: (c) 2024 Keller Jordan, because its training harness
+forks modded-nanogpt, and (c) 2026 Shaobo Wang, Xuan Ouyang, Tianyi Xu and the
+OPUS contributors. Both lines are retained in any file derived from it. The code
+here is a reimplementation against that repository as a specification; it is not
+a vendored copy.
+
+The guaranteed-lane ("Always-ON") and golden-proxy patterns are adapted from
+https://github.com/The-School-of-AI/LLM, Apache-2.0, (c) 2026 Rohan Shravan and
+The School of AI.
+
+WHAT IS MEASURED AND WHAT IS NOT
+
+Every performance figure published by this exercise is measured on one Apple
+Silicon laptop, on a model of roughly 5.9 million parameters over a corpus of
+tens of millions of tokens. The design is ABOUT the mechanics of a run three
+orders of magnitude larger. It was never run at that scale, and any figure
+describing that scale is labelled as modelled rather than measured.
+
+Efficiency figures quoted from the OPUS paper (4.7% overhead) and from
+LightningLM (3.2%) are theirs. They are not reproduced here and are not claimed.
+
+WHAT REPLAY PROVES, AND WHAT IT DOES NOT
+
+Replay reproduces INPUTS exactly: batch ids, token spans, and the hashes of the
+token block, loss mask, position ids and segment ids. It does NOT reproduce
+losses, selector scores, gradient norms or checkpoint weight hashes -- floating
+point reduction order differs across devices and thread counts -- and those are
+reported against a stated tolerance rather than asserted equal.
+
+NO EVALUATION CONTENT IS PUBLISHED
+
+Evaluation and validation shards are registered so the system can refuse them,
+never so they can be read. The firewall is deliberately two-sided: the shard
+carries a never-train tag AND the trainer independently asks the registry before
+consuming anything.
+
+NO DATASET IS REDISTRIBUTED
+
+This exercise fetches openly-licensed corpora, verifies each licence at fetch
+time from the source itself, and refuses anything that declares none. It does not
+host, mirror or redistribute any dataset. Links point at the publishers, and each
+dataset's own licence governs its use.

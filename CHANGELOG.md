@@ -10,6 +10,17 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Exercise 06 has the full exercise skeleton**, which it should have had before any code was
+  written: `BRIEF.md` (local, gitignored — the assignment), `CLAUDE.md` (rules for whoever changes
+  the code), `PROGRESS.md` (the running log), `NOTICE` (scope, affiliation and third-party credit
+  with both OPUS copyright lines), and `artifacts/`. It is now in the root README's exercise table.
+- **`tests/test_exercise_skeleton.py`** makes the skeleton checkable instead of remembered. It
+  requires the genuinely universal files only, and asserts **no `BRIEF.md` is ever tracked** —
+  verified with `git ls-files` rather than by reading `.gitignore`, because a file already in the
+  index stays tracked no matter what the ignore rules say afterwards.
+
 ### Changed
 
 - **Integration runs as three parallel CI jobs.** The previous change parallelised *within* a

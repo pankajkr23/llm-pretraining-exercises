@@ -59,6 +59,13 @@ repo** — it is the real safety net.
 
 - **Exercise folders:** `src/exercises/NN-slug/` — numeric, **zero-padded**, slugged (e.g. `01-introductions`). Zero-pad so lexical sort = numeric order.
 - **Identical skeleton per exercise:** `BRIEF.md` (assignment — **local only, gitignored**) · `README.md` (what/how) · `pyproject.toml` (member) · code in one place (`src/` or `web/`) · `artifacts/` (gitignored outputs). Long reasoning gets its own tracked `DECISIONS.md`.
+- **Set the folder up BEFORE writing code.** The skeleton is not paperwork to backfill. Exercise 06
+  was scaffolded with `pyproject.toml` and modules but no `CLAUDE.md`, `PROGRESS.md`, `NOTICE` or
+  `BRIEF.md`, because a convention that lives only in prose gets skipped under momentum.
+  `tests/test_exercise_skeleton.py` now checks the universal ones (`README.md`, `CLAUDE.md`,
+  `pyproject.toml`, `tests/`, `tools/`) and asserts **no `BRIEF.md` is ever tracked** — checked with
+  `git ls-files`, not by reading `.gitignore`, because a file already in the index stays tracked
+  whatever the ignore rules say afterwards.
 - **Shared code:** deferred — add `src/common/` (its own member) only when a 2nd exercise needs to reuse something. No premature abstraction.
 - **Notebooks:** top-level `notebooks/`, one per session — see below.
 

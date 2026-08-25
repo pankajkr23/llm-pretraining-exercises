@@ -63,6 +63,7 @@ uv run pytest            # run every exercise's tests from the root
 | 03 | [Data collection framework](src/exercises/03-data-collection-framework/) | How you decide what an India-first 40B model trains on — thirteen interactive chapters, 145 datasets graded on five checks, and five data-handling invariants enforced in CI. |
 | 04 | [Data cleaning & deduplication](src/exercises/04-data-cleaning-dedup/) | Eight cleaning stages over three real corpora, counting tokens with **our own Session 2 tokenizer** — and finding that three of the nine standard quality rules are not language-neutral. |
 | 05 | [Data mixtures & curriculum](src/exercises/05-datamixtures-and-curriculum/) | The V5 training recipe as a **[specification you can argue with](src/exercises/05-datamixtures-and-curriculum/SPEC.md)** — a defended share for every capability lane, sized against the datasets that actually exist, sixteen invariants in CI, and a proxy that costs nothing and returned one **refuted** hypothesis. [The recipe, the evidence and its limits](src/exercises/05-datamixtures-and-curriculum/README.md). |
+| 06 | [Building the training dataset](src/exercises/06-build-training-dataset/) | The **training data execution system**: tokenized shards, manifests, packing, ledgers, crash recovery, replay and audit — a run that can prove what it consumed, why, what the model learned from it, and how to reconstruct it. *Stage 1 of 8 — in progress.* |
 
 More exercises are added each week.
 

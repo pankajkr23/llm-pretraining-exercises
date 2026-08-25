@@ -23,7 +23,12 @@ documents -> tokenized shards -> manifests -> mixture schedule -> packing -> bat
 | --- | --- | --- |
 | **Meeting this for the first time** | [The problem](#the-problem) — why a training run needs a ledger at all | [The vocabulary](#the-vocabulary), which nine words carry the whole system |
 | **Changing the code** | [Layout](#layout) and [Run it](#run-it) | [The producer/auditor wall](#the-producerauditor-wall) — the one structural rule that must not be broken |
-| **Deciding whether to believe it** | [What it cannot establish](#what-it-cannot-establish) | [`DECISIONS.md`](DECISIONS.md) — what we chose, what we inherited, and what we invented |
+| **Deciding whether to believe it** | [What it cannot establish](#what-it-cannot-establish) | [`DECISIONS.md`](DECISIONS.md) — what we chose, what we inherited, and what we invented, each with what would overturn it |
+
+Also here: [`PROGRESS.md`](PROGRESS.md) is the running log — findings, changes, and what is still
+open, written so the work can be picked up cold. [`NOTICE`](NOTICE) is the authoritative statement
+of scope, affiliation and third-party credit. [`CLAUDE.md`](CLAUDE.md) carries the rules specific to
+this exercise, for anyone — human or agent — changing the code.
 
 ## The problem
 
@@ -86,11 +91,17 @@ Each ends in something you can run and see. Nothing advances until the previous 
 ## Layout
 
 ```text
+BRIEF.md         # the assignment — LOCAL ONLY, gitignored, never the deliverable
+CLAUDE.md        # rules specific to this exercise, for whoever changes the code
+DECISIONS.md     # what was chosen, and what would overturn each choice
+PROGRESS.md      # the running log — findings, changes, what is still open
+NOTICE           # scope, affiliation, third-party credit and licences
 src/trainingdata/
   spec.py        # constants the producer AND the auditor share — facts, never logic
   config.py      # one frozen dataclass, every knob, plus the run fingerprint
 tests/           # discovered by `uv run pytest` from the repo root
 tools/           # the notebook builder (local-only, gitignored — back it up)
+artifacts/       # heavy regenerable output (gitignored)
 ```
 
 ## Run it
