@@ -68,7 +68,7 @@ def fake_repo(tmp_path: Path) -> Path:
 
 def test_it_collects_every_protected_class(fake_repo: Path) -> None:
     """One miss here is one file with no copy anywhere."""
-    found = {str(p) for p in backup.collect(fake_repo)}
+    found = {str(p) for p in backup.collect(fake_repo)[0]}
     for expected in (
         "notebooks/S01-introductions.ipynb",
         "src/exercises/01-introductions/tools/build_notebook.py",
@@ -89,7 +89,7 @@ def test_the_session_corpus_glob_reaches_both_depths(fake_repo: Path) -> None:
     an assertion rather than a memory: if it did not, the entire course corpus would be skipped and
     the tool would still report success.
     """
-    found = {str(p) for p in backup.collect(fake_repo)}
+    found = {str(p) for p in backup.collect(fake_repo)[0]}
     assert "docs/sessions/s1.md" in found, "a file directly under docs/sessions/ was not matched"
     assert "docs/sessions/media/s1/diagram.svg" in found, "a nested file was not matched"
 
@@ -98,7 +98,7 @@ def test_a_regenerable_artifact_is_not_collected(fake_repo: Path) -> None:
     """Backing up derived output teaches the reader that the backup is optional."""
     _make(fake_repo, "src/exercises/01-introductions/artifacts/plot.png", "binary-ish")
     _make(fake_repo, "data/corpus/web.jsonl", "{}")
-    found = {str(p) for p in backup.collect(fake_repo)}
+    found = {str(p) for p in backup.collect(fake_repo)[0]}
     assert not any("artifacts/" in f or f.startswith("data/") for f in found)
 
 
@@ -142,25 +142,27 @@ def test_an_ordinary_name_is_not_flagged(name: str) -> None:
     assert not backup.looks_like_a_credential(Path("docs/sessions") / name)
 
 
-def test_collect_aborts_rather_than_skipping_when_one_is_swept_up(fake_repo: Path) -> None:
-    """The predicate is only useful if `collect` acts on it — and it must raise, not filter.
+def test_collect_skips_a_credential_and_names_it_rather_than_aborting(fake_repo: Path) -> None:
+    """**It must skip and report, not abort — and that is a correction, not a preference.**
+
+    The first version raised, so one innocuously-named document took the run from a hundred files
+    protected to *zero*: no backup at all, plus a frightening message. The file must be excluded,
+    named, and the other hundred still snapshotted.
 
     `deploy.env` is used because the sandbox permits it while still matching `*.env`; the
     dot-prefixed forms are covered by the predicate test above.
     """
     _make(fake_repo, "docs/sessions/deploy.env", "SECRET")
-    original = backup.PATTERNS
-    backup.PATTERNS = (*original, "docs/sessions/*")
-    try:
-        with pytest.raises(SystemExit, match="credential"):
-            backup.collect(fake_repo)
-    finally:
-        backup.PATTERNS = original
+    files, skipped = backup.collect(fake_repo)
+
+    assert skipped == ["docs/sessions/deploy.env"]
+    assert not any("deploy.env" in str(f) for f in files), "the credential was collected anyway"
+    assert len(files) >= 9, "skipping one file cost the rest their backup"
 
 
 def test_the_real_corpus_is_not_swallowed_by_the_forbidden_rules(fake_repo: Path) -> None:
     """End to end: the protected set survives the credential filter."""
-    assert len(backup.collect(fake_repo)) >= 9, "the forbidden patterns swallowed the corpus"
+    assert len(backup.collect(fake_repo)[0]) >= 9, "the forbidden patterns swallowed the corpus"
 
 
 # --- the store ---------------------------------------------------------------------------------
@@ -169,11 +171,11 @@ def test_the_real_corpus_is_not_swallowed_by_the_forbidden_rules(fake_repo: Path
 def test_a_snapshot_round_trips_byte_for_byte(fake_repo: Path, tmp_path: Path) -> None:
     """A backup that differs from the original is not a backup."""
     dest = tmp_path / "store"
-    files = backup.collect(fake_repo)
+    files, _ = backup.collect(fake_repo)
     backup.snapshot(fake_repo, dest, files, message="test")
 
-    absent, differing = backup.verify(fake_repo, dest, files)
-    assert not absent and not differing
+    absent, differing, lost = backup.verify(fake_repo, dest, files)
+    assert not absent and not differing and not lost
     for relative in files:
         assert (dest / relative).read_bytes() == (fake_repo / relative).read_bytes()
 
@@ -181,13 +183,11 @@ def test_a_snapshot_round_trips_byte_for_byte(fake_repo: Path, tmp_path: Path) -
 def test_verify_reports_a_file_the_store_never_received(fake_repo: Path, tmp_path: Path) -> None:
     """**The twin for verify.** A checker that cannot fail is not a checker."""
     dest = tmp_path / "store"
-    files = backup.collect(fake_repo)
+    files, _ = backup.collect(fake_repo)
     backup.snapshot(fake_repo, dest, files, message="test")
 
     _make(fake_repo, "notebooks/S02-tokenization.ipynb", "new work")
-    absent, _ = backup.verify(
-        fake_repo, backup.collect(fake_repo) and dest, backup.collect(fake_repo)
-    )
+    absent, _, _ = backup.verify(fake_repo, dest, backup.collect(fake_repo)[0])
     assert "notebooks/S02-tokenization.ipynb" in absent
 
 
@@ -196,11 +196,11 @@ def test_verify_reports_a_file_that_has_changed_since_the_snapshot(
 ) -> None:
     """The likelier loss is an overwrite, not a deletion, so staleness has to be visible."""
     dest = tmp_path / "store"
-    files = backup.collect(fake_repo)
+    files, _ = backup.collect(fake_repo)
     backup.snapshot(fake_repo, dest, files, message="test")
 
     (fake_repo / "notebooks/S01-introductions.ipynb").write_text("rebuilt", encoding="utf-8")
-    _, differing = backup.verify(fake_repo, dest, files)
+    _, differing, _ = backup.verify(fake_repo, dest, files)
     assert "notebooks/S01-introductions.ipynb" in differing
 
 
@@ -216,9 +216,9 @@ def test_the_store_keeps_the_previous_version_of_an_overwritten_file(
     dest = tmp_path / "store"
     notebook = "notebooks/S01-introductions.ipynb"
 
-    backup.snapshot(fake_repo, dest, backup.collect(fake_repo), message="good")
+    backup.snapshot(fake_repo, dest, backup.collect(fake_repo)[0], message="good")
     (fake_repo / notebook).write_text("BROKEN REBUILD", encoding="utf-8")
-    backup.snapshot(fake_repo, dest, backup.collect(fake_repo), message="broken")
+    backup.snapshot(fake_repo, dest, backup.collect(fake_repo)[0], message="broken")
 
     log = subprocess.run(
         ["git", "-C", str(dest), "log", "--format=%H", "--", notebook],
@@ -243,7 +243,7 @@ def test_a_second_snapshot_with_no_changes_reports_nothing_changed(
 ) -> None:
     """Noise in the store makes a real change harder to see in `git log`."""
     dest = tmp_path / "store"
-    files = backup.collect(fake_repo)
+    files, _ = backup.collect(fake_repo)
     backup.snapshot(fake_repo, dest, files, message="first")
     assert backup.snapshot(fake_repo, dest, files, message="second") == 0
 
@@ -359,3 +359,87 @@ def test_the_default_destination_is_outside_the_repository() -> None:
     """
     assert REPO_ROOT not in backup.DEFAULT_DEST.parents
     assert backup.DEFAULT_DEST != REPO_ROOT
+
+
+# --- detecting a loss, not just staleness --------------------------------------------------------
+
+
+def test_verify_reports_a_file_that_has_been_lost_from_the_checkout(
+    fake_repo: Path, tmp_path: Path
+) -> None:
+    """**The defect that made `--verify` useless at the exact moment it mattered.**
+
+    The first version asked only "is everything the checkout has also in the store?". A deleted
+    file is not in the checkout, so it was never asked about — deleting all six notebooks made the
+    answer *better*. And this is the command `AGENTS.md` tells you to run first after a checkout or
+    pull, which is the operation class that has already destroyed these files twice.
+    """
+    dest = tmp_path / "store"
+    files, _ = backup.collect(fake_repo)
+    backup.snapshot(fake_repo, dest, files, message="test")
+
+    (fake_repo / "notebooks/S01-introductions.ipynb").unlink()
+    remaining, _ = backup.collect(fake_repo)
+    _, _, lost = backup.verify(fake_repo, dest, remaining)
+
+    assert "notebooks/S01-introductions.ipynb" in lost
+
+
+def test_a_total_loss_is_reported_rather_than_looking_like_a_clone(
+    fake_repo: Path, tmp_path: Path
+) -> None:
+    """Losing *everything* must be the loudest result, not the quietest.
+
+    Emptying the checkout is indistinguishable from a fresh clone if you only look at the checkout.
+    The store is what tells the two apart.
+    """
+    dest = tmp_path / "store"
+    files, _ = backup.collect(fake_repo)
+    backup.snapshot(fake_repo, dest, files, message="test")
+
+    for relative in files:
+        (fake_repo / relative).unlink()
+
+    remaining, _ = backup.collect(fake_repo)
+    assert remaining == [], "the fixture did not actually empty"
+    _, _, lost = backup.verify(fake_repo, dest, remaining)
+    assert len(lost) == len(files), f"{len(lost)} of {len(files)} losses reported"
+
+
+def test_the_verify_command_exits_non_zero_on_a_loss(fake_repo: Path, tmp_path: Path) -> None:
+    """And the exit code has to carry it, or the hook that runs this cannot fail."""
+    dest = tmp_path / "store"
+    assert _run("--root", str(fake_repo), "--dest", str(dest)).returncode == 0
+
+    (fake_repo / "notebooks/S01-introductions.ipynb").unlink()
+    finished = _run("--verify", "--root", str(fake_repo), "--dest", str(dest))
+
+    assert finished.returncode == 1
+    assert "LOST FROM THE CHECKOUT" in finished.stdout
+
+
+def test_finder_metadata_is_not_stored(fake_repo: Path, tmp_path: Path) -> None:
+    """`.DS_Store` is not content, and storing it makes the store and the checkout disagree.
+
+    The directory sweep over `docs/sessions/` picks it up, and once stored, any Finder visit to
+    either side reads as drift — a guard that cries wolf gets ignored, which is how a real loss
+    gets missed.
+    """
+    _make(fake_repo, "docs/sessions/.DS_Store", "finder noise")
+    files, _ = backup.collect(fake_repo)
+    assert not any(f.name == ".DS_Store" for f in files)
+
+
+def test_a_tracked_file_is_never_backed_up(fake_repo: Path, tmp_path: Path) -> None:
+    """The store holds what git cannot restore. Anything else makes its contents ambiguous.
+
+    Without this, `src/exercises/*/docs/*.md` would sweep in seven tracked documents and a reader
+    could no longer tell which paths in the store git can already recover.
+    """
+    import subprocess
+
+    subprocess.run(["git", "-C", str(fake_repo), "init", "-q"], check=True)
+    subprocess.run(["git", "-C", str(fake_repo), "add", "TODO.md"], check=True)
+
+    files, _ = backup.collect(fake_repo)
+    assert Path("TODO.md") not in files, "a tracked file was collected into the store"

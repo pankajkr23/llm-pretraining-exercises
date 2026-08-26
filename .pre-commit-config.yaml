@@ -12,6 +12,12 @@
 # Run over everything (not just staged files):
 #     uv run pre-commit run --all-files
 
+# The local-only files are destroyed by CHECKOUT and MERGE, not by committing — so a config that
+# only declares `pre-commit` protects them at the one moment they were never at risk. Declaring the
+# hook types here means `pre-commit install` wires all four, and the snapshot happens on the
+# operation that does the damage rather than whenever somebody remembers.
+default_install_hook_types: [pre-commit, post-checkout, post-merge, post-rewrite]
+
 repos:
   # --- secrets ---------------------------------------------------------------------------------
   # A local hook rather than the upstream one on purpose: the upstream hook builds gitleaks from
@@ -64,3 +70,29 @@ repos:
         args: [--maxkb=2048] # the tracked submission bundle's cap; anything larger wants a decision
       - id: check-yaml
       - id: check-toml
+
+  # --- the files git cannot restore -------------------------------------------------------------
+  # `notebooks/`, the notebook builders, every BRIEF.md, the whole course corpus and the course's
+  # reference solution are gitignored, so git has never seen them and cannot bring them back. They
+  # have already been destroyed twice by ordinary checkouts.
+  #
+  # These run on checkout, merge and rewrite — the operations that do the damage — and NOT on
+  # commit, where they would cost two seconds for nothing. `always_run` with `pass_filenames: false`
+  # because the question is about the working tree, not about which files are staged.
+  - repo: local
+    hooks:
+      - id: backup-local-only
+        name: snapshot the files git cannot restore
+        entry: 'uv run python tools/backup_local_only.py --message "auto post-checkout"'
+        language: system
+        stages: [post-checkout, post-merge, post-rewrite]
+        always_run: true
+        pass_filenames: false
+
+      - id: local-only-tripwire
+        name: check nothing local-only went missing
+        entry: uv run pytest tests/test_local_only_files_present.py -q
+        language: system
+        stages: [post-checkout, post-merge, post-rewrite]
+        always_run: true
+        pass_filenames: false

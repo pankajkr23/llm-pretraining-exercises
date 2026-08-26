@@ -67,9 +67,22 @@ the new one, and deletes it. Nobody deleted anything. So:
   ```
   Step 2 works only while the removal commit is still reachable, which is why step 1 exists.
 
-**Prohibited without permission, on these paths:** `rm` · `git clean` · `git checkout -- ` ·
-`git restore` · `git reset --hard` · `git stash` (it removes untracked files with `-u`) · moving or
-renaming · writing over an existing notebook from anything other than a deliberate builder run.
+**Prohibited without permission, on these paths:** `rm` · `git checkout -- ` · `git restore` ·
+`git reset --hard` · moving or renaming · writing over an existing notebook from anything other
+than a deliberate builder run — plus the two below, whose **flags** are the part that matters:
+
+- **`git clean -x` or `-X`** deletes every file here in one command. Plain `git clean -fd` does
+  not, because these paths are *ignored* rather than merely untracked. Naming the command without
+  the flag teaches the wrong lesson: the danger is precisely `-x`/`-X`.
+- **`git stash -a` / `--all`** stashes ignored files, which is all of these. Plain `git stash -u`
+  is **safe** here for the same reason. This document said the opposite for months.
+
+**And the branch hazard is retired while the tag hazard is live.** The paths are untracked on every
+branch now, so a branch switch no longer destroys them — but **eleven tags still carry them**:
+`v0.1.0` through `v0.6.2` track between one and five of these files each. `git checkout v0.4.0`
+overwrites five live files with stale tagged copies, and switching back deletes them. So
+`git checkout <tag>`, `git bisect` and any checkout by SHA are now the remaining live path for the
+exact failure that has already happened twice — run the tripwire after each of them.
 
 **It has already happened once, and not by anyone deciding to delete anything.** After the builders
 were untracked, an ordinary `git checkout main && git pull` destroyed all five: `checkout` restored

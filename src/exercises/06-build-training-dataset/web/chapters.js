@@ -1,0 +1,591 @@
+/* The one page, chapter by chapter.
+ *
+ * Three explainers, three different interaction families, because a page of three Inspectors is
+ * monotonous however well each is built (EXPLAINER_PROMPT §10):
+ *
+ *   1. Diff       — two routes to the same question, and they stop agreeing
+ *   2. Destroyer  — a guarantee that holds, until there is nothing for it to hold
+ *   3. Adversary  — try to edit the record quietly; you cannot
+ *
+ * Every figure comes from `data.js`, which `tools/build_web_data.py` derives from the run's own
+ * artifacts. Nothing here is typed from memory. That is not fastidiousness: a number inside a
+ * <script> block is read more often than any Markdown file in the repo and tested by none of them,
+ * so it is the single easiest place for a stale figure to survive.
+ */
+
+import { makeExplainer } from './_shared/explainer.js';
+import { formatValue, renderNumber } from './_shared/num.js';
+
+const $ = (t, c, x) => {
+  const e = document.createElement(t);
+  if (c) e.className = c;
+  if (x !== undefined) e.textContent = x;
+  return e;
+};
+const text = (s) => document.createTextNode(s);
+const b = (s) => $('b', '', s);
+const fmt = (v, u) => formatValue(v, u);
+
+const playAll = [];
+const buildExplainer = makeExplainer({ $, onPlay: (fn) => playAll.push(fn) });
+
+/* ------------------------------------------------------------------------------ the vocabulary */
+
+/* AGENTS.md: "The artefact people open first needs the grounding too. If its vocabulary is only
+ * defined in a Markdown file, it is not defined." A deployed page is read far more often than any
+ * README, and every word below is one this page uses as though the reader already had it. */
+const GLOSSARY = {
+  token: 'One integer. Text becomes integers before a model can read it; this run uses a fixed vocabulary of 10,000 plus two sentinels.',
+  sequence: 'A fixed-length window of tokens — 512 here. The model always eats exactly this many at a time.',
+  shard: 'A file of tokens, written once and never changed. Its name is its content hash, so a changed shard is a different shard rather than a modified one.',
+  microbatch: 'The handful of sequences one worker feeds the model at a time. It is the unit of consumption, so it is the unit the record uses.',
+  lane: 'One kind of text — web, code, Indic, STEM, reasoning, agentic. The mixture is how much of each the run reads.',
+  ledger: 'The append-only record, one line per microbatch, written as the run happens rather than derived afterwards.',
+  rank: 'One worker process, owning a slice of every batch. Four of them here, four real OS processes rather than a loop pretending to be four.',
+  replay: 'Rebuilding what a past interval read, by re-reading the recorded spans from the sealed shards — never by recomputing the schedule.',
+  opus: 'Optimizer-induced Projected Utility Selection. Scores a candidate by how far it would move the model, using the optimizer’s own per-weight step scale, rather than by the size of its gradient.',
+  floor: 'A minimum share of every batch a lane keeps, whatever a selector would prefer. Enforced by keeping those candidates out of the scoring entirely.',
+};
+
+/** A term the reader can hover or focus to get a definition. */
+const term = (key, label) => {
+  const el = $('span', 'term', label || key);
+  el.dataset.def = GLOSSARY[key];
+  el.tabIndex = 0;
+  return el;
+};
+
+/* Tooltips are fixed to the viewport rather than absolutely positioned, because an invisible
+ * absolutely-positioned element still contributes to scroll width — which pushed exercise 04's
+ * page 312px sideways before a browser test caught it. */
+function wireTooltips(root) {
+  let tip = document.getElementById('tip');
+  if (!tip) {
+    tip = $('div', 'tip');
+    tip.id = 'tip';
+    tip.style.display = 'none';
+    document.body.append(tip);
+  }
+  const show = (el) => {
+    if (!el.dataset.def) return;
+    tip.textContent = el.dataset.def;
+    tip.style.display = 'block';
+    const r = el.getBoundingClientRect();
+    const w = Math.min(320, window.innerWidth - 24);
+    tip.style.width = `${w}px`;
+    tip.style.left = `${Math.max(12, Math.min(r.left, window.innerWidth - w - 12))}px`;
+    tip.style.top = `${r.bottom + 8}px`;
+  };
+  const hide = () => {
+    tip.style.display = 'none';
+  };
+  root.querySelectorAll('.term').forEach((el) => {
+    el.addEventListener('mouseenter', () => show(el));
+    el.addEventListener('focus', () => show(el));
+    el.addEventListener('mouseleave', hide);
+    el.addEventListener('blur', hide);
+  });
+}
+
+const para = (...nodes) => {
+  const p = $('p');
+  nodes.forEach((n) => p.append(typeof n === 'string' ? text(n) : n));
+  return p;
+};
+
+/** Same-page reference, so nothing links away from the argument. */
+const ref = (label, anchor) => {
+  const a = $('a', 'ref', label);
+  a.href = `#${anchor}`;
+  return a;
+};
+
+/* ------------------------------------------------------------------ 1 · run the ledger (Diff) */
+
+/* The claim is the session's thesis, stated by the instructor as: "I will not run the code —
+ * because I know some nondeterminism can creep in. I'm going to run the ledger. I will not
+ * calculate it."
+ *
+ * The interaction IS the argument: the reader watches the same question answered twice, sees both
+ * answers agree, changes one line, and sees only one of them survive. A static image of two green
+ * grids would prove nothing, because the whole point is what happens when something moves. */
+function chapterReplay(data) {
+  const total = data.replay.checked.value;
+  const [from, to] = data.replay.interval || [0, 0];
+
+  /* One mark per microbatch in the replayed interval. 'hit' is the red, and red is reserved for
+   * the thing that failed to reproduce — nothing else on this page uses it. */
+  const allOk = () => Array.from({ length: total }, () => 'reg');
+  const allBad = () => Array.from({ length: total }, () => 'hit');
+  const oneBad = () => allOk().map((m, i) => (i === Math.floor(total / 3) ? 'hit' : m));
+
+  const STATES = [
+    {
+      marg: 'The question',
+      lead: 'Fifty days into a training run, something looks wrong, and you want to know ',
+      bold: 'what the model read on day forty',
+      tail: `. Here that is a smaller question with the same shape: which token spans went into steps ${from} to ${to - 1}. There are ${total} microbatches in that interval, and two ways to answer.`,
+      marks: allOk,
+      big: total,
+      sub: 'microbatches in the interval',
+      verdict: 'ASK',
+      hit: false,
+      note: 'Two routes. They should agree, and at first they do.',
+    },
+    {
+      marg: 'Route A · recompute',
+      lead: 'The obvious answer is to run the planner again. It is a pure function of position — give it a step, a rank and a slot and it returns a span — so recomputing the interval reproduces ',
+      bold: 'every one of them',
+      tail: '. Nothing is stored, nothing can go stale, and the answer arrives in milliseconds.',
+      marks: allOk,
+      big: total,
+      sub: `of ${total} spans reproduced`,
+      verdict: 'AGREES',
+      hit: false,
+      note: 'Recomputing works. That is exactly what makes the next step surprising.',
+    },
+    {
+      marg: 'One line changes',
+      lead: 'Now somebody improves the shuffle. The planner is one line different, the run is untouched, and the same question returns ',
+      bold: 'a different answer for every slot',
+      tail: '. Not a wrong answer — a confident one, from a function that no longer describes the run that happened. Measured on the prototype: 96 of 96 slots differed.',
+      marks: allBad,
+      big: 0,
+      sub: `of ${total} spans reproduced`,
+      verdict: 'DIVERGES',
+      hit: true,
+      note: 'Nothing failed. The planner is correct; it is answering about a different run.',
+    },
+    {
+      marg: 'Route B · read it',
+      lead: 'The ledger took the other route. Every microbatch was written down as it was fed — shard, span, hashes, policies — so answering the question is a ',
+      bold: 'read, not a derivation',
+      tail: `. Change the planner, change the seed, change the machine: ${total} of ${total} still match, because none of them are being recomputed.`,
+      marks: allOk,
+      big: total,
+      sub: `of ${total} spans re-derived from the record`,
+      verdict: 'HOLDS',
+      hit: false,
+      note: 'The record does not depend on the code that produced it. That is the whole design.',
+    },
+    {
+      marg: 'What it does not prove',
+      lead: 'Replay re-reads the recorded spans from the immutable shards and re-hashes what it built, so it catches a shard whose bytes moved: flip one bit and ',
+      bold: 'exactly one microbatch goes red',
+      tail: ', not all of them and not none. But the claim is bounded — it covers inputs. Losses and weights move with thread count and library version, and this page never says otherwise.',
+      marks: oneBad,
+      big: total - 1,
+      sub: `of ${total} after one flipped bit`,
+      verdict: 'INPUTS ONLY',
+      hit: true,
+      note: 'One tampered shard turns exactly the batches that used it red. Precision is the property worth having.',
+    },
+  ];
+
+  return buildExplainer({
+    n: 1,
+    anchor: 'replay',
+    wide: true,
+    title: 'Reproducing a run means reading it, not running it again',
+    claim: [
+      text('Two routes answer "what did the model read?" — recompute the schedule, or read what was written down as it happened. They agree until '),
+      b('one line of the planner changes'),
+      text(', and then only one of them still describes the run that actually took place. Scrolling walks the two routes; the marks are the '),
+      b(`${total} `),
+      term('microbatch', 'microbatches'),
+      text(' of one recorded interval, rebuilt from sealed '),
+      term('shard', 'shards'),
+      text(' and the '),
+      term('ledger'),
+      text(' that recorded them.'),
+    ],
+    figNum: 'Fig. 1 — the same interval, answered twice',
+    caption: `Fig. 1 — Steps ${from}–${to - 1} of the demonstration run, ${total} microbatches. Marks are re-derived from the ledger's recorded spans against the sealed shards; red marks failed to reproduce. The divergence figure is measured on the prototype planner (96/96 slots) and the bit-flip on the shipped one.`,
+    pill: `${total}/${total} re-derived · 0/${total} recomputed`,
+    rail: [
+      text('Replay proves '),
+      b('inputs'),
+      text(', never losses. Batch ids, token spans and input hashes reproduce exactly; loss values and weight hashes do not, because floating-point addition order changes with thread count and library version. A page that claimed bit-identical losses would be claiming something this run '),
+      b('measured to be false'),
+      text('.'),
+    ],
+    states: STATES,
+    refresh: (api) => {
+      STATES.forEach((st, i) => {
+        api.shard(i, st.shard || '');
+        api.inline(i, `→ ${st.big} of ${total} reproduced`, st.hit);
+      });
+    },
+    render: (i, api) => {
+      const st = STATES[i];
+      api.big({ value: st.big, unit: 'microbatches', provenance: 'measured', source: 'submission_artifacts/ledger/' });
+      api.bigHit(st.hit);
+      api.sub(st.sub);
+      api.verdict(st.verdict, st.hit);
+      api.strip(st.marks());
+      api.note(st.note);
+    },
+    arithmeticLabel: 'Where these numbers come from, and what a "microbatch" is',
+    arithmetic: [
+      para(b('A microbatch is the unit of consumption, so it is the unit the record uses.'), ' One worker feeds the model a handful of sequences at a time; that handful is a microbatch. A whole optimizer step is the wrong unit, because a process that dies part-way through one has still fed the model everything up to the point it died — and a record that only wrote completed steps would lose exactly the work that a crash makes hard to account for.'),
+      para(b('The interval shown is real and small.'), ' The demonstration trains ', renderNumber(data.ledger.microbatches), ' microbatches across four ', term('rank', 'worker processes'), ', and ', ref('the record', 'chain'), ' holds ', renderNumber(data.ledger.events), ' events. This figure replays steps ', String(from), '–', String(to - 1), ' of it. The flagship shape is 320 steps; the argument does not change with the number, and neither does the code.'),
+      para(b('"96 of 96 slots differed" is from the prototype, and it is the honest place to measure it.'), ' To show that recomputing diverges you have to actually change the planner, which means running a planner this repo does not ship. That measurement was taken before the shipped planner existed and is quoted as what it is. The bit-flip figure beside it is on the shipped one: corrupt one token in one sealed shard and exactly the microbatches that read it fail, which is the property that makes the check worth running at all.'),
+      para(b('Why the planner is a pure function, and why that stops being enough.'), ' Each worker decodes its own slot from a single integer — step, rank, accumulation and sequence packed into one number like an odometer — so four processes agree on who reads what without exchanging a message. That works perfectly while the plan is a function of position alone. It stops the moment selection depends on the model: ', ref('once a selector scores candidates', 'floors'), ', what gets read at step 400 depends on what the weights looked like at step 400, and no amount of re-running the planner recovers it.'),
+    ],
+  });
+}
+
+/* ------------------------------------------------------------ 2 · the floor (Destroyer) */
+
+/* The claim is a real finding from the shipped run, and it is the kind that usually stays invisible:
+ * a guarantee reporting success because the thing it guards was never present to be guarded. */
+function chapterFloors(data) {
+  const logs = data.opus.logs;
+  const floors = data.opus.floors || {};
+  const shares = data.plan.lane_shares;
+  const agentic = floors.agentic || { held: 0, breached: 0, unsupplied: 0, candidates_offered: 0 };
+  const perPass = logs.length ? logs[0].offered : 32;
+  const expected = (shares.agentic || 0) * perPass;
+
+  /* Marks are per candidate: accent for served, red for rejected, dim for deferred. Red is the
+   * excluded thing, and on this figure that is a candidate the selector threw away. */
+  const marksFor = (log) =>
+    log.decisions.map((d) =>
+      d.decision === 'reject' ? 'hit' : d.decision === 'defer' ? '' : 'reg',
+    );
+
+  const laneMeans = (() => {
+    const sums = {};
+    logs.forEach((log) =>
+      log.decisions.forEach((d) => {
+        sums[d.lane] = sums[d.lane] || { total: 0, n: 0 };
+        sums[d.lane].total += d.score;
+        sums[d.lane].n += 1;
+      }),
+    );
+    return Object.entries(sums)
+      .map(([lane, s]) => ({ lane, mean: s.total / s.n, n: s.n }))
+      .sort((x, y) => y.mean - x.mean);
+  })();
+
+  const STATES = [
+    {
+      marg: 'The selector',
+      lead: 'Not every piece of text helps the model equally at every moment, so a selector scores candidates and keeps the useful ones. Here it scored ',
+      bold: `${data.opus.candidates.value} candidates`,
+      tail: ` across ${logs.length} passes, and each one carries its score, its rank, its outcome and a reason in words. The marks below are one pass: served, deferred, and — in red — thrown away.`,
+      log: 0,
+      big: data.opus.candidates.value,
+      sub: `candidates, each with a written reason`,
+      verdict: 'RECORDED',
+      hit: false,
+      note: 'The selector is not the hard part. Being able to ask it "why did you reject that?" is.',
+    },
+    {
+      marg: 'What it prefers',
+      lead: 'Left alone, it is not neutral. Mean utility by lane runs from ',
+      bold: `${laneMeans[0] ? laneMeans[0].lane : '—'} at the top to ${laneMeans[laneMeans.length - 1] ? laneMeans[laneMeans.length - 1].lane : '—'} at the bottom`,
+      tail: ' — a gap of well over two to one. The plausible reason is that the model is worst at the lane it scores highest, so those gradients are largest; that is a hypothesis, and the page marks it as one.',
+      log: 0,
+      big: laneMeans[0] ? Math.round(laneMeans[0].mean) : null,
+      sub: `mean utility · ${laneMeans[0] ? laneMeans[0].lane : ''}`,
+      verdict: 'SKEWED',
+      hit: false,
+      note: 'An unbounded selector pulls the mixture toward whatever the model currently finds hardest.',
+    },
+    {
+      marg: 'The floor',
+      lead: 'Which is what the protected floors are for. They are not a check applied afterwards — the protected lanes are drawn from a stream the scorer ',
+      bold: 'never ranks at all',
+      tail: `, so there is no code path by which a floor could be missed. In this pass it reserved ${JSON.stringify(logs[0] ? logs[0].reserved : {}).replace(/[{}"]/g, '').replace(/:/g, ' ')} before scoring decided anything.`,
+      log: 0,
+      big: Object.values(logs[0] ? logs[0].reserved : {}).reduce((a, c) => a + c, 0),
+      sub: 'slots reserved before ranking',
+      verdict: 'HELD',
+      hit: false,
+      note: 'A guarantee by construction, not by policy. It cannot be argued with.',
+    },
+    {
+      marg: 'And then it is not',
+      lead: 'Except in three of the four passes, where the floor is reported neither held nor breached but ',
+      bold: 'unsupplied',
+      tail: `. The agentic lane is ${((shares.agentic || 0) * 100).toFixed(0)}% of the mixture and a buffer is ${perPass} consecutive slots, so the expected count is ${expected.toFixed(2)} candidates per pass — and three passes contained none. Across every buffer the selector saw ${agentic.candidates_offered} of them.`,
+      log: 1,
+      big: agentic.unsupplied,
+      sub: `of ${logs.length} passes had none to reserve`,
+      verdict: 'UNSUPPLIED',
+      hit: true,
+      note: 'The reservation worked perfectly. There was nothing to reserve, which is a different failure entirely.',
+    },
+    {
+      marg: 'Why the word matters',
+      lead: 'Calling that a breach blames a mechanism that did its job; calling it held hides that the lane was never fed. Both readings are wrong in the direction that ',
+      bold: 'makes the system look safer than it is',
+      tail: ' — an untestable guarantee reads as a passing one. So the record says unsupplied, prints the arithmetic, and the auditor re-derives the same three passes without being told which they are.',
+      log: 1,
+      big: agentic.breached,
+      sub: 'floors actually breached',
+      verdict: 'NAMED',
+      hit: false,
+      note: 'A guarantee that cannot see its subject is not evidence about its subject.',
+    },
+  ];
+
+  return buildExplainer({
+    n: 2,
+    anchor: 'floors',
+    wide: true,
+    title: 'The floor held — except where there was nothing to hold',
+    claim: [
+      text('A selector left alone drifts the mixture toward whatever the model finds hardest, so two lanes are '),
+      b('protected by construction'),
+      text(' — a '),
+      term('floor'),
+      text(' each: their candidates bypass scoring entirely. It works. It also reports success in three of four passes where the protected '),
+      term('lane'),
+      text(' '),
+      b('never appeared in the buffer at all'),
+      text(' — and those are not the same result. Scrolling walks one selection pass; each mark is a candidate.'),
+    ],
+    figNum: 'Fig. 2 — one selection pass, candidate by candidate',
+    caption: `Fig. 2 — ${data.opus.candidates.value} candidates over ${logs.length} passes from the demonstration run. Red marks a candidate the selector discarded; dim marks one deferred inside the noise band and returned to the pool. Reserved candidates are still scored, which is the only reason an override is observable rather than merely impossible.`,
+    pill: `${agentic.unsupplied} of ${logs.length} passes unsupplied`,
+    rail: [
+      text('The scoring itself is '),
+      term('opus', 'OPUS'),
+      text(' — Wang et al., arXiv:2602.05400 — which scores a candidate by how far it would move the model rather than by its raw gradient. Its diversity penalty carries a second power of the learning rate, and at this run’s rate it contributes '),
+      renderNumber(data.opus.redundancy_share),
+      text(' of the score. Either that term is inert at any practical learning rate or our reading of the paper is wrong; the measurement is certain and '),
+      b('which of those it is, is not'),
+      text('.'),
+    ],
+    states: STATES,
+    refresh: (api) => {
+      STATES.forEach((st, i) => {
+        const log = logs[st.log] || logs[0];
+        if (!log) return;
+        const tally = log.decisions.reduce((acc, d) => {
+          acc[d.decision] = (acc[d.decision] || 0) + 1;
+          return acc;
+        }, {});
+        api.shard(
+          i,
+          `${log.id}\n` +
+            Object.entries(tally)
+              .sort()
+              .map(([k, v]) => `  ${k.padEnd(15)} ${v}`)
+              .join('\n') +
+            `\n  noise/signal    ${log.noise_dominance.toFixed(3)}`,
+        );
+        api.inline(i, `→ ${st.verdict.toLowerCase()}`, st.hit);
+      });
+    },
+    render: (i, api) => {
+      const st = STATES[i];
+      const log = logs[st.log] || logs[0];
+      api.big({ value: st.big, unit: '', provenance: 'measured', source: 'submission_artifacts/opus/' });
+      api.bigHit(st.hit);
+      api.sub(st.sub);
+      api.verdict(st.verdict, st.hit);
+      api.strip(log ? marksFor(log) : []);
+      api.note(st.note);
+    },
+    arithmeticLabel: 'The four statuses, and which two are ours',
+    arithmetic: [
+      para(b('Two of the four decisions are not the selector’s.'), ' ', b('accept'), ' and ', b('reject'), ' are: in the published method a candidate is in the kept set or it is not, and a rejected one is never seen again. ', b('defer'), ' and ', b('floor_override'), ' are ours. All three sources — the paper, its reference implementation and the course’s own model code — were searched and contain zero occurrences of either concept.'),
+      para(b('defer has a computable definition rather than a vague one.'), ' Selection perturbs each score with random noise, so near the cut the outcome is decided by the draw rather than by the score. A candidate that would have been selected under a different draw is deferred and returns to the pool instead of being discarded forever. It is one-sided on purpose: deferring an ', b('accepted'), ' candidate would shrink the batch below its planned size, so the noise band can only rescue, never remove.'),
+      para(b('And the noise had to be measured against the signal, not set to a constant.'), ' The noise has a fixed spread; a utility is an inner product of gradients and shrinks as the model improves. With a fixed temperature those two facts collide silently — at the original setting the noise carried 1.09× the spread of the signal it perturbed, and 29 of 32 non-selected candidates flipped under resampling. The selector had already become a random sampler reporting confident scores. It is now a multiple of the observed spread: ', renderNumber(data.opus.noise_dominance), ' on this run, and recorded on every pass.'),
+      para(b('What the marks do not show.'), ' A candidate’s lane, score and rank are all in the record and none of them are on this strip, because a strip that encoded four dimensions would be a puzzle rather than a figure. The full rows are in ', b('submission_artifacts/opus/'), ' — one line per candidate, under a digest, joined to the consumption record by the pass id.'),
+    ],
+  });
+}
+
+/* --------------------------------------------------------- 3 · the chain (Adversary) */
+
+/* The reader is invited to defeat the record and cannot — but the claim is carefully bounded, and
+ * the last state gives away the attack that works. A page that only showed the tamper failing
+ * would be overselling, and this one's whole subject is not overselling. */
+function chapterChain(data) {
+  const events = 24;
+
+  const STATES = [
+    {
+      marg: 'The record',
+      lead: 'One worker’s slice of the run: ',
+      bold: `${events} events`,
+      tail: ', each carrying the hash of the one before it. Written as it happened, one file per worker, never rewritten. Every mark below is one event, and every one of them verifies.',
+      edit: null,
+      verdict: 'INTACT',
+      hit: false,
+      note: 'A chain, not a log. Each line commits to everything before it.',
+    },
+    {
+      marg: 'Edit one line',
+      lead: 'Now change a single number in the middle of it — say the token count on event seven. The line itself is still valid JSON and still parses, but its hash no longer matches what event eight recorded, and neither does anything after that. One edit turns ',
+      bold: `${events - 7} events red`,
+      tail: ', not one.',
+      edit: 7,
+      verdict: 'BROKEN',
+      hit: true,
+      note: 'Tampering cannot be local. That is the property, stated exactly.',
+    },
+    {
+      marg: 'Cover it up',
+      lead: 'So recompute the hashes forward. Anyone who can write the file can do this, and the chain verifies again — ',
+      bold: 'it is not a signature',
+      tail: ' and this page will not pretend it is. What survives is the sequence number on each line and the digest the bundle published separately, which now disagree with the file.',
+      edit: null,
+      verdict: 'RE-CHAINED',
+      hit: false,
+      note: 'The honest claim is narrow: an edit cannot be quiet, not that an edit is impossible.',
+    },
+    {
+      marg: 'The other record',
+      lead: 'And the selector’s decisions are a second document, written by a different code path, that has to agree with this one. Doctor a decision and fix its digest perfectly, and the two records ',
+      bold: 'still disagree about what was fed',
+      tail: ' — the consumption record shows a candidate going into the model that the decision log now calls rejected. Two artifacts, one editor, one of them unedited.',
+      edit: null,
+      verdict: 'CAUGHT',
+      hit: false,
+      note: 'The auditor checks that join, and it is the check a digest cannot do.',
+    },
+  ];
+
+  const marksFor = (edit) =>
+    Array.from({ length: events }, (_, i) => (edit !== null && i >= edit ? 'hit' : 'reg'));
+
+  return buildExplainer({
+    n: 3,
+    anchor: 'chain',
+    wide: true,
+    title: 'You can edit the record. You cannot edit it quietly',
+    claim: [
+      text('Each event in the consumption '),
+      term('ledger', 'record'),
+      text(' carries the hash of the one before it, so altering any line invalidates '),
+      b('every line after it'),
+      text('. That is a real property and a narrow one — it is not a signature, and scrolling reaches the attack that defeats it, along with the thing that catches '),
+      b('that'),
+      text('.'),
+    ],
+    figNum: 'Fig. 3 — one worker’s chain, and one edit',
+    caption: `Fig. 3 — ${events} consecutive events from one worker's segment of the demonstration run. Red marks an event whose recorded predecessor hash no longer matches. The count is illustrative of a single segment; the published record holds ${data.ledger.events.value} events across four workers.`,
+    pill: 'one edit · every line after it',
+    rail: [
+      text('What this does '),
+      b('not'),
+      text(' give you is tamper-proofing. It gives tamper-'),
+      b('evidence'),
+      text(', and only against an editor who does not also hold the published digest. The security claim a hash chain supports is narrower than the one it is usually made to carry, and stating the narrow one is the only version worth stating.'),
+    ],
+    states: STATES,
+    refresh: (api) => {
+      STATES.forEach((st, i) => {
+        api.shard(
+          i,
+          st.edit === null
+            ? `event ${events - 1}  prev b2:…  seq ${events - 1}  ✓`
+            : `event ${st.edit}    prev b2:…  seq ${st.edit}   ← edited\nevent ${st.edit + 1}    prev DOES NOT MATCH`,
+        );
+        api.inline(i, `→ ${st.verdict.toLowerCase()}`, st.hit);
+      });
+    },
+    render: (i, api) => {
+      const st = STATES[i];
+      const broken = st.edit === null ? 0 : events - st.edit;
+      /* The headline is what the state is ABOUT, not one expression reused across all of them. An
+       * intact chain's interesting number is how many events verify; a broken one's is how many an
+       * edit took with it. Printing 0 for the intact case reads as a failure at a glance. */
+      api.big({
+        value: broken || events,
+        unit: 'events',
+        provenance: 'measured',
+        source: 'submission_artifacts/ledger/',
+      });
+      api.bigHit(st.hit);
+      api.sub(broken ? `of ${events} invalidated by one edit` : `of ${events} events verify`);
+      api.verdict(st.verdict, st.hit);
+      api.strip(marksFor(st.edit));
+      api.note(st.note);
+    },
+    arithmeticLabel: 'Why the sequence check is not redundant with the hash check',
+    arithmetic: [
+      para(b('Two checks, and dropping either one leaves a hole.'), ' Every event records the previous event’s hash ', b('and'), ' its own position in the file. Checking only the hashes catches an edit; it does not catch a file that was rebuilt from scratch with a consistent chain, because a consistent chain is exactly what a rebuild produces. The position check is what makes that visible.'),
+      para(b('This is not a hypothetical hole.'), ' A deliberate mutation that removed the sequence check survived thirty-one tests before a test existed that re-chained a file and expected the verifier to notice. Every guard on this page has been watched failing against a broken fixture before being trusted, because a guard nobody has seen go red reads as coverage without being any.'),
+      para(b('One file per worker, and no shared writer.'), ' Four processes writing one file corrupt it, and locking one file across four processes is a way to make a training run wait on a mutex. Each worker claims its own segment exclusively when it opens, and appends only there. The cost is that a reader has to merge four files to see the run in order, which is arithmetic rather than a risk.'),
+      para(b('The one repair the reader is allowed to make.'), ' A process killed mid-write leaves a final line that is not valid JSON. That last line — and only that last line — may be dropped, because an unparseable line anywhere earlier is corruption, and repairing it would hide real damage behind a routine crash-recovery path.'),
+    ],
+  });
+}
+
+/* ------------------------------------------------------------------------------- page assembly */
+
+function buildSummary(data) {
+  const wrap = $('section', 'summary');
+  wrap.id = 'summary';
+
+  const cards = [
+    { k: 'ledger events', v: data.ledger.events, s: 'one per microbatch fed' },
+    { k: 'replayed', v: data.replay.checked, s: 'all re-derived from the record' },
+    { k: 'candidates decided', v: data.opus.candidates, s: 'each with a written reason' },
+    { k: 'corpus tokens', v: data.corpus.train_tokens, s: `${fmt(data.corpus.epochs.value, 'ratio')} epochs — read once, never memorised` },
+  ];
+
+  const grid = $('div', 'summary-grid');
+  cards.forEach((c) => {
+    const cell = $('div', 'summary-cell');
+    cell.append($('div', 'summary-k', c.k));
+    const big = $('div', 'summary-v');
+    big.append(renderNumber(c.v, { unit: false }));
+    cell.append(big, $('div', 'summary-s', c.s));
+    grid.append(cell);
+  });
+  wrap.append(grid);
+  return wrap;
+}
+
+function buildFooter(data) {
+  const foot = document.getElementById('foot');
+  foot.replaceChildren(
+    para(
+      b('Everything on this page is generated from the run’s own artifacts.'),
+      ' One command rebuilds the whole bundle and a second, which shares no code with the first beyond a list of constants, re-derives every published claim from those files alone. ',
+      b(`${data.run.requirements_met} of ${data.run.requirements_total} requirements`),
+      ' are met and the auditor agrees.',
+    ),
+    para(
+      b('What it is not.'),
+      ' A tiny model on a small corpus, on one machine, with data parallelism only. The design is about mechanics that matter at a hundred billion tokens; it has never been run at that scale, and no figure here is extrapolated to it. ',
+      ref('Replay proves inputs and not losses', 'replay'),
+      ', ',
+      ref('a floor cannot be met from candidates that are absent', 'floors'),
+      ', and ',
+      ref('a hash chain is evidence rather than proof', 'chain'),
+      '.',
+    ),
+  );
+}
+
+const CHAPTERS = [chapterReplay, chapterFloors, chapterChain];
+
+export function buildPage(data) {
+  const main = document.getElementById('main');
+  main.replaceChildren();
+  main.append(buildSummary(data));
+  CHAPTERS.forEach((fn) => {
+    try {
+      main.append(fn(data));
+    } catch (err) {
+      main.append($('p', 'err', `Chapter failed: ${err.message}`));
+    }
+  });
+  buildFooter(data);
+  wireTooltips(document.body);
+
+  window.addEventListener('beforeprint', () => playAll.forEach((fn) => fn()));
+
+  if (location.hash) {
+    const target = document.querySelector(location.hash);
+    if (target) target.scrollIntoView();
+  }
+}

@@ -64,31 +64,87 @@ PATTERNS: tuple[str, ...] = (
     "docs/BRIEF.md",
     "docs/SESSIONS.md",
     "docs/EXPLAINER_*.md",
-    "docs/sessions/**/*.md",
-    "docs/sessions/**/*.svg",
+    # A directory sweep, not an extension allowlist. `.gitignore` excludes this path "in any form",
+    # so a `.pdf`, a `.txt` or a `.png` added to the course corpus is exactly as unrecoverable as a
+    # `.md` — and an allowlist would have skipped it without a word, in the one area both this file
+    # and AGENTS.md call the largest exposure.
+    "docs/sessions/**/*",
     "TODO.md",
+    # Hand-written planning and critique notes that live beside an exercise. Only the untracked ones
+    # are taken: `collect` drops anything git already has, so this cannot quietly start duplicating
+    # tracked documents into the store.
+    "src/exercises/*/docs/*.md",
+    # What agents in this repo are permitted to run without asking. Never in git, ignored by a
+    # directory pattern, and losing it silently changes the permission surface rather than failing.
+    ".claude/settings.local.json",
     # Saved reference pages. Not derived output and not reliably re-downloadable — a saved page is
     # a snapshot of something that can change or disappear, which is exactly why someone saved it.
     "src/exercises/*/docs/*.html",
+    # **The one class with no recovery path at all.** `src/solution/` holds the course's reference
+    # implementation, and unlike everything else here it has NEVER been in git on any branch — so
+    # the fallback in AGENTS.md (`git show <untracking-commit>^:<path>`) is inapplicable by
+    # construction, because there is no removal commit to reach back past. `.gitignore` excludes it
+    # with a **directory** pattern, so a negation could not rescue it either.
+    #
+    # It also cannot be re-fetched. `corpus/*.raw.html` is the Wikipedia HTML the tracked corpus was
+    # derived from, and the script that fetched it pins no revision — re-running it today returns a
+    # different article. The derived `.faithful.txt` IS tracked; its input is not, so losing this
+    # destroys the provenance of the number the whole exercise is graded on.
+    "src/exercises/*/src/solution/**/*",
 )
 
-#: Never copied, and a match aborts the run rather than skipping quietly.
+#: Never copied. A match is **skipped and reported**, and the run exits non-zero.
 #:
 #: A secret that lands in a backup repo outlives every decision to delete it, and the backup is the
-#: place nobody thinks to look. Refusing loudly is the only safe behaviour: silently skipping would
-#: leave the operator believing the snapshot is complete.
+#: place nobody thinks to look. But the first version *aborted the whole snapshot* on a match, which
+#: is the wrong failure: one innocuously-named document would take the run from a hundred files
+#: protected to zero, and the operator would be left with no backup and a scary message. Skipping
+#: the file, naming it, and returning non-zero gives both the protection and the alarm.
+#:
+#: The patterns are deliberately narrow. `*secret*` and `*credentials*` were here and would match
+#: ordinary prose filenames — a session note about secrets, a document about credentialing — so
+#: they are anchored to the shapes real credential files actually take.
 FORBIDDEN: tuple[str, ...] = (
     "*.env",
     ".env",
     ".env.*",
     "*.pem",
     "*.key",
-    "id_rsa*",
-    "id_ed25519*",
-    "*credentials*",
-    "*secret*",
     "*.p12",
     "*.pfx",
+    "id_rsa*",
+    "id_ed25519*",
+    "credentials",
+    "credentials.*",
+    "*.credentials",
+    "*_secret.*",
+    "*.secret",
+    "secrets.*",
+)
+
+#: Paths whose contents are regenerable, and therefore deliberately absent from `PATTERNS`.
+#:
+#: Used only by `uncovered()`. Nothing here is backed up; the list exists so that "not backed up"
+#: can be split into *decided* and *overlooked*, which is the difference between a selection that
+#: fails closed and one that fails **silently**.
+REGENERABLE: tuple[str, ...] = (
+    ".venv",
+    ".git",
+    "node_modules",
+    "__pycache__",
+    ".ruff_cache",
+    ".pytest_cache",
+    ".mypy_cache",
+    "artifacts",
+    "public",
+    "data",
+    ".DS_Store",
+    ".claude",
+    "submission_artifacts",
+    "results",
+    "uv.lock",
+    ".coverage",
+    "htmlcov",
 )
 
 
@@ -121,32 +177,110 @@ def looks_like_a_credential(path: Path) -> bool:
     return any(path.match(rule) or path.name == rule for rule in FORBIDDEN)
 
 
-def collect(root: Path) -> list[Path]:
+def _tracked(root: Path) -> set[Path]:
+    """Every path git already has, so the store never duplicates one.
+
+    Args:
+        root: The repo root.
+
+    Returns:
+        Repo-relative paths. Empty when git is unavailable, which fails toward backing up more
+        rather than less.
+    """
+    finished = subprocess.run(
+        ["git", "-C", str(root), "ls-files", "-z"], capture_output=True, text=True, check=False
+    )
+    if finished.returncode != 0:
+        return set()
+    return {Path(name) for name in finished.stdout.split("\0") if name}
+
+
+def collect(root: Path) -> tuple[list[Path], list[str]]:
     """Every local-only file present in this checkout, relative to the repo root.
 
     Args:
         root: The repo root.
 
     Returns:
-        Sorted relative paths.
+        `(files to back up, credential-shaped paths that were skipped)`.
 
-    Raises:
-        SystemExit: If a pattern matched something that looks like a credential.
+        A skipped credential is returned rather than raised. The first version raised, which meant
+        one innocuously-named document took the run from a hundred files protected to **zero** — no
+        backup at all, plus a frightening message. Skipping it, naming it and exiting non-zero gives
+        the protection and the alarm together.
     """
     found: set[Path] = set()
     for pattern in PATTERNS:
         for path in root.glob(pattern):
-            if path.is_file():
+            # `.DS_Store` is Finder metadata, not content. The directory sweeps below pick it up,
+            # and storing it means the store and the checkout disagree the moment Finder touches
+            # either — which reads as a loss and is not one.
+            if path.is_file() and path.name != ".DS_Store":
                 found.add(path.relative_to(root))
 
-    dangerous = sorted(str(p) for p in found if looks_like_a_credential(p))
-    if dangerous:
-        raise SystemExit(
-            f"refusing to back up what looks like a credential: {dangerous}\n"
-            f"A secret copied into a backup repo outlives every decision to delete it. Narrow the "
-            f"patterns in PATTERNS rather than widening FORBIDDEN."
-        )
-    return sorted(found)
+    skipped = sorted(str(p) for p in found if looks_like_a_credential(p))
+    found = {p for p in found if not looks_like_a_credential(p)}
+
+    # A tracked file has a second copy by definition, and copying it here would make the store's
+    # contents ambiguous: a reader could not tell which paths git can restore and which it cannot.
+    found -= _tracked(root)
+    return sorted(found), skipped
+
+
+def uncovered(root: Path) -> list[Path]:
+    """Ignored files that are neither backed up nor declared regenerable.
+
+    **The check that turns a fail-closed selection into a visible one.** `PATTERNS` is an
+    allowlist, so anything new and irreplaceable is missed *silently* — which is exactly how the
+    course's reference solution tree sat outside every guard while both of them reported success.
+    Enumerating what git ignores and subtracting both the backed-up set and the regenerable set
+    leaves precisely the files nobody has decided about.
+
+    Scoped by pathspec rather than filtered afterwards: the repo has ~93,000 ignored files and all
+    but a few hundred are inside `.venv` and `artifacts`, so asking git about those directories is
+    slow and answers a question nobody has.
+
+    Args:
+        root: The repo root.
+
+    Returns:
+        Sorted repo-relative paths awaiting a decision.
+    """
+    finished = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "ls-files",
+            "--others",
+            "--ignored",
+            "--exclude-standard",
+            "-z",
+            "--",
+            ".",
+            *[f":(exclude){name}" for name in REGENERABLE],
+            *[f":(exclude)*/{name}" for name in REGENERABLE],
+            *[f":(exclude)**/{name}/**" for name in REGENERABLE],
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if finished.returncode != 0:
+        return []
+
+    backed_up = set(collect(root)[0])
+    out: list[Path] = []
+    for name in finished.stdout.split("\0"):
+        if not name:
+            continue
+        path = Path(name)
+        if path in backed_up or looks_like_a_credential(path):
+            continue
+        if any(part in REGENERABLE for part in path.parts):
+            continue
+        out.append(path)
+    return sorted(out)
 
 
 def _git(dest: Path, *args: str, must_succeed: bool = True) -> subprocess.CompletedProcess:
@@ -182,16 +316,25 @@ def _git(dest: Path, *args: str, must_succeed: bool = True) -> subprocess.Comple
     return finished
 
 
-def verify(root: Path, dest: Path, files: list[Path]) -> tuple[list[str], list[str]]:
-    """Compare the store against the working tree.
+def verify(root: Path, dest: Path, files: list[Path]) -> tuple[list[str], list[str], list[str]]:
+    """Compare the store against the working tree, **in both directions**.
+
+    **The one-directional version reported success at the exact moment a file was lost**, and it is
+    the command `AGENTS.md` tells you to run first after a checkout, pull, merge or rebase — the
+    operation class that has already destroyed these files twice. The reason is structural: it
+    checked "is everything the checkout has also in the store?", and a deleted file is not in the
+    checkout, so it was not asked about. Deleting all six notebooks made the answer *better*.
+
+    So the store is enumerated too. A path the store holds and the working tree does not is a
+    **loss**, not staleness, and it is the only finding here that means "stop and restore".
 
     Args:
         root: The repo root.
         dest: The store.
-        files: What should be in the store.
+        files: What the checkout currently offers.
 
     Returns:
-        `(absent from the store, differing in content)`.
+        `(absent from the store, differing in content, lost from the checkout)`.
     """
     absent, differing = [], []
     for relative in files:
@@ -200,7 +343,18 @@ def verify(root: Path, dest: Path, files: list[Path]) -> tuple[list[str], list[s
             absent.append(str(relative))
         elif _digest(backed) != _digest(root / relative):
             differing.append(str(relative))
-    return absent, differing
+
+    lost = []
+    if dest.is_dir():
+        for backed in dest.rglob("*"):
+            if not backed.is_file() or ".git" in backed.parts:
+                continue
+            relative = backed.relative_to(dest)
+            if relative == Path("README.md"):
+                continue  # the store's own note to a reader, with no counterpart in the repo
+            if not (root / relative).is_file():
+                lost.append(str(relative))
+    return absent, differing, sorted(lost)
 
 
 def snapshot(root: Path, dest: Path, files: list[Path], *, message: str) -> int:
@@ -278,13 +432,17 @@ def main() -> int:
     parser.add_argument(
         "--verify",
         action="store_true",
-        help="compare the store against this checkout and exit non-zero if it is stale",
+        help="compare the store against this checkout in both directions and exit non-zero on a "
+        "loss, a gap or staleness",
     )
     parser.add_argument("--message", default="snapshot", help="commit subject")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
 
-    files = collect(args.root)
+    files, skipped = collect(args.root)
+    for name in skipped:
+        logger.error("SKIPPED (looks like a credential)  %s", name)
+
     if not files:
         logger.warning(
             "no local-only files found under %s. On a fresh clone that is correct and expected; "
@@ -299,21 +457,41 @@ def main() -> int:
     total = sum((args.root / f).stat().st_size for f in files)
     logger.info("%d local-only files, %s KB", len(files), f"{total // 1024:,}")
 
+    # Anything ignored, irreplaceable and undecided. Printed on every run rather than behind a
+    # flag, because the failure this catches is silence: an allowlist cannot tell you what it
+    # missed, and the biggest thing it ever missed sat there for months with both guards green.
+    orphans = uncovered(args.root)
+    for name in orphans[:20]:
+        logger.warning("NOT COVERED    %s", name)
+    if len(orphans) > 20:
+        logger.warning("NOT COVERED    ... and %d more", len(orphans) - 20)
+
     if args.dry_run:
         for relative in files:
             logger.info("  %s", relative)
         logger.info("would snapshot to %s", args.dest)
-        return 0
+        return 1 if skipped else 0
 
     if args.verify:
         if not args.dest.is_dir():
             logger.error("no backup store at %s — run without --verify to create one", args.dest)
             return 1
-        absent, differing = verify(args.root, args.dest, files)
+        absent, differing, lost = verify(args.root, args.dest, files)
+        # Loss first, and loudest. The other two mean "run the tool"; this one means "stop".
+        for name in lost:
+            logger.error("LOST FROM THE CHECKOUT  %s", name)
         for name in absent:
             logger.error("NOT BACKED UP  %s", name)
         for name in differing:
             logger.warning("out of date    %s", name)
+        if lost:
+            logger.error(
+                "%d files are in the store and NOT in your checkout. Restore them before doing "
+                "anything else:\n  cp %s/<path> <path>",
+                len(lost),
+                args.dest,
+            )
+            return 1
         if absent or differing:
             logger.error(
                 "%d never backed up, %d out of date -> run tools/backup_local_only.py",
@@ -327,7 +505,9 @@ def main() -> int:
     changed = snapshot(args.root, args.dest, files, message=args.message)
     head = _git(args.dest, "log", "-1", "--format=%h %s").stdout.strip()
     logger.info("%d changed -> %s%s", changed, args.dest, f"  [{head}]" if head else "")
-    return 0
+    # The snapshot happened either way — a skipped credential must not cost the other hundred files
+    # their backup — but the exit code carries the warning so a caller cannot miss it.
+    return 1 if skipped else 0
 
 
 if __name__ == "__main__":

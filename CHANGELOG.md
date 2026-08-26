@@ -27,7 +27,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   ranks, so no code path can violate a floor. `floor_override` stays *observable* because the
   reserved candidates are still scored — reserve without scoring and the override becomes
   unmeasurable rather than impossible.
-- **`verify.py` audits the selection independently and now passes 38 of 38**, including the join
+- **`verify.py` audits the selection independently and now passes 40 of 40**, including the join
   that a digest cannot do: a tamperer who edits a decision *and* recomputes the header hash is still
   caught, because the ledger shows that candidate being fed while the record calls it rejected.
   Both tampers are watched failing in tracked tests.
@@ -50,7 +50,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   `run_demo.py` regenerates the whole submission bundle in **21.7 s** with no interaction —
   347,726 bytes against the 2 MiB cap, **9 of 9** requirements met, 12 of the 13 required log
   events genuinely produced. `verify.py` re-derives every published claim from
-  `submission_artifacts/` alone and passes **38 of 38**, completing the thirteenth event itself. A
+  `submission_artifacts/` alone and passes **40 of 40**, completing the thirteenth event itself. A
   bundle whose token count is inflated by a million, or whose ledger has one doctored line, is
   rejected — watched failing before either check was trusted.
 - **The producer/auditor wall is a test, not a rule, because breaking it is invisible.** One

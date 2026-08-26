@@ -1,0 +1,110 @@
+/* Page-specific styles for exercise 06.
+ *
+ * Everything structural is in `_shared/` — the shell in page.css, the explainer vocabulary in
+ * explainer.css, the palette in tokens.css. This file holds only what this page adds: the summary
+ * strip at the top, and the tooltip that carries the glossary.
+ *
+ * EXPLAINER_PROMPT §15: editorial register, not dashboard. Hairlines instead of cards, mono
+ * numerals larger than feels comfortable, one accent and one alert and greyscale for everything
+ * else. **No colour is introduced here that is not already a token in tokens.css** — a per-page
+ * palette is how a design system stops being one.
+ */
+
+/* --------------------------------------------------------------------------- the summary strip */
+
+/* Four numbers, above the argument, for a reader who will not scroll. It is a hairline register
+ * rather than a row of cards: the border-top is the whole container, which is enough separation
+ * and a fraction of the ink. */
+.summary {
+  border-bottom: 0;
+  padding-bottom: 34px;
+  margin-bottom: 34px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 26px;
+}
+
+.summary-cell {
+  border-top: 1.5px solid var(--ink);
+  padding-top: 11px;
+}
+
+/* Uppercase mono in the gutter position — the §15 marginalia, carrying the label rather than a
+   chip. */
+.summary-k {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* "Mono tabular, larger than feels comfortable." Tabular figures matter here because these four
+   sit in a row and a proportional 1 would break the alignment the grid promises. */
+.summary-v {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin-top: 6px;
+  color: var(--ink);
+}
+
+.summary-s {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin-top: 6px;
+  max-width: 34ch;
+}
+
+/* ------------------------------------------------------------------------------------- glossary */
+
+/* A dotted rule rather than a colour, because colour on this page means one of exactly two things
+   and "there is a definition here" is neither of them. */
+.term {
+  border-bottom: 1px dotted var(--faint);
+  cursor: help;
+}
+.term:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* `fixed`, and positioned by script. An absolutely-positioned tooltip contributes to scroll width
+   even while invisible, which pushed exercise 04's page 312px sideways before a browser test
+   caught it. */
+.tip {
+  position: fixed;
+  z-index: 50;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 18%);
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------------------- print */
+
+/* The glossary is a hover affordance and hover does not exist on paper, so the tooltip goes and
+   the dotted rule with it — a printed page carrying dotted underlines that lead nowhere reads as
+   a rendering fault. The summary strip stays: it is the four numbers, and it prints as a table. */
+@media print {
+  .tip {
+    display: none;
+  }
+  .term {
+    border-bottom: 0;
+  }
+  .summary-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

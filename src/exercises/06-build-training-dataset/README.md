@@ -18,7 +18,7 @@ documents -> tokenized shards -> manifests -> mixture schedule -> packing -> bat
 > the immutable shards alone, `fork.py` branches with the lineage recorded rather than inferred,
 > and `opus.py` scores real candidates against a real checkpoint and writes a row per decision.
 > **One command produces the bundle — 9 of 9 requirements, 12 of the 13 required log events — and a
-> second, walled-off command re-derives every claim from that bundle alone and passes 38 of 38
+> second, walled-off command re-derives every claim from that bundle alone and passes 40 of 40
 > checks.** The thirteenth event is `audit completed`, which the producer marks `[SKIP]` on purpose
 > because it cannot certify its own audit; `verify.py` completes it. The stage table is
 > [below](#the-stages).
