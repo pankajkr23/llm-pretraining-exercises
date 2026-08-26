@@ -23,6 +23,12 @@ MODULES = EXERCISE / "src" / "trainingdata"
 #: `tools/build_notebook.py` is gitignored by repo policy — every exercise has one, none is pushed,
 #: and `AGENTS.md` explains why. It therefore exists on a working checkout and not in CI, so a
 #: filesystem scan disagrees with a fresh clone about whether the README is honest.
+#:
+#: **Kept separate from a "not built yet" allowlist, and that separation is the lesson.** This
+#: guard also once exempted `run_demo.py` and `verify.py` because they were named before they were
+#: written. When that reason expired the whole allowlist was deleted — and took this permanent
+#: exemption with it. One expires, the other never does; sharing a set means retiring the first
+#: silently retires the second.
 LOCAL_ONLY: set[str] = {"build_notebook.py"}
 
 
