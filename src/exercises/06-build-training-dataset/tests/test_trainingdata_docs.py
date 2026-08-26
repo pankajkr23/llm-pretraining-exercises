@@ -9,6 +9,7 @@ Where prose must stay hand-written, a test asserts the number in it. That is wha
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -16,6 +17,19 @@ import pytest
 EXERCISE = Path(__file__).resolve().parents[1]
 README = EXERCISE / "README.md"
 MODULES = EXERCISE / "src" / "trainingdata"
+
+#: Python files the documents may name that **no clone receives**, with the reason.
+#:
+#: `tools/build_notebook.py` is gitignored by repo policy — every exercise has one, none is pushed,
+#: and `AGENTS.md` explains why. It therefore exists on a working checkout and not in CI, so a
+#: filesystem scan disagrees with a fresh clone about whether the README is honest.
+#:
+#: **Kept separate from a "not built yet" allowlist, and that separation is the lesson.** This
+#: guard also once exempted `run_demo.py` and `verify.py` because they were named before they were
+#: written. When that reason expired the whole allowlist was deleted — and took this permanent
+#: exemption with it. One expires, the other never does; sharing a set means retiring the first
+#: silently retires the second.
+LOCAL_ONLY: set[str] = {"build_notebook.py"}
 
 
 def _stage_rows() -> list[tuple[int, str]]:
@@ -93,19 +107,63 @@ def test_no_python_file_is_named_that_does_not_exist() -> None:
     }
     named = set(re.findall(r"\b([a-z_][a-z0-9_]*\.py)\b", text))
 
-    # TWO different reasons a named file may be absent, kept apart on purpose. Rolling them into
-    # one set is what broke this: when the `planned` reason expired the whole allowlist was
-    # deleted, and the permanent exemption went with it — green locally, red in CI.
-    #
-    # Temporary: named but not yet written. The README's stage table says stage 8 is unfinished,
-    # and the producer/auditor section has to name the two commands the work will be graded on.
-    # These entries expire when the files land.
-    planned = {"run_demo.py", "verify.py"}
-
-    # Permanent: written, present on every working checkout, and deliberately never shipped.
-    # `tools/build_notebook.py` is gitignored by repo policy, so it exists here and on no clone —
-    # which is precisely why a filesystem scan disagrees with CI about whether the README is honest.
-    local_only = {"build_notebook.py"}
-
-    phantom = sorted(named - present - planned - local_only)
+    phantom = sorted(named - present - LOCAL_ONLY)
     assert not phantom, f"the README names Python files that do not exist: {phantom}"
+
+
+def test_the_not_shipped_paragraph_names_nothing_that_exists() -> None:
+    """**The stale sentence, caught rather than shipped again — in the agent instructions.**
+
+    `CLAUDE.md` carries a paragraph naming what the exercise does *not* have, and a paragraph
+    immediately after it warning that no test reads the header so it goes stale silently. It did:
+    it denied `fork`, `verify.py`, `run_demo.py`, the metrics module, the evidence writer, the
+    corpus fetcher and a tracked `results/` while all seven were on disk. An agent reading it would
+    have rebuilt work that was already done, or reported a finished deliverable as missing.
+
+    So the sentence is now derived from the filesystem, the same way the shipped list is.
+    """
+    text = (EXERCISE / "CLAUDE.md").read_text()
+    marker = "**Not shipped, and do not describe the exercise as having them:**"
+    assert marker in text, "CLAUDE.md lost its not-shipped paragraph; this guard is now inert"
+
+    paragraph = text.split(marker, 1)[1].split("\n\n", 1)[0]
+    denied = set(re.findall(r"`([a-z_][a-z0-9_]*\.py)`", paragraph))
+    exists = {n for n in denied if (MODULES / n).is_file() or (EXERCISE / n).is_file()}
+    assert not exists, (
+        f"CLAUDE.md says {sorted(exists)} are not shipped; they are on disk. A reader would "
+        f"rebuild work that is already done."
+    )
+
+
+def test_every_python_file_the_readme_names_is_either_tracked_or_known_to_be_local_only() -> None:
+    """**The half of the check above that a working checkout cannot see.**
+
+    `test_no_python_file_is_named_that_does_not_exist` scans the filesystem, so it passes on a
+    machine that has the gitignored builders and fails on a fresh clone — and CI is the fresh
+    clone. That asymmetry is not hypothetical: removing an allowlist entry passed here and failed
+    in CI, which is the slowest possible way to learn it.
+
+    So this asks the question a clone would ask: is every Python file the README names actually
+    *shipped*? A file that is deliberately not shipped is named in `LOCAL_ONLY` with the reason;
+    anything else naming a file no clone receives is a broken promise to a reader.
+
+    A newly written file must be `git add`ed before a document may name it. That is the intended
+    order anyway — CI decides, and CI only sees the index.
+    """
+    tracked = {
+        Path(line).name
+        for line in subprocess.run(
+            ["git", "ls-files", "*.py"],
+            cwd=EXERCISE.parents[2],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.split()
+    }
+    named = set(re.findall(r"\b([a-z_][a-z0-9_]*\.py)\b", README.read_text()))
+
+    unshipped = sorted(named - tracked - LOCAL_ONLY)
+    assert not unshipped, (
+        f"the README names {unshipped}, which no clone receives. Either commit them, or add them "
+        f"to LOCAL_ONLY with the reason they are deliberately not shipped."
+    )

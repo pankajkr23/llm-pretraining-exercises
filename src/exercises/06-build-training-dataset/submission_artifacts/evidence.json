@@ -1,0 +1,241 @@
+{
+  "config_fingerprint": "89c8c1be909d",
+  "met": 9,
+  "of": 9,
+  "requirements": [
+    {
+      "claim": "all 64 shard manifests pin one tokenizer digest, so every token id in the run has the same defined meaning",
+      "evidence": "submission_artifacts/manifests/*.jsonl \u2014 the `tokenizer_sha256` field",
+      "numbers": {
+        "distinct_digests": [
+          "sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae"
+        ],
+        "manifests": 64
+      },
+      "requirement": "tokenizer_integrity",
+      "status": "met"
+    },
+    {
+      "claim": "7 shard(s) were refused admission and none of them appears in any loss-bearing batch",
+      "evidence": "submission_artifacts/manifests/ and the ledger's per-event `samples`",
+      "numbers": {
+        "blocked": 7,
+        "blocked_shards_consumed": [],
+        "trainable": 57
+      },
+      "requirement": "evaluation_firewall",
+      "status": "met"
+    },
+    {
+      "claim": "96 microbatches packed; 196,048 of 196,608 positions earned gradient (99.7%), the rest padding, document-final tokens and 0 context-masked batches",
+      "evidence": "the ledger's per-event `tokens`, `loss_tokens`, `pad_tokens` and `loss_policy`",
+      "numbers": {
+        "context_masked_events": 0,
+        "corpus_epochs": 1.0139,
+        "loss_tokens": 196048,
+        "loss_utilization": 0.9971516927083334,
+        "microbatches": 96,
+        "pack_utilization": 1.0,
+        "pad_tokens": 0,
+        "tokens": 196608
+      },
+      "requirement": "packing_correctness",
+      "status": "met"
+    },
+    {
+      "claim": "the CORPUS is compliant \u2014 every funded lane within 1% of plan, both floors held. This run consumed 1.9% of the plan, and over a sample that small the realised mixture drifts by up to 2.3%: the schedule is exact over the run, never per step",
+      "evidence": "the ledger's per-event `lane_mix` summed and compared with `spec.LANE_SHARES`; the corpus figure from results/corpus_build.json",
+      "numbers": {
+        "corpus_compliant": true,
+        "corpus_floors_held": true,
+        "fraction_of_plan_consumed": 0.01875,
+        "is_a_sample": true,
+        "run_consumed": {
+          "agentic": 3584,
+          "code": 52736,
+          "indic": 32768,
+          "reasoning": 16896,
+          "stem": 28160,
+          "web": 62464
+        },
+        "run_drift": {
+          "agentic": -0.00177,
+          "code": -0.01177,
+          "indic": -0.01333,
+          "reasoning": 0.00594,
+          "stem": 0.02323,
+          "web": -0.00229
+        },
+        "run_floors_held": false
+      },
+      "requirement": "mixture_compliance",
+      "status": "met"
+    },
+    {
+      "claim": "128 candidates across 4 passes, each with a score, a rank, an outcome and a reason: 63 accepted, 14 rejected, 50 deferred inside the noise band, and 1 served against their score by a protected floor. 16 microbatches carry the pass id that decided them. agentic reached no floor in some pass because the buffer contained none of it \u2014 a floor no selector could meet, reported rather than scored as a breach.",
+      "evidence": "`opus/*.jsonl`, one row per candidate, joined to the ledger's `opus_decision_id`",
+      "numbers": {
+        "by_lane": {
+          "agentic": {
+            "accept": 0,
+            "defer": 0,
+            "floor_override": 1,
+            "reject": 0
+          },
+          "code": {
+            "accept": 24,
+            "defer": 13,
+            "floor_override": 0,
+            "reject": 2
+          },
+          "indic": {
+            "accept": 21,
+            "defer": 1,
+            "floor_override": 0,
+            "reject": 1
+          },
+          "reasoning": {
+            "accept": 5,
+            "defer": 8,
+            "floor_override": 0,
+            "reject": 0
+          },
+          "stem": {
+            "accept": 2,
+            "defer": 9,
+            "floor_override": 0,
+            "reject": 3
+          },
+          "web": {
+            "accept": 11,
+            "defer": 19,
+            "floor_override": 0,
+            "reject": 8
+          }
+        },
+        "candidates": 128,
+        "decisions": {
+          "accept": 63,
+          "defer": 50,
+          "floor_override": 1,
+          "reject": 14
+        },
+        "defer_rate": 0.390625,
+        "events_with_a_decision": 16,
+        "floor_override_rate": 0.007812,
+        "floors": {
+          "agentic": {
+            "breached": 0,
+            "candidates_offered": 1,
+            "held": 1,
+            "unsupplied": 3
+          },
+          "indic": {
+            "breached": 0,
+            "candidates_offered": 23,
+            "held": 4,
+            "unsupplied": 0
+          }
+        },
+        "floors_held": true,
+        "floors_unsupplied": [
+          "agentic"
+        ],
+        "noise_dominance": 0.320637,
+        "pass_digests": [
+          "b2:8d075235cbcb4ce831c4db1feb002d6e",
+          "b2:46b2b251da1b84d7c19b54e0749e2be4",
+          "b2:160e7685676f318940ab4bf4c151e27f",
+          "b2:4a0a108e72e17021e5eceed5dac2b35c"
+        ],
+        "passes": 4,
+        "redundancy_share": 0.00342144
+      },
+      "requirement": "opus_audit_trail",
+      "status": "met"
+    },
+    {
+      "claim": "after a real crash and resume, every (step, rank, accum, flat, microbatch_hash) matches a run that never crashed; 5 microbatches were re-executed and each names the discarded event it repeats",
+      "evidence": "submission_artifacts/run.log and the ledger's `replayed_from`",
+      "numbers": {
+        "checkpoint": "ckpt-main-000007",
+        "cut": {
+          "0": 16,
+          "1": 16,
+          "2": 16,
+          "3": 16
+        },
+        "events": 96,
+        "ids_match": true,
+        "reexecuted": 5
+      },
+      "requirement": "crash_recovery",
+      "status": "met"
+    },
+    {
+      "claim": "48/48 microbatches in steps [0, 6] were re-derived from the recorded spans and the immutable shards \u2014 read, never recomputed",
+      "evidence": "the ledger's spans and hashes, re-derived against the shard bytes",
+      "numbers": {
+        "checked": 48,
+        "fork": {
+          "at_step": 3,
+          "branch_id": "fork-a",
+          "checkpoint_id": "ckpt-main-000003",
+          "child_events": 64,
+          "child_starts_after": true,
+          "inherited": 32,
+          "next_attempt": 0,
+          "next_step": 4,
+          "ok": true,
+          "overlap": 0,
+          "parent_branch_id": "main"
+        },
+        "interval": [
+          0,
+          6
+        ],
+        "matched": 48,
+        "tampered_shards": []
+      },
+      "requirement": "replay",
+      "status": "met"
+    },
+    {
+      "claim": "loss recorded for 16 step-reports, each linked to the lanes that produced it through the ledger's per-event `lane_mix`",
+      "evidence": "submission_artifacts/telemetry/*.json joined to the ledger by step",
+      "numbers": {
+        "first_loss": 8.6066,
+        "lane_tokens": {
+          "agentic": 3584,
+          "code": 52736,
+          "indic": 32768,
+          "reasoning": 16896,
+          "stem": 28160,
+          "web": 62464
+        },
+        "last_loss": 8.6255,
+        "step_reports": 16
+      },
+      "requirement": "learning_trace",
+      "status": "met"
+    },
+    {
+      "claim": "118,376 loss-bearing tokens/s against 118,714 tokens/s over 4 steps on 4 rank(s); the gap is padding and ungraded positions",
+      "evidence": "submission_artifacts/performance.json, recomputable from the ledger + telemetry",
+      "numbers": {
+        "loss_tokens": 196048,
+        "loss_tokens_per_second": 118375.95941482956,
+        "loss_utilization": 0.9971516927083334,
+        "pack_utilization": 1.0,
+        "ranks": 4,
+        "seconds": 1.6561470839951653,
+        "steps": 4,
+        "tokens": 196608,
+        "tokens_per_second": 118714.09363334902
+      },
+      "requirement": "throughput",
+      "status": "met"
+    }
+  ],
+  "run_id": "s06-demo"
+}

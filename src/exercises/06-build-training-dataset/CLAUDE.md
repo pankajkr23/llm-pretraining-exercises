@@ -4,28 +4,37 @@ Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is the
 `submission_artifacts/` bundle, the reasoning is `DECISIONS.md`, the running log is `PROGRESS.md`,
 and `BRIEF.md` is the assignment (local only, gitignored).
 
-**Status: stage 7 done, stage 8 partial.** Shipped: `spec.py`, `config.py`, `shards.py`,
+**Status: all eight stages done.** Shipped: `spec.py`, `config.py`, `shards.py`,
 `manifest.py`, `firewall.py`, `plan.py`, `masks.py`, `pack.py`, `feed.py`, `ledger.py`, `model.py`,
-`train.py`, `runner.py`, `checkpoint.py`, `resume.py`, `replay.py` and `mixture.py` —
-seventeen modules. `tools/fetch_corpus.py` is **tracked**, unlike the notebook builder.
+`train.py`, `runner.py`, `checkpoint.py`, `resume.py`, `replay.py`, `mixture.py`, `corpus.py`,
+`fork.py`, `metrics.py`, `evidence.py`, `opus.py` and `opus_score.py`, plus `run_demo.py` and
+`verify.py` at the exercise root
+and `tools/fetch_corpus.py` + `tools/build_corpus.py`, both **tracked** (unlike the notebook
+builder). `results/` is tracked and documents render `corpus_build.json` from it.
 
-**Not shipped, and do not describe the exercise as having them:** `fork`, `verify.py`,
-`run_demo.py`, `opus`, the metrics/throughput module, the evidence writer (`evidence.json` /
-`evidence.md`), a corpus fetcher under `tools/`, and any `web/` bundle. There is also no tracked
-`results/` directory, so no document here yet renders a committed measurement.
+**Not shipped, and do not describe the exercise as having them:** any `web/` bundle.
+
+That sentence is now checked. `test_the_not_shipped_paragraph_names_nothing_that_exists` reads the
+paragraph above and fails if anything it denies is on disk — because it is the sentence that went
+stale, and it went stale in the file whose *next* paragraph warns it would. It denied fork, the
+auditor, the demo runner, the metrics module, the evidence writer, the corpus fetcher and a tracked
+`results/` while all seven were built. An agent reading it would have rebuilt finished work, or
+reported a delivered artefact as missing.
 
 **Stage 7 is proven, not asserted.** Golden run 144 events; ranks stopped at 24/25/26/27; resumed
 from `ckpt-main-000007`; 6 microbatches re-executed; every `(step, rank, accum, flat,
 microbatch_hash)` after resume equals the golden run.
 
-**Stage 8 is one third done.** Replay landed — 32/32 events re-derived, and one flipped shard bit
-turns exactly 1 of the 32 red, which is the property that makes the check worth running. Fork and
-the auditor have not.
+**Stage 8 landed.** Replay: 32/32 events re-derived, one flipped shard bit turns exactly 1 red.
+Fork: lineage recorded rather than inferred. Auditor: 20 of 22 checks, and the 2 failures are it
+refusing to bless the OPUS gap.
 
 `tests/test_trainingdata_docs.py` guards **README.md's** status line against **README.md's** stage
-table, and separately asserts every module is named in both README.md and CLAUDE.md. It does *not*
-read this header — so this paragraph is hand-maintained and goes stale silently. It already did:
-it denied `replay.py` existed while the module carried 340 lines and 14 tests.
+table, asserts every module is named in both README.md and CLAUDE.md, and — since this header went
+stale twice — asserts the not-shipped paragraph above names nothing that exists. What it still does
+**not** read is the rest of this header: the stage claims and their numbers are hand-maintained, and
+the first time one of them went stale it denied `replay.py` existed while the module carried 340
+lines and 14 tests.
 
 ## The rules this exercise adds
 
@@ -242,22 +251,62 @@ it denied `replay.py` existed while the module carried 340 lines and 14 tests.
   evidence the packer is efficient. Fix it by passing `window=cfg.sequence_length` so a short tail
   can show, or delete the field — do not leave a constant in the ledger dressed as a statistic.
 
-- **The corpus is 4.8 epochs, and the mixture claim does not survive that unstated.** The run
-  consumes `Config.total_tokens` = 10,485,760 positions; the corpus on disk holds 2,185,575 tokens.
-  Shaped to session 5's weights that is **30.2 epochs of web against 0.41 of agentic** — the
-  heaviest-funded lane memorised thirty times over, the lightest never read through once. Nothing
-  fails; shards read fine and the loss curve looks normal. Print the per-lane epoch count next to
-  any mixture-compliance figure this exercise publishes, and treat `mixture_compliance` in
-  `spec.REQUIREMENTS` as unmet until it does. `data/proxy/manifest.json` funds four lanes
-  (`stem`, `reasoning`, `agentic`, `stem-alt`) and this exercise ships **no fetcher of its own** —
-  `tools/` holds only the notebook builder.
+- **The corpus is sized against the RUN, and that took a refetch.** It was once 2,185,575 tokens
+  against `Config.total_tokens` = 10,485,760 positions — **4.8 epochs**, and shaped to session 5's
+  weights, **30.2 epochs of web against 0.41 of agentic**: the heaviest-funded lane memorised thirty
+  times over, the lightest never read through once. Nothing failed; the shards read fine and the
+  loss curve looked normal. It is now **10,649,549 training tokens at 1.01 epochs**, every lane
+  compliant and both floors held, plus **1,093,019 held-out tokens** written as `split="heldout"`
+  shards the firewall refuses. `tools/fetch_corpus.py` and `tools/build_corpus.py` are tracked, and
+  the build refuses outright below one epoch.
 
-- **Three of the deliverables are PUBLIC URLS, not repo files.** The platform totals **1,150** =
-  1,000 rubric (the repo link) + 3 × 50 for `run.log`, `evidence.json` and `evidence.md` published
-  at **three separate public URLs**. `BRIEF.md` truncates before those fields, so the brief is not
-  the authority here — the platform's field list is. `tests/test_submission_bundle.py` proves the
-  three files are *committable*; committing them is not publishing them, and the exercise is not
-  done until all three resolve.
+  **Still print the per-lane epoch count next to any mixture figure.** The failure it guards against
+  is silent by construction: a lane above ~1 epoch is measuring memorisation and a lane below 1.0
+  was never fully read, and neither shows up in a loss curve.
+
+- **The platform has FOUR fields, and three of them are direct links to files in this repo.** Read
+  from the platform's own submission page, not from `BRIEF.md`, which truncates at the words *"Your
+  submission"* and never lists them:
+
+  | field | points | what goes in it |
+  | --- | ---: | --- |
+  | Github Repo Link | 1000 | the repository URL |
+  | Github `run.log` link | 50 | `.../blob/main/src/exercises/06-build-training-dataset/submission_artifacts/run.log` |
+  | Github `evidence.json` link | 50 | the same path, `evidence.json` |
+  | Github `evidence.md` link | 50 | the same path, `evidence.md` |
+
+  Each field carries the note *"I tested this link in an incognito window — it's publicly
+  accessible (not private)."* So **"public" is a property of the repository, not a demand for
+  separate hosting** — the repo is already public, and the three files are already tracked. An
+  earlier version of this note called them *"PUBLIC URLS, not repo files"* and treated hosting them
+  elsewhere as outstanding work. That was wrong, and it was wrong in the expensive direction:
+  invented work on a deliverable that was nearly finished.
+
+  What is genuinely required is that the paths **resolve on `main`**. They 404 today because the
+  work is still on a branch. `tests/test_submission_bundle.py` proves the files are committable;
+  committing them is not merging them, and the links are not live until the PR lands.
+
+- **`verify.py` may import `spec` and nothing else, and a test asserts it transitively.** One
+  convenient `from trainingdata import metrics` turns every number check into the producer's
+  arithmetic checked against the producer's arithmetic — agreeing with itself whatever either got
+  wrong — and **the output looks identical**. That is why it is a test rather than a rule. The
+  chain hash is re-implemented in `verify.py` with `hashlib` for the same reason: a check that
+  called `ledger._digest` would confirm only that it is deterministic.
+
+- **`run_demo.py` never logs an event it did not produce.** Two of the thirteen — `OPUS decisions
+  recorded` and `audit completed` — are written `[SKIP]` with the reason, and the auditor reports
+  them as NOT PRODUCED. A verdict per line is what lets a reader tell "the run did not do this"
+  from "the run did not mention it"; only the second is a hole in the record.
+
+- **A short demo cannot speak for the mixture, and the evidence row says which it measured.** No
+  lane's share divides evenly into a 64-sequence step, so a run covering 1.2% of the plan drifts by
+  up to 2.1 points. The row reports its coverage, the sample drift, and separately whether the
+  *corpus* is compliant — the thing a short run cannot tell you about.
+
+- **A fork inherits its parent's history; it does not copy it.** So `common_prefix` between parent
+  and child is legitimately **zero**, which reads as a failure and is the opposite of one. Use
+  `fork.verify_fork`: the parent covers the shared steps, the child begins after them, and the
+  child re-ran none of them.
 
 ## Naming
 

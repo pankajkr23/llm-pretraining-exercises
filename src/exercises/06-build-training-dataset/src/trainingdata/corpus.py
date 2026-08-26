@@ -49,6 +49,10 @@ logger = logging.getLogger(__name__)
 #: a tampered-shard drill would turn an entire lane red rather than a few batches.
 PROXY_TOKENS_PER_SHARD: int = 200_000
 
+#: What the fetcher joins a document's parts with, and what the builder must rejoin them with so a
+#: cleaned document can be compared byte-for-byte against what went in.
+PART_SEPARATOR: str = "\n\n"
+
 
 @dataclass(frozen=True)
 class LaneText:
@@ -80,10 +84,14 @@ class LaneBuild:
         documents_in: Documents read from the fetched file.
         documents_kept: Documents surviving the cleaning stages.
         train_tokens: Tokens written to training shards.
-        heldout_tokens: Tokens withheld for evaluation.
+        heldout_tokens: Tokens withheld from training.
+        heldout_shard_ids: The shards those tokens were written to. They exist on disk: a count
+            without data is a claim nothing can check, and this one went unchecked for a while.
         shard_ids: The shards written, in order.
         dropped_short: Pieces discarded for being shorter than one sequence.
         unk_share: Share of training ids that came back `[UNK]`.
+        context_documents: Documents carrying a context span — a prompt that conditions the model
+            without earning loss.
         stage_removals: What each cleaning stage removed.
     """
 
@@ -92,14 +100,21 @@ class LaneBuild:
     documents_kept: int = 0
     train_tokens: int = 0
     heldout_tokens: int = 0
+    #: Shards written for the held-out split. Empty when the lane withheld less than one window.
+    heldout_shard_ids: list[str] = field(default_factory=list)
     shard_ids: list[str] = field(default_factory=list)
     dropped_short: int = 0
     unk_share: float = 0.0
+    context_documents: int = 0
     stage_removals: dict[str, int] = field(default_factory=dict)
 
 
-def read_documents(path: Path) -> list[str]:
-    """The fetched text — one JSON-encoded document per line.
+def read_documents(path: Path) -> list[list[str]]:
+    """The fetched text — one JSON-encoded document per line, as its list of PARTS.
+
+    A bare JSON string is a single-part document; a JSON array is a structured one, and by
+    convention **everything but the last part is context**. `[problem, solution]` means the problem
+    conditions the model and only the solution earns loss.
 
     **JSONL, not newline-joined text, and the difference is not cosmetic.** Documents contain
     newlines. Measured on real fetches: 2,174 FineWeb articles read back as 47,456 "documents"
@@ -113,11 +128,11 @@ def read_documents(path: Path) -> list[str]:
         path: The lane's `.jsonl` file.
 
     Returns:
-        Non-empty documents, in file order.
+        Non-empty documents, in file order, each as its list of parts.
 
     Raises:
-        ValueError: If a line is not a JSON string. A bare line would be a newline-joined file, and
-            reading it as documents would silently reintroduce the bug above.
+        ValueError: If a line is not a JSON string or array of strings. A bare line would be a
+            newline-joined file, and reading it as documents would reintroduce the bug above.
     """
     if not path.is_file():
         return []
@@ -133,16 +148,23 @@ def read_documents(path: Path) -> list[str]:
                 f"document per line — because documents contain newlines and a plain text file "
                 f"cannot say where one ends: {exc}"
             ) from exc
-        if not isinstance(document, str):
+        if isinstance(document, str):
+            parts = [document]
+        elif isinstance(document, list) and all(isinstance(part, str) for part in document):
+            parts = [part for part in document if part.strip()]
+        else:
             raise ValueError(
-                f"{path.name} line {number} is {type(document).__name__}, not a string"
+                f"{path.name} line {number} is {type(document).__name__}, not a string or a list "
+                f"of strings"
             )
-        if document.strip():
-            documents.append(document)
+        if any(part.strip() for part in parts):
+            documents.append(parts)
     return documents
 
 
-def clean(documents: list[str], lane: str) -> tuple[list[str], dict[str, str], dict[str, int]]:
+def clean(
+    documents: list[list[str]], lane: str
+) -> tuple[list[tuple[int, str, bool]], dict[str, str], dict[str, int]]:
     """Run the real exercise-04 stages and hash what each actually produced.
 
     Not a placeholder, and that is the point: `admit` refuses a `None` lineage hash because an
@@ -153,7 +175,8 @@ def clean(documents: list[str], lane: str) -> tuple[list[str], dict[str, str], d
         lane: Lane key, used as the corpus label the stages group by.
 
     Returns:
-        `(surviving documents, {cleaning,dedup,pii,eval_overlap}_hash, removals per stage)`.
+        `(survivors as (original index, cleaned text, boundary intact) triples, the four lineage
+        hashes, removals per stage)`.
 
     Raises:
         RuntimeError: If every document is removed, which means the corpus is unusable rather than
@@ -165,15 +188,15 @@ def clean(documents: list[str], lane: str) -> tuple[list[str], dict[str, str], d
     from datacleaning.records import Document
 
     config = CleaningConfig()
+    # The stages take whole documents: deduplication and decontamination are claims about a
+    # document, not about half of one. So the parts are joined for cleaning and the boundary is
+    # recovered afterwards.
+    joined = {
+        f"{lane}-{index:07d}": PART_SEPARATOR.join(parts) for index, parts in enumerate(documents)
+    }
     docs = [
-        Document(
-            doc_id=f"{lane}-{index:07d}",
-            text=text,
-            corpus=lane,
-            shard=lane,
-            claimed_lang="und",
-        )
-        for index, text in enumerate(documents)
+        Document(doc_id=doc_id, text=text, corpus=lane, shard=lane, claimed_lang="und")
+        for doc_id, text in joined.items()
     ]
 
     removals: dict[str, int] = {}
@@ -193,7 +216,24 @@ def clean(documents: list[str], lane: str) -> tuple[list[str], dict[str, str], d
 
     if not docs:
         raise RuntimeError(f"{lane}: every document was removed by cleaning; nothing to train on")
-    return [doc.text for doc in docs], hashes, removals
+
+    # **Whether the boundary survived cleaning is a fact, not an assumption.**
+    #
+    # PII scrubbing rewrites text in place, so a document it touched no longer splits where its
+    # parts said it did — the prompt's character length has moved and any span derived from it
+    # would grade the wrong tokens. Rather than trust that scrubbing is rare (measured: 0 removals
+    # on every lane, which says nothing about substitutions), each surviving document reports
+    # whether its text is byte-identical to what went in. One that changed keeps no context span
+    # and is graded in full, which is the safe direction: too much loss, never loss on the wrong
+    # half.
+    return (
+        [
+            (int(doc.doc_id.rsplit("-", 1)[1]), doc.text, doc.text == joined.get(doc.doc_id))
+            for doc in docs
+        ],
+        hashes,
+        removals,
+    )
 
 
 def _flatten(encoded: list[list[int]]) -> np.ndarray:
@@ -227,6 +267,75 @@ def _encode(documents: list[str], tokenizer) -> np.ndarray:
         ids.extend(tokenizer.encode(document).ids)
         ids.append(spec.EOS)
     return np.asarray(ids, dtype=np.int64)
+
+
+def _write_heldout(
+    heldout: np.ndarray,
+    out_dir: Path,
+    text: "LaneText",
+    config: Config,
+    tokenizer_sha256: str,
+    hashes: dict[str, str],
+) -> list[str]:
+    """Materialise the held-out split, instead of counting it and throwing it away.
+
+    **This existed as a number and not as data, which is the worst of both.** `heldout_tokens` was
+    computed here, recorded in `LaneBuild`, summed into the build report and published — while the
+    array itself went out of scope one line later. A tenth of the corpus was reported as withheld
+    for evaluation and did not exist anywhere on disk, so nothing could have been evaluated on it
+    and no test failed, because every test asked about the number.
+
+    It surfaced when OPUS needed a proxy set. `g_proxy` is the direction the run would like to move
+    in, and scoring against training data selects for whatever the model is already being pushed
+    toward — so the reference has to be text the run never trains on. The selector asked for the
+    held-out split and found an empty lane.
+
+    **Written with `split="heldout"`, which `manifest.admit` refuses**, so the firewall keeps it out
+    of every loss-bearing batch by the same rule that stops benchmark data. It carries no
+    `benchmark_ids`: it is not a benchmark, it is a reference sample, and conflating the two would
+    make the firewall's benchmark reason fire for something that overlaps no benchmark.
+
+    Args:
+        heldout: The withheld tokens for this lane.
+        out_dir: Where lane directories go.
+        text: The lane being built.
+        config: The run shape.
+        tokenizer_sha256: Provenance of what the token ids mean.
+        hashes: The cleaning lineage this lane's documents carry, so a held-out shard is traceable
+            to the same pipeline its training siblings came from.
+
+    Returns:
+        The shard ids written, which is empty when the lane withheld less than one sequence.
+    """
+    lane_dir = out_dir / "heldout"
+    written: list[str] = []
+    for piece in shards.split(heldout, config.tokens_per_shard):
+        if piece.size < config.sequence_length:
+            continue  # shorter than one window; it could never be read
+        shard_id, _ = shards.write(piece, lane_dir)
+        manifest_module.append(
+            manifest_module.ShardManifest(
+                context_spans=(),
+                shard_id=shard_id,
+                content_hash=shards.content_hash(piece),
+                token_count=int(piece.size),
+                dtype=shards.DTYPE.str,
+                source=f"{text.lane}:heldout",
+                lane="heldout",
+                language=text.language,
+                licence=text.licence,
+                provenance_tier=text.provenance_tier,
+                tokenizer_id=config.tokenizer_id,
+                tokenizer_sha256=tokenizer_sha256,
+                split="heldout",
+                config_fingerprint=config.fingerprint(),
+                unk_share=float((piece == 0).mean()),
+                **hashes,
+            ),
+            lane_dir,
+        )
+        written.append(shard_id)
+    return written
 
 
 def build_lane(
@@ -269,7 +378,24 @@ def build_lane(
     # withheld **16.1%** of the code lane's tokens, which pushed that lane 1.59 points below its
     # planned share and put the whole mixture out of compliance. The boundary is still a document
     # boundary; only the thing being counted changed.
-    encoded = [tokenizer.encode(document).ids for document in kept]
+    encoded, context_lengths = [], []
+    for index, cleaned, intact in kept:
+        parts = documents[index]
+        if intact and len(parts) > 1:
+            # **Tokenise the parts SEPARATELY and concatenate.** That makes the boundary exact by
+            # construction. Encoding the joined text and then splitting at a character index does
+            # not: measured on the frozen BPE, 10.8% of separator sites are absorbed into a longer
+            # token, so at those sites no token boundary exists to split at, and 4.7% of prompts do
+            # not tokenise to a prefix of the whole document. Measured cost of splitting: -0.14%.
+            head = tokenizer.encode(PART_SEPARATOR.join(parts[:-1]) + PART_SEPARATOR).ids
+            tail = tokenizer.encode(parts[-1]).ids
+            encoded.append(head + tail)
+            context_lengths.append(len(head))
+        else:
+            encoded.append(tokenizer.encode(cleaned).ids)
+            context_lengths.append(0)
+
+    result.context_documents = sum(1 for length in context_lengths if length)
     total = sum(len(ids) + 1 for ids in encoded)  # +1 for the EOS each document is terminated with
     want_train = total * (1.0 - config.heldout_share)
 
@@ -283,11 +409,24 @@ def build_lane(
 
     train = _flatten(encoded[:cut])
     heldout = _flatten(encoded[cut:])
+
+    # Where each training document's context ends, in LANE-stream coordinates. Converted to
+    # shard-relative below, because a shard is the unit anything downstream can address.
+    lane_spans: list[tuple[int, int]] = []
+    at = 0
+    for ids, context in zip(encoded[:cut], context_lengths[:cut], strict=True):
+        if context:
+            lane_spans.append((at, at + context))
+        at += len(ids) + 1
     result.train_tokens = int(train.size)
     result.heldout_tokens = int(heldout.size)
+    result.heldout_shard_ids = _write_heldout(
+        heldout, out_dir, text, config, tokenizer_sha256, hashes
+    )
     result.unk_share = float((train == 0).mean()) if train.size else 0.0
 
     lane_dir = out_dir / text.lane
+    written_tokens = 0
     for piece in shards.split(train, tokens_per_shard):
         if piece.size < config.sequence_length:
             # `build_span_table` discards it in silence, so its tokens would be counted in the
@@ -299,10 +438,19 @@ def build_lane(
                 piece.size,
                 config.sequence_length,
             )
+            written_tokens += int(piece.size)
             continue
 
         shard_id, path = shards.write(piece, lane_dir)
+        offset = written_tokens
+        within = tuple(
+            (max(start, offset) - offset, min(end, offset + int(piece.size)) - offset)
+            for start, end in lane_spans
+            if start < offset + int(piece.size) and end > offset
+        )
+        written_tokens += int(piece.size)
         entry = manifest_module.ShardManifest(
+            context_spans=within,
             shard_id=shard_id,
             content_hash=shards.content_hash(piece),
             token_count=int(piece.size),

@@ -283,3 +283,39 @@ def test_padding_does_not_count_as_a_segment_needing_an_offset() -> None:
     """Off-by-one bait: two documents plus padding is two offsets, not three."""
     segments = masks.segment_ids([2, 2], window=6)
     assert masks.position_ids(segments, offsets=[7, 0]).tolist() == [7, 8, 0, 1, 0, 0]
+
+
+# --- context spans -----------------------------------------------------------------------------
+
+
+def test_context_spans_are_clipped_to_the_span_and_translated_to_the_window() -> None:
+    """The caller knows about shards; `masks.loss_mask` knows only about the window in front of it.
+
+    A shard-relative range handed straight through would mask the wrong positions — and on a window
+    taken from the middle of a shard, it would usually mask nothing at all and look like it worked.
+    """
+    tokens = _stream(200)
+    index = pack.DocIndex(tokens)
+    # A span covering shard tokens 64..128; the context range 100..150 overlaps its second half.
+    window = pack.build_window(index, tokens, 64, 128, context_spans=((100, 150),))
+    assert window.context_spans == ((36, 64),), "the range was not translated to window coordinates"
+    assert not window.loss[36:64].any(), "the context range still earned loss"
+    assert window.loss[:36].any(), "masking spilled outside the context range"
+
+
+def test_a_context_span_outside_the_window_is_ignored() -> None:
+    """Every shard's spans are handed to every window cut from it, so most do not apply."""
+    tokens = _stream(200)
+    window = pack.build_window(pack.DocIndex(tokens), tokens, 0, 64, context_spans=((150, 180),))
+    assert window.context_spans == ()
+    assert window.loss.sum() > 0
+
+
+def test_a_window_with_no_context_spans_grades_everything_it_did_before() -> None:
+    """The control: passing an empty tuple must not change the mask at all."""
+    tokens = _stream(8, 8)
+    index = pack.DocIndex(tokens)
+    plain = pack.build_window(index, tokens, 0, 16)
+    explicit = pack.build_window(index, tokens, 0, 16, context_spans=())
+    assert np.array_equal(plain.loss, explicit.loss)
+    assert plain.hashes() == explicit.hashes()

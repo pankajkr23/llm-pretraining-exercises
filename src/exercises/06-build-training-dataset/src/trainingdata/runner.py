@@ -84,6 +84,8 @@ class RunSpec:
             values would make the cut *vector* indistinguishable from a scalar.
         replay_budget: Per rank, how many of this attempt's events re-execute microbatches the cut
             discarded. From the resume plan; published rather than hidden.
+        parent_branch_id: Set when this run is a fork, so its checkpoints carry the lineage.
+        forked_at_step: The last step this branch shares with its parent.
     """
 
     config: config_module.Config
@@ -106,6 +108,8 @@ class RunSpec:
     crash_at_step: int | None = None
     crash_after_microbatches: tuple[int, ...] = ()
     replay_budget: tuple[int, ...] = ()
+    parent_branch_id: str | None = None
+    forked_at_step: int | None = None
 
 
 def open_all(refs: tuple[ShardRef, ...]) -> dict[str, feed.ShardHandle]:
@@ -250,6 +254,8 @@ def worker(rank: int, spec: RunSpec, rendezvous: str) -> None:
                         segments=segments,
                         plan_digest=schedule.key.digest(),
                         config_fingerprint=spec.config.fingerprint(),
+                        parent_branch_id=spec.parent_branch_id,
+                        forked_at_step=spec.forked_at_step,
                     )
                 if world_size > 1:
                     # Nobody may run ahead until the checkpoint is on disk, or a rank could append

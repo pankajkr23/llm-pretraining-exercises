@@ -80,6 +80,16 @@ class ShardManifest:
     #: Shards this one was derived from. A shard cut from another keeps the lineage.
     parent_shard_ids: tuple[str, ...] = ()
 
+    #: Half-open `[start, end)` ranges, SHARD-relative, that provide context but earn no loss — an
+    #: instruction, a question, a tool observation.
+    #:
+    #: They live here because a shard is a flat token stream with no header and no side file: the
+    #: manifest is the only place that already travels with it and is already mandatory. They are
+    #: **token** offsets computed by tokenising the document's parts separately, never a character
+    #: index mapped afterwards — 10.8% of separator sites are absorbed into a longer BPE token, so
+    #: at those sites no token boundary exists to map to.
+    context_spans: tuple[tuple[int, int], ...] = ()
+
     #: The run configuration under which it was built.
     config_fingerprint: str = ""
     #: Share of tokens that came back `[UNK]`. A count that is mostly unknown is not a count.
@@ -94,6 +104,7 @@ class ShardManifest:
         out = asdict(self)
         out["benchmark_ids"] = list(self.benchmark_ids)
         out["parent_shard_ids"] = list(self.parent_shard_ids)
+        out["context_spans"] = [list(span) for span in self.context_spans]
         return out
 
     @classmethod
@@ -108,6 +119,9 @@ class ShardManifest:
         """
         data = dict(payload)
         data["benchmark_ids"] = tuple(data.get("benchmark_ids") or ())
+        data["context_spans"] = tuple(
+            (int(start), int(end)) for start, end in data.get("context_spans") or ()
+        )
         data["parent_shard_ids"] = tuple(data.get("parent_shard_ids") or ())
         return cls(**data)  # type: ignore[arg-type]
 

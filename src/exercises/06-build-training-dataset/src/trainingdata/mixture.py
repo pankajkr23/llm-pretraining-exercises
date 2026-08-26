@@ -27,31 +27,38 @@ counted under `code`.
 
 from typing import Final
 
+from . import spec
 from .config import Config
 
-#: Session 5's headline mixture. Verbatim, and the only place these numbers appear.
+#: Session 5's headline mixture, re-exported from `spec.py`.
+#:
+#: **Declared there, not here**, because the auditor needs them too and may not import this module
+#: to get them — `verify.py` re-derives a run's mixture and compares it against the plan, and a
+#: comparison against the producer's own copy of the plan would check nothing. `spec.py` is the one
+#: place both sides may read: shared facts, no shared logic.
 #:
 #: `long_context` is deliberately **zero**. It is a schedule over the other lanes, not a corpus, and
 #: a fetcher that gives it tokens is inventing a lane session 5 explicitly retired.
-LANE_SHARES: Final[dict[str, float]] = {
-    "web": 0.32,
-    "code": 0.28,
-    "indic": 0.18,
-    "stem": 0.12,
-    "reasoning": 0.08,
-    "agentic": 0.02,
-    "long_context": 0.0,
-}
+LANE_SHARES: Final[dict[str, float]] = spec.LANE_SHARES
 
 #: The minimum share of every batch a lane keeps, whatever a selector would prefer.
 #:
 #: A floor is a **minimum, not the lane's share**: `indic` runs at 18% of which only 12 points are
 #: protected, leaving 6 exposed. `agentic` sits *exactly* on its floor with zero headroom, which is
 #: why any floor breach there is immediately visible rather than absorbed.
-FLOORS: Final[dict[str, float]] = {"indic": 0.12, "agentic": 0.02}
+FLOORS: Final[dict[str, float]] = spec.FLOORS
 
 #: Protected lanes may not claim more than this between them. Session 5's number.
 FLOOR_CEILING: Final[float] = 0.20
+
+#: Extra supply a protected lane is fetched with, above its planned share.
+#:
+#: **A floor is a minimum, and supply at exactly the minimum breaches it on any rounding.**
+#: Measured: fetching `agentic` to precisely its 2.00% budget produced 1.99% of the built corpus —
+#: one ten-thousandth under, and its floor read BREACHED, because that lane's floor equals its
+#: share and so has no headroom at all. The scheduler enforces the floor per batch; this only
+#: guarantees there is enough on disk for it to be able to.
+FLOOR_HEADROOM: Final[float] = 0.05
 
 #: Lanes a fetcher is expected to supply text for — every lane carrying budget.
 FUNDED_LANES: Final[tuple[str, ...]] = tuple(
@@ -96,16 +103,20 @@ def token_targets(config: Config, *, include_heldout: bool = True) -> dict[str, 
         config: The run shape.
         include_heldout: Add the reserve `config.heldout_share` withholds. A fetcher that ignores
             it supplies exactly one epoch of training data and nothing to evaluate on, which reads
-            as success right up until the held-out split is taken out of the training tokens.
+            as success until the split is taken out of the training tokens. Protected lanes also
+            get `FLOOR_HEADROOM` on top, so their floor is satisfiable rather than knife-edge.
 
     Returns:
         Lane name to token count.
     """
     per_lane = sequence_targets(config)
     scale = 1.0 / (1.0 - config.heldout_share) if include_heldout else 1.0
-    return {
+    targets = {
         lane: int(round(count * config.sequence_length * scale)) for lane, count in per_lane.items()
     }
+    for lane in FLOORS:
+        targets[lane] = int(round(targets[lane] * (1.0 + FLOOR_HEADROOM)))
+    return targets
 
 
 def _check_shares() -> None:
@@ -154,7 +165,9 @@ def realised_shares(consumed: dict[str, int]) -> dict[str, float]:
     return {lane: count / total for lane, count in sorted(consumed.items())}
 
 
-def compliance(consumed: dict[str, int], *, tolerance: float = 0.01) -> dict[str, dict]:
+def compliance(
+    consumed: dict[str, int], *, tolerance: float = spec.MIXTURE_TOLERANCE
+) -> dict[str, dict]:
     """Planned versus actual share, per lane, with the floors checked.
 
     Args:

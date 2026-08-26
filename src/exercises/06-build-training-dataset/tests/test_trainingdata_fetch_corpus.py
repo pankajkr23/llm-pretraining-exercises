@@ -129,7 +129,7 @@ def test_a_copyleft_source_file_is_dropped(fetcher) -> None:
     code = next(s for s in fetcher.SOURCES if s.licence_column)
     assert fetcher._document({"code": "print(1)", "license": "gpl-3.0"}, code) is None
     assert fetcher._document({"code": "print(1)", "license": "agpl-3.0"}, code) is None
-    assert fetcher._document({"code": "print(1)", "license": "mit"}, code) == "print(1)"
+    assert fetcher._document({"code": "print(1)", "license": "mit"}, code) == ["print(1)"]
 
 
 def test_a_row_with_no_licence_at_all_is_dropped(fetcher) -> None:
@@ -156,7 +156,10 @@ def test_multi_field_sources_concatenate_rather_than_pick_one(fetcher) -> None:
     assert reasoning.fields == ("problem", "solution")
     assert "text" not in reasoning.fields
     rendered = fetcher._document({"problem": "2+2?", "solution": "4"}, reasoning)
-    assert rendered == "2+2?\n\n4"
+    assert rendered == ["2+2?", "4"], (
+        "the parts must be KEPT, not pre-joined — the boundary is unrecoverable afterwards, and "
+        "81.9% of real reasoning documents contain more than one blank line"
+    )
 
 
 # --- sizing ------------------------------------------------------------------------------------

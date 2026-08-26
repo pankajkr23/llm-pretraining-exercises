@@ -36,19 +36,53 @@ safety net.
 `pull` that crosses the untracking commit sees a file that was tracked at the old HEAD and is not at
 the new one, and deletes it. Nobody deleted anything. So:
 
-- **Back up every local-only file outside the repo.** That is the only real safety net:
-  `notebooks/S*.ipynb`, `src/exercises/*/tools/build_notebook.py`, `src/exercises/*/BRIEF.md`.
+- **Back up every local-only file outside the repo — there is now a tool, so do not do it by hand:**
+  ```bash
+  uv run python tools/backup_local_only.py            # snapshot + commit, outside the repo
+  uv run python tools/backup_local_only.py --verify   # is the store current? non-zero if not
+  ```
+  It writes a **git** store at `../.llm-pretraining-exercises-local-only`, so every *version* is
+  kept, not just the latest. That matters more than it sounds: these files are regenerated
+  constantly, so the likelier loss is a **bad overwrite**, and a plain copy would faithfully replace
+  the good version with the broken one. Run it before any branch switch and after any session that
+  rebuilds a notebook.
+
+- **The protected set is wider than the three classes named above, and the extra ones were
+  unguarded for months.** `docs/sessions/**` is the entire course corpus — every session's notes,
+  transcripts and assignments, including sessions this repo has not reached — and
+  `docs/EXPLAINER_PROMPT.md` / `docs/EXPLAINER_PATTERN.md` are the two documents any explainer is
+  required to be built from. All gitignored, none regenerable, none watched by the tripwire until
+  now. **85 files, 12 MB.** A guard that covers the documented cases and misses the largest one
+  reads as coverage without being any.
+
 - **After any branch switch, pull, merge, rebase or stash, run the tripwire** —
   `uv run pytest tests/test_local_only_files_present.py`. It fails when *some* of these files are
   present and others gone, and skips when all are absent (a clone, not a loss).
-- **Recovery, while the removal commit is still reachable:**
+- **Recovery, in the order to try it:**
   ```bash
-  git show <untracking-commit>^:<path> > <path>      # e.g. 18015b1^ for the briefs
+  uv run python tools/backup_local_only.py --verify              # 1. does the store have it?
+  cp ../.llm-pretraining-exercises-local-only/<path> <path>      #    restore the latest
+  git -C ../.llm-pretraining-exercises-local-only log -- <path>  #    or an earlier version
+  git show <untracking-commit>^:<path> > <path>                  # 2. e.g. 18015b1^ for the briefs
   ```
+  Step 2 works only while the removal commit is still reachable, which is why step 1 exists.
 
-**Prohibited without permission, on these paths:** `rm` · `git clean` · `git checkout -- ` ·
-`git restore` · `git reset --hard` · `git stash` (it removes untracked files with `-u`) · moving or
-renaming · writing over an existing notebook from anything other than a deliberate builder run.
+**Prohibited without permission, on these paths:** `rm` · `git checkout -- ` · `git restore` ·
+`git reset --hard` · moving or renaming · writing over an existing notebook from anything other
+than a deliberate builder run — plus the two below, whose **flags** are the part that matters:
+
+- **`git clean -x` or `-X`** deletes every file here in one command. Plain `git clean -fd` does
+  not, because these paths are *ignored* rather than merely untracked. Naming the command without
+  the flag teaches the wrong lesson: the danger is precisely `-x`/`-X`.
+- **`git stash -a` / `--all`** stashes ignored files, which is all of these. Plain `git stash -u`
+  is **safe** here for the same reason. This document said the opposite for months.
+
+**And the branch hazard is retired while the tag hazard is live.** The paths are untracked on every
+branch now, so a branch switch no longer destroys them — but **eleven tags still carry them**:
+`v0.1.0` through `v0.6.2` track between one and five of these files each. `git checkout v0.4.0`
+overwrites five live files with stale tagged copies, and switching back deletes them. So
+`git checkout <tag>`, `git bisect` and any checkout by SHA are now the remaining live path for the
+exact failure that has already happened twice — run the tripwire after each of them.
 
 **It has already happened once, and not by anyone deciding to delete anything.** After the builders
 were untracked, an ordinary `git checkout main && git pull` destroyed all five: `checkout` restored

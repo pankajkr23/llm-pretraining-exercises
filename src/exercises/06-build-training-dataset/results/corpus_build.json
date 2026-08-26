@@ -1,0 +1,268 @@
+{
+  "built_despite_short_lanes": false,
+  "config_fingerprint": "68b402b23a89",
+  "context_spans": 3260,
+  "epochs_of_supply": 1.0139,
+  "heldout_tokens": 1093019,
+  "lanes": {
+    "agentic": {
+      "context_documents": 0,
+      "documents_in": 229,
+      "documents_kept": 226,
+      "dropped_short": 0,
+      "heldout_shard_ids": [
+        "f1134d2a596952d8"
+      ],
+      "heldout_tokens": 23830,
+      "lane": "agentic",
+      "shard_ids": [
+        "c67536bc9f030617",
+        "4a257e8994066eba"
+      ],
+      "stage_removals": {
+        "dedup": 3,
+        "eval_overlap": 0,
+        "pii": 0
+      },
+      "train_tokens": 219659,
+      "unk_share": 5.463013124889033e-05
+    },
+    "code": {
+      "context_documents": 0,
+      "documents_in": 775,
+      "documents_kept": 769,
+      "dropped_short": 0,
+      "heldout_shard_ids": [
+        "1923cd96422b9789"
+      ],
+      "heldout_tokens": 259272,
+      "lane": "code",
+      "shard_ids": [
+        "e00cb9fe7061d903",
+        "7c8df50908a3b936",
+        "a8970cdcfb0801ef",
+        "23aa12e89def3cb2",
+        "bbe93bff81a19a33",
+        "491b337379fe8715",
+        "08e75e8f67895336",
+        "5a9f183e59b8ffc6",
+        "177c1bc4c1a92233",
+        "0efd039c5a7814f2",
+        "447e00576bba8d55",
+        "b52d5ad054a50870",
+        "4eb2a7b3b68a128e",
+        "b364c374d0595d91",
+        "d50003b02e272f44",
+        "232083c29a41a8d8"
+      ],
+      "stage_removals": {
+        "dedup": 6,
+        "eval_overlap": 0,
+        "pii": 0
+      },
+      "train_tokens": 3009455,
+      "unk_share": 0.0055305694884954255
+    },
+    "indic": {
+      "context_documents": 0,
+      "documents_in": 2447,
+      "documents_kept": 2396,
+      "dropped_short": 0,
+      "heldout_shard_ids": [
+        "a1331aecb2978fb8"
+      ],
+      "heldout_tokens": 205144,
+      "lane": "indic",
+      "shard_ids": [
+        "3df08e6f9c2868a4",
+        "8d332aa540aa65cc",
+        "21feaa0cbc3e6f16",
+        "364a9cc9263f4fe5",
+        "1574599739513672",
+        "93d987a9125467fd",
+        "7e91741d381609bd",
+        "a0349bfbd2dd227d",
+        "61c270d58ce93a10",
+        "86e0b60ca74b709f"
+      ],
+      "stage_removals": {
+        "dedup": 51,
+        "eval_overlap": 0,
+        "pii": 0
+      },
+      "train_tokens": 1960462,
+      "unk_share": 0.0007799182029542016
+    },
+    "reasoning": {
+      "context_documents": 1423,
+      "documents_in": 1444,
+      "documents_kept": 1444,
+      "dropped_short": 0,
+      "heldout_shard_ids": [
+        "531d763d8e7cbd6f"
+      ],
+      "heldout_tokens": 92459,
+      "lane": "reasoning",
+      "shard_ids": [
+        "abcb1a8f87d42cd8",
+        "8a264ad2170e84aa",
+        "18a2e4275ff0be38",
+        "5cce33a353e33dcd",
+        "e81d9cea061da4aa"
+      ],
+      "stage_removals": {
+        "dedup": 0,
+        "eval_overlap": 0,
+        "pii": 0
+      },
+      "train_tokens": 840767,
+      "unk_share": 0.0008599290885584235
+    },
+    "stem": {
+      "context_documents": 2197,
+      "documents_in": 2226,
+      "documents_kept": 2225,
+      "dropped_short": 0,
+      "heldout_shard_ids": [
+        "aaee2c813fee0127"
+      ],
+      "heldout_tokens": 139898,
+      "lane": "stem",
+      "shard_ids": [
+        "af308d766f6f25b7",
+        "475c5cc5a4090603",
+        "37ca90d406c14cb5",
+        "c68cf27c94b17714",
+        "6a5e1c9ea52d08c4",
+        "c7e68ceed57962a0",
+        "7e009d17dea4a583"
+      ],
+      "stage_removals": {
+        "dedup": 1,
+        "eval_overlap": 0,
+        "pii": 0
+      },
+      "train_tokens": 1259197,
+      "unk_share": 0.0019599792566214816
+    },
+    "web": {
+      "context_documents": 0,
+      "documents_in": 2174,
+      "documents_kept": 2173,
+      "dropped_short": 0,
+      "heldout_shard_ids": [
+        "f75ed26c42f2c67a"
+      ],
+      "heldout_tokens": 372416,
+      "lane": "web",
+      "shard_ids": [
+        "64f8ae6474530750",
+        "b3b0e70fbec7f61a",
+        "159509698c056411",
+        "f33cccd57581caed",
+        "e613daf8a57c2236",
+        "1bdb650be156a212",
+        "e81f64dfa145a02b",
+        "c3e62bc7b47ce6b2",
+        "aeec3c52b43258d5",
+        "e6d7c3f29c1007d0",
+        "50184622a7e2eaeb",
+        "75677f3492eac887",
+        "65e7d33e6079cf20",
+        "d46b5670fe36ba5d",
+        "dd0ef07ff466890f",
+        "125db7978e2eaf57",
+        "e01978ae2ec6c984"
+      ],
+      "stage_removals": {
+        "dedup": 0,
+        "eval_overlap": 1,
+        "pii": 0
+      },
+      "train_tokens": 3360009,
+      "unk_share": 0.0005279747762580398
+    }
+  },
+  "marginally_short_lanes": [
+    "agentic: 219,659 of 220,416 (99.7%, within tolerance)",
+    "indic: 1,960,462 of 1,981,594 (98.9%, within tolerance)"
+  ],
+  "mixture": {
+    "compliant": true,
+    "consumed": {
+      "agentic": 219659,
+      "code": 3009455,
+      "indic": 1960462,
+      "reasoning": 840767,
+      "stem": 1259197,
+      "web": 3360009
+    },
+    "floors_held": true,
+    "lanes": {
+      "agentic": {
+        "drift": 0.0006261316793790966,
+        "floor": 0.02,
+        "floor_held": true,
+        "planned": 0.02,
+        "realised": 0.020626131679379097,
+        "within_tolerance": true
+      },
+      "code": {
+        "drift": 0.002589901224925084,
+        "floor": null,
+        "floor_held": true,
+        "planned": 0.28,
+        "realised": 0.2825899012249251,
+        "within_tolerance": true
+      },
+      "indic": {
+        "drift": 0.0040887346497020804,
+        "floor": 0.12,
+        "floor_held": true,
+        "planned": 0.18,
+        "realised": 0.18408873464970207,
+        "within_tolerance": true
+      },
+      "long_context": {
+        "drift": 0.0,
+        "floor": null,
+        "floor_held": true,
+        "planned": 0.0,
+        "realised": 0.0,
+        "within_tolerance": true
+      },
+      "reasoning": {
+        "drift": -0.001051398514622548,
+        "floor": null,
+        "floor_held": true,
+        "planned": 0.08,
+        "realised": 0.07894860148537745,
+        "within_tolerance": true
+      },
+      "stem": {
+        "drift": -0.00176053276997927,
+        "floor": null,
+        "floor_held": true,
+        "planned": 0.12,
+        "realised": 0.11823946723002073,
+        "within_tolerance": true
+      },
+      "web": {
+        "drift": -0.004492836269404443,
+        "floor": null,
+        "floor_held": true,
+        "planned": 0.32,
+        "realised": 0.31550716373059556,
+        "within_tolerance": true
+      }
+    }
+  },
+  "plan_digest": "a8637e476e6043e7",
+  "refused_by_the_gate": [],
+  "run_needs_tokens": 10485760,
+  "shards": 57,
+  "short_lanes": [],
+  "spans": 20765,
+  "tokenizer_sha256": "sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae",
+  "train_tokens": 10649549
+}

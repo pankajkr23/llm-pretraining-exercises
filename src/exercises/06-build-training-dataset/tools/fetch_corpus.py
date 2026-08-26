@@ -33,6 +33,7 @@ Run it::
 import argparse
 import json
 import logging
+import re
 import ssl
 import sys
 import time
@@ -128,6 +129,9 @@ class LocalSource:
     provenance_tier: str
     stands_in_for: str
     why: str
+    #: Regex marking where one document starts. Documents are found by SPLITTING ON THIS, never by
+    #: lines — see `_local_documents` for what splitting on lines cost the first time.
+    document_start: str = r"(?=(?:^|\n)SYSTEM:)"
 
 
 #: Every source, with its licence to be verified live rather than trusted from this table.
@@ -370,22 +374,67 @@ def _rows(source: Source, offset: int, length: int) -> list[dict]:
     return [entry["row"] for entry in _get(url)["rows"]]
 
 
-def _document(row: dict, source: Source) -> str | None:
-    """One row rendered as a document, or None when it should be skipped.
+def _local_documents(text: str, local: LocalSource) -> list[str]:
+    """Split a local file into documents at its own document boundary.
+
+    **Not on lines, and the first version of this got it wrong.** It read one document per
+    non-empty line — the exact bug the JSONL writer a hundred lines below exists to prevent,
+    reintroduced on the local path where that fix did not reach. Measured: the agentic proxy's
+    **500 conversations became 16,753 line-fragments**, median 32 characters, thousands of them a
+    bare `{` or `    "type": "string",`. Deduplication then removed 59% of them as near-identical,
+    which read as a data-quality finding and was an artifact of the split.
+
+    The consequence was not cosmetic. Every fragment became its own `EOS`-terminated document, so
+    the block-diagonal mask walled a tool call off from the request that produced it — and the lane
+    then measured as the *best* candidate for whole-document packing when at conversation
+    granularity it is nearly the worst: 10.0% of conversations fit a 512-token window, not 100%.
+
+    `SYSTEM:` is the boundary because a conversation begins with a system turn: the source carries
+    exactly 500 of them and this rule yields exactly 500 documents. Splitting on runs of four or
+    more newlines yields 552, because some conversations contain such a run internally.
+
+    Args:
+        text: The whole file.
+        local: The source, carrying its own boundary pattern.
+
+    Returns:
+        Documents, in file order.
+    """
+    found = [part.strip() for part in re.split(local.document_start, text) if part.strip()]
+    return found or ([text.strip()] if text.strip() else [])
+
+
+def _document(row: dict, source: Source) -> list[str] | None:
+    r"""One row rendered as a document's PARTS, or None when it should be skipped.
+
+    **The parts are kept, not pre-joined, and that is the whole point.** The first version returned
+    `"\n\n".join(parts)` and the boundary between them was gone one line after it was known. It
+    cannot be recovered afterwards: measured on the fetched reasoning lane, **81.9% of documents
+    contain more than one blank line**, so "split on the first `\n\n`" resolves confidently and
+    lands inside the problem statement. And even a correct character index would not survive the
+    frozen BPE — **10.8% of separator sites are absorbed into a longer token**, so no token boundary
+    exists there at all.
+
+    Keeping the parts lets the builder tokenise each separately, which makes the boundary exact by
+    construction rather than recovered by guesswork.
+
+    The convention downstream: **everything but the last part is context**. For `(problem,
+    solution)` the problem is context and only the solution earns loss; for a single-part document
+    nothing is context and everything is graded.
 
     Args:
         row: A raw row.
         source: Which lane's source.
 
     Returns:
-        The text, or None.
+        The parts in order, or None.
     """
     if source.licence_column:
         declared = str(row.get(source.licence_column) or "").lower()
         if declared not in PERMISSIVE_CODE_FILES:
             return None
     parts = [str(row[name]) for name in source.fields if row.get(name)]
-    return "\n\n".join(parts) if parts else None
+    return parts or None
 
 
 def fetch_lane(
@@ -414,12 +463,20 @@ def fetch_lane(
         if not text:
             logger.warning("%s: %s is missing; the lane will be short", lane, local.path)
             continue
-        # One document per non-empty line, matching how session 5 wrote the file.
-        found = [line for line in text.splitlines() if line.strip()]
-        for document in found:
-            counted, unknown = _measure(document, tokenizer)
+        # Stop at the token target here too. The first version read a local file in FULL while the
+        # remote loop below stopped on target, so the agentic lane supplied 512,327 tokens against
+        # a 233,244 budget — 4.23% of the corpus against a 2.00% plan, which put the mixture out of
+        # tolerance on the high side. Availability is not the mixture: the plan draws uniformly
+        # over spans, so a lane with twice its budget on disk takes twice its share of the run.
+        kept: list[list[str]] = []
+        for document in _local_documents(text, local):
+            if tokens_so_far >= target_tokens:
+                break
+            counted, unknown = _measure([document], tokenizer)
             tokens_so_far += counted
             unknown_so_far += unknown
+            kept.append([document])
+        found = kept
         documents.extend(found)
         result.licences.append(local.licence)
         result.sources.append({**{k: str(v) for k, v in asdict(local).items()}, "rows": len(found)})
@@ -469,7 +526,7 @@ def fetch_lane(
     return result, documents
 
 
-def _measure(document: str, tokenizer) -> tuple[int, int]:
+def _measure(document: "str | list[str]", tokenizer) -> tuple[int, int]:
     """Token count and `[UNK]` count for one document, including its EOS terminator.
 
     `[UNK]` is id **0** in the frozen tokenizer, so the unknown share is computable straight from
@@ -485,8 +542,13 @@ def _measure(document: str, tokenizer) -> tuple[int, int]:
         target that ignored it would come up short by one token per document — about 16,000 tokens
         on the agentic lane alone.
     """
-    ids = tokenizer.encode(document).ids
-    return len(ids) + 1, sum(1 for i in ids if i == 0)
+    parts = [document] if isinstance(document, str) else document
+    tokens, unknown = 1, 0  # the EOS the shard builder terminates every document with
+    for part in parts:
+        ids = tokenizer.encode(part).ids
+        tokens += len(ids)
+        unknown += sum(1 for i in ids if i == 0)
+    return tokens, unknown
 
 
 def main() -> int:
@@ -527,7 +589,12 @@ def main() -> int:
             # article from each other — corrupting the exact boundary claim this exercise is built
             # on, while every count still looked plausible.
             path = args.out / f"{lane}.jsonl"
-            payload = "".join(json.dumps(d, ensure_ascii=False) + "\n" for d in documents)
+            # A single-part document is written as a bare JSON string and a multi-part one as an
+            # array. Both are valid JSONL and the builder normalises them, so adding structure to
+            # two lanes does not invalidate the four already on disk.
+            payload = "".join(
+                json.dumps(d[0] if len(d) == 1 else d, ensure_ascii=False) + "\n" for d in documents
+            )
             path.write_text(payload, encoding="utf-8")
             result.bytes_written = len(payload.encode("utf-8"))
         results.append(result)
@@ -543,7 +610,19 @@ def main() -> int:
         )
 
     if not args.dry_run:
-        (args.out / "manifest.json").write_text(
+        # MERGE, never replace. `--lane agentic` rewrote the whole manifest once and destroyed the
+        # provenance of the five lanes it had not touched. Their text was still on disk, but the
+        # record of which dataset and which licence produced it was gone — and building from files
+        # whose licence nobody recorded is precisely what this fetcher exists to prevent. The
+        # rebuild that followed reported a one-lane corpus at 0.04 epochs, which is how it surfaced.
+        manifest_path = args.out / "manifest.json"
+        keep: dict[str, dict] = {}
+        if manifest_path.is_file():
+            previous = json.loads(manifest_path.read_text(encoding="utf-8"))
+            keep = {entry["lane"]: entry for entry in previous.get("lanes", [])}
+        keep.update({r.lane: asdict(r) for r in results})
+
+        manifest_path.write_text(
             json.dumps(
                 {
                     "note": (
@@ -554,7 +633,7 @@ def main() -> int:
                     ),
                     "config_fingerprint": config.fingerprint(),
                     "total_tokens_needed": config.total_tokens,
-                    "lanes": [asdict(r) for r in results],
+                    "lanes": [keep[lane] for lane in sorted(keep)],
                 },
                 indent=2,
                 sort_keys=True,

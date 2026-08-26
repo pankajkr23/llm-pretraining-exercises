@@ -202,6 +202,7 @@ class Window:
         positions: Position within the token's own **document**, continuing across a window edge.
         loss: Which positions are graded.
         fragments: What was packed, in order.
+        context_spans: Window-relative ranges excluded from the loss.
     """
 
     tokens: np.ndarray
@@ -209,6 +210,9 @@ class Window:
     positions: np.ndarray
     loss: np.ndarray
     fragments: tuple[Fragment, ...]
+    #: WINDOW-relative ranges that earned no loss. Recorded so the ledger can carry them and replay
+    #: can rebuild the same mask without consulting the manifest.
+    context_spans: tuple[tuple[int, int], ...] = ()
 
     @property
     def pack_utilization(self) -> float:
@@ -261,6 +265,7 @@ def build_window(
     end: int,
     *,
     window: int | None = None,
+    context_spans: tuple[tuple[int, int], ...] = (),
 ) -> Window:
     """Pack one span into a window, walled off document by document.
 
@@ -270,6 +275,10 @@ def build_window(
         start: First token position of the span.
         end: One past the last.
         window: Window size. Defaults to the span length, which is the concat-and-chop case.
+        context_spans: SHARD-relative `[start, end)` ranges that condition the model without
+            earning loss — a prompt, a question, a tool observation. Clipped to this span and
+            translated to window coordinates here, because the caller knows about shards and
+            `masks.loss_mask` knows only about the window in front of it.
 
     Returns:
         The packed window.
@@ -289,10 +298,16 @@ def build_window(
     packed = np.full(size, spec.PAD, dtype=np.int64)
     packed[: end - start] = np.asarray(tokens[start:end], dtype=np.int64)
 
+    within = [
+        (max(begin, start) - start, min(finish, end) - start)
+        for begin, finish in context_spans
+        if begin < end and finish > start
+    ]
     return Window(
         tokens=packed,
         segments=segments,
         positions=positions,
-        loss=masks.loss_mask(segments, packed),
+        loss=masks.loss_mask(segments, packed, context_spans=within or None),
         fragments=tuple(fragments),
+        context_spans=tuple(within),
     )

@@ -61,6 +61,8 @@ class Checkpoint:
         plan_digest: The plan these weights were trained under.
         config_fingerprint: The settings they were trained under.
         environment: Device, threads and library versions.
+        parent_branch_id: The branch this one forked from, if any.
+        forked_at_step: The last step this branch shares with its parent.
     """
 
     v: int
@@ -75,6 +77,14 @@ class Checkpoint:
     plan_digest: str
     config_fingerprint: str
     environment: dict = field(default_factory=dict)
+
+    #: The branch this one forked from, and the step they last shared.
+    #:
+    #: Without these a forked branch is indistinguishable from an unrelated run that happens to use
+    #: the same shards — and the first eighty steps the two share would look like a coincidence
+    #: rather than the same history read twice.
+    parent_branch_id: str | None = None
+    forked_at_step: int | None = None
 
     @property
     def total_microbatches(self) -> int:

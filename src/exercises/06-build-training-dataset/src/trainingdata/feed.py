@@ -38,6 +38,7 @@ class ShardHandle:
         tokens: The token stream, read-only.
         index: Document boundaries within it.
         content_hash: Re-derived at open time, not copied from the manifest.
+        context_spans: Shard-relative ranges excluded from the loss.
     """
 
     shard_id: str
@@ -45,9 +46,19 @@ class ShardHandle:
     tokens: np.ndarray
     index: pack.DocIndex
     content_hash: str
+    #: Shard-relative ranges that condition the model without earning loss. From the manifest —
+    #: a shard is a flat token stream and cannot carry them itself.
+    context_spans: tuple[tuple[int, int], ...] = ()
 
 
-def open_shard(shard_id: str, path, lane: str, *, expected_hash: str | None = None) -> ShardHandle:
+def open_shard(
+    shard_id: str,
+    path,
+    lane: str,
+    *,
+    expected_hash: str | None = None,
+    context_spans: tuple[tuple[int, int], ...] = (),
+) -> ShardHandle:
     """Open a shard, verify it, and index its documents.
 
     Args:
@@ -55,6 +66,7 @@ def open_shard(shard_id: str, path, lane: str, *, expected_hash: str | None = No
         path: Where its tokens live.
         lane: Which data lane it came from.
         expected_hash: What the manifest recorded. Verified when given.
+        context_spans: Shard-relative ranges that earn no loss, from the manifest.
 
     Returns:
         The handle.
@@ -77,6 +89,7 @@ def open_shard(shard_id: str, path, lane: str, *, expected_hash: str | None = No
         tokens=tokens,
         index=pack.DocIndex(np.asarray(tokens), shard_id=shard_id, lane=lane),
         content_hash=content_hash,
+        context_spans=tuple(context_spans),
     )
 
 
@@ -154,6 +167,34 @@ class Microbatch:
             counts[sample["lane"]] += sample["end"] - sample["start"]
         return dict(sorted(counts.items()))
 
+    @property
+    def context_spans(self) -> tuple[tuple[int, int, int], ...]:
+        """Ranges that conditioned the model without earning loss, as `(window, start, end)`.
+
+        Flat triples rather than a list per window, so the ledger event stays a single sequence of
+        integers that replay can apply without knowing the microbatch's shape in advance.
+
+        Returns:
+            The triples, window-relative.
+        """
+        return tuple(
+            (index, start, end)
+            for index, window in enumerate(self.windows)
+            for start, end in window.context_spans
+        )
+
+    @property
+    def loss_policy(self) -> str:
+        """Which loss rule produced this microbatch's mask.
+
+        Derived from whether anything was actually excluded, not declared: a run that says
+        `context-masked` and masked nothing is claiming a behaviour it did not have.
+
+        Returns:
+            A member of `spec.LOSS_POLICIES`.
+        """
+        return "context-masked" if self.context_spans else "grade-all-but-document-final"
+
     def hashes(self) -> dict[str, str]:
         """Content hashes of everything replay must reproduce.
 
@@ -192,9 +233,7 @@ def build_microbatch(
             missing shard would silently shrink the batch and every count downstream with it.
     """
     config = schedule.config
-    windows: list[pack.Window] = []
-    samples: list[dict] = []
-
+    chosen = []
     for seq in range(config.microbatch):
         coord = plan_module.Coordinate(step=step, rank=rank, accum=accum, seq=seq)
         span = schedule.span_for(coord)
@@ -203,11 +242,56 @@ def build_microbatch(
                 f"the plan places shard {span.shard_id} at step {step} rank {rank} accum {accum} "
                 f"seq {seq}, but that shard was never opened"
             )
+        chosen.append((span, schedule.pass_number(coord)))
+    return assemble(chosen, handles, config.sequence_length)
+
+
+def assemble(
+    chosen: list[tuple[plan_module.Span, int]],
+    handles: dict[str, ShardHandle],
+    sequence_length: int,
+) -> Microbatch:
+    """Pack an explicit list of spans into a microbatch.
+
+    Split out of `build_microbatch` so that **who chose the spans** and **how they become tensors**
+    are different questions. The plan answers the first for an ordinary step; OPUS answers it for a
+    selected one. Sharing this function is what stops the two from drifting into two packers, which
+    would make an OPUS batch and a planned batch differently shaped for reasons no ledger records.
+
+    Args:
+        chosen: `(span, pass number)` pairs, one per sequence in the microbatch.
+        handles: Every open shard, by id.
+        sequence_length: Window size.
+
+    Returns:
+        The microbatch.
+
+    Raises:
+        KeyError: If a span names a shard that was not opened.
+        ValueError: If a span is not exactly one sequence long. The plan guarantees this; a
+            selector handing over its own spans does not, and a ragged one would surface far away
+            as an opaque `np.stack` shape error rather than as the wrong span it is.
+    """
+    windows: list[pack.Window] = []
+    samples: list[dict] = []
+
+    for seq, (span, pass_no) in enumerate(chosen):
+        if span.shard_id not in handles:
+            raise KeyError(f"span names shard {span.shard_id}, which was never opened")
+        if span.end - span.start != sequence_length:
+            raise ValueError(
+                f"span {seq} covers {span.end - span.start} tokens, not {sequence_length}"
+            )
         handle = handles[span.shard_id]
-        window = pack.build_window(handle.index, handle.tokens, span.start, span.end)
+        window = pack.build_window(
+            handle.index,
+            handle.tokens,
+            span.start,
+            span.end,
+            context_spans=handle.context_spans,
+        )
         windows.append(window)
 
-        pass_no = schedule.pass_number(coord)
         at = 0
         for fragment in window.fragments:
             graded = int(np.count_nonzero(window.loss[at : at + fragment.length]))

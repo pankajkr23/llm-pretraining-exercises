@@ -44,7 +44,7 @@ def test_a_document_containing_newlines_survives_the_round_trip(tmp_path) -> Non
 
     back = corpus.read_documents(path)
     assert len(back) == 2, f"a multi-paragraph article was split into {len(back)} documents"
-    assert back[0] == article
+    assert back[0] == [article], "a bare JSON string must read back as a single-part document"
 
 
 def test_a_newline_joined_file_is_refused_rather_than_misread(tmp_path) -> None:
@@ -322,3 +322,14 @@ def test_the_held_out_split_is_taken_by_tokens_not_by_document_count(tmp_path) -
         f"{share:.1%} of the tokens were withheld from a 10% split — the split is counting "
         f"documents, and one huge document has taken the whole held-out budget with it"
     )
+
+
+def test_a_structured_document_reads_back_as_its_parts(tmp_path) -> None:
+    """A JSON array is a document with structure — by convention every part but the last is
+    context, so `[problem, solution]` means only the solution earns loss."""
+    path = tmp_path / "reasoning.jsonl"
+    path.write_text(
+        json.dumps(["What is 2+2?", "It is 4."]) + "\n" + json.dumps("A plain document.") + "\n",
+        encoding="utf-8",
+    )
+    assert corpus.read_documents(path) == [["What is 2+2?", "It is 4."], ["A plain document."]]

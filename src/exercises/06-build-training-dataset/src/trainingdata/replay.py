@@ -153,6 +153,39 @@ def rebuild(event: ledger.ConsumeEvent, source: ShardSource) -> Rebuilt:
     if not event.samples:
         raise ValueError(f"event seq {event.seq} records no samples; there is nothing to rebuild")
 
+    # **Refuse a policy this code cannot rebuild, rather than rebuilding it the one way it knows.**
+    #
+    # Every reconstruction below is concat-and-chop with per-document positions and no context
+    # mask. Fed an event produced under a different policy, it would happily rebuild the wrong
+    # window, hash it, and report a mismatch — and a mismatch is the signal reserved for *a shard
+    # whose bytes moved*. The report would blame the data for a difference in the reader.
+    #
+    # `replay_interval` catches this and records it as the verdict's `error`, so the report names
+    # the policy instead of implying corruption.
+    for name, value, implemented in (
+        ("pack_policy", event.pack_policy, "concat-and-chop"),
+        ("position_policy", event.position_policy, "restart-per-document-continue-across-window"),
+        ("attention_policy", event.attention_policy, "block-diagonal-causal"),
+    ):
+        if value != implemented:
+            raise ValueError(
+                f"event seq {event.seq} was produced under {name}={value!r}; this replay only "
+                f"rebuilds {implemented!r}. Refusing rather than reporting a hash mismatch that "
+                f"would read as a tampered shard."
+            )
+
+    if event.loss_policy not in ("grade-all-but-document-final", "context-masked"):
+        raise ValueError(
+            f"event seq {event.seq} was produced under loss_policy={event.loss_policy!r}; this "
+            f"replay cannot rebuild it. Refusing rather than reporting a hash mismatch."
+        )
+    if event.loss_policy == "context-masked" and not event.context_spans:
+        raise ValueError(
+            f"event seq {event.seq} claims loss_policy='context-masked' but records no context "
+            f"spans. The mask it was graded under is unrecoverable, and rebuilding it as unmasked "
+            f"would report a mismatch that reads as a tampered shard."
+        )
+
     windows = sorted({sample.window for sample in event.samples})
     size = event.sequence_length
     tokens = np.full((len(windows), size), spec.PAD, dtype=np.int64)
@@ -175,7 +208,11 @@ def rebuild(event: ledger.ConsumeEvent, source: ShardSource) -> Rebuilt:
 
         segments[row] = masks.segment_ids(lengths, size)
         positions[row] = masks.position_ids(segments[row], offsets=offsets)
-        loss[row] = masks.loss_mask(segments[row], tokens[row])
+        # The spans come off the EVENT, not the manifest. Replay re-materialises from the shards
+        # and the record alone; needing a second file to agree with would make it an audit of two
+        # documents rather than of the run.
+        excluded = [(start, end) for index, start, end in event.context_spans if index == window]
+        loss[row] = masks.loss_mask(segments[row], tokens[row], context_spans=excluded or None)
 
     return Rebuilt(tokens=tokens, segments=segments, positions=positions, loss=loss)
 
@@ -256,15 +293,26 @@ class ReplayReport:
     def summary(self) -> str:
         """One line, generated from the counts rather than written beside them.
 
+        **It names a tampered shard even when every microbatch matched**, and that combination is
+        not a contradiction: a shard whose bytes changed outside the spans this interval read
+        produces a clean replay and a corrupt corpus. The report has always held both facts; the
+        summary used to print only the first, so the line a reader quotes said `all match` while
+        the object it came from knew a shard no longer hashed to its manifest.
+
         Returns:
             The summary.
         """
         start, end = self.interval
         state = "all match" if not self.failures else f"{len(self.failures)} MISMATCH"
-        return (
+        line = (
             f"{self.branch_id} steps [{start}, {end}): "
             f"{self.matched}/{self.checked} microbatches re-derived, {state}"
         )
+        if self.tampered:
+            names = ", ".join(sorted(self.tampered)[:3])
+            where = "and they are why" if self.failures else "though none in this interval"
+            line += f" — {len(self.tampered)} TAMPERED SHARD(S) [{names}], {where}"
+        return line
 
 
 def replay_interval(

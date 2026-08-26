@@ -38,6 +38,52 @@ EXPECTED_BUILDERS = [p / "tools" / "build_notebook.py" for p in EXERCISES]
 #: healthy working checkout has one per exercise.
 EXPECTED_BRIEFS = [p / "BRIEF.md" for p in EXERCISES]
 
+#: Programme-level material — the course corpus. **This was the largest exposure and nothing
+#: watched it.**
+#:
+#: The three lists above are the classes `AGENTS.md` names, and they were the only ones guarded.
+#: But `docs/sessions/` holds every session's notes, transcripts and assignments — including
+#: material for sessions this repo has not reached yet — and `docs/EXPLAINER_*.md` are the two
+#: files any explainer is supposed to be built from. All gitignored, none regenerable, none
+#: guarded. A tripwire that covers the documented cases and not the biggest one is a tripwire that
+#: reads as coverage.
+#:
+#: Counted rather than enumerated: the corpus grows a file per session, so a fixed list would go
+#: stale and a stale list here fails silently in the safe-looking direction.
+SESSION_CORPUS = REPO_ROOT / "docs" / "sessions"
+
+#: Where `tools/backup_local_only.py` writes. Read here as a **high-water mark**: a file the store
+#: holds and this checkout does not is a loss, and no hand-written floor can notice that.
+STORE = REPO_ROOT.parent / f".{REPO_ROOT.name}-local-only"
+EXPECTED_PROGRAMME = [
+    REPO_ROOT / "docs" / "BRIEF.md",
+    REPO_ROOT / "docs" / "EXPLAINER_PROMPT.md",
+    REPO_ROOT / "docs" / "EXPLAINER_PATTERN.md",
+]
+
+
+#: Every class this file watches, flattened. Used to answer "is this a working checkout?" **once**,
+#: rather than once per class.
+_ALL_WATCHED = EXPECTED_NOTEBOOKS + EXPECTED_BUILDERS + EXPECTED_BRIEFS + EXPECTED_PROGRAMME
+
+
+def is_a_working_checkout() -> bool:
+    """Whether this machine is supposed to have local-only files at all.
+
+    **The hole this closes is the incident the file was written for.** Every guard here decided
+    "clone or loss?" from the emptiness of *its own* class — so deleting all six notebooks made the
+    notebook guard skip, deleting all six builders made the builder guard skip, and the exact event
+    that destroyed all five builders in one `checkout && pull` would have turned the whole file
+    green. A guard that reports success on the total loss it exists to catch is worse than absent.
+
+    Liveness is therefore established across every class at once: a real clone has **nothing** from
+    any of them, and a working checkout that has lost one class still has the others.
+
+    Returns:
+        True when any watched file exists anywhere.
+    """
+    return any(p.is_file() for p in _ALL_WATCHED) or SESSION_CORPUS.is_dir()
+
 
 def _partial(paths: list[Path]) -> bool:
     """True when some but not all exist — a clone has none, a healthy checkout has all."""
@@ -48,8 +94,13 @@ def _partial(paths: list[Path]) -> bool:
 def test_no_session_notebook_has_gone_missing() -> None:
     """All of them or none of them. A gap means one was destroyed on this machine."""
     present = [p for p in EXPECTED_NOTEBOOKS if p.is_file()]
-    if not present:
-        pytest.skip("no session notebooks here — a fresh clone has none (they are gitignored)")
+    if not present and not is_a_working_checkout():
+        pytest.skip("no local-only files anywhere — this is a fresh clone, not a loss")
+    assert present, (
+        f"all {len(EXPECTED_NOTEBOOKS)} session notebooks are gone, and this checkout still has "
+        f"other local-only files — so it is not a clone. Restore from the backup store: "
+        f"`uv run python tools/backup_local_only.py --verify` names what it holds."
+    )
     missing = [p.name for p in EXPECTED_NOTEBOOKS if not p.is_file()]
     assert not missing, (
         f"{len(present)} session notebooks are present but {missing} are gone. These are "
@@ -62,8 +113,13 @@ def test_no_session_notebook_has_gone_missing() -> None:
 def test_no_notebook_builder_has_gone_missing() -> None:
     """The builders rebuild a lost notebook, and nothing tracked can restore a lost builder."""
     present = [p for p in EXPECTED_BUILDERS if p.is_file()]
-    if not present:
-        pytest.skip("no builders here — a fresh clone has none (they are gitignored)")
+    if not present and not is_a_working_checkout():
+        pytest.skip("no local-only files anywhere — this is a fresh clone, not a loss")
+    assert present, (
+        f"all {len(EXPECTED_BUILDERS)} notebook builders are gone, and this checkout still has "
+        f"other local-only files — so it is not a clone. This is the exact incident that has "
+        f"happened twice. Restore from the backup store before doing anything else."
+    )
     missing = [
         f"{p.parents[1].name}/tools/build_notebook.py" for p in EXPECTED_BUILDERS if not p.is_file()
     ]
@@ -74,6 +130,130 @@ def test_no_notebook_builder_has_gone_missing() -> None:
         f"'src/exercises/*/tools/build_notebook.py')^\" -- "
         f"'src/exercises/*/tools/build_notebook.py'\n"
         f"and keep a backup outside the repo (see AGENTS.md)."
+    )
+
+
+def test_no_programme_level_document_has_gone_missing() -> None:
+    """`docs/BRIEF.md` and the two explainer specs, which nothing else watched.
+
+    `AGENTS.md` requires both explainer documents to be read before building one, and they exist
+    only here. Losing them does not break a build — it silently removes the standard the next
+    explainer would have been held to.
+    """
+    present = [p for p in EXPECTED_PROGRAMME if p.is_file()]
+    if not present and not is_a_working_checkout():
+        pytest.skip("no local-only files anywhere — this is a fresh clone, not a loss")
+    assert present, (
+        "every programme-level document is gone, and this checkout still has other local-only "
+        "files — so it is not a clone. Restore from the backup store."
+    )
+    missing = [str(p.relative_to(REPO_ROOT)) for p in EXPECTED_PROGRAMME if not p.is_file()]
+    assert not missing, (
+        f"{len(present)} programme-level documents are present but {missing} are gone. They are "
+        f"gitignored and have no second copy in this repo. Restore from the backup store: "
+        f"`uv run python tools/backup_local_only.py --verify` will say whether it has them."
+    )
+
+
+def test_the_session_corpus_has_not_shrunk() -> None:
+    """The course material — transcripts, assignments, notes — is the biggest unguarded exposure.
+
+    **Measured against the backup store, not against a hand-written floor.** The first version
+    required at least one session note per exercise, which tolerated losing two thirds of the
+    corpus and ignored the forty-two diagrams entirely: a floor somebody typed is a floor that
+    stops meaning anything the moment the corpus grows. The store is a high-water mark that moves
+    on its own, so "fewer files than last time" is the question, and it is the right one.
+    """
+    if not SESSION_CORPUS.is_dir():
+        if is_a_working_checkout():
+            pytest.fail(
+                "docs/sessions is gone entirely and this checkout still has other local-only "
+                "files, so it is not a clone. That directory is the whole course corpus."
+            )
+        pytest.skip("no docs/sessions here — a fresh clone has none (it is gitignored)")
+
+    here = {p for p in SESSION_CORPUS.rglob("*") if p.is_file() and p.name != ".DS_Store"}
+
+    backed_up = STORE / "docs" / "sessions"
+    if backed_up.is_dir():
+        was = {
+            p.relative_to(backed_up)
+            for p in backed_up.rglob("*")
+            if p.is_file() and p.name != ".DS_Store"
+        }
+        gone = sorted(str(r) for r in was - {p.relative_to(SESSION_CORPUS) for p in here})
+        assert not gone, (
+            f"{len(gone)} files the backup store holds are missing from docs/sessions: "
+            f"{gone[:6]}. Restore them from {backed_up} before doing anything else."
+        )
+    else:
+        # No store on this machine yet, so fall back to the shape check. Weaker on purpose: it is
+        # better than nothing and it says so.
+        assert len(here) >= len(EXERCISES), (
+            f"docs/sessions holds {len(here)} files for {len(EXERCISES)} exercises, and there is "
+            f"no backup store to compare against. Run tools/backup_local_only.py."
+        )
+
+
+def test_no_watched_file_has_been_emptied() -> None:
+    """**Presence is not health, and these files are regenerated constantly.**
+
+    `is_file()` returns True for a zero-byte notebook. A builder that crashed half way through
+    writing leaves exactly that, and every guard above reports the file present — so the likelier
+    loss here, a bad overwrite rather than a deletion, passes cleanly. The floors are deliberately
+    crude: they catch empty and truncated, not subtly wrong, which is what a content hash in the
+    store is for.
+    """
+    floors = {".ipynb": 500, ".py": 500, ".md": 100}
+    thin = []
+    for path in _ALL_WATCHED:
+        if not path.is_file():
+            continue
+        size = path.stat().st_size
+        if size < floors.get(path.suffix, 1):
+            thin.append(f"{path.relative_to(REPO_ROOT)} ({size} bytes)")
+
+    assert not thin, (
+        f"these files exist but are empty or truncated: {thin}. A guard that only checks presence "
+        f"would call them healthy. Restore from the backup store."
+    )
+
+
+def test_every_session_notebook_is_still_valid_json() -> None:
+    """A notebook that no longer parses is lost, whatever its size says.
+
+    The builder writes JSON; an interrupted write produces a file that opens, has a plausible
+    length, and cannot be read by Jupyter or by anything else.
+    """
+    import json
+
+    broken = []
+    for path in EXPECTED_NOTEBOOKS:
+        if not path.is_file():
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            broken.append(f"{path.name}: {exc}")
+            continue
+        if not payload.get("cells"):
+            broken.append(f"{path.name}: parses but has no cells")
+
+    assert not broken, f"session notebooks that no longer read as notebooks: {broken}"
+
+
+def test_the_backup_store_is_named_somewhere_a_reader_will_find_it() -> None:
+    """A backup nobody knows about is not a backup.
+
+    The tripwire tells you a file is gone; it has to also tell you where the copy is. This asserts
+    the two stay connected, because the recovery instructions above are the only thing standing
+    between a loss and a permanent loss.
+    """
+    tool = REPO_ROOT / "tools" / "backup_local_only.py"
+    assert tool.is_file(), "the backup tool is gone; nothing else can restore a local-only file"
+    assert "backup_local_only" in (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8"), (
+        "AGENTS.md's MANDATORY section does not name the backup tool, so a reader following the "
+        "rules would never learn a store exists"
     )
 
 

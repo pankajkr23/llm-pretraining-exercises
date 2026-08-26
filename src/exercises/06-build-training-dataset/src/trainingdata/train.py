@@ -37,7 +37,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from . import checkpoint, feed, ledger
+from . import checkpoint, feed, ledger, opus, opus_score
 from . import model as model_module
 from . import plan as plan_module
 
@@ -150,6 +150,8 @@ def consume(
     tokenizer_sha256: str = "",
     attempt: int = 0,
     replayed_from: int | None = None,
+    chosen: list[tuple[plan_module.Span, int]] | None = None,
+    opus_decision_id: str | None = None,
 ) -> tuple[float, int, int]:
     """Feed one microbatch, accumulate its gradient, and write it down.
 
@@ -172,11 +174,23 @@ def consume(
         tokenizer_sha256: Provenance of what the token ids mean.
         attempt: Which attempt at this run this is.
         replayed_from: The step this one re-executes, when resuming past a checkpoint.
+        chosen: Explicit `(span, pass number)` pairs to feed instead of the plan's. This is how a
+            selector's decision reaches the model — and it is the *same* packer either way, so an
+            OPUS batch and a planned batch cannot drift into two differently-shaped things.
+        opus_decision_id: The selection pass these spans came from. Recorded on the event, which is
+            what lets an auditor check that every shard in a loss-bearing batch was `accept` or
+            `floor_override` in the pass it names. `None` for an ordinary planned step, and that
+            asymmetry is deliberate: a planned batch was not selected, so claiming a pass id for it
+            would point at a decision that never happened.
 
     Returns:
         `(summed loss, graded tokens, total tokens)` for this microbatch.
     """
-    batch = feed.build_microbatch(schedule, handles, step, rank, accum)
+    batch = (
+        feed.assemble(chosen, handles, schedule.config.sequence_length)
+        if chosen is not None
+        else feed.build_microbatch(schedule, handles, step, rank, accum)
+    )
 
     logits = state.net(
         torch.from_numpy(batch.tokens),
@@ -209,7 +223,9 @@ def consume(
         attention_policy="block-diagonal-causal",
         position_policy="restart-per-document-continue-across-window",
         pack_policy="concat-and-chop",
-        opus_decision_id=None,
+        loss_policy=batch.loss_policy,
+        context_spans=batch.context_spans,
+        opus_decision_id=opus_decision_id,
         tokenizer_sha256=tokenizer_sha256,
         plan_digest=schedule.key.digest(),
         replayed_from=replayed_from,
@@ -306,6 +322,183 @@ def run_step(
     return result
 
 
+def opus_candidates(
+    schedule: plan_module.Plan,
+    handles: dict[str, feed.ShardHandle],
+    *,
+    start_step: int,
+    rank: int,
+    count: int,
+) -> list[tuple[plan_module.Span, int, str, int]]:
+    """Draw a buffer of candidate spans from plan slots the run has not reached yet.
+
+    The candidates are **real upcoming work**, not a synthetic pool: selection is choosing the order
+    and composition of what this rank would otherwise consume next, which is what makes accepting
+    one and rejecting another a decision with consequences rather than a scoring exercise.
+
+    Args:
+        schedule: The run's plan.
+        handles: Every open shard, by id.
+        start_step: The first step to draw from — past the end of the run so far.
+        rank: Which worker's stream to draw from.
+        count: How many candidates.
+
+    **Each candidate carries the flat index of its own slot**, not its position in the buffer. The
+    odometer refuses a `seq` outside `[0, microbatch)` — correctly, since a carry there would make
+    two coordinates share one flat index — so numbering candidates 0..63 and calling that a
+    coordinate is caught rather than silently accepted. The flat index is what ties a decision back
+    to the work it was a decision about.
+
+    Returns:
+        `(span, pass number, lane, flat index)` per candidate, skipping any slot whose shard is not
+        open.
+    """
+    config = schedule.config
+    found: list[tuple[plan_module.Span, int, str, int]] = []
+    step = start_step
+
+    while len(found) < count:
+        for accum in range(config.accumulation):
+            for seq in range(config.microbatch):
+                coord = plan_module.Coordinate(step=step, rank=rank, accum=accum, seq=seq)
+                span = schedule.span_for(coord)
+                if span.shard_id in handles:
+                    found.append(
+                        (
+                            span,
+                            schedule.pass_number(coord),
+                            handles[span.shard_id].lane,
+                            plan_module.flat(coord, config),
+                        )
+                    )
+                if len(found) == count:
+                    return found
+        step += 1
+        if step > start_step + count:  # the plan cannot supply this rank; stop rather than spin
+            break
+    return found
+
+
+def run_opus_pass(
+    state: RankState,
+    schedule: plan_module.Plan,
+    handles: dict[str, feed.ShardHandle],
+    *,
+    step: int,
+    rank: int,
+    proxy: torch.Tensor,
+    pass_id: str,
+    buffer: int = 8,
+    ratio: float = 0.5,
+    temperature: float = 0.25,
+    score_len: int = 128,
+    seed: int = 0,
+    tokenizer_sha256: str = "",
+    stage: str = "opus",
+) -> tuple[opus.Pass, opus_score.Scoring, list[tuple[float, int, int]]]:
+    """Score a buffer, decide every candidate's fate, and feed the ones that were selected.
+
+    **The whole point is the last clause.** A selection that scores and records but never changes
+    what the model reads is a report, not a selector — and it would look identical in the log. Here
+    the served spans go through the same `consume` an ordinary step uses, so they land in the same
+    ledger with the same fields, carrying `opus_decision_id` so the decision and its consequence can
+    be joined afterwards.
+
+    Args:
+        state: This rank's model, optimizer and ledger writer.
+        schedule: The run's plan.
+        handles: Every open shard, by id.
+        step: The step number these microbatches are recorded under.
+        rank: This worker.
+        proxy: The reference direction, from `opus_score.proxy_direction`.
+        pass_id: Identifier shared by the decision log and every event it explains.
+        buffer: Candidates per served microbatch.
+        ratio: Fraction of the buffer to serve.
+        temperature: Boltzmann temperature, as a multiple of the score spread.
+        score_len: Tokens of each candidate scored.
+        seed: Noise seed.
+        tokenizer_sha256: Provenance of what the token ids mean.
+        stage: Curriculum stage recorded on the events.
+
+    Returns:
+        `(the decision pass, the scoring, one (loss, graded, tokens) per fed microbatch)`.
+
+    Raises:
+        ValueError: If the plan cannot supply a full buffer. A short buffer would change the keep
+            ratio silently, and every share derived from it afterwards.
+    """
+    config = schedule.config
+    wanted = buffer * config.microbatch
+    drawn = opus_candidates(schedule, handles, start_step=step, rank=rank, count=wanted)
+    if len(drawn) < wanted:
+        raise ValueError(
+            f"the plan supplied {len(drawn)} of {wanted} candidates for rank {rank} "
+            f"at step {step}; a short buffer changes the keep ratio without saying so"
+        )
+
+    # One sequence per candidate: the unit of selection is a span, not a microbatch. Packing them
+    # in groups would score a group and then be unable to say which member earned the score.
+    batches = [
+        feed.assemble([(span, pass_no)], handles, config.sequence_length)
+        for span, pass_no, _, _ in drawn
+    ]
+    scored = opus_score.score_buffer(
+        state.net,
+        state.optimizer,
+        [
+            {"tokens": b.tokens, "additive": b.additive, "positions": b.positions, "loss": b.loss}
+            for b in batches
+        ],
+        proxy,
+        keep=int(round(ratio * wanted)),
+        score_len=score_len,
+    )
+
+    candidates = [
+        opus.Candidate(
+            flat=flat_index, shard_id=span.shard_id, start=span.start, end=span.end, lane=lane
+        )
+        for span, _, lane, flat_index in drawn
+    ]
+    selection = opus.select(
+        candidates,
+        scored.scores,
+        keep=int(round(ratio * wanted)),
+        pass_id=pass_id,
+        temperature=temperature,
+        seed=seed,
+    )
+
+    by_flat = {candidate.flat: index for index, candidate in enumerate(candidates)}
+    served = [drawn[by_flat[c.flat]] for c in selection.served]
+
+    # Feed the served spans in whole microbatches. A partial trailing group is dropped rather than
+    # padded, because a short microbatch would reduce against a different token count than its
+    # siblings and quietly reweight the step.
+    results: list[tuple[float, int, int]] = []
+    for accum, offset in enumerate(
+        range(0, len(served) - config.microbatch + 1, config.microbatch)
+    ):
+        group = [
+            (span, pass_no) for span, pass_no, _, _ in served[offset : offset + config.microbatch]
+        ]
+        results.append(
+            consume(
+                state,
+                schedule,
+                handles,
+                step + accum,
+                rank,
+                0,
+                stage=stage,
+                tokenizer_sha256=tokenizer_sha256,
+                chosen=group,
+                opus_decision_id=pass_id,
+            )
+        )
+    return selection, scored, results
+
+
 def build_state(
     schedule: plan_module.Plan,
     ledger_dir,
@@ -399,6 +592,8 @@ def save_checkpoint(
     segments: dict[int, int],
     plan_digest: str,
     config_fingerprint: str,
+    parent_branch_id: str | None = None,
+    forked_at_step: int | None = None,
 ) -> checkpoint.Checkpoint:
     """Write weights, optimizer state and the cut vector.
 
@@ -421,6 +616,8 @@ def save_checkpoint(
         segments: Rank to segment number, from `gather_cut`.
         plan_digest: The plan these weights were trained under.
         config_fingerprint: The settings they were trained under.
+        parent_branch_id: The branch this one forked from, if any.
+        forked_at_step: The last step shared with that parent.
 
     Returns:
         The checkpoint's metadata.
@@ -445,6 +642,8 @@ def save_checkpoint(
         plan_digest=plan_digest,
         config_fingerprint=config_fingerprint,
         environment=environment(),
+        parent_branch_id=parent_branch_id,
+        forked_at_step=forked_at_step,
     )
     checkpoint.write_atomically(
         checkpoint.sidecar_path(directory, identifier),

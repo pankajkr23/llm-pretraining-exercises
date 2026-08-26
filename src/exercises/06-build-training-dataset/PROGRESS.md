@@ -317,14 +317,18 @@ Full reasoning in `DECISIONS.md`. Summary:
 | D5 | `defer` and `floor_override` are ours | a course source that defines them; none found |
 | D6 | OPUS is ported, not installed | — |
 | D7 | Build OPUS from the paper, not the lecture | nothing; verified against paper and code |
+| D18 | Boltzmann temperature is a multiple of the score spread | a source showing the paper's is already normalised |
+| D19 | `redundancy_weight` defaults to Eq. 23 unmodified | reading the paper's definition of η directly |
+| D20 | The held-out split is written to disk, not just counted | nothing — a count with no data is uncheckable |
 
 ---
 
 ## Verification
 
 ```bash
-uv run python -m trainingdata.run_demo   # (stage 8) one command, no manual intervention
-uv run python -m trainingdata.verify     # (stage 8) re-checks every claim from artifacts ONLY
+uv run python src/exercises/06-build-training-dataset/run_demo.py   # one command, no interaction
+uv run python src/exercises/06-build-training-dataset/verify.py     # re-checks every claim from
+                                                                    # the bundle ONLY
 uv run pytest src/exercises/06-build-training-dataset
 uv run ruff check . && uv run ruff format --check .
 ```

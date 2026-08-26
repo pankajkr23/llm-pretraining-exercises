@@ -12,13 +12,16 @@ documents -> tokenized shards -> manifests -> mixture schedule -> packing -> bat
           -> crash -> resume -> replay -> audit
 ```
 
-> **Status: stage 7 of 8.** The system trains on four real processes, writes a chain-hashed
+> **Status: stage 8 of 8.** The system trains on four real processes, writes a chain-hashed
 > consumption ledger, survives a genuine crash and resumes onto the same batch ids a run that never
-> crashed would have consumed. Stage 8 is part-landed: `replay.py` re-derives a recorded interval
-> from the immutable shards alone — 32/32 microbatches re-derived, and one flipped bit in one shard
-> turns exactly 1 of those 32 red. Fork, the auditor (`verify.py`) and the evidence bundle are
-> **not** built yet, and this file says so rather than describing a system that does not exist. The
-> stage table is [below](#the-stages).
+> crashed would have consumed. Stage 8 has landed: `replay.py` re-derives a recorded interval from
+> the immutable shards alone, `fork.py` branches with the lineage recorded rather than inferred,
+> and `opus.py` scores real candidates against a real checkpoint and writes a row per decision.
+> **One command produces the bundle — 9 of 9 requirements, 12 of the 13 required log events — and a
+> second, walled-off command re-derives every claim from that bundle alone and passes 40 of 40
+> checks.** The thirteenth event is `audit completed`, which the producer marks `[SKIP]` on purpose
+> because it cannot certify its own audit; `verify.py` completes it. The stage table is
+> [below](#the-stages).
 
 ## How to read this
 
@@ -89,11 +92,13 @@ Each ends in something you can run and see. Nothing advances until the previous 
 | 5 | pack a window and **see** the block-diagonal attention mask | **done** |
 | 6 | train, then read the consumption ledger back line by line | **done** |
 | 7 | crash it on purpose, resume, and watch the batch ids line up | **done** |
-| 8 | replay an interval, fork a branch, run the auditor | **part** — replay lands; fork and audit do not |
+| 8 | replay an interval, fork a branch, select with OPUS, run the auditor | **done** |
 
 ## Layout
 
 ```text
+run_demo.py      # ONE command: regenerates the whole submission bundle, no interaction
+verify.py        # the auditor: re-derives every claim from the bundle alone, importing only spec
 BRIEF.md         # the assignment — LOCAL ONLY, gitignored, never the deliverable
 CLAUDE.md        # rules specific to this exercise, for whoever changes the code
 DECISIONS.md     # what was chosen, and what would overturn each choice
@@ -117,11 +122,21 @@ src/trainingdata/
   resume.py      # bringing a ledger back into agreement with a checkpoint, after a crash
   replay.py      # re-deriving a recorded interval from the shards alone — never from the planner
   mixture.py     # session 5's recipe as data — lane shares, floors, and the token targets
+  corpus.py      # fetched text to sealed, admitted shards, with a checkable lineage
+  fork.py        # branching from an earlier checkpoint, with the lineage made a fact
+  metrics.py     # throughput and packing efficiency, derived from the ledger
+  evidence.py    # the nine requirement rows, computed from artifacts rather than memory
+  opus.py        # the decision record: floors, selection, the noise band, one row per candidate
+  opus_score.py  # the OPUS criterion itself — the only selection code that needs torch
 tests/           # discovered by `uv run pytest` from the repo root
 tools/
   fetch_corpus.py   # TRACKED — a corpus needs a tracked way to fetch and licence-check it
+  build_corpus.py   # TRACKED — fetched text to sealed shards, with the guards that matter
   build_notebook.py # local-only, gitignored — back it up
+  build_web_data.py # derives web/data.js from the run, so no page figure is typed by hand
 artifacts/       # heavy regenerable output (gitignored)
+results/         # TRACKED — measured evidence a document renders; it must survive a clone
+submission_artifacts/  # TRACKED — the deliverable: run.log, evidence.json/md, manifests, ledger
 ```
 
 ## Run it
@@ -190,6 +205,85 @@ Stated here, and it will be stated again beside the numbers when there are numbe
 - **Two of the four OPUS statuses are ours.** `defer` and `floor_override` appear nowhere in the
   OPUS paper, its reference implementation, or LightningLM; all three were searched.
   [`DECISIONS.md`](DECISIONS.md) records that we defined them.
+- **The redundancy penalty is inert at the learning rate this run uses**, and the run says so
+  rather than implying a diversity term that is doing work. See [Selection](#selection) below.
+
+## Selection
+
+**The plain version.** Not every piece of text helps the model equally at every moment. A selector
+scores a pool of candidate sequences and puts the useful ones in the batch. **OPUS** —
+*Optimizer-induced Projected Utility Selection* — scores each candidate not by how large its
+gradient is, but by **how far it would actually move the model**: it multiplies the gradient by
+AdamW's own per-weight step scale, read live out of `optimizer.state`. A direction that looks large
+in raw gradient space can be one the optimizer barely moves in. Measured here, that scale factor
+spans a **factor of 84,000 across weights**, so the two are genuinely different questions.
+
+**What this exercise adds is the record, and that is deliberate.** The selector is not the gap in
+the field; the accountability is. LightningLM ships a complete OPUS implementation and keeps one
+metrics dict per scoring *pass* — no per-candidate record, a `mark_batch_consumed()` that is never
+called, and batch provenance computed and discarded. *"Why was this rejected at step 400"* is
+unanswerable there. Here every candidate gets a row: its score, its noisy score, its rank, its
+outcome and **a reason in words**, under a digest, joined to the ledger by `opus_decision_id`.
+
+| status | meaning | whose |
+| --- | --- | --- |
+| `accept` | selected on its score, and served | the selector's |
+| `reject` | not selected, and discarded | the selector's |
+| `defer` | not selected, but **noise** decided it; returned to the pool | **ours** |
+| `floor_override` | served because a protected lane required it, *against* its score | **ours** |
+
+**The floor is architectural, not a clamp.** Protected lanes are drawn from a stream the scorer
+never ranks, so there is no code path by which a floor could be violated. What makes
+`floor_override` *observable* is that the reserved candidates are still scored — so when one lands
+below the cut, the record says the floor is what served it and by how much.
+
+### Two measurements that changed the code
+
+**The temperature had to become a multiple of the score spread.** Gumbel noise has a fixed standard
+deviation of `π/√6 ≈ 1.283`. A utility is an inner product of gradients, and it shrinks as the
+model improves. With an absolute temperature those two facts collide silently:
+
+| `τ` | noise ÷ signal | accept | reject | defer |
+| ---: | ---: | ---: | ---: | ---: |
+| 0.05 | 0.06 | 28 | 30 | 2 |
+| **0.25** (ours) | **0.32** | 31 | 15 | 17 |
+| 0.90 | 1.09 | 31 | 3 | 29 |
+| 2.00 | 2.43 | 32 | **0** | 32 |
+
+At `τ = 2.0` **not one rejection survives a redraw** — the selector is a uniform sampler wearing a
+score, and nothing fails to say so. Dividing by the observed spread makes the ratio a quantity that
+is chosen rather than inherited, and every pass records it.
+
+**The redundancy penalty contributes 0.07% of the score at our learning rate.** The alignment term
+carries `η` and the penalty carries `η²`, so at `η = 3e-4` there is a structural 3,333× gap before
+any inner product is looked at. Sweeping `η` without gaps: 3e-4 → **0.069%**, 1e-3 → 0.27%,
+1e-2 → 1.97%, 1e-1 → 24.7%, 1.0 → 85.1%. And the cause is `η` alone — with it stripped out the
+penalty's raw term is **4.05× larger** than the alignment's, exactly as it should be when `G` sums
+six selected vectors. Either the penalty is genuinely inert at any practical learning rate, or `η`
+in Eq. 23 is not the raw learning rate and our reading is wrong. **The measurement is certain;
+which of those it is, is not**, and the code does not pick one: `redundancy_weight` defaults to
+`1.0` — Eq. 23 unmodified — and every pass publishes `redundancy_share`.
+
+### Two things the shipped run measured about itself
+
+**The selector strongly prefers one lane, and the mixture is what stops it.** Mean utility by lane
+across all four passes: **indic 1,357 · code 1,088 · reasoning 740 · agentic 612 · web 569 ·
+stem 551**. Indic was accepted 21 times, rejected once; web was accepted 11 times and
+rejected or deferred 27. A plausible mechanism is that the model is worst at indic — a different
+script against a tokenizer trained mostly on other text — so its gradients are largest and align
+most with a proxy averaged over every lane. **That is a hypothesis, not a result**: nothing here
+isolates script difficulty from the several other things that differ between lanes. What is not a
+hypothesis is the consequence: a selector left alone will pull the realised mixture toward whatever
+the model currently finds hardest, which is exactly what the protected floors exist to bound.
+
+**A floor can fail for two reasons and only one of them is a bug.** `agentic` is 2% of the mixture
+and a candidate buffer is 32 consecutive plan slots, so **0.64 candidates are expected per pass** —
+and three of four passes contained none. The reservation worked perfectly; there was simply nothing
+to reserve. Reporting that as a breach blames the mechanism, and reporting it as *held* hides that
+the lane was never offered, so the record calls it **`unsupplied`** and prints the arithmetic. The
+auditor re-derives the same three passes independently. This is the repo's standing rule about
+blindness applied to a guarantee: *a floor that cannot see a lane is not evidence about that lane*,
+and untestable reads as passing.
 
 ## Credits
 

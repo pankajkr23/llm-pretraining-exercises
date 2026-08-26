@@ -52,8 +52,17 @@ class Config:
     #: Keep fraction. 0.5 in the paper, in the reference implementation's argparse, and in all
     #: three of LightningLM's OPUS configs.
     opus_ratio: float = 0.5
-    #: Boltzmann temperature for stochastic selection.
-    opus_temperature: float = 0.9
+    #: Boltzmann temperature for stochastic selection, as a **multiple of the score spread**.
+    #:
+    #: Not an absolute, and the difference is load-bearing. Gumbel noise has a fixed standard
+    #: deviation of `π/√6 ≈ 1.283`; a utility's spread is an inner product of gradients and shrinks
+    #: as the model improves. At an absolute 0.9 against unit-scale utilities the noise carried
+    #: **1.09×** the spread of the signal it perturbed, and 29 of 32 non-selected candidates flipped
+    #: under resampling — selection on merit had already become sampling at random, with nothing
+    #: failing to say so. Measured as a multiple, `noise_dominance = τ · π/√6` holds whatever the
+    #: gradients do. **0.25 puts it at 0.32**, which keeps the ordering score-led while leaving
+    #: real exploration. See `opus.select` for the sweep and `DECISIONS.md` D18.
+    opus_temperature: float = 0.25
     #: Tokens of each candidate actually scored.
     opus_score_len: int = 128
 
