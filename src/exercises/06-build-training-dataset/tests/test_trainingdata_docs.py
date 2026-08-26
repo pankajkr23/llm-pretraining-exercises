@@ -93,10 +93,19 @@ def test_no_python_file_is_named_that_does_not_exist() -> None:
     }
     named = set(re.findall(r"\b([a-z_][a-z0-9_]*\.py)\b", text))
 
-    # Named on purpose while unbuilt: the README's own stage table says stage 8 is unfinished, and
-    # the producer/auditor section has to name the two commands the assignment will be graded on.
-    # When they land, they land in the exercise root and this allowlist stops mattering.
+    # TWO different reasons a named file may be absent, kept apart on purpose. Rolling them into
+    # one set is what broke this: when the `planned` reason expired the whole allowlist was
+    # deleted, and the permanent exemption went with it — green locally, red in CI.
+    #
+    # Temporary: named but not yet written. The README's stage table says stage 8 is unfinished,
+    # and the producer/auditor section has to name the two commands the work will be graded on.
+    # These entries expire when the files land.
     planned = {"run_demo.py", "verify.py"}
 
-    phantom = sorted(named - present - planned)
+    # Permanent: written, present on every working checkout, and deliberately never shipped.
+    # `tools/build_notebook.py` is gitignored by repo policy, so it exists here and on no clone —
+    # which is precisely why a filesystem scan disagrees with CI about whether the README is honest.
+    local_only = {"build_notebook.py"}
+
+    phantom = sorted(named - present - planned - local_only)
     assert not phantom, f"the README names Python files that do not exist: {phantom}"
