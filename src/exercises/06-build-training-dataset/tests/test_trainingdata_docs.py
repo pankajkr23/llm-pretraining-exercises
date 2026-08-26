@@ -9,6 +9,7 @@ Where prose must stay hand-written, a test asserts the number in it. That is wha
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -16,6 +17,13 @@ import pytest
 EXERCISE = Path(__file__).resolve().parents[1]
 README = EXERCISE / "README.md"
 MODULES = EXERCISE / "src" / "trainingdata"
+
+#: Python files the documents may name that **no clone receives**, with the reason.
+#:
+#: `tools/build_notebook.py` is gitignored by repo policy — every exercise has one, none is pushed,
+#: and `AGENTS.md` explains why. It therefore exists on a working checkout and not in CI, so a
+#: filesystem scan disagrees with a fresh clone about whether the README is honest.
+LOCAL_ONLY: set[str] = {"build_notebook.py"}
 
 
 def _stage_rows() -> list[tuple[int, str]]:
@@ -93,7 +101,7 @@ def test_no_python_file_is_named_that_does_not_exist() -> None:
     }
     named = set(re.findall(r"\b([a-z_][a-z0-9_]*\.py)\b", text))
 
-    phantom = sorted(named - present)
+    phantom = sorted(named - present - LOCAL_ONLY)
     assert not phantom, f"the README names Python files that do not exist: {phantom}"
 
 
@@ -118,4 +126,38 @@ def test_the_not_shipped_paragraph_names_nothing_that_exists() -> None:
     assert not exists, (
         f"CLAUDE.md says {sorted(exists)} are not shipped; they are on disk. A reader would "
         f"rebuild work that is already done."
+    )
+
+
+def test_every_python_file_the_readme_names_is_either_tracked_or_known_to_be_local_only() -> None:
+    """**The half of the check above that a working checkout cannot see.**
+
+    `test_no_python_file_is_named_that_does_not_exist` scans the filesystem, so it passes on a
+    machine that has the gitignored builders and fails on a fresh clone — and CI is the fresh
+    clone. That asymmetry is not hypothetical: removing an allowlist entry passed here and failed
+    in CI, which is the slowest possible way to learn it.
+
+    So this asks the question a clone would ask: is every Python file the README names actually
+    *shipped*? A file that is deliberately not shipped is named in `LOCAL_ONLY` with the reason;
+    anything else naming a file no clone receives is a broken promise to a reader.
+
+    A newly written file must be `git add`ed before a document may name it. That is the intended
+    order anyway — CI decides, and CI only sees the index.
+    """
+    tracked = {
+        Path(line).name
+        for line in subprocess.run(
+            ["git", "ls-files", "*.py"],
+            cwd=EXERCISE.parents[2],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.split()
+    }
+    named = set(re.findall(r"\b([a-z_][a-z0-9_]*\.py)\b", README.read_text()))
+
+    unshipped = sorted(named - tracked - LOCAL_ONLY)
+    assert not unshipped, (
+        f"the README names {unshipped}, which no clone receives. Either commit them, or add them "
+        f"to LOCAL_ONLY with the reason they are deliberately not shipped."
     )
