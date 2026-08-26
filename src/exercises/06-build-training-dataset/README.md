@@ -116,8 +116,11 @@ src/trainingdata/
   checkpoint.py  # weights, optimizer state, and the ledger cut that belongs with them
   resume.py      # bringing a ledger back into agreement with a checkpoint, after a crash
   replay.py      # re-deriving a recorded interval from the shards alone — never from the planner
+  mixture.py     # session 5's recipe as data — lane shares, floors, and the token targets
 tests/           # discovered by `uv run pytest` from the repo root
-tools/           # the notebook builder (local-only, gitignored — back it up)
+tools/
+  fetch_corpus.py   # TRACKED — a corpus needs a tracked way to fetch and licence-check it
+  build_notebook.py # local-only, gitignored — back it up
 artifacts/       # heavy regenerable output (gitignored)
 ```
 
