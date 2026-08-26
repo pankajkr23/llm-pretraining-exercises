@@ -12,6 +12,30 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **The two graded commands exist and disagree with each other when they should.**
+  `run_demo.py` regenerates the whole submission bundle in **15.4 s** with no interaction —
+  225,067 bytes against the 2 MiB cap, 8 of 9 requirements met, 11 of 13 required log events
+  genuinely produced. `verify.py` re-derives every published claim from `submission_artifacts/`
+  alone and scores **20 of 22**; both failures are it refusing to bless the one requirement that is
+  not built. A bundle whose token count is inflated by a million, or whose ledger has one doctored
+  line, is rejected — watched failing before either check was trusted.
+- **The producer/auditor wall is a test, not a rule, because breaking it is invisible.** One
+  `from trainingdata import metrics` in `verify.py` would turn every number check into the
+  producer's arithmetic checked against the producer's arithmetic — agreeing with itself whatever
+  either had got wrong — and the printed report would look identical. The import closure is
+  asserted transitively, with a twin pointed at `run_demo.py` proving the walker sees imports at
+  all. The chain hash is re-implemented with `hashlib` for the same reason.
+- **A verdict per log line**, so an auditor can tell *"the run did not do this"* from *"the run did
+  not mention it"*. Two events are written `[SKIP]` with their reason rather than claimed.
+- **`fork.verify_fork` and lineage**, because `common_prefix` asked the wrong question of a fork: a
+  child **inherits** its parent's history rather than copying it, so a legitimate fork shares zero
+  events and the old check printed that as though it were a failure.
+- **Throughput measured as the slowest rank per step, not the sum** — four ranks summed would
+  report four times the tokens per second a step actually achieves.
+- **`tools/build_corpus.py`**, so the shards stop coming from a scratch directory. It refuses a
+  second build into a directory that already holds one: `manifest.append` is append-only, so
+  building twice writes a second set of lines for the same shards and **doubles every count derived
+  from them**, while the content-addressed shards on disk stay identical and nothing looks wrong.
 - **Context masking is a behaviour of the run, not a capability.** `masks.loss_mask(context_spans=)`
   was implemented, tested and taught in the notebook with **zero callers** — the pipeline
   demonstrably did not do what its own documentation showed. The spans now travel from the shard
@@ -37,6 +61,24 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   reasoning against 99.6% on web.
 - **`spec.py` gains the policy vocabularies** — `PACK_POLICIES`, `POSITION_POLICIES`,
   `ATTENTION_POLICIES`, `LOSS_POLICIES` — pinned by name with the same twin `DECISIONS` has.
+
+
+### Fixed
+
+- **The evaluation firewall was simulated in the demo** — the eval manifest was built in memory and
+  never written, so the evidence row correctly read *"no evaluation shard was offered"*, which is
+  true and the opposite of what the run intended to show. It now writes a real shard and the
+  auditor checks the refusal against the ledger's own spans.
+- **The mixture row was true and misleading.** It reported "outside tolerance" for a run consuming
+  **1.2% of the plan**, where no lane's share divides evenly into a 64-sequence step and drift of up
+  to 2.1 points is arithmetic rather than a defect. It now states coverage, sample drift and
+  corpus-level compliance separately.
+- **`verify.py` reported to stderr**, so every check "passed" against an empty string in any test
+  that read stdout. A report meant to be read and piped goes to stdout.
+- **`06/CLAUDE.md` denied that seven shipped things existed** — fork, the auditor, the demo runner,
+  the metrics module, the evidence writer, the corpus fetcher and a tracked `results/` — in the
+  same file whose next paragraph warned that this paragraph goes stale silently. It is now derived
+  from the filesystem by a test.
 
 ### Changed
 

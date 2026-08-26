@@ -323,8 +323,9 @@ Full reasoning in `DECISIONS.md`. Summary:
 ## Verification
 
 ```bash
-uv run python -m trainingdata.run_demo   # (stage 8) one command, no manual intervention
-uv run python -m trainingdata.verify     # (stage 8) re-checks every claim from artifacts ONLY
+uv run python src/exercises/06-build-training-dataset/run_demo.py   # one command, no interaction
+uv run python src/exercises/06-build-training-dataset/verify.py     # re-checks every claim from
+                                                                    # the bundle ONLY
 uv run pytest src/exercises/06-build-training-dataset
 uv run ruff check . && uv run ruff format --check .
 ```

@@ -4,29 +4,36 @@ Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is the
 `submission_artifacts/` bundle, the reasoning is `DECISIONS.md`, the running log is `PROGRESS.md`,
 and `BRIEF.md` is the assignment (local only, gitignored).
 
-**Status: stage 7 done, stage 8 partial.** Shipped: `spec.py`, `config.py`, `shards.py`,
+**Status: stage 8 done; OPUS outstanding.** Shipped: `spec.py`, `config.py`, `shards.py`,
 `manifest.py`, `firewall.py`, `plan.py`, `masks.py`, `pack.py`, `feed.py`, `ledger.py`, `model.py`,
-`train.py`, `runner.py`, `checkpoint.py`, `resume.py`, `replay.py`, `mixture.py`,
-`corpus.py`, `fork.py`, `metrics.py` and `evidence.py` — twenty-one modules, plus
-`run_demo.py` and `verify.py` at the exercise root. `tools/fetch_corpus.py` is **tracked**, unlike the notebook builder.
+`train.py`, `runner.py`, `checkpoint.py`, `resume.py`, `replay.py`, `mixture.py`, `corpus.py`,
+`fork.py`, `metrics.py` and `evidence.py`, plus `run_demo.py` and `verify.py` at the exercise root
+and `tools/fetch_corpus.py` + `tools/build_corpus.py`, both **tracked** (unlike the notebook
+builder). `results/` is tracked and documents render `corpus_build.json` from it.
 
-**Not shipped, and do not describe the exercise as having them:** `fork`, `verify.py`,
-`run_demo.py`, `opus`, the metrics/throughput module, the evidence writer (`evidence.json` /
-`evidence.md`), a corpus fetcher under `tools/`, and any `web/` bundle. There is also no tracked
-`results/` directory, so no document here yet renders a committed measurement.
+**Not shipped, and do not describe the exercise as having them:** `opus.py`, and any `web/` bundle.
+
+That sentence is now checked. `test_the_not_shipped_paragraph_names_nothing_that_exists` reads the
+paragraph above and fails if anything it denies is on disk — because it is the sentence that went
+stale, and it went stale in the file whose *next* paragraph warns it would. It denied fork, the
+auditor, the demo runner, the metrics module, the evidence writer, the corpus fetcher and a tracked
+`results/` while all seven were built. An agent reading it would have rebuilt finished work, or
+reported a delivered artefact as missing.
 
 **Stage 7 is proven, not asserted.** Golden run 144 events; ranks stopped at 24/25/26/27; resumed
 from `ckpt-main-000007`; 6 microbatches re-executed; every `(step, rank, accum, flat,
 microbatch_hash)` after resume equals the golden run.
 
-**Stage 8 is one third done.** Replay landed — 32/32 events re-derived, and one flipped shard bit
-turns exactly 1 of the 32 red, which is the property that makes the check worth running. Fork and
-the auditor have not.
+**Stage 8 landed.** Replay: 32/32 events re-derived, one flipped shard bit turns exactly 1 red.
+Fork: lineage recorded rather than inferred. Auditor: 20 of 22 checks, and the 2 failures are it
+refusing to bless the OPUS gap.
 
 `tests/test_trainingdata_docs.py` guards **README.md's** status line against **README.md's** stage
-table, and separately asserts every module is named in both README.md and CLAUDE.md. It does *not*
-read this header — so this paragraph is hand-maintained and goes stale silently. It already did:
-it denied `replay.py` existed while the module carried 340 lines and 14 tests.
+table, asserts every module is named in both README.md and CLAUDE.md, and — since this header went
+stale twice — asserts the not-shipped paragraph above names nothing that exists. What it still does
+**not** read is the rest of this header: the stage claims and their numbers are hand-maintained, and
+the first time one of them went stale it denied `replay.py` existed while the module carried 340
+lines and 14 tests.
 
 ## The rules this exercise adds
 

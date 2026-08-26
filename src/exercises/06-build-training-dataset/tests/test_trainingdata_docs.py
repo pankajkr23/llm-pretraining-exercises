@@ -93,10 +93,29 @@ def test_no_python_file_is_named_that_does_not_exist() -> None:
     }
     named = set(re.findall(r"\b([a-z_][a-z0-9_]*\.py)\b", text))
 
-    # Named on purpose while unbuilt: the README's own stage table says stage 8 is unfinished, and
-    # the producer/auditor section has to name the two commands the assignment will be graded on.
-    # When they land, they land in the exercise root and this allowlist stops mattering.
-    planned = {"run_demo.py", "verify.py"}
-
-    phantom = sorted(named - present - planned)
+    phantom = sorted(named - present)
     assert not phantom, f"the README names Python files that do not exist: {phantom}"
+
+
+def test_the_not_shipped_paragraph_names_nothing_that_exists() -> None:
+    """**The stale sentence, caught rather than shipped again — in the agent instructions.**
+
+    `CLAUDE.md` carries a paragraph naming what the exercise does *not* have, and a paragraph
+    immediately after it warning that no test reads the header so it goes stale silently. It did:
+    it denied `fork`, `verify.py`, `run_demo.py`, the metrics module, the evidence writer, the
+    corpus fetcher and a tracked `results/` while all seven were on disk. An agent reading it would
+    have rebuilt work that was already done, or reported a finished deliverable as missing.
+
+    So the sentence is now derived from the filesystem, the same way the shipped list is.
+    """
+    text = (EXERCISE / "CLAUDE.md").read_text()
+    marker = "**Not shipped, and do not describe the exercise as having them:**"
+    assert marker in text, "CLAUDE.md lost its not-shipped paragraph; this guard is now inert"
+
+    paragraph = text.split(marker, 1)[1].split("\n\n", 1)[0]
+    denied = set(re.findall(r"`([a-z_][a-z0-9_]*\.py)`", paragraph))
+    exists = {n for n in denied if (MODULES / n).is_file() or (EXERCISE / n).is_file()}
+    assert not exists, (
+        f"CLAUDE.md says {sorted(exists)} are not shipped; they are on disk. A reader would "
+        f"rebuild work that is already done."
+    )
