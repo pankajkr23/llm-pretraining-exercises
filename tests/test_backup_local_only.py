@@ -251,28 +251,104 @@ def test_a_second_snapshot_with_no_changes_reports_nothing_changed(
 # --- the tool as a command ----------------------------------------------------------------------
 
 
+def _run(*args: str, home: Path | None = None) -> subprocess.CompletedProcess:
+    """Invoke the tool as a command.
+
+    Args:
+        *args: Command-line arguments.
+        home: When given, run with **no git identity and no guessing**. That is what the CI runner
+            looked like when it exposed the swallowed `git commit` failure — and clearing the
+            config alone does not reproduce it on macOS, where git invents an identity from the
+            hostname and commits regardless.
+
+    Returns:
+        The finished process.
+    """
+    env = None
+    if home is not None:
+        import os
+
+        env = {
+            **os.environ,
+            "HOME": str(home),
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CONFIG_SYSTEM": os.devnull,
+            # Clearing the config is not enough on macOS: git happily GUESSES an identity from the
+            # username and hostname and commits anyway, so the failure reproduces on the Linux
+            # runner and not on the developer's machine — which is precisely how the defect
+            # shipped. `user.useConfigOnly` makes git refuse to guess, so the test means the same
+            # thing on both.
+            "GIT_CONFIG_COUNT": "1",
+            "GIT_CONFIG_KEY_0": "user.useConfigOnly",
+            "GIT_CONFIG_VALUE_0": "true",
+        }
+    return subprocess.run(
+        [sys.executable, str(TOOL), *args], capture_output=True, text=True, check=False, env=env
+    )
+
+
 def test_the_dry_run_writes_nothing(fake_repo: Path, tmp_path: Path) -> None:
     """A dry run that created the store would be the opposite of a dry run."""
     dest = tmp_path / "store"
-    finished = subprocess.run(
-        [sys.executable, str(TOOL), "--dry-run", "--dest", str(dest)],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    assert finished.returncode == 0
+    finished = _run("--dry-run", "--root", str(fake_repo), "--dest", str(dest))
+    assert finished.returncode == 0, finished.stderr
     assert not dest.exists()
 
 
-def test_verify_exits_non_zero_when_there_is_no_store(tmp_path: Path) -> None:
-    """It has to be usable as a gate, which means the exit code has to mean something."""
-    finished = subprocess.run(
-        [sys.executable, str(TOOL), "--verify", "--dest", str(tmp_path / "absent")],
+def test_verify_exits_non_zero_when_the_store_is_missing_files(
+    fake_repo: Path, tmp_path: Path
+) -> None:
+    """It has to be usable as a gate, which means the exit code has to mean something.
+
+    Pointed at a repo that genuinely **has** local-only files. Pointing it at this checkout would
+    prove nothing in CI, where a clone has none and the tool correctly returns 0 with nothing to
+    protect — which is how the first version of this test passed locally and failed in CI for the
+    opposite reason to the one it was written for.
+    """
+    finished = _run("--verify", "--root", str(fake_repo), "--dest", str(tmp_path / "absent"))
+    assert finished.returncode == 1, finished.stdout + finished.stderr
+
+
+def test_a_snapshot_commits_on_a_machine_with_no_git_identity(
+    fake_repo: Path, tmp_path: Path
+) -> None:
+    """**The defect CI found, pinned.**
+
+    `git commit` exits non-zero with no `user.email` configured. The failure was swallowed by
+    `check=False`, so the tool copied every file, printed success, and left a directory with **no
+    commits** — losing the version history that is the entire reason for a git store rather than
+    `cp -r`. The only symptom was an empty `git log` nobody ran.
+    """
+    dest = tmp_path / "store"
+    finished = _run("--root", str(fake_repo), "--dest", str(dest), home=tmp_path / "home")
+    assert finished.returncode == 0, finished.stdout + finished.stderr
+
+    head = subprocess.run(
+        ["git", "-C", str(dest), "rev-parse", "--verify", "HEAD"],
         capture_output=True,
         text=True,
         check=False,
     )
-    assert finished.returncode == 1
+    assert head.returncode == 0 and head.stdout.strip(), (
+        "the store has files but no commits; every earlier version is unreachable"
+    )
+
+
+def test_a_store_that_cannot_commit_is_refused_rather_than_reported_as_a_success(
+    fake_repo: Path, tmp_path: Path
+) -> None:
+    """**The twin.** If a broken git could not fail the run, the test above would prove nothing.
+
+    A store directory whose `.git` is a file rather than a directory makes every git call fail.
+    The tool must exit non-zero and say the snapshot is not safe.
+    """
+    dest = tmp_path / "store"
+    dest.mkdir()
+    (dest / ".git").write_text("not a git directory", encoding="utf-8")
+
+    finished = _run("--root", str(fake_repo), "--dest", str(dest))
+    assert finished.returncode != 0, "a store where git cannot run reported success"
+    assert "NOT safe" in (finished.stdout + finished.stderr)
 
 
 def test_the_default_destination_is_outside_the_repository() -> None:

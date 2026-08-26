@@ -149,19 +149,37 @@ def collect(root: Path) -> list[Path]:
     return sorted(found)
 
 
-def _git(dest: Path, *args: str) -> subprocess.CompletedProcess:
-    """Run git inside the backup store.
+def _git(dest: Path, *args: str, must_succeed: bool = True) -> subprocess.CompletedProcess:
+    """Run git inside the backup store, and refuse to ignore a failure.
+
+    **`check=False` was the original defect and it was invisible.** `git commit` exits non-zero
+    when the machine has no `user.email` — a bare CI runner, a fresh container, anyone who has not
+    configured git globally. With the failure swallowed, the tool copied every file, printed
+    success, and left a directory with **no commits at all**: the version history that is the whole
+    reason for using git rather than `cp -r` simply did not exist, and the only symptom was an
+    empty `git log` nobody ran. Caught by CI, which is exactly the machine that has no identity.
 
     Args:
         dest: The store.
         *args: Arguments after `git`.
+        must_succeed: Raise if git fails. `False` for probes whose failure is meaningful.
 
     Returns:
         The finished process.
+
+    Raises:
+        SystemExit: If git failed and `must_succeed` is set.
     """
-    return subprocess.run(
+    finished = subprocess.run(
         ["git", "-C", str(dest), *args], capture_output=True, text=True, check=False
     )
+    if must_succeed and finished.returncode != 0:
+        raise SystemExit(
+            f"git {' '.join(args)} failed in the backup store ({finished.returncode}):\n"
+            f"{finished.stderr.strip() or finished.stdout.strip()}\n"
+            f"The snapshot is NOT safe. Fix this before relying on the store."
+        )
+    return finished
 
 
 def verify(root: Path, dest: Path, files: list[Path]) -> tuple[list[str], list[str]]:
@@ -200,6 +218,10 @@ def snapshot(root: Path, dest: Path, files: list[Path], *, message: str) -> int:
     dest.mkdir(parents=True, exist_ok=True)
     if not (dest / ".git").is_dir():
         _git(dest, "init", "--quiet", "--initial-branch=main")
+        # A store-local identity, so a snapshot works on a machine with no global git config.
+        # Without it `git commit` fails, and the failure used to be swallowed.
+        _git(dest, "config", "user.email", "backup@local-only.invalid")
+        _git(dest, "config", "user.name", "backup_local_only.py")
         (dest / "README.md").write_text(
             "# local-only backup\n\n"
             "Versioned snapshots of the gitignored, non-regenerable files in "
@@ -225,9 +247,16 @@ def snapshot(root: Path, dest: Path, files: list[Path], *, message: str) -> int:
         target.write_bytes(payload)
 
     _git(dest, "add", "-A")
-    status = _git(dest, "status", "--porcelain")
-    if status.stdout.strip():
+    if _git(dest, "status", "--porcelain").stdout.strip():
         _git(dest, "commit", "--quiet", "-m", message)
+
+    # Assert the commit landed, rather than assuming it. A store with files and no history is a
+    # `cp -r` wearing a git directory, and it loses exactly the property the store exists for.
+    if not _git(dest, "rev-parse", "--verify", "HEAD", must_succeed=False).stdout.strip():
+        raise SystemExit(
+            f"the store at {dest} holds files but no commits — every earlier version of every "
+            f"file is unreachable. Something is wrong with git in that directory."
+        )
     return changed
 
 
@@ -239,6 +268,12 @@ def main() -> int:
     """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dest", type=Path, default=DEFAULT_DEST)
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=REPO_ROOT,
+        help="which checkout to back up (defaults to the one this tool lives in)",
+    )
     parser.add_argument("--dry-run", action="store_true", help="list what would be copied")
     parser.add_argument(
         "--verify",
@@ -249,16 +284,19 @@ def main() -> int:
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
 
-    files = collect(REPO_ROOT)
+    files = collect(args.root)
     if not files:
         logger.warning(
             "no local-only files found under %s. On a fresh clone that is correct and expected; "
             "on a working checkout it means they are gone.",
-            REPO_ROOT,
+            args.root,
         )
+        # Not an error: a clone legitimately has nothing to back up, and failing here would make
+        # the tool unusable as a gate. `--verify` still fails below when there IS something to
+        # protect and the store does not have it.
         return 0
 
-    total = sum((REPO_ROOT / f).stat().st_size for f in files)
+    total = sum((args.root / f).stat().st_size for f in files)
     logger.info("%d local-only files, %s KB", len(files), f"{total // 1024:,}")
 
     if args.dry_run:
@@ -271,7 +309,7 @@ def main() -> int:
         if not args.dest.is_dir():
             logger.error("no backup store at %s — run without --verify to create one", args.dest)
             return 1
-        absent, differing = verify(REPO_ROOT, args.dest, files)
+        absent, differing = verify(args.root, args.dest, files)
         for name in absent:
             logger.error("NOT BACKED UP  %s", name)
         for name in differing:
@@ -286,7 +324,7 @@ def main() -> int:
         logger.info("store at %s is current for all %d files", args.dest, len(files))
         return 0
 
-    changed = snapshot(REPO_ROOT, args.dest, files, message=args.message)
+    changed = snapshot(args.root, args.dest, files, message=args.message)
     head = _git(args.dest, "log", "-1", "--format=%h %s").stdout.strip()
     logger.info("%d changed -> %s%s", changed, args.dest, f"  [{head}]" if head else "")
     return 0
