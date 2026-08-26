@@ -263,6 +263,27 @@ in Eq. 23 is not the raw learning rate and our reading is wrong. **The measureme
 which of those it is, is not**, and the code does not pick one: `redundancy_weight` defaults to
 `1.0` — Eq. 23 unmodified — and every pass publishes `redundancy_share`.
 
+### Two things the shipped run measured about itself
+
+**The selector strongly prefers one lane, and the mixture is what stops it.** Mean utility by lane
+across all four passes: **indic 1,357 · code 1,088 · reasoning 740 · agentic 612 · web 569 ·
+stem 551**. Indic was accepted 21 times, rejected once; web was accepted 11 times and
+rejected or deferred 27. A plausible mechanism is that the model is worst at indic — a different
+script against a tokenizer trained mostly on other text — so its gradients are largest and align
+most with a proxy averaged over every lane. **That is a hypothesis, not a result**: nothing here
+isolates script difficulty from the several other things that differ between lanes. What is not a
+hypothesis is the consequence: a selector left alone will pull the realised mixture toward whatever
+the model currently finds hardest, which is exactly what the protected floors exist to bound.
+
+**A floor can fail for two reasons and only one of them is a bug.** `agentic` is 2% of the mixture
+and a candidate buffer is 32 consecutive plan slots, so **0.64 candidates are expected per pass** —
+and three of four passes contained none. The reservation worked perfectly; there was simply nothing
+to reserve. Reporting that as a breach blames the mechanism, and reporting it as *held* hides that
+the lane was never offered, so the record calls it **`unsupplied`** and prints the arithmetic. The
+auditor re-derives the same three passes independently. This is the repo's standing rule about
+blindness applied to a guarantee: *a floor that cannot see a lane is not evidence about that lane*,
+and untestable reads as passing.
+
 ## Credits
 
 The selection method is **OPUS — Optimizer-induced Projected Utility Selection**, Wang et al.,

@@ -382,8 +382,26 @@ def run_opus(
     report["preconditioned"] = all(s.preconditioned for s in scorings)
     report["restored_from"] = record.checkpoint_id
     report["proxy_shards"] = sorted(proxy_handles)
-    report["floors_held"] = all(
-        held for selection in passes for held in opus.floors_held(selection).values()
+    # Reported per lane and per verdict, never as one boolean. `agentic` is 2% of the mixture and
+    # a buffer is 32 consecutive plan slots, so the expected count is 0.64 candidates per pass — a
+    # floor that cannot be met because the lane was never offered is not the same failure as a
+    # floor the mechanism missed, and rolling them together would blame the bypass for the corpus.
+    report["floors"] = {
+        lane: {
+            "held": sum(1 for s in passes if opus.floor_status(s)[lane]["verdict"] == "held"),
+            "breached": sum(
+                1 for s in passes if opus.floor_status(s)[lane]["verdict"] == "breached"
+            ),
+            "unsupplied": sum(
+                1 for s in passes if opus.floor_status(s)[lane]["verdict"] == "unsupplied"
+            ),
+            "candidates_offered": sum(opus.floor_status(s)[lane]["in_buffer"] for s in passes),
+        }
+        for lane in sorted(spec.FLOORS)
+    }
+    report["floors_held"] = all(row["breached"] == 0 for row in report["floors"].values())
+    report["floors_unsupplied"] = sorted(
+        lane for lane, row in report["floors"].items() if row["unsupplied"]
     )
 
     broken = [
@@ -414,6 +432,22 @@ def run_opus(
             "no protected candidate landed below the cut in these passes, so the floor never had "
             "to override a score — the mechanism is exercised directly in the unit tests"
         )
+    for lane, row in sorted(report["floors"].items()):
+        note = (
+            f"floor {lane} at {spec.FLOORS[lane]:.0%}: held in {row['held']} of {len(passes)} "
+            f"passes, breached in {row['breached']}, unsupplied in {row['unsupplied']} "
+            f"({row['candidates_offered']} candidates offered across all buffers)"
+        )
+        if row["unsupplied"]:
+            expected = spec.LANE_SHARES[lane] * config.opus_buffer * config.microbatch
+            note += (
+                f" — the buffer is {config.opus_buffer * config.microbatch} consecutive plan slots "
+                f"and this lane is {spec.LANE_SHARES[lane]:.0%} of the mixture, so ~{expected:.1f} "
+                f"candidates are expected per pass. A floor no selector could meet is a fact about "
+                f"the corpus and the buffer size, not about the reservation, and it is reported as "
+                f"unsupplied rather than scored as a breach"
+            )
+        log.note(note)
     return report
 
 

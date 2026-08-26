@@ -534,11 +534,63 @@ def lane_shares(selection: Pass) -> dict[str, float]:
     return {lane: count / len(selection.served) for lane, count in sorted(counts.items())}
 
 
+def floor_status(selection: Pass, floors: dict[str, float] | None = None) -> dict[str, dict]:
+    """Per protected lane: what share it got, whether that clears its floor, and **why not**.
+
+    **The distinction this exists to make.** A floor can fail for two completely different reasons,
+    and a bare boolean conflates them:
+
+    - *breached* — the lane was in the buffer and the batch still came up short. That is the
+      mechanism failing, and it should never happen: the reservation is architectural.
+    - *unsupplied* — the lane had **no candidates in the buffer at all**. Nothing was reserved
+      because there was nothing to reserve, and no selector can conjure supply.
+
+    This is not hypothetical. Measured on the shipped demo: `agentic` is 2% of the mixture, the
+    buffer is 32 consecutive plan slots, so the expected count per pass is **0.64 candidates** — and
+    three of four passes contained none. The floor read as failing while the bypass was working
+    exactly as designed. Reporting that as a breach blames the mechanism; reporting it as `True`
+    hides that the lane was never fed. It is neither, and it says so.
+
+    The wider rule this repo already pays for: **an experiment that cannot see a lane is not
+    evidence about that lane.** A missing input does not make a guarantee safer; it makes it
+    untestable, and untestable reads as passing.
+
+    Args:
+        selection: The pass.
+        floors: Minimum share per lane, defaulting to `spec.FLOORS`.
+
+    Returns:
+        One entry per protected lane: `share`, `floor`, `in_buffer`, `reserved`, `held` and
+        `verdict` — one of `held`, `breached`, `unsupplied`.
+    """
+    floors = spec.FLOORS if floors is None else floors
+    shares = lane_shares(selection)
+    available: dict[str, int] = {}
+    for decision in selection.decisions:
+        available[decision.candidate.lane] = available.get(decision.candidate.lane, 0) + 1
+
+    status: dict[str, dict] = {}
+    for lane, floor in sorted(floors.items()):
+        share = shares.get(lane, 0.0)
+        held = share >= floor
+        status[lane] = {
+            "share": round(share, 6),
+            "floor": floor,
+            "in_buffer": available.get(lane, 0),
+            "reserved": selection.reserved.get(lane, 0),
+            "held": held,
+            "verdict": "held"
+            if held
+            else ("unsupplied" if not available.get(lane) else "breached"),
+        }
+    return status
+
+
 def floors_held(selection: Pass, floors: dict[str, float] | None = None) -> dict[str, bool]:
     """Whether each protected lane reached its floor in the served batch.
 
-    The bypass is supposed to make this unfailable, which is exactly why it is checked: a guard
-    that cannot fail is worth having only if something watched it try.
+    A plain boolean per lane. Use `floor_status` when the *reason* matters — `False` here covers
+    both a mechanism failure and a lane that was never in the buffer, and only the first is a bug.
 
     Args:
         selection: The pass.
@@ -547,9 +599,7 @@ def floors_held(selection: Pass, floors: dict[str, float] | None = None) -> dict
     Returns:
         One boolean per protected lane.
     """
-    floors = spec.FLOORS if floors is None else floors
-    shares = lane_shares(selection)
-    return {lane: shares.get(lane, 0.0) >= share for lane, share in sorted(floors.items())}
+    return {lane: row["held"] for lane, row in floor_status(selection, floors).items()}
 
 
 def write_log(selection: Pass, directory: Path) -> Path:
@@ -578,7 +628,7 @@ def write_log(selection: Pass, directory: Path) -> Path:
         "seed": selection.seed,
         "counts": selection.counts(),
         "lane_shares": {lane: round(v, 6) for lane, v in lane_shares(selection).items()},
-        "floors_held": floors_held(selection),
+        "floors": floor_status(selection),
     }
     lines = [json.dumps(header, sort_keys=True, separators=(",", ":"))]
     lines += [

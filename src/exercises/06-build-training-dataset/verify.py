@@ -471,6 +471,38 @@ def check_opus(bundle: Path) -> list[Finding]:
         )
     )
 
+    # Floors, re-derived from the served rows rather than read out of the header. A pass that
+    # breached a floor and wrote `held` in its own header would otherwise pass unexamined — the
+    # header is the producer's account of itself.
+    breached: list[str] = []
+    unsupplied: list[str] = []
+    for path in logs:
+        lines = [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        header, rows = json.loads(lines[0]), [json.loads(line) for line in lines[1:]]
+        served = [r for r in rows if r["decision"] in ("accept", "floor_override")]
+        for lane, floor in sorted(spec.FLOORS.items()):
+            got = sum(1 for r in served if r["lane"] == lane)
+            offered = sum(1 for r in rows if r["lane"] == lane)
+            if served and got / len(served) < floor:
+                (unsupplied if not offered else breached).append(f"{header['pass_id']}:{lane}")
+
+    findings.append(
+        Finding(
+            "no protected floor was breached with candidates available",
+            not breached,
+            f"BREACHED: {breached}" if breached else f"{len(logs)} passes, none breached",
+        )
+    )
+    findings.append(
+        Finding(
+            "a floor missed for lack of supply is reported as such",
+            True,
+            f"unsupplied (the buffer held none of the lane): {sorted(set(unsupplied))}"
+            if unsupplied
+            else "every protected lane was present in every buffer",
+        )
+    )
+
     unknown = sorted(set(tally) - set(spec.DECISIONS))
     findings.append(
         Finding(

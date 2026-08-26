@@ -241,6 +241,13 @@ def build_rows(
                 f"{tally.get('accept', 0)} accepted, {tally.get('reject', 0)} rejected, "
                 f"{tally.get('defer', 0)} deferred inside the noise band, and {override_note}. "
                 f"{decided} microbatches carry the pass id that decided them."
+                + (
+                    f" {unsupplied} reached no floor in some pass because the buffer contained "
+                    f"none of it — a floor no selector could meet, reported rather than scored as "
+                    f"a breach."
+                    if (unsupplied := ", ".join(opus_report.get("floors_unsupplied") or []))
+                    else ""
+                )
             ),
             evidence="`opus/*.jsonl`, one row per candidate, joined to the ledger's "
             "`opus_decision_id`",
@@ -252,6 +259,9 @@ def build_rows(
                 "defer_rate": opus_report["defer_rate"],
                 "floor_override_rate": opus_report["floor_override_rate"],
                 "by_lane": opus_report["by_lane"],
+                "floors": opus_report.get("floors"),
+                "floors_held": opus_report.get("floors_held"),
+                "floors_unsupplied": opus_report.get("floors_unsupplied"),
                 "noise_dominance": opus_report.get("noise_dominance"),
                 "redundancy_share": opus_report.get("redundancy_share"),
                 "pass_digests": opus_report["pass_digests"],

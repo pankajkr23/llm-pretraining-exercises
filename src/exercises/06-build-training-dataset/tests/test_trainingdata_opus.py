@@ -182,6 +182,42 @@ def test_a_floor_lane_absent_from_the_buffer_reserves_nothing() -> None:
     assert opus.floors_held(selection) == {"agentic": False, "indic": False}
 
 
+def test_an_unsupplied_floor_is_not_reported_as_a_breach() -> None:
+    """**Two failures that look identical as a boolean, and are not the same failure.**
+
+    Measured on the shipped demo: `agentic` is 2% of the mixture and a buffer is 32 consecutive
+    plan slots, so the expected count is **0.64 candidates per pass** — three of four passes held
+    none. Calling that a breach blames the reservation, which worked perfectly; calling it held
+    hides that the lane was never fed. It is `unsupplied`, and the record says so.
+    """
+    candidates = _buffer(["web"] * 8 + ["indic"] * 4)
+    selection = opus.select(candidates, np.zeros(12), keep=8, pass_id="p", seed=1)
+    status = opus.floor_status(selection)
+
+    assert status["agentic"]["verdict"] == "unsupplied"
+    assert status["agentic"]["in_buffer"] == 0
+    assert status["indic"]["verdict"] == "held"
+    assert status["indic"]["in_buffer"] == 4
+
+
+def test_a_supplied_lane_that_falls_short_is_a_breach_not_unsupplied() -> None:
+    """**The twin.** If every shortfall read as `unsupplied`, the first verdict would be unusable.
+
+    The bypass makes this unreachable through `select`, which is the point — so it is asserted
+    against a batch assembled by hand, the only way the distinction can be seen going the other
+    way.
+    """
+    candidates = _buffer(["indic"] + ["web"] * 9)
+    scores = np.zeros(10)
+    selection = opus.select(candidates, scores, keep=4, pass_id="p", seed=1, floors={})
+
+    status = opus.floor_status(selection, floors={"indic": 0.5})
+    assert status["indic"]["in_buffer"] == 1
+    assert status["indic"]["verdict"] == "breached", (
+        "a lane present in the buffer but short in the batch must read as breached"
+    )
+
+
 def test_floor_override_fires_only_below_the_cut(selection) -> None:
     """The status must mean what it says: the floor, not the score, is why this was served."""
     accepted = [d.raw_score for d in selection.decisions if d.decision == "accept" and d.rank >= 0]
@@ -360,6 +396,15 @@ def test_the_header_records_which_regime_the_pass_ran_in(selection, tmp_path) ->
     assert 0.0 < header["noise_dominance"] < 1.0
     assert header["score_spread"] > 0
     assert header["defer_band"] == opus.DEFER_BAND
+
+
+def test_the_header_records_a_verdict_per_floor_not_a_boolean(selection, tmp_path) -> None:
+    """A reader must be able to tell a breach from a lane that was never offered."""
+    header, _ = opus.read_log(opus.write_log(selection, tmp_path))
+    assert set(header["floors"]) == set(spec.FLOORS)
+    for row in header["floors"].values():
+        assert row["verdict"] in ("held", "breached", "unsupplied")
+        assert "in_buffer" in row and "share" in row
 
 
 def test_the_summary_totals_match_the_passes(selection) -> None:

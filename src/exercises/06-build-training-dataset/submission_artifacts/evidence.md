@@ -10,11 +10,11 @@ Run `s06-demo` · config `89c8c1be909d`
 | `evaluation_firewall` | **met** | 7 shard(s) were refused admission and none of them appears in any loss-bearing batch | submission_artifacts/manifests/ and the ledger's per-event `samples` |
 | `packing_correctness` | **met** | 96 microbatches packed; 196,048 of 196,608 positions earned gradient (99.7%), the rest padding, document-final tokens and 0 context-masked batches | the ledger's per-event `tokens`, `loss_tokens`, `pad_tokens` and `loss_policy` |
 | `mixture_compliance` | **met** | the CORPUS is compliant — every funded lane within 1% of plan, both floors held. This run consumed 1.9% of the plan, and over a sample that small the realised mixture drifts by up to 2.3%: the schedule is exact over the run, never per step | the ledger's per-event `lane_mix` summed and compared with `spec.LANE_SHARES`; the corpus figure from results/corpus_build.json |
-| `opus_audit_trail` | **met** | 128 candidates across 4 passes, each with a score, a rank, an outcome and a reason: 63 accepted, 14 rejected, 50 deferred inside the noise band, and 1 served against their score by a protected floor. 16 microbatches carry the pass id that decided them. | `opus/*.jsonl`, one row per candidate, joined to the ledger's `opus_decision_id` |
+| `opus_audit_trail` | **met** | 128 candidates across 4 passes, each with a score, a rank, an outcome and a reason: 63 accepted, 14 rejected, 50 deferred inside the noise band, and 1 served against their score by a protected floor. 16 microbatches carry the pass id that decided them. agentic reached no floor in some pass because the buffer contained none of it — a floor no selector could meet, reported rather than scored as a breach. | `opus/*.jsonl`, one row per candidate, joined to the ledger's `opus_decision_id` |
 | `crash_recovery` | **met** | after a real crash and resume, every (step, rank, accum, flat, microbatch_hash) matches a run that never crashed; 5 microbatches were re-executed and each names the discarded event it repeats | submission_artifacts/run.log and the ledger's `replayed_from` |
 | `replay` | **met** | 48/48 microbatches in steps [0, 6] were re-derived from the recorded spans and the immutable shards — read, never recomputed | the ledger's spans and hashes, re-derived against the shard bytes |
 | `learning_trace` | **met** | loss recorded for 16 step-reports, each linked to the lanes that produced it through the ledger's per-event `lane_mix` | submission_artifacts/telemetry/*.json joined to the ledger by step |
-| `throughput` | **met** | 114,731 loss-bearing tokens/s against 115,059 tokens/s over 4 steps on 4 rank(s); the gap is padding and ungraded positions | submission_artifacts/performance.json, recomputable from the ledger + telemetry |
+| `throughput` | **met** | 118,376 loss-bearing tokens/s against 118,714 tokens/s over 4 steps on 4 rank(s); the gap is padding and ungraded positions | submission_artifacts/performance.json, recomputable from the ledger + telemetry |
 
 ## Numbers
 
@@ -114,6 +114,24 @@ Run `s06-demo` · config `89c8c1be909d`
         "floor_override": 0
       }
     },
+    "floors": {
+      "agentic": {
+        "held": 1,
+        "breached": 0,
+        "unsupplied": 3,
+        "candidates_offered": 1
+      },
+      "indic": {
+        "held": 4,
+        "breached": 0,
+        "unsupplied": 0,
+        "candidates_offered": 23
+      }
+    },
+    "floors_held": true,
+    "floors_unsupplied": [
+      "agentic"
+    ],
     "noise_dominance": 0.320637,
     "redundancy_share": 0.00342144,
     "pass_digests": [
@@ -172,11 +190,11 @@ Run `s06-demo` · config `89c8c1be909d`
   },
   "throughput": {
     "steps": 4,
-    "seconds": 1.7087620010133833,
+    "seconds": 1.6561470839951653,
     "tokens": 196608,
     "loss_tokens": 196048,
-    "tokens_per_second": 115058.73836344757,
-    "loss_tokens_per_second": 114731.015719997,
+    "tokens_per_second": 118714.09363334902,
+    "loss_tokens_per_second": 118375.95941482956,
     "loss_utilization": 0.9971516927083334,
     "pack_utilization": 1.0,
     "ranks": 4

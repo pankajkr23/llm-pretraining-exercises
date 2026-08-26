@@ -72,7 +72,7 @@
       "status": "met"
     },
     {
-      "claim": "128 candidates across 4 passes, each with a score, a rank, an outcome and a reason: 63 accepted, 14 rejected, 50 deferred inside the noise band, and 1 served against their score by a protected floor. 16 microbatches carry the pass id that decided them.",
+      "claim": "128 candidates across 4 passes, each with a score, a rank, an outcome and a reason: 63 accepted, 14 rejected, 50 deferred inside the noise band, and 1 served against their score by a protected floor. 16 microbatches carry the pass id that decided them. agentic reached no floor in some pass because the buffer contained none of it \u2014 a floor no selector could meet, reported rather than scored as a breach.",
       "evidence": "`opus/*.jsonl`, one row per candidate, joined to the ledger's `opus_decision_id`",
       "numbers": {
         "by_lane": {
@@ -123,6 +123,24 @@
         "defer_rate": 0.390625,
         "events_with_a_decision": 16,
         "floor_override_rate": 0.007812,
+        "floors": {
+          "agentic": {
+            "breached": 0,
+            "candidates_offered": 1,
+            "held": 1,
+            "unsupplied": 3
+          },
+          "indic": {
+            "breached": 0,
+            "candidates_offered": 23,
+            "held": 4,
+            "unsupplied": 0
+          }
+        },
+        "floors_held": true,
+        "floors_unsupplied": [
+          "agentic"
+        ],
         "noise_dominance": 0.320637,
         "pass_digests": [
           "b2:8d075235cbcb4ce831c4db1feb002d6e",
@@ -202,18 +220,18 @@
       "status": "met"
     },
     {
-      "claim": "114,731 loss-bearing tokens/s against 115,059 tokens/s over 4 steps on 4 rank(s); the gap is padding and ungraded positions",
+      "claim": "118,376 loss-bearing tokens/s against 118,714 tokens/s over 4 steps on 4 rank(s); the gap is padding and ungraded positions",
       "evidence": "submission_artifacts/performance.json, recomputable from the ledger + telemetry",
       "numbers": {
         "loss_tokens": 196048,
-        "loss_tokens_per_second": 114731.015719997,
+        "loss_tokens_per_second": 118375.95941482956,
         "loss_utilization": 0.9971516927083334,
         "pack_utilization": 1.0,
         "ranks": 4,
-        "seconds": 1.7087620010133833,
+        "seconds": 1.6561470839951653,
         "steps": 4,
         "tokens": 196608,
-        "tokens_per_second": 115058.73836344757
+        "tokens_per_second": 118714.09363334902
       },
       "requirement": "throughput",
       "status": "met"

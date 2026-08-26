@@ -6,12 +6,14 @@
 [PASS] batches packed — 96 microbatches over 12 steps
 [PASS] OPUS decisions recorded — 128 candidates over 4 passes: 63 accept · 14 reject · 50 defer · 1 floor_override; every one with a score, a rank and a reason
        scored against 4 held-out shards, preconditioner from ckpt-main-000011; noise/signal 0.321, redundancy penalty 3.42e-03 of the score
+       floor agentic at 2%: held in 1 of 4 passes, breached in 0, unsupplied in 3 (1 candidates offered across all buffers) — the buffer is 32 consecutive plan slots and this lane is 2% of the mixture, so ~0.6 candidates are expected per pass. A floor no selector could meet is a fact about the corpus and the buffer size, not about the reservation, and it is reported as unsupplied rather than scored as a breach
+       floor indic at 12%: held in 4 of 4 passes, breached in 0, unsupplied in 0 (23 candidates offered across all buffers)
 [PASS] checkpoint saved — every 4 steps; tensors renamed into place before the sidecar, so the sidecar's existence is the commit
 [PASS] crash simulated — os._exit(137) in every rank at step 8; ProcessExitedException
 [PASS] run resumed — from ckpt-main-000007; 5 microbatches re-executed; batch ids match the uncrashed run: True
 [PASS] historical stream replayed — main steps [0, 6): 48/48 microbatches re-derived, all match
 [PASS] branch forked — fork-a from ckpt-main-000003 at step 3; it inherits 32 parent events, wrote 64 of its own, and re-ran 0 of the shared history — computed from the ledgers, not claimed
 [SKIP] audit completed — run `uv run python verify.py` — the auditor is a separate command by design, so the producer cannot mark its own work
-[PASS] performance measured — 114,731 loss-bearing tok/s of 115,059 tok/s over 4 steps on 4 ranks
-       bundle 347,726 bytes of 2,097,152 allowed
+[PASS] performance measured — 118,376 loss-bearing tok/s of 118,714 tok/s over 4 steps on 4 ranks
+       bundle 349,989 bytes of 2,097,152 allowed
        wall clock 21.7s

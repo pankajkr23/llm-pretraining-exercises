@@ -31,6 +31,18 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   that a digest cannot do: a tamperer who edits a decision *and* recomputes the header hash is still
   caught, because the ledger shows that candidate being fed while the record calls it rejected.
   Both tampers are watched failing in tracked tests.
+- **A floor now reports *why* it was missed.** `agentic` is 2% of the mixture and a candidate
+  buffer is 32 consecutive plan slots, so **0.64 candidates are expected per pass** — and three of
+  four passes contained none. The reservation worked perfectly; there was nothing to reserve.
+  `opus.floor_status` calls that **`unsupplied`** rather than `breached`, prints the arithmetic, and
+  the auditor re-derives the same three passes independently. A boolean conflated a mechanism
+  failure with a lane that was never offered, and only the first is a bug.
+- **Measured about the run itself: the selector strongly prefers one lane.** Mean utility across
+  four passes — indic 1,357 · code 1,088 · reasoning 740 · agentic 612 · web 569 · stem 551; indic
+  accepted 21 times and rejected once, web accepted 11 and rejected or deferred 27. The mechanism
+  (the model is worst at indic, so its gradients are largest) is offered as a hypothesis, not a
+  result. The consequence is not hypothetical: an unbounded selector pulls the realised mixture
+  toward whatever the model finds hardest, which is what the floors exist to stop.
 - **`audit completed` is completed by the auditor.** The producer marks it `[SKIP]` because a run
   that certifies its own audit certifies nothing; `verify.py` is what produces it. That is the last
   of the thirteen required log events.
@@ -86,6 +98,11 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **A breached floor was computed and never published.** `run_demo` evaluated `floors_held` across
+  every OPUS pass and put the result nowhere: the evidence row carried no floor field at all, so a
+  protected lane missing its floor in three of four passes was invisible in the deliverable. Now
+  reported per lane, per verdict, in the run log and the bundle, and checked independently by the
+  auditor.
 - **The held-out split was counted and never written.** `corpus.build_lane` computed it, recorded
   `heldout_tokens` on the build report, published **1,093,019 tokens** — and let the array go out of
   scope one line later. A tenth of the corpus was reported as withheld for evaluation and existed
