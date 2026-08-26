@@ -264,12 +264,27 @@ lines and 14 tests.
   is silent by construction: a lane above ~1 epoch is measuring memorisation and a lane below 1.0
   was never fully read, and neither shows up in a loss curve.
 
-- **Three of the deliverables are PUBLIC URLS, not repo files.** The platform totals **1,150** =
-  1,000 rubric (the repo link) + 3 × 50 for `run.log`, `evidence.json` and `evidence.md` published
-  at **three separate public URLs**. `BRIEF.md` truncates before those fields, so the brief is not
-  the authority here — the platform's field list is. `tests/test_submission_bundle.py` proves the
-  three files are *committable*; committing them is not publishing them, and the exercise is not
-  done until all three resolve.
+- **The platform has FOUR fields, and three of them are direct links to files in this repo.** Read
+  from the platform's own submission page, not from `BRIEF.md`, which truncates at the words *"Your
+  submission"* and never lists them:
+
+  | field | points | what goes in it |
+  | --- | ---: | --- |
+  | Github Repo Link | 1000 | the repository URL |
+  | Github `run.log` link | 50 | `.../blob/main/src/exercises/06-build-training-dataset/submission_artifacts/run.log` |
+  | Github `evidence.json` link | 50 | the same path, `evidence.json` |
+  | Github `evidence.md` link | 50 | the same path, `evidence.md` |
+
+  Each field carries the note *"I tested this link in an incognito window — it's publicly
+  accessible (not private)."* So **"public" is a property of the repository, not a demand for
+  separate hosting** — the repo is already public, and the three files are already tracked. An
+  earlier version of this note called them *"PUBLIC URLS, not repo files"* and treated hosting them
+  elsewhere as outstanding work. That was wrong, and it was wrong in the expensive direction:
+  invented work on a deliverable that was nearly finished.
+
+  What is genuinely required is that the paths **resolve on `main`**. They 404 today because the
+  work is still on a branch. `tests/test_submission_bundle.py` proves the files are committable;
+  committing them is not merging them, and the links are not live until the PR lands.
 
 - **`verify.py` may import `spec` and nothing else, and a test asserts it transitively.** One
   convenient `from trainingdata import metrics` turns every number check into the producer's
