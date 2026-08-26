@@ -133,6 +133,7 @@ tools/
   fetch_corpus.py   # TRACKED — a corpus needs a tracked way to fetch and licence-check it
   build_corpus.py   # TRACKED — fetched text to sealed shards, with the guards that matter
   build_notebook.py # local-only, gitignored — back it up
+  build_web_data.py # derives web/data.js from the run, so no page figure is typed by hand
 artifacts/       # heavy regenerable output (gitignored)
 results/         # TRACKED — measured evidence a document renders; it must survive a clone
 submission_artifacts/  # TRACKED — the deliverable: run.log, evidence.json/md, manifests, ledger

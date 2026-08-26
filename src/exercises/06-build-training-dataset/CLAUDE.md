@@ -251,15 +251,18 @@ lines and 14 tests.
   evidence the packer is efficient. Fix it by passing `window=cfg.sequence_length` so a short tail
   can show, or delete the field — do not leave a constant in the ledger dressed as a statistic.
 
-- **The corpus is 4.8 epochs, and the mixture claim does not survive that unstated.** The run
-  consumes `Config.total_tokens` = 10,485,760 positions; the corpus on disk holds 2,185,575 tokens.
-  Shaped to session 5's weights that is **30.2 epochs of web against 0.41 of agentic** — the
-  heaviest-funded lane memorised thirty times over, the lightest never read through once. Nothing
-  fails; shards read fine and the loss curve looks normal. Print the per-lane epoch count next to
-  any mixture-compliance figure this exercise publishes, and treat `mixture_compliance` in
-  `spec.REQUIREMENTS` as unmet until it does. `data/proxy/manifest.json` funds four lanes
-  (`stem`, `reasoning`, `agentic`, `stem-alt`) and this exercise ships **no fetcher of its own** —
-  `tools/` holds only the notebook builder.
+- **The corpus is sized against the RUN, and that took a refetch.** It was once 2,185,575 tokens
+  against `Config.total_tokens` = 10,485,760 positions — **4.8 epochs**, and shaped to session 5's
+  weights, **30.2 epochs of web against 0.41 of agentic**: the heaviest-funded lane memorised thirty
+  times over, the lightest never read through once. Nothing failed; the shards read fine and the
+  loss curve looked normal. It is now **10,649,549 training tokens at 1.01 epochs**, every lane
+  compliant and both floors held, plus **1,093,019 held-out tokens** written as `split="heldout"`
+  shards the firewall refuses. `tools/fetch_corpus.py` and `tools/build_corpus.py` are tracked, and
+  the build refuses outright below one epoch.
+
+  **Still print the per-lane epoch count next to any mixture figure.** The failure it guards against
+  is silent by construction: a lane above ~1 epoch is measuring memorisation and a lane below 1.0
+  was never fully read, and neither shows up in a loss curve.
 
 - **Three of the deliverables are PUBLIC URLS, not repo files.** The platform totals **1,150** =
   1,000 rubric (the repo link) + 3 × 50 for `run.log`, `evidence.json` and `evidence.md` published

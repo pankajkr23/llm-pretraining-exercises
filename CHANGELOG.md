@@ -43,6 +43,16 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   (the model is worst at indic, so its gradients are largest) is offered as a hypothesis, not a
   result. The consequence is not hypothetical: an unbounded selector pulls the realised mixture
   toward whatever the model finds hardest, which is what the floors exist to stop.
+- **The session notebook covers all eight stages**, up from five. Six new sections — a synthetic
+  corpus, a real training loop and the ledger it writes, crash/cut/resume, replay, forking, and
+  OPUS — **79 cells that execute end to end in 2.1 seconds**, from four shards of synthetic
+  documents rather than the gitignored 10.6M-token corpus, so it runs on a free Colab tier with
+  nothing downloaded.
+- **A web explainer**: three chapters, three different interaction families (Diff · Destroyer ·
+  Adversary), every figure derived from the run by `tools/build_web_data.py` rather than typed.
+  Fourteen browser tests, including the one the design rests on — that advancing a chapter actually
+  changes what the reader sees, because if it does not the page is decoration and every claim on it
+  is unproven.
 - **`audit completed` is completed by the auditor.** The producer marks it `[SKIP]` because a run
   that certifies its own audit certifies nothing; `verify.py` is what produces it. That is the last
   of the thirteen required log events.
@@ -103,6 +113,12 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   protected lane missing its floor in three of four passes was invisible in the deliverable. Now
   reported per lane, per verdict, in the run log and the bundle, and checked independently by the
   auditor.
+- **A clean replay over a corrupt corpus printed as "all match".** `ReplayReport` has always carried
+  both the verdicts and the tampered-shard map, but `summary()` printed only the first — so the one
+  line a reader quotes said everything reproduced while the object it came from knew a shard no
+  longer hashed to its manifest. It is a real state, not a contradiction: a shard damaged outside
+  the spans an interval read replays cleanly. Found by building the notebook, which is what
+  importing the package rather than restating it is for.
 - **The held-out split was counted and never written.** `corpus.build_lane` computed it, recorded
   `heldout_tokens` on the build report, published **1,093,019 tokens** — and let the array go out of
   scope one line later. A tenth of the corpus was reported as withheld for evaluation and existed

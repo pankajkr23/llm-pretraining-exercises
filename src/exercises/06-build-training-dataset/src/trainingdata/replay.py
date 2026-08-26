@@ -293,15 +293,26 @@ class ReplayReport:
     def summary(self) -> str:
         """One line, generated from the counts rather than written beside them.
 
+        **It names a tampered shard even when every microbatch matched**, and that combination is
+        not a contradiction: a shard whose bytes changed outside the spans this interval read
+        produces a clean replay and a corrupt corpus. The report has always held both facts; the
+        summary used to print only the first, so the line a reader quotes said `all match` while
+        the object it came from knew a shard no longer hashed to its manifest.
+
         Returns:
             The summary.
         """
         start, end = self.interval
         state = "all match" if not self.failures else f"{len(self.failures)} MISMATCH"
-        return (
+        line = (
             f"{self.branch_id} steps [{start}, {end}): "
             f"{self.matched}/{self.checked} microbatches re-derived, {state}"
         )
+        if self.tampered:
+            names = ", ".join(sorted(self.tampered)[:3])
+            where = "and they are why" if self.failures else "though none in this interval"
+            line += f" — {len(self.tampered)} TAMPERED SHARD(S) [{names}], {where}"
+        return line
 
 
 def replay_interval(

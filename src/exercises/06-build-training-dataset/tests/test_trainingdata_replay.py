@@ -511,3 +511,36 @@ def test_an_unknown_loss_policy_is_refused(tmp_path) -> None:
     event = dataclasses.replace(_event(shard_id, [(0, 64, 0)]), loss_policy="grade-nothing")
     with pytest.raises(ValueError, match="cannot rebuild"):
         replay.rebuild(event, replay.ShardSource({shard_id: path}))
+
+
+def test_the_summary_names_a_tampered_shard_even_when_every_batch_matched() -> None:
+    """**A clean replay over a corrupt corpus, which is a real state and used to print as "fine".**
+
+    A shard whose bytes changed *outside* the spans an interval read produces a genuinely clean
+    replay: nothing that was re-derived differs. The report has always carried both facts — the
+    verdicts and the `tampered` map — but `summary()` printed only the first, so the one line a
+    reader quotes said `all match` while the object it came from knew a shard no longer hashed to
+    its manifest.
+
+    Found by building the session notebook, which is the point of making the notebook import the
+    package rather than restate it.
+    """
+    report = replay.ReplayReport(
+        branch_id="main",
+        interval=(0, 4),
+        verdicts=(),
+        tampered={"deadbeefdeadbeef": "b2:whatever"},
+    )
+    line = report.summary()
+
+    assert "TAMPERED" in line, f"a corrupt shard is invisible in the summary: {line}"
+    assert "deadbeefdeadbeef" in line, "the summary does not say which shard"
+    assert "none in this interval" in line, (
+        "the summary must distinguish 'corrupt but unread here' from 'corrupt and that is why'"
+    )
+
+
+def test_an_untampered_report_says_nothing_about_tampering() -> None:
+    """**The twin.** A warning on every line is a warning nobody reads."""
+    report = replay.ReplayReport(branch_id="main", interval=(0, 4), verdicts=(), tampered={})
+    assert "TAMPERED" not in report.summary()
