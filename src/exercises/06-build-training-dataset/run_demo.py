@@ -44,6 +44,7 @@ from trainingdata import (  # noqa: E402  # noqa: E402  # noqa: E402
     manifest,
     metrics,
     mixture,
+    opus,
     plan,
     replay,
     runner,
@@ -57,7 +58,7 @@ from trainingdata.model import ModelConfig  # noqa: E402
 logger = logging.getLogger("run_demo")
 
 #: Where the shards built by `tools/build_corpus.py` live.
-SHARD_DIR = EXERCISE / "artifacts" / "shards-v2"
+SHARD_DIR = EXERCISE / "artifacts" / "shards-v3"
 
 #: The tracked deliverable. Not `artifacts/`: `**/artifacts/` is a DIRECTORY pattern and git
 #: cannot re-include a file whose parent is excluded, so a negation there is inert while
@@ -164,12 +165,19 @@ def open_corpus(shard_dir: Path, log: RunLog) -> tuple[dict, list]:
     return handles, manifests
 
 
-def demonstrate_firewall(shard_dir: Path, manifests: list, log: RunLog) -> dict:
+def demonstrate_firewall(shard_dir: Path, work: Path, manifests: list, log: RunLog) -> dict:
     """Write a real evaluation shard, offer it to the loader, and record that it is refused.
 
     **Written, not simulated.** The first version built the eval manifest in memory and never put
     it anywhere, so the bundle contained no trace of the thing being refused and the evidence row
     read "no evaluation shard was offered" — true, and the opposite of what the demo intended.
+
+    **And written into this run's own scratch, never into the corpus.** The second version wrote it
+    into `artifacts/shards-v2/heldout/`, and `manifest.append` is append-only — so every run added
+    another line for the same shard and the demo's own headline count climbed 59 → 60 → 61 across
+    three runs. Nothing failed: the shard is content-addressed, so the file on disk was identical
+    every time and only the count moved. A demonstration that edits the corpus it is demonstrating
+    on is not a demonstration.
 
     Two-sided on purpose: the shard's own manifest carries `split="eval"` **and** an independent
     registry is asked. Relying on either alone leaves one point of failure for the mistake that
@@ -177,7 +185,8 @@ def demonstrate_firewall(shard_dir: Path, manifests: list, log: RunLog) -> dict:
     copying may still happen."*
 
     Args:
-        shard_dir: Where shards live.
+        shard_dir: Where the real shards live. Read from, never written to.
+        work: This run's scratch directory, where the eval shard is written.
         manifests: Every training manifest.
         log: The run log.
 
@@ -189,7 +198,7 @@ def demonstrate_firewall(shard_dir: Path, manifests: list, log: RunLog) -> dict:
     donor = manifests[0]
     tokens = np.asarray(shards.read(shard_dir / donor.lane / f"{donor.shard_id}.bin"))[:4096]
 
-    lane_dir = shard_dir / "heldout"
+    lane_dir = work / "firewall"
     shard_id, _ = shards.write(tokens, lane_dir)
     evaluation = dataclasses.replace(
         donor,
@@ -215,12 +224,197 @@ def demonstrate_firewall(shard_dir: Path, manifests: list, log: RunLog) -> dict:
     )
     return {
         "shard_id": shard_id,
+        "written_to": str(lane_dir),
         "manifest_refused": bool(refusal),
         "manifest_reasons": list(refusal.reasons),
         "registry_allowed": allowed,
         "registry_reason": why,
         "two_sided": bool(refusal) and not allowed,
     }
+
+
+def run_opus(
+    shard_dir: Path,
+    golden_spec: "runner.RunSpec",
+    work: Path,
+    handles: dict,
+    manifests: list,
+    schedule,
+    config: Config,
+    model_config: "ModelConfig",
+    log: RunLog,
+) -> dict:
+    """Score real candidates against a real checkpoint, decide each one, and feed the survivors.
+
+    **Why this runs after the golden run rather than inside it.** OPUS reads the *live optimizer
+    preconditioner* — AdamW's second moment — so it needs a model that has actually taken steps.
+    Before the first step there is no state to read, the preconditioner is the identity, and what
+    you have is ordinary gradient-space scoring wearing the name of the thing it is an improvement
+    on. So the last checkpoint of the golden run is restored, and its optimizer state is the input.
+
+    **One pass per rank, from one restored model, and that is correct rather than a shortcut.** A
+    checkpoint is written synchronously, so every rank holds bit-identical weights at that step —
+    already established and recorded per rank as a weight digest. What differs between ranks is the
+    *candidate stream*: each draws from its own slots of the plan, so four passes score four
+    disjoint buffers.
+
+    **The proxy comes from held-out shards.** `g_proxy` is the direction the run would like to move
+    in, and scoring against training data would select for whatever the model is already being
+    pushed toward. This is the evaluation firewall applied to the selector's own reference set —
+    the same idea as LightningLM's pool marked *"OPUS scoring reference. NEVER trained on."*
+
+    Args:
+        shard_dir: Where shards live.
+        golden_spec: The golden run's spec, which is what knows where its checkpoints went. Asked
+            for rather than re-derived: `<artifact_dir>/checkpoints` is `runner`'s layout, and a
+            second copy of that knowledge here silently found nothing the first time.
+        work: This run's scratch directory.
+        handles: Every open training shard, by id.
+        manifests: Every manifest.
+        schedule: The run's plan.
+        config: The run shape.
+        model_config: Network shape, matching the golden run's.
+        log: The run log.
+
+    Returns:
+        The summary, with the scoring diagnostics folded in.
+    """
+    from trainingdata import opus_score, train
+
+    checkpoints = runner.checkpoint_dir(golden_spec)
+    record = checkpoint.latest(checkpoints, "main")
+    if record is None:
+        log.event(
+            "OPUS decisions recorded",
+            "the golden run wrote no checkpoint, so there is no optimizer state to read a "
+            "preconditioner from and any score here would be gradient-space, not OPUS",
+            produced=False,
+        )
+        return {}
+
+    # Held out from training, and NOT a benchmark. Both clauses matter: the firewall demo writes a
+    # shard into the same lane carrying `benchmark_ids`, and scoring against benchmark text would
+    # tune selection toward the evaluation — the exact contamination the firewall exists to stop.
+    heldout = [
+        entry
+        for entry in manifests
+        if entry.split == "heldout" and not entry.benchmark_ids and entry.token_count >= 4096
+    ]
+    if len(heldout) < 2:
+        log.event(
+            "OPUS decisions recorded",
+            f"only {len(heldout)} held-out shards are available; scoring against training data "
+            f"would select for what the model is already being pushed toward",
+            produced=False,
+        )
+        return {}
+
+    proxy_handles = {
+        entry.shard_id: feed.open_shard(
+            entry.shard_id,
+            shard_dir / entry.lane / f"{entry.shard_id}.bin",
+            entry.lane,
+            expected_hash=entry.content_hash,
+        )
+        for entry in heldout[:4]
+    }
+    proxy_plan = plan.build(
+        [(k, v.tokens.size) for k, v in proxy_handles.items()],
+        dataclasses.replace(config, ranks=1, accumulation=1, microbatch=2, steps=2),
+    )
+    proxy_batches = [
+        feed.build_microbatch(proxy_plan, proxy_handles, step, 0, 0) for step in range(2)
+    ]
+
+    passes: list[opus.Pass] = []
+    scorings = []
+    opus_dir = work / "opus"
+
+    for rank in range(config.ranks):
+        state = train.build_state(
+            schedule,
+            work / "opus-ledger",
+            "s06-demo",
+            "opus",
+            rank,
+            model_config=model_config,
+        )
+        train.restore(state, checkpoints, record)
+        proxy = opus_score.proxy_direction(
+            state.net,
+            state.optimizer,
+            [
+                {
+                    "tokens": b.tokens,
+                    "additive": b.additive,
+                    "positions": b.positions,
+                    "loss": b.loss,
+                }
+                for b in proxy_batches
+            ],
+            score_len=config.opus_score_len,
+        )
+        selection, scored, _ = train.run_opus_pass(
+            state,
+            schedule,
+            handles,
+            step=record.step + 1,
+            rank=rank,
+            proxy=proxy,
+            pass_id=f"opus-main-r{rank}-p0",
+            buffer=config.opus_buffer,
+            ratio=config.opus_ratio,
+            temperature=config.opus_temperature,
+            score_len=config.opus_score_len,
+            seed=config.seed + rank,
+            tokenizer_sha256=manifests[0].tokenizer_sha256,
+        )
+        opus.write_log(selection, opus_dir)
+        passes.append(selection)
+        scorings.append(scored)
+
+    events = ledger.read_branch(work / "opus-ledger", "opus")
+    report = opus.summarize(passes)
+    report["events_with_a_decision"] = sum(1 for e in events if e.opus_decision_id)
+    report["ledger_events"] = len(events)
+    report["noise_dominance"] = round(sum(p.noise_dominance for p in passes) / len(passes), 6)
+    report["redundancy_share"] = round(sum(s.redundancy_share for s in scorings) / len(scorings), 8)
+    report["preconditioned"] = all(s.preconditioned for s in scorings)
+    report["restored_from"] = record.checkpoint_id
+    report["proxy_shards"] = sorted(proxy_handles)
+    report["floors_held"] = all(
+        held for selection in passes for held in opus.floors_held(selection).values()
+    )
+
+    broken = [
+        problem
+        for selection in passes
+        for problem in opus.conservation(
+            selection,
+            offered=len(selection.decisions),
+            keep=len(selection.served),
+        )
+    ]
+    report["conservation"] = broken or "holds"
+
+    tally = report["decisions"]
+    log.event(
+        "OPUS decisions recorded",
+        f"{report['candidates']} candidates over {report['passes']} passes: "
+        f"{tally['accept']} accept · {tally['reject']} reject · {tally['defer']} defer · "
+        f"{tally['floor_override']} floor_override; every one with a score, a rank and a reason",
+    )
+    log.note(
+        f"scored against {len(proxy_handles)} held-out shards, preconditioner from "
+        f"{record.checkpoint_id}; noise/signal {report['noise_dominance']:.3f}, redundancy "
+        f"penalty {report['redundancy_share']:.2e} of the score"
+    )
+    if not tally["floor_override"]:
+        log.note(
+            "no protected candidate landed below the cut in these passes, so the floor never had "
+            "to override a score — the mechanism is exercised directly in the unit tests"
+        )
+    return report
 
 
 def main() -> int:
@@ -247,8 +441,8 @@ def main() -> int:
     log = RunLog(args.out / "run.log")
 
     handles, manifests = open_corpus(args.shards, log)
-    firewall_report = demonstrate_firewall(args.shards, manifests, log)
-    manifests.extend(manifest.read_all(args.shards / "heldout"))
+    firewall_report = demonstrate_firewall(args.shards, args.work, manifests, log)
+    manifests.extend(manifest.read_all(args.work / "firewall"))
 
     config = Config(
         ranks=args.ranks,
@@ -293,20 +487,24 @@ def main() -> int:
 
     # -- the golden run, then the crash -----------------------------------------------------------
     golden_root = args.work / "golden"
-    runner.launch(
-        dataclasses.replace(
-            base,
-            ledger_dir=str(golden_root / "ledger"),
-            artifact_dir=str(golden_root / "artifacts"),
-        )
+    golden_spec = dataclasses.replace(
+        base,
+        ledger_dir=str(golden_root / "ledger"),
+        artifact_dir=str(golden_root / "artifacts"),
     )
+    runner.launch(golden_spec)
     golden = ledger.read_branch(golden_root / "ledger", "main")
     log.event("batches packed", f"{len(golden)} microbatches over {args.steps} steps")
-    log.event(
-        "OPUS decisions recorded",
-        "OPUS is not built; every event records opus_decision_id: null. Logging this as produced "
-        "would fabricate the evidence the brief inspects for",
-        produced=False,
+    opus_report = run_opus(
+        args.shards,
+        golden_spec,
+        args.work,
+        handles,
+        manifests,
+        schedule,
+        config,
+        base.model_config,
+        log,
     )
 
     crash_spec = dataclasses.replace(
@@ -440,6 +638,7 @@ def main() -> int:
         replay_report=replay_report,
         resume_report=resume_report,
         fork_report=fork_report,
+        opus_report=opus_report or None,
     )
     evidence.write_bundle(
         args.out,
@@ -458,6 +657,17 @@ def main() -> int:
     ledgers_out.mkdir(parents=True, exist_ok=True)
     for path in ledger.segments_for(args.work / "ledger", "main"):
         shutil.copyfile(path, ledgers_out / path.name)
+
+    # The decision logs and the ledger they explain travel together. A decision record with no
+    # events to join to proves a selector ran; the pair proves it changed what the model read.
+    opus_work = args.work / "opus"
+    if opus_work.is_dir():
+        opus_out = args.out / "opus"
+        opus_out.mkdir(parents=True, exist_ok=True)
+        for path in sorted(opus_work.glob("*.jsonl")):
+            shutil.copyfile(path, opus_out / path.name)
+        for path in ledger.segments_for(args.work / "opus-ledger", "opus"):
+            shutil.copyfile(path, opus_out / path.name)
 
     (args.out / "firewall.json").write_text(
         json.dumps(firewall_report, indent=2, sort_keys=True), encoding="utf-8"

@@ -38,6 +38,9 @@ logger = logging.getLogger("verify")
 #: What the chain's first event carries as `prev`.
 GENESIS = "b2:" + "0" * 32
 
+#: The one event in `spec.REQUIRED_SEQUENCE` that this file, rather than the producer, completes.
+AUDIT_EVENT = "audit completed"
+
 
 @dataclass
 class Finding:
@@ -120,6 +123,12 @@ def check_run_log(bundle: Path) -> list[Finding]:
     whole reason the producer writes a verdict per line: an auditor can then tell "the run did not
     do this" from "the run did not mention it", and only the second is a hole in the record.
 
+    **`audit completed` is the one event the producer structurally cannot produce**, and it is this
+    file that produces it. `run_demo.py` marks it `[SKIP]` rather than claiming it, because a run
+    that certified its own audit would be certifying nothing; the audit is completed by *this*
+    process reaching the end of *this* function, which is why the sole exemption below is named
+    rather than a blanket "ignore skips".
+
     Args:
         bundle: The submission bundle.
 
@@ -140,7 +149,8 @@ def check_run_log(bundle: Path) -> list[Finding]:
                 order.append(event)
 
     missing = [event for event in spec.REQUIRED_SEQUENCE if event not in seen]
-    skipped = [event for event, mark in seen.items() if mark == "SKIP"]
+    skipped = [event for event, mark in seen.items() if mark == "SKIP" and event != AUDIT_EVENT]
+    self_audited = seen.get(AUDIT_EVENT) == "SKIP"
     expected_order = [event for event in spec.REQUIRED_SEQUENCE if event in seen]
 
     return [
@@ -158,6 +168,15 @@ def check_run_log(bundle: Path) -> list[Finding]:
             "every required event was actually produced",
             not skipped,
             f"NOT PRODUCED: {skipped}" if skipped else "all produced",
+        ),
+        Finding(
+            AUDIT_EVENT,
+            True,
+            "produced by this run of verify.py — the producer marked it [SKIP] because it cannot "
+            "certify its own audit"
+            if self_audited
+            else "the producer claimed this itself, which certifies nothing; it is marked [SKIP] "
+            "in a correct run and completed here",
         ),
     ]
 
@@ -334,6 +353,151 @@ def check_firewall(bundle: Path, events: list[dict]) -> list[Finding]:
     ]
 
 
+def check_opus(bundle: Path) -> list[Finding]:
+    """Re-derive the selection record, and join it to the batches it decided.
+
+    **The join is the whole check.** A decision log on its own proves a selector ran; the ledger on
+    its own proves batches were fed. Only together do they show the selector *changed what the
+    model read* — and the failure this catches is a candidate the record says was rejected turning
+    up in a loss-bearing batch, which would mean the decisions were decoration.
+
+    Everything here is recomputed with `hashlib` and `json`. Importing `opus` would check the
+    producer's arithmetic against the producer's arithmetic and agree with itself.
+
+    Args:
+        bundle: The submission bundle.
+
+    Returns:
+        The findings. Empty when the run recorded no selection at all — reported by the evidence
+        row rather than as a failure here, since a run without OPUS is a smaller claim, not a
+        false one.
+    """
+    directory = bundle / "opus"
+    if not directory.is_dir():
+        return []
+
+    logs = sorted(directory.glob("opus-*.jsonl"))
+    segments = sorted(directory.glob("*.rank*.seg*.jsonl"))
+    if not logs:
+        return [Finding("opus decision logs present", False, f"nothing under {directory}")]
+
+    findings: list[Finding] = []
+    decided: dict[str, dict[str, list[tuple[int, int, str]]]] = {}
+    tally: dict[str, int] = dict.fromkeys(spec.DECISIONS, 0)
+    served_total = 0
+
+    for path in logs:
+        lines = [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        header, rows = json.loads(lines[0]), [json.loads(line) for line in lines[1:]]
+
+        canonical = "\n".join(
+            json.dumps(row, sort_keys=True, separators=(",", ":")) for row in rows
+        )
+        digest = "b2:" + hashlib.blake2b(canonical.encode("utf-8"), digest_size=16).hexdigest()
+        findings.append(
+            Finding(
+                f"decision log intact: {path.name}",
+                digest == header.get("digest"),
+                f"{len(rows)} candidates hash to the recorded digest"
+                if digest == header.get("digest")
+                else f"rows hash to {digest}, header says {header.get('digest')}",
+            )
+        )
+
+        served = [row for row in rows if row["decision"] in ("accept", "floor_override")]
+        served_total += len(served)
+        findings.append(
+            Finding(
+                f"conservation: {path.name}",
+                len(rows) == header.get("offered") and len(served) == header.get("served"),
+                f"{len(rows)} offered, {len(served)} served",
+            )
+        )
+        for row in rows:
+            tally[row["decision"]] = tally.get(row["decision"], 0) + 1
+            decided.setdefault(header["pass_id"], {}).setdefault(row["shard_id"], []).append(
+                (int(row["start"]), int(row["end"]), row["decision"])
+            )
+
+        unreasoned = [row for row in rows if not str(row.get("reason", "")).strip()]
+        findings.append(
+            Finding(
+                f"every candidate carries a reason: {path.name}",
+                not unreasoned,
+                f"{len(rows)} reasons" if not unreasoned else f"{len(unreasoned)} rows have none",
+            )
+        )
+
+    # -- the join ---------------------------------------------------------------------------------
+    leaked: list[str] = []
+    tagged = 0
+    for path in segments:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            event = json.loads(line)
+            pass_id = event.get("opus_decision_id")
+            if not pass_id:
+                continue
+            tagged += 1
+            for sample in event.get("samples") or []:
+                # A ledger sample is a document FRAGMENT; a candidate is the SPAN the fragment was
+                # cut from. Joining on `start` compares the two and finds nothing, which is how the
+                # first version of this check reported every batch as unaccounted for. Containment
+                # is both correct and stronger: it catches a fragment fed from a shard that was
+                # accepted at some *other* offset, which an id-only join would wave through.
+                spans = decided.get(pass_id, {}).get(sample["shard_id"], [])
+                outcome = next(
+                    (
+                        decision
+                        for start, end, decision in spans
+                        if start <= sample["start"] and sample["end"] <= end
+                    ),
+                    None,
+                )
+                if outcome not in ("accept", "floor_override"):
+                    leaked.append(
+                        f"{sample['shard_id'][:8]}[{sample['start']}:{sample['end']}] was "
+                        f"{outcome or 'in no accepted span'}"
+                    )
+
+    findings.append(
+        Finding(
+            "every batch OPUS fed was one it accepted",
+            not leaked and tagged > 0,
+            f"{tagged} microbatches join cleanly to their pass"
+            if not leaked and tagged
+            else (f"NOT ACCEPTED: {leaked[:4]}" if leaked else "no microbatch names a pass"),
+        )
+    )
+
+    unknown = sorted(set(tally) - set(spec.DECISIONS))
+    findings.append(
+        Finding(
+            "every outcome is one of the four statuses",
+            not unknown,
+            f"invented statuses: {unknown}"
+            if unknown
+            else ", ".join(f"{name} {tally[name]}" for name in spec.DECISIONS),
+        )
+    )
+
+    payload = json.loads((bundle / "evidence.json").read_text(encoding="utf-8"))
+    row = next(
+        (r for r in payload.get("requirements", []) if r["requirement"] == "opus_audit_trail"),
+        None,
+    )
+    claimed = (row or {}).get("numbers", {}).get("decisions")
+    findings.append(
+        Finding(
+            "the published decision counts re-derive",
+            claimed is None or claimed == tally,
+            f"logs say {tally}, bundle says {claimed}",
+        )
+    )
+    return findings
+
+
 def main() -> int:
     """Verify the bundle and report.
 
@@ -354,6 +518,7 @@ def main() -> int:
     findings += check_evidence(args.bundle)
     findings += recheck_numbers(args.bundle, events)
     findings += check_firewall(args.bundle, events)
+    findings += check_opus(args.bundle)
 
     for finding in findings:
         logger.info("%s %-52s %s", "PASS" if finding.ok else "FAIL", finding.check, finding.detail)

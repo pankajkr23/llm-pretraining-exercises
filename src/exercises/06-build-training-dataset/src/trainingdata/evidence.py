@@ -80,6 +80,7 @@ def build_rows(
     replay_report: dict | None = None,
     resume_report: dict | None = None,
     fork_report: dict | None = None,
+    opus_report: dict | None = None,
 ) -> list[Row]:
     """Compute all nine requirement rows from the artifacts.
 
@@ -91,6 +92,7 @@ def build_rows(
         replay_report: Summary of a replay interval.
         resume_report: What the crash and resume produced.
         fork_report: What the fork produced.
+        opus_report: What `opus.summarize` produced over the run's selection passes.
 
     Returns:
         Nine rows, in `spec.REQUIREMENTS` order.
@@ -214,22 +216,53 @@ def build_rows(
     )
 
     # -- OPUS ------------------------------------------------------------------------------------
-    decided = [event for event in events if event.opus_decision_id]
-    rows["opus_audit_trail"] = (
-        Row(
+    # Counted from the OPUS report rather than from `events`, because selection runs on its own
+    # branch: the main branch's events legitimately carry `opus_decision_id: null`, and looking for
+    # them there would report a working selector as absent.
+    decided = (opus_report or {}).get("events_with_a_decision", 0)
+    if decided and opus_report:
+        tally = opus_report["decisions"]
+        # `floor_override` firing zero times is a fact about these scores, not about the mechanism:
+        # it means no protected candidate landed below the cut. Saying so beats a bare 0, which
+        # reads as "never implemented".
+        overrides = tally.get("floor_override", 0)
+        override_note = (
+            f"{overrides} served against their score by a protected floor"
+            if overrides
+            else "no protected candidate landed below the cut in these passes, so the floor never "
+            "had to override a score"
+        )
+        rows["opus_audit_trail"] = Row(
             requirement="opus_audit_trail",
             status="met",
-            claim=f"{len(decided)} microbatches carry an OPUS decision id",
-            evidence="the ledger's `opus_decision_id`, joined to the decision records",
-            numbers={"events_with_a_decision": len(decided)},
+            claim=(
+                f"{opus_report['candidates']} candidates across {opus_report['passes']} passes, "
+                f"each with a score, a rank, an outcome and a reason: "
+                f"{tally.get('accept', 0)} accepted, {tally.get('reject', 0)} rejected, "
+                f"{tally.get('defer', 0)} deferred inside the noise band, and {override_note}. "
+                f"{decided} microbatches carry the pass id that decided them."
+            ),
+            evidence="`opus/*.jsonl`, one row per candidate, joined to the ledger's "
+            "`opus_decision_id`",
+            numbers={
+                "events_with_a_decision": decided,
+                "candidates": opus_report["candidates"],
+                "passes": opus_report["passes"],
+                "decisions": tally,
+                "defer_rate": opus_report["defer_rate"],
+                "floor_override_rate": opus_report["floor_override_rate"],
+                "by_lane": opus_report["by_lane"],
+                "noise_dominance": opus_report.get("noise_dominance"),
+                "redundancy_share": opus_report.get("redundancy_share"),
+                "pass_digests": opus_report["pass_digests"],
+            },
         )
-        if decided
-        else _unmet(
+    else:
+        rows["opus_audit_trail"] = _unmet(
             "opus_audit_trail",
-            "OPUS is not built. Every event records `opus_decision_id: null`, so this run has no "
-            "candidate decisions to audit and says so rather than omitting the row.",
+            "This run recorded no OPUS decisions. Every event carries `opus_decision_id: null`, so "
+            "there is nothing to audit — reported rather than omitted.",
         )
-    )
 
     # -- crash recovery --------------------------------------------------------------------------
     rows["crash_recovery"] = (

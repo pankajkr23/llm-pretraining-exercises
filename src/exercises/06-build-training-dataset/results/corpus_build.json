@@ -1,6 +1,6 @@
 {
   "built_despite_short_lanes": false,
-  "config_fingerprint": "a72bf6053187",
+  "config_fingerprint": "68b402b23a89",
   "context_spans": 3260,
   "epochs_of_supply": 1.0139,
   "heldout_tokens": 1093019,
@@ -10,6 +10,9 @@
       "documents_in": 229,
       "documents_kept": 226,
       "dropped_short": 0,
+      "heldout_shard_ids": [
+        "f1134d2a596952d8"
+      ],
       "heldout_tokens": 23830,
       "lane": "agentic",
       "shard_ids": [
@@ -29,6 +32,9 @@
       "documents_in": 775,
       "documents_kept": 769,
       "dropped_short": 0,
+      "heldout_shard_ids": [
+        "1923cd96422b9789"
+      ],
       "heldout_tokens": 259272,
       "lane": "code",
       "shard_ids": [
@@ -62,6 +68,9 @@
       "documents_in": 2447,
       "documents_kept": 2396,
       "dropped_short": 0,
+      "heldout_shard_ids": [
+        "a1331aecb2978fb8"
+      ],
       "heldout_tokens": 205144,
       "lane": "indic",
       "shard_ids": [
@@ -89,6 +98,9 @@
       "documents_in": 1444,
       "documents_kept": 1444,
       "dropped_short": 0,
+      "heldout_shard_ids": [
+        "531d763d8e7cbd6f"
+      ],
       "heldout_tokens": 92459,
       "lane": "reasoning",
       "shard_ids": [
@@ -111,6 +123,9 @@
       "documents_in": 2226,
       "documents_kept": 2225,
       "dropped_short": 0,
+      "heldout_shard_ids": [
+        "aaee2c813fee0127"
+      ],
       "heldout_tokens": 139898,
       "lane": "stem",
       "shard_ids": [
@@ -135,6 +150,9 @@
       "documents_in": 2174,
       "documents_kept": 2173,
       "dropped_short": 0,
+      "heldout_shard_ids": [
+        "f75ed26c42f2c67a"
+      ],
       "heldout_tokens": 372416,
       "lane": "web",
       "shard_ids": [
@@ -239,7 +257,7 @@
       }
     }
   },
-  "plan_digest": "afe27bf534171ae2",
+  "plan_digest": "a8637e476e6043e7",
   "refused_by_the_gate": [],
   "run_needs_tokens": 10485760,
   "shards": 57,

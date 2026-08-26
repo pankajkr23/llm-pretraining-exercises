@@ -12,13 +12,35 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **OPUS lands, and the run reaches 9 of 9 requirements.** Two modules split at the torch boundary:
+  `opus.py` — floors, selection, the noise band, the conservation laws and the written record, all
+  pure numpy so CI verifies them — and `opus_score.py`, the criterion itself, gated behind the
+  `train` extra. In the demo run: **128 candidates over 4 passes, 63 accept · 14 reject · 50 defer ·
+  1 floor_override**, every one with a score, a rank and a reason in words, scored against a real
+  checkpoint's live AdamW preconditioner and four held-out shards.
+- **The record is the deliverable, not the selector.** LightningLM ships a complete OPUS and keeps
+  one metrics dict per scoring *pass* — no per-candidate record, `mark_batch_consumed()` never
+  called, provenance computed and discarded. *"Why was this rejected at step 400"* is unanswerable
+  there. Here each decision log carries a row per candidate under a digest, joined to the ledger by
+  `opus_decision_id`.
+- **The floor is architectural, not a clamp.** Protected lanes come from a stream the scorer never
+  ranks, so no code path can violate a floor. `floor_override` stays *observable* because the
+  reserved candidates are still scored — reserve without scoring and the override becomes
+  unmeasurable rather than impossible.
+- **`verify.py` audits the selection independently and now passes 38 of 38**, including the join
+  that a digest cannot do: a tamperer who edits a decision *and* recomputes the header hash is still
+  caught, because the ledger shows that candidate being fed while the record calls it rejected.
+  Both tampers are watched failing in tracked tests.
+- **`audit completed` is completed by the auditor.** The producer marks it `[SKIP]` because a run
+  that certifies its own audit certifies nothing; `verify.py` is what produces it. That is the last
+  of the thirteen required log events.
 - **The two graded commands exist and disagree with each other when they should.**
-  `run_demo.py` regenerates the whole submission bundle in **15.4 s** with no interaction —
-  225,067 bytes against the 2 MiB cap, 8 of 9 requirements met, 11 of 13 required log events
-  genuinely produced. `verify.py` re-derives every published claim from `submission_artifacts/`
-  alone and scores **20 of 22**; both failures are it refusing to bless the one requirement that is
-  not built. A bundle whose token count is inflated by a million, or whose ledger has one doctored
-  line, is rejected — watched failing before either check was trusted.
+  `run_demo.py` regenerates the whole submission bundle in **21.7 s** with no interaction —
+  347,726 bytes against the 2 MiB cap, **9 of 9** requirements met, 12 of the 13 required log
+  events genuinely produced. `verify.py` re-derives every published claim from
+  `submission_artifacts/` alone and passes **38 of 38**, completing the thirteenth event itself. A
+  bundle whose token count is inflated by a million, or whose ledger has one doctored line, is
+  rejected — watched failing before either check was trusted.
 - **The producer/auditor wall is a test, not a rule, because breaking it is invisible.** One
   `from trainingdata import metrics` in `verify.py` would turn every number check into the
   producer's arithmetic checked against the producer's arithmetic — agreeing with itself whatever
@@ -62,8 +84,26 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 - **`spec.py` gains the policy vocabularies** — `PACK_POLICIES`, `POSITION_POLICIES`,
   `ATTENTION_POLICIES`, `LOSS_POLICIES` — pinned by name with the same twin `DECISIONS` has.
 
-
 ### Fixed
+
+- **The held-out split was counted and never written.** `corpus.build_lane` computed it, recorded
+  `heldout_tokens` on the build report, published **1,093,019 tokens** — and let the array go out of
+  scope one line later. A tenth of the corpus was reported as withheld for evaluation and existed
+  nowhere on disk. Nothing failed, because every test asked about the number. It surfaced only when
+  OPUS needed a proxy set that the run never trains on and found an empty lane. Now written as
+  shards with `split="heldout"`, which the firewall refuses; disk and report agree exactly.
+- **`run_demo.py` was editing the corpus it was demonstrating on.** Its evaluation shard went into
+  `artifacts/shards-v2/heldout/`, and `manifest.append` is append-only — so the demo's own headline
+  count climbed 59 → 60 → 61 across three runs. The shard is content-addressed, so the file was
+  byte-identical each time and only the count moved. It now writes into the run's own scratch.
+- **The Boltzmann temperature was an absolute, which is a defect with a delayed fuse.** Gumbel noise
+  has a fixed spread; a utility's shrinks as the model improves, so the selector slides from
+  utility-driven toward random over a run with nothing failing. Measured at the old default: noise
+  carrying **1.09×** the signal, and at `τ = 2.0` **zero** rejections surviving a redraw. Now a
+  multiple of the observed spread — proven scale-free against scores multiplied by a thousand.
+- **A `str.replace` that matched nothing reported success**, leaving half a patch applied in
+  `verify.py`: the OPUS join was reading a dict keyed one way and writing it another, and reported
+  every batch as unaccounted for. The same failure mode this repo has already paid for once.
 
 - **The evaluation firewall was simulated in the demo** — the eval manifest was built in memory and
   never written, so the evidence row correctly read *"no evaluation shard was offered"*, which is

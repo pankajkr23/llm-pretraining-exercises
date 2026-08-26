@@ -84,7 +84,9 @@ class LaneBuild:
         documents_in: Documents read from the fetched file.
         documents_kept: Documents surviving the cleaning stages.
         train_tokens: Tokens written to training shards.
-        heldout_tokens: Tokens withheld for evaluation.
+        heldout_tokens: Tokens withheld from training.
+        heldout_shard_ids: The shards those tokens were written to. They exist on disk: a count
+            without data is a claim nothing can check, and this one went unchecked for a while.
         shard_ids: The shards written, in order.
         dropped_short: Pieces discarded for being shorter than one sequence.
         unk_share: Share of training ids that came back `[UNK]`.
@@ -98,6 +100,8 @@ class LaneBuild:
     documents_kept: int = 0
     train_tokens: int = 0
     heldout_tokens: int = 0
+    #: Shards written for the held-out split. Empty when the lane withheld less than one window.
+    heldout_shard_ids: list[str] = field(default_factory=list)
     shard_ids: list[str] = field(default_factory=list)
     dropped_short: int = 0
     unk_share: float = 0.0
@@ -265,6 +269,75 @@ def _encode(documents: list[str], tokenizer) -> np.ndarray:
     return np.asarray(ids, dtype=np.int64)
 
 
+def _write_heldout(
+    heldout: np.ndarray,
+    out_dir: Path,
+    text: "LaneText",
+    config: Config,
+    tokenizer_sha256: str,
+    hashes: dict[str, str],
+) -> list[str]:
+    """Materialise the held-out split, instead of counting it and throwing it away.
+
+    **This existed as a number and not as data, which is the worst of both.** `heldout_tokens` was
+    computed here, recorded in `LaneBuild`, summed into the build report and published — while the
+    array itself went out of scope one line later. A tenth of the corpus was reported as withheld
+    for evaluation and did not exist anywhere on disk, so nothing could have been evaluated on it
+    and no test failed, because every test asked about the number.
+
+    It surfaced when OPUS needed a proxy set. `g_proxy` is the direction the run would like to move
+    in, and scoring against training data selects for whatever the model is already being pushed
+    toward — so the reference has to be text the run never trains on. The selector asked for the
+    held-out split and found an empty lane.
+
+    **Written with `split="heldout"`, which `manifest.admit` refuses**, so the firewall keeps it out
+    of every loss-bearing batch by the same rule that stops benchmark data. It carries no
+    `benchmark_ids`: it is not a benchmark, it is a reference sample, and conflating the two would
+    make the firewall's benchmark reason fire for something that overlaps no benchmark.
+
+    Args:
+        heldout: The withheld tokens for this lane.
+        out_dir: Where lane directories go.
+        text: The lane being built.
+        config: The run shape.
+        tokenizer_sha256: Provenance of what the token ids mean.
+        hashes: The cleaning lineage this lane's documents carry, so a held-out shard is traceable
+            to the same pipeline its training siblings came from.
+
+    Returns:
+        The shard ids written, which is empty when the lane withheld less than one sequence.
+    """
+    lane_dir = out_dir / "heldout"
+    written: list[str] = []
+    for piece in shards.split(heldout, config.tokens_per_shard):
+        if piece.size < config.sequence_length:
+            continue  # shorter than one window; it could never be read
+        shard_id, _ = shards.write(piece, lane_dir)
+        manifest_module.append(
+            manifest_module.ShardManifest(
+                context_spans=(),
+                shard_id=shard_id,
+                content_hash=shards.content_hash(piece),
+                token_count=int(piece.size),
+                dtype=shards.DTYPE.str,
+                source=f"{text.lane}:heldout",
+                lane="heldout",
+                language=text.language,
+                licence=text.licence,
+                provenance_tier=text.provenance_tier,
+                tokenizer_id=config.tokenizer_id,
+                tokenizer_sha256=tokenizer_sha256,
+                split="heldout",
+                config_fingerprint=config.fingerprint(),
+                unk_share=float((piece == 0).mean()),
+                **hashes,
+            ),
+            lane_dir,
+        )
+        written.append(shard_id)
+    return written
+
+
 def build_lane(
     text: LaneText,
     out_dir: Path,
@@ -347,6 +420,9 @@ def build_lane(
         at += len(ids) + 1
     result.train_tokens = int(train.size)
     result.heldout_tokens = int(heldout.size)
+    result.heldout_shard_ids = _write_heldout(
+        heldout, out_dir, text, config, tokenizer_sha256, hashes
+    )
     result.unk_share = float((train == 0).mean()) if train.size else 0.0
 
     lane_dir = out_dir / text.lane

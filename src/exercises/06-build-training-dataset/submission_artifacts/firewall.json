@@ -7,5 +7,6 @@
   "registry_allowed": false,
   "registry_reason": "registered to benchmark 'demo-benchmark': never-train",
   "shard_id": "10767e14fed0a365",
-  "two_sided": true
+  "two_sided": true,
+  "written_to": "/Users/pankajkumar/git/tsai/era5/llm-pretraining-exercises/src/exercises/06-build-training-dataset/artifacts/demo/firewall"
 }

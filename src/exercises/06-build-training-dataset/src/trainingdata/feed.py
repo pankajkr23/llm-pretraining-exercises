@@ -233,9 +233,7 @@ def build_microbatch(
             missing shard would silently shrink the batch and every count downstream with it.
     """
     config = schedule.config
-    windows: list[pack.Window] = []
-    samples: list[dict] = []
-
+    chosen = []
     for seq in range(config.microbatch):
         coord = plan_module.Coordinate(step=step, rank=rank, accum=accum, seq=seq)
         span = schedule.span_for(coord)
@@ -243,6 +241,46 @@ def build_microbatch(
             raise KeyError(
                 f"the plan places shard {span.shard_id} at step {step} rank {rank} accum {accum} "
                 f"seq {seq}, but that shard was never opened"
+            )
+        chosen.append((span, schedule.pass_number(coord)))
+    return assemble(chosen, handles, config.sequence_length)
+
+
+def assemble(
+    chosen: list[tuple[plan_module.Span, int]],
+    handles: dict[str, ShardHandle],
+    sequence_length: int,
+) -> Microbatch:
+    """Pack an explicit list of spans into a microbatch.
+
+    Split out of `build_microbatch` so that **who chose the spans** and **how they become tensors**
+    are different questions. The plan answers the first for an ordinary step; OPUS answers it for a
+    selected one. Sharing this function is what stops the two from drifting into two packers, which
+    would make an OPUS batch and a planned batch differently shaped for reasons no ledger records.
+
+    Args:
+        chosen: `(span, pass number)` pairs, one per sequence in the microbatch.
+        handles: Every open shard, by id.
+        sequence_length: Window size.
+
+    Returns:
+        The microbatch.
+
+    Raises:
+        KeyError: If a span names a shard that was not opened.
+        ValueError: If a span is not exactly one sequence long. The plan guarantees this; a
+            selector handing over its own spans does not, and a ragged one would surface far away
+            as an opaque `np.stack` shape error rather than as the wrong span it is.
+    """
+    windows: list[pack.Window] = []
+    samples: list[dict] = []
+
+    for seq, (span, pass_no) in enumerate(chosen):
+        if span.shard_id not in handles:
+            raise KeyError(f"span names shard {span.shard_id}, which was never opened")
+        if span.end - span.start != sequence_length:
+            raise ValueError(
+                f"span {seq} covers {span.end - span.start} tokens, not {sequence_length}"
             )
         handle = handles[span.shard_id]
         window = pack.build_window(
@@ -254,7 +292,6 @@ def build_microbatch(
         )
         windows.append(window)
 
-        pass_no = schedule.pass_number(coord)
         at = 0
         for fragment in window.fragments:
             graded = int(np.count_nonzero(window.loss[at : at + fragment.length]))

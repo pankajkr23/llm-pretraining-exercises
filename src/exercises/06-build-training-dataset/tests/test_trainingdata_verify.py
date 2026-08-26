@@ -188,3 +188,89 @@ def test_the_auditor_catches_a_doctored_ledger(bundle, tmp_path) -> None:
 
     output = _verify(copy).stdout
     assert "FAIL chain intact" in output, "a doctored ledger line survived the audit"
+
+
+# --- the OPUS record, audited independently ------------------------------------------------------
+
+
+@pytest.mark.integration
+def test_the_auditor_catches_a_doctored_decision_log(bundle, tmp_path) -> None:
+    """Editing one candidate's outcome must break the log's digest.
+
+    The first line of defence, and the cheap one: the header records a hash over every row, so a
+    log edited after the fact no longer hashes to what it claims.
+    """
+    import shutil
+
+    if not (bundle / "opus").is_dir():
+        pytest.skip("this bundle recorded no OPUS decisions")
+
+    copy = tmp_path / "bundle"
+    shutil.copytree(bundle, copy)
+
+    path = sorted((copy / "opus").glob("opus-*.jsonl"))[0]
+    lines = path.read_text().splitlines()
+    for index, line in enumerate(lines[1:], start=1):
+        row = json.loads(line)
+        if row["decision"] == "reject":
+            row["decision"] = "accept"
+            lines[index] = json.dumps(row, sort_keys=True, separators=(",", ":"))
+            break
+    path.write_text("\n".join(lines) + "\n")
+
+    output = _verify(copy).stdout
+    assert "FAIL decision log intact" in output, "an edited decision survived the audit"
+
+
+@pytest.mark.integration
+def test_the_join_catches_a_tamper_the_digest_cannot(bundle, tmp_path) -> None:
+    """**The check that earns the join its place.**
+
+    A digest is not a signature: anyone who can edit the log can recompute it. So this test edits a
+    row *and* fixes the header, which defeats the integrity check completely — and is still caught,
+    because the ledger shows that candidate being fed to the model while the record now says it was
+    rejected. Two artifacts written by different code paths have to agree, and only one of them is
+    the one being edited.
+    """
+    import hashlib
+    import shutil
+
+    if not (bundle / "opus").is_dir():
+        pytest.skip("this bundle recorded no OPUS decisions")
+
+    copy = tmp_path / "bundle"
+    shutil.copytree(bundle, copy)
+
+    path = sorted((copy / "opus").glob("opus-*.jsonl"))[0]
+    lines = path.read_text().splitlines()
+    header, rows = json.loads(lines[0]), [json.loads(line) for line in lines[1:]]
+    for row in rows:
+        if row["decision"] == "accept":
+            row["decision"] = "reject"
+            break
+
+    canonical = "\n".join(json.dumps(r, sort_keys=True, separators=(",", ":")) for r in rows)
+    header["digest"] = "b2:" + hashlib.blake2b(canonical.encode(), digest_size=16).hexdigest()
+    path.write_text(
+        "\n".join(
+            [json.dumps(header, sort_keys=True, separators=(",", ":"))]
+            + [json.dumps(r, sort_keys=True, separators=(",", ":")) for r in rows]
+        )
+        + "\n"
+    )
+
+    output = _verify(copy).stdout
+    assert "FAIL decision log intact" not in output, (
+        "the digest check caught this, so it is not testing what the join adds"
+    )
+    assert "FAIL every batch OPUS fed was one it accepted" in output, (
+        "a batch the record now calls rejected was fed to the model and the audit accepted it"
+    )
+
+
+@pytest.mark.integration
+def test_the_auditor_completes_the_one_event_the_producer_cannot(bundle) -> None:
+    """`audit completed` is this file's own event; the producer marks it `[SKIP]` deliberately."""
+    output = _verify(bundle).stdout
+    assert "PASS audit completed" in output
+    assert "NOT PRODUCED" not in output, "a required event other than the audit went unproduced"

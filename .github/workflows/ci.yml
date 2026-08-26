@@ -185,15 +185,18 @@ jobs:
                exit 1 ;;
           esac
 
-      # The four files whose module-level importorskip("torch") makes them invisible without the
+      # The five files whose module-level importorskip("torch") makes them invisible without the
       # extra. Both markers: their unit AND integration tests are equally unreachable otherwise.
+      # This list is hand-maintained, so tests/test_ci_shards_cover_everything.py fails when a new
+      # torch-gated file is not added to it — which is how the OPUS scorer got here.
       - name: Torch-gated tests
         run: |
           uv run pytest -n auto --dist loadfile \
             src/exercises/05-datamixtures-and-curriculum/tests/test_mixture_proxy_run.py \
             src/exercises/06-build-training-dataset/tests/test_trainingdata_model.py \
             src/exercises/06-build-training-dataset/tests/test_trainingdata_train.py \
-            src/exercises/06-build-training-dataset/tests/test_trainingdata_crash.py
+            src/exercises/06-build-training-dataset/tests/test_trainingdata_crash.py \
+            src/exercises/06-build-training-dataset/tests/test_trainingdata_opus_score.py
 
   security:
     runs-on: ubuntu-latest

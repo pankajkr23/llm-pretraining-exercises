@@ -436,3 +436,75 @@ a PR and nowhere else, which is a limit of the evidence and not of the design.
 
 **Would overturn it.** NCCL and real GPUs, which change the backend and nothing else about the
 structure — the code is identical either way, which is the reason `gloo` was chosen.
+
+---
+
+## D18 · The Boltzmann temperature is a multiple of the score spread, not an absolute.
+
+**Decided.** `opus.select` scales scores by `τ · std(contested scores)` before adding Gumbel noise.
+`Config.opus_temperature` moves from `0.9` to `0.25`, and the field's meaning changes with it.
+
+**Why.** Gumbel(0, 1) noise has a **fixed** standard deviation of `π/√6 ≈ 1.283`. A utility does
+not: it is an inner product of gradients, so it shrinks as the model improves — the instructor's own
+control-pool diagnostic shows mean ‖g‖ falling 3.07 → 0.74 over a run. Under an absolute
+temperature the ratio between the two drifts, and the selector slides from utility-driven toward
+random **over the course of the run with nothing failing**. Batches keep filling, loss keeps
+falling, and the audit trail records confident-looking scores beside decisions those scores did not
+make.
+
+**Measured, at the old default.** At `τ = 0.9` the noise carried **1.09×** the spread of the signal
+it perturbed, and 29 of 32 non-selected candidates flipped under resampling. At `τ = 2.0`, **zero**
+rejections survive a redraw. The sweep — `τ` 0.05 / 0.25 / 0.9 / 2.0 → noise-to-signal 0.06 / 0.32 /
+1.09 / 2.43 — is in `opus.select`'s docstring and the README.
+
+**Proven scale-free.** Multiply every score by a thousand: identical served set, identical
+`noise_dominance`. That is the property an absolute temperature does not have.
+
+**Would overturn it.** A source showing the paper's temperature is already normalised, in which
+case this is the paper's design rather than ours and D18 becomes a note rather than a decision.
+
+---
+
+## D19 · `redundancy_weight` exists, and defaults to Eq. 23 unmodified.
+
+**Decided.** Ship the criterion exactly as published (`λ = 1.0`), publish `redundancy_share` on
+every pass, and provide `λ` for anyone who wants the diversity term to do something.
+
+**Why not simply rebalance it.** The plan flagged the imbalance as *"a trap to inspect before
+letting one term subtract the other"*, and inspecting it confirmed the trap: at `η = 3e-4` the
+penalty contributes **0.069%** of the score. Sweeping without gaps — 3e-4 → 0.069%, 1e-3 → 0.27%,
+1e-2 → 1.97%, 1e-1 → 24.7%, 1.0 → 85.1% — and with `η` stripped out the penalty's raw inner product
+is **4.05× larger** than the alignment's. So nothing is cancelling; one factor of `η` is.
+
+**Two branches, and we do not pick one.** Either the penalty is genuinely inert at any learning
+rate a pretraining run uses, or `η` in Eq. 23 is not the raw learning rate and our reading of it is
+wrong. **The measurement is certain; the interpretation is not.** Silently rebalancing a published
+criterion would hide the question, and silently shipping it without the number would let a reader
+believe a diversity term was working. So: faithful by default, measured on every pass, and both
+branches stated wherever the number appears.
+
+**Would overturn it.** The paper's definition of `η`, read directly. That settles which branch this
+is, and D19 collapses to one sentence either way.
+
+---
+
+## D20 · The held-out split is written to disk, not merely counted.
+
+**Decided.** `corpus.build_lane` materialises the withheld tokens as shards under a `heldout` lane
+with `split="heldout"`, which `manifest.admit` refuses.
+
+**Why this is a decision and not a bug fix.** It was both. `heldout_tokens` was computed, stored on
+`LaneBuild`, summed into the tracked build report and published — **1,093,019 tokens** — while the
+array itself went out of scope one line later. A tenth of the corpus was reported as withheld for
+evaluation and existed nowhere. No test failed, because every test asked about the number.
+
+It surfaced when OPUS needed a proxy set: `g_proxy` must come from text the run never trains on, or
+selection tunes toward what the model is already being pushed toward. The selector asked for the
+held-out split and found an empty lane.
+
+**`split="heldout"`, not `"eval"`, and no `benchmark_ids`.** It is a reference sample, not a
+benchmark. Tagging it as one would make the firewall's benchmark clause fire for something that
+overlaps no benchmark, which is a true refusal for a false reason.
+
+**Would overturn it.** Nothing. A count with no data behind it is a claim nothing can check.
+

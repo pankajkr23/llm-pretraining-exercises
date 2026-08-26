@@ -1,125 +1,183 @@
 # Evidence
 
-Run `s06-demo` · config `eec26b710dbf`
+Run `s06-demo` · config `89c8c1be909d`
 
-**8 of 9 requirements met.** Every row below is derived from the artifacts in this bundle, not recorded by the step that performed the work — `uv run python verify.py` re-derives all of them independently.
+**9 of 9 requirements met.** Every row below is derived from the artifacts in this bundle, not recorded by the step that performed the work — `uv run python verify.py` re-derives all of them independently.
 
 | requirement | status | claim | evidence |
 | --- | --- | --- | --- |
-| `tokenizer_integrity` | **met** | all 60 shard manifests pin one tokenizer digest, so every token id in the run has the same defined meaning | submission_artifacts/manifests/*.jsonl — the `tokenizer_sha256` field |
-| `evaluation_firewall` | **met** | 3 shard(s) were refused admission and none of them appears in any loss-bearing batch | submission_artifacts/manifests/ and the ledger's per-event `samples` |
-| `packing_correctness` | **met** | 64 microbatches packed; 130,719 of 131,072 positions earned gradient (99.7%), the rest padding, document-final tokens and 0 context-masked batches | the ledger's per-event `tokens`, `loss_tokens`, `pad_tokens` and `loss_policy` |
-| `mixture_compliance` | **met** | the CORPUS is compliant — every funded lane within 1% of plan, both floors held. This run consumed 1.2% of the plan, and over a sample that small the realised mixture drifts by up to 2.1%: the schedule is exact over the run, never per step | the ledger's per-event `lane_mix` summed and compared with `spec.LANE_SHARES`; the corpus figure from results/corpus_build.json |
-| `opus_audit_trail` | not built | OPUS is not built. Every event records `opus_decision_id: null`, so this run has no candidate decisions to audit and says so rather than omitting the row. | — |
-| `crash_recovery` | **met** | after a real crash and resume, every (step, rank, accum, flat, microbatch_hash) matches a run that never crashed; 21 microbatches were re-executed and each names the discarded event it repeats | submission_artifacts/run.log and the ledger's `replayed_from` |
-| `replay` | **met** | 32/32 microbatches in steps [0, 4] were re-derived from the recorded spans and the immutable shards — read, never recomputed | the ledger's spans and hashes, re-derived against the shard bytes |
-| `learning_trace` | **met** | loss recorded for 20 step-reports, each linked to the lanes that produced it through the ledger's per-event `lane_mix` | submission_artifacts/telemetry/*.json joined to the ledger by step |
-| `throughput` | **met** | 61,777 loss-bearing tokens/s against 61,944 tokens/s over 5 steps on 4 rank(s); the gap is padding and ungraded positions | submission_artifacts/performance.json, recomputable from the ledger + telemetry |
+| `tokenizer_integrity` | **met** | all 64 shard manifests pin one tokenizer digest, so every token id in the run has the same defined meaning | submission_artifacts/manifests/*.jsonl — the `tokenizer_sha256` field |
+| `evaluation_firewall` | **met** | 7 shard(s) were refused admission and none of them appears in any loss-bearing batch | submission_artifacts/manifests/ and the ledger's per-event `samples` |
+| `packing_correctness` | **met** | 96 microbatches packed; 196,048 of 196,608 positions earned gradient (99.7%), the rest padding, document-final tokens and 0 context-masked batches | the ledger's per-event `tokens`, `loss_tokens`, `pad_tokens` and `loss_policy` |
+| `mixture_compliance` | **met** | the CORPUS is compliant — every funded lane within 1% of plan, both floors held. This run consumed 1.9% of the plan, and over a sample that small the realised mixture drifts by up to 2.3%: the schedule is exact over the run, never per step | the ledger's per-event `lane_mix` summed and compared with `spec.LANE_SHARES`; the corpus figure from results/corpus_build.json |
+| `opus_audit_trail` | **met** | 128 candidates across 4 passes, each with a score, a rank, an outcome and a reason: 63 accepted, 14 rejected, 50 deferred inside the noise band, and 1 served against their score by a protected floor. 16 microbatches carry the pass id that decided them. | `opus/*.jsonl`, one row per candidate, joined to the ledger's `opus_decision_id` |
+| `crash_recovery` | **met** | after a real crash and resume, every (step, rank, accum, flat, microbatch_hash) matches a run that never crashed; 5 microbatches were re-executed and each names the discarded event it repeats | submission_artifacts/run.log and the ledger's `replayed_from` |
+| `replay` | **met** | 48/48 microbatches in steps [0, 6] were re-derived from the recorded spans and the immutable shards — read, never recomputed | the ledger's spans and hashes, re-derived against the shard bytes |
+| `learning_trace` | **met** | loss recorded for 16 step-reports, each linked to the lanes that produced it through the ledger's per-event `lane_mix` | submission_artifacts/telemetry/*.json joined to the ledger by step |
+| `throughput` | **met** | 114,731 loss-bearing tokens/s against 115,059 tokens/s over 4 steps on 4 rank(s); the gap is padding and ungraded positions | submission_artifacts/performance.json, recomputable from the ledger + telemetry |
 
 ## Numbers
 
 ```json
 {
   "tokenizer_integrity": {
-    "manifests": 60,
+    "manifests": 64,
     "distinct_digests": [
       "sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae"
     ]
   },
   "evaluation_firewall": {
     "trainable": 57,
-    "blocked": 3,
+    "blocked": 7,
     "blocked_shards_consumed": []
   },
   "packing_correctness": {
-    "microbatches": 64,
-    "tokens": 131072,
-    "loss_tokens": 130719,
+    "microbatches": 96,
+    "tokens": 196608,
+    "loss_tokens": 196048,
     "pad_tokens": 0,
     "context_masked_events": 0,
     "pack_utilization": 1.0,
-    "loss_utilization": 0.9973068237304688,
+    "loss_utilization": 0.9971516927083334,
     "corpus_epochs": 1.0139
   },
   "mixture_compliance": {
     "run_drift": {
-      "agentic": 0.01516,
-      "code": 0.00906,
-      "indic": -0.01594,
-      "reasoning": -0.02141,
-      "stem": 0.00891,
-      "web": 0.00422
+      "agentic": -0.00177,
+      "code": -0.01177,
+      "indic": -0.01333,
+      "reasoning": 0.00594,
+      "stem": 0.02323,
+      "web": -0.00229
     },
-    "run_floors_held": true,
+    "run_floors_held": false,
     "run_consumed": {
-      "agentic": 4608,
-      "code": 37888,
-      "indic": 21504,
-      "reasoning": 7680,
-      "stem": 16896,
-      "web": 42496
+      "agentic": 3584,
+      "code": 52736,
+      "indic": 32768,
+      "reasoning": 16896,
+      "stem": 28160,
+      "web": 62464
     },
-    "fraction_of_plan_consumed": 0.0125,
+    "fraction_of_plan_consumed": 0.01875,
     "is_a_sample": true,
     "corpus_compliant": true,
     "corpus_floors_held": true
   },
-  "opus_audit_trail": {},
-  "crash_recovery": {
-    "checkpoint": "ckpt-main-000002",
-    "cut": {
-      "0": 6,
-      "1": 6,
-      "2": 6,
-      "3": 6
+  "opus_audit_trail": {
+    "events_with_a_decision": 16,
+    "candidates": 128,
+    "passes": 4,
+    "decisions": {
+      "accept": 63,
+      "reject": 14,
+      "defer": 50,
+      "floor_override": 1
     },
-    "reexecuted": 21,
+    "defer_rate": 0.390625,
+    "floor_override_rate": 0.007812,
+    "by_lane": {
+      "agentic": {
+        "accept": 0,
+        "reject": 0,
+        "defer": 0,
+        "floor_override": 1
+      },
+      "code": {
+        "accept": 24,
+        "reject": 2,
+        "defer": 13,
+        "floor_override": 0
+      },
+      "indic": {
+        "accept": 21,
+        "reject": 1,
+        "defer": 1,
+        "floor_override": 0
+      },
+      "reasoning": {
+        "accept": 5,
+        "reject": 0,
+        "defer": 8,
+        "floor_override": 0
+      },
+      "stem": {
+        "accept": 2,
+        "reject": 3,
+        "defer": 9,
+        "floor_override": 0
+      },
+      "web": {
+        "accept": 11,
+        "reject": 8,
+        "defer": 19,
+        "floor_override": 0
+      }
+    },
+    "noise_dominance": 0.320637,
+    "redundancy_share": 0.00342144,
+    "pass_digests": [
+      "b2:8d075235cbcb4ce831c4db1feb002d6e",
+      "b2:46b2b251da1b84d7c19b54e0749e2be4",
+      "b2:160e7685676f318940ab4bf4c151e27f",
+      "b2:4a0a108e72e17021e5eceed5dac2b35c"
+    ]
+  },
+  "crash_recovery": {
+    "checkpoint": "ckpt-main-000007",
+    "cut": {
+      "0": 16,
+      "1": 16,
+      "2": 16,
+      "3": 16
+    },
+    "reexecuted": 5,
     "ids_match": true,
-    "events": 64
+    "events": 96
   },
   "replay": {
     "interval": [
       0,
-      4
+      6
     ],
-    "checked": 32,
-    "matched": 32,
+    "checked": 48,
+    "matched": 48,
     "tampered_shards": [],
     "fork": {
       "branch_id": "fork-a",
       "parent_branch_id": "main",
-      "at_step": 2,
-      "checkpoint_id": "ckpt-main-000002",
-      "next_step": 3,
+      "at_step": 3,
+      "checkpoint_id": "ckpt-main-000003",
+      "next_step": 4,
       "next_attempt": 0,
-      "inherited": 24,
-      "child_events": 40,
+      "inherited": 32,
+      "child_events": 64,
       "child_starts_after": true,
       "overlap": 0,
       "ok": true
     }
   },
   "learning_trace": {
-    "step_reports": 20,
-    "first_loss": 8.7639,
-    "last_loss": 8.7571,
+    "step_reports": 16,
+    "first_loss": 8.6066,
+    "last_loss": 8.6255,
     "lane_tokens": {
-      "agentic": 4608,
-      "code": 37888,
-      "indic": 21504,
-      "reasoning": 7680,
-      "stem": 16896,
-      "web": 42496
+      "agentic": 3584,
+      "code": 52736,
+      "indic": 32768,
+      "reasoning": 16896,
+      "stem": 28160,
+      "web": 62464
     }
   },
   "throughput": {
-    "steps": 5,
-    "seconds": 2.1159879580372944,
-    "tokens": 131072,
-    "loss_tokens": 130719,
-    "tokens_per_second": 61943.6417405594,
-    "loss_tokens_per_second": 61776.81659457538,
-    "loss_utilization": 0.9973068237304688,
+    "steps": 4,
+    "seconds": 1.7087620010133833,
+    "tokens": 196608,
+    "loss_tokens": 196048,
+    "tokens_per_second": 115058.73836344757,
+    "loss_tokens_per_second": 114731.015719997,
+    "loss_utilization": 0.9971516927083334,
     "pack_utilization": 1.0,
     "ranks": 4
   }

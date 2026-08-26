@@ -4,14 +4,15 @@ Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is the
 `submission_artifacts/` bundle, the reasoning is `DECISIONS.md`, the running log is `PROGRESS.md`,
 and `BRIEF.md` is the assignment (local only, gitignored).
 
-**Status: stage 8 done; OPUS outstanding.** Shipped: `spec.py`, `config.py`, `shards.py`,
+**Status: all eight stages done.** Shipped: `spec.py`, `config.py`, `shards.py`,
 `manifest.py`, `firewall.py`, `plan.py`, `masks.py`, `pack.py`, `feed.py`, `ledger.py`, `model.py`,
 `train.py`, `runner.py`, `checkpoint.py`, `resume.py`, `replay.py`, `mixture.py`, `corpus.py`,
-`fork.py`, `metrics.py` and `evidence.py`, plus `run_demo.py` and `verify.py` at the exercise root
+`fork.py`, `metrics.py`, `evidence.py`, `opus.py` and `opus_score.py`, plus `run_demo.py` and
+`verify.py` at the exercise root
 and `tools/fetch_corpus.py` + `tools/build_corpus.py`, both **tracked** (unlike the notebook
 builder). `results/` is tracked and documents render `corpus_build.json` from it.
 
-**Not shipped, and do not describe the exercise as having them:** `opus.py`, and any `web/` bundle.
+**Not shipped, and do not describe the exercise as having them:** any `web/` bundle.
 
 That sentence is now checked. `test_the_not_shipped_paragraph_names_nothing_that_exists` reads the
 paragraph above and fails if anything it denies is on disk — because it is the sentence that went
