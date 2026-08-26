@@ -173,9 +173,10 @@ tests still skip inside a sandbox that blocks it; a GitHub runner allows it.
 ## The producer/auditor wall
 
 The assignment refuses hardcoded evidence and inspects the code to check the behaviour was not
-simulated. So the auditor — `verify.py`, when it lands — will re-derive every published claim from
-the artifacts on disk **without importing the code that produced them**. If it imported the
-producer it would inherit the producer's bugs and agree with itself.
+simulated. So the auditor — `verify.py` — re-derives every published claim from the artifacts on
+disk **without importing the code that produced them**, and passes **40 of 40 checks**. If it
+imported the producer it would inherit the producer's bugs and agree with itself, and the printed
+report would look exactly the same — which is why the import closure is a test rather than a rule.
 
 `spec.py` is the one deliberate exception: shared **facts** (the nine evidence rows, the thirteen
 log events, the sentinel ids), never shared **logic**. A test parses its source and fails if it ever

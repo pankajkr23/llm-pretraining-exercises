@@ -36,7 +36,7 @@ def _fields(**overrides) -> dict:
         "stage": "warmup",
         "lane_mix": {"web": 512},
         "attention_policy": "block-diagonal-causal",
-        "position_policy": "restart-per-document",
+        "position_policy": "restart-per-document-continue-across-window",
         "pack_policy": "concat-and-chop",
         "opus_decision_id": None,
         "microbatch_hash": "b2:" + "a" * 32,

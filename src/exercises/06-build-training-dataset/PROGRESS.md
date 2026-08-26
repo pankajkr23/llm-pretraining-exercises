@@ -21,12 +21,18 @@ the score at 1,000 and nothing in the repo would notice.
 
 ## Open items — for review
 
-**Stage 7 of 8 is done, and stage 8 is part-landed.** Settings, shared constants, the vocabulary
+**All eight stages are done, and v0.9.0 is released.** Settings, shared constants, the vocabulary
 problem, immutable shards with manifests and an admission gate, the two-sided evaluation firewall,
 the plan, packed-sequence masks, packing, the feeder, the chain-hashed consumption ledger, TinyGPT,
-the token-weighted training step, four real `gloo` worker processes, checkpoints, and crash and
-resume — plus, from stage 8, replay. Fork, the auditor (`verify.py`) and the evidence bundle are
-**not** built, and no document here claims otherwise.
+the token-weighted training step, four real `gloo` worker processes, checkpoints, crash and resume,
+replay, fork, OPUS, the evidence bundle and the auditor.
+
+`run_demo.py` regenerates the bundle at **9 of 9 requirements**; `verify.py` re-derives every claim
+from it and passes **40 of 40**. The corpus is **10,649,549 training tokens at 1.01 epochs**, the
+session notebook covers all eight stages, and the `web/` explainer is deployed.
+
+**Nothing in the assignment is outstanding.** What remains is listed under O7 and O8 below, and both
+are deferred by decision rather than pending.
 
 | # | item | status | note |
 | --- | --- | --- | --- |
@@ -39,10 +45,11 @@ resume — plus, from stage 8, replay. Fork, the auditor (`verify.py`) and the e
 
 | O3e | **Stage 6 — ledger, model, four real processes** | **done** | `ledger.py`, `pack.py`, `feed.py`, `model.py`, `train.py`, `runner.py`. Four `gloo` ranks over disjoint data write four chained segments and the loss falls. TinyGPT is **5,774,080 parameters** — RMSNorm + SwiGLU + RoPE + tied head. RoPE is a **data-system** choice: `pack.py` gives a continuation fragment its true position, so a 5,000-token document chopped into 512-token windows reaches position 4,999, which no learned table sized to the window can hold. Four ranks measured **bit-identical** at run end (equal weight digest on all four). 47/47 mutants killed. |
 | O3f | **Stage 7 — crash and resume** | **done** | `checkpoint.py`, `resume.py`, and the crash/resume paths in `runner.py`. Golden run 144 events; ranks stopped at 24/25/26/27; restored `ckpt-main-000007`; 6 microbatches re-executed and each carries `replayed_from`; after resume every `(step, rank, accum, flat, microbatch_hash)` equals golden. 24/24 mutants killed. |
-| O3g | **Stage 8 — replay** | **part-landed** | `replay.py` re-derives a recorded interval from the immutable shards, never from the planner: **32/32 microbatches re-derived**, and one flipped shard bit turns **exactly 1 of the 32** red. Import closure asserted free of torch and of `plan.py`, transitively, with a twin. **Fork and the auditor have not landed.** |
-| O4 | **Corpus** | not started | ~40–60 MB across S5's six lanes, licence verified **at fetch time from the source itself**. |
-| O5 | **OPUS** | decided, not built | Port the criterion (~300 lines) from the MIT reference as a spec. Not installable: its `train.py` fails at import on `torch.empty(1, device="cuda")` and needs NCCL. |
-| O6 | **The web explainer** | not started | In scope, after the system works. |
+| O3g | **Stage 8 — replay, fork, audit** | **done** | `replay.py` re-derives a recorded interval from the immutable shards, never from the planner: **32/32 microbatches re-derived**, and one flipped shard bit turns **exactly 1 of the 32** red. It also **refuses a policy it cannot rebuild** rather than reporting a hash mismatch that would read as a tampered shard. `fork.py` verifies a branch by the three things that can actually fail — a fork *inherits* rather than copies, so zero shared events is correct. `verify.py` passes **40 of 40**, and its import closure is asserted transitively. |
+| O4 | **Corpus** | **done** | **10,649,549 training tokens at 1.01 epochs** across 57 shards, six lanes, every licence verified at fetch time from the dataset's own card, plus **1,093,019 held-out tokens** written as `split="heldout"` shards the firewall refuses. `tools/fetch_corpus.py` and `tools/build_corpus.py` are tracked; the build refuses below one epoch. |
+| O5 | **OPUS** | **done** | Ported, not installed. `opus.py` (torch-free record) + `opus_score.py` (the criterion). **128 candidates over 4 passes: 63 accept · 14 reject · 50 defer · 1 floor_override**, each with a score, a rank, an outcome and a reason. Two measurements changed the code — the temperature is now a multiple of the score spread, and the redundancy penalty is published as inert at this learning rate. |
+| O6 | **The web explainer** | **done** | Three chapters, three interaction families, deployed. Every figure derived from the run by `tools/build_web_data.py`. 21 browser tests. |
+| O8 | **Rebuild-in-place safety** | **done** | `tools/backup_local_only.py` versions the 113 gitignored, unrecoverable files into a git store outside the repo; `post-checkout`/`post-merge` hooks run it. |
 | O7 | **Cloud (multi-GPU, NCCL, FSDP)** | **deferred — PK's decision** | Local only for now. §"What this cannot establish" in the README states what that costs. |
 
 ---
@@ -98,6 +105,101 @@ every shard manifest pins, so the sentinels are assigned **out of vocabulary** �
 ---
 
 ## Change log
+
+### 2026-08-26 (release — v0.9.0, tagged and deployed)
+
+Tag `v0.9.0` on `56d5ff6`, CI verified green on that exact commit before tagging. GitHub Release
+published with all 46 changelog entries; the gated production deploy shipped exercise 06's page.
+The four submission fields resolve anonymously: the repo, `run.log`, `evidence.json`, `evidence.md`.
+
+**One correction landed with it.** The root README linked 06's page before production had deployed
+it, so the front door carried a 404. Removed, then restored once the URL returned 200 *and* the live
+page had been rendered in a browser — a 200 alone would not have been enough, because ES modules can
+fail while the shell still returns 200 and the page still shows its title.
+
+### 2026-08-26 (the explainer — three claims, three interaction families)
+
+`web/` ships and is deployed. Three chapters, deliberately three different families, because a page
+of three Inspectors is monotonous however well each is built: **Diff** (two routes to the same
+question, and they stop agreeing), **Destroyer** (a floor that holds until there is nothing to hold),
+**Adversary** (edit the record; you cannot do it quietly).
+
+`tools/build_web_data.py` derives `web/data.js` from `submission_artifacts/` and `results/`, so no
+figure on the page is typed. **21 browser tests**, including the one the design rests on — that
+advancing a chapter changes what the reader sees, because if it does not the page is decoration and
+every claim on it is unproven.
+
+**A layout bug got through all fourteen of the first tests and was caught by looking.** The summary
+rules sat with **zero** vertical gap below the lede's buttons at every viewport width, so two of the
+four hairlines read as broken. Nothing in the DOM was wrong; the defect was entirely in where the
+boxes landed. The tests now measure the gap at six widths and assert the four cells share a baseline.
+
+### 2026-08-26 (the notebook — all eight stages)
+
+Six new sections take it from five stages to eight: a synthetic corpus, a real training loop and the
+ledger it writes, crash/cut/resume, replay, forking, and OPUS. **79 cells, 2.1 seconds end to end.**
+It trains on four shards of synthetic documents rather than the 10.6M-token corpus, which is
+gitignored and therefore absent from a clone — the token values are meaningless, the **document
+boundaries** are what packing and the masks are about.
+
+**Building it found a reporting defect**, which is the whole reason the notebook imports the package
+rather than restating it. `ReplayReport` carries both the verdicts and the tampered-shard map, and
+`summary()` printed only the first — so a shard damaged *outside* the spans an interval read produced
+`6/6 microbatches re-derived, all match` from an object that knew a shard no longer hashed to its
+manifest. Both facts are true at once; the half a reader quotes was the reassuring one.
+
+### 2026-08-26 (milestone 6 — OPUS, and the record that is the deliverable)
+
+Two modules split at the torch boundary: `opus.py` (floors, selection, the noise band, the
+conservation laws, the written record — pure numpy, so CI verifies it) and `opus_score.py` (the
+criterion, gated behind the `train` extra).
+
+**128 candidates over 4 passes: 63 accept · 14 reject · 50 defer · 1 floor_override**, each with a
+score, a rank, an outcome and a reason in words, scored against a real checkpoint's live AdamW
+preconditioner and four held-out shards. The selector is not the gap in the field; the accountability
+is — LightningLM ships a complete OPUS and keeps one metrics dict per scoring *pass*.
+
+**Two measurements changed the code.**
+
+*The temperature was an absolute, which is a defect with a delayed fuse.* Gumbel noise has a fixed
+spread; a utility is an inner product of gradients and shrinks as the model improves. At the original
+setting the noise carried **1.09×** the spread of the signal it perturbed and 29 of 32 non-selected
+candidates flipped under resampling — already a coin toss reporting confident scores. Now a multiple
+of the observed spread, proven scale-free against scores multiplied by a thousand.
+
+*The redundancy penalty is inert at this learning rate.* Alignment carries `η`, the penalty `η²`: a
+structural 3,333× gap at `η = 3e-4`. Sweeping without gaps — 0.069% at 3e-4, 0.27%, 1.97%, 24.7%,
+85.1% at `η = 1.0`. With `η` stripped the penalty's raw term is **4.05× larger**, so nothing is
+cancelling; one factor of `η` is. Either the term is inert at any practical rate **or** `η` in Eq. 23
+is not the raw learning rate. The measurement is certain; which of those it is, is not — so the code
+ships Eq. 23 unmodified and publishes the number.
+
+**A breached floor was computed and never published**, and it was not a breach: `agentic` is 2% of
+the mixture against a 32-slot buffer, so 0.64 candidates are expected per pass and three of four had
+none. `floor_status` now separates **`unsupplied`** from `breached`. A floor that cannot see a lane
+is not evidence about that lane.
+
+### 2026-08-26 (milestone 5 — the two graded commands)
+
+`run_demo.py` regenerates the bundle in **21.7 s** (350,003 bytes against a 2 MiB cap), 9 of 9
+requirements, 12 of the 13 required log events. `verify.py` re-derives every claim from the bundle
+alone and passes **40 of 40**, completing the thirteenth event itself — the producer marks
+`audit completed` `[SKIP]` because a run that certifies its own audit certifies nothing.
+
+**The producer/auditor wall is a test, not a rule, because breaking it is invisible.** One
+`from trainingdata import metrics` would turn every number check into the producer's arithmetic
+checked against itself and the printed report would look identical. The import closure is asserted
+transitively, with a twin pointed at `run_demo.py` proving the walker sees imports at all.
+
+**The join is what a digest cannot do.** A tracked test edits a decision *and* recomputes the header
+hash — defeating the integrity check entirely — and is still caught, because the ledger shows that
+candidate being fed while the record calls it rejected.
+
+**Three defects found by wiring, not by reading.** The held-out split was counted and never written
+(1,093,019 tokens published in the build report, existing nowhere on disk, and no test failed because
+every test asked about the number). `run_demo` was editing the corpus it demonstrated on, so its own
+headline shard count climbed 59 → 60 → 61 across three runs. And a `str.replace` that matched nothing
+reported success, leaving half a patch applied in `verify.py`.
 
 ### 2026-08-25 (stage 5 — packed-sequence masks)
 
@@ -171,7 +273,7 @@ for once.
 | stem | math-ai/StackMathQA | cc-by-4.0 | 2,223 | 1,259,198 | 7 | 0.196% |
 | reasoning | open-r1/OpenR1-Math-220k | apache-2.0 | 1,443 | 840,510 | 5 | 0.086% |
 | agentic | session 5 proxy | apache-2.0 | 6,872 | 306,140 | 2 | 0.007% |
-| **total** | | | **15,763** | **10,633,752** | **57** | |
+| **total** | | | **9,233** | **10,649,549** | **57** | |
 
 **57 shards, all hash-verified on open, all 57 admitted by the gate. 1.01 epochs of supply.**
 

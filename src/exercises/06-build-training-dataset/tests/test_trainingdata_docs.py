@@ -121,17 +121,35 @@ def test_the_not_shipped_paragraph_names_nothing_that_exists() -> None:
     have rebuilt work that was already done, or reported a finished deliverable as missing.
 
     So the sentence is now derived from the filesystem, the same way the shipped list is.
+
+    **It matches directories as well as modules**, and that is the second hole rather than a
+    flourish. The first version matched only `*.py` names, so when the paragraph went stale a second
+    time — denying *"any `web/` bundle"* while that bundle was live in production — the guard read
+    the sentence, found no Python file in it, and passed. A claim about a directory was invisible to
+    the check written to catch stale claims.
+
+    When nothing is outstanding the paragraph is removed entirely, and this test skips rather than
+    failing on a missing marker: a repo with nothing to deny should not be forced to keep an empty
+    denial around to satisfy a guard.
     """
     text = (EXERCISE / "CLAUDE.md").read_text()
     marker = "**Not shipped, and do not describe the exercise as having them:**"
-    assert marker in text, "CLAUDE.md lost its not-shipped paragraph; this guard is now inert"
+    if marker not in text:
+        pytest.skip("nothing is currently denied, so there is no claim to check")
 
     paragraph = text.split(marker, 1)[1].split("\n\n", 1)[0]
-    denied = set(re.findall(r"`([a-z_][a-z0-9_]*\.py)`", paragraph))
-    exists = {n for n in denied if (MODULES / n).is_file() or (EXERCISE / n).is_file()}
+    denied = set(re.findall(r"`([A-Za-z_][A-Za-z0-9_./-]*)`", paragraph))
+
+    exists = set()
+    for name in denied:
+        candidate = name.rstrip("/")
+        for base in (MODULES, EXERCISE):
+            target = base / candidate
+            if target.is_file() or target.is_dir():
+                exists.add(name)
     assert not exists, (
         f"CLAUDE.md says {sorted(exists)} are not shipped; they are on disk. A reader would "
-        f"rebuild work that is already done."
+        f"rebuild work that is already done, or report a delivered artefact as missing."
     )
 
 

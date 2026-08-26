@@ -278,7 +278,7 @@ Three rules, each learned by getting it wrong in `02-tokenization` (see that exe
 
 When one of these overturns a published claim, correct it where the claim was made and say what changed. A quietly amended number is worse than the original error.
 
-- **Prose that states a number is generated too, or it goes stale while the table beside it stays right.** This is the failure that has cost this repo the most edits. A generated table under a hand-written sentence looks maintained, and only the sentence is wrong — so a reader believes the sentence. Session 5 shipped documents reading "across three lanes", "H3 came back qualified", "Thirteen invariants" and "one verdict did not survive its own noise", every one of them contradicting a correct table directly above or below it, and no test failed. If a sentence contains a count, a verdict or a size, derive it from the same source the table uses. Where prose genuinely must stay hand-written — a row in the root README's exercise table — the number in it has **no test**, and the row for exercise 06 has read *"Stage 1 of 8"* since the exercise reached stage 7. Writing that test is outstanding work; until it lands, the row is verified by hand on every PR that advances an exercise.
+- **Prose that states a number is generated too, or it goes stale while the table beside it stays right.** This is the failure that has cost this repo the most edits. A generated table under a hand-written sentence looks maintained, and only the sentence is wrong — so a reader believes the sentence. Session 5 shipped documents reading "across three lanes", "H3 came back qualified", "Thirteen invariants" and "one verdict did not survive its own noise", every one of them contradicting a correct table directly above or below it, and no test failed. If a sentence contains a count, a verdict or a size, derive it from the same source the table uses. Where prose genuinely must stay hand-written — a row in the root README's exercise table — the number in it went untested long enough for exercise 06's row to read *"Stage 1 of 8"* while the exercise was at stage 7. `tests/test_doc_counts_match.py` now derives that count from the exercise's own stage table. **The prose around the number is still untested**, so a row can carry a correct stage and a wrong description; verify that by hand on every PR that advances an exercise.
 
 - **An experiment that cannot see a lane is not evidence about that lane.** Exercise 05's proxy dropped the three lanes it had no text for, and one hypothesis read `qualified` for two weeks because the lane its refutation clause tested was absent. Funding the lane flipped it to `refuted` with the effect size essentially unchanged. **A missing input does not make a hypothesis safer, it makes it untestable — and untestable reads as passing.** Before trusting a result, list what the measurement was blind to.
 
@@ -287,11 +287,13 @@ When one of these overturns a published claim, correct it where the claim was ma
   experiment is: the run stops measuring a mixture and starts measuring repetition. Exercise 06
   consumes `ranks × accumulation × microbatch × sequence_length × steps` =
   `4 × 2 × 8 × 512 × 320` = **10,485,760** token positions (read it from `Config.total_tokens`,
-  never from memory) against **2,185,575** tokens on disk — **4.8 epochs flat**, and once shaped to
-  session 5's lane weights, **30.2 epochs of the web lane against 0.41 of the agentic lane**. The
-  lane the mixture funds most heavily is the one the model sees thirty times over, while the lane it
-  funds least is not seen through even once. No mixture claim survives that, and nothing in the
-  pipeline fails: the shards read fine and the loss curve looks normal.
+  never from memory). Its first corpus held **2,185,575** tokens — **4.8 epochs flat**, and once
+  shaped to session 5's lane weights, **30.2 epochs of the web lane against 0.41 of the agentic
+  lane**. The lane the mixture funded most heavily was the one the model saw thirty times over,
+  while the lane it funded least was not seen through even once. No mixture claim survives that, and
+  nothing in the pipeline failed: the shards read fine and the loss curve looked normal. **It was
+  refetched to 10,649,549 tokens at 1.01 epochs**, and `tools/build_corpus.py` now refuses to build
+  below one epoch rather than leaving it to be noticed.
   **So before a run, print `total_tokens ÷ corpus_tokens` per lane and put it next to the mixture
   table.** A lane above ~1 epoch is measuring memorisation; a lane below 1.0 was never fully read.
   Fix it by fetching more text or by cutting `steps` — never by leaving the ratio unstated. A
@@ -307,13 +309,13 @@ Two more that cost this repo real defects:
   `NN-slug/pyproject.toml` on its own. The two that are **hand-maintained** are the root README's
   exercise table and the cards in `deploy/vercel/index.html` — an exercise can be deployed and
   reachable while being invisible to anyone arriving at the site root. Both are now checked:
-  `tests/test_deploy_registration.py`. **The root README row is NOT checked — that test does not
-  exist.** `grep -l README tests/*.py` returns only the link and structure guards, neither of which
-  reads the exercise table. The cost is already on the page: exercise 06's row reads *"Stage 1 of
-  8 — in progress"* while its own README and stage table say **stage 7 of 8**, six stages stale,
-  and nothing is red. Until that test is written, treat the row as hand-verified on every PR that
+  `tests/test_deploy_registration.py`. **The root README row is checked now** —
+  `tests/test_doc_counts_match.py` derives the stage count from the exercise's own stage table and
+  asserts the row links its README directly. It exists because the row read *"Stage 1 of 8 — in
+  progress"* while the exercise was at stage 7, six stages stale, with nothing red. What it still
+  does **not** check is the prose around the number, so treat that as hand-verified on every PR that
   moves an exercise forward.
-- **A new module is not done until every list that names modules includes it.** `explainer.py` shipped and stayed missing from three places — the README's *Run it*, the README's layout block, and the exercise's `CLAUDE.md`. Exercise 06 now checks two of those three: `tests/test_trainingdata_docs.py::test_every_module_is_named_in_the_documents_that_list_modules` asserts every `src/trainingdata/*.py` is named somewhere in **both** README.md and CLAUDE.md, and it is **red right now** — `replay.py` shipped and the README never learned about it. Copy that guard into any exercise that grows past a handful of modules. Note its limit: it checks the *document*, not the *list*, so a module named once in prose satisfies it while the layout block a reader actually follows stays wrong. The consequence was not cosmetic: a reader regenerating the site would have run `widget` without `explainer` and published a page whose figures contradicted its own tool.
+- **A new module is not done until every list that names modules includes it.** `explainer.py` shipped and stayed missing from three places — the README's *Run it*, the README's layout block, and the exercise's `CLAUDE.md`. Exercise 06 now checks two of those three: `tests/test_trainingdata_docs.py::test_every_module_is_named_in_the_documents_that_list_modules` asserts every `src/trainingdata/*.py` is named somewhere in **both** README.md and CLAUDE.md. It was red when written — `replay.py` had shipped and the README never learned about it — and is green now, including `opus.py` and `opus_score.py`. Copy that guard into any exercise that grows past a handful of modules. Note its limit: it checks the *document*, not the *list*, so a module named once in prose satisfies it while the layout block a reader actually follows stays wrong. The consequence was not cosmetic: a reader regenerating the site would have run `widget` without `explainer` and published a page whose figures contradicted its own tool.
 - **Render a diagram before committing it.** A Mermaid block is not verified by reading it. A semicolon inside a `Note over` is a statement separator, so the note terminated mid-sentence and GitHub would have rendered a parse error where a diagram should be — caught only by running it through `npx @mermaid-js/mermaid-cli`. The same applies to every number inside one: read them back from the code.
 
 ## The root README is a map; each exercise's README is the guide
