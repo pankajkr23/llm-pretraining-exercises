@@ -15,8 +15,14 @@
 /* Four numbers, above the argument, for a reader who will not scroll. It is a hairline register
  * rather than a row of cards: the border-top is the whole container, which is enough separation
  * and a fraction of the ink. */
+/* The top margin is load-bearing, not taste. Each cell carries a `border-top` hairline, and the
+   lede's action buttons sit directly above with no gap of their own — so at every viewport width
+   the rules rendered flush against the rounded pills, and the two rules the buttons covered read
+   as broken while the two beside them read as fine. A hairline register needs air above it or it
+   attaches itself to whatever it touches. */
 .summary {
   border-bottom: 0;
+  margin-top: 46px;
   padding-bottom: 34px;
   margin-bottom: 34px;
 }

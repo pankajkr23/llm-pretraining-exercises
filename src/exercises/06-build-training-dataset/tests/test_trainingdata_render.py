@@ -258,3 +258,58 @@ def test_the_page_survives_a_narrow_viewport(page) -> None:
         assert page.is_visible("section#replay .fig-big")
     finally:
         page.set_viewport_size({"width": 1280, "height": 900})
+
+
+# --- geometry a reader sees and a DOM assertion does not -----------------------------------------
+
+
+@pytest.mark.parametrize("width", [600, 760, 1024, 1280, 1418, 1600])
+def test_nothing_collides_with_the_summary_rules(page, width: int) -> None:
+    """**The bug fourteen passing tests missed, because none of them looked at geometry.**
+
+    Each summary cell carries a `border-top` hairline, and the lede's action buttons sat directly
+    above with **zero** vertical gap at every width tested. So the rules rendered flush against two
+    rounded pills: the two the buttons covered read as broken while the two beside them read as
+    fine, and the page looked misaligned rather than tight.
+
+    Nothing in the DOM was wrong. Every element existed, every number was right, no console error
+    fired — the defect was entirely in where the boxes landed, which is only visible by measuring
+    them or by looking.
+    """
+    page.set_viewport_size({"width": width, "height": 900})
+    page.wait_for_timeout(150)
+    try:
+        gap = page.evaluate("""() => {
+            const btns = [...document.querySelectorAll('.lede-actions .jump')];
+            const cells = [...document.querySelectorAll('.summary-cell')];
+            let smallest = Infinity;
+            for (const b of btns) {
+              const A = b.getBoundingClientRect();
+              for (const c of cells) {
+                const B = c.getBoundingClientRect();
+                const overlapX = Math.min(A.right, B.right) - Math.max(A.left, B.left);
+                if (overlapX > 0) smallest = Math.min(smallest, B.top - A.bottom);
+              }
+            }
+            return smallest === Infinity ? null : Math.round(smallest);
+        }""")
+        assert gap is not None, "the buttons and the summary no longer share any column"
+        assert gap >= 12, (
+            f"at {width}px the summary rules sit {gap}px below the action buttons. A hairline "
+            f"register needs air above it, or it reads as attached to whatever it touches."
+        )
+    finally:
+        page.set_viewport_size({"width": 1280, "height": 900})
+
+
+def test_the_summary_rules_all_sit_on_one_line(page) -> None:
+    """Four cells in a row must share a baseline, or the register reads as broken rather than tight.
+
+    A grid with `auto-fit` can silently wrap one cell onto a second row at an awkward width, and
+    three-on-top-one-below is exactly what "dislocated" looks like to a reader.
+    """
+    tops = page.eval_on_selector_all(
+        ".summary-cell", "els => els.map(e => Math.round(e.getBoundingClientRect().top))"
+    )
+    assert len(tops) == 4
+    assert len(set(tops)) == 1, f"the four summary cells are on {len(set(tops))} rows: {tops}"
