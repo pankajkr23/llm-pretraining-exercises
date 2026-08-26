@@ -8,26 +8,26 @@ and `BRIEF.md` is the assignment (local only, gitignored).
 `manifest.py`, `firewall.py`, `plan.py`, `masks.py`, `pack.py`, `feed.py`, `ledger.py`, `model.py`,
 `train.py`, `runner.py`, `checkpoint.py`, `resume.py`, `replay.py`, `mixture.py`, `corpus.py`,
 `fork.py`, `metrics.py`, `evidence.py`, `opus.py` and `opus_score.py`, plus `run_demo.py` and
-`verify.py` at the exercise root
-and `tools/fetch_corpus.py` + `tools/build_corpus.py`, both **tracked** (unlike the notebook
-builder). `results/` is tracked and documents render `corpus_build.json` from it.
+`verify.py` at the exercise root, `tools/fetch_corpus.py`, `tools/build_corpus.py` and
+`tools/build_web_data.py`, all **tracked** (unlike the notebook builder), and a deployed `web/`
+explainer. `results/` is tracked and documents render `corpus_build.json` from it.
 
-**Not shipped, and do not describe the exercise as having them:** any `web/` bundle.
-
-That sentence is now checked. `test_the_not_shipped_paragraph_names_nothing_that_exists` reads the
-paragraph above and fails if anything it denies is on disk — because it is the sentence that went
-stale, and it went stale in the file whose *next* paragraph warns it would. It denied fork, the
-auditor, the demo runner, the metrics module, the evidence writer, the corpus fetcher and a tracked
-`results/` while all seven were built. An agent reading it would have rebuilt finished work, or
-reported a delivered artefact as missing.
+**Nothing is outstanding**, so there is no "not shipped" list here any more — and its absence is
+deliberate. That sentence was wrong twice.
+`test_the_not_shipped_paragraph_names_nothing_that_exists` catches it when there is one: the first
+time it denied fork, the auditor, the demo runner, the metrics module, the evidence writer, the
+corpus fetcher and a tracked `results/` while all seven were built — in the file whose *next*
+paragraph warns it would go stale. The second time it denied the `web/` bundle **while that bundle
+was live in production**, and the guard missed it because it only matched `*.py` names: a claim
+about a *directory* was invisible to it. It now checks both.
 
 **Stage 7 is proven, not asserted.** Golden run 144 events; ranks stopped at 24/25/26/27; resumed
 from `ckpt-main-000007`; 6 microbatches re-executed; every `(step, rank, accum, flat,
 microbatch_hash)` after resume equals the golden run.
 
 **Stage 8 landed.** Replay: 32/32 events re-derived, one flipped shard bit turns exactly 1 red.
-Fork: lineage recorded rather than inferred. Auditor: 20 of 22 checks, and the 2 failures are it
-refusing to bless the OPUS gap.
+Fork: lineage recorded rather than inferred. OPUS: 128 candidates over 4 passes, each with a score,
+a rank, an outcome and a reason. Auditor: **40 of 40 checks**, re-derived from the bundle alone.
 
 `tests/test_trainingdata_docs.py` guards **README.md's** status line against **README.md's** stage
 table, asserts every module is named in both README.md and CLAUDE.md, and — since this header went
@@ -217,35 +217,37 @@ lines and 14 tests.
   *checkpoint*, not after the crash; the microbatches between them are re-executed, carry
   `replayed_from` naming the discarded event each repeats, and the count is published.
 
-- **Replay must read the POLICY out of the event, not hardcode the reconstruction.** This is the
-  half of "run the ledger, don't calculate it" that `replay.py` has not finished. `rebuild()`
-  correctly reads the spans, the shard ids and `sequence_length` from the event — and then calls
-  `masks.segment_ids`, `masks.position_ids` and `masks.loss_mask(segments[row], tokens[row])`
-  hardcoded, ignoring the three policy fields the event carries for exactly this purpose:
-  `attention_policy`, `position_policy`, `pack_policy`. `grep -n "_policy" replay.py` returns
-  nothing. Today every run writes the same three strings so nothing diverges; the failure appears
-  the first time a run masks a prompt as context or changes the window rule, and it appears in the
-  **worst possible disguise** — `loss_mask_hash` mismatches, the verdict goes red, and the report
-  blames the shard when the shard is fine. Either dispatch on the recorded policy, or assert it
-  equals the single value this build implements and fail loudly with "this replay cannot rebuild
-  policy X" — never re-derive silently under an assumption the event contradicts.
-  There is also **no `loss_policy` field**, so `context_spans` masking is not recordable at all: add
-  the field before adding the caller, or replay is unfixable by construction. And nothing validates
-  the strings — `tests/test_trainingdata_ledger.py:39` writes `"restart-per-document"` where
-  `train.py:210` writes `"restart-per-document-continue-across-window"`. **A policy string nothing
-  reads and nothing validates is a label, not a contract.**
+- **Replay reads the POLICY out of the event, and refuses one it cannot rebuild.** This is the half
+  of "run the ledger, don't calculate it" that is easiest to leave half-done, and it shipped:
+  `replay.rebuild` compares `pack_policy`, `position_policy` and `attention_policy` against the
+  single values this build implements and raises rather than reconstructing under an assumption the
+  event contradicts. `loss_policy` is checked the same way, and a `context-masked` event that
+  records no spans is refused outright.
 
-- **`masks.loss_mask(context_spans=...)` has zero callers, and the docs must stop implying
-  otherwise.** It is implemented, tested (`test_context_spans_are_excluded_from_loss`) and taught in
-  the notebook; `feed.build_microbatch` never passes it. So the SFT-prompt / tool-observation
-  masking this exercise explains is a **capability, not a behaviour of the run** — the shipped run
-  grades every non-pad token that is not a document's last. The agentic lane is the one that makes
-  this concrete, and it is exactly the lane the corpus under-feeds. Either wire it through `feed.py`
-  *and* record the spans in the event, or say plainly in the README which of the two it is.
+  **Refusing is the whole point, because the alternative failure wears a disguise.** Rebuild the
+  wrong window silently and `loss_mask_hash` mismatches — which is the signal reserved for *a shard
+  whose bytes moved*, so the report blames the shard when the shard is fine.
+
+  Keep it that way when a policy is added: either dispatch on the recorded value, or extend the
+  refusal. Never re-derive silently. `spec.py` owns the four vocabularies
+  (`PACK_POLICIES`, `POSITION_POLICIES`, `ATTENTION_POLICIES`, `LOSS_POLICIES`) so the producer, the
+  auditor and this guard cannot drift apart.
+
+- **`masks.loss_mask(context_spans=...)` is wired end to end — and it took a caller to make the
+  documents true.** It was implemented, tested and taught in the notebook with **zero callers**, so
+  every document describing SFT-prompt masking described a capability while the run graded every
+  non-pad token. The spans now travel shard manifest → `ShardHandle` → `pack.build_window`, which
+  **clips and translates** them into window coordinates → `masks.loss_mask` → the ledger event →
+  replay.
+
+  Two details that are load-bearing. The translation matters: handing a shard-relative range
+  straight through would mask the wrong positions, and on a window from the middle of a shard would
+  usually mask nothing and look like it worked. And the policy is **derived from what the microbatch
+  did**, never declared — a run that says `context-masked` and masked nothing is claiming a
+  behaviour it lacked, which is exactly how the feature sat unused while the docs said otherwise.
 
 - **`pack_util` in the telemetry is arithmetic, not a measurement — it is always `1.0`.**
-  `feed.py:207` calls `pack.build_window(handle.index, handle.tokens, span.start, span.end)` with no
-  `window=`, so `size = end - start`, `packed[: end - start]` fills the array end to end, no `PAD`
+  `feed.py:286` calls `pack.build_window(...)` with `context_spans=` but **no** `window=`, so `size = end - start`, `packed[: end - start]` fills the array end to end, no `PAD`
   is written, and `masks.utilization` can only return 1.0. `train.py:206` records it per microbatch
   and `ledger.ConsumeEvent` carries it into the committed bundle, where a reader will take it as
   evidence the packer is efficient. Fix it by passing `window=cfg.sequence_length` so a short tail
@@ -282,9 +284,10 @@ lines and 14 tests.
   elsewhere as outstanding work. That was wrong, and it was wrong in the expensive direction:
   invented work on a deliverable that was nearly finished.
 
-  What is genuinely required is that the paths **resolve on `main`**. They 404 today because the
-  work is still on a branch. `tests/test_submission_bundle.py` proves the files are committable;
-  committing them is not merging them, and the links are not live until the PR lands.
+  What is genuinely required is that the paths **resolve on `main`**, and as of v0.9.0 all four do
+  — tested anonymously, HTTP 200. `tests/test_submission_bundle.py` proves the files are
+  committable; committing them is not merging them, so re-check the links after any change that
+  moves or regenerates the bundle.
 
 - **`verify.py` may import `spec` and nothing else, and a test asserts it transitively.** One
   convenient `from trainingdata import metrics` turns every number check into the producer's
@@ -293,14 +296,15 @@ lines and 14 tests.
   chain hash is re-implemented in `verify.py` with `hashlib` for the same reason: a check that
   called `ledger._digest` would confirm only that it is deterministic.
 
-- **`run_demo.py` never logs an event it did not produce.** Two of the thirteen — `OPUS decisions
-  recorded` and `audit completed` — are written `[SKIP]` with the reason, and the auditor reports
-  them as NOT PRODUCED. A verdict per line is what lets a reader tell "the run did not do this"
+- **`run_demo.py` never logs an event it did not produce.** Exactly one of the thirteen —
+  `audit completed` — is written `[SKIP]`, and that one is structural rather than a gap: a run that
+  certifies its own audit certifies nothing, so `verify.py` produces it. `OPUS decisions recorded`
+  was the other `[SKIP]` until OPUS shipped, and it now reads `[PASS]`. A verdict per line is what lets a reader tell "the run did not do this"
   from "the run did not mention it"; only the second is a hole in the record.
 
 - **A short demo cannot speak for the mixture, and the evidence row says which it measured.** No
-  lane's share divides evenly into a 64-sequence step, so a run covering 1.2% of the plan drifts by
-  up to 2.1 points. The row reports its coverage, the sample drift, and separately whether the
+  lane's share divides evenly into a 64-sequence step, so a run covering 1.9% of the plan drifts by
+  up to 2.3 points. The row reports its coverage, the sample drift, and separately whether the
   *corpus* is compliant — the thing a short run cannot tell you about.
 
 - **A fork inherits its parent's history; it does not copy it.** So `common_prefix` between parent
@@ -310,14 +314,14 @@ lines and 14 tests.
 
 ## Naming
 
-- **Two shipped helpers currently have no caller, and that is worth knowing before trusting them.**
-  `masks.loss_mask(context_spans=...)` is implemented, tested (`test_context_spans_are_excluded_from_loss`)
-  and taught in the notebook, but **nothing in the pipeline passes `context_spans`** — the agentic
-  loss-mask argument is demonstrated, not exercised. And `pack_utilization` is arithmetically pinned
-  to `1.0` because `feed.py` never passes `window=`, so the `pack_util` field `train.py` writes into
-  every ledger event is a constant, not a measurement. Neither is a bug; both are claims the evidence
-  bundle must not overstate.
+- **One shipped helper still has no varying input, and it is worth knowing before trusting it.**
+  `pack_utilization` is arithmetically pinned to `1.0` because `feed.py` never passes `window=`, so
+  the `pack_util` field `train.py` writes into every ledger event is a constant, not a measurement.
+  That is not a bug; it is a claim the evidence bundle must not overstate, and `metrics.py` says so
+  in its own docstring. The honest packing number the bundle publishes is **loss utilisation**,
+  which does vary — 73.8% on a masked reasoning batch against 99.6% on web.
 
+  `masks.loss_mask(context_spans=...)` used to be the second entry here. It has callers now.
 
 Test modules are prefixed `test_trainingdata_*`. pytest imports test modules by **basename**, so a
 second `test_config.py` anywhere in the repo aborts *collection* rather than failing a test.

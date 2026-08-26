@@ -10,6 +10,40 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Twelve documents were describing a system that no longer existed.** A 45-agent adversarial sweep
+  over every tracked document returned **37 confirmed** contradictions between what the docs say and
+  what the code does. The two worst were actively dangerous rather than merely stale:
+  `06/CLAUDE.md` told an agent that `replay.py` "has not finished" reading policies out of the event
+  and directed it to add a `loss_policy` field — **both already shipped**, so following the
+  instruction would have duplicated a field and rewritten a working guard. And `06/PROGRESS.md`,
+  whose stated job is cold pickup, said fork, the auditor and the evidence bundle were "**not**
+  built, and no document here claims otherwise" — all three ship, and its own Verification section
+  three hundred lines below tells the reader to run `verify.py`.
+- **The counts, corrected against their sources rather than by hand.** PROGRESS's corpus total read
+  10,633,752 tokens over 15,763 documents; `results/corpus_build.json` says **10,649,549** over
+  **9,233**. `06/CLAUDE.md` reported a run covering 1.2% of the plan drifting 2.1 points; the bundle
+  says **1.9%** and **2.3**. CI was described as "three concurrent jobs" in three places and has
+  been **four** since the `train` job landed. `docs/DESIGN.md` published `--faint` and `--accent` at
+  the exact values `tokens.css` records as its fixed contrast failures.
+- **Lessons kept, live-status claims retired.** Several AGENTS.md rules asserted a currently-red
+  state as evidence — "it is **red right now**", "the consequence is live", "that test does not
+  exist". Every one of those is now green or written. The lesson is why the rule exists and stays;
+  the status was doing the opposite of its job, since a reader who checked would find it false and
+  trust the rule less.
+- **A test fixture recorded a policy the system would refuse.** `test_trainingdata_ledger.py` wrote
+  `position_policy: "restart-per-document"` where the pipeline writes
+  `"restart-per-document-continue-across-window"` — an event its own `replay.rebuild` would reject,
+  in the suite whose job is to say the ledger is well-formed. Fixed, and guarded: a new lexical
+  check reads every test file for policy assignments and validates them against `spec`. It knows to
+  allow a deliberately-invalid value inside a refusal test, because without that it would have
+  flagged the one test proving invalid policies are caught.
+- **The "not shipped" guard could not see a directory.** It matched only `*.py`, so when
+  `06/CLAUDE.md` denied "any `web/` bundle" **while that bundle was live in production**, the guard
+  read the sentence, found no Python file, and passed. It now checks both, and skips cleanly when
+  there is nothing to deny.
+
 ## [0.9.0] — 2026-08-26
 
 ### Added

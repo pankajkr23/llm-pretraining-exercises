@@ -46,10 +46,20 @@ Declare as CSS custom properties in `:root`, overridden under
 | `--track` | `#e8e8ed` | `#2a2a2c` | Segmented-control track |
 | `--ink` | `#1d1d1f` | `#f5f5f7` | Primary text |
 | `--muted` | `#6e6e73` | `#a1a1a6` | Secondary text |
-| `--faint` | `#86868b` | `#6e6e73` | Labels, captions |
+| `--faint` | `#6f6f74` | `#8a8a90` | Labels, captions |
 | `--line` | `#d2d2d7` | `#2f2f31` | Borders, dividers |
-| `--accent` | `#0071e3` | `#2997ff` | The single bright accent |
+| `--accent` | `#0068d1` | `#2997ff` | The single bright accent |
 | `--accent-soft` | `rgba(0,113,227,0.1)` | `rgba(41,151,255,0.14)` | Focus glow |
+
+> **These values are copied from `deploy/vercel/_shared/tokens.css`, which is the source of
+> truth, and the copy has gone stale before.** `--faint` and `--accent` sat here at `#86868b`
+> and `#0071e3` long after that file had corrected them — those two were the contrast failures
+> (3.33:1 and 4.31:1) whose fix is described in its own header comment. If they disagree,
+> `tokens.css` wins, and the table above is the thing that is wrong.
+>
+> The file also ships **32 light tokens**; only the core set is tabulated here. Read it directly
+> before inventing a colour — the rule is that no page introduces a value that is not already a
+> token there.
 
 Shadow: `--shadow: 0 1px 3px rgba(0,0,0,0.04), 0 6px 20px rgba(0,0,0,0.03)` in light; `none`
 in dark (borders carry the elevation there).

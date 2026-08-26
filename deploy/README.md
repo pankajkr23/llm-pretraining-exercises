@@ -11,22 +11,36 @@ One Vercel project serves every exercise's static `web/` bundle under its slug, 
 | `/` | landing page ([`vercel/index.html`](vercel/index.html)) |
 | `/01-introductions/` | `src/exercises/01-introductions/web/` |
 | `/02-tokenization/` | `src/exercises/02-tokenization/web/` |
+| `/03-data-collection-framework/` | `src/exercises/03-data-collection-framework/web/` |
+| `/04-data-cleaning-dedup/` | `src/exercises/04-data-cleaning-dedup/web/` |
+| `/05-datamixtures-and-curriculum/` | `src/exercises/05-datamixtures-and-curriculum/web/` |
+| `/06-build-training-dataset/` | `src/exercises/06-build-training-dataset/web/` |
 
 Config is code:
 
 - [`/vercel.json`](../vercel.json) (repo root) — `buildCommand: bash deploy/vercel/build.sh`, `outputDirectory: public`.
-- [`vercel/build.sh`](vercel/build.sh) — no framework build; just assembles `public/` by copying the landing
-  page plus every `src/exercises/*/web/` into `public/<slug>/`. Any exercise with a `web/` dir is picked
-  up automatically; only the landing page's cards are hand-maintained.
+- [`vercel/build.sh`](vercel/build.sh) — no framework build. It assembles `public/` by copying the landing
+  page, `deploy/vercel/_shared/` into `public/_shared/` (the tokens and theme script every page links
+  **absolutely**, so it must exist at the site root), each exercise's `NOTICE`, and every
+  `src/exercises/*/web/` into `public/<slug>/`. It then fingerprints asset references for cache-busting.
+  Any exercise with a `web/` dir is picked up automatically; only the landing page's cards are
+  hand-maintained, and `tests/test_deploy_registration.py` fails when one is missing.
 
 **Deploy model — gated:**
 
 - **Previews: automatic.** Vercel's Git integration deploys a preview URL for every PR branch.
 - **Production: on-demand.** `main` does **not** auto-deploy (`vercel.json` → `git.deploymentEnabled.main: false`).
-  Production ships only when you run the **`Deploy to production`** workflow
-  ([`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)) — Actions tab → *Run workflow*, or
-  `gh workflow run deploy.yml`. It runs `vercel build/deploy --prod` and is gated by the `production`
-  GitHub environment (add required reviewers there for an approval step).
+  **Two** workflows reach production, both through the reusable
+  [`deploy-production.yml`](../.github/workflows/deploy-production.yml), and both gated by the
+  `production` GitHub environment (add required reviewers there for an approval step):
+
+  - [`deploy.yml`](../.github/workflows/deploy.yml) — `workflow_dispatch`, deploys `main` on demand.
+    Actions tab → *Run workflow*, or `gh workflow run deploy.yml`.
+  - [`release.yml`](../.github/workflows/release.yml) — fires on a `v*` tag, creates the GitHub
+    Release from that `CHANGELOG.md` section, then deploys the **tagged** commit.
+
+  So tagging a release deploys production. That is deliberate, and it is why the tag is pushed only
+  after `main` is verified green on the exact commit being tagged.
 
 **Required GitHub secrets** (for the deploy workflow) — set under repo *Settings → Secrets and variables → Actions*:
 

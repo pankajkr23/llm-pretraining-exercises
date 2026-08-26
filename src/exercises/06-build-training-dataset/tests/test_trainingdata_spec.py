@@ -6,12 +6,16 @@ assignment explicitly refuses. Shared *facts* are fine; shared *logic* is not.
 """
 
 import ast
+import re
 from pathlib import Path
 
 import pytest
 from trainingdata import spec
 
 SPEC_FILE = Path(spec.__file__)
+
+#: This exercise's root, for the fixture sweep below.
+EXERCISE = Path(__file__).resolve().parents[1]
 
 
 def test_spec_imports_nothing_from_the_package() -> None:
@@ -111,3 +115,66 @@ def test_only_one_pack_policy_is_actually_implemented() -> None:
     """
     assert "document-boundary" in spec.PACK_POLICIES
     assert spec.PACK_POLICIES[0] == "concat-and-chop", "the implemented policy must come first"
+
+
+def test_no_test_fixture_records_a_policy_the_system_would_refuse() -> None:
+    """**A fixture carrying an invalid policy string is a contract nobody is holding.**
+
+    `spec.py` owns four policy vocabularies and `replay.rebuild` refuses anything outside them. But
+    a *fixture* can write whatever it likes, and one did: `test_trainingdata_ledger.py` recorded
+    `position_policy: "restart-per-document"` where the pipeline writes
+    `"restart-per-document-continue-across-window"`. Nothing caught it, because that file never
+    reaches replay — so the repo held a ledger event that its own replay would reject, in a test
+    suite whose job is to say the ledger is well-formed.
+
+    This reads every test file for policy assignments and checks each value against the vocabulary
+    it belongs to. It is lexical on purpose: the point is what the source says, not what happens to
+    execute.
+    """
+    vocabularies = {
+        "pack_policy": spec.PACK_POLICIES,
+        "position_policy": spec.POSITION_POLICIES,
+        "attention_policy": spec.ATTENTION_POLICIES,
+        "loss_policy": spec.LOSS_POLICIES,
+    }
+
+    wrong: list[str] = []
+    for path in sorted((EXERCISE / "tests").glob("test_*.py")):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for number, line in enumerate(lines, start=1):
+            for field, allowed in vocabularies.items():
+                found = re.findall(rf'["\']?{field}["\']?\s*[:=]\s*["\']([^"\']+)["\']', line)
+                for value in found:
+                    if value in allowed or _is_a_refusal_fixture(lines, number):
+                        continue
+                    wrong.append(f"{path.name}:{number}: {field}={value!r} is not in spec")
+
+    assert not wrong, "fixtures record policies the system would refuse:\n  " + "\n  ".join(wrong)
+
+
+def _is_a_refusal_fixture(lines: list[str], number: int) -> bool:
+    """Whether a line sits inside a test that deliberately feeds an invalid value.
+
+    **Without this the guard would demand its own opposite.** There is a test whose whole job is to
+    hand `replay.rebuild` a policy outside the vocabulary and watch it refuse —
+    so a rule reading "no fixture may hold an invalid policy" would flag the one test proving
+    invalid policies are caught, and "fixing" it would delete the coverage.
+
+    A refusal is recognised by the test's own name or by a nearby `pytest.raises`, both of which are
+    facts about the source rather than about what runs.
+
+    Args:
+        lines: The file's lines.
+        number: 1-indexed line the value appeared on.
+
+    Returns:
+        True when the surrounding test is asserting a refusal.
+    """
+    start = number - 1
+    while start > 0 and not lines[start].lstrip().startswith("def test"):
+        start -= 1
+    name = lines[start] if start >= 0 else ""
+    if any(word in name for word in ("refus", "reject", "unknown", "invalid", "catches")):
+        return True
+    window = "\n".join(lines[max(0, number - 12) : min(len(lines), number + 12)])
+    return "pytest.raises" in window
