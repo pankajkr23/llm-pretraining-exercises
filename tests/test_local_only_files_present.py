@@ -38,6 +38,25 @@ EXPECTED_BUILDERS = [p / "tools" / "build_notebook.py" for p in EXERCISES]
 #: healthy working checkout has one per exercise.
 EXPECTED_BRIEFS = [p / "BRIEF.md" for p in EXERCISES]
 
+#: Programme-level material — the course corpus. **This was the largest exposure and nothing
+#: watched it.**
+#:
+#: The three lists above are the classes `AGENTS.md` names, and they were the only ones guarded.
+#: But `docs/sessions/` holds every session's notes, transcripts and assignments — including
+#: material for sessions this repo has not reached yet — and `docs/EXPLAINER_*.md` are the two
+#: files any explainer is supposed to be built from. All gitignored, none regenerable, none
+#: guarded. A tripwire that covers the documented cases and not the biggest one is a tripwire that
+#: reads as coverage.
+#:
+#: Counted rather than enumerated: the corpus grows a file per session, so a fixed list would go
+#: stale and a stale list here fails silently in the safe-looking direction.
+SESSION_CORPUS = REPO_ROOT / "docs" / "sessions"
+EXPECTED_PROGRAMME = [
+    REPO_ROOT / "docs" / "BRIEF.md",
+    REPO_ROOT / "docs" / "EXPLAINER_PROMPT.md",
+    REPO_ROOT / "docs" / "EXPLAINER_PATTERN.md",
+]
+
 
 def _partial(paths: list[Path]) -> bool:
     """True when some but not all exist — a clone has none, a healthy checkout has all."""
@@ -74,6 +93,57 @@ def test_no_notebook_builder_has_gone_missing() -> None:
         f"'src/exercises/*/tools/build_notebook.py')^\" -- "
         f"'src/exercises/*/tools/build_notebook.py'\n"
         f"and keep a backup outside the repo (see AGENTS.md)."
+    )
+
+
+def test_no_programme_level_document_has_gone_missing() -> None:
+    """`docs/BRIEF.md` and the two explainer specs, which nothing else watched.
+
+    `AGENTS.md` requires both explainer documents to be read before building one, and they exist
+    only here. Losing them does not break a build — it silently removes the standard the next
+    explainer would have been held to.
+    """
+    present = [p for p in EXPECTED_PROGRAMME if p.is_file()]
+    if not present:
+        pytest.skip("no programme documents here — a fresh clone has none (they are gitignored)")
+    missing = [str(p.relative_to(REPO_ROOT)) for p in EXPECTED_PROGRAMME if not p.is_file()]
+    assert not missing, (
+        f"{len(present)} programme-level documents are present but {missing} are gone. They are "
+        f"gitignored and have no second copy in this repo. Restore from the backup store: "
+        f"`uv run python tools/backup_local_only.py --verify` will say whether it has them."
+    )
+
+
+def test_the_session_corpus_has_not_shrunk() -> None:
+    """The course material — transcripts, assignments, notes — is the biggest unguarded exposure.
+
+    Enumerating it would go stale every session, so this asserts the *shape* instead: if the
+    directory exists at all, it must hold a session note for every exercise plus the transcripts
+    that go with them. A corpus that has lost half its files still looks fine to `ls`.
+    """
+    if not SESSION_CORPUS.is_dir():
+        pytest.skip("no docs/sessions here — a fresh clone has none (it is gitignored)")
+
+    notes = sorted(SESSION_CORPUS.glob("s[0-9]*.md"))
+    assert len(notes) >= len(EXERCISES), (
+        f"docs/sessions holds {len(notes)} session documents for {len(EXERCISES)} exercises. "
+        f"The corpus is gitignored and irreplaceable; check "
+        f"`uv run python tools/backup_local_only.py --verify` before doing anything else."
+    )
+
+
+def test_the_backup_store_is_named_somewhere_a_reader_will_find_it() -> None:
+    """A backup nobody knows about is not a backup.
+
+    The tripwire tells you a file is gone; it has to also tell you where the copy is. This asserts
+    the two stay connected, because the recovery instructions above are the only thing standing
+    between a loss and a permanent loss.
+    """
+    tool = REPO_ROOT / "tools" / "backup_local_only.py"
+    assert tool.is_file(), "the backup tool is gone; nothing else can restore a local-only file"
+    assert "backup_local_only" in (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8"), (
+        "AGENTS.md's MANDATORY section does not name the backup tool, so a reader following the "
+        "rules would never learn a store exists"
     )
 
 
