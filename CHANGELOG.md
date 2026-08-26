@@ -10,6 +10,8 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-08-26
+
 ### Added
 
 - **OPUS lands, and the run reaches 9 of 9 requirements.** Two modules split at the torch boundary:
@@ -18,44 +20,53 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   `train` extra. In the demo run: **128 candidates over 4 passes, 63 accept · 14 reject · 50 defer ·
   1 floor_override**, every one with a score, a rank and a reason in words, scored against a real
   checkpoint's live AdamW preconditioner and four held-out shards.
+
 - **The record is the deliverable, not the selector.** LightningLM ships a complete OPUS and keeps
   one metrics dict per scoring *pass* — no per-candidate record, `mark_batch_consumed()` never
   called, provenance computed and discarded. *"Why was this rejected at step 400"* is unanswerable
   there. Here each decision log carries a row per candidate under a digest, joined to the ledger by
   `opus_decision_id`.
+
 - **The floor is architectural, not a clamp.** Protected lanes come from a stream the scorer never
   ranks, so no code path can violate a floor. `floor_override` stays *observable* because the
   reserved candidates are still scored — reserve without scoring and the override becomes
   unmeasurable rather than impossible.
+
 - **`verify.py` audits the selection independently and now passes 40 of 40**, including the join
   that a digest cannot do: a tamperer who edits a decision *and* recomputes the header hash is still
   caught, because the ledger shows that candidate being fed while the record calls it rejected.
   Both tampers are watched failing in tracked tests.
+
 - **A floor now reports *why* it was missed.** `agentic` is 2% of the mixture and a candidate
   buffer is 32 consecutive plan slots, so **0.64 candidates are expected per pass** — and three of
   four passes contained none. The reservation worked perfectly; there was nothing to reserve.
   `opus.floor_status` calls that **`unsupplied`** rather than `breached`, prints the arithmetic, and
   the auditor re-derives the same three passes independently. A boolean conflated a mechanism
   failure with a lane that was never offered, and only the first is a bug.
+
 - **Measured about the run itself: the selector strongly prefers one lane.** Mean utility across
   four passes — indic 1,357 · code 1,088 · reasoning 740 · agentic 612 · web 569 · stem 551; indic
   accepted 21 times and rejected once, web accepted 11 and rejected or deferred 27. The mechanism
   (the model is worst at indic, so its gradients are largest) is offered as a hypothesis, not a
   result. The consequence is not hypothetical: an unbounded selector pulls the realised mixture
   toward whatever the model finds hardest, which is what the floors exist to stop.
+
 - **The session notebook covers all eight stages**, up from five. Six new sections — a synthetic
   corpus, a real training loop and the ledger it writes, crash/cut/resume, replay, forking, and
   OPUS — **79 cells that execute end to end in 2.1 seconds**, from four shards of synthetic
   documents rather than the gitignored 10.6M-token corpus, so it runs on a free Colab tier with
   nothing downloaded.
+
 - **A web explainer**: three chapters, three different interaction families (Diff · Destroyer ·
   Adversary), every figure derived from the run by `tools/build_web_data.py` rather than typed.
   Fourteen browser tests, including the one the design rests on — that advancing a chapter actually
   changes what the reader sees, because if it does not the page is decoration and every claim on it
   is unproven.
+
 - **`audit completed` is completed by the auditor.** The producer marks it `[SKIP]` because a run
   that certifies its own audit certifies nothing; `verify.py` is what produces it. That is the last
   of the thirteen required log events.
+
 - **The two graded commands exist and disagree with each other when they should.**
   `run_demo.py` regenerates the whole submission bundle in **21.7 s** with no interaction —
   347,726 bytes against the 2 MiB cap, **9 of 9** requirements met, 12 of the 13 required log
@@ -63,23 +74,29 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   `submission_artifacts/` alone and passes **40 of 40**, completing the thirteenth event itself. A
   bundle whose token count is inflated by a million, or whose ledger has one doctored line, is
   rejected — watched failing before either check was trusted.
+
 - **The producer/auditor wall is a test, not a rule, because breaking it is invisible.** One
   `from trainingdata import metrics` in `verify.py` would turn every number check into the
   producer's arithmetic checked against the producer's arithmetic — agreeing with itself whatever
   either had got wrong — and the printed report would look identical. The import closure is
   asserted transitively, with a twin pointed at `run_demo.py` proving the walker sees imports at
   all. The chain hash is re-implemented with `hashlib` for the same reason.
+
 - **A verdict per log line**, so an auditor can tell *"the run did not do this"* from *"the run did
   not mention it"*. Two events are written `[SKIP]` with their reason rather than claimed.
+
 - **`fork.verify_fork` and lineage**, because `common_prefix` asked the wrong question of a fork: a
   child **inherits** its parent's history rather than copying it, so a legitimate fork shares zero
   events and the old check printed that as though it were a failure.
+
 - **Throughput measured as the slowest rank per step, not the sum** — four ranks summed would
   report four times the tokens per second a step actually achieves.
+
 - **`tools/build_corpus.py`**, so the shards stop coming from a scratch directory. It refuses a
   second build into a directory that already holds one: `manifest.append` is append-only, so
   building twice writes a second set of lines for the same shards and **doubles every count derived
   from them**, while the content-addressed shards on disk stay identical and nothing looks wrong.
+
 - **Context masking is a behaviour of the run, not a capability.** `masks.loss_mask(context_spans=)`
   was implemented, tested and taught in the notebook with **zero callers** — the pipeline
   demonstrably did not do what its own documentation showed. The spans now travel from the shard
@@ -87,71 +104,29 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   coordinates before the mask sees them. Handing a shard-relative range straight through would mask
   the wrong positions, and on a window from the middle of a shard would usually mask nothing and
   look like it worked.
+
 - **The ledger carries the loss policy and the spans on the EVENT**, not a pointer to the manifest,
   so replay re-materialises from the shards and the record alone. Needing a second file to agree
   with would make it an audit of two documents rather than of the run.
+
 - **The policy is derived from what the microbatch did, never declared.** A run that says
   `context-masked` and masked nothing is claiming a behaviour it lacked — which is exactly how the
   feature sat unused while every document said the pipeline used it.
+
 - **Measured on the real corpus:** the reasoning lane carries **1,286 context spans** across five
   shards and web carries **0** (single-part documents, correctly). One microbatch grades **73.8% of
   positions against 99.6% unmasked**. Four training steps graded 2,896–3,568 of 4,096 tokens,
   varying per batch. **Replay of that interval: 8/8 re-derived, all match** — and stripping the
   spans out of the record produces a *different* `loss_mask_hash`, so they are load-bearing rather
   than decoration.
+
 - **An honest packing-efficiency number, for the first time.** `pack_util` is pinned to **1.0 by
   construction** — the plan drops each shard's tail, so a span is always exactly one sequence — and
   was a constant dressed as a statistic. Loss utilisation genuinely varies: 73.8% on masked
   reasoning against 99.6% on web.
+
 - **`spec.py` gains the policy vocabularies** — `PACK_POLICIES`, `POSITION_POLICIES`,
   `ATTENTION_POLICIES`, `LOSS_POLICIES` — pinned by name with the same twin `DECISIONS` has.
-
-### Fixed
-
-- **A breached floor was computed and never published.** `run_demo` evaluated `floors_held` across
-  every OPUS pass and put the result nowhere: the evidence row carried no floor field at all, so a
-  protected lane missing its floor in three of four passes was invisible in the deliverable. Now
-  reported per lane, per verdict, in the run log and the bundle, and checked independently by the
-  auditor.
-- **A clean replay over a corrupt corpus printed as "all match".** `ReplayReport` has always carried
-  both the verdicts and the tampered-shard map, but `summary()` printed only the first — so the one
-  line a reader quotes said everything reproduced while the object it came from knew a shard no
-  longer hashed to its manifest. It is a real state, not a contradiction: a shard damaged outside
-  the spans an interval read replays cleanly. Found by building the notebook, which is what
-  importing the package rather than restating it is for.
-- **The held-out split was counted and never written.** `corpus.build_lane` computed it, recorded
-  `heldout_tokens` on the build report, published **1,093,019 tokens** — and let the array go out of
-  scope one line later. A tenth of the corpus was reported as withheld for evaluation and existed
-  nowhere on disk. Nothing failed, because every test asked about the number. It surfaced only when
-  OPUS needed a proxy set that the run never trains on and found an empty lane. Now written as
-  shards with `split="heldout"`, which the firewall refuses; disk and report agree exactly.
-- **`run_demo.py` was editing the corpus it was demonstrating on.** Its evaluation shard went into
-  `artifacts/shards-v2/heldout/`, and `manifest.append` is append-only — so the demo's own headline
-  count climbed 59 → 60 → 61 across three runs. The shard is content-addressed, so the file was
-  byte-identical each time and only the count moved. It now writes into the run's own scratch.
-- **The Boltzmann temperature was an absolute, which is a defect with a delayed fuse.** Gumbel noise
-  has a fixed spread; a utility's shrinks as the model improves, so the selector slides from
-  utility-driven toward random over a run with nothing failing. Measured at the old default: noise
-  carrying **1.09×** the signal, and at `τ = 2.0` **zero** rejections surviving a redraw. Now a
-  multiple of the observed spread — proven scale-free against scores multiplied by a thousand.
-- **A `str.replace` that matched nothing reported success**, leaving half a patch applied in
-  `verify.py`: the OPUS join was reading a dict keyed one way and writing it another, and reported
-  every batch as unaccounted for. The same failure mode this repo has already paid for once.
-
-- **The evaluation firewall was simulated in the demo** — the eval manifest was built in memory and
-  never written, so the evidence row correctly read *"no evaluation shard was offered"*, which is
-  true and the opposite of what the run intended to show. It now writes a real shard and the
-  auditor checks the refusal against the ledger's own spans.
-- **The mixture row was true and misleading.** It reported "outside tolerance" for a run consuming
-  **1.2% of the plan**, where no lane's share divides evenly into a 64-sequence step and drift of up
-  to 2.1 points is arithmetic rather than a defect. It now states coverage, sample drift and
-  corpus-level compliance separately.
-- **`verify.py` reported to stderr**, so every check "passed" against an empty string in any test
-  that read stdout. A report meant to be read and piped goes to stdout.
-- **`06/CLAUDE.md` denied that seven shipped things existed** — fork, the auditor, the demo runner,
-  the metrics module, the evidence writer, the corpus fetcher and a tracked `results/` — in the
-  same file whose next paragraph warned that this paragraph goes stale silently. It is now derived
-  from the filesystem by a test.
 
 ### Changed
 
@@ -164,12 +139,66 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **A breached floor was computed and never published.** `run_demo` evaluated `floors_held` across
+  every OPUS pass and put the result nowhere: the evidence row carried no floor field at all, so a
+  protected lane missing its floor in three of four passes was invisible in the deliverable. Now
+  reported per lane, per verdict, in the run log and the bundle, and checked independently by the
+  auditor.
+
+- **A clean replay over a corrupt corpus printed as "all match".** `ReplayReport` has always carried
+  both the verdicts and the tampered-shard map, but `summary()` printed only the first — so the one
+  line a reader quotes said everything reproduced while the object it came from knew a shard no
+  longer hashed to its manifest. It is a real state, not a contradiction: a shard damaged outside
+  the spans an interval read replays cleanly. Found by building the notebook, which is what
+  importing the package rather than restating it is for.
+
+- **The held-out split was counted and never written.** `corpus.build_lane` computed it, recorded
+  `heldout_tokens` on the build report, published **1,093,019 tokens** — and let the array go out of
+  scope one line later. A tenth of the corpus was reported as withheld for evaluation and existed
+  nowhere on disk. Nothing failed, because every test asked about the number. It surfaced only when
+  OPUS needed a proxy set that the run never trains on and found an empty lane. Now written as
+  shards with `split="heldout"`, which the firewall refuses; disk and report agree exactly.
+
+- **`run_demo.py` was editing the corpus it was demonstrating on.** Its evaluation shard went into
+  `artifacts/shards-v2/heldout/`, and `manifest.append` is append-only — so the demo's own headline
+  count climbed 59 → 60 → 61 across three runs. The shard is content-addressed, so the file was
+  byte-identical each time and only the count moved. It now writes into the run's own scratch.
+
+- **The Boltzmann temperature was an absolute, which is a defect with a delayed fuse.** Gumbel noise
+  has a fixed spread; a utility's shrinks as the model improves, so the selector slides from
+  utility-driven toward random over a run with nothing failing. Measured at the old default: noise
+  carrying **1.09×** the signal, and at `τ = 2.0` **zero** rejections surviving a redraw. Now a
+  multiple of the observed spread — proven scale-free against scores multiplied by a thousand.
+
+- **A `str.replace` that matched nothing reported success**, leaving half a patch applied in
+  `verify.py`: the OPUS join was reading a dict keyed one way and writing it another, and reported
+  every batch as unaccounted for. The same failure mode this repo has already paid for once.
+
+- **The evaluation firewall was simulated in the demo** — the eval manifest was built in memory and
+  never written, so the evidence row correctly read *"no evaluation shard was offered"*, which is
+  true and the opposite of what the run intended to show. It now writes a real shard and the
+  auditor checks the refusal against the ledger's own spans.
+
+- **The mixture row was true and misleading.** It reported "outside tolerance" for a run consuming
+  **1.2% of the plan**, where no lane's share divides evenly into a 64-sequence step and drift of up
+  to 2.1 points is arithmetic rather than a defect. It now states coverage, sample drift and
+  corpus-level compliance separately.
+
+- **`verify.py` reported to stderr**, so every check "passed" against an empty string in any test
+  that read stdout. A report meant to be read and piped goes to stdout.
+
+- **`06/CLAUDE.md` denied that seven shipped things existed** — fork, the auditor, the demo runner,
+  the metrics module, the evidence writer, the corpus fetcher and a tracked `results/` — in the
+  same file whose next paragraph warned that this paragraph goes stale silently. It is now derived
+  from the filesystem by a test.
+
 - **Replay refuses a policy it cannot rebuild.** Every reconstruction is concat-and-chop with
   per-document positions; handed an event from another policy it would have rebuilt the wrong
   window, hashed it, and reported a mismatch — the signal reserved for *a shard whose bytes moved*.
   It would have blamed the data for a difference in the reader. It also refuses an event claiming
   `context-masked` while recording no spans, because the mask it was graded under is then
   unrecoverable.
+
 - **The local-lane fetch split on lines, reintroducing a bug already fixed for the remote lanes**
   a hundred lines below the comment explaining it. The agentic proxy's **500 conversations became
   16,753 line-fragments**, median 32 characters. Deduplication then removed 59% of them as
@@ -177,13 +206,16 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   split. It also inverted the measurement it fed: at line granularity agentic looked like the best
   lane for whole-document packing (100% under 512 tokens); at conversation granularity it is nearly
   the worst (10.0%, carrying 4.4% of its tokens).
+
 - **`--lane X` rewrote the whole fetch manifest**, destroying the provenance of the lanes it had not
   touched. Their text survived; the record of which dataset and licence produced it did not. The
   rebuild reported a one-lane corpus at 0.04 epochs with indic's floor breached, which is how it
   surfaced. The manifest now merges.
+
 - **A local lane was read in full while remote lanes stopped on target**, so agentic supplied 4.23%
   of the corpus against a 2.00% plan. Availability is not the mixture: the plan draws uniformly over
   spans, so a lane with twice its budget takes twice its share.
+
 - **A protected lane supplied at exactly its floor breaches it.** Fixing the above produced the
   opposite failure — agentic at 1.99% against a 2.00% floor, one ten-thousandth under, because that
   lane's floor *equals* its share and has no headroom. Protected lanes now carry 5% headroom, so the
@@ -194,20 +226,24 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   protected floors (indic .12, agentic .02) and the per-lane token targets derived from the run
   size. Nothing restates them: a fetcher sizing a download and a compliance report checking against
   a second copy would drift, and the report would become a measurement of itself.
+
 - **`long_context` is deliberately zero and a test says so.** It is a schedule over the other
   lanes, not a corpus — session 5 retired it on its own evidence, 60 of its 100B being repo-packed
   code already counted under `code`. A fetcher that gave it tokens would invent a lane and
   double-count another.
+
 - **A tracked corpus fetcher, sized in TOKENS rather than rows.** Bytes per token under the frozen
   vocabulary ranges from **1.98 (code) to 8.81 (indic)** — a 4.4x spread — so a row-counting
   fetcher lands nowhere near the mixture it is reproducing. Licences are verified from each
   dataset's own card at fetch time, before a byte is downloaded, and a dataset declaring none is
   refused: an unverifiable licence is not a permissive one.
+
 - **The code lane's licence is checked per FILE, not per dataset.** `codeparrot/github-code-clean`
   is Apache-2.0 as *packaging* and mixes GPL/AGPL/LGPL source with permissive; the dataset tag
   would wave all of it through. Rows outside a narrower per-file set are dropped, and that set
   deliberately excludes `odc-by` — a fine licence for a data collection and a meaningless one for
   somebody's `.py`.
+
 - **Every candidate dataset was probed live rather than remembered**, and three were rejected on
   licence grounds: `bigcode/the-stack-smol` (gated *and* declares nothing),
   `the-stack-smol-xs` (ungated, declares nothing at all), `peS2o` (odc-by and ungated, but has no
@@ -222,6 +258,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   exercise 06's 272 tests and all 20 of its integration tests ran nowhere**, plus exercise 05's
   proxy run, with every gate green. `ci.yml` compounded it by treating pytest's exit code 5 as
   success.
+
 - **CPU-only torch wheels, pinned by a Linux-scoped index.** **191.8 MB** instead of the 2.7 GB
   CUDA build, and **19 fewer packages** in the lock. Nothing here trains on a GPU — the graded run
   is CPU + gloo precisely so it behaves the same on a grader's machine — so the CUDA payload bought
@@ -230,8 +267,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   disagree. The job asserts `+cpu` in `torch.__version__`: if the pin regresses, the CUDA wheel
   installs silently and the only symptom is a slower job. Measured at **28.2s** for all 78 tests,
   against a 164s critical path.
-
-### Fixed
 
 - **Multi-rank training depended on what the machine's hostname resolved to.** gloo picks its
   network interface that way, and on a laptop the hostname resolves to a **WiFi** address — so
@@ -242,6 +277,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   meant to remove, and a grader on a VPN would have hit it. `GLOO_SOCKET_IFNAME` is now defaulted
   to loopback, with `setdefault` semantics so a real multi-node run can still name its own
   interface.
+
 - **The shard guard could not see the hole it existed for.** It detected "file in no shard" but not
   "file in a shard that collects zero", because it derived ownership from a collection run in the
   same environment that was missing the dependency. It is now **lexical** — the filesystem and each
