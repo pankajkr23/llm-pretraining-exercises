@@ -323,7 +323,6 @@ lines and 14 tests.
 
   `masks.loss_mask(context_spans=...)` used to be the second entry here. It has callers now.
 
-
 Test modules are prefixed `test_trainingdata_*`. pytest imports test modules by **basename**, so a
 second `test_config.py` anywhere in the repo aborts *collection* rather than failing a test.
 `tests/test_module_names.py` enforces this repo-wide.

@@ -44,7 +44,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   read the sentence, found no Python file, and passed. It now checks both, and skips cleanly when
   there is nothing to deny.
 
-
 ## [0.9.0] — 2026-08-26
 
 ### Added
