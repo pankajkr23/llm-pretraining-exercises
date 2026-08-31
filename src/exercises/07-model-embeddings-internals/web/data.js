@@ -490,6 +490,7 @@ export const M = Object.freeze({
   },
   "scale_cost": {
     "source": "k2/scale_cost.py, d_model 768",
+    "d_model": 768,
     "rows": [
       {
         "vocab": 10000,

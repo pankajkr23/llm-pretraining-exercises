@@ -606,6 +606,11 @@ function chapterMethod(M) {
       `Every arm on this page is the same small transformer — <b>${su.layers} layers</b>, width
        <b>${su.d_model}</b>, <b>${su.steps} steps</b> over real text in four languages — with only
        the embedding and the head swapped. That is what makes the comparison mean anything.`,
+      `<b>Two widths appear on this page, and they are doing different jobs.</b> Every
+       <i>measured</i> number — loss, recovery, coherence — comes from this width
+       <b>${su.d_model}</b> model. Every <i>parameter and memory</i> table is arithmetic at width
+       <b>${M.v1_arithmetic.d_model}</b>, GPT-2 124M's size, because the cost argument is about
+       models that big. A count at one width is never quoted as evidence at the other.`,
       `The load-bearing detail is the one most easily skipped. Across the five runs the ordinary
        model’s own score moves by <b>${p.unpaired_spread.toFixed(3)} nats</b> — <i>larger than every
        effect measured on this page</i>. Averaging the runs and comparing averages would bury every
@@ -794,7 +799,12 @@ function chapterResults(M) {
        words needs <b>${M.scale_cost.rows[2].naive_gb} GB</b> and the process is killed. Building
        only the rows you need holds at <b>${M.scale_cost.rows[2].sampled_gb} GB</b> and about
        <b>${M.scale_cost.rows[2].sampled_ms} ms</b>, flat in vocabulary size — an option that exists
-       only because the table is computed rather than stored.`
+       only because the table is computed rather than stored.`,
+      `<b>These are projections at width ${M.scale_cost.d_model}</b>, GPT-2 124M's hidden size —
+       not measurements of the model this page trains, which is width
+       <b>${M.setup.d_model}</b>. Every parameter and memory figure in this section is arithmetic
+       at the larger width, because that is the scale the claim is about; every <i>loss</i> figure
+       on this page is measured at the smaller one. Neither is extrapolated to the other.`
     )
   );
   s.append(
