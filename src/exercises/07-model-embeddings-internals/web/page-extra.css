@@ -242,3 +242,12 @@ table.grid tr.bad td {
     gap: 4px;
   }
 }
+
+/* The shared `section` rule sets bottom spacing only — `padding-bottom` and `margin-bottom`, no
+ * top. Exercises 05 and 06 never notice because both put a summary panel between the lede actions
+ * and the first chapter. This page goes straight into chapter one, so the first heading sat flush
+ * against the buttons: measured 0px here against 46px on 06. Matched to 06 rather than guessed.
+ */
+main > section:first-child {
+  margin-top: 46px;
+}

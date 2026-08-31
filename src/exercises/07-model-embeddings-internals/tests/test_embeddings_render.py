@@ -144,3 +144,66 @@ def test_the_lock_demonstration_holds_under_reroll(page):
         seen.add(tuple(rows))
         assert abs(float(total)) < 1e-9, f"the alternating sum moved: {total}"
     assert len(seen) > 1, "re-rolling never changed the four scores; the control does nothing"
+
+
+def test_the_left_rail_is_built_and_lists_every_chapter(page):
+    """The shared stylesheet styles `.rail` AND reserves 260px of left gutter on `.wrap` at 1180px
+    and up — so a page that never builds the rail renders that gutter empty. 05 has had one since
+    it shipped; 06 and 07 inherited the CSS and not the element, which is what this guards.
+    """
+    page.set_viewport_size({"width": 1400, "height": 900})
+    page.wait_for_timeout(250)
+
+    titles = page.eval_on_selector_all(".rail-link .rail-t", "els => els.map(e => e.innerText)")
+    ids = page.eval_on_selector_all("main section", "els => els.map(e => e.id)")
+    assert len(titles) == len(ids), f"{len(titles)} rail links for {len(ids)} sections"
+    assert all(t.strip() for t in titles), "a rail entry with no text"
+
+    hrefs = page.eval_on_selector_all(".rail-link", "els => els.map(e => e.getAttribute('href'))")
+    assert hrefs == [f"#{i}" for i in ids], "the rail does not point at the sections in order"
+
+    numbers = page.eval_on_selector_all(".rail-link .rail-n", "els => els.map(e => e.innerText)")
+    assert numbers == [str(i + 1) for i in range(len(ids))], f"rail numbering is wrong: {numbers}"
+
+
+def test_the_rail_number_and_title_are_grid_siblings(page):
+    """`.rail-link` is a two-column grid. Nesting the number inside the body gives the grid one
+    child, which lands in the 16px number column and squeezes every title to one word per line —
+    the exact bug 05's builder carries a comment about. Checked by geometry, not by markup.
+    """
+    page.set_viewport_size({"width": 1400, "height": 900})
+    page.wait_for_timeout(250)
+    widths = page.eval_on_selector_all(
+        ".rail-link .rail-t", "els => els.map(e => e.getBoundingClientRect().width)"
+    )
+    assert widths, "no rail titles to measure"
+    assert all(w > 60 for w in widths), f"a rail title is squeezed into the number column: {widths}"
+
+
+def test_the_reserved_left_gutter_is_actually_occupied(page):
+    """The bug this fixes: `.wrap` pads 260px for the rail whether or not one exists."""
+    page.set_viewport_size({"width": 1400, "height": 900})
+    page.wait_for_timeout(250)
+    pad = page.eval_on_selector(".wrap", "el => parseFloat(getComputedStyle(el).paddingLeft)")
+    rail_w = page.eval_on_selector("#rail", "el => el.getBoundingClientRect().width")
+    assert pad > 200, f"the shared stylesheet no longer reserves the gutter ({pad}px)"
+    assert rail_w > 150, f"the gutter is reserved but the rail does not fill it ({rail_w}px)"
+
+
+def test_the_first_chapter_is_not_flush_against_the_action_buttons(page):
+    """The shared `section` rule has bottom spacing and no top spacing.
+
+    05 and 06 both place a summary panel between the lede actions and their first chapter, so
+    neither exposes it. This page goes straight into chapter one, and before `page-extra.css`
+    compensated, the first heading sat at a measured **0px** below the buttons.
+    """
+    page.set_viewport_size({"width": 1440, "height": 940})
+    page.wait_for_timeout(250)
+    gap = page.evaluate(
+        """() => {
+            const a = document.querySelector('.lede-actions').getBoundingClientRect();
+            const b = document.querySelector('main > section').getBoundingClientRect();
+            return Math.round(b.top - a.bottom);
+        }"""
+    )
+    assert gap >= 30, f"the first chapter sits {gap}px below the action buttons"

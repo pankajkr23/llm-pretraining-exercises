@@ -19,9 +19,19 @@ function el(tag, cls, text) {
   return node;
 }
 
-function section(id, title, intro) {
+let sectionCount = 0;
+
+/* `rail` is `{ short, sub }` — the wording the left-hand rail uses. It is passed rather than
+ * derived from the heading because `h2.textContent` is the full sentence, and a rail 236px wide
+ * needs a shorter one. `sub` is the answer line: shown when the rail sits inline on a narrow
+ * screen, hidden by the shared stylesheet once the rail pins to the margin. */
+function section(id, title, intro, rail) {
   const s = el('section');
   s.id = id;
+  sectionCount += 1;
+  s.dataset.n = String(sectionCount);
+  s.dataset.title = (rail && rail.short) || title;
+  if (rail && rail.sub) s.dataset.sub = rail.sub;
   s.append(el('h2', null, title));
   for (const p of [].concat(intro)) {
     const node = el('p', 'say');
@@ -80,7 +90,8 @@ function chapterDoors(M) {
        cancels: <b>${int(a.v1_total)}</b> parameters against a tied baseline's
        <b>${int(a.tied_baseline)}</b> — <b>${a.ratio.toFixed(2)}× larger</b> than the thing it was
        meant to beat. That is the whole problem, in one row.`,
-    ]
+    ],
+    { short: 'Kronecker fixed one door', sub: 'and the other still costs a billion' }
   );
 
   s.append(
@@ -144,7 +155,8 @@ function chapterReading(M) {
        shown the answer. Certificate and truth agreed on
        <b>${r.certificate_agreement.toFixed(1)}%</b> of tokens — including when the decode failed,
        which is the half that makes it a certificate rather than a rubber stamp.`,
-    ]
+    ],
+    { short: 'Reading the word back out', sub: 'exact, and it certifies itself' }
   );
 
   s.append(
@@ -201,7 +213,8 @@ function chapterLock(M) {
       `An untied head has four free parameters there; the tie has zero. This is a limit of the
        function class, and it is why every purely-tied arm trails. <b>It is not a criticism of the
        original paper</b>, whose shipped head is untied and unconstrained here.`,
-    ]
+    ],
+    { short: 'Four words it cannot separate', sub: 'A − B − C + D = 0, for every input' }
   );
 
   /* Re-roll the hidden state. Individual scores move a lot; their alternating sum does not. The
@@ -260,7 +273,8 @@ function chapterBreaking(M) {
        function of a quantity that is already additive, so it must amplify differences that have
        already collapsed. Counting which byte pairs a word contains adds information the additive
        code never had. Expressive power was necessary and nowhere near sufficient.`,
-    ]
+    ],
+    { short: 'What breaks the lock', sub: 'both can; only one helps' }
   );
 
   s.append(
@@ -318,7 +332,8 @@ function chapterAttribution(M) {
       `<b>The two solutions are separable.</b> Problem 5 beats the original design using the
        original's own position scheme, borrowing nothing. Problem 3 improves the positions with no
        change to the head. Together they are roughly additive.`,
-    ]
+    ],
+    { short: 'Which problem each answers', sub: '#5 alone already beats v1' }
   );
 
   s.append(
@@ -372,7 +387,8 @@ function chapterCost(M) {
        rows it has to store anyway.`,
       `<b>So the accurate claim is:</b> vocabulary-free in parameters unconditionally, and
        vocabulary-free in compute and memory when paired with sampled scoring.`,
-    ]
+    ],
+    { short: 'What it actually costs', sub: 'free in parameters, not in compute' }
   );
 
   s.append(
@@ -427,6 +443,37 @@ function buildFooter(M) {
   f.append(box);
 }
 
+/* The rail. The shared stylesheet already styles `.rail` and, at 1180px and up, already reserves
+ * 260px of left padding on `.wrap` for it — so a page without this builder renders that gutter
+ * empty. 05 has had the rail since it shipped; 06 and 07 inherited the CSS and never the element.
+ *
+ * `rail-n` and `rail-body` are SIBLINGS on purpose: `.rail-link` is a two-column grid (a 16px
+ * number column and a text column), so nesting the number inside the body gives the grid one child,
+ * which lands in the 16px column and squeezes every title to one word per line. */
+function buildRail(root) {
+  const rail = document.getElementById('rail');
+  if (!rail) return;
+  rail.replaceChildren();
+  const inner = el('div', 'rail-inner');
+  const head = el('div', 'rail-head');
+  head.append(el('div', 'rail-title', 'On this page'));
+  inner.append(head);
+
+  const list = el('div', 'rail-list');
+  for (const sec of root.querySelectorAll('section')) {
+    if (!sec.dataset.title) continue;
+    const link = el('a', 'rail-link');
+    link.href = `#${sec.id}`;
+    const body = el('span', 'rail-body');
+    body.append(el('span', 'rail-t', sec.dataset.title));
+    if (sec.dataset.sub) body.append(el('span', 'rail-sub', sec.dataset.sub));
+    link.append(el('span', 'rail-n', sec.dataset.n), body);
+    list.append(link);
+  }
+  inner.append(list);
+  rail.append(inner);
+}
+
 export function buildPage(M) {
   chapterDoors(M);
   chapterReading(M);
@@ -435,4 +482,5 @@ export function buildPage(M) {
   chapterAttribution(M);
   chapterCost(M);
   buildFooter(M);
+  buildRail(main());
 }

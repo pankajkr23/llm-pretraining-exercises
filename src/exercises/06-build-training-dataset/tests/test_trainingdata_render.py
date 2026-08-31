@@ -313,3 +313,28 @@ def test_the_summary_rules_all_sit_on_one_line(page) -> None:
     )
     assert len(tops) == 4
     assert len(set(tops)) == 1, f"the four summary cells are on {len(set(tops))} rows: {tops}"
+
+
+def test_the_left_rail_is_built_and_fills_the_gutter_it_reserves(page):
+    """The shared stylesheet styles `.rail` AND, at 1180px and up, pads `.wrap` 260px to make room
+    for it. This page inherited that CSS without ever building the element, so it rendered an empty
+    260px gutter on every wide screen. The guard is the pairing: gutter reserved AND gutter filled.
+    """
+    page.set_viewport_size({"width": 1400, "height": 900})
+    page.wait_for_timeout(250)
+
+    pad = page.eval_on_selector(".wrap", "el => parseFloat(getComputedStyle(el).paddingLeft)")
+    rail_w = page.eval_on_selector("#rail", "el => el.getBoundingClientRect().width")
+    assert pad > 200, f"the shared stylesheet no longer reserves the gutter ({pad}px)"
+    assert rail_w > 150, f"the gutter is reserved but the rail does not fill it ({rail_w}px)"
+
+    hrefs = page.eval_on_selector_all(".rail-link", "els => els.map(e => e.getAttribute('href'))")
+    ids = page.eval_on_selector_all("main section", "els => els.map(e => '#' + e.id)")
+    assert hrefs == ids, f"the rail does not point at the sections in order: {hrefs} vs {ids}"
+
+    # `.rail-link` is a two-column grid; nesting the number inside the body squeezes every title
+    # into the 16px number column. Checked by geometry rather than by markup.
+    widths = page.eval_on_selector_all(
+        ".rail-link .rail-t", "els => els.map(e => e.getBoundingClientRect().width)"
+    )
+    assert widths and all(w > 60 for w in widths), f"a rail title is squeezed: {widths}"

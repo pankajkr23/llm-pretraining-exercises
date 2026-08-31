@@ -568,6 +568,53 @@ function buildFooter(data) {
 
 const CHAPTERS = [chapterReplay, chapterFloors, chapterChain];
 
+/* The left rail. The shared stylesheet has always styled `.rail` and, at 1180px and up, has always
+ * reserved 260px of left padding on `.wrap` for it — so a page without this builder renders that
+ * gutter empty, which is what this page did until now. Exercise 05 shipped with a rail; 06
+ * inherited the CSS and never the element.
+ *
+ * Titles are declared here rather than scraped from the headings: `h2.textContent` is the full
+ * sentence plus a number span plus an anchor "#", and a 236px rail needs a short form.
+ *
+ * `rail-n` and `rail-body` are SIBLINGS on purpose — `.rail-link` is a two-column grid, and nesting
+ * the number inside the body gives the grid one child, which lands in the 16px number column and
+ * squeezes every title to one word per line. */
+const RAIL = {
+  summary: ['How this was built', 'the four claims, and where each is checked'],
+  replay: ['Reproducing a run', 'read the record, do not run it again'],
+  floors: ['The floor held', 'except where there was nothing to hold'],
+  chain: ['You can edit the record', 'you cannot edit it quietly'],
+};
+
+function buildRail(main) {
+  const rail = document.getElementById('rail');
+  if (!rail) return;
+  rail.replaceChildren();
+  const inner = $('div', 'rail-inner');
+  const head = $('div', 'rail-head');
+  head.append($('div', 'rail-title', 'On this page'));
+  inner.append(head);
+
+  const list = $('div', 'rail-list');
+  let n = 0;
+  main.querySelectorAll('section').forEach((sec) => {
+    const entry = RAIL[sec.id];
+    if (!entry) return;
+    sec.dataset.title = entry[0];
+    sec.dataset.n = String(n);
+    n += 1;
+    const link = $('a', 'rail-link');
+    link.href = `#${sec.id}`;
+    const body = $('span', 'rail-body');
+    body.append($('span', 'rail-t', entry[0]));
+    if (entry[1]) body.append($('span', 'rail-sub', entry[1]));
+    link.append($('span', 'rail-n', sec.dataset.n), body);
+    list.append(link);
+  });
+  inner.append(list);
+  rail.append(inner);
+}
+
 export function buildPage(data) {
   const main = document.getElementById('main');
   main.replaceChildren();
@@ -580,6 +627,7 @@ export function buildPage(data) {
     }
   });
   buildFooter(data);
+  buildRail(main);
   wireTooltips(document.body);
 
   window.addEventListener('beforeprint', () => playAll.forEach((fn) => fn()));
