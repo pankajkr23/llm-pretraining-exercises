@@ -106,32 +106,23 @@ function chapterDoors(M) {
     )
   );
 
-  /* The interaction: grow the vocabulary and watch one number move while the other does not.
-   * The point is in the sentence above it, so declining to drag costs nothing. */
-  const rows = M.scale_cost.rows;
-  const box = el('div', 'panel play');
-  box.append(el('p', 'playtitle', 'Grow the vocabulary. Only one of these moves.'));
-  const slider = el('input');
-  slider.type = 'range';
-  slider.min = '0';
-  slider.max = String(rows.length - 1);
-  slider.value = '0';
-  slider.step = '1';
-  slider.id = 'vslider';
-  slider.setAttribute('aria-label', 'vocabulary size');
-  const out = el('div', 'readout');
-  const paint = () => {
-    const r = rows[Number(slider.value)];
-    out.innerHTML = `
-      <div class="big"><span class="k">vocabulary</span><span class="v">${int(r.vocab)}</span></div>
-      <div class="big bad"><span class="k">dense tied head</span><span class="v">${int(r.dense_params)}</span></div>
-      <div class="big good"><span class="k">Kronecker head</span><span class="v">${int(r.v2_params)}</span></div>
-      <div class="big"><span class="k">times smaller</span><span class="v">${(r.dense_params / r.v2_params).toFixed(1)}×</span></div>`;
-  };
-  slider.addEventListener('input', paint);
-  paint();
-  box.append(slider, out);
-  s.append(box);
+  /* No slider here. Dragging one would show exactly what the table below shows, and
+   * `EXPLAINER_PROMPT.md` §1 is explicit: if a reader learns the same thing from a static image,
+   * the interaction is decoration. §9 says the same of a single series. So: a table. */
+  s.append(
+    table(
+      ['vocabulary', 'dense tied head', 'this head', 'times smaller'],
+      M.scale_cost.rows.map((r) => ({
+        __mark: r.vocab === 1000000 ? 'good' : null,
+        cells: [
+          int(r.vocab),
+          int(r.dense_params),
+          `<b>${int(r.v2_params)}</b>`,
+          `<b>${(r.dense_params / r.v2_params).toFixed(1)}×</b>`,
+        ],
+      }))
+    )
+  );
 }
 
 /* ------------------------------------------------------- 2. reading the word back */
@@ -217,42 +208,51 @@ function chapterLock(M) {
     { short: 'Four words it cannot separate', sub: 'A − B − C + D = 0, for every input' }
   );
 
-  /* Re-roll the hidden state. Individual scores move a lot; their alternating sum does not. The
-   * sentence above already says so — this only lets you watch it refuse to move. */
+  /* Step through REAL measured hidden states, not numbers this page makes up.
+   *
+   * The first version of this generated five random values in JavaScript and combined them
+   * additively, so the alternating sum was zero because of how the demo was written rather than
+   * because of the model — and the browser test asserting it was zero could never have failed.
+   * These twelve samples are logits from the real tied head, produced by
+   * `tools/measure_lock_samples.py` and carried in `results/measurements.json`.
+   *
+   * The interaction earns its place here in a way the vocabulary slider did not: the claim is about
+   * EVERY hidden state, and a static image can only ever show one. */
   const box = el('div', 'panel play');
   box.append(
-    el('p', 'playtitle', 'Roll a new hidden state. The four scores move; their alternating sum does not.')
+    el('p', 'playtitle', 'Step through measured hidden states. The four scores move; their sum does not.')
   );
   const readout = el('div', 'lockout');
-  const btn = el('button', 'btn', 'Roll a new hidden state');
-  const names = L.rectangle;
-  const roll = () => {
-    /* A stand-in for a real forward pass: four additive scores built from shared per-position
-     * terms, exactly as the tie computes them. The identity is structural, so any consistent
-     * assignment reproduces it — which is the point being demonstrated. */
-    const p0 = (Math.random() - 0.5) * 40;
-    const p1 = (Math.random() - 0.5) * 40;
-    const q0 = (Math.random() - 0.5) * 40;
-    const q1 = (Math.random() - 0.5) * 40;
-    const base = (Math.random() - 0.5) * 20;
-    const v = [p0 + q0 + base, p0 + q1 + base, p1 + q0 + base, p1 + q1 + base];
-    const alt = v[0] - v[1] - v[2] + v[3];
+  const btn = el('button', 'btn', 'Next measured hidden state');
+  const samples = L.samples || [];
+  let at = 0;
+  const show = () => {
+    const s2 = samples[at % samples.length];
+    at += 1;
     readout.innerHTML =
-      names
+      L.rectangle
         .map(
           (n, i) =>
-            `<div class="lockrow"><span class="k"><code>${n.replace(/\\n/g, '\\n')}</code></span><span class="v">${v[i].toFixed(3)}</span></div>`
+            `<div class="lockrow"><span class="k"><code>${n.replace(/\\n/g, '\\n')}</code></span>` +
+            `<span class="v">${s2.logits[i].toFixed(4)}</span></div>`
         )
         .join('') +
-      `<div class="lockrow sum"><span class="k">A − B − C + D</span><span class="v">${alt.toFixed(12)}</span></div>`;
+      `<div class="lockrow sum"><span class="k">A − B − C + D</span>` +
+      `<span class="v">${s2.alternating_sum.toExponential(3)}</span></div>` +
+      `<div class="lockrow"><span class="k">sample</span>` +
+      `<span class="v">${((at - 1) % samples.length) + 1} of ${samples.length}</span></div>`;
   };
-  btn.addEventListener('click', roll);
-  roll();
+  btn.addEventListener('click', show);
+  show();
   box.append(btn, readout);
   s.append(box);
 
   const note = el('p', 'say');
-  note.innerHTML = `Measured on the real model rather than this demonstration, the residual is
+  note.innerHTML = `Those are measured logits, not an illustration — `+
+    `<code>tools/measure_lock_samples.py</code> computes them from the real tied head at twelve `+
+    `sampled hidden states with <code>W</code> at initialisation, and the largest alternating sum `+
+    `across all twelve is <b>${(L.worst_sample_residual || 0).toExponential(2)}</b> while the four `+
+    `scores themselves range over a full unit. On the trained model the residual is
     <b>${L.rectangle_residual.toExponential(1)}</b>. Adding a <code>d×d</code> transform to the
     hidden state leaves it at <b>${L.with_transform.toExponential(1)}</b> — still zero, because that
     only re-labels the hidden state and cannot change what is expressible.`;

@@ -29,6 +29,7 @@ The full argument, every table, and the limits are in `README.md`. Do not restat
 | --- | --- | --- |
 | `results/measurements.json` | **every number the README and the page render** | **yes** — required |
 | `tools/build_web_data.py` | generates `web/data.js` from it | **yes** — unlike the notebook builder |
+| `tools/measure_lock_samples.py` | measures the rectangle identity on the real head | **yes** |
 | `web/index.html` · `chapters.js` · `page-extra.css` | the page | yes |
 | `web/_shared/` | vendored, byte-identical to 05 and 06 | yes |
 | `tests/test_embeddings_render.py` | 15 browser tests over the assembled site | yes |
@@ -88,7 +89,7 @@ buttons. `page-extra.css` compensates, and a test measures the gap.
 
 ## Claims that were wrong, so they are not re-derived
 
-Five statements in this exercise's own history turned out to be false. They are corrected where
+Six statements in this exercise's own history turned out to be false. They are corrected where
 they were made; the short version, so nobody reintroduces them:
 
 - **"A `d×d` transform gives the head freedom of its own."** No. `⟨h, A·E⟩ = ⟨Aᵀh, E⟩` is a
@@ -105,6 +106,12 @@ they were made; the short version, so nobody reintroduces them:
   by it.** It also requires the four tokens to be of **equal byte length** (the `1/sqrt(L)` scaling),
   and it survives z-normalisation exactly because μ and σ depend only on `L` and the ±1 coefficients
   cancel the shared shift. Say all three conditions or say none.
+- **The page's lock demonstration was a fake.** It generated five random numbers in JavaScript and
+  combined them additively, so the alternating sum was zero *by construction of the demo* rather
+  than because of the model — and the browser test asserting it was zero **could never have
+  failed**. It now steps through twelve logit vectors measured from the real tied head by
+  `tools/measure_lock_samples.py`, and the test reads `results/measurements.json` and fails if the
+  page shows a value that is not in it. Verified by breaking it on purpose.
 - **"The end-of-token symbol removes the short-token bias."** No. With uniform per-slot
   distributions the score is still `-(L+1) ln 257`, and the correlation with length stays at
   −0.99997 — a test caught this. The real defect is an **ordering**: without a stop symbol every

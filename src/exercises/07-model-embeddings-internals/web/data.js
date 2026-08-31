@@ -268,7 +268,131 @@ export const M = Object.freeze({
         "breaks_lock": true,
         "buys": -0.412
       }
-    ]
+    ],
+    "samples": [
+      {
+        "logits": [
+          -0.3189,
+          -0.2525,
+          -0.092,
+          -0.0256
+        ],
+        "alternating_sum": 9.313225746154785e-08,
+        "scale": 1.13
+      },
+      {
+        "logits": [
+          -0.111,
+          0.1152,
+          -0.2971,
+          -0.0709
+        ],
+        "alternating_sum": 4.470348358154297e-08,
+        "scale": 1.05
+      },
+      {
+        "logits": [
+          -0.5164,
+          -0.6647,
+          -0.1703,
+          -0.3186
+        ],
+        "alternating_sum": 1.7881393432617188e-07,
+        "scale": 1.12
+      },
+      {
+        "logits": [
+          0.0231,
+          0.1276,
+          -0.0955,
+          0.009
+        ],
+        "alternating_sum": 1.257285475730896e-07,
+        "scale": 1.2
+      },
+      {
+        "logits": [
+          0.7681,
+          0.7883,
+          0.5709,
+          0.5911
+        ],
+        "alternating_sum": -3.5762786865234375e-07,
+        "scale": 1.31
+      },
+      {
+        "logits": [
+          0.9637,
+          0.4319,
+          0.5136,
+          -0.0182
+        ],
+        "alternating_sum": 1.601874828338623e-07,
+        "scale": 1.19
+      },
+      {
+        "logits": [
+          -0.3422,
+          0.2273,
+          -0.0102,
+          0.5593
+        ],
+        "alternating_sum": 2.384185791015625e-07,
+        "scale": 1.18
+      },
+      {
+        "logits": [
+          0.0262,
+          -0.3903,
+          0.1662,
+          -0.2504
+        ],
+        "alternating_sum": -1.1920928955078125e-07,
+        "scale": 1.07
+      },
+      {
+        "logits": [
+          -0.4199,
+          -0.287,
+          -0.5377,
+          -0.4047
+        ],
+        "alternating_sum": 0.0,
+        "scale": 1.26
+      },
+      {
+        "logits": [
+          0.4894,
+          0.469,
+          0.3922,
+          0.3718
+        ],
+        "alternating_sum": 8.940696716308594e-08,
+        "scale": 1.13
+      },
+      {
+        "logits": [
+          -0.1682,
+          -0.0589,
+          -0.1541,
+          -0.0448
+        ],
+        "alternating_sum": -5.587935447692871e-08,
+        "scale": 1.1
+      },
+      {
+        "logits": [
+          0.2534,
+          0.0331,
+          0.3928,
+          0.1724
+        ],
+        "alternating_sum": 0.0,
+        "scale": 1.35
+      }
+    ],
+    "samples_note": "Real logits from heads.TiedHead — the real codec and induced embedding — at 12 sampled hidden states, W at initialisation. Produced by tools/measure_lock_samples.py.",
+    "worst_sample_residual": 3.5762786865234375e-07
   },
   "bucket_sweep": {
     "source": "k2/ng_sweep.py, 3 seeds",

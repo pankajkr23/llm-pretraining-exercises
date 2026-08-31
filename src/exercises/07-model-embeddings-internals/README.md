@@ -271,6 +271,10 @@ contains such a quadruple:
 
 An untied `d_model→V` head has four free parameters there. The tie has zero.
 
+*(The page lets you step through twelve of these, measured from the real head by
+`tools/measure_lock_samples.py` rather than illustrated — the largest alternating sum across all
+twelve is 3.6e-07 while the four scores themselves range over a full unit.)*
+
 **Three conditions, each load-bearing.** The four tokens must be of **equal byte length** — the
 `1/√L` scaling turns unequal lengths into a weighted identity rather than a vanishing one. The
 identity **survives z-normalisation exactly**: for fixed `L`, μ and σ depend only on `L`, so they are

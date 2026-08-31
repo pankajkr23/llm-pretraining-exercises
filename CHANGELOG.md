@@ -30,6 +30,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The page's lock demonstration showed numbers it invented.** It generated five random values in
+  JavaScript and combined them additively, so the alternating sum it displayed was zero because of
+  how the demo was written rather than because of the model, and the browser test asserting it was
+  zero could never have failed. It now steps through twelve logit vectors measured from the real
+  tied head (`tools/measure_lock_samples.py`, shipped in `results/measurements.json`), and the test
+  fails if the page renders a value that is not in that file — verified by breaking it. The
+  vocabulary slider was deleted outright: `docs/EXPLAINER_PROMPT.md` §1 says an interaction a
+  static image could replace is decoration, and the table beside it said the same thing.
 - **The landing page used a third of a wide screen.** `.wrap` was a fixed 640px column at every
   viewport, so at 1920px the exercise list was a tall ribbon between two empty margins. Widening it
   outright would have been the wrong fix — a 1200px line of prose is unreadable — so the page is now

@@ -131,19 +131,47 @@ def test_the_page_never_scrolls_sideways(page, width):
     assert overflow <= 1, f"the page scrolls sideways by {overflow}px at {width}px wide"
 
 
-def test_the_lock_demonstration_holds_under_reroll(page):
-    """The interaction's whole point: the four scores move, their alternating sum does not."""
+def test_the_lock_demonstration_shows_measured_numbers(page):
+    """The interaction must step through MEASURED logits, not numbers the page invents.
+
+    The first version generated five random values in JavaScript and combined them additively, so
+    the alternating sum was zero because of how the demo was written — and the assertion that it
+    was zero could never have failed. This reads the shipped samples and checks the page shows
+    those, which means it goes red if the page ever starts making numbers up again.
+    """
+    import json
+
+    measured = json.loads(
+        (Path(__file__).resolve().parents[1] / "results" / "measurements.json").read_text(
+            encoding="utf-8"
+        )
+    )["lock"]["samples"]
+    assert measured, "no measured lock samples shipped"
+
     page.set_viewport_size({"width": 1280, "height": 900})
-    seen = set()
-    for _ in range(5):
-        page.click("#lock .btn")
-        rows = page.eval_on_selector_all(
+    seen = []
+    for _ in range(len(measured)):
+        shown = page.eval_on_selector_all(
             "#lock .lockrow:not(.sum) .v", "els => els.map(e => e.textContent)"
         )
-        total = page.eval_on_selector("#lock .lockrow.sum .v", "el => el.textContent")
-        seen.add(tuple(rows))
-        assert abs(float(total)) < 1e-9, f"the alternating sum moved: {total}"
-    assert len(seen) > 1, "re-rolling never changed the four scores; the control does nothing"
+        seen.append(tuple(shown[:4]))
+        page.click("#lock .btn")
+
+    expected = {tuple(f"{v:.4f}" for v in s["logits"]) for s in measured}
+    assert set(seen) <= expected, (
+        "the page is showing logit values that are not in results/measurements.json — "
+        "it is generating them rather than rendering measurements"
+    )
+    assert len(set(seen)) == len(measured), (
+        f"stepped through {len(set(seen))} distinct samples, expected {len(measured)}"
+    )
+
+
+def test_the_lock_page_states_the_samples_are_measured(page):
+    """A reader must be able to tell the demo is evidence and not an illustration."""
+    text = page.eval_on_selector("#lock", "el => el.innerText").lower()
+    assert "measured" in text
+    assert "initialisation" in text or "initialization" in text
 
 
 def test_the_left_rail_is_built_and_lists_every_chapter(page):
