@@ -14,6 +14,7 @@ means it protects the page silently or not at all: `uv run playwright install ch
 """
 
 import http.server
+import importlib.util
 import json
 import os
 import re
@@ -392,6 +393,71 @@ def test_no_markup_reaches_the_reader_unrendered(page):
     assert leftovers == [], f"unrendered markup reached the reader: {leftovers}"
 
 
+def test_no_html_tag_reaches_the_reader_as_text(page):
+    """The fourth way markup leaks, and the one the guard above was blind to.
+
+    `rich()` understands `**bold**` and `[[term|key]]`; it does **not** understand HTML, so a cell
+    written as `<b>H1</b>` is inserted with `createTextNode` and the reader sees the angle brackets.
+    That shipped in the predictions table, and every existing guard passed: the text contains no
+    `[[`, no `**` and no backtick, so the check above found nothing to complain about.
+
+    A guard that only knows the three failures it was written for is not a guard against the fourth.
+    """
+    leaked = page.evaluate(
+        r"""() => {
+            const found = [];
+            const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            let node;
+            while ((node = walk.nextNode())) {
+                if (node.parentElement.closest('pre, code')) continue;  // code is meant to show it
+                const t = node.textContent.trim();
+                if (/<\/?[a-zA-Z][a-zA-Z0-9]*\s*\/?>/.test(t)) {
+                    found.push(node.parentElement.tagName + ': ' + t.slice(0, 70));
+                }
+            }
+            return found;
+        }"""
+    )
+    assert leaked == [], f"an HTML tag reached the reader as literal text: {leaked}"
+
+
+def test_no_stray_emphasis_marker_survives_rendering(page):
+    """The fifth leak, and it is a real limitation of `rich()` rather than a typo.
+
+    The bold pattern is `\\*\\*([^*]+)\\*\\*`, whose character class cannot cross an asterisk. So
+    `**a *b* c**` never matches as bold; the single-asterisk rule fires on the leading `**` instead
+    and the reader gets `*a b c*` with the markers showing. The guard above misses it because the
+    rendered text no longer contains a doubled asterisk — only single ones.
+
+    Checked on the edges of a text node rather than anywhere inside it, so an asterisk used as an
+    ordinary character mid-sentence is not reported.
+
+    **The lone-marker case is the one that matters and it was nearly missed.** When the parser gives
+    up on `**a *b* c**` it emits the opening `*` as its own text node, so the stray marker is a
+    single character. The first version of this check required a length above one — it passed
+    against the real bug, and only breaking the page on purpose showed that.
+    """
+    strays = page.evaluate(
+        r"""() => {
+            const found = [];
+            const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            let node;
+            while ((node = walk.nextNode())) {
+                if (node.parentElement.closest('pre, code')) continue;
+                const t = node.textContent.trim();
+                if (!t) continue;
+                const lone = /^\*+$/.test(t);
+                const edge = t.length > 1 && (t.startsWith('*') || t.endsWith('*'));
+                if (lone || edge) {
+                    found.push(node.parentElement.tagName + ': ' + t.slice(0, 70));
+                }
+            }
+            return found;
+        }"""
+    )
+    assert strays == [], f"an emphasis marker is visible to the reader: {strays}"
+
+
 def test_a_glossary_term_inside_bold_still_becomes_a_term(page):
     """The specific nesting that failed, pinned so the flat-parse regression cannot return."""
     terms = page.evaluate(
@@ -550,7 +616,7 @@ def test_the_page_states_its_blind_spots(page):
     opens — carried the findings and none of the limits, which is the format hiding the best
     material exactly as §13 warns.
     """
-    text = page.eval_on_selector("#results", "el => el.textContent")
+    text = page.eval_on_selector("#limits", "el => el.textContent")
     bundle = json.loads(
         (PUBLIC / SLUG / "data.js")
         .read_text(encoding="utf-8")
@@ -573,7 +639,7 @@ def test_the_page_states_its_blind_spots(page):
 
 def test_the_blind_spots_are_not_hidden_behind_a_disclosure(page):
     """A limitation a reader must open a drawer to find is a limitation the page is hiding."""
-    visible = page.inner_text("#results")
+    visible = page.inner_text("#limits")
     assert "could not see" in visible, (
         "the blind-spot block is inside a collapsed <details>; it must be in the open text"
     )
@@ -585,7 +651,7 @@ def test_the_corrections_log_is_on_the_page(page):
     The strongest material in the exercise — a verdict that flipped because a lane that had been
     missing was funded, with the effect size essentially unchanged — appeared nowhere on the page.
     """
-    text = page.eval_on_selector("#results", "el => el.textContent")
+    text = page.eval_on_selector("#negatives", "el => el.textContent")
     assert "What we got wrong" in text
     assert "unfalsifiable" in text, "the transferable lesson must be stated, not just the anecdote"
     assert "Stack Exchange" in text, "the second stand-in check is what makes the finding hold up"
@@ -597,23 +663,23 @@ def test_the_prediction_is_asked_before_the_answer_is_shown(page):
     Revealing on load would make it a caption. The output must be empty until asked for, and the
     guess must survive the reveal — the gap is the whole lesson.
     """
-    predicts = page.query_selector_all("#results .predict")
+    predicts = page.query_selector_all("#negatives .predict")
     assert len(predicts) == 1, (
         f"{len(predicts)} predict blocks; §14.1 caps this at three per page and one is what this "
         "page spends"
     )
 
-    out = page.query_selector("#results .predict-out")
+    out = page.query_selector("#negatives .predict-out")
     assert out.inner_text().strip() == "", "the answer is on screen before the reader has guessed"
 
     page.eval_on_selector(
-        "#results .predict input[type=range]",
+        "#negatives .predict input[type=range]",
         "el => { el.value = '1.80'; el.dispatchEvent(new Event('input', {bubbles: true})); }",
     )
-    page.click("#results .predict .btn")
+    page.click("#negatives .predict .btn")
     page.wait_for_timeout(150)
 
-    revealed = page.inner_text("#results .predict-out")
+    revealed = page.inner_text("#negatives .predict-out")
     assert "your guess" in revealed and "actual" in revealed, "the guess is not pinned beside it"
     assert "1.80" in revealed, "the reader's own guess was discarded on reveal"
     assert "out by" in revealed, "the gap is the lesson and it is not labelled"
@@ -622,10 +688,10 @@ def test_the_prediction_is_asked_before_the_answer_is_shown(page):
 def test_the_answer_is_reachable_without_playing(page):
     """Reveal must not require a guess first: a reader who will not play is not locked out."""
     page.reload(wait_until="load")
-    page.wait_for_selector("#results .predict")
-    page.click("#results .predict .btn")
+    page.wait_for_selector("#negatives .predict")
+    page.click("#negatives .predict .btn")
     page.wait_for_timeout(150)
-    assert "actual" in page.inner_text("#results .predict-out")
+    assert "actual" in page.inner_text("#negatives .predict-out")
 
 
 def test_the_page_defines_the_words_it_uses(page):
@@ -755,10 +821,18 @@ def test_no_control_response_animates_for_longer_than_the_reader_can_compare(pag
 
 
 def test_every_chapter_leaves_the_reader_with_one_number(page):
-    """§7's checklist: a takeaway pill stating one number."""
+    """§7's checklist: a takeaway pill stating one number.
+
+    Scoped to the numbered chapters — the ones that argue from a figure. The spine's prose sections
+    around them (the glossary, the problem, how to reproduce it) have no single number to leave a
+    reader with, and inventing a pill for them would be decoration rather than a takeaway.
+    """
     pills = page.query_selector_all(".takeaway")
-    sections = page.query_selector_all("section")
-    assert len(pills) >= len(sections) - 1, f"{len(pills)} pills for {len(sections)} chapters"
+    chapters = page.query_selector_all(
+        'section[data-role="mechanism"], section[data-role="results"]'
+    )
+    assert chapters, "no numbered chapters found"
+    assert len(pills) >= len(chapters), f"{len(pills)} pills for {len(chapters)} chapters"
     for pill in pills:
         assert any(ch.isdigit() for ch in pill.inner_text()), (
             f"a takeaway pill states no number: {pill.inner_text()!r}"
@@ -816,3 +890,36 @@ def test_the_page_declares_a_reduced_motion_end_state(page):
     block = match.group(1)
     assert ".rep-bar" in block, "the animated element is not covered by the reduced-motion block"
     assert "transition: none" in block
+
+
+def _required_spine() -> tuple[str, ...]:
+    """The spine, read from the repo-wide guard so this list cannot drift from it.
+
+    Loaded by path rather than imported: `tests/` is not a package, and adding an `__init__.py`
+    to make it one would change how pytest collects every file in it. One source of truth is worth
+    five lines of importlib.
+    """
+    path = REPO / "tests" / "test_page_spine.py"
+    spec = importlib.util.spec_from_file_location("_page_spine", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.SPINE
+
+
+def test_the_page_has_the_required_spine_in_order(page):
+    """A reader arriving cold must find every part of the story, in an order that makes sense.
+
+    The repo-wide `tests/test_page_spine.py` checks that this page *declares* each role, reading the
+    source. It cannot see DOM order, because `buildPage` decides that at runtime. This is the other
+    half: order is asserted because `limits` before `results` reads as hedging, and `conclusion`
+    before the evidence reads as a press release.
+    """
+    spine = _required_spine()
+
+    roles = page.eval_on_selector_all("main section", "els => els.map(e => e.dataset.role)")
+    missing = [r for r in spine if r not in roles]
+    assert not missing, f"the page is missing these parts of the story: {missing}"
+
+    seen = [r for r in roles if r in spine]
+    first = [r for i, r in enumerate(seen) if r not in seen[:i]]
+    assert first == list(spine), f"the spine is out of order: {first}"
