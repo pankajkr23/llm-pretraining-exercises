@@ -30,6 +30,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The landing page used a third of a wide screen.** `.wrap` was a fixed 640px column at every
+  viewport, so at 1920px the exercise list was a tall ribbon between two empty margins. Widening it
+  outright would have been the wrong fix — a 1200px line of prose is unreadable — so the page is now
+  two measures: the header keeps a readable line length and the exercise cards became a responsive
+  grid, three columns at 1440px and one on a phone. Cards in a row share a height with their meta
+  line pinned to the bottom, and the cards adopt the rounded-panel-with-lift treatment `DESIGN.md`
+  already specified for link-cards but the front door never used. Twelve browser tests pin both
+  halves, including that the prose does **not** widen with the grid.
 - **Exercises 06 and 07 reserved a 260px left gutter for a table-of-contents rail they never
   built.** The shared stylesheet has always styled `.rail` *and* set `.wrap { padding-left: 260px }`
   at 1180px and up — unconditionally, whether or not a rail exists. Only 05 ever carried the
