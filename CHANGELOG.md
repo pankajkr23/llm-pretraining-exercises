@@ -30,6 +30,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercises 06 and 07 reserved a 260px left gutter for a table-of-contents rail they never
+  built.** The shared stylesheet has always styled `.rail` *and* set `.wrap { padding-left: 260px }`
+  at 1180px and up — unconditionally, whether or not a rail exists. Only 05 ever carried the
+  `<aside id="rail">` element and a builder for it, so the other two rendered an empty margin on
+  every wide screen. Both now build the rail from their own sections. The same work exposed a
+  spacing defect on 07: the shared `section` rule has bottom spacing and no top, which 05 and 06
+  hide behind a summary panel, so 07's first heading sat a measured 0px below the action buttons
+  against 06's 46px.
+
 - **Twelve documents were describing a system that no longer existed.** A 45-agent adversarial sweep
   over every tracked document returned **37 confirmed** contradictions between what the docs say and
   what the code does. The two worst were actively dangerous rather than merely stale:
