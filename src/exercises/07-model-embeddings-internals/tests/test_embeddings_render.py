@@ -59,7 +59,7 @@ def page():
             view.on("console", lambda m: problems.append(m.text) if m.type == "error" else None)
             view.on("pageerror", lambda e: problems.append(f"pageerror: {e}"))
             view.goto(f"http://127.0.0.1:{httpd.server_address[1]}/{SLUG}/index.html")
-            view.wait_for_selector("section#cost", timeout=10_000)
+            view.wait_for_selector("section#reproduce", timeout=10_000)
             view.console_problems = problems
             yield view
             browser.close()
@@ -72,10 +72,66 @@ def test_the_page_loads_without_console_errors(page):
     assert page.console_problems == []
 
 
-def test_every_chapter_rendered(page):
-    """The six sections the argument needs, in order. A missing one is a silently dropped claim."""
-    ids = page.eval_on_selector_all("main section", "els => els.map(e => e.id)")
-    assert ids == ["doors", "reading", "lock", "breaking", "attribution", "cost"]
+#: The spine the page must have, in order. Roles rather than ids, so wording can change freely.
+REQUIRED_ROLES = (
+    "thesis",
+    "glossary",
+    "problem",
+    "mechanism",
+    "method",
+    "expected",
+    "results",
+    "negatives",
+    "conclusion",
+    "limits",
+    "next",
+    "reproduce",
+)
+
+
+def test_the_page_has_the_required_spine_in_order(page):
+    """A reader arriving cold must be able to find every part of the story, in a sensible order.
+
+    Checked by `data-role` rather than by heading text, so the prose stays free to change. The order
+    is asserted because "limits" before "results" would read as hedging, and "conclusion" before the
+    evidence would read as a press release.
+    """
+    roles = page.eval_on_selector_all("main section", "els => els.map(e => e.dataset.role)")
+    missing = [r for r in REQUIRED_ROLES if r not in roles]
+    assert not missing, f"the page is missing these parts of the story: {missing}"
+    seen = [r for r in roles if r in REQUIRED_ROLES]
+    first = [r for i, r in enumerate(seen) if r not in seen[:i]]
+    assert first == list(REQUIRED_ROLES), f"the spine is out of order: {first}"
+
+
+def test_every_figure_has_a_caption_that_says_something(page):
+    """A figure with a bare label makes the reader do the interpreting. Captions here state what to
+    conclude, so a short one is a caption that has not done its job."""
+    caps = page.eval_on_selector_all("figure figcaption", "els => els.map(e => e.innerText)")
+    figs = page.evaluate("() => document.querySelectorAll('figure').length")
+    assert len(caps) == figs > 0, f"{figs} figures but {len(caps)} captions"
+    short = [c[:40] for c in caps if len(c) < 120]
+    assert not short, f"these captions are too short to be doing any work: {short}"
+
+
+def test_the_page_explains_the_solution_and_not_only_the_results(page):
+    """The failure this rewrite exists to fix: a page that reports measurements without ever saying
+    what the solution is. At least two MECHANISM sections, and the diagram of the tie itself."""
+    roles = page.eval_on_selector_all("main section", "els => els.map(e => e.dataset.role)")
+    assert roles.count("mechanism") >= 2, "mechanism is what makes results comprehensible"
+    text = page.eval_on_selector("#solution", "el => el.innerText").lower()
+    assert "reuse" in text
+    assert page.locator("#solution figure").count() >= 2, "the solution needs its own diagrams"
+
+
+def test_the_glossary_defines_terms_before_they_are_used(page):
+    """The newcomer's route in. Every entry carries a real number from our own run, so the
+    definitions are grounded rather than generic."""
+    terms = page.eval_on_selector_all("#glossary .gloss dt", "els => els.map(e => e.innerText)")
+    defs = page.eval_on_selector_all("#glossary .gloss dd", "els => els.map(e => e.innerText)")
+    assert len(terms) >= 6, f"only {len(terms)} terms defined"
+    assert len(terms) == len(defs)
+    assert all(len(d) > 60 for d in defs), "a definition too short to explain anything"
 
 
 def test_no_cell_rendered_as_undefined_or_nan(page):
@@ -101,22 +157,30 @@ def test_the_headline_numbers_come_from_the_measurements(page):
     look at the page rather than discovering the drift after it is published.
     """
     text = page.eval_on_selector("main", "el => el.innerText")
-    for expected in ("44,888,832", "768,000,000", "6,291,457", "100.00%", "99.85%"):
+    for expected in ("44,888,832", "768,000,000", "6,291,457", "100.00%", "99.85%", "38,597,376"):
         assert expected in text, f"{expected!r} is missing from the rendered page"
 
 
 def test_the_limits_are_in_the_open_text(page):
-    """`AGENTS.md`: a limitation a reader has to open a drawer to find is one the page is hiding."""
-    assert page.locator("footer .limits").count() == 1
-    assert page.locator("footer details").count() == 0
-    items = page.eval_on_selector_all("footer .limits li", "els => els.map(e => e.innerText)")
+    """`AGENTS.md`: a limitation a reader has to open a drawer to find is one the page is hiding.
+
+    The limits are a first-class section rather than a footer note, so they sit in the rail and a
+    reader scanning the page can see that they exist.
+    """
+    assert page.locator("section[data-role='limits']").count() == 1
+    assert page.locator("details").count() == 0, "a limit behind a disclosure is a limit hidden"
+    items = page.eval_on_selector_all(
+        "section[data-role='limits'] .limitlist li", "els => els.map(e => e.innerText)"
+    )
     assert len(items) >= 4, f"only {len(items)} stated limits"
     assert all(len(i) > 60 for i in items), "a limit stated too briefly to be useful"
+    rail = page.eval_on_selector_all(".rail-link", "els => els.map(e => e.getAttribute('href'))")
+    assert "#limits" in rail, "the limits must be reachable from the rail, not buried"
 
 
 def test_the_borrowed_credit_is_on_the_page(page):
     """The n-gram term is prior work. The page has to say so where a reader will see it."""
-    text = page.eval_on_selector("footer", "el => el.innerText").lower()
+    text = page.eval_on_selector("section[data-role='limits']", "el => el.innerText").lower()
     assert "borrowed" in text
 
 
@@ -168,10 +232,17 @@ def test_the_lock_demonstration_shows_measured_numbers(page):
 
 
 def test_the_lock_page_states_the_samples_are_measured(page):
-    """A reader must be able to tell the demo is evidence and not an illustration."""
+    """A reader must be able to tell the demo is evidence and not an illustration, and must be told
+    the samples come from an untrained model.
+
+    Asserted by MEANING, not by vocabulary. An earlier version required the word "initialisation";
+    the page now says "at its starting values, before any training", which is the same fact in words
+    a newcomer can read — and the test, not the page, was what needed to change.
+    """
     text = page.eval_on_selector("#lock", "el => el.innerText").lower()
-    assert "measured" in text
-    assert "initialisation" in text or "initialization" in text
+    assert "measured" in text, "the reader cannot tell this is evidence rather than an illustration"
+    untrained = ("before any training", "starting values", "initialis", "initializ")
+    assert any(k in text for k in untrained), "the page does not say the samples are untrained"
 
 
 def test_the_left_rail_is_built_and_lists_every_chapter(page):

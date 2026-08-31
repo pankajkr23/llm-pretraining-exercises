@@ -521,5 +521,35 @@
     "without_stop_symbol": 10.56,
     "with_stop_symbol": 6.961,
     "uniform": 9.211
+  },
+  "scale_bug": {
+    "source": "k2/arms.py (Kronecker.out_scale) and k2/experiment.py first-step losses",
+    "induced_norm": 15.82,
+    "normal_embedding_norm": 0.3197,
+    "ratio": 49.5,
+    "loss_naive_tie": 94.0,
+    "loss_uniform": 9.211,
+    "loss_with_one_scalar": 7.45,
+    "note": "z-normalisation gives kappa unit variance over all D coordinates, so ||kappa|| = sqrt(D) ~ 90 and the induced rows are ~49x a normal embedding's. One learned scalar fixes it."
+  },
+  "pairing": {
+    "source": "k2/summary.py",
+    "unpaired_spread": 0.469,
+    "control_per_seed": [
+      5.708,
+      5.626,
+      5.907,
+      5.954,
+      5.485
+    ],
+    "best_per_seed": [
+      5.108,
+      5.049,
+      5.309,
+      5.315,
+      4.899
+    ],
+    "paired_sd": 0.024,
+    "note": "Across seeds the control moves 0.469 nats - larger than every effect measured. Within a seed both arms see the same data order, so the difference cancels it: paired sd 0.024."
   }
 }

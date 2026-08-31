@@ -6,7 +6,7 @@
     <title>Deleting the output head — Kronecker v2</title>
     <meta
       name="description"
-      content="A language model keeps one row of numbers per word, twice over. Kronecker embeddings delete the first table and say the second cannot follow. It can: the code inverts exactly, the head ties to it, and the result beats the paper's own design with fewer parameters."
+      content="A language model keeps one row of numbers per word, and keeps that list twice. Kronecker embeddings delete the first copy and say the second cannot follow. It can: the code reads back exactly, the second list is the first one reused, and the result beats the paper's own design with fewer numbers."
     />
     <!-- Inline so it costs no request; a missing favicon is a 404 in every reader's console. -->
     <link
@@ -50,17 +50,16 @@
       <p class="eyebrow">07 · Model embeddings internals</p>
       <h1>Deleting the output head</h1>
       <p class="lede">
-        A language model keeps one row of numbers per word — and it keeps that table
-        <b>twice</b>, once to read words in and once to choose the next one. At a million words
-        that is <b>768 million parameters per door</b>. Kronecker embeddings delete the first table
-        by computing each row from the word's own spelling. Their paper then says the second door
-        cannot follow, and lists it under <i>Limitations</i>. <b>It can.</b> The code inverts
-        exactly, the head ties to it, and the result beats the paper's own design
-        <b>on 5 of 5 seeds with fewer parameters</b>.
+        Every language model carries a list with one row of numbers per word — and it carries that
+        list <b>twice</b>, once to read words in and once to choose the next one. At a million words
+        that is <b>768 million numbers per copy</b>, memorised, doing nothing else. A published trick
+        deletes the first copy by working each row out from the word's spelling, then says the second
+        copy cannot follow and lists that under <i>Limitations</i>. <b>It can.</b> This page is the
+        argument, with the measurements underneath it.
       </p>
       <p class="lede-actions">
-        <a class="jump" href="#reading">Start with reading a word back out <span aria-hidden="true">→</span></a>
-        <a class="jump ghost" href="#cost">Skip to what it actually costs</a>
+        <a class="jump" href="#solution">Skip to the solution <span aria-hidden="true">→</span></a>
+        <a class="jump ghost" href="#glossary">Start with the eight words you need</a>
       </p>
       <aside id="rail" class="rail"></aside>
       <main id="main"></main>

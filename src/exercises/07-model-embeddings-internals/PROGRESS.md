@@ -87,8 +87,11 @@ Registered in the root README table, the CI `rest` shard, and `OPTIONAL_DEPENDEN
 executed and verified, outputs stripped. Builder at `tools/build_notebook.py`. Both are gitignored
 and both are in the outside-the-repo backup store (115 files, 19.5 MB, verified current).
 
-**The page.** `web/`, published at `/07-model-embeddings-internals/` — six chapters, three
-interactions, and a left rail. Every figure is generated from the tracked
+**The page.** `web/`, published at `/07-model-embeddings-internals/` — **fourteen sections, six
+inline-SVG figures and a left rail**, rebuilt to the audience ladder and required spine now recorded
+in `AGENTS.md`. The previous version was nine tables and one button: ~1,300 words that never said
+what an embedding is, never stated the question, and had no method, summary, conclusion or next
+step. It is now ~3,300 words, and every figure is generated from `results/measurements.json`. Every figure is generated from the tracked
 `results/measurements.json` by `tools/build_web_data.py`, so nothing on the page can drift from the
 run that produced it. **15 browser tests** over the assembled site.
 

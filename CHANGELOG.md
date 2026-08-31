@@ -30,6 +30,16 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercise 07's page was rewritten for readability.** An audit found it was nine tables, one
+  button and **no diagram of any kind** — ~1,300 words that never said what an embedding is, never
+  stated the question it answers, never explained the method that makes its numbers trustworthy, and
+  had no summary, conclusion or next step. It is now **fourteen sections and ~3,300 words** with
+  **six inline-SVG figures** built from `results/measurements.json`: the 256×32 grid the exercise is
+  about and had never shown, a diagram of the tie itself, the 49× scale bug that made the idea look
+  impossible, the four locked tokens drawn as an actual rectangle, and the paired-seed figure that
+  explains why any of the numbers can be believed. Adds a glossary, the brief quoted verbatim, an
+  expected-vs-found block, a negatives section, a conclusion, limits and what comes next. Four new
+  browser tests enforce the spine, and each was broken on purpose to confirm it fails.
 - **The page's lock demonstration showed numbers it invented.** It generated five random values in
   JavaScript and combined them additively, so the alternating sum it displayed was zero because of
   how the demo was written rather than because of the model, and the browser test asserting it was

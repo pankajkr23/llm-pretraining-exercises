@@ -505,6 +505,25 @@ unstated limitation of a proposal in the paper this work builds on.
 
 ---
 
+## What comes next
+
+Named in the order they would settle the most doubt.
+
+1. **Run it at 124M parameters.** Every limitation below begins with scale, and one real run answers
+   more than everything else here. Ties are known to behave differently late in training, and this
+   is the experiment that would say so.
+2. **Grow the vocabulary instead of shrinking the buckets.** §2d answered the capacity question with
+   a stand-in — varying `m` at fixed `V`. The direct experiment is a larger vocabulary at a fixed
+   bucket count, and it is the one a reviewer will ask for.
+3. **Generate from the byte head.** It exists so a model can spell words it has never seen. Nothing
+   here tests generation, which is the entire reason that arm is interesting.
+4. **Make the tie cheap in compute, not only in parameters.** Because the logit is additive over
+   (position, byte), the whole vocabulary can in principle be scored by walking a trie of spellings
+   rather than touching every row — an exact V-independent normaliser, where §5's sampled softmax is
+   an approximation of the normalisation.
+
+---
+
 ## What this cannot establish
 
 - **Scale.** 2 layers, `d_model = 256`, 500 steps, ~200k training tokens, one 10k tokenizer. Nothing

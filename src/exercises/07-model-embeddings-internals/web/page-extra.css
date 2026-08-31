@@ -97,54 +97,6 @@ table.grid tr.bad td {
   color: var(--accent);
 }
 
-.play input[type='range'] {
-  width: 100%;
-  accent-color: var(--accent);
-  margin: 0 0 18px;
-}
-
-.play input[type='range']:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-
-.readout {
-  display: grid;
-  gap: 10px;
-}
-
-.big {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 16px;
-  padding: 9px 13px;
-  border-radius: 10px;
-  background: var(--track);
-}
-
-.big .k {
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.big .v {
-  font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 1.15rem;
-  font-weight: 600;
-  /* ~550ms, matching the house animation timing, so a value change reads as a move not a jump. */
-  transition: color 0.55s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.big.good .v {
-  color: var(--grade-a);
-}
-
-.big.bad .v {
-  color: var(--grade-x);
-}
-
 .btn {
   font: inherit;
   font-weight: 500;
@@ -229,14 +181,7 @@ table.grid tr.bad td {
   color: var(--muted);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .big .v {
-    transition: none;
-  }
-}
-
 @media (max-width: 620px) {
-  .big,
   .lockrow {
     flex-direction: column;
     gap: 4px;
@@ -250,4 +195,432 @@ table.grid tr.bad td {
  */
 main > section:first-child {
   margin-top: 46px;
+}
+
+
+/* ==== storytelling elements: tiles, glossary, figures, expected-vs-found ==== */
+
+/* --- headline tiles ---------------------------------------------------------------------------- */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  gap: 14px;
+  margin: 26px 0 18px;
+}
+
+.tile {
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  border-top: 3px solid var(--line);
+}
+
+.tile.good {
+  border-top-color: var(--grade-a);
+}
+
+.tile.bad {
+  border-top-color: var(--grade-x);
+}
+
+.tile-v {
+  font-family: var(--mono);
+  font-size: 1.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.tile.good .tile-v {
+  color: var(--grade-a);
+}
+
+.tile.bad .tile-v {
+  color: var(--grade-x);
+}
+
+.tile-k {
+  margin-top: 6px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* --- glossary ---------------------------------------------------------------------------------- */
+
+.gloss {
+  margin: 20px 0 8px;
+  max-width: 74ch;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 10px 22px;
+}
+
+.gloss dt {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.gloss dd {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .gloss {
+    grid-template-columns: 1fr;
+    gap: 2px 0;
+  }
+  .gloss dd {
+    margin: 0 0 14px;
+  }
+}
+
+/* --- figures ----------------------------------------------------------------------------------- */
+
+figure {
+  margin: 26px 0 30px;
+  padding: 20px 20px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  overflow-x: auto;
+}
+
+.fig-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-width: 460px;
+}
+
+figcaption {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 78ch;
+}
+
+/* SVG internals, all token-driven */
+.grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.cliff {
+  stroke: var(--grade-x);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+
+.rect {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+
+.mk {
+  stroke: var(--panel);
+  stroke-width: 1.5;
+}
+
+.mk.a {
+  fill: var(--accent);
+}
+
+.mk.b {
+  fill: var(--hi);
+}
+
+.mk.x {
+  fill: var(--grade-x);
+}
+
+.bar {
+  fill: var(--muted);
+}
+
+.bar.good {
+  fill: var(--accent);
+}
+
+text.ax {
+  fill: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+text.ax.end {
+  text-anchor: end;
+}
+
+text.ax.mid {
+  text-anchor: middle;
+}
+
+text.ax.strong {
+  fill: var(--ink);
+  font-weight: 600;
+}
+
+text.ax.warn {
+  fill: var(--grade-x);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  align-items: center;
+  margin-top: 12px;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.legend code {
+  font-family: var(--mono);
+  background: var(--track);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.sw {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 7px;
+  vertical-align: -1px;
+}
+
+.sw.a {
+  background: var(--accent);
+}
+
+.sw.b {
+  background: var(--hi);
+}
+
+.sw.x {
+  background: var(--grade-x);
+}
+
+/* --- expected vs found ------------------------------------------------------------------------- */
+
+.expects {
+  display: grid;
+  gap: 14px;
+  margin: 22px 0;
+  max-width: 78ch;
+}
+
+.expect {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--muted);
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+.expect.bad {
+  border-left-color: var(--grade-x);
+}
+
+.expect.part {
+  border-left-color: var(--hi);
+}
+
+.ex-k {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  padding-top: 3px;
+}
+
+.ex-v {
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 640px) {
+  .expect {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .ex-v {
+    margin-bottom: 10px;
+  }
+}
+
+/* The region past column 32 — what the codec throws away. Shaded so the loss is visible rather
+   than implied, because an earlier draft drew those bytes outside the plot and showed one dot. */
+.dropzone {
+  fill: var(--grade-x);
+  opacity: 0.07;
+}
+
+/* --- section role eyebrow, the brief quote, and the closing lists ------------------------------ */
+
+.role {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+blockquote.brief {
+  margin: 20px 0 24px;
+  padding: 18px 22px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 12px;
+  background: var(--panel);
+  max-width: 72ch;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+blockquote.brief cite {
+  display: block;
+  margin-top: 10px;
+  font-size: 12px;
+  font-style: normal;
+  letter-spacing: 0.04em;
+  color: var(--faint);
+}
+
+section h3 {
+  margin: 34px 0 12px;
+  font-size: 1.06rem;
+  font-weight: 600;
+}
+
+.limitlist,
+.nextlist {
+  max-width: 76ch;
+  margin: 18px 0;
+  padding-left: 22px;
+}
+
+.limitlist li,
+.nextlist li {
+  margin: 0 0 12px;
+  line-height: 1.6;
+}
+
+pre.repro {
+  margin: 18px 0;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 0.86rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+/* --- SVG diagram internals, all token-driven so every theme works --------------------------- */
+
+.nodebox {
+  fill: var(--track);
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.nodebox.fixed {
+  fill: var(--track);
+  stroke: var(--muted);
+  stroke-dasharray: 4 3;
+}
+
+.nodebox.learn {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+}
+
+.nodebox.good {
+  fill: var(--accent-soft);
+  stroke: var(--grade-a);
+  stroke-width: 2;
+}
+
+.nodebox.bad {
+  fill: color-mix(in srgb, var(--grade-x) 10%, transparent);
+  stroke: var(--grade-x);
+  stroke-width: 2;
+}
+
+.flow {
+  stroke: var(--muted);
+  stroke-width: 1.6;
+}
+
+.flow.good {
+  stroke: var(--grade-a);
+  stroke-width: 2;
+}
+
+.ahead {
+  fill: var(--muted);
+}
+
+.zero {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+.tether {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  opacity: 0.45;
+}
+
+.series {
+  stroke-width: 2;
+  fill: none;
+}
+
+.series.a {
+  stroke: var(--accent);
+}
+
+.series.b {
+  stroke: var(--muted);
+}
+
+text.ax.good {
+  fill: var(--grade-a);
+}
+
+/* The control series draws its dots in the same colour as its line; an earlier pass left grey
+   lines with orange dots, which read as two different series. */
+.mk.c {
+  fill: var(--muted);
+}
+
+.series.c {
+  stroke: var(--muted);
 }

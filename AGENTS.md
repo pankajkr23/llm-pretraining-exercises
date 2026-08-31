@@ -366,15 +366,48 @@ Exercise 05 shipped every graded item, a proxy run and four experiments, and its
 could not tell from any file what `H1`, `E2`, *arm* or *bits per byte* meant. Everything was
 correct and nothing was legible.
 
-**Write for three readers, and say which one each section is for.**
+**Write for a ladder of readers, and let one narrative deepen — never five parallel tracks.** A
+reader must be able to stop at any depth and still be *correct*, not merely comforted. Tabs, toggles
+and "advanced" drawers split the argument; layering keeps it whole.
 
-| reader | what they need |
-| --- | --- |
-| **Meeting it for the first time** | What problem this solves, in plain words, before any table. What the jargon means. What was actually done — not the abstraction, the concrete thing: which model, how big, which data, how measured. |
-| **A contributor who has to change it** | How the pieces fit and in what order. Where a number comes from. Which module to edit for which effect. Diagrams, because a pipeline described in prose has to be reassembled in the reader's head every time. |
-| **A reviewer deciding whether to believe it** | The measurement, its noise floor, what it could not see, and what would falsify it. Limits stated where the numbers are, not in a closing paragraph. |
+| rung | what they need | the test to apply |
+| --- | --- | --- |
+| **A curious teenager** | the problem in plain words, one concrete analogy, zero notation | could they retell the point to someone else? |
+| **A practitioner** | what it is mechanically, how to run it, what it costs | could they use it on Monday? |
+| **A researcher** | the method, the noise floor, prior art, what would falsify it | could they attack it? |
+| **Product** | what it enables, and when *not* to use it | could they scope it? |
+| **A CTO** | the one number that decides, and the risk attached | could they say yes or no? |
+
+**Every exercise page carries the same spine, and it is test-enforced.** Sections declare
+`data-role`, so `tests/test_embeddings_render.py`-style guards check the *structure* while the prose
+stays free to change:
+
+`thesis` · `glossary` · `problem` · `mechanism` · `method` · `expected` · `results` · `negatives` ·
+`conclusion` · `limits` · `next` · `reproduce`
+
+Exercise 07 is the reference implementation. It was rebuilt after an audit found the previous page
+was **nine tables, one button and no diagram of any kind** — ~1,300 words that never said what an
+embedding is, never stated the question being answered, never explained the method, and had no
+summary, conclusion or next step. The rewrite runs ~3,300 words with six figures, and the shared
+`web/_shared/` helpers it needed had been sitting vendored and unused the whole time.
 
 The rules that follow from it:
+
+- **A mechanism figure is not a results chart, and a page needs both.** Results say *what happened*;
+  mechanism says *why it must*. A page with only results can be believed but not understood — and
+  mechanism is the half that survives five years. Draw the central object: exercise 07 spent weeks
+  on a 256×32 grid its own page never once showed.
+- **A caption argues; it does not label.** State what to conclude, and where useful what would
+  falsify it — *"one hidden state where that sum is meaningfully non-zero would refute this
+  section."* A figure whose caption is its title has made the reader do the interpreting.
+- **Say what you expected before what you found.** It is the only way a reader can tell a finding
+  from a story told backwards, and it costs nothing when the prediction was wrong — which is when it
+  is worth the most.
+- **Define every term where the reader first meets it**, and give each definition a real number from
+  your own run rather than a textbook gloss.
+- **Put a failure in the opening tiles.** A page that shows only its wins has not earned the ones it
+  shows.
+
 
 - **Every term used as shorthand is defined in exactly one findable place, and everything else links there.** `SPEC.md` is the decision; `METHOD.md` is the apparatus. Splitting them is deliberate — an adversarially-graded specification cannot carry a glossary and two architecture diagrams without paying for it, and a first-time reader cannot do without them.
 - **Explain the metric, not just its name.** "Held-out BPB, lower is better" names a measure. What it measures, what it is divided by, and why *that* denominator, is the part that lets a reader judge the table.
