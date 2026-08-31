@@ -10,6 +10,8 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-08-31
+
 ### Added
 
 - **Exercise 07 — Kronecker v2: an invertible codec and a vocabulary-independent output head.**
@@ -2056,6 +2058,8 @@ First tagged release: two interactive exercises live on Vercel with a gated depl
   integration split), GitHub Actions CI, and a PR-only workflow documented in `AGENTS.md`.
 
 [Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.8.0...HEAD
+[0.10.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.9.0...v0.10.0
+[0.9.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.6.1...v0.6.2
