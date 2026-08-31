@@ -14,6 +14,7 @@ members = [
     "exercise-04-data-cleaning-dedup",
     "exercise-05-datamixtures-and-curriculum",
     "exercise-06-build-training-dataset",
+    "exercise-07-model-embeddings-internals",
     "llm-pretraining-exercises",
 ]
 
@@ -424,6 +425,30 @@ train = [
 requires-dist = [
     { name = "exercise-04-data-cleaning-dedup", editable = "src/exercises/04-data-cleaning-dedup" },
     { name = "exercise-05-datamixtures-and-curriculum", editable = "src/exercises/05-datamixtures-and-curriculum" },
+    { name = "numpy", specifier = ">=2" },
+    { name = "torch", marker = "sys_platform == 'linux' and extra == 'train'", specifier = ">=2.6", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "torch", marker = "sys_platform != 'linux' and extra == 'train'", specifier = ">=2.6" },
+]
+provides-extras = ["train"]
+
+[[package]]
+name = "exercise-07-model-embeddings-internals"
+version = "0.1.0"
+source = { editable = "src/exercises/07-model-embeddings-internals" }
+dependencies = [
+    { name = "exercise-04-data-cleaning-dedup" },
+    { name = "numpy" },
+]
+
+[package.optional-dependencies]
+train = [
+    { name = "torch", version = "2.13.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux'" },
+    { name = "torch", version = "2.13.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'linux'" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "exercise-04-data-cleaning-dedup", editable = "src/exercises/04-data-cleaning-dedup" },
     { name = "numpy", specifier = ">=2" },
     { name = "torch", marker = "sys_platform == 'linux' and extra == 'train'", specifier = ">=2.6", index = "https://download.pytorch.org/whl/cpu" },
     { name = "torch", marker = "sys_platform != 'linux' and extra == 'train'", specifier = ">=2.6" },

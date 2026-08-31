@@ -41,11 +41,14 @@ OPTIONAL_DEPENDENCY_GATES: dict[str, str] = {
     "src/exercises/04-data-cleaning-dedup/tests/test_page_render.py": "playwright",
     "src/exercises/05-datamixtures-and-curriculum/tests/test_mixture_page_render.py": "playwright",
     "src/exercises/06-build-training-dataset/tests/test_trainingdata_render.py": "playwright",
+    "src/exercises/07-model-embeddings-internals/tests/test_embeddings_render.py": "playwright",
+    "tests/test_landing_render.py": "playwright",
     "src/exercises/05-datamixtures-and-curriculum/tests/test_mixture_proxy_run.py": "torch",
     "src/exercises/06-build-training-dataset/tests/test_trainingdata_crash.py": "torch",
     "src/exercises/06-build-training-dataset/tests/test_trainingdata_model.py": "torch",
     "src/exercises/06-build-training-dataset/tests/test_trainingdata_train.py": "torch",
     "src/exercises/06-build-training-dataset/tests/test_trainingdata_opus_score.py": "torch",
+    "src/exercises/07-model-embeddings-internals/tests/test_embeddings_heads.py": "torch",
 }
 
 #: Which `uv sync --extra <name>` provides which import.

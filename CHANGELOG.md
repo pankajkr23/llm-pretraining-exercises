@@ -10,7 +10,60 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Exercise 07 — Kronecker v2: an invertible codec and a vocabulary-independent output head.**
+  Session 7's brief asks whether the Kronecker byte codec can be reversed so the `d_model × |V|`
+  output head can be deleted. It can. The projection inverts **exactly** at `d_model = 384` with a
+  decoder that **certifies its own answer**, and that survives a projection trained to loss 2.45.
+  Tying the head to the *induced* embedding `E = K·W_proj` — not to `W_proj`, which is the tie the
+  paper correctly rules out — removes every vocabulary-sized parameter: **6,291,457 against
+  768,000,000** at a million-token vocabulary.
+- **The tied head's exact expressive limit, and the term that removes it.** The tied logit is
+  additive over (position, byte), so four *named* tokens of the repo's own vocabulary are pinned by
+  `A − B − C + D = 0` for every hidden state. A hashed byte-n-gram residual breaks it and beats the
+  v1 paper's own design by **−0.141 nats on 5/5 paired seeds with fewer parameters**; a residual MLP
+  breaks the same constraint and buys **−0.002**, which is the more interesting half.
+- **A deployed page** at `/07-model-embeddings-internals/`, generated entirely from the tracked
+  `results/measurements.json` so no figure on it can drift from the run that produced it, plus a
+  12-test browser suite that checks what a reader actually sees.
+
 ### Fixed
+
+- **Exercise 07's page was rewritten for readability.** An audit found it was nine tables, one
+  button and **no diagram of any kind** — ~1,300 words that never said what an embedding is, never
+  stated the question it answers, never explained the method that makes its numbers trustworthy, and
+  had no summary, conclusion or next step. It is now **fourteen sections and ~3,300 words** with
+  **six inline-SVG figures** built from `results/measurements.json`: the 256×32 grid the exercise is
+  about and had never shown, a diagram of the tie itself, the 49× scale bug that made the idea look
+  impossible, the four locked tokens drawn as an actual rectangle, and the paired-seed figure that
+  explains why any of the numbers can be believed. Adds a glossary, the brief quoted verbatim, an
+  expected-vs-found block, a negatives section, a conclusion, limits and what comes next. Four new
+  browser tests enforce the spine, and each was broken on purpose to confirm it fails.
+- **The page's lock demonstration showed numbers it invented.** It generated five random values in
+  JavaScript and combined them additively, so the alternating sum it displayed was zero because of
+  how the demo was written rather than because of the model, and the browser test asserting it was
+  zero could never have failed. It now steps through twelve logit vectors measured from the real
+  tied head (`tools/measure_lock_samples.py`, shipped in `results/measurements.json`), and the test
+  fails if the page renders a value that is not in that file — verified by breaking it. The
+  vocabulary slider was deleted outright: `docs/EXPLAINER_PROMPT.md` §1 says an interaction a
+  static image could replace is decoration, and the table beside it said the same thing.
+- **The landing page used a third of a wide screen.** `.wrap` was a fixed 640px column at every
+  viewport, so at 1920px the exercise list was a tall ribbon between two empty margins. Widening it
+  outright would have been the wrong fix — a 1200px line of prose is unreadable — so the page is now
+  two measures: the header keeps a readable line length and the exercise cards became a responsive
+  grid, three columns at 1440px and one on a phone. Cards in a row share a height with their meta
+  line pinned to the bottom, and the cards adopt the rounded-panel-with-lift treatment `DESIGN.md`
+  already specified for link-cards but the front door never used. Twelve browser tests pin both
+  halves, including that the prose does **not** widen with the grid.
+- **Exercises 06 and 07 reserved a 260px left gutter for a table-of-contents rail they never
+  built.** The shared stylesheet has always styled `.rail` *and* set `.wrap { padding-left: 260px }`
+  at 1180px and up — unconditionally, whether or not a rail exists. Only 05 ever carried the
+  `<aside id="rail">` element and a builder for it, so the other two rendered an empty margin on
+  every wide screen. Both now build the rail from their own sections. The same work exposed a
+  spacing defect on 07: the shared `section` rule has bottom spacing and no top, which 05 and 06
+  hide behind a summary panel, so 07's first heading sat a measured 0px below the action buttons
+  against 06's 46px.
 
 - **Twelve documents were describing a system that no longer existed.** A 45-agent adversarial sweep
   over every tracked document returned **37 confirmed** contradictions between what the docs say and

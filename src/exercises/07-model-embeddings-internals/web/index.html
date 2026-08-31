@@ -3,15 +3,15 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>What did it read on day forty? — a training run that can answer</title>
+    <title>Deleting the output head — Kronecker v2</title>
     <meta
       name="description"
-      content="Fifty days into a training run, something looks wrong and you want to know what the model read on day forty. Recomputing the schedule gives a confident answer about a different run. Reading what was written down does not."
+      content="A language model keeps one row of numbers per word, and keeps that list twice. Kronecker embeddings delete the first copy and say the second cannot follow. It can: the code reads back exactly, the second list is the first one reused, and the result beats the paper's own design with fewer numbers."
     />
     <!-- Inline so it costs no request; a missing favicon is a 404 in every reader's console. -->
     <link
       rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230071e3'/%3E%3Cg fill='%23fff'%3E%3Crect x='6' y='6' width='20' height='3' rx='1.5'/%3E%3Crect x='6' y='12' width='20' height='3' rx='1.5' opacity='.72'/%3E%3Crect x='6' y='18' width='20' height='3' rx='1.5' opacity='.46'/%3E%3Crect x='6' y='24' width='11' height='3' rx='1.5' opacity='.28'/%3E%3C/g%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230071e3'/%3E%3Cg fill='%23fff'%3E%3Crect x='7' y='7' width='5' height='5' rx='1'/%3E%3Crect x='13.5' y='13.5' width='5' height='5' rx='1'/%3E%3Crect x='20' y='20' width='5' height='5' rx='1'/%3E%3C/g%3E%3C/svg%3E"
     />
     <link rel="stylesheet" href="/_shared/tokens.css" />
     <link rel="stylesheet" href="./_shared/tokens.css" />
@@ -47,20 +47,19 @@
           </select>
         </div>
       </div>
-      <p class="eyebrow">06 · Training data execution</p>
-      <h1>What did it read on day forty?</h1>
+      <p class="eyebrow">07 · Model embeddings internals</p>
+      <h1>Deleting the output head</h1>
       <p class="lede">
-        A model is trained for fifty days. Something looks wrong, and you want to know which text it
-        read on day forty. You open the folder and find thirty gigabytes of files and
-        <b>no way to answer</b>. The obvious fix is to work it out again from the code that chose the
-        order — which produces a confident answer about
-        <b>a run that did not happen</b> as soon as one line of that code changes. The other fix is
-        to write it down as it happens and <b>read it back</b>. This page is three arguments for the
-        second one, and each of them names what it cannot prove.
+        Every language model carries a list with one row of numbers per word — and it carries that
+        list <b>twice</b>, once to read words in and once to choose the next one. At a million words
+        that is <b>768 million numbers per copy</b>, memorised, doing nothing else. A published trick
+        deletes the first copy by working each row out from the word's spelling, then says the second
+        copy cannot follow and lists that under <i>Limitations</i>. <b>It can.</b> This page is the
+        argument, with the measurements underneath it.
       </p>
       <p class="lede-actions">
-        <a class="jump" href="#replay">Start with the two routes <span aria-hidden="true">→</span></a>
-        <a class="jump ghost" href="#chain">Skip to whether the record can be forged</a>
+        <a class="jump" href="#solution">Skip to the solution <span aria-hidden="true">→</span></a>
+        <a class="jump ghost" href="#glossary">Start with the eight words you need</a>
       </p>
       <aside id="rail" class="rail"></aside>
       <main id="main"></main>
@@ -68,13 +67,10 @@
     </div>
 
     <script type="module">
-      /* The bundle is imported, not fetched. EXPLAINER_PROMPT §6: the data is precomputed and
-       * inlined into the script, so there is no loading state to design and no failure mode where
-       * the page paints before its numbers arrive. */
       import { buildPage } from './chapters.js';
-      import { BUNDLE } from './data.js';
+      import { M } from './data.js';
 
-      buildPage(BUNDLE);
+      buildPage(M);
 
       /* The picker. The head script already applied the stored choice; this only keeps the control
        * in step with it and writes changes back. "system" removes the attribute rather than setting

@@ -366,15 +366,48 @@ Exercise 05 shipped every graded item, a proxy run and four experiments, and its
 could not tell from any file what `H1`, `E2`, *arm* or *bits per byte* meant. Everything was
 correct and nothing was legible.
 
-**Write for three readers, and say which one each section is for.**
+**Write for a ladder of readers, and let one narrative deepen — never five parallel tracks.** A
+reader must be able to stop at any depth and still be *correct*, not merely comforted. Tabs, toggles
+and "advanced" drawers split the argument; layering keeps it whole.
 
-| reader | what they need |
-| --- | --- |
-| **Meeting it for the first time** | What problem this solves, in plain words, before any table. What the jargon means. What was actually done — not the abstraction, the concrete thing: which model, how big, which data, how measured. |
-| **A contributor who has to change it** | How the pieces fit and in what order. Where a number comes from. Which module to edit for which effect. Diagrams, because a pipeline described in prose has to be reassembled in the reader's head every time. |
-| **A reviewer deciding whether to believe it** | The measurement, its noise floor, what it could not see, and what would falsify it. Limits stated where the numbers are, not in a closing paragraph. |
+| rung | what they need | the test to apply |
+| --- | --- | --- |
+| **A curious teenager** | the problem in plain words, one concrete analogy, zero notation | could they retell the point to someone else? |
+| **A practitioner** | what it is mechanically, how to run it, what it costs | could they use it on Monday? |
+| **A researcher** | the method, the noise floor, prior art, what would falsify it | could they attack it? |
+| **Product** | what it enables, and when *not* to use it | could they scope it? |
+| **A CTO** | the one number that decides, and the risk attached | could they say yes or no? |
+
+**Every exercise page carries the same spine, and it is test-enforced.** Sections declare
+`data-role`, so `tests/test_embeddings_render.py`-style guards check the *structure* while the prose
+stays free to change:
+
+`thesis` · `glossary` · `problem` · `mechanism` · `method` · `expected` · `results` · `negatives` ·
+`conclusion` · `limits` · `next` · `reproduce`
+
+Exercise 07 is the reference implementation. It was rebuilt after an audit found the previous page
+was **nine tables, one button and no diagram of any kind** — ~1,300 words that never said what an
+embedding is, never stated the question being answered, never explained the method, and had no
+summary, conclusion or next step. The rewrite runs ~3,300 words with six figures, and the shared
+`web/_shared/` helpers it needed had been sitting vendored and unused the whole time.
 
 The rules that follow from it:
+
+- **A mechanism figure is not a results chart, and a page needs both.** Results say *what happened*;
+  mechanism says *why it must*. A page with only results can be believed but not understood — and
+  mechanism is the half that survives five years. Draw the central object: exercise 07 spent weeks
+  on a 256×32 grid its own page never once showed.
+- **A caption argues; it does not label.** State what to conclude, and where useful what would
+  falsify it — *"one hidden state where that sum is meaningfully non-zero would refute this
+  section."* A figure whose caption is its title has made the reader do the interpreting.
+- **Say what you expected before what you found.** It is the only way a reader can tell a finding
+  from a story told backwards, and it costs nothing when the prediction was wrong — which is when it
+  is worth the most.
+- **Define every term where the reader first meets it**, and give each definition a real number from
+  your own run rather than a textbook gloss.
+- **Put a failure in the opening tiles.** A page that shows only its wins has not earned the ones it
+  shows.
+
 
 - **Every term used as shorthand is defined in exactly one findable place, and everything else links there.** `SPEC.md` is the decision; `METHOD.md` is the apparatus. Splitting them is deliberate — an adversarially-graded specification cannot carry a glossary and two architecture diagrams without paying for it, and a first-time reader cannot do without them.
 - **Explain the metric, not just its name.** "Held-out BPB, lower is better" names a measure. What it measures, what it is divided by, and why *that* denominator, is the part that lets a reader judge the table.
@@ -422,7 +455,7 @@ uv run pre-commit run --all-files                        # over everything, not 
 
 ## CI/CD
 
-- CI (`.github/workflows/ci.yml`) is **three concurrent jobs, not one chain**. `test`: `uv sync --all-packages` → `ruff check` → `ruff format --check` → `pytest -m "not integration" -n auto --dist loadfile` → `node --check` over `find src/exercises -path '*/web/*' -name '*.js'`. `integration`: a **three-shard matrix** (`tokenization` · `mixtures` · `rest`), each shard syncing, caching and installing chromium, running `deploy/vercel/build.sh` once, then `pytest -m integration`. `security`: gitleaks over the full history. `push` is filtered to `main` — branches are covered by the `pull_request` event, because an unfiltered `push` ran every PR commit twice. `train`: `uv sync --all-packages --extra train` with **CPU-only wheels** (a Linux-scoped
+- CI (`.github/workflows/ci.yml`) is **four concurrent jobs, not one chain**. `test`: `uv sync --all-packages` → `ruff check` → `ruff format --check` → `pytest -m "not integration" -n auto --dist loadfile` → `node --check` over `find src/exercises -path '*/web/*' -name '*.js'`. `integration`: a **three-shard matrix** (`tokenization` · `mixtures` · `rest`), each shard syncing, caching and installing chromium, running `deploy/vercel/build.sh` once, then `pytest -m integration`. `security`: gitleaks over the full history. `push` is filtered to `main` — branches are covered by the `pull_request` event, because an unfiltered `push` ran every PR commit twice. `train`: `uv sync --all-packages --extra train` with **CPU-only wheels** (a Linux-scoped
   `pytorch-cpu` index in the root `pyproject.toml` — 191.8 MB instead of 2.7 GB, and 19 fewer
   packages in the lock), running only the files whose module-level `importorskip` would otherwise
   skip them entirely.
@@ -442,6 +475,22 @@ Every deployable exercise's static `web/` bundle shares **one design system** �
 - **Canvas state changes animate** — morph with a short eased transition (≈550ms), not an instant redraw, keeping the framing stable so panels don't resize mid-toggle.
 
 - **An interaction must never be the only route to a lesson.** Exercise 05's predict-before-reveal block was written with its transferable point inside the reveal, so a reader who declined to guess never reached it — and neither would any print or reduced-motion reader. The interaction may earn a point more vividly; the point itself belongs in prose that is always visible. The same rule is why a page's limitations sit in the open text and not inside a collapsed `<details>`: **a limitation a reader has to open a drawer to find is a limitation the page is hiding.**
+- **A shared stylesheet can reserve space for an element each page has to add itself.**
+  `_shared/page.css` styles `.rail` and, at 1180px and up, also sets `.wrap { padding-left: 260px }`
+  — unconditionally, whether or not that page builds a rail. Only exercise 05 ever had the
+  `<aside id="rail">` element and a builder for it, so **06 and 07 rendered a 260px empty gutter on
+  every wide screen** and nothing failed. Copying `web/_shared/` into a new exercise copies the
+  styles and not the markup they assume. When you vendor that directory, check what it expects the
+  page to provide: measure `.wrap`'s computed padding against the rail's rendered width, and assert
+  the pairing — gutter reserved **and** gutter filled.
+
+- **Widening a page is two decisions, not one.** The landing page was a fixed 640px column at every
+  viewport, using a third of a 1920px screen. The fix is not a bigger `max-width`: a 1200px line of
+  prose is unreadable. Split the measures — prose keeps its line length, cards become a responsive
+  grid — and **test both halves**, because a naive fix breaks the half nobody guards. Use
+  `minmax(min(340px, 100%), 1fr)` and never a bare `340px`: an auto-fill track cannot shrink below
+  its own minimum and will push a 320px phone sideways.
+
 - **Editing non-ASCII HTML** (`—`, `→`, `·`, math glyphs): use the Edit/Write tools. **Never** `perl -0pi`/`sed` with wide-char escapes — byte-mode rewrites double-encode UTF-8 into mojibake.
 
 ## Instruction files (this system)

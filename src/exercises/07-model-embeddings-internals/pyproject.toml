@@ -1,0 +1,34 @@
+[project]
+name = "exercise-07-model-embeddings-internals"
+version = "0.1.0"
+description = "Session 7 — Kronecker byte embeddings v2: an invertible codec and a vocabulary-independent output head"
+requires-python = ">=3.12"
+dependencies = [
+    # The frozen 10k tokenizer is the vocabulary every measurement here is made against — the
+    # collision count, the byte-length distribution and the recovery rate are all properties of a
+    # specific vocabulary, so it has to be THE one the repo already froze rather than a fresh one.
+    "exercise-04-data-cleaning-dedup",
+    "numpy>=2",
+]
+
+# torch is an OPTIONAL extra, for the same reason as exercises 05 and 06 — and the boundary is
+# unusually clean here. The codec, the decoder, the collision analysis and the parameter arithmetic
+# are pure numpy, and they carry most of the findings. Only the trained comparison of output heads
+# needs torch. CI runs `uv sync --all-packages` with no extras, so that split means CI verifies the
+# invertibility result — the load-bearing one — rather than skipping it.
+#
+#     uv sync --all-packages --extra train
+[project.optional-dependencies]
+train = [
+    "torch>=2.6",
+]
+
+[tool.uv.sources]
+exercise-04-data-cleaning-dedup = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/embeddings"]

@@ -96,6 +96,36 @@ colours, distinct in both themes (light / dark):
 - **Panels / cards:** `--panel` background, `1px solid var(--line)`, `border-radius: 18px`,
   ~22–24px padding, `box-shadow: var(--shadow)`. Cards that are links lift on hover
   (`translateY(-3px)` + a deeper shadow).
+- **Figures are inline SVG built from the page's own data, never a chart library.** Exercise 07
+  draws six from `data.js` with `createElementNS`: a scatter on a grid, a flow diagram, two bar
+  charts and a paired-lines plot. No dependency, no CDN, and they inherit the theme for free because
+  **every colour is a token** — `--accent`, `--muted`, `--grade-a`, `--grade-x`, `--line`,
+  `--track`. Never a literal: a literal is right in one of the six themes and wrong in the other
+  five, and the theme picker shows it instantly.
+- **Every figure sits in `<figure>` with a `<figcaption>` that argues.** Number them (`Figure 3.`),
+  state what to conclude, and where it applies state what would falsify it. `figure` gets
+  `overflow-x: auto` and the svg a `min-width`, so a wide diagram scrolls inside its own box and the
+  page body never does.
+- **Draw the whole object, not the part that fits.** 07's grid figure originally stopped at column
+  32, so the discarded bytes landed outside the viewBox and stacked into one dot — a figure whose
+  caption said nineteen bytes were thrown away while showing one. Extend the domain and shade the
+  region being lost.
+- **Check a mechanism figure's mapping against the data, not against how it looks.** The same page
+  shipped a draft with two of four labelled points on the wrong rows: a correct-looking rectangle,
+  wrongly labelled, which is the one thing a mechanism figure must never be.
+- **The landing page is two measures, not one.** Prose keeps a readable line length (`.head` at
+  54ch, the lede at 52ch) while the exercise cards go wide as a grid —
+  `repeat(auto-fill, minmax(min(340px, 100%), 1fr))`, three columns at 1440px, one on a phone. It
+  was a single 640px column at every width for a long time, which used a third of a 1920px screen.
+  Widening the column instead would have made the sentences unreadable, so **both halves are
+  tested**: that the grid uses the screen, and that the prose does not widen with it.
+  `min(340px, 100%)` and never a bare `340px` — an auto-fill track cannot shrink below its own
+  minimum and pushes a 320px phone sideways.
+- **Cards in a row share a height.** `align-items: stretch` on the grid, and the meta line pinned
+  down with `margin-top: auto`, so a row does not end at three different depths. Watch the
+  selectors: the index label is *also* a direct-child `span`, so `a.item > span { flex: 1 }` gives
+  it flex-grow and it stretches to fill the card — 93px tall for one line, pushing the title into
+  the middle. Scope it `:not(.idx)`.
 - **Segmented control:** `--track` background; the selected button is a `--panel` "knob" with
   `--shadow`.
 - **Inputs:** on focus, `--accent` border plus a 3px `--accent-soft` glow ring.
