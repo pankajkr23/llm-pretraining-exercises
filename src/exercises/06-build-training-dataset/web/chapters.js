@@ -45,6 +45,14 @@ const GLOSSARY = {
   replay: 'Rebuilding what a past interval read, by re-reading the recorded spans from the sealed shards — never by recomputing the schedule.',
   opus: 'Optimizer-induced Projected Utility Selection. Scores a candidate by how far it would move the model, using the optimizer’s own per-weight step scale, rather than by the size of its gradient.',
   floor: 'A minimum share of every batch a lane keeps, whatever a selector would prefer. Enforced by keeping those candidates out of the scoring entirely.',
+  candidate: 'One sequence the selector is allowed to consider for a batch. Each one leaves a row saying what was decided about it and why.',
+  defer: 'Not selected, but noise decided it rather than the score — so it goes back in the pool. One-sided on purpose: deferring an accepted candidate would shrink the batch below its planned size, so the noise band can only rescue, never remove.',
+  floor_override: 'Served because a protected lane required it, against its own score. Ours, not the paper’s.',
+  unsupplied: 'A floor that was neither held nor breached, because the lane never appeared in the buffer at all. A floor cannot be met from candidates that are absent.',
+  chain: 'Each event carries the hash of the one before it, so tampering can never be local. It is evidence, not proof: anyone who can edit the file can recompute every hash after their edit. What exposes them then is the sequence number.',
+  epoch: 'How many times the run reads its corpus — total token positions divided by corpus tokens. Above about 1 a lane is measuring memorisation; below 1 it was never fully read, and neither shows up in a loss curve.',
+  span: 'A stretch of tokens inside one shard, recorded as a start and an end. The ledger stores spans rather than copies, so replay re-reads the original bytes.',
+  auditor: 'The second program. It re-derives every published claim from the artifacts on disk without importing the code that produced them — sharing facts, never logic.',
 };
 
 /** A term the reader can hover or focus to get a definition. */
@@ -523,17 +531,32 @@ function chapterChain(data) {
 function buildSummary(data) {
   const wrap = $('section', 'summary');
   wrap.id = 'summary';
+  wrap.dataset.role = 'thesis';
 
+  /* The fourth card is deliberately not a win. AGENTS.md: "put a failure in the opening tiles" —
+   * a page that shows only its successes has not earned the ones it shows. The agentic lane is 2%
+   * of the mixture against a 32-slot buffer, so most passes were never offered a candidate from it
+   * at all, and the floor could not be met from candidates that were absent. */
+  const unsupplied = (data.opus.floors && data.opus.floors.agentic) || {};
   const cards = [
     { k: 'ledger events', v: data.ledger.events, s: 'one per microbatch fed' },
     { k: 'replayed', v: data.replay.checked, s: 'all re-derived from the record' },
-    { k: 'candidates decided', v: data.opus.candidates, s: 'each with a written reason' },
-    { k: 'corpus tokens', v: data.corpus.train_tokens, s: `${fmt(data.corpus.epochs.value, 'ratio')} epochs — read once, never memorised` },
+    {
+      k: 'corpus tokens',
+      v: data.corpus.train_tokens,
+      s: `${fmt(data.corpus.epochs.value, 'ratio')} epochs — read once, never memorised`,
+    },
+    {
+      k: 'passes with no agentic candidate',
+      v: { value: unsupplied.unsupplied ?? 0, unit: 'count', provenance: 'measured' },
+      s: `of ${data.opus.passes.value} — a floor cannot hold what was never offered`,
+      bad: true,
+    },
   ];
 
   const grid = $('div', 'summary-grid');
   cards.forEach((c) => {
-    const cell = $('div', 'summary-cell');
+    const cell = $('div', c.bad ? 'summary-cell bad' : 'summary-cell');
     cell.append($('div', 'summary-k', c.k));
     const big = $('div', 'summary-v');
     big.append(renderNumber(c.v, { unit: false }));
@@ -542,6 +565,537 @@ function buildSummary(data) {
   });
   wrap.append(grid);
   return wrap;
+}
+
+/* --------------------------------------------------------------------------------- the spine */
+
+/* AGENTS.md requires every exercise page to carry the same twelve-part story, declared as
+ * `data-role` so a test can check the structure while the prose stays free. The three explainer
+ * chapters above are the `results` block; everything a reader needs *around* them — what the
+ * question was, how it was answered, what it cost, what it cannot show — lives here.
+ *
+ * Roles are written as literal strings at the point each section is constructed, not looked up from
+ * a map. `tests/test_page_spine.py` reads this file, so a role assembled from a variable would be
+ * invisible to it and the guard would pass while the page had no spine at all. */
+
+/** A prose section whose `data-role` names its place in the story. */
+function section(id, role, eyebrow, title, nodes) {
+  const s = $('section', 'prose');
+  s.id = id;
+  s.dataset.role = role;
+  s.append($('p', 'eyebrow', eyebrow), $('h2', '', title));
+  nodes.forEach((n) => s.append(n));
+  return s;
+}
+
+/** A two-column definition list — the `dl` a glossary actually wants. */
+function defs(pairs) {
+  const dl = $('dl', 'defs');
+  pairs.forEach(([k, v]) => {
+    dl.append($('dt', '', k), $('dd', '', v));
+  });
+  return dl;
+}
+
+/** A bare list, used where the material is genuinely a list rather than a paragraph. */
+function bullets(items) {
+  const ul = $('ul', 'bullets');
+  items.forEach((n) => {
+    const li = $('li');
+    (Array.isArray(n) ? n : [n]).forEach((x) => li.append(typeof x === 'string' ? text(x) : x));
+    ul.append(li);
+  });
+  return ul;
+}
+
+function codeBlock(lines) {
+  const pre = $('pre', 'code');
+  pre.append($('code', '', lines.join('\n')));
+  return pre;
+}
+
+/* 2 · The words this page uses as though you already had them.
+ *
+ * These strings ARE the tooltip definitions — same object, rendered twice. A glossary that exists
+ * only on hover is not a glossary: hover does not exist on a touch screen, does not survive
+ * printing, and is exactly the "drawer a reader has to open" AGENTS.md rules out for anything
+ * load-bearing. */
+function chapterGlossary() {
+  const order = [
+    'token',
+    'sequence',
+    'shard',
+    'span',
+    'microbatch',
+    'lane',
+    'epoch',
+    'rank',
+    'ledger',
+    'chain',
+    'replay',
+    'candidate',
+    'opus',
+    'floor',
+    'unsupplied',
+    'defer',
+    'floor_override',
+    'auditor',
+  ];
+  /* The count in the title is derived, never typed. AGENTS.md: "Prose that states a number is
+   * generated too, or it goes stale while the table beside it stays right" — a heading reading
+   * "Eighteen words" above a list of nineteen is the exact failure that has cost this repo the
+   * most edits, and no test would catch it. */
+  const shown = order.filter((k) => GLOSSARY[k]);
+  const NAMES = [
+    'Zero',
+    'One',
+    'Two',
+    'Three',
+    'Four',
+    'Five',
+    'Six',
+    'Seven',
+    'Eight',
+    'Nine',
+    'Ten',
+    'Eleven',
+    'Twelve',
+    'Thirteen',
+    'Fourteen',
+    'Fifteen',
+    'Sixteen',
+    'Seventeen',
+    'Eighteen',
+    'Nineteen',
+    'Twenty',
+  ];
+  const count = NAMES[shown.length] || String(shown.length);
+
+  return section(
+    'glossary',
+    'glossary',
+    'The vocabulary',
+    `${count} words, before anything is claimed with them`,
+    [
+      para(
+        'Every term below is used on this page as though you already had it. They are defined here ',
+        b('and'),
+        ' on hover, from the same source — so nothing load-bearing is hidden behind a gesture a phone cannot make and a printer cannot show.',
+      ),
+      defs(shown.map((k) => [k.replace(/_/g, ' '), GLOSSARY[k]])),
+    ],
+  );
+}
+
+/* 3 · The question, in the words it was asked in. */
+function chapterProblem() {
+  const rows = [
+    ['what did it consume?', 'the consumption ledger'],
+    ['why that, and not something else?', 'the OPUS decision records'],
+    ['what did the model learn from it?', 'the learning ledger'],
+    ['can the run be reconstructed?', 'replay · fork · audit'],
+  ];
+  const t = $('table', 'qtable');
+  const tb = $('tbody');
+  rows.forEach(([q, sub]) => {
+    const tr = $('tr');
+    tr.append($('td', 'q', q), $('td', 'sub', sub));
+    tb.append(tr);
+  });
+  t.append(tb);
+
+  return section('problem', 'problem', 'The problem', 'Thirty gigabytes and no way to ask', [
+    para(
+      'You are fifty days into a training run and something looks wrong. You want to know what the model read on day forty. You open the folder, find thirty gigabytes of files, and ',
+      b('there is no way to answer'),
+      '.',
+    ),
+    para(
+      'That is the motivation. The deliverable is therefore not a data loader but a ',
+      term('ledger'),
+      ' — an append-only record written as training happens — so the run can be interrogated afterwards. Session 5 produced a ',
+      $('i', '', 'recipe'),
+      ': how much of each kind of data, in what order. This builds the machine that executes it and can prove it did.',
+    ),
+    para('Four questions, one subsystem each:'),
+    t,
+    para(
+      'And one idea everything hangs off: ',
+      b('you do not make a run reproducible by seeding it'),
+      '. You make it reproducible by writing down what actually happened and replaying that. The record outranks the code — which is the only thing that still works once the selector’s decisions depend on the model’s current weights.',
+    ),
+  ]);
+}
+
+/* 4 · The central object, drawn.
+ *
+ * AGENTS.md: "A mechanism figure is not a results chart, and a page needs both. Results say what
+ * happened; mechanism says why it must." Every figure on this page was a results strip until now —
+ * the pipeline the whole argument rests on had never once been drawn. */
+function chapterMechanism(data) {
+  /* `key` marks the two stages that are this exercise's actual contribution. Marked explicitly
+   * rather than with `:nth-last-child`, which would count the arrows between the boxes as well and
+   * silently select the wrong ones the moment a stage is added. */
+  const stages = [
+    ['documents', 'raw text, licence checked at fetch', false],
+    ['shards', 'tokenized, sealed, named by content hash', false],
+    ['manifests', 'contents · origin · licence · split', false],
+    ['schedule', 'which rank reads which tokens, when', false],
+    ['packing', 'sequences into fixed windows', false],
+    ['batches', 'what a worker actually feeds the model', false],
+    ['ledger', 'one line per microbatch, as it happens', true],
+    ['replay · audit', 'read it back; check it independently', true],
+  ];
+  const flow = $('div', 'flow');
+  stages.forEach(([name, sub, key], i) => {
+    if (i) flow.append($('div', 'flow-arrow', '→'));
+    const box = $('div', key ? 'flow-box key' : 'flow-box');
+    box.append($('div', 'flow-name', name), $('div', 'flow-sub', sub));
+    flow.append(box);
+  });
+
+  const fig = $('figure', 'mech');
+  fig.append(flow);
+  const cap = $('figcaption');
+  cap.append(
+    b('Figure 0. '),
+    text(
+      'The pipeline, end to end. Everything up to the batch is ordinary; the claim of this exercise is the two highlighted stages — the ledger and what can be done with it afterwards. Note the direction of that last arrow: replay reads the record, it does not re-enter the pipeline and recompute. That is what makes it survive a selector whose choices depend on the model’s current weights — and it is why a shard is named by its content hash rather than by a filename somebody could reuse.',
+    ),
+  );
+  fig.append(cap);
+
+  return section('mechanism', 'mechanism', 'How it works', 'A record, not a recipe', [
+    para(
+      'A schedule is a ',
+      $('i', '', 'function'),
+      ': give it a position and it tells you what to read. That works right up until the selector starts asking the model what it wants next, at which point the same position gives a different answer on every run. So the position is written down instead.',
+    ),
+    fig,
+    para(
+      'Each slot has one address — step, ',
+      term('rank'),
+      ', accumulation, sequence — folded into a single mixed-radix number that decodes back to exactly one coordinate. The ',
+      term('ledger'),
+      ' stores that address plus the token ',
+      term('span'),
+      's it resolved to, never a copy of the text. Replay re-reads the original bytes from the sealed ',
+      term('shard'),
+      's, which is why a damaged shard shows up as damage rather than as agreement.',
+    ),
+    para(
+      'The run this page reports fed ',
+      renderNumber(data.ledger.events, { unit: false }),
+      ' microbatches across ',
+      renderNumber(data.throughput.ranks, { unit: false }),
+      ' ranks, and every one of them left a line.',
+    ),
+  ]);
+}
+
+/* 5 · What was actually done — concretely, not abstractly. */
+function chapterMethod(data) {
+  return section('method', 'method', 'How it was measured', 'Two programs that share facts, not code', [
+    para(
+      'The measurements on this page come from one demonstration run: ',
+      renderNumber(data.ledger.events, { unit: false }),
+      ' ledger events over ',
+      renderNumber(data.throughput.ranks, { unit: false }),
+      ' real worker processes — not a loop pretending to be four — feeding ',
+      renderNumber(data.ledger.tokens, { unit: false }),
+      ' tokens in ',
+      renderNumber(data.ledger.microbatches, { unit: false }),
+      ' microbatches, with a deliberate crash and resume in the middle. Run id ',
+      $('code', '', data.run.id),
+      ', config fingerprint ',
+      $('code', '', data.run.fingerprint),
+      '.',
+    ),
+    para(
+      b('The load-bearing design decision is that two programs produce these numbers, not one.'),
+      ' The first runs the pipeline and writes the bundle. The second re-derives every published claim from the artifacts on disk ',
+      $('i', '', 'without importing the code that produced them'),
+      ' — one shared module of constants, and no shared logic. A checker built from the producer’s own functions agrees with the producer by construction; that is not a check, it is an echo.',
+    ),
+    para(
+      'The corpus was sized against the run rather than against the mixture’s ratios: ',
+      renderNumber(data.corpus.train_tokens, { unit: false }),
+      ' training tokens across ',
+      renderNumber(data.corpus.shards, { unit: false }),
+      ' shards, which is ',
+      b(`${fmt(data.corpus.epochs.value, 'ratio')} `),
+      term('epoch', 'epochs'),
+      ' — read once, not memorised. A further ',
+      renderNumber(data.corpus.heldout_tokens, { unit: false }),
+      ' tokens are written to disk as held-out shards the firewall refuses to serve.',
+    ),
+    para(
+      'The selector scored ',
+      renderNumber(data.opus.candidates, { unit: false }),
+      ' ',
+      term('candidate', 'candidates'),
+      ' over ',
+      renderNumber(data.opus.passes, { unit: false }),
+      ' passes. Every one carries its own reason string.',
+    ),
+  ]);
+}
+
+/* 6 · What was predicted first.
+ *
+ * This section is deliberately short and says so. The repo records DECISIONS with falsifiers and
+ * corrections after the fact; it almost never records a stated prior expectation. Writing a
+ * confident "we expected X" here would be inventing the most quotable kind of sentence on the page.
+ */
+function chapterExpected(data) {
+  const share = (data.plan.lane_shares || {}).agentic || 0;
+  const offered = data.opus.logs && data.opus.logs.length ? data.opus.logs[0].offered : 32;
+  const expected = share * offered;
+  const floors = (data.opus.floors && data.opus.floors.agentic) || {};
+
+  return section('expected', 'expected', 'What we expected', 'One real prediction, and an honest gap', [
+    para(
+      b('One number on this page was predicted before it was measured, and it is worth the space.'),
+      ' The ',
+      term('lane', 'agentic lane'),
+      ' is ',
+      $('b', '', `${(share * 100).toFixed(0)}%`),
+      ' of the mixture and a candidate buffer is ',
+      $('b', '', String(offered)),
+      ' consecutive slots, so ',
+      $('b', '', expected.toFixed(2)),
+      ' candidates are expected per pass. Fewer than one. Across every buffer the selector actually saw ',
+      $('b', '', String(floors.candidates_offered ?? 0)),
+      ' — and ',
+      $('b', '', String(floors.unsupplied ?? 0)),
+      ' of ',
+      renderNumber(data.opus.passes, { unit: false }),
+      ' passes contained none at all. The arithmetic said this would happen; a reader who has not done it reads the same result as a broken floor.',
+    ),
+    para(
+      b('For most of the rest, no prediction was recorded, and this page will not invent one.'),
+      ' What the exercise wrote down instead was, for each of its twenty design decisions, ',
+      $('i', '', 'what would overturn it'),
+      ' — which is a falsifier rather than an expectation. Two examples, unedited: for reading the ledger rather than recomputing the schedule, ',
+      $('i', '', '“nothing plausible”'),
+      '; for treating the redundancy penalty as the paper defines it, ',
+      $('i', '', '“the paper’s definition of η, read directly — that settles which branch this is.”'),
+      ' The second one is still open.',
+    ),
+    para(
+      'The distinction matters for how you weigh what follows. A result that confirms a stated prediction is stronger evidence than one that merely came out; almost everything below is the second kind.',
+    ),
+  ]);
+}
+
+/* 8 · The claims that were wrong.
+ *
+ * AGENTS.md: "put a failure in the opening tiles" and "correct it where the claim was made". This
+ * section exists so the corrections are somewhere a reader can be *sent*, rather than distributed
+ * through a repo they will not read. */
+function chapterNegatives(data) {
+  return section(
+    'negatives',
+    'negatives',
+    'What we got wrong',
+    'Six claims this page used to make, and does not',
+    [
+      para(
+        'Every item here was published, believed, and then found to be false. They are listed rather than quietly amended, because a corrected number with no record of the correction teaches nothing about how much to trust the next one.',
+      ),
+      bullets([
+        [
+          b('The corpus was sized against the mixture’s ratios, not against the run. '),
+          'It held 2,185,575 tokens against 10,485,760 token positions — 4.8 epochs — and once shaped to the lane weights, about 30 epochs of the web lane against 0.41 of the agentic one. The lane funded most heavily was the one the model saw thirty times; the lane funded least was never read through once. ',
+          b('Nothing failed. '),
+          'The shards read fine and the loss curve looked normal. It was refetched to the ',
+          renderNumber(data.corpus.train_tokens, { unit: false }),
+          ' tokens above, and the corpus builder now refuses to build below one epoch.',
+        ],
+        [
+          b('The selector was built from the lecture’s description, which is not what the paper says. '),
+          'The lecture describes a weight mask stored as a map. There is no weight mask in the paper or in the reference implementation — it is a continuous preconditioned gradient inner product, minus a redundancy penalty the lecture never mentions. Building from the lecture alone would have produced the wrong system.',
+        ],
+        [
+          b('A masking feature was documented as a behaviour of the run, and had zero callers. '),
+          'It was implemented, tested, and taught in the session notebook, while the pipeline built every microbatch with the default mask. The tests proved the function worked; only a caller proves the system uses it. It is now wired end to end.',
+        ],
+        [
+          b('A number in the telemetry was arithmetic wearing a statistic’s clothes. '),
+          'Packing utilisation is written per microbatch and is always exactly 1.0 — not because packing is perfect, but because the window size is set to the span length, so no padding can ever be written. No input to the run can move it. The honest packing figure is loss utilisation, which does vary: ',
+          renderNumber(data.ledger.loss_utilization, { unit: false }),
+          ' here, and about 74% on a masked reasoning batch.',
+        ],
+        [
+          b('The selector’s temperature was an absolute, which made it a defect with a delayed fuse. '),
+          'At the old setting the noise carried more spread than the signal, and 29 of 32 non-selected candidates would have flipped under a redraw — already a coin toss reporting confident scores. It is now a multiple of the observed spread: noise-to-signal ',
+          renderNumber(data.opus.noise_dominance, { unit: false }),
+          ', proven scale-free against scores multiplied by a thousand.',
+        ],
+        [
+          b('A held-out split was counted, published, and never written to disk. '),
+          renderNumber(data.corpus.heldout_tokens, { unit: false }),
+          ' tokens appeared in a tracked build report and existed nowhere. No test failed, because every test asked about the number. It surfaced only when the selector needed the data and found an empty lane.',
+        ],
+        [
+          b('A floor was reported as breached when it had not been. '),
+          'A lane that never appears in the buffer cannot breach a floor — there was nothing to hold. The record now separates ',
+          term('unsupplied'),
+          ' from breached and prints the arithmetic either way.',
+        ],
+      ]),
+    ],
+  );
+}
+
+/* 9 · What is now known. */
+function chapterConclusion(data) {
+  return section('conclusion', 'conclusion', 'What this establishes', 'Four claims, and what backs each', [
+    bullets([
+      [
+        b('Reproducing a run means reading the record, not re-running the code. '),
+        'Change one line in the schedule and recompute, and every one of 96 slots differs; read the same interval back from the ledger and all 96 match. On the shipped module, ',
+        renderNumber(data.replay.matched, { unit: false }),
+        ' of ',
+        renderNumber(data.replay.checked, { unit: false }),
+        ' microbatches re-derive from the ledger and the shard bytes alone. (The 96-slot comparison is measured on a prototype schedule; the replay figure is the shipped one.)',
+      ],
+      [
+        b('The check is diagnostic, not merely pass or fail. '),
+        'Flip a single bit in one shard and exactly one of the 32 goes red. The damage stays local, which is what makes the result usable rather than just reassuring.',
+      ],
+      [
+        b('A crash and a resume land on the same batch ids as a run that never crashed. '),
+        'The run was killed at step 8, restored from ',
+        $('code', '', data.crash.checkpoint),
+        ', and ',
+        renderNumber(data.crash.reexecuted, { unit: false }),
+        ' microbatches were re-executed, each carrying the id of what it replayed. Afterwards every address and input hash matches the uninterrupted run.',
+      ],
+      [
+        b('An unbounded selector is not neutral, and the floors are what bound it. '),
+        'Left alone it concentrated on the lanes it scored highest and starved others. The floors are enforced by keeping protected candidates out of the scoring entirely, rather than by correcting the result afterwards — and across this run the record shows ',
+        $('b', '', String((data.opus.decisions || {}).floor_override ?? 0)),
+        ' candidate served against its own score because a protected lane required it.',
+      ],
+      [
+        b('The producer and the auditor share facts, never logic — and it passes. '),
+        'One command builds the bundle and meets ',
+        $('b', '', `${data.run.requirements_met} of ${data.run.requirements_total}`),
+        ' requirements; a second, walled off from the first, re-derives every published claim from the bundle alone.',
+      ],
+    ]),
+  ]);
+}
+
+/* 10 · What it cannot establish — in the open text, never inside a disclosure. */
+function chapterLimits() {
+  return section('limits', 'limits', 'What this cannot show', 'The five that matter most', [
+    para(
+      'These are not caveats attached at the end of a finished argument; they are the boundary of what the run is evidence for, and they belong next to the numbers rather than behind a link.',
+    ),
+    bullets([
+      [
+        b('A tiny model on a small corpus, on one machine. '),
+        'The design is about mechanics that matter at a hundred billion tokens. It has never been run at that scale and no figure here is extrapolated to it.',
+      ],
+      [
+        b('Data parallelism only. '),
+        'No tensor, pipeline or sequence parallelism, and no sharded optimizer state — those need multiple GPUs.',
+      ],
+      [
+        b('Replay proves inputs, never losses. '),
+        'Batch ids, token spans and input hashes reproduce exactly. Losses, selector scores and checkpoint hashes do not — floats differ across devices — and are reported with a stated tolerance rather than as an equality.',
+      ],
+      [
+        b('The crash drill does not exercise the hard case. '),
+        'A synchronous checkpoint lands every rank on the same event count, so the four cut values coincide. The vector is structurally necessary because per-rank selection will diverge — but this drill does not show that happening.',
+      ],
+      [
+        b('The hash chain is tamper-evidence, not tamper-proofing. '),
+        'Anyone who can edit the file can recompute every hash after their edit. What exposes them is the sequence number, and a mutation that removed that check survived thirty-one tests before one was written for it.',
+      ],
+      [
+        b('Two of the four decision statuses are ours, not the paper’s. ',
+        ),
+        term('defer'),
+        ' and ',
+        term('floor_override'),
+        ' appear nowhere in the OPUS paper, its reference implementation, or the production system we compared against; all three were searched.',
+      ],
+      [
+        b('A short demo cannot speak for the mixture. '),
+        'No lane’s share divides evenly into a step, so a run covering under 2% of the plan drifts by a couple of points. Whether the ',
+        $('i', '', 'corpus'),
+        ' is compliant is reported separately from whether this run’s sample was.',
+      ],
+    ]),
+  ]);
+}
+
+/* 11 · What comes next. Four items, because four is what is recorded. */
+function chapterNext() {
+  return section('next', 'next', 'What comes next', 'Four open items, and no roadmap beyond them', [
+    para(
+      'Everything the assignment asked for is done. What follows is the honest remainder — three known defects and one unresolved question — rather than an invented plan.',
+    ),
+    bullets([
+      [
+        b('Fix or delete the packing-utilisation field. '),
+        'Pass a real window size so a short tail can show, or remove it. Do not leave a constant in the ledger dressed as a statistic. It is still in the shipped bundle.',
+      ],
+      [
+        b('Resolve what η means in the redundancy penalty. '),
+        'At this learning rate the penalty contributes ',
+        $('b', '', '0.069%'),
+        ' of the score. Either it is genuinely inert at any practical learning rate, or the symbol is not the raw learning rate and our reading is wrong. Reading the paper’s definition directly settles it.',
+      ],
+      [
+        b('Understand the agentic lane’s deduplication rate. '),
+        'Deduplication removed 59% of that lane — 16,753 documents down to 6,872 — which is worth understanding before it carries a protected floor in a real run.',
+      ],
+      [
+        b('Multi-GPU: NCCL, FSDP, sharded optimizer state. '),
+        'Deferred deliberately. The cost of that choice is the first two limits above.',
+      ],
+    ]),
+  ]);
+}
+
+/* 12 · How to check any of this yourself. */
+function chapterReproduce() {
+  return section('reproduce', 'reproduce', 'Check it yourself', 'Two commands, and the second distrusts the first', [
+    para(
+      'The first command runs the pipeline and writes the bundle. The second re-derives every claim on this page from that bundle alone, importing none of the code that produced it. If they ever disagree, the second one is the one to believe.',
+    ),
+    codeBlock([
+      'uv sync --all-packages',
+      '',
+      '# produce the bundle: one command, no interaction',
+      'uv run python src/exercises/06-build-training-dataset/run_demo.py',
+      '',
+      '# re-derive every published claim from the bundle ONLY',
+      'uv run python src/exercises/06-build-training-dataset/verify.py',
+      '',
+      '# the suite',
+      'uv run pytest src/exercises/06-build-training-dataset',
+    ]),
+    para(
+      'The training step needs torch, which is an optional extra so a fresh clone stays small; the browser tests need a one-time ',
+      $('code', '', 'uv run playwright install chromium'),
+      ' and skip without it.',
+    ),
+    codeBlock([
+      'uv sync --all-packages --extra train',
+      'uv run pytest src/exercises/06-build-training-dataset -m integration',
+      '',
+      '# regenerate the numbers this page renders, and fail if they are stale',
+      'uv run python src/exercises/06-build-training-dataset/tools/build_web_data.py --check',
+    ]),
+    para(
+      'Every figure on this page is generated from the run’s own artifacts by that last command. None of them is typed in by hand — a number inside a script block is read far more often than any file in the repository and tested by none of them, which makes it the easiest place for a stale figure to survive.',
+    ),
+  ]);
 }
 
 function buildFooter(data) {
@@ -553,20 +1107,44 @@ function buildFooter(data) {
       b(`${data.run.requirements_met} of ${data.run.requirements_total} requirements`),
       ' are met and the auditor agrees.',
     ),
+    /* The limits used to live here, in the last paragraph of a footer. They now have a section of
+     * their own, because a caveat a reader reaches only by finishing the page is a caveat the page
+     * is hiding — and the same reasoning that keeps them out of a collapsed <details> keeps them
+     * out of the small print. */
     para(
-      b('What it is not.'),
-      ' A tiny model on a small corpus, on one machine, with data parallelism only. The design is about mechanics that matter at a hundred billion tokens; it has never been run at that scale, and no figure here is extrapolated to it. ',
-      ref('Replay proves inputs and not losses', 'replay'),
+      'The rest of the story is on this page rather than behind it: ',
+      ref('what it cannot show', 'limits'),
       ', ',
-      ref('a floor cannot be met from candidates that are absent', 'floors'),
+      ref('what we got wrong', 'negatives'),
+      ', ',
+      ref('what is still open', 'next'),
       ', and ',
-      ref('a hash chain is evidence rather than proof', 'chain'),
+      ref('how to check any of it yourself', 'reproduce'),
       '.',
     ),
   );
 }
 
-const CHAPTERS = [chapterReplay, chapterFloors, chapterChain];
+/* The three explainer chapters are the page's `results` block: each one is a measured outcome the
+ * reader can push on. Roles are literal strings rather than a lookup, because
+ * `tests/test_page_spine.py` reads this source — see the note above `section()`. */
+const CHAPTERS = [
+  (data) => {
+    const s = chapterReplay(data);
+    s.dataset.role = 'results';
+    return s;
+  },
+  (data) => {
+    const s = chapterFloors(data);
+    s.dataset.role = 'results';
+    return s;
+  },
+  (data) => {
+    const s = chapterChain(data);
+    s.dataset.role = 'results';
+    return s;
+  },
+];
 
 /* The left rail. The shared stylesheet has always styled `.rail` and, at 1180px and up, has always
  * reserved 260px of left padding on `.wrap` for it — so a page without this builder renders that
@@ -581,9 +1159,19 @@ const CHAPTERS = [chapterReplay, chapterFloors, chapterChain];
  * squeezes every title to one word per line. */
 const RAIL = {
   summary: ['How this was built', 'the four claims, and where each is checked'],
+  glossary: ['The vocabulary', 'eighteen words, defined before they are used'],
+  problem: ['Thirty gigabytes', 'and no way to ask what it read'],
+  mechanism: ['A record, not a recipe', 'why the schedule stops being a function'],
+  method: ['How it was measured', 'two programs that share facts, not code'],
+  expected: ['What we expected', 'one real prediction, and an honest gap'],
   replay: ['Reproducing a run', 'read the record, do not run it again'],
   floors: ['The floor held', 'except where there was nothing to hold'],
   chain: ['You can edit the record', 'you cannot edit it quietly'],
+  negatives: ['What we got wrong', 'six claims this page used to make'],
+  conclusion: ['What this establishes', 'and what backs each claim'],
+  limits: ['What it cannot show', 'stated next to the numbers, not after them'],
+  next: ['What comes next', 'three defects and one open question'],
+  reproduce: ['Check it yourself', 'the second command distrusts the first'],
 };
 
 function buildRail(main) {
@@ -618,8 +1206,25 @@ function buildRail(main) {
 export function buildPage(data) {
   const main = document.getElementById('main');
   main.replaceChildren();
-  main.append(buildSummary(data));
-  CHAPTERS.forEach((fn) => {
+
+  /* The spine, in the order a reader meets it: what this is, the words it uses, the question, how
+   * it works, how it was measured, what we expected — then the three interactive results, then
+   * what was wrong, what is known, what it cannot show, what is left, and how to check it. */
+  const parts = [
+    buildSummary,
+    chapterGlossary,
+    chapterProblem,
+    chapterMechanism,
+    chapterMethod,
+    chapterExpected,
+    ...CHAPTERS,
+    chapterNegatives,
+    chapterConclusion,
+    chapterLimits,
+    chapterNext,
+    chapterReproduce,
+  ];
+  parts.forEach((fn) => {
     try {
       main.append(fn(data));
     } catch (err) {

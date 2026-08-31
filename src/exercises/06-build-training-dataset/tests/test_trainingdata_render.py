@@ -14,6 +14,7 @@ time setup: `uv run playwright install chromium`.
 
 import functools
 import http.server
+import importlib.util
 import socketserver
 import threading
 from pathlib import Path
@@ -82,15 +83,25 @@ def test_every_chapter_built(page) -> None:
     """
     assert page.eval_on_selector_all(".err", "els => els.map(e => e.textContent)") == []
     ids = page.eval_on_selector_all("section", "els => els.map(e => e.id)")
-    assert ids == ["summary", "replay", "floors", "chain"]
+
+    # The three interactive chapters, in order, still surrounded by whatever the spine adds.
+    interactive = [i for i in ids if i in ("replay", "floors", "chain")]
+    assert interactive == ["replay", "floors", "chain"]
+    assert ids[0] == "summary", f"the page no longer opens with its summary: {ids[0]}"
 
 
-def test_each_chapter_title_is_a_claim_not_a_topic(page) -> None:
-    """EXPLAINER_PROMPT §2①. A topic invites skimming; a claim invites checking."""
+def test_each_interactive_chapter_title_is_a_claim_not_a_topic(page) -> None:
+    """EXPLAINER_PROMPT §2①. A topic invites skimming; a claim invites checking.
+
+    Scoped to the three explainer chapters — the `results` role. The spine's prose sections around
+    them are headed by role (`What we got wrong`, `The vocabulary`), which is a different job: those
+    tell a reader *how to weigh* what follows rather than asserting something checkable.
+    """
     titles = page.eval_on_selector_all(
-        "section h2", "els => els.map(e => e.textContent.replace('#','').trim())"
+        'section[data-role="results"] h2',
+        "els => els.map(e => e.textContent.replace('#','').trim())",
     )
-    assert len(titles) == 3
+    assert len(titles) == 3, f"expected the three interactive chapters, got {titles}"
     for title in titles:
         # A claim has a verb. "Packing", "The ledger", "Selection" do not.
         assert any(
@@ -338,3 +349,74 @@ def test_the_left_rail_is_built_and_fills_the_gutter_it_reserves(page):
         ".rail-link .rail-t", "els => els.map(e => e.getBoundingClientRect().width)"
     )
     assert widths and all(w > 60 for w in widths), f"a rail title is squeezed: {widths}"
+
+
+def _required_spine() -> tuple[str, ...]:
+    """The spine, read from the repo-wide guard so this list cannot drift from it.
+
+    Loaded by path rather than imported: `tests/` is not a package, and adding an `__init__.py`
+    to make it one would change how pytest collects every file in it. One source of truth is worth
+    five lines of importlib.
+    """
+    path = REPO_ROOT / "tests" / "test_page_spine.py"
+    spec = importlib.util.spec_from_file_location("_page_spine", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.SPINE
+
+
+def test_the_page_has_the_required_spine_in_order(page) -> None:
+    """A reader arriving cold must find every part of the story, in an order that makes sense.
+
+    The repo-wide `tests/test_page_spine.py` checks that this page *declares* each role, reading the
+    source. It cannot see DOM order, because `buildPage` decides that at runtime. This is the other
+    half: order is asserted because `limits` before `results` reads as hedging, and `conclusion`
+    before the evidence reads as a press release.
+    """
+    spine = _required_spine()
+
+    roles = page.eval_on_selector_all("main section", "els => els.map(e => e.dataset.role)")
+    missing = [r for r in spine if r not in roles]
+    assert not missing, f"the page is missing these parts of the story: {missing}"
+
+    seen = [r for r in roles if r in spine]
+    first = [r for i, r in enumerate(seen) if r not in seen[:i]]
+    assert first == list(spine), f"the spine is out of order: {first}"
+
+
+def test_the_glossary_heading_counts_the_terms_it_actually_shows(page) -> None:
+    """A count in prose beside a generated list is this repo's most expensive recurring bug.
+
+    The heading reads "<N> words, before anything is claimed with them" and the list below it is
+    built from the same object, so the two cannot disagree — unless someone types the number back
+    in. This is the test that notices if they do.
+    """
+    heading = page.eval_on_selector("section#glossary h2", "e => e.textContent")
+    shown = page.eval_on_selector_all("section#glossary .defs dt", "els => els.length")
+
+    words = {
+        "Ten": 10,
+        "Eleven": 11,
+        "Twelve": 12,
+        "Thirteen": 13,
+        "Fourteen": 14,
+        "Fifteen": 15,
+        "Sixteen": 16,
+        "Seventeen": 17,
+        "Eighteen": 18,
+        "Nineteen": 19,
+        "Twenty": 20,
+    }
+    stated = next((n for w, n in words.items() if heading.startswith(w)), None)
+    assert stated is not None, f"the glossary heading states no count: {heading!r}"
+    assert stated == shown, f"the heading says {stated} terms; the list shows {shown}"
+
+
+def test_every_defined_term_is_actually_defined(page) -> None:
+    """An empty definition renders as a blank row and reads as a term nobody bothered to explain."""
+    defs = page.eval_on_selector_all(
+        "section#glossary .defs dd", "els => els.map(e => e.textContent.trim())"
+    )
+    assert defs, "the glossary rendered no definitions"
+    thin = [d for d in defs if len(d.split()) < 6]
+    assert not thin, f"these definitions are too thin to be useful: {thin}"
