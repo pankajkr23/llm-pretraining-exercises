@@ -1,0 +1,75 @@
+NOTICE — 07-model-embeddings-internals
+======================================
+
+WHAT THIS IS
+
+A coursework exercise examining the input and output embedding paths of a
+language model, and specifically whether the Kronecker byte codec can be
+inverted and used as the output head. It is a study, not a product, not a
+proposal to any organisation, and not infrastructure anybody operates. No large
+model has been trained with it.
+
+NO AFFILIATION
+
+This work is not affiliated with, endorsed by, sponsored by, or produced on
+behalf of any company, government body, research institute, university, or
+funding programme. Every organisation, paper and repository named here is named
+because their public work is the evidence being examined or the code being
+credited. Naming them is citation, not association, and none of them has
+reviewed or approved anything here.
+
+THIRD-PARTY WORK, AND HOW IT IS USED
+
+The subject of this exercise is Kronecker Embeddings, arXiv:2605.29459v1. Its
+reference implementation is https://github.com/theschoolofai/kronecker-embeddings,
+which is Apache-2.0 licensed. The codec here is a reimplementation written
+against the paper's Equation 1 and that repository read as a specification; it
+is not a vendored copy, and no file from it is redistributed.
+
+One difference is worth recording rather than leaving to be discovered. The
+reference codec indexes the grid as `byte_value * d_p + position`; this
+implementation uses `position * 256 + byte_value`. The two are a permutation of
+each other's coordinates, and since the projection W is learned, they are
+equivalent for training and for recovery -- but a direct numerical diff against
+the reference will not line up without accounting for it.
+
+The frozen 10,000-token tokenizer used for every vocabulary measurement is this
+repository's own, produced in exercise 02 and loaded through exercise 04's
+`datacleaning.tokens`. Collision counts, byte-length distributions and recovery
+rates are properties of THAT vocabulary and do not transfer unchanged to another.
+
+WHAT IS MEASURED AND WHAT IS NOT
+
+Every training figure published by this exercise is measured on one Apple
+Silicon laptop: a 2-layer transformer, d_model 256, 500 steps, batch 8 x 64,
+over roughly 200,000 tokens of real text. The claims are ABOUT models three to
+four orders of magnitude larger. They were never run at that scale. Nothing here
+establishes that a result holds at 124M parameters or after 100,000 steps, and
+weight tying in particular is known to behave differently late in training.
+
+Recovery figures are measured on 2,000 tokens sampled from the frozen
+vocabulary, with both random and trained projection matrices, and the trained
+case is stated separately because it is the one that could have failed.
+
+WHAT IS A NEGATIVE RESULT, AND SAID SO
+
+Three claims made during this work turned out to be false and are corrected
+where they were made rather than quietly removed: that a d x d transform on the
+hidden state gives the tied head expressive freedom (it does not -- it
+reparameterises h); that folding byte positions "loses nothing recoverable" (it
+does -- folding records a multiset, not a sequence); and an earlier recovery
+figure that came from reading a metric which scores truncated tokens as decoder
+failures by construction. The Fourier position variant is also a negative
+result: it removes every collision and trains worse than doing nothing.
+
+WHICH ASSIGNMENT PROBLEM EACH RESULT ANSWERS
+
+The brief states that its five problems are separate. Every result here is
+labelled with the problem it addresses, and any result that spans two is
+labelled as spanning two rather than being presented as a single-problem
+solution. See README.md.
+
+NO DATASET IS REDISTRIBUTED
+
+Training text is this repository's own tracked corpus from exercise 02. No
+external dataset is fetched, hosted, mirrored or redistributed by this exercise.

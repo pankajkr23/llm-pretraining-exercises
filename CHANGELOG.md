@@ -10,6 +10,24 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Exercise 07 — Kronecker v2: an invertible codec and a vocabulary-independent output head.**
+  Session 7's brief asks whether the Kronecker byte codec can be reversed so the `d_model × |V|`
+  output head can be deleted. It can. The projection inverts **exactly** at `d_model = 384` with a
+  decoder that **certifies its own answer**, and that survives a projection trained to loss 2.45.
+  Tying the head to the *induced* embedding `E = K·W_proj` — not to `W_proj`, which is the tie the
+  paper correctly rules out — removes every vocabulary-sized parameter: **6,291,457 against
+  768,000,000** at a million-token vocabulary.
+- **The tied head's exact expressive limit, and the term that removes it.** The tied logit is
+  additive over (position, byte), so four *named* tokens of the repo's own vocabulary are pinned by
+  `A − B − C + D = 0` for every hidden state. A hashed byte-n-gram residual breaks it and beats the
+  v1 paper's own design by **−0.141 nats on 5/5 paired seeds with fewer parameters**; a residual MLP
+  breaks the same constraint and buys **−0.002**, which is the more interesting half.
+- **A deployed page** at `/07-model-embeddings-internals/`, generated entirely from the tracked
+  `results/measurements.json` so no figure on it can drift from the run that produced it, plus a
+  12-test browser suite that checks what a reader actually sees.
+
 ### Fixed
 
 - **Twelve documents were describing a system that no longer existed.** A 45-agent adversarial sweep

@@ -116,6 +116,15 @@
             <div class="meta">A real crash, a resume onto the same batch ids, and an auditor that shares no code with the run</div>
           </span>
         </a>
+
+        <a class="item" href="/07-model-embeddings-internals/">
+          <span class="idx">07</span>
+          <span>
+            <h2>Deleting the output head</h2>
+            <p>A language model keeps one row of numbers per word, and keeps that table twice — once to read words in, once to choose the next one. A published trick deletes the first by computing each row from the word's spelling, then says the second cannot follow and lists it as a limitation. It can follow: the code reads back exactly, the second table ties to the first, and the result is smaller than the design it replaces.</p>
+            <div class="meta">Exact self-certifying inversion, four real words a tied head provably cannot separate, and the one term that fixes it</div>
+          </span>
+        </a>
       </nav>
 
       <footer>

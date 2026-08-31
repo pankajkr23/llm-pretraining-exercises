@@ -1,0 +1,148 @@
+{
+  "_": "Every number the README and the web page render. Tracked, because AGENTS.md requires the evidence a published document renders to survive a clone. Written by hand from the runs in the session scratchpad; each entry names the script that produced it.",
+  "setup": {
+    "source": "k2/experiment.py",
+    "layers": 2,
+    "d_model": 256,
+    "steps": 500,
+    "batch": "8 x 64",
+    "seeds": 5,
+    "vocab_size": 10002,
+    "corpus": "src/exercises/02-tokenization/corpus/v2 (en, hi, ta, te)",
+    "uniform_loss": 9.211,
+    "unpaired_spread": 0.469
+  },
+  "v1_arithmetic": {
+    "source": "embeddings.budget, GPT-2 124M",
+    "vocab_size": 50257,
+    "d_model": 768,
+    "tied_baseline": 38597376,
+    "v1_projection": 6291456,
+    "v1_untied_head": 38597376,
+    "v1_total": 44888832,
+    "ratio": 1.163
+  },
+  "recovery": {
+    "source": "k2/agent_blocksparse/sweep_main.log, exact_repr on 2,000 real tokens",
+    "rows": [
+      { "d_model": 128, "gaussian": 86.65, "semiortho": 86.65, "blocktight": 86.3, "search_limited": "241 of 241" },
+      { "d_model": 256, "gaussian": 99.4, "semiortho": 99.65, "blocktight": 99.7, "search_limited": "5 of 5" },
+      { "d_model": 384, "gaussian": 100.0, "semiortho": 100.0, "blocktight": 100.0, "search_limited": "0" },
+      { "d_model": 512, "gaussian": 100.0, "semiortho": 100.0, "blocktight": 100.0, "search_limited": "0" }
+    ],
+    "matched_filter_at_384": 86.7,
+    "certificate_agreement": 100.0,
+    "znorm_inversion_error": 7.0e-7
+  },
+  "trained_projection": {
+    "source": "k2/trained_w.py",
+    "rows": [
+      { "w": "random", "exact": 100.0, "loss": null },
+      { "w": "v1 trained 500 steps", "exact": 100.0, "loss": 4.89 },
+      { "w": "v1 trained 2,000 steps", "exact": 100.0, "loss": 2.45 },
+      { "w": "tied + n-gram, 500 steps", "exact": 99.85, "loss": 4.89 }
+    ]
+  },
+  "coherence": {
+    "source": "k2/coherence.py, |cos| between the D atoms of W after 500 steps",
+    "rows": [
+      { "w": "random, untrained", "max": 0.274, "mean": 0.041, "rms": 0.051 },
+      { "w": "v1 — untied head", "max": 0.626, "mean": 0.05, "rms": 0.062 },
+      { "w": "ours — tied + n-gram", "max": 0.685, "mean": 0.051, "rms": 0.064 },
+      { "w": "ours — tied + n-gram + wrap", "max": 0.768, "mean": 0.105, "rms": 0.123 }
+    ]
+  },
+  "arms": {
+    "source": "k2/summary.py, 5 paired seeds",
+    "rows": [
+      { "arm": "dense tied embedding", "problem": null, "loss": 5.736, "vs_control": null, "vs_v1": 0.459, "params": 3872512, "v_free": false },
+      { "arm": "v1 — Kronecker in, untied head", "problem": null, "loss": 5.277, "vs_control": -0.459, "vs_v1": null, "params": 5969665, "v_free": false },
+      { "arm": "tied to induced E", "problem": "5", "loss": 5.626, "vs_control": -0.11, "vs_v1": 0.35, "params": 3409153, "v_free": true },
+      { "arm": "tied + d x d transform", "problem": "5", "loss": 5.553, "vs_control": -0.183, "vs_v1": 0.276, "params": 3474689, "v_free": true },
+      { "arm": "tied + n-gram (one-hot positions)", "problem": "5", "loss": 5.136, "vs_control": -0.6, "vs_v1": -0.141, "params": 5571841, "v_free": true },
+      { "arm": "tied + residual MLP", "problem": "5", "loss": 5.522, "vs_control": -0.214, "vs_v1": 0.245, "params": 3606273, "v_free": true },
+      { "arm": "byte head + end-of-token", "problem": "5", "loss": 6.961, "vs_control": 1.225, "vs_v1": 1.685, "params": 5514497, "v_free": true },
+      { "arm": "wrapped positions", "problem": "3", "loss": 5.524, "vs_control": -0.212, "vs_v1": 0.248, "params": 3474689, "v_free": true },
+      { "arm": "Fourier positions", "problem": "4", "loss": 5.821, "vs_control": 0.085, "vs_v1": 0.544, "params": 3474689, "v_free": true },
+      { "arm": "wrap + n-gram", "problem": "3+5", "loss": 5.112, "vs_control": -0.624, "vs_v1": -0.164, "params": 5571841, "v_free": true }
+    ]
+  },
+  "attribution": {
+    "source": "k2/summary.py",
+    "rows": [
+      { "what": "#5 alone — tie + scale + n-gram, on v1's own one-hot positions", "against": "v1", "gap": -0.141, "sd": 0.024, "t": -13.2, "seeds": "5/5" },
+      { "what": "#3 alone — wrapped positions, no n-gram", "against": "one-hot", "gap": -0.029, "sd": 0.011, "t": -5.9, "seeds": "5/5" },
+      { "what": "#3 + #5 together", "against": "v1", "gap": -0.164, "sd": 0.025, "t": -14.6, "seeds": "5/5" }
+    ],
+    "wrap_on_top_of_5": -0.024
+  },
+  "lock": {
+    "source": "k2/lock.py and k2/lock_break.py",
+    "additivity_error": 4.2e-5,
+    "logit_scale": 61.91,
+    "rectangle": ["\"\\n", "\".", ")\\n", ")."],
+    "rectangle_residual": 1.4e-5,
+    "with_transform": 2.1e-4,
+    "breakers": [
+      { "term": "residual MLP on E", "breaks_lock": true, "buys": -0.002 },
+      { "term": "hashed byte bigram/trigram block", "breaks_lock": true, "buys": -0.412 }
+    ]
+  },
+  "bucket_sweep": {
+    "source": "k2/ng_sweep.py, 3 seeds",
+    "rows": [
+      { "buckets": 128, "v_over_m": 78.1, "vs_wrap_only": -0.097, "vs_v1": 0.159 },
+      { "buckets": 512, "v_over_m": 19.5, "vs_wrap_only": -0.203, "vs_v1": 0.053 },
+      { "buckets": 2048, "v_over_m": 4.9, "vs_wrap_only": -0.341, "vs_v1": -0.085 },
+      { "buckets": 8192, "v_over_m": 1.2, "vs_wrap_only": -0.421, "vs_v1": -0.165 },
+      { "buckets": 32768, "v_over_m": 0.3, "vs_wrap_only": -0.457, "vs_v1": -0.202 }
+    ]
+  },
+  "collisions": {
+    "source": "embeddings.collisions on the frozen 10k tokenizer",
+    "vocab_size": 10000,
+    "colliding_tokens": 407,
+    "groups": 75,
+    "largest_group": 83,
+    "largest_group_prefix": "](https://hi.wikipedia.org/wiki/",
+    "max_token_bytes": 121,
+    "over_32_bytes": 533,
+    "worked_example": {
+      "a": "अंतर्राष्ट्रीयकरण",
+      "b": "अंतर्राष्ट्रीयता",
+      "bytes_a": 51,
+      "bytes_b": 48,
+      "first_differing_byte": 44,
+      "cosine_onehot": 1.0,
+      "cosine_wrap": 0.932436
+    },
+    "schemes": [
+      { "scheme": "v1 one-hot", "collisions": 407, "length_limit": "32 bytes" },
+      { "scheme": "Fourier", "collisions": 0, "length_limit": "none" },
+      { "scheme": "wrap + sign", "collisions": 0, "length_limit": "none" }
+    ]
+  },
+  "d_p_128": {
+    "source": "k2/dp128.py, long-token-enriched sample",
+    "rows": [
+      { "d_p": 32, "d_model": 768, "whole_token": 36.0, "long_tokens": 0.0 },
+      { "d_p": 128, "d_model": 384, "whole_token": 81.2, "long_tokens": 70.5 },
+      { "d_p": 128, "d_model": 768, "whole_token": 99.9, "long_tokens": 99.8 }
+    ]
+  },
+  "scale_cost": {
+    "source": "k2/scale_cost.py, d_model 768",
+    "rows": [
+      { "vocab": 10000, "dense_params": 7680000, "v2_params": 6291457, "naive_gb": 0.9, "chunked_gb": 3.03, "sampled_gb": 0.75, "chunked_ms": 182, "sampled_ms": 73 },
+      { "vocab": 100000, "dense_params": 76800000, "v2_params": 6291457, "naive_gb": 9.2, "chunked_gb": 3.29, "sampled_gb": 0.75, "chunked_ms": 1037, "sampled_ms": 73 },
+      { "vocab": 1000000, "dense_params": 768000000, "v2_params": 6291457, "naive_gb": 91.6, "chunked_gb": 5.86, "sampled_gb": 0.75, "chunked_ms": 7406, "sampled_ms": 71 }
+    ],
+    "naive_dies_at": 1000000
+  },
+  "byte_head": {
+    "source": "k2/one_arm.py",
+    "without_stop_symbol": 10.56,
+    "with_stop_symbol": 6.961,
+    "uniform": 9.211
+  }
+}
