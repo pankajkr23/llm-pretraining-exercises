@@ -68,7 +68,12 @@ labelled as spanning two.
 **Repo state:** `ruff` clean, **1,262 tests pass**, 1 skipped, 0 failures. `BRIEF.md`, `NOTICE` and
 this file now exist, so every skeleton and tripwire test is green.
 
-**Not yet done and needed for submission:** a public URL. Nothing is committed.
+**Not yet done and needed for submission: the public URL.** Everything is on a branch with an
+open PR and all CI green; the page is built and browser-tested, but production only publishes after
+the PR merges **and** the production environment gate is approved. Until then
+`/07-model-embeddings-internals/` is a 404 on the live site and the assignment cannot be submitted —
+the preview deployment is behind Vercel's login wall, so it does not satisfy the brief's
+incognito-accessible requirement.
 
 ---
 
@@ -81,6 +86,16 @@ Registered in the root README table, the CI `rest` shard, and `OPTIONAL_DEPENDEN
 **The notebook.** `notebooks/S07-model-embeddings-internals.ipynb`, 27 cells, every code cell
 executed and verified, outputs stripped. Builder at `tools/build_notebook.py`. Both are gitignored
 and both are in the outside-the-repo backup store (115 files, 19.5 MB, verified current).
+
+**The page.** `web/`, published at `/07-model-embeddings-internals/` — six chapters, three
+interactions, and a left rail. Every figure is generated from the tracked
+`results/measurements.json` by `tools/build_web_data.py`, so nothing on the page can drift from the
+run that produced it. **15 browser tests** over the assembled site.
+
+Two shared-stylesheet defects surfaced while building it, both fixed and both guarded: the `.rail`
+styles reserve 260px of left gutter on `.wrap` whether or not a page builds a rail (so 06 and 07
+rendered an empty margin), and the shared `section` rule has no top spacing, which only shows on a
+page without a summary panel.
 
 **The measurements**, all from `k2/` in the session scratchpad:
 

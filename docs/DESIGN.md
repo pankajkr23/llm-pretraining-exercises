@@ -96,6 +96,19 @@ colours, distinct in both themes (light / dark):
 - **Panels / cards:** `--panel` background, `1px solid var(--line)`, `border-radius: 18px`,
   ~22–24px padding, `box-shadow: var(--shadow)`. Cards that are links lift on hover
   (`translateY(-3px)` + a deeper shadow).
+- **The landing page is two measures, not one.** Prose keeps a readable line length (`.head` at
+  54ch, the lede at 52ch) while the exercise cards go wide as a grid —
+  `repeat(auto-fill, minmax(min(340px, 100%), 1fr))`, three columns at 1440px, one on a phone. It
+  was a single 640px column at every width for a long time, which used a third of a 1920px screen.
+  Widening the column instead would have made the sentences unreadable, so **both halves are
+  tested**: that the grid uses the screen, and that the prose does not widen with it.
+  `min(340px, 100%)` and never a bare `340px` — an auto-fill track cannot shrink below its own
+  minimum and pushes a 320px phone sideways.
+- **Cards in a row share a height.** `align-items: stretch` on the grid, and the meta line pinned
+  down with `margin-top: auto`, so a row does not end at three different depths. Watch the
+  selectors: the index label is *also* a direct-child `span`, so `a.item > span { flex: 1 }` gives
+  it flex-grow and it stretches to fill the card — 93px tall for one line, pushing the title into
+  the middle. Scope it `:not(.idx)`.
 - **Segmented control:** `--track` background; the selected button is a `--panel` "knob" with
   `--shadow`.
 - **Inputs:** on focus, `--accent` border plus a 3px `--accent-soft` glow ring.

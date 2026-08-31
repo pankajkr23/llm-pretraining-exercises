@@ -422,7 +422,7 @@ uv run pre-commit run --all-files                        # over everything, not 
 
 ## CI/CD
 
-- CI (`.github/workflows/ci.yml`) is **three concurrent jobs, not one chain**. `test`: `uv sync --all-packages` → `ruff check` → `ruff format --check` → `pytest -m "not integration" -n auto --dist loadfile` → `node --check` over `find src/exercises -path '*/web/*' -name '*.js'`. `integration`: a **three-shard matrix** (`tokenization` · `mixtures` · `rest`), each shard syncing, caching and installing chromium, running `deploy/vercel/build.sh` once, then `pytest -m integration`. `security`: gitleaks over the full history. `push` is filtered to `main` — branches are covered by the `pull_request` event, because an unfiltered `push` ran every PR commit twice. `train`: `uv sync --all-packages --extra train` with **CPU-only wheels** (a Linux-scoped
+- CI (`.github/workflows/ci.yml`) is **four concurrent jobs, not one chain**. `test`: `uv sync --all-packages` → `ruff check` → `ruff format --check` → `pytest -m "not integration" -n auto --dist loadfile` → `node --check` over `find src/exercises -path '*/web/*' -name '*.js'`. `integration`: a **three-shard matrix** (`tokenization` · `mixtures` · `rest`), each shard syncing, caching and installing chromium, running `deploy/vercel/build.sh` once, then `pytest -m integration`. `security`: gitleaks over the full history. `push` is filtered to `main` — branches are covered by the `pull_request` event, because an unfiltered `push` ran every PR commit twice. `train`: `uv sync --all-packages --extra train` with **CPU-only wheels** (a Linux-scoped
   `pytorch-cpu` index in the root `pyproject.toml` — 191.8 MB instead of 2.7 GB, and 19 fewer
   packages in the lock), running only the files whose module-level `importorskip` would otherwise
   skip them entirely.
@@ -442,6 +442,22 @@ Every deployable exercise's static `web/` bundle shares **one design system** �
 - **Canvas state changes animate** — morph with a short eased transition (≈550ms), not an instant redraw, keeping the framing stable so panels don't resize mid-toggle.
 
 - **An interaction must never be the only route to a lesson.** Exercise 05's predict-before-reveal block was written with its transferable point inside the reveal, so a reader who declined to guess never reached it — and neither would any print or reduced-motion reader. The interaction may earn a point more vividly; the point itself belongs in prose that is always visible. The same rule is why a page's limitations sit in the open text and not inside a collapsed `<details>`: **a limitation a reader has to open a drawer to find is a limitation the page is hiding.**
+- **A shared stylesheet can reserve space for an element each page has to add itself.**
+  `_shared/page.css` styles `.rail` and, at 1180px and up, also sets `.wrap { padding-left: 260px }`
+  — unconditionally, whether or not that page builds a rail. Only exercise 05 ever had the
+  `<aside id="rail">` element and a builder for it, so **06 and 07 rendered a 260px empty gutter on
+  every wide screen** and nothing failed. Copying `web/_shared/` into a new exercise copies the
+  styles and not the markup they assume. When you vendor that directory, check what it expects the
+  page to provide: measure `.wrap`'s computed padding against the rail's rendered width, and assert
+  the pairing — gutter reserved **and** gutter filled.
+
+- **Widening a page is two decisions, not one.** The landing page was a fixed 640px column at every
+  viewport, using a third of a 1920px screen. The fix is not a bigger `max-width`: a 1200px line of
+  prose is unreadable. Split the measures — prose keeps its line length, cards become a responsive
+  grid — and **test both halves**, because a naive fix breaks the half nobody guards. Use
+  `minmax(min(340px, 100%), 1fr)` and never a bare `340px`: an auto-fill track cannot shrink below
+  its own minimum and will push a 320px phone sideways.
+
 - **Editing non-ASCII HTML** (`—`, `→`, `·`, math glyphs): use the Edit/Write tools. **Never** `perl -0pi`/`sed` with wide-char escapes — byte-mode rewrites double-encode UTF-8 into mojibake.
 
 ## Instruction files (this system)

@@ -71,8 +71,9 @@ evidence is:
 - **Changing the code** — start at *How the pieces fit*, then the module map. `codec.py` defines
   what the code **is**; everything else consumes that definition rather than restating it.
 - **Deciding whether to believe it** — go straight to *The evidence*, then
-  [What this cannot establish](#what-this-cannot-establish). Three claims here contradict things I
-  wrote earlier in this exercise, and each correction is stated where the claim was made.
+  [What this cannot establish](#what-this-cannot-establish). Several claims here contradict things
+  I wrote earlier in this exercise; each correction is stated where the claim was made, and
+  `CLAUDE.md` keeps the full list so it is not re-derived.
 
 ---
 

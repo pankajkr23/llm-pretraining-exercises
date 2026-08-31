@@ -20,7 +20,42 @@ The full argument, every table, and the limits are in `README.md`. Do not restat
 | `decode.py` | `matched_filter`, `block_omp`, `coordinate_descent`, `recover`, `fold_is_order_lossy` | no |
 | `collisions.py` | `truncation_groups`, `colliding_tokens`, `collisions_by_code`, `cosine` | no |
 | `budget.py` | `budget`, `crossover` — the parameter arithmetic | no |
-| `heads.py` | `KroneckerEmbedding`, `LockBreaker`, `TiedHead` | **yes** |
+| `heads.py` | `KroneckerEmbedding`, `LockBreaker`, `ByteHead`, `TiedHead` | **yes** |
+| `__init__.py` | the package docstring — what v1 is and why its output side is the problem | no |
+
+## The published page, and the one rule it lives by
+
+| path | what it is | tracked? |
+| --- | --- | --- |
+| `results/measurements.json` | **every number the README and the page render** | **yes** — required |
+| `tools/build_web_data.py` | generates `web/data.js` from it | **yes** — unlike the notebook builder |
+| `web/index.html` · `chapters.js` · `page-extra.css` | the page | yes |
+| `web/_shared/` | vendored, byte-identical to 05 and 06 | yes |
+| `tests/test_embeddings_render.py` | 15 browser tests over the assembled site | yes |
+
+**No number is written into `chapters.js`.** The page reads `data.js`, which is generated from
+`results/measurements.json`. `AGENTS.md` requires the evidence a published document renders to
+survive a clone, and it is also the only thing stopping a figure on the site drifting from the run
+that produced it. After changing a measurement:
+
+```bash
+uv run python src/exercises/07-model-embeddings-internals/tools/build_web_data.py
+bash deploy/vercel/build.sh
+uv run pytest src/exercises/07-model-embeddings-internals/tests -m integration
+```
+
+`test_the_headline_numbers_come_from_the_measurements` pins five figures deliberately: change the
+measurements and it goes red, so someone has to look at the page rather than find the drift after
+publishing.
+
+**The page needs an `<aside id="rail">` and a builder — the shared stylesheet only provides the
+styles.** `_shared/page.css` also pads `.wrap` 260px at 1180px and up to make room for it, whether
+or not the page builds one, so a missing rail is a visible empty gutter rather than nothing. Three
+tests cover it, all by geometry rather than markup.
+
+**This page has no summary panel**, unlike 05 and 06, so it exposes something they hide: the shared
+`section` rule sets bottom spacing and no top, and the first heading sat flush against the action
+buttons. `page-extra.css` compensates, and a test measures the gap.
 
 ## Rules specific to this exercise
 
@@ -43,16 +78,18 @@ The full argument, every table, and the limits are in `README.md`. Do not restat
   the logit scale. An absolute threshold here silently encodes an init scale and can be passed or
   failed by turning a knob.
 
-- **`heads.py` is behind `importorskip("torch")`, and that has two registration costs.** The file is
-  listed in `tests/test_ci_shards_cover_everything.py`'s `OPTIONAL_DEPENDENCY_GATES` **and** in the
-  `train` job of `.github/workflows/ci.yml`. A gated file in neither runs nowhere while CI stays
-  green — this repo has already lost 46 tests exactly that way. If you add another gated file, add
-  both entries.
+- **Two files here are behind an `importorskip`, and each costs two registrations.**
+  `tests/test_embeddings_heads.py` gates on `torch`; `tests/test_embeddings_render.py` gates on
+  `playwright`. Each must appear in `tests/test_ci_shards_cover_everything.py`'s
+  `OPTIONAL_DEPENDENCY_GATES` **and** be reachable by a job that installs what it needs — the torch
+  file via the `train` job's explicit file list, the playwright file via the `rest` integration
+  shard, which installs chromium. A gated file in neither runs **nowhere** while CI stays green;
+  this repo has already lost 46 tests exactly that way. If you add another gated file, add both.
 
 ## Claims that were wrong, so they are not re-derived
 
-Three statements in this exercise's own history turned out to be false. They are corrected in
-`README.md` where they were made; the short version, so nobody reintroduces them:
+Five statements in this exercise's own history turned out to be false. They are corrected where
+they were made; the short version, so nobody reintroduces them:
 
 - **"A `d×d` transform gives the head freedom of its own."** No. `⟨h, A·E⟩ = ⟨Aᵀh, E⟩` is a
   reparameterisation of `h` and cannot change the expressible function class. The transform helps by
@@ -63,6 +100,17 @@ Three statements in this exercise's own history turned out to be false. They are
 - **"Per-wrap byte permutations fix the aliasing."** They make it worse (14.6% vs 19.1%).
   Permutations make every position swap available; signs at least block the slots whose wrap levels
   disagree in sign — 15 of 32.
+- **"The lock is why v1 loses 0.25 nats."** Overclaimed. The lock constrains a *tied, byte-factored*
+  head — ours, and v1's §8.5 Hypothesis A. **v1 as shipped uses an untied head and is unconstrained
+  by it.** It also requires the four tokens to be of **equal byte length** (the `1/sqrt(L)` scaling),
+  and it survives z-normalisation exactly because μ and σ depend only on `L` and the ±1 coefficients
+  cancel the shared shift. Say all three conditions or say none.
+- **"The end-of-token symbol removes the short-token bias."** No. With uniform per-slot
+  distributions the score is still `-(L+1) ln 257`, and the correlation with length stays at
+  −0.99997 — a test caught this. The real defect is an **ordering**: without a stop symbol every
+  extra byte only subtracts, so a token that is a strict prefix of another **always** outscores it,
+  for every weight setting. `the` can never lose to `there`. EOT makes that ordering expressible,
+  which is a different and much stronger claim.
 
 ## Reporting numbers from here
 
