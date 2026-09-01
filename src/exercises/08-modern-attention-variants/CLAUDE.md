@@ -16,7 +16,7 @@ Every previous exercise measured something it ran. This one's central claim is a
 the instructor grades on it:
 
 > "Your job is to be right about the dates, right about the trade-offs, and clear about the story."
-
+>
 > "Your agent will happily invent a launch date and describe a technique it has half remembered.
 > Check every date against the actual paper or release."
 

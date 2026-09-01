@@ -12,6 +12,17 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **`tools/new_exercise.py` — scaffold a new exercise in one command.** It writes the whole skeleton
+  including the three gitignored files, joins the `rest` CI shard and adds the root README row, then
+  prints what is left. It deliberately does **not** add the landing card or the `SPINE_ENFORCED`
+  entry: both guards assert in two directions, so an entry without a `web/` directory is exactly as
+  red as a missing one.
+
+  `tests/test_new_exercise.py` runs it for real into a temporary directory and checks the output
+  against the **real** guards — importing `REQUIRED`, `REQUIRED_DIRS` and `_READERS` from the guard
+  modules rather than restating them, so the generator cannot drift from the conventions it encodes.
+  It caught the generator inserting the CI path after the shard's trailing `tests` entry.
+
 - **Exercise 08 — modern attention variants, scaffolded with a verified chronology.** Session 8 asks
   for a web app placing every attention mechanism in the order it was launched, and states the graded
   axis plainly: *"Your job is to be right about the dates."* So the first artifact is not the page but

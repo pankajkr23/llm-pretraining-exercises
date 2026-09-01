@@ -128,6 +128,31 @@ repo** — it is the real safety net.
 
 - **Exercise folders:** `src/exercises/NN-slug/` — numeric, **zero-padded**, slugged (e.g. `01-introductions`). Zero-pad so lexical sort = numeric order.
 - **Identical skeleton per exercise:** `BRIEF.md` (assignment — **local only, gitignored**) · `README.md` (what/how) · `pyproject.toml` (member) · code in one place (`src/` or `web/`) · `artifacts/` (gitignored outputs). Long reasoning gets its own tracked `DECISIONS.md`.
+- **Do not scaffold an exercise by hand. There is a generator.**
+  ```bash
+  uv run python tools/new_exercise.py 09 loss-functions-output-heads \
+      --title "Loss functions and output heads" --package lossheads \
+      --summary "One sentence for the root README row." [--dry-run]
+  ```
+  It writes the whole skeleton, **including the three gitignored files** (`BRIEF.md`, seeded from
+  `docs/sessions/sN_assignment.md` when one exists; `tools/build_notebook.py`; and the notebook it
+  builds), joins the `rest` CI shard, adds the root README row, and prints what is left for you.
+
+  **The sequencing is the reason it exists.** `tests/_exercises.py::exercises_in` only counts a
+  directory that has a `pyproject.toml`, so a new exercise is invisible to every guard until that
+  file lands — and the moment it does, six test families apply at once, three of them checking for
+  gitignored files a fresh clone will never have. Do it by hand and the suite goes red locally with
+  a message about files "going missing" that were never there.
+
+  **It deliberately does not touch the two web-gated registrations** — the landing card and the
+  `SPINE_ENFORCED` ledger — because both guards assert in *two* directions and a premature entry is
+  exactly as red as a missing one. It prints them as deferred instead.
+
+  `tests/test_new_exercise.py` runs the generator for real into a temporary directory and checks the
+  result against the **real** guards, importing `REQUIRED`, `REQUIRED_DIRS` and `_READERS` from the
+  guard modules rather than restating them. That is the point: a generator whose templates encode
+  the conventions is a second copy of them, and a second copy drifts. It has already earned its
+  keep — it caught the generator inserting the CI path *after* the shard's trailing `tests` entry.
 - **Set the folder up BEFORE writing code.** The skeleton is not paperwork to backfill. Exercise 06
   was scaffolded with `pyproject.toml` and modules but no `CLAUDE.md`, `PROGRESS.md`, `NOTICE` or
   `BRIEF.md`, because a convention that lives only in prose gets skipped under momentum.
@@ -319,6 +344,10 @@ When one of these overturns a published claim, correct it where the claim was ma
 
 Two more that cost this repo real defects:
 
+- **Registering a new exercise: five lists, two automatic, and `tools/new_exercise.py` does three
+  of the rest.** The generator handles the CI shard and the root README row; the landing card and the
+  spine ledger are deferred to whenever `web/` lands, because both fail in two directions. The
+  paragraph below is what the generator encodes — read it when it goes wrong, not before.
 - **Registering a new exercise: three lists, two of them automatic.** `deploy/vercel/build.sh`
   publishes any `src/exercises/*/web/` on its own, and the workspace glob picks up any
   `NN-slug/pyproject.toml` on its own. The two that are **hand-maintained** are the root README's

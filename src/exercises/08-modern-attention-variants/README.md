@@ -36,7 +36,7 @@ construct.
 
 Attention charges twice, and the two bills grow differently:
 
-```
+```text
 compute    grows with T²    every token scores against every other token
 KV cache   grows with T     every token's key and value are kept for the next one
 ```
