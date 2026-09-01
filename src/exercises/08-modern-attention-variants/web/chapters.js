@@ -477,14 +477,23 @@ function readingSpread(M) {
     figure.append(svg, cap);
   };
 
-  spread.show = (key) => {
+  /* `defer` is for the SWEEP and nothing else.
+   *
+   * The first version deferred every selection, including a reader's own click, so for 220ms after
+   * every click the figure was simply absent. That is invisible to a person — the eye has not
+   * arrived yet — and total to anything that captures the page: a save, a print, a PDF, a
+   * screenshot tool. A page save taken right after a click came back with no diagram in it at all.
+   * It is the same defect as the invoice cut line, which was there and not there depending on
+   * whether you had scrolled: content that exists only if you wait. A click draws immediately; only
+   * the sweep, which fires thirty times in twenty seconds, pays the delay it was written for. */
+  spread.show = (key, opts = {}) => {
     if (key === current) return;
     render(key);
     const m = byKey.get(key);
     if (!m) return;
     if (pending) clearTimeout(pending);
-    if (REDUCED) drawFigure(m);
-    else pending = setTimeout(() => drawFigure(m), 220);
+    if (opts.defer && !REDUCED) pending = setTimeout(() => drawFigure(m), 220);
+    else drawFigure(m);
   };
   render('standard_attention');
   drawFigure(byKey.get('standard_attention'));
@@ -596,7 +605,7 @@ function chapterResults(M, spreadRef) {
         const key = p.sweep(frac);
         if (key && key !== last) {
           last = key;
-          spread.show(key);
+          spread.show(key, { defer: true });
           p.select(key);
           const m = M.mechanisms.find((x) => x.key === key);
           note.textContent = `${m.date} · ${m.name}`;

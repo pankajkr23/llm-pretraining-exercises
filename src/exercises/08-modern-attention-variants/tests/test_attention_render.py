@@ -699,3 +699,40 @@ def test_the_sweep_control_does_not_collide_with_the_reading_spread(page) -> Non
     assert box[1] < spread - 4, (
         f"the sweep control (bottom {box[1]:.0f}) overlaps the reading spread (top {spread:.0f})"
     )
+
+
+def test_the_diagram_is_present_the_instant_a_mechanism_is_chosen(page) -> None:
+    """No waiting. A figure that needs a delay to appear is absent to anything that captures.
+
+    The figure build is deferred by 220ms so a running sweep does not rebuild a 720-unit drawing
+    thirty times. The first version applied that to every selection, including a reader's own
+    click — invisible to a person, because the eye has not arrived yet, and total to a save, a
+    print, a PDF or a screenshot tool. A page save taken just after a click came back with no
+    diagram in it at all, which is how this was found.
+
+    Same shape as the invoice cut line: content that exists only if you wait.
+    """
+    page.eval_on_selector(
+        '#results .plate-entry[data-key="alibi"]',
+        "e => e.dispatchEvent(new MouseEvent('click', {bubbles: true}))",
+    )
+    # deliberately no wait_for_timeout
+    present = page.eval_on_selector_all(".spread .diagram-svg", "els => els.length")
+    assert present == 1, (
+        f"{present} diagrams in the spread immediately after a click — a capture taken now would "
+        f"record the page without its figure"
+    )
+    shown = page.eval_on_selector(".spread .sp-name", "e => e.textContent")
+    assert "ALiBi" in shown, f"the spread shows {shown!r} rather than the mechanism clicked"
+
+
+def test_the_spread_never_stacks_more_than_one_diagram(page) -> None:
+    """`render()` wipes its two columns by hand, so the figure needs its own wipe."""
+    for key in ("mamba", "gqa", "yarn", "nsa"):
+        page.eval_on_selector(
+            f'#results .plate-entry[data-key="{key}"]',
+            "e => e.dispatchEvent(new MouseEvent('click', {bubbles: true}))",
+        )
+        page.wait_for_timeout(120)
+    count = page.eval_on_selector_all(".spread .diagram-svg", "els => els.length")
+    assert count == 1, f"after four selections the spread holds {count} diagrams"
