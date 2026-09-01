@@ -158,10 +158,10 @@ uv run pytest src/exercises/06-build-training-dataset -m integration
 
 **What CI runs, and the gap that used to be invisible.** The torch tests — the model, the training
 step, and the four-process `gloo` run — skip without the `train` extra, and `uv sync --all-packages`
-does not install it. That silently removed **46 of this exercise's 272 tests** and **every one of
-its 20 integration tests**: a module-level `importorskip` skips the whole file, a file that collects
-nothing looks exactly like a file with nothing in it, and the shard step treats pytest's exit code 5
-as success. Every gate stayed green.
+does not install it. That silently removed **63 of this exercise's 450 tests** and **every one of the
+20 torch-gated integration tests** (of 51 integration tests in total): a module-level `importorskip`
+skips the whole file, a file that collects nothing looks exactly like a file with nothing in it, and
+the shard step treats pytest's exit code 5 as success. Every gate stayed green.
 
 A dedicated **`train` job** now runs those files with CPU-only torch wheels — 191.8 MB rather than
 the 2.7 GB CUDA build, pinned by a Linux-scoped index in the root `pyproject.toml` — in parallel
@@ -189,8 +189,10 @@ not import is `plan.py` — recomputing the plan instead of reading the record w
 measurement circular in exactly the way this session is about — and torch.
 `test_replay_cannot_reach_the_planner_or_torch` walks the transitive closure for both, and
 `test_the_closure_check_would_notice_a_new_import` is the twin that fails when the walker stops
-seeing anything. The auditor's wall is stricter and still unbuilt: `verify.py` will import nothing
-from `trainingdata` except `spec.py`.
+seeing anything. The auditor's wall is stricter, and it is built: `verify.py` imports nothing from
+`trainingdata` except `spec.py`, asserted transitively, and re-derives every published claim from
+the bundle alone — 40 of 40 checks. (This sentence read *"stricter and still unbuilt"* for months
+after it was built, eight lines below a paragraph saying so.)
 
 ## What it cannot establish
 
