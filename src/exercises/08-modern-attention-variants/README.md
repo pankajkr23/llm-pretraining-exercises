@@ -1,6 +1,6 @@
 # 08 · Modern attention variants — in the order they were launched
 
-**Twenty-four ways of computing attention and of telling a model where a token sits, ordered by the
+**Thirty ways of computing attention and of telling a model where a token sits, ordered by the
 date each one actually appeared, with every date read from the primary source.**
 
 Session 8's assignment is not to describe attention mechanisms. It is to put them in **chronological
@@ -132,7 +132,7 @@ does not say which was meant.
 
 Derived by `timeline.pressure_by_period`, not asserted. The brief predicts a tidy sequence —
 *"first it wants exactness, then it wants memory back, then it wants length, then it wants memory
-back again"* — and the data is messier than that: **one of the six two-year windows has no single
+back again"* — and the data is messier than that: **one of the seven two-year windows has no single
 dominant pressure at all.** In that period the field was attacking several bills at once, and a test
 fails if that ever stops being true, so the finding cannot quietly become the tidy story.
 
@@ -160,7 +160,7 @@ Five things visible only on a date axis, and not from any list:
   GQA to make head sharing tunable; the delta rule waited 1,204 days for a parallel formulation.
   Publication date and usable date are not the same date, and only the axis shows the gap.
 
-### Five mechanisms the coverage list did not name
+### Eleven mechanisms the coverage list did not name
 
 Each is on the timeline, each carries the URL its date was read from, and each is marked `†` on the
 page's index plate.
@@ -172,6 +172,41 @@ page's index plate.
 | **FlashAttention** | 2022-05-27 | [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness](https://arxiv.org/abs/2205.14135) | `[v1] Fri, 27 May 2022 17:53:09 UTC (1,325 KB)` |
 | **Mamba (selective state space)** | 2023-12-01 | [Mamba: Linear-Time Sequence Modeling with Selective State Spaces](https://arxiv.org/abs/2312.00752) | `[v1] Fri, 1 Dec 2023 18:01:34 UTC (1,264 KB)` |
 | **Parallelised DeltaNet** | 2024-06-10 | [Parallelizing Linear Transformers with the Delta Rule over Sequence Length](https://arxiv.org/abs/2406.06484) | `[v1] Mon, 10 Jun 2024 17:24:42 UTC (124 KB)` |
+| **Kimi Delta Attention (KDA)** | 2025-10-30 | [Kimi Linear: An Expressive, Efficient Attention Architecture](https://arxiv.org/abs/2510.26692) | `[v1] Thu, 30 Oct 2025 16:59:43 UTC (645 KB)` |
+| **Mamba-3** | 2026-03-16 | [Mamba-3: Improved Sequence Modeling using State Space Principles](https://arxiv.org/abs/2603.15569) | `[v1] Mon, 16 Mar 2026 17:30:08 UTC (247 KB)` |
+| **Compressed sparse attention (DeepSeek-V4)** | 2026-04-26 | [DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence](https://arxiv.org/abs/2606.19348) | `[v1] Sun, 26 Apr 2026 14:49:33 UTC (2,854 KB)` |
+| **Gated DeltaNet-2** | 2026-05-21 | [Gated DeltaNet-2: Decoupling Erase and Write in Linear Attention](https://arxiv.org/abs/2605.22791) | `[v1] Thu, 21 May 2026 17:44:57 UTC (94 KB)` |
+| **MiniMax sparse attention (MSA)** | 2026-06-11 | [MiniMax Sparse Attention](https://arxiv.org/abs/2606.13392) | `[v1] Thu, 11 Jun 2026 14:23:41 UTC (3,976 KB)` |
+| **Higher-dimensional RoPE (HD-RoPE)** | 2026-08-30 | [Higher-Dimensional Rotary Position Embedding](https://arxiv.org/abs/2608.29715) | `[v1] Sun, 30 Aug 2026 10:46:24 UTC (1,372 KB)` |
+
+**The last six carry the timeline to 31 August 2026**, and they are the reason the plate does not
+stop at a round number. Every one of them was verified by opening its arXiv abstract page and
+copying the submission-history line printed in the table above; six of the six are dated after the
+point the reference material stops.
+
+**The position lane now ends on a contradiction, and that is the finding.** DroPE (2025-12-13)
+concludes that positional embeddings should be *deleted* and the model left to infer order from the
+causal mask. HD-RoPE (2026-08-30) concludes they should be made *richer* — rotating in higher
+dimensions rather than in independent planes. Both report gains over standard RoPE. A chronology can
+show that the field has not settled this; it cannot settle it.
+
+**What we looked for and did not find is also a result.** We checked every frontier lab through
+31 August 2026:
+
+- **OpenAI, Anthropic and Meta published no architecture at all** in the window — system cards
+  without attention mechanisms, positional schemes or parameter counts. Nothing to put on a
+  chronology of mechanisms.
+- **GLM-5, Qwen, Gemma, ERNIE and Kimi K3 describe their attention in terms of mechanisms already
+  on this plate** — grouped-query, latent, sliding-window, sparse, and the delta-rule family. They
+  are evidence about *adoption*, which is a different axis and one this page cannot see.
+- **Gnani.ai has published no attention mechanism.** Searched and found nothing — they build
+  conversational voice systems rather than architectures. Recorded so the absence is a checked
+  result rather than an unchecked assumption.
+- **JEPA and the world-model line do not belong here, and it took checking to say so.** JEPA
+  changes the *objective* — predict in representation space instead of reconstructing the input —
+  while its encoders remain vision transformers running ordinary softmax attention. Every in-window
+  JEPA paper we checked changes the loss, the regulariser or the domain; not one touches attention.
+  World models apply existing mechanisms rather than inventing them.
 
 **Bahdanau earns its place by being first.** Attention is on this timeline three years before the
 Transformer, and a chronology that starts in 2017 hides the single most surprising thing in it.
@@ -185,6 +220,13 @@ overlay to mark the difference.
 **Mamba and Parallelised DeltaNet earn theirs by closing gaps the timeline makes visible.** The
 delta rule was published in 2021 and was sequential by construction; it sat unusable for **1,204
 days** until someone parallelised it. You cannot see a hole like that in a list.
+
+**Where to look next, and how we used it.** Sebastian Raschka's
+[*A Visual Guide to Attention Variants in Modern LLMs*](https://magazine.sebastianraschka.com/p/visual-attention-variants)
+is the best single index of which attention variants are actually running inside shipped models,
+and his architecture comparisons are how several of the leads above were found. It is used here as
+an **index, never as a date**: every date on this page was read from the paper's own arXiv abstract
+page, because a date copied from a secondary source is exactly the failure this work is graded on.
 
 ### One mechanism the coverage list named and we had wrong
 
@@ -224,22 +266,22 @@ before it can rank them, so it reduces the work *after* selection and not the sc
 <https://llm-pretraining-demos.vercel.app/08-modern-attention-variants/>
 
 Twelve sections carrying the spine `AGENTS.md` requires, set as a **monograph feature**: six
-numbered plates, six chapters, and the twenty-four mechanisms as *one object entered twenty-four
-times* rather than twenty-four collapsed cards a reader has to click through.
+numbered plates, six chapters, and the thirty mechanisms as *one object entered thirty times*
+rather than thirty collapsed cards a reader has to click through.
 
 The spine sentence is the thing the session never states, and it is what makes drawing this worth
 doing rather than restating the reading: **attention is one idea that sent two bills, and almost
 everything since is somebody who could not pay one of them.** The two bills are the triangle of
 scores between every pair of tokens, and the cache holding what each past token contributed.
 
-Three views of the same twenty-four, because they answer different questions and a reader should
+Three views of the same thirty, because they answer different questions and a reader should
 not have to interact to get an answer to any of them:
 
 | view | what it answers | interaction needed |
 | --- | --- | --- |
-| **Plate III**, the chronology | *where* each sits in time, and which bill it pays | none — all 24 at once |
+| **Plate III**, the chronology | *where* each sits in time, and which bill it pays | none — all 30 at once |
 | the reading spread | *what one of them traded*, in depth | one click, and it is pre-loaded |
-| the index plate | *comparability* — 24 rows, same six fields, same six places | none |
+| the index plate | *comparability* — 30 rows, same six fields, same six places | none |
 
 Every mechanism carries a **glyph** drawn by one of four generators from a `pattern` block in the
 catalogue, so a glyph is derived from data rather than hand-drawn per mechanism. Two of those

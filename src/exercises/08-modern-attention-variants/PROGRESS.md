@@ -20,7 +20,7 @@ pipeline is fine, and the link must resolve for a logged-out stranger.
 
 | # | item | status | note |
 | --- | --- | --- | --- |
-| O1 | **The catalogue** | **done** | 24 mechanisms, every date read from the primary source and cross-checked against the source's own wording. 19 required by the coverage list + 5 beyond it. |
+| O1 | **The catalogue** | **done** | 30 mechanisms, 2014 to Aug 2026, every date read from the primary source and cross-checked against the source's own wording. 19 required by the coverage list + 5 beyond it. |
 | O2 | **The arithmetic** | **done** | The session's 6.44 GB / 51.54 GB / 4× GQA all reproduce exactly from `cache.py`. |
 | O3 | **The page** | **done** | Twelve spine sections, the two-object mechanism figure and the timeline, at `/08-modern-attention-variants/`. Registered in the landing card, `SPINE_ENFORCED` and `OPTIONAL_DEPENDENCY_GATES` in the same change. 20 browser tests. |
 | O4 | **Question 2's written answer** | **open** | The findings are on the page's conclusion section and in the README; they still need pasting into the platform's answer field. |
@@ -106,7 +106,7 @@ which was meant — so neither number is published alone.
   `results/mechanisms.json`.
 - **No torch.** Nothing here trains, so the exercise is fully verified by CI's default sync rather
   than needing the `train` extra and a separate job.
-- 24 mechanisms catalogued, every date verified against its primary source and cross-checked
+- 30 mechanisms catalogued, every date verified against its primary source and cross-checked
   against the source's own quoted wording.
 - Registered in the `rest` integration shard and the root README table. **Not** registered in
   `deploy/vercel/index.html` or `SPINE_ENFORCED` — both guards fail in *both* directions, so an
@@ -168,6 +168,27 @@ no graphics, misaligned. Rebuilt as a monograph feature — six numbered plates,
   glyph alphabet. All eleven code cells were executed against the package rather than assumed to run.
 - **The Q2 deliverable is written down**: five findings visible only on a date axis, the five
   mechanisms beyond the coverage list with their dates and sources, and the one we had wrong.
+
+---
+
+## Carried to the frontier (this pass)
+
+- **Six mechanisms added, taking the timeline to 31 August 2026**: Kimi Delta Attention
+  (2025-10-30), Mamba-3, DeepSeek-V4's compressed sparse attention, Gated DeltaNet-2, MiniMax
+  sparse attention, and higher-dimensional RoPE (2026-08-30). Every arXiv abstract page opened and
+  its submission-history line copied by hand; no date taken on a research agent's word.
+- **KDA was a gap, not an extension.** Kimi Linear is dated October 2025 — it predates DroPE and
+  should always have been on the plate.
+- **The position lane now ends on a contradiction.** DroPE concludes positional embeddings should
+  be deleted; HD-RoPE, eight months later, concludes they should be made richer. Both report gains.
+  Well IV's headline was rewritten because it stated a day count that the new entry invalidated.
+- **Negative results recorded as results.** OpenAI, Anthropic and Meta published no architecture in
+  the window. GLM-5, Qwen, Gemma, ERNIE and Kimi K3 use mechanisms already on the plate. JEPA and
+  world models change the objective, not the attention. Gnani.ai has published no mechanism at all.
+- **Two page bugs found by PK that no test caught**: the sweep control threw on every click because
+  the plate wrapper forwarded `select` and not `sweep`, and Plate V had no replay control.
+- **Neutral voice.** Every word tying the page to a particular class or assignment is gone from the
+  page, the served NOTICE and the meta description.
 
 ---
 

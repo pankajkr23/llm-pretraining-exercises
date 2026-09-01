@@ -864,6 +864,45 @@ export const M = Object.freeze({
       }
     },
     {
+      "key": "kda",
+      "name": "Kimi Delta Attention (KDA)",
+      "aka": [
+        "Kimi Linear",
+        "KDA"
+      ],
+      "date": "2025-10-30",
+      "year": 2025,
+      "bill": "both",
+      "taught": false,
+      "bonus": true,
+      "whatExisted": "Gated DeltaNet had made a fixed-size state forgetful, with one scalar gate deciding how much of the old state to keep.",
+      "problem": "A scalar gate applies the same decay to every channel of the state at once, so a model cannot forget one kind of association while holding on to another.",
+      "mechanism": "Extend the gated delta rule with channel-wise gating so each dimension of the state decays at its own rate, run through a chunkwise algorithm built on a restricted diagonal-plus-low-rank transition, and interleave three such layers with one full-attention layer.",
+      "whatItFixed": "Finer control of a finite state. The hybrid beat full multi-head latent attention on every task its authors evaluated, at up to 75% less KV cache and up to six times the decoding throughput at a million tokens.",
+      "newTradeoff": "It is a hybrid, not a replacement: one layer in four is still full attention, so the cache still grows with the sequence - just four times more slowly. The saving depends on that ratio continuing to hold at scale.",
+      "buys": "Most of full attention's quality at a quarter of its cache, with fixed-state layers doing the bulk of the sequence mixing.",
+      "givesUp": "Architectural simplicity, and exact recall in three layers out of every four.",
+      "whenToChoose": "Long-context serving where the cache is the binding constraint and you can design the layer stack around a fixed ratio.",
+      "glyph": {
+        "kind": "state",
+        "params": {
+          "write": "add+correct",
+          "gated": "channelwise"
+        },
+        "scale": "schematic",
+        "source": "A state box whose gate is drawn per channel rather than as one mark, because the whole change is that decay is no longer a single scalar. The number of channels drawn is ours."
+      },
+      "source": {
+        "kind": "paper",
+        "title": "Kimi Linear: An Expressive, Efficient Attention Architecture",
+        "url": "https://arxiv.org/abs/2510.26692",
+        "arxiv": "2510.26692",
+        "quoted": "[v1] Thu, 30 Oct 2025 16:59:43 UTC (645 KB)",
+        "verifiedOn": "2026-09-01",
+        "note": "Kimi Team (Moonshot AI). Read from the arXiv abstract page. A v2 followed on 1 Nov 2025; the v1 date is the one recorded, as everywhere else on this timeline."
+      }
+    },
+    {
       "key": "drope",
       "name": "DroPE",
       "aka": [],
@@ -898,26 +937,224 @@ export const M = Object.freeze({
         "verifiedOn": "2026-09-01",
         "note": "Gelberg, Eguchi, Akiba, Cetin (Sakana AI). CAUTION: a different paper, DRoPE with a capital R (arXiv:2503.15029, 'Directional Rotary Position Embedding for Efficient Agent Interaction Modeling', 19 Mar 2025), is an autonomous-driving trajectory paper and is NOT this technique - the course transcript quotes its title while describing this mechanism. The two differ by one capital letter."
       }
+    },
+    {
+      "key": "mamba3",
+      "name": "Mamba-3",
+      "aka": [
+        "Mamba 3"
+      ],
+      "date": "2026-03-16",
+      "year": 2026,
+      "bill": "both",
+      "taught": false,
+      "bonus": true,
+      "whatExisted": "Mamba-2 and the gated delta rule had shown a selective fixed-size state could compete with attention on language modelling.",
+      "problem": "Those models bought efficiency by giving up capability - they failed at tracking state through a sequence - and their theoretical linearity did not translate into hardware efficiency in practice.",
+      "mechanism": "Three changes taken from the state-space view: a more expressive recurrence from a better discretisation, a complex-valued state update that permits richer state tracking, and a multi-input multi-output formulation that adds capacity without adding decode latency.",
+      "whatItFixed": "Retrieval and state tracking both improved. At 1.5B parameters it beat Gated DeltaNet by 0.6 points of average downstream accuracy and its MIMO variant by 1.8, and matched Mamba-2's perplexity on half the state.",
+      "newTradeoff": "The gains are measured at 1.5B parameters against other sub-quadratic models, not against full attention at frontier scale, and a complex-valued state is a commitment made in the kernel.",
+      "buys": "A fixed-size state that finally tracks state, at half the memory its predecessor needed for the same perplexity.",
+      "givesUp": "What every fixed state gives up - exact recall of an arbitrary earlier token - plus simplicity of implementation.",
+      "whenToChoose": "When you want constant-memory decoding and your workload includes tasks that need the model to follow state rather than only retrieve.",
+      "glyph": {
+        "kind": "state",
+        "params": {
+          "write": "selective",
+          "rotating": true
+        },
+        "scale": "schematic",
+        "source": "A state box with a rotation mark, for the complex-valued update that is the paper's distinguishing change. The mark is a symbol, not a measurement."
+      },
+      "source": {
+        "kind": "paper",
+        "title": "Mamba-3: Improved Sequence Modeling using State Space Principles",
+        "url": "https://arxiv.org/abs/2603.15569",
+        "arxiv": "2603.15569",
+        "quoted": "[v1] Mon, 16 Mar 2026 17:30:08 UTC (247 KB)",
+        "verifiedOn": "2026-09-01",
+        "note": "Lahoti, Li, Chen, Wang, Bick, Kolter, Dao, Gu - including both original Mamba authors. Read from the arXiv abstract page."
+      }
+    },
+    {
+      "key": "deepseek_csa",
+      "name": "Compressed sparse attention (DeepSeek-V4)",
+      "aka": [
+        "CSA",
+        "HCA",
+        "DeepSeek-V4 hybrid attention"
+      ],
+      "date": "2026-04-26",
+      "year": 2026,
+      "bill": "both",
+      "taught": false,
+      "bonus": true,
+      "whatExisted": "DeepSeek's own line: multi-head latent attention to shrink the cache, then natively sparse attention to choose what to read.",
+      "problem": "At a million tokens neither compression nor selection is enough alone. Both the per-token compute and the cache have to come down, and by a large factor, in the same architecture.",
+      "mechanism": "Two interleaved layer types. Compressed sparse attention folds the KV cache of every m tokens into one entry and then runs sparse selection over the result; heavily compressed attention consolidates far more tokens per entry and stays dense.",
+      "whatItFixed": "At a one-million-token context the model reports 27% of the per-token inference FLOPs and 10% of the KV cache of its own predecessor.",
+      "newTradeoff": "A query cannot see the other tokens inside its own compressed block, which the design patches with a sliding-window branch for local detail. Compression is permanent: what a block summary drops is not recoverable by anything downstream.",
+      "buys": "A tenfold cache reduction at a million tokens, in a shipped frontier model rather than in a benchmark.",
+      "givesUp": "Token-level detail inside every compressed block, and any ability to revisit the compression ratio after pretraining.",
+      "whenToChoose": "When a million-token context is the product requirement and you control the architecture from pretraining onward.",
+      "glyph": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "blocks": 3,
+          "selected": 2,
+          "window": 3,
+          "compressed": true
+        },
+        "scale": "schematic",
+        "source": "Selected blocks plus a local window, with a compression mark, because it layers compression underneath the selection its predecessor already did. Block size and how many are selected are ours."
+      },
+      "source": {
+        "kind": "paper",
+        "title": "DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence",
+        "url": "https://arxiv.org/abs/2606.19348",
+        "arxiv": "2606.19348",
+        "quoted": "[v1] Sun, 26 Apr 2026 14:49:33 UTC (2,854 KB)",
+        "verifiedOn": "2026-09-01",
+        "note": "DeepSeek-AI, 538 authors. Read from the arXiv abstract page. NOTE A DISCREPANCY WE DID NOT RESOLVE: the identifier is 2606, which normally encodes June 2026, while the submission-history line says 26 April 2026. The usual cause is a hold between submission and announcement. We record the v1 line because that is this catalogue's stated convention everywhere else, and we flag the disagreement rather than choosing silently."
+      }
+    },
+    {
+      "key": "gated_deltanet2",
+      "name": "Gated DeltaNet-2",
+      "aka": [
+        "Gated Delta Rule-2"
+      ],
+      "date": "2026-05-21",
+      "year": 2026,
+      "bill": "both",
+      "taught": false,
+      "bonus": true,
+      "whatExisted": "Gated DeltaNet combined the delta rule's corrective write with adaptive forgetting, and Kimi Delta Attention sharpened the forgetting into a per-channel decay.",
+      "problem": "Both still used a single scalar gate to control two different things: how much old content to erase on the key side, and how much new content to commit on the value side.",
+      "mechanism": "Separate the two roles into a channel-wise erase gate and a channel-wise write gate, with a chunkwise algorithm that absorbs the decay into asymmetric erase factors. It collapses back to Kimi Delta Attention when both gates agree, and to Gated DeltaNet when the decay collapses too.",
+      "whatItFixed": "At 1.3B parameters on 100B tokens it was the strongest of Mamba-2, Gated DeltaNet, Kimi Delta Attention and Mamba-3 across language modelling, commonsense reasoning and retrieval, with its largest margin on long-context needle-in-a-haystack retrieval.",
+      "newTradeoff": "Two gates mean more parameters and a more intricate backward pass, for a gain demonstrated at 1.3B - the scale at which linear-attention comparisons are usually run, and well below the scale at which the cache actually hurts.",
+      "buys": "Independent control of forgetting and writing, which is what a fixed state needs in order to edit itself without scrambling what it already holds.",
+      "givesUp": "Simplicity, and the exact recall every fixed-size state gives up.",
+      "whenToChoose": "As the current default for the linear-attention layers of a hybrid, where it strictly generalises both of the mechanisms it replaces.",
+      "glyph": {
+        "kind": "state",
+        "params": {
+          "write": "add+correct",
+          "gates": 2
+        },
+        "scale": "schematic",
+        "source": "Two separate gate marks on the state box, for the erase gate and the write gate the paper decouples. Their size and placement are ours."
+      },
+      "source": {
+        "kind": "paper",
+        "title": "Gated DeltaNet-2: Decoupling Erase and Write in Linear Attention",
+        "url": "https://arxiv.org/abs/2605.22791",
+        "arxiv": "2605.22791",
+        "quoted": "[v1] Thu, 21 May 2026 17:44:57 UTC (94 KB)",
+        "verifiedOn": "2026-09-01",
+        "note": "Hatamizadeh, Choi, Kautz (NVIDIA). Read from the arXiv abstract page."
+      }
+    },
+    {
+      "key": "msa",
+      "name": "MiniMax sparse attention (MSA)",
+      "aka": [
+        "MSA"
+      ],
+      "date": "2026-06-11",
+      "year": 2026,
+      "bill": "compute",
+      "taught": false,
+      "bonus": true,
+      "whatExisted": "Grouped-query attention as the standard cache saving, and a decade of sparse-attention proposals whose savings rarely survived contact with real kernels.",
+      "problem": "Agentic workflows and repository-scale reasoning need hundreds of thousands to millions of tokens attended jointly, and softmax's quadratic cost makes that untenable at deployment scale.",
+      "mechanism": "Blockwise sparsity built on top of grouped-query attention: a lightweight index branch scores key-value blocks and selects a top-k subset independently for each query group, and a main branch then runs exact block-sparse attention over only the selected blocks.",
+      "whatItFixed": "On a 109B natively multimodal model it matched grouped-query attention while cutting per-token attention compute by 28.4x at a million tokens - and, unusually, reported the wall-clock result too: 14.2x prefill and 7.6x decoding speedups on H800.",
+      "newTradeoff": "The wall-clock speedup is far below the FLOP reduction, because index construction, top-k selection and load balancing eat the difference. And each query attends to roughly two thousand tokens however long the context is.",
+      "buys": "Sparsity that shows up on a clock rather than only in a flop count, on hardware people actually have.",
+      "givesUp": "Exactness outside the selected blocks, and any growth in what a single query can see as the context grows.",
+      "whenToChoose": "Ultra-long-context serving where deployment cost is the constraint and a bounded per-query budget is acceptable.",
+      "glyph": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "blocks": 4,
+          "selected": 2,
+          "window": 2,
+          "grouped": true
+        },
+        "scale": "schematic",
+        "source": "Blocks selected per query group, drawn as selection with a grouping mark. How many blocks and how many are selected are ours; the paper's point is that selection is per group."
+      },
+      "source": {
+        "kind": "paper",
+        "title": "MiniMax Sparse Attention",
+        "url": "https://arxiv.org/abs/2606.13392",
+        "arxiv": "2606.13392",
+        "quoted": "[v1] Thu, 11 Jun 2026 14:23:41 UTC (3,976 KB)",
+        "verifiedOn": "2026-09-01",
+        "note": "MiniMax. Read from the arXiv abstract page. A v2 followed the next day; the v1 date is recorded, as everywhere else here."
+      }
+    },
+    {
+      "key": "hd_rope",
+      "name": "Higher-dimensional RoPE (HD-RoPE)",
+      "aka": [
+        "HD-RoPE"
+      ],
+      "date": "2026-08-30",
+      "year": 2026,
+      "bill": "position",
+      "taught": false,
+      "bonus": true,
+      "whatExisted": "Rotary embeddings, and five years of repairs to how they behave past the trained length - ending in a proposal to delete positional embeddings altogether.",
+      "problem": "RoPE rotates independent two-dimensional pairs, so its structure is pairwise, block-based and decoupled. Channels barely mix, which its authors argue limits both the depth of mixing and robustness across channels.",
+      "mechanism": "Extend the rotation from independent 2D planes to higher-dimensional rotations, using a Paley-I orthogonal basis to get balanced, isotropic, dense phase mixing inside each rotation subspace - while keeping orthogonality and the relative-position closure that made RoPE work in the first place.",
+      "whatItFixed": "Reported improvements over standard RoPE across benchmarks in both long and short contexts, with no additional trainable parameters.",
+      "newTradeoff": "It reaches the opposite conclusion to the entry before it. Where DroPE proposes removing positional embeddings, this makes them richer - and both cannot be right.",
+      "buys": "Denser channel coupling and more rotational freedom, at no parameter cost and no inference cost.",
+      "givesUp": "The simplicity of independent 2D rotations, and the engineering familiarity of the most widely deployed positional scheme there is.",
+      "whenToChoose": "When you are pretraining and can pay a small implementation cost for a positional scheme that mixes channels rather than isolating them.",
+      "glyph": {
+        "kind": "bands",
+        "params": {
+          "rows": 6,
+          "coupled": true
+        },
+        "scale": "schematic",
+        "source": "Bands with coupling marks between them, because the change is that rotation subspaces mix rather than staying independent. The number of bands drawn is ours."
+      },
+      "source": {
+        "kind": "paper",
+        "title": "Higher-Dimensional Rotary Position Embedding",
+        "url": "https://arxiv.org/abs/2608.29715",
+        "arxiv": "2608.29715",
+        "quoted": "[v1] Sun, 30 Aug 2026 10:46:24 UTC (1,372 KB)",
+        "verifiedOn": "2026-09-01",
+        "note": "Li, Xie, Zhang, Bai, Sun, Cheng. Read from the arXiv abstract page. The most recent entry on this timeline, and the reason the timeline ends where it does rather than at a round number."
+      }
     }
   ],
   "counts": {
-    "total": 24,
+    "total": 30,
     "mandated": 18,
-    "bonus": 5,
-    "outsideSession": 11,
-    "schematic": 19,
+    "bonus": 11,
+    "outsideSession": 17,
+    "schematic": 25,
     "glyphKinds": {
-      "bands": 5,
-      "field": 11,
+      "bands": 6,
+      "field": 13,
       "stack": 3,
-      "state": 5
+      "state": 8
     },
     "bills": {
       "origin": 2,
-      "position": 7,
-      "compute": 4,
+      "position": 8,
+      "compute": 5,
       "cache": 4,
-      "both": 7
+      "both": 11
     }
   },
   "periods": [
@@ -1003,7 +1240,7 @@ export const M = Object.freeze({
       "dominant": "both",
       "counts": {
         "cache": 1,
-        "both": 3,
+        "both": 4,
         "position": 1
       },
       "mechanisms": [
@@ -1011,7 +1248,25 @@ export const M = Object.freeze({
         "deltanet_parallel",
         "gated_deltanet",
         "nsa",
+        "kda",
         "drope"
+      ]
+    },
+    {
+      "start": 2026,
+      "end": 2027,
+      "dominant": "both",
+      "counts": {
+        "both": 3,
+        "compute": 1,
+        "position": 1
+      },
+      "mechanisms": [
+        "mamba3",
+        "deepseek_csa",
+        "gated_deltanet2",
+        "msa",
+        "hd_rope"
       ]
     }
   ],
@@ -1032,14 +1287,14 @@ export const M = Object.freeze({
       "days": 360
     },
     {
-      "before": "nsa",
-      "after": "drope",
-      "days": 300
-    },
-    {
       "before": "alibi",
       "after": "flashattention",
       "days": 273
+    },
+    {
+      "before": "nsa",
+      "after": "kda",
+      "days": 256
     }
   ],
   "quietStretch": {
@@ -1143,25 +1398,27 @@ export const M = Object.freeze({
         "sliding_window",
         "mqa",
         "gqa",
-        "mla"
+        "mla",
+        "msa"
       ],
       "from": "2019-04-23",
-      "to": "2024-05-07"
+      "to": "2026-06-11"
     },
     {
       "numeral": "IV",
-      "headline": "We shipped a position scheme in 2021 and spent 1,698 days repairing it.",
-      "standfirst": "Rotary embeddings solved relative distance elegantly and left one bomb: run past the trained length and the rotation keeps going. Three repairs follow, and the last one is to delete it.",
+      "headline": "We shipped a position scheme in 2021 and we are still arguing about it.",
+      "standfirst": "Rotary embeddings solved relative distance elegantly and left one bomb: run past the trained length and the rotation keeps going. Three repairs follow. Then one paper concludes the answer is to delete positional embeddings entirely -- and the next one concludes the answer is to make them richer. Both cannot be right.",
       "pullQuote": "Stop repairing it and remove it.",
       "keys": [
         "rope",
         "alibi",
         "ntk_aware",
         "yarn",
-        "drope"
+        "drope",
+        "hd_rope"
       ],
       "from": "2021-04-20",
-      "to": "2025-12-13"
+      "to": "2026-08-30"
     },
     {
       "numeral": "V",
@@ -1178,7 +1435,7 @@ export const M = Object.freeze({
     {
       "numeral": "VI",
       "headline": "Then stop keeping everything.",
-      "standfirst": "If the cache is the bill, refuse to hold a cache. Fold the past into a fixed-size state instead -- and pay, every time, in the one way none of these six escapes.",
+      "standfirst": "If the cache is the bill, refuse to hold a cache. Fold the past into a fixed-size state instead. Four generations of that idea are here, each fixing the last one's way of forgetting -- and every one of them pays in the same single way.",
       "pullQuote": "The state is a lossy summary, and what it lost is not recoverable.",
       "keys": [
         "linear_attention",
@@ -1186,10 +1443,14 @@ export const M = Object.freeze({
         "mamba",
         "deltanet_parallel",
         "gated_deltanet",
-        "nsa"
+        "kda",
+        "nsa",
+        "mamba3",
+        "deepseek_csa",
+        "gated_deltanet2"
       ],
       "from": "2020-06-29",
-      "to": "2025-02-16"
+      "to": "2026-05-21"
     }
   ],
   "perYear": [
@@ -1239,7 +1500,11 @@ export const M = Object.freeze({
     },
     {
       "year": 2025,
-      "count": 2
+      "count": 3
+    },
+    {
+      "year": 2026,
+      "count": 5
     }
   ],
   "transcriptDiscrepancy": {

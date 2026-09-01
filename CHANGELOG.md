@@ -33,6 +33,39 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   never fired, plate labels printing over each other, and glyph marks escaping their own viewBox
   onto a neighbour's caption.
 
+- **The timeline now runs to 31 August 2026.** Six mechanisms added after a sweep of everything
+  published since DroPE, each verified by opening its arXiv abstract page and copying the
+  submission-history line: **Kimi Delta Attention** (2025-10-30, arXiv:2510.26692 — a gap, not an
+  extension: it predates DroPE), **Mamba-3** (2026-03-16), **DeepSeek-V4's compressed sparse
+  attention** (2026-04-26), **Gated DeltaNet-2** (2026-05-21), **MiniMax sparse attention**
+  (2026-06-11) and **higher-dimensional RoPE** (2026-08-30). Thirty mechanisms in total.
+
+- **The position lane ends on a contradiction, and the page says so.** DroPE concludes positional
+  embeddings should be deleted; HD-RoPE, eight months later, concludes they should be made richer.
+  Both report gains over standard RoPE. The page ends on the open question rather than resolving it.
+
+- **Negative results recorded as results.** OpenAI, Anthropic and Meta published no architecture at
+  all in the window; GLM-5, Qwen, Gemma, ERNIE and Kimi K3 describe their attention with mechanisms
+  already on the plate; and JEPA and the world-model line change the training objective while their
+  encoders keep running ordinary softmax attention. All three are in the page's *limits*, because
+  the recent end of the plate is drawn almost entirely from labs that publish papers.
+
+- **Fixed: the plate's sweep control threw on every click.** The wrapper holding both plates
+  forwarded `select` and not `sweep`, so the animation died on frame one and the button stuck on
+  "Stop". The existing test called `sweep()` on the SVG directly and so never touched the wiring.
+
+- **Fixed: the sweep control straddled the reading spread's rule**, and Plate V had no way to
+  replay its animation.
+
+- **Added: a "How to read this" opening**, explaining the two costs the whole page hangs off in
+  plain words and offering three ways in; and **orientation briefs above Plates V and VI**, which
+  showed objects — two rotary dials, forty tokens under a sliding window — that were not guessable
+  from a caption written to argue after the fact.
+
+- **Neutral voice throughout.** Every word tying the page to a particular class or assignment is
+  gone from the page, the served NOTICE and the meta description. The corrections are unchanged in
+  substance; they now correct "our sources".
+
 - **Top-k attention (2019-12-25)** — a required mechanism that was missing, and mis-described. The
   coverage list names *"sparse and top-k attention"*; only the sparse half was catalogued, and its
   entry claimed "top-k attention" as an alias, asserting that a fixed pattern chosen before the

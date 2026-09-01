@@ -628,6 +628,13 @@ def test_the_page_states_its_own_size_correctly(page) -> None:
         "twenty-five",
         "twenty-six",
         "twenty-seven",
+        "twenty-eight",
+        "twenty-nine",
+        "thirty",
+        "thirty-one",
+        "thirty-two",
+        "thirty-three",
+        "thirty-four",
     ]
     total = len(_bundle()["mechanisms"])
     assert 20 <= total < 20 + len(words), f"extend the word list for a catalogue of {total}"

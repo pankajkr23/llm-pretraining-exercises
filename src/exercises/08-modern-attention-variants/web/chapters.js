@@ -847,6 +847,18 @@ function chapterLimits(M) {
       '**Launch date is not adoption date.** An arXiv v1 is when an idea became public, not when ' +
         'it became the default. The plate therefore shows when the field could have moved, not ' +
         'when it did.',
+      '**The most-used models are the least documented.** We checked every frontier lab for a new ' +
+        'mechanism through 31 August 2026. OpenAI, Anthropic and Meta published no architecture at ' +
+        'all in that window — system cards without attention mechanisms, positional schemes or ' +
+        'parameter counts. So the recent end of this plate is drawn almost entirely from labs that ' +
+        'publish papers, which is a real bias in what a chronology like this can see, not an ' +
+        'accident of our searching.',
+      '**Attention is not the only architecture, and this page only covers attention.** JEPA and ' +
+        'the world-model line change the training *objective* — predict in representation space ' +
+        'rather than reconstruct the input — while their encoders remain transformers running ' +
+        'ordinary softmax attention. Nothing in that family between December 2025 and August 2026 ' +
+        'proposed a new attention mechanism, so nothing from it is on the plate. That is a finding ' +
+        'about where the innovation is happening, not a gap in coverage.',
     ],
     { short: 'Limits', sub: 'What it cannot establish' }
   );
@@ -867,6 +879,12 @@ function chapterNext() {
         'each paper, and the glyphs stop being schematic.',
       '**A cost model that ranks.** The invoice prices the cache exactly. Pricing the compute bill ' +
         'the same way would let the plate be sorted by what a mechanism actually saves.',
+      '**Settle the position argument.** The last two entries on this plate disagree outright. One ' +
+        'concludes that positional embeddings should be deleted and the model left to infer order ' +
+        'from the causal mask; the next concludes they should be made richer, rotating in higher ' +
+        'dimensions rather than independent planes. Both report gains. Nothing here can say which ' +
+        'is right, and the plate ends on an open question rather than a conclusion — which is the ' +
+        'honest place for it to end.',
     ],
     { short: 'Next', sub: 'Three follow-ons' }
   );

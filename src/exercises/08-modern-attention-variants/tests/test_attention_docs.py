@@ -41,6 +41,12 @@ WORDS = {
     22: "Twenty-two",
     23: "Twenty-three",
     24: "Twenty-four",
+    25: "Twenty-five",
+    26: "Twenty-six",
+    27: "Twenty-seven",
+    28: "Twenty-eight",
+    29: "Twenty-nine",
+    30: "Thirty",
 }
 
 

@@ -168,6 +168,38 @@ function drawField(g, p, size) {
 
   /* The tiling overlay: FlashAttention's ONLY difference from the field above it. The field is
    * identical because the maths is identical. */
+  /* Both marks below sit INSIDE the box, in the upper-right dead space a causal field leaves
+   * empty. The first version drew one below the box and one to the left of it, and the viewBox
+   * guard caught both — an escaping mark renders on a neighbour's caption, because SVG does not
+   * clip by default. */
+  if (p.compressed) {
+    // many rows folded into one: what the selector picks from is already a summary
+    const x0 = size * 0.56;
+    const w = size * 0.2;
+    for (let k = 0; k < 3; k += 1) {
+      const yy = size * (0.04 + k * 0.055);
+      g.append(s('rect', { x: x0, y: yy, width: w, height: size * 0.03, class: 'gl-permblock' }));
+    }
+    g.append(
+      s('rect', { x: x0 + w + size * 0.08, y: size * 0.075, width: w * 0.9, height: size * 0.035, class: 'gl-on' })
+    );
+    g.append(
+      s('path', { d: `M${x0 + w + 1} ${size * 0.09} h${size * 0.06}`, class: 'gl-perm' })
+    );
+  }
+  if (p.grouped) {
+    // selection happens per QUERY GROUP, not per query: three brackets, one per group
+    const x0 = size * 0.62;
+    for (let k = 0; k < 3; k += 1) {
+      const gy = size * (0.04 + k * 0.075);
+      g.append(
+        s('path', { d: `M${x0} ${gy} h${size * 0.06} v${size * 0.05} h-${size * 0.06}`, class: 'gl-perm' })
+      );
+      g.append(
+        s('rect', { x: x0 + size * 0.1, y: gy + size * 0.012, width: size * 0.16, height: size * 0.026, class: 'gl-permblock' })
+      );
+    }
+  }
   if (p.tiled) {
     /* The field above is byte-identical to standard attention's, because the maths is identical.
      * The tiling is the ONLY mark of difference, so it has to be plainly visible — otherwise a
@@ -347,6 +379,39 @@ function drawState(g, p, size) {
     // the gate that can clear it wholesale: a bar swept across the store
     g.append(s('line', { x1: x - 1, y1: y + box * 0.78, x2: x + box + 1, y2: y + box * 0.22, class: 'gl-flush' }));
   }
+  if (p.gated === 'channelwise') {
+    /* KDA's whole change is that the gate stops being one scalar. Drawn as per-channel ticks along
+     * the top of the store, rather than the single valve Mamba gets. */
+    for (let k = 0; k < 7; k += 1) {
+      const gx = x + box * (0.1 + k * 0.133);
+      g.append(s('line', { x1: gx, y1: y - size * 0.12, x2: gx, y2: y - 1.5, class: 'gl-wire accent' }));
+    }
+    g.append(
+      s('rect', {
+        x: x + box * 0.06,
+        y: y - size * 0.145,
+        width: box * 0.88,
+        height: Math.max(1.6, size * 0.03),
+        class: 'gl-gate',
+      })
+    );
+  }
+  if (p.gates === 2) {
+    /* Gated DeltaNet-2 decouples erase from write. Two marks, deliberately unequal and offset, so
+     * a reader sees two different jobs rather than one repeated. */
+    g.append(
+      s('rect', { x: x + box * 0.12, y: cy - box * 0.32, width: box * 0.34, height: box * 0.13, class: 'gl-edit' })
+    );
+    g.append(
+      s('rect', { x: x + box * 0.52, y: cy + box * 0.14, width: box * 0.36, height: box * 0.13, class: 'gl-gate' })
+    );
+  }
+  if (p.rotating) {
+    /* Mamba-3's distinguishing change is a complex-valued update. A rotation, drawn as one. */
+    const r = box * 0.27;
+    g.append(s('path', { d: `M${cx - r} ${cy} A${r} ${r} 0 1 1 ${cx} ${cy + r}`, class: 'gl-edit-s' }));
+    g.append(s('circle', { cx: cx, cy: cy + r, r: Math.max(1.5, box * 0.07), class: 'gl-gate' }));
+  }
   if (write === 'select') {
     // input-dependent write: a valve above the store, deciding what gets in
     g.append(s('circle', { cx: size / 2, cy: y - size * 0.11, r: size * 0.085, class: 'gl-gate' }));
@@ -396,6 +461,20 @@ function drawBands(g, p, size) {
     g.append(s('rect', { x: 0, y: i * h + 0.7, width: w, height: h - 1.4, rx: 0.8, class: cls }));
   }
 
+  if (p.coupled) {
+    /* HD-RoPE's change is that rotation subspaces MIX, where RoPE keeps them independent. The
+     * coupling is the mark; the bands themselves are unchanged, which is exactly the point. */
+    for (let i = 0; i < rows - 1; i += 1) {
+      const y1 = i * h + h / 2;
+      const y2 = (i + 1) * h + h / 2;
+      g.append(
+        s('path', {
+          d: `M${size * 0.3} ${y1} Q${size * 0.68} ${(y1 + y2) / 2} ${size * 0.3} ${y2}`,
+          class: 'gl-wire accent',
+        })
+      );
+    }
+  }
   if (p.hardEdge) {
     // the wall: nothing exists past the trained length
     g.append(s('line', { x1: wall, y1: -1, x2: wall, y2: size + 1, class: 'gl-wall' }));

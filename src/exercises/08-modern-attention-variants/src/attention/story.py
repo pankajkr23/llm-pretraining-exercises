@@ -88,18 +88,20 @@ WELLS: tuple[Well, ...] = (
             "mqa",
             "gqa",
             "mla",
+            "msa",
         ),
     ),
     Well(
         numeral="IV",
-        headline="We shipped a position scheme in 2021 and spent 1,698 days repairing it.",
+        headline="We shipped a position scheme in 2021 and we are still arguing about it.",
         standfirst=(
             "Rotary embeddings solved relative distance elegantly and left one bomb: run past the "
-            "trained length and the rotation keeps going. Three repairs follow, and the last one "
-            "is to delete it."
+            "trained length and the rotation keeps going. Three repairs follow. Then one paper "
+            "concludes the answer is to delete positional embeddings entirely -- and the next one "
+            "concludes the answer is to make them richer. Both cannot be right."
         ),
         pull_quote="Stop repairing it and remove it.",
-        keys=("rope", "alibi", "ntk_aware", "yarn", "drope"),
+        keys=("rope", "alibi", "ntk_aware", "yarn", "drope", "hd_rope"),
     ),
     Well(
         numeral="V",
@@ -117,7 +119,8 @@ WELLS: tuple[Well, ...] = (
         headline="Then stop keeping everything.",
         standfirst=(
             "If the cache is the bill, refuse to hold a cache. Fold the past into a fixed-size "
-            "state instead -- and pay, every time, in the one way none of these six escapes."
+            "state instead. Four generations of that idea are here, each fixing the last one's "
+            "way of forgetting -- and every one of them pays in the same single way."
         ),
         pull_quote="The state is a lossy summary, and what it lost is not recoverable.",
         keys=(
@@ -126,7 +129,11 @@ WELLS: tuple[Well, ...] = (
             "mamba",
             "deltanet_parallel",
             "gated_deltanet",
+            "kda",
             "nsa",
+            "mamba3",
+            "deepseek_csa",
+            "gated_deltanet2",
         ),
     ),
 )

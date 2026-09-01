@@ -126,5 +126,12 @@ def test_a_wells_span_is_read_from_the_dates_not_assumed_contiguous(
     assert spans["IV"][0] < spans["III"][1], "Well IV should begin before Well III ends"
     assert spans["VI"][0] < spans["IV"][0], "Well VI should begin before Well IV does"
 
-    # And the one the copy claims out loud: RoPE to DroPE is 1,698 days.
-    assert (spans["IV"][1] - spans["IV"][0]).days == 1698
+    # The 1,698 days the page talks about is RoPE to DroPE specifically -- from the decision to the
+    # proposal to delete it. It is NOT the well's span: HD-RoPE (2026-08-30) joined the same well
+    # and argues the opposite, so the span now runs past DroPE. Asserting the span here would have
+    # made a correct addition look like a regression.
+    by_key = {m.key: m for m in mechanisms}
+    assert (by_key["drope"].date - by_key["rope"].date).days == 1698
+    assert spans["IV"][1] > by_key["drope"].date, (
+        "Well IV should now extend past DroPE - the argument did not end there"
+    )

@@ -177,6 +177,33 @@ an entry must not have the page move under them. Under reduced motion the contro
 all**: a sweep has no terminal state, and offering a control that would do nothing is worse than
 withholding it. The evidence is never withheld, only the motion.
 
+## The timeline runs to 31 August 2026, and keeping it there is work
+
+The catalogue is **30 mechanisms, 2014-09-01 to 2026-08-30**. Six were added in one pass after a
+sweep of everything published since DroPE, and the rules that pass established:
+
+- **Every 2026 date was verified by opening the arXiv abstract page and copying the
+  submission-history line.** Research agents proposed candidates; not one date was accepted on an
+  agent's word. That is not distrust of the tooling — it is that a plausible-looking arXiv id which
+  resolves to a different paper is the exact failure mode here, and it has already happened once in
+  this exercise's source material.
+- **One date disagrees with its own identifier and we say so rather than choosing.**
+  `deepseek_csa` has identifier `2606.19348` — normally June 2026 — and a submission line reading
+  26 April 2026. We record the v1 line, because that is the convention everywhere else here, and
+  the discrepancy is written into `source.note`.
+- **A model release is not a mechanism.** GLM-5, Qwen, Gemma, ERNIE and Kimi K3 all describe their
+  attention using mechanisms already on the plate. They are evidence about *adoption*, which this
+  page cannot see and does not claim to.
+- **The negative results are on the page.** OpenAI, Anthropic and Meta published no architecture at
+  all in the window. JEPA and world models change the objective, not the attention. Both are stated
+  in `limits` because a reader should know the recent end of the plate is drawn almost entirely
+  from labs that publish papers.
+- **Adding an entry can overturn a published claim, and twice now it has.** Top-k broke the 2018-19
+  tie; the 2026 entries added a seventh pressure window and moved Well IV's end past DroPE. Every
+  count and every plural on the page is derived for this reason — but a *headline* is not derived
+  unless you make it so, and Well IV's headline had to be rewritten because it stated a day count
+  the data no longer supported.
+
 ## Two claims that live in Python because a test must reach them
 
 - **`story.py` holds the six chapters.** The grouping is an editorial claim, so it is tracked data
