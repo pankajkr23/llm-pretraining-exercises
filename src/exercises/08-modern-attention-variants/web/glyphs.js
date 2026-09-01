@@ -93,6 +93,14 @@ function fieldSupport(p) {
         const bj = Math.floor(j / block);
         on = i - j < win || bj < sel || j % block === 0 ? 1 : 0;
       }
+      if (p.topk !== undefined) {
+        /* Content-based selection: which cells survive depends on the SCORES, so it depends on the
+         * data. Drawn as a reproducible scatter that always keeps the diagonal, and labelled
+         * schematic, because a tidy fixed shape here would assert a structure top-k does not have
+         * — the whole point is that the shape is not knowable in advance. */
+        const rank = ((i * 7 + j * 13) % 11) + (i === j ? -20 : 0);
+        on = rank < p.topk * 2 ? 1 : 0;
+      }
       if (p.permuted) {
         // Reformer buckets by hashing, so the live cells depend on the DATA, not the position.
         // Drawn as block-diagonal on a permuted sequence and labelled as such, because a

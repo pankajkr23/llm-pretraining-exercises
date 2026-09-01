@@ -149,10 +149,33 @@ def test_the_stored_json_round_trips_through_the_loader() -> None:
     assert len({m.key for m in MECHANISMS}) == len(MECHANISMS), "duplicate keys in the catalogue"
 
 
-@pytest.mark.parametrize("phrase,key", sorted(MANDATED.items()))
+@pytest.mark.parametrize(
+    "phrase,key", sorted((phrase, key) for phrase, keys in MANDATED.items() for key in keys)
+)
 def test_each_required_mechanism_individually(phrase: str, key: str) -> None:
-    """One test per required mechanism, so a failure names exactly which one is missing."""
+    """One test per required mechanism, so a failure names exactly which one is missing.
+
+    Parametrised over the FLATTENED mapping, because two of the instructor's phrases name two
+    mechanisms each. "sparse and top-k attention" used to map to `sparse_attention` alone and this
+    test passed on half a phrase — while the catalogue additionally claimed "top-k attention" as an
+    alias of Sparse Transformers, which is a different technique with a different date and a
+    different failure mode. Covering half a phrase and reporting success is exactly the "missing or
+    mis-explained mechanism" the assignment scores zero for.
+    """
     assert any(m.key == key for m in MECHANISMS), f"the assignment requires {phrase!r} ({key})"
+
+
+def test_no_phrase_is_satisfied_by_only_part_of_itself() -> None:
+    """Break it on purpose: a compound phrase must fail when either half is absent."""
+    from attention.catalogue import missing_mandated
+
+    assert missing_mandated(MECHANISMS) == []
+    without_topk = [m for m in MECHANISMS if m.key != "topk_attention"]
+    assert "sparse and top-k attention" in missing_mandated(without_topk), (
+        "dropping top-k must fail the phrase that names it"
+    )
+    without_sparse = [m for m in MECHANISMS if m.key != "sparse_attention"]
+    assert "sparse and top-k attention" in missing_mandated(without_sparse)
 
 
 # ---- the glyphs the plate draws ------------------------------------------------------------

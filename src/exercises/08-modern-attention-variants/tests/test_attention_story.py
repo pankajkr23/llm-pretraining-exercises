@@ -27,7 +27,9 @@ def test_every_mechanism_is_reachable_through_exactly_one_well(
 ) -> None:
     assigned = [key for well in story.WELLS for key in well.keys]
     assert sorted(assigned) == sorted(m.key for m in mechanisms)
-    assert len(assigned) == len(set(assigned)) == 23
+    # Derived, not 23. A literal here is the same defect this file exists to catch, one level up:
+    # adding top-k attention made a correct assertion fail for the wrong reason.
+    assert len(assigned) == len(set(assigned)) == len(mechanisms)
 
 
 def test_check_fails_when_a_mechanism_belongs_to_no_well(

@@ -31,27 +31,38 @@ CATALOGUE = EXERCISE / "results" / "mechanisms.json"
 
 #: The coverage list, verbatim from `docs/sessions/s8_assignment.md`, mapped to catalogue keys.
 #:
-#: Left side is the instructor's phrase exactly as written; right side is our key. Splitting
-#: them means a rename on our side can never quietly drop one of his items: the test reads the left.
-MANDATED: dict[str, str] = {
-    "standard attention": "standard_attention",
-    "absolute learned positions": "learned_absolute",
-    "sinusoidal": "sinusoidal",
-    "RoPE": "rope",
-    "ALiBi": "alibi",
-    "MQA": "mqa",
-    "GQA": "gqa",
-    "sliding window": "sliding_window",
-    "attention sinks": "attention_sinks",
-    "NTK-aware scaling": "ntk_aware",
-    "YaRN": "yarn",
-    "linear attention": "linear_attention",
-    "the delta rule": "delta_rule",
-    "Gated DeltaNet": "gated_deltanet",
-    "MLA": "mla",
-    "sparse and top-k attention": "sparse_attention",
-    "compressed and sparse attention as DeepSeek does it": "nsa",
-    "DroPE": "drope",
+#: Left side is the instructor's phrase exactly as written; right side is every key that phrase
+#: requires. Splitting them means a rename on our side can never quietly drop one of his items:
+#: the test reads the left.
+#:
+#: **The right side is a tuple because two of his phrases name two mechanisms each**, and that is
+#: not a formatting detail -- it is where this guard failed. "sparse and top-k attention" mapped to
+#: `sparse_attention` alone, and `sparse_attention.aka` additionally claimed "top-k attention" as
+#: an alias, so the catalogue asserted the two were the same technique and the guard agreed.
+#: They are not the same technique: a fixed sparse pattern decides which pairs can ever interact
+#: before the model sees any data, while top-k decides per query from the scores themselves, and
+#: the session teaches the difference at length (`s8.md`, "How do we know which keys are best?").
+#: Covering half a phrase and passing is exactly the "missing or mis-explained mechanism" the
+#: assignment scores zero for.
+MANDATED: dict[str, tuple[str, ...]] = {
+    "standard attention": ("standard_attention",),
+    "absolute learned positions": ("learned_absolute",),
+    "sinusoidal": ("sinusoidal",),
+    "RoPE": ("rope",),
+    "ALiBi": ("alibi",),
+    "MQA": ("mqa",),
+    "GQA": ("gqa",),
+    "sliding window": ("sliding_window",),
+    "attention sinks": ("attention_sinks",),
+    "NTK-aware scaling": ("ntk_aware",),
+    "YaRN": ("yarn",),
+    "linear attention": ("linear_attention",),
+    "the delta rule": ("delta_rule",),
+    "Gated DeltaNet": ("gated_deltanet",),
+    "MLA": ("mla",),
+    "sparse and top-k attention": ("sparse_attention", "topk_attention"),
+    "compressed and sparse attention as DeepSeek does it": ("nsa",),
+    "DroPE": ("drope",),
 }
 
 #: How a mechanism's glyph is drawn. Four generators cover all twenty-three.
@@ -228,7 +239,7 @@ def missing_mandated(mechanisms: list[Mechanism]) -> list[str]:
         His phrases, not our keys -- so a failure reads in the words he graded against.
     """
     have = {m.key for m in mechanisms}
-    return [phrase for phrase, key in MANDATED.items() if key not in have]
+    return [phrase for phrase, keys in MANDATED.items() if not set(keys) <= have]
 
 
 def undrawn(mechanisms: list[Mechanism]) -> list[Mechanism]:

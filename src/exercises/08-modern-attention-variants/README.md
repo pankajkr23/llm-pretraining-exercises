@@ -1,6 +1,6 @@
 # 08 · Modern attention variants — in the order they were launched
 
-**Twenty-three ways of computing attention and of telling a model where a token sits, ordered by the
+**Twenty-four ways of computing attention and of telling a model where a token sits, ordered by the
 date each one actually appeared, with every date read from the primary source.**
 
 Session 8's assignment is not to describe attention mechanisms. It is to put them in **chronological
@@ -132,17 +132,74 @@ does not say which was meant.
 
 Derived by `timeline.pressure_by_period`, not asserted. The brief predicts a tidy sequence —
 *"first it wants exactness, then it wants memory back, then it wants length, then it wants memory
-back again"* — and the data is messier than that in a way worth reporting: **two of the six
-two-year windows have no single dominant pressure at all.** In those periods the field was attacking
-several bills at once, and a test fails if that ever stops being true, so the finding cannot quietly
-become the tidy story.
+back again"* — and the data is messier than that: **one of the six two-year windows has no single
+dominant pressure at all.** In that period the field was attacking several bills at once, and a test
+fails if that ever stops being true, so the finding cannot quietly become the tidy story.
 
-Two things visible only on a date axis:
+> **Correction, and it is our own.** This section said **two** of six windows for as long as the
+> catalogue held twenty-three mechanisms. Adding top-k attention (2019-12-25) put a second *compute*
+> entry into the 2018–19 window, which had been an exact 1–1 tie between compute and cache, and the
+> tie broke in favour of compute. The claim moved from two undecided windows to one. Nothing about
+> the method changed — the count was always derived — but the input was incomplete, and an
+> incomplete input made the field look more indecisive than it was. This is recorded rather than
+> silently amended because the number appeared on a published page.
 
-- **Attention is three years older than the Transformer.** Bahdanau's soft alignment is 2014; the
-  2017 paper removed the recurrence around it rather than inventing attention.
-- **Nobody attacked the cost for nearly two years.** Between the Transformer and Sparse Transformers
-  there are 680 days in which the field used attention without trying to make it cheaper.
+Five things visible only on a date axis, and not from any list:
+
+- **Attention is three years older than the Transformer.** Bahdanau's soft alignment is 2014-09-01;
+  the 2017 paper removed the recurrence around it rather than inventing attention. 1,015 days apart.
+- **Nobody attacked the cost for 680 days.** Between the Transformer and Sparse Transformers the
+  field used attention without once trying to make it cheaper, because contexts were short enough
+  that the bill was small.
+- **Two crowds, not one queue.** Sparse attention (2019-04-23) and MQA (2019-11-06) are 197 days
+  apart and have nothing to do with each other — one attacks the score grid, the other the cache. A
+  date-ordered *list* interleaves them into apparent nonsense; two lanes make it obvious.
+- **Nothing attacked both bills at once until 2020-04-10.** Every one of the seven mechanisms that
+  bounds compute *and* cache with a single idea falls in the last third of the timeline.
+- **Two mechanisms sat unusable for years after they were published.** MQA waited 1,293 days for
+  GQA to make head sharing tunable; the delta rule waited 1,204 days for a parallel formulation.
+  Publication date and usable date are not the same date, and only the axis shows the gap.
+
+### Five mechanisms the coverage list did not name
+
+Each is on the timeline, each carries the URL its date was read from, and each is marked `†` on the
+page's index plate.
+
+| mechanism | launch date | source | the source's own date string |
+| --- | --- | --- | --- |
+| **Additive (Bahdanau) attention** | 2014-09-01 | [Neural Machine Translation by Jointly Learning to Align and Translate](https://arxiv.org/abs/1409.0473) | `[v1] Mon, 1 Sep 2014 16:33:02 UTC (83 KB)` |
+| **Reformer (LSH attention)** | 2020-01-13 | [Reformer: The Efficient Transformer](https://arxiv.org/abs/2001.04451) | `[v1] Mon, 13 Jan 2020 18:38:28 UTC (421 KB)` |
+| **FlashAttention** | 2022-05-27 | [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness](https://arxiv.org/abs/2205.14135) | `[v1] Fri, 27 May 2022 17:53:09 UTC (1,325 KB)` |
+| **Mamba (selective state space)** | 2023-12-01 | [Mamba: Linear-Time Sequence Modeling with Selective State Spaces](https://arxiv.org/abs/2312.00752) | `[v1] Fri, 1 Dec 2023 18:01:34 UTC (1,264 KB)` |
+| **Parallelised DeltaNet** | 2024-06-10 | [Parallelizing Linear Transformers with the Delta Rule over Sequence Length](https://arxiv.org/abs/2406.06484) | `[v1] Mon, 10 Jun 2024 17:24:42 UTC (124 KB)` |
+
+**Bahdanau earns its place by being first.** Attention is on this timeline three years before the
+Transformer, and a chronology that starts in 2017 hides the single most surprising thing in it.
+
+**FlashAttention earns its place by invalidating an argument.** Every compute-side entry before it
+assumed the cost was arithmetic. It was memory traffic. Exact attention got several times faster
+with a bit-for-bit identical result, and the headline case for approximate attention evaporated —
+which is why this page draws its glyph *identical* to standard attention's, with only a tiling
+overlay to mark the difference.
+
+**Mamba and Parallelised DeltaNet earn theirs by closing gaps the timeline makes visible.** The
+delta rule was published in 2021 and was sequential by construction; it sat unusable for **1,204
+days** until someone parallelised it. You cannot see a hole like that in a list.
+
+### One mechanism the coverage list named and we had wrong
+
+The list says *"sparse and top-k attention"*. Those are **two** techniques, and we had catalogued
+one. A fixed sparse pattern decides which pairs of positions can ever interact **before the model
+sees any data**; top-k decides **per query, from the scores themselves**. Worse, the entry for
+Sparse Transformers claimed "top-k attention" as an alias, so the catalogue actively asserted they
+were the same thing.
+
+Top-k attention is now its own entry — **2019-12-25**, [Explicit Sparse Transformer: Concentrated
+Attention Through Explicit Selection](https://arxiv.org/abs/1912.11637), `[v1] Wed, 25 Dec 2019
+10:59:31 UTC (689 KB)` — and `MANDATED` now maps that phrase to *both* keys, so a compound
+requirement can never again be satisfied by half of itself. The session teaches the distinction at
+length, including the catch that makes top-k interesting: naive top-k still has to score every key
+before it can rank them, so it reduces the work *after* selection and not the scoring itself.
 
 ## What this cannot establish
 
@@ -167,22 +224,22 @@ Two things visible only on a date axis:
 <https://llm-pretraining-demos.vercel.app/08-modern-attention-variants/>
 
 Twelve sections carrying the spine `AGENTS.md` requires, set as a **monograph feature**: six
-numbered plates, six chapters, and the twenty-three mechanisms as *one object entered twenty-three
-times* rather than twenty-three collapsed cards a reader has to click through.
+numbered plates, six chapters, and the twenty-four mechanisms as *one object entered twenty-four
+times* rather than twenty-four collapsed cards a reader has to click through.
 
 The spine sentence is the thing the session never states, and it is what makes drawing this worth
 doing rather than restating the reading: **attention is one idea that sent two bills, and almost
 everything since is somebody who could not pay one of them.** The two bills are the triangle of
 scores between every pair of tokens, and the cache holding what each past token contributed.
 
-Three views of the same twenty-three, because they answer different questions and a reader should
+Three views of the same twenty-four, because they answer different questions and a reader should
 not have to interact to get an answer to any of them:
 
 | view | what it answers | interaction needed |
 | --- | --- | --- |
-| **Plate III**, the chronology | *where* each sits in time, and which bill it pays | none — all 23 at once |
+| **Plate III**, the chronology | *where* each sits in time, and which bill it pays | none — all 24 at once |
 | the reading spread | *what one of them traded*, in depth | one click, and it is pre-loaded |
-| the index plate | *comparability* — 23 rows, same six fields, same six places | none |
+| the index plate | *comparability* — 24 rows, same six fields, same six places | none |
 
 Every mechanism carries a **glyph** drawn by one of four generators from a `pattern` block in the
 catalogue, so a glyph is derived from data rather than hand-drawn per mechanism. Two of those

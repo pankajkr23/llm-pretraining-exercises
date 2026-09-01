@@ -163,8 +163,7 @@ export const M = Object.freeze({
       "name": "Sparse (factorised) attention",
       "aka": [
         "Sparse Transformer",
-        "strided attention",
-        "top-k attention"
+        "strided attention"
       ],
       "date": "2019-04-23",
       "year": 2019,
@@ -175,7 +174,7 @@ export const M = Object.freeze({
       "problem": "Most of that attention matrix carries almost no weight, so most of the compute buys almost nothing.",
       "mechanism": "Attend over a fixed sparse pattern instead of all pairs - strided and local factorisations that together still connect any two positions in a few hops.",
       "whatItFixed": "Cost dropped from quadratic toward n-root-n, making far longer sequences reachable at the same budget.",
-      "newTradeoff": "The pattern is chosen in advance, so a genuinely important long-range pair that the pattern does not connect is simply unavailable - and a learned top-k variant still has to score the candidates before it can rank them.",
+      "newTradeoff": "The pattern is chosen in advance, so a genuinely important long-range pair that the pattern does not connect is simply unavailable - it cannot be recovered by anything downstream.",
       "buys": "A large constant-factor reduction in attention compute, with softmax and its normalisation intact.",
       "givesUp": "Exactness. The model can no longer reach every position directly, and which pairs it loses is a design decision rather than a learned one.",
       "whenToChoose": "Long sequences with structure you understand - images, audio, code - where a fixed pattern plausibly covers the dependencies that matter.",
@@ -233,6 +232,46 @@ export const M = Object.freeze({
         "quoted": "[v1] Wed, 6 Nov 2019 00:19:05 UTC (10 KB)",
         "verifiedOn": "2026-09-01",
         "note": "Single author (Noam Shazeer), single version."
+      }
+    },
+    {
+      "key": "topk_attention",
+      "name": "Top-k (explicit sparse) attention",
+      "aka": [
+        "Explicit Sparse Transformer",
+        "explicit selection",
+        "top-k selection"
+      ],
+      "date": "2019-12-25",
+      "year": 2019,
+      "bill": "compute",
+      "taught": true,
+      "bonus": false,
+      "whatExisted": "Fixed sparse patterns - strided, local, factorised - that decided which pairs of positions could ever interact before the model saw a single token.",
+      "problem": "A pattern fixed in advance cannot know which earlier tokens matter for this query. Attention mass really is concentrated on a few tokens, but which few is a property of the content, not of the positions.",
+      "mechanism": "Score the candidate keys, keep only the k highest-scoring ones for each query, and run softmax over just those k before combining their values.",
+      "whatItFixed": "Selection became content-based rather than positional, so the keys a query keeps are the ones that actually scored highly for it, and the softmax is no longer diluted by keys carrying almost no weight.",
+      "newTradeoff": "Naive top-k still has to score every key before it can rank them, so it cuts the work after selection and not the scoring itself - if scoring was the expensive part, nothing was saved. Making it a real reduction needs a cheaper proposal step, and every proposal step can fail to suggest a key that mattered.",
+      "buys": "Attention concentrated on the keys that actually matter, chosen per query from the data rather than fixed in advance, with softmax and its normalisation intact over the survivors.",
+      "givesUp": "Exactness, and the guarantee of a saving. A dropped key is unrecoverable, and a naive implementation still pays the full quadratic scoring cost it was meant to avoid.",
+      "whenToChoose": "When attention genuinely is concentrated on a few tokens and you have a cheap way to propose candidates. It is the ancestor of the selection branch inside native sparse attention, which is what a proposal step looks like once it is designed in from the start.",
+      "glyph": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "topk": 3
+        },
+        "scale": "schematic",
+        "source": "Three surviving cells per row, scattered rather than patterned, because which cells survive depends on the scores and therefore on the data. A tidy fixed shape here would be a lie a reader cannot detect - the whole point of top-k is that the shape is not knowable in advance."
+      },
+      "source": {
+        "kind": "paper",
+        "title": "Explicit Sparse Transformer: Concentrated Attention Through Explicit Selection",
+        "url": "https://arxiv.org/abs/1912.11637",
+        "arxiv": "1912.11637",
+        "quoted": "[v1] Wed, 25 Dec 2019 10:59:31 UTC (689 KB)",
+        "verifiedOn": "2026-09-01",
+        "note": "Zhao, Lin, Zhang, Ren, Su, Sun. Read from the arXiv abstract page. Listed separately from Sparse Transformers on purpose: the session's coverage list names 'sparse and top-k attention' as two things, and they are two things - a fixed pattern decides which pairs survive before seeing any data, while top-k decides per query from the scores themselves."
       }
     },
     {
@@ -862,21 +901,21 @@ export const M = Object.freeze({
     }
   ],
   "counts": {
-    "total": 23,
+    "total": 24,
     "mandated": 18,
     "bonus": 5,
     "outsideSession": 11,
-    "schematic": 18,
+    "schematic": 19,
     "glyphKinds": {
       "bands": 5,
-      "field": 10,
+      "field": 11,
       "stack": 3,
       "state": 5
     },
     "bills": {
       "origin": 2,
       "position": 7,
-      "compute": 3,
+      "compute": 4,
       "cache": 4,
       "both": 7
     }
@@ -910,14 +949,15 @@ export const M = Object.freeze({
     {
       "start": 2018,
       "end": 2019,
-      "dominant": null,
+      "dominant": "compute",
       "counts": {
-        "compute": 1,
+        "compute": 2,
         "cache": 1
       },
       "mechanisms": [
         "sparse_attention",
-        "mqa"
+        "mqa",
+        "topk_attention"
       ]
     },
     {
@@ -1094,10 +1134,11 @@ export const M = Object.freeze({
     {
       "numeral": "III",
       "headline": "Two bills, two crowds.",
-      "standfirst": "The compute bill and the cache bill were attacked by different people for different reasons, and a date-ordered list interleaves them into apparent nonsense. Read as two crowds, the six entries here are two arguments running in parallel.",
+      "standfirst": "The compute bill and the cache bill were attacked by different people for different reasons, and a date-ordered list interleaves them into apparent nonsense. Read as two crowds, the entries here are two arguments running in parallel.",
       "pullQuote": "It moves along the same line rather than leaving it.",
       "keys": [
         "sparse_attention",
+        "topk_attention",
         "reformer",
         "sliding_window",
         "mqa",
@@ -1174,7 +1215,7 @@ export const M = Object.freeze({
     },
     {
       "year": 2019,
-      "count": 2
+      "count": 3
     },
     {
       "year": 2020,

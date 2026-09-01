@@ -27,6 +27,8 @@ TEXT = README.read_text(encoding="utf-8")
 
 #: Number words the README uses, so a count can be written as prose rather than a digit.
 WORDS = {
+    0: "No",
+    1: "One",
     2: "Two",
     3: "Three",
     4: "Four",

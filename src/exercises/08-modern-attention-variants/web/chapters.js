@@ -517,26 +517,41 @@ function chapterNegatives(M) {
 /* ----------------------------------------------------------------- 8 · conclusion */
 
 function chapterConclusion(M) {
+  /* Every count, and the grammar around every count, is derived.
+   *
+   * This section is where the repo's most expensive documented failure kept happening: a generated
+   * table under a hand-written sentence looks maintained, and only the sentence is wrong. It
+   * happened here too. The headline read "The tidy arc is half true" and the rail read "Four
+   * windows of six" while the paragraph between them counted correctly — and then adding the
+   * missing top-k mechanism broke the 2018-19 tie, so the arc held in five of six and both
+   * hand-written strings were quietly false. If a sentence states a count, a verdict or a size,
+   * it is built from the same source the figure uses. That includes the plural. */
+  const total = M.periods.length;
   const ties = M.periods.filter((p) => !p.dominant).length;
-  const s = section(
-    'conclusion',
-    'conclusion',
-    'The verdict',
-    'The tidy arc is half true',
-    [
-      `The claimed arc holds in ${M.periods.length - ties} of these ${M.periods.length} windows ` +
-        `and fails in ${ties}. The failures are not noise: they are exact ties, and the code that ` +
-        'counts them refuses to break one.',
-    ],
-    { short: 'The verdict', sub: 'Four windows of six' }
-  );
+  const held = total - ties;
+  const tie = ties === 1 ? 'window' : 'windows';
+  const isare = ties === 1 ? 'is an exact tie' : 'are exact ties';
+
+  const headline =
+    ties === 0
+      ? 'The tidy arc holds'
+      : ties === 1
+        ? 'The tidy arc holds, with one exception'
+        : 'The tidy arc is only partly true';
+
+  const s = section('conclusion', 'conclusion', 'The verdict', headline, [
+    `The claimed arc holds in **${held}** of these ${total} two-year windows and fails in ` +
+      `**${ties}**. That failure is not noise: the remaining ${tie} ${isare}, and the code that ` +
+      'counts them returns no winner rather than picking one.',
+  ], { short: 'The verdict', sub: `${held} windows of ${total}` });
+
   const f = el('figure', 'wide');
   f.append(figVerdict(M, glyphSvg));
   const cap = el('figcaption');
   cap.innerHTML = rich(
-    `A framed cell is the window's dominant bill; a **TIE** stamp is a window where no bill ` +
-      'dominated. Read the ties as the field doing two things at once rather than changing its ' +
-      'mind. A cleaner story was available here and it would have been false.'
+    `A framed cell is that window's dominant bill; a **TIE** stamp marks a window where no bill ` +
+      `dominated — ${ties} of ${total}. Read a tie as the field doing two things at once rather ` +
+      'than changing its mind. A cleaner story was available here and it would have been false.'
   );
   f.append(cap);
   s.append(f);

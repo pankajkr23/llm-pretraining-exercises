@@ -77,10 +77,18 @@ WELLS: tuple[Well, ...] = (
         standfirst=(
             "The compute bill and the cache bill were attacked by different people for different "
             "reasons, and a date-ordered list interleaves them into apparent nonsense. Read as "
-            "two crowds, the six entries here are two arguments running in parallel."
+            "two crowds, the entries here are two arguments running in parallel."
         ),
         pull_quote="It moves along the same line rather than leaving it.",
-        keys=("sparse_attention", "reformer", "sliding_window", "mqa", "gqa", "mla"),
+        keys=(
+            "sparse_attention",
+            "topk_attention",
+            "reformer",
+            "sliding_window",
+            "mqa",
+            "gqa",
+            "mla",
+        ),
     ),
     Well(
         numeral="IV",

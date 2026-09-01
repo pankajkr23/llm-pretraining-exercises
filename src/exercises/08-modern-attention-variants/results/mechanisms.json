@@ -84,6 +84,39 @@
       }
     },
     {
+      "key": "sinusoidal",
+      "name": "Sinusoidal positional encoding",
+      "date": "2017-06-12",
+      "bill": "position",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "1706.03762",
+        "title": "Attention Is All You Need",
+        "url": "https://arxiv.org/abs/1706.03762",
+        "quoted_date": "[v1] Mon, 12 Jun 2017 17:57:34 UTC (1,102 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Same paper and same date as standard_attention - introduced in section 3.5, not in the abstract. It is not a separate release and must not be given a separate date."
+      },
+      "what_existed": "Learned absolute position tables, with a hard limit at the trained length.",
+      "problem": "The table cannot answer a question about a position it never saw, and it spends parameters on something that might be computable instead.",
+      "mechanism": "Replace the table with fixed sine and cosine functions of different frequencies, one pair per embedding dimension.",
+      "what_it_fixed": "Positions became defined at any index without training or parameters, and nearby positions got similar encodings by construction.",
+      "new_tradeoff": "Defined is not the same as learned: the function returns a value past the trained length, but the model has never been taught what to do with it, so quality still falls away.",
+      "buys": "Positions at any length, for zero parameters.",
+      "gives_up": "The chance to learn a positional structure that suits the data, and any guarantee that extrapolation actually works.",
+      "when_to_choose": "When you want a simple, parameter-free baseline, or a fixed encoding you can reason about analytically.",
+      "pattern": {
+        "kind": "bands",
+        "params": {
+          "rows": 6,
+          "hardEdge": false,
+          "continues": true
+        },
+        "scale": "schematic",
+        "source": "Fixed sine and cosine bands at different frequencies, defined past the trained length. Band count is illustrative."
+      }
+    },
+    {
       "key": "standard_attention",
       "name": "Scaled dot-product attention",
       "aka": [
@@ -120,45 +153,11 @@
       }
     },
     {
-      "key": "sinusoidal",
-      "name": "Sinusoidal positional encoding",
-      "date": "2017-06-12",
-      "bill": "position",
-      "source": {
-        "kind": "paper",
-        "arxiv_id": "1706.03762",
-        "title": "Attention Is All You Need",
-        "url": "https://arxiv.org/abs/1706.03762",
-        "quoted_date": "[v1] Mon, 12 Jun 2017 17:57:34 UTC (1,102 KB)",
-        "verified_on": "2026-09-01",
-        "note": "Same paper and same date as standard_attention - introduced in section 3.5, not in the abstract. It is not a separate release and must not be given a separate date."
-      },
-      "what_existed": "Learned absolute position tables, with a hard limit at the trained length.",
-      "problem": "The table cannot answer a question about a position it never saw, and it spends parameters on something that might be computable instead.",
-      "mechanism": "Replace the table with fixed sine and cosine functions of different frequencies, one pair per embedding dimension.",
-      "what_it_fixed": "Positions became defined at any index without training or parameters, and nearby positions got similar encodings by construction.",
-      "new_tradeoff": "Defined is not the same as learned: the function returns a value past the trained length, but the model has never been taught what to do with it, so quality still falls away.",
-      "buys": "Positions at any length, for zero parameters.",
-      "gives_up": "The chance to learn a positional structure that suits the data, and any guarantee that extrapolation actually works.",
-      "when_to_choose": "When you want a simple, parameter-free baseline, or a fixed encoding you can reason about analytically.",
-      "pattern": {
-        "kind": "bands",
-        "params": {
-          "rows": 6,
-          "hardEdge": false,
-          "continues": true
-        },
-        "scale": "schematic",
-        "source": "Fixed sine and cosine bands at different frequencies, defined past the trained length. Band count is illustrative."
-      }
-    },
-    {
       "key": "sparse_attention",
       "name": "Sparse (factorised) attention",
       "aka": [
         "Sparse Transformer",
-        "strided attention",
-        "top-k attention"
+        "strided attention"
       ],
       "date": "2019-04-23",
       "bill": "compute",
@@ -175,7 +174,7 @@
       "problem": "Most of that attention matrix carries almost no weight, so most of the compute buys almost nothing.",
       "mechanism": "Attend over a fixed sparse pattern instead of all pairs - strided and local factorisations that together still connect any two positions in a few hops.",
       "what_it_fixed": "Cost dropped from quadratic toward n-root-n, making far longer sequences reachable at the same budget.",
-      "new_tradeoff": "The pattern is chosen in advance, so a genuinely important long-range pair that the pattern does not connect is simply unavailable - and a learned top-k variant still has to score the candidates before it can rank them.",
+      "new_tradeoff": "The pattern is chosen in advance, so a genuinely important long-range pair that the pattern does not connect is simply unavailable - it cannot be recovered by anything downstream.",
       "buys": "A large constant-factor reduction in attention compute, with softmax and its normalisation intact.",
       "gives_up": "Exactness. The model can no longer reach every position directly, and which pairs it loses is a design decision rather than a learned one.",
       "when_to_choose": "Long sequences with structure you understand - images, audio, code - where a fixed pattern plausibly covers the dependencies that matter.",
@@ -220,6 +219,45 @@
         },
         "scale": "illustrative",
         "source": "One key/value head for all query heads, by definition. Head count 8 is the session's own yardstick."
+      }
+    },
+    {
+      "key": "topk_attention",
+      "name": "Top-k (explicit sparse) attention",
+      "aka": [
+        "Explicit Sparse Transformer",
+        "explicit selection",
+        "top-k selection"
+      ],
+      "date": "2019-12-25",
+      "bill": "compute",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "1912.11637",
+        "title": "Explicit Sparse Transformer: Concentrated Attention Through Explicit Selection",
+        "url": "https://arxiv.org/abs/1912.11637",
+        "quoted_date": "[v1] Wed, 25 Dec 2019 10:59:31 UTC (689 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Zhao, Lin, Zhang, Ren, Su, Sun. Read from the arXiv abstract page. Listed separately from Sparse Transformers on purpose: the session's coverage list names 'sparse and top-k attention' as two things, and they are two things - a fixed pattern decides which pairs survive before seeing any data, while top-k decides per query from the scores themselves."
+      },
+      "what_existed": "Fixed sparse patterns - strided, local, factorised - that decided which pairs of positions could ever interact before the model saw a single token.",
+      "problem": "A pattern fixed in advance cannot know which earlier tokens matter for this query. Attention mass really is concentrated on a few tokens, but which few is a property of the content, not of the positions.",
+      "mechanism": "Score the candidate keys, keep only the k highest-scoring ones for each query, and run softmax over just those k before combining their values.",
+      "what_it_fixed": "Selection became content-based rather than positional, so the keys a query keeps are the ones that actually scored highly for it, and the softmax is no longer diluted by keys carrying almost no weight.",
+      "new_tradeoff": "Naive top-k still has to score every key before it can rank them, so it cuts the work after selection and not the scoring itself - if scoring was the expensive part, nothing was saved. Making it a real reduction needs a cheaper proposal step, and every proposal step can fail to suggest a key that mattered.",
+      "buys": "Attention concentrated on the keys that actually matter, chosen per query from the data rather than fixed in advance, with softmax and its normalisation intact over the survivors.",
+      "gives_up": "Exactness, and the guarantee of a saving. A dropped key is unrecoverable, and a naive implementation still pays the full quadratic scoring cost it was meant to avoid.",
+      "when_to_choose": "When attention genuinely is concentrated on a few tokens and you have a cheap way to propose candidates. It is the ancestor of the selection branch inside native sparse attention, which is what a proposal step looks like once it is designed in from the start.",
+      "taught_in_session": true,
+      "bonus": false,
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "topk": 3
+        },
+        "scale": "schematic",
+        "source": "Three surviving cells per row, scattered rather than patterned, because which cells survive depends on the scores and therefore on the data. A tidy fixed shape here would be a lie a reader cannot detect - the whole point of top-k is that the shape is not knowable in advance."
       }
     },
     {
