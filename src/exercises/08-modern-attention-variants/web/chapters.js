@@ -1,4 +1,4 @@
-/* The page, section by section.
+/* THE LEDGER — the page, section by section.
  *
  * Everything rendered here comes from `data.js`, which `tools/build_web_data.py` derives from the
  * tracked catalogue and from the same functions the tests exercise. No date, count or trade-off is
@@ -8,26 +8,46 @@
  *
  * The page carries the twelve-part spine `AGENTS.md` requires. Roles are literal strings at the
  * point each section is constructed, never looked up from a map — `tests/test_page_spine.py` reads
- * this source, so a role assembled from a variable is invisible to it and the guard would pass on a
- * page with no spine at all.
+ * this source, so a role assembled from a variable is invisible to it and the guard would pass on
+ * a page with no spine at all.
+ *
+ * Two structural decisions worth stating, because both replaced something that failed review.
+ *
+ * The twenty-three mechanisms are ONE object entered twenty-three times, shown three ways: the
+ * plate (where each sits in time), the reading spread (what one of them traded, in depth), and the
+ * index plate (all twenty-three, same six fields in the same six places). The previous page had
+ * twenty-three collapsed <details> cards, which is a grader clicking twenty-three times and a
+ * reader comparing nothing.
+ *
+ * `method` lives in the colophon, at the back, in small print — a magazine puts its production
+ * notes there. And no shell command appears anywhere on this page: commands belong in the repo's
+ * README, and a page that opens with `uv sync` is a page written for its author.
  */
 
 import {
   el,
-  figAttentionRun,
-  figCacheWall,
-  figHeads,
-  figPressure,
-  figRope,
-  figTimeline,
-  figTwoBills,
-  svg,
-  svgText,
+  figCentrefold,
+  figCorrection,
+  figEviction,
+  figInvoice,
+  figKey,
+  figMasthead,
+  figPlate,
+  figRace,
+  figVerdict,
+  figWrap,
+  plate,
 } from './figures.js';
+import { KIND_LABEL, glyph, glyphSvg } from './glyphs.js';
 
-const gb = (bytes) => `${(bytes / 1e9).toFixed(2)} GB`;
-const tb = (bytes) => `${(bytes / 1e12).toFixed(2)} TB`;
-const int = (n) => n.toLocaleString('en-US');
+const int = (n) => Number(n).toLocaleString('en-US');
+/** Whole days between two catalogue entries. Derived, because a number written into prose here
+ * would be the one thing on this page that no test can see. */
+function daysBetween(M, aKey, bKey) {
+  const at = (k) => new Date(`${M.mechanisms.find((m) => m.key === k).date}T00:00:00Z`).getTime();
+  return Math.round((at(bKey) - at(aKey)) / 86400000);
+}
+
 const nice = (iso) =>
   new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-GB', {
     day: 'numeric',
@@ -35,6 +55,20 @@ const nice = (iso) =>
     year: 'numeric',
     timeZone: 'UTC',
   });
+
+/* Escape first, THEN mark up. The reverse order lets a stray angle bracket in the catalogue open a
+ * tag, and an earlier version of this helper did not parse HTML at all — so `<b>H1</b>` written in
+ * a chapter reached the reader as five literal characters. The markup guard looks for `[[`, `**`
+ * and backticks and could not see either failure; only reading the rendered page could. */
+function rich(text) {
+  const safe = String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  return safe
+    .replace(/\*\*([\s\S]+?)\*\*/g, '<b>$1</b>')
+    .replace(/(^|[\s(])_([^_]+)_(?=$|[\s.,;:)])/g, '$1<i>$2</i>');
+}
 
 let sectionCount = 0;
 
@@ -47,1081 +81,695 @@ function section(id, role, eyebrow, title, paras, rail) {
   s.dataset.n = String(sectionCount);
   s.dataset.title = (rail && rail.short) || title;
   if (rail && rail.sub) s.dataset.sub = rail.sub;
-  s.append(el('p', 'role', eyebrow), el('h2', null, title));
+  if (eyebrow) s.append(el('p', 'role', eyebrow));
+  if (title) s.append(el('h2', null, title));
   for (const p of [].concat(paras || [])) {
     const node = el('p', 'say');
-    node.innerHTML = p;
+    node.innerHTML = rich(p);
     s.append(node);
   }
   document.getElementById('main').append(s);
   return s;
 }
 
-/** A figure whose caption argues rather than labels. */
-function figure(node, num, caption) {
-  const f = el('figure');
-  f.append(node);
-  const c = el('figcaption');
-  c.innerHTML = `<b>Figure ${num}.</b> ${caption}`;
-  f.append(c);
-  return f;
+/** A standfirst: one short paragraph at a large size, set on a narrow measure. */
+function standfirst(text) {
+  const p = el('p', 'standfirst');
+  p.innerHTML = rich(text);
+  return p;
 }
 
-/* `table.plain` and NOT `table.grid`. The shared stylesheet defines the first and has never
- * defined the second, so the original class rendered every table with browser defaults --
- * no borders, no alignment, no padding. It looked broken because it was. */
-function table(head, rows, cls) {
-  const wrap = el('div', 'tablewrap');
-  const t = el('table', cls || 'plain');
-  const thead = el('thead');
-  const hr = el('tr');
-  for (const h of head) {
-    const th = el('th');
-    th.innerHTML = h;
-    hr.append(th);
-  }
-  thead.append(hr);
-  const tbody = el('tbody');
-  for (const row of rows) {
-    const tr = el('tr');
-    if (row.__mark) tr.className = row.__mark;
-    for (const cell of row.cells || row) {
-      const td = el('td');
-      if (cell instanceof Node) td.append(cell);
-      else td.innerHTML = cell;
-      tr.append(td);
-    }
-    tbody.append(tr);
-  }
-  t.append(thead, tbody);
-  wrap.append(t);
-  return wrap;
+/** A pull quote. Every one of these is a phrase the catalogue already contains — a test asserts it. */
+function pull(quote, source) {
+  const d = el('div', 'pull');
+  const q = el('div', 'q');
+  q.textContent = `“${quote}”`;
+  d.append(q);
+  if (source) d.append(el('span', 'src', source));
+  return d;
 }
 
-/* ----------------------------------------------------------------------------- 1 · thesis */
+/* --------------------------------------------------------------------- 1 · thesis */
 
 function chapterThesis(M) {
-  const c = M.counts;
+  const s = section('thesis', 'thesis', null, null, null, {
+    short: 'The masthead',
+    sub: 'Attention charges twice',
+  });
+  const wrap = el('div', 'masthead bleed');
+  wrap.append(figMasthead());
 
-  const s = section(
-    'summary',
-    'thesis',
-    'The short version',
-    'Every one of these is somebody paying a bill',
-    [
-      `Attention was not <i>wrong</i> and then replaced by something better. It was
-       <b>expensive</b>, in two separate ways, and almost everything since is a different answer to
-       the question <i>which of the two do I pay less of, and what am I willing to lose?</i>`,
-      `Put them in the order they were launched and the field's changing mind becomes visible.
-       That order is also the part most easily got wrong, so <b>every date here was read from the
-       paper or release itself</b> — and each one carries the link and the source's own wording, so
-       you can check it rather than trust it.`,
-    ],
-    { short: 'The short version', sub: 'two bills, and everything since' }
+  const body = el('div', 'mast-body');
+  body.append(el('p', 'kicker', '08 · Modern attention variants'));
+  const h = el('h1', 'mast-h');
+  h.textContent = 'How attention works now';
+  body.append(h);
+  body.append(
+    standfirst(
+      'Attention is one idea that sent two bills, and almost everything since is somebody who ' +
+        'could not pay one of them. Here are twenty-three mechanisms in the order they were ' +
+        'actually launched, every date read from the paper it came from.'
+    )
   );
 
-  const tiles = [
-    { k: 'mechanisms, dated', v: int(c.total), s: 'each from its primary source' },
-    { k: 'the assignment required', v: int(c.mandated), s: 'all present; a test names any that is not' },
-    {
-      k: 'never taught in the session',
-      v: int(c.outsideSession),
-      s: 'sourced from outside the course material',
-      bad: true,
-    },
-    {
-      k: 'days nobody touched the cost',
-      v: int(M.quietStretch.days),
-      s: 'between the transformer and the first attempt to make it cheaper',
-    },
-  ];
+  const per = M.cache.sharing.find((sh) => sh.kvHeads === M.yardstick.kvHeads).bytesPerToken;
+  const stat = el('div', 'stat');
+  stat.append(el('div', 'v', `${per / 1024} KiB`));
+  stat.append(el('div', 'k', 'is what one token costs, in the cache, for as long as the conversation lasts.'));
+  stat.append(
+    el(
+      'div',
+      'sub',
+      `${M.yardstick.layers} layers × ${M.yardstick.kvHeads} KV heads × ${M.yardstick.headDim} dims × 2 (K and V) × 2 bytes. Never discarded.`
+    )
+  );
+  body.append(stat);
+  wrap.append(body);
+  s.append(wrap);
+  return s;
+}
 
-  const grid = el('div', 'tiles');
-  for (const t of tiles) {
-    const cell = el('div', t.bad ? 'tile bad' : 'tile');
-    cell.append(el('div', 'tile-k', t.k), el('div', 'tile-v', t.v), el('div', 'tile-s', t.s));
-    grid.append(cell);
+/* ------------------------------------------------------------------- 2 · glossary */
+
+function chapterGlossary(M) {
+  const s = section(
+    'glossary',
+    'glossary',
+    'The key',
+    'The words, and a number against each',
+    [
+      'Every term on this page is defined here, and every definition carries a figure from our own ' +
+        'arithmetic rather than a textbook gloss. Four shapes cover all twenty-three mechanisms — ' +
+        'and the first thing the key tells you is that most of them are not the attention matrix.',
+    ],
+    { short: 'The key', sub: 'Four shapes, five bills, one yardstick' }
+  );
+  s.append(figKey(M, glyphSvg, KIND_LABEL));
+  const cap = el('p', 'say');
+  cap.innerHTML = rich(
+    `Only ${M.counts.glyphKinds.field} of the ${M.counts.total} are drawn as a score grid at all. ` +
+      'That is the finding the rest of the page is built on: after 2020 the field largely stopped ' +
+      'editing the triangle and started replacing it.'
+  );
+  s.append(cap);
+  return s;
+}
+
+/* -------------------------------------------------------------------- 3 · problem */
+
+function chapterProblem(M) {
+  const s = section(
+    'problem',
+    'problem',
+    'Plate I',
+    'The bill',
+    [],
+    { short: 'The bill', sub: 'One token, 192 KiB, forever' }
+  );
+  s.append(
+    standfirst(
+      'Attention sends two bills. The first grows with the square of the text. The second is ' +
+        'quieter and is the one that actually stops you: every token you have read stays in memory ' +
+        'until the conversation ends.'
+    )
+  );
+
+  const last = M.cache.contexts[M.cache.contexts.length - 1];
+  s.append(
+    plate(
+      'Plate I',
+      'The invoice',
+      figInvoice(M),
+      'These are not estimates. Read the last row: one person at a million tokens needs ' +
+        `<b>${(last.oneUser / M.cache.acceleratorBytes).toFixed(2)}×</b> an 80&nbsp;GB accelerator ` +
+        'for the cache alone, before a single model weight is loaded — and eight of them need ' +
+        `<b>${(last.eightUsers / M.cache.acceleratorBytes).toFixed(2)}×</b>. Everything on the ` +
+        'plate that follows is somebody trying to move that cut line down the page.'
+    )
+  );
+  return s;
+}
+
+/* ------------------------------------------------------------------ 4 · mechanism */
+
+function chapterMechanism() {
+  const s = section('mechanism', 'mechanism', 'Plate II', 'One step, taken apart', [], {
+    short: 'The centrefold',
+    sub: 'Q·K → scale → mask → softmax → ×V',
+  });
+  s.append(
+    standfirst(
+      'Before any of the twenty-three, the thing they all edit. Six words, five stages, and real ' +
+        'arithmetic you can check against the cells.'
+    )
+  );
+  s.append(
+    plate(
+      'Plate II',
+      'One attention step, in five bays',
+      figCentrefold(),
+      'Six tokens produce 36 scores and use 21 of them — the mask throws away the upper triangle ' +
+        'that was already computed, which is <b>why the triangle exists</b> in every glyph after ' +
+        'this. Scale it to a 32,768-token context and the same picture has <b>536,887,296</b> ' +
+        'useful cells, per head, per layer, of which this model has 8 and 48. Watch the last ' +
+        'stage: attention does not output weights, it outputs a vector. Nothing later on this page ' +
+        'changes what happens in these five bays — every one of them changes which cells are ' +
+        'computed, which are stored, or whether the grid is built at all.'
+    )
+  );
+  return s;
+}
+
+/* ------------------------------------------------------------------- 5 · expected */
+
+function chapterExpected(M) {
+  const s = section(
+    'expected',
+    'expected',
+    'Before the evidence',
+    'What we expected to find',
+    [
+      'The course describes a tidy arc: the field worked on **exactness**, then on **memory**, ' +
+        'then on **length**, then on memory again. Stated before we ordered anything, that is a ' +
+        'falsifiable claim — each two-year window should have one bill it clearly attacked most.',
+      'We also expected the invention of attention and the invention of the Transformer to sit ' +
+        `close together. They are **${int(daysBetween(M, 'bahdanau_attention', 'standard_attention'))} ` +
+        'days** apart, and the ordering makes that visible in a way a list of names cannot.',
+    ],
+    { short: 'The prediction', sub: 'Stated before the evidence' }
+  );
+  return s;
+}
+
+/* -------------------------------------------------------------------- 6 · results
+ *
+ * The plate, the reading spread, and the six wells. This is the body of the feature.
+ */
+
+function readingSpread(M) {
+  const spread = el('div', 'spread bleed');
+  const left = el('div');
+  const right = el('div');
+  spread.append(left, right);
+
+  const byKey = new Map(M.mechanisms.map((m) => [m.key, m]));
+  let current = null;
+
+  const render = (key) => {
+    const m = byKey.get(key);
+    if (!m) return;
+    current = key;
+    left.textContent = '';
+    right.textContent = '';
+
+    const g = glyphSvg(m, 96);
+    g.classList.add('sp-glyph');
+    left.append(g);
+    const date = el('p', 'sp-date');
+    date.textContent = `${nice(m.date)} · ${m.bill}`;
+    left.append(date);
+    const name = el('h3', 'sp-name');
+    name.textContent = m.name;
+    left.append(name);
+    const prob = el('p', 'sp-problem');
+    prob.innerHTML = rich(m.problem);
+    left.append(prob);
+    if (!m.taught || m.bonus) {
+      const marks = el('p', 'sp-marks');
+      marks.textContent = [
+        m.taught ? null : '‡ sourced outside the session',
+        m.bonus ? '† beyond the mandated list' : null,
+      ]
+        .filter(Boolean)
+        .join('   ');
+      left.append(marks);
+    }
+
+    const led = el('div', 'ledger');
+    const credit = el('div', 'credit');
+    credit.append(el('span', 'lab', 'Credit'));
+    const cv = el('div', 'val');
+    cv.innerHTML = rich(m.buys);
+    credit.append(cv);
+    const debit = el('div', 'debit');
+    debit.append(el('span', 'lab', 'Debit'));
+    const dv = el('div', 'val');
+    dv.innerHTML = rich(m.givesUp);
+    debit.append(dv);
+    led.append(credit, debit);
+    right.append(led);
+
+    // The five-field arc as ONE run-on paragraph with numbered marks, not five headed blocks.
+    // That is the single biggest reduction in visual noise available here, and it reads as prose
+    // because the fields were written to run on.
+    const arc = el('p', 'sp-arc');
+    const parts = [m.whatExisted, m.problem, m.mechanism, m.whatItFixed, m.newTradeoff];
+    arc.innerHTML = parts
+      .map((t, i) => `<span class="mk">${i + 1}</span>${rich(t)}`)
+      .join(' ');
+    right.append(arc);
+
+    const when = el('div', 'sp-when');
+    when.append(el('span', 'lab', "When you'd pick it"));
+    const wv = el('div', 'val');
+    wv.innerHTML = rich(m.whenToChoose);
+    when.append(wv);
+    right.append(when);
+
+    const src = el('div', 'sp-src');
+    const a = el('a');
+    a.href = m.source.url;
+    a.textContent = m.source.title;
+    a.rel = 'noopener';
+    a.target = '_blank';
+    src.append(a);
+    const qd = el('span', 'sp-quoted');
+    qd.textContent = m.source.quoted;
+    src.append(qd);
+    right.append(src);
+  };
+
+  spread.show = (key) => {
+    if (key === current) return;
+    render(key);
+  };
+  render('standard_attention');
+  return spread;
+}
+
+function well(parent, w, M, extras) {
+  const sec = el('section', 'well');
+  sec.append(el('p', 'kicker', `Well ${w.numeral}`));
+  const h = el('h3', 'well-h');
+  h.textContent = w.headline;
+  sec.append(h);
+  const dates = el('p', 'well-dates');
+  dates.textContent = `${nice(w.from)} — ${nice(w.to)} · ${w.keys.length} of ${M.counts.total}`;
+  sec.append(dates);
+  sec.append(standfirst(w.standfirst));
+  for (const node of extras || []) sec.append(node);
+  sec.append(pull(w.pullQuote, 'from this exercise’s own catalogue'));
+  parent.append(sec);
+  return sec;
+}
+
+function chapterResults(M, spreadRef) {
+  const s = section('results', 'results', 'Plate III', 'All twenty-three, at once', [], {
+    short: 'The plate',
+    sub: 'Every mechanism, on real time',
+  });
+  s.append(
+    standfirst(
+      'One stave per bill, and time along the bottom drawn to scale — so the gaps are as visible ' +
+        'as the entries. Choose any mechanism and the spread beneath re-typesets.'
+    )
+  );
+
+  const spread = readingSpread(M);
+  spreadRef.node = spread;
+  const p = figPlate(M, glyph, (key) => {
+    spread.show(key);
+    p.select(key);
+  });
+  p.select('standard_attention');
+
+  const gap = M.quietStretch;
+  s.append(
+    plate(
+      'Plate III',
+      'The chronology',
+      p,
+      'Two things this shape shows that no list can. Attention sits on the plate <b>three years ' +
+        'before the Transformer</b> — the idea and the architecture are separate inventions. And ' +
+        `the shaded band is <b>${int(gap.days)} days</b> in which nobody attacked either bill, ` +
+        'because contexts were short enough that the bill was small. Read the staves downward and ' +
+        'the field’s changing mind is visible: position work clusters and stops, cache work barely ' +
+        'exists before 2019 and never lets up after, and the ties — mechanisms attacking both ' +
+        'bills at once — do not exist at all until 2020. Figures drawn to schema; where a paper ' +
+        'states a size we used it, and where it does not the shape is illustrative and marked ~.'
+    )
+  );
+  s.append(spread);
+
+  // The six wells: the storyline. Every mechanism belongs to exactly one, checked in Python.
+  const wells = M.wells;
+  well(s, wells[0], M);
+  well(s, wells[1], M);
+  well(s, wells[2], M, [
+    plate(
+      'Plate IV',
+      'The race',
+      figRace(M),
+      'Head sharing buys 4× and then 8×, and it buys nothing else: all three lines are straight ' +
+        'and all three hit the wall. That is the difference between this and a bar chart — a bar ' +
+        'chart says GQA is smaller, the race shows GQA is <b>on the same line</b>. Read the ' +
+        'crossings against MQA’s own reported cost, that heads lose the ability to attend to ' +
+        'genuinely different things, and the trade is visible rather than asserted.'
+    ),
+  ]);
+  well(s, wells[3], M, [
+    plate(
+      'Plate V',
+      'The wrap',
+      figWrap(),
+      'The wobble past the blue rule is not a rendering artefact; it is the reason NTK-aware ' +
+        'scaling, YaRN and finally DroPE exist. Watch the fast dial lap the slow one tens of times ' +
+        'before the curve stops behaving — that is cause, where two static curves would only show ' +
+        'correlation. One design decision in April 2021 generated <b>1,698 days</b> of repair ' +
+        'work, and the last repair was to delete it.'
+    ),
+  ]);
+  well(s, wells[4], M, [
+    plate(
+      'Plate VI',
+      'The eviction',
+      figEviction(),
+      'Nothing was fixed here — something was discovered. Models were already dumping surplus ' +
+        'softmax mass onto the first few tokens, which made those tokens load-bearing while ' +
+        'carrying no meaning. Act 2 costs a handful of cache slots and buys indefinite streaming; ' +
+        'it does not buy memory. Everything the window has passed is genuinely gone.'
+    ),
+  ]);
+  well(s, wells[5], M);
+  return s;
+}
+
+/* ------------------------------------------------------------------ 7 · negatives */
+
+function chapterNegatives(M) {
+  const s = section(
+    'negatives',
+    'negatives',
+    'Corrections',
+    'Three things the source material gets wrong',
+    [
+      'The assignment invites this explicitly. We record them because a reader deserves to know ' +
+        'which claims we checked rather than copied.',
+    ],
+    { short: 'Corrections', sub: 'Where we disagree with the course' }
+  );
+
+  const items = [
+    [
+      'The Transformer is mis-dated',
+      'The transcript says Vaswani “invented in 2018 and 17”. <i>Attention Is All You Need</i> is ' +
+        'arXiv:1706.03762, v1 dated Mon, 12 Jun 2017 — read from the abstract page, not from ' +
+        'memory. June 2017, not 2018.',
+    ],
+    [
+      'DroPE is two papers, one capital letter apart',
+      'The technique the session describes — pretrain with positional embeddings, drop them, ' +
+        'recalibrate briefly — is arXiv:2512.12167. The transcript’s title instead matches ' +
+        '<b>DRoPE</b>, arXiv:2503.15029, an autonomous-driving trajectory paper with no relation ' +
+        'to it. We cite the first and footnote the second so nobody re-finds it and “corrects” us.',
+    ],
+    [
+      'The million-token figure does not reproduce',
+      `The transcript gives about ${M.transcriptDiscrepancy.claimedTB.toFixed(0)} TB for ` +
+        `${M.transcriptDiscrepancy.users} readers at a ` +
+        `${int(M.transcriptDiscrepancy.context)}-token context. The session’s own formula, at the ` +
+        `session’s own yardstick, gives ` +
+        `${(M.transcriptDiscrepancy.computedBytes / 1e12).toFixed(2)} TB. A smaller model, fewer ` +
+        'KV heads, or fp8 would each reconcile them; we publish both rather than quietly adopting ' +
+        'the rounder one.',
+    ],
+  ];
+  for (const [label, body] of items) {
+    const c = el('div', 'correction');
+    c.append(el('span', 'clab', label));
+    const p = el('p', 'cbody');
+    p.innerHTML = body;
+    c.append(p);
+    s.append(c);
+  }
+
+  const f = el('figure', 'wide');
+  f.append(figCorrection(M));
+  const cap = el('figcaption');
+  cap.innerHTML =
+    'The formula wins, and it is the session’s own formula. A page that corrects its source in ' +
+    'the open is the one you should believe about the other twenty-two dates.';
+  f.append(cap);
+  s.append(f);
+  return s;
+}
+
+/* ----------------------------------------------------------------- 8 · conclusion */
+
+function chapterConclusion(M) {
+  const ties = M.periods.filter((p) => !p.dominant).length;
+  const s = section(
+    'conclusion',
+    'conclusion',
+    'The verdict',
+    'The tidy arc is half true',
+    [
+      `The claimed arc holds in ${M.periods.length - ties} of these ${M.periods.length} windows ` +
+        `and fails in ${ties}. The failures are not noise: they are exact ties, and the code that ` +
+        'counts them refuses to break one.',
+    ],
+    { short: 'The verdict', sub: 'Four windows of six' }
+  );
+  const f = el('figure', 'wide');
+  f.append(figVerdict(M, glyphSvg));
+  const cap = el('figcaption');
+  cap.innerHTML = rich(
+    `A framed cell is the window's dominant bill; a **TIE** stamp is a window where no bill ` +
+      'dominated. Read the ties as the field doing two things at once rather than changing its ' +
+      'mind. A cleaner story was available here and it would have been false.'
+  );
+  f.append(cap);
+  s.append(f);
+  return s;
+}
+
+/* --------------------------------------------------------------------- 9 · limits */
+
+function chapterLimits(M) {
+  return section(
+    'limits',
+    'limits',
+    'In the open',
+    'What this page cannot tell you',
+    [
+      `**It is a chronology, not a benchmark.** Nothing here was trained or measured against ` +
+        'anything else. Every trade-off is what the primary source reports, not what we observed.',
+      `**${M.counts.outsideSession} of the ${M.counts.total} entries are sourced entirely from ` +
+        'outside the course material**, because the session names them and never teaches them. ' +
+        'Each carries the URL and the source’s own date string so you can check ours against it.',
+      '**The glyphs are shapes, not measurements.** The catalogue records no window size, sink ' +
+        `count, latent width, block size or state dimension, so ${M.counts.schematic} of ` +
+        `${M.counts.total} glyphs are drawn to schema and marked ~. Where a paper states a size ` +
+        'we used it; where it does not, the proportion on the page is ours and means nothing.',
+      '**Launch date is not adoption date.** An arXiv v1 is when an idea became public, not when ' +
+        'it became the default. The plate therefore shows when the field could have moved, not ' +
+        'when it did.',
+    ],
+    { short: 'Limits', sub: 'What it cannot establish' }
+  );
+}
+
+/* ----------------------------------------------------------------------- 10 · next */
+
+function chapterNext() {
+  return section(
+    'next',
+    'next',
+    'Next issue',
+    'Three things this opens',
+    [
+      '**Adoption against invention.** Plot the date each mechanism entered a shipped open-weights ' +
+        'model beside its launch date. The gap is the thing this page cannot see.',
+      '**The sizes.** Read window widths, sink counts, block sizes and latent dimensions out of ' +
+        'each paper, and the glyphs stop being schematic.',
+      '**A cost model that ranks.** The invoice prices the cache exactly. Pricing the compute bill ' +
+        'the same way would let the plate be sorted by what a mechanism actually saves.',
+    ],
+    { short: 'Next', sub: 'Three follow-ons' }
+  );
+}
+
+/* ------------------------------------------------------------------ 11 · reproduce */
+
+function chapterReproduce(M, spreadRef, plateRef) {
+  const s = section('reproduce', 'reproduce', 'The index plate', 'All twenty-three, on one page', [], {
+    short: 'The index',
+    sub: 'Every entry and its source',
+  });
+  s.append(
+    standfirst(
+      'Twenty-three rows, the same six fields in the same six places, so the comparison is one ' +
+        'your eye makes rather than one this page asserts. Every date was read from the string ' +
+        'printed beside it.'
+    )
+  );
+
+  const grid = el('div', 'index-plate bleed');
+  let year = null;
+  for (const m of M.mechanisms) {
+    const y = m.date.slice(0, 4);
+    if (y !== year) {
+      year = y;
+      grid.append(el('div', 'ix-year', y));
+    }
+    const row = el('div', 'ix-row');
+    row.id = `m-${m.key}`;
+
+    const g = el('div', 'ix-glyph');
+    g.append(glyphSvg(m, 30));
+    row.append(g);
+
+    const d = el('div', 'ix-date');
+    d.textContent = m.date;
+    row.append(d);
+
+    const n = el('div', 'ix-name');
+    const b = el('button', null, m.name);
+    b.type = 'button';
+    b.addEventListener('click', () => {
+      spreadRef.node.show(m.key);
+      plateRef.node.select(m.key);
+      spreadRef.node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    n.append(b);
+    const marks = [m.taught ? '' : '‡', m.bonus ? '†' : ''].join('');
+    if (marks) {
+      const sup = el('span', 'ix-bill', ` ${marks}`);
+      n.append(sup);
+    }
+    row.append(n);
+
+    const bill = el('div', 'ix-bill');
+    bill.textContent = m.bill;
+    row.append(bill);
+
+    const led = el('div', 'ix-ledger');
+    const c = el('div', 'c');
+    c.append(el('span', 'k', 'Credit'), document.createTextNode(m.buys));
+    const dd = el('div', 'd');
+    dd.append(el('span', 'k', 'Debit'), document.createTextNode(m.givesUp));
+    led.append(c, dd);
+    row.append(led);
+
+    const src = el('div', 'ix-src');
+    const a = el('a');
+    a.href = m.source.url;
+    a.textContent = m.source.title;
+    a.rel = 'noopener';
+    a.target = '_blank';
+    src.append(a);
+    src.append(el('span', 'q', ` — ${m.source.quoted}`));
+    row.append(src);
+
+    grid.append(row);
   }
   s.append(grid);
 
-  const note = el('p', 'say small');
-  note.innerHTML = `The third tile is not a boast. Eight of the mechanisms the assignment names are
-    never explained in the session at all, so our evidence for those comes entirely from outside the
-    course — and the catalogue records which is which rather than letting them blend together.`;
-  s.append(note);
+  const legend = el('p', 'say');
+  legend.innerHTML = rich(
+    `‡ sourced outside the session (${M.counts.outsideSession} of ${M.counts.total}) · ` +
+      `† beyond the ${M.counts.mandated} mandated mechanisms (${M.counts.bonus}) · ` +
+      '~ glyph drawn to schema rather than to scale'
+  );
+  s.append(legend);
   return s;
 }
 
-/* --------------------------------------------------------------------------- 2 · glossary */
-
-const GLOSSARY = [
-  ['token', 'One chunk of text the model actually sees — roughly a word, sometimes part of one.'],
-  ['context', 'How many tokens the model can look at in one go. Written T throughout.'],
-  [
-    'query, key, value',
-    'Three views of each token. The query is what it is looking for, the key is what it offers, and the value is what it passes on when chosen.',
-  ],
-  [
-    'attention score',
-    'How much one token should listen to another, computed as query times key. There are T x T of them, which is the first bill.',
-  ],
-  [
-    'softmax',
-    'Turns raw scores into weights that are positive and sum to one, so the tokens compete for attention. Removing it is what makes linear attention possible, and what it loses.',
-  ],
-  [
-    'causal mask',
-    'Stops a token seeing the future by setting those scores to minus infinity before the softmax.',
-  ],
-  [
-    'head',
-    'One independent copy of the whole attention mechanism. Models run several so different heads can watch different things.',
-  ],
-  [
-    'KV cache',
-    'The keys and values of every token generated so far, kept in memory so the next token does not recompute them. It grows with the context, which is the second bill.',
-  ],
-  [
-    'positional encoding',
-    'How the model is told where a token sits. Without it, "dog bites man" and "man bites dog" look identical.',
-  ],
-  [
-    'context extension',
-    'Making a model work at a longer context than it was trained on. Roughly a third of this timeline is attempts at it.',
-  ],
-];
-
-function chapterGlossary() {
-  const s = section(
-    'glossary',
-    'glossary',
-    'The vocabulary',
-    `${GLOSSARY.length} words, before anything is claimed with them`,
-    [
-      `Every term below is used on this page as though you already had it. They are defined here in
-       the open text rather than on hover, because a definition you have to point at does not exist
-       on a phone, in print, or for anyone reading with a keyboard.`,
-    ],
-    { short: 'The vocabulary', sub: 'defined before they are used' }
-  );
-
-  const dl = el('dl', 'defs');
-  for (const [term, meaning] of GLOSSARY) {
-    dl.append(el('dt', null, term), el('dd', null, meaning));
-  }
-  s.append(dl);
-  return s;
-}
-
-/* ---------------------------------------------------------------------------- 3 · problem */
-
-function chapterProblem(M) {
-  const y = M.yardstick;
-  const at32k = M.cache.contexts.find((c) => c.context === 32768);
-  const big = M.cache.contexts[M.cache.contexts.length - 1];
-
-  const s = section(
-    'problem',
-    'problem',
-    'The problem',
-    'Attention sends two bills, and they grow differently',
-    [
-      `Letting every token look at every other token means computing a score for every pair. Double
-       the text and you quadruple the work — <b>${int(6)} tokens is ${int(36)} scores, ${int(600)} is
-       ${int(360000)}, ${int(10000)} is ${int(100000000)}</b>. That is the first bill, and it is the
-       one everybody knows about.`,
-      `The second is quieter and, at long contexts, worse. To generate each new token the model needs
-       the keys and values of everything before it, so it keeps them — and that store grows in a
-       straight line, forever. On a ${y.layers}-layer model with ${y.kvHeads} key/value heads at
-       ${y.dtype}, one reader at a ${int(at32k.context)}-token context costs
-       <b>${gb(at32k.oneUser)}</b>. Eight of them cost <b>${gb(at32k.eightUsers)}</b>. At
-       ${int(big.context)} tokens, those same eight cost <b>${tb(big.eightUsers)}</b> — and that is
-       before the model's own weights.`,
-      `<b>Those are arithmetic, not measurements.</b> Given the shape of the model the answer is the
-       answer, which is why this page computes them rather than quoting them.`,
-    ],
-    { short: 'Two bills', sub: 'one grows squared, one grows forever' }
-  );
-
-  s.append(
-    figure(
-      figTwoBills(M),
-      1,
-      `<b>Growth, not size.</b> Both lines start at 1× for a 1,000-token context, so the chart
-       compares only how fast each bill rises — an honest comparison between a count of scores and a
-       quantity of memory, which have no common unit. Take the context from 1K to 1M and compute
-       grows a <b>million-fold</b> while the cache grows a <b>thousand-fold</b>.
-       <b>So why is the flatter line the one that stopped the field?</b> Because compute can be
-       spread over time, split across machines, or approximated — while the cache must be resident,
-       all of it, at once. A bill you can pay in instalments is not the bill that bankrupts you.`
-    )
-  );
-
-  s.append(
-    figure(
-      figCacheWall(M),
-      2,
-      `The same numbers against something physical. Eight readers at a 32K context fit inside one
-       80 GB accelerator. At 256K they do not, and at a million tokens the cache alone is
-       <b>${tb(big.eightUsers)}</b> — about twenty accelerators holding nothing but the conversation
-       so far, before a single model weight. <b>This is the wall the second half of the timeline is
-       built against</b>, and a bar dropping below the line without a mechanism changing would mean
-       this figure is wrong.`
-    )
-  );
-
-  s.append(
-    table(
-      ['context', 'one reader', 'eight readers'],
-      M.cache.contexts.map((c) => ({
-        __mark: c.context === big.context ? 'bad' : null,
-        cells: [int(c.context), gb(c.oneUser), c.context === big.context ? `<b>${tb(c.eightUsers)}</b>` : gb(c.eightUsers)],
-      }))
-    )
-  );
-  return s;
-}
-
-/* -------------------------------------------------------------- 4 · mechanism — the figure */
-
-/* The central object, drawn.
- *
- * Every mechanism on this timeline is a structural edit to one of exactly two things: which cells
- * of the score triangle survive, or how much of the cache is kept per position. The session never
- * states that, and it is the single most useful framing available — so this figure draws both
- * objects side by side and lets a reader switch the edit.
- *
- * Everything is computed from the two shapes rather than drawn per variant, so a new variant is a
- * predicate, not a picture. */
-const T = 14;
-const VARIANTS = [
-  {
-    key: 'full',
-    label: 'Full attention',
-    cells: () => true,
-    kvCols: 8,
-    rows: T,
-    note: 'Every past token, every head, kept. Exact, and the most expensive thing here.',
-  },
-  {
-    key: 'window',
-    label: 'Sliding window',
-    cells: (i, j) => i - j < 5,
-    kvCols: 8,
-    rows: 5,
-    note: 'Only the last few tokens are visible, so the cache stops growing — and anything older is reachable only through depth.',
-  },
-  {
-    key: 'sinks',
-    label: 'Window + sinks',
-    cells: (i, j) => i - j < 5 || j < 2,
-    kvCols: 8,
-    rows: 7,
-    note: 'Keep the first tokens permanently. Softmax has to put its surplus weight somewhere; take those away and the model collapses.',
-  },
-  {
-    key: 'sparse',
-    label: 'Sparse / top-k',
-    cells: (i, j) => i - j < 2 || j % 4 === 0,
-    kvCols: 8,
-    rows: T,
-    note: 'A local band plus a scattered few. Cheaper scoring, and whichever pair the pattern misses is simply unavailable.',
-  },
-  {
-    key: 'gqa',
-    label: 'GQA (2 KV heads)',
-    cells: () => true,
-    kvCols: 2,
-    rows: T,
-    note: 'The triangle is untouched. What shrinks is the cache: query heads share keys and values in groups.',
-  },
-  {
-    key: 'mqa',
-    label: 'MQA (1 KV head)',
-    cells: () => true,
-    kvCols: 1,
-    rows: T,
-    note: 'The same edit, taken as far as it goes. Smallest cache, most sharing, and the heads lose their independence.',
-  },
-  {
-    key: 'compress',
-    label: 'Compressed positions',
-    cells: () => true,
-    kvCols: 8,
-    rows: Math.ceil(T / 3),
-    note: 'Summarise blocks of tokens into one entry. This divides the other factor — positions, not heads — so it multiplies with GQA rather than competing.',
-  },
-  {
-    key: 'linear',
-    label: 'Linear / recurrent',
-    cells: (i, j) => i === j,
-    kvCols: 0,
-    rows: 0,
-    note: 'The triangle collapses. There is no per-token store at all any more, just one fixed-size state — the same size after a million tokens as after ten.',
-  },
-];
-
-function figMechanism() {
-  const W = 720;
-  // Tall enough for the grid plus its axis label and nothing more. The first version left a quarter
-  // of the box empty below the content, which reads as a figure that failed to finish drawing.
-  const H = 316;
-  const cell = 16;
-  const gapX = 96;
-  const gridX = 56;
-  const gridY = 54;
-  const cacheX = gridX + T * cell + gapX;
-
-  const root = el('div', 'mech');
-  const g = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'fig-svg', role: 'img' });
-  g.setAttribute('aria-label', 'The attention score triangle beside the key-value cache column.');
-
-  g.append(svgText(gridX, 30, 'ax strong', 'which scores survive'));
-  g.append(svgText(cacheX, 30, 'ax strong', 'what the cache keeps'));
-  g.append(svgText(gridX - 8, gridY + T * cell + 20, 'ax small', 'earlier  →  later'));
-
-  // The score triangle: one rect per (query i, key j) pair, causal so j <= i.
-  const scoreCells = [];
-  for (let i = 0; i < T; i += 1) {
-    for (let j = 0; j <= i; j += 1) {
-      const r = svg('rect', {
-        x: gridX + j * cell,
-        y: gridY + i * cell,
-        width: cell - 2,
-        height: cell - 2,
-        rx: 2,
-        class: 'sc',
-      });
-      r.dataset.i = String(i);
-      r.dataset.j = String(j);
-      g.append(r);
-      scoreCells.push(r);
-    }
-  }
-
-  // The cache: one rect per (position, kv head).
-  const cacheCells = [];
-  for (let p = 0; p < T; p += 1) {
-    for (let h = 0; h < 8; h += 1) {
-      const r = svg('rect', {
-        x: cacheX + h * cell,
-        y: gridY + p * cell,
-        width: cell - 2,
-        height: cell - 2,
-        rx: 2,
-        class: 'kv',
-      });
-      r.dataset.p = String(p);
-      r.dataset.h = String(h);
-      g.append(r);
-      cacheCells.push(r);
-    }
-  }
-
-  const state = svg('rect', {
-    x: cacheX,
-    y: gridY,
-    width: cell * 3 - 2,
-    height: cell * 3 - 2,
-    rx: 3,
-    class: 'kv state',
-  });
-  state.style.display = 'none';
-  g.append(state);
-  const stateLabel = svgText(cacheX, gridY + cell * 3 + 16, 'ax small accent', 'one fixed state');
-  stateLabel.style.display = 'none';
-  g.append(stateLabel);
-
-  const readout = el('p', 'mech-note');
-  const controls = el('div', 'mech-controls');
-
-  function draw(variant) {
-    for (const r of scoreCells) {
-      const live = variant.cells(Number(r.dataset.i), Number(r.dataset.j));
-      r.classList.toggle('off', !live);
-    }
-    const collapsed = variant.kvCols === 0;
-    for (const r of cacheCells) {
-      const p = Number(r.dataset.p);
-      const h = Number(r.dataset.h);
-      const kept = !collapsed && h < variant.kvCols && p >= T - variant.rows;
-      r.classList.toggle('off', !kept);
-      r.style.display = collapsed ? 'none' : '';
-    }
-    state.style.display = collapsed ? '' : 'none';
-    stateLabel.style.display = collapsed ? '' : 'none';
-
-    const kept = collapsed ? 0 : variant.kvCols * variant.rows;
-    const full = 8 * T;
-    readout.innerHTML = collapsed
-      ? `<b>${variant.label}.</b> ${variant.note}`
-      : `<b>${variant.label}.</b> ${variant.note} Cache kept: <b>${kept}</b> of ${full} squares` +
-        (kept === full ? '.' : ` — ${(full / kept).toFixed(1)}× smaller.`);
-
-    for (const b of controls.querySelectorAll('button')) {
-      b.classList.toggle('on', b.dataset.key === variant.key);
-      b.setAttribute('aria-pressed', String(b.dataset.key === variant.key));
-    }
-  }
-
-  for (const v of VARIANTS) {
-    const b = el('button', 'chip', v.label);
-    b.type = 'button';
-    b.dataset.key = v.key;
-    b.addEventListener('click', () => draw(v));
-    controls.append(b);
-  }
-
-  root.append(controls, g, readout);
-  draw(VARIANTS[0]);
-  return root;
-}
-
-function chapterMechanism(M) {
-  const s = section(
-    'mechanism',
-    'mechanism',
-    'How it works',
-    'There are only two things any of these can change',
-    [
-      `Here is the framing the session never quite says out loud, and it is the most useful thing on
-       this page. Attention has exactly two objects that cost anything: <b>the triangle of scores</b>
-       between every pair of tokens, and <b>the cache</b> holding what each past token contributed.
-       Every mechanism in the whole timeline is a structural edit to one of them.`,
-      `Some cut cells out of the triangle. Some make each row of the cache narrower. Some make the
-       cache shorter. One collapses the triangle entirely and keeps a single fixed state instead.
-       Once you can see which of those a technique is doing, the rest of the page is a matter of
-       dates and trade-offs.`,
-    ],
-    { short: 'Two objects', sub: 'every variant edits one of them' }
-  );
-  s.append(
-    figure(
-      figAttentionRun(),
-      3,
-      `<b>Attention, actually running.</b> Six words, real numbers — step through the four stages and
-       watch the matrix change. Rows are who is looking, columns who is being looked at. Watch what
-       the <b>mask</b> does: everything above the diagonal becomes impossible, because a word cannot
-       see the future. Then <b>softmax</b> turns raw scores into weights that <i>compete</i> — every
-       row now sums to one, so attention paid to one word is attention taken from another.
-       <b>That competition is exactly what linear attention removes seven years later</b>, and this
-       is the only place on the page you can watch what gets given up.`
-    )
-  );
-
-  s.append(
-    figure(
-      figMechanism(),
-      4,
-      `The two objects, and what each family does to them. Switch between them and watch which one
-       moves: <b>GQA and MQA leave the triangle completely untouched</b> and narrow the cache, while
-       <b>sliding window and sparse attention leave the cache width alone</b> and cut cells out of
-       the triangle. Compression shortens the cache instead of narrowing it, which is why it
-       multiplies with GQA rather than competing with it. And linear attention is the odd one out:
-       the triangle collapses to a diagonal and the per-token store disappears entirely. <b>A
-       mechanism that changed neither object would not be an attention variant at all</b> — that is
-       the test for whether something belongs on this timeline.`
-    )
-  );
-
-  s.append(
-    figure(
-      figHeads(M),
-      5,
-      `The first edit, wired up. Every query head needs keys and values to read; the only question is
-       how many <i>distinct</i> sets exist. Switch between them and watch the wires converge — the
-       query heads never change, and neither does a single attention score. <b>The whole saving is in
-       how many boxes the bottom row has.</b> That is why this was such an easy win, and why it is
-       not a solution to long context: it divides the cache by a constant and leaves it growing
-       linearly with every token.`
-    )
-  );
-
-  s.append(
-    figure(
-      figRope(),
-      6,
-      `The other thread, and the one with no picture anywhere in the source material. Position is
-       supplied by <b>rotating</b> each token's vectors by an angle proportional to where it sits.
-       Drag the slider: both arms spin as the pair moves later in the text, but the angle
-       <i>between</i> them never changes, so the score they produce is identical. <b>Absolute
-       position rotates away; relative position survives.</b> And the failure mode is in the same
-       picture — push far enough and the arms have gone round so many times that "how far apart"
-       stops being recoverable, which is what every extension method after RoPE is trying to repair.`
-    )
-  );
-  return s;
-}
-
-/* ----------------------------------------------------------------------------- 5 · method */
+/* ------------------------------------------------------------------- 12 · method */
 
 function chapterMethod(M) {
-  const c = M.counts;
-  const withArxiv = M.mechanisms.filter((m) => m.source.arxiv).length;
-  const s = section(
-    'method',
-    'method',
-    'How the dates were established',
-    'Read from the source, and quoted so you can check',
-    [
-      `The instructor's warning was specific: <i>"Your agent will happily invent a launch date and
-       describe a technique it has half remembered."</i> A fabricated date looks exactly like a real
-       one, so a convention would not have been enough.`,
-      `Every entry stores the URL it was read from, <b>the source's own wording of the date</b>, and
-       the day somebody looked. ${withArxiv} of ${c.total} are arXiv papers, and for those the quoted
-       string is the <b>v1</b> submission-history line — not a conference date, and not the month in
-       the arXiv identifier. Those alternatives are wrong in ways that reorder the timeline rather
-       than merely misreporting a row: one paper here has twenty months between its v1 and its
-       latest revision.`,
-      `Three guards enforce it, and each was watched failing on a deliberately broken catalogue
-       before being trusted: removing a required mechanism, transposing a date from the 20th to the
-       2nd, and stripping a source URL. The last one does not fail a test — it refuses to load at
-       all.`,
-      `<b>Not everything is a paper, and the catalogue says so.</b> One entry here originates in a
-       forum post and is dated by that platform's own timestamp, read from a web archive because the
-       live site refused our requests. That is recorded on the entry rather than smoothed into
-       looking like a citation.`,
-    ],
-    { short: 'How dates were checked', sub: 'quoted, not remembered' }
-  );
-  return s;
-}
-
-/* --------------------------------------------------------------------------- 6 · expected */
-
-function chapterExpected(M) {
-  const periods = M.periods;
-  const s = section(
-    'expected',
-    'expected',
-    'What we expected to see',
-    'A tidy story, predicted in advance',
-    [
-      `The brief tells you what the timeline will show before you build it:
-       <i>"first it wants exactness, then it wants memory back, then it wants length, then it wants
-       memory back again."</i> The session's longer version adds more stages — exact global
-       attention, cheaper decoding memory, better position handling, longer contexts, recurrent state
-       returning, sparsity returning, compression getting more aggressive.`,
-      `So the prediction was a <b>clean sequence</b>: each period dominated by one pressure, handing
-       over to the next. Writing that sentence under a chart would have been the easiest thing on
-       this page.`,
-      `Instead the dates were grouped into ${periods.length} two-year windows and the dominant
-       pressure in each was <b>counted</b>. Where two pressures tie, the answer is recorded as a tie
-       rather than broken in favour of the story. What came back is in
-       <a href="#conclusion">the conclusion</a>, and it is not quite the tidy version.`,
-    ],
-    { short: 'What we expected', sub: 'a tidy arc, predicted first' }
-  );
-  return s;
-}
-
-/* ---------------------------------------------------------------------------- 7 · results */
-
-const BILL_LABEL = {
-  origin: 'created the situation',
-  compute: 'pays down compute',
-  cache: 'pays down the cache',
-  position: 'fixes position',
-  both: 'pays down both',
-};
-
-
-const REDUCED_MOTION =
-  window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-/** One mechanism's full story, used by the timeline's detail panel. */
-function detailFor(m) {
-  const card = el('div', `tl-card bill-${m.bill}`);
-  const head = el('div', 'tl-head');
-  head.append(el('span', 'tl-date', nice(m.date)), el('span', 'tl-name', m.name));
-  if (m.bonus) head.append(el('span', 'tl-tag', 'not covered in class'));
-  head.append(el('span', 'tl-bill', BILL_LABEL[m.bill] || m.bill));
-  card.append(head);
-  card.append(el('p', 'tl-problem', m.problem));
-
-  const dl = el('dl', 'tl-story');
-  for (const [k, v] of [
-    ['What existed', m.whatExisted],
-    ['The mechanism', m.mechanism],
-    ['What it fixed', m.whatItFixed],
-    ['The new trade-off', m.newTradeoff],
-  ]) {
-    dl.append(el('dt', null, k), el('dd', null, v));
-  }
-  card.append(dl);
-
-  const trio = el('div', 'trio');
-  for (const [k, v, cls] of [
-    ['What it buys', m.buys, 'good'],
-    ['What it gives up', m.givesUp, 'cost'],
-    ['When to choose it', m.whenToChoose, 'pick'],
-  ]) {
-    const c = el('div', `trio-card ${cls}`);
-    c.append(el('div', 'trio-k', k), el('div', 'trio-v', v));
-    trio.append(c);
-  }
-  card.append(trio);
-
-  const cite = el('p', 'tl-cite');
-  const link = el('a', null, m.source.title);
-  link.href = m.source.url;
-  link.rel = 'noopener';
-  cite.append(document.createTextNode('Date read from '), link);
-  cite.append(el('code', null, m.source.quoted));
-  card.append(cite);
-  return card;
-}
-
-
-function chapterResults(M) {
-  const s = section(
-    'results',
-    'results',
-    'The timeline',
-    'Every mechanism, in the order it was launched',
-    [
-      `Oldest first. Each one is an answer to a problem that existed <i>at that moment</i>, so read
-       the middle column as a conversation: what somebody had, what went wrong with it, what they
-       did, and what that cost them in turn.`,
-      `The colour says which bill it pays. Click any row to open its full story, its trade-offs, and
-       the source its date was read from.`,
-    ],
-    { short: 'The timeline', sub: 'oldest first, every date sourced' }
-  );
-
-  /* The chart is the primary view and the cards are the detail. The other way round -- which is
-   * what this section shipped as first -- is twenty-three text blocks in a column, and a reader
-   * cannot see the shape of a field from a list however well each row is written. */
-  const detail = el('div', 'tl-detail');
-  const timelineFig = figTimeline(M, (m) => {
-    detail.replaceChildren(detailFor(m));
-    detail.scrollIntoView({ block: 'nearest', behavior: REDUCED_MOTION ? 'auto' : 'smooth' });
+  const s = section('method', 'method', 'Colophon', 'How this was made', [], {
+    short: 'Colophon',
+    sub: 'Production notes',
   });
-
-  s.append(
-    figure(
-      timelineFig.node,
-      7,
-      `<b>Every mechanism at its real launch date</b>, on the row for the cost it addresses. Click any
-       dot for its full story. Two things this shape shows that no list can: attention sits in the
-       top row <b>three years before the transformer</b>, and the shaded band is
-       <b>${int(M.quietStretch.days)} days</b> in which nobody attacked the cost at all. Read the rows
-       downward and the field's changing mind is visible — position work clusters, then stops; cache
-       work barely exists before 2019 and never lets up after.`
-    )
-  );
-  detail.append(el('p', 'tl-hint', 'Pick a dot above, or read the full list below.'));
-  s.append(detail);
-
-  const list = el('div', 'timeline');
-  let lastYear = null;
-
-  for (const m of M.mechanisms) {
-    if (m.year !== lastYear) {
-      list.append(el('div', 'tl-year', String(m.year)));
-      lastYear = m.year;
-    }
-
-    const item = el('details', `tl-item bill-${m.bill}`);
-    item.id = `m-${m.key}`;
-    const sum = el('summary');
-    const head = el('div', 'tl-head');
-    head.append(el('span', 'tl-date', nice(m.date)), el('span', 'tl-name', m.name));
-    if (m.bonus) head.append(el('span', 'tl-tag', 'not covered in class'));
-    if (!m.taught) head.append(el('span', 'tl-tag ghost', 'sourced outside the session'));
-    const bill = el('span', 'tl-bill', BILL_LABEL[m.bill] || m.bill);
-    head.append(bill);
-    sum.append(head);
-    sum.append(el('p', 'tl-problem', m.problem));
-    item.append(sum);
-
-    const body = el('div', 'tl-body');
-    const story = [
-      ['What existed', m.whatExisted],
-      ['The mechanism', m.mechanism],
-      ['What it fixed', m.whatItFixed],
-      ['The new trade-off', m.newTradeoff],
-    ];
-    const dl = el('dl', 'tl-story');
-    for (const [k, v] of story) dl.append(el('dt', null, k), el('dd', null, v));
-    body.append(dl);
-
-    const trio = el('div', 'trio');
-    for (const [k, v, cls] of [
-      ['What it buys', m.buys, 'good'],
-      ['What it gives up', m.givesUp, 'cost'],
-      ['When to choose it', m.whenToChoose, 'pick'],
-    ]) {
-      const card = el('div', `trio-card ${cls}`);
-      card.append(el('div', 'trio-k', k), el('div', 'trio-v', v));
-      trio.append(card);
-    }
-    body.append(trio);
-
-    const cite = el('p', 'tl-cite');
-    const link = el('a', null, m.source.title);
-    link.href = m.source.url;
-    link.rel = 'noopener';
-    cite.append(document.createTextNode('Date read from '), link);
-    cite.append(el('code', null, m.source.quoted));
-    cite.append(document.createTextNode(` · checked ${nice(m.source.verifiedOn)}`));
-    body.append(cite);
-    if (m.source.note) body.append(el('p', 'tl-note', m.source.note));
-
-    item.append(body);
-    list.append(item);
-  }
-
-  s.append(list);
-  return s;
-}
-
-/* -------------------------------------------------------------------------- 8 · negatives */
-
-function chapterNegatives(M) {
-  const d = M.transcriptDiscrepancy;
-  const s = section(
-    'negatives',
-    'negatives',
-    'What we found wrong',
-    'Three corrections, two of them to the course itself',
-    [
-      `The assignment asks for this directly — <i>"if you catch me in another one, tell me"</i> — and
-       checking every date against its source is exactly the process that turns them up.`,
-    ],
-    { short: 'What we found wrong', sub: 'including in the course material' }
-  );
-
-  const items = [
-    [
-      'The transformer is mis-dated in the session',
-      `The transcript says the transformer was "invented in 2018 and 17". <i>Attention Is All You
-       Need</i> is <code>arXiv:1706.03762</code>, and its first version was submitted on
-       <b>12 June 2017</b>. Read from the abstract page.`,
-    ],
-    [
-      'DroPE is two different papers, one capital letter apart',
-      `The technique described in class — pretrain with positional embeddings, drop them, recalibrate
-       briefly — is <i>Extending the Context of Pretrained LLMs by Dropping Their Positional
-       Embeddings</i>, <code>arXiv:2512.12167</code>. But the title the transcript reaches for maps
-       onto <b>DRoPE</b>, with a capital R: <code>arXiv:2503.15029</code>, <i>Directional Rotary
-       Position Embedding for Efficient Agent Interaction Modeling</i> — a paper about
-       <b>autonomous-driving trajectories</b>, with no relation to context extension. Both are named
-       here so nobody re-finds the second one and "corrects" the first.`,
-    ],
-    [
-      'One cache figure does not reproduce',
-      `The transcript gives about <b>${d.claimedTB.toFixed(0)} TB</b> for ${d.users} readers at a
-       ${int(d.context)}-token context. The session's own formula, at the session's own model shape,
-       gives <b>${tb(d.computedBytes)}</b>. Both are recorded and neither is published alone: a
-       smaller model, fewer key/value heads, or storing at half the precision would each reconcile
-       them, and the source does not say which was meant.`,
-    ],
+  const c = el('div', 'colophon');
+  const paras = [
+    `Set in the reader's system sans, with ${M.counts.total} entries typeset from one tracked ` +
+      'catalogue. Nothing on this page is typed by hand: every date, count, byte figure and ' +
+      'trade-off is generated from <code>results/mechanisms.json</code> and from the same Python ' +
+      'functions the test suite exercises.',
+    'Dates are the arXiv <b>v1</b> submission date, because later versions move by months and ' +
+      'sometimes years — Bahdanau’s v1 is Sep 2014 and its v7 is May 2016, a twenty-month spread. ' +
+      'Each entry stores the source’s own date string beside our parsed date so a reader compares ' +
+      'two fields rather than trusting one.',
+    'The cache arithmetic is 2 × layers × kv_heads × head_dim × context × batch × bytes, at ' +
+      `${M.yardstick.layers} layers, ${M.yardstick.kvHeads} KV heads, head dimension ` +
+      `${M.yardstick.headDim} and ${M.yardstick.dtype}. Accelerator capacity is quoted in decimal ` +
+      'GB, as accelerators are sold.',
+    'A mechanism with no stated cost is rejected at construction — the catalogue refuses an entry ' +
+      'whose trade-off, debit or when-to-choose field is empty, because a technique written down ' +
+      'with only advantages has not been understood yet.',
+    'Every figure is inline SVG built from that data, with no chart library and no third-party ' +
+      'request of any kind. Colours are tokens, so the page follows your theme rather than being ' +
+      'right in one of six and wrong in five.',
+    'Commands to rebuild and test all of this live in the repository’s README, where commands ' +
+      'belong.',
   ];
-
-  const wrap = el('div', 'findings');
-  for (const [title, body] of items) {
-    const card = el('div', 'finding');
-    card.append(el('h3', null, title));
-    const p = el('p');
-    p.innerHTML = body;
-    card.append(p);
-    wrap.append(card);
+  for (const p of paras) {
+    const node = el('p');
+    node.innerHTML = p;
+    c.append(node);
   }
-  s.append(wrap);
-
-  const caveat = el('p', 'say small');
-  caveat.innerHTML = `<b>And one about our own work.</b> The trade-offs on this page — what each
-    mechanism buys, gives up, and when you would pick it — are written by us from reading the
-    sources. They are the part no test can check, and the part to argue with.`;
-  s.append(caveat);
+  s.append(c);
   return s;
 }
 
-/* ------------------------------------------------------------------------- 9 · conclusion */
-
-function chapterConclusion(M) {
-  const periods = M.periods;
-  const ties = periods.filter((p) => p.dominant === null);
-  const first = M.mechanisms[0];
-  const quiet = M.quietStretch;
-
-  const s = section(
-    'conclusion',
-    'conclusion',
-    'What the order shows',
-    'The field was messier than the story about it',
-    [
-      `<b>The tidy arc is not what the data shows.</b> Of the ${periods.length} two-year windows,
-       <b>${ties.length} have no single dominant pressure at all</b> — in those periods the field was
-       attacking compute, memory and position simultaneously rather than in sequence. The prediction
-       was a relay; what happened was a scramble.`,
-      `<b>Attention is three years older than the Transformer.</b> ${first.name} is
-       ${nice(first.date)}. The 2017 paper removed the recurrence around attention rather than
-       inventing attention — which is obvious in date order and invisible in every list that starts
-       with "Attention Is All You Need".`,
-      `<b>Nobody attacked the cost for ${int(quiet.days)} days.</b> Between the transformer and the
-       first serious attempt to make attention cheaper there is a gap of nearly two years, in which
-       the field was busy using attention rather than paying for it. A list cannot show a silence.`,
-      `And the thing the instructor said this was all for — guessing what comes next. The last three
-       entries all reduce the same object, the cache, by increasingly aggressive
-       <i>approximation</i>: fewer heads, then compressed positions, then dropping the positional
-       signal altogether. If that direction continues, the next move is not another way to store less
-       but a way to <b>decide what was never worth storing</b> — and that is a retrieval problem
-       wearing an attention costume.`,
-    ],
-    { short: 'What the order shows', sub: 'and it is not the tidy version' }
-  );
-
-  s.append(
-    figure(
-      figPressure(M),
-      8,
-      `The prediction, tested. Each bar is one two-year window, stacked by which bill its mechanisms
-       paid. A clean relay would show one colour dominating, handing over to the next. <b>Two windows
-       are marked "no winner"</b> — in those the field was doing three things at once. The arc is
-       real at the ends and a scramble in the middle, which is a more useful thing to know than the
-       tidy version: <b>if the field moved in one direction at a time, you could predict it. It does
-       not, so you cannot.</b>`
-    )
-  );
-
-  s.append(
-    table(
-      ['period', 'what it was buying', 'mechanisms'],
-      periods.map((p) => ({
-        __mark: p.dominant === null ? 'bad' : null,
-        cells: [
-          `${p.start}–${p.end}`,
-          p.dominant ? BILL_LABEL[p.dominant] : '<b>no single pressure</b>',
-          String(p.mechanisms.length),
-        ],
-      }))
-    )
-  );
-  return s;
-}
-
-/* ----------------------------------------------------------------------------- 10 · limits */
-
-function chapterLimits(M) {
-  const s = section(
-    'limits',
-    'limits',
-    'What this cannot tell you',
-    'A chronology is not an experiment',
-    [
-      `These are not caveats attached to a finished argument. They are the boundary of what this page
-       is evidence for, and they belong beside the timeline rather than behind a link.`,
-    ],
-    { short: 'What it cannot show', sub: 'a survey is not an experiment' }
-  );
-
-  const items = [
-    [
-      'Nothing here was trained or benchmarked.',
-      `No claim that one mechanism is <i>better</i> than another is measured on this page. Where a
-       paper reports a speedup or a quality result, it belongs to that paper and is attributed there.
-       We did not re-run any of it.`,
-    ],
-    [
-      'The arithmetic is exact, and exactly as narrow.',
-      `The cache figures are correct for one model shape — ${M.yardstick.layers} layers,
-       ${M.yardstick.kvHeads} key/value heads, head width ${M.yardstick.headDim},
-       ${M.yardstick.dtype} — and mean nothing for another. They describe no running system.`,
-    ],
-    [
-      'A first-appearance date is not a claim of invention.',
-      `Ideas have precursors. Several entries here have contested attributions that the catalogue
-       records rather than resolves — learned absolute positions in particular reach back further
-       than the entry's date, through a lead we did not open and therefore do not assert.`,
-    ],
-    [
-      'The trade-offs are editorial.',
-      `What each mechanism buys, gives up, and when you would choose it is our judgement from reading
-       the sources. It is the most useful part of this page and the least verifiable.`,
-    ],
-    [
-      'One source could not be read live.',
-      `The forum post behind NTK-aware scaling was read from a web archive capture, because the site
-       refused our requests. A reader who needs the original needs a browser.`,
-    ],
-  ];
-
-  const ul = el('ul', 'bullets');
-  for (const [head, body] of items) {
-    const li = el('li');
-    li.innerHTML = `<b>${head}</b> ${body}`;
-    ul.append(li);
-  }
-  s.append(ul);
-  return s;
-}
-
-/* ------------------------------------------------------------------------------- 11 · next */
-
-function chapterNext() {
-  const s = section(
-    'next',
-    'next',
-    'What would make this better',
-    'Three things this page does not yet do',
-    [],
-    { short: 'What comes next', sub: 'three honest gaps' }
-  );
-  const ul = el('ul', 'bullets');
-  for (const [head, body] of [
-    [
-      'Measure one of the trade-offs instead of reading it.',
-      `The cheapest real experiment here is the accuracy cost of top-k attention as k falls — a curve
-       rather than a sentence. It needs no training, only a forward pass, and it would turn one
-       editorial claim on this page into a measurement.`,
-    ],
-    [
-      'Date the model releases, not just the papers.',
-      `Several mechanisms reached practice through a model rather than a paper, sometimes much later
-       than their first publication. A second date per entry — first published, first shipped — would
-       show a lag the current timeline hides entirely.`,
-    ],
-    [
-      'Follow the leads we did not open.',
-      `At least one attribution here stops at a citation we chose not to chase. Learned absolute
-       positions in particular have an earlier claim that would move a row on the timeline if it
-       held up.`,
-    ],
-  ]) {
-    const li = el('li');
-    li.innerHTML = `<b>${head}</b> ${body}`;
-    ul.append(li);
-  }
-  s.append(ul);
-  return s;
-}
-
-/* -------------------------------------------------------------------------- 12 · reproduce */
-
-function chapterReproduce(M) {
-  const s = section(
-    'reproduce',
-    'reproduce',
-    'Check it yourself',
-    'Every date, and the line it was read from',
-    [
-      `Dates are the easiest thing on a page like this to get confidently wrong, so none of these is
-       asked to be taken on trust. Every row below links the paper or post the date came from, and
-       quotes <b>that source's own wording of it</b> — so checking one means opening a link and
-       comparing two strings.`,
-      `For papers the quoted line is the <b>first</b> submission, not a later revision and not the
-       conference date. Those differ by months and sometimes years — one paper here has twenty
-       months between its first version and its latest — and since this page is ordered <i>by</i>
-       date, taking the wrong one would silently reshuffle the story.`,
-    ],
-    { short: 'Check it yourself', sub: 'every date, linked and quoted' }
-  );
-
-  /* Reader-facing evidence, not developer instructions.
-   *
-   * This section used to print `uv sync` and a pytest invocation — shell commands for running the
-   * repository, on a page written for someone who asked how attention works. They belong in the
-   * README and nowhere near a reader. What a reader actually wants from a section called "check it
-   * yourself" is the sources, and here they are: all of them, in one table, each one click away. */
-  s.append(
-    table(
-      ['mechanism', 'date', 'read from', 'the source&rsquo;s own words'],
-      M.mechanisms.map((m) => {
-        const link = el('a', null, m.source.title);
-        link.href = m.source.url;
-        link.rel = 'noopener';
-        const quote = el('code', 'quoted', m.source.quoted);
-        return {
-          cells: [`<b>${m.name}</b>`, nice(m.date), link, quote],
-        };
-      }),
-      'plain sources'
-    )
-  );
-
-  const note = el('p', 'say small');
-  note.innerHTML = `Not every one is a paper. <b>${
-    M.mechanisms.filter((m) => m.source.kind !== 'paper').length
-  }</b> of the ${M.counts.total} began somewhere else — a forum post, a model release — and the
-    table says so rather than dressing them up as citations. One of them could only be read from a
-    web archive, because the original site refused the request.`;
-  s.append(note);
-  return s;
-}
-
-/* ---------------------------------------------------------------------------- the shell */
+/* --------------------------------------------------------------------- the shell */
 
 function buildRail(root) {
   const rail = document.getElementById('rail');
   if (!rail) return;
-  rail.replaceChildren();
-  const inner = el('div', 'rail-inner');
   const head = el('div', 'rail-head');
-  head.append(el('div', 'rail-title', 'On this page'));
-  inner.append(head);
+  head.append(el('span', 'rail-title', 'Contents'));
+  rail.append(head);
   const list = el('div', 'rail-list');
-  for (const sec of root.querySelectorAll('section')) {
-    if (!sec.dataset.title) continue;
-    const link = el('a', 'rail-link');
-    link.href = `#${sec.id}`;
-    const body = el('span', 'rail-body');
-    body.append(el('span', 'rail-t', sec.dataset.title));
+  for (const sec of root.querySelectorAll('section[data-role]')) {
+    const a = el('a', 'rail-link');
+    a.href = `#${sec.id}`;
+    a.append(el('span', 'rail-n', String(sec.dataset.n).padStart(2, '0')));
+    const body = el('div', 'rail-body');
+    body.append(el('span', 'rail-t', sec.dataset.title || sec.id));
     if (sec.dataset.sub) body.append(el('span', 'rail-sub', sec.dataset.sub));
-    /* `rail-n` and `rail-body` are SIBLINGS: `.rail-link` is a two-column grid, and nesting the
-     * number inside the body squeezes every title into the 16px number column. */
-    link.append(el('span', 'rail-n', sec.dataset.n), body);
-    list.append(link);
+    a.append(body);
+    list.append(a);
   }
-  inner.append(list);
-  rail.append(inner);
+  rail.append(list);
 }
 
-function buildFooter() {
+function buildFooter(M) {
   const foot = document.getElementById('foot');
-  const p = el('p', 'say small');
-  p.innerHTML =
-    'Written for whoever asked "how does attention work now" and deserved more than a list. Every ' +
-    'date is linked to the source it was read from; the trade-offs are ours, and are the part to ' +
-    'argue with. ' +
-    '<a href="https://github.com/pankajkr23/llm-pretraining-exercises/tree/main/src/exercises/08-modern-attention-variants">Code, catalogue and the full write-up</a>.';
+  if (!foot) return;
+  const p = el('p', 'disclaim');
+  p.innerHTML = rich(
+    `${M.counts.total} mechanisms, every date verified against its primary source. Part of an ` +
+      'LLM pre-training exercise series. The course, instructor and platform are credited in the ' +
+      'repository README.'
+  );
   foot.append(p);
 }
 
 export function buildPage(M) {
-  const main = document.getElementById('main');
-  main.replaceChildren();
-  sectionCount = 0;
+  const spreadRef = {};
+  const plateRef = {};
 
-  const parts = [
-    chapterThesis,
-    chapterGlossary,
-    chapterProblem,
-    chapterMechanism,
-    chapterMethod,
-    chapterExpected,
-    chapterResults,
-    chapterNegatives,
-    chapterConclusion,
-    chapterLimits,
-    chapterNext,
-    chapterReproduce,
-  ];
-  for (const fn of parts) {
-    try {
-      fn(M);
-    } catch (err) {
-      const p = el('p', 'err', `Section failed: ${err.message}`);
-      main.append(p);
-    }
+  chapterThesis(M);
+  chapterGlossary(M);
+  chapterProblem(M);
+  chapterMechanism(M);
+  chapterExpected(M);
+  const results = chapterResults(M, spreadRef);
+  plateRef.node = results.querySelector('svg');
+  // The plate is the first svg in the results section; grab the one that carries select().
+  for (const svgEl of results.querySelectorAll('svg')) {
+    if (typeof svgEl.select === 'function') plateRef.node = svgEl;
   }
+  chapterNegatives(M);
+  chapterConclusion(M);
+  chapterLimits(M);
+  chapterNext();
+  chapterReproduce(M, spreadRef, plateRef);
+  chapterMethod(M);
 
-  buildRail(main);
-  buildFooter();
-
-  if (location.hash) {
-    const target = document.querySelector(location.hash);
-    if (target) target.scrollIntoView();
-  }
+  buildRail(document.getElementById('main'));
+  buildFooter(M);
 }

@@ -1,4 +1,4 @@
-/* The figures.
+/* THE PLATES.
  *
  * All inline SVG built from the page's own data — no chart library, no CDN, no dependency. Every
  * colour is a token from the shared stylesheet, so each figure follows the reader's theme instead
@@ -8,9 +8,16 @@
  * restates a sentence is decoration. The test applied to each: could a reader who skipped the text
  * still learn the point from the picture, and would a wrong implementation look obviously wrong?
  *
- * Motion is used where the thing being explained *is* a process — a softmax redistributing weight,
- * a vector rotating, a cache filling. It is switched off wholesale under `prefers-reduced-motion`,
- * and every animated figure has a readable terminal state so a still screenshot still teaches.
+ * Motion is spent, not sprinkled. It is used only where the thing being explained *is* a process
+ * whose rate or ordering is the lesson — a softmax redistributing weight, three caches filling at
+ * different slopes towards one wall, a rotation running past its trained length, the moment a sink
+ * token leaves the window. Under `prefers-reduced-motion` every figure is rendered DIRECTLY into
+ * its terminal state rather than reaching it quickly, which is the only version that survives a
+ * screenshot.
+ *
+ * One convention runs through all of them: `--accent` has exactly one job — the current selection,
+ * the playhead, or the line being crossed. Giving it a second job is what turns a plate back into
+ * a chart.
  */
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -34,31 +41,290 @@ export const svgText = (x, y, cls, text) => {
   return t;
 };
 
-const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+export const REDUCED =
+  typeof window !== 'undefined' &&
+  Boolean(window.matchMedia) &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** Run `step(t)` for `ms`, with `t` easing 0 → 1. Jumps straight to the end for reduced motion. */
-function animate(ms, step) {
+export function animate(ms, step) {
   if (REDUCED) {
     step(1);
-    return;
+    return () => {};
   }
+  let live = true;
   const start = performance.now();
   const tick = (now) => {
+    if (!live) return;
     const raw = Math.min(1, (now - start) / ms);
     step(raw < 0.5 ? 2 * raw * raw : 1 - (-2 * raw + 2) ** 2 / 2);
     if (raw < 1) requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
+  return () => {
+    live = false;
+  };
 }
 
-/* ============================================================ 1 · attention, actually running
+/** Play `fn` the first time the element is scrolled into view, once. */
+export function onFirstView(node, fn) {
+  if (REDUCED || typeof IntersectionObserver === 'undefined') {
+    fn();
+    return;
+  }
+  /* Deferred by one frame ON PURPOSE. Every caller builds its figure and asks for this before
+   * returning it, so at call time the node is still detached — and an IntersectionObserver on a
+   * detached node never fires. The page renders, nothing throws, and the figure simply sits in
+   * its start state forever. The invoice's cut line starts at opacity 0, so that failure was
+   * total: the plate's whole argument was invisible and the console was clean. */
+  requestAnimationFrame(() => {
+    if (!node.isConnected) {
+      fn();
+      return;
+    }
+    observe(node, fn);
+  });
+}
+
+function observe(node, fn) {
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          io.disconnect();
+          fn();
+        }
+      }
+    },
+    { threshold: 0.2 }
+  );
+  io.observe(node);
+}
+
+const int = (n) => Math.round(n).toLocaleString('en-US');
+
+/** A plate: a numbered rule, a title, the figure, and a caption that argues. */
+export function plate(numeral, title, node, caption) {
+  const f = el('figure', 'plate bleed');
+  const head = el('div', 'plate-head');
+  head.append(el('span', 'plate-n', numeral), el('span', 'plate-t', title));
+  f.append(head, node);
+  if (caption) {
+    const c = el('figcaption');
+    c.innerHTML = caption;
+    f.append(c);
+  }
+  return f;
+}
+
+/* ============================================================= PLATE 0 · the masthead field
  *
- * The assignment is explicit: start with plain scaled dot-product attention, because nothing after
- * it makes sense without it. So this is not a diagram of the formula — it runs it, on six tokens,
- * one stage at a time, and shows the numbers changing.
+ * The causal triangle at T = 64, used as the feature's cover art: the page's subject as its own
+ * wallpaper. Run-length drawn — a causal row is one contiguous run, so this is 64 rects and not
+ * 4,096. It is a shape, not a measurement, and the caption says so.
+ */
+export function figMasthead() {
+  const T = 64;
+  const s = svg('svg', {
+    viewBox: '0 0 640 640',
+    preserveAspectRatio: 'xMidYMid slice',
+    class: 'mast-field',
+    'aria-hidden': 'true',
+  });
+  const rows = [];
+  for (let i = 0; i < T; i += 1) {
+    const r = svg('rect', { x: 0, y: i * 10, width: (i + 1) * 10, height: 9, class: 'f-ink' });
+    r.setAttribute('opacity', '0');
+    rows.push(r);
+    s.append(r);
+  }
+  // The one query line: row 32, in accent. The only accent mark on the masthead.
+  s.append(svg('rect', { x: 0, y: 32 * 10 + 3, width: 33 * 10, height: 2.5, class: 'f-accent' }));
+
+  const target = (i) => 0.07 + 0.06 * (i / (T - 1));
+  animate(480, (t) => {
+    for (let i = 0; i < T; i += 1) {
+      const local = Math.max(0, Math.min(1, t * T - i));
+      rows[i].setAttribute('opacity', (target(i) * local).toFixed(3));
+    }
+  });
+  return s;
+}
+
+/* ==================================================================================== THE KEY
  *
- * The numbers are real: fixed six-token Q and K vectors, dot products computed live. A reader can
- * check the arithmetic against the boxes.
+ * The visual alphabet, before it is used, with a real number from our own run against every term.
+ * The glyph exemplars are drawn by the SAME generators the plate uses, so the key cannot drift
+ * from the figures it explains.
+ */
+export function figKey(M, glyphSvg, KIND_LABEL) {
+  const wrap = el('div', 'key bleed');
+
+  const alpha = el('section');
+  alpha.append(el('h3', null, 'The alphabet'));
+  const strip = el('div', 'key-alpha');
+  const seen = new Set();
+  for (const m of M.mechanisms) {
+    if (seen.has(m.glyph.kind)) continue;
+    seen.add(m.glyph.kind);
+    const it = el('div', 'it');
+    it.append(glyphSvg(m, 40));
+    const lab = el('span', 'lab');
+    lab.textContent = `${m.glyph.kind.toUpperCase()} — ${KIND_LABEL[m.glyph.kind]}`;
+    it.append(lab);
+    strip.append(it);
+  }
+  alpha.append(strip);
+  const note = el('span', 'lab');
+  note.textContent =
+    `~ marks a glyph drawn to schema rather than to scale — ` +
+    `${M.counts.schematic} of ${M.counts.total} are.`;
+  alpha.append(note);
+
+  const bills = el('section');
+  bills.append(el('h3', null, 'The five bills'));
+  const bl = el('div', 'key-bills');
+  const BILL_GLOSS = {
+    origin: 'invented the thing',
+    compute: 'the score grid',
+    cache: 'the stored keys',
+    position: 'where a token sits',
+    both: 'grid and cache at once',
+  };
+  for (const [name, n] of Object.entries(M.counts.bills)) {
+    const b = el('div', 'b');
+    b.append(el('span', null, name.toUpperCase()));
+    b.append(el('span', null, BILL_GLOSS[name] || ''));
+    b.append(el('span', 'n', String(n)));
+    bl.append(b);
+  }
+  bills.append(bl);
+
+  const yard = el('section');
+  yard.append(el('h3', null, 'The yardstick'));
+  const y = el('div', 'key-yard');
+  const cell = (k, v) => {
+    const d = el('div');
+    const kk = el('span', 'k');
+    kk.textContent = k;
+    d.append(kk, document.createTextNode(v));
+    return d;
+  };
+  y.append(
+    cell('layers', String(M.yardstick.layers)),
+    cell('kv heads', String(M.yardstick.kvHeads)),
+    cell('head dim', String(M.yardstick.headDim)),
+    cell('numbers', M.yardstick.dtype)
+  );
+  const per = M.cache.sharing.find((sh) => sh.kvHeads === M.yardstick.kvHeads).bytesPerToken;
+  const d = el('div', 'derived');
+  const kk = el('span', 'k');
+  kk.textContent = 'one token, held in the cache';
+  d.append(kk, document.createTextNode(`${per / 1024} KiB — ${int(per)} bytes`));
+  y.append(d);
+  yard.append(y);
+
+  wrap.append(alpha, bills, yard);
+  return wrap;
+}
+
+/* =========================================================================== PLATE I · the bill
+ *
+ * The two bills as a printed invoice rather than a chart, because the data literally is a bill.
+ * The cut line — the row where one 80 GB accelerator is exhausted — is the whole argument, set as
+ * typography: everything below it is typeset as overdrawn.
+ */
+export function figInvoice(M) {
+  const wrap = el('div', 'invoice bleed');
+
+  const co = el('div', 'inv-co');
+  co.append(el('span', null, 'Attention, Ltd.'));
+  const acct = el('span', 'acct');
+  acct.textContent =
+    `account: ${M.yardstick.layers}L · ${M.yardstick.kvHeads}KV · ` +
+    `d${M.yardstick.headDim} · ${M.yardstick.dtype}`;
+  co.append(acct);
+  wrap.append(co);
+
+  const g = el('div', 'inv-grid');
+  const head = (t, cls) => {
+    const h = el('div', `inv-h${cls ? ` ${cls}` : ''}`);
+    h.textContent = t;
+    return h;
+  };
+  g.append(
+    head('Item'),
+    head('Context', 'num'),
+    head('One reader', 'num'),
+    head('Eight readers', 'num eight')
+  );
+
+  const budget = M.cache.acceleratorBytes;
+  const cutRow = el('div', 'inv-cut');
+  const cutLab = el('span', 'lab');
+  cutLab.textContent = `one ${int(budget / 1e9)} GB accelerator, exhausted`;
+  cutRow.append(cutLab);
+
+  let cutDrawn = false;
+  for (const row of M.cache.contexts) {
+    if (!cutDrawn && row.oneUser > budget) {
+      g.append(cutRow);
+      cutDrawn = true;
+    }
+    const over = cutDrawn ? ' over' : '';
+    const item = el('div', `inv-item${over}`);
+    item.textContent = 'KV cache';
+    const ctx = el('div', `inv-n${over}`);
+    ctx.textContent = int(row.context);
+    const one = el('div', `inv-n${over}`);
+    one.textContent = `${(row.oneUser / 1e9).toFixed(2)} GB`;
+    const eight = el('div', `inv-n eight${over}`);
+    eight.textContent = `${(row.eightUsers / 1e9).toFixed(2)} GB`;
+    g.append(item, ctx, one, eight);
+  }
+
+  const last = M.cache.contexts[M.cache.contexts.length - 1];
+  const tot = el('div', 'inv-item total');
+  tot.textContent = 'Overdrawn, at the last row';
+  const tctx = el('div', 'inv-n total');
+  tctx.textContent = '';
+  const t1 = el('div', 'inv-n total');
+  t1.textContent = `${(last.oneUser / budget).toFixed(2)}×`;
+  const t8 = el('div', 'inv-n total eight');
+  t8.textContent = `${(last.eightUsers / budget).toFixed(2)}×`;
+  g.append(tot, tctx, t1, t8);
+  wrap.append(g);
+
+  const ref = M.cache.contexts[1];
+  const foot = el('p', 'inv-foot');
+  foot.textContent =
+    `GB decimal, as accelerators are sold. ${(ref.oneUser / 1e9).toFixed(2)} GB is ` +
+    `${(ref.oneUser / 1024 ** 3).toFixed(2)} GiB; using binary units would move the cut line by ` +
+    `7.4%. Every figure above is 2 × layers × kv_heads × head_dim × context × batch × bytes, ` +
+    `evaluated rather than estimated.`;
+  wrap.append(foot);
+
+  if (!REDUCED) {
+    cutRow.style.opacity = '0';
+    onFirstView(wrap, () =>
+      animate(300, (t) => {
+        cutRow.style.opacity = String(t);
+      })
+    );
+  }
+  return wrap;
+}
+
+/* ====================================================== PLATE II · the centrefold, five bays
+ *
+ * One attention step, taken apart. The assignment requires plain scaled dot-product attention
+ * first, because nothing after it makes sense without it — and it names five steps, not four:
+ * Q·K, scale, mask, softmax, and the weighted sum of V. An earlier version of this figure stopped
+ * at softmax, which is precisely the step at which a reader would conclude that attention outputs
+ * weights. It outputs a vector; bay five is where that happens.
+ *
+ * The numbers are real: fixed six-token Q, K and V, dot products computed live. A reader can check
+ * the arithmetic against the cells.
  */
 
 const WORDS = ['the', 'cat', 'sat', 'on', 'the', 'mat'];
@@ -80,595 +346,782 @@ const K = [
   [1.0, 0.0],
   [0.2, 0.9],
 ];
+// V is what actually leaves the block, and it is deliberately NOT K. A figure that reuses the keys
+// as the values teaches that attention returns its own keys, which is the commonest misreading of
+// the formula there is.
+const V = [
+  [0.2, 0.9],
+  [1.0, 0.2],
+  [0.6, 0.6],
+  [0.3, 0.4],
+  [0.2, 0.9],
+  [0.9, 0.3],
+];
 
 const STAGES = [
   ['Q · K', 'Every token scores every other token. Six tokens, thirty-six numbers.'],
   ['÷ √d', 'Scaled down, so the numbers stay in a range softmax can work with.'],
   ['+ mask', 'The future is set to minus infinity. A token may only look backwards.'],
   ['softmax', 'Scores become weights: all positive, each row summing to one. Now they compete.'],
+  ['× V', 'The weights multiply the values and are summed. This vector is what leaves the block.'],
 ];
 
-export function figAttentionRun() {
-  const n = WORDS.length;
-  const cell = 52;
-  const left = 108;
-  const top = 74;
-  const W = left + n * cell + 24;
-  const H = top + n * cell + 40;
-
+function scoreMatrix(stage) {
   const raw = Q.map((q) => K.map((k) => q[0] * k[0] + q[1] * k[1]));
+  if (stage === 0) return raw;
   const scaled = raw.map((r) => r.map((v) => v / Math.SQRT2));
-  const masked = scaled.map((r, i) => r.map((v, j) => (j > i ? -Infinity : v)));
-  const weights = masked.map((r) => {
-    const ex = r.map((v) => (v === -Infinity ? 0 : Math.exp(v)));
-    const total = ex.reduce((a, b) => a + b, 0);
-    return ex.map((v) => v / total);
+  if (stage === 1) return scaled;
+  const masked = scaled.map((r, i) => r.map((v, j) => (j > i ? null : v)));
+  if (stage === 2) return masked;
+  return masked.map((r) => {
+    const live = r.filter((v) => v !== null);
+    const mx = Math.max(...live);
+    const ex = r.map((v) => (v === null ? null : Math.exp(v - mx)));
+    const sum = ex.reduce((a, b) => a + (b || 0), 0);
+    return ex.map((v) => (v === null ? null : v / sum));
   });
-  const frames = [raw, scaled, masked, weights];
-
-  const root = el('div', 'fig fig-attention');
-  const controls = el('div', 'fig-controls');
-  const g = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'fig-svg tall' });
-  g.setAttribute('role', 'img');
-  g.setAttribute('aria-label', 'A six-token attention matrix, stage by stage.');
-
-  for (let j = 0; j < n; j += 1) {
-    g.append(svgText(left + j * cell + cell / 2, 40, 'ax mid small', WORDS[j]));
-  }
-  g.append(svgText(left + (n * cell) / 2, 20, 'ax mid small faint', 'attending to'));
-  for (let i = 0; i < n; i += 1) {
-    g.append(svgText(left - 20, top + i * cell + cell / 2 + 4, 'ax end small', WORDS[i]));
-  }
-
-  const rects = [];
-  const labels = [];
-  for (let i = 0; i < n; i += 1) {
-    for (let j = 0; j < n; j += 1) {
-      const r = svg('rect', {
-        x: left + j * cell,
-        y: top + i * cell,
-        width: cell - 4,
-        height: cell - 4,
-        rx: 5,
-        class: 'att',
-      });
-      g.append(r);
-      rects.push(r);
-      const t = svgText(left + j * cell + (cell - 4) / 2, top + i * cell + cell / 2 + 4, 'val', '');
-      g.append(t);
-      labels.push(t);
-    }
-  }
-
-  const caption = el('p', 'fig-note');
-  let stage = 0;
-  let shown = frames[0].flat();
-
-  function paint(values) {
-    const finite = values.filter((v) => Number.isFinite(v));
-    const hi = Math.max(...finite.map(Math.abs), 0.001);
-    values.forEach((v, idx) => {
-      const r = rects[idx];
-      const t = labels[idx];
-      if (!Number.isFinite(v)) {
-        r.style.opacity = '0.12';
-        t.textContent = '−∞';
-        t.classList.add('dim');
-        return;
-      }
-      const share = stage === 3 ? v : Math.abs(v) / hi;
-      r.style.opacity = String(0.14 + 0.86 * share);
-      t.textContent = stage === 3 ? v.toFixed(2).replace(/^0/, '') : v.toFixed(2);
-      t.classList.toggle('dim', share < 0.45);
-    });
-  }
-
-  function go(next) {
-    const from = shown.slice();
-    const to = frames[next].flat();
-    stage = next;
-    animate(420, (t) => {
-      shown = to.map((v, i) => {
-        if (!Number.isFinite(v)) return v;
-        const a = Number.isFinite(from[i]) ? from[i] : 0;
-        return a + (v - a) * t;
-      });
-      paint(shown);
-    });
-    caption.innerHTML = `<b>${STAGES[next][0]}.</b> ${STAGES[next][1]}`;
-    for (const b of controls.querySelectorAll('button')) {
-      const on = Number(b.dataset.i) === next;
-      b.classList.toggle('on', on);
-      b.setAttribute('aria-pressed', String(on));
-    }
-  }
-
-  STAGES.forEach(([label], i) => {
-    const b = el('button', 'chip', label);
-    b.type = 'button';
-    b.dataset.i = String(i);
-    b.addEventListener('click', () => go(i));
-    controls.append(b);
-  });
-
-  root.append(controls, g, caption);
-  go(0);
-  return root;
 }
 
-/* ================================================================== 2 · the two bills, drawn
- *
- * One chart, log-scaled, showing why the two costs are not the same kind of problem: compute grows
- * with the square and the cache grows in a straight line, but the cache is the one that stops you,
- * because it must all be resident at once.
- */
+/** The output vectors: weights × V, summed per row. What the block actually returns. */
+export function outputs() {
+  return scoreMatrix(3).map((row) => {
+    const o = [0, 0];
+    row.forEach((weight, j) => {
+      if (weight === null) return;
+      o[0] += weight * V[j][0];
+      o[1] += weight * V[j][1];
+    });
+    return o;
+  });
+}
 
-export function figTwoBills(M) {
-  const W = 720;
-  const H = 300;
-  const L = 68;
-  const R = 168;
-  const T = 26;
-  const B = 48;
+export function figCentrefold() {
+  const wrap = el('div');
+  const W = 1240;
+  const H = 560;
+  const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img' });
+  const title = svg('title', {});
+  title.textContent =
+    'One attention step in five bays: the tokens, Q K and V, the score grid, the weights, and the output vectors.';
+  s.append(title);
 
-  const base = 1000;
-  const maxCtx = M.cache.contexts[M.cache.contexts.length - 1].context;
-
-  /* **Growth relative to a 1K context, not absolute size.**
-   *
-   * The first version of this chart plotted attention scores and cache bytes on one axis. They are
-   * different units -- a count against a quantity of memory -- so the line that happened to sit
-   * higher said nothing at all, and it flatly contradicted the caption beneath it. What the two
-   * bills actually differ in is their *rate*: multiply the context by ten and compute goes up a
-   * hundredfold while the cache goes up tenfold. Normalising both to 1 at 1K tokens makes that the
-   * only thing the chart says, and makes it unit-free and true. */
-  const x = (t) =>
-    L + ((Math.log10(t) - Math.log10(base)) / (Math.log10(maxCtx) - Math.log10(base))) * (W - L - R);
-  const topExp = 2 * (Math.log10(maxCtx) - Math.log10(base));
-  const y = (mult) => H - B - (Math.log10(Math.max(mult, 1)) / topExp) * (H - T - B);
-
-  const g = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'fig-svg', role: 'img' });
-  g.setAttribute(
-    'aria-label',
-    'Relative growth from a 1K context: compute rises with the square, the cache linearly.'
-  );
-
-  g.append(svg('line', { x1: L, y1: H - B, x2: W - R, y2: H - B, class: 'ax-line' }));
-  for (const mult of [1, 10, 100, 1000, 10000, 100000, 1000000]) {
-    if (Math.log10(mult) > topExp) continue;
-    g.append(svg('line', { x1: L, y1: y(mult), x2: W - R, y2: y(mult), class: 'ax-grid' }));
-    const label = mult === 1 ? '1×' : mult >= 1e6 ? '1M×' : mult >= 1000 ? `${mult / 1000}K×` : `${mult}×`;
-    g.append(svgText(L - 10, y(mult) + 4, 'ax end small', label));
-  }
-  for (const t of [1000, 10000, 100000, 1000000]) {
-    if (t > maxCtx) continue;
-    g.append(svgText(x(t), H - B + 18, 'ax mid small', t >= 1e6 ? '1M' : `${t / 1000}K`));
-  }
-  g.append(svgText((L + W - R) / 2, H - 10, 'ax mid small', 'context length'));
-  g.append(svgText(L - 10, T - 6, 'ax end small faint', 'growth'));
-
-  const line = (power, cls) => {
-    const pts = [];
-    for (let e = Math.log10(base); e <= Math.log10(maxCtx) + 0.001; e += 0.04) {
-      const t = 10 ** e;
-      pts.push(`${x(t)},${y((t / base) ** power)}`);
+  const BAYS = [
+    [0, 150, 'Tokens'],
+    [172, 344, 'Q · K · V'],
+    [366, 742, 'The score grid'],
+    [764, 906, 'Weights'],
+    [928, 1240, 'Out'],
+  ];
+  for (const [x0, x1, name] of BAYS) {
+    s.append(svgText((x0 + x1) / 2, 20, 'kick mid', name.toUpperCase()));
+    if (x0 > 0) {
+      s.append(svg('line', { x1: x0 - 11, y1: 32, x2: x0 - 11, y2: H - 40, class: 's-line' }));
     }
-    const poly = svg('polyline', { points: pts.join(' '), class: cls });
-    return poly;
+  }
+
+  // Bay 1 — the tokens.
+  WORDS.forEach((w, i) => {
+    const y = 62 + i * 66;
+    s.append(svg('rect', { x: 4, y, width: 128, height: 40, rx: 2, class: 'f-panel' }));
+    s.append(svg('rect', { x: 4, y, width: 128, height: 40, rx: 2, class: 's-line' }));
+    s.append(svgText(16, y + 25, 'lbl', w));
+    s.append(svgText(126, y + 25, 'ax end', `t=${i}`));
+  });
+
+  // Bay 2 — Q, K and V as blocks of cells, so "a vector" is a thing with a size on the page.
+  [
+    ['Q', Q, 180],
+    ['K', K, 236],
+    ['V', V, 292],
+  ].forEach(([label, mat, x]) => {
+    s.append(svgText(x + 22, 48, 'kick mid', label));
+    mat.forEach((vec, i) => {
+      const y = 62 + i * 66;
+      vec.forEach((val, dim) => {
+        const r = svg('rect', { x: x + dim * 24, y: y + 8, width: 20, height: 24, class: 'f-ink' });
+        r.setAttribute('opacity', (0.15 + 0.75 * val).toFixed(3));
+        s.append(r);
+      });
+    });
+  });
+
+  // Bay 3 — the hero: 6 × 6, live numerals.
+  const CELL = 58;
+  const GX = 388;
+  const GY = 62;
+  const cells = [];
+  const nums = [];
+  for (let i = 0; i < 6; i += 1) {
+    s.append(svgText(GX - 8, GY + i * CELL + 34, 'ax end', WORDS[i]));
+    s.append(svgText(GX + i * CELL + CELL / 2, GY - 10, 'ax mid', WORDS[i]));
+    for (let j = 0; j < 6; j += 1) {
+      const r = svg('rect', {
+        x: GX + j * CELL + 1,
+        y: GY + i * CELL + 1,
+        width: CELL - 2,
+        height: CELL - 2,
+        class: 'f-ink',
+      });
+      s.append(r);
+      cells.push(r);
+      const t = svgText(GX + j * CELL + CELL / 2, GY + i * CELL + CELL / 2 + 4, 'num mid', '');
+      s.append(t);
+      nums.push(t);
+    }
+  }
+
+  // Bay 4 — the same grid, small, no numerals: the shape only, so redistribution is seen not read.
+  const SM = 20;
+  const SX = 786;
+  const SY = GY + 62;
+  const small = [];
+  for (let i = 0; i < 6; i += 1) {
+    for (let j = 0; j < 6; j += 1) {
+      const r = svg('rect', {
+        x: SX + j * SM,
+        y: SY + i * SM,
+        width: SM - 1.5,
+        height: SM - 1.5,
+        class: 'f-ink',
+      });
+      s.append(r);
+      small.push(r);
+    }
+  }
+  s.append(svgText(SX + 3 * SM, SY - 14, 'ax mid', 'after softmax'));
+
+  // Bay 5 — what leaves the block.
+  const outBars = [];
+  outputs().forEach((o, i) => {
+    const y = 62 + i * 66;
+    s.append(svgText(936, y + 12, 'ax', `out ${i}`));
+    o.forEach((val, dim) => {
+      const by = y + 18 + dim * 15;
+      s.append(svg('rect', { x: 936, y: by, width: 288, height: 11, class: 'f-track' }));
+      const bar = svg('rect', { x: 936, y: by, width: 0, height: 11, class: 'f-ink' });
+      bar.dataset.full = String(288 * val);
+      s.append(bar);
+      outBars.push(bar);
+    });
+  });
+
+  // The operation cartouches, on the rules between the bays.
+  [
+    [161, 'project', 62],
+    [355, 'Q · K', 62],
+    [753, '÷ √d · mask · softmax', 150],
+  ].forEach(([x, label, w]) => {
+    s.append(svg('rect', { x: x - w / 2, y: H - 30, width: w, height: 20, rx: 3, class: 'f-panel' }));
+    s.append(svg('rect', { x: x - w / 2, y: H - 30, width: w, height: 20, rx: 3, class: 's-line' }));
+    s.append(svgText(x, H - 16, 'ax mid', label));
+  });
+  // The one the page is here to restore, so it is the one in accent.
+  s.append(svg('rect', { x: 917 - 31, y: H - 30, width: 62, height: 20, rx: 3, class: 'f-accent' }));
+  const xv = svgText(917, H - 16, 'ax mid', '× V');
+  xv.setAttribute('fill', 'var(--on-accent)');
+  s.append(xv);
+
+  let stage = 0;
+  let cancel = () => {};
+
+  const norm = (v, st) => {
+    if (v === null) return 0;
+    if (st === 3) return v;
+    return Math.max(0, Math.min(1, (v + 0.2) / 1.5));
   };
 
-  const compute = line(2, 'l-compute');
-  const cache = line(1, 'l-cache');
-  g.append(cache, compute);
+  const paint = (t) => {
+    const gridStage = Math.min(stage, 3);
+    const prevStage = Math.min(Math.max(0, stage - 1), 3);
+    const from = scoreMatrix(prevStage);
+    const to = scoreMatrix(gridStage);
+    const weights = scoreMatrix(3);
+    for (let i = 0; i < 6; i += 1) {
+      for (let j = 0; j < 6; j += 1) {
+        const idx = i * 6 + j;
+        const a = norm(from[i][j], prevStage);
+        const b = norm(to[i][j], gridStage);
+        const v = a + (b - a) * t;
+        cells[idx].setAttribute('opacity', (0.06 + 0.9 * v).toFixed(3));
+        const raw = to[i][j];
+        nums[idx].textContent = raw === null ? '' : raw.toFixed(2);
+        nums[idx].setAttribute('fill', v > 0.55 ? 'var(--bg)' : 'var(--ink)');
+        nums[idx].setAttribute('opacity', stage >= 4 ? (1 - t).toFixed(2) : '1');
 
-  const endCompute = (maxCtx / base) ** 2;
-  const endCache = maxCtx / base;
-  g.append(svgText(W - R + 12, y(endCompute) + 4, 'ax small strong warn', 'compute — T²'));
-  g.append(
-    svgText(W - R + 12, y(endCompute) + 20, 'ax small faint', `${(endCompute / 1000).toFixed(0)}K× bigger`)
-  );
-  g.append(svgText(W - R + 12, y(endCache) + 4, 'ax small strong accent', 'cache — T'));
-  g.append(svgText(W - R + 12, y(endCache) + 20, 'ax small faint', `${endCache}× bigger`));
-  g.append(
-    svgText(W - R + 12, y(endCache) + 36, 'ax small faint', 'but it must all fit at once')
-  );
+        const w = weights[i][j];
+        small[idx].setAttribute('opacity', w === null ? '0.05' : (0.08 + 0.92 * w).toFixed(3));
+      }
+    }
+    const show = stage >= 4 ? t : 0;
+    for (const bar of outBars) bar.setAttribute('width', String(Number(bar.dataset.full) * show));
+  };
 
-  return g;
-}
-
-/* ============================================================= 3 · what the cache actually costs
- *
- * The chart that makes the second bill visceral: bars against the memory of one accelerator. The
- * point lands the moment a bar crosses the line.
- */
-
-export function figCacheWall(M) {
-  const W = 720;
-  const H = 300;
-  const L = 132;
-  const R = 108;
-  const T = 52;
-  const B = 56;
-  const GPU = 80e9;
-
-  const rows = M.cache.contexts;
-  const barH = 30;
-  const gap = 22;
-  const span = W - L - R;
-
-  /* **Log scale on the bar length, which is unusual and is the honest choice here.**
-   *
-   * Linear, the 1.57 TB row is 120x the 13 GB row, so the two small bars collapse to slivers and
-   * the figure says only "the last one is enormous" -- which the reader already knew. On a log axis
-   * every row is legible, the 80 GB line lands in the middle where it can actually separate them,
-   * and the thing being shown is what it should be: *which* contexts cross the wall, not just that
-   * the biggest one does. The tick marks are labelled so nobody reads the lengths as linear. */
-  const lo = 1e9;
-  const hi = 4e12;
-  const width = (v) =>
-    ((Math.log10(Math.max(v, lo)) - Math.log10(lo)) / (Math.log10(hi) - Math.log10(lo))) * span;
-
-  const g = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'fig-svg', role: 'img' });
-  g.setAttribute(
-    'aria-label',
-    'Key-value cache for eight readers at each context, against one 80GB accelerator.'
-  );
-
-  g.append(svgText(L - 14, 22, 'ax end small strong', 'KV cache,'));
-  g.append(svgText(L - 14, 36, 'ax end small strong', 'eight readers'));
-
-  for (const tick of [1e9, 1e10, 1e11, 1e12]) {
-    const at = L + width(tick);
-    g.append(svg('line', { x1: at, y1: T - 8, x2: at, y2: T + rows.length * (barH + gap) - gap + 6, class: 'ax-grid' }));
-    const label = tick >= 1e12 ? '1 TB' : `${tick / 1e9} GB`;
-    g.append(svgText(at, T + rows.length * (barH + gap) - gap + 22, 'ax mid small faint', label));
-  }
-
-  rows.forEach((r, i) => {
-    const yy = T + i * (barH + gap);
-    const label = r.context >= 1e6 ? '1M' : `${Math.round(r.context / 1000)}K`;
-    g.append(svgText(L - 14, yy + barH / 2 + 4, 'ax end small', `${label} tokens`));
-
-    const over = r.eightUsers > GPU;
-    const bar = svg('rect', {
-      x: L,
-      y: yy,
-      width: 0,
-      height: barH,
-      rx: 4,
-      class: over ? 'bar over' : 'bar',
-    });
-    g.append(bar);
-    const target = width(r.eightUsers);
-    animate(800, (t) => bar.setAttribute('width', String(target * t)));
-
-    const text =
-      r.eightUsers >= 1e12
-        ? `${(r.eightUsers / 1e12).toFixed(2)} TB`
-        : `${Math.round(r.eightUsers / 1e9)} GB`;
-    g.append(svgText(L + target + 10, yy + barH / 2 + 4, 'ax small strong', text));
+  const tabs = el('div', 'tabs');
+  const note = el('p', 'say');
+  const buttons = STAGES.map(([label], i) => {
+    const b = el('button', null, label);
+    b.type = 'button';
+    b.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+    b.addEventListener('click', () => go(i));
+    tabs.append(b);
+    return b;
   });
 
-  const wall = L + width(GPU);
-  const bottom = T + rows.length * (barH + gap) - gap;
-  g.append(svg('line', { x1: wall, y1: T - 30, x2: wall, y2: bottom + 6, class: 'ax-wall' }));
-  g.append(svgText(wall, T - 36, 'ax mid small warn strong', '80 GB — one accelerator'));
+  function go(next) {
+    cancel();
+    stage = next;
+    buttons.forEach((b, i) => b.setAttribute('aria-pressed', i === next ? 'true' : 'false'));
+    note.textContent = STAGES[next][1];
+    cancel = animate(550, paint);
+  }
 
-  return g;
+  const holder = el('div');
+  holder.tabIndex = 0;
+  holder.setAttribute('role', 'group');
+  holder.setAttribute('aria-label', 'One attention step, five stages');
+  holder.append(s);
+  holder.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') go(Math.min(STAGES.length - 1, stage + 1));
+    else if (e.key === 'ArrowLeft') go(Math.max(0, stage - 1));
+    else return;
+    e.preventDefault();
+  });
+
+  wrap.append(tabs, holder, note);
+  go(0);
+  return wrap;
 }
 
-/* ================================================================ 4 · the timeline, as a chart
+/* ============================================================== PLATE III · all 23, at once
  *
- * The centrepiece. Twenty-three mechanisms on a real date axis, height by which bill they pay, so
- * the shape of the field's attention over time is visible at a glance — including the two things a
- * list cannot show: that attention predates the transformer, and the long silence after it.
+ * An engraved score. Three staves for the three single bills, a rule above them for `origin`, and
+ * the `both` entries drawn as a TIE bracketing the compute and cache staves — because a mechanism
+ * attacking both bills is not a fourth category, it is a bridge between two.
+ *
+ * x is real time, so the empty stretches are visible as empty. Labels ladder to a minimum
+ * separation and kink back to their true tick: the axis never lies, the labels move.
  */
+/** A name short enough to set on a plate, preferring the paper's own abbreviation.
+ *
+ * "Multi-query attention (MQA)" becomes MQA, which is both shorter and what practitioners call it.
+ * A parenthetical that is not an abbreviation ("Sparse (factorised) attention") is simply dropped.
+ * The full name is always one hover or one click away, in the title and in the reading spread.
+ */
+export function shortName(name) {
+  const abbr = name.match(/\(([A-Za-z]{2,6})\)/);
+  if (abbr && abbr[1] === abbr[1].toUpperCase()) return abbr[1];
+  const lead = name.split(' / ')[0];
+  const base = lead.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
+  return base.toUpperCase();
+}
 
-const BILL_ROW = { origin: 0, compute: 1, cache: 2, position: 3, both: 4 };
-const BILL_NAME = {
-  origin: 'created the situation',
-  compute: 'pays down compute',
-  cache: 'pays down the cache',
-  position: 'fixes position',
-  both: 'pays down both',
-};
+/* Stave spacing is set by the LABELS, not by the glyphs. Three tiers of 9.5px caps need ~54px
+ * of clear air above each stave, and the `both` lane sits between compute and cache, so it needs
+ * that air too. Tightening these to fit the figure in less height puts one lane's third tier on
+ * top of the lane above it. */
+const STAVES = { compute: 150, cache: 310, position: 420 };
+const ORIGIN_Y = 56;
+const BOTH_Y = 230;
 
-export function figTimeline(M, onPick) {
+export function figPlate(M, glyph, onPick) {
+  const W = 1440;
+  const H = 640;
+  const X0 = 132;
+  const SPAN = 1236;
+  const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img' });
+  const title = svg('title', {});
+  title.textContent =
+    'Twenty-three attention mechanisms placed on real time, on one stave per bill they pay.';
+  s.append(title);
+
+  const first = new Date(`${M.mechanisms[0].date}T00:00:00Z`).getTime();
+  const last = new Date(`${M.mechanisms[M.mechanisms.length - 1].date}T00:00:00Z`).getTime();
+  const xOf = (iso) =>
+    X0 + SPAN * ((new Date(`${iso}T00:00:00Z`).getTime() - first) / (last - first));
+
+  const byKey = new Map(M.mechanisms.map((m) => [m.key, m]));
+
+  // The quiet stretch: the longest run in which nobody paid either bill, drawn as area not text.
+  const q = M.quietStretch;
+  const qa = xOf(byKey.get(q.before).date);
+  const qb = xOf(byKey.get(q.after).date);
+  s.append(svg('rect', { x: qa, y: 36, width: qb - qa, height: 464, class: 'quiet-band' }));
+  s.append(
+    svgText((qa + qb) / 2, 522, 'quiet-lab', `${int(q.days)} DAYS — NOBODY PAID EITHER BILL`)
+  );
+
+  s.append(svg('line', { x1: X0, y1: ORIGIN_Y, x2: X0 + SPAN, y2: ORIGIN_Y, class: 's-ink' }));
+  s.append(svgText(X0 - 12, ORIGIN_Y + 4, 'kick end', 'ORIGIN'));
+  for (const [name, y] of Object.entries(STAVES)) {
+    s.append(svg('line', { x1: X0, y1: y, x2: X0 + SPAN, y2: y, class: 's-line' }));
+    s.append(svgText(X0 - 12, y + 4, 'kick end', name.toUpperCase()));
+  }
+
+  // The ties. Their arrival is the finding: none exists before the first `both` entry.
+  for (const m of M.mechanisms) {
+    if (m.bill !== 'both') continue;
+    const x = xOf(m.date);
+    s.append(
+      svg('path', {
+        d: `M${x - 8} ${STAVES.compute} h8 V${STAVES.cache} h-8`,
+        class: 's-ink',
+        'stroke-width': 2,
+      })
+    );
+  }
+
+  // The ruler, one bar per year — the three empty years are visible as empty.
+  const RY = 546;
+  s.append(svg('line', { x1: X0, y1: RY, x2: X0 + SPAN, y2: RY, class: 's-strong' }));
+  const bw = SPAN / M.perYear.length;
+  M.perYear.forEach((y, i) => {
+    const x = X0 + i * bw + bw / 2;
+    s.append(svgText(x, RY + 16, 'ax mid', String(y.year)));
+    if (y.count) {
+      s.append(svg('rect', { x: x - 7, y: RY + 24, width: 14, height: y.count * 8, class: 'f-ink' }));
+    }
+    s.append(svgText(x, RY + 36 + y.count * 8, 'ax mid', String(y.count)));
+  });
+
+  const lanes = { origin: [], compute: [], cache: [], position: [], both: [] };
+  for (const m of M.mechanisms) lanes[m.bill].push(m);
+
+  const nodes = new Map();
+  const place = (list, y) => {
+    /* Laddering, done properly. An earlier version pushed each label to a fixed 48px minimum
+     * separation, which is meaningless when a label is 200px wide: five of the staves printed
+     * their names on top of each other ("SPARSE (FACTORISED) ATTENTREFORMER"). Labels are placed
+     * on one of three tiers, by MEASURED width, on the first tier where they clear the previous
+     * occupant — and the leader kinks back to the true tick, so the axis never lies. */
+    const TIERS = [22, 38, 54];
+    const rightEdge = TIERS.map(() => -Infinity);
+    for (const m of list) {
+      const x = xOf(m.date);
+      const g = svg('g', { class: 'plate-entry', tabindex: '0', role: 'button' });
+      g.dataset.key = m.key;
+      const t = svg('title', {});
+      t.textContent = `${m.name} — ${m.date}`;
+      g.append(t);
+
+      const gl = glyph(m, 26);
+      gl.setAttribute('class', `${gl.getAttribute('class')} pe-glyph`);
+      gl.setAttribute('transform', `translate(${x - 13} ${y - 13})`);
+
+      const text = shortName(m.name);
+      const half = (text.length * 6.4 + 10) / 2; // 9.5px mono-ish caps at 0.06em tracking
+      let tier = TIERS.findIndex((_, i) => x - half >= rightEdge[i] + 10);
+      if (tier < 0) tier = rightEdge.indexOf(Math.min(...rightEdge));
+      const lx = Math.max(x, rightEdge[tier] + 10 + half);
+      rightEdge[tier] = lx + half;
+
+      const label = svgText(lx, y - TIERS[tier], 'pe-name', text);
+      label.setAttribute('text-anchor', 'middle');
+      if (Math.abs(lx - x) > 1 || tier > 0) {
+        g.append(
+          svg('path', {
+            d: `M${x} ${y - 16} L${lx} ${y - TIERS[tier] + 3}`,
+            class: 's-line',
+          })
+        );
+      }
+      // The leader down to the true tick on the ruler: the axis never lies.
+      const leader = svg('line', { x1: x, y1: y + 13, x2: x, y2: RY, class: 's-line' });
+      leader.setAttribute('opacity', '0.4');
+      g.append(leader, svg('circle', { cx: x, cy: RY, r: 2, class: 'f-ink' }), gl, label);
+
+      const pick = () => onPick && onPick(m.key);
+      g.addEventListener('click', pick);
+      g.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          pick();
+        }
+      });
+      s.append(g);
+      nodes.set(m.key, g);
+    }
+  };
+
+  place(lanes.origin, ORIGIN_Y);
+  place(lanes.compute, STAVES.compute);
+  place(lanes.cache, STAVES.cache);
+  place(lanes.position, STAVES.position);
+  // `both` sits on its tie, midway between the two staves it bridges.
+  place(lanes.both, BOTH_Y);
+
+  s.select = (key) => {
+    for (const [k, g] of nodes) g.classList.toggle('on', k === key);
+  };
+  s.entries = nodes;
+  return s;
+}
+
+/* ================================================================== PLATE IV · the race
+ *
+ * Three reservoirs filling towards one wall. A bar chart says GQA is smaller; the race shows GQA
+ * is on the SAME LINE — which is exactly what its own stated trade-off says, and is the thing a
+ * bar chart provably cannot show.
+ */
+export function figRace(M) {
+  const wrap = el('div');
   const W = 940;
-  const rowH = 46;
-  const T = 42;
-  const L = 186;
-  const B = 40;
-  const H = T + Object.keys(BILL_ROW).length * rowH + B;
+  const H = 268;
+  const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img' });
+  const title = svg('title', {});
+  title.textContent =
+    'Three key/value sharing arrangements filling one 80 GB accelerator at different rates.';
+  s.append(title);
 
-  const dates = M.mechanisms.map((m) => Date.parse(m.date));
-  const lo = Date.parse('2013-10-01');
-  const hi = Date.parse('2026-06-01');
-  const x = (ms) => L + ((ms - lo) / (hi - lo)) * (W - L - 40);
-  const y = (bill) => T + BILL_ROW[bill] * rowH + rowH / 2;
+  const GUT = 186;
+  const TRACK = 690;
+  const rows = M.cache.sharing;
+  const maxTokens = Math.max(...rows.map((r) => r.tokensBeforeWall));
 
-  const g = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'fig-svg', role: 'img' });
-  g.setAttribute('aria-label', 'Every mechanism plotted at its real launch date, by which cost it addresses.');
+  const counter = svgText(GUT, 26, 'big', '0');
+  s.append(counter, svgText(GUT + 170, 26, 'ax', 'tokens held in cache'));
 
-  for (const [bill, row] of Object.entries(BILL_ROW)) {
-    const yy = T + row * rowH;
-    g.append(svg('rect', { x: L, y: yy, width: W - L - 40, height: rowH, class: `lane lane-${bill}` }));
-    g.append(svgText(L - 18, yy + rowH / 2 + 4, `ax end small bill-${bill}`, BILL_NAME[bill]));
-  }
+  const wallX = GUT + TRACK;
+  s.append(
+    svg('line', { x1: wallX, y1: 40, x2: wallX, y2: H - 28, class: 's-ink', 'stroke-width': 2 })
+  );
+  s.append(svgText(wallX, H - 12, 'kick end', `${int(M.cache.acceleratorBytes / 1e9)} GB`));
 
-  for (let yr = 2014; yr <= 2026; yr += 1) {
-    const at = x(Date.parse(`${yr}-01-01`));
-    g.append(svg('line', { x1: at, y1: T, x2: at, y2: T + 5 * rowH, class: 'ax-grid' }));
-    if (yr % 2 === 0) g.append(svgText(at, H - B + 22, 'ax mid small', String(yr)));
-  }
+  const fills = [];
+  const marks = [];
+  rows.forEach((r, i) => {
+    const y = 54 + i * 62;
+    s.append(svgText(0, y + 22, 'lbl', r.name));
+    s.append(svgText(0, y + 38, 'ax', `${r.kvHeads} KV — ${r.bytesPerToken / 1024} KiB/token`));
+    s.append(svg('rect', { x: GUT, y, width: TRACK, height: 44, class: 'f-track' }));
+    s.append(svg('rect', { x: GUT, y, width: TRACK, height: 44, class: 's-line' }));
+    const fill = svg('rect', { x: GUT, y, width: 0, height: 44, class: 'f-ink' });
+    s.append(fill);
+    fills.push({ fill, row: r });
+    const mark = svgText(GUT + 12, y + 27, 'num', '');
+    mark.setAttribute('fill', 'var(--bg)');
+    s.append(mark);
+    marks.push(mark);
+  });
 
-  // The silence after the transformer, drawn as a band rather than described.
-  const quiet = M.quietStretch;
-  if (quiet) {
-    const a = M.mechanisms.find((m) => m.key === quiet.before);
-    const b = M.mechanisms.find((m) => m.key === quiet.after);
-    if (a && b) {
-      g.append(
-        svg('rect', {
-          x: x(Date.parse(a.date)),
-          y: T,
-          width: x(Date.parse(b.date)) - x(Date.parse(a.date)),
-          height: 5 * rowH,
-          class: 'quiet',
+  const draw = (t) => {
+    const tokens = maxTokens * t;
+    counter.textContent = int(tokens);
+    fills.forEach(({ fill, row }, i) => {
+      const frac = Math.min(1, tokens / row.tokensBeforeWall);
+      fill.setAttribute('width', String(TRACK * frac));
+      marks[i].textContent = frac >= 1 ? `full at ${int(row.tokensBeforeWall)} tokens` : '';
+    });
+  };
+
+  const run = () => animate(4500, draw);
+  const btn = el('button', 'runbtn', 'Run');
+  btn.type = 'button';
+  btn.addEventListener('click', run);
+  const ctl = el('div', 'ctl');
+  ctl.append(btn);
+
+  wrap.append(s, ctl);
+  if (REDUCED) draw(1);
+  else onFirstView(wrap, run);
+  return wrap;
+}
+
+/* =================================================================== PLATE V · the wrap
+ *
+ * RoPE's rotation running past the length it was trained on. One figure motivating four of the
+ * seven `position` entries. The fast band laps many times before the curve stops behaving — the
+ * motion shows cause, where two static curves would only show correlation.
+ */
+export function figWrap() {
+  const wrap = el('div');
+  const W = 940;
+  const H = 350;
+  const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img' });
+  const title = svg('title', {});
+  title.textContent =
+    'Two rotary bands and the score they produce, from zero to four times the trained length.';
+  s.append(title);
+
+  const DIALS = [
+    { cx: 116, cy: 152, r: 72, rate: 1.0, label: 'fast band' },
+    { cx: 292, cy: 152, r: 72, rate: 0.055, label: 'slow band' },
+  ];
+  const hands = DIALS.map((d) => {
+    s.append(svg('circle', { cx: d.cx, cy: d.cy, r: d.r, class: 's-line' }));
+    for (let k = 0; k < 24; k += 1) {
+      const a = (k / 24) * Math.PI * 2;
+      s.append(
+        svg('line', {
+          x1: d.cx + Math.cos(a) * (d.r - 6),
+          y1: d.cy + Math.sin(a) * (d.r - 6),
+          x2: d.cx + Math.cos(a) * d.r,
+          y2: d.cy + Math.sin(a) * d.r,
+          class: 's-line',
         })
       );
-      g.append(
-        svgText(
-          (x(Date.parse(a.date)) + x(Date.parse(b.date))) / 2,
-          T - 12,
-          'ax mid small faint',
-          `${quiet.days} days — nobody touched the cost`
-        )
-      );
     }
-  }
-
-  const dots = [];
-  M.mechanisms.forEach((m, i) => {
-    const cx = x(Date.parse(m.date));
-    const cy = y(m.bill);
-    const dot = svg('circle', { cx, cy, r: 0, class: `dot bill-${m.bill}${m.bonus ? ' bonus' : ''}` });
-    dot.dataset.key = m.key;
-    dot.setAttribute('tabindex', '0');
-    dot.setAttribute('role', 'button');
-    dot.setAttribute('aria-label', `${m.name}, ${m.date}`);
-    const pick = () => {
-      for (const d of dots) d.classList.toggle('on', d === dot);
-      if (onPick) onPick(m);
-    };
-    dot.addEventListener('click', pick);
-    dot.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        pick();
-      }
+    s.append(svgText(d.cx, d.cy + d.r + 20, 'ax mid', d.label));
+    const hand = svg('line', {
+      x1: d.cx,
+      y1: d.cy,
+      x2: d.cx + d.r - 10,
+      y2: d.cy,
+      class: 's-ink',
+      'stroke-width': 2,
     });
-    g.append(dot);
-    dots.push(dot);
-    animate(500 + i * 26, (t) => dot.setAttribute('r', String(7 * Math.min(1, t))));
+    const turns = svgText(d.cx, d.cy + d.r + 36, 'num mid', '0.0 turns');
+    s.append(hand, turns);
+    return { hand, turns, d };
   });
 
-  return { node: g, select: (key) => dots.find((d) => d.dataset.key === key)?.dispatchEvent(new Event('click')) };
-}
+  const PX = 432;
+  const PW = 480;
+  const PY = 62;
+  const PH = 196;
+  const TRAINED = 0.25; // the trained length sits a quarter of the way along a 4x sweep
+  s.append(
+    svg('rect', {
+      x: PX + PW * TRAINED,
+      y: PY,
+      width: PW * (1 - TRAINED),
+      height: PH,
+      class: 'f-track',
+    })
+  );
+  s.append(svg('line', { x1: PX, y1: PY + PH, x2: PX + PW, y2: PY + PH, class: 's-strong' }));
+  s.append(svg('line', { x1: PX, y1: PY, x2: PX, y2: PY + PH, class: 's-strong' }));
+  s.append(
+    svg('line', {
+      x1: PX + PW * TRAINED,
+      y1: PY - 6,
+      x2: PX + PW * TRAINED,
+      y2: PY + PH,
+      class: 's-accent',
+      'stroke-width': 2,
+    })
+  );
+  s.append(svgText(PX + PW * TRAINED, PY - 12, 'kick mid', 'trained length'));
+  s.append(svgText(PX, PY + PH + 18, 'ax', '0'));
+  s.append(svgText(PX + PW, PY + PH + 18, 'ax end', '4× trained'));
+  s.append(svgText(PX - 8, PY + 10, 'ax end', 'q·k'));
 
-/* ========================================================== 5 · what the field was buying, over time
- *
- * The derived answer to Question 2, as a picture. Each window is a stacked bar of the pressures it
- * contained; a window with no single dominant one is marked, because that is the finding.
- */
-
-export function figPressure(M) {
-  const W = 720;
-  const H = 230;
-  const L = 46;
-  const T = 26;
-  const B = 52;
-  const bills = ['origin', 'compute', 'cache', 'position', 'both'];
-
-  const g = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'fig-svg', role: 'img' });
-  g.setAttribute('aria-label', 'Which cost each two-year window was addressing.');
-
-  const cols = M.periods.length;
-  const bw = Math.min(78, (W - L - 30) / cols - 14);
-  const step = (W - L - 30) / cols;
-  const max = Math.max(...M.periods.map((p) => Object.values(p.counts).reduce((a, b) => a + b, 0)));
-
-  M.periods.forEach((p, i) => {
-    const cx = L + i * step + step / 2;
-    let acc = 0;
-    for (const bill of bills) {
-      const n = p.counts[bill] || 0;
-      if (!n) continue;
-      const h = (n / max) * (H - T - B);
-      const yy = H - B - acc - h;
-      const r = svg('rect', {
-        x: cx - bw / 2,
-        y: yy,
-        width: bw,
-        height: 0,
-        rx: 3,
-        class: `stack bill-${bill}`,
-      });
-      g.append(r);
-      animate(700, (t) => {
-        r.setAttribute('height', String(h * t));
-        r.setAttribute('y', String(yy + h * (1 - t)));
-      });
-      acc += h;
-    }
-    g.append(svgText(cx, H - B + 18, 'ax mid small', `${p.start}–${p.end}`));
-    if (p.dominant === null) {
-      g.append(svgText(cx, H - B + 34, 'ax mid small warn strong', 'no winner'));
-    }
-  });
-
-  /* A legend, because this figure is read on its own. The colours are established two figures
-   * earlier, and a reader who arrived here from the conclusion's link has not seen that one. */
-  const key = [
-    ['origin', 'created it'],
-    ['compute', 'compute'],
-    ['cache', 'cache'],
-    ['position', 'position'],
-    ['both', 'both'],
-  ];
-  let kx = L;
-  for (const [bill, label] of key) {
-    g.append(svg('rect', { x: kx, y: 8, width: 10, height: 10, rx: 2, class: `stack bill-${bill}` }));
-    g.append(svgText(kx + 15, 17, 'ax small', label));
-    kx += 22 + label.length * 6.2;
+  // The score against distance: a sum of two cosines, which is what a two-band rotary score is.
+  const score = (u) => 0.5 * Math.cos(u * 26) + 0.5 * Math.cos(u * 1.45);
+  const pts = [];
+  for (let i = 0; i <= 240; i += 1) {
+    const u = i / 240;
+    pts.push(`${(PX + PW * u).toFixed(1)},${(PY + PH / 2 - (score(u) * PH) / 2.4).toFixed(1)}`);
   }
-  return g;
-}
+  s.append(svg('path', { d: `M${pts.join(' L')}`, class: 's-ink', 'stroke-width': 1.5 }));
+  const dot = svg('circle', { cx: PX, cy: PY + PH / 2, r: 4.5, class: 'f-accent' });
+  s.append(dot);
 
-/* ============================================================== 6 · RoPE, as a rotation
- *
- * A third of this timeline is about position and none of it had a picture. RoPE is the one worth
- * drawing because the mechanism *is* geometric: rotate two vectors by their position, and their dot
- * product depends only on the gap between them. Drag the pair along and watch the score hold.
- */
+  const read = el('span', 'read', '0.00×');
+  const set = (u) => {
+    hands.forEach(({ hand, turns, d }) => {
+      const a = u * d.rate * Math.PI * 2 * 13;
+      hand.setAttribute('x2', String(d.cx + Math.cos(a) * (d.r - 10)));
+      hand.setAttribute('y2', String(d.cy + Math.sin(a) * (d.r - 10)));
+      turns.textContent = `${(u * d.rate * 13).toFixed(1)} turns`;
+    });
+    dot.setAttribute('cx', String(PX + PW * u));
+    dot.setAttribute('cy', String(PY + PH / 2 - (score(u) * PH) / 2.4));
+    read.textContent = `${(u * 4).toFixed(2)}×`;
+  };
 
-export function figRope() {
-  const W = 720;
-  const H = 260;
-  const cx1 = 190;
-  const cx2 = 470;
-  const cy = 128;
-  const rad = 62;
-
-  const g = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'fig-svg', role: 'img' });
-  g.setAttribute('aria-label', 'Two vectors rotated by position; their dot product depends only on the gap.');
-
-  for (const [cx, label] of [
-    [cx1, 'token at position i'],
-    [cx2, 'token at position j'],
-  ]) {
-    g.append(svg('circle', { cx, cy, r: rad, class: 'dial' }));
-    g.append(svgText(cx, cy + rad + 24, 'ax mid small', label));
-  }
-
-  const armA = svg('line', { x1: cx1, y1: cy, x2: cx1 + rad, y2: cy, class: 'arm a' });
-  const armB = svg('line', { x1: cx2, y1: cy, x2: cx2 + rad, y2: cy, class: 'arm b' });
-  g.append(armA, armB);
-
-  const score = svgText(W - 130, cy - 6, 'ax mid big accent', '');
-  const scoreLab = svgText(W - 130, cy + 16, 'ax mid small', 'their score');
-  const gapLab = svgText((cx1 + cx2) / 2, cy - rad - 18, 'ax mid small strong', '');
-  g.append(score, scoreLab, gapLab);
-
-  const root = el('div', 'fig fig-rope');
   const slider = el('input');
   slider.type = 'range';
   slider.min = '0';
-  slider.max = '24';
+  slider.max = '1000';
   slider.value = '0';
-  slider.setAttribute('aria-label', 'move both tokens later in the sequence');
+  slider.setAttribute(
+    'aria-label',
+    'Distance between the two tokens, as a multiple of the trained length'
+  );
+  slider.addEventListener('input', () => set(Number(slider.value) / 1000));
 
-  const note = el('p', 'fig-note');
-  const GAP = 3;
-  const THETA = 0.32;
+  const ctl = el('div', 'ctl');
+  ctl.append(el('label', null, 'Distance'), slider, read);
+  wrap.append(s, ctl);
 
-  function render() {
-    const i = Number(slider.value);
-    const j = i + GAP;
-    const a = i * THETA;
-    const b = j * THETA;
-    armA.setAttribute('x2', String(cx1 + rad * Math.cos(a)));
-    armA.setAttribute('y2', String(cy + rad * Math.sin(a)));
-    armB.setAttribute('x2', String(cx2 + rad * Math.cos(b)));
-    armB.setAttribute('y2', String(cy + rad * Math.sin(b)));
-    score.textContent = Math.cos(b - a).toFixed(3);
-    gapLab.textContent = `positions ${i} and ${j} — gap of ${GAP}`;
-    note.innerHTML =
-      `Both arms turn as the tokens move later in the text, but the <b>angle between them</b> never ` +
-      `changes — so the score stays at <b>${Math.cos(b - a).toFixed(3)}</b>. That is the whole idea: ` +
-      `absolute position rotates, relative position survives.`;
+  set(0);
+  if (REDUCED) {
+    slider.value = '1000';
+    set(1);
+  } else {
+    onFirstView(wrap, () =>
+      animate(3000, (t) => {
+        slider.value = String(Math.round(t * 1000));
+        set(t);
+      })
+    );
   }
-
-  slider.addEventListener('input', render);
-  root.append(g, slider, note);
-  render();
-  return root;
+  return wrap;
 }
 
-/* ========================================================= 7 · head sharing, as a wiring diagram
+/* ================================================================ PLATE VI · the eviction
  *
- * MHA, GQA and MQA differ in exactly one thing: how many key/value heads the query heads share.
- * Drawn as wiring, the "quarter of the cache" figure stops being a number and becomes a picture.
+ * Why removing the first four tokens breaks a model. Two acts, and the two-act structure IS the
+ * lesson: a before/after pair cannot show the moment the sink leaves, which is the whole point.
  */
+export function figEviction() {
+  const wrap = el('div');
+  const N = 40;
+  const W = 940;
+  const H = 300;
+  const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img' });
+  const title = svg('title', {});
+  title.textContent =
+    'A sliding window passing the first tokens, with and without the first four pinned.';
+  s.append(title);
 
-export function figHeads(M) {
-  const W = 720;
-  const H = 230;
-  const opts = M.cache.sharing;
+  const X0 = 24;
+  const CW = (W - 48) / N;
+  const BASE = 236;
 
-  const root = el('div', 'fig fig-heads');
-  const controls = el('div', 'fig-controls');
-  const g = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'fig-svg', role: 'img' });
-  g.setAttribute('aria-label', 'Query heads sharing key and value heads.');
+  const win = svg('rect', { x: X0, y: 46, width: CW * 12, height: 208, class: 'f-track' });
+  const winOutline = svg('rect', { x: X0, y: 46, width: CW * 12, height: 208, class: 's-strong' });
+  s.append(win, winOutline);
 
-  const qy = 56;
-  const ky = 168;
-  const qn = M.yardstick.queryHeads;
-  const qx = (i) => 120 + i * 62;
-
-  g.append(svgText(60, qy + 5, 'ax end small', 'query heads'));
-  g.append(svgText(60, ky + 5, 'ax end small', 'KV heads'));
-
-  const wires = [];
-  const kvBoxes = [];
-  for (let i = 0; i < qn; i += 1) {
-    g.append(svg('rect', { x: qx(i) - 18, y: qy - 15, width: 36, height: 30, rx: 6, class: 'head q' }));
-    const w = svg('line', { x1: qx(i), y1: qy + 15, x2: qx(i), y2: ky - 15, class: 'wire' });
-    g.append(w);
-    wires.push(w);
-  }
-  for (let i = 0; i < qn; i += 1) {
-    const b = svg('rect', { x: qx(i) - 18, y: ky - 15, width: 36, height: 30, rx: 6, class: 'head kvhead' });
-    g.append(b);
-    kvBoxes.push(b);
+  const bars = [];
+  const cells = [];
+  for (let i = 0; i < N; i += 1) {
+    const x = X0 + i * CW;
+    const c = svg('rect', { x: x + 1, y: BASE, width: CW - 2, height: 18, class: 'f-panel' });
+    const b = svg('rect', { x: x + 2, y: BASE, width: CW - 4, height: 0, class: 'f-ink' });
+    s.append(c, b);
+    cells.push(c);
+    bars.push(b);
   }
 
-  const note = el('p', 'fig-note');
+  const pins = [];
+  for (let i = 0; i < 4; i += 1) {
+    const p = svg('rect', {
+      x: X0 + i * CW + 0.5,
+      y: BASE - 1,
+      width: CW - 1,
+      height: 20,
+      class: 's-accent',
+      'stroke-width': 2,
+    });
+    p.setAttribute('opacity', '0');
+    s.append(p);
+    pins.push(p);
+  }
+  const stamp = svgText(W / 2, 28, 'kick mid', '');
+  s.append(stamp);
 
-  function draw(opt) {
-    const groups = opt.kvHeads;
-    const per = qn / groups;
-    kvBoxes.forEach((b, i) => {
-      const live = i % per === 0 && i / per < groups;
-      b.classList.toggle('off', !live);
+  // Mass: the first token carries a large share and the rest decay — the observation StreamingLLM
+  // reports, and the reason evicting position zero is catastrophic rather than merely lossy.
+  const massSunk = (i) => (i === 0 ? 1 : 0.06 + 0.34 * Math.exp(-i / 9));
+  const massScattered = (i) => 0.1 + 0.5 * Math.abs(Math.sin(i * 2.399)) * Math.exp(-i / 26);
+
+  const paint = (winStart, sinkGone, pinned) => {
+    win.setAttribute('x', String(X0 + winStart * CW));
+    winOutline.setAttribute('x', String(X0 + winStart * CW));
+    for (let i = 0; i < N; i += 1) {
+      const inWin = i >= winStart && i < winStart + 12;
+      const kept = inWin || (pinned && i < 4);
+      const m = sinkGone && !pinned ? massScattered(i) : massSunk(i);
+      const h = kept ? m * 170 : 0;
+      bars[i].setAttribute('height', String(h));
+      bars[i].setAttribute('y', String(BASE - h));
+      cells[i].setAttribute('opacity', kept ? '1' : '0.25');
+      if (i < 4) pins[i].setAttribute('opacity', pinned ? '1' : '0');
+    }
+  };
+
+  const act = (pinned, done) => {
+    stamp.textContent = pinned ? 'ACT 2 — FIRST FOUR PINNED' : 'ACT 1 — THE WINDOW PASSES THE SINK';
+    animate(2400, (t) => {
+      const start = t * (N - 12);
+      paint(start, start > 4, pinned);
+      if (t >= 1 && done) setTimeout(done, 700);
     });
-    wires.forEach((w, i) => {
-      const target = Math.floor(i / per) * per;
-      w.setAttribute('x2', String(qx(target)));
-    });
-    const full = opts[0].bytesAt32k;
-    note.innerHTML =
-      `<b>${opt.name}</b> — ${opt.kvHeads} key/value head${opt.kvHeads > 1 ? 's' : ''}. ${opt.note}. ` +
-      `Cache at a 32K context: <b>${(opt.bytesAt32k / 1e9).toFixed(2)} GB</b>` +
-      (opt.bytesAt32k === full
-        ? '.'
-        : ` — <b>${(full / opt.bytesAt32k).toFixed(0)}× smaller</b> than multi-head.`);
-    for (const b of controls.querySelectorAll('button')) {
-      const on = b.dataset.name === opt.name;
-      b.classList.toggle('on', on);
-      b.setAttribute('aria-pressed', String(on));
+  };
+
+  const play = () => act(false, () => act(true, null));
+  const btn = el('button', 'runbtn', 'Replay');
+  btn.type = 'button';
+  btn.addEventListener('click', play);
+  const ctl = el('div', 'ctl');
+  ctl.append(btn);
+  wrap.append(s, ctl);
+
+  if (REDUCED) {
+    stamp.textContent = 'SINK EVICTED — THE MASS SCATTERS';
+    paint(N - 12, true, false);
+  } else {
+    paint(0, false, false);
+    onFirstView(wrap, play);
+  }
+  return wrap;
+}
+
+/* ==================================================================== the verdict grid
+ *
+ * Six windows by five bills, computed by `pressure_by_period` rather than asserted. A window whose
+ * dominant bill is null gets no frame and a TIE stamp — the code refuses to break a tie, and so
+ * does the figure.
+ */
+export function figVerdict(M, glyphSvg) {
+  /* glyphSvg, NOT glyph. `glyph()` returns an SVG <g>, which is correct for embedding inside an
+   * existing <svg> — the plate — and renders as absolutely nothing when appended to an HTML <div>.
+   * This grid printed its frames, its TIE stamps and twenty-three invisible chips, and no test
+   * failed, because every element the guard counted was present in the DOM. */
+  const g = el('div', 'verdict');
+  const BILLS = ['origin', 'compute', 'cache', 'position', 'both'];
+  g.append(el('div', 'vh', ''));
+  for (const b of BILLS) g.append(el('div', 'vh', b));
+
+  const byKey = new Map(M.mechanisms.map((m) => [m.key, m]));
+  for (const p of M.periods) {
+    const row = el('div', 'vr');
+    row.append(document.createTextNode(`${p.start}–${String(p.end).slice(2)}`));
+    // The stamp belongs to the WINDOW, not to a bill. Putting it in the first bill column read as
+    // "origin tied", which is the opposite of what a tie means.
+    if (!p.dominant) row.append(el('span', 'tie', 'TIE'));
+    g.append(row);
+    for (const b of BILLS) {
+      const cell = el('div', `cell${p.dominant === b ? ' dom' : ''}`);
+      for (const key of p.mechanisms) {
+        const m = byKey.get(key);
+        if (!m || m.bill !== b) continue;
+        cell.append(glyphSvg(m, 18, 1));
+      }
+      g.append(cell);
     }
   }
+  return g;
+}
 
-  for (const opt of opts) {
-    const b = el('button', 'chip', opt.name);
-    b.type = 'button';
-    b.dataset.name = opt.name;
-    b.addEventListener('click', () => draw(opt));
-    controls.append(b);
-  }
+/* ============================================================ the corrections comparison */
+export function figCorrection(M) {
+  const d = M.transcriptDiscrepancy;
+  const computed = d.computedBytes / 1e12;
+  const s = svg('svg', { viewBox: '0 0 900 156', role: 'img' });
+  const t = svg('title', {});
+  t.textContent = "The transcript's figure against the session's own formula, drawn to scale.";
+  s.append(t);
 
-  root.append(controls, g, note);
-  draw(opts[0]);
-  return root;
+  const X = 210;
+  const FULL = 600;
+  const ratio = d.claimedTB / computed;
+  s.append(svgText(X - 12, 46, 'ax end', 'TRANSCRIPT'));
+  s.append(svg('rect', { x: X, y: 34, width: FULL * ratio, height: 16, class: 'f-muted' }));
+  s.append(svgText(X + FULL * ratio + 10, 47, 'num', `${d.claimedTB.toFixed(2)} TB`));
+  s.append(svgText(X - 12, 102, 'ax end', 'ITS OWN FORMULA'));
+  s.append(svg('rect', { x: X, y: 90, width: FULL, height: 16, class: 'f-ink' }));
+  s.append(svgText(X + FULL + 10, 103, 'num', `${computed.toFixed(2)} TB`));
+  const pct = ((computed - d.claimedTB) / d.claimedTB) * 100;
+  s.append(svgText(X + 12, 78, 'big', `+${pct.toFixed(1)}%`));
+  s.append(
+    svgText(
+      X,
+      138,
+      'ax',
+      `${int(d.users)} readers at a ${int(d.context)}-token context, on the same yardstick`
+    )
+  );
+  return s;
 }
