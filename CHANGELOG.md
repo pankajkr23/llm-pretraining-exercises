@@ -10,6 +10,8 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+## [0.11.0] — 2026-09-01
+
 ### Added
 
 - **The page spine is now enforced repo-wide, not just on exercise 07.** `tests/test_page_spine.py`
@@ -2113,7 +2115,8 @@ First tagged release: two interactive exercises live on Vercel with a gated depl
 - **Tooling & conventions:** uv workspace (Python 3.12), ruff lint/format, pytest (unit +
   integration split), GitHub Actions CI, and a PR-only workflow documented in `AGENTS.md`.
 
-[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.7.0...v0.8.0
