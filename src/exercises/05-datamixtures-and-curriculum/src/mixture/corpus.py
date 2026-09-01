@@ -104,6 +104,63 @@ def _repo_python() -> tuple[Path, ...]:
     )
 
 
+#: Bumped whenever the way a lane is split changes, because it is part of the cache key.
+SPLIT_RULE = "cut@0.90+drop-shared-blocks-8"
+
+#: The shortest run of lines counted as a shared passage rather than a shared idiom. Source code
+#: repeats `import pytest` and `if __name__ == "__main__":` everywhere and always will; it does not
+#: repeat eight consecutive lines by accident.
+SHARED_BLOCK_LINES = 8
+
+
+def _drop_shared_blocks(train_text: str, heldout_text: str) -> str:
+    """Remove from training every run of lines that also occurs in the held-out split.
+
+    **The disjointness has to be built, not hoped for.** The test guarding this invariant says the
+    property is "reserved at write time, so this is a property of the arrays rather than of the
+    evaluator's good behaviour" — and until this function existed that sentence was not true. The
+    split was a single character cut through the concatenated corpus, and whether anything recurred
+    across it depended entirely on where that cut happened to land.
+
+    It landed badly, and the way it failed is the point. The code lane is this repository's own
+    Python, and this repository's conventions *instruct* duplication: `AGENTS.md` says to copy a
+    guard into any exercise that grows past a handful of modules, and every deployable exercise
+    vendors the same `web/_shared/` helpers. So a 220-character assertion block lives in both
+    exercise 06's render test and exercise 07's. The cut landed on the second copy, and a
+    data-handling invariant in exercise 05 went red because of an edit to exercise 08 — two
+    exercises with no relationship to each other, connected only through a corpus built by
+    concatenating the repo and slicing it at a fixed offset.
+
+    Removing whole lines rather than character spans keeps what is left readable as code, which
+    matters because the model is trained on it.
+
+    Args:
+        train_text: The training side of the character cut.
+        heldout_text: The held-out side, which is authoritative and never modified.
+
+    Returns:
+        `train_text` with every shared line-run removed.
+    """
+    held = heldout_text.splitlines(keepends=True)
+    if len(held) < SHARED_BLOCK_LINES:
+        return train_text
+    shared = {
+        "".join(held[i : i + SHARED_BLOCK_LINES]) for i in range(len(held) - SHARED_BLOCK_LINES + 1)
+    }
+
+    lines = train_text.splitlines(keepends=True)
+    keep: list[str] = []
+    i = 0
+    while i < len(lines):
+        window = "".join(lines[i : i + SHARED_BLOCK_LINES])
+        if len(lines) - i >= SHARED_BLOCK_LINES and window in shared:
+            i += 1  # drop this line; the next window is re-tested from the following one
+            continue
+        keep.append(lines[i])
+        i += 1
+    return "".join(keep)
+
+
 def _fetched_sources() -> tuple[LaneSource, ...]:
     """The three lanes no committed text can fund, if they have been fetched.
 
@@ -256,7 +313,12 @@ def build(config: Config | None = None, force: bool = False) -> dict[str, LaneSh
     shards: dict[str, LaneShard] = {}
     for source in sources():
         text = _read(source)
-        digest = hashlib.blake2b(text.encode("utf-8"), digest_size=8).hexdigest()
+        #: The digest covers the SPLIT RULE as well as the text. Without that, changing how the
+        #: split is taken leaves every existing cache valid by its own test — the content is
+        #: unchanged, so `build()` would serve the old arrays and the new rule would apply only on
+        #: a machine that had never built the corpus. A cache keyed on an input that no longer
+        #: determines the output is a cache that hides the change you just made.
+        digest = hashlib.blake2b(f"{SPLIT_RULE}\n{text}".encode(), digest_size=8).hexdigest()
 
         measured = count_tokens(text)
         if measured.unk_share > UNK_GATE:
@@ -280,6 +342,7 @@ def build(config: Config | None = None, force: bool = False) -> dict[str, LaneSh
         # the held-out passage is real contiguous prose and no token straddles the two arrays.
         cut = int(len(text) * (1 - HELDOUT_SHARE))
         train_text, heldout_text = text[:cut], text[cut:]
+        train_text = _drop_shared_blocks(train_text, heldout_text)
 
         train_ids = np.asarray(tokenizer.encode(train_text).ids, dtype=np.uint16)
         heldout_ids = np.asarray(tokenizer.encode(heldout_text).ids, dtype=np.uint16)

@@ -191,6 +191,18 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercise 05's held-out split is now disjoint from training by construction, not by luck.** Its
+  code lane is this repository's own Python, concatenated in path order and cut once at 90%, and
+  the guard checked a single 32-token window at exactly that cut. Whether it passed depended on
+  where the cut happened to land — so an edit to exercise 08's tests turned exercise 05's data
+  invariant red, two exercises with no relationship to each other. The leak it found was real: a
+  220-character assertion block lives in both exercise 06's render test and exercise 07's, because
+  this repo's own conventions instruct copying guards between exercises. `_drop_shared_blocks` now
+  removes from training every run of eight or more lines that also appears in the held-out split
+  (638 characters of the code lane, 0.037%; nothing from web or indic), the split rule is part of
+  the cache key so an existing cache cannot mask the change, and the guard samples forty windows
+  across the whole held-out split instead of one at its most exposed point.
+
 - **Reverted a rail change that was made from a misreading, and guarded the layout that was always
   correct.** A wide-screen report was read as "the rail is too far left"; the rail was moved inward
   to sit against the text. Every railed page (05, 06, 07, 08) already centred the reading column in

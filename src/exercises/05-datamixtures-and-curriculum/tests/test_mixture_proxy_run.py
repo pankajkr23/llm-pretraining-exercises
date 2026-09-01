@@ -86,9 +86,18 @@ def test_every_built_lane_is_under_the_unk_gate():
 def test_the_held_out_split_is_disjoint_from_training():
     """The guarantee the whole metric rests on.
 
-    Reserved at write time, so this is a property of the arrays rather than of the evaluator's
-    good behaviour. Checked by content: a long token n-gram from the held-out split must not
-    appear in the training split.
+    **Sampled across the whole held-out split, not just its first window.** The original check took
+    a 32-token needle from the very start of the held-out array — the one point in the corpus most
+    exposed to an accident of alignment, because it is exactly where the character cut fell. Source
+    code repeats itself: this repository's own conventions tell you to copy a guard between
+    exercises, and every deployable exercise vendors the same helpers. So a 220-character block
+    lives in both exercise 06's render test and exercise 07's, the cut landed on the second copy,
+    and a data invariant in exercise 05 went red because of an edit to exercise 08.
+
+    That failure was real — the text genuinely spanned both splits — but the test could only ever
+    see it by luck, and an unrelated edit anywhere in the repo could hide it again. Disjointness is
+    now built by `corpus._drop_shared_blocks` rather than hoped for, so this samples widely enough
+    to notice if that ever stops being true.
     """
     for lane in ("web", "indic", "code"):
         train_ids = corpus.load(lane, "train")
@@ -96,11 +105,37 @@ def test_the_held_out_split_is_disjoint_from_training():
         assert train_ids.size and heldout.size
 
         # A 32-token window is far longer than any phrase that would recur by chance.
-        window = heldout[:32].tolist()
-        haystack = train_ids.tolist()
-        joined = ",".join(map(str, haystack))
-        needle = ",".join(map(str, window))
-        assert needle not in joined, f"{lane}: held-out text appears in the training split"
+        joined = ",".join(map(str, train_ids.tolist()))
+        held = heldout.tolist()
+        step = max(1, (len(held) - 32) // 40)
+        leaks = [
+            start
+            for start in range(0, max(1, len(held) - 32), step)
+            if ",".join(map(str, held[start : start + 32])) in joined
+        ]
+        assert not leaks, (
+            f"{lane}: held-out text appears in the training split at {len(leaks)} of "
+            f"{len(range(0, max(1, len(held) - 32), step))} sampled windows (offsets {leaks[:5]})"
+        )
+
+
+def test_the_disjointness_is_built_rather_than_hoped_for():
+    """`_drop_shared_blocks` must actually remove something, or it is a no-op wearing a docstring.
+
+    The repository's own duplication is what makes it necessary — copied guards and vendored
+    helpers — so if it ever returns its input unchanged on text that plainly shares a block, the
+    guarantee above has quietly become luck again.
+    """
+    shared = "".join(f"line {i}\n" for i in range(12))
+    train = "unique head\n" + shared + "unique tail\n"
+    heldout = "something else\n" + shared + "more\n"
+
+    cleaned = corpus._drop_shared_blocks(train, heldout)
+    assert "unique head" in cleaned and "unique tail" in cleaned
+    assert shared not in cleaned, "the shared block survived the dedup"
+
+    untouched = corpus._drop_shared_blocks("a\nb\nc\n", "x\ny\nz\n")
+    assert untouched == "a\nb\nc\n", "text sharing nothing must pass through unchanged"
 
 
 def test_the_split_is_the_declared_share():
