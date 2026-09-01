@@ -30,7 +30,13 @@ from attention.catalogue import CATALOGUE, MANDATED, load  # noqa: E402
 from attention.config import YARDSTICK_CONTEXTS, Yardstick  # noqa: E402
 from attention.story import WELLS, span  # noqa: E402
 from attention.story import check as check_wells  # noqa: E402
-from attention.timeline import bills_addressed, gaps, in_order, pressure_by_period  # noqa: E402
+from attention.timeline import (  # noqa: E402
+    arc_verdict,
+    bills_addressed,
+    gaps,
+    in_order,
+    pressure_by_period,
+)
 
 OUT = EXERCISE / "web" / "data.js"
 
@@ -51,6 +57,7 @@ def payload() -> dict:
     check_wells(mechanisms)  # refuse to emit a page that would silently drop a mechanism
     yard = Yardstick()
 
+    verdict = arc_verdict(mechanisms)
     return {
         "mechanisms": [
             {
@@ -111,6 +118,20 @@ def payload() -> dict:
             }
             for p in pressure_by_period(mechanisms, window=2)
         ],
+        # The arc is an editorial claim from the brief, so the page must not restate it — it must
+        # render the result of testing it. Every field here is derived; `chapters.js` asserts none
+        # of it. The number it replaces ("holds in 6 of 7 windows") counted windows that produced a
+        # winner, not windows whose winner the arc predicted, and the arc does not survive that.
+        "arc": {
+            "claimed": list(verdict.claimed),
+            "observed": list(verdict.observed),
+            "decided": verdict.decided,
+            "undecided": verdict.undecided,
+            "matches": verdict.matches,
+            "neverDominates": list(verdict.never_dominates),
+            "settlesOn": verdict.settles_on,
+            "settlesFrom": verdict.settles_from,
+        },
         "gaps": [
             {"before": a, "after": b, "days": d}
             for a, b, d in sorted(gaps(mechanisms), key=lambda t: -t[2])[:5]

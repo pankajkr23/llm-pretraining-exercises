@@ -1569,6 +1569,15 @@ a.guide-path:focus-visible {
  * var(--ink), which is the right default everywhere else and unreadable here. The ratio is safe in
  * all six themes for the same reason --muted is: it is already a text colour on --bg, and swapping
  * which of the pair is the ground does not change the contrast between them. */
+/* A short reconciling note under a key heading — prose, not a data row. */
+.key-note {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 64ch;
+  margin: 2px 0 12px;
+}
+
 /* The two registers under the centrefold's bays: the plain sentence set as prose at reading size,
  * the exact one under it, smaller and quieter. Layered rather than tabbed — a reader must be able
  * to stop at the first line and still be correct, which a disclosure widget cannot promise. */

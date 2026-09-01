@@ -105,3 +105,51 @@ def test_the_gaps_are_computable_and_never_negative() -> None:
     """A negative gap would mean the ordering broke; the whole timeline rests on this."""
     for before, after, days in gaps(MECHANISMS):
         assert days >= 0, f"{before} -> {after} runs backwards by {days} days"
+
+
+def test_the_arc_verdict_answers_the_question_that_was_asked() -> None:
+    """The page published "the claimed arc holds in 6 of these 7 windows" and it was wrong.
+
+    `held` counted windows that produced *a* clear winner. The claim under test is not "does each
+    window decide" — it is "do the windows decide in the order the brief predicts". Six of seven do
+    decide, and the order is not the claimed one, so the honest verdict is the opposite of the
+    published one. What made it convincing was that the number was derived; deriving a number does
+    not make it an answer to the question you asked.
+    """
+    from attention.timeline import CLAIMED_ARC, arc_verdict
+
+    v = arc_verdict(load())
+
+    assert v.decided + v.undecided == len(v.observed)
+    assert v.decided > 0, "no window decided, so there is nothing to compare against the claim"
+
+    decided = tuple(x for x in v.observed if x)
+    assert v.matches == (decided == CLAIMED_ARC), "matches must compare the ORDER, not the count"
+
+    #: The specific failure, pinned. If a future catalogue makes the arc true this test should be
+    #: rewritten to say so — but it must never pass by accident because `matches` stopped comparing
+    #: sequences, which is exactly how the published claim went wrong.
+    assert not v.matches, "the arc now matches; rewrite the verdict rather than loosening this"
+    assert "cache" in v.never_dominates, (
+        "the claim has the field returning to the cache bill twice; if some window now decides on "
+        "cache alone, the verdict's central sentence is stale"
+    )
+    assert v.settles_on == "both" and v.settles_from is not None
+
+
+def test_the_old_measurement_would_still_look_convincing() -> None:
+    """The broken version, reconstructed, so the difference is visible rather than asserted.
+
+    Counting decided windows gives a large, derived, confident number that says nothing about the
+    claim. This is here because the failure was not sloppiness — it was a real count answering an
+    adjacent question, which is the hardest kind of wrong number to notice.
+    """
+    from attention.timeline import arc_verdict, pressure_by_period
+
+    periods = pressure_by_period(load())
+    old_number = sum(1 for p in periods if p.dominant)
+    v = arc_verdict(load())
+
+    assert old_number == v.decided, "the reconstruction must match what the page used to print"
+    assert old_number >= len(periods) - 1, "the old number was large, which is why it convinced"
+    assert not v.matches, "and the claim it was offered as evidence for is false"

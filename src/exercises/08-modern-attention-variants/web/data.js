@@ -1892,6 +1892,31 @@ export const M = Object.freeze({
       ]
     }
   ],
+  "arc": {
+    "claimed": [
+      "compute",
+      "cache",
+      "position",
+      "cache"
+    ],
+    "observed": [
+      "origin",
+      "position",
+      "compute",
+      "both",
+      null,
+      "both",
+      "both"
+    ],
+    "decided": 6,
+    "undecided": 1,
+    "matches": false,
+    "neverDominates": [
+      "cache"
+    ],
+    "settlesOn": "both",
+    "settlesFrom": 2020
+  },
   "gaps": [
     {
       "before": "bahdanau_attention",

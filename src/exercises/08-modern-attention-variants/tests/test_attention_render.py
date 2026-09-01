@@ -858,3 +858,37 @@ def test_the_orientation_defines_the_two_borrowed_words(page) -> None:
         "the orientation names the words without saying where they come from, which is the half "
         "that makes them stick"
     )
+
+
+def test_no_two_paragraphs_on_the_page_say_the_same_thing(page) -> None:
+    """A sentence printed twice reads as a rendering fault, not as emphasis.
+
+    It happened while fixing something else: the page's definition of attention was moved up into
+    the masthead, where it belongs, and the copy it was moved from was left in place — so a reader
+    met the same sentence twice, two paragraphs apart. Nothing failed, because both copies were
+    correct.
+
+    Compares normalised paragraphs of real length, so shared short labels and repeated headings do
+    not trip it.
+    """
+    paras = page.eval_on_selector_all(
+        "#main p",
+        "els => els.map(e => e.innerText.replace(/\\s+/g, ' ').trim().toLowerCase())",
+    )
+    long = [t for t in paras if len(t) >= 90]
+    seen: dict[str, int] = {}
+    for t in long:
+        seen[t] = seen.get(t, 0) + 1
+    repeated = [t for t, n in seen.items() if n > 1]
+    assert not repeated, f"these paragraphs appear more than once: {[t[:90] for t in repeated]}"
+
+    #: And near-duplicates, which is the shape the real defect had: the two copies differed only in
+    #: "expensive" versus "costs". Compare openings, which is where a duplicated sentence shows.
+    heads: dict[str, str] = {}
+    twins = []
+    for t in long:
+        head = t[:60]
+        if head in heads and heads[head] != t:
+            twins.append(head)
+        heads[head] = t
+    assert not twins, f"these paragraphs open identically and then diverge: {twins}"

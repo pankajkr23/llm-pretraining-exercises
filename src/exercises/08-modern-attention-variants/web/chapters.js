@@ -174,9 +174,17 @@ function chapterThesis(M) {
   body.append(h);
   body.append(
     standfirst(
-      'Attention is one idea that sent two bills, and almost everything since is somebody who ' +
-        `could not pay one of them. Here are ${spell(M.counts.total)} mechanisms in the order they ` +
-        'were actually launched, every date read from the paper it came from.'
+      /* DEFINITION FIRST, METAPHOR SECOND. The first sentence a cold reader met told them what
+       * attention COST before telling them what it DOES, and personified a research idea as
+       * "somebody who could not pay". The one sentence that actually defines it sat below the
+       * fold under a heading reading HOW TO READ THIS — the exact heading a confident reader
+       * skips. The benchmark this page is measured against never does this: the problem arrives
+       * before the mechanism, and the mechanism arrives before its price. */
+      'Attention lets every word in a piece of text look at every other word before deciding what ' +
+        'it means. That is why it works, and it is why it costs — twice over. This page calls ' +
+        `those two costs the **bills**, and almost every one of these ${spell(M.counts.total)} ` +
+        'mechanisms is somebody refusing to pay one of them. In the order they were actually ' +
+        'launched, every date read from the paper it came from.'
     )
   );
 
@@ -204,11 +212,15 @@ function chapterThesis(M) {
   const guide = el('div', 'guide bleed');
   guide.append(el('p', 'kicker', 'How to read this'));
 
+  /* DO NOT REPEAT THE MASTHEAD. This paragraph used to open with the page's definition of
+   * attention, which was the right sentence in the wrong place — the masthead led with a cost
+   * metaphor instead. The definition moved up; leaving a copy here put the same sentence on screen
+   * twice, two paragraphs apart, which reads as a rendering fault rather than emphasis. This picks
+   * up where the masthead stops. */
   const lede = el('p', 'guide-lede');
   lede.innerHTML = rich(
-    'Attention lets every word in a piece of text look at every other word. That is why it works, ' +
-      'and it is why it is expensive — **twice over**. Those two costs are the spine of everything ' +
-      'below, so the page calls them **bills**:'
+    'Those two costs are the spine of everything below. They are worth separating, because they ' +
+      'behave differently and almost every mechanism here goes after one or the other:'
   );
   guide.append(lede);
 
@@ -290,17 +302,26 @@ function chapterGlossary(M) {
     'The key',
     'The words, and a number against each',
     [
+      /* THE ONE OBJECT THE PAGE TURNS ON, DEFINED BEFORE IT IS COUNTED. This section opened by
+       * telling the reader how many mechanisms are "not the attention matrix" — a term used here
+       * for the first time, never defined, and called three different things across the page (the
+       * attention matrix, a score grid, the triangle). You cannot be told that most of thirty
+       * things are not an X before you are told what an X is. One name from here on: score grid. */
+      'First, the object everything below edits. Attention builds a **score grid**: one row per ' +
+        'word, one column per word, each cell holding how much that pair matters. A word may not ' +
+        'look at words that come after it, so the top half is thrown away — which is why it is ' +
+        'always drawn as a triangle. Six words make 36 cells and use 21 of them.', // count-literal-ok: the 6x6 demo grid is fixed
       'Every term on this page is defined here, and every definition carries a figure from our own ' +
         `arithmetic rather than a textbook gloss. ${Spell(Object.keys(M.counts.glyphKinds).length)} ` +
         `shapes cover all ${spell(M.counts.total)} mechanisms — and the first thing the key tells ` +
-        'you is that most of them are not the attention matrix.',
+        'you is that most of them never build that grid at all.',
     ],
-    { short: 'The key', sub: 'Four shapes, five bills, one yardstick' }
+    { short: 'The key', sub: 'One grid, four shapes, one yardstick' }
   );
   s.append(figKey(M, glyphSvg, KIND_LABEL));
   const cap = el('p', 'say');
   cap.innerHTML = rich(
-    `Only ${M.counts.glyphKinds.field} of the ${M.counts.total} are drawn as a score grid at all. ` +
+    `Only ${M.counts.glyphKinds.field} of the ${M.counts.total} build a score grid at all. ` +
       'That is the finding the rest of the page is built on: after 2020 the field largely stopped ' +
       'editing the triangle and started replacing it.'
   );
@@ -943,18 +964,41 @@ function chapterConclusion(M) {
   const tie = ties === 1 ? 'window' : 'windows';
   const isare = ties === 1 ? 'is an exact tie' : 'are exact ties';
 
-  const headline =
-    ties === 0
-      ? 'The tidy arc holds'
-      : ties === 1
-        ? 'The tidy arc holds, with one exception'
-        : 'The tidy arc is only partly true';
+  /* THE NUMBER THAT WAS HERE MEASURED THE WRONG THING, and it was derived, which is what made it
+   * convincing. "The claimed arc holds in 6 of these 7 windows" counted windows that produced *a*
+   * clear winner — not windows whose winner the arc predicted. Six of seven do decide; the order
+   * they decide in is not the claimed one, and the cache bill the story has the field returning to
+   * twice never dominates a single window on its own. The verdict was therefore the opposite of
+   * the truth. `timeline.arc_verdict` now does the comparison in Python where a test can reach it,
+   * and everything below is rendered from it. */
+  const arc = M.arc;
+  const NAME = {
+    origin: 'inventing it',
+    compute: 'the score grid',
+    cache: 'the stored keys',
+    position: 'where a word sits',
+    both: 'both bills at once',
+  };
+  const seq = (xs) => xs.map((x) => (x ? NAME[x] || x : 'no winner')).join(' → ');
+
+  const headline = arc.matches
+    ? 'The tidy arc holds'
+    : 'The tidy arc is not what happened';
 
   const s = section('conclusion', 'conclusion', 'The verdict', headline, [
-    `The claimed arc holds in **${held}** of these ${total} two-year windows and fails in ` +
-      `**${ties}**. That failure is not noise: the remaining ${tie} ${isare}, and the code that ` +
-      'counts them returns no winner rather than picking one.',
-  ], { short: 'The verdict', sub: `${held} windows of ${total}` });
+    `The story usually told is that the field wanted exactness, then memory back, then length, ` +
+      `then memory again — in our labels, **${seq(arc.claimed)}**. Sorting the ` +
+      `${spell(M.counts.total)} by launch date and asking which bill each two-year window went ` +
+      `after hardest gives **${seq(arc.observed)}**.`,
+    `**${Spell(arc.decided)} of the ${spell(total)} windows do produce a clear winner**, and they ` +
+      `do not come in the claimed order. The bill the story has the field returning to twice — ` +
+      `**${NAME[arc.neverDominates[0]] || arc.neverDominates[0]}** — never dominates a single ` +
+      `window on its own. And from **${arc.settlesFrom}** every decided window goes after ` +
+      `**${NAME[arc.settlesOn]}**, and the field never goes back to choosing.`,
+    `The remaining ${tie} ${isare}, and the code returns no winner rather than picking one. That ` +
+      'is the whole reason this reads as a refutation rather than a story: a tie was allowed to ' +
+      'stay a tie.',
+  ], { short: 'The verdict', sub: arc.matches ? 'the arc holds' : 'the arc does not hold' });
 
   const f = el('figure', 'wide');
   f.append(figVerdict(M, glyphSvg));
@@ -962,7 +1006,8 @@ function chapterConclusion(M) {
   cap.innerHTML = rich(
     `A framed cell is that window's dominant bill; a **TIE** stamp marks a window where no bill ` +
       `dominated — ${ties} of ${total}. Read a tie as the field doing two things at once rather ` +
-      'than changing its mind. A cleaner story was available here and it would have been false.'
+      'than changing its mind. A cleaner story was available here and it would have been false — ' +
+      'and for a while this page printed it, with a derived number attached.'
   );
   f.append(cap);
   s.append(f);

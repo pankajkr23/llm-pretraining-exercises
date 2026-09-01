@@ -191,13 +191,25 @@ export function figKey(M, glyphSvg, KIND_LABEL) {
     `${M.counts.schematic} of ${M.counts.total} are.`;
   alpha.append(note);
 
+  /* NOT "THE FIVE BILLS". The masthead teaches, emphatically, that there are exactly two bills and
+   * that they are the spine of everything below — and twenty lines later this block was headed
+   * "The five bills", of which three are not bills at all. A reader who has just been given a
+   * two-part frame is handed a five-part one under the same word, and the page has contradicted
+   * itself before it has finished introducing itself. The labels are a sorting of the thirty, not a
+   * list of costs, so the heading now says what it is and one line reconciles it with the two. */
   const bills = el('section');
-  bills.append(el('h3', null, 'The five bills'));
+  bills.append(el('h3', null, 'What each mechanism attacks'));
+  const reconcile = el('p', 'key-note');
+  reconcile.textContent =
+    'Every mechanism gets exactly one label. Two of these are the bills themselves; BOTH means it ' +
+    'goes after the pair. POSITION is a third problem the bills do not cover — where a word sits ' +
+    'in the sentence. ORIGIN marks the papers that invented attention rather than making it cheaper.';
+  bills.append(reconcile);
   const bl = el('div', 'key-bills');
   const BILL_GLOSS = {
     origin: 'invented the thing',
-    compute: 'the score grid',
-    cache: 'the stored keys',
+    compute: 'the score grid — the cost that grows with the square of the length',
+    cache: 'the stored keys — the cost that never shrinks while the conversation lasts',
     position: 'where a token sits',
     both: 'grid and cache at once',
   };
