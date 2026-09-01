@@ -90,6 +90,7 @@ jobs:
               src/exercises/04-data-cleaning-dedup
               src/exercises/06-build-training-dataset
               src/exercises/07-model-embeddings-internals
+              src/exercises/08-modern-attention-variants
               tests
     steps:
       - uses: actions/checkout@v5

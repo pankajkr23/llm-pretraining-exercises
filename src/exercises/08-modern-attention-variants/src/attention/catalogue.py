@@ -1,0 +1,174 @@
+"""The mechanisms, what each one traded, and when it actually appeared.
+
+`results/mechanisms.json` is the tracked evidence this exercise exists to produce. Everything a
+future page renders comes from there, so the page cannot disagree with the catalogue and the
+catalogue cannot disagree with the sources it cites.
+
+**The shape is the instructor's, not ours.** `s8.md` specifies the narrative each entry must carry:
+
+    here is what existed -> here is the problem people hit -> here is the new mechanism
+    -> here is what it fixed -> here is the new trade-off it introduced
+
+and three questions each entry must answer: *what does it buy*, *what does it give up*, *when would
+I actually choose it*. Those are fields below, not prose conventions, because a field can be
+checked for emptiness and a paragraph cannot.
+
+**`MANDATED` is the assignment's own list, quoted.** The instructor said he will score zero for a
+missing mechanism, so "did we cover everything" is a test rather than a memory. Keep the wording as
+he wrote it; the mapping from his phrase to our key lives beside it and is the part allowed to
+change.
+"""
+
+import json
+from dataclasses import dataclass, field
+from datetime import date
+from pathlib import Path
+
+from attention.sources import Source
+
+EXERCISE = Path(__file__).resolve().parents[2]
+CATALOGUE = EXERCISE / "results" / "mechanisms.json"
+
+#: The coverage list, verbatim from `docs/sessions/s8_assignment.md`, mapped to catalogue keys.
+#:
+#: Left side is the instructor's phrase exactly as written; right side is our key. Splitting
+#: them means a rename on our side can never quietly drop one of his items: the test reads the left.
+MANDATED: dict[str, str] = {
+    "standard attention": "standard_attention",
+    "absolute learned positions": "learned_absolute",
+    "sinusoidal": "sinusoidal",
+    "RoPE": "rope",
+    "ALiBi": "alibi",
+    "MQA": "mqa",
+    "GQA": "gqa",
+    "sliding window": "sliding_window",
+    "attention sinks": "attention_sinks",
+    "NTK-aware scaling": "ntk_aware",
+    "YaRN": "yarn",
+    "linear attention": "linear_attention",
+    "the delta rule": "delta_rule",
+    "Gated DeltaNet": "gated_deltanet",
+    "MLA": "mla",
+    "sparse and top-k attention": "sparse_attention",
+    "compressed and sparse attention as DeepSeek does it": "nsa",
+    "DroPE": "drope",
+}
+
+#: Which bill a mechanism pays down. Session 8's organising idea: attention charges twice, and
+#: everything after the original is somebody paying less of one of them.
+#:
+#: `origin` exists because the first entries on the timeline do not pay a bill — they *create* the
+#: situation the rest of the list responds to. Forcing them into `compute` or `cache` would make the
+#: era counts in `timeline.pressure_by_period` claim an optimisation pressure that did not yet
+#: exist.
+BILLS: frozenset[str] = frozenset({"origin", "compute", "cache", "position", "both"})
+
+
+@dataclass(frozen=True)
+class Mechanism:
+    """One entry on the timeline.
+
+    Attributes:
+        key: Stable identifier, used by the page and by `MANDATED`.
+        name: Display name.
+        date: When it first appeared publicly, from `source`.
+        source: Where that date was read.
+        bill: Which of the two bills it addresses, or `position`.
+        what_existed: The state of the art it arrived into.
+        problem: The problem that existed *at that moment*.
+        mechanism: What it actually does, mechanically.
+        what_it_fixed: What became cheaper or possible.
+        new_tradeoff: What it made worse. Required — see `__post_init__`.
+        buys: One clause: what you get.
+        gives_up: One clause: what you pay.
+        when_to_choose: The workload it is right for.
+        taught_in_session: Whether Session 8 covered it, or whether we sourced it from outside.
+        bonus: True for a mechanism the instructor did not list at all.
+    """
+
+    key: str
+    name: str
+    date: date
+    source: Source
+    bill: str
+    what_existed: str
+    problem: str
+    mechanism: str
+    what_it_fixed: str
+    new_tradeoff: str
+    buys: str
+    gives_up: str
+    when_to_choose: str
+    taught_in_session: bool = True
+    bonus: bool = False
+    aka: tuple[str, ...] = field(default_factory=tuple)
+
+    def __post_init__(self) -> None:
+        """Refuse an entry that has only upside.
+
+        The assignment is explicit: *"If you write down a technique with only pros, you have not
+        understood it yet."* An empty `new_tradeoff` or `gives_up` is how that failure would enter
+        the catalogue, so it is rejected at construction rather than noticed in review.
+        """
+        if self.bill not in BILLS:
+            raise ValueError(
+                f"{self.key}: unknown bill {self.bill!r}; expected one of {sorted(BILLS)}"
+            )
+        for name in ("new_tradeoff", "gives_up", "when_to_choose"):
+            if not getattr(self, name).strip():
+                raise ValueError(
+                    f"{self.key}: {name} is empty. Every mechanism here is a trade; an entry with "
+                    f"no stated cost has not been understood yet."
+                )
+
+
+def load(path: Path = CATALOGUE) -> list[Mechanism]:
+    """Read the catalogue, newest last.
+
+    Args:
+        path: The tracked JSON.
+
+    Returns:
+        Mechanisms in date order.
+    """
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    out = [_mechanism(entry) for entry in raw["mechanisms"]]
+    return sorted(out, key=lambda m: (m.date, m.key))
+
+
+def _mechanism(entry: dict) -> Mechanism:
+    """Build one `Mechanism` from its JSON form."""
+    src = dict(entry["source"])
+    source = Source(
+        kind=src["kind"],
+        title=src["title"],
+        url=src.get("url", ""),
+        quoted_date=src.get("quoted_date", ""),
+        verified_on=date.fromisoformat(src["verified_on"]),
+        arxiv_id=src.get("arxiv_id"),
+        confidence=src.get("confidence", "verified"),
+        note=src.get("note", ""),
+    )
+    known = {f for f in Mechanism.__dataclass_fields__ if f not in {"date", "source", "aka"}}
+    fields = {k: v for k, v in entry.items() if k in known}
+    return Mechanism(
+        date=date.fromisoformat(entry["date"]),
+        source=source,
+        aka=tuple(entry.get("aka", ())),
+        **fields,
+    )
+
+
+def missing_mandated(mechanisms: list[Mechanism]) -> list[str]:
+    """Which of the instructor's required mechanisms are absent.
+
+    Returns:
+        His phrases, not our keys -- so a failure reads in the words he graded against.
+    """
+    have = {m.key for m in mechanisms}
+    return [phrase for phrase, key in MANDATED.items() if key not in have]
+
+
+def unverified(mechanisms: list[Mechanism]) -> list[Mechanism]:
+    """Entries whose date a reader could not check for themselves."""
+    return [m for m in mechanisms if not m.source.is_checkable]

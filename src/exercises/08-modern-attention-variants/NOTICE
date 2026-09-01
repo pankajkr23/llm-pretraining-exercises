@@ -1,0 +1,77 @@
+NOTICE — 08-modern-attention-variants
+=====================================
+
+WHAT THIS IS
+
+A coursework exercise: a sourced chronology of attention mechanisms and
+positional encoding schemes, ordered by the date each first appeared publicly,
+with the trade-offs each one makes. It is a survey and a study, not a product,
+not a proposal to any organisation, and not infrastructure anybody operates. No
+model is trained here and no benchmark is run.
+
+NO AFFILIATION
+
+This work is not affiliated with, endorsed by, sponsored by, or produced on
+behalf of any company, university, research institute or funding programme.
+Every paper, author, model and organisation named here is named because their
+public work is the subject being catalogued. Naming them is citation, not
+association, and none of them has reviewed or approved anything here.
+
+WHAT IS MEASURED AND WHAT IS NOT
+
+Two different kinds of claim appear in this exercise and they must not be
+confused.
+
+MEASURED BY US: the arithmetic. The KV-cache formula, the T^2 growth in
+attention scores, the ratio between MHA, GQA and MQA, and the effect of
+sequence compression are computed in `src/attention/cache.py` from the
+configuration in `config.py`. They are exact for that configuration -- 48
+layers, 8 KV heads, head dimension 128, bf16 -- and meaningless for any other.
+They are arithmetic, not observations of a running system: nothing here was
+profiled, timed or benchmarked.
+
+READ FROM SOURCES, NOT REPRODUCED: everything else. Each mechanism's date is
+read from its primary source. Each mechanism's reported benefits -- a speedup, a
+cache reduction, a quality result -- belongs to the paper that reported it and is
+attributed there. We did not re-run any of them, and this exercise offers no
+independent evidence that any published number is correct.
+
+WRITTEN BY US, AND ARGUABLE: the trade-off fields. "What it buys", "what it
+gives up" and "when would I actually choose it" are our editorial judgement,
+formed from the sources and from the session. They are the part of this work a
+reader should push back on, and no test can check them.
+
+ON DATES
+
+Every date is the first public appearance we could verify, read from the primary
+source on the date recorded in `verified_on`, with the source's own wording
+stored verbatim beside it. For arXiv papers that is the v1 submission-history
+line rather than a later revision or a conference date.
+
+A first-appearance date is not a claim of invention. Several entries have
+precursors, and where the attribution is genuinely contested the entry records
+the competing candidates rather than resolving them. Learned absolute position
+embeddings in particular reach back at least to 2016, and a 2015 lead that we
+did not open is noted as a lead rather than asserted as a source.
+
+One entry -- NTK-aware RoPE scaling -- has no paper at all. It originates in a
+public forum post, and its date is that platform's own timestamp field, read
+from a web archive capture because the live site refused our requests. The entry
+says so.
+
+NO SOURCE TEXT IS REDISTRIBUTED
+
+No paper is copied, mirrored, quoted at length or redistributed here. The
+catalogue stores bibliographic metadata -- title, identifier, URL, the date
+line -- and our own descriptions written from reading them. Short quotations
+from the course material appear where the point is what the course actually
+said, including where it was wrong.
+
+WHERE THE COURSE MATERIAL IS WRONG, WE SAY SO
+
+The assignment explicitly invites this. Two errors in the session are recorded
+in README.md and CLAUDE.md with the corrected sources: the transformer's date,
+and a confusion between two papers whose names differ by one capital letter. A
+third discrepancy -- a cache figure that does not reproduce from the session's
+own formula -- is recorded with both values rather than resolved in favour of
+either.

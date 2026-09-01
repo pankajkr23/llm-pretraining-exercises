@@ -10,6 +10,25 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Exercise 08 — modern attention variants, scaffolded with a verified chronology.** Session 8 asks
+  for a web app placing every attention mechanism in the order it was launched, and states the graded
+  axis plainly: *"Your job is to be right about the dates."* So the first artifact is not the page but
+  `results/mechanisms.json` — **23 mechanisms** from Bahdanau (2014) to DroPE (2025), each date read
+  from the primary source, with the URL and the source's **own wording** stored beside it so a reader
+  can check the two against each other.
+- **Guards that make an invented date a test failure.** A citation claiming `verified` will not
+  construct without a URL and a quoted date; a test parses the quoted string and compares it to the
+  recorded date; another asserts every mechanism the assignment names is present, failing in the
+  instructor's own words. All three were watched failing on a deliberately broken catalogue — a
+  dropped mechanism, a transposed date (`2021-04-20` → `2021-04-02`), and a stripped URL.
+- **Two errors in the course material, recorded with sources.** The transcript dates the transformer
+  to "2018 and 17" (it is 12 June 2017), and it describes DroPE while quoting the title of **DRoPE** —
+  a different paper, one capital letter apart, about autonomous-driving trajectories. A third
+  discrepancy is recorded rather than resolved: a cache figure the transcript gives as ~1 TB comes out
+  at 1.57 TB from the session's own formula.
+
 ## [0.12.0] — 2026-09-01
 
 ### Added
