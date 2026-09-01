@@ -40,7 +40,7 @@ import {
   figWrap,
   plate,
 } from './figures.js';
-import { KIND_LABEL, glyph, glyphSvg } from './glyphs.js';
+import { KIND_GLOSS, KIND_LABEL, glyph, glyphSvg } from './glyphs.js';
 import { diagramSvg } from './diagrams.js';
 
 const int = (n) => Number(n).toLocaleString('en-US');
@@ -318,7 +318,7 @@ function chapterGlossary(M) {
     ],
     { short: 'The key', sub: 'One grid, four shapes, one yardstick' }
   );
-  s.append(figKey(M, glyphSvg, KIND_LABEL));
+  s.append(figKey(M, glyphSvg, KIND_LABEL, KIND_GLOSS));
   const cap = el('p', 'say');
   cap.innerHTML = rich(
     `Only ${M.counts.glyphKinds.field} of the ${M.counts.total} build a score grid at all. ` +
@@ -1134,10 +1134,13 @@ function chapterReproduce(M, spreadRef, plateRef) {
   });
   s.append(
     standfirst(
-      `${Spell(M.counts.total)} rows, the same six fields in the same six places, so the ` +
-        'comparison is one ' +
-        'your eye makes rather than one this page asserts. Every date was read from the string ' +
-        'printed beside it.'
+      /* SAY WHAT THE COLUMNS MEAN. "Credit" and "Debit" were bare labels, and the Debit lines are
+       * noun phrases with the verb left out — read cold, "Debit: A constant-size interface" states
+       * a feature rather than a loss. One sentence turns the whole column back into what it is. */
+      `${Spell(M.counts.total)} rows, the same fields in the same places, so the comparison is ` +
+        'one your eye makes rather than one this page asserts. **Credit** is what the mechanism ' +
+        'buys; **Debit** is what it gives up in order to buy it — read every Debit line as ' +
+        'beginning "gives up". Every date was read from the string printed beside it.'
     )
   );
 
@@ -1179,6 +1182,15 @@ function chapterReproduce(M, spreadRef, plateRef) {
     const bill = el('div', 'ix-bill');
     bill.textContent = m.bill;
     row.append(bill);
+
+    /* WHAT IT DOES, WHICH THE INDEX NEVER SAID. Thirty rows gave a date, a name, a family and two
+     * consequences — Credit and Debit — for a cause that was never stated. Most of the thirty get
+     * no prose chapter anywhere else on the page, so for those a reader met only the trade-off of
+     * a mechanism they had not been told about. The sentence is not new: `mechanism` has been in
+     * the catalogue since it was written, and the index simply never rendered it. */
+    const does = el('div', 'ix-does');
+    does.textContent = m.mechanism;
+    row.append(does);
 
     const led = el('div', 'ix-ledger');
     const c = el('div', 'c');

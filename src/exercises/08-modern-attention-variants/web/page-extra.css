@@ -1569,6 +1569,49 @@ a.guide-path:focus-visible {
  * var(--ink), which is the right default everywhere else and unreadable here. The ratio is safe in
  * all six themes for the same reason --muted is: it is already a text colour on --bg, and swapping
  * which of the pair is the ground does not change the contrast between them. */
+/* The key's alphabet: one shape per row, wide enough for a sentence.
+ *
+ * `.key-alpha` is a flex row whose items are pinned to 118px, so `grid-template-columns` on it did
+ * nothing at all — a rule that looks like a fix, changes no pixels, and passes every test. The
+ * property that matters is the item width. Two 118px columns crammed a nine-line gloss beside a
+ * two-line one. */
+.key-alpha .it {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  column-gap: 14px;
+  align-items: start;
+}
+.key-alpha .it > svg {
+  grid-row: 1 / span 3;
+}
+.key-gloss {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 4px 0 0;
+  max-width: 46ch;
+}
+.key-tally {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  margin-left: 8px;
+}
+
+/* What the mechanism does, above its ledger. Set as prose at reading size, because it is the one
+ * field in the row a newcomer needs and the rest are reference. */
+.ix-does {
+  grid-column: 1 / -1;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 78ch;
+  margin: 2px 0 8px;
+}
+
 /* The always-on recipe under the centrefold. Sits below the stepper, so a reader who never touches
  * a tab still gets all five steps in order. */
 .bay-recipe {

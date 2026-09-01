@@ -167,7 +167,7 @@ export function figMasthead() {
  * The glyph exemplars are drawn by the SAME generators the plate uses, so the key cannot drift
  * from the figures it explains.
  */
-export function figKey(M, glyphSvg, KIND_LABEL) {
+export function figKey(M, glyphSvg, KIND_LABEL, KIND_GLOSS) {
   const wrap = el('div', 'key bleed');
 
   const alpha = el('section');
@@ -181,7 +181,14 @@ export function figKey(M, glyphSvg, KIND_LABEL) {
     it.append(glyphSvg(m, 40));
     const lab = el('span', 'lab');
     lab.textContent = `${m.glyph.kind.toUpperCase()} — ${KIND_LABEL[m.glyph.kind]}`;
-    it.append(lab);
+    /* The key is the one place a reader is asking what a shape means, so it gets the long form
+     * under the short one, and the count, which makes the four sum to thirty in front of them. */
+    const gloss = el('p', 'key-gloss');
+    gloss.textContent = KIND_GLOSS[m.glyph.kind];
+    const n = M.counts.glyphKinds[m.glyph.kind];
+    const tally = el('span', 'key-tally');
+    tally.textContent = `${n} of ${M.counts.total}`;
+    it.append(lab, tally, gloss);
     strip.append(it);
   }
   alpha.append(strip);
@@ -222,8 +229,21 @@ export function figKey(M, glyphSvg, KIND_LABEL) {
   }
   bills.append(bl);
 
+  /* THIS BLOCK SAT UNDER "every term on this page is defined here" AND DEFINED NOTHING. Four of
+   * the page's most jargon-heavy labels appeared as bare words with numbers beside them, and the
+   * reader was never told what the yardstick is a yardstick FOR. */
   const yard = el('section');
   yard.append(el('h3', null, 'The yardstick'));
+  const yardNote = el('p', 'key-note');
+  yardNote.textContent =
+    'Every byte figure on this page is computed for one reference model — a stand-in for a ' +
+    'mid-size open model, not any particular one. Inside each layer attention runs several times ' +
+    'in parallel; each parallel copy is a head, and the keys and values a head stores are the ' +
+    `part that has to be kept. So: ${M.yardstick.layers} layers, ${M.yardstick.kvHeads} ` +
+    `key-value heads in each, ${M.yardstick.headDim} numbers per head, each stored in 16 bits ` +
+    "(bf16 — 'brain float 16', the format most models are served in). Multiply those out and one " +
+    'token costs the figure in the masthead, for as long as the conversation lasts.';
+  yard.append(yardNote);
   const y = el('div', 'key-yard');
   const cell = (k, v) => {
     const d = el('div');

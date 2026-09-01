@@ -445,11 +445,28 @@ const DRAW = { field: drawField, stack: drawStack, state: drawState, bands: draw
 export const KIND_LABEL = {
   field: 'which scores survive',
   stack: 'what the cache stores',
-  /* STATE was defined as itself, and it is the shape covering the family whose whole point is that
-   * it has no cache bill at all — the most important of the four and the least explained. BANDS
-   * named a mechanism without ever naming the problem it solves. */
-  state: 'no grid and no cache — one fixed-size summary of everything read so far, rewritten as each word arrives',
-  bands: 'how position gets in — attention looks at all the words at once, so by itself it cannot tell "dog bites man" from "man bites dog"',
+  /* STATE was defined as itself — and it labels the family whose whole point is that it has no
+   * cache bill at all, so it was the most important of the four and the least explained. */
+  state: 'one running summary, no cache',
+  bands: 'how position gets in',
+}
+
+/** The same four, at length.
+ *
+ * Two labels are needed because there are two places to put them. `KIND_LABEL` rides on chips,
+ * card metadata and accessible names, where it must stay short; `KIND_GLOSS` is for the key, which
+ * is the one place a reader is asking what the shape means. Putting the long form in both turned
+ * the key's 2x2 alphabet into one nine-line column beside a two-line one.
+ */
+export const KIND_GLOSS = {
+  field: 'The score grid itself, edited — which query-key pairs are allowed to survive.',
+  stack: 'What the cache keeps per token, and how many copies of it the heads share.',
+  state:
+    'No grid and no cache. One fixed-size summary of everything read so far, rewritten as each ' +
+    'new word arrives — so memory stops growing with the conversation.',
+  bands:
+    'How position gets in. Attention looks at all the words at once, so by itself it cannot tell ' +
+    '"dog bites man" from "man bites dog"; these mechanisms are how a model is told the order.',
 };
 
 /**
