@@ -60,7 +60,7 @@ evidence is:
   including on the runs where it fails, which is what makes it a certificate.
 - **Adversarial checks on our own claims.** Three are corrected in place below; the n-gram term is
   stress-tested against the accusation that it is just memorising, and the answer is *partly yes*.
-- **34 tests**, of which the browser render suite checks what a reader actually sees.
+- **54 tests**, of which a 20-test browser suite checks what a reader actually sees.
 
 **Run it:** [`## Run it`](#run-it) · **the page:** <https://llm-pretraining-demos.vercel.app/07-model-embeddings-internals/>
 

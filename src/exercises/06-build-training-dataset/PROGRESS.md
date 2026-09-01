@@ -48,7 +48,7 @@ are deferred by decision rather than pending.
 | O3g | **Stage 8 — replay, fork, audit** | **done** | `replay.py` re-derives a recorded interval from the immutable shards, never from the planner: **32/32 microbatches re-derived**, and one flipped shard bit turns **exactly 1 of the 32** red. It also **refuses a policy it cannot rebuild** rather than reporting a hash mismatch that would read as a tampered shard. `fork.py` verifies a branch by the three things that can actually fail — a fork *inherits* rather than copies, so zero shared events is correct. `verify.py` passes **40 of 40**, and its import closure is asserted transitively. |
 | O4 | **Corpus** | **done** | **10,649,549 training tokens at 1.01 epochs** across 57 shards, six lanes, every licence verified at fetch time from the dataset's own card, plus **1,093,019 held-out tokens** written as `split="heldout"` shards the firewall refuses. `tools/fetch_corpus.py` and `tools/build_corpus.py` are tracked; the build refuses below one epoch. |
 | O5 | **OPUS** | **done** | Ported, not installed. `opus.py` (torch-free record) + `opus_score.py` (the criterion). **128 candidates over 4 passes: 63 accept · 14 reject · 50 defer · 1 floor_override**, each with a score, a rank, an outcome and a reason. Two measurements changed the code — the temperature is now a multiple of the score spread, and the redundancy penalty is published as inert at this learning rate. |
-| O6 | **The web explainer** | **done** | Three chapters, three interaction families, deployed. Every figure derived from the run by `tools/build_web_data.py`. 21 browser tests. |
+| O6 | **The web explainer** | **done** | **14 sections** — the three interactive chapters, three interaction families, plus the narrative spine and a drawn pipeline figure (v0.11.0). Every figure derived from the run by `tools/build_web_data.py`. **25 browser tests**. |
 | O8 | **Rebuild-in-place safety** | **done** | `tools/backup_local_only.py` versions the 113 gitignored, unrecoverable files into a git store outside the repo; `post-checkout`/`post-merge` hooks run it. |
 | O7 | **Cloud (multi-GPU, NCCL, FSDP)** | **deferred — PK's decision** | Local only for now. §"What this cannot establish" in the README states what that costs. |
 
@@ -106,6 +106,34 @@ every shard manifest pins, so the sentinels are assigned **out of vocabulary** �
 
 ## Change log
 
+### 2026-09-01 (release — v0.11.0: the page rebuilt to the narrative spine)
+
+- **The page carries the twelve-part spine.** It was four sections — a summary panel and three
+  interactive chapters — which answered the question well and never asked it. The three explainer
+  chapters are untouched and become the `results` block; around them sit the problem, the mechanism,
+  the method, what was expected, what was got wrong, what is established, what it cannot show, what
+  is still open, and how to check it.
+- **The pipeline is drawn.** Every figure on the page had been a results strip, so nothing on it
+  ever showed the object the whole argument rests on. The two stages that are this exercise's
+  contribution are marked by an explicit `key` class — never `:nth-child`, because the arrows are
+  siblings of the boxes and any positional rule counts them too.
+- **The glossary is visible, not hover-only.** Ten terms existed solely as tooltips, which is a
+  definition that is absent on a touch screen, absent in print and unreachable by keyboard. The
+  section renders the same object the tooltips use, so the two cannot disagree, and eight terms the
+  page had been using undefined were added. Its heading's count is derived from the list it heads,
+  with a test.
+- **The limits left the footer.** A caveat a reader reaches only by finishing the page is a caveat
+  the page is hiding — the same rule that keeps them out of a collapsed `<details>`.
+- **One opening tile is now a failure.** Three of four selector passes were offered no agentic
+  candidate at all, so the floor could not be met from candidates that were absent. All four tiles
+  had been wins, and a page that shows only its wins has not earned the ones it shows.
+- **Two `NOTICE` errors corrected, in one sentence, and guarded.** It gave the corpus as 2,185,575
+  tokens at 4.8 epochs — the pre-refetch figure every other document had superseded with 10,649,549
+  at 1.0139 — and named 5,774,080 parameters, which is `model.py`'s **default**. `run_demo.py` builds
+  `d_model=128`, which is **2,084,224** parameters, and every published performance figure came from
+  that model. The count had never been recorded anywhere in the repo; it is now, measured. Both the
+  corpus figures and the model are checked against the tracked artifacts.
+
 ### 2026-08-26 (release — v0.9.0, tagged and deployed)
 
 Tag `v0.9.0` on `56d5ff6`, CI verified green on that exact commit before tagging. GitHub Release
@@ -125,7 +153,7 @@ question, and they stop agreeing), **Destroyer** (a floor that holds until there
 **Adversary** (edit the record; you cannot do it quietly).
 
 `tools/build_web_data.py` derives `web/data.js` from `submission_artifacts/` and `results/`, so no
-figure on the page is typed. **21 browser tests**, including the one the design rests on — that
+figure on the page is typed. **25 browser tests**, including the one the design rests on — that
 advancing a chapter changes what the reader sees, because if it does not the page is decoration and
 every claim on it is unproven.
 

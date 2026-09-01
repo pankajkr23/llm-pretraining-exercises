@@ -3,8 +3,10 @@
 A running log of what was built, what was measured, what changed and what is still open. Written so
 the work can be picked up cold. Newest entries at the top of each section.
 
-**Where the work lives:** on a branch, not yet merged. This file does not name branch or PR numbers
-— `git log` and `gh pr list` answer that correctly and a markdown file goes stale.
+**Where the work lives:** on `main`, released and deployed to production. This file does not name
+branch or PR numbers — `git log` and `gh pr list` answer that correctly and a markdown file goes
+stale. (It said *"on a branch, not yet merged"* for two releases after it was merged, which is the
+same failure this paragraph is warning about, one line further down.)
 
 **Deliverable shape — read this before calling the session done.** The platform asks **two** fields:
 *"Which Problem did you work on?"* (0 pts) and *"GitHub README or App link"* (**1000 pts**), and it
@@ -85,15 +87,29 @@ Registered in the root README table, the CI `rest` shard, and `OPTIONAL_DEPENDEN
 
 **The notebook.** `notebooks/S07-model-embeddings-internals.ipynb`, 27 cells, every code cell
 executed and verified, outputs stripped. Builder at `tools/build_notebook.py`. Both are gitignored
-and both are in the outside-the-repo backup store (115 files, 19.5 MB, verified current).
+and both are in the outside-the-repo backup store. **Do not quote its size here** — this line said
+*"115 files, 19.5 MB"* long after it held 132; a snapshot of a store that grows every session is a
+number that is wrong by the next one. `uv run python tools/backup_local_only.py --verify` reports it
+and exits non-zero when it is behind, which is the only form of that claim worth making.
 
 **The page.** `web/`, published at `/07-model-embeddings-internals/` — **fourteen sections, six
 inline-SVG figures and a left rail**, rebuilt to the audience ladder and required spine now recorded
 in `AGENTS.md`. The previous version was nine tables and one button: ~1,300 words that never said
 what an embedding is, never stated the question, and had no method, summary, conclusion or next
-step. It is now ~3,300 words, and every figure is generated from `results/measurements.json`. Every figure is generated from the tracked
+step. It is now ~3,300 words. Every figure is generated from the tracked
 `results/measurements.json` by `tools/build_web_data.py`, so nothing on the page can drift from the
-run that produced it. **15 browser tests** over the assembled site.
+run that produced it. **17 test functions, 20 collected**, over the assembled site.
+
+**The two widths are reconciled (v0.11.0).** The page carried `d_model` 256 for every measured
+number and 768 for every parameter and memory table, and never said which was which; the scale-cost
+table did not state its width at all. Both now do, rendering the width from the measurements rather
+than hard-coding it — `scale_cost` gained an explicit `d_model` key, promoting a value that was
+already sitting in that block's `source` string.
+
+**The spine is enforced repo-wide now, not just here (v0.11.0).** `tests/test_page_spine.py` checks
+every enforced page constructs a section for each role, and asserts this exercise keeps a render test
+that checks the *order* — the lexical guard cannot see DOM order, so the two halves are deliberately
+paired. Exercises 05 and 06 were retrofitted from this page in the same release.
 
 Two shared-stylesheet defects surfaced while building it, both fixed and both guarded: the `.rail`
 styles reserve 260px of left gutter on `.wrap` whether or not a page builds a rail (so 06 and 07

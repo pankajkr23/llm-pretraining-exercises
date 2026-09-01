@@ -48,9 +48,11 @@ did not survive that check.
 | **6 · Proxy** | 4 arms × 5 seeds over 1,784,212 tokens, thresholds fixed before the first arm ran — 2 supported, 1 not |
 | **7 · Follow-ups** | 3 further experiments at no cost — what a re-read token is worth, whether a seam's warmup band does anything, and whether the ranking survives a change of scale |
 
-**Nothing here is typed by hand.** `SPEC.md`, `TOKENIZER.md`, `EXPERIMENTS.md`, this README and the
-exercise-05 section of the repository's root README are all generated from the modules the tests
-pin, and a test regenerates each and compares byte for byte. That is not tidiness: a hand-written
+**Nothing here is typed by hand.** `SPEC.md`, `TOKENIZER.md`, `METHOD.md`, `EXPERIMENTS.md` and
+this README are all generated from the modules the tests pin, and a test regenerates each and
+compares byte for byte. (The root README is **not** among them and never was: it is a map, and
+`AGENTS.md` forbids it carrying a per-exercise section at all. This sentence claimed one for
+months.) That is not tidiness: a hand-written
 sentence beside a generated table goes stale silently, and the sentence is the half a reader
 believes. Config fingerprint `740cb808dbf2`.
 
@@ -345,7 +347,15 @@ CUDA wheel to run arithmetic: `uv sync --all-packages --extra proxy`.
 **[Out of what?](https://llm-pretraining-demos.vercel.app/05-datamixtures-and-curriculum/)** — drag
 the lane shares and watch supply, floors and verdicts respond. Three rules live in both Python and
 JavaScript so the page can recompute per frame; a node harness diffs the two and fails on
-disagreement.
+disagreement. (That harness **skips** where node is absent, so it protects the page on the machine
+that has node and nowhere else.)
+
+The page carries the twelve-part narrative spine `AGENTS.md` requires — the question, the
+vocabulary, the mechanism, the apparatus, the predictions with their thresholds, the results, the
+corrections, the conclusion, the limits, what would settle it, and how to reproduce any of it. The
+five numbered chapters are the mechanism and results blocks. **What these runs could not see** and
+**what we got wrong** are sections of their own rather than blocks buried in the results chapter,
+because a page's two most valuable admissions need somewhere a reader can be sent.
 
 ## Layout
 
@@ -353,7 +363,8 @@ disagreement.
 SPEC.md           the specification — generated, never edited by hand
 EXPERIMENTS.md    what happened when the proxy ran
 TOKENIZER.md      the vocabulary these counts are denominated in
-DECISIONS.md      the reasoning that needed more room than a comment
+METHOD.md         the apparatus: the model, the metric, the noise floor
+NOTICE            what is measured, what stands in for what, and what is not claimed
 results/          step0.json — the proxy run, tracked so it survives a clone
 src/mixture/      the modules every number is computed from
 tests/            every invariant, each paired with a twin that fails

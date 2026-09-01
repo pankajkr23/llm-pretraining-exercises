@@ -32,7 +32,7 @@ The full argument, every table, and the limits are in `README.md`. Do not restat
 | `tools/measure_lock_samples.py` | measures the rectangle identity on the real head | **yes** |
 | `web/index.html` · `chapters.js` · `page-extra.css` | the page | yes |
 | `web/_shared/` | vendored, byte-identical to 05 and 06 | yes |
-| `tests/test_embeddings_render.py` | 15 browser tests over the assembled site | yes |
+| `tests/test_embeddings_render.py` | 17 test functions, 20 collected, over the assembled site | yes |
 
 **No number is written into `chapters.js`.** The page reads `data.js`, which is generated from
 `results/measurements.json`. `AGENTS.md` requires the evidence a published document renders to
@@ -57,6 +57,36 @@ tests cover it, all by geometry rather than markup.
 **This page has no summary panel**, unlike 05 and 06, so it exposes something they hide: the shared
 `section` rule sets bottom spacing and no top, and the first heading sat flush against the action
 buttons. `page-extra.css` compensates, and a test measures the gap.
+
+## This page is the spine's reference implementation, and two things follow from that
+
+`AGENTS.md` requires every exercise page to carry the twelve-part narrative — `thesis · glossary ·
+problem · mechanism · method · expected · results · negatives · conclusion · limits · next ·
+reproduce` — declared as `data-role`. This page was rebuilt to it first, and 05 and 06 were
+retrofitted from it in v0.11.0.
+
+- **`section(id, role, …)` writes the role as a literal string.** `tests/test_page_spine.py` reads
+  this file's *source*, not the rendered DOM, so a role assembled from a variable is invisible to it
+  and the guard would pass on a page with no spine at all. It also asserts this exercise has a
+  render test that checks the *rendered order*, which the lexical guard cannot see — that is
+  `test_the_page_has_the_required_spine_in_order`, and the two halves are meant to stay paired.
+- **Copying this page's shape into a new exercise means copying `web/_shared/` too — check what it
+  assumes.** `_shared/page.css` reserves 260px of left padding on `.wrap` at 1180px and up whether
+  or not the page builds an `<aside id="rail">`, so a page that vendors the directory without the
+  markup renders an empty gutter and nothing fails.
+
+## Two widths appear on this page, and conflating them is the failure to avoid
+
+Every **measured** number here — loss, recovery, coherence, the lock residual — comes from the
+`setup.d_model` = **256** model this exercise trains. Every **parameter and memory** table is
+arithmetic at `v1_arithmetic.d_model` / `scale_cost.d_model` = **768**, GPT-2 124M's width, because
+that is the scale the cost argument is about. The page carried both and reconciled neither until
+v0.11.0; it now says so in the method section and again beside the scale-cost table.
+
+`scale_cost` gained an explicit `d_model` key for this. It is not a new measurement — the value was
+already recorded in that block's `source` string (`"k2/scale_cost.py, d_model 768"`), and promoting
+it to a real key is what lets the page render the width instead of hard-coding it. **Never quote a
+count at one width as evidence at the other.**
 
 ## Rules specific to this exercise
 

@@ -67,6 +67,21 @@ the new one, and deletes it. Nobody deleted anything. So:
   ```
   Step 2 works only while the removal commit is still reachable, which is why step 1 exists.
 
+- **Deleting one of these files on purpose takes a step nobody had written down.** The store is
+  **append-only**: `backup_local_only.py` copies in and never removes, so it is a high-water mark,
+  and the tripwire's question is *"is anything in the store missing from the working tree?"* That is
+  the right question for a loss and the wrong one for an intentional deletion — which therefore
+  reds the tripwire **permanently**, and re-running the backup tool does not clear it. After PK has
+  named the file, record the removal in the store as its own commit:
+  ```bash
+  git -C ../.llm-pretraining-exercises-local-only rm <path>
+  git -C ../.llm-pretraining-exercises-local-only commit -m "why this was deleted, and who asked"
+  ```
+  The content stays reachable in the store's history — that is the whole reason the store is a git
+  repo rather than a copy — so verify you can still read it back before moving on:
+  `git -C <store> show <removal>^:<path> | wc -c`. Never resolve a red tripwire by deleting the
+  store, and never by editing the test.
+
 **Prohibited without permission, on these paths:** `rm` · `git checkout -- ` · `git restore` ·
 `git reset --hard` · moving or renaming · writing over an existing notebook from anything other
 than a deliberate builder run — plus the two below, whose **flags** are the part that matters:
@@ -422,6 +437,13 @@ The rules that follow from it:
   your own run rather than a textbook gloss.
 - **Put a failure in the opening tiles.** A page that shows only its wins has not earned the ones it
   shows.
+- **Screenshot every section you build. A green suite is not a rendered page.** Retrofitting 05 and
+  06 to the spine produced four real defects and **every one was found by looking at the page**,
+  with the whole suite passing each time: a raw `<b>` tag shown as literal text, stray `*` markers
+  from a bold that cannot nest an italic, two rail entries with the same title, and a figure whose
+  caption pointed at two boxes that sat off-screen behind a horizontal scroll. The existing markup
+  guard could not see the first two — it looks for `[[`, `**` and backticks, and neither string
+  contains any. Render the section, read it, *then* write the guard for what you found.
 
 
 - **Every term used as shorthand is defined in exactly one findable place, and everything else links there.** `SPEC.md` is the decision; `METHOD.md` is the apparatus. Splitting them is deliberate — an adversarially-graded specification cannot carry a glossary and two architecture diagrams without paying for it, and a first-time reader cannot do without them.
