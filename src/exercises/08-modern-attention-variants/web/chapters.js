@@ -363,7 +363,7 @@ function chapterProblem(M) {
         `<b>${(last.oneUser / M.cache.acceleratorBytes).toFixed(2)}×</b> an 80&nbsp;GB accelerator ` +
         'for the cache alone, before a single model weight is loaded — and eight of them need ' +
         `<b>${(last.eightUsers / M.cache.acceleratorBytes).toFixed(2)}×</b>. Everything on the ` +
-        'plate that follows is somebody trying to move that cut line down the page.'
+        'chronology that follows is somebody trying to move that cut line down the page.'
     )
   );
   return s;
@@ -425,7 +425,11 @@ function chapterMechanism(M) {
   how.innerHTML = rich(
     'Every word produces all three. The plate below runs the six words of that sentence through ' +
       'the five steps that turn those three into one new vector per word — and the numbers in the ' +
-      'grid are the real ones, not an illustration. **Step through the five tabs in order.**'
+      'grid are computed rather than drawn — every dot product is worked live in your browser, ' +
+      'so the arithmetic can be checked against the cells. One thing is left out on purpose: ' +
+      'position. The two copies of "the" get identical vectors here, which is exactly the gap the ' +
+      'position mechanisms later on this page exist to fill. **Step through the five tabs in ' +
+      'order.**'
   );
   setup.append(how);
   s.append(setup);
@@ -459,7 +463,8 @@ function chapterMechanism(M) {
   walk.innerHTML = rich(
     'Take the bottom row, **mat**. It is the last word, so it may look at all six — nothing is ' +
       'masked. Across that row the model asks _how much does each of these matter to me_ and ' +
-      'the strongest answer is **cat**, which is the pairing the sentence is built on. After ' +
+      'the strongest answer is **cat** — the only word in the sentence that tells you what the ' +
+      'mat has to do with anything. After ' +
       'softmax those six scores become six shares that add up to 1, and the output for "mat" is ' +
       'every word\'s V mixed in exactly those proportions. That is one row. The grid is that ' +
       'question asked once per word, all at once.'
@@ -836,6 +841,21 @@ function chapterResults(M, spreadRef) {
             'head shares a single set.',
         ],
         [
+          'Who ships which',
+          /* Generated from the same sourced field the index uses, so the two can never disagree
+           * and no model name on this page is here on our say-so. */
+          ['gqa', 'mqa']
+            .map((k) => {
+              const m = (M.mechanisms || []).find((x) => x.key === k) || {};
+              const who = (m.shippedIn || []).map((a) => a.model);
+              return who.length ? `**${m.name}** — ${who.join(', ')}` : null;
+            })
+            .filter(Boolean)
+            .join('. ') +
+            '. Every one of those was read out of that model\'s own paper; hover a name in the ' +
+            'index below to see the sentence.',
+        ],
+        [
           'Why it is worth understanding',
           'This is the cheapest large saving anyone found, and every frontier model uses some ' +
             'point on it. It is also the clearest example of the page\'s whole argument: the ' +
@@ -935,7 +955,8 @@ function chapterResults(M, spreadRef) {
       ]),
       'Nothing was fixed here — something was discovered. Models were already dumping surplus ' +
         'softmax mass onto the first few tokens, which made those tokens load-bearing while ' +
-        'carrying no meaning. Act 2 costs a handful of cache slots and buys indefinite streaming; ' +
+        'carrying no meaning. The fix — keep the first few tokens forever and never evict them ' +
+        '— costs a handful of cache slots and buys indefinite streaming; ' +
         'it does not buy memory. Everything the window has passed is genuinely gone.'
     ),
   ]);
@@ -1136,16 +1157,21 @@ function chapterLimits(M) {
       '**Launch date is not adoption date.** An arXiv v1 is when an idea became public, not when ' +
         'it became the default. The plate therefore shows when the field could have moved, not ' +
         'when it did.',
-      '**The most-used models are the least documented.** We checked every frontier lab for a new ' +
-        'mechanism through 31 August 2026. OpenAI, Anthropic and Meta published no architecture at ' +
-        'all in that window — system cards without attention mechanisms, positional schemes or ' +
-        'parameter counts. So the recent end of this plate is drawn almost entirely from labs that ' +
+      '**The most-used models are the least documented.** Between December 2025 and 31 August ' +
+        '2026 we checked the labs whose models are most used and which publish least — OpenAI, ' +
+        'Anthropic and Meta — for a new attention mechanism. They published no architecture at ' +
+        'all in that window: only **system cards**, the release documents describing how a model ' +
+        'behaves and what it refuses, which name no attention mechanism, no positional scheme and ' +
+        'no parameter count. So the recent end of this plate is drawn almost entirely from labs that ' +
         'publish papers, which is a real bias in what a chronology like this can see, not an ' +
         'accident of our searching.',
-      '**Attention is not the only architecture, and this page only covers attention.** JEPA and ' +
-        'the world-model line change the training _objective_ — predict in representation space ' +
-        'rather than reconstruct the input — while their encoders remain transformers running ' +
-        'ordinary softmax attention. Nothing in that family between December 2025 and August 2026 ' +
+      '**Attention is not the only architecture, and this page only covers attention.** There is a ' +
+        'rival line of research — **JEPA**, short for Joint-Embedding Predictive Architecture, and ' +
+        'the world models built on it. It changes what the model is trained to guess: instead of ' +
+        'reproducing the next piece of input exactly, it guesses a compressed description of it, ' +
+        'on the argument that predicting every pixel or character wastes effort on detail that ' +
+        'does not matter. That is a change to the _objective_, not to attention — their encoders ' +
+        'are still transformers running ordinary softmax attention. Nothing in that family between December 2025 and August 2026 ' +
         'proposed a new attention mechanism, so nothing from it is on the plate. That is a finding ' +
         'about where the innovation is happening, not a gap in coverage.',
     ],
@@ -1246,6 +1272,30 @@ function chapterReproduce(M, spreadRef, plateRef) {
     does.textContent = m.mechanism;
     row.append(does);
 
+    /* WHO SHIPS IT. The benchmark this page is measured against closes every idea with EXAMPLE
+     * ARCHITECTURES, and this page named no real model anywhere in its own voice — so a reader
+     * could not tell whether it was describing history, a research frontier, or the thing inside
+     * the chatbot they used this morning. Every name here was read out of that model's own paper.
+     * An empty row is deliberate and is a finding: it separates what the field adopted from what
+     * it admired. */
+    const ship = el('div', 'ix-ship');
+    if ((m.shippedIn || []).length) {
+      ship.append(el('span', 'k', 'Shipped in'));
+      m.shippedIn.forEach((a, i) => {
+        const link = el('a', null, a.model);
+        link.href = a.url;
+        link.rel = 'noopener';
+        link.target = '_blank';
+        link.title = `“${a.quote}” — ${a.where}`;
+        ship.append(link);
+        if (i < m.shippedIn.length - 1) ship.append(document.createTextNode(' · '));
+      });
+    } else {
+      ship.append(el('span', 'k', 'Shipped in'));
+      ship.append(el('span', 'none', 'no model paper we read names it'));
+    }
+    row.append(ship);
+
     const led = el('div', 'ix-ledger');
     const c = el('div', 'c');
     c.append(el('span', 'k', 'Credit'), document.createTextNode(m.buys));
@@ -1285,8 +1335,13 @@ function chapterReproduce(M, spreadRef, plateRef) {
 
   const legend = el('p', 'say');
   legend.innerHTML = rich(
-    `‡ built from the primary paper alone (${M.counts.outsideSession} of ${M.counts.total}) · ` +
-      `† beyond the ${M.counts.mandated} mandated mechanisms (${M.counts.bonus}) · ` +
+    /* "MANDATED" IS COURSE VOCABULARY A READER OF THIS PAGE HAS NO ACCESS TO — the page
+     * deliberately never mentions a course. And the count needs a footnote of its own: the
+     * required list names 18 items but 19 mechanisms, because one of its phrases covers two
+     * different techniques that this catalogue keeps apart. */
+    `‡ dated from the primary paper alone, without the teaching material ` +
+      `(${M.counts.outsideSession} of ${M.counts.total}) · ` +
+      `† ours, beyond the required list (${M.counts.bonus} of ${M.counts.total}) · ` +
       '~ glyph drawn to schema rather than to scale'
   );
   s.append(legend);

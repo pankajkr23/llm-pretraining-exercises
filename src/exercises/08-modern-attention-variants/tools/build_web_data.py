@@ -79,6 +79,10 @@ def payload() -> dict:
                 "buys": m.buys,
                 "givesUp": m.gives_up,
                 "whenToChoose": m.when_to_choose,
+                "shippedIn": [
+                    {"model": a.model, "quote": a.quote, "where": a.where, "url": a.url}
+                    for a in m.shipped_in
+                ],
                 "glyph": {
                     "kind": m.glyph.kind,
                     "params": m.glyph.params,

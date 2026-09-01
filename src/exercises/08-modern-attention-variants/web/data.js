@@ -28,6 +28,7 @@ export const M = Object.freeze({
       "buys": "Direct access to every input position, so distance stops causing forgetting.",
       "givesUp": "A constant-size interface, in exchange for one that grows with the input.",
       "whenToChoose": "Historical. It matters because it is the origin: attention existed for three years before anyone removed the recurrence around it.",
+      "shippedIn": [],
       "glyph": {
         "kind": "field",
         "params": {
@@ -72,6 +73,7 @@ export const M = Object.freeze({
       "buys": "Order information at almost no compute cost, learned rather than designed.",
       "givesUp": "Any ability to run past the trained length, and parameters that scale with the maximum context.",
       "whenToChoose": "When the context length is fixed and known in advance, and you would rather the model learn positional structure than be told it.",
+      "shippedIn": [],
       "glyph": {
         "kind": "bands",
         "params": {
@@ -118,6 +120,7 @@ export const M = Object.freeze({
       "buys": "Positions at any length, for zero parameters.",
       "givesUp": "The chance to learn a positional structure that suits the data, and any guarantee that extrapolation actually works.",
       "whenToChoose": "When you want a simple, parameter-free baseline, or a fixed encoding you can reason about analytically.",
+      "shippedIn": [],
       "glyph": {
         "kind": "bands",
         "params": {
@@ -189,6 +192,14 @@ export const M = Object.freeze({
       "buys": "Exact, global, parallel mixing - every token sees every other token, with no approximation anywhere.",
       "givesUp": "Quadratic compute and a cache that grows without limit. Everything after this on the timeline is somebody paying less of one of those two.",
       "whenToChoose": "Short contexts, and as the baseline any alternative has to beat. It is not obsolete; it is exact, and exactness is what the rest of the list trades away.",
+      "shippedIn": [
+        {
+          "model": "OLMo",
+          "quote": "Attention variant \n full",
+          "where": "Table 2 (architecture comparison against LLaMA2-7B / OpenLM-7B / Falcon-7B / PaLM-8B), row \"Attention variant\", OLMo-7B column (file lines 388-389). arXiv:2402.00838",
+          "url": "https://arxiv.org/abs/2402.00838"
+        }
+      ],
       "glyph": {
         "kind": "field",
         "params": {
@@ -243,6 +254,7 @@ export const M = Object.freeze({
       "buys": "A large constant-factor reduction in attention compute, with softmax and its normalisation intact.",
       "givesUp": "Exactness. The model can no longer reach every position directly, and which pairs it loses is a design decision rather than a learned one.",
       "whenToChoose": "Long sequences with structure you understand - images, audio, code - where a fixed pattern plausibly covers the dependencies that matter.",
+      "shippedIn": [],
       "glyph": {
         "kind": "field",
         "params": {
@@ -303,6 +315,14 @@ export const M = Object.freeze({
       "buys": "The largest cache reduction available from head sharing, and a matching speedup in generation.",
       "givesUp": "Head diversity, and with it some model quality - the paper reports the degradation rather than hiding it.",
       "whenToChoose": "Generation-heavy serving where memory bandwidth is the binding constraint and a small quality cost is acceptable.",
+      "shippedIn": [
+        {
+          "model": "PaLM",
+          "quote": "the key/value projections are shared for each head",
+          "where": "Section 2, Model Architecture — bulleted list of modifications (arXiv:2204.02311)",
+          "url": "https://arxiv.org/abs/2204.02311"
+        }
+      ],
       "glyph": {
         "kind": "stack",
         "params": {
@@ -352,6 +372,7 @@ export const M = Object.freeze({
       "buys": "Attention concentrated on the keys that actually matter, chosen per query from the data rather than fixed in advance, with softmax and its normalisation intact over the survivors.",
       "givesUp": "Exactness, and the guarantee of a saving. A dropped key is unrecoverable, and a naive implementation still pays the full quadratic scoring cost it was meant to avoid.",
       "whenToChoose": "When attention genuinely is concentrated on a few tokens and you have a cheap way to propose candidates. It is the ancestor of the selection branch inside native sparse attention, which is what a proposal step looks like once it is designed in from the start.",
+      "shippedIn": [],
       "glyph": {
         "kind": "field",
         "params": {
@@ -397,6 +418,7 @@ export const M = Object.freeze({
       "buys": "Learned, content-aware sparsity without scoring every pair.",
       "givesUp": "Determinism and simplicity - and in practice the constants were high enough that it saw little production use.",
       "whenToChoose": "Rarely today. It earns its place on the timeline as the moment the field tried to learn the sparsity pattern instead of designing it.",
+      "shippedIn": [],
       "glyph": {
         "kind": "field",
         "params": {
@@ -446,6 +468,20 @@ export const M = Object.freeze({
       "buys": "Linear cost and a cache that stops growing - the only entry here that bounds both bills with one idea.",
       "givesUp": "Direct long-range access. Retrieval across the whole context becomes a function of depth rather than a guarantee.",
       "whenToChoose": "Long inputs whose important dependencies really are local, or as one component of a hybrid that pairs it with something global.",
+      "shippedIn": [
+        {
+          "model": "Gemma 2",
+          "quote": "We alternate between a local sliding window attention",
+          "where": "Section 2 (Model Architecture), \"Local Sliding Window and Global Attention\" paragraph, line 208; Table 1 row \"Sliding window\" — arXiv:2408.00118",
+          "url": "https://arxiv.org/abs/2408.00118"
+        },
+        {
+          "model": "Mistral 7B",
+          "quote": "we use sliding window attention: each token can attend to at most W tokens from the previous layer",
+          "where": "Figure 1 caption, Section 2 (Architectural details), arXiv:2310.06825",
+          "url": "https://arxiv.org/abs/2310.06825"
+        }
+      ],
       "glyph": {
         "kind": "field",
         "params": {
@@ -499,6 +535,7 @@ export const M = Object.freeze({
       "buys": "Constant memory and linear time, with a state that never grows.",
       "givesUp": "Exact recall. The state is a lossy summary, and what it lost is not recoverable.",
       "whenToChoose": "Very long streams where a bounded state is a hard requirement, and where approximate recall of the distant past is acceptable.",
+      "shippedIn": [],
       "glyph": {
         "kind": "state",
         "params": {
@@ -560,6 +597,7 @@ export const M = Object.freeze({
       "buys": "A fixed-size state that can actually be edited, removing linear attention's worst failure mode.",
       "givesUp": "The simple parallel form of plain linear attention, and it still has no exact record of the past.",
       "whenToChoose": "Whenever you want linear attention's economics but the task involves overwriting facts rather than only accumulating them.",
+      "shippedIn": [],
       "glyph": {
         "kind": "state",
         "params": {
@@ -604,6 +642,50 @@ export const M = Object.freeze({
       "buys": "Clean relative position, no parameters, and a form that composes with efficient attention kernels.",
       "givesUp": "Reliable behaviour outside the trained range - defined everywhere, trustworthy only where it was trained.",
       "whenToChoose": "Almost every decoder-only model today. It is the default, and the entries after it are about extending it rather than replacing it.",
+      "shippedIn": [
+        {
+          "model": "DeepSeek-V3",
+          "quote": "the matrix used to produce the decoupled key that carries Rotary Positional Embedding (RoPE)",
+          "where": "Section 2.1.1, notation defining W^KR after Eq. (1)-(5) (arXiv:2412.19437)",
+          "url": "https://arxiv.org/abs/2412.19437"
+        },
+        {
+          "model": "Falcon",
+          "quote": "we adopt rotary positionnal embeddings, and use custom kernels to mitigate the overhead",
+          "where": "§4.3.2 \"Rotary positionnal embeddings may only offer a limited edge over ALiBi\", Recipe decision (line 891); restated in §5.2 Architecture: \"we use rotary embeddings ( Su et al.,, 2021 )\" (line 1341) (arXiv:2311.16867)",
+          "url": "https://arxiv.org/abs/2311.16867"
+        },
+        {
+          "model": "Gemma 2",
+          "quote": "architectural elements are similar to the first version of Gemma models; namely, a context length of 8192 tokens, the use of Rotary Position Embeddings (RoPE)",
+          "where": "Section 2 (Model Architecture), opening paragraph, line 206 — arXiv:2408.00118",
+          "url": "https://arxiv.org/abs/2408.00118"
+        },
+        {
+          "model": "Llama 2",
+          "quote": "and rotary positional embeddings (RoPE, Su et al. 2022 )",
+          "where": "§2.2 Training Details — arXiv:2307.09288",
+          "url": "https://arxiv.org/abs/2307.09288"
+        },
+        {
+          "model": "OLMo",
+          "quote": "we replace absolute positional embeddings with rotary positional embeddings (RoPE; Su et al., 2021 )",
+          "where": "Section 2.1 (OLMo Model and Architecture), enumerated change #4 in \"Our main changes over the vanilla transformer architecture\"; restated in Table 2 row \"Positional embeddings\", OLMo-7B column. arXiv:2402.00838",
+          "url": "https://arxiv.org/abs/2402.00838"
+        },
+        {
+          "model": "PaLM",
+          "quote": "RoPE Embeddings - We use RoPE embeddings ( Su et al., 2021 ) rather than absolute or relative position embeddings",
+          "where": "Section 2, Model Architecture — bulleted list of modifications (arXiv:2204.02311)",
+          "url": "https://arxiv.org/abs/2204.02311"
+        },
+        {
+          "model": "Qwen2.5",
+          "quote": "Rotary Positional Embeddings (RoPE, Su et al., 2024 ) for encoding position information",
+          "where": "Section 2 (Architecture & Tokenizer), line 169, arXiv:2412.15115",
+          "url": "https://arxiv.org/abs/2412.15115"
+        }
+      ],
       "glyph": {
         "kind": "field",
         "params": {
@@ -656,6 +738,7 @@ export const M = Object.freeze({
       "buys": "Length extrapolation with no extra parameters and almost no compute.",
       "givesUp": "The ability to attend strongly to something distant, and any positional structure more expressive than 'closer is better'.",
       "whenToChoose": "When train-short-run-long matters more than exact long-range recall, and the task is largely local.",
+      "shippedIn": [],
       "glyph": {
         "kind": "field",
         "params": {
@@ -715,6 +798,20 @@ export const M = Object.freeze({
       "buys": "A large constant-factor speedup and a big memory saving, while staying exact.",
       "givesUp": "Nothing mathematically - which is why it is on this list as the exception. What it costs is portability: it is a kernel, not an idea you can express in a few lines of framework code.",
       "whenToChoose": "Always, where a kernel exists for your hardware. It is the reason exact attention stayed competitive long after the approximations arrived.",
+      "shippedIn": [
+        {
+          "model": "Falcon",
+          "quote": "We note that the use of FlashAttention is the main driver of improved throughput during training.",
+          "where": "§5.3.2 \"State-of-the-art throughput with dedicated Triton kernels\" (line 1569) (arXiv:2311.16867)",
+          "url": "https://arxiv.org/abs/2311.16867"
+        },
+        {
+          "model": "Mistral 7B",
+          "quote": "changes made to FlashAttention [ 11 ] and xFormers [ 18 ] yield a 2x speed improvement over a vanilla attention baseline",
+          "where": "Section 2 (Architectural details), Sliding Window Attention paragraph, arXiv:2310.06825",
+          "url": "https://arxiv.org/abs/2310.06825"
+        }
+      ],
       "glyph": {
         "kind": "field",
         "params": {
@@ -767,6 +864,38 @@ export const M = Object.freeze({
       "buys": "A tunable trade between cache size and head diversity, and a way to convert an existing multi-head checkpoint rather than retrain.",
       "givesUp": "Some head diversity still, and the underlying linear growth in context length is untouched.",
       "whenToChoose": "Almost any production decoder today - it is the practical default. Not a solution to long context on its own.",
+      "shippedIn": [
+        {
+          "model": "Falcon",
+          "quote": "the Falcon series implement multigroup with KV=TP for all models (respectively 1/8/8 for Falcon-7/40/180B)",
+          "where": "§4.3.1 \"Extending multiquery into multigroup for tensor parallel training and inference\", Recipe decision (line 782); restated in §5.2 Architecture (line 1341) and Table 16 in §5.2.1 (arXiv:2311.16867)",
+          "url": "https://arxiv.org/abs/2311.16867"
+        },
+        {
+          "model": "Gemma 2",
+          "quote": "We use GQA with num_groups = 2 , based on ablations showing increased speed at inference time",
+          "where": "Section 2 (Model Architecture), \"Grouped-Query Attention (Ainslie et al., 2023)\" paragraph, line 244; also Abstract and Introduction, and Table 1 row \"Head type\" — arXiv:2408.00118",
+          "url": "https://arxiv.org/abs/2408.00118"
+        },
+        {
+          "model": "Llama 2",
+          "quote": "for the 34B and 70B Llama 2 models we chose to use GQA instead of MQA.",
+          "where": "Appendix A.2.1 \"Grouped-Query Attention\" (also §2.1 Table 1 and §2.2) — arXiv:2307.09288",
+          "url": "https://arxiv.org/abs/2307.09288"
+        },
+        {
+          "model": "Mistral 7B",
+          "quote": "Mistral 7B leverages grouped-query attention (GQA)",
+          "where": "Section 1 (Introduction), arXiv:2310.06825",
+          "url": "https://arxiv.org/abs/2310.06825"
+        },
+        {
+          "model": "Qwen2.5",
+          "quote": "Grouped Query Attention (GQA, Ainslie et al., 2023 ) for efficient KV cache utilization",
+          "where": "Section 2 (Architecture & Tokenizer), line 169 + Table 1, arXiv:2412.15115",
+          "url": "https://arxiv.org/abs/2412.15115"
+        }
+      ],
       "glyph": {
         "kind": "stack",
         "params": {
@@ -819,6 +948,7 @@ export const M = Object.freeze({
       "buys": "A large context extension for free - no training, no data, a few lines of change.",
       "givesUp": "Principled grounding and headroom; it is a patch on a mismatch rather than a fix for it.",
       "whenToChoose": "When you need more context from an existing checkpoint today and cannot afford to train anything.",
+      "shippedIn": [],
       "glyph": {
         "kind": "bands",
         "params": {
@@ -864,6 +994,20 @@ export const M = Object.freeze({
       "buys": "The strongest RoPE extension of its generation, at a small fraction of the training cost.",
       "givesUp": "The zero-training property of the pure heuristic, and it adds hyperparameters that need setting per model.",
       "whenToChoose": "When you have an existing RoPE model, need a large context extension, and can afford a short fine-tune.",
+      "shippedIn": [
+        {
+          "model": "DeepSeek-V3",
+          "quote": "we apply YaRN ( Peng et al., 2023a ) for context extension",
+          "where": "Section 4.3 Long Context Extension (arXiv:2412.19437)",
+          "url": "https://arxiv.org/abs/2412.19437"
+        },
+        {
+          "model": "Qwen2.5",
+          "quote": "we implement two key strategies: YARN ( Peng et al., 2023 )",
+          "where": "Section 3.3 (Long-context Pre-training), line 273, arXiv:2412.15115",
+          "url": "https://arxiv.org/abs/2412.15115"
+        }
+      ],
       "glyph": {
         "kind": "bands",
         "params": {
@@ -923,6 +1067,7 @@ export const M = Object.freeze({
       "buys": "Indefinite streaming at constant memory, from an existing checkpoint, with no training.",
       "givesUp": "Any access to the middle of a long history - which makes it wrong for tasks that need recall rather than continuation.",
       "whenToChoose": "Long-running conversation or streaming where recent context is what matters and the distant past can be forgotten.",
+      "shippedIn": [],
       "glyph": {
         "kind": "field",
         "params": {
@@ -969,6 +1114,7 @@ export const M = Object.freeze({
       "buys": "Linear time, constant memory, and content-dependent selection.",
       "givesUp": "Exact retrieval, and the simplicity of a single uniform layer type in practice.",
       "whenToChoose": "Very long sequences where throughput dominates, usually interleaved with attention layers rather than used alone.",
+      "shippedIn": [],
       "glyph": {
         "kind": "state",
         "params": {
@@ -1027,6 +1173,14 @@ export const M = Object.freeze({
       "buys": "A large cache reduction without giving up head diversity.",
       "givesUp": "Simplicity and some compute; and it must be trained in from the start rather than converted from a checkpoint.",
       "whenToChoose": "Large-scale serving where the KV cache is the binding constraint and you control pretraining.",
+      "shippedIn": [
+        {
+          "model": "DeepSeek-V3",
+          "quote": "For attention, DeepSeek-V3 adopts the MLA architecture.",
+          "where": "Section 2.1.1 Multi-Head Latent Attention (arXiv:2412.19437)",
+          "url": "https://arxiv.org/abs/2412.19437"
+        }
+      ],
       "glyph": {
         "kind": "stack",
         "params": {
@@ -1073,6 +1227,7 @@ export const M = Object.freeze({
       "buys": "Practical training speed for an update rule that was already known to be better.",
       "givesUp": "Implementation simplicity; the arithmetic is no longer something you can read off in a line.",
       "whenToChoose": "Any serious use of the delta rule at scale - this is the version that made it deployable.",
+      "shippedIn": [],
       "glyph": {
         "kind": "state",
         "params": {
@@ -1118,6 +1273,7 @@ export const M = Object.freeze({
       "buys": "The strongest linear-recurrent quality of its generation, still at constant memory.",
       "givesUp": "Simplicity, and exact recall remains out of reach - a better-managed fixed state is still a fixed state.",
       "whenToChoose": "As the recurrent half of a hybrid stack, where most layers carry a bounded state and a few attention layers supply exact lookup.",
+      "shippedIn": [],
       "glyph": {
         "kind": "state",
         "params": {
@@ -1172,6 +1328,7 @@ export const M = Object.freeze({
       "buys": "Long context at a cost that is affordable in practice, reducing both bills at once.",
       "givesUp": "Exactness twice over - once in the compression, once in the selection - and any option to change your mind after training.",
       "whenToChoose": "When you are pretraining for very long context and can design the architecture and the kernels together.",
+      "shippedIn": [],
       "glyph": {
         "kind": "field",
         "params": {
@@ -1258,6 +1415,7 @@ export const M = Object.freeze({
       "buys": "Most of full attention's quality at a quarter of its cache, with fixed-state layers doing the bulk of the sequence mixing.",
       "givesUp": "Architectural simplicity, and exact recall in three layers out of every four.",
       "whenToChoose": "Long-context serving where the cache is the binding constraint and you can design the layer stack around a fixed ratio.",
+      "shippedIn": [],
       "glyph": {
         "kind": "state",
         "params": {
@@ -1331,6 +1489,7 @@ export const M = Object.freeze({
       "buys": "Very large context extension without the long-context training data every earlier method needed.",
       "givesUp": "The ability to apply it post-hoc, and the comfort of a well-replicated result.",
       "whenToChoose": "When you control pretraining, need context far beyond what you trained on, and cannot afford to train at that length.",
+      "shippedIn": [],
       "glyph": {
         "kind": "bands",
         "params": {
@@ -1399,6 +1558,7 @@ export const M = Object.freeze({
       "buys": "A fixed-size state that finally tracks state, at half the memory its predecessor needed for the same perplexity.",
       "givesUp": "What every fixed state gives up - exact recall of an arbitrary earlier token - plus simplicity of implementation.",
       "whenToChoose": "When you want constant-memory decoding and your workload includes tasks that need the model to follow state rather than only retrieve.",
+      "shippedIn": [],
       "glyph": {
         "kind": "state",
         "params": {
@@ -1469,6 +1629,7 @@ export const M = Object.freeze({
       "buys": "A tenfold cache reduction at a million tokens, in a shipped frontier model rather than in a benchmark.",
       "givesUp": "Token-level detail inside every compressed block, and any ability to revisit the compression ratio after pretraining.",
       "whenToChoose": "When a million-token context is the product requirement and you control the architecture from pretraining onward.",
+      "shippedIn": [],
       "glyph": {
         "kind": "field",
         "params": {
@@ -1555,6 +1716,7 @@ export const M = Object.freeze({
       "buys": "Independent control of forgetting and writing, which is what a fixed state needs in order to edit itself without scrambling what it already holds.",
       "givesUp": "Simplicity, and the exact recall every fixed-size state gives up.",
       "whenToChoose": "As the current default for the linear-attention layers of a hybrid, where it strictly generalises both of the mechanisms it replaces.",
+      "shippedIn": [],
       "glyph": {
         "kind": "state",
         "params": {
@@ -1630,6 +1792,7 @@ export const M = Object.freeze({
       "buys": "Sparsity that shows up on a clock rather than only in a flop count, on hardware people actually have.",
       "givesUp": "Exactness outside the selected blocks, and any growth in what a single query can see as the context grows.",
       "whenToChoose": "Ultra-long-context serving where deployment cost is the constraint and a bounded per-query budget is acceptable.",
+      "shippedIn": [],
       "glyph": {
         "kind": "field",
         "params": {
@@ -1723,6 +1886,7 @@ export const M = Object.freeze({
       "buys": "Denser channel coupling and more rotational freedom, at no parameter cost and no inference cost.",
       "givesUp": "The simplicity of independent 2D rotations, and the engineering familiarity of the most widely deployed positional scheme there is.",
       "whenToChoose": "When you are pretraining and can pay a small implementation cost for a positional scheme that mixes channels rather than isolating them.",
+      "shippedIn": [],
       "glyph": {
         "kind": "bands",
         "params": {

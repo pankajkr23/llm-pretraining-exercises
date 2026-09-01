@@ -1569,6 +1569,47 @@ a.guide-path:focus-visible {
  * var(--ink), which is the right default everywhere else and unreadable here. The ratio is safe in
  * all six themes for the same reason --muted is: it is already a text colour on --bg, and swapping
  * which of the pair is the ground does not change the contrast between them. */
+/* Who ships a mechanism, under what it does. */
+.ix-ship {
+  grid-column: 1 / -1;
+  font-size: 12.5px;
+  line-height: 1.6;
+  margin: 0 0 8px;
+  color: var(--ink);
+}
+.ix-ship .k {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-right: 10px;
+}
+.ix-ship a {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-strong);
+}
+.ix-ship a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.ix-ship .none {
+  color: var(--faint);
+  font-style: italic;
+}
+
+/* A short gloss under the invoice's column heads. */
+.inv-note {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 66ch;
+  margin: 10px 0 0;
+}
+
 /* The key's alphabet: one shape per row, wide enough for a sentence.
  *
  * `.key-alpha` is a flex row whose items are pinned to 118px, so `grid-template-columns` on it did

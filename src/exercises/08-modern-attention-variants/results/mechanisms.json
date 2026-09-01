@@ -215,7 +215,16 @@
             "where": "S3.2.2 Multi-Head Attention, arXiv:1706.03762v1"
           }
         }
-      }
+      },
+      "shipped_in": [
+        {
+          "model": "OLMo",
+          "quote": "Attention variant \n full",
+          "where": "Table 2 (architecture comparison against LLaMA2-7B / OpenLM-7B / Falcon-7B / PaLM-8B), row \"Attention variant\", OLMo-7B column (file lines 388-389). arXiv:2402.00838",
+          "url": "https://arxiv.org/abs/2402.00838",
+          "confidence": "implied"
+        }
+      ]
     },
     {
       "key": "sparse_attention",
@@ -316,7 +325,16 @@
             "where": "Table 2 caption, S4.3 Speed, arXiv:1911.02150v1"
           }
         }
-      }
+      },
+      "shipped_in": [
+        {
+          "model": "PaLM",
+          "quote": "the key/value projections are shared for each head",
+          "where": "Section 2, Model Architecture — bulleted list of modifications (arXiv:2204.02311)",
+          "url": "https://arxiv.org/abs/2204.02311",
+          "confidence": "explicit"
+        }
+      ]
     },
     {
       "key": "topk_attention",
@@ -459,7 +477,23 @@
             "note": "four times the window, chosen so both the band and what it excludes are visible"
           }
         }
-      }
+      },
+      "shipped_in": [
+        {
+          "model": "Gemma 2",
+          "quote": "We alternate between a local sliding window attention",
+          "where": "Section 2 (Model Architecture), \"Local Sliding Window and Global Attention\" paragraph, line 208; Table 1 row \"Sliding window\" — arXiv:2408.00118",
+          "url": "https://arxiv.org/abs/2408.00118",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Mistral 7B",
+          "quote": "we use sliding window attention: each token can attend to at most W tokens from the previous layer",
+          "where": "Figure 1 caption, Section 2 (Architectural details), arXiv:2310.06825",
+          "url": "https://arxiv.org/abs/2310.06825",
+          "confidence": "explicit"
+        }
+      ]
     },
     {
       "key": "linear_attention",
@@ -609,7 +643,58 @@
             "where": "S4.4 Results (text accompanying Table 4), arXiv:2104.09864v1"
           }
         }
-      }
+      },
+      "shipped_in": [
+        {
+          "model": "DeepSeek-V3",
+          "quote": "the matrix used to produce the decoupled key that carries Rotary Positional Embedding (RoPE)",
+          "where": "Section 2.1.1, notation defining W^KR after Eq. (1)-(5) (arXiv:2412.19437)",
+          "url": "https://arxiv.org/abs/2412.19437",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Falcon",
+          "quote": "we adopt rotary positionnal embeddings, and use custom kernels to mitigate the overhead",
+          "where": "§4.3.2 \"Rotary positionnal embeddings may only offer a limited edge over ALiBi\", Recipe decision (line 891); restated in §5.2 Architecture: \"we use rotary embeddings ( Su et al.,, 2021 )\" (line 1341) (arXiv:2311.16867)",
+          "url": "https://arxiv.org/abs/2311.16867",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Gemma 2",
+          "quote": "architectural elements are similar to the first version of Gemma models; namely, a context length of 8192 tokens, the use of Rotary Position Embeddings (RoPE)",
+          "where": "Section 2 (Model Architecture), opening paragraph, line 206 — arXiv:2408.00118",
+          "url": "https://arxiv.org/abs/2408.00118",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Llama 2",
+          "quote": "and rotary positional embeddings (RoPE, Su et al. 2022 )",
+          "where": "§2.2 Training Details — arXiv:2307.09288",
+          "url": "https://arxiv.org/abs/2307.09288",
+          "confidence": "explicit"
+        },
+        {
+          "model": "OLMo",
+          "quote": "we replace absolute positional embeddings with rotary positional embeddings (RoPE; Su et al., 2021 )",
+          "where": "Section 2.1 (OLMo Model and Architecture), enumerated change #4 in \"Our main changes over the vanilla transformer architecture\"; restated in Table 2 row \"Positional embeddings\", OLMo-7B column. arXiv:2402.00838",
+          "url": "https://arxiv.org/abs/2402.00838",
+          "confidence": "explicit"
+        },
+        {
+          "model": "PaLM",
+          "quote": "RoPE Embeddings - We use RoPE embeddings ( Su et al., 2021 ) rather than absolute or relative position embeddings",
+          "where": "Section 2, Model Architecture — bulleted list of modifications (arXiv:2204.02311)",
+          "url": "https://arxiv.org/abs/2204.02311",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Qwen2.5",
+          "quote": "Rotary Positional Embeddings (RoPE, Su et al., 2024 ) for encoding position information",
+          "where": "Section 2 (Architecture & Tokenizer), line 169, arXiv:2412.15115",
+          "url": "https://arxiv.org/abs/2412.15115",
+          "confidence": "explicit"
+        }
+      ]
     },
     {
       "key": "alibi",
@@ -715,7 +800,23 @@
             "where": "Appendix E.5 Full Benchmarking Results, 'Setup', arXiv:2205.14135v1"
           }
         }
-      }
+      },
+      "shipped_in": [
+        {
+          "model": "Falcon",
+          "quote": "We note that the use of FlashAttention is the main driver of improved throughput during training.",
+          "where": "§5.3.2 \"State-of-the-art throughput with dedicated Triton kernels\" (line 1569) (arXiv:2311.16867)",
+          "url": "https://arxiv.org/abs/2311.16867",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Mistral 7B",
+          "quote": "changes made to FlashAttention [ 11 ] and xFormers [ 18 ] yield a 2x speed improvement over a vanilla attention baseline",
+          "where": "Section 2 (Architectural details), Sliding Window Attention paragraph, arXiv:2310.06825",
+          "url": "https://arxiv.org/abs/2310.06825",
+          "confidence": "implied"
+        }
+      ]
     },
     {
       "key": "gqa",
@@ -763,7 +864,44 @@
             "where": "Figure 6 caption, S3.3 Ablations (\"Number of groups\"), arXiv:2305.13245v1"
           }
         }
-      }
+      },
+      "shipped_in": [
+        {
+          "model": "Falcon",
+          "quote": "the Falcon series implement multigroup with KV=TP for all models (respectively 1/8/8 for Falcon-7/40/180B)",
+          "where": "§4.3.1 \"Extending multiquery into multigroup for tensor parallel training and inference\", Recipe decision (line 782); restated in §5.2 Architecture (line 1341) and Table 16 in §5.2.1 (arXiv:2311.16867)",
+          "url": "https://arxiv.org/abs/2311.16867",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Gemma 2",
+          "quote": "We use GQA with num_groups = 2 , based on ablations showing increased speed at inference time",
+          "where": "Section 2 (Model Architecture), \"Grouped-Query Attention (Ainslie et al., 2023)\" paragraph, line 244; also Abstract and Introduction, and Table 1 row \"Head type\" — arXiv:2408.00118",
+          "url": "https://arxiv.org/abs/2408.00118",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Llama 2",
+          "quote": "for the 34B and 70B Llama 2 models we chose to use GQA instead of MQA.",
+          "where": "Appendix A.2.1 \"Grouped-Query Attention\" (also §2.1 Table 1 and §2.2) — arXiv:2307.09288",
+          "url": "https://arxiv.org/abs/2307.09288",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Mistral 7B",
+          "quote": "Mistral 7B leverages grouped-query attention (GQA)",
+          "where": "Section 1 (Introduction), arXiv:2310.06825",
+          "url": "https://arxiv.org/abs/2310.06825",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Qwen2.5",
+          "quote": "Grouped Query Attention (GQA, Ainslie et al., 2023 ) for efficient KV cache utilization",
+          "where": "Section 2 (Architecture & Tokenizer), line 169 + Table 1, arXiv:2412.15115",
+          "url": "https://arxiv.org/abs/2412.15115",
+          "confidence": "explicit"
+        }
+      ]
     },
     {
       "key": "ntk_aware",
@@ -861,7 +999,23 @@
             "where": "Abstract, arXiv:2309.00071v1"
           }
         }
-      }
+      },
+      "shipped_in": [
+        {
+          "model": "DeepSeek-V3",
+          "quote": "we apply YaRN ( Peng et al., 2023a ) for context extension",
+          "where": "Section 4.3 Long Context Extension (arXiv:2412.19437)",
+          "url": "https://arxiv.org/abs/2412.19437",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Qwen2.5",
+          "quote": "we implement two key strategies: YARN ( Peng et al., 2023 )",
+          "where": "Section 3.3 (Long-context Pre-training), line 273, arXiv:2412.15115",
+          "url": "https://arxiv.org/abs/2412.15115",
+          "confidence": "explicit"
+        }
+      ]
     },
     {
       "key": "attention_sinks",
@@ -1003,7 +1157,16 @@
             "where": "abstract, arXiv:2405.04434v5"
           }
         }
-      }
+      },
+      "shipped_in": [
+        {
+          "model": "DeepSeek-V3",
+          "quote": "For attention, DeepSeek-V3 adopts the MLA architecture.",
+          "where": "Section 2.1.1 Multi-Head Latent Attention (arXiv:2412.19437)",
+          "url": "https://arxiv.org/abs/2412.19437",
+          "confidence": "explicit"
+        }
+      ]
     },
     {
       "key": "deltanet_parallel",

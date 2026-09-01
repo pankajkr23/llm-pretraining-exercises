@@ -167,6 +167,48 @@ class Glyph:
 
 
 @dataclass(frozen=True)
+class Adoption:
+    """One shipped model that uses this mechanism, and the sentence saying so.
+
+    **A model name is a claim, so it is sourced exactly like a date.** The page names real models
+    because a reader otherwise cannot tell whether it is describing history, a research frontier or
+    the thing inside the chatbot they used this morning — and "almost every open model uses them"
+    asks for trust while offering nothing to check. Every entry here was read out of that model's
+    own paper and the quote is verified as a contiguous substring of it.
+
+    **An empty list is a result, not a gap.** Reformer and top-k attention have no entry because no
+    model paper we read claims them, and that absence is one of the more informative things on the
+    plate: it separates the mechanisms the field adopted from the ones it admired.
+
+    Attributes:
+        model: The model's name as its own paper writes it.
+        quote: The sentence from that paper, verbatim.
+        where: Section or table, plus the arXiv id.
+        url: The paper.
+        confidence: `explicit` when the paper names the mechanism; `implied` when it describes it
+            without the name and the description is unambiguous.
+        note: Scope that a bare name would misrepresent -- most often that only some model sizes
+            use it.
+    """
+
+    model: str
+    quote: str
+    where: str
+    url: str
+    confidence: str = "explicit"
+    note: str = ""
+
+    def __post_init__(self) -> None:
+        """Refuse a model name with nothing behind it."""
+        if not self.quote.strip():
+            raise ValueError(f"adoption by {self.model!r} must quote the paper that says so")
+        if not self.url.strip():
+            raise ValueError(f"adoption by {self.model!r} must link the paper")
+        if self.confidence not in {"explicit", "implied"}:
+            raise ValueError(f"adoption by {self.model!r} has confidence {self.confidence!r}")
+
+
+@dataclass(frozen=True)
 class Mechanism:
     """One entry on the timeline.
 
@@ -186,6 +228,8 @@ class Mechanism:
         when_to_choose: The workload it is right for.
         taught_in_session: Whether Session 8 covered it, or whether we sourced it from outside.
         bonus: True for a mechanism the instructor did not list at all.
+        shipped_in: Models that use it, each with the sentence from its own paper.
+            Empty where no paper we read claims it, which is itself a finding.
     """
 
     key: str
@@ -204,6 +248,7 @@ class Mechanism:
     taught_in_session: bool = True
     bonus: bool = False
     aka: tuple[str, ...] = field(default_factory=tuple)
+    shipped_in: tuple[Adoption, ...] = ()
     glyph: Glyph | None = None
 
     def __post_init__(self) -> None:
@@ -265,7 +310,9 @@ def _mechanism(entry: dict) -> Mechanism:
         else None
     )
     known = {
-        f for f in Mechanism.__dataclass_fields__ if f not in {"date", "source", "aka", "glyph"}
+        f
+        for f in Mechanism.__dataclass_fields__
+        if f not in {"date", "source", "aka", "glyph", "shipped_in"}
     }
     fields = {k: v for k, v in entry.items() if k in known}
     return Mechanism(
@@ -273,6 +320,7 @@ def _mechanism(entry: dict) -> Mechanism:
         source=source,
         aka=tuple(entry.get("aka", ())),
         glyph=glyph,
+        shipped_in=tuple(Adoption(**a) for a in entry.get("shipped_in", ())),
         **fields,
     )
 

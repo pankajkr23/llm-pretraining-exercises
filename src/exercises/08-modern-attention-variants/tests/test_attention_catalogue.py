@@ -248,3 +248,60 @@ def test_the_recurrent_family_is_not_drawn_as_a_diagonal() -> None:
     by_key = {m.key: m for m in MECHANISMS}
     for key in recurrent:
         assert by_key[key].glyph.kind == "state", f"{key} must be drawn as a state, not a field"
+
+
+def test_every_model_named_on_the_page_carries_the_sentence_that_says_so() -> None:
+    """A model name is a claim, and this catalogue does not publish unsourced claims.
+
+    The page names real models because a reader otherwise cannot tell whether it describes history,
+    a research frontier, or the thing inside the chatbot they used this morning — and "almost every
+    open model uses them" asks for trust while offering nothing to check. So adoption is sourced
+    exactly like a date: read out of that model's own paper, quoted, and linked.
+    """
+    named = [(m.key, a) for m in load() for a in m.shipped_in]
+    assert named, "no adoption is recorded at all — this guard would be vacuous"
+
+    for key, a in named:
+        assert a.quote.strip(), f"{key}: {a.model} is named with no quote"
+        assert a.url.startswith("https://arxiv.org/abs/"), f"{key}: {a.model} has no paper"
+        assert a.where.strip(), f"{key}: {a.model} does not say where in the paper"
+        assert a.confidence in {"explicit", "implied"}, f"{key}: {a.model} has odd confidence"
+
+
+def test_an_unsourced_model_name_is_refused_at_construction() -> None:
+    """Break it on purpose: the record must not build without the evidence."""
+    from attention.catalogue import Adoption
+
+    ok = Adoption(
+        model="X", quote="X uses grouped-query attention", where="S2", url="https://arxiv.org/abs/1"
+    )
+    assert ok.model == "X"
+
+    for bad in (
+        {"model": "X", "quote": "  ", "where": "S2", "url": "https://arxiv.org/abs/1"},
+        {"model": "X", "quote": "q", "where": "S2", "url": ""},
+        {"model": "X", "quote": "q", "where": "S2", "url": "u", "confidence": "probably"},
+    ):
+        try:
+            Adoption(**bad)
+        except ValueError:
+            continue
+        raise AssertionError(f"an adoption record built without evidence: {bad}")
+
+
+def test_the_mechanisms_no_model_paper_claims_are_left_empty() -> None:
+    """An empty adoption list is a result, not a gap.
+
+    It separates the mechanisms the field adopted from the ones it admired, and filling it in with
+    plausible names would destroy exactly that signal. Reformer is the case in point: the catalogue
+    already says it saw little production use, and no model paper read here names it.
+    """
+    ms = load()
+    empty = {m.key for m in ms if not m.shipped_in}
+    assert "reformer" in empty, (
+        "a model paper now names Reformer — record it, do not assume this list is right forever"
+    )
+    assert len(empty) > len(ms) // 3, (
+        "almost everything is now attributed to a model, which is suspicious: check that names are "
+        "still coming from papers rather than from assumption"
+    )

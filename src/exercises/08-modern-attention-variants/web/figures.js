@@ -303,11 +303,23 @@ export function figInvoice(M) {
     head('One reader', 'num'),
     head('Eight readers', 'num eight')
   );
+  /* WHAT A "READER" IS. The two right-hand columns are the whole point of the invoice — the cache
+   * is per conversation, so serving several people at once multiplies it — and "Eight readers" as
+   * a bare column head asks the reader to infer that. */
+  const who = el('p', 'inv-note');
+  who.textContent =
+    'A reader is one conversation. Caches are not shared between them, so eight people talking to ' +
+    'the model at once means eight separate caches, each paying in full.';
+  wrap.append(who);
 
   const budget = M.cache.acceleratorBytes;
   const cutRow = el('div', 'inv-cut');
   const cutLab = el('span', 'lab');
-  cutLab.textContent = `one ${int(budget / 1e9)} GB accelerator, exhausted`;
+  /* NAME IT. "The cut line" is used as a term in the caption and the footnote below, and this is
+   * the only place it appears on the figure — as a description, never as the name. */
+  cutLab.textContent =
+    `the cut line — one ${int(budget / 1e9)} GB accelerator, exhausted. Below this the cache ` +
+    'alone needs a second machine, before a single model weight is loaded.';
   cutRow.append(cutLab);
 
   let cutDrawn = false;
