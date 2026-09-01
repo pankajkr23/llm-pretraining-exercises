@@ -489,12 +489,25 @@ function chapterExpected(M) {
     'Before the evidence',
     'What we expected to find',
     [
-      'The story usually told is a tidy arc: the field worked on **exactness**, then on **memory**, ' +
-        'then on **length**, then on memory again. Stated before we ordered anything, that is a ' +
-        'falsifiable claim — each two-year window should have one bill it clearly attacked most.',
+      /* THREE PROBLEMS IN THREE SENTENCES, and the first was the worst. "exactness / memory /
+       * length" is a THIRD vocabulary for a thing the page has already named twice — two bills,
+       * then five labels — and "memory" appears in it twice with nothing to map it onto, so the
+       * prediction and the figure that tests it were phrased in different words. The section also
+       * answered its own prediction in the same breath, and never stated the decision rule, which
+       * then surfaced for the first time in the verdict where it reads as chosen after the count. */
+      'The story usually told is a tidy arc, and the key has already given it its words: first the ' +
+        'field got attention working at all (**origin**), then went after the score grid ' +
+        '(**compute**), then after the stored keys (**cache**), then after both at once ' +
+        '(**both**).',
+      `Here is the test, fixed before anything was ordered. Group the ${spell(M.counts.total)} into ` +
+        'two-year windows — two years rather than one because several single years on the plate ' +
+        'contain nothing at all. Count which bill each window attacked most, and where two draw, ' +
+        'return **no winner** rather than picking one. If the arc is real, one bill dominates ' +
+        'nearly every window and they fall in that order.',
       'We also expected the invention of attention and the invention of the Transformer to sit ' +
-        `close together. They are **${int(daysBetween(M, 'bahdanau_attention', 'standard_attention'))} ` +
-        'days** apart, and the ordering makes that visible in a way a list of names cannot.',
+        'close together — attention being the idea of letting a model look back at every input ' +
+        'word, the Transformer being the model built out of almost nothing else. Whether they do ' +
+        'is on the plate above; the number is in the verdict below.',
     ],
     { short: 'The prediction', sub: 'Stated before the evidence' }
   );
@@ -635,7 +648,10 @@ function readingSpread(M) {
 
 function well(parent, w, M, extras) {
   const sec = el('section', 'well');
-  sec.append(el('p', 'kicker', `Well ${w.numeral}`));
+  /* The kicker carries the SUBJECT as well as the numeral. The hooks below are deliberately
+   * oblique — "Two bills, two crowds." is a good chapter title and tells a reader scanning the
+   * longest section on the page nothing about what is in it. */
+  sec.append(el('p', 'kicker', `Well ${w.numeral} · ${w.subject}`));
   const h = el('h3', 'well-h');
   h.textContent = w.headline;
   sec.append(h);
@@ -966,7 +982,7 @@ function chapterNegatives(M) {
         'to it. We cite the first and footnote the second so nobody re-finds it and “corrects” us.',
     ],
     [
-      'The million-token figure does not reproduce',
+      'The million-token figure does not reproduce on our yardstick',
       `The transcript gives about ${M.transcriptDiscrepancy.claimedTB.toFixed(0)} TB for ` +
         `${M.transcriptDiscrepancy.users} readers at a ` +
         `${int(M.transcriptDiscrepancy.context)}-token context. The formula that figure comes ` +
@@ -989,9 +1005,18 @@ function chapterNegatives(M) {
   f.append(figCorrection(M));
   const cap = el('figcaption');
   cap.innerHTML =
-    'The formula wins, and it is the same formula the smaller figure was derived from. A page ' +
-    'that corrects its own sources in the open is the one to believe about the other ' +
-    `${spell(M.counts.total - 1)} dates.`;
+    /* THIS ADJUDICATED WHAT THE PARAGRAPH ABOVE HAS JUST SAID CANNOT BE ADJUDICATED. That
+     * paragraph lists three inputs — a smaller model, fewer key-value heads, or eight-bit numbers —
+     * any of which would reconcile the two figures. If the source used one of them then both
+     * numbers are right and nobody is wrong, so "the formula wins" declares a winner in a contest
+     * the page has just called undecidable. What we can say is narrower and true: on OUR yardstick
+     * it does not reproduce. */
+    'We cannot tell which machine the larger figure was for, and we are not going to guess. On ' +
+    `this page's yardstick — ${M.yardstick.layers} layers, ${M.yardstick.kvHeads} key-value ` +
+    `heads, head dimension ${M.yardstick.headDim}, ${M.yardstick.dtype} — the arithmetic gives ` +
+    `${(M.transcriptDiscrepancy.computedBytes / 1e12).toFixed(2)} TB, and we publish both rather ` +
+    'than quietly adopting the rounder one. A page that shows its disagreements in the open is ' +
+    `the one to believe about the other ${spell(M.counts.total - 1)} dates.`;
   f.append(cap);
   s.append(f);
   return s;
@@ -1063,6 +1088,15 @@ function chapterConclusion(M) {
       'measurement.',
     `The remaining ${tie} ${isare}, and the code returns no winner rather than picking one. That ` +
       'is why this reads as a refutation rather than a story: a tie was allowed to stay a tie.',
+    /* THE SECOND PREDICTION, ANSWERED WHERE IT IS ANSWERED. "Before the evidence" states both
+     * predictions and deliberately gives away neither; this is the one that turned out right, and
+     * without it that section's pointer to "the number is in the verdict below" is a promise the
+     * page does not keep. */
+    `And the other prediction — that the invention of attention and the invention of the ` +
+      'Transformer would sit close together — was wrong in the direction that matters. They are ' +
+      `**${int(daysBetween(M, 'bahdanau_attention', 'standard_attention'))} days** apart, most of ` +
+      'three years, which is why a list of names ordered by family reads as though attention were ' +
+      'a part of the Transformer rather than something the Transformer was built out of.',
   ], { short: 'The verdict', sub: arc.matches ? 'the arc holds' : 'the arc does not hold' });
 
   const f = el('figure', 'wide');

@@ -195,6 +195,7 @@ def payload() -> dict:
         "wells": [
             {
                 "numeral": w.numeral,
+                "subject": w.subject,
                 "headline": w.headline,
                 "standfirst": w.standfirst,
                 "pullQuote": w.pull_quote,

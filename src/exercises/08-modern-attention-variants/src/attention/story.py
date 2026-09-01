@@ -30,6 +30,11 @@ class Well:
 
     Attributes:
         numeral: The Roman numeral the page sets as the chapter's kicker.
+        subject: What the chapter is ABOUT, in three or four plain words. The hooks below are the
+            chapter titles and they are deliberately oblique -- "Two bills, two crowds." is a good
+            hook and tells a reader scanning the longest section on the page nothing about what is
+            in it. The subject rides beside the numeral so the rail, the kicker and a returning
+            reader all have something to navigate by.
         headline: The chapter's problem, stated in plain words rather than named as a technique.
         standfirst: One sentence of orientation, set under the headline.
         pull_quote: A line lifted from the catalogue's own text, set large. Not authored here --
@@ -39,6 +44,7 @@ class Well:
     """
 
     numeral: str
+    subject: str
     headline: str
     standfirst: str
     pull_quote: str
@@ -48,6 +54,7 @@ class Well:
 WELLS: tuple[Well, ...] = (
     Well(
         numeral="I",
+        subject="Attention before the Transformer",
         headline="By the end of the sentence it had forgotten the beginning.",
         standfirst=(
             "One fixed vector had to carry a whole source sentence. Attention's first form let "
@@ -61,6 +68,7 @@ WELLS: tuple[Well, ...] = (
     ),
     Well(
         numeral="II",
+        subject="The Transformer, and the two bills it opens",
         headline="The hardware was parallel and the model was not.",
         standfirst=(
             "Dropping recurrence bought parallel training and cost the model any idea of order. "
@@ -73,6 +81,7 @@ WELLS: tuple[Well, ...] = (
     ),
     Well(
         numeral="III",
+        subject="Compute and cache split the field",
         headline="Two bills, two crowds.",
         standfirst=(
             "The compute bill and the cache bill were attacked by different people for different "
@@ -93,6 +102,7 @@ WELLS: tuple[Well, ...] = (
     ),
     Well(
         numeral="IV",
+        subject="Rotary embeddings, and the three repairs",
         headline="We shipped a position scheme in 2021 and we are still arguing about it.",
         standfirst=(
             "Rotary embeddings solved relative distance elegantly and left one bomb: run past the "
@@ -105,17 +115,23 @@ WELLS: tuple[Well, ...] = (
     ),
     Well(
         numeral="V",
+        subject="Two discoveries, not two optimisations",
         headline="Two things we were wrong about.",
         standfirst=(
             "Neither of these is an optimisation. Both are discoveries about what was already "
-            "happening -- one about where the cost actually was, one about what models had "
-            "quietly been doing with the first few tokens all along."
+            "happening \u2014 one about where the cost actually was, one about what models had "
+            "quietly been doing with the first few tokens all along. The first is FlashAttention. "
+            "Everyone had assumed attention was slow because of the arithmetic; it was actually "
+            "slow because of shuttling the score grid out to memory and back, so reordering the "
+            "same maths to keep the grid on chip made it several times faster with a bit-for-bit "
+            "identical result. Nothing was approximated \u2014 the bill had simply been misread."
         ),
         pull_quote="Nothing mathematically - which is why it is on this list as the exception.",
         keys=("flashattention", "attention_sinks"),
     ),
     Well(
         numeral="VI",
+        subject="Throw the cache away, keep a fixed-size state",
         headline="Then stop keeping everything.",
         standfirst=(
             "If the cache is the bill, refuse to hold a cache. Fold the past into a fixed-size "

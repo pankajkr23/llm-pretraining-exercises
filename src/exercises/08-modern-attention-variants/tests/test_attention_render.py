@@ -892,3 +892,26 @@ def test_no_two_paragraphs_on_the_page_say_the_same_thing(page) -> None:
             twins.append(head)
         heads[head] = t
     assert not twins, f"these paragraphs open identically and then diverge: {twins}"
+
+
+def test_the_prediction_is_stated_before_it_is_answered_and_the_answer_exists(page) -> None:
+    """ "Say what you expected before what you found" only works if the finding is somewhere.
+
+    The `expected` section used to state a prediction and answer it in the same breath, which is
+    the failure the rule exists to prevent. Fixing that introduced the opposite one: the answer was
+    deleted along with the give-away, and the section was left pointing at "the number is in the
+    verdict below" — a promise the page did not keep, and nothing failed.
+    """
+    expected = page.inner_text("section[data-role='expected']").lower()
+    verdict = page.inner_text("section[data-role='conclusion']").lower()
+
+    assert "expected" in expected, "the prediction section no longer states a prediction"
+    assert "days apart" not in expected, (
+        "the prediction section gives away its own answer; state it, then answer it below"
+    )
+    assert "days apart" in verdict, (
+        "the prediction section points at an answer the verdict does not contain"
+    )
+
+    #: And the verdict must not be the first place the reader meets the claim being tested.
+    assert "tidy arc" in expected, "the arc under test is not stated before the evidence"
