@@ -60,9 +60,17 @@ without breaking anything else.
 | `sources.py` | the citation model: what was read, from where, quoted verbatim, and when |
 | `catalogue.py` | the mechanisms, their trade-offs, and the coverage list the assignment mandates |
 | `timeline.py` | ordering, the gaps, and which bill each period was paying down |
+| `story.py` | the six chapters the page tells, and the rule that every mechanism is in exactly one |
 
 `results/mechanisms.json` is the tracked evidence. Nothing derives it; it was assembled by hand from
 primary sources and is validated by `catalogue.py`.
+
+Two of those modules exist because a claim needed somewhere to live where a test could reach it.
+`story.py` holds the page's chapter grouping — an editorial claim, so it is data with a guard rather
+than prose inside the page's JavaScript, and `story.check()` refuses a partition that does not cover
+the catalogue exactly once. `cache.tokens_before_wall()` holds the three crossings the page's race
+figure animates towards, as the same arithmetic as the invoice solved for the context instead of the
+bytes — so the figure and the table cannot disagree.
 
 ## Run it
 
@@ -158,12 +166,36 @@ Two things visible only on a date axis:
 
 <https://llm-pretraining-demos.vercel.app/08-modern-attention-variants/>
 
-Twelve sections carrying the spine `AGENTS.md` requires, and one figure that is the point of the
-whole thing: **attention has exactly two objects that cost anything** — the triangle of scores
-between every pair of tokens, and the cache holding what each past token contributed — and every
-mechanism on the timeline is a structural edit to one of them. Switch between the variants and watch
-which object moves. GQA and MQA leave the triangle untouched; sliding window and sparse attention
-leave the cache width alone; linear attention collapses both into a single fixed state.
+Twelve sections carrying the spine `AGENTS.md` requires, set as a **monograph feature**: six
+numbered plates, six chapters, and the twenty-three mechanisms as *one object entered twenty-three
+times* rather than twenty-three collapsed cards a reader has to click through.
 
-The session never states that framing, which is what makes drawing it worth doing rather than a
-restatement of the reading.
+The spine sentence is the thing the session never states, and it is what makes drawing this worth
+doing rather than restating the reading: **attention is one idea that sent two bills, and almost
+everything since is somebody who could not pay one of them.** The two bills are the triangle of
+scores between every pair of tokens, and the cache holding what each past token contributed.
+
+Three views of the same twenty-three, because they answer different questions and a reader should
+not have to interact to get an answer to any of them:
+
+| view | what it answers | interaction needed |
+| --- | --- | --- |
+| **Plate III**, the chronology | *where* each sits in time, and which bill it pays | none — all 23 at once |
+| the reading spread | *what one of them traded*, in depth | one click, and it is pre-loaded |
+| the index plate | *comparability* — 23 rows, same six fields, same six places | none |
+
+Every mechanism carries a **glyph** drawn by one of four generators from a `pattern` block in the
+catalogue, so a glyph is derived from data rather than hand-drawn per mechanism. Two of those
+drawings are load-bearing and easy to get wrong. FlashAttention's field is byte-identical to
+standard attention's, because it is *exact* attention and drawing it a different shape would be the
+worst factual error available on the page; its difference is a tiling overlay. And linear attention
+does not get a thin diagonal — a diagonal implies "attends only to itself", which is the opposite of
+a fixed-size state that summarises everything.
+
+The plates each carry an argument the prose cannot make: the KV cache typeset as a printed
+**invoice** with a cut line where one 80&nbsp;GB accelerator is exhausted; one attention step
+**exploded into five bays**, ending in the weighted sum of V that produces the vector leaving the
+block; three cache arrangements **racing one wall**, which shows that head sharing moves along the
+same line rather than leaving it — the thing a bar chart provably cannot show.
+
+The page prints **no shell commands**. Those are in *Run it* above, where commands belong.

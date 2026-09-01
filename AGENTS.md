@@ -278,6 +278,21 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
   is written twice — once against the real spine, once against a deliberately broken fixture — and
   when you add one, break the thing on purpose and watch it go red before you commit.
 
+- **A guard must not trigger the behaviour it is testing for.** Exercise 08's invoice cut line
+  starts hidden and is revealed by an `IntersectionObserver`. The guard asserting it was visible
+  called `scrollIntoView()` first, then measured — so it fired the observer and then checked the
+  result of its own action. It passed for the entire time the cut line was invisible to every reader
+  who had not scrolled: a screenshot, a print, a PDF, anyone landing on an in-page anchor. The rule
+  generalises past scrolling: if a test clicks, focuses, hovers or scrolls before asserting, ask
+  whether the assertion is about the state after that action or about the state the reader actually
+  arrives in — and if it is the second, do not perform the action.
+
+- **Prefer a painted terminal state to an animated one wherever the motion buys nothing.** The same
+  cut line was a 300ms fade that said nothing the dashed rule did not already say standing still,
+  and it cost the plate its entire argument in every non-scrolling context. Reveal-on-scroll is a
+  decision to hide something by default; make it deliberately, and never for the one element that
+  carries the point.
+
 - **A coverage guard must ask whether a test can RUN, not whether it is listed.**
   `tests/test_ci_shards_cover_everything.py` was written for the obvious failure — a file outside
   every shard is never run and CI is green — and was blind to the adjacent one: a file that *is*
@@ -556,6 +571,21 @@ Every deployable exercise's static `web/` bundle shares **one design system** �
   grid — and **test both halves**, because a naive fix breaks the half nobody guards. Use
   `minmax(min(340px, 100%), 1fr)` and never a bare `340px`: an auto-fill track cannot shrink below
   its own minimum and will push a 320px phone sideways.
+
+- **An `IntersectionObserver` on a detached node never fires, and says nothing.** Every figure
+  builder returns its element before the page appends it, so registering the observer inside the
+  builder observes a node that is not in the document yet. Three of exercise 08's plates never
+  animated and one was invisible outright, with a clean console and a green suite. Defer by one
+  frame and check `isConnected`, or register the observer from the code that does the appending.
+
+- **A `ch` or `em` measure resolves against the element that declares it, not the text inside it.**
+  A pull quote wrapper at `max-width: 24ch` with `font-size: 16px` is 192px wide however large the
+  38px quote inside it is set — one word per line. Put the measure on the element that carries the
+  type, or use `rem`.
+
+- **A full-bleed element still needs its own inset.** A `full` grid track runs edge to edge by
+  design; that is what makes a plate span the page. Padding belongs on the element, not the track,
+  or every full-width figure prints flush against the window on both sides.
 
 - **Editing non-ASCII HTML** (`—`, `→`, `·`, math glyphs): use the Edit/Write tools. **Never** `perl -0pi`/`sed` with wide-char escapes — byte-mode rewrites double-encode UTF-8 into mojibake.
 

@@ -12,12 +12,39 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
-- **Exercise 08's page** at `/08-modern-attention-variants/` — twelve spine sections, the timeline of
-  23 mechanisms in launch order, and a figure that draws the framing the session never states:
-  attention has exactly **two** objects that cost anything, and every mechanism is a structural edit
-  to one of them. Eight variants, each written as a predicate rather than a drawing, with three
-  browser tests that make the figure falsifiable — switching must change what is on screen, GQA must
-  touch no attention score, and linear attention must leave no per-position cache square drawn.
+- **Exercise 08's page** at `/08-modern-attention-variants/` — twelve spine sections set as a
+  **monograph feature**: six numbered plates, six chapters, and the 23 mechanisms as *one object
+  entered twenty-three times* rather than 23 collapsed cards. Three views answer three different
+  questions and two of them need no interaction at all: **Plate III** places all 23 on real time,
+  one stave per bill, with the both-bill entries drawn as ties between the compute and cache staves
+  — so the finding that no tie exists before 2020 is visible rather than asserted; a **reading
+  spread** re-typesets on click; an **index plate** prints all 23 with the same six fields in the
+  same six places. Every mechanism carries a glyph drawn by one of four generators from a `pattern`
+  block in the catalogue, so a glyph is derived from data rather than hand-drawn.
+
+  The plates each carry an argument the prose cannot make: the KV cache typeset as a printed
+  **invoice** with a cut line where one 80 GB accelerator is exhausted; one attention step
+  **exploded into five bays**, ending in the weighted sum of V that produces the vector leaving the
+  block; and three cache arrangements **racing one wall**, which shows head sharing moving along the
+  same line rather than leaving it — the thing a bar chart provably cannot show.
+
+  Thirty-six browser assertions back it, each named after a defect the page actually shipped with a
+  green suite: a verdict grid of invisible chips, an invoice cut line revealed by an observer that
+  never fired, plate labels printing over each other, and glyph marks escaping their own viewBox
+  onto a neighbour's caption.
+
+- **The page no longer prints shell commands.** `uv sync` and `pytest` were on a public page;
+  commands live in the README, and a test now enforces it.
+
+- **`src/attention/story.py`** — the page's six chapters as tracked data with a guard, because the
+  grouping is an editorial claim. `story.check()` refuses a partition that does not cover the
+  catalogue exactly once, and its pull-quote guard asserts every line the page sets large is a
+  phrase the catalogue already contains.
+
+- **`cache.tokens_before_wall()`** — how many tokens fit in one accelerator before the KV cache
+  exhausts it: **406,901** at 8 KV heads, **1,627,604** at 2, **3,255,208** at 1. The same
+  arithmetic as the invoice solved for the context instead of the bytes, so the figure and the table
+  cannot disagree.
 
 - **`tools/new_exercise.py` — scaffold a new exercise in one command.** It writes the whole skeleton
   including the three gitignored files, joins the `rest` CI shard and adds the root README row, then

@@ -116,6 +116,34 @@ which was meant — so neither number is published alone.
 
 ---
 
+## The page, rebuilt (this pass)
+
+The first page shipped every graded item and was rejected on sight: text and tables, no explainers,
+no graphics, misaligned. Rebuilt as a monograph feature — six numbered plates, six chapters, and the
+23 as one object entered 23 times rather than 23 collapsed cards.
+
+- **Three views, two of which need no interaction.** Plate III (all 23 on real time, one stave per
+  bill, `both` drawn as ties), the reading spread (one entry in depth), the index plate (all 23, same
+  six fields, same six places). A grader must not click 23 times, and a print must still carry it.
+- **A glyph alphabet.** Four generators read a `pattern` block now carried by all 23 catalogue
+  entries, so a glyph is derived rather than drawn. Rendering the sheet at 160px is what exposed
+  RoPE and ALiBi printing as the same gradient (a `min(.., π/2)` clamp had flattened RoPE's
+  oscillation into ALiBi's ramp) and Reformer printing as a sliding window.
+- **The centrefold gained its fifth stage.** It stopped at softmax, which is exactly where a reader
+  concludes attention outputs weights.
+- **No shell commands on the page**, and `method` moved to a colophon — kept in its canonical spine
+  position, because a repo-wide order matters more than this page's instinct to put production notes
+  last.
+- **Six defects found by screenshotting, all with a green suite**, now each with a named guard:
+  invisible verdict chips, an invoice cut line revealed by an observer on a detached node, plate
+  labels laddered to a fixed 48px, every glyph escaping its viewBox, the masthead scrolling a 320px
+  screen sideways, and a guard that scrolled the element into view before measuring whether it was
+  visible without scrolling.
+- Read in all six themes: no console error, no sideways scroll at 320–1440px, foreground and ground
+  resolving as a pair in each.
+
+---
+
 ## Verification
 
 ```bash

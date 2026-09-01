@@ -99,17 +99,75 @@ attention sinks, NTK-aware scaling, YaRN and MLA. Those are sourced entirely fro
 material, and `taught_in_session` on each entry records which is which — so a reader can see where
 our evidence came from rather than assuming it all came from class.
 
-## The figure, and the one rule it lives by
+## The page is a monograph, and four rules keep it one
 
-Figure 1 draws the two objects every mechanism edits — the causal score triangle and the KV cache —
-and lets a reader switch which edit is applied. **The variants are predicates, not pictures**: each
-one is a `cells(i, j)` function plus a cache width and height, and the drawing is computed from
-those. Adding a mechanism to the figure means adding a predicate, never drawing a new diagram.
+It was rebuilt after a review found the previous version was text and tables: no explainers, no
+graphics, misaligned, "a ten year old boy's project". The rebuild is six numbered plates and six
+chapters. If you touch it, these are the rules that produced it.
 
-Three browser tests make the figure falsifiable rather than decorative: switching variants must
-change what is on screen, GQA must change the cache and touch **no** score, and linear attention must
-leave no per-position square drawn at all. If a variant were mis-wired the page would still look
-completely normal, which is the whole reason those exist.
+- **Twenty-three text cards is not a design, it is a list with a scrollbar.** The twenty-three are
+  **one object entered twenty-three times, shown three ways** — the plate (where each sits in time),
+  the reading spread (what one traded, in depth), the index plate (all 23, same six fields, same six
+  places). Two of the three need no interaction at all, because a grader must not click 23 times and
+  a printed page must still carry the evidence.
+- **A glyph is derived, never drawn.** Four generators in `web/glyphs.js` read the `pattern` block
+  each catalogue entry carries. Adding a mechanism means adding a pattern, not drawing a picture.
+  Two glyphs are load-bearing: **FlashAttention's field is byte-identical to standard attention's**
+  because it is exact attention — a different shape there would be the worst factual error on the
+  page — and **linear attention gets a state box, never a thin diagonal**, which would imply the
+  opposite of what a fixed-size state does. `tests/test_attention_catalogue.py` pins both.
+- **No shell commands on the page.** Commands go in the README, and
+  `test_the_page_shows_no_shell_commands` enforces it.
+- **`--accent` has exactly one job:** the current selection, the playhead, or the line being
+  crossed. A second job and the plate stops reading at a glance under six themes.
+
+## Six defects this page shipped with a green suite
+
+Every one was found by **looking at a rendered screenshot**, and each now has a guard in
+`tests/test_attention_render.py` named after it. This is the list to re-read before believing the
+suite about a change under `web/`.
+
+- **The verdict grid was handed `glyph()`** — which returns an SVG `<g>`. Appended into an HTML
+  `<div>` a bare `<g>` renders nothing, so the grid drew frames and TIE stamps over twenty-three
+  invisible chips. Use `glyphSvg()` anywhere outside an existing `<svg>`.
+- **`onFirstView` observed detached nodes.** Every figure asks for it before `chapters.js` appends
+  it, and an `IntersectionObserver` on a detached node never fires, silently. Three plates never
+  animated. It now defers a frame and checks `isConnected`.
+- **The invoice cut line was invisible, and the guard passed it** because the guard scrolled the row
+  into view before measuring — triggering the behaviour it was testing for. The reveal is deleted
+  rather than fixed: an element invisible until a scroll is invisible to a screenshot, a print and
+  an anchor landing. **Prefer a painted terminal state to an animated one when the motion buys
+  nothing.**
+- **Plate labels laddered to a fixed 48px** while a label is up to 200px wide, printing five staves
+  on top of each other. Laddering measures the label now, across three tiers.
+- **Every glyph escaped its viewBox.** The schema tilde sits at `x = size + 2`, and a square viewBox
+  clipped 21 of 23 on two sides. An earlier mark at a negative `y` rendered on top of the caption of
+  the glyph in the row *above* — SVG does not clip by default, so an escaping mark is present,
+  legible, and attributed to the wrong mechanism.
+- **The masthead field is `preserveAspectRatio="slice"`**, so it is wider than its box by design and
+  scrolled a 320px screen sideways by 86px until it was given `overflow: hidden`.
+
+## Two claims that live in Python because a test must reach them
+
+- **`story.py` holds the six chapters.** The grouping is an editorial claim, so it is tracked data
+  with a guard rather than prose inside `chapters.js`. `story.check()` refuses a partition that does
+  not cover the catalogue exactly once, and `build_web_data.py` calls it before emitting — both ways
+  it rots are invisible on the rendered page: a mechanism in no well is simply never drawn, and one
+  in two wells reads as an editing slip. Its **pull-quote guard** asserts every quote the page sets
+  large is a phrase the catalogue already contains, and caught two of the six on the day it was
+  written — one differing from its source only by an em dash, one invented outright.
+- **`cache.tokens_before_wall()` holds the race's three crossings** — 406,901 / 1,627,604 /
+  3,255,208 tokens — as the invoice's own arithmetic solved for the context instead of the bytes, so
+  the figure and the table cannot disagree. `ACCELERATOR_BYTES` is decimal and the page says so;
+  binary units would move every crossing by 7.4%.
+
+## The centrefold has five stages, and the fifth is not optional
+
+`figCentrefold` runs `Q·K → ÷√d → mask → softmax → ×V` on six real tokens with live arithmetic. An
+earlier version stopped at softmax, which is precisely the step where a reader concludes attention
+outputs weights. It outputs a **vector**; bay five is where that happens. `V` is deliberately not
+`K` — a figure that reuses the keys as the values teaches that attention returns its own keys, the
+commonest misreading of the formula there is.
 
 **Do not carry a derived figure by searching a list.** The "days nobody touched the cost" tile once
 looked its gap up out of the top-five list, which meant a new mechanism displacing it would have made
