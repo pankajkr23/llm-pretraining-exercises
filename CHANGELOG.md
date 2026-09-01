@@ -13,12 +13,12 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 ### Added
 
 - **Exercise 08's page** at `/08-modern-attention-variants/` — twelve spine sections set as a
-  **monograph feature**: six numbered plates, six chapters, and the 23 mechanisms as *one object
-  entered twenty-three times* rather than 23 collapsed cards. Three views answer three different
-  questions and two of them need no interaction at all: **Plate III** places all 23 on real time,
+  **monograph feature**: six numbered plates, six chapters, and the 24 mechanisms as *one object
+  entered once per mechanism* rather than 24 collapsed cards. Three views answer three different
+  questions and two of them need no interaction at all: **Plate III** places all 24 on real time,
   one stave per bill, with the both-bill entries drawn as ties between the compute and cache staves
   — so the finding that no tie exists before 2020 is visible rather than asserted; a **reading
-  spread** re-typesets on click; an **index plate** prints all 23 with the same six fields in the
+  spread** re-typesets on click; an **index plate** prints all 24 with the same six fields in the
   same six places. Every mechanism carries a glyph drawn by one of four generators from a `pattern`
   block in the catalogue, so a glyph is derived from data rather than hand-drawn.
 
@@ -32,6 +32,25 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   green suite: a verdict grid of invisible chips, an invoice cut line revealed by an observer that
   never fired, plate labels printing over each other, and glyph marks escaping their own viewBox
   onto a neighbour's caption.
+
+- **Top-k attention (2019-12-25)** — a required mechanism that was missing, and mis-described. The
+  coverage list names *"sparse and top-k attention"*; only the sparse half was catalogued, and its
+  entry claimed "top-k attention" as an alias, asserting that a fixed pattern chosen before the
+  model sees any data is the same technique as a per-query choice made from the scores. Sourced to
+  *Explicit Sparse Transformer* (arXiv:1912.11637), v1 date read from the abstract page. `MANDATED`
+  now maps a phrase to every key it names, so a compound requirement cannot be satisfied by half of
+  itself.
+
+- **Corrected: one undecided pressure window, not two.** Adding a second 2019 compute entry breaks
+  the 2018–19 tie. The exercise README records the change rather than amending the number quietly.
+
+- **A portrait plate for phones.** The landscape plate is a 1440-unit SVG and is unreadable in a
+  342px column; below 720px time now runs down the page instead, keeping the lanes, the to-scale
+  gaps and the ties, and dropping the names — which a tap or the index plate supplies.
+
+- **"Read the plate"** — a playhead that sweeps the whole chronology in one pass, lighting each
+  entry as it goes and advancing the reading spread. Interruptible, and not built at all under
+  reduced motion, because a sweep has no terminal state.
 
 - **The page no longer prints shell commands.** `uv sync` and `pytest` were on a public page;
   commands live in the README, and a test now enforces it.
@@ -60,7 +79,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 - **Exercise 08 — modern attention variants, scaffolded with a verified chronology.** Session 8 asks
   for a web app placing every attention mechanism in the order it was launched, and states the graded
   axis plainly: *"Your job is to be right about the dates."* So the first artifact is not the page but
-  `results/mechanisms.json` — **23 mechanisms** from Bahdanau (2014) to DroPE (2025), each date read
+  `results/mechanisms.json` — **24 mechanisms** from Bahdanau (2014) to DroPE (2025), each date read
   from the primary source, with the URL and the source's **own wording** stored beside it so a reader
   can check the two against each other.
 - **Guards that make an invented date a test failure.** A citation claiming `verified` will not

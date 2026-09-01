@@ -20,7 +20,7 @@ pipeline is fine, and the link must resolve for a logged-out stranger.
 
 | # | item | status | note |
 | --- | --- | --- | --- |
-| O1 | **The catalogue** | **done** | 23 mechanisms, every date read from the primary source and cross-checked against the source's own wording. 18 mandated + 5 bonus. |
+| O1 | **The catalogue** | **done** | 24 mechanisms, every date read from the primary source and cross-checked against the source's own wording. 19 required by the coverage list + 5 beyond it. |
 | O2 | **The arithmetic** | **done** | The session's 6.44 GB / 51.54 GB / 4× GQA all reproduce exactly from `cache.py`. |
 | O3 | **The page** | **done** | Twelve spine sections, the two-object mechanism figure and the timeline, at `/08-modern-attention-variants/`. Registered in the landing card, `SPINE_ENFORCED` and `OPTIONAL_DEPENDENCY_GATES` in the same change. 20 browser tests. |
 | O4 | **Question 2's written answer** | **open** | The findings are on the page's conclusion section and in the README; they still need pasting into the platform's answer field. |
@@ -106,7 +106,7 @@ which was meant — so neither number is published alone.
   `results/mechanisms.json`.
 - **No torch.** Nothing here trains, so the exercise is fully verified by CI's default sync rather
   than needing the `train` extra and a separate job.
-- 23 mechanisms catalogued, every date verified against its primary source and cross-checked
+- 24 mechanisms catalogued, every date verified against its primary source and cross-checked
   against the source's own quoted wording.
 - Registered in the `rest` integration shard and the root README table. **Not** registered in
   `deploy/vercel/index.html` or `SPINE_ENFORCED` — both guards fail in *both* directions, so an
@@ -122,10 +122,10 @@ The first page shipped every graded item and was rejected on sight: text and tab
 no graphics, misaligned. Rebuilt as a monograph feature — six numbered plates, six chapters, and the
 23 as one object entered 23 times rather than 23 collapsed cards.
 
-- **Three views, two of which need no interaction.** Plate III (all 23 on real time, one stave per
-  bill, `both` drawn as ties), the reading spread (one entry in depth), the index plate (all 23, same
+- **Three views, two of which need no interaction.** Plate III (all of them on real time, one stave
+  per bill, `both` drawn as ties), the reading spread (one entry in depth), the index plate (all, same
   six fields, same six places). A grader must not click 23 times, and a print must still carry it.
-- **A glyph alphabet.** Four generators read a `pattern` block now carried by all 23 catalogue
+- **A glyph alphabet.** Four generators read a `pattern` block now carried by every catalogue
   entries, so a glyph is derived rather than drawn. Rendering the sheet at 160px is what exposed
   RoPE and ALiBi printing as the same gradient (a `min(.., π/2)` clamp had flattened RoPE's
   oscillation into ALiBi's ramp) and Reformer printing as a sliding window.
@@ -141,6 +141,33 @@ no graphics, misaligned. Rebuilt as a monograph feature — six numbered plates,
   visible without scrolling.
 - Read in all six themes: no console error, no sideways scroll at 320–1440px, foreground and ground
   resolving as a pair in each.
+
+---
+
+## Completing the session (this pass)
+
+- **A mandated mechanism was missing and the guard could not see it.** The coverage list says
+  *"sparse and top-k attention"*; we had catalogued the sparse half and the Sparse Transformers
+  entry additionally claimed "top-k attention" as an alias, so the catalogue asserted the two were
+  the same technique. Top-k is now its own entry (2019-12-25, arXiv:1912.11637, v1 date read from
+  the abstract page), and `MANDATED` maps a phrase to *every* key it names so a compound
+  requirement cannot be satisfied by half of itself again.
+- **That overturned a published claim, and it is corrected in the open.** The 2018–19 window had
+  been an exact 1–1 tie; a second 2019 compute entry breaks it. Two undecided windows of six became
+  one. The page's body text corrected itself — the headline and the rail subtitle did not, because
+  they were hand-written. Both are derived now, along with every plural in that section.
+- **Every reader-facing count is derived.** The page spelled "twenty-three" in six places; one new
+  mechanism made all six wrong at once. A lexical guard now forbids a spelled count as a source
+  literal in `web/*.js`.
+- **The plate has a portrait form.** The landscape plate is unreadable in a 342px column, which
+  meant the page's centrepiece carried nothing on a phone. Time now runs down the page below 720px.
+- **The plate can be read as one motion.** A playhead sweeps the whole chronology, lighting each
+  entry as it passes and advancing the reading spread — visibly racing through 2023 and stalling
+  through 2018. Withheld entirely under reduced motion, because a sweep has no terminal state.
+- **The notebook covers the shipped code again**, including `story.py`, `tokens_before_wall` and the
+  glyph alphabet. All eleven code cells were executed against the package rather than assumed to run.
+- **The Q2 deliverable is written down**: five findings visible only on a date axis, the five
+  mechanisms beyond the coverage list with their dates and sources, and the one we had wrong.
 
 ---
 

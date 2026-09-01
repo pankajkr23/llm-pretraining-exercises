@@ -30,6 +30,7 @@ import functools
 import http.server
 import importlib.util
 import json
+import re
 import socketserver
 import threading
 from pathlib import Path
@@ -218,7 +219,9 @@ def test_the_dates_on_screen_are_the_dates_in_the_catalogue(page) -> None:
 
 
 def test_the_plate_places_every_mechanism(page) -> None:
-    keys = page.eval_on_selector_all("#results .plate-entry", "els => els.map(e => e.dataset.key)")
+    keys = page.eval_on_selector_all(
+        "#results svg.plate-wide .plate-entry", "els => els.map(e => e.dataset.key)"
+    )
     assert sorted(keys) == sorted(m["key"] for m in _bundle()["mechanisms"])
 
 
@@ -231,7 +234,7 @@ def test_the_plate_puts_time_on_the_x_axis_and_does_not_lie_about_it(page) -> No
     bundle = _bundle()
     order = {m["key"]: i for i, m in enumerate(bundle["mechanisms"])}
     placed = page.eval_on_selector_all(
-        "#results .plate-entry",
+        "#results svg.plate-wide .plate-entry",
         "els => els.map(e => [e.dataset.key, e.querySelector('circle').getBoundingClientRect().x])",
     )
     by_date = sorted(placed, key=lambda kv: order[kv[0]])
@@ -247,7 +250,7 @@ def test_no_two_plate_labels_overlap(page) -> None:
     Nothing failed, because every label was present and correctly positioned relative to its tick.
     """
     boxes = page.eval_on_selector_all(
-        "#results .plate-entry text.pe-name",
+        "#results svg.plate-wide .plate-entry text.pe-name",
         "els => els.map(e => { const r = e.getBoundingClientRect();"
         " return [e.textContent, r.x, r.y, r.width, r.height]; })",
     )
@@ -264,9 +267,9 @@ def test_the_quiet_stretch_is_drawn_as_area_and_labelled_with_its_own_number(pag
     """The 680-day silence is a finding, so it is a shape on the plate and not a sentence."""
     bundle = _bundle()
     days = bundle["quietStretch"]["days"]
-    label = page.eval_on_selector("#results .quiet-lab", "e => e.textContent")
+    label = page.eval_on_selector("#results svg.plate-wide .quiet-lab", "e => e.textContent")
     assert str(days) in label, f"the quiet band is labelled {label!r}, not with {days}"
-    width = page.eval_on_selector("#results .quiet-band", "e => e.getBBox().width")
+    width = page.eval_on_selector("#results svg.plate-wide .quiet-band", "e => e.getBBox().width")
     assert width > 40, "the quiet stretch is drawn too small to read as a gap"
 
 
@@ -275,7 +278,7 @@ def test_clicking_a_plate_entry_retypesets_the_reading_spread(page) -> None:
     static card wearing an interaction."""
     before = page.inner_text(".spread")
     page.eval_on_selector(
-        '#results .plate-entry[data-key="mamba"]',
+        '#results svg.plate-wide .plate-entry[data-key="mamba"]',
         "e => e.dispatchEvent(new MouseEvent('click', {bubbles: true}))",
     )
     page.wait_for_timeout(400)
@@ -407,7 +410,10 @@ def test_the_invoice_prices_every_context_the_data_carries(page) -> None:
 def test_the_race_ends_at_the_crossings_the_arithmetic_gives(page) -> None:
     """The figure and the invoice must not be able to disagree: both read `tokensBeforeWall`."""
     bundle = _bundle()
-    page.eval_on_selector("#results .runbtn", "e => { e.scrollIntoView(); e.click(); }")
+    # Scoped to the race's own figure. An unscoped "#results .runbtn" now finds the plate's sweep
+    # control, which is a different button doing a different thing — and the test would have gone
+    # green while clicking the wrong control for as long as the race numbers stayed on screen.
+    page.eval_on_selector("#results .well .runbtn", "e => { e.scrollIntoView(); e.click(); }")
     page.wait_for_timeout(5200)
     text = page.inner_text("#results")
     for row in bundle["cache"]["sharing"]:
@@ -502,3 +508,131 @@ def test_every_spine_section_that_argues_from_a_figure_has_one(page) -> None:
             "els => els.length",
         )
         assert figures >= 1, f"the {role} section argues from a figure it does not have"
+
+
+def test_exactly_one_plate_is_visible_at_each_width(page) -> None:
+    """Two plates are built; a reader must ever see one.
+
+    They are separate SVGs rather than one responsive drawing, so the only thing stopping both from
+    rendering is a CSS rule, and the first version of it lost: `.plate svg { display: block }`
+    is (0,1,1) and out-specified a bare `.plate-tall` at (0,1,0), so the phone got the unreadable
+    landscape smear stacked on top of the portrait plate built to spare it.
+    """
+    for width, expect_wide in ((1400, True), (900, True), (720, False), (390, False), (320, False)):
+        page.set_viewport_size({"width": width, "height": 900})
+        page.wait_for_timeout(250)
+        seen = page.evaluate(
+            """() => {
+              const vis = (sel) => {
+                const e = document.querySelector(sel);
+                return !!e && getComputedStyle(e).display !== 'none';
+              };
+              return [vis('svg.plate-wide'), vis('svg.plate-tall')];
+            }"""
+        )
+        assert seen == [expect_wide, not expect_wide], (
+            f"at {width}px the visible plates are wide={seen[0]} tall={seen[1]}"
+        )
+    page.set_viewport_size({"width": 1400, "height": 950})
+    page.wait_for_timeout(250)
+
+
+def test_both_plates_carry_every_mechanism(page) -> None:
+    """The portrait plate drops the NAMES on purpose. It must not drop an entry."""
+    keys = _bundle()["mechanisms"]
+    for sel in ("svg.plate-wide", "svg.plate-tall"):
+        got = page.eval_on_selector_all(
+            f"#results {sel} .plate-entry", "els => els.map(e => e.dataset.key)"
+        )
+        assert sorted(got) == sorted(m["key"] for m in keys), f"{sel} is missing entries"
+
+
+def test_the_sweep_reads_the_plate_in_date_order(page) -> None:
+    """The one motion on this page that teaches something static arrangement cannot.
+
+    A sweep that lit entries in DOM order rather than date order would look completely normal and
+    would destroy the only thing it exists to show — that the field raced through some years and
+    stalled through others.
+    """
+    lit = page.evaluate(
+        """() => {
+          const svg = document.querySelector('#results svg.plate-wide');
+          const seen = [];
+          for (let i = 0; i <= 600; i++) {
+            const key = svg.sweep(i / 600);
+            if (key && key !== seen[seen.length - 1]) seen.push(key);
+          }
+          svg.sweepOff();
+          return seen;
+        }"""
+    )
+    mechanisms = _bundle()["mechanisms"]
+    order = [m["key"] for m in mechanisms]
+    assert lit == [k for k in order if k in lit], "the sweep lights entries out of date order"
+
+    # The playhead reports the LAST entry it has passed, so two mechanisms sharing a date share a
+    # position and only the later one is ever reported. The reachable count is therefore the number
+    # of distinct dates, not the number of mechanisms — derived here rather than guessed, because a
+    # guessed threshold is what made this assertion fail against a correct sweep.
+    reachable = len({m["date"] for m in mechanisms})
+    assert len(lit) == reachable, f"the sweep reached {len(lit)} of {reachable} distinct dates"
+
+
+def test_the_plate_offers_a_sweep_control(page) -> None:
+    """The control exists and belongs to the plate rather than to a well's figure.
+
+    Its label is not asserted: it toggles to "Stop" while a sweep is running, and an earlier
+    version of this test asserted the idle label and failed whenever another test in the module had
+    left a sweep in flight. A guard that depends on test ordering is a flaky guard.
+    """
+    present = page.eval_on_selector_all("#results > .ctl .runbtn", "els => els.length")
+    assert present == 1, f"expected exactly one sweep control on the plate, found {present}"
+
+
+def test_the_sweep_is_withheld_entirely_under_reduced_motion(page) -> None:
+    """A sweep has no terminal state, so it is withheld rather than degraded.
+
+    Every other figure here renders directly into a readable still. This one cannot: its whole
+    content is an ordering over time. Offering a control that would do nothing is worse than not
+    offering it, so the reduced-motion page must not build one — checked in a real reduced-motion
+    context rather than by reading the source.
+    """
+    ctx = page.context.browser.new_context(reduced_motion="reduce")
+    quiet = ctx.new_page()
+    try:
+        quiet.goto(page.url)
+        quiet.wait_for_selector("section#reproduce", timeout=15_000)
+        quiet.wait_for_timeout(800)
+        assert quiet.eval_on_selector_all("#results > .ctl .runbtn", "els => els.length") == 0, (
+            "a sweep control was built for a reader who asked for no motion"
+        )
+        # And the rest of the plate must still be there: withholding the motion must not withhold
+        # the evidence.
+        entries = quiet.eval_on_selector_all(
+            "#results svg.plate-wide .plate-entry", "els => els.length"
+        )
+        assert entries == len(_bundle()["mechanisms"])
+    finally:
+        quiet.close()
+        ctx.close()
+
+
+def test_the_page_states_its_own_size_correctly(page) -> None:
+    """Whatever else it says, the page must spell its own catalogue size."""
+    words = [
+        "twenty",
+        "twenty-one",
+        "twenty-two",
+        "twenty-three",
+        "twenty-four",
+        "twenty-five",
+        "twenty-six",
+        "twenty-seven",
+    ]
+    total = len(_bundle()["mechanisms"])
+    assert 20 <= total < 20 + len(words), f"extend the word list for a catalogue of {total}"
+    correct = words[total - 20]
+    body = page.inner_text("main").lower()
+    assert re.search(rf"\b{re.escape(correct)}\b", body), (
+        f"the page never states its own size ({correct})"
+    )

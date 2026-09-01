@@ -33,6 +33,8 @@ import {
   figKey,
   figMasthead,
   figPlate,
+  figPlateTall,
+  REDUCED,
   figRace,
   figVerdict,
   figWrap,
@@ -41,6 +43,25 @@ import {
 import { KIND_LABEL, glyph, glyphSvg } from './glyphs.js';
 
 const int = (n) => Number(n).toLocaleString('en-US');
+
+/** A count, spelled, for prose that has to say it in words.
+ *
+ * Every reader-facing count on this page goes through here. They used to be typed: the page said
+ * "twenty-three" in six places, and adding one mechanism made all six wrong at once while the
+ * tables beside them stayed right — which is the failure `AGENTS.md` calls the most expensive one
+ * in this repo, because only the sentence is wrong and a reader believes the sentence.
+ */
+const SPELLED = [
+  'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+  'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen',
+  'nineteen', 'twenty', 'twenty-one', 'twenty-two', 'twenty-three', 'twenty-four', 'twenty-five',
+  'twenty-six', 'twenty-seven', 'twenty-eight', 'twenty-nine', 'thirty',
+];
+const spell = (n) => SPELLED[n] || String(n);
+const Spell = (n) => {
+  const w = spell(n);
+  return w[0].toUpperCase() + w.slice(1);
+};
 /** Whole days between two catalogue entries. Derived, because a number written into prose here
  * would be the one thing on this page that no test can see. */
 function daysBetween(M, aKey, bKey) {
@@ -127,8 +148,8 @@ function chapterThesis(M) {
   body.append(
     standfirst(
       'Attention is one idea that sent two bills, and almost everything since is somebody who ' +
-        'could not pay one of them. Here are twenty-three mechanisms in the order they were ' +
-        'actually launched, every date read from the paper it came from.'
+        `could not pay one of them. Here are ${spell(M.counts.total)} mechanisms in the order they ` +
+        'were actually launched, every date read from the paper it came from.'
     )
   );
 
@@ -159,8 +180,9 @@ function chapterGlossary(M) {
     'The words, and a number against each',
     [
       'Every term on this page is defined here, and every definition carries a figure from our own ' +
-        'arithmetic rather than a textbook gloss. Four shapes cover all twenty-three mechanisms — ' +
-        'and the first thing the key tells you is that most of them are not the attention matrix.',
+        `arithmetic rather than a textbook gloss. ${Spell(Object.keys(M.counts.glyphKinds).length)} ` +
+        `shapes cover all ${spell(M.counts.total)} mechanisms — and the first thing the key tells ` +
+        'you is that most of them are not the attention matrix.',
     ],
     { short: 'The key', sub: 'Four shapes, five bills, one yardstick' }
   );
@@ -212,15 +234,15 @@ function chapterProblem(M) {
 
 /* ------------------------------------------------------------------ 4 · mechanism */
 
-function chapterMechanism() {
+function chapterMechanism(M) {
   const s = section('mechanism', 'mechanism', 'Plate II', 'One step, taken apart', [], {
     short: 'The centrefold',
     sub: 'Q·K → scale → mask → softmax → ×V',
   });
   s.append(
     standfirst(
-      'Before any of the twenty-three, the thing they all edit. Six words, five stages, and real ' +
-        'arithmetic you can check against the cells.'
+      `Before any of the ${spell(M.counts.total)}, the thing they all edit. Six words, five ` +
+        'stages, and real arithmetic you can check against the cells.'
     )
   );
   s.append(
@@ -374,7 +396,7 @@ function well(parent, w, M, extras) {
 }
 
 function chapterResults(M, spreadRef) {
-  const s = section('results', 'results', 'Plate III', 'All twenty-three, at once', [], {
+  const s = section('results', 'results', 'Plate III', `All ${spell(M.counts.total)}, at once`, [], {
     short: 'The plate',
     sub: 'Every mechanism, on real time',
   });
@@ -387,11 +409,93 @@ function chapterResults(M, spreadRef) {
 
   const spread = readingSpread(M);
   spreadRef.node = spread;
-  const p = figPlate(M, glyph, (key) => {
+
+  /* Two plates, one selection. The landscape plate is a 1440-unit SVG that becomes an unreadable
+   * smear in a 342px column, so a portrait plate carries the same argument down the page below
+   * 720px and CSS shows exactly one of them. They are built together and selected together, so
+   * neither can fall out of step with the reading spread. */
+  const pick = (key) => {
     spread.show(key);
-    p.select(key);
-  });
+    wide.select(key);
+    tall.select(key);
+  };
+  const wide = figPlate(M, glyph, pick);
+  const tall = figPlateTall(M, glyph, pick);
+  wide.classList.add('plate-wide');
+  tall.classList.add('plate-tall');
+  const p = el('div', 'plate-pair');
+  p.append(wide, tall);
+  p.select = (key) => {
+    wide.select(key);
+    tall.select(key);
+  };
   p.select('standard_attention');
+
+  /* READ THE PLATE. The sweep is the only motion on this page that teaches something no static
+   * arrangement can: the field's trajectory is a RATE, and a rate needs time to be shown in. It
+   * lights each entry as it passes and advances the reading spread, so the plate fills in the
+   * order the field actually moved — visibly racing through 2023 and stalling through 2018.
+   *
+   * It stops on any interaction, because a reader who has started reading an entry must not have
+   * the page move underneath them. Under reduced motion the control is not offered at all: there
+   * is no terminal state for a sweep, and a figure that cannot degrade should not be forced to. */
+  const controls = el('div', 'ctl');
+  if (!REDUCED) {
+    const run = el('button', 'runbtn', 'Read the plate');
+    run.type = 'button';
+    const note = el('span', 'read', '');
+    let raf = null;
+    let stop = null;
+
+    const end = () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+      p.sweepOff();
+      note.textContent = '';
+      run.textContent = 'Read the plate';
+      if (stop) stop();
+      stop = null;
+    };
+
+    const start = () => {
+      if (raf) {
+        end();
+        return;
+      }
+      run.textContent = 'Stop';
+      const seconds = M.mechanisms.length * 0.7;
+      const t0 = performance.now();
+      let last = null;
+      const tick = (now) => {
+        const frac = Math.min(1, (now - t0) / (seconds * 1000));
+        const key = p.sweep(frac);
+        if (key && key !== last) {
+          last = key;
+          spread.show(key);
+          p.select(key);
+          const m = M.mechanisms.find((x) => x.key === key);
+          note.textContent = `${m.date} · ${m.name}`;
+        }
+        if (frac < 1) raf = requestAnimationFrame(tick);
+        else {
+          raf = null;
+          run.textContent = 'Read the plate';
+          note.textContent = 'the whole field, in one pass';
+        }
+      };
+      raf = requestAnimationFrame(tick);
+      const onInterrupt = () => end();
+      window.addEventListener('keydown', onInterrupt, { once: true });
+      p.addEventListener('pointerdown', onInterrupt, { once: true });
+      stop = () => {
+        window.removeEventListener('keydown', onInterrupt);
+        p.removeEventListener('pointerdown', onInterrupt);
+      };
+    };
+
+    run.addEventListener('click', start);
+    controls.append(run, note);
+  }
 
   const gap = M.quietStretch;
   s.append(
@@ -409,7 +513,7 @@ function chapterResults(M, spreadRef) {
         'states a size we used it, and where it does not the shape is illustrative and marked ~.'
     )
   );
-  s.append(spread);
+  s.append(controls, spread);
 
   // The six wells: the storyline. Every mechanism belongs to exactly one, checked in Python.
   const wells = M.wells;
@@ -508,7 +612,7 @@ function chapterNegatives(M) {
   const cap = el('figcaption');
   cap.innerHTML =
     'The formula wins, and it is the session’s own formula. A page that corrects its source in ' +
-    'the open is the one you should believe about the other twenty-two dates.';
+    `the open is the one you should believe about the other ${spell(M.counts.total - 1)} dates.`;
   f.append(cap);
   s.append(f);
   return s;
@@ -607,13 +711,14 @@ function chapterNext() {
 /* ------------------------------------------------------------------ 11 · reproduce */
 
 function chapterReproduce(M, spreadRef, plateRef) {
-  const s = section('reproduce', 'reproduce', 'The index plate', 'All twenty-three, on one page', [], {
+  const s = section('reproduce', 'reproduce', 'The index plate', `All ${spell(M.counts.total)}, on one page`, [], {
     short: 'The index',
     sub: 'Every entry and its source',
   });
   s.append(
     standfirst(
-      'Twenty-three rows, the same six fields in the same six places, so the comparison is one ' +
+      `${Spell(M.counts.total)} rows, the same six fields in the same six places, so the ` +
+        'comparison is one ' +
         'your eye makes rather than one this page asserts. Every date was read from the string ' +
         'printed beside it.'
     )
@@ -704,7 +809,7 @@ function chapterMethod(M) {
       'trade-off is generated from <code>results/mechanisms.json</code> and from the same Python ' +
       'functions the test suite exercises.',
     'Dates are the arXiv <b>v1</b> submission date, because later versions move by months and ' +
-      'sometimes years — Bahdanau’s v1 is Sep 2014 and its v7 is May 2016, a twenty-month spread. ' +
+      'sometimes years — Bahdanau’s v1 is Sep 2014 and its v7 is May 2016, a twenty-month spread. ' + // count-literal-ok: a duration, not a catalogue size
       'Each entry stores the source’s own date string beside our parsed date so a reader compares ' +
       'two fields rather than trusting one.',
     'The cache arithmetic is 2 × layers × kv_heads × head_dim × context × batch × bytes, at ' +
@@ -781,11 +886,8 @@ export function buildPage(M) {
   chapterMethod(M);
   chapterExpected(M);
   const results = chapterResults(M, spreadRef);
-  plateRef.node = results.querySelector('svg');
-  // The plate is the first svg in the results section; grab the one that carries select().
-  for (const svgEl of results.querySelectorAll('svg')) {
-    if (typeof svgEl.select === 'function') plateRef.node = svgEl;
-  }
+  // The pair wrapper carries select(); it drives both the landscape and the portrait plate.
+  plateRef.node = results.querySelector('.plate-pair');
   chapterNegatives(M);
   chapterConclusion(M);
   chapterLimits(M);

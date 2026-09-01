@@ -358,7 +358,7 @@ const V = [
 ];
 
 const STAGES = [
-  ['Q · K', 'Every token scores every other token. Six tokens, thirty-six numbers.'],
+  ['Q · K', 'Every token scores every other token. Six tokens, thirty-six numbers.'], // count-literal-ok: the 6x6 grid is fixed
   ['÷ √d', 'Scaled down, so the numbers stay in a range softmax can work with.'],
   ['+ mask', 'The future is set to minus infinity. A token may only look backwards.'],
   ['softmax', 'Scores become weights: all positive, each row summing to one. Now they compete.'],
@@ -630,7 +630,7 @@ export function figPlate(M, glyph, onPick) {
   const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img' });
   const title = svg('title', {});
   title.textContent =
-    'Twenty-three attention mechanisms placed on real time, on one stave per bill they pay.';
+    `${M.mechanisms.length} attention mechanisms placed on real time, one stave per bill they pay.`;
   s.append(title);
 
   const first = new Date(`${M.mechanisms[0].date}T00:00:00Z`).getTime();
@@ -747,6 +747,34 @@ export function figPlate(M, glyph, onPick) {
   place(lanes.position, STAVES.position);
   // `both` sits on its tie, midway between the two staves it bridges.
   place(lanes.both, BOTH_Y);
+
+  /* The playhead. One control reads the whole plate as a single motion, which is the one thing
+   * twenty-four static glyphs cannot do: where the field raced and where it stalled is a RATE, and
+   * a rate needs time to be shown in. Everything ahead of the head is dimmed and lights as it is
+   * passed, so the plate fills in the order the field actually moved. */
+  const headW = svg('line', { x1: X0, y1: 36, x2: X0, y2: RY, class: 's-accent' });
+  headW.setAttribute('stroke-width', '2');
+  headW.setAttribute('opacity', '0');
+  s.append(headW);
+  const orderedW = M.mechanisms.map((m) => ({ key: m.key, at: xOf(m.date) }));
+  s.sweep = (frac) => {
+    const x = X0 + SPAN * frac;
+    headW.setAttribute('opacity', '1');
+    headW.setAttribute('x1', String(x));
+    headW.setAttribute('x2', String(x));
+    let passed = -1;
+    orderedW.forEach((e, i) => {
+      const isPast = e.at <= x;
+      nodes.get(e.key).classList.toggle('dim', !isPast);
+      if (isPast) passed = i;
+    });
+    return passed >= 0 ? orderedW[passed].key : null;
+  };
+  s.sweepOff = () => {
+    headW.setAttribute('opacity', '0');
+    for (const g of nodes.values()) g.classList.remove('dim');
+  };
+
 
   s.select = (key) => {
     for (const [k, g] of nodes) g.classList.toggle('on', k === key);
@@ -1126,5 +1154,154 @@ export function figCorrection(M) {
       `${int(d.users)} readers at a ${int(d.context)}-token context, on the same yardstick`
     )
   );
+  return s;
+}
+
+/* ================================================== PLATE III, portrait · the phone treatment
+ *
+ * The landscape plate is a 1440-unit SVG. Scaled into a 342px column it is an unreadable smear:
+ * every label is sub-pixel and the page's centrepiece carries zero information on a phone. So the
+ * plate turns ninety degrees and time runs DOWN.
+ *
+ * What it keeps is the argument — the lanes (which bill), the gaps (drawn to scale, so the quiet
+ * stretch is still visibly empty), and the ties bridging compute and cache. What it drops is the
+ * names, because at 342px there is no honest way to fit twenty-four of them; a tap loads the entry
+ * into the reading spread, and the index plate below prints all of them with no interaction at all.
+ * Dropping a label is a decision; shrinking it to four pixels is a pretence.
+ */
+export function figPlateTall(M, glyph, onPick) {
+  const W = 360;
+  const H = 1180;
+  const TOP = 66;
+  const BOT = H - 54;
+  const LANE = { origin: 96, compute: 162, cache: 244, position: 312 };
+  const BOTH_X = (LANE.compute + LANE.cache) / 2;
+  const RULER = 52;
+
+  const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img' });
+  const title = svg('title', {});
+  title.textContent =
+    'The same chronology with time running down the page: one lane per bill, drawn to scale.';
+  s.append(title);
+
+  const first = new Date(`${M.mechanisms[0].date}T00:00:00Z`).getTime();
+  const last = new Date(`${M.mechanisms[M.mechanisms.length - 1].date}T00:00:00Z`).getTime();
+  const yOf = (iso) =>
+    TOP + (BOT - TOP) * ((new Date(`${iso}T00:00:00Z`).getTime() - first) / (last - first));
+
+  const byKey = new Map(M.mechanisms.map((m) => [m.key, m]));
+
+  // The quiet stretch, still to scale: on a phone this is the most legible thing on the plate.
+  const q = M.quietStretch;
+  const qa = yOf(byKey.get(q.before).date);
+  const qb = yOf(byKey.get(q.after).date);
+  s.append(svg('rect', { x: RULER, y: qa, width: W - RULER - 6, height: qb - qa, class: 'quiet-band' }));
+  const qlab = svgText(RULER + (W - RULER) / 2, (qa + qb) / 2, 'quiet-lab', `${int(q.days)} DAYS QUIET`);
+  s.append(qlab);
+
+  // The year ruler down the left edge.
+  s.append(svg('line', { x1: RULER, y1: TOP - 10, x2: RULER, y2: BOT + 10, class: 's-strong' }));
+  for (const y of M.perYear) {
+    const ty = yOf(`${y.year}-01-01`);
+    if (ty < TOP - 12 || ty > BOT + 12) continue;
+    s.append(svgText(RULER - 8, ty + 3, 'ax end', String(y.year)));
+    s.append(svg('line', { x1: RULER - 4, y1: ty, x2: RULER, y2: ty, class: 's-line' }));
+  }
+
+  // Lane headers.
+  for (const [name, x] of Object.entries(LANE)) {
+    s.append(svgText(x, 30, 'kick mid', name.slice(0, 3).toUpperCase()));
+    s.append(svg('line', { x1: x, y1: 40, x2: x, y2: BOT + 8, class: 's-line' }));
+  }
+
+  // The ties, now horizontal: a mechanism paying both bills bridges the two lanes it joins.
+  for (const m of M.mechanisms) {
+    if (m.bill !== 'both') continue;
+    const y = yOf(m.date);
+    s.append(
+      svg('path', {
+        d: `M${LANE.compute} ${y - 6} v6 H${LANE.cache} v-6`,
+        class: 's-ink',
+        'stroke-width': 1.6,
+      })
+    );
+  }
+
+  const lanes = { origin: [], compute: [], cache: [], position: [], both: [] };
+  for (const m of M.mechanisms) lanes[m.bill].push(m);
+
+  const nodes = new Map();
+  const place = (list, x) => {
+    let lastY = -Infinity;
+    for (const m of list) {
+      const trueY = yOf(m.date);
+      const y = Math.max(trueY, lastY + 26); // ladder down; the leader keeps the axis honest
+      lastY = y;
+
+      const g = svg('g', { class: 'plate-entry', tabindex: '0', role: 'button' });
+      g.dataset.key = m.key;
+      const t = svg('title', {});
+      t.textContent = `${m.name} — ${m.date}`;
+      g.append(t);
+
+      if (Math.abs(y - trueY) > 1) {
+        g.append(svg('path', { d: `M${RULER} ${trueY} L${x - 11} ${y}`, class: 's-line' }));
+      }
+      const gl = glyph(m, 22);
+      gl.setAttribute('class', `${gl.getAttribute('class')} pe-glyph`);
+      gl.setAttribute('transform', `translate(${x - 11} ${y - 11})`);
+      g.append(gl);
+
+      const pick = () => onPick && onPick(m.key);
+      g.addEventListener('click', pick);
+      g.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          pick();
+        }
+      });
+      s.append(g);
+      nodes.set(m.key, g);
+    }
+  };
+
+  place(lanes.origin, LANE.origin);
+  place(lanes.compute, LANE.compute);
+  place(lanes.both, BOTH_X);
+  place(lanes.cache, LANE.cache);
+  place(lanes.position, LANE.position);
+
+  /* The playhead. One control reads the whole plate as a single motion, which is the one thing
+   * twenty-four static glyphs cannot do: where the field raced and where it stalled is a RATE, and
+   * a rate needs time to be shown in. Everything ahead of the head is dimmed and lights as it is
+   * passed, so the plate fills in the order the field actually moved. */
+  const headT = svg('line', { x1: RULER, y1: TOP, x2: W - 6, y2: TOP, class: 's-accent' });
+  headT.setAttribute('stroke-width', '2');
+  headT.setAttribute('opacity', '0');
+  s.append(headT);
+  const orderedT = M.mechanisms.map((m) => ({ key: m.key, at: yOf(m.date) }));
+  s.sweep = (frac) => {
+    const y = TOP + (BOT - TOP) * frac;
+    headT.setAttribute('opacity', '1');
+    headT.setAttribute('y1', String(y));
+    headT.setAttribute('y2', String(y));
+    let passed = -1;
+    orderedT.forEach((e, i) => {
+      const isPast = e.at <= y;
+      nodes.get(e.key).classList.toggle('dim', !isPast);
+      if (isPast) passed = i;
+    });
+    return passed >= 0 ? orderedT[passed].key : null;
+  };
+  s.sweepOff = () => {
+    headT.setAttribute('opacity', '0');
+    for (const g of nodes.values()) g.classList.remove('dim');
+  };
+
+
+  s.select = (key) => {
+    for (const [k, g] of nodes) g.classList.toggle('on', k === key);
+  };
+  s.entries = nodes;
   return s;
 }

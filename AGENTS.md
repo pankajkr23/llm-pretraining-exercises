@@ -578,6 +578,15 @@ Every deployable exercise's static `web/` bundle shares **one design system** �
   animated and one was invisible outright, with a clean console and a green suite. Defer by one
   frame and check `isConnected`, or register the observer from the code that does the appending.
 
+- **`web/_shared/tokens.css` is NOT the token file, in any exercise, and the name has already cost
+  time.** Every deployable exercise (03–08) vendors a byte-identical copy of exercise 03's
+  *component* stylesheet under that name — its own first line says so. The real six-theme token file
+  is `deploy/vercel/_shared/tokens.css`, served at `/_shared/tokens.css`, and each `index.html`
+  links **both**. A scratch harness that linked only the vendored one rendered every glyph mark
+  invisible, because `var(--bg)` was undefined and a `stroke: var(--bg)` simply does not paint. When
+  you build a test page for an exercise, link `/_shared/tokens.css` the way `index.html` does. (The
+  file is misnamed in six places; renaming it is its own change, not a drive-by.)
+
 - **A `ch` or `em` measure resolves against the element that declares it, not the text inside it.**
   A pull quote wrapper at `max-width: 24ch` with `font-size: 16px` is 192px wide however large the
   38px quote inside it is set — one word per line. Put the measure on the element that carries the

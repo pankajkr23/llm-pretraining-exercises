@@ -127,3 +127,46 @@ def test_the_readme_links_the_catalogue_it_describes() -> None:
     assert re.search(r"\]\(results/mechanisms\.json\)", TEXT), (
         "the README describes the catalogue without linking it"
     )
+
+
+def test_no_count_is_typed_into_the_page_as_a_word() -> None:
+    """The page may not carry a spelled count as a source literal. It must derive every one.
+
+    This is the repo's most expensive documented failure, and it happened here twice. The page said
+    "twenty-three" in six places — masthead, key, centrefold, both plate headings, index standfirst
+    — and adding one mechanism made all six wrong at once while every table beside them stayed
+    right. Only the sentences were wrong, which is the kind a reader believes.
+
+    Lexical on purpose. A runtime check cannot tell a derived "twenty-four" from a typed one, and
+    the typed one is the defect. `spell(M.counts.total)` passes this; `'twenty-four'` does not.
+    """
+    import re as _re
+
+    numbers = (
+        "eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen"
+        "|twenty(?:-(?:one|two|three|four|five|six|seven|eight|nine))?|thirty"
+    )
+    offenders = []
+    for path in sorted((EXERCISE / "web").glob("*.js")):
+        if path.name == "data.js":  # generated
+            continue
+        in_speller = False
+        for n, line in enumerate(path.read_text(encoding="utf-8").split("\n"), 1):
+            # The speller's own table is the one place these words belong as literals.
+            if "const SPELLED" in line:
+                in_speller = True
+            if in_speller:
+                if line.rstrip().endswith("];"):
+                    in_speller = False
+                continue
+            # An explicit marker for a spelled number that is NOT a catalogue size -- a duration,
+            # or the fixed 6x6 grid. Marking them keeps the guard strict instead of loosening the
+            # pattern until it stops catching the defect it exists for.
+            if "count-literal-ok" in line:
+                continue
+            code = line.split("//")[0]
+            if code.lstrip().startswith("*") or code.lstrip().startswith("/*"):
+                continue  # a comment may discuss history freely
+            if _re.search(rf"['\"`][^'\"`]*\b({numbers})\b", code, _re.I):
+                offenders.append(f"{path.name}:{n}: {line.strip()[:88]}")
+    assert not offenders, "spelled counts typed into page prose:\n  " + "\n  ".join(offenders)

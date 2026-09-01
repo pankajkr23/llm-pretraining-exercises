@@ -105,11 +105,20 @@ It was rebuilt after a review found the previous version was text and tables: no
 graphics, misaligned, "a ten year old boy's project". The rebuild is six numbered plates and six
 chapters. If you touch it, these are the rules that produced it.
 
-- **Twenty-three text cards is not a design, it is a list with a scrollbar.** The twenty-three are
-  **one object entered twenty-three times, shown three ways** — the plate (where each sits in time),
-  the reading spread (what one traded, in depth), the index plate (all 23, same six fields, same six
-  places). Two of the three need no interaction at all, because a grader must not click 23 times and
-  a printed page must still carry the evidence.
+- **A text card per mechanism is not a design, it is a list with a scrollbar.** The catalogue is
+  **one object entered once per mechanism, shown three ways** — the plate (where each sits in time),
+  the reading spread (what one traded, in depth), the index plate (all of them, same six fields in
+  the same six places). Two of the three need no interaction at all, because a grader must not click
+  two dozen times and a printed page must still carry the evidence.
+- **Never type a count into page prose.** Every reader-facing count goes through `spell()` in
+  `chapters.js`, which reads `M.counts.total`. The page said "twenty-three" in six places, and
+  adding one mechanism made all six wrong at once while every table beside them stayed right —
+  the failure `AGENTS.md` calls the most expensive in this repo, because only the sentences are
+  wrong and a reader believes the sentences.
+  `tests/test_attention_docs.py::test_no_count_is_typed_into_the_page_as_a_word` is lexical, because
+  a runtime check cannot tell a derived "twenty-four" from a typed one. A spelled number that is
+  genuinely fixed — a duration, the 6×6 grid — carries a `// count-literal-ok` marker rather than
+  the guard being loosened until it stops catching anything.
 - **A glyph is derived, never drawn.** Four generators in `web/glyphs.js` read the `pattern` block
   each catalogue entry carries. Adding a mechanism means adding a pattern, not drawing a picture.
   Two glyphs are load-bearing: **FlashAttention's field is byte-identical to standard attention's**
@@ -128,7 +137,7 @@ Every one was found by **looking at a rendered screenshot**, and each now has a 
 suite about a change under `web/`.
 
 - **The verdict grid was handed `glyph()`** — which returns an SVG `<g>`. Appended into an HTML
-  `<div>` a bare `<g>` renders nothing, so the grid drew frames and TIE stamps over twenty-three
+  `<div>` a bare `<g>` renders nothing, so the grid drew frames and TIE stamps over a full set of
   invisible chips. Use `glyphSvg()` anywhere outside an existing `<svg>`.
 - **`onFirstView` observed detached nodes.** Every figure asks for it before `chapters.js` appends
   it, and an `IntersectionObserver` on a detached node never fires, silently. Three plates never
@@ -141,11 +150,32 @@ suite about a change under `web/`.
 - **Plate labels laddered to a fixed 48px** while a label is up to 200px wide, printing five staves
   on top of each other. Laddering measures the label now, across three tiers.
 - **Every glyph escaped its viewBox.** The schema tilde sits at `x = size + 2`, and a square viewBox
-  clipped 21 of 23 on two sides. An earlier mark at a negative `y` rendered on top of the caption of
+  clipped almost all of them on two sides. An earlier mark at a negative `y` rendered on the caption of
   the glyph in the row *above* — SVG does not clip by default, so an escaping mark is present,
   legible, and attributed to the wrong mechanism.
 - **The masthead field is `preserveAspectRatio="slice"`**, so it is wider than its box by design and
   scrolled a 320px screen sideways by 86px until it was given `overflow: hidden`.
+
+## The plate is two plates, and the phone gets the other one
+
+`figPlate` is a 1440-unit landscape SVG. Scaled into a 342px column every label is sub-pixel and the
+page's centrepiece carries no information at all, so `figPlateTall` runs the same argument down the
+page below 720px — same lanes, same to-scale gaps, same ties — and **drops the names**, because at
+that width there is no honest way to fit them. Dropping a label is a decision; shrinking it to four
+pixels is a pretence. A tap loads the entry into the reading spread, and the index plate below
+prints every name with no interaction at all.
+
+Both are built, both are selected together, and CSS shows exactly one. **The selector must be
+`svg.plate-tall`, not `.plate-tall`**: `.plate svg { display: block }` is (0,1,1) and out-specifies
+a bare class at (0,1,0), so the first version rendered both and the phone got the smear stacked on
+top of the fix. `test_exactly_one_plate_is_visible_at_each_width` exists for that.
+
+**The sweep is the only motion here that teaches something no static arrangement can.** The field's
+trajectory is a *rate*, and a rate needs time to be shown in — it visibly races through 2023 and
+stalls through 2018. It stops on any key or pointer event, because a reader who has started reading
+an entry must not have the page move under them. Under reduced motion the control is **not built at
+all**: a sweep has no terminal state, and offering a control that would do nothing is worse than
+withholding it. The evidence is never withheld, only the motion.
 
 ## Two claims that live in Python because a test must reach them
 

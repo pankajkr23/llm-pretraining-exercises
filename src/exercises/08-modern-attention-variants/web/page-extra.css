@@ -1298,3 +1298,22 @@ text.quiet-lab {
   font-family: var(--mono);
   font-size: 9px;
 }
+
+/* Two plates, one at a time. The landscape plate is a 1440-unit SVG; scaled into a phone column
+ * every label is sub-pixel and the page's centrepiece carries no information at all. The portrait
+ * plate runs time down the page instead, keeps the lanes, the to-scale gaps and the ties, and
+ * drops the names — which is a decision, where shrinking them to four pixels is a pretence. */
+/* `svg.` on purpose: `.plate svg { display: block }` above is (0,1,1) and would out-specify a bare
+ * `.plate-tall` at (0,1,0), so both plates rendered at once and the phone got the smear it was
+ * meant to be spared, stacked on top of the fix. */
+svg.plate-tall {
+  display: none;
+}
+@media (max-width: 720px) {
+  svg.plate-wide {
+    display: none;
+  }
+  svg.plate-tall {
+    display: block;
+  }
+}
