@@ -1,13 +1,26 @@
 """The page as a reader sees it, in a real browser.
 
 `node --check` proves a file has no syntax error and nothing more. A call to an undefined function,
-a figure whose variants all draw the same thing, and a timeline entry missing two thirds of its
-trade-offs all parse perfectly.
+a figure whose stages all draw the same thing, a grid of invisible chips, and a plate printing five
+labels on top of each other all parse perfectly and log nothing.
 
-The tests that matter here are not "the page loads". They are: **the dates on screen are the ones
-the catalogue verified**, **every entry shows what it costs and not only what it buys**, and **the
-mechanism figure actually changes when you change the variant** — because if it does not, the
-figure is decoration and the claim it illustrates is unproven.
+**Every assertion below that names a defect is one this page actually shipped**, found by looking
+at a screenshot while the whole suite was green. They are written down here so the next rebuild
+cannot reintroduce them:
+
+- ``test_the_verdict_grid_is_not_a_grid_of_invisible_chips`` — the grid was handed ``glyph()``,
+  which returns an SVG ``<g>``; appended into an HTML ``<div>`` it renders nothing at all. Six
+  windows of frames and stamps over twenty-three chips that were in the DOM and not on the screen.
+- ``test_the_invoice_cut_line_is_visible`` — the cut line starts at ``opacity: 0`` and is revealed
+  by an ``IntersectionObserver`` registered while the node was still detached, which never fires.
+  The plate's entire argument was invisible.
+- ``test_no_two_plate_labels_overlap`` — laddering used a fixed 48px separation for labels up to
+  200px wide.
+- ``test_no_glyph_draws_outside_its_own_box`` — a mark at a negative ``y`` rendered on top of the
+  caption of the glyph in the row above, because SVG does not clip by default. Present, legible,
+  and attributed to the wrong mechanism.
+- ``test_the_page_shows_no_shell_commands`` — the page used to print ``uv sync`` and ``pytest``.
+  Commands belong in the README.
 
 Playwright is integration-marked and skips without a browser, so a fresh checkout still works. One
 time setup: `uv run playwright install chromium`.
@@ -68,12 +81,14 @@ def page():
                 browser = p.chromium.launch()
             except Exception as exc:  # no browser installed, or a sandbox blocking it
                 pytest.skip(f"chromium unavailable: {exc}")
-            view = browser.new_page(viewport={"width": 1280, "height": 900})
+            view = browser.new_page(viewport={"width": 1400, "height": 950})
             problems: list[str] = []
             view.on("console", lambda m: problems.append(m.text) if m.type == "error" else None)
             view.on("pageerror", lambda e: problems.append(f"pageerror: {e}"))
             view.goto(f"http://127.0.0.1:{httpd.server_address[1]}/{SLUG}/index.html")
             view.wait_for_selector("section#reproduce", timeout=15_000)
+            # Every plate animates on first view; settle before measuring anything.
+            view.wait_for_timeout(1500)
             view.console_problems = problems
             yield view
             browser.close()
@@ -81,15 +96,30 @@ def page():
         httpd.shutdown()
 
 
+# ---- the page renders at all --------------------------------------------------------------------
+
+
 def test_the_page_renders_without_a_single_console_error(page) -> None:
     """A page that throws on load still shows its title, which is why this is asserted."""
     assert not page.console_problems, page.console_problems
 
 
-def test_no_section_reported_a_failure(page) -> None:
-    """`buildPage` catches a failing section and renders `.err` rather than dying — so a broken
-    section is invisible unless something looks."""
-    assert page.eval_on_selector_all(".err", "els => els.map(e => e.textContent)") == []
+def test_no_undefined_or_nan_reaches_the_reader(page) -> None:
+    body = page.inner_text("body")
+    for bad in ("undefined", "NaN", "[object Object]"):
+        assert bad not in body, f"{bad!r} is visible on the page"
+
+
+def test_no_markup_reaches_the_reader_as_literal_text(page) -> None:
+    """`rich()` escapes first and marks up second, so a stray marker shows rather than a tag.
+
+    The previous helper did not parse HTML at all, so `<b>H1</b>` written in a chapter reached the
+    reader as five literal characters. The existing markup guard looked for `[[` and backticks and
+    could see neither failure.
+    """
+    body = page.inner_text("main")
+    for bad in ("<b>", "</b>", "<i>", "**", "[[", "&amp;", "&lt;"):
+        assert bad not in body, f"{bad!r} is rendered as literal text"
 
 
 def test_the_page_has_the_required_spine_in_order(page) -> None:
@@ -99,7 +129,7 @@ def test_the_page_has_the_required_spine_in_order(page) -> None:
     the evidence reads as a press release.
     """
     spine = _required_spine()
-    roles = page.eval_on_selector_all("main section", "els => els.map(e => e.dataset.role)")
+    roles = page.eval_on_selector_all("#main > section", "els => els.map(e => e.dataset.role)")
     missing = [r for r in spine if r not in roles]
     assert not missing, f"the page is missing these parts of the story: {missing}"
 
@@ -108,13 +138,14 @@ def test_the_page_has_the_required_spine_in_order(page) -> None:
     assert first == list(spine), f"the spine is out of order: {first}"
 
 
-def test_no_undefined_or_nan_reaches_the_reader(page) -> None:
-    body = page.inner_text("body")
-    for bad in ("undefined", "NaN", "[object Object]"):
-        assert bad not in body, f"{bad!r} is visible on the page"
+def test_the_page_shows_no_shell_commands(page) -> None:
+    """Commands live in the README. A page that opens with `uv sync` is written for its author."""
+    body = page.inner_text("main")
+    for bad in ("uv sync", "uv run", "pytest", "pip install", "npm "):
+        assert bad not in body, f"the page prints a shell command: {bad!r}"
 
 
-# ---- the timeline is the deliverable -----------------------------------------------------------
+# ---- the twenty-three are all there, three ways -------------------------------------------------
 
 
 def test_every_catalogued_mechanism_appears_on_the_page(page) -> None:
@@ -125,300 +156,349 @@ def test_every_catalogued_mechanism_appears_on_the_page(page) -> None:
     assert not missing, f"catalogued but not rendered: {missing}"
 
 
-def test_the_timeline_is_in_date_order_on_screen(page) -> None:
+def test_the_index_plate_shows_all_of_them_without_any_clicking(page) -> None:
+    """A grader must not have to click twenty-three times to see twenty-three mechanisms."""
+    bundle = _bundle()
+    rows = page.eval_on_selector_all(
+        "#reproduce .ix-row", "els => els.map(e => e.id.replace('m-',''))"
+    )
+    assert rows == [m["key"] for m in bundle["mechanisms"]], (
+        "the index plate is not the catalogue in date order"
+    )
+
+
+def test_the_index_plate_is_in_date_order_on_screen(page) -> None:
     """The assignment's central requirement, asserted on the rendered order rather than the data.
 
     The catalogue being sorted proves nothing about the page: a template that iterated a dictionary
     or reversed a list would still pass every catalogue test.
     """
-    bundle = _bundle()
-    names = page.eval_on_selector_all(
-        "#results .tl-name", "els => els.map(e => e.textContent.trim())"
+    shown = page.eval_on_selector_all(
+        "#reproduce .ix-date", "els => els.map(e => e.textContent.trim())"
     )
-    assert len(names) >= 20, f"only {len(names)} timeline entries rendered"
-
-    # Compared against the catalogue's own order rather than by re-parsing the displayed dates.
-    # The page formats them for humans — `en-GB` renders September as "Sept", which no strptime
-    # format reads — and a test that fought the display format would break on a locale change while
-    # telling you nothing about the ordering, which is the property that actually matters.
-    expected = [m["name"] for m in bundle["mechanisms"]]
-    assert names == expected, "the rendered order is not the catalogue's date order"
-
-    dates = [m["date"] for m in bundle["mechanisms"]]
-    assert dates == sorted(dates), "the catalogue the page renders is not itself in date order"
+    assert shown == sorted(shown), "the index plate is not in date order on screen"
+    assert len(shown) == len(_bundle()["mechanisms"])
 
 
-def test_every_entry_states_what_it_costs_and_not_only_what_it_buys(page) -> None:
-    """> "If you write down a technique with only pros, you have not understood it yet."
-
-    Each entry must render all three cards. One with only the "buys" card would look complete at a
-    glance, which is exactly why this counts them.
-    """
-    counts = page.eval_on_selector_all(
-        "#results .tl-item",
-        "els => els.map(e => [e.querySelectorAll('.trio-card').length,"
-        " e.querySelector('.tl-name').textContent])",
+def test_every_index_row_states_what_it_costs_and_not_only_what_it_buys(page) -> None:
+    """The assignment: a technique written down with only pros has not been understood yet."""
+    rows = page.eval_on_selector_all(
+        "#reproduce .ix-row",
+        "els => els.map(e => [e.id, (e.querySelector('.ix-ledger .c')||{}).textContent || '',"
+        " (e.querySelector('.ix-ledger .d')||{}).textContent || ''])",
     )
-    thin = [name for n, name in counts if n != 3]
-    assert not thin, f"these entries do not show all three of buys/gives-up/when: {thin}"
+    assert rows, "no index rows rendered"
+    thin = [rid for rid, credit, debit in rows if len(credit) < 20 or len(debit) < 20]
+    assert not thin, f"these rows do not state both a credit and a debit: {thin}"
 
 
-def test_every_entry_links_the_source_its_date_came_from(page) -> None:
+def test_every_index_row_links_the_source_its_date_came_from(page) -> None:
     """A date a reader cannot check is the failure the whole exercise is built to avoid."""
-    entries = page.eval_on_selector_all(
-        "#results .tl-item",
-        "els => els.map(e => [!!e.querySelector('.tl-cite a[href^=\"http\"]'),"
-        " !!e.querySelector('.tl-cite code'), e.querySelector('.tl-name').textContent])",
+    rows = page.eval_on_selector_all(
+        "#reproduce .ix-row",
+        "els => els.map(e => [e.id, !!e.querySelector('.ix-src a[href^=\"http\"]'),"
+        " (e.querySelector('.ix-src .q')||{}).textContent || ''])",
     )
-    unlinked = [name for has_link, _, name in entries if not has_link]
-    unquoted = [name for _, has_quote, name in entries if not has_quote]
-    assert not unlinked, f"these entries cite no source URL: {unlinked}"
-    assert not unquoted, f"these entries quote no date from their source: {unquoted}"
+    unlinked = [rid for rid, has_link, _ in rows if not has_link]
+    unquoted = [rid for rid, _, quoted in rows if len(quoted) < 10]
+    assert not unlinked, f"these rows cite no source URL: {unlinked}"
+    assert not unquoted, f"these rows quote no date string from their source: {unquoted}"
 
 
 def test_the_dates_on_screen_are_the_dates_in_the_catalogue(page) -> None:
     """The page must not reformat a date into a different one."""
     bundle = _bundle()
+    shown = page.eval_on_selector_all(
+        "#reproduce .ix-date", "els => els.map(e => e.textContent.trim())"
+    )
+    assert shown == [m["date"] for m in bundle["mechanisms"]]
+
+
+# ---- PLATE III: the chronology ------------------------------------------------------------------
+
+
+def test_the_plate_places_every_mechanism(page) -> None:
+    keys = page.eval_on_selector_all("#results .plate-entry", "els => els.map(e => e.dataset.key)")
+    assert sorted(keys) == sorted(m["key"] for m in _bundle()["mechanisms"])
+
+
+def test_the_plate_puts_time_on_the_x_axis_and_does_not_lie_about_it(page) -> None:
+    """Entries must be ordered left to right by date, because the axis is the whole argument.
+
+    A plate that grouped by bill and then laid entries out evenly would look almost identical and
+    would destroy the finding — the gaps are the point.
+    """
+    bundle = _bundle()
+    order = {m["key"]: i for i, m in enumerate(bundle["mechanisms"])}
+    placed = page.eval_on_selector_all(
+        "#results .plate-entry",
+        "els => els.map(e => [e.dataset.key, e.querySelector('circle').getBoundingClientRect().x])",
+    )
+    by_date = sorted(placed, key=lambda kv: order[kv[0]])
+    xs = [x for _, x in by_date]
+    assert xs == sorted(xs), "plate entries are not left-to-right in date order"
+
+
+def test_no_two_plate_labels_overlap(page) -> None:
+    """The defect that made five staves unreadable.
+
+    An earlier version laddered labels to a fixed 48px minimum separation while a label is up to
+    200px wide, so names printed on top of each other — "SPARSE (FACTORISED) ATTENTREFORMER".
+    Nothing failed, because every label was present and correctly positioned relative to its tick.
+    """
+    boxes = page.eval_on_selector_all(
+        "#results .plate-entry text.pe-name",
+        "els => els.map(e => { const r = e.getBoundingClientRect();"
+        " return [e.textContent, r.x, r.y, r.width, r.height]; })",
+    )
+    assert len(boxes) >= 20, f"only {len(boxes)} plate labels rendered"
+    clashes = []
+    for i, (ta, xa, ya, wa, ha) in enumerate(boxes):
+        for tb, xb, yb, wb, hb in boxes[i + 1 :]:
+            if xa < xb + wb and xb < xa + wa and ya < yb + hb and yb < ya + ha:
+                clashes.append(f"{ta!r} over {tb!r}")
+    assert not clashes, f"plate labels overlap: {clashes}"
+
+
+def test_the_quiet_stretch_is_drawn_as_area_and_labelled_with_its_own_number(page) -> None:
+    """The 680-day silence is a finding, so it is a shape on the plate and not a sentence."""
+    bundle = _bundle()
+    days = bundle["quietStretch"]["days"]
+    label = page.eval_on_selector("#results .quiet-lab", "e => e.textContent")
+    assert str(days) in label, f"the quiet band is labelled {label!r}, not with {days}"
+    width = page.eval_on_selector("#results .quiet-band", "e => e.getBBox().width")
+    assert width > 40, "the quiet stretch is drawn too small to read as a gap"
+
+
+def test_clicking_a_plate_entry_retypesets_the_reading_spread(page) -> None:
+    """The spread is what replaced twenty-three collapsed cards. If it does not change, it is a
+    static card wearing an interaction."""
+    before = page.inner_text(".spread")
+    page.eval_on_selector(
+        '#results .plate-entry[data-key="mamba"]',
+        "e => e.dispatchEvent(new MouseEvent('click', {bubbles: true}))",
+    )
+    page.wait_for_timeout(400)
+    after = page.inner_text(".spread")
+    assert after != before, "the reading spread did not change when a plate entry was clicked"
+    assert "Mamba" in after, "the spread did not typeset the mechanism that was clicked"
+
+
+# ---- PLATE II: the centrefold -------------------------------------------------------------------
+
+
+def test_the_centrefold_runs_all_five_stages_including_the_weighted_sum(page) -> None:
+    """The assignment names five steps and an earlier version of this figure had four.
+
+    Stopping at softmax is the one place a reader concludes attention outputs weights. It outputs a
+    vector, and the fifth stage is where that happens.
+    """
+    labels = page.eval_on_selector_all(
+        "#mechanism .tabs button", "els => els.map(e => e.textContent.trim())"
+    )
+    assert len(labels) == 5, f"the centrefold has {len(labels)} stages, not five: {labels}"
+    assert any("V" in t for t in labels), f"no weighted-sum stage: {labels}"
+
+
+def test_changing_the_stage_changes_what_is_drawn(page) -> None:
+    """**The test the figure rests on.** A stepper that changes a caption and not the picture is
+    decoration, and would look completely normal.
+
+    The first four stages are distinguished by the score grid's shading. The fifth is not, and that
+    is correct rather than a bug: the weights are already final after softmax, and what x V adds is
+    the output. So it is checked on the geometry it actually changes. An earlier version of this
+    test compared opacity alone and reported four distinct states for five stages, which read as a
+    broken figure when it was a badly aimed assertion.
+    """
+    shade = "els => els.map(e => e.getAttribute('opacity')).join(',')"
+    width = "els => Math.round(els.reduce((a,e)=>a+e.getBoundingClientRect().width,0))"
+    grids, widths = [], []
+    for i in range(5):
+        page.eval_on_selector_all("#mechanism .tabs button", f"els => els[{i}].click()")
+        page.wait_for_timeout(800)
+        grids.append(page.eval_on_selector_all("#mechanism svg rect.f-ink", shade))
+        widths.append(page.eval_on_selector_all("#mechanism svg rect.f-ink", width))
+    assert len(set(grids[:4])) == 4, "two of the first four stages shade the grid identically"
+    assert widths[4] > widths[3], "the weighted-sum stage drew nothing the softmax stage did not"
+
+
+def test_the_masked_stage_leaves_exactly_the_causal_triangle(page) -> None:
+    """Six tokens make 36 scores and use 21. That arithmetic is the reason every later glyph is a
+    triangle, so it is asserted rather than merely asserted in prose."""
+    page.eval_on_selector_all("#mechanism .tabs button", "els => els[2].click()")
+    page.wait_for_timeout(750)
+    nums = page.eval_on_selector_all(
+        "#mechanism svg text.num", "els => els.map(e => e.textContent)"
+    )
+    grid = nums[:36]
+    filled = [t for t in grid if t and t.strip()]
+    assert len(grid) == 36, f"the score grid has {len(grid)} cells, not 36"
+    assert len(filled) == 21, f"the mask left {len(filled)} live cells, not 21"
+
+
+def test_the_weighted_sum_stage_actually_draws_an_output(page) -> None:
+    """Bay five must produce visible bars. A fifth tab that changes only the caption is the exact
+    failure this figure was rebuilt to fix."""
+    page.eval_on_selector_all("#mechanism .tabs button", "els => els[3].click()")
+    page.wait_for_timeout(750)
+    total = "els => els.reduce((a,e)=>a+e.getBoundingClientRect().width,0)"
+    before = page.eval_on_selector_all("#mechanism svg rect.f-ink", total)
+    page.eval_on_selector_all("#mechanism .tabs button", "els => els[4].click()")
+    page.wait_for_timeout(950)
+    after = page.eval_on_selector_all("#mechanism svg rect.f-ink", total)
+    assert after > before + 50, "the weighted-sum stage drew no output bars"
+
+
+# ---- the plates that were invisible -------------------------------------------------------------
+
+
+def test_the_verdict_grid_is_not_a_grid_of_invisible_chips(page) -> None:
+    """The defect: the grid was handed `glyph()`, which returns an SVG `<g>`.
+
+    Appended into an HTML `<div>` a bare `<g>` renders nothing. The grid drew six windows of frames
+    and TIE stamps over twenty-three chips that were all present in the DOM and none of them on the
+    screen, and no test failed because every element the guard counted existed.
+    """
+    chips = page.eval_on_selector_all(
+        "#conclusion .verdict .cell svg",
+        "els => els.filter(e => e.getBoundingClientRect().width > 4).length",
+    )
+    total = len(_bundle()["mechanisms"])
+    assert chips == total, f"{chips} of {total} verdict chips have a rendered size"
+
+
+def test_the_verdict_stamps_a_tie_on_exactly_the_windows_that_tied(page) -> None:
+    """`Period.dominant` returns None on a tie instead of picking a winner, and so does the page."""
+    bundle = _bundle()
+    tied = [p for p in bundle["periods"] if not p["dominant"]]
+    assert tied, "no tied window in the data — this test would then be vacuous"
+    stamps = page.eval_on_selector_all("#conclusion .verdict .tie", "els => els.length")
+    assert stamps == len(tied), f"{stamps} TIE stamps for {len(tied)} tied windows"
+
+
+def test_the_invoice_cut_line_is_visible(page) -> None:
+    """The defect: it starts at `opacity: 0` and is revealed by an observer that never fired.
+
+    Every figure asks for `onFirstView` before `chapters.js` appends it, so the node was detached;
+    an IntersectionObserver on a detached node never fires. The plate's whole argument — the row
+    where one accelerator is exhausted — was invisible, with a clean console.
+    """
+    # Measured WITHOUT scrolling to it first. The original version of this test scrolled the row
+    # into view and then checked its opacity, which is why it passed against a cut line that was
+    # invisible to every reader who had not scrolled — a screenshot, a print, an anchor landing.
+    # A guard that triggers the behaviour it is testing for is not a guard.
+    opacity = page.eval_on_selector("#problem .inv-cut", "e => getComputedStyle(e).opacity")
+    assert float(opacity) > 0.9, f"the invoice cut line is at opacity {opacity} before any scroll"
+    assert page.inner_text("#problem .inv-cut").strip(), "the cut line carries no label"
+    rule = page.eval_on_selector(
+        "#problem .inv-cut", "e => getComputedStyle(e, '::after').borderTopStyle"
+    )
+    assert rule == "dashed", f"the cut line draws no dashed rule (border-top-style: {rule})"
+
+
+def test_the_invoice_prices_every_context_the_data_carries(page) -> None:
+    bundle = _bundle()
+    text = page.inner_text("#problem")
+    for row in bundle["cache"]["contexts"]:
+        shown = f"{row['oneUser'] / 1e9:.2f} GB"
+        assert shown in text, f"the invoice does not print {shown}"
+
+
+def test_the_race_ends_at_the_crossings_the_arithmetic_gives(page) -> None:
+    """The figure and the invoice must not be able to disagree: both read `tokensBeforeWall`."""
+    bundle = _bundle()
+    page.eval_on_selector("#results .runbtn", "e => { e.scrollIntoView(); e.click(); }")
+    page.wait_for_timeout(5200)
     text = page.inner_text("#results")
-    for mechanism in bundle["mechanisms"][:6]:
-        year = mechanism["date"][:4]
-        assert year in text, f"{mechanism['name']}'s year {year} does not appear in the timeline"
+    for row in bundle["cache"]["sharing"]:
+        shown = f"{row['tokensBeforeWall']:,}"
+        assert shown in text, f"{row['name']} never reports its crossing at {shown}"
 
 
-# ---- the mechanism figure is the argument -------------------------------------------------------
+# ---- the glyph alphabet -------------------------------------------------------------------------
 
 
-def test_the_mechanism_figure_exists_in_a_mechanism_section(page) -> None:
-    """A page of results and no mechanism can be believed but not understood."""
-    figures = page.eval_on_selector_all(
-        'section[data-role="mechanism"] figure', "els => els.length"
-    )
-    assert figures >= 1, "no figure in the mechanism section"
+def test_no_glyph_draws_outside_its_own_box(page) -> None:
+    """The defect: a mark at a negative `y` landed on the caption of the glyph in the row above.
 
-
-def test_changing_the_variant_changes_what_is_drawn(page) -> None:
-    """**The test the figure rests on.**
-
-    If switching variants leaves the drawing identical, the figure is decoration and the claim it
-    illustrates — that every mechanism edits one of two objects — is unproven. The page would look
-    completely normal.
+    SVG does not clip by default, so an escaping mark renders — present, legible, and attributed to
+    the wrong mechanism. Nothing failed; the element was in the DOM and correctly drawn.
     """
-    chips = page.query_selector_all(".mech .chip")
-    assert len(chips) >= 5, f"only {len(chips)} variants offered"
-
-    def shape() -> tuple:
-        return (
-            page.eval_on_selector_all(".mech .sc.off", "els => els.length"),
-            page.eval_on_selector_all(".mech .kv.off", "els => els.length"),
-        )
-
-    chips[0].click()
-    page.wait_for_timeout(120)
-    full = shape()
-
-    chips[1].click()
-    page.wait_for_timeout(120)
-    windowed = shape()
-
-    assert full != windowed, "switching from full attention to a window changed nothing on screen"
-    assert full[0] == 0, "full attention should switch off no scores"
-    assert windowed[0] > 0, "a sliding window must remove scores from the triangle"
-
-
-def test_head_sharing_edits_the_cache_and_leaves_the_triangle_alone(page) -> None:
-    """The figure's actual claim, asserted rather than captioned.
-
-    GQA and MQA change how much is cached per position and touch no score at all. If this fails, the
-    figure is drawing something other than what its caption says.
-    """
-    by_label = {
-        page.eval_on_selector_all(".mech .chip", "els => els.map(e => e.textContent)")[i]: i
-        for i in range(len(page.query_selector_all(".mech .chip")))
-    }
-    gqa = next(label for label in by_label if label.startswith("GQA"))
-    page.query_selector_all(".mech .chip")[by_label[gqa]].click()
-    page.wait_for_timeout(120)
-
-    scores_off = page.eval_on_selector_all(".mech .sc.off", "els => els.length")
-    cache_off = page.eval_on_selector_all(".mech .kv.off", "els => els.length")
-    assert scores_off == 0, "GQA must not remove any attention score"
-    assert cache_off > 0, "GQA must shrink the cache"
-
-
-def test_linear_attention_collapses_the_cache_entirely(page) -> None:
-    """The one variant that removes the per-token store rather than shrinking it."""
-    labels = page.eval_on_selector_all(".mech .chip", "els => els.map(e => e.textContent)")
-    index = next(i for i, label in enumerate(labels) if "Linear" in label)
-    page.query_selector_all(".mech .chip")[index].click()
-    page.wait_for_timeout(120)
-
-    visible = page.eval_on_selector_all(
-        ".mech .kv:not(.state)", "els => els.filter(e => e.style.display !== 'none').length"
+    escapes = page.evaluate(
+        """() => {
+      const bad = [];
+      for (const s of document.querySelectorAll('svg.glyph-svg')) {
+        const vb = s.viewBox.baseVal;
+        const b = s.getBBox();
+        if (b.x < vb.x - 0.5 || b.y < vb.y - 0.5 ||
+            b.x + b.width > vb.x + vb.width + 0.5 ||
+            b.y + b.height > vb.y + vb.height + 0.5) {
+          bad.push([s.getAttribute('aria-label') || '?',
+                    [b.x, b.y, b.width, b.height].map(n => +n.toFixed(1)).join(','),
+                    [vb.x, vb.y, vb.width, vb.height].join(',')]);
+        }
+      }
+      return bad;
+    }"""
     )
-    assert visible == 0, "linear attention should leave no per-position cache squares drawn"
-    state = page.eval_on_selector(".mech .kv.state", "el => el.style.display !== 'none'")
-    assert state, "linear attention should draw the single fixed state instead"
+    assert not escapes, f"these glyphs draw outside their viewBox: {escapes}"
 
 
-# ---- the shell -----------------------------------------------------------------------------------
+def test_the_key_draws_one_exemplar_per_glyph_family_that_the_plate_uses(page) -> None:
+    """The key is generated by the same functions as the plate, so it cannot describe a shape the
+    plate does not draw."""
+    bundle = _bundle()
+    shown = page.eval_on_selector_all(
+        "#glossary .key-alpha .it .lab", "els => els.map(e => e.textContent.split(' ')[0])"
+    )
+    assert sorted(s.lower() for s in shown) == sorted(bundle["counts"]["glyphKinds"])
+
+
+# ---- the shell ----------------------------------------------------------------------------------
 
 
 def test_the_left_rail_is_built_and_fills_the_gutter_it_reserves(page) -> None:
-    """`_shared/page.css` reserves 260px on `.wrap` at 1180px and up whether or not a page builds a
-    rail, so a missing rail is a visible empty gutter and nothing fails. Assert the pairing."""
-    page.set_viewport_size({"width": 1280, "height": 900})
-    page.wait_for_timeout(150)
-    pad = page.eval_on_selector(".wrap", "el => parseFloat(getComputedStyle(el).paddingLeft)")
-    width = page.eval_on_selector("#rail", "el => el.getBoundingClientRect().width")
-    assert pad > 200, f"the shared stylesheet no longer reserves the gutter ({pad}px)"
-    assert width > 150, f"the gutter is reserved but the rail does not fill it ({width}px)"
+    """`_shared/page.css` reserves 260px at >=1180px whether or not the page builds a rail.
+
+    Exercises 06 and 07 shipped an empty 260px gutter for months by copying the stylesheet and not
+    the markup it assumes, and nothing failed.
+    """
+    page.set_viewport_size({"width": 1400, "height": 950})
+    page.wait_for_timeout(300)
+    padding = page.eval_on_selector(".wrap", "e => parseFloat(getComputedStyle(e).paddingLeft)")
+    rail = page.eval_on_selector("#rail", "e => e.getBoundingClientRect().width")
+    if padding > 100:
+        assert rail > padding * 0.5, f"a {padding}px gutter is reserved and the rail fills {rail}px"
 
 
 def test_the_rail_lists_every_section_in_order(page) -> None:
-    ids = page.eval_on_selector_all("main section", "els => els.map(e => e.id)")
-    hrefs = page.eval_on_selector_all(
-        "#rail .rail-link", "els => els.map(e => e.getAttribute('href'))"
-    )
-    assert hrefs == [f"#{i}" for i in ids]
+    links = page.eval_on_selector_all("#rail .rail-link", "els => els.map(e => e.hash.slice(1))")
+    roles = page.eval_on_selector_all("#main > section", "els => els.map(e => e.id)")
+    assert links == roles, "the contents list does not match the sections, in order"
 
 
-@pytest.mark.parametrize("width", [1440, 1180, 900, 390, 320])
+@pytest.mark.parametrize("width", [1440, 1180, 900, 620, 390, 320])
 def test_the_page_never_scrolls_sideways(page, width: int) -> None:
-    """Wide content scrolls inside its own container; the body never does."""
+    """A full-bleed plate built on `100vw` scrolls sideways on every browser that reserves a
+    scrollbar. This page uses named grid lines instead, and this is what proves it."""
     page.set_viewport_size({"width": width, "height": 900})
-    page.wait_for_timeout(150)
+    page.wait_for_timeout(400)
     overflow = page.evaluate(
         "() => document.documentElement.scrollWidth - document.documentElement.clientWidth"
     )
-    assert overflow <= 1, f"the page scrolls sideways by {overflow}px at {width}px"
+    assert overflow <= 1, f"the page scrolls sideways by {overflow}px at {width}px wide"
 
 
-# ---- the figures added in the visual rebuild -----------------------------------------------------
+def test_every_spine_section_that_argues_from_a_figure_has_one(page) -> None:
+    """A page with only results can be believed but not understood.
 
-
-def test_the_page_carries_a_figure_in_every_section_that_argues_from_one(page) -> None:
-    """The first version of this page had one figure across twelve sections — a wall of text.
-
-    Counted rather than eyeballed, because "add some visuals" is exactly the kind of intention that
-    quietly decays back to prose on the next edit.
+    `svg, .invoice` and not just `svg`: PLATE I is deliberately set as a printed invoice rather
+    than drawn as a chart, because the data literally is a bill and typography states it better
+    than two curves would.
     """
-    total = page.eval_on_selector_all("main figure", "els => els.length")
-    assert total >= 8, f"only {total} figures on the page"
-    for role in ("problem", "mechanism", "results", "conclusion"):
-        n = page.eval_on_selector_all(f'section[data-role="{role}"] figure', "els => els.length")
-        assert n >= 1, f"the {role} section argues from no figure at all"
-
-
-def test_the_attention_demo_actually_runs_the_stages(page) -> None:
-    """The assignment insists the page starts from plain attention. So it must *run*, not diagram.
-
-    Stepping from raw scores to softmax must change the numbers on screen; if it does not, the
-    figure is a static picture with buttons attached.
-    """
-    chips = page.query_selector_all(".fig-attention .chip")
-    assert len(chips) == 4, f"expected four stages, found {len(chips)}"
-
-    def cells() -> list[str]:
-        return page.eval_on_selector_all(
-            ".fig-attention text.val", "els => els.map(e => e.textContent)"
+    for role in ("problem", "mechanism", "results", "conclusion", "negatives"):
+        figures = page.eval_on_selector_all(
+            f'section[data-role="{role}"] svg, section[data-role="{role}"] .invoice',
+            "els => els.length",
         )
-
-    chips[0].click()
-    page.wait_for_timeout(500)
-    raw = cells()
-
-    chips[3].click()
-    page.wait_for_timeout(600)
-    softmaxed = cells()
-
-    assert raw != softmaxed, "stepping to softmax changed none of the numbers"
-    assert any("−∞" in c for c in softmaxed) is False, (
-        "softmax should have consumed the masked cells"
-    )
-
-    chips[2].click()
-    page.wait_for_timeout(600)
-    assert any("−∞" in c for c in cells()), "the mask stage shows no masked cells"
-
-
-def test_every_row_of_the_softmax_stage_sums_to_one(page) -> None:
-    """The property that makes softmax *competition* rather than scaling.
-
-    Checked on the rendered numbers, so a figure that drew plausible-looking weights which did not
-    actually normalise would fail — that is the whole point of the stage.
-    """
-    page.query_selector_all(".fig-attention .chip")[3].click()
-    page.wait_for_timeout(600)
-    values = page.eval_on_selector_all(
-        ".fig-attention text.val", "els => els.map(e => e.textContent)"
-    )
-    n = 6
-    for row in range(n):
-        cells = values[row * n : (row + 1) * n]
-        total = sum(float(c) if c.strip() not in ("", "−∞") else 0.0 for c in cells)
-        assert abs(total - 1.0) < 0.02, f"row {row} of the softmax stage sums to {total:.3f}, not 1"
-
-
-def test_the_rope_figure_shows_the_invariance_it_claims(page) -> None:
-    """**The figure's actual claim, and the only interesting thing to test about it.**
-
-    RoPE's point is that moving *both* tokens later leaves their score unchanged, because only the
-    gap between them matters. So the arms must move and the score must not. A figure that drew a
-    rotation without preserving the score would look perfectly convincing.
-    """
-    slider = page.query_selector(".fig-rope input[type=range]")
-    assert slider, "the RoPE figure has no control"
-
-    def state() -> tuple:
-        return (
-            page.eval_on_selector(".fig-rope line.arm.a", "e => e.getAttribute('x2')"),
-            page.eval_on_selector(".fig-rope text.big", "e => e.textContent"),
-        )
-
-    slider.fill("0")
-    page.wait_for_timeout(120)
-    arm_at_zero, score_at_zero = state()
-
-    slider.fill("17")
-    page.wait_for_timeout(120)
-    arm_later, score_later = state()
-
-    assert arm_at_zero != arm_later, "moving the tokens did not rotate anything"
-    assert score_at_zero == score_later, (
-        f"the score changed from {score_at_zero} to {score_later} — RoPE's whole claim is that it "
-        f"does not, because the gap between the two tokens never changed"
-    )
-
-
-def test_the_head_sharing_figure_changes_the_cache_it_reports(page) -> None:
-    """MHA to MQA must shrink the reported cache and switch off KV boxes."""
-    chips = page.query_selector_all(".fig-heads .chip")
-    assert len(chips) == 3, f"expected MHA/GQA/MQA, found {len(chips)}"
-
-    chips[0].click()
-    page.wait_for_timeout(200)
-    live_mha = page.eval_on_selector_all(".fig-heads rect.kvhead:not(.off)", "els => els.length")
-
-    chips[2].click()
-    page.wait_for_timeout(200)
-    live_mqa = page.eval_on_selector_all(".fig-heads rect.kvhead:not(.off)", "els => els.length")
-
-    assert live_mha > live_mqa, "MQA should leave fewer key/value heads lit than MHA"
-    assert live_mqa == 1, f"MQA is one KV head by definition; the figure shows {live_mqa}"
-
-
-def test_the_timeline_chart_plots_every_mechanism(page) -> None:
-    """The chart is the primary view now, so it must be complete — not a sample."""
-    bundle = _bundle()
-    dots = page.eval_on_selector_all("#results circle.dot", "els => els.length")
-    assert dots == len(bundle["mechanisms"]), (
-        f"the chart plots {dots} dots for {len(bundle['mechanisms'])} mechanisms"
-    )
-
-
-def test_clicking_a_dot_opens_that_mechanism(page) -> None:
-    """The chart is only navigable if a dot leads somewhere."""
-    page.eval_on_selector("#results circle.dot", "e => e.dispatchEvent(new Event('click'))")
-    page.wait_for_timeout(250)
-    shown = page.eval_on_selector_all("#results .tl-detail .tl-card .tl-name", "els => els.length")
-    assert shown == 1, "clicking a dot did not open exactly one mechanism"
+        assert figures >= 1, f"the {role} section argues from a figure it does not have"

@@ -756,6 +756,14 @@ export function buildPage(M) {
   chapterGlossary(M);
   chapterProblem(M);
   chapterMechanism(M);
+  /* The colophon sits HERE, not at the back, and that is the repo convention winning over this
+   * page's own instincts. `AGENTS.md` fixes the spine's order and 05, 06 and 07 all follow it; a
+   * magazine would put production notes on the last page, but one exercise quietly reordering a
+   * repo-wide standard is worse than a colophon in an unusual place. It reads well enough right
+   * after the centrefold, which is exactly where a reader starts asking where the numbers came
+   * from. What the review actually objected to was method-shaped prose dominating the front — so
+   * it is six short paragraphs of small print, and the index plate keeps the back page. */
+  chapterMethod(M);
   chapterExpected(M);
   const results = chapterResults(M, spreadRef);
   plateRef.node = results.querySelector('svg');
@@ -768,7 +776,6 @@ export function buildPage(M) {
   chapterLimits(M);
   chapterNext();
   chapterReproduce(M, spreadRef, plateRef);
-  chapterMethod(M);
 
   buildRail(document.getElementById('main'));
   buildFooter(M);

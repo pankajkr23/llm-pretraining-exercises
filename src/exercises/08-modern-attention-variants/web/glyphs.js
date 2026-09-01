@@ -445,17 +445,20 @@ export function glyph(mechanism, size) {
 
 /** A standalone glyph in its own `<svg>`, for inline use. */
 export function glyphSvg(mechanism, size, pad = 3) {
-  const box = size + pad * 2;
+  /* The viewBox has a NEGATIVE origin rather than a translate, because the schema tilde is drawn
+   * at x = size + 2 and its ascender reaches above y = 0 — so a square `0 0 box box` box cut it
+   * off on two sides, on twenty-one of the twenty-three glyphs. A negative origin lets the glyph
+   * keep coordinates 0..size while the box admits the marks that sit just outside it. */
+  const marked = mechanism.glyph.scale === 'schematic' && size >= 24;
+  const right = marked ? 11 : pad;
   const el = s('svg', {
-    viewBox: `0 0 ${box} ${box}`,
-    width: box,
-    height: box,
+    viewBox: `${-pad} ${-pad} ${size + pad + right} ${size + pad * 2}`,
+    width: size + pad + right,
+    height: size + pad * 2,
     class: 'glyph-svg',
     role: 'img',
   });
   el.setAttribute('aria-label', `${mechanism.name}: ${KIND_LABEL[mechanism.glyph.kind]}`);
-  const g = glyph(mechanism, size);
-  g.setAttribute('transform', `translate(${pad} ${pad})`);
-  el.append(g);
+  el.append(glyph(mechanism, size));
   return el;
 }

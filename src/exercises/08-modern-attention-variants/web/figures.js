@@ -304,14 +304,13 @@ export function figInvoice(M) {
     `evaluated rather than estimated.`;
   wrap.append(foot);
 
-  if (!REDUCED) {
-    cutRow.style.opacity = '0';
-    onFirstView(wrap, () =>
-      animate(300, (t) => {
-        cutRow.style.opacity = String(t);
-      })
-    );
-  }
+  /* The cut line is NOT revealed on scroll, and that is a deliberate reversal.
+   *
+   * It used to start at `opacity: 0` and fade in when the invoice entered the viewport. That made
+   * the plate's entire argument — the row where one accelerator is exhausted — invisible to
+   * anything that does not scroll: a screenshot, a print, a PDF, a reader who lands mid-page from
+   * an anchor. Motion is spent, not sprinkled, and a 300ms fade bought nothing that the dashed
+   * accent rule does not already say standing still. */
   return wrap;
 }
 
@@ -1092,7 +1091,11 @@ export function figVerdict(M, glyphSvg) {
       g.append(cell);
     }
   }
-  return g;
+  /* Six columns of 9.5px caps do not fit 320px, and `AGENTS.md` is explicit that wide content
+   * scrolls inside its own container rather than pushing the page sideways. */
+  const scroller = el('div', 'verdict-wrap');
+  scroller.append(g);
+  return scroller;
 }
 
 /* ============================================================ the corrections comparison */
