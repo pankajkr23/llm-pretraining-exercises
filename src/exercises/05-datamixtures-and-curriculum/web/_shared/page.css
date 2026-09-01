@@ -528,16 +528,7 @@ tr.cardrow .gatecard { margin-top: 4px; }
   .rail {
     position: fixed;
     top: 0;
-    /* AGAINST THE CONTENT BLOCK, NOT THE WINDOW. `.wrap` is centred at max-width 1500px and
-       reserves a 260px gutter inside itself; the rail is fixed, so it was pinned to the window.
-       Past 1500px those are two different places — the reserved gutter drifts right with the
-       centred wrap while the rail stays welded to the far edge, leaving a widening void between
-       the rail and the text it indexes, and an empty gutter that indexes nothing. At 2000px that
-       void is 250px wide. The max() keeps the old behaviour until there is spare margin to move
-       into, so nothing below 1500px changes. Percentages on a fixed element resolve against the
-       initial containing block, which excludes the scrollbar — `100vw` does not, and would push
-       the rail a scrollbar's width too far right on every platform that reserves one. */
-    left: max(0px, calc((100% - 1500px) / 2));
+    left: 0;
     width: 236px;
     height: 100vh;
     min-height: 0;

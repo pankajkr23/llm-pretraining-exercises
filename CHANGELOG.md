@@ -191,14 +191,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
-- **The pinned rail and the gutter reserved for it were in two different places past 1500px.**
-  `.wrap` is centred at `max-width: 1500px` and reserves 260px of left padding for the rail; the
-  rail is `position: fixed`, so it was pinned to the *window*. Below 1500px those coincide. Above
-  it they separate, and the page grows a widening void between the rail and the text it indexes
-  plus an empty gutter indexing nothing — **554px of it at 2560px**. Nothing failed, because the
-  existing guard asks whether the gutter is *filled*, and it was, by an element half a screen away.
-  Fixed on exercises 05 and 08 (the vendored stylesheet is byte-identical and both build a rail);
-  the new guard asserts the *relationship* rather than an offset.
+- **Reverted a rail change that was made from a misreading, and guarded the layout that was always
+  correct.** A wide-screen report was read as "the rail is too far left"; the rail was moved inward
+  to sit against the text. Every railed page (05, 06, 07, 08) already centred the reading column in
+  the space the rail leaves, with equal air either side — 554px at 2560px, 24px at 1180px — and the
+  change destroyed that symmetry, leaving dead space on both sides of the rail and pushing the
+  column off the page's centre, which was the actual complaint. Both copies are back to
+  `left: 0`, and the guard now asserts the symmetry the design holds rather than the offset the
+  misreading invented.
 
 - **Exercise 08's link to the field guide rendered as a raw underlined anchor**, which in dark mode
   is bare accent blue on near-black. It clears the contrast floor and still reads as broken, because

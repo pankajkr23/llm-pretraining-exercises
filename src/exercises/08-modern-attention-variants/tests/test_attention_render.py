@@ -738,40 +738,46 @@ def test_the_spread_never_stacks_more_than_one_diagram(page) -> None:
     assert count == 1, f"after four selections the spread holds {count} diagrams"
 
 
-@pytest.mark.parametrize("width", [2560, 1920, 1600, 1500, 1400, 1180])
-def test_the_rail_sits_against_the_text_it_indexes(page, width: int) -> None:
-    """The gutter and the rail must be in the SAME place, not merely both present.
+@pytest.mark.parametrize("width", [2560, 1920, 1600, 1440, 1280, 1180, 1100, 900])
+def test_the_content_is_centred_in_the_space_beside_the_rail(page, width: int) -> None:
+    """The reading column sits centred in whatever space the rail leaves, at every width.
 
-    `.wrap` is centred at `max-width: 1500px` and reserves 260px of left padding for the rail;
-    the rail is `position: fixed`, so it was pinned to the window. Below 1500px those coincide and
-    everything looked right. Past it they separate — the reserved gutter drifts right with the
-    centred wrap while the rail stays welded to the far edge — so the page grows a widening void
-    between the rail and the text it indexes, and an empty gutter indexing nothing. At 2560px the
-    void was 554px. Nothing failed: exercise 07's guard asks whether the gutter is *filled*, which
-    it was, by an element 554px away from it.
+    The rail is fixed chrome down the left edge; `.wrap` is centred at `max-width: 1500px` and
+    reserves 260px of left padding for it. Together those put equal air either side of the text —
+    554px at 2560, 24px at 1180 — and that symmetry is the whole layout.
 
-    A fixed offset is the wrong assertion here; the invariant is the relationship.
+    **This guard replaces one that asserted the opposite**, and the story is the point. Asked to fix
+    a wide-screen layout I read the complaint as "the rail is too far left", moved the rail inward
+    to sit against the text, and wrote a guard demanding a gap of at most 60px. It was green, it was
+    wrong, and it shipped: it left dead space on both sides of the rail and pushed the reading
+    column off the page's centre, which is what the reader had actually been reporting. A guard
+    written from a misreading makes the misreading permanent — so measure the invariant the design
+    already holds before writing a test that pins a new one.
     """
     page.set_viewport_size({"width": width, "height": 900})
-    page.wait_for_timeout(160)
+    page.wait_for_timeout(180)
     m = page.evaluate(
         """() => {
           const rail = document.querySelector('.rail');
           const wrap = document.querySelector('.wrap');
-          const rb = rail.getBoundingClientRect();
           const cs = getComputedStyle(wrap);
+          const wb = wrap.getBoundingClientRect();
+          const pinned = getComputedStyle(rail).position === 'fixed';
           return {
-            fixed: getComputedStyle(rail).position === 'fixed',
-            railRight: rb.right,
-            textLeft: wrap.getBoundingClientRect().left + parseFloat(cs.paddingLeft),
+            pinned,
+            railRight: pinned ? rail.getBoundingClientRect().right : 0,
+            left: wb.left + parseFloat(cs.paddingLeft),
+            right: wb.right - parseFloat(cs.paddingRight),
+            viewport: document.documentElement.clientWidth,
           };
         }"""
     )
-    assert m["fixed"], f"at {width}px the rail is not pinned — this guard is measuring nothing"
-    gap = m["textLeft"] - m["railRight"]
-    assert 0 <= gap <= 60, (
-        f"at {width}px the rail ends at {m['railRight']:.0f} and the text starts at "
-        f"{m['textLeft']:.0f} — a {gap:.0f}px gap between the rail and what it indexes"
+    gap_left = m["left"] - m["railRight"]
+    gap_right = m["viewport"] - m["right"]
+    assert gap_left > 0, f"at {width}px the text starts before the rail ends"
+    assert abs(gap_left - gap_right) <= 2, (
+        f"at {width}px the reading column is off centre: {gap_left:.0f}px between the rail and the "
+        f"text, {gap_right:.0f}px on the right"
     )
 
 

@@ -403,6 +403,20 @@ Two more that cost this repo real defects:
   ordinal, a shape, a texture — and let colour keep its one job. Here the ordinal was also *more*
   informative than the colour it replaced: the steps happen in that order.
 
+- **Measure the invariant a design already holds before you change it — and never write a guard
+  from a misreading.** Asked to fix a wide-screen layout, I read "shouldn't the rail be centred?"
+  as "the rail is too far left", moved the rail inward to sit against the text, and wrote a guard
+  demanding a gap of at most 60px. Every railed page (05, 06, 07, 08) already centred the reading
+  column in the space the rail leaves — equal air either side, 554px at 2560 and 24px at 1180 — and
+  the change destroyed that symmetry, leaving dead space on both sides of the rail and pushing the
+  column off centre, which is what the reader had actually been reporting. **The guard was the
+  worst part**: green, wrong, and it would have made the misreading permanent by failing anyone who
+  restored the correct layout. Two rules follow. Measure what the existing design does across the
+  full width range *first*; symmetry, ratios and the relationship between elements are visible in
+  numbers and settle what prose cannot. And when a report is ambiguous about which element is
+  misplaced, ask — a layout complaint names a symptom, and the element the reader blames is often
+  not the one that moved.
+
 - **When agents gather evidence, make a machine the arbiter — and test the machine first.** Exercise
   08 sourced 80 hyperparameters across 29 papers this way: download every source *before* any agent
   runs, have agents read those local files, then check each proposed quote as a contiguous run of
