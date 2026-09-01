@@ -439,9 +439,10 @@ function chapterMechanism(M) {
         'that was already computed, which is <b>why the triangle exists</b> in every glyph after ' +
         'this. Scale it to a 32,768-token context and the same picture has <b>536,887,296</b> ' +
         'useful cells, per head, per layer, of which this model has 8 and 48. Watch the last ' +
-        'stage: attention does not output weights, it outputs a vector. Nothing later on this page ' +
-        'changes what happens in these five bays — every one of them changes which cells are ' +
-        'computed, which are stored, or whether the grid is built at all.'
+        'stage: attention does not output weights, it outputs a vector. And nothing later on this ' +
+        `page changes the <b>arithmetic inside</b> these five stages — what the ` +
+        `${spell(M.counts.total)} mechanisms change is which cells get computed, which get ` +
+        'stored, and in a few cases whether the grid is built at all.'
     )
   );
 
@@ -655,8 +656,11 @@ function chapterResults(M, spreadRef) {
   });
   s.append(
     standfirst(
-      'One stave per bill, and time along the bottom drawn to scale — so the gaps are as visible ' +
-        'as the entries. Choose any mechanism and the spread beneath re-typesets.'
+      /* "Stave", "spread" and "re-typesets" are printing words. The page earns "plate" and "well"
+       * by defining them; these three were never defined, and they sit in the one sentence telling
+       * a reader how to use the biggest figure on the page. */
+      'One horizontal lane per bill, and time along the bottom drawn to scale — so the gaps are ' +
+        'as visible as the entries. Click any mechanism and the panel below fills in with its entry.'
     )
   );
 
@@ -773,8 +777,8 @@ function chapterResults(M, spreadRef) {
         `the shaded band is <b>${int(gap.days)} days</b> in which nobody attacked either bill, ` +
         'because contexts were short enough that the bill was small. Read the staves downward and ' +
         'the field’s changing mind is visible: position work clusters and stops, cache work barely ' +
-        'exists before 2019 and never lets up after, and the ties — mechanisms attacking both ' +
-        'bills at once — do not exist at all until 2020. Figures drawn to schema; where a paper ' +
+        'exists before 2019 and never lets up after, and the both-bills entries — mechanisms ' +
+        'attacking compute and cache at once — do not exist at all until 2020. Figures drawn to schema; where a paper ' +
         'states a size we used it, and where it does not the shape is illustrative and marked ~.'
   );
   // Inside the figure, between the drawing and its caption. Appended to the section instead, it
@@ -1038,23 +1042,39 @@ function chapterConclusion(M) {
       `${spell(M.counts.total)} by launch date and asking which bill each two-year window went ` +
       `after hardest gives **${seq(arc.observed)}**.`,
     `**${Spell(arc.decided)} of the ${spell(total)} windows do produce a clear winner**, and they ` +
-      `do not come in the claimed order. The bill the story has the field returning to twice — ` +
+      'do not come in the claimed order. The bill the story has the field returning to twice — ' +
       `**${NAME[arc.neverDominates[0]] || arc.neverDominates[0]}** — never dominates a single ` +
-      `window on its own. And from **${arc.settlesFrom}** every decided window goes after ` +
-      `**${NAME[arc.settlesOn]}**, and the field never goes back to choosing.`,
+      'window on its own.',
+    /* THE NOISE FLOOR, WHICH THIS SECTION ASSERTED AND DID NOT MEASURE. The two-year buckets begin
+     * in 2014 because attention does, not because the field turned on that boundary, so the edges
+     * are an arbitrary choice — and the page said its count was "not noise" while offering no
+     * evidence at all. Re-running with the edges shifted one year is the cheapest available test
+     * and it cost this section a finding: the claim that the field settles on both bills from 2020
+     * does not survive it. Both findings that do survive are stated as surviving. */
+    `Those buckets are an arbitrary choice — they start at ${M.periods[0].start} because attention ` +
+      'does, not because anything happened to the field that year. So the same tally re-run with ' +
+      'the edges shifted by one year gives ' +
+      `**${seq(arc.robust.sequences[1])}**. Two conclusions survive that and one does not. ` +
+      'Surviving: the claimed order matches under neither slicing, and ' +
+      `**${NAME[arc.neverDominates[0]]}** wins no window under either. Not surviving: on the ` +
+      `original edges the field appears to settle on **${NAME[arc.settlesOn]}** from ` +
+      `**${arc.settlesFrom}** onward and never go back — shift the edges and that window goes to ` +
+      '**where a word sits** instead. Treat the settling as one reading of the chronology, not a ' +
+      'measurement.',
     `The remaining ${tie} ${isare}, and the code returns no winner rather than picking one. That ` +
-      'is the whole reason this reads as a refutation rather than a story: a tie was allowed to ' +
-      'stay a tie.',
+      'is why this reads as a refutation rather than a story: a tie was allowed to stay a tie.',
   ], { short: 'The verdict', sub: arc.matches ? 'the arc holds' : 'the arc does not hold' });
 
   const f = el('figure', 'wide');
   f.append(figVerdict(M, glyphSvg));
   const cap = el('figcaption');
   cap.innerHTML = rich(
-    `A framed cell is that window's dominant bill; a **TIE** stamp marks a window where no bill ` +
-      `dominated — ${ties} of ${total}. Read a tie as the field doing two things at once rather ` +
-      'than changing its mind. A cleaner story was available here and it would have been false — ' +
-      'and for a while this page printed it, with a derived number attached.'
+    `A framed cell is that window's dominant bill; a **NO WINNER** stamp marks a window where no ` +
+      `bill was attacked more than the others — ` +
+      `${ties} of ${total}. That is not the same as a **BOTH** entry: BOTH is one mechanism ` +
+      'attacking the compute bill and the cache bill together, and this is a two-year window in ' +
+      'which no single bill won. A cleaner story was available here and it would have been false ' +
+      '— and for a while this page printed it, with a derived number attached.'
   );
   f.append(cap);
   s.append(f);

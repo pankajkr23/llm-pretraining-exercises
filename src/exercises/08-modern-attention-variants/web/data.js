@@ -1915,7 +1915,35 @@ export const M = Object.freeze({
       "cache"
     ],
     "settlesOn": "both",
-    "settlesFrom": 2020
+    "settlesFrom": 2020,
+    "robust": {
+      "offsets": [
+        0,
+        1
+      ],
+      "sequences": [
+        [
+          "origin",
+          "position",
+          "compute",
+          "both",
+          null,
+          "both",
+          "both"
+        ],
+        [
+          "origin",
+          "position",
+          "compute",
+          "position",
+          null,
+          "both"
+        ]
+      ],
+      "matchesAnywhere": false,
+      "cacheNeverDominates": true,
+      "settlesEverywhere": null
+    }
   },
   "gaps": [
     {

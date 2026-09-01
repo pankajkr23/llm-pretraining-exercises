@@ -153,3 +153,38 @@ def test_the_old_measurement_would_still_look_convincing() -> None:
     assert old_number == v.decided, "the reconstruction must match what the page used to print"
     assert old_number >= len(periods) - 1, "the old number was large, which is why it convinced"
     assert not v.matches, "and the claim it was offered as evidence for is false"
+
+
+def test_the_arc_findings_are_reported_only_if_they_survive_moving_the_buckets() -> None:
+    """The bucket edges are arbitrary, so every count drawn from them needs a noise floor.
+
+    They start in 2014 because attention does, not because the field turned on that boundary. The
+    page asserted its count was "not noise" and offered no evidence; re-running with the edges
+    shifted one year is the cheapest test available and it immediately cost a finding — the claim
+    that the field settles on both bills from 2020 does not survive. Two findings do.
+    """
+    from attention.timeline import arc_robustness, arc_verdict
+
+    r = arc_robustness(load())
+    assert len(r.offsets) >= 2, "one slicing is not a noise floor"
+    assert len({tuple(s) for s in r.sequences}) > 1, (
+        "the offsets produce identical sequences, so this measures nothing — pick edges that move"
+    )
+
+    #: The two that survive. If either ever stops surviving, the verdict's central claims are stale
+    #: and must be rewritten rather than this loosened.
+    assert not r.matches_anywhere, (
+        "the claimed arc now matches under some slicing; rewrite the verdict"
+    )
+    assert r.cache_never_dominates, (
+        "the cache bill now wins a window; the verdict's key sentence is stale"
+    )
+
+    #: And the one that does not. This is asserted so that if a future catalogue makes the settling
+    #: robust, the test fails and someone upgrades the prose from "one reading" to a finding.
+    assert r.settles_everywhere is None, (
+        "the settling now survives every slicing — promote it from a reading to a finding"
+    )
+    assert arc_verdict(load()).settles_on is not None, (
+        "the unshifted slicing no longer settles at all; the paragraph describing it is stale"
+    )

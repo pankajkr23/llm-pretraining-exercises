@@ -64,12 +64,20 @@ def in_order(mechanisms: list[Mechanism]) -> list[Mechanism]:
     return sorted(mechanisms, key=lambda m: (m.date, m.key))
 
 
-def pressure_by_period(mechanisms: list[Mechanism], window: int = 2) -> list[Period]:
+def pressure_by_period(
+    mechanisms: list[Mechanism], window: int = 2, offset: int = 0
+) -> list[Period]:
     """Group the timeline into windows and count which bill each one was paying down.
 
     Args:
         mechanisms: The catalogue.
         window: Years per period.
+        offset: Years to shift the first bucket boundary back by. **The bucket edges are an
+            arbitrary choice** — they start at 2014 because that is when attention starts, not
+            because anything happened to the field on that boundary. Shifting them is how the
+            noise floor of every count derived from these windows gets measured, which this repo
+            requires before a comparison is quoted: re-run it under a different arbitrary choice
+            and check the effect survives.
 
     Returns:
         Periods in chronological order, covering only years the catalogue actually spans.
@@ -78,7 +86,7 @@ def pressure_by_period(mechanisms: list[Mechanism], window: int = 2) -> list[Per
     if not ordered:
         return []
 
-    first, last = ordered[0].date.year, ordered[-1].date.year
+    first, last = ordered[0].date.year - offset, ordered[-1].date.year
     periods: list[Period] = []
     for start in range(first, last + 1, window):
         end = start + window - 1
@@ -144,7 +152,7 @@ class ArcVerdict:
     settles_from: int | None
 
 
-def arc_verdict(mechanisms: list[Mechanism]) -> ArcVerdict:
+def arc_verdict(mechanisms: list[Mechanism], offset: int = 0) -> ArcVerdict:
     """Test the claimed arc against the windows, and report what actually happened.
 
     **The page used to print "the claimed arc holds in 6 of these 7 windows", and that number was
@@ -158,7 +166,7 @@ def arc_verdict(mechanisms: list[Mechanism]) -> ArcVerdict:
     Returns:
         The verdict, with every field derived so the page can render it without asserting anything.
     """
-    periods = pressure_by_period(mechanisms)
+    periods = pressure_by_period(mechanisms, offset=offset)
     observed = tuple(p.dominant for p in periods)
     winners = [p for p in observed if p]
 
@@ -185,4 +193,50 @@ def arc_verdict(mechanisms: list[Mechanism]) -> ArcVerdict:
         never_dominates=tuple(b for b in dict.fromkeys(CLAIMED_ARC) if b not in winners),
         settles_on=settles_on,
         settles_from=settles_from,
+    )
+
+
+@dataclass(frozen=True)
+class ArcRobustness:
+    """Which conclusions survive moving the bucket edges.
+
+    Attributes:
+        offsets: The offsets tested.
+        sequences: The observed winner sequence at each.
+        matches_anywhere: Whether the claimed arc matches under any of them.
+        cache_never_dominates: Whether the cache bill fails to win a window under all of them.
+        settles_everywhere: The bill every slicing settles on, or `None` if they disagree.
+    """
+
+    offsets: tuple[int, ...]
+    sequences: tuple[tuple[str | None, ...], ...]
+    matches_anywhere: bool
+    cache_never_dominates: bool
+    settles_everywhere: str | None
+
+
+def arc_robustness(mechanisms: list[Mechanism], offsets: tuple[int, ...] = (0, 1)) -> ArcRobustness:
+    """Re-run the whole verdict under a different arbitrary choice and report what survives.
+
+    **The two-year buckets start in 2014 because attention does, not because anything happened to
+    the field on that boundary.** That makes the edges arbitrary, and this repo's own rule is that
+    an arbitrary choice must be varied before any comparison drawn from it is quoted. The page
+    asserted its count was "not noise" and offered no evidence for that at all.
+
+    Varying it matters here: shifting the edges by one year changes the fourth window's winner and
+    drops a window entirely. Two conclusions survive anyway — the claimed arc matches under neither
+    slicing, and the cache bill never wins a window under either — and one does not, which is why
+    it must be reported as the weaker claim it is.
+
+    Returns:
+        What held across every offset, and what did not.
+    """
+    verdicts = [arc_verdict(mechanisms, offset=o) for o in offsets]
+    settles = {v.settles_on for v in verdicts}
+    return ArcRobustness(
+        offsets=offsets,
+        sequences=tuple(v.observed for v in verdicts),
+        matches_anywhere=any(v.matches for v in verdicts),
+        cache_never_dominates=all("cache" in v.never_dominates for v in verdicts),
+        settles_everywhere=settles.pop() if len(settles) == 1 else None,
     )

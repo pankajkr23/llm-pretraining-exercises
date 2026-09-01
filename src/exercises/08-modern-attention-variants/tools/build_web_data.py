@@ -31,6 +31,7 @@ from attention.config import YARDSTICK_CONTEXTS, Yardstick  # noqa: E402
 from attention.story import WELLS, span  # noqa: E402
 from attention.story import check as check_wells  # noqa: E402
 from attention.timeline import (  # noqa: E402
+    arc_robustness,
     arc_verdict,
     bills_addressed,
     gaps,
@@ -58,6 +59,7 @@ def payload() -> dict:
     yard = Yardstick()
 
     verdict = arc_verdict(mechanisms)
+    robust = arc_robustness(mechanisms)
     return {
         "mechanisms": [
             {
@@ -131,6 +133,16 @@ def payload() -> dict:
             "neverDominates": list(verdict.never_dominates),
             "settlesOn": verdict.settles_on,
             "settlesFrom": verdict.settles_from,
+            # What survives moving an arbitrary choice. The buckets start in 2014 because attention
+            # does, not because the field changed on that boundary, so every count drawn from them
+            # has to be re-run under a different edge before it is quoted.
+            "robust": {
+                "offsets": list(robust.offsets),
+                "sequences": [list(x) for x in robust.sequences],
+                "matchesAnywhere": robust.matches_anywhere,
+                "cacheNeverDominates": robust.cache_never_dominates,
+                "settlesEverywhere": robust.settles_everywhere,
+            },
         },
         "gaps": [
             {"before": a, "after": b, "days": d}

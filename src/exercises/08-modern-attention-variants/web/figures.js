@@ -282,9 +282,12 @@ export function figInvoice(M) {
   const co = el('div', 'inv-co');
   co.append(el('span', null, 'Attention, Ltd.'));
   const acct = el('span', 'acct');
+  /* Expanded. This line is what turns a count of numbers into bytes, and every term on it was an
+   * abbreviation the page never spells out — bf16 above all, which is the single factor doing the
+   * conversion. */
   acct.textContent =
-    `account: ${M.yardstick.layers}L · ${M.yardstick.kvHeads}KV · ` +
-    `d${M.yardstick.headDim} · ${M.yardstick.dtype}`;
+    `account: ${M.yardstick.layers} layers · ${M.yardstick.kvHeads} key-value heads · ` +
+    `${M.yardstick.headDim} numbers per head · ${M.yardstick.dtype}, 2 bytes per number`;
   co.append(acct);
   wrap.append(co);
 
@@ -735,13 +738,16 @@ export function figPlate(M, glyph, onPick) {
 
   const byKey = new Map(M.mechanisms.map((m) => [m.key, m]));
 
-  // The quiet stretch: the longest run in which nobody paid either bill, drawn as area not text.
+  /* The quiet stretch: the longest run in which nobody ATTACKED either bill, drawn as area not
+   * text. Not "paid": everywhere else on the page, paying a bill means bearing the cost — "somebody
+   * refusing to pay one of them" — so "nobody paid either bill" reads as nobody bore the cost,
+   * which is the opposite of what a quiet stretch means. */
   const q = M.quietStretch;
   const qa = xOf(byKey.get(q.before).date);
   const qb = xOf(byKey.get(q.after).date);
   s.append(svg('rect', { x: qa, y: 36, width: qb - qa, height: 464, class: 'quiet-band' }));
   s.append(
-    svgText((qa + qb) / 2, 522, 'quiet-lab', `${int(q.days)} DAYS — NOBODY PAID EITHER BILL`)
+    svgText((qa + qb) / 2, 522, 'quiet-lab', `${int(q.days)} DAYS — NOBODY ATTACKED EITHER BILL`)
   );
 
   s.append(svg('line', { x1: X0, y1: ORIGIN_Y, x2: X0 + SPAN, y2: ORIGIN_Y, class: 's-ink' }));
@@ -1230,7 +1236,10 @@ export function figVerdict(M, glyphSvg) {
     row.append(document.createTextNode(`${p.start}–${String(p.end).slice(2)}`));
     // The stamp belongs to the WINDOW, not to a bill. Putting it in the first bill column read as
     // "origin tied", which is the opposite of what a tie means.
-    if (!p.dominant) row.append(el('span', 'tie', 'TIE'));
+    /* NOT "TIE". BOTH is a column heading in this very grid and means one mechanism attacking
+     * compute and cache together; a reader carrying that meaning reads a TIE stamp as "this window
+     * was full of BOTH entries", which is a different claim about a different object. */
+    if (!p.dominant) row.append(el('span', 'tie', 'NO WINNER'));
     g.append(row);
     for (const b of BILLS) {
       const cell = el('div', `cell${p.dominant === b ? ' dom' : ''}`);
