@@ -50,12 +50,20 @@ jobs:
       # `find` rather than a glob: the previous pattern was web/js/*.js, which matched nothing —
       # exercise 01 inlines its JS and exercise 03 keeps shared modules in web/_shared/, so the
       # step silently checked zero files.
-      - name: Web bundle syntax (node --check)
+      #
+      # AND IT MUST PARSE AS A MODULE. Plain `node --check <file>` parses with the SCRIPT goal,
+      # which for a `.js` file means node wraps the source in the CommonJS function wrapper first —
+      # so a stray `}` merely closes that wrapper early and the file passes. Every file this step
+      # checks is an ES module. A real one slipped through exactly this way: `node --check` exited
+      # 0 on a diagrams.js with an unbalanced brace, and the browser refused it with
+      # "Unexpected token '}'". Feeding the file on stdin with --input-type=module parses with the
+      # module goal, which passes valid modules and catches that.
+      - name: Web bundle syntax (parsed as ES modules)
         run: |
           found=0
           while IFS= read -r f; do
             echo "checking $f"
-            node --check "$f"
+            node --input-type=module --check < "$f"
             found=$((found + 1))
           done < <(find src/exercises -path '*/web/*' -name '*.js' -type f | sort)
           echo "checked $found file(s)"

@@ -62,6 +62,23 @@ without breaking anything else.
 | `timeline.py` | ordering, the gaps, and which bill each period was paying down |
 | `story.py` | the six chapters the page tells, and the rule that every mechanism is in exactly one |
 
+The page is six more, and they are listed because a module nobody names is a module the next
+reader regenerates the site without:
+
+| module | owns |
+| --- | --- |
+| `web/data.js` | everything the page renders, emitted by `tools/build_web_data.py`. Never hand-edited |
+| `web/chapters.js` | the twelve spine sections and the six chapters — layout only, no numbers |
+| `web/figures.js` | the six numbered plates: the invoice, the race, the centrefold, the timeline |
+| `web/glyphs.js` | the four glyph generators, one per shape, read from each entry's `pattern` block |
+| `web/support.js` | the predicate itself — which query-key pairs survive, at any resolution |
+| `web/diagrams.js` | the full-size diagram per mechanism, four scenes over the same `pattern` block |
+| `web/field-guide/` | the second route: all thirty diagrams at once, in one convention |
+
+`web/support.js` is extracted rather than inlined so a glyph at 26px and a diagram at 720 units call
+the *same* predicate — they cannot disagree about what a mechanism does, which they could while each
+had its own copy.
+
 `results/mechanisms.json` is the tracked evidence. Nothing derives it; it was assembled by hand from
 primary sources and is validated by `catalogue.py`.
 

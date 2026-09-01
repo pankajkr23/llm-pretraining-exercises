@@ -12,6 +12,25 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **A drawn diagram for every one of exercise 08's thirty attention mechanisms**, and a
+  **field guide** at `/08-modern-attention-variants/field-guide/` showing all thirty at once in one
+  convention so they can be compared rather than read in sequence. Four scenes cover the lot —
+  which query-key pairs survive, what the cache keeps, what one fixed state does per token, and how
+  position enters — each generated from the `pattern` block the catalogue already carried, so a
+  thirty-first mechanism gets a diagram with no new drawing. Filters derive from the data; deep
+  links work both ways.
+
+  Form carries the meaning (solid, hollow, hatched, ruled) and colour carries only the parts, via
+  four new `--part-*` tokens valued across all six themes. That order is not conservatism: under
+  `high-contrast` the `--muted` and `--ink` tokens are the *same* `#000000`, so any encoding leaning
+  on one against the other reads in five themes and vanishes in the sixth.
+
+- **A theme test, which this repo had never had** — all six themes render with no console error,
+  every token resolves, body text clears 4.5:1 on its own ground, and no painted mark falls into its
+  background. Plus a deliberately broken twin, because a contrast checker nobody has watched fail is
+  not a checker.
+
+
 - **Exercise 08's page** at `/08-modern-attention-variants/` — twelve spine sections set as a
   **monograph feature**: six numbered plates, six chapters, and the 24 mechanisms as *one object
   entered once per mechanism* rather than 24 collapsed cards. Three views answer three different
@@ -159,6 +178,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   and every one was found by looking at the page while the whole suite passed.
 
 ### Fixed
+
+- **CI's web syntax gate could not see an unbalanced brace.** `node --check` parses a `.js` file
+  with the script goal, wrapping it in the CommonJS function wrapper first, so a stray `}` closes
+  the wrapper early and the file passes — while the browser refuses the same file outright. It
+  happened: a `diagrams.js` passed the gate and threw `Unexpected token '}'` on load. The gate now
+  feeds each file on stdin with `--input-type=module`. All 34 web modules pass the stricter check.
+
+- **Four defects on exercise 08's figures, every one found by reading a rendered screenshot with the
+  whole suite green.** Learned absolute position embeddings were drawn as six frequency bands of
+  differing lengths, labelled *fast* and *slow* — it is a lookup table with one row per position and
+  no frequency structure at all, which its own catalogue note had said all along. DroPE drew two
+  surviving bands directly above a caption reading *"the bands are removed entirely"*. Sinusoidal
+  printed its summary twice in slightly different words. And the state scenes' update legends drew
+  `forget` and `write gate` in two classes that resolve to the same token, so a six-step recipe
+  rendered five distinguishable marks.
 
 - **Two documents named things that do not exist.** Exercise 05's generated README claimed
   `SPEC.md`, `TOKENIZER.md`, `EXPERIMENTS.md`, itself *"and the exercise-05 section of the

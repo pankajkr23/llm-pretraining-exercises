@@ -1559,6 +1559,14 @@ a.guide-path:focus-visible {
 .diagram-svg text.lbl {
   font-weight: 600;
 }
+/* A numeral printed ON a painted mark takes the page ground, not the ink. `text.num` fills with
+ * var(--ink), which is the right default everywhere else and unreadable here. The ratio is safe in
+ * all six themes for the same reason --muted is: it is already a text colour on --bg, and swapping
+ * which of the pair is the ground does not change the contrast between them. */
+.diagram-svg text.onmark {
+  fill: var(--bg);
+  font-weight: 700;
+}
 
 /* The detail diagram sits beneath the spread's two columns, spanning both. */
 .sp-diagram {

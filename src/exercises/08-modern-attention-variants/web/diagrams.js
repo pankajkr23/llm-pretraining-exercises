@@ -113,21 +113,31 @@ function head(g, x, y, label) {
   g.append(t(x, y, 'kick', label.toUpperCase()));
 }
 
-/** The legend: what each mark means, only for the marks this diagram actually used. */
-function legend(g, x, y, used) {
-  let cx = x;
+/** THE MARKS: what each mark means, only for the marks this diagram actually used.
+ *
+ * Shared, because it was not. The field scene grew its own copy and the bands scenes had none at
+ * all — so YaRN's three-way split and NTK's two-way split rendered as bare colours a reader had to
+ * infer from the order of a sentence underneath. Four colours carry two registers on this page
+ * (which PART something is, and WHY a cell survived); that is legible only where a figure says
+ * which register it is using.
+ *
+ * `hatch` and `hollow` are keys, not classes. Setting them as a class produced an unstyled rect,
+ * which every browser fills black — so the swatch for "dropped by this mechanism" once came out as
+ * the most solid mark on the whole figure, the exact opposite of what it means.
+ */
+function marks(g, x, y, used, hatch) {
+  head(g, x, y, 'the marks');
+  let cy = y + 18;
   for (const [cls, label] of used) {
-    if (cls === 'hatch') {
-      g.append(s('rect', { x: cx, y: y - 8, width: 14, height: 10, class: 'dg-masked-swatch' }));
-    } else if (cls === 'hollow') {
-      g.append(s('rect', { x: cx, y: y - 8, width: 14, height: 10, class: 'dg-dropped' }));
-    } else {
-      g.append(s('rect', { x: cx, y: y - 8, width: 14, height: 10, class: cls }));
-    }
-    g.append(t(cx + 19, y, 'ax', label));
-    cx += 26 + label.length * 5.4;
+    const swatch =
+      cls === 'hatch'
+        ? s('rect', { x, y: cy - 9, width: 16, height: 11, fill: hatch, class: 'dg-masked' })
+        : s('rect', { x, y: cy - 9, width: 16, height: 11, class: cls === 'hollow' ? 'dg-dropped' : cls });
+    g.append(swatch);
+    g.append(t(x + 23, cy, 'ax', label));
+    cy += 16;
   }
-  return cx;
+  return cy;
 }
 
 /** The size table: every number the drawing used, and where it came from. */
@@ -300,26 +310,7 @@ function sceneField(m, key) {
   });
 
   const ly = 34 + boxes.length * 30 + 18;
-  head(g, HX, ly, 'the marks');
-  let cy = ly + 18;
-  for (const [cls, label] of used) {
-    /* `hatch` and `hollow` are keys, not classes. Setting them as a class produced an unstyled
-     * rect, which every browser fills black — so the swatch for "dropped by this mechanism" came
-     * out as the most solid mark on the whole figure, the exact opposite of what it means. */
-    const swatch =
-      cls === 'hatch'
-        ? s('rect', { x: HX, y: cy - 9, width: 16, height: 11, fill: hatch, class: 'dg-masked' })
-        : s('rect', {
-            x: HX,
-            y: cy - 9,
-            width: 16,
-            height: 11,
-            class: cls === 'hollow' ? 'dg-dropped' : cls,
-          });
-    g.append(swatch);
-    g.append(t(HX + 23, cy, 'ax', label));
-    cy += 16;
-  }
+  let cy = marks(g, HX, ly, used, hatch);
 
   /* No causal mask is itself the finding, and a solid square does not say so on its own.
    * Cross-attention predates the decoder-only Transformer: there is no future to hide, because
@@ -499,6 +490,13 @@ function sceneState(m) {
       g.append(s('rect', { x: x + k * 15, y: CY, width: 12, height: 22, rx: 1, class: 'dg-k' }));
     }
     g.append(t(x, CY - 8, 'ax', `t = ${step + 1}`));
+    /* Named where it is drawn, not only in a sentence at the top of the figure. Two rows of
+     * coloured marks with their explanation forty units above them is a legend a reader has to
+     * hold in their head while looking somewhere else. */
+    if (step === 2) {
+      g.append(t(x + 52, CY + 15, 'ax', 'KV cache'));
+      g.append(t(x + 104, SY + 36, 'ax', 'fixed state'));
+    }
 
     // the fixed state
     g.append(s('rect', { x, y: SY, width: 96, height: 62, rx: 3, class: 'dg-store' }));
@@ -513,20 +511,32 @@ function sceneState(m) {
   // What the update actually is — the thing that separates the family.
   const UY = SY + 96;
   head(g, 24, UY, 'what the update does');
+  /* NUMBERED, NOT COLOURED, and the reason is the page's own palette rule. These steps mark
+   * nothing in the drawing above — they are legend-only — so a colour here was decoration, and it
+   * was decoration drawn from the four-part palette, which made it read as meaning. Worse, it
+   * collided: `forget` used dg-local and `write gate` used dg-k, and BOTH resolve to --part-k, so
+   * KDA's six-step recipe rendered two of its steps identically. That is exactly the defect YaRN's
+   * bands had, in a second family. There are up to six steps and only four part colours, so colour
+   * could never have carried this.
+   *
+   * An ordinal carries something true instead: the update happens in this order. Form for
+   * semantics, colour for parts — the rule this exercise wrote down and then broke here. */
   const steps = [];
-  if (p.selective || write.startsWith('select')) steps.push(['decide', 'read the token, choose whether to write it at all', 'dg-selected']);
-  if (p.gated === 'channelwise') steps.push(['forget', 'decay each channel of the state at its own rate', 'dg-local']);
-  else if (write.includes('flush')) steps.push(['forget', 'one gate can clear the whole store', 'dg-local']);
-  if (write.includes('correct')) steps.push(['erase', 'read what is already stored for this key and subtract it', 'dg-v']);
-  steps.push(['write', 'add the new value', 'dg-q']);
-  if (p.gates === 2) steps.push(['write gate', 'a second gate, so how much is written is decided separately from how much is erased', 'dg-k']);
-  if (p.rotating) steps.push(['rotate', 'a complex-valued update, so the state can track order', 'dg-bucket']);
-  if (p.chunked) steps.push(['in chunks', 'a block of tokens at a time, so it parallelises', 'dg-block']);
+  if (p.selective || write.startsWith('select')) steps.push(['decide', 'read the token, choose whether to write it at all']);
+  if (p.gated === 'channelwise') steps.push(['forget', 'decay each channel of the state at its own rate']);
+  else if (write.includes('flush')) steps.push(['forget', 'one gate can clear the whole store']);
+  if (write.includes('correct')) steps.push(['erase', 'read what is already stored for this key and subtract it']);
+  steps.push(['write', 'add the new value']);
+  if (p.gates === 2) steps.push(['write gate', 'a second gate, so how much is written is decided separately from how much is erased']);
+  if (p.rotating) steps.push(['rotate', 'a complex-valued update, so the state can track order']);
+  if (p.chunked) steps.push(['in chunks', 'a block of tokens at a time, so it parallelises']);
 
-  let cy = UY + 20;
-  steps.forEach(([name, why, cls]) => {
-    g.append(s('rect', { x: 24, y: cy - 9, width: 12, height: 12, rx: 2, class: cls }));
-    g.append(t(44, cy, 'lbl', name));
+  g.append(t(24, UY + 15, 'ax', 'in this order, once per token:'));
+  let cy = UY + 38;
+  steps.forEach(([name, why], i) => {
+    g.append(s('rect', { x: 24, y: cy - 10, width: 15, height: 14, rx: 2, class: 'dg-ref' }));
+    g.append(t(31.5, cy, 'num mid onmark', String(i + 1)));
+    g.append(t(46, cy, 'lbl', name));
     g.append(t(150, cy, 'ax', why));
     cy += 21;
   });
@@ -539,13 +549,25 @@ function sceneBands(m) {
   const p = m.glyph.params || {};
   const g = s('g', {});
   const rows = p.rows || 6;
-  /* A note that only some schemes need, rendered under the summary rather than beside the bars —
-   * out to the right it ran past a 720-unit frame, which the bbox guard caught. */
-  let extra = '';
 
-  head(g, 24, 20, 'how position enters, band by band');
+  /* A LOOKUP TABLE IS NOT A FREQUENCY DECOMPOSITION, and drawing one as the other invents
+   * structure the mechanism does not have — the failure this exercise exists to prevent, in the
+   * one place nobody was watching for it. Learned absolute embeddings store one row per position;
+   * there is no fast band and no slow band, and no row reaches further than any other. The
+   * catalogue's own note has always said so ("One learned row per position"); the drawing said
+   * otherwise, in a header, a subhead and six row labels. */
+  const table = p.table === true;
+
+  head(g, 24, 20, table ? 'how position enters, row by row' : 'how position enters, band by band');
   g.append(
-    t(24, 38, 'ax', 'each bar is one frequency band — short bars turn fast, long bars turn slowly')
+    t(
+      24,
+      38,
+      'ax',
+      table
+        ? 'each bar is one stored row — one per position, learned independently of the others'
+        : 'each bar is one frequency band — short bars turn fast, long bars turn slowly'
+    )
   );
 
   const X0 = 120;
@@ -553,6 +575,10 @@ function sceneBands(m) {
   const wall = FULL * 0.62;
   const BY = 66;
   const h = 26;
+  const used = [];
+  const add = (cls, label) => {
+    if (!used.some(([c]) => c === cls)) used.push([cls, label]);
+  };
 
   g.append(
     s('line', { x1: X0 + wall, y1: BY - 4, x2: X0 + wall, y2: BY + rows * h + 6, class: 'dg-wall' })
@@ -563,10 +589,19 @@ function sceneBands(m) {
     const y = BY + i * h;
     let w = FULL * (0.3 + (0.7 * (i + 1)) / rows);
     let cls = 'dg-k';
-    if (p.hardEdge || p.continues) w = Math.min(w, wall);
+    if (table) {
+      /* Every row identical and stopping dead at the wall: that IS the mechanism. */
+      w = wall;
+      add('dg-k', 'a stored row, learned during training');
+    } else if (p.hardEdge || p.continues || p.coupled) {
+      w = Math.min(w, wall);
+      add('dg-k', p.coupled ? 'a frequency band' : 'a frequency band, unchanged');
+    }
     if (p.stretch === 'low') {
       w = i >= rows - 2 ? FULL : Math.min(w, wall * 1.05);
       if (i >= rows - 2) cls = 'dg-selected';
+      add('dg-k', 'left nearly alone');
+      add('dg-selected', 'stretched to reach further');
     }
     if (p.stretch === 'banded') {
       /* Three treatments, and they must be three COLOURS. The first version used dg-k and dg-local
@@ -574,21 +609,40 @@ function sceneBands(m) {
        * and the figure showed a mechanism with one fewer idea in it than it has. */
       w = i < 2 ? Math.min(w, wall * 0.8) : i < 4 ? Math.min(w, wall * 1.02) : FULL;
       cls = i < 2 ? 'dg-k' : i < 4 ? 'dg-store' : 'dg-selected';
+      add('dg-k', 'left as trained');
+      add('dg-store', 'interpolated');
+      add('dg-selected', 'stretched');
     }
-    if (p.emptying && i >= 2) {
+    if (p.emptying) {
+      /* DroPE removes the positional embeddings, ALL of them — that is the whole technique. The
+       * first version emptied bands three onward and left two solid, directly under a caption
+       * reading "removed entirely". A reader sees two filled bars and believes two survive. */
       cls = 'dg-dropped';
       w = FULL * 0.92;
+      add('hollow', 'removed, and the model recalibrated without it');
     }
     g.append(s('rect', { x: X0, y: y + 3, width: w, height: h - 7, rx: 1, class: cls }));
-    g.append(t(X0 - 10, y + h / 2 + 3, 'ax end', i < rows / 2 ? `band ${i + 1} · fast` : `band ${i + 1} · slow`));
+    g.append(
+      t(
+        X0 - 10,
+        y + h / 2 + 3,
+        'ax end',
+        table ? `row ${i + 1}` : i < rows / 2 ? `band ${i + 1} · fast` : `band ${i + 1} · slow`
+      )
+    );
   }
 
+  /* A note that only some schemes need, rendered under the summary rather than beside the bars —
+   * out to the right it ran past a 720-unit frame, which the bbox guard caught. It must describe a
+   * MARK the reader can see and the summary does not already state: the first version restated the
+   * summary word for word, so sinusoidal printed the same sentence twice. */
+  let extra = '';
   if (p.continues) {
-    for (let i = 0; i < rows; i += 2) {
+    for (let i = 0; i < rows; i += 1) {
       const y = BY + i * h + h / 2 + 1;
       g.append(s('line', { x1: X0 + wall + 3, y1: y, x2: X0 + FULL, y2: y, class: 'dg-cont' }));
     }
-    extra = 'the function is defined past the wall, but was never trained there';
+    extra = 'the dashed runs are where the function still returns a value nobody trained';
   }
   if (p.coupled) {
     for (let i = 0; i < rows - 1; i += 1) {
@@ -599,24 +653,26 @@ function sceneBands(m) {
     extra = 'the curved links mark bands that rotate together rather than independently';
   }
 
-  const cy = BY + rows * h + 46;
-  head(g, 24, cy, 'what this scheme changes');
-  const note =
-    p.emptying
-      ? 'the bands are removed entirely and the model is briefly recalibrated without them'
-      : p.stretch === 'banded'
-        ? 'three treatments by band: leave the fast ones, interpolate the middle, stretch the slow'
-        : p.stretch === 'low'
-          ? 'stretch the slow bands so they still fit; leave the fast ones nearly alone'
-          : p.coupled
-            ? 'rotate in higher dimensions so bands mix, instead of turning in isolation'
-            : p.continues
-              ? 'the function is defined past the trained length, but was never trained there'
-              : 'the table simply stops: past the trained length there is nothing to look up';
-  g.append(t(24, cy + 18, 'ax', note));
-  if (extra) g.append(t(24, cy + 33, 'ax', extra));
+  const my = BY + rows * h + 46;
+  const cy = used.length ? marks(g, 24, my, used, null) : my;
 
-  return { node: g, height: cy + (extra ? 54 : 40) };
+  const ny = cy + (used.length ? 18 : 0);
+  head(g, 24, ny, 'what this scheme changes');
+  const note = p.emptying
+    ? 'the bands are removed entirely and the model is briefly recalibrated without them'
+    : p.stretch === 'banded'
+      ? 'three treatments by band: leave the fast ones, interpolate the middle, stretch the slow'
+      : p.stretch === 'low'
+        ? 'stretch the slow bands so they still fit; leave the fast ones nearly alone'
+        : p.coupled
+          ? 'rotate in higher dimensions so bands mix, instead of turning in isolation'
+          : p.continues
+            ? 'the function is defined past the trained length, but was never trained there'
+            : 'the table simply stops: past the trained length there is nothing to look up';
+  g.append(t(24, ny + 18, 'ax', note));
+  if (extra) g.append(t(24, ny + 33, 'ax', extra));
+
+  return { node: g, height: ny + (extra ? 54 : 40) };
 }
 
 const SCENE = { field: sceneField, stack: sceneStack, state: sceneState, bands: sceneBands };

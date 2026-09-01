@@ -158,7 +158,7 @@ suite about a change under `web/`.
 
 ## The plate is two plates, and the phone gets the other one
 
-`figPlate` is a 1440-unit landscape SVG. Scaled into a 342px column every label is sub-pixel and the
+`figPlate` — all six plates live in `web/figures.js` — is a 1440-unit landscape SVG. Scaled into a 342px column every label is sub-pixel and the
 page's centrepiece carries no information at all, so `figPlateTall` runs the same argument down the
 page below 720px — same lanes, same to-scale gaps, same ties — and **drops the names**, because at
 that width there is no honest way to fit them. Dropping a label is a decision; shrinking it to four
@@ -203,6 +203,34 @@ sweep of everything published since DroPE, and the rules that pass established:
   count and every plural on the page is derived for this reason — but a *headline* is not derived
   unless you make it so, and Well IV's headline had to be rewritten because it stated a day count
   the data no longer supported.
+
+## The diagrams: one predicate, two resolutions, and a citation as the price of a number
+
+`web/diagrams.js` draws all thirty from the same `pattern` block the glyphs use, through
+`web/support.js` — extracted so a glyph at T=12 and a diagram at its own T cannot disagree about
+what a mechanism does. Four scenes (`field`, `stack`, `state`, `bands`), no numeric literal in the
+module describing any mechanism, and `web/field-guide/` is a second route over the same catalogue.
+
+- **A size may enter the catalogue only with a citation attached.** `GLYPH_SCALES` says why there
+  were none: *a glyph drawn to specific numbers would be inventing them.* `Glyph._check_sizes`
+  keeps that guarantee by pricing entry — a `stated` size quotes the sentence and names where, an
+  `ours` size says why, and **the quote must contain the number it is evidence for**. That last rule
+  caught 512 attributed to Longformer on a quote that never says 512.
+- **A silent fallback produced a plausible wrong number.** MLA is not a point on the cache sharing
+  ladder, so the lookup fell through to its first row and drew MLA at "192 KiB, 1× less than keeping
+  every head" — directly beneath its own credit line claiming a large cache reduction. It draws
+  93.3% now, quoting its own abstract, with no fallback.
+- **Form carries the semantics; colour carries only the parts.** Under `high-contrast`, `--muted`
+  and `--ink` are the same `#000000`. And colour only works while there are more colours than
+  meanings: four `--part-*` tokens were asked to separate six update steps and two of them collided,
+  so the steps are **numbered** now — which is also more informative, because they happen in order.
+- **Four defects, all found by reading a rendered screenshot with the suite green**, each now with a
+  guard named after it in `tests/test_attention_diagrams.py`: a lookup table drawn as frequency
+  bands, DroPE keeping two bands under a caption saying it removes them all, a figure printing its
+  summary twice, and a legend whose two classes resolved to one token.
+- **Two guards asked for a phrasing instead of a property** and failed correct work — one demanded
+  "drawn to scale" from a figure that quotes its paper verbatim, one demanded a `THE MARKS` heading
+  from eleven figures keyed by other means. Both ask the underlying question now.
 
 ## Two claims that live in Python because a test must reach them
 

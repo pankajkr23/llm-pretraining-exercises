@@ -68,10 +68,11 @@ export const M = Object.freeze({
         "kind": "bands",
         "params": {
           "rows": 6,
-          "hardEdge": true
+          "hardEdge": true,
+          "table": true
         },
         "scale": "schematic",
-        "source": "One learned row per position, with nothing beyond the trained length. Band count is illustrative.",
+        "source": "One learned row per position, with nothing beyond the trained length. Drawn as a table rather than a frequency decomposition, because that is what it is: no row is faster or slower than another. Row count is illustrative.",
         "sizes": {}
       },
       "source": {

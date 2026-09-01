@@ -375,6 +375,34 @@ Two more that cost this repo real defects:
   does **not** check is the prose around the number, so treat that as hand-verified on every PR that
   moves an exercise forward.
 - **A new module is not done until every list that names modules includes it.** `explainer.py` shipped and stayed missing from three places — the README's *Run it*, the README's layout block, and the exercise's `CLAUDE.md`. Exercise 06 now checks two of those three: `tests/test_trainingdata_docs.py::test_every_module_is_named_in_the_documents_that_list_modules` asserts every `src/trainingdata/*.py` is named somewhere in **both** README.md and CLAUDE.md. It was red when written — `replay.py` had shipped and the README never learned about it — and is green now, including `opus.py` and `opus_score.py`. Copy that guard into any exercise that grows past a handful of modules. Note its limit: it checks the *document*, not the *list*, so a module named once in prose satisfies it while the layout block a reader actually follows stays wrong. The consequence was not cosmetic: a reader regenerating the site would have run `widget` without `explainer` and published a page whose figures contradicted its own tool.
+- **`node --check` does NOT parse a `.js` file as an ES module, and CI's syntax gate depended on
+  it.** Node parses a lone `.js` with the *script* goal, which means wrapping the source in the
+  CommonJS function wrapper first — so a stray `}` merely closes that wrapper early and the file
+  passes. It is not theoretical: `node --check` exited 0 on a `diagrams.js` with an unbalanced
+  brace and the browser refused the same file with `Unexpected token '}'`. Verified on a
+  four-line throwaway module. Every file the gate checks (`find src/exercises -path '*/web/*'
+  -name '*.js'`) is an ES module, so the gate was weaker than it read for as long as it has
+  existed. Feed the file on stdin instead — `node --input-type=module --check < "$f"` — which
+  parses with the module goal, passes valid modules and catches that.
+
+- **A guard must test the property, not one phrasing of it.** Two guards in one session asked for
+  a specific string and failed correct work: one demanded a "drawn to scale" line and red-flagged a
+  figure that quotes its own paper verbatim (stronger evidence than the thing being demanded), and
+  one demanded a legend headed `THE MARKS` and red-flagged eleven figures keyed by other means — a
+  legend headed *"what the update does"*, or marks labelled in place. Both times the honest fix was
+  to ask the underlying question: *is this attributed?* and *is this colour explained anywhere on
+  the figure?* A guard that names one implementation of a property will fail every other
+  implementation, and the pressure is then to reword good work to satisfy the test.
+
+- **Colour can only carry semantics while there are more colours than meanings.** A semantic
+  palette of four (`--part-q/k/v/store`) was asked to distinguish up to six update steps, and two
+  of them (`dg-local`, `dg-k`) resolved to the same token — so a six-step recipe rendered five
+  marks and nobody could see which two had merged. The same bug had already shipped once in the
+  same exercise, in a different family, and been fixed locally rather than as a rule. When the
+  count of things to distinguish can exceed the count of colours, encode it in **form** — an
+  ordinal, a shape, a texture — and let colour keep its one job. Here the ordinal was also *more*
+  informative than the colour it replaced: the steps happen in that order.
+
 - **Render a diagram before committing it.** A Mermaid block is not verified by reading it. A semicolon inside a `Note over` is a statement separator, so the note terminated mid-sentence and GitHub would have rendered a parse error where a diagram should be — caught only by running it through `npx @mermaid-js/mermaid-cli`. The same applies to every number inside one: read them back from the code.
 
 ## The root README is a map; each exercise's README is the guide

@@ -226,6 +226,46 @@ def test_the_page_renders_under_every_theme(browser, name: str, attr: str | None
 
 
 @pytest.mark.parametrize("name,attr,scheme", THEMES, ids=[t[0] for t in THEMES])
+def test_text_printed_on_a_painted_mark_is_readable_on_it(
+    browser, name: str, attr: str | None, scheme: str
+):
+    """`.onmark` prints a numeral **on** a swatch rather than beside it, which inverts the usual
+    pairing: the ground is `--muted` and the text is `--bg`.
+
+    Every other text check on this page measures against the page ground, so this pairing was
+    unmeasured. It is the pairing that goes wrong quietly — `text.num` fills with `--ink`, so a
+    numeral dropped onto a muted swatch without its own rule is ink-on-muted, and under
+    `high-contrast` those two tokens are the *same* `#000000`: a number that is simply not there,
+    in exactly one of six themes.
+    """
+    ctx, page = _open(browser, attr, scheme)
+    try:
+        r = page.evaluate(
+            _luminance_js()
+            + """
+            () => {
+              const root = getComputedStyle(document.documentElement);
+              const v = (n) => root.getPropertyValue(n).trim();
+              const probe = document.createElement('div');
+              document.body.appendChild(probe);
+              const resolve = (c) => {
+                probe.style.color = c;
+                return getComputedStyle(probe).color;
+              };
+              const out = ratio(rgb(resolve(v('--bg'))), rgb(resolve(v('--muted'))));
+              probe.remove();
+              return out;
+            }"""
+        )
+        assert r >= TEXT_CONTRAST, (
+            f"{name}: a numeral on a muted swatch reads at {r:.2f}:1, below {TEXT_CONTRAST}:1"
+        )
+    finally:
+        page.close()
+        ctx.close()
+
+
+@pytest.mark.parametrize("name,attr,scheme", THEMES, ids=[t[0] for t in THEMES])
 def test_no_painted_mark_is_the_same_colour_as_its_background(
     browser, name: str, attr: str | None, scheme: str
 ):

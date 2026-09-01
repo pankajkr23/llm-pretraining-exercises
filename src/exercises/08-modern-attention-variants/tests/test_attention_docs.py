@@ -179,3 +179,34 @@ def test_no_count_is_typed_into_the_page_as_a_word() -> None:
             if _re.search(rf"['\"`][^'\"`]*\b({numbers})\b", code, _re.I):
                 offenders.append(f"{path.name}:{n}: {line.strip()[:88]}")
     assert not offenders, "spelled counts typed into page prose:\n  " + "\n  ".join(offenders)
+
+
+def test_every_module_is_named_in_the_documents_that_list_modules() -> None:
+    """A new module is not done until every list that names modules includes it.
+
+    Copied from exercise 06, where `explainer.py` shipped and stayed missing from three such lists
+    — and the consequence was not cosmetic: a reader regenerating the site would have run the wrong
+    subset and published a page whose figures contradicted its own tool. All six of this exercise's
+    web modules were missing from README.md when this was written.
+
+    Its limit, which 06's copy also has: it checks the *document*, not the *list*. A module named
+    once in prose satisfies it while the table a reader actually follows stays wrong.
+    """
+    root = Path(__file__).resolve().parents[1]
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    claude = (root / "CLAUDE.md").read_text(encoding="utf-8")
+
+    modules = sorted(
+        p.name for p in (root / "src" / "attention").glob("*.py") if p.stem != "__init__"
+    )
+    modules += sorted(p.name for p in (root / "web").glob("*.js"))
+    assert len(modules) > 8, f"only found {modules} — the glob has stopped seeing the code"
+
+    missing = {
+        name: [d for d, text in (("README.md", readme), ("CLAUDE.md", claude)) if name not in text]
+        for name in modules
+    }
+    missing = {n: d for n, d in missing.items() if d}
+    assert not missing, (
+        f"these modules are not named in every document that lists modules: {missing}"
+    )

@@ -86,12 +86,19 @@ def drawn(site):
               host.appendChild(svg);
               const vb = svg.viewBox.baseVal;
               const b = svg.getBBox();
+              const box = (el) => { const r = el.getBBox(); return [r.x, r.y, r.width, r.height]; };
               res[m.key] = {
                 markup: svg.innerHTML,
                 label: svg.getAttribute('aria-label') || '',
                 bbox: [b.x, b.y, b.width, b.height],
                 view: [vb.x, vb.y, vb.width, vb.height],
                 nodes: svg.querySelectorAll('*').length,
+                painted: [...svg.querySelectorAll('[class]')]
+                  .filter((el) => el.tagName !== 'text')
+                  .map((el) => ({ cls: el.getAttribute('class'), at: box(el) })),
+                words: [...svg.querySelectorAll('text')].map((el) => ({
+                  text: el.textContent, at: box(el),
+                })),
               };
             }
             host.remove();
@@ -259,3 +266,114 @@ def test_the_field_guide_never_scrolls_sideways(guide, width: int) -> None:
         "() => document.documentElement.scrollWidth - document.documentElement.clientWidth"
     )
     assert overflow <= 1, f"the field guide scrolls sideways by {overflow}px at {width}px"
+
+
+#: The classes that carry meaning through colour. Structural marks (walls, wires, dashes, reference
+#: bars, tracks) are furniture and are labelled in place where they need to be.
+_MEANINGFUL = frozenset(
+    {
+        "dg-q",
+        "dg-k",
+        "dg-v",
+        "dg-store",
+        "dg-local",
+        "dg-sink",
+        "dg-stride",
+        "dg-block",
+        "dg-selected",
+        "dg-bucket",
+    }
+)
+
+#: A label is "beside" a mark when a reader would read the two together: on roughly the same line,
+#: within a short reach either side. Generous on purpose — the point is to catch a colour with NO
+#: text anywhere near it, not to police layout.
+_REACH, _SAME_LINE = 190.0, 17.0
+
+
+# ---- three guards written after reading the rendered figures, not before -------------------------
+
+
+def test_no_diagram_prints_the_same_sentence_twice(drawn) -> None:
+    """Sinusoidal's figure carried its summary and a note underneath saying the same thing:
+
+        the function is defined past the trained length, but was never trained there
+        the function is defined past the wall, but was never trained there
+
+    Two lines, one fact, and a reader reasonably concludes the renderer is broken. The note exists
+    to explain a *mark* the summary does not mention, so restating the summary is always the bug.
+    """
+    dupes = {}
+    for key, v in drawn.items():
+        seen: dict[str, int] = {}
+        for text in re.findall(r"<text[^>]*>([^<]{25,})</text>", v["markup"]):
+            seen[text.strip()] = seen.get(text.strip(), 0) + 1
+        repeated = [t for t, n in seen.items() if n > 1]
+        if repeated:
+            dupes[key] = repeated
+    assert not dupes, f"these diagrams print a line twice: {dupes}"
+
+
+def test_every_colour_a_diagram_uses_is_named_somewhere_on_that_diagram(drawn) -> None:
+    """Four colours carry two registers on this page — which *part* something is (Q, K, V, store),
+    and *why* a cell survived (local, sink, selected, block). That is legible only where the figure
+    itself says which register it is using, and in what sense.
+
+    The field scenes always carried a marks list. The bands scenes carried none, so YaRN's
+    three-way split and NTK's two-way split rendered as bare colours whose meaning a reader had to
+    infer from the order of a sentence below them. Same page, same magenta, two meanings, no key.
+
+    **This asks whether a colour is EXPLAINED, not whether a particular heading is present.** The
+    first version looked for the literal string "THE MARKS" and failed eleven figures that are
+    properly keyed by other means — the state scenes head their legend "what the update does", and
+    the stack scenes label each mark in place ("8 query heads" beside eight orange boxes). Testing
+    for one phrasing rather than the property is the same error this file's provenance guard made.
+
+    Its limit, stated because a guard that overstates itself is worse than none: proximity is not
+    comprehension. It proves some text sits beside every coloured mark; it cannot prove the text is
+    the right text. Reading the figure is still the check that decides.
+    """
+
+    def near(mark, words) -> bool:
+        mx, my, mw, mh = mark
+        cy = my + mh / 2
+        for w in words:
+            wx, wy, ww, wh = w["at"]
+            if abs((wy + wh / 2) - cy) > _SAME_LINE:
+                continue
+            if wx + ww >= mx - _REACH and wx <= mx + mw + _REACH:
+                return True
+        return False
+
+    unkeyed = {}
+    for key, v in drawn.items():
+        used = {}
+        for el in v["painted"]:
+            cls = el["cls"]
+            if cls in _MEANINGFUL:
+                used.setdefault(cls, []).append(el["at"])
+        if len(used) < 2:
+            continue  # a single colour cannot be confused with another
+        silent = sorted(c for c, ats in used.items() if not any(near(a, v["words"]) for a in ats))
+        if silent:
+            unkeyed[key] = silent
+    assert not unkeyed, f"these paint a meaning-carrying colour with no text beside it: {unkeyed}"
+
+
+def test_a_mechanism_that_removes_everything_draws_nothing_kept(drawn) -> None:
+    """DroPE's summary reads *"the bands are removed entirely"* and its figure drew two solid bands
+    above that sentence, because the emptying branch started at index two. A reader sees two filled
+    bars and concludes two survive — the figure contradicting its own caption, which is the defect
+    this page keeps finding in new costumes.
+    """
+    emptying = [
+        m["key"]
+        for m in _bundle()["mechanisms"]
+        if (m["pattern"] if "pattern" in m else m["glyph"]).get("params", {}).get("emptying")
+    ]
+    assert emptying, "no mechanism claims to empty its bands — this guard would be vacuous"
+    for key in emptying:
+        markup = drawn[key]["markup"]
+        assert "removed entirely" in markup, f"{key} no longer states that it removes everything"
+        kept = re.findall(r'<rect[^>]*class="dg-(?:k|v|q|store|selected|local)"', markup)
+        assert not kept, f"{key} says it removes everything and draws {len(kept)} kept bands"

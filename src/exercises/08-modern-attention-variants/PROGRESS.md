@@ -25,6 +25,9 @@ pipeline is fine, and the link must resolve for a logged-out stranger.
 | O3 | **The page** | **done** | Twelve spine sections, the two-object mechanism figure and the timeline, at `/08-modern-attention-variants/`. Registered in the landing card, `SPINE_ENFORCED` and `OPTIONAL_DEPENDENCY_GATES` in the same change. 20 browser tests. |
 | O4 | **Question 2's written answer** | **open** | The findings are on the page's conclusion section and in the README; they still need pasting into the platform's answer field. |
 | O5 | **A mechanism figure** | **done** | Figure 1: the causal score triangle beside the KV-cache column, with eight variants as predicates rather than pictures. Three browser tests make it falsifiable — switching must change the drawing, GQA must touch no score, linear attention must leave no per-position square. |
+| O7 | **A diagram per mechanism** | **done** | Thirty, four scenes, generated from the `pattern` block each catalogue entry already carried. Sourced sizes carry a citation as the price of entry. |
+| O8 | **The field guide** | **done** | `/08-modern-attention-variants/field-guide/` — all thirty at once, filters derived from the data, deep links both ways. No build change needed. |
+| O9 | **A theme test** | **done** | Six themes × render, tokens, text contrast, mark separation. The first in the repo; it closed a gap that predates this exercise. |
 | O6 | **The notebook** | **open** | `tools/build_notebook.py` exists as a stub. It must import the package and run the shipped code, not re-implement it. |
 
 ---
