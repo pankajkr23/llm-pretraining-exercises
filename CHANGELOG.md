@@ -10,6 +10,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Exercise 05 has a drawn figure for the first time.** The repetition curve, its `16.4×`
+  asymptote, and every funded lane plotted where it sits on it — the mechanism the whole exercise
+  turns on, and previously reachable only by dragging a slider one point at a time. Every point is
+  computed by `worthTokens()`, the same function the slider and the supply verdicts use, so the
+  drawing cannot disagree with the arithmetic. It was the last page carrying the spine with no
+  figure at all; `AGENTS.md` requires both a results chart and a mechanism figure, because results
+  say *what happened* and only mechanism says *why it must*.
+- **A guard that a figure may not silently drop a data point.** The figure's first draft filtered
+  out every lane past its axis maximum and labelled the remainder *"all 5 funded lanes"* — there are
+  six, and the dropped one was the lane that cannot be funded at any price. It is now drawn as an
+  off-scale marker with its real value, and the test fails if any funded lane is neither plotted nor
+  named. Watched failing by dropping it again on purpose.
+
 ### Changed
 
 - **The documentation caught up with v0.11.0.** `docs/DESIGN.md` gained the spine's visual

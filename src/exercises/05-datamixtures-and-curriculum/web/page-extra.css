@@ -472,3 +472,62 @@ pre.code {
   font-size: 12.5px;
   line-height: 1.65;
 }
+
+/* ------------------------------------------------------------------------------- figures
+ *
+ * Inline SVG drawn from the page's own functions. Every colour is a token from
+ * /_shared/tokens.css, so the figure follows the reader's theme rather than being right in one of
+ * them; a literal here is wrong in five of the six. See docs/DESIGN.md.
+ */
+
+figure.fig { margin: 20px 0; }
+
+/* The figure scrolls inside its own box so the page body never does -- exercise 04 shipped a
+ * 312px sideways scroll from an element that did not. */
+figure.fig { overflow-x: auto; }
+
+.fig-svg {
+  display: block;
+  width: 100%;
+  min-width: 460px;
+  height: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+figure.fig figcaption {
+  max-width: 72ch;
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.ax-line { stroke: var(--line); stroke-width: 1; }
+.ax-grid { stroke: var(--line); stroke-width: 1; opacity: 0.45; }
+.ax-ceiling { stroke: var(--grade-x); stroke-width: 1.5; stroke-dasharray: 5 4; }
+
+text.ax { fill: var(--muted); font-size: 11px; font-family: var(--sans); }
+text.ax.mid { text-anchor: middle; }
+text.ax.end { text-anchor: end; }
+text.ax.small { font-size: 10px; }
+text.ax.strong { font-weight: 600; }
+text.ax.accent { fill: var(--accent); }
+text.ax.warn { fill: var(--grade-x); }
+
+/* What you pay for: the straight line, and the one that is not the point. */
+.fig-paid { fill: none; stroke: var(--grade-x); stroke-width: 2; opacity: 0.85; }
+
+/* What you get: the fitted curve. The accent is spent here, on the half that matters. */
+.fig-got { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+
+.fig-dot { fill: var(--accent); stroke: var(--panel); stroke-width: 1.5; }
+
+/* The span the funded lanes occupy. Faint on purpose: it is context for the dots, not a series. */
+.fig-band { fill: var(--accent); opacity: 0.07; }
+
+/* The off-scale lane: red, because it is the one that cannot be funded, and red on this site is
+   reserved for the excluded thing. */
+.fig-offscale { stroke: var(--grade-x); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.fig-dot.bad { fill: var(--grade-x); }
