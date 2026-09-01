@@ -1563,6 +1563,11 @@ a.guide-path:focus-visible {
  * var(--ink), which is the right default everywhere else and unreadable here. The ratio is safe in
  * all six themes for the same reason --muted is: it is already a text colour on --bg, and swapping
  * which of the pair is the ground does not change the contrast between them. */
+/* The citation under a group of numbers: the same size as the labels, set back so the numbers
+ * above it read as the content and the source as its footing. */
+.diagram-svg text.dim {
+  fill: var(--faint);
+}
 .diagram-svg text.onmark {
   fill: var(--bg);
   font-weight: 700;

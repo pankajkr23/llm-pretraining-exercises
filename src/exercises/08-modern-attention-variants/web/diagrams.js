@@ -141,17 +141,100 @@ function marks(g, x, y, used, hatch) {
 }
 
 /** The size table: every number the drawing used, and where it came from. */
-function sizeTable(g, x, y, rows) {
+/** How a size name reads to someone who has not seen the code. */
+const SIZE_LABEL = {
+  context: 'context length',
+  window: 'sliding window',
+  local: 'local band',
+  stride: 'stride',
+  blockSize: 'block size',
+  selected: 'blocks selected',
+  compressBlock: 'compression block',
+  compressStride: 'compression stride',
+  sinks: 'attention sinks',
+  topk: 'k, scores kept',
+  buckets: 'hash buckets',
+  hashes: 'hash rounds',
+  tile: 'on-chip tile',
+  heads: 'query heads',
+  kvHeads: 'key/value heads',
+  cacheReduction: 'cache reduction',
+  headDim: 'per-head dimension',
+  stateSize: 'state dimension',
+  expansion: 'expansion factor',
+  chunk: 'chunk length',
+  base: 'rotation base',
+  trainedLength: 'trained length',
+  extendedLength: 'extended to',
+  extension: 'scale factor',
+  dims: 'rotated dimensions',
+};
+
+/** The numbers a diagram used, grouped by the sentence each was read from.
+ *
+ * GROUPED, because papers state four hyperparameters in one breath. MSA's "Each attention module
+ * uses MSA with 64 query heads, 4 KV heads, head dimension 128, and RoPE dimension 64" is the
+ * evidence for four separate sizes, and a row-per-size table printed that sentence four times in a
+ * column a reader is meant to scan. One source, one citation, however many numbers it carries.
+ *
+ * The note WRAPS. It is a citation, which runs long, and this table sits inside a 720-unit frame:
+ * unwrapped, a `where` naming a section and an arXiv id runs straight out of the viewBox, and SVG
+ * does not clip, so it would land on whatever is beside it.
+ */
+function sizeTable(g, x, y, groups) {
   let cy = y;
-  for (const [name, value, from, note] of rows) {
-    g.append(t(x, cy, 'ax', name));
-    g.append(t(x + 132, cy, 'num', value));
-    const mark = from === 'stated' ? '' : '~';
-    if (mark) g.append(t(x + 214, cy, 'ax', mark));
-    g.append(t(x + 226, cy, 'ax', note));
-    cy += 15;
+  for (const { rows, note, stated } of groups) {
+    for (const [name, value] of rows) {
+      g.append(t(x, cy, 'ax', name));
+      g.append(t(x + 150, cy, 'num', value));
+      if (!stated) g.append(t(x + 236, cy, 'ax', '~'));
+      cy += 14;
+    }
+    for (const line of wrapAt(String(note || ''), 96)) {
+      g.append(t(x + 14, cy + 2, 'ax dim', line));
+      cy += 13;
+    }
+    cy += 9;
   }
   return cy;
+}
+
+/** Appended by the dispatcher, not by each scene.
+ *
+ * One convention for all thirty was the whole point of drawing them, and a block each scene has to
+ * remember to add is one a new scene will not have. Put it where every diagram passes through and
+ * the rule holds by construction rather than by discipline.
+ */
+function provenance(m, y) {
+  const sizes = (m.glyph && m.glyph.sizes) || {};
+  const names = Object.keys(sizes);
+  if (!names.length) return null;
+
+  const groups = [];
+  const seen = new Map();
+  for (const k of names) {
+    const z = sizes[k];
+    const stated = z.from === 'stated';
+    const note = stated ? `“${z.quote}” — ${z.where}` : z.note;
+    const unit = z.unit === 'percent' ? '%' : z.unit ? ` ${z.unit}` : '';
+    const row = [SIZE_LABEL[k] || k, `${z.value}${unit}`];
+    if (seen.has(note)) {
+      seen.get(note).rows.push(row);
+    } else {
+      const grp = { rows: [row], note, stated };
+      seen.set(note, grp);
+      groups.push(grp);
+    }
+  }
+
+  const g = s('g', {});
+  head(g, 24, y + 14, 'the numbers, and where they came from');
+  const end = sizeTable(g, 24, y + 34, groups);
+  if (groups.some((grp) => !grp.stated)) {
+    g.append(t(24, end + 2, 'ax', '~ our choice, not the paper\'s — the note says why'));
+    return { node: g, height: end + 16 };
+  }
+  return { node: g, height: end + 4 };
 }
 
 /* ------------------------------------------------------------------------- the field scene
@@ -242,14 +325,30 @@ function sceneField(m, key) {
 
   /* The true proportion, computed from the paper's own numbers rather than from the picture. This
    * is what carries the honesty when the grid cannot. */
+  /* A PERCENTAGE THAT ROUNDS TO ZERO IS NOT A MEASUREMENT. MSA selects 16 blocks of 128 tokens in
+   * a million-token context — 0.2% — and `toFixed(0)` printed "about 0%", which reads as "none"
+   * and is the one thing it is not. Sparsity this aggressive is the entire claim of these papers,
+   * so the figure has to be able to say a small number out loud. */
+  const pct = (x) => {
+    const v = x * 100;
+    if (v >= 10) return `${v.toFixed(0)}%`;
+    if (v >= 1) return `${v.toFixed(1)}%`;
+    return `${Number(v.toPrecision(1))}%`;
+  };
+
   let trueShare = null;
   if (trueContext && val('blockSize') && val('selected')) {
     const blocks = Math.round(trueContext / val('blockSize'));
-    const win = val('window') || 0;
-    const share = (val('selected') * val('blockSize') + win) / trueContext;
-    trueShare = `${val('selected')} of ${int(blocks)} blocks plus a ${int(win)}-token window — about ${(share * 100).toFixed(0)}% of a ${int(trueContext)}-token context`;
+    const win = val('window');
+    /* Only name the window when the paper gave us one. Reporting "plus a 0-token window" for a
+     * mechanism whose window we never sourced states a fact about our catalogue as if it were a
+     * fact about the mechanism, and MSA — which does have a local window — was published saying
+     * exactly that. An absent number is not a zero. */
+    const share = (val('selected') * val('blockSize') + (win || 0)) / trueContext;
+    const winPart = win ? ` plus a ${int(win)}-token window` : '';
+    trueShare = `${val('selected')} of ${int(blocks)} blocks${winPart} — about ${pct(share)} of a ${int(trueContext)}-token context`;
   } else if (trueContext && val('window')) {
-    trueShare = `a ${int(val('window'))}-token window in a ${int(trueContext)}-token context — ${((val('window') / trueContext) * 100).toFixed(0)}%`;
+    trueShare = `a ${int(val('window'))}-token window in a ${int(trueContext)}-token context — ${pct(val('window') / trueContext)}`;
   }
 
   const grid = support(p, T, drawSizes);
@@ -437,11 +536,13 @@ function sceneStack(m) {
       g.append(t(BX - 10, y + 13, 'ax end', label));
       g.append(t(BX + barW * frac + 8, y + 13, 'num', i === 0 ? 'baseline' : `${(frac * 100).toFixed(1)}%`));
     });
+    /* The DERIVED sentence only. The citation itself now goes in the provenance table the
+     * dispatcher appends to every diagram, and printing it here too put the same quote on the
+     * figure twice. It also had a latent bug worth recording: each wrapped line was drawn at the
+     * same y, so a citation long enough to wrap would have overprinted itself into an unreadable
+     * smudge. It never did, because MLA's happens to fit on one line. */
     g.append(t(BX, CY + 88, 'ax', `a ${stated.value}% reduction, the figure its own paper reports`));
-    for (const line of wrapAt(`“${stated.quote}” — ${stated.where}`, 78)) {
-      g.append(t(BX, CY + 104, 'ax', line));
-    }
-    return { node: g, height: CY + 128 };
+    return { node: g, height: CY + 104 };
   }
   if (perToken) {
     const full = perToken.mha;
@@ -701,9 +802,16 @@ export function diagramSvg(m, opts = {}) {
   }
 
   const { node, height } = scene(m, m.key);
+  /* Every diagram states its numbers and their provenance, in one place and one format. */
+  const foot = provenance(m, height);
+  let total = height;
+  if (foot) {
+    node.append(foot.node);
+    total = foot.height;
+  }
   title.textContent = `${m.name}: ${diagramSummary(m)}`;
   el.append(title, node);
-  el.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  el.setAttribute('viewBox', `0 0 ${width} ${total}`);
   el.setAttribute('width', '100%');
   el.setAttribute('aria-label', `${m.name} — ${diagramSummary(m)}`);
   return el;

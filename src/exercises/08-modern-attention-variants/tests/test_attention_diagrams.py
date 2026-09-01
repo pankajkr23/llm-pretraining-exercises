@@ -291,6 +291,13 @@ _MEANINGFUL = frozenset(
 _REACH, _SAME_LINE = 190.0, 17.0
 
 
+def _unescape(markup: str) -> str:
+    """SVG text arrives XML-escaped; a catalogue quote does not."""
+    for a, b in (("&amp;", "&"), ("&lt;", "<"), ("&gt;", ">"), ("&quot;", '"'), ("&#39;", "'")):
+        markup = markup.replace(a, b)
+    return markup
+
+
 # ---- three guards written after reading the rendered figures, not before -------------------------
 
 
@@ -303,12 +310,28 @@ def test_no_diagram_prints_the_same_sentence_twice(drawn) -> None:
     Two lines, one fact, and a reader reasonably concludes the renderer is broken. The note exists
     to explain a *mark* the summary does not mention, so restating the summary is always the bug.
     """
+    by_key = {m["key"]: m for m in _bundle()["mechanisms"]}
     dupes = {}
     for key, v in drawn.items():
         seen: dict[str, int] = {}
         for text in re.findall(r"<text[^>]*>([^<]{25,})</text>", v["markup"]):
             seen[text.strip()] = seen.get(text.strip(), 0) + 1
         repeated = [t for t, n in seen.items() if n > 1]
+
+        #: ALSO CATCH THE WRAPPED CASE, and check it against the catalogue's OWN quote strings
+        #: rather than by guessing quotation marks. A quote printed once as a whole line and once
+        #: split across wrapped lines is the same duplication to a reader and matches nothing
+        #: above, because no two text nodes are equal. MLA shipped exactly that: its citation
+        #: appeared in the stack scene and again in the provenance table the dispatcher appends.
+        #: A first attempt looked for text between quote characters with a 30-character floor and
+        #: silently passed, because MLA's quote is 29 characters and the two copies used different
+        #: quote glyphs. Guessing the delimiter was the wrong idea; the quote is in the data.
+        joined = " ".join(re.findall(r"<text[^>]*>([^<]*)</text>", v["markup"]))
+        flat = re.sub(r"\s+", " ", _unescape(joined))
+        for spec in (by_key[key]["glyph"].get("sizes") or {}).values():
+            quote = re.sub(r"\s+", " ", str(spec.get("quote", ""))).strip()
+            if len(quote) >= 12 and flat.count(quote) > 1:
+                repeated.append(f"(quoted {flat.count(quote)}x) {quote[:60]}")
         if repeated:
             dupes[key] = repeated
     assert not dupes, f"these diagrams print a line twice: {dupes}"
@@ -377,3 +400,28 @@ def test_a_mechanism_that_removes_everything_draws_nothing_kept(drawn) -> None:
         assert "removed entirely" in markup, f"{key} no longer states that it removes everything"
         kept = re.findall(r'<rect[^>]*class="dg-(?:k|v|q|store|selected|local)"', markup)
         assert not kept, f"{key} says it removes everything and draws {len(kept)} kept bands"
+
+
+def test_no_diagram_reports_a_share_that_rounds_to_nothing(drawn) -> None:
+    """A percentage printed as "about 0%" reads as "none", which is the one thing it is not.
+
+    MSA selects 16 blocks of 128 tokens in a million-token context. That is 0.2% — the entire point
+    of the paper — and `toFixed(0)` published it as "about 0% of a 1,000,000-token context".
+    Aggressive sparsity is exactly the regime these figures exist to show, so the formatter has to
+    be able to say a small number out loud.
+    """
+    zeros = {
+        k: v for k, v in drawn.items() if "about 0% of" in v["markup"] or "— 0%" in v["markup"]
+    }
+    assert not zeros, f"these report a share of 0%: {sorted(zeros)}"
+
+
+def test_no_diagram_reports_a_size_it_never_sourced_as_zero(drawn) -> None:
+    """An absent number is not a zero, and printing it as one states a fact about our catalogue as
+    if it were a fact about the mechanism.
+
+    MSA has a local window; we never sourced its size. The figure said "plus a 0-token window",
+    which is a claim the paper contradicts. The clause is now omitted when the number is absent.
+    """
+    bad = {k: v for k, v in drawn.items() if "0-token window" in v["markup"]}
+    assert not bad, f"these print a window of zero tokens: {sorted(bad)}"

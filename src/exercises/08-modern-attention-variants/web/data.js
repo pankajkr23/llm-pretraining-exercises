@@ -35,7 +35,15 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "Cross-attention over a source sentence: every target position may see every source position, so there is no mask. Shape from the paper's description; grid size is ours.",
-        "sizes": {}
+        "sizes": {
+          "context": {
+            "value": 50,
+            "unit": "words",
+            "from": "stated",
+            "quote": "sentences of length up to 50 word (RNNenc-50, RNNsearch-50)",
+            "where": "S4.2 Models, arXiv:1409.0473v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -73,7 +81,15 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "One learned row per position, with nothing beyond the trained length. Drawn as a table rather than a frequency decomposition, because that is what it is: no row is faster or slower than another. Row count is illustrative.",
-        "sizes": {}
+        "sizes": {
+          "dims": {
+            "value": 512,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "All embeddings, including the output produced by the decoder before the final linear layer, have dimensionality 512",
+            "where": "S4.2 Model Parameters and Optimization, arXiv:1705.03122v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -111,7 +127,36 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "Fixed sine and cosine bands at different frequencies, defined past the trained length. Band count is illustrative.",
-        "sizes": {}
+        "sizes": {
+          "dims": {
+            "value": 512,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "produce outputs of dimension d model = 512",
+            "where": "S3.1 Encoder and Decoder Stacks, arXiv:1706.03762v1 (same value in the 'base' row of Table 3, S6.2)"
+          },
+          "headDim": {
+            "value": 64,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "we use d k = d v = d model / h = 64",
+            "where": "S3.2.2 Multi-Head Attention, arXiv:1706.03762v1 (d_k = d_v = 64 in the 'base' row of Table 3, S6.2)"
+          },
+          "heads": {
+            "value": 8,
+            "unit": "heads",
+            "from": "stated",
+            "quote": "we employ h = 8 parallel attention layers, or heads",
+            "where": "S3.2.2 Multi-Head Attention, arXiv:1706.03762v1 ('base' row of Table 3, S6.2)"
+          },
+          "base": {
+            "value": 10000,
+            "unit": "dimensionless",
+            "from": "stated",
+            "quote": "The wavelengths form a geometric progression from 2 π to 10000 ⋅ 2 π",
+            "where": "S3.5 Positional Encoding, arXiv:1706.03762v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -151,7 +196,22 @@ export const M = Object.freeze({
         },
         "scale": "illustrative",
         "source": "The full causal triangle — the reference every other field glyph is drawn against. Exact by construction.",
-        "sizes": {}
+        "sizes": {
+          "heads": {
+            "value": 8,
+            "unit": "heads",
+            "from": "stated",
+            "quote": "In this work we employ h = 8 parallel attention layers, or heads",
+            "where": "S3.2.2 Multi-Head Attention, arXiv:1706.03762v1"
+          },
+          "headDim": {
+            "value": 64,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "For each of these we use d k = d v = d model / h = 64",
+            "where": "S3.2.2 Multi-Head Attention, arXiv:1706.03762v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -192,7 +252,29 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "Strided plus local factorisation. The paper gives O(n sqrt n); the specific stride and local width here are ours.",
-        "sizes": {}
+        "sizes": {
+          "context": {
+            "value": 12288,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "We trained with a context length of 12,288, which is longer than previous approaches",
+            "where": "S7.2 Text (Enwik8), arXiv:1904.10509v1"
+          },
+          "stride": {
+            "value": 128,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "We used a stride of 128, c = 32 , and merged the factorized attention heads",
+            "where": "S7.2 Text (Enwik8), arXiv:1904.10509v1"
+          },
+          "heads": {
+            "value": 8,
+            "unit": "heads",
+            "from": "stated",
+            "quote": "fixed Sparse Transformers with 8 heads",
+            "where": "S7.2 Text (Enwik8), arXiv:1904.10509v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -229,7 +311,15 @@ export const M = Object.freeze({
         },
         "scale": "illustrative",
         "source": "One key/value head for all query heads, by definition. Head count 8 is the session's own yardstick.",
-        "sizes": {}
+        "sizes": {
+          "context": {
+            "value": 128,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "WMT14 EN-DE Translation Task with sequence length 128",
+            "where": "Table 2 caption, S4.3 Speed, arXiv:1911.02150v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -270,7 +360,15 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "Three surviving cells per row, scattered rather than patterned, because which cells survive depends on the scores and therefore on the data. A tidy fixed shape here would be a lie a reader cannot detect - the whole point of top-k is that the shape is not knowable in advance.",
-        "sizes": {}
+        "sizes": {
+          "topk": {
+            "value": 8,
+            "unit": "keys",
+            "from": "stated",
+            "quote": "setting the value of k to 8 achieves consistent improvements over the transformer baseline",
+            "where": "S4.2 How to Select a Proper k?, arXiv:1912.11637v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -308,7 +406,15 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "Block-diagonal on a reordered sequence, with the reordering drawn above it. Buckets come from hashing the content, so which cells are live depends on the data and not on position; a fixed pattern here would be a lie a reader cannot detect.",
-        "sizes": {}
+        "sizes": {
+          "hashes": {
+            "value": 8,
+            "unit": "rounds",
+            "from": "stated",
+            "quote": "At n rounds = 8 , it already almost matches full attention",
+            "where": "S5 Experiments, arXiv:2001.04451v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -400,7 +506,29 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "A fixed-size running state, the same size at any context. Deliberately NOT a diagonal, which would wrongly suggest a token attends only to itself. State dimensions are ours.",
-        "sizes": {}
+        "sizes": {
+          "heads": {
+            "value": 8,
+            "unit": "heads",
+            "from": "stated",
+            "quote": "comprises 8 attention layers with 8 attention heads each",
+            "where": "S4.2.1 MNIST, arXiv:2006.16236v1"
+          },
+          "context": {
+            "value": 784,
+            "unit": "pixels",
+            "from": "stated",
+            "quote": "Since the sequence length is realtively small, namely only 784 pixels",
+            "where": "S4.2.1 MNIST, arXiv:2006.16236v1"
+          },
+          "headDim": {
+            "value": 32,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "We set the embedding size to 256 which is 32 dimensions per head",
+            "where": "S4.2.1 MNIST, arXiv:2006.16236v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -439,7 +567,15 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "The same fixed state, written by reading first and applying only the difference.",
-        "sizes": {}
+        "sizes": {
+          "context": {
+            "value": 256,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "and the training and evaluation context length L to 256",
+            "where": "S6.3 Language Modelling Experiments (small configuration), arXiv:2102.11174v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -476,7 +612,22 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "A graded field constant along each diagonal, oscillating with the gap under a slow decay envelope, because the score is a sum of cosines of the gap times theta. Frequency and envelope are illustrative; the oscillation is the mechanism.",
-        "sizes": {}
+        "sizes": {
+          "base": {
+            "value": 10000,
+            "unit": "dimensionless",
+            "from": "stated",
+            "quote": "we choose θ i = 10000 - 2 i / d",
+            "where": "S3.3 Properties of RoPE / Long-term decay, arXiv:2104.09864v1"
+          },
+          "context": {
+            "value": 1024,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "when increase the maximum input text length to 1024 RoFormer outperforms WoBERT",
+            "where": "S4.4 Results (text accompanying Table 4), arXiv:2104.09864v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -513,7 +664,29 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "A linear penalty growing with distance, subtracted before softmax. Per-head slopes exist in the paper; the one drawn is illustrative.",
-        "sizes": {}
+        "sizes": {
+          "heads": {
+            "value": 8,
+            "unit": "heads",
+            "from": "stated",
+            "quote": "For our models that have 8 heads the slopes that we used are the geometric sequence",
+            "where": "S3 Attention with Linear Biases (ALiBi), arXiv:2108.12409v1"
+          },
+          "trainedLength": {
+            "value": 1024,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "training a 1.3 billion parameter model on input sequences of length 1024",
+            "where": "Abstract, arXiv:2108.12409v1"
+          },
+          "extendedLength": {
+            "value": 2048,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "extrapolates to input sequences of length 2048",
+            "where": "Abstract, arXiv:2108.12409v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -550,7 +723,22 @@ export const M = Object.freeze({
         },
         "scale": "illustrative",
         "source": "Byte-identical to the standard-attention field, because FlashAttention is EXACT — it changes memory traffic, not one score. The only difference drawn is the tiling overlay.",
-        "sizes": {}
+        "sizes": {
+          "context": {
+            "value": 1024,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "(seq. length 1024, head dim. 64, 16 heads, batch size 64)",
+            "where": "Figure 2 caption (Left/Middle panels, S3.2 IO-complexity analysis), arXiv:2205.14135v1"
+          },
+          "headDim": {
+            "value": 64,
+            "unit": "dimensions per head",
+            "from": "stated",
+            "quote": "8 heads of dimension 64, and batch size 128",
+            "where": "Appendix E.5 Full Benchmarking Results, 'Setup', arXiv:2205.14135v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -587,7 +775,22 @@ export const M = Object.freeze({
         },
         "scale": "illustrative",
         "source": "Query heads in groups sharing a key/value head. 2 of 8 is the session's own worked example.",
-        "sizes": {}
+        "sizes": {
+          "kvHeads": {
+            "value": 8,
+            "unit": "groups",
+            "from": "stated",
+            "quote": "We selected 8 groups as a favorable middle ground",
+            "where": "S3.3 Ablations, \"Number of groups\" (discussion of Figure 6), arXiv:2305.13245v1"
+          },
+          "context": {
+            "value": 2048,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "as a function of the number of GQA groups with input length 2048 and output length 512",
+            "where": "Figure 6 caption, S3.3 Ablations (\"Number of groups\"), arXiv:2305.13245v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -623,8 +826,16 @@ export const M = Object.freeze({
           "stretch": "low"
         },
         "scale": "schematic",
-        "source": "Low-frequency bands stretched, high-frequency bands left nearly alone. Which bands and by how much is illustrative.",
-        "sizes": {}
+        "source": "Bands with the low-frequency ones stretched and the high-frequency ones left nearly alone. NTK-aware was announced in a Reddit post rather than a paper, and that post is not retrievable, so this is the only entry whose one sourced number is quoted from a different document — YaRN, by the same authors. Which bands and by how much is illustrative.",
+        "sizes": {
+          "base": {
+            "value": 10000,
+            "unit": "dimensionless",
+            "from": "stated",
+            "quote": "and b = 10000",
+            "where": "S2.1, arXiv:2309.00071 (YaRN) — NTK-aware's own authors, describing the base their method rescales; NTK-aware itself was posted to Reddit, not published"
+          }
+        }
       },
       "source": {
         "kind": "post",
@@ -661,7 +872,29 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "Frequencies split into bands and treated differently by band. The split points are illustrative.",
-        "sizes": {}
+        "sizes": {
+          "base": {
+            "value": 10000,
+            "unit": "dimensionless",
+            "from": "stated",
+            "quote": "and b = 10000",
+            "where": "S2.1 Rotary Position Embeddings, arXiv:2309.00071v1"
+          },
+          "extension": {
+            "value": 16,
+            "unit": "multiple",
+            "from": "stated",
+            "quote": "For s = 16 we fine-tuned for 400 steps",
+            "where": "S4.1 Training, arXiv:2309.00071v1"
+          },
+          "extendedLength": {
+            "value": 65536,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "fine-tuned using YaRN with 64k and 128k context windows",
+            "where": "Abstract, arXiv:2309.00071v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -699,7 +932,15 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "A sliding window plus the first few positions held permanently — literally the union of two earlier glyphs. Sink count is illustrative.",
-        "sizes": {}
+        "sizes": {
+          "sinks": {
+            "value": 4,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "introducing 4 initial tokens as attention sinks in StreamingLLM",
+            "where": "S4.4 Ablation Studies, \"Numbers of Initial Tokens\", arXiv:2309.17453v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -735,7 +976,29 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "A fixed state whose write is input-dependent: store, ignore or forget per token.",
-        "sizes": {}
+        "sizes": {
+          "stateSize": {
+            "value": 16,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "We use a model dimension of D = 1024 and state dimension N = 16",
+            "where": "E.5 Efficiency Benchmark (Scan Operation), arXiv:2312.00752v2"
+          },
+          "expansion": {
+            "value": 2,
+            "unit": "multiple",
+            "from": "stated",
+            "quote": "We always fix to E = 2 in our experiments",
+            "where": "S3.4 A Simplified SSM Architecture, arXiv:2312.00752v2"
+          },
+          "context": {
+            "value": 2048,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "Mamba and Pythia are trained with context length 2048",
+            "where": "S4.2.2 Downstream Evaluations, arXiv:2312.00752v2"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -818,7 +1081,15 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "The delta-rule state, written a chunk at a time so it can be trained in parallel.",
-        "sizes": {}
+        "sizes": {
+          "headDim": {
+            "value": 128,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "The head dimension of DeltaNet is set to 128",
+            "where": "S4.2 Language Modeling, 'Hyperparameters' paragraph, arXiv:2406.06484v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -854,7 +1125,22 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "The delta-rule state plus a gate that can clear it wholesale.",
-        "sizes": {}
+        "sizes": {
+          "context": {
+            "value": 4096,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "we set the training length to 4K tokens",
+            "where": "S4 Experiments, \"Setup\" paragraph, arXiv:2412.06464v1"
+          },
+          "headDim": {
+            "value": 128,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "a head dimension of 128 provides an optimal trade-off",
+            "where": "Appendix A.2 Ablation Study, prose discussing Table S.1, arXiv:2412.06464v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -980,7 +1266,43 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "A state box whose gate is drawn per channel rather than as one mark, because the whole change is that decay is no longer a single scalar. The number of channels drawn is ours.",
-        "sizes": {}
+        "sizes": {
+          "context": {
+            "value": 4096,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "All models are pretrained using a 4,096-token context window",
+            "where": "S5.4.1 Pre-training recipe, arXiv:2510.26692v1"
+          },
+          "stateSize": {
+            "value": 128,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "a fixed-sized state ( d k x d v per head, with d k = d v = 128 )",
+            "where": "S6.3 Inference strategy and cost, arXiv:2510.26692v1"
+          },
+          "chunk": {
+            "value": 64,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "a fixed chunk size C = 64",
+            "where": "S6.3 Complexity Analysis (Training flops), arXiv:2510.26692v1"
+          },
+          "headDim": {
+            "value": 128,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "the key and value head dimensions, which are set to 128 for all experiments",
+            "where": "S4 The Kimi Linear Model Architecture, Neural Parameterization, arXiv:2510.26692v1"
+          },
+          "cacheReduction": {
+            "value": 75,
+            "unit": "percent",
+            "from": "stated",
+            "quote": "reducing KV cache usage by up to 75%",
+            "where": "Abstract (repeated in S1 Contributions), arXiv:2510.26692v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -1017,7 +1339,36 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "The positional bands being removed after pretraining, which is the mechanism itself.",
-        "sizes": {}
+        "sizes": {
+          "trainedLength": {
+            "value": 2048,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "SmolLM 's pretraining context ( 2048 tokens)",
+            "where": "S5.1 Large-scale empirical evaluation ('Extending the context of LMs in the wild with DroPE'), arXiv:2512.12167v1"
+          },
+          "dims": {
+            "value": 64,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "Head dimension 64",
+            "where": "Table 4 (Appendix C.1 Training), 'Model architectures' block, arXiv:2512.12167v1"
+          },
+          "extension": {
+            "value": 2,
+            "unit": "multiple",
+            "from": "stated",
+            "quote": "Table 1: Zero-shot NIAH at 2 x training context",
+            "where": "Table 1 caption, S5.1 (matching Figure 1's caption), arXiv:2512.12167v1"
+          },
+          "base": {
+            "value": 10000,
+            "unit": "dimensionless",
+            "from": "stated",
+            "quote": "RoPE θ 1,000,000 10,000",
+            "where": "Table 4 (Appendix C.1 Training), SmolLM column, arXiv:2512.12167v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -1056,7 +1407,36 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "A state box with a rotation mark, for the complex-valued update that is the paper's distinguishing change. The mark is a symbol, not a measurement.",
-        "sizes": {}
+        "sizes": {
+          "context": {
+            "value": 2048,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "Context Length 2048",
+            "where": "Table 4 (Context Length row), S4.1 Language Modeling, arXiv:2603.15569v1"
+          },
+          "stateSize": {
+            "value": 128,
+            "unit": "dimensions (N per head)",
+            "from": "stated",
+            "quote": "For Mamba variants we set state size as 128 and head dimension 64",
+            "where": "Appendix G Latency Benchmark Details (1.5B models), arXiv:2603.15569v1"
+          },
+          "expansion": {
+            "value": 2,
+            "unit": "multiple of the model dimension",
+            "from": "stated",
+            "quote": "the standard expand factor of 2",
+            "where": "Appendix D Experimental Details, Language Modeling, arXiv:2603.15569v1"
+          },
+          "headDim": {
+            "value": 64,
+            "unit": "dimensions (P per head)",
+            "from": "stated",
+            "quote": "head dimension of 64",
+            "where": "Appendix D Experimental Details, Language Modeling, arXiv:2603.15569v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -1101,7 +1481,50 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "Selected blocks plus a local window, with a compression mark, because it layers compression underneath the selection its predecessor already did. Block size and how many are selected are ours. Blocks are chosen per query BY SCORE, not by position: an earlier version of this drawing turned on the first N blocks, which asserts that the mechanism always attends to the oldest text. It does not. Which blocks survive depends on the scores and therefore on the data, so the selection is drawn as a reproducible scatter and labelled as one.",
-        "sizes": {}
+        "sizes": {
+          "context": {
+            "value": 1000000,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "these two models can natively and efficiently support 1M-length contexts",
+            "where": "S1 Introduction, arXiv:2606.19348v1"
+          },
+          "topk": {
+            "value": 1024,
+            "unit": "compressed KV entries",
+            "from": "stated",
+            "quote": "the number of KV entries selected for sparse attention (i.e., attention top-k) to 1024",
+            "where": "S4.2.1 Model Setups, DeepSeek-V4-Pro, arXiv:2606.19348v1"
+          },
+          "window": {
+            "value": 128,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "the window size n win is set to 128",
+            "where": "S4.2.1 Model Setups (stated identically for DeepSeek-V4-Flash and DeepSeek-V4-Pro), arXiv:2606.19348v1"
+          },
+          "heads": {
+            "value": 128,
+            "unit": "query heads",
+            "from": "stated",
+            "quote": "we set the number of query heads n h to 128",
+            "where": "S4.2.1 Model Setups, DeepSeek-V4-Pro, arXiv:2606.19348v1"
+          },
+          "headDim": {
+            "value": 512,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "the head dimension c to 512",
+            "where": "S4.2.1 Model Setups (stated identically for DeepSeek-V4-Flash and DeepSeek-V4-Pro), arXiv:2606.19348v1"
+          },
+          "dims": {
+            "value": 64,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "we apply RoPE to its last 64 dimensions",
+            "where": "S2.3.3 Other Details, 'Partial Rotary Positional Embedding', arXiv:2606.19348v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -1140,7 +1563,43 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "Two separate gate marks on the state box, for the erase gate and the write gate the paper decouples. Their size and placement are ours.",
-        "sizes": {}
+        "sizes": {
+          "context": {
+            "value": 4096,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "The training sequence length is 4K tokens",
+            "where": "Appendix E.1 Training, arXiv:2605.22791v1"
+          },
+          "heads": {
+            "value": 16,
+            "unit": "heads",
+            "from": "stated",
+            "quote": "Gated DeltaNet-2 use H = 16 heads with d k = 128 and d v = 128",
+            "where": "Appendix E.1 Training, arXiv:2605.22791v1"
+          },
+          "stateSize": {
+            "value": 128,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "Gated DeltaNet-2 use H = 16 heads with d k = 128 and d v = 128",
+            "where": "Appendix E.1 Training, arXiv:2605.22791v1"
+          },
+          "headDim": {
+            "value": 128,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "Gated DeltaNet-2 use H = 16 heads with d k = 128 and d v = 128",
+            "where": "Appendix E.1 Training, arXiv:2605.22791v1"
+          },
+          "chunk": {
+            "value": 64,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "The chunk size is fixed to C = 64",
+            "where": "Appendix C.2 Forward kernels, arXiv:2605.22791v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -1183,7 +1642,57 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "Blocks selected per query group, drawn as selection with a grouping mark. How many blocks and how many are selected are ours; the paper's point is that selection is per group. Blocks are chosen per query BY SCORE, not by position: an earlier version of this drawing turned on the first N blocks, which asserts that the mechanism always attends to the oldest text. It does not. Which blocks survive depends on the scores and therefore on the data, so the selection is drawn as a reproducible scatter and labelled as one.",
-        "sizes": {}
+        "sizes": {
+          "blockSize": {
+            "value": 128,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "both MSA models use block size B k = 128 and keep k = 16 key-value blocks per query and GQA group",
+            "where": "S5.1 Setup, Model Structure, arXiv:2606.13392v1"
+          },
+          "selected": {
+            "value": 16,
+            "unit": "blocks",
+            "from": "stated",
+            "quote": "both MSA models use block size B k = 128 and keep k = 16 key-value blocks per query and GQA group",
+            "where": "S5.1 Setup, Model Structure, arXiv:2606.13392v1"
+          },
+          "context": {
+            "value": 1000000,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "speedups at 1M context length",
+            "where": "S1 Introduction, arXiv:2606.13392v1"
+          },
+          "heads": {
+            "value": 64,
+            "unit": "heads",
+            "from": "stated",
+            "quote": "Each attention module uses MSA with 64 query heads, 4 KV heads, head dimension 128, and RoPE dimension 64",
+            "where": "S5.1 Setup, Model Structure, arXiv:2606.13392v1"
+          },
+          "kvHeads": {
+            "value": 4,
+            "unit": "heads",
+            "from": "stated",
+            "quote": "Each attention module uses MSA with 64 query heads, 4 KV heads, head dimension 128, and RoPE dimension 64",
+            "where": "S5.1 Setup, Model Structure, arXiv:2606.13392v1"
+          },
+          "headDim": {
+            "value": 128,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "Each attention module uses MSA with 64 query heads, 4 KV heads, head dimension 128, and RoPE dimension 64",
+            "where": "S5.1 Setup, Model Structure, arXiv:2606.13392v1"
+          },
+          "dims": {
+            "value": 64,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "Each attention module uses MSA with 64 query heads, 4 KV heads, head dimension 128, and RoPE dimension 64",
+            "where": "S5.1 Setup, Model Structure, arXiv:2606.13392v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -1222,7 +1731,22 @@ export const M = Object.freeze({
         },
         "scale": "schematic",
         "source": "Bands with coupling marks between them, because the change is that rotation subspaces mix rather than staying independent. The number of bands drawn is ours.",
-        "sizes": {}
+        "sizes": {
+          "dims": {
+            "value": 64,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "Head Dim. 64",
+            "where": "Table 6 (A.3.1 Model Architecture), arXiv:2608.29715v1"
+          },
+          "extendedLength": {
+            "value": 32768,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "utilizing a sequence length of 32,768 and a total of 13.4B training tokens",
+            "where": "S4.6 Effect of HD-RoPE with Long-Context Continue Pre-training, arXiv:2608.29715v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",

@@ -25,6 +25,18 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   `high-contrast` the `--muted` and `--ink` tokens are the *same* `#000000`, so any encoding leaning
   on one against the other reads in five themes and vanishes in the sixth.
 
+- **Every one of exercise 08's thirty mechanisms now draws from sourced numbers** — 80 sizes, 78 of
+  them quoted verbatim from the primary paper with the section and arXiv version named, rendered as
+  a provenance block under every diagram in one convention. The grids that can be drawn to scale now
+  are; the ones that cannot say so and state the true proportion beside the picture.
+
+  The method is the point, and it is recorded in `DECISIONS.md` D12: every paper was downloaded
+  before any agent ran, agents read those local files, and **every quote was then checked
+  mechanically as a contiguous run of the paper's own characters**. 82 proposed, 82 verbatim, zero
+  fabrications. Verbatim is not correct, so a second check asked whether each quote talks about the
+  quantity claimed — which caught "Figure 4: The KV cache of StreamingLLM" offered as evidence for
+  four attention sinks, and a *Communications of the ACM* volume number offered as a head dimension.
+
 - **A theme test, which this repo had never had** — all six themes render with no console error,
   every token resolves, body text clears 4.5:1 on its own ground, and no painted mark falls into its
   background. Plus a deliberately broken twin, because a contrast checker nobody has watched fail is

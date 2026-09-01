@@ -403,6 +403,31 @@ Two more that cost this repo real defects:
   ordinal, a shape, a texture — and let colour keep its one job. Here the ordinal was also *more*
   informative than the colour it replaced: the steps happen in that order.
 
+- **When agents gather evidence, make a machine the arbiter — and test the machine first.** Exercise
+  08 sourced 80 hyperparameters across 29 papers this way: download every source *before* any agent
+  runs, have agents read those local files, then check each proposed quote as a contiguous run of
+  that file's own characters. 82 proposed, 82 verbatim, zero fabrications — a result worth having
+  because the gate was built to catch the opposite. **The gate needed three fixes before it could be
+  trusted**, each found by running it against quotes already known to be good: arXiv's HTML prints
+  every equation twice (rendered, then LaTeX source), hides `U+200B` inside numbers where Python's
+  `\s` will not match it, and papers write `1 M` as often as `1M`. Every one made it report a
+  hand-verified quote as absent from its own paper. **A guard with false negatives is not the safe
+  direction to err in** — here it silently converts sourced numbers into unsourced ones, which reads
+  as caution and is a loss of provenance.
+
+- **Verbatim is not the same as correct, and the second question is the one that catches real
+  errors.** A quote can be a genuine sentence from the right paper and still be evidence for
+  something else: "Figure 4: The KV cache of StreamingLLM" offered for four attention sinks, "we set
+  D = 256" offered as a context length, a *Communications of the ACM* volume number offered as a
+  head dimension. All three survive an authenticity check. Ask separately whether the quote talks
+  about the quantity being claimed.
+
+- **An absent number is not a zero, and a percentage that rounds to zero is not a measurement.** A
+  published figure read "16 of 7,813 blocks plus a **0-token window** — about **0%** of a
+  1,000,000-token context." The mechanism has a local window whose size we had not sourced, and its
+  true share is 0.2% — which is the entire claim of the paper. Omit the clause when the input is
+  missing, and give a small ratio enough significant figures to be sayable out loud.
+
 - **Render a diagram before committing it.** A Mermaid block is not verified by reading it. A semicolon inside a `Note over` is a statement separator, so the note terminated mid-sentence and GitHub would have rendered a parse error where a diagram should be — caught only by running it through `npx @mermaid-js/mermaid-cli`. The same applies to every number inside one: read them back from the code.
 
 ## The root README is a map; each exercise's README is the guide

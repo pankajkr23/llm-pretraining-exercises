@@ -224,6 +224,18 @@ module describing any mechanism, and `web/field-guide/` is a second route over t
   and `--ink` are the same `#000000`. And colour only works while there are more colours than
   meanings: four `--part-*` tokens were asked to separate six update steps and two of them collided,
   so the steps are **numbered** now — which is also more informative, because they happen in order.
+- **Sourcing at scale: agents propose, the paper's own bytes dispose.** All 30 carry sizes now (80,
+  78 quoted). Download every paper *first*, have agents read the local files, then check each quote
+  as a contiguous run of that file's characters — 82 proposed, 82 verbatim, 0 fabrications. **Test
+  the checker before trusting it**: three normalisation bugs (arXiv double-renders equations, hides
+  `U+200B` inside numbers, and writes `1 M` as well as `1M`) each made it report a hand-verified
+  quote as absent, and a gate with false negatives silently converts sourced numbers into "ours".
+- **Verbatim is not correct.** "Figure 4: The KV cache of StreamingLLM" passes every authenticity
+  check and is not evidence for four attention sinks. Ask separately whether the quote talks about
+  the quantity claimed.
+- **An absent number is not a zero, and a percentage that rounds to zero is not a measurement.** MSA
+  published "16 of 7,813 blocks plus a **0-token window** — about **0%** of a 1,000,000-token
+  context". It has a window we never sourced, and its share is 0.2% — the paper's entire claim.
 - **Four defects, all found by reading a rendered screenshot with the suite green**, each now with a
   guard named after it in `tests/test_attention_diagrams.py`: a lookup table drawn as frequency
   bands, DroPE keeping two bands under a caption saying it removes them all, a figure printing its

@@ -52,6 +52,12 @@ const int = (n) => Number(n).toLocaleString('en-US');
  * tables beside them stayed right — which is the failure `AGENTS.md` calls the most expensive one
  * in this repo, because only the sentence is wrong and a reader believes the sentence.
  */
+/* The plates, in order. One source of truth for a count the orientation states in words -- the
+ * numerals themselves are still typed at each kicker, so `test_attention_render.py` asserts the
+ * rendered set matches this list. A count typed into prose is the failure this page has paid for
+ * more than any other. */
+const PLATE_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI'];
+
 const SPELLED = [
   'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
   'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen',
@@ -245,12 +251,32 @@ function chapterThesis(M) {
 
   const marks = el('p', 'guide-marks');
   marks.innerHTML = rich(
-    'Two conventions worth knowing before you meet them. Each mechanism carries a small **drawn ' +
-      'mark** — a shape standing for what it changes, explained in the key below. And a **~** on a ' +
+    'Three conventions worth knowing before you meet them. Each mechanism carries a small **drawn ' +
+      'mark** — a shape standing for what it changes, explained in the key below. A **~** on a ' +
       'mark means it is drawn to schema rather than to scale: where a paper states a size we used ' +
       'it, and where it does not, the proportions are ours and mean nothing.'
   );
   guide.append(marks);
+
+  /* THE TWO BORROWED WORDS. The page is set as a monograph and takes its furniture vocabulary from
+   * magazine production, where "plate" and "well" are ordinary trade terms and nowhere else. A
+   * reader meets `Plate III` and `Well IV` as bare kickers with nothing telling them what either
+   * is, and infers - reasonably - that they are jargon from attention research they have missed.
+   * `AGENTS.md` says define every term where the reader first meets it; these two were the only
+   * ones on the page that were never defined anywhere, including in the glossary that claims to
+   * hold every term. Counts derived, because a hand-typed "six" here is the failure this page has
+   * paid for more than any other. */
+  const vocab = el('p', 'guide-marks');
+  vocab.innerHTML = rich(
+    `And the page borrows two words from how magazines are made. A **plate** is a full-page ` +
+      `figure, numbered separately from the text the way printed illustrations always were — ` +
+      `there are ${spell(PLATE_NUMERALS.length)}, and each carries an argument the prose cannot ` +
+      `make. ` +
+      `A **well** is the trade name for the run of pages holding a magazine's main feature; here ` +
+      `each of the ${spell(M.wells.length)} is one chapter of the story, and every mechanism ` +
+      `belongs to exactly one.`
+  );
+  guide.append(vocab);
   s.append(guide);
   return s;
 }

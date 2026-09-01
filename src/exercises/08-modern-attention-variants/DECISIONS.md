@@ -198,3 +198,46 @@ easy to get wrong and both have bitten this repo:
   non-recursive `glob("*.js")`, so the guide's own script would have been exempt from the repo's
   most expensive check the moment it landed — silently, for one missing letter.
 
+## D12 — Agents propose a number; the paper's own bytes dispose of it
+
+Sourcing 80 hyperparameters across 30 papers is more reading than one pass can do carefully,
+and it is exactly the task an LLM fails at most convincingly: a real paper, a fluent sentence, and a
+number that was never in it. So the division of labour is deliberate.
+
+**Every paper was downloaded first**, before any agent ran. Agents read those local files and
+returned a claim plus a quote; **every quote was then checked mechanically as a contiguous run of
+the paper's own characters**, and the value re-checked against the catalogue's own
+`_quote_evidences`. The result: **82 quotes proposed, 82 verbatim, zero fabrications.** That is
+worth stating because it was not assumed — the gate was built to catch the opposite.
+
+**The gate was tested against known-good and known-bad input before it was trusted**, and it needed
+three corrections, each of which had already thrown away honest evidence:
+
+- arXiv's HTML prints every equation twice, rendered then as LaTeX source, so the file reads
+  `block size l = 32 l=32`. A quote transcribed from the PDF is never contiguous in it.
+- It sprinkles `U+200B` inside numbers, and Python's `\s` does not match it — so `32k-length` in a
+  quote and `32 ​ k -length` in the file are the same words and fail a naive comparison.
+- Papers write `1 M` as often as `1M`. The catalogue's own checker knew one and not the other.
+
+Each of those made the gate report a hand-verified quote as absent from its own paper. **A gate
+with false negatives is not the safe direction to err in**: it silently converts sourced numbers
+into "ours", which looks like caution and is a loss of provenance.
+
+**Verbatim is not the same as correct, and the second check is the one that caught real errors.** A
+quote can be perfectly real and still be evidence for something else — "Figure 4: The KV cache of
+StreamingLLM" offered for four attention sinks, "we set D = 256" offered as a context length,
+"Communications of the ACM 64(9)" offered as a head dimension. A name-consistency check (does a
+quote offered for `sinks` mention sinks?) caught most; reading all of them caught the rest. Five
+were dropped by hand with the reason recorded in the pipeline, including two two-column table rows
+covering two models where which column is which is not recoverable.
+
+**One re-extraction experiment failed and is worth recording.** Rather than repair the agents'
+quotes, a pass re-cut every quote mechanically from the clean text, scoring spans by word overlap.
+It produced better-formatted quotes and worse evidence — Bahdanau's context of 50 came back sourced
+to `h-30 21.50 31.` — because optimising for a short span with overlapping words selects table
+fragments. The agent's judgement about *which sentence says the thing* was the part worth keeping.
+
+**2 of 80 are `ours` rather than stated**, and NTK-aware is the single entry whose number is
+quoted from a different document: it was announced in a Reddit post that cannot be retrieved, and
+YaRN's authors are its authors. The `where` field says so on the figure rather than in a footnote.
+

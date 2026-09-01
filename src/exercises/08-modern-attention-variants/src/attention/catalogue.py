@@ -290,7 +290,13 @@ def _quote_evidences(value: object, quote: str) -> bool:
         return True
     if isinstance(value, int):
         for unit, scale in (("k", 1024), ("k", 1000), ("m", 1024**2), ("m", 1000**2)):
-            if value % scale == 0 and f"{value // scale}{unit}" in flat:
+            if value % scale != 0:
+                continue
+            #: Both spacings, because papers use both -- "1M tokens" and "At 1 M tokens, the FLOPs
+            #: reduction reaches 28x" are the same claim, and rejecting the second would have
+            #: thrown away MSA's context length on a typographic detail. Teaching the check the
+            #: notation is what its docstring describes; a literal test rejects honest evidence.
+            if any(f"{value // scale}{sep}{unit}" in flat for sep in ("", " ")):
                 return True
     return False
 
