@@ -191,6 +191,13 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **And the disjointness guard was inventing leaks.** It compared comma-joined token ids by
+  substring, which matches mid-number: the needle `,25,537,` is found inside `,325,537,` because
+  `25` is the tail of token `325`'s decimal spelling, not a token. CI reported that as held-out text
+  in the training split while the corpus was clean. Both sides are wrapped in commas now, so a match
+  must begin and end on a token boundary — a flaw the check had since it was written, surfaced only
+  once the sampling widened enough to hit a case.
+
 - **Exercise 05's held-out split is now disjoint from training by construction, not by luck.** Its
   code lane is this repository's own Python, concatenated in path order and cut once at 90%, and
   the guard checked a single 32-token window at exactly that cut. Whether it passed depended on

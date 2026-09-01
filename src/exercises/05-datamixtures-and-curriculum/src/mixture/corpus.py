@@ -105,7 +105,14 @@ def _repo_python() -> tuple[Path, ...]:
 
 
 #: Bumped whenever the way a lane is split changes, because it is part of the cache key.
-SPLIT_RULE = "cut@0.90+drop-shared-blocks-8"
+SPLIT_RULE = "cut@0.90+drop-shared-blocks-8+drop-shared-windows-32"
+
+#: The window the disjointness guarantee is stated in. The guard imports this rather than keeping
+#: its own copy, because the two must be the same number: a corpus deduplicated at one granularity
+#: and checked at another guarantees nothing. That is not hypothetical — the first version of this
+#: removed shared runs of eight LINES and was checked in 32 TOKENS, and 32 tokens is routinely
+#: fewer than eight lines, so a short duplicated run passed the dedup and failed the check.
+DISJOINT_WINDOW = 32
 
 #: The shortest run of lines counted as a shared passage rather than a shared idiom. Source code
 #: repeats `import pytest` and `if __name__ == "__main__":` everywhere and always will; it does not
@@ -159,6 +166,40 @@ def _drop_shared_blocks(train_text: str, heldout_text: str) -> str:
         keep.append(lines[i])
         i += 1
     return "".join(keep)
+
+
+def _drop_shared_windows(train_ids: "np.ndarray", heldout_ids: "np.ndarray") -> "np.ndarray":
+    """Guarantee, in tokens, that no `DISJOINT_WINDOW`-token run of held-out text is in training.
+
+    `_drop_shared_blocks` works on lines and removes the bulk — whole copied guards, vendored
+    helpers. This finishes the job in the unit the invariant is actually stated in. It emits the
+    training stream token by token and refuses any token that would complete a window the held-out
+    split contains, so the property holds by construction rather than by how the two granularities
+    happen to line up.
+
+    Dropping a token mid-stream is acceptable here in a way that dropping a line of source is not:
+    by this point the array is a token stream to be trained on, not code to be read.
+
+    Args:
+        train_ids: The training token ids, after the line-level pass.
+        heldout_ids: The held-out ids, which are authoritative and never modified.
+
+    Returns:
+        A training array containing no held-out window.
+    """
+    w = DISJOINT_WINDOW
+    if heldout_ids.size < w or train_ids.size < w:
+        return train_ids
+
+    held = heldout_ids.tolist()
+    banned = {tuple(held[i : i + w]) for i in range(len(held) - w + 1)}
+
+    kept: list[int] = []
+    for token in train_ids.tolist():
+        kept.append(token)
+        if len(kept) >= w and tuple(kept[-w:]) in banned:
+            kept.pop()
+    return np.asarray(kept, dtype=train_ids.dtype)
 
 
 def _fetched_sources() -> tuple[LaneSource, ...]:
@@ -346,6 +387,7 @@ def build(config: Config | None = None, force: bool = False) -> dict[str, LaneSh
 
         train_ids = np.asarray(tokenizer.encode(train_text).ids, dtype=np.uint16)
         heldout_ids = np.asarray(tokenizer.encode(heldout_text).ids, dtype=np.uint16)
+        train_ids = _drop_shared_windows(train_ids, heldout_ids)
         np.save(train_path, train_ids)
         np.save(heldout_path, heldout_ids)
 

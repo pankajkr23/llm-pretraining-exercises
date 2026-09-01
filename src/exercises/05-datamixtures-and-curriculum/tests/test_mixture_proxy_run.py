@@ -104,18 +104,26 @@ def test_the_held_out_split_is_disjoint_from_training():
         heldout = corpus.load(lane, "heldout")
         assert train_ids.size and heldout.size
 
-        # A 32-token window is far longer than any phrase that would recur by chance.
-        joined = ",".join(map(str, train_ids.tolist()))
+        #: The window comes from `corpus`, not from a literal here. A corpus deduplicated at one
+        #: granularity and checked at another guarantees nothing, and that is exactly how this
+        #: failed once: the dedup removed shared runs of eight LINES while the guard asked about 32
+        #: TOKENS, and 32 tokens is routinely fewer than eight lines. One number, one place.
+        w = corpus.DISJOINT_WINDOW
+
+        #: COMMAS ON BOTH ENDS, so a match has to begin and end on a token boundary. Without them,
+        #: comma-joined containment matches inside a number: the needle ",25,537,..." is found in
+        #: "...,325,537,..." because "25" is the tail of token 325. That is not a shared window,
+        #: it is a shared suffix of one integer's decimal spelling, and the guard reported it as a
+        #: data leak. The check has had this flaw since it was written; it only surfaced once the
+        #: sampling widened enough to hit a case.
+        joined = "," + ",".join(map(str, train_ids.tolist())) + ","
         held = heldout.tolist()
-        step = max(1, (len(held) - 32) // 40)
-        leaks = [
-            start
-            for start in range(0, max(1, len(held) - 32), step)
-            if ",".join(map(str, held[start : start + 32])) in joined
-        ]
+        step = max(1, (len(held) - w) // 40)
+        starts = list(range(0, max(1, len(held) - w), step))
+        leaks = [s for s in starts if "," + ",".join(map(str, held[s : s + w])) + "," in joined]
         assert not leaks, (
             f"{lane}: held-out text appears in the training split at {len(leaks)} of "
-            f"{len(range(0, max(1, len(held) - 32), step))} sampled windows (offsets {leaks[:5]})"
+            f"{len(starts)} sampled windows (offsets {leaks[:5]})"
         )
 
 
@@ -136,6 +144,54 @@ def test_the_disjointness_is_built_rather_than_hoped_for():
 
     untouched = corpus._drop_shared_blocks("a\nb\nc\n", "x\ny\nz\n")
     assert untouched == "a\nb\nc\n", "text sharing nothing must pass through unchanged"
+
+
+def test_a_shared_suffix_of_one_number_is_not_a_shared_window():
+    """The comparison must respect token boundaries, or it invents leaks.
+
+    Token ids joined by commas can match mid-number: ",25,537," is a substring of ",325,537,"
+    though 25 is not a token there, only the tail of 325's decimal spelling. CI reported exactly
+    that as "held-out text appears in the training split", and the corpus was clean. Both sides are
+    wrapped in commas so a match must begin and end on a boundary.
+    """
+    train = [325, 537, 1, 294]
+    held = [25, 537, 1]
+    naive = ",".join(map(str, held)) in ",".join(map(str, train))
+    safe = "," + ",".join(map(str, held)) + "," in "," + ",".join(map(str, train)) + ","
+    assert naive, "the fixture must reproduce the false positive"
+    assert not safe, "the boundary-safe comparison still reports a leak that is not one"
+
+
+def test_the_token_level_pass_closes_what_the_line_level_one_cannot():
+    """`_drop_shared_windows` is the half that makes the guarantee exact.
+
+    The line pass removes whole copied blocks and keeps the text readable; it cannot promise
+    anything about a window measured in tokens, because a 32-token run is often fewer than eight
+    lines. CI proved it — one window of the code lane still leaked after the line pass alone.
+    """
+    import numpy as np
+
+    w = corpus.DISJOINT_WINDOW
+    heldout = np.arange(1000, 1000 + w * 3, dtype=np.uint16)
+    # a training stream that embeds one held-out window verbatim
+    train = np.concatenate(
+        [
+            np.arange(1, 50, dtype=np.uint16),
+            heldout[:w],
+            np.arange(500, 560, dtype=np.uint16),
+        ]
+    )
+
+    def run(ids):
+        return "," + ",".join(map(str, ids.tolist())) + ","
+
+    needle = "," + ",".join(map(str, heldout[:w].tolist())) + ","
+    assert needle in run(train), "the fixture must start contaminated"
+
+    cleaned = corpus._drop_shared_windows(train, heldout)
+    assert needle not in run(cleaned)
+    assert cleaned.size < train.size, "nothing was removed, so nothing was guaranteed"
+    assert cleaned.size >= train.size - w, "far more was removed than the one shared window"
 
 
 def test_the_split_is_the_declared_share():
