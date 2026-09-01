@@ -203,13 +203,13 @@ def test_changing_the_variant_changes_what_is_drawn(page) -> None:
     illustrates — that every mechanism edits one of two objects — is unproven. The page would look
     completely normal.
     """
-    chips = page.query_selector_all("#mechanism .chip")
+    chips = page.query_selector_all(".mech .chip")
     assert len(chips) >= 5, f"only {len(chips)} variants offered"
 
     def shape() -> tuple:
         return (
-            page.eval_on_selector_all("#mechanism .sc.off", "els => els.length"),
-            page.eval_on_selector_all("#mechanism .kv.off", "els => els.length"),
+            page.eval_on_selector_all(".mech .sc.off", "els => els.length"),
+            page.eval_on_selector_all(".mech .kv.off", "els => els.length"),
         )
 
     chips[0].click()
@@ -232,31 +232,31 @@ def test_head_sharing_edits_the_cache_and_leaves_the_triangle_alone(page) -> Non
     figure is drawing something other than what its caption says.
     """
     by_label = {
-        page.eval_on_selector_all("#mechanism .chip", "els => els.map(e => e.textContent)")[i]: i
-        for i in range(len(page.query_selector_all("#mechanism .chip")))
+        page.eval_on_selector_all(".mech .chip", "els => els.map(e => e.textContent)")[i]: i
+        for i in range(len(page.query_selector_all(".mech .chip")))
     }
     gqa = next(label for label in by_label if label.startswith("GQA"))
-    page.query_selector_all("#mechanism .chip")[by_label[gqa]].click()
+    page.query_selector_all(".mech .chip")[by_label[gqa]].click()
     page.wait_for_timeout(120)
 
-    scores_off = page.eval_on_selector_all("#mechanism .sc.off", "els => els.length")
-    cache_off = page.eval_on_selector_all("#mechanism .kv.off", "els => els.length")
+    scores_off = page.eval_on_selector_all(".mech .sc.off", "els => els.length")
+    cache_off = page.eval_on_selector_all(".mech .kv.off", "els => els.length")
     assert scores_off == 0, "GQA must not remove any attention score"
     assert cache_off > 0, "GQA must shrink the cache"
 
 
 def test_linear_attention_collapses_the_cache_entirely(page) -> None:
     """The one variant that removes the per-token store rather than shrinking it."""
-    labels = page.eval_on_selector_all("#mechanism .chip", "els => els.map(e => e.textContent)")
+    labels = page.eval_on_selector_all(".mech .chip", "els => els.map(e => e.textContent)")
     index = next(i for i, label in enumerate(labels) if "Linear" in label)
-    page.query_selector_all("#mechanism .chip")[index].click()
+    page.query_selector_all(".mech .chip")[index].click()
     page.wait_for_timeout(120)
 
     visible = page.eval_on_selector_all(
-        "#mechanism .kv:not(.state)", "els => els.filter(e => e.style.display !== 'none').length"
+        ".mech .kv:not(.state)", "els => els.filter(e => e.style.display !== 'none').length"
     )
     assert visible == 0, "linear attention should leave no per-position cache squares drawn"
-    state = page.eval_on_selector("#mechanism .kv.state", "el => el.style.display !== 'none'")
+    state = page.eval_on_selector(".mech .kv.state", "el => el.style.display !== 'none'")
     assert state, "linear attention should draw the single fixed state instead"
 
 
@@ -291,3 +291,134 @@ def test_the_page_never_scrolls_sideways(page, width: int) -> None:
         "() => document.documentElement.scrollWidth - document.documentElement.clientWidth"
     )
     assert overflow <= 1, f"the page scrolls sideways by {overflow}px at {width}px"
+
+
+# ---- the figures added in the visual rebuild -----------------------------------------------------
+
+
+def test_the_page_carries_a_figure_in_every_section_that_argues_from_one(page) -> None:
+    """The first version of this page had one figure across twelve sections — a wall of text.
+
+    Counted rather than eyeballed, because "add some visuals" is exactly the kind of intention that
+    quietly decays back to prose on the next edit.
+    """
+    total = page.eval_on_selector_all("main figure", "els => els.length")
+    assert total >= 8, f"only {total} figures on the page"
+    for role in ("problem", "mechanism", "results", "conclusion"):
+        n = page.eval_on_selector_all(f'section[data-role="{role}"] figure', "els => els.length")
+        assert n >= 1, f"the {role} section argues from no figure at all"
+
+
+def test_the_attention_demo_actually_runs_the_stages(page) -> None:
+    """The assignment insists the page starts from plain attention. So it must *run*, not diagram.
+
+    Stepping from raw scores to softmax must change the numbers on screen; if it does not, the
+    figure is a static picture with buttons attached.
+    """
+    chips = page.query_selector_all(".fig-attention .chip")
+    assert len(chips) == 4, f"expected four stages, found {len(chips)}"
+
+    def cells() -> list[str]:
+        return page.eval_on_selector_all(
+            ".fig-attention text.val", "els => els.map(e => e.textContent)"
+        )
+
+    chips[0].click()
+    page.wait_for_timeout(500)
+    raw = cells()
+
+    chips[3].click()
+    page.wait_for_timeout(600)
+    softmaxed = cells()
+
+    assert raw != softmaxed, "stepping to softmax changed none of the numbers"
+    assert any("−∞" in c for c in softmaxed) is False, (
+        "softmax should have consumed the masked cells"
+    )
+
+    chips[2].click()
+    page.wait_for_timeout(600)
+    assert any("−∞" in c for c in cells()), "the mask stage shows no masked cells"
+
+
+def test_every_row_of_the_softmax_stage_sums_to_one(page) -> None:
+    """The property that makes softmax *competition* rather than scaling.
+
+    Checked on the rendered numbers, so a figure that drew plausible-looking weights which did not
+    actually normalise would fail — that is the whole point of the stage.
+    """
+    page.query_selector_all(".fig-attention .chip")[3].click()
+    page.wait_for_timeout(600)
+    values = page.eval_on_selector_all(
+        ".fig-attention text.val", "els => els.map(e => e.textContent)"
+    )
+    n = 6
+    for row in range(n):
+        cells = values[row * n : (row + 1) * n]
+        total = sum(float(c) if c.strip() not in ("", "−∞") else 0.0 for c in cells)
+        assert abs(total - 1.0) < 0.02, f"row {row} of the softmax stage sums to {total:.3f}, not 1"
+
+
+def test_the_rope_figure_shows_the_invariance_it_claims(page) -> None:
+    """**The figure's actual claim, and the only interesting thing to test about it.**
+
+    RoPE's point is that moving *both* tokens later leaves their score unchanged, because only the
+    gap between them matters. So the arms must move and the score must not. A figure that drew a
+    rotation without preserving the score would look perfectly convincing.
+    """
+    slider = page.query_selector(".fig-rope input[type=range]")
+    assert slider, "the RoPE figure has no control"
+
+    def state() -> tuple:
+        return (
+            page.eval_on_selector(".fig-rope line.arm.a", "e => e.getAttribute('x2')"),
+            page.eval_on_selector(".fig-rope text.big", "e => e.textContent"),
+        )
+
+    slider.fill("0")
+    page.wait_for_timeout(120)
+    arm_at_zero, score_at_zero = state()
+
+    slider.fill("17")
+    page.wait_for_timeout(120)
+    arm_later, score_later = state()
+
+    assert arm_at_zero != arm_later, "moving the tokens did not rotate anything"
+    assert score_at_zero == score_later, (
+        f"the score changed from {score_at_zero} to {score_later} — RoPE's whole claim is that it "
+        f"does not, because the gap between the two tokens never changed"
+    )
+
+
+def test_the_head_sharing_figure_changes_the_cache_it_reports(page) -> None:
+    """MHA to MQA must shrink the reported cache and switch off KV boxes."""
+    chips = page.query_selector_all(".fig-heads .chip")
+    assert len(chips) == 3, f"expected MHA/GQA/MQA, found {len(chips)}"
+
+    chips[0].click()
+    page.wait_for_timeout(200)
+    live_mha = page.eval_on_selector_all(".fig-heads rect.kvhead:not(.off)", "els => els.length")
+
+    chips[2].click()
+    page.wait_for_timeout(200)
+    live_mqa = page.eval_on_selector_all(".fig-heads rect.kvhead:not(.off)", "els => els.length")
+
+    assert live_mha > live_mqa, "MQA should leave fewer key/value heads lit than MHA"
+    assert live_mqa == 1, f"MQA is one KV head by definition; the figure shows {live_mqa}"
+
+
+def test_the_timeline_chart_plots_every_mechanism(page) -> None:
+    """The chart is the primary view now, so it must be complete — not a sample."""
+    bundle = _bundle()
+    dots = page.eval_on_selector_all("#results circle.dot", "els => els.length")
+    assert dots == len(bundle["mechanisms"]), (
+        f"the chart plots {dots} dots for {len(bundle['mechanisms'])} mechanisms"
+    )
+
+
+def test_clicking_a_dot_opens_that_mechanism(page) -> None:
+    """The chart is only navigable if a dot leads somewhere."""
+    page.eval_on_selector("#results circle.dot", "e => e.dispatchEvent(new Event('click'))")
+    page.wait_for_timeout(250)
+    shown = page.eval_on_selector_all("#results .tl-detail .tl-card .tl-name", "els => els.length")
+    assert shown == 1, "clicking a dot did not open exactly one mechanism"

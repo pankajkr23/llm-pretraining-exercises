@@ -109,6 +109,16 @@ figcaption {
 }
 
 text.ax { fill: var(--muted); font-size: 11px; font-family: var(--sans); }
+
+/* **The two rules whose absence broke every figure on this page.**
+ *
+ * `svgText(x, y, 'ax mid', …)` and `'ax end'` were used throughout to centre a label on a tick or
+ * right-align one against a gutter — and neither class existed, so SVG's default `text-anchor:
+ * start` applied and every one of them rendered from its x position rightwards. That is why axis
+ * labels sat on top of data, lane names ran under their first dot, and a bar's value printed over
+ * the bar. Nothing errored; the text was simply in the wrong place in eight figures at once. */
+text.ax.mid { text-anchor: middle; }
+text.ax.end { text-anchor: end; }
 text.ax.small { font-size: 10px; }
 text.ax.strong { font-weight: 600; fill: var(--ink); }
 text.ax.accent { fill: var(--accent); }
@@ -276,4 +286,138 @@ pre.code {
   line-height: 1.65;
 }
 
-table.grid tr.bad td { background: color-mix(in srgb, var(--grade-x) 8%, transparent); }
+table.plain tr.bad td { background: color-mix(in srgb, var(--grade-x) 8%, transparent); }
+
+/* ============================================================== prose measure, and the figures
+ *
+ * The shared stylesheet gives `.wrap` a 1240px max-width and sets no measure on body text, so
+ * paragraphs ran the full column — well past a hundred characters a line. Prose gets a measure;
+ * figures and tables keep the whole width, which is the two-measure rule docs/DESIGN.md already
+ * states for the landing page.
+ */
+
+section .say { max-width: 74ch; }
+section .role { color: var(--accent); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; font-size: 11.5px; }
+
+/* --------------------------------------------------------------------------- figure chrome */
+
+.fig { display: block; }
+.fig-controls { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+
+.fig-note {
+  max-width: 74ch;
+  margin: 12px 0 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.fig-svg.tall { min-width: 460px; }
+
+.fig input[type='range'] {
+  width: min(420px, 100%);
+  margin: 14px 0 0;
+  accent-color: var(--accent);
+}
+
+/* ------------------------------------------------------------------ 1 · the attention matrix */
+
+rect.att { fill: var(--accent); transition: opacity 220ms ease; }
+text.val {
+  fill: #fff;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-anchor: middle;
+  pointer-events: none;
+}
+text.val.dim { fill: var(--ink); }
+text.ax.faint { fill: var(--faint); }
+text.ax.big { font-size: 22px; font-weight: 650; }
+
+@media (prefers-reduced-motion: reduce) {
+  rect.att { transition: none; }
+}
+
+/* --------------------------------------------------------------------------- 2 · two bills */
+
+.l-compute { fill: none; stroke: var(--grade-x); stroke-width: 2.5; }
+.l-cache { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+
+/* ------------------------------------------------------------------------- 3 · the wall */
+
+rect.bar { fill: var(--accent); opacity: 0.8; }
+rect.bar.over { fill: var(--grade-x); opacity: 0.85; }
+.ax-wall { stroke: var(--grade-x); stroke-width: 2; stroke-dasharray: 5 4; }
+
+/* -------------------------------------------------------------------- 4 · the timeline chart */
+
+rect.lane { fill: var(--ink); opacity: 0.028; }
+rect.lane:nth-of-type(even) { opacity: 0.05; }
+rect.quiet { fill: var(--grade-x); opacity: 0.07; }
+
+circle.dot {
+  cursor: pointer;
+  stroke: var(--panel);
+  stroke-width: 2;
+  transition: r 140ms ease;
+}
+circle.dot:hover, circle.dot:focus-visible { stroke: var(--ink); outline: none; }
+circle.dot.on { stroke: var(--ink); stroke-width: 3; }
+circle.dot.bonus { stroke-dasharray: 2 2; }
+
+circle.dot.bill-origin { fill: var(--muted); }
+circle.dot.bill-compute { fill: var(--grade-b, #b0700f); }
+circle.dot.bill-cache { fill: var(--accent); }
+circle.dot.bill-position { fill: var(--grade-a); }
+circle.dot.bill-both { fill: var(--grade-x); }
+
+text.ax.bill-origin { fill: var(--muted); }
+text.ax.bill-compute { fill: var(--grade-b, #b0700f); }
+text.ax.bill-cache { fill: var(--accent); }
+text.ax.bill-position { fill: var(--grade-a); }
+text.ax.bill-both { fill: var(--grade-x); }
+
+.tl-detail { margin: 18px 0 26px; min-height: 60px; }
+.tl-hint { margin: 0; font-size: 13px; color: var(--faint); font-style: italic; }
+
+.tl-card {
+  padding: 18px 20px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.tl-card.bill-origin { border-left-color: var(--muted); }
+.tl-card.bill-compute { border-left-color: var(--grade-b, #b0700f); }
+.tl-card.bill-cache { border-left-color: var(--accent); }
+.tl-card.bill-position { border-left-color: var(--grade-a); }
+.tl-card.bill-both { border-left-color: var(--grade-x); }
+
+/* ----------------------------------------------------------------- 5 · the wiring diagram */
+
+rect.head { fill: var(--accent); opacity: 0.85; transition: opacity 240ms ease; }
+rect.head.kvhead { fill: var(--grade-a); }
+rect.head.off { opacity: 0.12; }
+line.wire { stroke: var(--muted); stroke-width: 1.5; opacity: 0.55; transition: all 260ms ease; }
+
+/* --------------------------------------------------------------------------- 6 · the dials */
+
+circle.dial { fill: none; stroke: var(--line); stroke-width: 1.5; }
+line.arm { stroke-width: 3; stroke-linecap: round; }
+line.arm.a { stroke: var(--accent); }
+line.arm.b { stroke: var(--grade-a); }
+
+/* ----------------------------------------------------------------------- 7 · the stacked bars */
+
+rect.stack { opacity: 0.88; }
+rect.stack.bill-origin { fill: var(--muted); }
+rect.stack.bill-compute { fill: var(--grade-b, #b0700f); }
+rect.stack.bill-cache { fill: var(--accent); }
+rect.stack.bill-position { fill: var(--grade-a); }
+rect.stack.bill-both { fill: var(--grade-x); }
+
+@media (prefers-reduced-motion: reduce) {
+  rect.head, line.wire, circle.dot { transition: none; }
+}

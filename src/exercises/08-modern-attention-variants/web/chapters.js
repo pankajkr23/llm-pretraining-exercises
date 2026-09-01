@@ -12,26 +12,18 @@
  * page with no spine at all.
  */
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
-
-const el = (tag, cls, text) => {
-  const node = document.createElement(tag);
-  if (cls) node.className = cls;
-  if (text !== undefined) node.textContent = text;
-  return node;
-};
-
-const svg = (tag, attrs) => {
-  const node = document.createElementNS(SVG_NS, tag);
-  for (const [k, v] of Object.entries(attrs || {})) node.setAttribute(k, String(v));
-  return node;
-};
-
-const svgText = (x, y, cls, text) => {
-  const t = svg('text', { x, y, class: cls });
-  t.textContent = text;
-  return t;
-};
+import {
+  el,
+  figAttentionRun,
+  figCacheWall,
+  figHeads,
+  figPressure,
+  figRope,
+  figTimeline,
+  figTwoBills,
+  svg,
+  svgText,
+} from './figures.js';
 
 const gb = (bytes) => `${(bytes / 1e9).toFixed(2)} GB`;
 const tb = (bytes) => `${(bytes / 1e12).toFixed(2)} TB`;
@@ -75,9 +67,12 @@ function figure(node, num, caption) {
   return f;
 }
 
+/* `table.plain` and NOT `table.grid`. The shared stylesheet defines the first and has never
+ * defined the second, so the original class rendered every table with browser defaults --
+ * no borders, no alignment, no padding. It looked broken because it was. */
 function table(head, rows, cls) {
   const wrap = el('div', 'tablewrap');
-  const t = el('table', cls || 'grid');
+  const t = el('table', cls || 'plain');
   const thead = el('thead');
   const hr = el('tr');
   for (const h of head) {
@@ -246,6 +241,33 @@ function chapterProblem(M) {
        answer, which is why this page computes them rather than quoting them.`,
     ],
     { short: 'Two bills', sub: 'one grows squared, one grows forever' }
+  );
+
+  s.append(
+    figure(
+      figTwoBills(M),
+      1,
+      `<b>Growth, not size.</b> Both lines start at 1× for a 1,000-token context, so the chart
+       compares only how fast each bill rises — an honest comparison between a count of scores and a
+       quantity of memory, which have no common unit. Take the context from 1K to 1M and compute
+       grows a <b>million-fold</b> while the cache grows a <b>thousand-fold</b>.
+       <b>So why is the flatter line the one that stopped the field?</b> Because compute can be
+       spread over time, split across machines, or approximated — while the cache must be resident,
+       all of it, at once. A bill you can pay in instalments is not the bill that bankrupts you.`
+    )
+  );
+
+  s.append(
+    figure(
+      figCacheWall(M),
+      2,
+      `The same numbers against something physical. Eight readers at a 32K context fit inside one
+       80 GB accelerator. At 256K they do not, and at a million tokens the cache alone is
+       <b>${tb(big.eightUsers)}</b> — about twenty accelerators holding nothing but the conversation
+       so far, before a single model weight. <b>This is the wall the second half of the timeline is
+       built against</b>, and a bar dropping below the line without a mechanism changing would mean
+       this figure is wrong.`
+    )
   );
 
   s.append(
@@ -455,7 +477,7 @@ function figMechanism() {
   return root;
 }
 
-function chapterMechanism() {
+function chapterMechanism(M) {
   const s = section(
     'mechanism',
     'mechanism',
@@ -475,8 +497,22 @@ function chapterMechanism() {
   );
   s.append(
     figure(
+      figAttentionRun(),
+      3,
+      `<b>Attention, actually running.</b> Six words, real numbers — step through the four stages and
+       watch the matrix change. Rows are who is looking, columns who is being looked at. Watch what
+       the <b>mask</b> does: everything above the diagonal becomes impossible, because a word cannot
+       see the future. Then <b>softmax</b> turns raw scores into weights that <i>compete</i> — every
+       row now sums to one, so attention paid to one word is attention taken from another.
+       <b>That competition is exactly what linear attention removes seven years later</b>, and this
+       is the only place on the page you can watch what gets given up.`
+    )
+  );
+
+  s.append(
+    figure(
       figMechanism(),
-      1,
+      4,
       `The two objects, and what each family does to them. Switch between them and watch which one
        moves: <b>GQA and MQA leave the triangle completely untouched</b> and narrow the cache, while
        <b>sliding window and sparse attention leave the cache width alone</b> and cut cells out of
@@ -485,6 +521,33 @@ function chapterMechanism() {
        the triangle collapses to a diagonal and the per-token store disappears entirely. <b>A
        mechanism that changed neither object would not be an attention variant at all</b> — that is
        the test for whether something belongs on this timeline.`
+    )
+  );
+
+  s.append(
+    figure(
+      figHeads(M),
+      5,
+      `The first edit, wired up. Every query head needs keys and values to read; the only question is
+       how many <i>distinct</i> sets exist. Switch between them and watch the wires converge — the
+       query heads never change, and neither does a single attention score. <b>The whole saving is in
+       how many boxes the bottom row has.</b> That is why this was such an easy win, and why it is
+       not a solution to long context: it divides the cache by a constant and leaves it growing
+       linearly with every token.`
+    )
+  );
+
+  s.append(
+    figure(
+      figRope(),
+      6,
+      `The other thread, and the one with no picture anywhere in the source material. Position is
+       supplied by <b>rotating</b> each token's vectors by an angle proportional to where it sits.
+       Drag the slider: both arms spin as the pair moves later in the text, but the angle
+       <i>between</i> them never changes, so the score they produce is identical. <b>Absolute
+       position rotates away; relative position survives.</b> And the failure mode is in the same
+       picture — push far enough and the arms have gone round so many times that "how far apart"
+       stops being recoverable, which is what every extension method after RoPE is trying to repair.`
     )
   );
   return s;
@@ -562,6 +625,54 @@ const BILL_LABEL = {
   both: 'pays down both',
 };
 
+
+const REDUCED_MOTION =
+  window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** One mechanism's full story, used by the timeline's detail panel. */
+function detailFor(m) {
+  const card = el('div', `tl-card bill-${m.bill}`);
+  const head = el('div', 'tl-head');
+  head.append(el('span', 'tl-date', nice(m.date)), el('span', 'tl-name', m.name));
+  if (m.bonus) head.append(el('span', 'tl-tag', 'not covered in class'));
+  head.append(el('span', 'tl-bill', BILL_LABEL[m.bill] || m.bill));
+  card.append(head);
+  card.append(el('p', 'tl-problem', m.problem));
+
+  const dl = el('dl', 'tl-story');
+  for (const [k, v] of [
+    ['What existed', m.whatExisted],
+    ['The mechanism', m.mechanism],
+    ['What it fixed', m.whatItFixed],
+    ['The new trade-off', m.newTradeoff],
+  ]) {
+    dl.append(el('dt', null, k), el('dd', null, v));
+  }
+  card.append(dl);
+
+  const trio = el('div', 'trio');
+  for (const [k, v, cls] of [
+    ['What it buys', m.buys, 'good'],
+    ['What it gives up', m.givesUp, 'cost'],
+    ['When to choose it', m.whenToChoose, 'pick'],
+  ]) {
+    const c = el('div', `trio-card ${cls}`);
+    c.append(el('div', 'trio-k', k), el('div', 'trio-v', v));
+    trio.append(c);
+  }
+  card.append(trio);
+
+  const cite = el('p', 'tl-cite');
+  const link = el('a', null, m.source.title);
+  link.href = m.source.url;
+  link.rel = 'noopener';
+  cite.append(document.createTextNode('Date read from '), link);
+  cite.append(el('code', null, m.source.quoted));
+  card.append(cite);
+  return card;
+}
+
+
 function chapterResults(M) {
   const s = section(
     'results',
@@ -578,6 +689,30 @@ function chapterResults(M) {
     { short: 'The timeline', sub: 'oldest first, every date sourced' }
   );
 
+  /* The chart is the primary view and the cards are the detail. The other way round -- which is
+   * what this section shipped as first -- is twenty-three text blocks in a column, and a reader
+   * cannot see the shape of a field from a list however well each row is written. */
+  const detail = el('div', 'tl-detail');
+  const timelineFig = figTimeline(M, (m) => {
+    detail.replaceChildren(detailFor(m));
+    detail.scrollIntoView({ block: 'nearest', behavior: REDUCED_MOTION ? 'auto' : 'smooth' });
+  });
+
+  s.append(
+    figure(
+      timelineFig.node,
+      7,
+      `<b>Every mechanism at its real launch date</b>, on the row for the cost it addresses. Click any
+       dot for its full story. Two things this shape shows that no list can: attention sits in the
+       top row <b>three years before the transformer</b>, and the shaded band is
+       <b>${int(M.quietStretch.days)} days</b> in which nobody attacked the cost at all. Read the rows
+       downward and the field's changing mind is visible — position work clusters, then stops; cache
+       work barely exists before 2019 and never lets up after.`
+    )
+  );
+  detail.append(el('p', 'tl-hint', 'Pick a dot above, or read the full list below.'));
+  s.append(detail);
+
   const list = el('div', 'timeline');
   let lastYear = null;
 
@@ -588,6 +723,7 @@ function chapterResults(M) {
     }
 
     const item = el('details', `tl-item bill-${m.bill}`);
+    item.id = `m-${m.key}`;
     const sum = el('summary');
     const head = el('div', 'tl-head');
     head.append(el('span', 'tl-date', nice(m.date)), el('span', 'tl-name', m.name));
@@ -735,6 +871,19 @@ function chapterConclusion(M) {
        wearing an attention costume.`,
     ],
     { short: 'What the order shows', sub: 'and it is not the tidy version' }
+  );
+
+  s.append(
+    figure(
+      figPressure(M),
+      8,
+      `The prediction, tested. Each bar is one two-year window, stacked by which bill its mechanisms
+       paid. A clean relay would show one colour dominating, handing over to the next. <b>Two windows
+       are marked "no winner"</b> — in those the field was doing three things at once. The arc is
+       real at the ends and a scramble in the middle, which is a more useful thing to know than the
+       tidy version: <b>if the field moved in one direction at a time, you could predict it. It does
+       not, so you cannot.</b>`
+    )
   );
 
   s.append(
