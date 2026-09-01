@@ -1043,22 +1043,164 @@ export const M = Object.freeze({
         "name": "MHA",
         "kvHeads": 8,
         "note": "one KV head per query head; the largest cache",
-        "bytesAt32k": 6442450944
+        "bytesAt32k": 6442450944,
+        "bytesPerToken": 196608,
+        "tokensBeforeWall": 406901
       },
       {
         "name": "GQA",
         "kvHeads": 2,
         "note": "query heads share KV heads in groups; the practical default",
-        "bytesAt32k": 1610612736
+        "bytesAt32k": 1610612736,
+        "bytesPerToken": 49152,
+        "tokensBeforeWall": 1627604
       },
       {
         "name": "MQA",
         "kvHeads": 1,
         "note": "every query head reads one KV head; the smallest cache, most sharing",
-        "bytesAt32k": 805306368
+        "bytesAt32k": 805306368,
+        "bytesPerToken": 24576,
+        "tokensBeforeWall": 3255208
       }
-    ]
+    ],
+    "acceleratorBytes": 80000000000
   },
+  "wells": [
+    {
+      "numeral": "I",
+      "headline": "By the end of the sentence it had forgotten the beginning.",
+      "standfirst": "One fixed vector had to carry a whole source sentence. Attention's first form let the decoder look at every input position directly -- and it arrives three years before the architecture everyone now associates it with.",
+      "pullQuote": "Attention existed for three years before anyone removed the recurrence around it.",
+      "keys": [
+        "bahdanau_attention"
+      ],
+      "from": "2014-09-01",
+      "to": "2014-09-01"
+    },
+    {
+      "numeral": "II",
+      "headline": "The hardware was parallel and the model was not.",
+      "standfirst": "Dropping recurrence bought parallel training and cost the model any idea of order. One paper ships the fix, the architecture, and both of the bills this page is about.",
+      "pullQuote": "Everything after this on the timeline is somebody paying less of one of those two.",
+      "keys": [
+        "learned_absolute",
+        "standard_attention",
+        "sinusoidal"
+      ],
+      "from": "2017-05-08",
+      "to": "2017-06-12"
+    },
+    {
+      "numeral": "III",
+      "headline": "Two bills, two crowds.",
+      "standfirst": "The compute bill and the cache bill were attacked by different people for different reasons, and a date-ordered list interleaves them into apparent nonsense. Read as two crowds, the six entries here are two arguments running in parallel.",
+      "pullQuote": "It moves along the same line rather than leaving it.",
+      "keys": [
+        "sparse_attention",
+        "reformer",
+        "sliding_window",
+        "mqa",
+        "gqa",
+        "mla"
+      ],
+      "from": "2019-04-23",
+      "to": "2024-05-07"
+    },
+    {
+      "numeral": "IV",
+      "headline": "We shipped a position scheme in 2021 and spent 1,698 days repairing it.",
+      "standfirst": "Rotary embeddings solved relative distance elegantly and left one bomb: run past the trained length and the rotation keeps going. Three repairs follow, and the last one is to delete it.",
+      "pullQuote": "Stop repairing it and remove it.",
+      "keys": [
+        "rope",
+        "alibi",
+        "ntk_aware",
+        "yarn",
+        "drope"
+      ],
+      "from": "2021-04-20",
+      "to": "2025-12-13"
+    },
+    {
+      "numeral": "V",
+      "headline": "Two things we were wrong about.",
+      "standfirst": "Neither of these is an optimisation. Both are discoveries about what was already happening -- one about where the cost actually was, one about what models had quietly been doing with the first few tokens all along.",
+      "pullQuote": "Nothing mathematically - which is why it is on this list as the exception.",
+      "keys": [
+        "flashattention",
+        "attention_sinks"
+      ],
+      "from": "2022-05-27",
+      "to": "2023-09-29"
+    },
+    {
+      "numeral": "VI",
+      "headline": "Then stop keeping everything.",
+      "standfirst": "If the cache is the bill, refuse to hold a cache. Fold the past into a fixed-size state instead -- and pay, every time, in the one way none of these six escapes.",
+      "pullQuote": "The state is a lossy summary, and what it lost is not recoverable.",
+      "keys": [
+        "linear_attention",
+        "delta_rule",
+        "mamba",
+        "deltanet_parallel",
+        "gated_deltanet",
+        "nsa"
+      ],
+      "from": "2020-06-29",
+      "to": "2025-02-16"
+    }
+  ],
+  "perYear": [
+    {
+      "year": 2014,
+      "count": 1
+    },
+    {
+      "year": 2015,
+      "count": 0
+    },
+    {
+      "year": 2016,
+      "count": 0
+    },
+    {
+      "year": 2017,
+      "count": 3
+    },
+    {
+      "year": 2018,
+      "count": 0
+    },
+    {
+      "year": 2019,
+      "count": 2
+    },
+    {
+      "year": 2020,
+      "count": 3
+    },
+    {
+      "year": 2021,
+      "count": 3
+    },
+    {
+      "year": 2022,
+      "count": 1
+    },
+    {
+      "year": 2023,
+      "count": 5
+    },
+    {
+      "year": 2024,
+      "count": 3
+    },
+    {
+      "year": 2025,
+      "count": 2
+    }
+  ],
   "transcriptDiscrepancy": {
     "claimedTB": 1.0,
     "computedBytes": 1572864000000,

@@ -99,3 +99,36 @@ def compressed_positions(context: int, block: int) -> int:
     if block < 1:
         raise ValueError("block size must be at least 1")
     return -(-context // block)  # ceil, so a partial trailing block still costs a position
+
+
+ACCELERATOR_BYTES = 80_000_000_000
+"""One 80 GB accelerator, in the decimal units accelerators are actually sold in.
+
+Binary units would make this 85,899,345,920 and move every crossing below by 7.4%. The page
+prints the convention rather than leaving a reader to guess which one produced the number.
+"""
+
+
+def tokens_before_wall(
+    sharing: Sharing,
+    yardstick: Yardstick,
+    *,
+    budget_bytes: int = ACCELERATOR_BYTES,
+    batch: int = 1,
+) -> int:
+    """How many tokens fit in `budget_bytes` of KV cache before the wall.
+
+    This is the same arithmetic as :func:`kv_cache_bytes` solved for the context rather than
+    for the bytes, so a change to the yardstick moves the page's race and its invoice together.
+
+    Args:
+        sharing: One point on the MHA -> GQA -> MQA line.
+        yardstick: The model shape the whole exercise measures against.
+        budget_bytes: The memory available for cache alone. Defaults to one 80 GB accelerator.
+        batch: Concurrent readers sharing the budget.
+
+    Returns:
+        The largest whole number of tokens whose cache fits, floored.
+    """
+    per_token = kv_cache_bytes(yardstick, 1, batch=batch, kv_heads=sharing.kv_heads)
+    return budget_bytes // per_token

@@ -13,6 +13,7 @@ from attention.cache import (
     compressed_positions,
     kv_cache_bytes,
     sharing_ladder,
+    tokens_before_wall,
 )
 from attention.config import Yardstick
 
@@ -93,3 +94,38 @@ def test_sharing_and_compression_multiply_rather_than_compete() -> None:
     full = kv_cache_bytes(SESSION, context=32_768, kv_heads=8)
     both = kv_cache_bytes(SESSION, context=compressed_positions(32_768, block=4), kv_heads=2)
     assert full == 16 * both  # 4x from heads, 4x from positions
+
+
+def test_the_accelerator_wall_is_where_the_race_figure_draws_it() -> None:
+    """The three crossings the page animates towards, pinned exactly.
+
+    These are the whole content of PLATE IV: three straight lines with different slopes, all of
+    which hit the same wall. If the yardstick moves, the race and the invoice must move together,
+    so the figure reads them from here rather than carrying its own copy.
+    """
+    yard = Yardstick()
+    crossings = {s.name: tokens_before_wall(s, yard) for s in sharing_ladder(yard)}
+    assert crossings == {"MHA": 406_901, "GQA": 1_627_604, "MQA": 3_255_208}
+
+
+def test_head_sharing_buys_a_multiple_and_nothing_else() -> None:
+    """GQA's own stated trade-off, as arithmetic: it moves along the line, it does not leave it.
+
+    Every crossing is the MHA crossing times the head-sharing ratio -- exactly, with no remainder
+    beyond the floor. That is what makes a bar chart the wrong figure for this: the interesting
+    fact is that all three are on one line, not that one bar is shorter.
+    """
+    yard = Yardstick()
+    ladder = {s.name: s for s in sharing_ladder(yard)}
+    base = tokens_before_wall(ladder["MHA"], yard)
+    for name, factor in (("GQA", 4), ("MQA", 8)):
+        assert tokens_before_wall(ladder[name], yard) == base * factor, (
+            f"{name} should be exactly {factor}x MHA's crossing"
+        )
+
+
+def test_one_token_costs_192_kib_which_is_the_number_the_masthead_prints() -> None:
+    yard = Yardstick()
+    per_token = kv_cache_bytes(yard, 1)
+    assert per_token == 196_608
+    assert per_token / 1024 == 192.0

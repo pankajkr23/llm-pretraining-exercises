@@ -20,9 +20,16 @@ from pathlib import Path
 EXERCISE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(EXERCISE / "src"))
 
-from attention.cache import kv_cache_bytes, sharing_ladder  # noqa: E402
+from attention.cache import (  # noqa: E402
+    ACCELERATOR_BYTES,
+    kv_cache_bytes,
+    sharing_ladder,
+    tokens_before_wall,
+)
 from attention.catalogue import CATALOGUE, MANDATED, load  # noqa: E402
 from attention.config import YARDSTICK_CONTEXTS, Yardstick  # noqa: E402
+from attention.story import WELLS, span  # noqa: E402
+from attention.story import check as check_wells  # noqa: E402
 from attention.timeline import bills_addressed, gaps, in_order, pressure_by_period  # noqa: E402
 
 OUT = EXERCISE / "web" / "data.js"
@@ -41,6 +48,7 @@ BANNER = """\
 def payload() -> dict:
     """Everything the page renders, derived here so the page derives nothing."""
     mechanisms = in_order(load())
+    check_wells(mechanisms)  # refuse to emit a page that would silently drop a mechanism
     yard = Yardstick()
 
     return {
@@ -141,12 +149,33 @@ def payload() -> dict:
                     "kvHeads": s.kv_heads,
                     "note": s.note,
                     "bytesAt32k": kv_cache_bytes(yard, 32_768, kv_heads=s.kv_heads),
+                    "bytesPerToken": kv_cache_bytes(yard, 1, kv_heads=s.kv_heads),
+                    "tokensBeforeWall": tokens_before_wall(s, yard),
                 }
                 for s in sharing_ladder(yard)
             ],
+            "acceleratorBytes": ACCELERATOR_BYTES,
         },
         # The session's transcript gives ~1 TB for eight users at 1M tokens; its own formula gives
         # something else. Both travel to the page so it can show the disagreement rather than pick.
+        "wells": [
+            {
+                "numeral": w.numeral,
+                "headline": w.headline,
+                "standfirst": w.standfirst,
+                "pullQuote": w.pull_quote,
+                "keys": list(w.keys),
+                "from": span(w, mechanisms)[0].isoformat(),
+                "to": span(w, mechanisms)[1].isoformat(),
+            }
+            for w in WELLS
+        ],
+        # The plate's ruler draws one bar per year, and the empty years are the point: three of
+        # them have no entry at all. Derived here so a year with nothing in it still gets a slot.
+        "perYear": [
+            {"year": y, "count": sum(1 for m in mechanisms if m.date.year == y)}
+            for y in range(mechanisms[0].date.year, mechanisms[-1].date.year + 1)
+        ],
         "transcriptDiscrepancy": {
             "claimedTB": 1.0,
             "computedBytes": kv_cache_bytes(yard, 1_000_000, batch=8),
