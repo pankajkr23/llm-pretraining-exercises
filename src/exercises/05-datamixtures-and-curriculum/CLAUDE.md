@@ -28,9 +28,44 @@ only, gitignored).
   applied at its *generous* end and explicitly marked non-load-bearing. A reviewer's first move
   against an impossible verdict is to attack whichever correction produced it.
 
-- **No figure is invented for hardware nobody measured.** `proxy.HARDWARE["m4-max"].tflops` is
-  `None` and `estimate()` returns absent hours and cost. A plausible number there would decide a
-  spending question on evidence nobody gathered.
+- **No figure is invented for hardware nobody measured.** The local entry
+  `proxy.HARDWARE["m4-max"]` now carries `tflops=5.281` with `provenance="measured"` and its
+  command in `source` — it was `None` until `python -m mixture.bench` was run, and this rule said so
+  for months after it stopped being true. The rule itself is unchanged and still binding: the two
+  rented-GPU entries stay `provenance="estimated"`, because a plausible number there would decide a
+  spending question on evidence nobody gathered. **Read the field, never this sentence** — which is
+  the lesson the stale version taught.
+
+## The page carries the spine, and `rich()` has two limits that have both shipped bugs
+
+`web/chapters.js` builds the twelve-part narrative `AGENTS.md` requires, declared as `data-role`.
+The five numbered chapters keep their place: `composer` and `repetition` are `mechanism`, the other
+three are `results`. Everything else is prose built by `section(id, role, …)`.
+
+- **Roles are literal strings at the construction site.** `tests/test_page_spine.py` reads this
+  file's *source*, so a role assigned from a variable is invisible to it and the guard would pass on
+  a page with no spine. That is why `MECHANISM_CHAPTERS` / `RESULT_CHAPTERS` wrap each builder in a
+  one-line arrow function instead of tagging them in a loop — and why the two lists are separate:
+  the spine puts `method` and `expected` *between* mechanism and results.
+- **Section numbers are assigned after assembly, in `buildPage`, not per chapter.** They used to be
+  hard-coded `1`–`5`; inserting a section before them left the rail counting wrong.
+- **Blind spots and corrections are their own sections now** (`#limits`, `#negatives`). They used to
+  be spread into `chapterResults`'s body, which meant the page's two most valuable admissions had no
+  rail entry and no anchor to send anyone to. Both still return an empty list when their data is
+  absent, and `buildPage` skips a builder returning `null` rather than rendering an empty heading.
+
+**`rich()` is markdown-ish, and it is neither HTML nor nestable. Both gaps have shipped to the page.**
+
+- **It does not understand HTML.** A cell written `<b>H1</b>` goes in through `createTextNode` and
+  the reader sees the angle brackets. Every guard passed, because
+  `test_no_markup_reaches_the_reader_unrendered` looks for `[[`, `**` and backticks and that text has
+  none. `test_no_html_tag_reaches_the_reader_as_text` covers it now.
+- **Bold cannot contain italic.** The pattern is `\*\*([^*]+)\*\*`, whose character class cannot
+  cross an asterisk, so `**a *b* c**` never matches as bold — the single-`*` rule fires instead and
+  leaves stray markers on screen. Use one or the other, never both.
+  `test_no_stray_emphasis_marker_survives_rendering` covers it, and **its first version was
+  decorative**: it required a text node longer than one character, and the marker the parser emits is
+  a lone `*`, so it passed against the real bug. Only breaking the page on purpose found that.
 
 ## The page carries the blind spots and the corrections, not just the findings
 

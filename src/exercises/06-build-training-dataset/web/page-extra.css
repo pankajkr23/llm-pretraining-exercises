@@ -114,3 +114,134 @@
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+/* ------------------------------------------------------------------------------- the spine
+ *
+ * The twelve-part narrative AGENTS.md requires. The three explainer chapters already had their
+ * own styling; these rules cover the prose sections built around them.
+ *
+ * Every colour here is a token from /_shared/tokens.css. Nothing declares a literal, so the page
+ * follows the reader's theme in both directions without a second palette to keep in step.
+ */
+
+section.prose { margin: 0 0 44px; }
+
+section.prose .eyebrow {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+section.prose h2 { margin: 0 0 14px; }
+section.prose p { max-width: 72ch; }
+
+/* A glossary reads as a table of terms, so it is laid out as one. Grid rather than float, so a
+ * long definition wraps under itself instead of under the term. */
+.defs {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) 1fr;
+  gap: 10px 20px;
+  margin: 18px 0 0;
+  padding: 18px 20px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.defs dt {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.defs dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* One column on a phone: a 120px term column plus a definition is unreadable at 390px. */
+@media (max-width: 640px) {
+  .defs { grid-template-columns: 1fr; gap: 4px 0; }
+  .defs dd { margin: 0 0 12px; }
+}
+
+.bullets { max-width: 72ch; margin: 14px 0 0; padding-left: 20px; }
+.bullets li { margin: 0 0 12px; line-height: 1.6; }
+
+table.qtable { border-collapse: collapse; margin: 14px 0 0; }
+table.qtable td { padding: 7px 18px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.qtable td.q { font-weight: 600; }
+table.qtable td.sub { color: var(--muted); font-family: var(--mono); font-size: 13px; }
+
+/* The mechanism figure: the pipeline, drawn. Horizontal on a wide screen, and it scrolls inside
+ * its own container rather than pushing the page sideways -- the failure exercise 04 shipped. */
+figure.mech { margin: 20px 0 0; }
+
+.flow {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 18px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.flow-box {
+  flex: 0 0 auto;
+  min-width: 118px;
+  max-width: 150px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+
+.flow-name { font-weight: 600; font-size: 13px; }
+.flow-sub { margin-top: 4px; font-size: 11px; line-height: 1.4; color: var(--muted); }
+
+.flow-arrow {
+  flex: 0 0 auto;
+  align-self: center;
+  color: var(--accent);
+  font-size: 15px;
+}
+
+/* The two stages that are this exercise's contribution. Marked by an explicit class from the
+ * builder, never by position: the arrows are siblings of the boxes, so any :nth-child rule here
+ * counts them too and selects the wrong stages as soon as one is added. */
+.flow-box.key { border-color: var(--accent); }
+
+figure.mech figcaption {
+  max-width: 72ch;
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+pre.code {
+  max-width: 72ch;
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+
+/* The one card in the opening tiles that is not a win. AGENTS.md: a page that shows only its
+ * successes has not earned the ones it shows. */
+.summary-cell.bad .summary-v { color: var(--grade-x); }

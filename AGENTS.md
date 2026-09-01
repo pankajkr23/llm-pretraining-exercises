@@ -379,11 +379,26 @@ and "advanced" drawers split the argument; layering keeps it whole.
 | **A CTO** | the one number that decides, and the risk attached | could they say yes or no? |
 
 **Every exercise page carries the same spine, and it is test-enforced.** Sections declare
-`data-role`, so `tests/test_embeddings_render.py`-style guards check the *structure* while the prose
-stays free to change:
+`data-role`, so guards check the *structure* while the prose stays free to change:
 
 `thesis` · `glossary` · `problem` · `mechanism` · `method` · `expected` · `results` · `negatives` ·
 `conclusion` · `limits` · `next` · `reproduce`
+
+**Enforcement is two halves, and neither is sufficient alone.** `tests/test_page_spine.py` is the
+repo-wide, **lexical** half: it reads each `chapters.js` and asserts every enforced page constructs a
+section for every role. It runs in the plain `test` job with no browser and no assembled site,
+because a structural rule that only runs when chromium happens to be installed is one that can
+silently stop running — this repo has already lost 46 tests exactly that way. What it cannot see is
+**order**, since source order is not DOM order; that is the per-exercise browser test's job
+(`test_embeddings_render.py::test_the_page_has_the_required_spine_in_order`), and the lexical guard
+asserts every enforced exercise *has* such a test so the two halves cannot drift apart.
+
+**The ledger fails in both directions.** `SPINE_ENFORCED` names the exercises held to the standard;
+`SPINE_EXEMPT` names the deployable pages deliberately outside it **with a reason each**, and the
+deployable set is read from the filesystem rather than listed. A new exercise ships a `web/` bundle,
+lands in neither, and the guard goes red — which is the whole point, because the previous version of
+this rule lived only in prose and applied to whoever remembered it. 01–04 are exempt: the spine
+describes an exercise that ran an experiment and reports a result, and those four do not.
 
 Exercise 07 is the reference implementation. It was rebuilt after an audit found the previous page
 was **nine tables, one button and no diagram of any kind** — ~1,300 words that never said what an

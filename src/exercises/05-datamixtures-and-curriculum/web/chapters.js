@@ -121,6 +121,11 @@ const GLOSSARY = {
   heldout: 'Text set aside before training and never trained on. Scoring on anything else would measure memory rather than learning.',
   standin: 'Text used in place of a dataset too large or too restricted to use here. The same kind of text, not the same text — so a finding resting on it rests on the substitution too.',
   proxy: 'A model small enough to train in seconds, used to compare mixtures. Not a small version of the real model; an instrument for ranking recipes.',
+  /* Two more the page leans on without defining. `tier` is the worse of the pair: the repo uses it
+   * in two different senses and no file reconciles them, so a reader meeting both has no way to
+   * know they are not the same word. `decay` appears only as a symbol and a constant. */
+  tier: 'Two different things in these documents, so check which one is meant. On an Indic share it is the provenance ladder — A verified native, B unverified crawl, C translated, D synthetic — which asks how the text was produced. On an inventory row it is the same ladder applied to one dataset, and it is blank where the inventory never said.',
+  decay: 'How fast a re-read token loses value. The repetition curve is fitted rather than assumed, and this constant is what sets the shape: four passes over a pool are worth 3.73 times it rather than 4, and sixteen are worth 10.6 rather than 16.',
 };
 
 /** Wrap every glossary term found in `text` with a definition tooltip.
@@ -979,8 +984,6 @@ function chapterResults(data) {
         'note',
       ),
       verdicts,
-      ...blindSpots(data),
-      ...corrections(data),
       ...exp.comparisons
         .filter((c) => c.secondary)
         .map((c) =>
@@ -1029,7 +1032,69 @@ function chapterResults(data) {
 
 /* -------------------------------------------------------------------------------- page assembly */
 
-const CHAPTERS = [chapterComposer, chapterRepetition, chapterAgentic, chapterTiers, chapterResults];
+/* Both of these used to be spread into the body of the results chapter, after the verdicts table.
+ * That put a page's two most important admissions -- what it could not see, and what it got wrong
+ * -- in a place no rail entry pointed at and no reader could be sent to. They are sections now.
+ *
+ * The guard each one already had is kept: they return an empty list when their data is missing, so
+ * the section must not be built at all in that case rather than rendered empty. */
+
+/** What the runs could not see. */
+function chapterLimits(data) {
+  const parts = blindSpots(data);
+  if (!parts.length) return null;
+  const sec = section('limits', 'limits', 'What these runs could not see', parts.slice(1));
+  return sec;
+}
+
+/** What we got wrong, and how we found out. */
+function chapterNegatives(data) {
+  const parts = corrections(data);
+  if (!parts.length) return null;
+  return section('negatives', 'negatives', 'What we got wrong, and how we found out', parts.slice(1));
+}
+
+/* The five numbered chapters, each tagged with its place in the spine. The first two explain *how
+ * a mixture works* — you can move a share and watch the arithmetic answer — so they are mechanism.
+ * The last three report what was measured.
+ *
+ * The role is a literal string here rather than a parameter threaded through `chapter()`, because
+ * `tests/test_page_spine.py` reads this source: a role assigned from a variable is invisible to it,
+ * and the guard would go green on a page with no spine. */
+const MECHANISM_CHAPTERS = [
+  (d) => {
+    const s = chapterComposer(d);
+    s.dataset.role = 'mechanism';
+    return s;
+  },
+  (d) => {
+    const s = chapterRepetition(d);
+    s.dataset.role = 'mechanism';
+    return s;
+  },
+];
+
+const RESULT_CHAPTERS = [
+  (d) => {
+    const s = chapterAgentic(d);
+    s.dataset.role = 'results';
+    return s;
+  },
+  (d) => {
+    const s = chapterTiers(d);
+    s.dataset.role = 'results';
+    return s;
+  },
+  (d) => {
+    const s = chapterResults(d);
+    s.dataset.role = 'results';
+    return s;
+  },
+];
+
+/* Kept so anything still importing the old flat list keeps working, and so the count of numbered
+ * chapters remains one thing rather than two. */
+const CHAPTERS = [...MECHANISM_CHAPTERS, ...RESULT_CHAPTERS];
 
 function fillLede(data) {
   const cfg = data.config;
@@ -1053,6 +1118,285 @@ function fillLede(data) {
   set('agentic', '3.9× more than any amount of re-reading could ever be worth');
   set('longctx', 'counting 60B of the same text twice');
   void cfg;
+}
+
+/* --------------------------------------------------------------------------------- the spine */
+
+/* AGENTS.md requires every exercise page to tell the same twelve-part story, declared as
+ * `data-role` so a test checks the structure while the prose stays free. The five numbered
+ * chapters carry the mechanism and the results; these sections are what a reader needs around
+ * them — the question, the apparatus, the predictions, the conclusion, and how to check it.
+ *
+ * Roles are literal strings written where each section is built, never looked up from a map:
+ * `tests/test_page_spine.py` reads this file, and a role assembled from a variable is invisible to
+ * it, so the guard would pass on a page with no spine at all. */
+
+/** A prose section whose `data-role` names its place in the story. */
+function section(id, role, title, nodes) {
+  const sec = $('section', 'prose');
+  sec.id = id;
+  sec.dataset.role = role;
+  sec.dataset.title = title;
+
+  const h = $('h2');
+  h.append(document.createTextNode(title));
+  const anchor = $('a', 'anchor', '#');
+  anchor.href = `#${id}`;
+  h.append(anchor);
+  sec.append(h);
+
+  (nodes || []).forEach((n) => sec.append(n));
+  return sec;
+}
+
+/** The vocabulary, visible rather than only on hover. */
+function chapterGlossary() {
+  /* Ordered so a reader meets them roughly in the order the page uses them, not alphabetically:
+   * an alphabetical glossary opens on `anneal`, which nothing has needed yet. */
+  const order = [
+    'lane',
+    'supply',
+    'demand',
+    'epoch',
+    'worth',
+    'ceiling',
+    'decay',
+    'floor',
+    'tier',
+    'standin',
+    'proxy',
+    'arm',
+    'hypothesis',
+    'bpb',
+    'heldout',
+    'seedspread',
+    'anneal',
+    'minhash',
+  ];
+  const shown = order.filter((k) => GLOSSARY[k]);
+
+  const dl = $('dl', 'defs');
+  shown.forEach((k) => {
+    dl.append($('dt', null, k === 'bpb' ? 'bits per byte' : k), $('dd', null, GLOSSARY[k]));
+  });
+
+  return section('glossary', 'glossary', 'The words this page uses', [
+    richP(
+      `These ${shown.length} terms do all the work below. They are defined here **and** on hover, from the same source — because a definition a reader can only reach by hovering is missing on a phone, missing in print, and missing for anyone reading with a keyboard.`,
+      'claim',
+    ),
+    dl,
+    richP(
+      'Everything above is a word this page uses as though you already had it. The one worth reading twice is **bits per byte**: it is what every score below is measured in, and it is the reason the results table must be read *down a column and never across a row*.',
+    ),
+  ]);
+}
+
+/** The question, before any of the arithmetic that answers it. */
+function chapterProblem(data) {
+  const lanes = data.lanes.filter((l) => l.share > 0);
+  /* Not "Out of what?" — that is chapter 1's title, and two identical entries in a fourteen-line
+   * rail is a rail a reader cannot navigate by. This section poses the question; that one answers
+   * it interactively. */
+  return section('problem', 'problem', 'The question behind every percentage', [
+    richP(
+      'We are choosing what a large model reads. The budget is fixed, and the deliverable is a set of percentages: how much general web, how much code, how much Indic, and so on.',
+      'claim',
+    ),
+    richP(
+      `Anyone can write ${lanes.length} percentages that add to 100. The work is answering one question for each of them — **out of what?** Do that honestly and three of the session's own numbers stop being affordable: one [[lane|lane]] asks for more than any amount of re-reading could ever be worth, one is missing a third of the [[supply|supply]] it was credited with, and one turns out to be counting the same text twice.`,
+    ),
+    richP(
+      'Those percentages cannot be tested at full scale — a single attempt costs months and a large amount of money. So they are tested on a model small enough to train in seconds, and this page is explicit throughout about what that does and does not prove.',
+    ),
+  ]);
+}
+
+/** The apparatus: what was actually built and measured. */
+function chapterMethod(data) {
+  const exp = data.experiment;
+  if (!exp) return section('method', 'method', 'How it was measured', []);
+
+  const m = exp.model;
+  const corpusTokens = Object.values(exp.corpus).reduce((s, l) => s + l.train_tokens, 0);
+  const laneNames = Object.keys(exp.corpus);
+  const standIns = laneNames.filter((l) =>
+    (exp.corpus[l].sources || []).some((s) => s.startsWith('data/proxy/')),
+  );
+
+  const apparatus = table(
+    ['', ''],
+    [
+      ['model', `${m.layers}-layer transformer, ${m.width} wide, ${m.heads} heads`],
+      ['context', `${m.context} tokens`],
+      ['vocabulary', `${m.vocab_size.toLocaleString()} tokens, the session 2 tokenizer`],
+      ['schedule', `${exp.steps} steps per run`],
+      ['repeats', `${exp.seeds.length} seeds per arm`],
+      ['device', exp.device],
+      ['corpus', `${(corpusTokens / 1e6).toFixed(2)}M training tokens across ${laneNames.length} lanes`],
+    ],
+  );
+
+  return section('method', 'method', 'How it was measured', [
+    richP(
+      `Four [[arms|arm]] — the same model trained four times on four sets of proportions, with **nothing else different**. That is what makes the comparison mean anything.`,
+      'claim',
+    ),
+    apparatus,
+    richP(
+      `Every arm is scored on [[held-out|heldout]] text with **the candidate's weights, not its own**. Weighting each arm by its own mixture would let an arm win by caring only about what it chose to train on.`,
+    ),
+    richP(
+      `**The load-bearing detail is the noise floor, and there is no single one.** Each comparison carries its own: the same recipe run at ${exp.seeds.length} different seeds does not score identically, and the [[spread|seedspread]] across those runs is what any claimed effect has to clear. An effect smaller than it is reported as inconclusive however large it looks — which is why every verdict below is printed beside its own noise rather than against a threshold alone.`,
+    ),
+    standIns.length
+      ? richP(
+          `**${standIns.length} of the ${laneNames.length} lanes are [[stand-ins|standin]]** — ${standIns.join(', ')}. Openly-licensed text of the right *kind*, not the datasets the specification funds those lanes from.`,
+        )
+      : richP('Every lane is funded from the text the specification names.'),
+  ]);
+}
+
+/** What was predicted, with the thresholds fixed in advance. */
+function chapterExpected(data) {
+  const exp = data.experiment;
+  if (!exp) return section('expected', 'expected', 'What we predicted', []);
+
+  const arms = exp.arms || {};
+  const armRows = Object.entries(arms).map(([k, a]) => [`Arm ${k}`, a.name]);
+
+  return section('expected', 'expected', 'What we predicted, before running anything', [
+    richP(
+      'A [[hypothesis|hypothesis]] here is a claim about the mixture written down **with its pass mark, before any arm ran**. That ordering is the whole point: pick the threshold afterwards and you will pick the one that flatters the result.',
+      'claim',
+    ),
+    table(['arm', 'the mixture it runs'], armRows),
+    richP('And the three claims, each with the number it had to beat and the condition that would kill it:'),
+    /* Cells go through `rich()`, so markup here is `**bold**` and `*italic*` — never HTML tags,
+     * which `rich()` inserts as literal text and the reader sees as `<b>`. That shipped once. */
+    table(
+      ['the claim', 'supported if', 'refuted if'],
+      [
+        [
+          '**H1** — composing a mixture beats crawling whatever is cheapest',
+          'arm A beats arm B by at least 2%',
+          'A is within 2% of B, or worse. Then composition bought nothing at this scale.',
+        ],
+        [
+          '**H2** — the protected floor is doing work, not ceremony',
+          'removing it costs Indic at least 5%',
+          'arm C is within 5% of arm A. Then the floor is ceremony at this scale.',
+        ],
+        [
+          '**H3** — halving Indic costs Indic more than it gains the other lanes',
+          'at least 3% worse on Indic',
+          /* No nested italic here: `rich()`'s bold pattern is `\*\*([^*]+)\*\*`, whose character
+           * class cannot cross an asterisk, so `**a *b* c**` never matches as bold and the single
+           * `*` rule fires instead — leaving stray asterisks on screen. Bold or italic, not both. */
+          '**within 3% on Indic, or the other lanes gain more than 1%**',
+        ],
+      ],
+    ),
+    richP(
+      '**H3 has two refutation clauses, and that detail decides the result.** A hypothesis with a compound condition has to be checked on both halves; checking only the first is how a claim survives by not being asked the harder question. This one failed on the second clause.',
+    ),
+  ]);
+}
+
+/** What is now known. */
+function chapterConclusion(data) {
+  const exp = data.experiment;
+  if (!exp) return section('conclusion', 'conclusion', 'What this establishes', []);
+
+  const tally = {};
+  exp.comparisons.forEach((c) => {
+    tally[c.verdict] = (tally[c.verdict] || 0) + 1;
+  });
+  const summary = Object.entries(tally)
+    .map(([k, v]) => `${v} ${k}`)
+    .join(' · ');
+
+  return section('conclusion', 'conclusion', 'What this establishes, and what it costs', [
+    richP(
+      `Of the three predictions fixed before the run: **${summary}**. The refuted one is the most important line here.`,
+      'claim',
+    ),
+    richP(
+      '**H3 is refuted, and its declared consequence was fixed in advance**, so it is owed rather than negotiable: the Indic lane is over-provisioned and the share should fall toward its floor.',
+    ),
+    richP(
+      '**It has not been moved, and the reason is not reluctance.** The gain arrives through the STEM lane, whose text is a declared [[stand-in|standin]], measured on a [[proxy model|proxy]]. This work\'s own rule is that a model this size cannot settle the mixture — and that rule does not stop applying when the result is inconvenient. Moving a headline share on evidence the specification calls insufficient would be the same error in the opposite direction.',
+    ),
+    richP(
+      '**So it is a decision rather than a deferral.** The share stands, and what the refutation buys is a standing instruction: treat it as an **upper bound rather than a target**. The burden of proof has moved — it is now the number that has to justify itself, instrumented against its floor at real scale.',
+    ),
+    richP(
+      'It was also re-tested against a second, deliberately different stand-in for the same lane, and came back refuted again — so the finding is not an artefact of one substitution. Two runs agreeing is still not two pieces of evidence when they share a corpus and a tokenizer, which is the next section\'s problem.',
+    ),
+  ]);
+}
+
+/** What comes next — priced, and honest that it is not scheduled. */
+function chapterNext() {
+  return section('next', 'next', 'What would settle it', [
+    richP(
+      'One experiment decides the open question, it is priced from a measurement rather than a guess, and it is **not scheduled**. Saying so is the point: "we will settle this later" is a plan only while there is a date on it.',
+      'claim',
+    ),
+    richP(
+      '**Run the arms at a real rung.** Everything on this page is three orders of magnitude below the scale these shares are for. A rung large enough to rank the four arms is a few days of rented compute rather than a research programme — and until it runs, nothing here validates the mixture at full scale.',
+    ),
+    richP(
+      '**Instrument the Indic lane against its floor on the first real run.** This is the standing instruction the refutation bought, and it is what turns an upper bound into something checkable rather than a note in a document.',
+    ),
+    richP(
+      '**Two lanes cannot be fixed by cleaning, and the work list says so.** The agentic lane has nothing to clean — it is generated, not collected — and the Indic shortfall is bounded by the vocabulary before it is bounded by the crawler: several languages are unreachable until the tokenizer is replaced. Both are priced as generation rather than collection.',
+    ),
+  ]);
+}
+
+/** How to check any of it. */
+function chapterReproduce() {
+  const pre = (lines) => {
+    const p = $('pre', 'code');
+    p.append($('code', null, lines.join('\n')));
+    return p;
+  };
+
+  return section('reproduce', 'reproduce', 'Check it yourself', [
+    richP(
+      'Every document in this exercise is generated from the modules, and every number on this page is generated from the run\'s own results file. Nothing here is typed in by hand — which is what stops a figure on the page drifting from the run that produced it.',
+      'claim',
+    ),
+    pre([
+      'uv sync --all-packages',
+      '',
+      '# rebuild every generated document from the modules',
+      'uv run python -m mixture',
+      '',
+      "# the lane supplies, itemised against the session's own headline numbers",
+      'uv run python -m mixture.inventory',
+      '',
+      '# the invariants, each paired with a test that proves it can fail',
+      'uv run python -m mixture.checks',
+      '',
+      'uv run pytest src/exercises/05-datamixtures-and-curriculum',
+    ]),
+    richP(
+      'The training parts need torch, which is an optional extra deliberately kept out of the default install so CI never pulls a large wheel to run arithmetic:',
+    ),
+    pre([
+      'uv sync --all-packages --extra proxy',
+      '',
+      '# the four arms and the three hypotheses',
+      'uv run python -m mixture.experiment',
+      '',
+      '# the follow-on experiments',
+      'uv run python -m mixture.repetition   # what a re-read token is actually worth',
+      'uv run python -m mixture.seam         # does a warmup band calm a stage seam?',
+      'uv run python -m mixture.scale        # does the ranking survive a change of scale?',
+    ]),
+  ]);
 }
 
 function buildRail(main) {
@@ -1161,6 +1505,7 @@ function buildSummary(data) {
   wrap.id = 'how';
   wrap.dataset.title = 'How this was built';
   wrap.dataset.n = '0';
+  wrap.dataset.role = 'thesis';
   wrap.append(
     richP(
       '**What this is.** A training recipe for a 40B model: how much of each kind of text it ' +
@@ -1213,14 +1558,47 @@ function buildSummary(data) {
 export function buildPage(data) {
   const main = document.getElementById('main');
   main.replaceChildren();
-  main.append(buildSummary(data));
-  CHAPTERS.forEach((fn) => {
+
+  /* The spine, in the order a reader meets it. The five numbered chapters keep their place in the
+   * middle; what changed is that the page now says what it is answering before it answers it, and
+   * what it could not see afterwards — instead of burying both inside the results chapter. */
+  const parts = [
+    buildSummary,
+    chapterGlossary,
+    chapterProblem,
+    ...MECHANISM_CHAPTERS,
+    chapterMethod,
+    chapterExpected,
+    ...RESULT_CHAPTERS,
+    chapterNegatives,
+    chapterConclusion,
+    chapterLimits,
+    chapterNext,
+    chapterReproduce,
+  ];
+  parts.forEach((fn) => {
     try {
-      main.append(fn(data));
+      const node = fn(data);
+      // `chapterLimits`/`chapterNegatives` return null when the run's data is absent, rather than
+      // rendering a section with a heading and nothing under it.
+      if (node) main.append(node);
     } catch (err) {
       main.append($('p', 'err', `Chapter failed: ${err.message}`));
     }
   });
+
+  /* Numbered after assembly, not by each builder. The five original chapters carried hard-coded
+   * numbers 1-5; with sections inserted before and after them, any hand-kept numbering would be
+   * wrong the moment the order changed. */
+  let n = 0;
+  main.querySelectorAll('section').forEach((sec) => {
+    if (!sec.dataset.title) return;
+    sec.dataset.n = String(n);
+    const label = sec.querySelector('h2 .n');
+    if (label) label.textContent = String(n);
+    n += 1;
+  });
+
   fillLede(data);
   buildRail(main);
   buildFooter(data);

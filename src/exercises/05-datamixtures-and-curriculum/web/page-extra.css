@@ -414,3 +414,61 @@ p.note { color: var(--muted); font-size: 13.5px; }
 /* The pointer out to METHOD.md, under the summary strip. */
 .summary-more { margin: 10px 0 0; }
 .summary-more a { color: var(--accent); }
+
+/* ------------------------------------------------------------------------------- the spine
+ *
+ * The prose sections the narrative spine adds around the five numbered chapters. The chapters
+ * keep their own styling; these are the parts a reader needs before and after them.
+ *
+ * Every colour is a token from /_shared/tokens.css, so the page follows the reader's theme in
+ * both directions with no second palette to keep in step.
+ */
+
+section.prose p { max-width: 72ch; }
+section.prose p + p { margin-top: 14px; }
+
+/* The glossary, as the table of terms it actually is. Grid rather than a float, so a long
+ * definition wraps under itself instead of under the term. */
+.defs {
+  display: grid;
+  grid-template-columns: minmax(110px, 165px) 1fr;
+  gap: 10px 20px;
+  margin: 18px 0;
+  padding: 18px 20px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.defs dt {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.defs dd {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* One column on a phone: a 110px term column beside a definition is unreadable at 390px. */
+@media (max-width: 640px) {
+  .defs { grid-template-columns: 1fr; gap: 4px 0; }
+  .defs dd { margin: 0 0 12px; }
+}
+
+pre.code {
+  max-width: 72ch;
+  margin: 16px 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+}

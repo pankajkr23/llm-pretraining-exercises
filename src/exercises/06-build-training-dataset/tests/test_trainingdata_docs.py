@@ -185,3 +185,63 @@ def test_every_python_file_the_readme_names_is_either_tracked_or_known_to_be_loc
         f"the README names {unshipped}, which no clone receives. Either commit them, or add them "
         f"to LOCAL_ONLY with the reason they are deliberately not shipped."
     )
+
+
+# --- NOTICE must agree with the tracked artifacts -------------------------------------------------
+#
+# `NOTICE` carried the pre-refetch corpus figure for weeks after the refetch: 2,185,575 tokens and
+# 4.8 epochs, while README, CLAUDE.md, PROGRESS.md, `results/corpus_build.json` and the page all
+# said 10,649,549 at 1.0139. The same sentence also named 5,774,080 parameters — `model.py`'s
+# DEFAULT, which nothing in this exercise trains; `run_demo.py` builds a 2,084,224-parameter model.
+#
+# Nothing checked it, which is the whole reason it survived. These read the tracked artifact.
+
+NOTICE = EXERCISE / "NOTICE"
+CORPUS_BUILD = EXERCISE / "results" / "corpus_build.json"
+
+
+def _corpus_build() -> dict:
+    import json
+
+    return json.loads(CORPUS_BUILD.read_text(encoding="utf-8"))
+
+
+def test_the_notice_quotes_the_corpus_the_run_actually_used() -> None:
+    """Every corpus figure in NOTICE comes from `results/corpus_build.json` or it is stale."""
+    notice = NOTICE.read_text(encoding="utf-8")
+    build = _corpus_build()
+
+    for key in ("train_tokens", "heldout_tokens", "run_needs_tokens"):
+        assert f"{build[key]:,}" in notice, (
+            f"NOTICE does not state the tracked {key} ({build[key]:,}); it has gone stale before"
+        )
+    assert str(build["epochs_of_supply"]) in notice, (
+        f"NOTICE does not state the tracked epochs_of_supply ({build['epochs_of_supply']})"
+    )
+
+
+def test_the_notice_does_not_present_the_superseded_corpus_as_current() -> None:
+    """The old figures may appear — as history. They may not appear as the run's own numbers.
+
+    Written this way on purpose: NOTICE now explains the refetch, so banning the old numbers
+    outright would ban the correction too. What must not happen is the old number standing alone.
+    """
+    notice = NOTICE.read_text(encoding="utf-8")
+    if "2,185,575" in notice:
+        assert "was once" in notice or "previously" in notice or "earlier" in notice, (
+            "NOTICE states the superseded corpus size without marking it as superseded"
+        )
+
+
+def test_the_notice_names_the_model_the_demo_actually_builds() -> None:
+    """The published figures come from `run_demo.py`'s model, not from `ModelConfig`'s defaults.
+
+    Both counts may be named — the point of the sentence is to distinguish them — but the demo's
+    must be there, since it is the one every measurement came from.
+    """
+    notice = NOTICE.read_text(encoding="utf-8")
+    demo_width = re.search(r"ModelConfig\(d_model=(\d+)", (EXERCISE / "run_demo.py").read_text())
+    assert demo_width, "run_demo.py no longer builds an explicit ModelConfig; update this guard"
+    assert (
+        f"d_model {demo_width.group(1)}" in notice or f"d_model={demo_width.group(1)}" in notice
+    ), f"NOTICE never says the demo runs at d_model {demo_width.group(1)}"
