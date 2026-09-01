@@ -329,7 +329,21 @@
           "window": 4
         },
         "scale": "schematic",
-        "source": "A band of recent positions. Window width is ours; the papers use several."
+        "source": "A band of recent positions. Window width is ours; the papers use several.",
+        "sizes": {
+          "window": {
+            "value": 512,
+            "unit": "tokens",
+            "from": "ours",
+            "note": "a representative window; Longformer varies it by layer and we could not read a single stated value out of the PDF, so this is ours rather than attributed"
+          },
+          "context": {
+            "value": 2048,
+            "unit": "tokens",
+            "from": "ours",
+            "note": "four times the window, chosen so both the band and what it excludes are visible"
+          }
+        }
       }
     },
     {
@@ -800,7 +814,51 @@
           "selectBy": "score"
         },
         "scale": "schematic",
-        "source": "Compressed blocks plus selected blocks plus a local window. The paper describes a hierarchical strategy; block size, how many are selected and the window are all ours. Blocks are chosen per query BY SCORE, not by position: an earlier version of this drawing turned on the first N blocks, which asserts that the mechanism always attends to the oldest text. It does not. Which blocks survive depends on the scores and therefore on the data, so the selection is drawn as a reproducible scatter and labelled as one."
+        "source": "Three branches drawn separately - a local window, blocks selected per query by score, and the compressed summaries the selector reads. Every size is the paper's own; the grid is drawn at a reduced context so the window is visible at all, and the figure states the reduction and the true proportion beside it.",
+        "sizes": {
+          "compressBlock": {
+            "value": 32,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "we set compression block size l=32",
+            "where": "§4.1 Pretraining Setup, arXiv:2502.11089v1"
+          },
+          "compressStride": {
+            "value": 16,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "sliding stride d=16",
+            "where": "§4.1 Pretraining Setup, arXiv:2502.11089v1"
+          },
+          "blockSize": {
+            "value": 64,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "selected block size l′=64",
+            "where": "§4.1 Pretraining Setup, arXiv:2502.11089v1"
+          },
+          "selected": {
+            "value": 16,
+            "unit": "blocks",
+            "from": "stated",
+            "quote": "selected block count n=16 (including fixed activating the 1 initial block and 2 local blocks)",
+            "where": "§4.1 Pretraining Setup, arXiv:2502.11089v1"
+          },
+          "window": {
+            "value": 512,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "sliding window size w=512",
+            "where": "§4.1 Pretraining Setup, arXiv:2502.11089v1"
+          },
+          "context": {
+            "value": 32768,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "followed by continued training and supervised fine-tuning on 32k-length texts",
+            "where": "§4.1 Pretraining Setup, arXiv:2502.11089v1"
+          }
+        }
       }
     },
     {

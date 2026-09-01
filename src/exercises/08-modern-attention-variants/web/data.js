@@ -34,7 +34,8 @@ export const M = Object.freeze({
           "causal": false
         },
         "scale": "schematic",
-        "source": "Cross-attention over a source sentence: every target position may see every source position, so there is no mask. Shape from the paper's description; grid size is ours."
+        "source": "Cross-attention over a source sentence: every target position may see every source position, so there is no mask. Shape from the paper's description; grid size is ours.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -70,7 +71,8 @@ export const M = Object.freeze({
           "hardEdge": true
         },
         "scale": "schematic",
-        "source": "One learned row per position, with nothing beyond the trained length. Band count is illustrative."
+        "source": "One learned row per position, with nothing beyond the trained length. Band count is illustrative.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -107,7 +109,8 @@ export const M = Object.freeze({
           "continues": true
         },
         "scale": "schematic",
-        "source": "Fixed sine and cosine bands at different frequencies, defined past the trained length. Band count is illustrative."
+        "source": "Fixed sine and cosine bands at different frequencies, defined past the trained length. Band count is illustrative.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -146,7 +149,8 @@ export const M = Object.freeze({
           "causal": true
         },
         "scale": "illustrative",
-        "source": "The full causal triangle — the reference every other field glyph is drawn against. Exact by construction."
+        "source": "The full causal triangle — the reference every other field glyph is drawn against. Exact by construction.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -186,7 +190,8 @@ export const M = Object.freeze({
           "stride": 4
         },
         "scale": "schematic",
-        "source": "Strided plus local factorisation. The paper gives O(n sqrt n); the specific stride and local width here are ours."
+        "source": "Strided plus local factorisation. The paper gives O(n sqrt n); the specific stride and local width here are ours.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -222,7 +227,8 @@ export const M = Object.freeze({
           "of": 8
         },
         "scale": "illustrative",
-        "source": "One key/value head for all query heads, by definition. Head count 8 is the session's own yardstick."
+        "source": "One key/value head for all query heads, by definition. Head count 8 is the session's own yardstick.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -262,7 +268,8 @@ export const M = Object.freeze({
           "topk": 3
         },
         "scale": "schematic",
-        "source": "Three surviving cells per row, scattered rather than patterned, because which cells survive depends on the scores and therefore on the data. A tidy fixed shape here would be a lie a reader cannot detect - the whole point of top-k is that the shape is not knowable in advance."
+        "source": "Three surviving cells per row, scattered rather than patterned, because which cells survive depends on the scores and therefore on the data. A tidy fixed shape here would be a lie a reader cannot detect - the whole point of top-k is that the shape is not knowable in advance.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -299,7 +306,8 @@ export const M = Object.freeze({
           "blocks": 3
         },
         "scale": "schematic",
-        "source": "Block-diagonal on a reordered sequence, with the reordering drawn above it. Buckets come from hashing the content, so which cells are live depends on the data and not on position; a fixed pattern here would be a lie a reader cannot detect."
+        "source": "Block-diagonal on a reordered sequence, with the reordering drawn above it. Buckets come from hashing the content, so which cells are live depends on the data and not on position; a fixed pattern here would be a lie a reader cannot detect.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -338,7 +346,21 @@ export const M = Object.freeze({
           "window": 4
         },
         "scale": "schematic",
-        "source": "A band of recent positions. Window width is ours; the papers use several."
+        "source": "A band of recent positions. Window width is ours; the papers use several.",
+        "sizes": {
+          "window": {
+            "value": 512,
+            "unit": "tokens",
+            "from": "ours",
+            "note": "a representative window; Longformer varies it by layer and we could not read a single stated value out of the PDF, so this is ours rather than attributed"
+          },
+          "context": {
+            "value": 2048,
+            "unit": "tokens",
+            "from": "ours",
+            "note": "four times the window, chosen so both the band and what it excludes are visible"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -376,7 +398,8 @@ export const M = Object.freeze({
           "write": "add"
         },
         "scale": "schematic",
-        "source": "A fixed-size running state, the same size at any context. Deliberately NOT a diagonal, which would wrongly suggest a token attends only to itself. State dimensions are ours."
+        "source": "A fixed-size running state, the same size at any context. Deliberately NOT a diagonal, which would wrongly suggest a token attends only to itself. State dimensions are ours.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -414,7 +437,8 @@ export const M = Object.freeze({
           "write": "add+correct"
         },
         "scale": "schematic",
-        "source": "The same fixed state, written by reading first and applying only the difference."
+        "source": "The same fixed state, written by reading first and applying only the difference.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -450,7 +474,8 @@ export const M = Object.freeze({
           "graded": "relative"
         },
         "scale": "schematic",
-        "source": "A graded field constant along each diagonal, oscillating with the gap under a slow decay envelope, because the score is a sum of cosines of the gap times theta. Frequency and envelope are illustrative; the oscillation is the mechanism."
+        "source": "A graded field constant along each diagonal, oscillating with the gap under a slow decay envelope, because the score is a sum of cosines of the gap times theta. Frequency and envelope are illustrative; the oscillation is the mechanism.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -486,7 +511,8 @@ export const M = Object.freeze({
           "graded": "linear"
         },
         "scale": "schematic",
-        "source": "A linear penalty growing with distance, subtracted before softmax. Per-head slopes exist in the paper; the one drawn is illustrative."
+        "source": "A linear penalty growing with distance, subtracted before softmax. Per-head slopes exist in the paper; the one drawn is illustrative.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -522,7 +548,8 @@ export const M = Object.freeze({
           "tiled": true
         },
         "scale": "illustrative",
-        "source": "Byte-identical to the standard-attention field, because FlashAttention is EXACT — it changes memory traffic, not one score. The only difference drawn is the tiling overlay."
+        "source": "Byte-identical to the standard-attention field, because FlashAttention is EXACT — it changes memory traffic, not one score. The only difference drawn is the tiling overlay.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -558,7 +585,8 @@ export const M = Object.freeze({
           "of": 8
         },
         "scale": "illustrative",
-        "source": "Query heads in groups sharing a key/value head. 2 of 8 is the session's own worked example."
+        "source": "Query heads in groups sharing a key/value head. 2 of 8 is the session's own worked example.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -594,7 +622,8 @@ export const M = Object.freeze({
           "stretch": "low"
         },
         "scale": "schematic",
-        "source": "Low-frequency bands stretched, high-frequency bands left nearly alone. Which bands and by how much is illustrative."
+        "source": "Low-frequency bands stretched, high-frequency bands left nearly alone. Which bands and by how much is illustrative.",
+        "sizes": {}
       },
       "source": {
         "kind": "post",
@@ -630,7 +659,8 @@ export const M = Object.freeze({
           "stretch": "banded"
         },
         "scale": "schematic",
-        "source": "Frequencies split into bands and treated differently by band. The split points are illustrative."
+        "source": "Frequencies split into bands and treated differently by band. The split points are illustrative.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -667,7 +697,8 @@ export const M = Object.freeze({
           "sinks": 4
         },
         "scale": "schematic",
-        "source": "A sliding window plus the first few positions held permanently — literally the union of two earlier glyphs. Sink count is illustrative."
+        "source": "A sliding window plus the first few positions held permanently — literally the union of two earlier glyphs. Sink count is illustrative.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -702,7 +733,8 @@ export const M = Object.freeze({
           "write": "select"
         },
         "scale": "schematic",
-        "source": "A fixed state whose write is input-dependent: store, ignore or forget per token."
+        "source": "A fixed state whose write is input-dependent: store, ignore or forget per token.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -739,7 +771,8 @@ export const M = Object.freeze({
           "latent": true
         },
         "scale": "illustrative",
-        "source": "Keys and values are not stored per head at all; a narrow shared latent is stored and re-expanded. The paper reports a 93.3% cache reduction against its own baseline."
+        "source": "Keys and values are not stored per head at all; a narrow shared latent is stored and re-expanded. The paper reports a 93.3% cache reduction against its own baseline.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -775,7 +808,8 @@ export const M = Object.freeze({
           "chunked": true
         },
         "scale": "schematic",
-        "source": "The delta-rule state, written a chunk at a time so it can be trained in parallel."
+        "source": "The delta-rule state, written a chunk at a time so it can be trained in parallel.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -810,7 +844,8 @@ export const M = Object.freeze({
           "write": "add+correct+flush"
         },
         "scale": "schematic",
-        "source": "The delta-rule state plus a gate that can clear it wholesale."
+        "source": "The delta-rule state plus a gate that can clear it wholesale.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -852,7 +887,51 @@ export const M = Object.freeze({
           "selectBy": "score"
         },
         "scale": "schematic",
-        "source": "Compressed blocks plus selected blocks plus a local window. The paper describes a hierarchical strategy; block size, how many are selected and the window are all ours. Blocks are chosen per query BY SCORE, not by position: an earlier version of this drawing turned on the first N blocks, which asserts that the mechanism always attends to the oldest text. It does not. Which blocks survive depends on the scores and therefore on the data, so the selection is drawn as a reproducible scatter and labelled as one."
+        "source": "Three branches drawn separately - a local window, blocks selected per query by score, and the compressed summaries the selector reads. Every size is the paper's own; the grid is drawn at a reduced context so the window is visible at all, and the figure states the reduction and the true proportion beside it.",
+        "sizes": {
+          "compressBlock": {
+            "value": 32,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "we set compression block size l=32",
+            "where": "§4.1 Pretraining Setup, arXiv:2502.11089v1"
+          },
+          "compressStride": {
+            "value": 16,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "sliding stride d=16",
+            "where": "§4.1 Pretraining Setup, arXiv:2502.11089v1"
+          },
+          "blockSize": {
+            "value": 64,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "selected block size l′=64",
+            "where": "§4.1 Pretraining Setup, arXiv:2502.11089v1"
+          },
+          "selected": {
+            "value": 16,
+            "unit": "blocks",
+            "from": "stated",
+            "quote": "selected block count n=16 (including fixed activating the 1 initial block and 2 local blocks)",
+            "where": "§4.1 Pretraining Setup, arXiv:2502.11089v1"
+          },
+          "window": {
+            "value": 512,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "sliding window size w=512",
+            "where": "§4.1 Pretraining Setup, arXiv:2502.11089v1"
+          },
+          "context": {
+            "value": 32768,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "followed by continued training and supervised fine-tuning on 32k-length texts",
+            "where": "§4.1 Pretraining Setup, arXiv:2502.11089v1"
+          }
+        }
       },
       "source": {
         "kind": "paper",
@@ -891,7 +970,8 @@ export const M = Object.freeze({
           "gated": "channelwise"
         },
         "scale": "schematic",
-        "source": "A state box whose gate is drawn per channel rather than as one mark, because the whole change is that decay is no longer a single scalar. The number of channels drawn is ours."
+        "source": "A state box whose gate is drawn per channel rather than as one mark, because the whole change is that decay is no longer a single scalar. The number of channels drawn is ours.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -927,7 +1007,8 @@ export const M = Object.freeze({
           "emptying": true
         },
         "scale": "schematic",
-        "source": "The positional bands being removed after pretraining, which is the mechanism itself."
+        "source": "The positional bands being removed after pretraining, which is the mechanism itself.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -965,7 +1046,8 @@ export const M = Object.freeze({
           "rotating": true
         },
         "scale": "schematic",
-        "source": "A state box with a rotation mark, for the complex-valued update that is the paper's distinguishing change. The mark is a symbol, not a measurement."
+        "source": "A state box with a rotation mark, for the complex-valued update that is the paper's distinguishing change. The mark is a symbol, not a measurement.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -1009,7 +1091,8 @@ export const M = Object.freeze({
           "selectBy": "score"
         },
         "scale": "schematic",
-        "source": "Selected blocks plus a local window, with a compression mark, because it layers compression underneath the selection its predecessor already did. Block size and how many are selected are ours. Blocks are chosen per query BY SCORE, not by position: an earlier version of this drawing turned on the first N blocks, which asserts that the mechanism always attends to the oldest text. It does not. Which blocks survive depends on the scores and therefore on the data, so the selection is drawn as a reproducible scatter and labelled as one."
+        "source": "Selected blocks plus a local window, with a compression mark, because it layers compression underneath the selection its predecessor already did. Block size and how many are selected are ours. Blocks are chosen per query BY SCORE, not by position: an earlier version of this drawing turned on the first N blocks, which asserts that the mechanism always attends to the oldest text. It does not. Which blocks survive depends on the scores and therefore on the data, so the selection is drawn as a reproducible scatter and labelled as one.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -1047,7 +1130,8 @@ export const M = Object.freeze({
           "gates": 2
         },
         "scale": "schematic",
-        "source": "Two separate gate marks on the state box, for the erase gate and the write gate the paper decouples. Their size and placement are ours."
+        "source": "Two separate gate marks on the state box, for the erase gate and the write gate the paper decouples. Their size and placement are ours.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -1089,7 +1173,8 @@ export const M = Object.freeze({
           "selectBy": "score"
         },
         "scale": "schematic",
-        "source": "Blocks selected per query group, drawn as selection with a grouping mark. How many blocks and how many are selected are ours; the paper's point is that selection is per group. Blocks are chosen per query BY SCORE, not by position: an earlier version of this drawing turned on the first N blocks, which asserts that the mechanism always attends to the oldest text. It does not. Which blocks survive depends on the scores and therefore on the data, so the selection is drawn as a reproducible scatter and labelled as one."
+        "source": "Blocks selected per query group, drawn as selection with a grouping mark. How many blocks and how many are selected are ours; the paper's point is that selection is per group. Blocks are chosen per query BY SCORE, not by position: an earlier version of this drawing turned on the first N blocks, which asserts that the mechanism always attends to the oldest text. It does not. Which blocks survive depends on the scores and therefore on the data, so the selection is drawn as a reproducible scatter and labelled as one.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",
@@ -1127,7 +1212,8 @@ export const M = Object.freeze({
           "coupled": true
         },
         "scale": "schematic",
-        "source": "Bands with coupling marks between them, because the change is that rotation subspaces mix rather than staying independent. The number of bands drawn is ours."
+        "source": "Bands with coupling marks between them, because the change is that rotation subspaces mix rather than staying independent. The number of bands drawn is ours.",
+        "sizes": {}
       },
       "source": {
         "kind": "paper",

@@ -100,15 +100,19 @@ class Glyph:
         params: Generator arguments — window widths, head counts, and so on.
         scale: `illustrative` when the numbers come from a source, `schematic` when they are ours.
         source: Why this shape, in words a reader can weigh. Required.
+        sizes: Real quantities the drawing may use, each carrying its own provenance. A number may
+            enter this catalogue only with a citation attached -- see `_check_sizes`.
     """
 
     kind: str
     params: dict
     scale: str
     source: str
+    sizes: dict = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """A glyph with no stated provenance is a picture presenting itself as evidence."""
+        self._check_sizes()
         if self.kind not in GLYPH_KINDS:
             raise ValueError(f"unknown glyph kind {self.kind!r}; expected {sorted(GLYPH_KINDS)}")
         if self.scale not in GLYPH_SCALES:
@@ -120,6 +124,46 @@ class Glyph:
                 "every glyph must say where its shape comes from; a drawing with no provenance "
                 "reads as measured and is not"
             )
+
+    def _check_sizes(self) -> None:
+        """A number may enter only with a citation attached.
+
+        `GLYPH_SCALES` explains why the catalogue held no sizes at all: *a glyph drawn to specific
+        numbers would be inventing them - the exact fabrication this exercise is built to prevent.*
+        Real sizes are allowed now because the diagrams need them, and the guarantee is preserved by
+        making provenance the price of entry, exactly as `Source` refuses a verified citation with
+        no URL. A `stated` size quotes the sentence it was read from; an `ours` size says why we
+        chose it. Neither may be a bare number.
+        """
+        for name, spec in (self.sizes or {}).items():
+            if not isinstance(spec, dict) or "value" not in spec:
+                raise ValueError(f"size {name!r} must be a mapping with a 'value'")
+            origin = spec.get("from")
+            if origin == "stated":
+                quote = str(spec.get("quote", "")).strip()
+                if not quote:
+                    raise ValueError(f"size {name!r} claims to be stated but quotes nothing")
+                #: The quote must CONTAIN the number it is evidence for. That is a far stronger
+                #: check than a word count, and it is the right one: a hyperparameter is quoted as
+                #: a fragment ("sliding stride d=16") rather than a sentence, so a length floor
+                #: rejects honest evidence while still admitting a long quote that never mentions
+                #: the value. This admits the fragment and rejects the mismatch.
+                if not _quote_evidences(spec["value"], quote):
+                    raise ValueError(
+                        f"size {name!r} is {spec['value']}, but the quote offered as evidence does "
+                        f"not contain that number: {quote!r}"
+                    )
+                if not spec.get("where"):
+                    raise ValueError(f"size {name!r} is stated but says nowhere in the source")
+            elif origin == "ours":
+                if len(str(spec.get("note", "")).split()) < 6:
+                    raise ValueError(
+                        f"size {name!r} is ours and must say why we chose it, in a sentence"
+                    )
+            else:
+                raise ValueError(
+                    f"size {name!r} must declare from: 'stated' or 'ours', got {origin!r}"
+                )
 
 
 @dataclass(frozen=True)
@@ -215,6 +259,7 @@ def _mechanism(entry: dict) -> Mechanism:
             params=pattern.get("params", {}),
             scale=pattern["scale"],
             source=pattern["source"],
+            sizes=pattern.get("sizes", {}),
         )
         if pattern
         else None
@@ -230,6 +275,24 @@ def _mechanism(entry: dict) -> Mechanism:
         glyph=glyph,
         **fields,
     )
+
+
+def _quote_evidences(value: object, quote: str) -> bool:
+    """Does this quote actually contain the number it is offered as evidence for?
+
+    Taught the notation the sources use, rather than loosened. Papers write context lengths as
+    "32k" and "1M", not "32768" and "1000000", so a literal substring test rejects an honest quote.
+    It still rejects the case that matters: a quote that never mentions the value at all, which is
+    a number attributed to a paper on nothing more than our say-so.
+    """
+    flat = quote.replace(",", "").lower()
+    if str(value).lower() in flat:
+        return True
+    if isinstance(value, int):
+        for unit, scale in (("k", 1024), ("k", 1000), ("m", 1024**2), ("m", 1000**2)):
+            if value % scale == 0 and f"{value // scale}{unit}" in flat:
+                return True
+    return False
 
 
 def missing_mandated(mechanisms: list[Mechanism]) -> list[str]:

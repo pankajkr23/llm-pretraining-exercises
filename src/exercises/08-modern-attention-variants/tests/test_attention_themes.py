@@ -72,6 +72,20 @@ MARKS_ON_PAGE = (
     "gl-gate",
     "gl-perm",
     "gl-permblock",
+    # the detail diagrams
+    "dg-live",
+    "dg-q",
+    "dg-k",
+    "dg-v",
+    "dg-store",
+    "dg-ref",
+    "dg-local",
+    "dg-sink",
+    "dg-stride",
+    "dg-block",
+    "dg-selected",
+    "dg-bucket",
+    "dg-wall",
 )
 
 #: Marks painted ON TOP OF a filled field, so `--ink` is the surface behind them, not `--bg`.
@@ -93,6 +107,17 @@ SURFACES = (
     "gl-schema",
     "gl-wire",
     "gl-band",
+    # diagram surfaces and hairlines: a track is a ground, a dropped cell is deliberately hollow,
+    # and the hatch is a texture read at pattern scale rather than as a fill
+    "dg-track",
+    "dg-dropped",
+    "dg-masked",
+    "dg-hatch-line",
+    "dg-masked-swatch",
+    "dg-wire",
+    "dg-wire-accent",
+    "dg-arrow",
+    "dg-cont",
 )
 
 

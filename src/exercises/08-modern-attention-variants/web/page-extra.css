@@ -1449,3 +1449,113 @@ a.guide-path:focus-visible {
   line-height: 1.6;
   color: var(--ink);
 }
+
+/* ============================================================ the detail diagrams
+ *
+ * Form carries the meaning and colour is the second encoding, never the only one — form survives
+ * greyscale, print, colour blindness, and the high-contrast theme where --muted and --ink are the
+ * same black. Every value here is a token; `tests/test_attention_themes.py` measures each one
+ * against the surface behind it, in all six themes.
+ */
+.diagram-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* The three cell states. This distinction is the whole point of the figure: the glyph could only
+ * say "on", so everything else was simply absent — which conflates "the maths forbids this" with
+ * "this design threw it away". */
+.dg-live {
+  fill: var(--ink);
+}
+.dg-dropped {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 0.75;
+}
+.dg-masked {
+  stroke: none;
+}
+.dg-hatch-line {
+  stroke: var(--faint);
+  stroke-width: 1.1;
+}
+.dg-masked-swatch {
+  fill: none;
+  stroke: var(--faint);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+/* The four parts. */
+.dg-q {
+  fill: var(--part-q);
+}
+.dg-k {
+  fill: var(--part-k);
+}
+.dg-v {
+  fill: var(--part-v);
+}
+.dg-store {
+  fill: var(--part-store);
+}
+.dg-ref {
+  fill: var(--muted);
+}
+.dg-track {
+  fill: var(--track);
+}
+
+/* Why a cell survived. */
+.dg-local {
+  fill: var(--part-k);
+}
+.dg-sink {
+  fill: var(--part-q);
+}
+.dg-stride {
+  fill: var(--part-v);
+}
+.dg-block {
+  fill: var(--part-store);
+}
+.dg-selected {
+  fill: var(--part-v);
+}
+.dg-bucket {
+  fill: var(--part-store);
+}
+
+.dg-wire {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+  fill: none;
+}
+.dg-wire-accent {
+  stroke: var(--part-store);
+  stroke-width: 1.2;
+  fill: none;
+}
+.dg-arrow {
+  stroke: var(--muted);
+  stroke-width: 1.2;
+  fill: none;
+}
+.dg-wall {
+  stroke: var(--part-q);
+  stroke-width: 2;
+}
+.dg-cont {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  fill: none;
+}
+
+/* Text inside a diagram reuses the figure classes, which are already themed and anchored. */
+.diagram-svg text.lbl {
+  font-weight: 600;
+}

@@ -75,6 +75,7 @@ def payload() -> dict:
                     "params": m.glyph.params,
                     "scale": m.glyph.scale,
                     "source": m.glyph.source,
+                    "sizes": m.glyph.sizes,
                 },
                 "source": {
                     "kind": m.source.kind,
