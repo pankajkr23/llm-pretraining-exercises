@@ -848,10 +848,11 @@ export const M = Object.freeze({
           "causal": true,
           "blocks": 3,
           "selected": 2,
-          "window": 3
+          "window": 3,
+          "selectBy": "score"
         },
         "scale": "schematic",
-        "source": "Compressed blocks plus selected blocks plus a local window. The paper describes a hierarchical strategy; block size, how many are selected and the window are all ours."
+        "source": "Compressed blocks plus selected blocks plus a local window. The paper describes a hierarchical strategy; block size, how many are selected and the window are all ours. Blocks are chosen per query BY SCORE, not by position: an earlier version of this drawing turned on the first N blocks, which asserts that the mechanism always attends to the oldest text. It does not. Which blocks survive depends on the scores and therefore on the data, so the selection is drawn as a reproducible scatter and labelled as one."
       },
       "source": {
         "kind": "paper",
@@ -1004,10 +1005,11 @@ export const M = Object.freeze({
           "blocks": 3,
           "selected": 2,
           "window": 3,
-          "compressed": true
+          "compressed": true,
+          "selectBy": "score"
         },
         "scale": "schematic",
-        "source": "Selected blocks plus a local window, with a compression mark, because it layers compression underneath the selection its predecessor already did. Block size and how many are selected are ours."
+        "source": "Selected blocks plus a local window, with a compression mark, because it layers compression underneath the selection its predecessor already did. Block size and how many are selected are ours. Blocks are chosen per query BY SCORE, not by position: an earlier version of this drawing turned on the first N blocks, which asserts that the mechanism always attends to the oldest text. It does not. Which blocks survive depends on the scores and therefore on the data, so the selection is drawn as a reproducible scatter and labelled as one."
       },
       "source": {
         "kind": "paper",
@@ -1083,10 +1085,11 @@ export const M = Object.freeze({
           "blocks": 4,
           "selected": 2,
           "window": 2,
-          "grouped": true
+          "grouped": true,
+          "selectBy": "score"
         },
         "scale": "schematic",
-        "source": "Blocks selected per query group, drawn as selection with a grouping mark. How many blocks and how many are selected are ours; the paper's point is that selection is per group."
+        "source": "Blocks selected per query group, drawn as selection with a grouping mark. How many blocks and how many are selected are ours; the paper's point is that selection is per group. Blocks are chosen per query BY SCORE, not by position: an earlier version of this drawing turned on the first N blocks, which asserts that the mechanism always attends to the oldest text. It does not. Which blocks survive depends on the scores and therefore on the data, so the selection is drawn as a reproducible scatter and labelled as one."
       },
       "source": {
         "kind": "paper",

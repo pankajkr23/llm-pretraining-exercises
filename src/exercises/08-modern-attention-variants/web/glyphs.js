@@ -37,7 +37,12 @@ const s = (tag, attrs) => {
   return n;
 };
 
-/** Grid resolution for a field glyph. Twelve reads as a matrix; more reads as texture. */
+import { binary, weight } from './support.js';
+
+/** Grid resolution for a field glyph. Twelve reads as a matrix; more reads as texture.
+ *
+ * The detail diagrams choose their own, higher resolution. Both call the same predicate in
+ * `support.js`, so a glyph and its diagram cannot disagree about what a mechanism does. */
 const T = 12;
 
 /* Below this pixel size a 1px hatch shimmers, especially on the high-contrast theme's pure black
@@ -64,76 +69,13 @@ function runs(row) {
 
 /* ------------------------------------------------------------------------------- the field
  *
- * Which query-key pairs survive. Row i is the token doing the looking, column j the token being
- * looked at, so a causal field is a lower triangle. Every pattern mechanism is a stencil on this.
+ * Which query-key pairs survive. The predicate itself lives in `support.js` so the diagram can ask
+ * the same question at a higher resolution; this collapses its answer to the 0/1 a mark needs.
  */
-
-function fieldSupport(p) {
-  const causal = p.causal !== false;
-  const grid = [];
-  for (let i = 0; i < T; i += 1) {
-    const row = [];
-    for (let j = 0; j < T; j += 1) {
-      if (causal && j > i) {
-        row.push(0);
-        continue;
-      }
-      let on = 1;
-      if (p.window !== undefined) on = i - j < p.window ? 1 : 0;
-      if (p.sinks !== undefined && j < p.sinks) on = 1; // the union that IS attention sinks
-      if (p.stride !== undefined) {
-        const local = p.local === undefined ? 1 : p.local;
-        on = i - j < local || j % p.stride === 0 ? 1 : 0;
-      }
-      if (p.blocks !== undefined) {
-        // compressed blocks + a couple selected + a local window: NSA's three branches
-        const block = Math.ceil(T / p.blocks);
-        const sel = p.selected === undefined ? 1 : p.selected;
-        const win = p.window === undefined ? 2 : p.window;
-        const bj = Math.floor(j / block);
-        on = i - j < win || bj < sel || j % block === 0 ? 1 : 0;
-      }
-      if (p.topk !== undefined) {
-        /* Content-based selection: which cells survive depends on the SCORES, so it depends on the
-         * data. Drawn as a reproducible scatter that always keeps the diagonal, and labelled
-         * schematic, because a tidy fixed shape here would assert a structure top-k does not have
-         * — the whole point is that the shape is not knowable in advance. */
-        const rank = ((i * 7 + j * 13) % 11) + (i === j ? -20 : 0);
-        on = rank < p.topk * 2 ? 1 : 0;
-      }
-      if (p.permuted) {
-        // Reformer buckets by hashing, so the live cells depend on the DATA, not the position.
-        // Drawn as block-diagonal on a permuted sequence and labelled as such, because a
-        // plausible-looking fixed pattern would be a lie a reader cannot detect.
-        const block = Math.ceil(T / (p.blocks || 3));
-        on = Math.floor(i / block) === Math.floor(j / block) ? 1 : 0;
-      }
-      row.push(on);
-    }
-    grid.push(row);
-  }
-  return grid;
-}
-
-/** Graded fields: RoPE's score depends on the gap, ALiBi's penalty grows with it. */
-function fieldWeight(p, i, j) {
-  if (p.graded === 'relative') {
-    /* RoPE's score between two positions is a sum of cosines of (i - j) * theta_k, so it
-     * OSCILLATES with the gap under a slow decay envelope. It is constant along each diagonal —
-     * that is the relative-position property — but it is not a ramp. Drawing it as a monotone
-     * fade made it identical to ALiBi below, which is the one comparison this pair has to make
-     * legible: ALiBi subtracts a penalty that always grows, RoPE rotates. Frequency and envelope
-     * are illustrative; the oscillation is not. */
-    const osc = 0.18 + 0.82 * Math.cos((i - j) * 0.85) ** 2;
-    return osc * (0.45 + 0.55 * (1 - (i - j) / T));
-  }
-  if (p.graded === 'linear') return Math.max(0.12, 1 - (i - j) / T);
-  return 1;
-}
 
 function drawField(g, p, size) {
   const cell = size / T;
-  const grid = fieldSupport(p);
+  const grid = binary(p, T);
   const graded = Boolean(p.graded);
   const small = size < HATCH_FLOOR * 2;
 
@@ -148,7 +90,7 @@ function drawField(g, p, size) {
           height: Math.max(cell - 0.5, 0.5),
           class: 'gl-on',
         });
-        r.setAttribute('opacity', fieldWeight(p, i, j).toFixed(3));
+        r.setAttribute('opacity', weight(p, i, j, T).toFixed(3));
         g.append(r);
       }
       continue;
@@ -412,7 +354,12 @@ function drawState(g, p, size) {
     g.append(s('path', { d: `M${cx - r} ${cy} A${r} ${r} 0 1 1 ${cx} ${cy + r}`, class: 'gl-edit-s' }));
     g.append(s('circle', { cx: cx, cy: cy + r, r: Math.max(1.5, box * 0.07), class: 'gl-gate' }));
   }
-  if (write === 'select') {
+  if (write === 'select' || write === 'selective') {
+    /* Both spellings on purpose. `mamba` carries 'select' and `mamba3` carries 'selective', and
+     * the exact-equality test used to match only the first — so Mamba-3, whose whole name is
+     * *selective* state space, drew no selectivity mark at all. Its only mark was the rotation
+     * arc, which is the secondary change. A string comparison that silently matches nothing is
+     * the quietest possible defect: the glyph rendered, it just rendered the wrong mechanism. */
     // input-dependent write: a valve above the store, deciding what gets in
     g.append(s('circle', { cx: size / 2, cy: y - size * 0.11, r: size * 0.085, class: 'gl-gate' }));
     g.append(s('line', { x1: size / 2 - size * 0.05, y1: y - size * 0.11, x2: size / 2 + size * 0.05, y2: y - size * 0.11, class: 'gl-cut' }));
