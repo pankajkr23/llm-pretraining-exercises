@@ -923,3 +923,82 @@ def test_the_page_has_the_required_spine_in_order(page):
     seen = [r for r in roles if r in spine]
     first = [r for i, r in enumerate(seen) if r not in seen[:i]]
     assert first == list(spine), f"the spine is out of order: {first}"
+
+
+# ---- the mechanism figure ---------------------------------------------------------------------
+#
+# This page had no drawn figure at all until v0.11.1 — fifteen sections of sliders, tables and mark
+# strips. `AGENTS.md`: "A mechanism figure is not a results chart, and a page needs both. Results
+# say what happened; mechanism says why it must." The slider samples one point of the repetition
+# curve; the curve's shape and its asymptote were reachable only by dragging.
+
+
+def _bundle(page) -> dict:
+    """The page's own data, read from the served bundle."""
+    return json.loads(
+        (PUBLIC / SLUG / "data.js")
+        .read_text(encoding="utf-8")
+        .split("Object.freeze(", 1)[1]
+        .rsplit(");", 1)[0]
+    )
+
+
+def test_the_page_draws_a_mechanism_figure(page):
+    """A page of results and no mechanism can be believed but not understood."""
+    figures = page.eval_on_selector_all(
+        'section[data-role="mechanism"] figure', "els => els.length"
+    )
+    assert figures >= 1, "no figure in any mechanism section; the page shows what, never why"
+
+
+def test_the_figure_caption_argues_rather_than_labels(page):
+    """A caption whose text is its title has made the reader do the interpreting."""
+    caps = page.eval_on_selector_all("figure figcaption", "els => els.map(e => e.innerText)")
+    assert caps, "a figure with no caption at all"
+    for cap in caps:
+        assert len(cap.split()) >= 40, f"caption too thin to be arguing anything: {cap[:80]!r}"
+
+
+def test_the_figure_does_not_silently_drop_a_funded_lane(page):
+    """**The failure this guard exists for, and it shipped in the first draft.**
+
+    `docs/DESIGN.md`: *"Draw the whole object, not the part that fits."* The first version of this
+    figure filtered out every lane past the axis maximum and then labelled the remainder *"all 5
+    funded lanes"* — when there are six. The one it dropped is the lane that cannot be funded at any
+    price, which is the entire point of the chapter after it.
+
+    So: every funded lane must be **either** plotted on the axis **or** named in the off-scale
+    annotation. Never absent.
+    """
+    bundle = _bundle(page)
+    funded = [lane for lane in bundle["lanes"] if lane["share"] > 0 and lane["epochs"] > 0]
+    assert funded, "no funded lanes in the bundle; this guard would pass vacuously"
+
+    on_axis = page.eval_on_selector_all("figure .fig-dot:not(.bad)", "els => els.length")
+    off_axis = page.eval_on_selector_all("figure .fig-dot.bad", "els => els.length")
+    assert on_axis + off_axis == len(funded), (
+        f"{len(funded)} funded lanes, but the figure draws {on_axis} on-axis and {off_axis} "
+        f"off-axis — one is missing entirely"
+    )
+
+    # And the off-scale ones must be named, not merely dotted: an unlabelled dot at the edge says
+    # nothing about which lane it is or how far past the axis it sits.
+    text = page.eval_on_selector("figure", "el => el.textContent")
+    axis_max = 40
+    for lane in funded:
+        if lane["epochs"] > axis_max:
+            assert lane["key"] in text, (
+                f"lane {lane['key']!r} is off this figure's axis at {lane['epochs']:.0f} passes "
+                f"and the figure never names it"
+            )
+
+
+def test_the_figure_states_the_count_it_actually_draws(page):
+    """A count in a figure's own annotation, beside the dots it counts."""
+    bundle = _bundle(page)
+    funded = [lane for lane in bundle["lanes"] if lane["share"] > 0 and lane["epochs"] > 0]
+    on_axis = page.eval_on_selector_all("figure .fig-dot:not(.bad)", "els => els.length")
+    text = page.eval_on_selector("figure", "el => el.textContent")
+    assert f"{on_axis} of the {len(funded)} funded lanes" in text, (
+        f"the figure's annotation does not say '{on_axis} of the {len(funded)} funded lanes'"
+    )

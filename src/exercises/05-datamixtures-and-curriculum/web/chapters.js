@@ -172,6 +172,42 @@ const richP = (text, cls) => {
   return p;
 };
 
+/* ------------------------------------------------------------------------------- figures
+ *
+ * Inline SVG built from the page's own functions, never a chart library: no dependency, no CDN,
+ * and every colour is a token so the figure follows the reader's theme instead of being right in
+ * one of them. `docs/DESIGN.md` has the full rules.
+ *
+ * This page had **no drawn figure at all** until v0.11.1 -- fifteen sections of sliders, tables and
+ * mark strips. AGENTS.md: "A mechanism figure is not a results chart, and a page needs both.
+ * Results say what happened; mechanism says why it must." The slider below samples one point of the
+ * repetition curve at a time; the curve itself, and the asymptote that is the whole argument, could
+ * only be discovered by dragging -- which is also the interaction-as-the-only-route failure. */
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function svg(tag, attrs) {
+  const node = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) node.setAttribute(k, String(v));
+  return node;
+}
+
+function svgText(x, y, cls, text) {
+  const t = svg('text', { x, y, class: cls });
+  t.textContent = text;
+  return t;
+}
+
+/** A figure whose caption argues rather than labels. */
+function figure(node, num, caption) {
+  const f = $('figure', 'fig');
+  f.append(node);
+  const c = $('figcaption');
+  c.append(rich(`**Figure ${num}.** ${caption}`));
+  f.append(c);
+  return f;
+}
+
 
 /* EXPLAINER_PROMPT §14.1 — predict before you reveal.
  *
@@ -513,6 +549,125 @@ function chapterComposer(data) {
 
 /* ------------------------------------------------------------------ 2 · why repeating is not it */
 
+/* The mechanism this whole exercise turns on: what a re-read token is worth, and the ceiling it
+ * cannot cross. Every point is computed by `worthTokens` -- the same function the slider below and
+ * the supply verdicts use -- so the drawing cannot disagree with the arithmetic it illustrates. */
+function figRepetitionCurve(data) {
+  const cfg = data.config;
+  const decay = cfg.repetition_decay;
+  const ceiling = cfg.worth_ceiling;
+
+  const W = 720;
+  const H = 340;
+  const L = 56;
+  const R = 20;
+  const T = 22;
+  const B = 44;
+  const maxEpochs = 40;
+
+  const g = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'fig-svg', role: 'img' });
+  g.setAttribute('aria-label', `What repetition is worth: value rises but never crosses ${ceiling} times the pool.`);
+
+  const x = (e) => L + (e / maxEpochs) * (W - L - R);
+  const y = (v) => H - B - (v / (ceiling * 1.12)) * (H - T - B);
+
+  // axes
+  g.append(svg('line', { x1: L, y1: H - B, x2: W - R, y2: H - B, class: 'ax-line' }));
+  g.append(svg('line', { x1: L, y1: T, x2: L, y2: H - B, class: 'ax-line' }));
+
+  // the ceiling: the only thing on this figure that is not a measurement but a bound
+  g.append(svg('line', { x1: L, y1: y(ceiling), x2: W - R, y2: y(ceiling), class: 'ax-ceiling' }));
+  g.append(svgText(W - R, y(ceiling) - 8, 'ax mid strong end', `ceiling ${ceiling}× — never crossed`));
+
+  // y ticks
+  for (const v of [0, 4, 8, 12, 16]) {
+    g.append(svgText(L - 10, y(v) + 4, 'ax end', `${v}×`));
+    if (v) g.append(svg('line', { x1: L, y1: y(v), x2: W - R, y2: y(v), class: 'ax-grid' }));
+  }
+  // x ticks
+  for (const e of [1, 10, 20, 30, 40]) {
+    g.append(svgText(x(e), H - B + 18, 'ax mid', String(e)));
+  }
+  g.append(svgText((L + W - R) / 2, H - 8, 'ax mid', 'passes over the pool (epochs)'));
+
+  /* What you PAY: y = epochs, and it must run OFF the top of the plot rather than flatten.
+   * The first version clamped it to the y-range, which drew it bending over into a plateau -- so
+   * the line whose whole job is to have no ceiling appeared to have one, which is the exact
+   * opposite of the argument. Stop plotting it at the top edge instead. */
+  const topV = ceiling * 1.12;
+  const paid = [];
+  for (let e = 0; e <= maxEpochs; e += 0.5) {
+    if (e > topV) break;
+    paid.push(`${x(e)},${y(e)}`);
+  }
+  g.append(svg('polyline', { points: paid.join(' '), class: 'fig-paid' }));
+  g.append(svgText(x(topV) + 8, T + 12, 'ax strong warn', 'what you pay for →'));
+
+  // what you GET: the fitted curve
+  const got = [];
+  for (let e = 0; e <= maxEpochs; e += 0.25) got.push(`${x(e)},${y(worthTokens(1, e, decay))}`);
+  g.append(svg('polyline', { points: got.join(' '), class: 'fig-got' }));
+  g.append(svgText(x(30), y(worthTokens(1, 30, decay)) + 24, 'ax strong accent mid', 'what you get'));
+
+  /* Where the funded lanes actually sit -- all of them inside the first two passes, in the part of
+   * the curve where repetition is still nearly linear. That is the quiet half of the argument and
+   * it is invisible from the slider, which shows one point at a time.
+   *
+   * Marked as a BAND with one label rather than a dot per lane with a name each: every funded lane
+   * falls between 0.14 and 1.88 epochs, so six labels at that spacing overlapped into an unreadable
+   * stack. The per-lane numbers are in chapter 1's table; what this figure is for is the position
+   * of the group. */
+  const funded = (data.lanes || []).filter((l) => l.share > 0 && l.epochs > 0);
+  const onChart = funded.filter((l) => l.epochs <= maxEpochs);
+  const offChart = funded.filter((l) => l.epochs > maxEpochs);
+
+  if (onChart.length) {
+    const hi = Math.max(...onChart.map((l) => l.epochs));
+    g.append(svg('rect', { x: L, y: T, width: x(hi) - L, height: H - B - T, class: 'fig-band' }));
+    for (const lane of onChart) {
+      g.append(
+        svg('circle', {
+          cx: x(lane.epochs),
+          cy: y(worthTokens(1, lane.epochs, decay)),
+          r: 4.5,
+          class: 'fig-dot',
+        }),
+      );
+    }
+    g.append(
+      svgText(
+        x(hi) + 10,
+        y(0) - 16,
+        'ax strong',
+        `${onChart.length} of the ${funded.length} funded lanes — under ${hi.toFixed(1)} passes`,
+      ),
+    );
+  }
+
+  /* The lane that does NOT fit, drawn as the thing it is rather than dropped.
+   *
+   * `docs/DESIGN.md`: "Draw the whole object, not the part that fits." Exercise 07 shipped a figure
+   * whose caption said nineteen bytes were discarded while showing one, because the rest were
+   * outside the viewBox. The first version of THIS figure repeated it exactly -- it filtered the
+   * agentic lane out for being off-scale and then labelled the remainder "all 5 funded lanes",
+   * when there are six. The omitted one is this exercise's headline finding: it is the lane that
+   * cannot be bought at any price, and it is off-scale BECAUSE of that. */
+  for (const lane of offChart) {
+    const ax = W - R - 6;
+    const ay = y(0) - 52;
+    g.append(svg('line', { x1: ax - 46, y1: ay, x2: ax, y2: ay, class: 'fig-offscale' }));
+    g.append(svg('circle', { cx: ax, cy: ay, r: 4.5, class: 'fig-dot bad' }));
+    g.append(
+      svgText(ax, ay - 12, 'ax end strong warn', `${lane.key}: ${Math.round(lane.epochs)} passes →`),
+    );
+    g.append(
+      svgText(ax, ay + 18, 'ax end warn small', `${Math.round(lane.epochs / maxEpochs)}× beyond this axis`),
+    );
+  }
+
+  return g;
+}
+
 function chapterRepetition(data) {
   const cfg = data.config;
   const pool = 1e9;
@@ -572,7 +727,28 @@ function chapterRepetition(data) {
       'They never converge, and the bottom one stops moving.',
     big: `${cfg.worth_ceiling}×`,
     bigSub: 'the most any amount of re-reading can ever be worth, whatever you spend',
-    body: [chart, input, out],
+    body: [
+      figure(
+        figRepetitionCurve(data),
+        1,
+        `The two lines never meet, and the lower one flattens. **What you pay for** rises with every ` +
+          `pass and runs off the top of this chart; **what you get** is the fitted curve, and it ` +
+          `cannot cross ${cfg.worth_ceiling}× the pool however long you run. That bound is the ` +
+          `difference between a lane that is *expensive* and one that is *impossible* — a share ` +
+          `asking for more than its pool can ever be worth is asking for something no schedule ` +
+          `reaches. **Read the two groups of dots as one finding.** Five of the six funded lanes sit ` +
+          `inside the first two passes, in the shaded band where repetition is still nearly linear, ` +
+          `so their shares are affordable and the curve barely matters to them. The sixth is not on ` +
+          `this axis at all: *agentic* needs about 589 passes, fifteen times beyond the right edge, ` +
+          `and no point on a curve bounded at ${cfg.worth_ceiling}× can supply it. **That lane is ` +
+          `drawn rather than dropped on purpose** — it is the one the whole chapter after this is ` +
+          `about, and a figure that quietly excluded it would show a mixture with no problem in it. ` +
+          `Every point is computed by the same function the slider below and the supply verdicts use.`,
+      ),
+      chart,
+      input,
+      out,
+    ],
     arithmetic: [
       richP(
         'The curve is fitted, not assumed: Muennighoff et al., *Scaling Data-Constrained Language ' +

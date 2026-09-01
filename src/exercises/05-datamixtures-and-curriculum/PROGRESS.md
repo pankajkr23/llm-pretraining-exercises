@@ -24,7 +24,7 @@ and is O8 below. What remains is your call.
 | O1 | **Run the proxy** | **done** | 4 arms × 5 seeds × 500 steps on MPS, over all six funded lanes. **2 supported, 1 refuted** — see O8. `EXPERIMENTS.md`. |
 | O2 | **Measure local throughput** | **done** | 5.281 TFLOP/s, measured by `mixture.bench` across six model sizes. `proxy.HARDWARE` no longer says `unknown`. |
 | O3 | **Interactive page** | **done** | **15 sections** at `/05-datamixtures-and-curriculum/` — the five numbered chapters plus the narrative spine, v0.11.0. **47 browser tests**, 8 agreement tests, both mutation-checked. |
-| O9 | **A mechanism figure for this page** | **open** | It is the only spine page with **no drawn figure** — 06 has 4, 07 has 6. Its chapters are sliders and mark-strips, which show *what happens* and never *why it must*. `METHOD.md` §4 already carries two rendered Mermaid diagrams that were never brought across; copy those rather than redrawing from memory. |
+| O9 | **A mechanism figure for this page** | **done** | Figure 1 in chapter 2: the repetition curve, its `16.4×` asymptote, and where every funded lane sits on it. Drawn from `worthTokens()` — the same function the slider and the supply verdicts use — so it cannot disagree with the arithmetic it illustrates. Not the `METHOD.md` module diagrams: those describe the *software*, and the central object here is the curve that makes a lane impossible rather than expensive. |
 | O4 | **Colab notebook** | **done** | `notebooks/S05-datamixtures-and-curriculum.ipynb`, 37 code cells, executed end to end in CI's place. **Not tracked** — the notebook *and* its `tools/build_notebook.py` are both local-only, so a clone has neither. Back the builder up outside the repo. |
 | O5 | **Exercise 04's dedup is in-memory** | **done** | `accumulate.py` — append-only shards, persistent signature index, cross-shard dedup. Measured: 40.5 GB vs 0.55 GB at the 1B gate. Exercise 04's published numbers are untouched; the store is a continuation, not a replacement. |
 | O6 | **The 1B rung** | **deprioritised — not scheduled** | Priced at **~34 h and ~$98** on rented H100s against **105 days** locally, and not being spent. It no longer resolves O8; E4 replaced it with the question that could still be asked for nothing. |
@@ -324,6 +324,22 @@ plausible numbers nobody measured.
 ---
 
 ## Change log
+
+### 2026-09-01 (the mechanism figure, and the lane it nearly hid)
+
+- **The page has a drawn figure for the first time.** The repetition curve with its `16.4×`
+  asymptote, both lines, and every funded lane plotted where it actually sits. Every point comes
+  from `worthTokens()`, the function the slider and the supply verdicts already use, so the drawing
+  cannot drift from the arithmetic.
+- **Its first draft repeated exercise 07's figure bug exactly.** It filtered out any lane past the
+  axis maximum and then labelled the remainder *"all 5 funded lanes"* — there are six. The dropped
+  one was **agentic at 588.9 passes**, the lane that cannot be bought at any price and the subject
+  of the entire next chapter. A figure that quietly excluded it showed a mixture with no problem in
+  it. It is now drawn as an off-scale marker with its real number, and
+  `test_the_figure_does_not_silently_drop_a_funded_lane` fails if any funded lane is neither
+  plotted nor named — verified by dropping it again on purpose.
+- **The caption had to be rewritten after the fix**, because the version written against the broken
+  figure claimed no funded lane plots beyond the knee, which the corrected figure visibly refutes.
 
 ### 2026-09-01 (release — v0.11.0: the page rebuilt to the narrative spine)
 
