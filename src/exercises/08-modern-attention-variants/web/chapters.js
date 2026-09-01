@@ -1005,45 +1005,48 @@ function chapterReproduce(M) {
     'reproduce',
     'reproduce',
     'Check it yourself',
-    'Every date on this page has a link and a quote',
+    'Every date, and the line it was read from',
     [
-      `The catalogue is one tracked JSON file. Every entry carries the URL its date was read from and
-       the source's own wording, so checking a row means opening a link and comparing two strings —
-       no tooling required.`,
-      `To check the whole thing at once, or to re-derive the findings in the conclusion:`,
+      `Dates are the easiest thing on a page like this to get confidently wrong, so none of these is
+       asked to be taken on trust. Every row below links the paper or post the date came from, and
+       quotes <b>that source's own wording of it</b> — so checking one means opening a link and
+       comparing two strings.`,
+      `For papers the quoted line is the <b>first</b> submission, not a later revision and not the
+       conference date. Those differ by months and sometimes years — one paper here has twenty
+       months between its first version and its latest — and since this page is ordered <i>by</i>
+       date, taking the wrong one would silently reshuffle the story.`,
     ],
-    { short: 'Check it yourself', sub: 'the catalogue is one file' }
+    { short: 'Check it yourself', sub: 'every date, linked and quoted' }
   );
 
-  const pre = el('pre', 'code');
-  pre.append(
-    el(
-      'code',
-      null,
-      [
-        'uv sync --all-packages',
-        '',
-        '# the guards: coverage, sourcing, ordering, and the session arithmetic',
-        'uv run pytest src/exercises/08-modern-attention-variants',
-        '',
-        '# the timeline and the pressure in each window, derived from the catalogue',
-        'uv run python -c "',
-        "import sys; sys.path.insert(0, 'src/exercises/08-modern-attention-variants/src')",
-        'from attention.catalogue import load',
-        'from attention.timeline import in_order, pressure_by_period',
-        'for m in in_order(load()): print(m.date, m.bill, m.name)',
-        "for p in pressure_by_period(load()): print(p.start, p.end, p.dominant or 'tie', p.counts)",
-        '"',
-      ].join('\n')
+  /* Reader-facing evidence, not developer instructions.
+   *
+   * This section used to print `uv sync` and a pytest invocation — shell commands for running the
+   * repository, on a page written for someone who asked how attention works. They belong in the
+   * README and nowhere near a reader. What a reader actually wants from a section called "check it
+   * yourself" is the sources, and here they are: all of them, in one table, each one click away. */
+  s.append(
+    table(
+      ['mechanism', 'date', 'read from', 'the source&rsquo;s own words'],
+      M.mechanisms.map((m) => {
+        const link = el('a', null, m.source.title);
+        link.href = m.source.url;
+        link.rel = 'noopener';
+        const quote = el('code', 'quoted', m.source.quoted);
+        return {
+          cells: [`<b>${m.name}</b>`, nice(m.date), link, quote],
+        };
+      }),
+      'plain sources'
     )
   );
-  s.append(pre);
 
   const note = el('p', 'say small');
-  note.innerHTML = `The page reads a generated <code>data.js</code>; the generator reads the
-    catalogue and the same functions the tests exercise. So a figure here cannot disagree with the
-    evidence, and the derived findings cannot disagree with the code that produced them.
-    ${M.counts.total} mechanisms, ${M.counts.mandated} of them required by the assignment.`;
+  note.innerHTML = `Not every one is a paper. <b>${
+    M.mechanisms.filter((m) => m.source.kind !== 'paper').length
+  }</b> of the ${M.counts.total} began somewhere else — a forum post, a model release — and the
+    table says so rather than dressing them up as citations. One of them could only be read from a
+    web archive, because the original site refused the request.`;
   s.append(note);
   return s;
 }

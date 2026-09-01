@@ -421,3 +421,70 @@ rect.stack.bill-both { fill: var(--grade-x); }
 @media (prefers-reduced-motion: reduce) {
   rect.head, line.wire, circle.dot { transition: none; }
 }
+
+/* ------------------------------------------------------------------------- the sources table
+ *
+ * This replaced a block of `uv` shell commands. A section headed "check it yourself" on a page for
+ * general readers should hand them the sources, not instructions for running the repository.
+ */
+
+table.plain.sources { font-size: 12.5px; }
+table.plain.sources td { padding: 8px 14px 8px 0; }
+table.plain.sources td:first-child { min-width: 150px; }
+table.plain.sources a { word-break: break-word; }
+
+code.quoted {
+  font-size: 11px;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+/* The quoted submission line is long and is the least important column: let it be the one that
+   scrolls, inside the table's own overflow container, rather than widening the page. */
+@media (max-width: 900px) {
+  table.plain.sources code.quoted { font-size: 10px; }
+}
+
+/* ================================================================== the glyph alphabet
+ *
+ * Monochrome plus one accent, by design and not by taste: it is what lets the whole alphabet
+ * survive six themes and a high-contrast mode without inventing thirty colour tokens in a file
+ * shared with five other exercises. Which bill a mechanism pays is carried by TEXTURE, not hue —
+ * so it also reads at 100% greyscale and is colour-blind-safe by construction.
+ */
+
+.glyph-svg { display: block; overflow: visible; }
+
+.gl-on { fill: var(--ink); }
+.gl-q { fill: var(--ink); opacity: 0.55; }
+.gl-kv { fill: var(--ink); }
+.gl-kv.latent { fill: var(--accent); }
+.gl-wire { stroke: var(--ink); stroke-width: 0.7; opacity: 0.35; }
+.gl-state { fill: var(--ink); opacity: 0.9; }
+.gl-edit { fill: var(--bg); }
+.gl-flush { stroke: var(--bg); stroke-width: 1.6; }
+.gl-gate { fill: var(--accent); }
+.gl-band { fill: var(--ink); opacity: 0.85; }
+.gl-band.banded { opacity: 0.62; }
+.gl-band.gone { fill: var(--ink); opacity: 0.12; }
+.gl-wall { stroke: var(--grade-x); stroke-width: 1.4; }
+.gl-cont { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 2 2; fill: none; }
+.gl-tile { stroke: var(--bg); stroke-width: 1; opacity: 0.9; }
+.gl-perm { stroke: var(--accent); stroke-width: 1; fill: none; }
+.gl-unknown { fill: none; stroke: var(--grade-x); stroke-width: 1; stroke-dasharray: 2 2; }
+.gl-schema { fill: var(--faint); font-family: var(--mono); font-size: 9px; }
+
+/* Within-family contrast. The alphabet's promise is that a reader learns it once — which fails the
+   moment five state glyphs read as the same dark square. Each member gets one unmistakable mark. */
+.gl-cut { stroke: var(--bg); stroke-width: 1.4; }
+.gl-edit-s { stroke: var(--bg); stroke-width: 1.6; stroke-linecap: round; }
+.gl-flush { stroke: var(--bg); stroke-width: 2.2; stroke-linecap: round; }
+.gl-gate { fill: var(--accent); }
+.gl-wire.accent { stroke: var(--accent); opacity: 0.8; }
+.gl-band.stretched { fill: var(--accent); opacity: 0.75; }
+.gl-wall.soft { stroke: var(--muted); stroke-dasharray: 2 2; stroke-width: 1; }
+.gl-tile { stroke: var(--bg); stroke-width: 1.4; opacity: 1; }
+.gl-tilebox { fill: none; stroke: var(--accent); stroke-width: 1.2; }
+
+/* Reformer's shuffle: the mark that says "grouped by similarity, not by distance". */
+.gl-permblock { fill: var(--ink); opacity: 0.55; }

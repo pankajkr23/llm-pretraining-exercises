@@ -62,6 +62,12 @@ def payload() -> dict:
                 "buys": m.buys,
                 "givesUp": m.gives_up,
                 "whenToChoose": m.when_to_choose,
+                "glyph": {
+                    "kind": m.glyph.kind,
+                    "params": m.glyph.params,
+                    "scale": m.glyph.scale,
+                    "source": m.glyph.source,
+                },
                 "source": {
                     "kind": m.source.kind,
                     "title": m.source.title,
@@ -79,6 +85,11 @@ def payload() -> dict:
             "mandated": len(MANDATED),
             "bonus": sum(m.bonus for m in mechanisms),
             "outsideSession": sum(not m.taught_in_session for m in mechanisms),
+            "schematic": sum(m.glyph.scale == "schematic" for m in mechanisms),
+            "glyphKinds": {
+                k: sum(m.glyph.kind == k for m in mechanisms)
+                for k in sorted({m.glyph.kind for m in mechanisms})
+            },
             "bills": bills_addressed(mechanisms),
         },
         "periods": [

@@ -153,3 +153,75 @@ def test_the_stored_json_round_trips_through_the_loader() -> None:
 def test_each_required_mechanism_individually(phrase: str, key: str) -> None:
     """One test per required mechanism, so a failure names exactly which one is missing."""
     assert any(m.key == key for m in MECHANISMS), f"the assignment requires {phrase!r} ({key})"
+
+
+# ---- the glyphs the plate draws ------------------------------------------------------------
+
+
+def test_every_mechanism_can_be_drawn() -> None:
+    """The plate shows all twenty-three or it is not the plate.
+
+    An entry with no glyph would be a silent hole in a figure whose entire claim is completeness —
+    and a reader counting the plate against the assignment's list would find it before we did.
+    """
+    from attention.catalogue import undrawn
+
+    missing = [m.key for m in undrawn(MECHANISMS)]
+    assert not missing, f"these have no glyph and would vanish from the plate: {missing}"
+
+
+def test_every_glyph_says_where_its_shape_came_from() -> None:
+    """**The honesty rule for pictures, and it matters more here than the dates.**
+
+    The catalogue records no window size, sink count, stride, block size, top-k, latent width or
+    state dimension for any entry. So a glyph drawn to specific numbers is drawn to *our* numbers,
+    and a figure that looks measured while being invented is worse than no figure. Each one has to
+    say which it is, in words.
+    """
+    for mechanism in MECHANISMS:
+        glyph = mechanism.glyph
+        assert len(glyph.source.split()) >= 6, (
+            f"{mechanism.key}'s glyph gives no real provenance: {glyph.source!r}"
+        )
+        assert glyph.scale in {"illustrative", "schematic"}
+
+
+def test_most_glyphs_admit_they_are_schematic() -> None:
+    """A catalogue in which every shape claimed to be sourced would be lying.
+
+    Deliberately asserted as a floor rather than an exact count: if someone later sources real
+    parameters this should move, but it must never quietly reach zero — which is what would happen
+    if a future edit relabelled the shapes to look more authoritative than the evidence allows.
+    """
+    schematic = [m for m in MECHANISMS if m.glyph.scale == "schematic"]
+    assert len(schematic) >= 15, (
+        f"only {len(schematic)} of {len(MECHANISMS)} glyphs are marked schematic — the catalogue "
+        f"holds no pattern parameters, so most shapes cannot honestly claim to be to scale"
+    )
+
+
+def test_flashattention_is_drawn_as_an_unchanged_field() -> None:
+    """The one glyph whose correctness is a factual claim rather than a style choice.
+
+    FlashAttention is *exact*: it changes memory traffic and not one attention score. Drawing it as
+    a different shape from standard attention would be the worst factual error available on this
+    page, so the pairing is pinned.
+    """
+    by_key = {m.key: m for m in MECHANISMS}
+    flash = by_key["flashattention"].glyph
+    standard = by_key["standard_attention"].glyph
+    assert flash.kind == standard.kind == "field"
+    assert flash.params.get("causal") is True
+    assert flash.params.get("tiled") is True, "the tiling overlay is the only permitted difference"
+
+
+def test_the_recurrent_family_is_not_drawn_as_a_diagonal() -> None:
+    """A diagonal would say "attends only to itself", which is the opposite of what a state does.
+
+    Linear attention and its descendants keep a fixed-size summary of *everything*. They share the
+    `state` generator precisely so the page cannot imply otherwise.
+    """
+    recurrent = ["linear_attention", "delta_rule", "deltanet_parallel", "gated_deltanet", "mamba"]
+    by_key = {m.key: m for m in MECHANISMS}
+    for key in recurrent:
+        assert by_key[key].glyph.kind == "state", f"{key} must be drawn as a state, not a field"

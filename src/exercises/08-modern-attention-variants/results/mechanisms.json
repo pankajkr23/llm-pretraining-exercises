@@ -16,7 +16,10 @@
     {
       "key": "bahdanau_attention",
       "name": "Additive (Bahdanau) attention",
-      "aka": ["soft alignment", "RNN attention"],
+      "aka": [
+        "soft alignment",
+        "RNN attention"
+      ],
       "date": "2014-09-01",
       "bill": "origin",
       "taught_in_session": false,
@@ -37,7 +40,15 @@
       "new_tradeoff": "Cost became a product of the two sequence lengths rather than a constant, and the recurrence it sat on top of still forced sequential computation.",
       "buys": "Direct access to every input position, so distance stops causing forgetting.",
       "gives_up": "A constant-size interface, in exchange for one that grows with the input.",
-      "when_to_choose": "Historical. It matters because it is the origin: attention existed for three years before anyone removed the recurrence around it."
+      "when_to_choose": "Historical. It matters because it is the origin: attention existed for three years before anyone removed the recurrence around it.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": false
+        },
+        "scale": "schematic",
+        "source": "Cross-attention over a source sentence: every target position may see every source position, so there is no mask. Shape from the paper's description; grid size is ours."
+      }
     },
     {
       "key": "learned_absolute",
@@ -61,12 +72,25 @@
       "new_tradeoff": "The table has a fixed number of rows, so the model has no representation at all for a position it never trained on - a hard wall rather than a graceful decline.",
       "buys": "Order information at almost no compute cost, learned rather than designed.",
       "gives_up": "Any ability to run past the trained length, and parameters that scale with the maximum context.",
-      "when_to_choose": "When the context length is fixed and known in advance, and you would rather the model learn positional structure than be told it."
+      "when_to_choose": "When the context length is fixed and known in advance, and you would rather the model learn positional structure than be told it.",
+      "pattern": {
+        "kind": "bands",
+        "params": {
+          "rows": 6,
+          "hardEdge": true
+        },
+        "scale": "schematic",
+        "source": "One learned row per position, with nothing beyond the trained length. Band count is illustrative."
+      }
     },
     {
       "key": "standard_attention",
       "name": "Scaled dot-product attention",
-      "aka": ["vanilla attention", "softmax attention", "MHA"],
+      "aka": [
+        "vanilla attention",
+        "softmax attention",
+        "MHA"
+      ],
       "date": "2017-06-12",
       "bill": "origin",
       "source": {
@@ -85,7 +109,15 @@
       "new_tradeoff": "It sends two bills that nothing before it sent: scores grow with the square of the sequence length, and generation must keep every past key and value in memory.",
       "buys": "Exact, global, parallel mixing - every token sees every other token, with no approximation anywhere.",
       "gives_up": "Quadratic compute and a cache that grows without limit. Everything after this on the timeline is somebody paying less of one of those two.",
-      "when_to_choose": "Short contexts, and as the baseline any alternative has to beat. It is not obsolete; it is exact, and exactness is what the rest of the list trades away."
+      "when_to_choose": "Short contexts, and as the baseline any alternative has to beat. It is not obsolete; it is exact, and exactness is what the rest of the list trades away.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true
+        },
+        "scale": "illustrative",
+        "source": "The full causal triangle — the reference every other field glyph is drawn against. Exact by construction."
+      }
     },
     {
       "key": "sinusoidal",
@@ -108,12 +140,26 @@
       "new_tradeoff": "Defined is not the same as learned: the function returns a value past the trained length, but the model has never been taught what to do with it, so quality still falls away.",
       "buys": "Positions at any length, for zero parameters.",
       "gives_up": "The chance to learn a positional structure that suits the data, and any guarantee that extrapolation actually works.",
-      "when_to_choose": "When you want a simple, parameter-free baseline, or a fixed encoding you can reason about analytically."
+      "when_to_choose": "When you want a simple, parameter-free baseline, or a fixed encoding you can reason about analytically.",
+      "pattern": {
+        "kind": "bands",
+        "params": {
+          "rows": 6,
+          "hardEdge": false,
+          "continues": true
+        },
+        "scale": "schematic",
+        "source": "Fixed sine and cosine bands at different frequencies, defined past the trained length. Band count is illustrative."
+      }
     },
     {
       "key": "sparse_attention",
       "name": "Sparse (factorised) attention",
-      "aka": ["Sparse Transformer", "strided attention", "top-k attention"],
+      "aka": [
+        "Sparse Transformer",
+        "strided attention",
+        "top-k attention"
+      ],
       "date": "2019-04-23",
       "bill": "compute",
       "source": {
@@ -132,7 +178,17 @@
       "new_tradeoff": "The pattern is chosen in advance, so a genuinely important long-range pair that the pattern does not connect is simply unavailable - and a learned top-k variant still has to score the candidates before it can rank them.",
       "buys": "A large constant-factor reduction in attention compute, with softmax and its normalisation intact.",
       "gives_up": "Exactness. The model can no longer reach every position directly, and which pairs it loses is a design decision rather than a learned one.",
-      "when_to_choose": "Long sequences with structure you understand - images, audio, code - where a fixed pattern plausibly covers the dependencies that matter."
+      "when_to_choose": "Long sequences with structure you understand - images, audio, code - where a fixed pattern plausibly covers the dependencies that matter.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "local": 2,
+          "stride": 4
+        },
+        "scale": "schematic",
+        "source": "Strided plus local factorisation. The paper gives O(n sqrt n); the specific stride and local width here are ours."
+      }
     },
     {
       "key": "mqa",
@@ -155,7 +211,16 @@
       "new_tradeoff": "Every query head now reads the same keys and values, so the heads lose the ability to attend to genuinely different things, and quality can fall.",
       "buys": "The largest cache reduction available from head sharing, and a matching speedup in generation.",
       "gives_up": "Head diversity, and with it some model quality - the paper reports the degradation rather than hiding it.",
-      "when_to_choose": "Generation-heavy serving where memory bandwidth is the binding constraint and a small quality cost is acceptable."
+      "when_to_choose": "Generation-heavy serving where memory bandwidth is the binding constraint and a small quality cost is acceptable.",
+      "pattern": {
+        "kind": "stack",
+        "params": {
+          "kv": 1,
+          "of": 8
+        },
+        "scale": "illustrative",
+        "source": "One key/value head for all query heads, by definition. Head count 8 is the session's own yardstick."
+      }
     },
     {
       "key": "reformer",
@@ -180,12 +245,25 @@
       "new_tradeoff": "Hashing is probabilistic, so a relevant pair can miss each other by luck; and the scheme needs several hash rounds plus shared query-key projections to work, which constrains the architecture.",
       "buys": "Learned, content-aware sparsity without scoring every pair.",
       "gives_up": "Determinism and simplicity - and in practice the constants were high enough that it saw little production use.",
-      "when_to_choose": "Rarely today. It earns its place on the timeline as the moment the field tried to learn the sparsity pattern instead of designing it."
+      "when_to_choose": "Rarely today. It earns its place on the timeline as the moment the field tried to learn the sparsity pattern instead of designing it.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "permuted": true,
+          "blocks": 3
+        },
+        "scale": "schematic",
+        "source": "Block-diagonal on a reordered sequence, with the reordering drawn above it. Buckets come from hashing the content, so which cells are live depends on the data and not on position; a fixed pattern here would be a lie a reader cannot detect."
+      }
     },
     {
       "key": "sliding_window",
       "name": "Sliding-window attention",
-      "aka": ["local attention", "Longformer window"],
+      "aka": [
+        "local attention",
+        "Longformer window"
+      ],
       "date": "2020-04-10",
       "bill": "both",
       "taught_in_session": false,
@@ -205,12 +283,24 @@
       "new_tradeoff": "Anything outside the window is reachable only through several layers of indirection, and a fact that must be recalled verbatim from far away can be lost entirely.",
       "buys": "Linear cost and a cache that stops growing - the only entry here that bounds both bills with one idea.",
       "gives_up": "Direct long-range access. Retrieval across the whole context becomes a function of depth rather than a guarantee.",
-      "when_to_choose": "Long inputs whose important dependencies really are local, or as one component of a hybrid that pairs it with something global."
+      "when_to_choose": "Long inputs whose important dependencies really are local, or as one component of a hybrid that pairs it with something global.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "window": 4
+        },
+        "scale": "schematic",
+        "source": "A band of recent positions. Window width is ours; the papers use several."
+      }
     },
     {
       "key": "linear_attention",
       "name": "Linear attention",
-      "aka": ["Transformers are RNNs", "kernel attention"],
+      "aka": [
+        "Transformers are RNNs",
+        "kernel attention"
+      ],
       "date": "2020-06-29",
       "bill": "both",
       "source": {
@@ -229,12 +319,23 @@
       "new_tradeoff": "Four things go at once: weights are no longer positive, they no longer sum to one, keys no longer compete with each other, and there is no fresh query-specific distribution over the exact old keys. Memories interfere, and unnormalised scores can grow.",
       "buys": "Constant memory and linear time, with a state that never grows.",
       "gives_up": "Exact recall. The state is a lossy summary, and what it lost is not recoverable.",
-      "when_to_choose": "Very long streams where a bounded state is a hard requirement, and where approximate recall of the distant past is acceptable."
+      "when_to_choose": "Very long streams where a bounded state is a hard requirement, and where approximate recall of the distant past is acceptable.",
+      "pattern": {
+        "kind": "state",
+        "params": {
+          "write": "add"
+        },
+        "scale": "schematic",
+        "source": "A fixed-size running state, the same size at any context. Deliberately NOT a diagonal, which would wrongly suggest a token attends only to itself. State dimensions are ours."
+      }
     },
     {
       "key": "delta_rule",
       "name": "The delta rule",
-      "aka": ["fast weight programmers", "DeltaNet"],
+      "aka": [
+        "fast weight programmers",
+        "DeltaNet"
+      ],
       "date": "2021-02-22",
       "bill": "both",
       "source": {
@@ -253,7 +354,15 @@
       "new_tradeoff": "The update is sequential by construction - each write depends on the read before it - which made it hard to train efficiently until the parallelisation work three years later.",
       "buys": "A fixed-size state that can actually be edited, removing linear attention's worst failure mode.",
       "gives_up": "The simple parallel form of plain linear attention, and it still has no exact record of the past.",
-      "when_to_choose": "Whenever you want linear attention's economics but the task involves overwriting facts rather than only accumulating them."
+      "when_to_choose": "Whenever you want linear attention's economics but the task involves overwriting facts rather than only accumulating them.",
+      "pattern": {
+        "kind": "state",
+        "params": {
+          "write": "add+correct"
+        },
+        "scale": "schematic",
+        "source": "The same fixed state, written by reading first and applying only the difference."
+      }
     },
     {
       "key": "rope",
@@ -276,7 +385,16 @@
       "new_tradeoff": "The rotation keeps turning past the trained length. Somewhere beyond the context the model saw, a very distant pair has rotated so far that the relationship degrades - which is what every extension method after this is trying to repair.",
       "buys": "Clean relative position, no parameters, and a form that composes with efficient attention kernels.",
       "gives_up": "Reliable behaviour outside the trained range - defined everywhere, trustworthy only where it was trained.",
-      "when_to_choose": "Almost every decoder-only model today. It is the default, and the entries after it are about extending it rather than replacing it."
+      "when_to_choose": "Almost every decoder-only model today. It is the default, and the entries after it are about extending it rather than replacing it.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "graded": "relative"
+        },
+        "scale": "schematic",
+        "source": "A graded field constant along each diagonal, oscillating with the gap under a slow decay envelope, because the score is a sum of cosines of the gap times theta. Frequency and envelope are illustrative; the oscillation is the mechanism."
+      }
     },
     {
       "key": "alibi",
@@ -300,7 +418,16 @@
       "new_tradeoff": "The penalty is a fixed monotonic prior that says nearer is always more relevant. A task needing a specific far-away token fights that prior, and unlike a learned scheme there is no way for the model to override it.",
       "buys": "Length extrapolation with no extra parameters and almost no compute.",
       "gives_up": "The ability to attend strongly to something distant, and any positional structure more expressive than 'closer is better'.",
-      "when_to_choose": "When train-short-run-long matters more than exact long-range recall, and the task is largely local."
+      "when_to_choose": "When train-short-run-long matters more than exact long-range recall, and the task is largely local.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "graded": "linear"
+        },
+        "scale": "schematic",
+        "source": "A linear penalty growing with distance, subtracted before softmax. Per-head slopes exist in the paper; the one drawn is illustrative."
+      }
     },
     {
       "key": "flashattention",
@@ -325,7 +452,16 @@
       "new_tradeoff": "The saving is in memory movement, not arithmetic, so the asymptotic cost is still quadratic; and the gain comes from hardware-specific kernels that must be rewritten for each new accelerator.",
       "buys": "A large constant-factor speedup and a big memory saving, while staying exact.",
       "gives_up": "Nothing mathematically - which is why it is on this list as the exception. What it costs is portability: it is a kernel, not an idea you can express in a few lines of framework code.",
-      "when_to_choose": "Always, where a kernel exists for your hardware. It is the reason exact attention stayed competitive long after the approximations arrived."
+      "when_to_choose": "Always, where a kernel exists for your hardware. It is the reason exact attention stayed competitive long after the approximations arrived.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "tiled": true
+        },
+        "scale": "illustrative",
+        "source": "Byte-identical to the standard-attention field, because FlashAttention is EXACT — it changes memory traffic, not one score. The only difference drawn is the tiling overlay."
+      }
     },
     {
       "key": "gqa",
@@ -348,7 +484,16 @@
       "new_tradeoff": "It moves along the same line rather than leaving it: the cache still grows linearly with context, so GQA makes long context cheaper without making it affordable.",
       "buys": "A tunable trade between cache size and head diversity, and a way to convert an existing multi-head checkpoint rather than retrain.",
       "gives_up": "Some head diversity still, and the underlying linear growth in context length is untouched.",
-      "when_to_choose": "Almost any production decoder today - it is the practical default. Not a solution to long context on its own."
+      "when_to_choose": "Almost any production decoder today - it is the practical default. Not a solution to long context on its own.",
+      "pattern": {
+        "kind": "stack",
+        "params": {
+          "kv": 2,
+          "of": 8
+        },
+        "scale": "illustrative",
+        "source": "Query heads in groups sharing a key/value head. 2 of 8 is the session's own worked example."
+      }
     },
     {
       "key": "ntk_aware",
@@ -372,7 +517,16 @@
       "new_tradeoff": "It is a heuristic reparameterisation with no training behind it, so the gain is bounded and it stops helping well before the extreme lengths later methods reach.",
       "buys": "A large context extension for free - no training, no data, a few lines of change.",
       "gives_up": "Principled grounding and headroom; it is a patch on a mismatch rather than a fix for it.",
-      "when_to_choose": "When you need more context from an existing checkpoint today and cannot afford to train anything."
+      "when_to_choose": "When you need more context from an existing checkpoint today and cannot afford to train anything.",
+      "pattern": {
+        "kind": "bands",
+        "params": {
+          "rows": 6,
+          "stretch": "low"
+        },
+        "scale": "schematic",
+        "source": "Low-frequency bands stretched, high-frequency bands left nearly alone. Which bands and by how much is illustrative."
+      }
     },
     {
       "key": "yarn",
@@ -396,7 +550,16 @@
       "new_tradeoff": "It still needs some fine-tuning to reach its best results, and it inherits the assumption that the trained rotary structure is worth preserving at all - an assumption DroPE later attacks directly.",
       "buys": "The strongest RoPE extension of its generation, at a small fraction of the training cost.",
       "gives_up": "The zero-training property of the pure heuristic, and it adds hyperparameters that need setting per model.",
-      "when_to_choose": "When you have an existing RoPE model, need a large context extension, and can afford a short fine-tune."
+      "when_to_choose": "When you have an existing RoPE model, need a large context extension, and can afford a short fine-tune.",
+      "pattern": {
+        "kind": "bands",
+        "params": {
+          "rows": 6,
+          "stretch": "banded"
+        },
+        "scale": "schematic",
+        "source": "Frequencies split into bands and treated differently by band. The split points are illustrative."
+      }
     },
     {
       "key": "attention_sinks",
@@ -420,7 +583,17 @@
       "new_tradeoff": "It stabilises the model without extending it: everything evicted is genuinely gone, so this buys unbounded generation, not unbounded memory.",
       "buys": "Indefinite streaming at constant memory, from an existing checkpoint, with no training.",
       "gives_up": "Any access to the middle of a long history - which makes it wrong for tasks that need recall rather than continuation.",
-      "when_to_choose": "Long-running conversation or streaming where recent context is what matters and the distant past can be forgotten."
+      "when_to_choose": "Long-running conversation or streaming where recent context is what matters and the distant past can be forgotten.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "window": 4,
+          "sinks": 4
+        },
+        "scale": "schematic",
+        "source": "A sliding window plus the first few positions held permanently — literally the union of two earlier glyphs. Sink count is illustrative."
+      }
     },
     {
       "key": "mamba",
@@ -445,7 +618,15 @@
       "new_tradeoff": "The state is still a fixed-size summary, so exact recall of an arbitrary earlier token is not available - which is why the strongest systems pair it with a few attention layers rather than replacing them.",
       "buys": "Linear time, constant memory, and content-dependent selection.",
       "gives_up": "Exact retrieval, and the simplicity of a single uniform layer type in practice.",
-      "when_to_choose": "Very long sequences where throughput dominates, usually interleaved with attention layers rather than used alone."
+      "when_to_choose": "Very long sequences where throughput dominates, usually interleaved with attention layers rather than used alone.",
+      "pattern": {
+        "kind": "state",
+        "params": {
+          "write": "select"
+        },
+        "scale": "schematic",
+        "source": "A fixed state whose write is input-dependent: store, ignore or forget per token."
+      }
     },
     {
       "key": "mla",
@@ -469,7 +650,17 @@
       "new_tradeoff": "Reconstruction is extra arithmetic at every step, the latent width is a new capacity bottleneck, and it interacts awkwardly with RoPE - which is why the design carries a separate small set of dimensions just for position.",
       "buys": "A large cache reduction without giving up head diversity.",
       "gives_up": "Simplicity and some compute; and it must be trained in from the start rather than converted from a checkpoint.",
-      "when_to_choose": "Large-scale serving where the KV cache is the binding constraint and you control pretraining."
+      "when_to_choose": "Large-scale serving where the KV cache is the binding constraint and you control pretraining.",
+      "pattern": {
+        "kind": "stack",
+        "params": {
+          "kv": 1,
+          "of": 8,
+          "latent": true
+        },
+        "scale": "illustrative",
+        "source": "Keys and values are not stored per head at all; a narrow shared latent is stored and re-expanded. The paper reports a 93.3% cache reduction against its own baseline."
+      }
     },
     {
       "key": "deltanet_parallel",
@@ -493,7 +684,16 @@
       "new_tradeoff": "The chunked form is more complex to implement and reason about, and it does not change what the state can hold - the recall limits of a fixed-size state are untouched.",
       "buys": "Practical training speed for an update rule that was already known to be better.",
       "gives_up": "Implementation simplicity; the arithmetic is no longer something you can read off in a line.",
-      "when_to_choose": "Any serious use of the delta rule at scale - this is the version that made it deployable."
+      "when_to_choose": "Any serious use of the delta rule at scale - this is the version that made it deployable.",
+      "pattern": {
+        "kind": "state",
+        "params": {
+          "write": "add+correct",
+          "chunked": true
+        },
+        "scale": "schematic",
+        "source": "The delta-rule state, written a chunk at a time so it can be trained in parallel."
+      }
     },
     {
       "key": "gated_deltanet",
@@ -516,12 +716,23 @@
       "new_tradeoff": "More moving parts and more to tune, and it remains a fixed-size state - better bookkeeping does not become exact memory.",
       "buys": "The strongest linear-recurrent quality of its generation, still at constant memory.",
       "gives_up": "Simplicity, and exact recall remains out of reach - a better-managed fixed state is still a fixed state.",
-      "when_to_choose": "As the recurrent half of a hybrid stack, where most layers carry a bounded state and a few attention layers supply exact lookup."
+      "when_to_choose": "As the recurrent half of a hybrid stack, where most layers carry a bounded state and a few attention layers supply exact lookup.",
+      "pattern": {
+        "kind": "state",
+        "params": {
+          "write": "add+correct+flush"
+        },
+        "scale": "schematic",
+        "source": "The delta-rule state plus a gate that can clear it wholesale."
+      }
     },
     {
       "key": "nsa",
       "name": "Native sparse attention (NSA)",
-      "aka": ["DeepSeek compressed sparse attention", "CSA"],
+      "aka": [
+        "DeepSeek compressed sparse attention",
+        "CSA"
+      ],
       "date": "2025-02-16",
       "bill": "both",
       "source": {
@@ -540,7 +751,18 @@
       "new_tradeoff": "Compression discards token-level detail permanently, the selector can miss a block that mattered, and the whole design must be committed to before pretraining rather than added later.",
       "buys": "Long context at a cost that is affordable in practice, reducing both bills at once.",
       "gives_up": "Exactness twice over - once in the compression, once in the selection - and any option to change your mind after training.",
-      "when_to_choose": "When you are pretraining for very long context and can design the architecture and the kernels together."
+      "when_to_choose": "When you are pretraining for very long context and can design the architecture and the kernels together.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "blocks": 3,
+          "selected": 2,
+          "window": 3
+        },
+        "scale": "schematic",
+        "source": "Compressed blocks plus selected blocks plus a local window. The paper describes a hierarchical strategy; block size, how many are selected and the window are all ours."
+      }
     },
     {
       "key": "drope",
@@ -563,7 +785,16 @@
       "new_tradeoff": "It requires access to training - this cannot be applied to a checkpoint you can only run - and the loss spikes when the embeddings are removed before it recovers. It is also the newest entry here, with correspondingly less independent replication.",
       "buys": "Very large context extension without the long-context training data every earlier method needed.",
       "gives_up": "The ability to apply it post-hoc, and the comfort of a well-replicated result.",
-      "when_to_choose": "When you control pretraining, need context far beyond what you trained on, and cannot afford to train at that length."
+      "when_to_choose": "When you control pretraining, need context far beyond what you trained on, and cannot afford to train at that length.",
+      "pattern": {
+        "kind": "bands",
+        "params": {
+          "rows": 6,
+          "emptying": true
+        },
+        "scale": "schematic",
+        "source": "The positional bands being removed after pretraining, which is the mechanism itself."
+      }
     }
   ]
 }

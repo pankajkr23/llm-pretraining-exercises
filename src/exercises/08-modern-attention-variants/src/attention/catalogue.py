@@ -54,6 +54,22 @@ MANDATED: dict[str, str] = {
     "DroPE": "drope",
 }
 
+#: How a mechanism's glyph is drawn. Four generators cover all twenty-three.
+#:
+#: `field` — a T x T support: which scores survive. `stack` — how many key/value heads are kept.
+#: `state` — a fixed-size store, the same size at any context. `bands` — rotary frequency bands.
+GLYPH_KINDS: frozenset[str] = frozenset({"field", "stack", "state", "bands"})
+
+#: How much of a glyph's shape is sourced.
+#:
+#: **This distinction is the whole reason the field exists.** The catalogue records no window size,
+#: sink count, stride, block size, top-k, latent width or state dimension for any entry, so a glyph
+#: drawn to specific numbers would be inventing them — the exact fabrication this exercise is built
+#: to prevent. `schematic` means the *shape* is faithful and the *numbers* are ours, and the page
+#: says so on the plate rather than leaving a reader to assume otherwise.
+GLYPH_SCALES: frozenset[str] = frozenset({"illustrative", "schematic"})
+
+
 #: Which bill a mechanism pays down. Session 8's organising idea: attention charges twice, and
 #: everything after the original is somebody paying less of one of them.
 #:
@@ -62,6 +78,37 @@ MANDATED: dict[str, str] = {
 #: era counts in `timeline.pressure_by_period` claim an optimisation pressure that did not yet
 #: exist.
 BILLS: frozenset[str] = frozenset({"origin", "compute", "cache", "position", "both"})
+
+
+@dataclass(frozen=True)
+class Glyph:
+    """How one mechanism is drawn, and how much of that drawing is sourced.
+
+    Attributes:
+        kind: One of `GLYPH_KINDS`.
+        params: Generator arguments — window widths, head counts, and so on.
+        scale: `illustrative` when the numbers come from a source, `schematic` when they are ours.
+        source: Why this shape, in words a reader can weigh. Required.
+    """
+
+    kind: str
+    params: dict
+    scale: str
+    source: str
+
+    def __post_init__(self) -> None:
+        """A glyph with no stated provenance is a picture presenting itself as evidence."""
+        if self.kind not in GLYPH_KINDS:
+            raise ValueError(f"unknown glyph kind {self.kind!r}; expected {sorted(GLYPH_KINDS)}")
+        if self.scale not in GLYPH_SCALES:
+            raise ValueError(
+                f"glyph scale must be one of {sorted(GLYPH_SCALES)}, got {self.scale!r}"
+            )
+        if len(self.source.split()) < 6:
+            raise ValueError(
+                "every glyph must say where its shape comes from; a drawing with no provenance "
+                "reads as measured and is not"
+            )
 
 
 @dataclass(frozen=True)
@@ -102,6 +149,7 @@ class Mechanism:
     taught_in_session: bool = True
     bonus: bool = False
     aka: tuple[str, ...] = field(default_factory=tuple)
+    glyph: Glyph | None = None
 
     def __post_init__(self) -> None:
         """Refuse an entry that has only upside.
@@ -149,12 +197,26 @@ def _mechanism(entry: dict) -> Mechanism:
         confidence=src.get("confidence", "verified"),
         note=src.get("note", ""),
     )
-    known = {f for f in Mechanism.__dataclass_fields__ if f not in {"date", "source", "aka"}}
+    pattern = entry.get("pattern")
+    glyph = (
+        Glyph(
+            kind=pattern["kind"],
+            params=pattern.get("params", {}),
+            scale=pattern["scale"],
+            source=pattern["source"],
+        )
+        if pattern
+        else None
+    )
+    known = {
+        f for f in Mechanism.__dataclass_fields__ if f not in {"date", "source", "aka", "glyph"}
+    }
     fields = {k: v for k, v in entry.items() if k in known}
     return Mechanism(
         date=date.fromisoformat(entry["date"]),
         source=source,
         aka=tuple(entry.get("aka", ())),
+        glyph=glyph,
         **fields,
     )
 
@@ -167,6 +229,15 @@ def missing_mandated(mechanisms: list[Mechanism]) -> list[str]:
     """
     have = {m.key for m in mechanisms}
     return [phrase for phrase, key in MANDATED.items() if key not in have]
+
+
+def undrawn(mechanisms: list[Mechanism]) -> list[Mechanism]:
+    """Entries the page cannot draw a glyph for.
+
+    The plate shows all twenty-three or it is not the plate; an entry with no glyph would be a
+    silent hole in a figure whose whole claim is completeness.
+    """
+    return [m for m in mechanisms if m.glyph is None]
 
 
 def unverified(mechanisms: list[Mechanism]) -> list[Mechanism]:

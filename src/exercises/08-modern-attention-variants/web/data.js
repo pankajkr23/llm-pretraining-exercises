@@ -28,6 +28,14 @@ export const M = Object.freeze({
       "buys": "Direct access to every input position, so distance stops causing forgetting.",
       "givesUp": "A constant-size interface, in exchange for one that grows with the input.",
       "whenToChoose": "Historical. It matters because it is the origin: attention existed for three years before anyone removed the recurrence around it.",
+      "glyph": {
+        "kind": "field",
+        "params": {
+          "causal": false
+        },
+        "scale": "schematic",
+        "source": "Cross-attention over a source sentence: every target position may see every source position, so there is no mask. Shape from the paper's description; grid size is ours."
+      },
       "source": {
         "kind": "paper",
         "title": "Neural Machine Translation by Jointly Learning to Align and Translate",
@@ -55,6 +63,15 @@ export const M = Object.freeze({
       "buys": "Order information at almost no compute cost, learned rather than designed.",
       "givesUp": "Any ability to run past the trained length, and parameters that scale with the maximum context.",
       "whenToChoose": "When the context length is fixed and known in advance, and you would rather the model learn positional structure than be told it.",
+      "glyph": {
+        "kind": "bands",
+        "params": {
+          "rows": 6,
+          "hardEdge": true
+        },
+        "scale": "schematic",
+        "source": "One learned row per position, with nothing beyond the trained length. Band count is illustrative."
+      },
       "source": {
         "kind": "paper",
         "title": "Convolutional Sequence to Sequence Learning",
@@ -82,6 +99,16 @@ export const M = Object.freeze({
       "buys": "Positions at any length, for zero parameters.",
       "givesUp": "The chance to learn a positional structure that suits the data, and any guarantee that extrapolation actually works.",
       "whenToChoose": "When you want a simple, parameter-free baseline, or a fixed encoding you can reason about analytically.",
+      "glyph": {
+        "kind": "bands",
+        "params": {
+          "rows": 6,
+          "hardEdge": false,
+          "continues": true
+        },
+        "scale": "schematic",
+        "source": "Fixed sine and cosine bands at different frequencies, defined past the trained length. Band count is illustrative."
+      },
       "source": {
         "kind": "paper",
         "title": "Attention Is All You Need",
@@ -113,6 +140,14 @@ export const M = Object.freeze({
       "buys": "Exact, global, parallel mixing - every token sees every other token, with no approximation anywhere.",
       "givesUp": "Quadratic compute and a cache that grows without limit. Everything after this on the timeline is somebody paying less of one of those two.",
       "whenToChoose": "Short contexts, and as the baseline any alternative has to beat. It is not obsolete; it is exact, and exactness is what the rest of the list trades away.",
+      "glyph": {
+        "kind": "field",
+        "params": {
+          "causal": true
+        },
+        "scale": "illustrative",
+        "source": "The full causal triangle — the reference every other field glyph is drawn against. Exact by construction."
+      },
       "source": {
         "kind": "paper",
         "title": "Attention Is All You Need",
@@ -144,6 +179,16 @@ export const M = Object.freeze({
       "buys": "A large constant-factor reduction in attention compute, with softmax and its normalisation intact.",
       "givesUp": "Exactness. The model can no longer reach every position directly, and which pairs it loses is a design decision rather than a learned one.",
       "whenToChoose": "Long sequences with structure you understand - images, audio, code - where a fixed pattern plausibly covers the dependencies that matter.",
+      "glyph": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "local": 2,
+          "stride": 4
+        },
+        "scale": "schematic",
+        "source": "Strided plus local factorisation. The paper gives O(n sqrt n); the specific stride and local width here are ours."
+      },
       "source": {
         "kind": "paper",
         "title": "Generating Long Sequences with Sparse Transformers",
@@ -171,6 +216,15 @@ export const M = Object.freeze({
       "buys": "The largest cache reduction available from head sharing, and a matching speedup in generation.",
       "givesUp": "Head diversity, and with it some model quality - the paper reports the degradation rather than hiding it.",
       "whenToChoose": "Generation-heavy serving where memory bandwidth is the binding constraint and a small quality cost is acceptable.",
+      "glyph": {
+        "kind": "stack",
+        "params": {
+          "kv": 1,
+          "of": 8
+        },
+        "scale": "illustrative",
+        "source": "One key/value head for all query heads, by definition. Head count 8 is the session's own yardstick."
+      },
       "source": {
         "kind": "paper",
         "title": "Fast Transformer Decoding: One Write-Head is All You Need",
@@ -198,6 +252,16 @@ export const M = Object.freeze({
       "buys": "Learned, content-aware sparsity without scoring every pair.",
       "givesUp": "Determinism and simplicity - and in practice the constants were high enough that it saw little production use.",
       "whenToChoose": "Rarely today. It earns its place on the timeline as the moment the field tried to learn the sparsity pattern instead of designing it.",
+      "glyph": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "permuted": true,
+          "blocks": 3
+        },
+        "scale": "schematic",
+        "source": "Block-diagonal on a reordered sequence, with the reordering drawn above it. Buckets come from hashing the content, so which cells are live depends on the data and not on position; a fixed pattern here would be a lie a reader cannot detect."
+      },
       "source": {
         "kind": "paper",
         "title": "Reformer: The Efficient Transformer",
@@ -228,6 +292,15 @@ export const M = Object.freeze({
       "buys": "Linear cost and a cache that stops growing - the only entry here that bounds both bills with one idea.",
       "givesUp": "Direct long-range access. Retrieval across the whole context becomes a function of depth rather than a guarantee.",
       "whenToChoose": "Long inputs whose important dependencies really are local, or as one component of a hybrid that pairs it with something global.",
+      "glyph": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "window": 4
+        },
+        "scale": "schematic",
+        "source": "A band of recent positions. Window width is ours; the papers use several."
+      },
       "source": {
         "kind": "paper",
         "title": "Longformer: The Long-Document Transformer",
@@ -258,6 +331,14 @@ export const M = Object.freeze({
       "buys": "Constant memory and linear time, with a state that never grows.",
       "givesUp": "Exact recall. The state is a lossy summary, and what it lost is not recoverable.",
       "whenToChoose": "Very long streams where a bounded state is a hard requirement, and where approximate recall of the distant past is acceptable.",
+      "glyph": {
+        "kind": "state",
+        "params": {
+          "write": "add"
+        },
+        "scale": "schematic",
+        "source": "A fixed-size running state, the same size at any context. Deliberately NOT a diagonal, which would wrongly suggest a token attends only to itself. State dimensions are ours."
+      },
       "source": {
         "kind": "paper",
         "title": "Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention",
@@ -288,6 +369,14 @@ export const M = Object.freeze({
       "buys": "A fixed-size state that can actually be edited, removing linear attention's worst failure mode.",
       "givesUp": "The simple parallel form of plain linear attention, and it still has no exact record of the past.",
       "whenToChoose": "Whenever you want linear attention's economics but the task involves overwriting facts rather than only accumulating them.",
+      "glyph": {
+        "kind": "state",
+        "params": {
+          "write": "add+correct"
+        },
+        "scale": "schematic",
+        "source": "The same fixed state, written by reading first and applying only the difference."
+      },
       "source": {
         "kind": "paper",
         "title": "Linear Transformers Are Secretly Fast Weight Programmers",
@@ -315,6 +404,15 @@ export const M = Object.freeze({
       "buys": "Clean relative position, no parameters, and a form that composes with efficient attention kernels.",
       "givesUp": "Reliable behaviour outside the trained range - defined everywhere, trustworthy only where it was trained.",
       "whenToChoose": "Almost every decoder-only model today. It is the default, and the entries after it are about extending it rather than replacing it.",
+      "glyph": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "graded": "relative"
+        },
+        "scale": "schematic",
+        "source": "A graded field constant along each diagonal, oscillating with the gap under a slow decay envelope, because the score is a sum of cosines of the gap times theta. Frequency and envelope are illustrative; the oscillation is the mechanism."
+      },
       "source": {
         "kind": "paper",
         "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
@@ -342,6 +440,15 @@ export const M = Object.freeze({
       "buys": "Length extrapolation with no extra parameters and almost no compute.",
       "givesUp": "The ability to attend strongly to something distant, and any positional structure more expressive than 'closer is better'.",
       "whenToChoose": "When train-short-run-long matters more than exact long-range recall, and the task is largely local.",
+      "glyph": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "graded": "linear"
+        },
+        "scale": "schematic",
+        "source": "A linear penalty growing with distance, subtracted before softmax. Per-head slopes exist in the paper; the one drawn is illustrative."
+      },
       "source": {
         "kind": "paper",
         "title": "Train Short, Test Long: Attention with Linear Biases Enables Input Length Extrapolation",
@@ -369,6 +476,15 @@ export const M = Object.freeze({
       "buys": "A large constant-factor speedup and a big memory saving, while staying exact.",
       "givesUp": "Nothing mathematically - which is why it is on this list as the exception. What it costs is portability: it is a kernel, not an idea you can express in a few lines of framework code.",
       "whenToChoose": "Always, where a kernel exists for your hardware. It is the reason exact attention stayed competitive long after the approximations arrived.",
+      "glyph": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "tiled": true
+        },
+        "scale": "illustrative",
+        "source": "Byte-identical to the standard-attention field, because FlashAttention is EXACT — it changes memory traffic, not one score. The only difference drawn is the tiling overlay."
+      },
       "source": {
         "kind": "paper",
         "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
@@ -396,6 +512,15 @@ export const M = Object.freeze({
       "buys": "A tunable trade between cache size and head diversity, and a way to convert an existing multi-head checkpoint rather than retrain.",
       "givesUp": "Some head diversity still, and the underlying linear growth in context length is untouched.",
       "whenToChoose": "Almost any production decoder today - it is the practical default. Not a solution to long context on its own.",
+      "glyph": {
+        "kind": "stack",
+        "params": {
+          "kv": 2,
+          "of": 8
+        },
+        "scale": "illustrative",
+        "source": "Query heads in groups sharing a key/value head. 2 of 8 is the session's own worked example."
+      },
       "source": {
         "kind": "paper",
         "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
@@ -423,6 +548,15 @@ export const M = Object.freeze({
       "buys": "A large context extension for free - no training, no data, a few lines of change.",
       "givesUp": "Principled grounding and headroom; it is a patch on a mismatch rather than a fix for it.",
       "whenToChoose": "When you need more context from an existing checkpoint today and cannot afford to train anything.",
+      "glyph": {
+        "kind": "bands",
+        "params": {
+          "rows": 6,
+          "stretch": "low"
+        },
+        "scale": "schematic",
+        "source": "Low-frequency bands stretched, high-frequency bands left nearly alone. Which bands and by how much is illustrative."
+      },
       "source": {
         "kind": "post",
         "title": "NTK-Aware Scaled RoPE allows LLaMA models to have extended (8k+) context size without any fine-tuning and minimal perplexity degradation.",
@@ -450,6 +584,15 @@ export const M = Object.freeze({
       "buys": "The strongest RoPE extension of its generation, at a small fraction of the training cost.",
       "givesUp": "The zero-training property of the pure heuristic, and it adds hyperparameters that need setting per model.",
       "whenToChoose": "When you have an existing RoPE model, need a large context extension, and can afford a short fine-tune.",
+      "glyph": {
+        "kind": "bands",
+        "params": {
+          "rows": 6,
+          "stretch": "banded"
+        },
+        "scale": "schematic",
+        "source": "Frequencies split into bands and treated differently by band. The split points are illustrative."
+      },
       "source": {
         "kind": "paper",
         "title": "YaRN: Efficient Context Window Extension of Large Language Models",
@@ -477,6 +620,16 @@ export const M = Object.freeze({
       "buys": "Indefinite streaming at constant memory, from an existing checkpoint, with no training.",
       "givesUp": "Any access to the middle of a long history - which makes it wrong for tasks that need recall rather than continuation.",
       "whenToChoose": "Long-running conversation or streaming where recent context is what matters and the distant past can be forgotten.",
+      "glyph": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "window": 4,
+          "sinks": 4
+        },
+        "scale": "schematic",
+        "source": "A sliding window plus the first few positions held permanently — literally the union of two earlier glyphs. Sink count is illustrative."
+      },
       "source": {
         "kind": "paper",
         "title": "Efficient Streaming Language Models with Attention Sinks",
@@ -504,6 +657,14 @@ export const M = Object.freeze({
       "buys": "Linear time, constant memory, and content-dependent selection.",
       "givesUp": "Exact retrieval, and the simplicity of a single uniform layer type in practice.",
       "whenToChoose": "Very long sequences where throughput dominates, usually interleaved with attention layers rather than used alone.",
+      "glyph": {
+        "kind": "state",
+        "params": {
+          "write": "select"
+        },
+        "scale": "schematic",
+        "source": "A fixed state whose write is input-dependent: store, ignore or forget per token."
+      },
       "source": {
         "kind": "paper",
         "title": "Mamba: Linear-Time Sequence Modeling with Selective State Spaces",
@@ -531,6 +692,16 @@ export const M = Object.freeze({
       "buys": "A large cache reduction without giving up head diversity.",
       "givesUp": "Simplicity and some compute; and it must be trained in from the start rather than converted from a checkpoint.",
       "whenToChoose": "Large-scale serving where the KV cache is the binding constraint and you control pretraining.",
+      "glyph": {
+        "kind": "stack",
+        "params": {
+          "kv": 1,
+          "of": 8,
+          "latent": true
+        },
+        "scale": "illustrative",
+        "source": "Keys and values are not stored per head at all; a narrow shared latent is stored and re-expanded. The paper reports a 93.3% cache reduction against its own baseline."
+      },
       "source": {
         "kind": "paper",
         "title": "DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model",
@@ -558,6 +729,15 @@ export const M = Object.freeze({
       "buys": "Practical training speed for an update rule that was already known to be better.",
       "givesUp": "Implementation simplicity; the arithmetic is no longer something you can read off in a line.",
       "whenToChoose": "Any serious use of the delta rule at scale - this is the version that made it deployable.",
+      "glyph": {
+        "kind": "state",
+        "params": {
+          "write": "add+correct",
+          "chunked": true
+        },
+        "scale": "schematic",
+        "source": "The delta-rule state, written a chunk at a time so it can be trained in parallel."
+      },
       "source": {
         "kind": "paper",
         "title": "Parallelizing Linear Transformers with the Delta Rule over Sequence Length",
@@ -585,6 +765,14 @@ export const M = Object.freeze({
       "buys": "The strongest linear-recurrent quality of its generation, still at constant memory.",
       "givesUp": "Simplicity, and exact recall remains out of reach - a better-managed fixed state is still a fixed state.",
       "whenToChoose": "As the recurrent half of a hybrid stack, where most layers carry a bounded state and a few attention layers supply exact lookup.",
+      "glyph": {
+        "kind": "state",
+        "params": {
+          "write": "add+correct+flush"
+        },
+        "scale": "schematic",
+        "source": "The delta-rule state plus a gate that can clear it wholesale."
+      },
       "source": {
         "kind": "paper",
         "title": "Gated Delta Networks: Improving Mamba2 with Delta Rule",
@@ -615,6 +803,17 @@ export const M = Object.freeze({
       "buys": "Long context at a cost that is affordable in practice, reducing both bills at once.",
       "givesUp": "Exactness twice over - once in the compression, once in the selection - and any option to change your mind after training.",
       "whenToChoose": "When you are pretraining for very long context and can design the architecture and the kernels together.",
+      "glyph": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "blocks": 3,
+          "selected": 2,
+          "window": 3
+        },
+        "scale": "schematic",
+        "source": "Compressed blocks plus selected blocks plus a local window. The paper describes a hierarchical strategy; block size, how many are selected and the window are all ours."
+      },
       "source": {
         "kind": "paper",
         "title": "Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention",
@@ -642,6 +841,15 @@ export const M = Object.freeze({
       "buys": "Very large context extension without the long-context training data every earlier method needed.",
       "givesUp": "The ability to apply it post-hoc, and the comfort of a well-replicated result.",
       "whenToChoose": "When you control pretraining, need context far beyond what you trained on, and cannot afford to train at that length.",
+      "glyph": {
+        "kind": "bands",
+        "params": {
+          "rows": 6,
+          "emptying": true
+        },
+        "scale": "schematic",
+        "source": "The positional bands being removed after pretraining, which is the mechanism itself."
+      },
       "source": {
         "kind": "paper",
         "title": "Extending the Context of Pretrained LLMs by Dropping Their Positional Embeddings",
@@ -658,6 +866,13 @@ export const M = Object.freeze({
     "mandated": 18,
     "bonus": 5,
     "outsideSession": 11,
+    "schematic": 18,
+    "glyphKinds": {
+      "bands": 5,
+      "field": 10,
+      "stack": 3,
+      "state": 5
+    },
     "bills": {
       "origin": 2,
       "position": 7,

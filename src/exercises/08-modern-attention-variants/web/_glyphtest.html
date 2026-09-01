@@ -1,0 +1,24 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="/_shared/tokens.css">
+<link rel="stylesheet" href="./_shared/tokens.css">
+<link rel="stylesheet" href="./page-extra.css">
+<style>
+ body{font-family:system-ui;background:var(--bg);color:var(--ink);padding:24px}
+ .row{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}
+ .cell{text-align:center}
+ .cell .n{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.3}
+ .cell .k{font-size:9px;color:var(--faint);font-family:var(--mono)}
+</style></head><body>
+<div class="row" id="r"></div>
+<script type="module">
+import { M } from './data.js';
+import { glyphSvg } from './glyphs.js';
+const r = document.getElementById('r');
+for (const m of M.mechanisms) {
+  const c = document.createElement('div'); c.className='cell';
+  c.append(glyphSvg(m, 160));
+  const n = document.createElement('div'); n.className='n'; n.textContent = m.name; c.append(n);
+  const k = document.createElement('div'); k.className='k'; k.textContent = `${m.glyph.kind} · ${m.glyph.scale}`; c.append(k);
+  r.append(c);
+}
+</script></body></html>
