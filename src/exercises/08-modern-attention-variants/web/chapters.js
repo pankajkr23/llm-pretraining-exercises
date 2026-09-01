@@ -41,6 +41,7 @@ import {
   plate,
 } from './figures.js';
 import { KIND_LABEL, glyph, glyphSvg } from './glyphs.js';
+import { diagramSvg } from './diagrams.js';
 
 const int = (n) => Number(n).toLocaleString('en-US');
 
@@ -376,7 +377,11 @@ function readingSpread(M) {
   const spread = el('div', 'spread bleed');
   const left = el('div');
   const right = el('div');
-  spread.append(left, right);
+  /* The diagram is a THIRD child, spanning both columns beneath them. `render()` wipes `left` and
+   * `right` by hand, so a third child needs its own wipe or every entry stacks another diagram
+   * under the last one. */
+  const figure = el('figure', 'sp-diagram');
+  spread.append(left, right, figure);
 
   const byKey = new Map(M.mechanisms.map((m) => [m.key, m]));
   let current = null;
@@ -387,6 +392,7 @@ function readingSpread(M) {
     current = key;
     left.textContent = '';
     right.textContent = '';
+    figure.textContent = '';
 
     const g = glyphSvg(m, 96);
     g.classList.add('sp-glyph');
@@ -455,11 +461,33 @@ function readingSpread(M) {
     right.append(src);
   };
 
+  /* Building a 720-unit figure on every selection is fine for a click and wrong for the sweep,
+   * which calls `show()` once per mechanism over about twenty seconds. Deferred by a beat so a
+   * running sweep never pays for one, and built immediately when motion is off. */
+  let pending = null;
+  const drawFigure = (m) => {
+    const svg = diagramSvg(m);
+    const cap = el('figcaption');
+    cap.innerHTML = rich(
+      `**${m.name}**, drawn from the same catalogue entry as everything above. ` +
+        (m.glyph.sizes && Object.keys(m.glyph.sizes).length
+          ? 'Sizes are the source’s own where it states them, and marked as ours where it does not.'
+          : 'Proportions here are ours: the source states no sizes for this one.')
+    );
+    figure.append(svg, cap);
+  };
+
   spread.show = (key) => {
     if (key === current) return;
     render(key);
+    const m = byKey.get(key);
+    if (!m) return;
+    if (pending) clearTimeout(pending);
+    if (REDUCED) drawFigure(m);
+    else pending = setTimeout(() => drawFigure(m), 220);
   };
   render('standard_attention');
+  drawFigure(byKey.get('standard_attention'));
   return spread;
 }
 
