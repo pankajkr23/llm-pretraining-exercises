@@ -22,9 +22,9 @@ pipeline is fine, and the link must resolve for a logged-out stranger.
 | --- | --- | --- | --- |
 | O1 | **The catalogue** | **done** | 23 mechanisms, every date read from the primary source and cross-checked against the source's own wording. 18 mandated + 5 bonus. |
 | O2 | **The arithmetic** | **done** | The session's 6.44 GB / 51.54 GB / 4× GQA all reproduce exactly from `cache.py`. |
-| O3 | **The page** | **open** | `web/` does not exist. It is the graded artifact and gets its own pass. When it lands, register it in **both** `deploy/vercel/index.html` and `SPINE_ENFORCED` in the same change. |
-| O4 | **Question 2's written answer** | **open** | The derived findings are in the README; they need writing up as the submission answer. |
-| O5 | **A mechanism figure** | **open** | The central object is the `[T×T]` causal score matrix beside the KV-cache column: every variant on the timeline is a structural edit to one of those two objects. The session never states that framing, so drawing it is additive rather than a restatement. |
+| O3 | **The page** | **done** | Twelve spine sections, the two-object mechanism figure and the timeline, at `/08-modern-attention-variants/`. Registered in the landing card, `SPINE_ENFORCED` and `OPTIONAL_DEPENDENCY_GATES` in the same change. 20 browser tests. |
+| O4 | **Question 2's written answer** | **open** | The findings are on the page's conclusion section and in the README; they still need pasting into the platform's answer field. |
+| O5 | **A mechanism figure** | **done** | Figure 1: the causal score triangle beside the KV-cache column, with eight variants as predicates rather than pictures. Three browser tests make it falsifiable — switching must change the drawing, GQA must touch no score, linear attention must leave no per-position square. |
 | O6 | **The notebook** | **open** | `tools/build_notebook.py` exists as a stub. It must import the package and run the shipped code, not re-implement it. |
 
 ---
@@ -82,6 +82,22 @@ which was meant — so neither number is published alone.
 ---
 
 ## Change log
+
+### 2026-09-01 (the page)
+
+- **Twelve spine sections and the timeline**, at `/08-modern-attention-variants/`. Every date,
+  trade-off and citation is rendered from `web/data.js`, which `tools/build_web_data.py` derives from
+  the catalogue and from the same functions the tests exercise — so the page cannot disagree with the
+  evidence, and the derived findings cannot disagree with the code.
+- **Figure 1 draws the framing the session never states**: attention has exactly two objects that
+  cost anything, and every mechanism is a structural edit to one of them. Eight variants, each a
+  predicate rather than a drawing.
+- **One latent bug caught before it shipped.** The "days nobody touched the cost" tile looked its gap
+  up out of the top-five list, so a new mechanism displacing it would have made the tile show a
+  *different* gap under the same label — a wrong number reading as a correct sentence. `data.js`
+  carries `quietStretch` explicitly now.
+- The mechanism figure's first render left a quarter of its box empty below the content; the viewBox
+  is tightened to fit.
 
 ### 2026-09-01 (scaffold + the chronology)
 

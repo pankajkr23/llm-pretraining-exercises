@@ -1,0 +1,279 @@
+/* Styles specific to this page. Everything shared lives in _shared/; this file is for what only
+ * exercise 08 needs — the timeline, the two-object figure, and the trade-off cards.
+ *
+ * Every colour is a token from /_shared/tokens.css. A literal would be right in one of the six
+ * themes and wrong in the other five, and the theme picker shows it instantly.
+ */
+
+/* The shared `section` rule sets bottom spacing and no top, so the first heading lands flush
+ * against the lede actions. Exercise 07 hit this too. */
+#main > section:first-of-type { margin-top: 26px; }
+
+/* ------------------------------------------------------------------------------ the tiles */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  gap: 12px;
+  margin: 20px 0 0;
+}
+
+.tile {
+  padding: 16px 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.tile-k { font-size: 12px; color: var(--muted); }
+.tile-v { margin: 6px 0 4px; font-size: 30px; font-weight: 650; letter-spacing: -0.02em; }
+.tile-s { font-size: 12px; line-height: 1.45; color: var(--muted); }
+
+/* One tile is deliberately not a win. AGENTS.md: a page that shows only its successes has not
+ * earned the ones it shows. */
+.tile.bad .tile-v { color: var(--grade-x); }
+
+/* --------------------------------------------------------------------------- the glossary */
+
+.defs {
+  display: grid;
+  grid-template-columns: minmax(130px, 190px) 1fr;
+  gap: 10px 22px;
+  margin: 18px 0 0;
+  padding: 18px 20px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.defs dt { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ink); }
+.defs dd { margin: 0; font-size: 14px; line-height: 1.55; color: var(--muted); }
+
+/* A term column beside a definition is unreadable on a phone. */
+@media (max-width: 640px) {
+  .defs { grid-template-columns: 1fr; gap: 4px 0; }
+  .defs dd { margin: 0 0 12px; }
+}
+
+/* ------------------------------------------------------------------ the mechanism figure */
+
+.mech { display: block; }
+
+.mech-controls { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+
+.chip {
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 980px;
+  cursor: pointer;
+}
+
+.chip:hover { border-color: var(--accent); }
+.chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+figure { margin: 20px 0; }
+
+.fig-svg {
+  display: block;
+  width: 100%;
+  min-width: 560px;
+  height: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+/* Wide content scrolls inside its own box so the page body never does. */
+figure { overflow-x: auto; }
+
+figcaption {
+  max-width: 72ch;
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.mech-note {
+  max-width: 72ch;
+  margin: 12px 0 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+text.ax { fill: var(--muted); font-size: 11px; font-family: var(--sans); }
+text.ax.small { font-size: 10px; }
+text.ax.strong { font-weight: 600; fill: var(--ink); }
+text.ax.accent { fill: var(--accent); }
+
+/* A live score, and a live cache square. `off` is what the variant removed — kept visible rather
+ * than hidden, because the point of the figure is what each edit takes away. */
+.sc { fill: var(--accent); opacity: 0.85; transition: opacity 180ms ease, fill 180ms ease; }
+.sc.off { fill: var(--line); opacity: 0.35; }
+.kv { fill: var(--accent); opacity: 0.55; transition: opacity 180ms ease, fill 180ms ease; }
+.kv.off { fill: var(--line); opacity: 0.3; }
+.kv.state { fill: var(--accent); opacity: 0.9; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sc, .kv { transition: none; }
+}
+
+/* -------------------------------------------------------------------------- the timeline */
+
+.timeline { margin: 20px 0 0; }
+
+.tl-year {
+  margin: 22px 0 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.tl-item {
+  margin: 0 0 8px;
+  padding: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.tl-item summary {
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.tl-item summary::-webkit-details-marker { display: none; }
+.tl-item[open] { border-color: var(--accent); }
+.tl-item summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Which bill it pays, as a colour on the spine of the card. */
+.bill-origin { border-left-color: var(--muted); }
+.bill-compute { border-left-color: var(--grade-b, var(--accent)); }
+.bill-cache { border-left-color: var(--accent); }
+.bill-position { border-left-color: var(--grade-a); }
+.bill-both { border-left-color: var(--grade-x); }
+
+.tl-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; }
+
+.tl-date {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.tl-name { font-weight: 650; font-size: 15px; }
+
+.tl-bill {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.tl-tag {
+  padding: 2px 8px;
+  font-size: 10.5px;
+  border-radius: 980px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+
+.tl-tag.ghost { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+
+.tl-problem {
+  max-width: 74ch;
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.tl-body { padding: 0 16px 16px; border-top: 1px solid var(--line); }
+
+.tl-story {
+  display: grid;
+  grid-template-columns: minmax(130px, 170px) 1fr;
+  gap: 8px 20px;
+  margin: 14px 0 0;
+}
+
+.tl-story dt { font-size: 12px; font-weight: 600; color: var(--muted); }
+.tl-story dd { margin: 0; font-size: 13.5px; line-height: 1.55; }
+
+@media (max-width: 640px) {
+  .tl-story { grid-template-columns: 1fr; gap: 2px 0; }
+  .tl-story dd { margin: 0 0 10px; }
+}
+
+/* The three questions the assignment requires of every entry, side by side so a card with only
+ * upside is visibly missing a third of itself. */
+.trio {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  gap: 10px;
+  margin: 16px 0 0;
+}
+
+.trio-card {
+  padding: 12px 14px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.trio-k { font-size: 11px; font-weight: 600; letter-spacing: 0.03em; color: var(--muted); }
+.trio-v { margin-top: 6px; font-size: 13px; line-height: 1.5; }
+.trio-card.good { border-left: 3px solid var(--grade-a); }
+.trio-card.cost { border-left: 3px solid var(--grade-x); }
+.trio-card.pick { border-left: 3px solid var(--accent); }
+
+.tl-cite { margin: 14px 0 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
+.tl-cite code { margin-left: 6px; font-size: 11px; }
+.tl-note { margin: 6px 0 0; font-size: 12px; line-height: 1.55; color: var(--muted); }
+
+/* --------------------------------------------------------------------------- the findings */
+
+.findings { display: grid; gap: 12px; margin: 18px 0 0; }
+
+.finding {
+  padding: 16px 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--grade-x);
+  border-radius: 12px;
+}
+
+.finding h3 { margin: 0 0 8px; font-size: 15px; }
+.finding p { max-width: 74ch; margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--muted); }
+
+/* -------------------------------------------------------------------------------- the rest */
+
+.bullets { max-width: 72ch; margin: 16px 0 0; padding-left: 20px; }
+.bullets li { margin: 0 0 12px; line-height: 1.6; }
+
+pre.code {
+  max-width: 72ch;
+  margin: 16px 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+
+table.grid tr.bad td { background: color-mix(in srgb, var(--grade-x) 8%, transparent); }

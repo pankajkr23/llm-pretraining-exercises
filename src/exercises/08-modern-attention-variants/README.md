@@ -154,9 +154,16 @@ Two things visible only on a date axis:
 - **One source could not be read live.** The NTK-aware entry comes from an archived capture rather
   than the original page.
 
-## Where this is going
+## The page
 
-`web/` does not exist yet. When the page lands it must be registered in **two** places in the same
-change — the landing card in `deploy/vercel/index.html` and `SPINE_ENFORCED` in
-`tests/test_page_spine.py` — because each guard fails in both directions and an early entry is as
-red as a missing one.
+<https://llm-pretraining-demos.vercel.app/08-modern-attention-variants/>
+
+Twelve sections carrying the spine `AGENTS.md` requires, and one figure that is the point of the
+whole thing: **attention has exactly two objects that cost anything** — the triangle of scores
+between every pair of tokens, and the cache holding what each past token contributed — and every
+mechanism on the timeline is a structural edit to one of them. Switch between the variants and watch
+which object moves. GQA and MQA leave the triangle untouched; sliding window and sparse attention
+leave the cache width alone; linear attention collapses both into a single fixed state.
+
+The session never states that framing, which is what makes drawing it worth doing rather than a
+restatement of the reading.

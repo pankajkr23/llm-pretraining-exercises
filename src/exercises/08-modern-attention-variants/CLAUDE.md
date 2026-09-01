@@ -4,11 +4,20 @@ Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is a p
 a sourced chronology; the reasoning is `DECISIONS.md`, the running log is `PROGRESS.md`, and
 `BRIEF.md` is the assignment (local only, gitignored).
 
-**Status: scaffolded, catalogue in progress, no `web/` yet.** Shipped: `config.py`, `cache.py`,
-`sources.py`, `catalogue.py`, `timeline.py`, and `results/mechanisms.json`. Not yet built: the page.
-When `web/` lands it must be added to **two** places in the same change — the landing card in
-`deploy/vercel/index.html` and `SPINE_ENFORCED` in `tests/test_page_spine.py`. Adding either one
-early goes red, which is why neither is there now.
+**Status: shipped.** `config.py`, `cache.py`, `sources.py`, `catalogue.py`, `timeline.py`,
+`results/mechanisms.json`, and the page at `web/` — twelve spine sections, the two-object mechanism
+figure, and the timeline. Registered in the `rest` CI shard, the landing card, `SPINE_ENFORCED`, and
+`OPTIONAL_DEPENDENCY_GATES` (the render test gates on playwright).
+
+**The page derives nothing.** `tools/build_web_data.py` reads the catalogue and the same functions
+the tests exercise, and emits `web/data.js`; `chapters.js` renders only what is in it. After changing
+a date or a trade-off:
+
+```bash
+uv run python src/exercises/08-modern-attention-variants/tools/build_web_data.py
+bash deploy/vercel/build.sh
+uv run pytest src/exercises/08-modern-attention-variants -m integration
+```
 
 ## What makes this exercise different
 
@@ -89,6 +98,23 @@ coverage list and never taught**: sinusoidal, learned absolute positions, ALiBi,
 attention sinks, NTK-aware scaling, YaRN and MLA. Those are sourced entirely from outside the course
 material, and `taught_in_session` on each entry records which is which — so a reader can see where
 our evidence came from rather than assuming it all came from class.
+
+## The figure, and the one rule it lives by
+
+Figure 1 draws the two objects every mechanism edits — the causal score triangle and the KV cache —
+and lets a reader switch which edit is applied. **The variants are predicates, not pictures**: each
+one is a `cells(i, j)` function plus a cache width and height, and the drawing is computed from
+those. Adding a mechanism to the figure means adding a predicate, never drawing a new diagram.
+
+Three browser tests make the figure falsifiable rather than decorative: switching variants must
+change what is on screen, GQA must change the cache and touch **no** score, and linear attention must
+leave no per-position square drawn at all. If a variant were mis-wired the page would still look
+completely normal, which is the whole reason those exist.
+
+**Do not carry a derived figure by searching a list.** The "days nobody touched the cost" tile once
+looked its gap up out of the top-five list, which meant a new mechanism displacing it would have made
+the tile silently show a *different* gap under the same label. `data.js` carries `quietStretch`
+explicitly now.
 
 ## Running it
 

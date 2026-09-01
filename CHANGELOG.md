@@ -12,6 +12,13 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 08's page** at `/08-modern-attention-variants/` — twelve spine sections, the timeline of
+  23 mechanisms in launch order, and a figure that draws the framing the session never states:
+  attention has exactly **two** objects that cost anything, and every mechanism is a structural edit
+  to one of them. Eight variants, each written as a predicate rather than a drawing, with three
+  browser tests that make the figure falsifiable — switching must change what is on screen, GQA must
+  touch no attention score, and linear attention must leave no per-position cache square drawn.
+
 - **`tools/new_exercise.py` — scaffold a new exercise in one command.** It writes the whole skeleton
   including the three gitignored files, joins the `rest` CI shard and adds the root README row, then
   prints what is left. It deliberately does **not** add the landing card or the `SPINE_ENFORCED`
