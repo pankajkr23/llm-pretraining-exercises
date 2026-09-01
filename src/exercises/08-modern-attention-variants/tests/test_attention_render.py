@@ -585,7 +585,7 @@ def test_the_plate_offers_a_sweep_control(page) -> None:
     version of this test asserted the idle label and failed whenever another test in the module had
     left a sweep in flight. A guard that depends on test ordering is a flaky guard.
     """
-    present = page.eval_on_selector_all("#results > .ctl .runbtn", "els => els.length")
+    present = page.eval_on_selector_all("#results .sweep-ctl .runbtn", "els => els.length")
     assert present == 1, f"expected exactly one sweep control on the plate, found {present}"
 
 
@@ -603,9 +603,9 @@ def test_the_sweep_is_withheld_entirely_under_reduced_motion(page) -> None:
         quiet.goto(page.url)
         quiet.wait_for_selector("section#reproduce", timeout=15_000)
         quiet.wait_for_timeout(800)
-        assert quiet.eval_on_selector_all("#results > .ctl .runbtn", "els => els.length") == 0, (
-            "a sweep control was built for a reader who asked for no motion"
-        )
+        assert (
+            quiet.eval_on_selector_all("#results .sweep-ctl .runbtn", "els => els.length") == 0
+        ), "a sweep control was built for a reader who asked for no motion"
         # And the rest of the plate must still be there: withholding the motion must not withhold
         # the evidence.
         entries = quiet.eval_on_selector_all(
@@ -635,4 +635,60 @@ def test_the_page_states_its_own_size_correctly(page) -> None:
     body = page.inner_text("main").lower()
     assert re.search(rf"\b{re.escape(correct)}\b", body), (
         f"the page never states its own size ({correct})"
+    )
+
+
+def test_clicking_the_sweep_control_actually_sweeps(page) -> None:
+    """The WIRING, not the mechanism. This is the test that was missing.
+
+    `test_the_sweep_reads_the_plate_in_date_order` calls `sweep()` on the SVG directly, so it
+    exercised the drawing and never the button. The wrapper that holds both plates forwarded
+    `select` and not `sweep`, so a real click threw "p.sweep is not a function" inside the
+    animation frame, the loop died on frame one, and the label sat on "Stop" forever — with the
+    mechanism test green the whole time.
+    """
+    page.eval_on_selector("#results .sweep-ctl .runbtn", "e => e.scrollIntoView()")
+    page.wait_for_timeout(200)
+    errors: list[str] = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+
+    label0 = page.eval_on_selector("#results .sweep-ctl .runbtn", "e => e.textContent.trim()")
+    page.eval_on_selector("#results .sweep-ctl .runbtn", "e => e.click()")
+    page.wait_for_timeout(900)
+
+    assert not errors, f"the sweep threw: {errors}"
+    running = page.eval_on_selector("#results .sweep-ctl .runbtn", "e => e.textContent.trim()")
+    assert running != label0, "the control did not change state when clicked"
+
+    # The playhead must be somewhere other than its parked position, and entries must be dimmed.
+    moved = page.eval_on_selector(
+        "#results svg.plate-wide line.s-accent", "e => e.getAttribute('opacity')"
+    )
+    assert moved == "1", "the playhead is not visible during a sweep"
+    dimmed = page.eval_on_selector_all(
+        "#results svg.plate-wide .plate-entry.dim", "els => els.length"
+    )
+    assert dimmed > 0, "nothing ahead of the playhead is dimmed, so the sweep is not running"
+
+    # And clicking again stops it and puts the plate back.
+    page.eval_on_selector("#results .sweep-ctl .runbtn", "e => e.click()")
+    page.wait_for_timeout(300)
+    assert (
+        page.eval_on_selector("#results .sweep-ctl .runbtn", "e => e.textContent.trim()") == label0
+    ), "the control did not return to its idle label after being stopped"
+    assert (
+        page.eval_on_selector_all("#results svg.plate-wide .plate-entry.dim", "els => els.length")
+        == 0
+    ), "stopping the sweep left the plate dimmed"
+
+
+def test_the_sweep_control_does_not_collide_with_the_reading_spread(page) -> None:
+    """It sat on the spread's 2px top rule and the line ran through the button."""
+    box = page.eval_on_selector(
+        "#results .sweep-ctl .runbtn",
+        "e => { const r = e.getBoundingClientRect(); return [r.top, r.bottom]; }",
+    )
+    spread = page.eval_on_selector(".spread", "e => e.getBoundingClientRect().top")
+    assert box[1] < spread - 4, (
+        f"the sweep control (bottom {box[1]:.0f}) overlaps the reading spread (top {spread:.0f})"
     )

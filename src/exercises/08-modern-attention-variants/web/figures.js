@@ -104,11 +104,21 @@ function observe(node, fn) {
 const int = (n) => Math.round(n).toLocaleString('en-US');
 
 /** A plate: a numbered rule, a title, the figure, and a caption that argues. */
-export function plate(numeral, title, node, caption) {
+export function plate(numeral, title, node, caption, briefNode) {
+  /* The brief may be passed in either slot. A caption is a string and a brief is a Node, so the
+   * two are unambiguous, and the call site is allowed to list them in the order the READER meets
+   * them: brief above the figure, caption below it. */
+  if (caption && typeof caption !== 'string') {
+    const swap = caption;
+    caption = briefNode;
+    briefNode = swap;
+  }
   const f = el('figure', 'plate bleed');
   const head = el('div', 'plate-head');
   head.append(el('span', 'plate-n', numeral), el('span', 'plate-t', title));
-  f.append(head, node);
+  f.append(head);
+  if (briefNode) f.append(briefNode);
+  f.append(node);
   if (caption) {
     const c = el('figcaption');
     c.innerHTML = caption;
@@ -967,8 +977,41 @@ export function figWrap() {
   );
   slider.addEventListener('input', () => set(Number(slider.value) / 1000));
 
+  /* A replay control, because the sweep auto-plays once on entry and a reader who looked away has
+   * no way back to it. Every other animated plate here offers one; this was the only figure whose
+   * motion could not be repeated. */
+  let cancel = () => {};
+  let running = false;
+  const play = () => {
+    cancel();
+    if (running) {
+      running = false;
+      btn.textContent = 'Replay';
+      return;
+    }
+    running = true;
+    btn.textContent = 'Stop';
+    cancel = animate(3000, (t) => {
+      slider.value = String(Math.round(t * 1000));
+      set(t);
+      if (t >= 1) {
+        running = false;
+        btn.textContent = 'Replay';
+      }
+    });
+  };
+  const btn = el('button', 'runbtn', 'Replay');
+  btn.type = 'button';
+  btn.addEventListener('click', play);
+  // Dragging the slider is the reader taking over; stop competing with them for the handle.
+  slider.addEventListener('pointerdown', () => {
+    cancel();
+    running = false;
+    btn.textContent = 'Replay';
+  });
+
   const ctl = el('div', 'ctl');
-  ctl.append(el('label', null, 'Distance'), slider, read);
+  ctl.append(btn, el('label', null, 'Distance'), slider, read);
   wrap.append(s, ctl);
 
   set(0);
@@ -976,12 +1019,7 @@ export function figWrap() {
     slider.value = '1000';
     set(1);
   } else {
-    onFirstView(wrap, () =>
-      animate(3000, (t) => {
-        slider.value = String(Math.round(t * 1000));
-        set(t);
-      })
-    );
+    onFirstView(wrap, play);
   }
   return wrap;
 }
@@ -1132,7 +1170,7 @@ export function figCorrection(M) {
   const computed = d.computedBytes / 1e12;
   const s = svg('svg', { viewBox: '0 0 900 156', role: 'img' });
   const t = svg('title', {});
-  t.textContent = "The transcript's figure against the session's own formula, drawn to scale.";
+  t.textContent = 'A widely quoted figure against the formula it is derived from, drawn to scale.';
   s.append(t);
 
   const X = 210;

@@ -120,6 +120,26 @@ function standfirst(text) {
   return p;
 }
 
+/** Orientation for a figure: what you are looking at, and why it is here.
+ *
+ * A caption argues *after* the fact — it tells you what to conclude. That is the right job for a
+ * caption and the wrong job for a reader's first second with an unfamiliar drawing. Two of these
+ * plates show objects nobody has seen before (a pair of rotary dials; forty tokens under a sliding
+ * window) and both were unreadable cold. This is the half that was missing.
+ */
+function brief(rows) {
+  const d = el('div', 'brief');
+  for (const [label, text] of rows) {
+    const r = el('div', 'brief-row');
+    r.append(el('span', 'brief-lab', label));
+    const v = el('p');
+    v.innerHTML = rich(text);
+    r.append(v);
+    d.append(r);
+  }
+  return d;
+}
+
 /** A pull quote. Every one of these is a phrase the catalogue already contains — a test asserts it. */
 function pull(quote, source) {
   const d = el('div', 'pull');
@@ -167,6 +187,70 @@ function chapterThesis(M) {
   body.append(stat);
   wrap.append(body);
   s.append(wrap);
+
+  /* HOW TO READ THIS. A reader arriving cold meets a plate of glyphs, four lane names and a word
+   * ("bill") used in a sense nobody uses it in. None of that is guessable, and a page that makes
+   * you infer its own conventions has spent your attention before it has earned any. This is the
+   * orientation: what the page is, the one idea everything hangs off, and three ways in depending
+   * on why you came. It sits inside the opening rather than as its own section because it is
+   * furniture, not an argument. */
+  const guide = el('div', 'guide bleed');
+  guide.append(el('p', 'kicker', 'How to read this'));
+
+  const lede = el('p', 'guide-lede');
+  lede.innerHTML = rich(
+    'Attention lets every word in a piece of text look at every other word. That is why it works, ' +
+      'and it is why it is expensive — **twice over**. Those two costs are the spine of everything ' +
+      'below, so the page calls them **bills**:'
+  );
+  guide.append(lede);
+
+  const bills = el('div', 'guide-bills');
+  for (const [name, line] of [
+    ['The compute bill', 'Every word scores every other word, so the work grows with the <b>square</b> of the length. Double the text and you quadruple the scoring.'],
+    ['The cache bill', 'To generate the next word, everything already read has to stay in memory — and it never shrinks while the conversation lasts.'],
+  ]) {
+    const b = el('div');
+    b.append(el('span', 'lab', name));
+    const v = el('p');
+    v.innerHTML = line;
+    b.append(v);
+    bills.append(b);
+  }
+  guide.append(bills);
+
+  const close = el('p', 'guide-lede');
+  close.innerHTML = rich(
+    `Nearly every mechanism here is somebody looking at one of those two bills and trying to pay ` +
+      'less of it. Ordering them **by the date they were actually launched** — rather than by ' +
+      'family, which is how they are usually taught — is what makes the pattern visible.'
+  );
+  guide.append(close);
+
+  const paths = el('div', 'guide-paths');
+  for (const [who, what, where] of [
+    ['New to this', 'Start with one attention step taken apart, then read the six chapters in order.', '#mechanism'],
+    ['Here for the argument', 'Go straight to the chronology; the chapters underneath explain each cluster.', '#results'],
+    ['Here to check us', 'Every entry, its trade-off, and the source its date was read from, on one page.', '#reproduce'],
+  ]) {
+    const a = el('a', 'guide-path');
+    a.href = where;
+    a.append(el('span', 'who', who));
+    a.append(el('span', 'what', what));
+    guide.append(a);
+    paths.append(a);
+  }
+  guide.append(paths);
+
+  const marks = el('p', 'guide-marks');
+  marks.innerHTML = rich(
+    'Two conventions worth knowing before you meet them. Each mechanism carries a small **drawn ' +
+      'mark** — a shape standing for what it changes, explained in the key below. And a **~** on a ' +
+      'mark means it is drawn to schema rather than to scale: where a paper states a size we used ' +
+      'it, and where it does not, the proportions are ours and mean nothing.'
+  );
+  guide.append(marks);
+  s.append(guide);
   return s;
 }
 
@@ -271,7 +355,7 @@ function chapterExpected(M) {
     'Before the evidence',
     'What we expected to find',
     [
-      'The course describes a tidy arc: the field worked on **exactness**, then on **memory**, ' +
+      'The story usually told is a tidy arc: the field worked on **exactness**, then on **memory**, ' +
         'then on **length**, then on memory again. Stated before we ordered anything, that is a ' +
         'falsifiable claim — each two-year window should have one bill it clearly attacked most.',
       'We also expected the invention of attention and the invention of the Transformer to sit ' +
@@ -319,7 +403,7 @@ function readingSpread(M) {
     if (!m.taught || m.bonus) {
       const marks = el('p', 'sp-marks');
       marks.textContent = [
-        m.taught ? null : '‡ sourced outside the session',
+        m.taught ? null : '‡ built from the primary paper alone',
         m.bonus ? '† beyond the mandated list' : null,
       ]
         .filter(Boolean)
@@ -390,7 +474,7 @@ function well(parent, w, M, extras) {
   sec.append(dates);
   sec.append(standfirst(w.standfirst));
   for (const node of extras || []) sec.append(node);
-  sec.append(pull(w.pullQuote, 'from this exercise’s own catalogue'));
+  sec.append(pull(w.pullQuote, 'from this page’s own catalogue'));
   parent.append(sec);
   return sec;
 }
@@ -425,9 +509,22 @@ function chapterResults(M, spreadRef) {
   tall.classList.add('plate-tall');
   const p = el('div', 'plate-pair');
   p.append(wide, tall);
+  /* The wrapper must forward EVERY method the plates expose, not just the one that happened to be
+   * needed first. It forwarded `select` and not `sweep`, so clicking Run threw
+   * "p.sweep is not a function" inside the animation frame: the loop died on frame one and the
+   * button sat on "Stop" forever. The sweep test called `sweep()` on the SVG directly, so it
+   * exercised the mechanism and never the wiring — which is the only part that was broken. */
   p.select = (key) => {
     wide.select(key);
     tall.select(key);
+  };
+  p.sweep = (frac) => {
+    tall.sweep(frac);
+    return wide.sweep(frac);
+  };
+  p.sweepOff = () => {
+    wide.sweepOff();
+    tall.sweepOff();
   };
   p.select('standard_attention');
 
@@ -439,7 +536,7 @@ function chapterResults(M, spreadRef) {
    * It stops on any interaction, because a reader who has started reading an entry must not have
    * the page move underneath them. Under reduced motion the control is not offered at all: there
    * is no terminal state for a sweep, and a figure that cannot degrade should not be forced to. */
-  const controls = el('div', 'ctl');
+  const controls = el('div', 'ctl sweep-ctl');
   if (!REDUCED) {
     const run = el('button', 'runbtn', 'Read the plate');
     run.type = 'button';
@@ -498,8 +595,7 @@ function chapterResults(M, spreadRef) {
   }
 
   const gap = M.quietStretch;
-  s.append(
-    plate(
+  const plateIII = plate(
       'Plate III',
       'The chronology',
       p,
@@ -511,9 +607,11 @@ function chapterResults(M, spreadRef) {
         'exists before 2019 and never lets up after, and the ties — mechanisms attacking both ' +
         'bills at once — do not exist at all until 2020. Figures drawn to schema; where a paper ' +
         'states a size we used it, and where it does not the shape is illustrative and marked ~.'
-    )
   );
-  s.append(controls, spread);
+  // Inside the figure, between the drawing and its caption. Appended to the section instead, it
+  // landed on the reading spread's 2px top border and the rule ran straight through the button.
+  plateIII.insertBefore(controls, plateIII.querySelector('figcaption'));
+  s.append(plateIII, spread);
 
   // The six wells: the storyline. Every mechanism belongs to exactly one, checked in Python.
   const wells = M.wells;
@@ -536,6 +634,37 @@ function chapterResults(M, spreadRef) {
       'Plate V',
       'The wrap',
       figWrap(),
+      brief([
+        [
+          'What you are looking at',
+          'Rotary embeddings tell a model where a word sits by **rotating** its query and key ' +
+            'vectors — a little for nearby positions, a lot for distant ones. The vector is split ' +
+            'into bands and each band rotates at its own speed; the two dials are one fast band and ' +
+            'one slow one. The curve on the right is the resulting attention score between two ' +
+            'words as the gap between them grows.',
+        ],
+        [
+          'Why this is elegant',
+          'The score depends only on the **gap** between two positions, never on where the pair sits ' +
+            'in the text. "The cat" scores the same at position 5 and at position 5,000. That is why ' +
+            'rotary embeddings won, and why almost every open model shipped since 2021 uses them.',
+        ],
+        [
+          'A concrete example',
+          'Take a model trained on 4,096 tokens. At a gap of 4,000 the fast band has turned a handful ' +
+            'of times and the score still behaves. Now feed it 16,000 tokens — **four times what it ' +
+            'was trained on**. The fast band has now turned tens of times and lands in combinations ' +
+            'the model never saw once during training. Drag the slider past the blue rule and watch ' +
+            'the curve stop settling: that is the moment a model starts producing worse answers about ' +
+            'text it can technically still read.',
+        ],
+        [
+          'Why it matters',
+          'If you have ever seen a model degrade well before its advertised context limit, this curve ' +
+            'is the reason. One design decision in April 2021 produced three separate repairs — and ' +
+            'the last of them proposes deleting positional embeddings altogether.',
+        ],
+      ]),
       'The wobble past the blue rule is not a rendering artefact; it is the reason NTK-aware ' +
         'scaling, YaRN and finally DroPE exist. Watch the fast dial lap the slow one tens of times ' +
         'before the curve stops behaving — that is cause, where two static curves would only show ' +
@@ -548,6 +677,38 @@ function chapterResults(M, spreadRef) {
       'Plate VI',
       'The eviction',
       figEviction(),
+      brief([
+        [
+          'What you are looking at',
+          'Forty words in a row along the bottom. The bar above each one is how much **attention ' +
+            'mass** it receives — how much the model is looking at it. The shaded box is a sliding ' +
+            'window: to keep memory constant while generating forever, you keep only the most recent ' +
+            'words and throw the rest away. Watch it move right.',
+        ],
+        [
+          'Why we have this',
+          'A sliding window is the obvious way to stream indefinitely on a fixed budget, and it broke ' +
+            'in a way nobody could explain. Models did not degrade gracefully as old words fell out ' +
+            'of the window — they **collapsed**, and they collapsed at a specific moment: the instant ' +
+            'the window passed the very first tokens of the text.',
+        ],
+        [
+          'Where we are coming from',
+          'This is the one entry on the whole timeline that **fixed nothing**. Nothing was invented ' +
+            'here; something was discovered. Softmax has to put its weight *somewhere* — the numbers ' +
+            'are forced to sum to one — so when a model has nothing useful to attend to, it needs ' +
+            'somewhere to dump the surplus. It learned to dump it on the first few tokens, which every ' +
+            'query can see and which usually carry no meaning. Those tokens became load-bearing by ' +
+            'accident, and nobody wrote that down because nobody designed it.',
+        ],
+        [
+          'Why it is worth understanding',
+          'A working system can depend on behaviour that no one specified and no one documented, and ' +
+            'you find out by removing it. The repair is almost insultingly cheap — keep four tokens ' +
+            'that carry no meaning and never evict them — but it was invisible until someone asked ' +
+            'why the obvious optimisation kept failing.',
+        ],
+      ]),
       'Nothing was fixed here — something was discovered. Models were already dumping surplus ' +
         'softmax mass onto the first few tokens, which made those tokens load-bearing while ' +
         'carrying no meaning. Act 2 costs a handful of cache slots and buys indefinite streaming; ' +
@@ -567,10 +728,11 @@ function chapterNegatives(M) {
     'Corrections',
     'Three things the source material gets wrong',
     [
-      'The assignment invites this explicitly. We record them because a reader deserves to know ' +
-        'which claims we checked rather than copied.',
+      'Recorded because a reader deserves to know which claims we checked rather than copied — ' +
+        'and because a page that corrects its own sources in the open is easier to trust about ' +
+        'the ones it does not.',
     ],
-    { short: 'Corrections', sub: 'Where we disagree with the course' }
+    { short: 'Corrections', sub: 'Where we disagree with our sources' }
   );
 
   const items = [
@@ -582,7 +744,8 @@ function chapterNegatives(M) {
     ],
     [
       'DroPE is two papers, one capital letter apart',
-      'The technique the session describes — pretrain with positional embeddings, drop them, ' +
+      'The technique usually described under this name — pretrain with positional embeddings, ' +
+        'drop them, ' +
         'recalibrate briefly — is arXiv:2512.12167. The transcript’s title instead matches ' +
         '<b>DRoPE</b>, arXiv:2503.15029, an autonomous-driving trajectory paper with no relation ' +
         'to it. We cite the first and footnote the second so nobody re-finds it and “corrects” us.',
@@ -591,8 +754,8 @@ function chapterNegatives(M) {
       'The million-token figure does not reproduce',
       `The transcript gives about ${M.transcriptDiscrepancy.claimedTB.toFixed(0)} TB for ` +
         `${M.transcriptDiscrepancy.users} readers at a ` +
-        `${int(M.transcriptDiscrepancy.context)}-token context. The session’s own formula, at the ` +
-        `session’s own yardstick, gives ` +
+        `${int(M.transcriptDiscrepancy.context)}-token context. The formula that figure comes ` +
+        'from, at the same model shape, gives ' +
         `${(M.transcriptDiscrepancy.computedBytes / 1e12).toFixed(2)} TB. A smaller model, fewer ` +
         'KV heads, or fp8 would each reconcile them; we publish both rather than quietly adopting ' +
         'the rounder one.',
@@ -611,8 +774,9 @@ function chapterNegatives(M) {
   f.append(figCorrection(M));
   const cap = el('figcaption');
   cap.innerHTML =
-    'The formula wins, and it is the session’s own formula. A page that corrects its source in ' +
-    `the open is the one you should believe about the other ${spell(M.counts.total - 1)} dates.`;
+    'The formula wins, and it is the same formula the smaller figure was derived from. A page ' +
+    'that corrects its own sources in the open is the one to believe about the other ' +
+    `${spell(M.counts.total - 1)} dates.`;
   f.append(cap);
   s.append(f);
   return s;
@@ -673,9 +837,9 @@ function chapterLimits(M) {
     [
       `**It is a chronology, not a benchmark.** Nothing here was trained or measured against ` +
         'anything else. Every trade-off is what the primary source reports, not what we observed.',
-      `**${M.counts.outsideSession} of the ${M.counts.total} entries are sourced entirely from ` +
-        'outside the course material**, because the session names them and never teaches them. ' +
-        'Each carries the URL and the source’s own date string so you can check ours against it.',
+      `**${M.counts.outsideSession} of the ${M.counts.total} entries were built from the primary ` +
+        'paper alone**, with no secondary explanation to lean on. Each carries the URL and the ' +
+        'source’s own date string, so you can check our reading against it.',
       '**The glyphs are shapes, not measurements.** The catalogue records no window size, sink ' +
         `count, latent width, block size or state dimension, so ${M.counts.schematic} of ` +
         `${M.counts.total} glyphs are drawn to schema and marked ~. Where a paper states a size ` +
@@ -787,7 +951,7 @@ function chapterReproduce(M, spreadRef, plateRef) {
 
   const legend = el('p', 'say');
   legend.innerHTML = rich(
-    `‡ sourced outside the session (${M.counts.outsideSession} of ${M.counts.total}) · ` +
+    `‡ built from the primary paper alone (${M.counts.outsideSession} of ${M.counts.total}) · ` +
       `† beyond the ${M.counts.mandated} mandated mechanisms (${M.counts.bonus}) · ` +
       '~ glyph drawn to schema rather than to scale'
   );
@@ -862,8 +1026,7 @@ function buildFooter(M) {
   const p = el('p', 'disclaim');
   p.innerHTML = rich(
     `${M.counts.total} mechanisms, every date verified against its primary source. Part of an ` +
-      'LLM pre-training exercise series. The course, instructor and platform are credited in the ' +
-      'repository README.'
+      'series on LLM pre-training. Credits and full sources are in the repository README.'
   );
   foot.append(p);
 }
