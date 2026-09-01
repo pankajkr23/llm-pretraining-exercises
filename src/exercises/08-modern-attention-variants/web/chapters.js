@@ -1357,10 +1357,20 @@ function chapterMethod(M) {
   });
   const c = el('div', 'colophon');
   const paras = [
-    `Set in the reader's system sans, with ${M.counts.total} entries typeset from one tracked ` +
-      'catalogue. Nothing on this page is typed by hand: every date, count, byte figure and ' +
-      'trade-off is generated from <code>results/mechanisms.json</code> and from the same Python ' +
-      'functions the test suite exercises.',
+    /* THE RULE FOR ADMISSION FIRST. A reader reaching the end of this section could not say how
+     * the entries were chosen, because the section opened on typography — and "what got in" is the
+     * question a sceptical reader most wants answered about a chronology. */
+    `<b>What got in.</b> ${Spell(M.counts.total)} entries, one rule: a paper that changes how ` +
+      'attention scores its tokens, what it stores for them, or what replaces the score grid ' +
+      'entirely — and that states what the change costs. ' +
+      `${Spell(M.counts.mandatedMechanisms)} of them come from the required reading list this page ` +
+      `was built against; the other ${spell(M.counts.bonus)} are ours, marked †. (That list names ` +
+      `${spell(M.counts.mandatedPhrases)} items but ${spell(M.counts.mandatedMechanisms)} ` +
+      'mechanisms — one of its phrases covers two different techniques, and this catalogue keeps ' +
+      'them apart.)',
+    'Nothing on this page is typed by hand: every date, count, byte figure and trade-off is ' +
+      'generated from <code>results/mechanisms.json</code> and from the same Python functions the ' +
+      'test suite exercises. It is set in whatever sans-serif your system uses.',
     'Dates are the arXiv <b>v1</b> submission date, because later versions move by months and ' +
       'sometimes years — Bahdanau’s v1 is Sep 2014 and its v7 is May 2016, a twenty-month spread. ' + // count-literal-ok: a duration, not a catalogue size
       'Each entry stores the source’s own date string beside our parsed date so a reader compares ' +
@@ -1373,10 +1383,12 @@ function chapterMethod(M) {
       'whose trade-off, debit or when-to-choose field is empty, because a technique written down ' +
       'with only advantages has not been understood yet.',
     'Every figure is inline SVG built from that data, with no chart library and no third-party ' +
-      'request of any kind. Colours are tokens, so the page follows your theme rather than being ' +
-      'right in one of six and wrong in five.',
-    'Commands to rebuild and test all of this live in the repository’s README, where commands ' +
-      'belong.',
+      'request of any kind. No colour here is fixed: each is named and then looked up from whichever ' +
+      'of the six colour themes you are reading in, so a figure legible in one stays legible in ' +
+      'all six rather than being right in one and unreadable in the rest.',
+    'Every command needed to rebuild this page, regenerate the catalogue and run its tests is in ' +
+      '<b>this exercise’s own README</b> in the repository — not the root README, which is a map ' +
+      'rather than a manual. Commands belong where the thing they build lives.',
   ];
   for (const p of paras) {
     const node = el('p');

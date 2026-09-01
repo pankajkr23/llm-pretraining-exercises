@@ -210,3 +210,35 @@ def test_every_module_is_named_in_the_documents_that_list_modules() -> None:
     assert not missing, (
         f"these modules are not named in every document that lists modules: {missing}"
     )
+
+
+def test_the_counts_the_page_presents_as_a_partition_actually_add_up() -> None:
+    """Two numbers offered as covering everything must cover everything.
+
+    The colophon says how many entries came from the required list and how many are ours. A first
+    draft used the list's PHRASE count (18) against the bonus count (11), which reads as 29 of 30 —
+    a visible subtraction error in the one paragraph explaining how entries were chosen. The list
+    names 18 phrases but 19 mechanisms, because one phrase covers two techniques this catalogue
+    keeps apart, and the page now says so rather than leaving a reader to notice the gap.
+    """
+    import json
+
+    text = (EXERCISE / "web" / "data.js").read_text(encoding="utf-8")
+    counts = json.loads(text.split("Object.freeze(", 1)[1].rsplit(");", 1)[0])["counts"]
+    total = counts["total"]
+
+    assert counts["mandatedMechanisms"] + counts["bonus"] == total, (
+        f"{counts['mandatedMechanisms']} from the list + {counts['bonus']} ours != {total} entries"
+    )
+    assert counts["mandatedPhrases"] <= counts["mandatedMechanisms"], (
+        "the required list cannot name more phrases than mechanisms"
+    )
+
+    #: And if the two ever coincide, the parenthetical explaining the discrepancy is stale and
+    #: should be removed rather than left explaining something that is no longer true.
+    if counts["mandatedPhrases"] == counts["mandatedMechanisms"]:
+        source = (EXERCISE / "web" / "chapters.js").read_text(encoding="utf-8")
+        assert "covers two different techniques" not in source, (
+            "the list's phrase and mechanism counts now agree; drop the parenthetical that "
+            "explains why they differ"
+        )

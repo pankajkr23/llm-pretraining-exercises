@@ -113,6 +113,12 @@ def payload() -> dict:
                 for k in sorted({m.glyph.kind for m in mechanisms})
             },
             "bills": bills_addressed(mechanisms),
+            # The required list names 18 PHRASES but 19 mechanisms — one phrase, "sparse and
+            # top-k attention", covers two different techniques that this catalogue keeps
+            # apart. Both numbers are emitted because the page needs each: the phrase count
+            # when quoting the list, the mechanism count whenever it has to add up to 30.
+            "mandatedPhrases": len(MANDATED),
+            "mandatedMechanisms": len({k for v in MANDATED.values() for k in v}),
         },
         "periods": [
             {

@@ -17,9 +17,9 @@ are sound; readability and design are the work.
 | 1.1 | Six-agent readability audit against the benchmark + the ladder-of-readers rubric | done — 75 findings, 37 ranked edits |
 | 1.2 | All 10 blocking edits | done |
 | 1.3 | The arc verdict measured the wrong thing; noise floor now measured, one finding lost to it | done |
-| 1.4 | Remaining 27 edits (confusing / overclaim / polish tiers) | in progress |
-| 1.5 | Name real models per mechanism (`shippedIn`), verified not guessed | queued |
-| 1.6 | Full screenshot pass, six themes, 1400px and 390px | queued |
+| 1.4 | All 37 audit edits | done |
+| 1.5 | Name real models per mechanism, verified not guessed | done — 21 claims, 8 models, 0 rejected by the gate |
+| 1.6 | Full screenshot pass, six themes, 1400px and 390px | done — clean console, no sideways scroll, all twelve |
 | 1.7 | Notebook re-read to the same standard | queued |
 | 1.8 | Docs: exercise README/CLAUDE/PROGRESS/DECISIONS, root README, AGENTS.md, CHANGELOG | queued |
 | 1.9 | O4 — Q2 answer drafted from data | blocked: the app link 404s until PR #83 merges and the production gate runs |

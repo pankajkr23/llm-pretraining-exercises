@@ -1941,7 +1941,9 @@ export const M = Object.freeze({
       "compute": 5,
       "cache": 4,
       "both": 11
-    }
+    },
+    "mandatedPhrases": 18,
+    "mandatedMechanisms": 19
   },
   "periods": [
     {
