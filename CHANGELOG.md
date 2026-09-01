@@ -10,6 +10,8 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+## [0.12.0] — 2026-09-01
+
 ### Added
 
 - **Exercise 05 has a drawn figure for the first time.** The repetition curve, its `16.4×`
@@ -2167,7 +2169,8 @@ First tagged release: two interactive exercises live on Vercel with a gated depl
 - **Tooling & conventions:** uv workspace (Python 3.12), ruff lint/format, pytest (unit +
   integration split), GitHub Actions CI, and a PR-only workflow documented in `AGENTS.md`.
 
-[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.8.0...v0.9.0
