@@ -10,6 +10,41 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **The page spine is now enforced repo-wide, not just on exercise 07.** `tests/test_page_spine.py`
+  reads every `chapters.js` and asserts each enforced page constructs a section for all twelve roles
+  (`thesis` … `reproduce`). It is **lexical and unconditional** — no browser, no assembled site — so
+  it runs in the plain `test` job rather than behind an `importorskip` that can quietly stop running.
+  Its ledger fails in **both** directions: the deployable set is read from the filesystem, so an
+  exercise that ships a `web/` bundle and is in neither `SPINE_ENFORCED` nor `SPINE_EXEMPT` turns it
+  red. Exercises 01–04 are exempt, each with a stated reason.
+
+- **Two guards on exercise 05's page that its existing markup check could not see.** A raw `<b>` tag
+  rendered as literal text because `rich()` understands markdown and not HTML, and the existing guard
+  looks only for `[[`, `**` and backticks. A second guard covers stray emphasis markers, which appear
+  because `rich()`'s bold pattern cannot contain a nested italic. Both were watched failing on a
+  deliberately broken page — the second one's first version was decorative and passed against the real
+  bug, since the marker the parser emits is a lone asterisk shorter than the check's own length floor.
+
+### Changed
+
+- **Exercises 05 and 06 rebuilt to the spine.** Both pages now open with a thesis and a glossary and
+  close with limits, next steps and a reproduce block, so a reader arriving cold gets the question
+  before the tables and the caveats without opening a drawer. 05's blind spots and corrections — the
+  page's two most valuable admissions — were buried inside the results chapter with no rail entry and
+  no anchor; they are sections now. 06's limits were the last paragraph of a footer.
+- **Exercise 06's page draws its pipeline.** It had three results figures and no mechanism figure at
+  all, so nothing on it showed the object the whole argument rests on. Its glossary also became
+  visible: the definitions existed only as hover tooltips, which are absent on a touch screen, in
+  print, and for a keyboard reader.
+- **Exercise 05 defines `tier` and `decay` for the first time.** The page used both as shorthand;
+  `tier` means two different things in this exercise and no file reconciled them.
+- **Exercise 07's page says which `d_model` each table is computed at.** Every measured number comes
+  from the width 256 model it trains; every parameter and memory table is arithmetic at width 768,
+  GPT-2 124M's size. The page carried both and reconciled neither, and the scale-cost table never
+  stated its width at all.
+
 ## [0.10.0] — 2026-08-31
 
 ### Added

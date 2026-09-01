@@ -312,6 +312,38 @@ lines and 14 tests.
   `fork.verify_fork`: the parent covers the shared steps, the child begins after them, and the
   child re-ran none of them.
 
+## The page carries the spine, and two of its sections are not optional
+
+`web/chapters.js` builds the twelve-part narrative `AGENTS.md` requires, declared as `data-role` on
+each section. The three explainer chapters (`replay`, `floors`, `chain`) are the `results` block and
+are unchanged; everything around them is prose built by `section(id, role, …)`.
+
+- **Roles are literal strings at the construction site, never looked up from a map.**
+  `tests/test_page_spine.py` reads this file's *source*, so `sec.dataset.role = ROLES[sec.id]` is
+  invisible to it and the guard would go green on a page with no spine at all. That is why the three
+  chapters are wrapped in one-line arrow functions in `CHAPTERS` rather than tagged in a loop.
+- **The glossary section and the hover tooltips render the same `GLOSSARY` object.** Do not write a
+  second set of definitions. The section exists because hover is absent on a touch screen, absent in
+  print, and absent for a keyboard reader — the same "drawer a reader has to open" that `AGENTS.md`
+  rules out for anything load-bearing. Its heading's count is **derived from the list it heads**, and
+  `test_the_glossary_heading_counts_the_terms_it_actually_shows` is what stops someone typing it back
+  in.
+- **The mechanism figure is the pipeline, and its two accented boxes are marked by an explicit
+  `key` class.** Never by `:nth-child` — the arrows are siblings of the boxes, so any positional rule
+  counts them too and selects the wrong stages the moment one is added.
+- **The limits are a section, not a footer paragraph.** They used to be the last thing in
+  `buildFooter`. A caveat a reader reaches only by finishing the page is a caveat the page is hiding,
+  which is the same rule that keeps them out of a collapsed `<details>`.
+- **One opening tile is a failure on purpose** — three of four selector passes were offered no
+  agentic candidate. `AGENTS.md`: a page that shows only its wins has not earned the ones it shows.
+  If you replace it, replace it with another honest one.
+
+Two render tests were rescoped when this landed and the distinction matters:
+`test_every_chapter_built` now asserts the three interactive chapters are present and in order
+rather than pinning the whole section list, and the "a title is a claim, not a topic" rule applies to
+`section[data-role="results"]` only — the spine's prose sections are headed by *role*, which is a
+different job.
+
 ## Naming
 
 - **One shipped helper still has no varying input, and it is worth knowing before trusting it.**
