@@ -10,6 +10,28 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- **The documentation caught up with v0.11.0.** `docs/DESIGN.md` gained the spine's visual
+  components — the glossary definition list, the wrapping pipeline figure, prose sections and command
+  blocks — and points at `AGENTS.md` for the rule it does not own. Exercise 07's `CLAUDE.md` now
+  records that it is the spine's reference implementation and that its two `d_model` values mean
+  different things. Change-log entries were added to 05's, 06's and 07's `PROGRESS.md`.
+- **`AGENTS.md` documents how to delete a protected local-only file on purpose.** The backup store is
+  append-only, so the tripwire treats it as a permanent high-water mark: an intentional deletion reds
+  it forever and re-running the backup tool does not clear it. The missing step — record the removal
+  in the store as its own commit, then verify the content still reads back from history — was not
+  written down anywhere.
+- **`AGENTS.md`: screenshot every section you build.** Retrofitting 05 and 06 produced four defects
+  and every one was found by looking at the page while the whole suite passed.
+
+### Fixed
+
+- **Three stale counts in exercise 07's own documents.** Its `CLAUDE.md` said the page had 15 browser
+  tests (17 functions, 20 collected); its `PROGRESS.md` said the work was *"on a branch, not yet
+  merged"* two releases after it merged, quoted a backup-store size that had been wrong by 17 files,
+  and carried a duplicated sentence about figure generation.
+
 ## [0.11.0] — 2026-09-01
 
 ### Added

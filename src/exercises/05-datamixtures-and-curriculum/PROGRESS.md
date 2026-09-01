@@ -324,6 +324,32 @@ plausible numbers nobody measured.
 
 ## Change log
 
+### 2026-09-01 (release — v0.11.0: the page rebuilt to the narrative spine)
+
+- **The page carries the twelve-part spine.** It gained a glossary, the problem, the apparatus, the
+  predictions with the thresholds fixed before the run, a conclusion, what would settle the open
+  question, and how to reproduce any of it. The five numbered chapters are unchanged: `composer` and
+  `repetition` are the `mechanism` block, the other three are `results`.
+- **The blind spots and the corrections log became sections.** They were spread into the body of
+  `chapterResults`, so the page's two most valuable admissions had no rail entry and no anchor
+  anyone could be sent to. They are `#limits` and `#negatives` now, and the five browser tests that
+  scoped to `#results` were repointed rather than deleted.
+- **Section numbers are assigned after assembly**, in `buildPage`, instead of being hard-coded 1-5
+  per chapter. Inserting a section used to leave the rail counting wrong.
+- **`tier` and `decay` are defined for the first time.** Both were used as shorthand throughout;
+  `tier` means two different things in this exercise (the Indic provenance ladder, and the same
+  ladder applied to one inventory row) and no file had ever reconciled them.
+- **Three defects found by rendering the page, none by reading it.** A raw `<b>` shown as literal
+  text, stray emphasis markers from a bold that cannot nest an italic, and two rail entries sharing
+  the title *"Out of what?"*. The first two now have guards, both watched failing on a deliberately
+  broken page first — and the stray-marker guard needed that, because its first version required a
+  text node longer than one character and the marker the parser emits is a lone `*`.
+- **Two `NOTICE` claims corrected, and guarded.** It carried a section headed *"THE PROXY HAS NOT
+  BEEN RUN"* when `results/step0.json` records four arms at five seeds, and a bullet calling the
+  local throughput *"NOT MEASURED"* after `mixture.bench` measured it at 5.281 TFLOP/s. `CLAUDE.md`
+  repeated the second as a rule. Both directions of the disclosure are now tested, and the rule the
+  stale bullet protected is kept: the rented-GPU entries must stay `provenance="estimated"`.
+
 ### 2026-08-24 (documentation architecture)
 
 - **The root README went back to being a map.** It had reached 307 lines, **211 of them five

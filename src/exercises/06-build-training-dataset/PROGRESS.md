@@ -106,6 +106,34 @@ every shard manifest pins, so the sentinels are assigned **out of vocabulary** �
 
 ## Change log
 
+### 2026-09-01 (release — v0.11.0: the page rebuilt to the narrative spine)
+
+- **The page carries the twelve-part spine.** It was four sections — a summary panel and three
+  interactive chapters — which answered the question well and never asked it. The three explainer
+  chapters are untouched and become the `results` block; around them sit the problem, the mechanism,
+  the method, what was expected, what was got wrong, what is established, what it cannot show, what
+  is still open, and how to check it.
+- **The pipeline is drawn.** Every figure on the page had been a results strip, so nothing on it
+  ever showed the object the whole argument rests on. The two stages that are this exercise's
+  contribution are marked by an explicit `key` class — never `:nth-child`, because the arrows are
+  siblings of the boxes and any positional rule counts them too.
+- **The glossary is visible, not hover-only.** Ten terms existed solely as tooltips, which is a
+  definition that is absent on a touch screen, absent in print and unreachable by keyboard. The
+  section renders the same object the tooltips use, so the two cannot disagree, and eight terms the
+  page had been using undefined were added. Its heading's count is derived from the list it heads,
+  with a test.
+- **The limits left the footer.** A caveat a reader reaches only by finishing the page is a caveat
+  the page is hiding — the same rule that keeps them out of a collapsed `<details>`.
+- **One opening tile is now a failure.** Three of four selector passes were offered no agentic
+  candidate at all, so the floor could not be met from candidates that were absent. All four tiles
+  had been wins, and a page that shows only its wins has not earned the ones it shows.
+- **Two `NOTICE` errors corrected, in one sentence, and guarded.** It gave the corpus as 2,185,575
+  tokens at 4.8 epochs — the pre-refetch figure every other document had superseded with 10,649,549
+  at 1.0139 — and named 5,774,080 parameters, which is `model.py`'s **default**. `run_demo.py` builds
+  `d_model=128`, which is **2,084,224** parameters, and every published performance figure came from
+  that model. The count had never been recorded anywhere in the repo; it is now, measured. Both the
+  corpus figures and the model are checked against the tracked artifacts.
+
 ### 2026-08-26 (release — v0.9.0, tagged and deployed)
 
 Tag `v0.9.0` on `56d5ff6`, CI verified green on that exact commit before tagging. GitHub Release

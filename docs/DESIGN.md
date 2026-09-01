@@ -11,6 +11,12 @@ This is the canonical reference; `AGENTS.md` carries the short version.
 - **One consistent shell across pages.** Same header structure, back navigation, type scale,
   accent, panel/card treatment, and footer voice on every page (landing, each exercise).
 - **Written for a general audience** — blog-style and self-contained (see [Copy & tone](#copy--tone)).
+- **Every exercise page tells the same story in the same order.** The twelve-part spine —
+  `thesis · glossary · problem · mechanism · method · expected · results · negatives · conclusion ·
+  limits · next · reproduce` — is declared as `data-role` on each section. **`AGENTS.md` owns that
+  rule and `tests/test_page_spine.py` enforces it repo-wide**; this document owns only how the
+  sections look. Write each role as a literal string where the section is built: the guard reads the
+  source, so a role assigned from a variable is invisible to it and passes on a page with no spine.
 - **One content width; prose is limited by line length, not by the container.** The wrapper is a
   single width and never moves, so every left edge on a page lines up. What varies is how far an
   element *fills* it: prose stops at its own `ch` measure and leaves the right ragged, while
@@ -126,6 +132,31 @@ colours, distinct in both themes (light / dark):
   selectors: the index label is *also* a direct-child `span`, so `a.item > span { flex: 1 }` gives
   it flex-grow and it stretches to fill the card — 93px tall for one line, pushing the title into
   the middle. Scope it `:not(.idx)`.
+- **Prose sections of the spine** (`section.prose`): the twelve-part narrative `AGENTS.md` requires
+  is mostly prose, and it sits between the interactive chapters rather than replacing them. Give the
+  paragraphs `max-width: 72ch` — slightly wider than the 66ch `.claim` measure, because these are
+  read continuously rather than glanced at. Exercises 05, 06 and 07 all carry it; 05 and 06 style it
+  in their own `page-extra.css` rather than in `_shared/`, which is the honest place for it until a
+  fourth page wants the same rules.
+- **A glossary is a table of terms, not a paragraph of them** (`dl.defs`): a two-column grid,
+  `minmax(110px, 165px)` for the term and `1fr` for the definition, collapsing to **one column below
+  640px** — a 110px term column beside a definition is unreadable on a phone. The term is `--mono`,
+  the definition `--muted`. Use a grid rather than a float so a long definition wraps under itself
+  instead of under the term.
+- **A glossary must not be hover-only.** Exercise 06 defined ten terms as tooltips and nothing else,
+  which is a definition that does not exist on a touch screen, does not survive printing, and cannot
+  be reached with a keyboard. Render the *same object* as a visible section and keep the tooltips —
+  two presentations, one source, so they cannot disagree. If the heading states a count, derive it
+  from the list it heads and test it.
+- **A pipeline figure is boxes and arrows that wrap** (`.flow`): `display: flex` with
+  `flex-wrap: wrap` and `overflow-x: auto`, arrows as separate `.flow-arrow` siblings between the
+  boxes. **Mark the stages that matter with an explicit class, never `:nth-child`** — the arrows are
+  siblings of the boxes, so any positional rule counts them too and selects the wrong stages the
+  moment one is added. And let it wrap rather than scroll: 06's first version put the two stages its
+  caption called out off-screen behind a horizontal scroll, so the figure's punchline was invisible.
+- **Command blocks** (`pre.code`): `--panel` on `--line`, `border-radius: 10px`, `--mono` at
+  12.5px/1.65, `overflow-x: auto`. A `reproduce` section is mostly these, so they need to read as
+  runnable rather than as decoration.
 - **Segmented control:** `--track` background; the selected button is a `--panel` "knob" with
   `--shadow`.
 - **Inputs:** on focus, `--accent` border plus a 3px `--accent-soft` glow ring.
