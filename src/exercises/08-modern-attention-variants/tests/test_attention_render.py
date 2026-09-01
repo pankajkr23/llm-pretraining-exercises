@@ -736,3 +736,64 @@ def test_the_spread_never_stacks_more_than_one_diagram(page) -> None:
         page.wait_for_timeout(120)
     count = page.eval_on_selector_all(".spread .diagram-svg", "els => els.length")
     assert count == 1, f"after four selections the spread holds {count} diagrams"
+
+
+@pytest.mark.parametrize("width", [2560, 1920, 1600, 1500, 1400, 1180])
+def test_the_rail_sits_against_the_text_it_indexes(page, width: int) -> None:
+    """The gutter and the rail must be in the SAME place, not merely both present.
+
+    `.wrap` is centred at `max-width: 1500px` and reserves 260px of left padding for the rail;
+    the rail is `position: fixed`, so it was pinned to the window. Below 1500px those coincide and
+    everything looked right. Past it they separate — the reserved gutter drifts right with the
+    centred wrap while the rail stays welded to the far edge — so the page grows a widening void
+    between the rail and the text it indexes, and an empty gutter indexing nothing. At 2560px the
+    void was 554px. Nothing failed: exercise 07's guard asks whether the gutter is *filled*, which
+    it was, by an element 554px away from it.
+
+    A fixed offset is the wrong assertion here; the invariant is the relationship.
+    """
+    page.set_viewport_size({"width": width, "height": 900})
+    page.wait_for_timeout(160)
+    m = page.evaluate(
+        """() => {
+          const rail = document.querySelector('.rail');
+          const wrap = document.querySelector('.wrap');
+          const rb = rail.getBoundingClientRect();
+          const cs = getComputedStyle(wrap);
+          return {
+            fixed: getComputedStyle(rail).position === 'fixed',
+            railRight: rb.right,
+            textLeft: wrap.getBoundingClientRect().left + parseFloat(cs.paddingLeft),
+          };
+        }"""
+    )
+    assert m["fixed"], f"at {width}px the rail is not pinned — this guard is measuring nothing"
+    gap = m["textLeft"] - m["railRight"]
+    assert 0 <= gap <= 60, (
+        f"at {width}px the rail ends at {m['railRight']:.0f} and the text starts at "
+        f"{m['textLeft']:.0f} — a {gap:.0f}px gap between the rail and what it indexes"
+    )
+
+
+def test_the_link_to_the_field_guide_is_a_designed_control(page) -> None:
+    """An unclassed `<a>` takes the generic link colour, which in dark mode is raw accent blue on
+    near-black. It clears the contrast floor and still reads as broken, because it is the only
+    untreated element on a page where every other control is a designed object — so it looks like
+    something that failed to load rather than something to click.
+
+    `.jump` puts `--on-accent` ON the accent, the pairing the token set is built around. The shared
+    stylesheet has carried it all along and this exercise had never used it.
+    """
+    link = page.query_selector("a.jump[href='field-guide/']")
+    assert link is not None, "the field-guide link is not a .jump — it will render as a raw anchor"
+    paint = page.evaluate(
+        """(el) => {
+          const cs = getComputedStyle(el);
+          return {bg: cs.backgroundColor, fg: cs.color, deco: cs.textDecorationLine};
+        }""",
+        link,
+    )
+    assert paint["bg"] not in ("rgba(0, 0, 0, 0)", "transparent"), (
+        f"the pill has no ground of its own: {paint}"
+    )
+    assert paint["deco"] == "none", f"a pill should not also be underlined: {paint}"

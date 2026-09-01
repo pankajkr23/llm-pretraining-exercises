@@ -179,6 +179,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The pinned rail and the gutter reserved for it were in two different places past 1500px.**
+  `.wrap` is centred at `max-width: 1500px` and reserves 260px of left padding for the rail; the
+  rail is `position: fixed`, so it was pinned to the *window*. Below 1500px those coincide. Above
+  it they separate, and the page grows a widening void between the rail and the text it indexes
+  plus an empty gutter indexing nothing — **554px of it at 2560px**. Nothing failed, because the
+  existing guard asks whether the gutter is *filled*, and it was, by an element half a screen away.
+  Fixed on exercises 05 and 08 (the vendored stylesheet is byte-identical and both build a rail);
+  the new guard asserts the *relationship* rather than an offset.
+
+- **Exercise 08's link to the field guide rendered as a raw underlined anchor**, which in dark mode
+  is bare accent blue on near-black. It clears the contrast floor and still reads as broken, because
+  it was the only untreated element on a page where every other control is a designed object. It is
+  now the shared `.jump` pill — `--on-accent` on the accent — which the stylesheet had carried all
+  along and this exercise had never used.
+
 - **CI's web syntax gate could not see an unbalanced brace.** `node --check` parses a `.js` file
   with the script goal, wrapping it in the CommonJS function wrapper first, so a stray `}` closes
   the wrapper early and the file passes — while the browser refuses the same file outright. It

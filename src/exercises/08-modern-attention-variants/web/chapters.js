@@ -1006,8 +1006,14 @@ function chapterReproduce(M, spreadRef, plateRef) {
 
   /* Out to the reference form of the same catalogue. The chronology reads in sequence; the guide
    * puts every diagram side by side so they can be compared instead. */
-  const out = el('p', 'say');
-  const a = el('a');
+  /* `.jump` and not a bare anchor. An unclassed <a> takes the generic link colour, which in dark
+   * mode is raw accent blue on near-black: legible by the numbers and wrong by eye, because it is
+   * the only untreated element on a page where every other control is a designed object, so it
+   * reads as something that failed to load. The pill puts --on-accent ON the accent instead, which
+   * is the pairing the token set is built around. The shared sheet has carried `.jump` all along
+   * and this exercise had never used it. */
+  const out = el('div', 'lede-actions');
+  const a = el('a', 'jump');
   a.href = 'field-guide/';
   a.textContent = `See all ${spell(M.counts.total)} diagrams side by side →`;
   out.append(a);
