@@ -27,6 +27,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Two documents named things that do not exist.** Exercise 05's generated README claimed
+  `SPEC.md`, `TOKENIZER.md`, `EXPERIMENTS.md`, itself *"and the exercise-05 section of the
+  repository's root README"* were all generated — there is no such section, and `AGENTS.md` forbids
+  one. Its Layout block named a `DECISIONS.md` this exercise does not have while omitting
+  `METHOD.md`, which the reading path three lines above sends readers to. Both fixed in `export.py`,
+  since the README is generated.
+- **Exercise 06's README said its auditor was "still unbuilt"** — eight lines below a paragraph
+  saying it is built and passes 40 of 40 — and gave its test counts as 46 of 272 with 20 integration
+  tests; they are 63 of 450, and 20 torch-gated of 51 integration.
+- **Root README:** "three concerns kept physically separate" → five (notebooks and the *tracked*
+  `results/` were both missing, and `results/` is the exception that matters); `results/` added to
+  the skeleton; the scaffold example still said `07-slug`, taken since August;
+  `tests/test_page_spine.py` was unmentioned; and rows 01–05 linked no page though all seven deploy
+  and return 200 — the root's job is routing, so a row that does not link its page is the one thing
+  it must not be.
 - **Three stale counts in exercise 07's own documents.** Its `CLAUDE.md` said the page had 15 browser
   tests (17 functions, 20 collected); its `PROGRESS.md` said the work was *"on a branch, not yet
   merged"* two releases after it merged, quoted a backup-store size that had been wrong by 17 files,
