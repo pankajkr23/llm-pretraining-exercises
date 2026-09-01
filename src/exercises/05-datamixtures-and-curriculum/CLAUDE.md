@@ -28,9 +28,13 @@ only, gitignored).
   applied at its *generous* end and explicitly marked non-load-bearing. A reviewer's first move
   against an impossible verdict is to attack whichever correction produced it.
 
-- **No figure is invented for hardware nobody measured.** `proxy.HARDWARE["m4-max"].tflops` is
-  `None` and `estimate()` returns absent hours and cost. A plausible number there would decide a
-  spending question on evidence nobody gathered.
+- **No figure is invented for hardware nobody measured.** The local entry
+  `proxy.HARDWARE["m4-max"]` now carries `tflops=5.281` with `provenance="measured"` and its
+  command in `source` — it was `None` until `python -m mixture.bench` was run, and this rule said so
+  for months after it stopped being true. The rule itself is unchanged and still binding: the two
+  rented-GPU entries stay `provenance="estimated"`, because a plausible number there would decide a
+  spending question on evidence nobody gathered. **Read the field, never this sentence** — which is
+  the lesson the stale version taught.
 
 ## The page carries the spine, and `rich()` has two limits that have both shipped bugs
 

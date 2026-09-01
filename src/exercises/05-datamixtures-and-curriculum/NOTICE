@@ -48,17 +48,36 @@ WHAT IS MEASURED AND WHAT IS NOT
   applied at its most generous end, and the conclusion it supports does not depend
   on it — the agentic lane fails its repetition ceiling on raw, uncorrected tokens.
 
-- NOT MEASURED, AND SAID SO: the throughput of the local machine the proxy runs
-  would use. No figure is entered for it and the cost model returns an absent value
-  rather than a plausible one, because a number there would decide a spending
-  question on evidence nobody gathered.
+- MEASURED, AND SAID SO: the throughput of the local machine. It is 5.281 TFLOP/s,
+  produced by `python -m mixture.bench` sweeping six model sizes, and it carries
+  provenance="measured" with its source recorded beside it. This entry previously
+  read NOT MEASURED and described an absent value; that was true when the cost
+  model would otherwise have had to invent one, and it stopped being true when the
+  benchmark was run. The rule it was protecting still stands: the two rented-GPU
+  figures beside it remain provenance="estimated", because nobody here measured
+  them, and a plausible number would decide a spending question on evidence nobody
+  gathered.
 
 - ILLUSTRATIVE, AND SAID SO: the difficulty-band examples (B0–B5) are authored to
   illustrate each level. They are not samples from any corpus, and no classifier
   assigns real documents to bands here.
 
-THE PROXY HAS NOT BEEN RUN
+THE PROXY HAS BEEN RUN, AND IT IS STILL PROXY-SCALE
 
-SPEC.md commits to an experiment and declares its thresholds in advance. At the
-time of writing, no arm has been trained and no result is reported. Any statement
-about what the mixture achieves is a hypothesis, and the specification says so.
+SPEC.md commits to an experiment and declares its thresholds in advance. That
+experiment has now run: four arms at five seeds each, scored on held-out text, in
+results/step0.json. Two of the three hypotheses are supported and one is refuted.
+This section said the opposite for months, so treat the tracked results file as
+the authority and this paragraph as a summary of it.
+
+What has NOT changed is what the result licenses. Every arm is a 4-layer model of
+roughly 5.8M parameters over 1,784,212 tokens -- three orders of magnitude below
+the scale these shares are for -- and three of its six lanes are declared
+stand-ins. The refuted hypothesis has NOT moved the share it argues against,
+because acting on it would mean changing a headline number on evidence this
+specification itself calls insufficient. It is recorded as an upper bound rather
+than a target. Any statement about what the mixture achieves AT SCALE remains a
+hypothesis, and the specification says so.
+
+The run that would settle it -- a rung large enough to rank the arms for real --
+is priced from a measurement rather than a guess, and is not scheduled.

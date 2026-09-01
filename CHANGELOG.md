@@ -27,6 +27,27 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   deliberately broken page — the second one's first version was decorative and passed against the real
   bug, since the marker the parser emits is a lone asterisk shorter than the check's own length floor.
 
+- **Guards on both `NOTICE` files, which had no test at all.** 06's corpus figures are now checked
+  against `results/corpus_build.json` and its model against what `run_demo.py` builds; 05's cannot
+  claim the proxy is unrun while `results/step0.json` records arms, nor call the local throughput
+  unmeasured while the hardware entry carries `provenance="measured"`. Every one was watched failing
+  against the exact stale text that shipped.
+
+### Fixed
+
+- **Four stale claims in the two `NOTICE` files, each contradicted by a tracked artifact.** 06's
+  said the corpus was 2,185,575 tokens at 4.8 epochs — the pre-refetch figure, superseded by
+  10,649,549 at 1.0139 everywhere else — and in the same sentence named 5,774,080 parameters, which
+  is `model.py`'s **default**, not the 2,084,224-parameter model `run_demo.py` actually trains and
+  every published figure came from. 05's carried a section headed "THE PROXY HAS NOT BEEN RUN" when
+  it has (four arms, five seeds, in the tracked results), and a bullet declaring the local throughput
+  "NOT MEASURED" after `mixture.bench` had measured it at 5.281 TFLOP/s. 05's `CLAUDE.md` repeated
+  the last one as a rule.
+
+  These read as scrupulous honesty while being false, which is the expensive direction for a
+  disclosure to be wrong in. The corrections keep the superseded numbers as history rather than
+  deleting them, since the refetch is the more useful thing to record.
+
 ### Changed
 
 - **Exercises 05 and 06 rebuilt to the spine.** Both pages now open with a thesis and a glossary and

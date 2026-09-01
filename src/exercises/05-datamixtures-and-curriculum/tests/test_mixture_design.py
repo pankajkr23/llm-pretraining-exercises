@@ -482,3 +482,58 @@ def test_each_stage_agrees_with_the_ladder_it_sits_on():
         assert stage.sequence_length in by_stage[stage.key], (
             f"{stage.key} declares {stage.sequence_length}, ladder runs {by_stage[stage.key]}"
         )
+
+
+# ---- NOTICE must not contradict the tracked results ---------------------------------------
+#
+# `NOTICE` carried a section headed "THE PROXY HAS NOT BEEN RUN" for months after it was run --
+# five seeds across four arms, sitting in the tracked `results/step0.json`, with `SPEC.md` §7
+# literally headed "It has been run". A second bullet declared the local throughput NOT MEASURED
+# after `mixture.bench` had measured it. Both read as scrupulous honesty while being false, which
+# is the expensive direction for a disclosure to be wrong in.
+
+import json  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+EXERCISE = Path(__file__).resolve().parents[1]
+NOTICE = EXERCISE / "NOTICE"
+STEP0 = EXERCISE / "results" / "step0.json"
+
+
+def test_the_notice_does_not_claim_an_experiment_that_has_run_has_not():
+    """The tracked results file is the authority; NOTICE must agree with whether it exists."""
+    notice = NOTICE.read_text(encoding="utf-8")
+    if not STEP0.exists():
+        return  # nothing has run; the original wording would be correct again
+
+    results = json.loads(STEP0.read_text(encoding="utf-8"))
+    assert results.get("arms"), "step0.json exists but records no arms"
+    assert "HAS NOT BEEN RUN" not in notice.upper(), (
+        "NOTICE says the proxy has not been run, and results/step0.json records "
+        f"{len(results['arms'])} arms at {len(results.get('seeds', []))} seeds"
+    )
+
+
+def test_the_notice_reports_the_local_throughput_as_measured_because_it_is():
+    """`provenance` on the hardware entry is the fact; the prose must not contradict it.
+
+    The rule this protects is unchanged — a figure nobody measured must stay `estimated`. What went
+    stale was the claim that *nobody had measured this one*.
+    """
+    notice = NOTICE.read_text(encoding="utf-8")
+    local = next(h for h in proxy.HARDWARE if h.key == "m4-max")
+
+    if local.provenance == "measured":
+        assert local.tflops is not None, "a measured hardware entry with no figure"
+        assert "NOT MEASURED, AND SAID SO: the throughput" not in notice, (
+            f"NOTICE calls the local throughput unmeasured; the catalogue records "
+            f"{local.tflops} TFLOP/s with provenance={local.provenance!r}"
+        )
+        assert str(local.tflops) in notice, (
+            f"NOTICE never states the measured local throughput ({local.tflops})"
+        )
+
+    for rented in (h for h in proxy.HARDWARE if h.key != "m4-max"):
+        assert rented.provenance == "estimated", (
+            f"{rented.key} claims to be measured; nobody here measured a rented GPU"
+        )

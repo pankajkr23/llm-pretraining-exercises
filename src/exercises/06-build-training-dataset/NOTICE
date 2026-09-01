@@ -38,13 +38,28 @@ The School of AI.
 WHAT IS MEASURED AND WHAT IS NOT
 
 Every performance figure published by this exercise is measured on one Apple
-Silicon laptop, on a model of 5,774,080 parameters over a corpus of 2,185,575
-tokens -- which a full run of 10,485,760 token positions crosses about 4.8
-times, and which is shaped to session 5's mixture into roughly 30 epochs of
-web against 0.41 of an epoch of agentic. The design is ABOUT the mechanics of a
-run four orders of magnitude larger in tokens. It was never run at that scale,
-and any figure describing that scale is labelled as modelled rather than
-measured.
+Silicon laptop, by the demonstration run in run_demo.py. That run builds a model
+of 2,084,224 parameters (d_model 128) -- NOT the 5,774,080-parameter default in
+model.py, which nothing here trains. Naming the wrong one has already happened in
+this file, so state which model a figure came from whenever you quote it.
+
+The corpus is 10,649,549 training tokens across 57 shards, which a full run of
+10,485,760 token positions crosses 1.0139 times: read once, not memorised. A
+further 1,093,019 tokens are written as held-out shards the firewall refuses to
+serve. These are the figures in results/corpus_build.json, which is tracked, and
+they are the only ones that should ever be quoted here.
+
+That corpus is itself a correction, and the earlier number was in this paragraph
+for weeks. It was once 2,185,575 tokens -- 4.8 crossings, and shaped to the
+mixture, roughly 30 epochs of the web lane against 0.41 of an epoch of the
+agentic one: the lane funded most heavily read thirty times over, the lane funded
+least never read through once. Nothing failed. The shards read fine and the loss
+curve looked normal, which is exactly why the corpus builder now refuses to build
+below one epoch rather than leaving it to be noticed.
+
+The design is ABOUT the mechanics of a run four orders of magnitude larger in
+tokens. It was never run at that scale, and any figure describing that scale is
+labelled as modelled rather than measured.
 
 Efficiency figures quoted from the OPUS paper (4.7% overhead) and from
 LightningLM (3.2%) are theirs. They are not reproduced here and are not claimed.
