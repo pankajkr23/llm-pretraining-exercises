@@ -342,9 +342,14 @@ function chapterProblem(M) {
   );
   s.append(
     standfirst(
+      /* NAME THE THING THE INVOICE PRICES. "KV cache" is the item on all four rows of the plate
+       * below and appeared nowhere before it — "KV" is not guessable from anything on the page, so
+       * the reader was handed a bill for something unnamed. */
       'Attention sends two bills. The first grows with the square of the text. The second is ' +
-        'quieter and is the one that actually stops you: every token you have read stays in memory ' +
-        'until the conversation ends.'
+        'quieter and is the one that actually stops you: every token you have read stays in ' +
+        'memory until the conversation ends. That store is the **KV cache** — the keys and values ' +
+        'every token leaves behind, so the model never has to re-read the conversation to produce ' +
+        'the next word — and it is what every row of the invoice below is priced in.'
     )
   );
 
@@ -786,11 +791,46 @@ function chapterResults(M, spreadRef) {
       'Plate IV',
       'The race',
       figRace(M),
+      /* THE ONLY PLATE IN THIS SECTION WITH NO ORIENTATION BLOCK. Plates V and VI each open with
+       * four labelled rows and read at exactly the level this page is aiming for; this one raced
+       * three unexpanded acronyms whose entire mechanism turns on the word "head", which the page
+       * never defined in plain words anywhere. Same `brief()` shape as its neighbours. */
+      brief([
+        [
+          'What you are looking at',
+          'Three model designs generating text side by side. Each line is how much memory that ' +
+            "model's cache has eaten so far, and the finish line is one 80 GB accelerator.",
+        ],
+        [
+          'The word everything turns on',
+          'Inside every layer, attention runs several times in parallel, and each parallel copy ' +
+            'is a **head**. Heads let the model look for different kinds of relationship at once ' +
+            '— one for the word right before, another for the subject of the sentence. Normally ' +
+            'every head stores its own keys and values, and that store is the whole cache bill.',
+        ],
+        [
+          'What the three are doing',
+          '**MHA** (multi-head attention) keeps a separate set for all ' +
+            `${M.yardstick.kvHeads} heads. **GQA** (grouped-query attention) makes groups of ` +
+            'heads share one set. **MQA** (multi-query attention) takes it to the limit: every ' +
+            'head shares a single set.',
+        ],
+        [
+          'Why it is worth understanding',
+          'This is the cheapest large saving anyone found, and every frontier model uses some ' +
+            'point on it. It is also the clearest example of the page\'s whole argument: the ' +
+            'saving is a constant factor, and a constant factor does not change the slope.',
+        ],
+      ]),
+      /* The last sentence did not parse: "Read the crossings against X, that Y, and Z" is a list
+       * of three things that are not the same kind of thing. Split into two sentences. */
       'Head sharing buys 4× and then 8×, and it buys nothing else: all three lines are straight ' +
         'and all three hit the wall. That is the difference between this and a bar chart — a bar ' +
-        'chart says GQA is smaller, the race shows GQA is <b>on the same line</b>. Read the ' +
-        'crossings against MQA’s own reported cost, that heads lose the ability to attend to ' +
-        'genuinely different things, and the trade is visible rather than asserted.'
+        'chart says GQA is smaller, the race shows GQA is <b>on the same line</b>. Now read the ' +
+        'crossings against what the sharing costs: heads that share keys and values lose some of ' +
+        'their ability to attend to genuinely different things. The trade is then visible rather ' +
+        'than asserted — you can see exactly how much context each design buys, and decide ' +
+        'whether that much head diversity was worth it.'
     ),
   ]);
   well(s, wells[3], M, [
@@ -892,6 +932,13 @@ function chapterNegatives(M) {
     'Corrections',
     'Three things the source material gets wrong',
     [
+      /* NAME THE SOURCE BEFORE REBUTTING IT. Three careful corrections were aimed at "the
+       * transcript" and "the source material", named nowhere on the page — so a newcomer read
+       * three rebuttals of a document they had no idea existed. */
+      `These ${spell(M.counts.total)} entries were checked against the teaching material this ` +
+        'page was built from — ' +
+        'spoken session notes and a transcript, not a paper. Three of its claims did not survive ' +
+        'that check, and they are here rather than quietly fixed.',
       'Recorded because a reader deserves to know which claims we checked rather than copied — ' +
         'and because a page that corrects its own sources in the open is easier to trust about ' +
         'the ones it does not.',

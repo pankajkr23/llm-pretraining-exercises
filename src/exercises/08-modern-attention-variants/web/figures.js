@@ -396,7 +396,8 @@ const STAGES = [
   [
     '÷ √d',
     'Those numbers come out too big, and big numbers make the next step pick one winner and ignore everything else. So shrink them all by the same amount.',
-    'Divided by the square root of the head dimension, so the variance of the scores does not grow with width.',
+    'Divided by the square root of the head dimension. Here d is 2, because the demo gives every '
+    + 'word two numbers; in the model priced on Plate I it is 128, so the divisor there is about 11.3.',
   ],
   [
     '+ mask',
@@ -623,12 +624,12 @@ export function figCentrefold() {
     /* Both registers, always. Not a toggle and not a tooltip: a reader who needs the plain
      * sentence should never have to discover a control to get it, and a reader who does not need
      * it loses one line. */
+    /* THE ARITHMETIC ONLY. The plain sentence for every bay now sits in the always-on recipe
+     * below, so printing it here as well put the selected bay's sentence on screen twice. */
     note.textContent = '';
-    const plain = el('span', 'bay-plain');
-    plain.textContent = STAGES[next][1];
     const exact = el('span', 'bay-exact');
     exact.textContent = STAGES[next][2];
-    note.append(plain, exact);
+    note.append(exact);
     cancel = animate(550, paint);
   }
 
@@ -644,7 +645,23 @@ export function figCentrefold() {
     e.preventDefault();
   });
 
-  wrap.append(tabs, holder, note);
+  /* ALL FIVE, ALWAYS. Every bay has a good plain sentence, and `go()` wipes the note and rewrites
+   * it on each tab change — so exactly one was ever on screen, and on load it was bay one. Four of
+   * the five explanations existed and were unreachable without clicking, which is the page's own
+   * rule broken in the figure it matters most in: an interaction must never be the only route to a
+   * lesson. A reader who does not click, or who prints, or who arrives on an in-page anchor, now
+   * gets the whole recipe in order. The tab keeps the second register, which is the arithmetic. */
+  const recipe = el('div', 'brief bay-recipe');
+  for (const [label, plain] of STAGES) {
+    const row = el('div', 'brief-row');
+    row.append(el('span', 'brief-lab', label));
+    const v = el('p');
+    v.textContent = plain;
+    row.append(v);
+    recipe.append(row);
+  }
+
+  wrap.append(tabs, holder, note, recipe);
   go(0);
   return wrap;
 }

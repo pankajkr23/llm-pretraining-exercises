@@ -1569,6 +1569,14 @@ a.guide-path:focus-visible {
  * var(--ink), which is the right default everywhere else and unreadable here. The ratio is safe in
  * all six themes for the same reason --muted is: it is already a text colour on --bg, and swapping
  * which of the pair is the ground does not change the contrast between them. */
+/* The always-on recipe under the centrefold. Sits below the stepper, so a reader who never touches
+ * a tab still gets all five steps in order. */
+.bay-recipe {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
 /* A short reconciling note under a key heading — prose, not a data row. */
 .key-note {
   font-size: 13.5px;

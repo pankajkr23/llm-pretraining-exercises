@@ -445,8 +445,11 @@ const DRAW = { field: drawField, stack: drawStack, state: drawState, bands: draw
 export const KIND_LABEL = {
   field: 'which scores survive',
   stack: 'what the cache stores',
-  state: 'one fixed-size state',
-  bands: 'how position enters',
+  /* STATE was defined as itself, and it is the shape covering the family whose whole point is that
+   * it has no cache bill at all — the most important of the four and the least explained. BANDS
+   * named a mechanism without ever naming the problem it solves. */
+  state: 'no grid and no cache — one fixed-size summary of everything read so far, rewritten as each word arrives',
+  bands: 'how position gets in — attention looks at all the words at once, so by itself it cannot tell "dog bites man" from "man bites dog"',
 };
 
 /**
