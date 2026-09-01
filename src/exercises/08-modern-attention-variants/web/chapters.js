@@ -1004,6 +1004,15 @@ function chapterReproduce(M, spreadRef, plateRef) {
   }
   s.append(grid);
 
+  /* Out to the reference form of the same catalogue. The chronology reads in sequence; the guide
+   * puts every diagram side by side so they can be compared instead. */
+  const out = el('p', 'say');
+  const a = el('a');
+  a.href = 'field-guide/';
+  a.textContent = `See all ${spell(M.counts.total)} diagrams side by side →`;
+  out.append(a);
+  s.append(out);
+
   const legend = el('p', 'say');
   legend.innerHTML = rich(
     `‡ built from the primary paper alone (${M.counts.outsideSession} of ${M.counts.total}) · ` +

@@ -321,6 +321,14 @@ function sceneField(m, key) {
     cy += 16;
   }
 
+  /* No causal mask is itself the finding, and a solid square does not say so on its own.
+   * Cross-attention predates the decoder-only Transformer: there is no future to hide, because
+   * the thing being attended to is a different sequence that already exists in full. */
+  if (p.causal === false) {
+    g.append(t(MX, MY + side + 16, 'ax', 'no causal mask: every position may see every other,'));
+    g.append(t(MX, MY + side + 29, 'ax', 'because the text being read already exists in full'));
+  }
+
   const live = grid.flat().filter((b) => b !== null && b !== BRANCH.MASKED).length;
   const computable = grid.flat().filter((b) => b !== BRANCH.MASKED).length;
   cy += 12;
@@ -353,7 +361,7 @@ function sceneField(m, key) {
     }
   }
 
-  const H = Math.max(MY + side + 26, cy + 26);
+  const H = Math.max(MY + side + (p.causal === false ? 42 : 26), cy + 26);
   return { node: g, height: H };
 }
 
@@ -416,7 +424,34 @@ function sceneStack(m) {
   // invoice uses, so the figure and the table cannot disagree.
   const CY = 214;
   head(g, 24, CY - 12, 'what that costs per token');
+
+  /* MLA is not a point on the head-sharing ladder, so there is no bytes-per-token row for it. The
+   * first version fell back to the ladder's first row and drew MLA at 192 KiB, "1x less than
+   * keeping every head" — directly under its own credit line claiming a large cache reduction.
+   * A silent fallback that yields a plausible wrong number is the failure this page keeps finding;
+   * a mechanism with no figure of its own now states the one its paper reports instead. */
+  const stated = (m.glyph.sizes || {}).cacheReduction;
   const perToken = m.diagramBytes;
+  if (stated) {
+    const BX = 250;
+    const barW = W - BX - 86;
+    const kept = 1 - stated.value / 100;
+    [
+      ['every head keeps its own', 1, 'dg-ref'],
+      [shortLabel(m.name), kept, 'dg-store'],
+    ].forEach(([label, frac, cls], i) => {
+      const y = CY + 6 + i * 32;
+      g.append(s('rect', { x: BX, y, width: barW, height: 18, class: 'dg-track' }));
+      g.append(s('rect', { x: BX, y, width: barW * frac, height: 18, class: cls }));
+      g.append(t(BX - 10, y + 13, 'ax end', label));
+      g.append(t(BX + barW * frac + 8, y + 13, 'num', i === 0 ? 'baseline' : `${(frac * 100).toFixed(1)}%`));
+    });
+    g.append(t(BX, CY + 88, 'ax', `a ${stated.value}% reduction, the figure its own paper reports`));
+    for (const line of wrapAt(`“${stated.quote}” — ${stated.where}`, 78)) {
+      g.append(t(BX, CY + 104, 'ax', line));
+    }
+    return { node: g, height: CY + 128 };
+  }
   if (perToken) {
     const full = perToken.mha;
     const BX = 250;

@@ -142,3 +142,59 @@ trying to be helpful.
 
 **What would overturn it.** Being wrong about any of them. Each cites a primary source so that is
 checkable, which is the point.
+
+## D9 — Shape and texture carry the diagram's meaning; colour carries only its parts
+
+The detail diagrams distinguish three cell states — live, dropped by the mechanism, forbidden by
+causality — and they do it by **form**: solid, hollow outline, hatch. Colour names the four *parts*
+(query, key, value, store) through `--part-*`, and `--accent` keeps its single job.
+
+Form first is not conservatism. Under `high-contrast`, `--muted` and `--ink` are the *same*
+`#000000`; any encoding leaning on ink-against-muted reads perfectly in five themes and vanishes in
+the sixth, and until this pass nothing in the repo rendered five of the six. Form also survives
+greyscale, print and colour blindness, none of which a token can help with.
+
+The palette lives in `deploy/vercel/_shared/tokens.css` beside `--grade-*`, not in the exercise,
+because that file already carries a semantic palette valued across all six themes. A per-exercise
+palette would have been the first in the repo and `AGENTS.md` warns against exactly that. PK
+relaxed the monochrome rule explicitly, and the relaxation is recorded here rather than left as a
+diff nobody can find the reason for.
+
+## D10 — A size may enter the catalogue only with a citation attached
+
+`GLYPH_SCALES` says why the catalogue held no sizes at all: *a glyph drawn to specific numbers would
+be inventing them — the exact fabrication this exercise is built to prevent.* The diagrams need real
+sizes, so the guarantee is kept by making provenance the price of entry, enforced in
+`Glyph._check_sizes`: a `stated` size quotes the sentence it was read from and names where, an
+`ours` size says why we chose it, and **the quote must contain the number it is evidence for**.
+
+That last rule replaced a word-count floor, which was the wrong test twice over — it rejected honest
+hyperparameter fragments like *"sliding stride d=16"* and would have admitted a long quote that
+never mentions the value. It immediately caught a real error: 512 attributed to Longformer on a
+quote that never says 512. That size is now marked `ours`, with the reason.
+
+The check also understands the notation sources actually use — a paper writes *32k*, not *32768*.
+Teaching the guard the convention is not loosening it; a literal substring test would reject the
+paper's own words.
+
+## D11 — The field guide is a reference, and the page spine deliberately does not apply
+
+`web/field-guide/` is a second route over the same catalogue: every diagram at once, in one
+convention, so they can be compared rather than read in sequence.
+
+The twelve-part spine describes an *argument* — thesis, problem, method, results, limits. A field
+guide has no argument; it has an index. Bolting twelve sections onto a gallery would be
+cargo-culting the letter of the rule against its purpose, and `SPINE_EXEMPT` already records the
+same reasoning for exercises 02, 03 and 04. Written down here so nobody later "fixes" it.
+
+It needs no build change — `build.sh` does `cp -R "$web/."` — but two things about a sub-route are
+easy to get wrong and both have bitten this repo:
+
+- **Link `/_shared/tokens.css` absolutely.** The vendored `../_shared/tokens.css` is a component
+  stylesheet that only shares the name. A page linking the second and not the first renders with
+  every token undefined, and `stroke: var(--bg)` on an undefined token paints nothing at all, with
+  a clean console.
+- **Guards that glob must recurse.** `test_no_count_is_typed_into_the_page_as_a_word` used a
+  non-recursive `glob("*.js")`, so the guide's own script would have been exempt from the repo's
+  most expensive check the moment it landed — silently, for one missing letter.
+

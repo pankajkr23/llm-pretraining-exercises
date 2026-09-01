@@ -153,7 +153,10 @@ def test_no_count_is_typed_into_the_page_as_a_word() -> None:
         "|twenty(?:-(?:one|two|three|four|five|six|seven|eight|nine))?|thirty"
     )
     offenders = []
-    for path in sorted((EXERCISE / "web").glob("*.js")):
+    #: `rglob`, not `glob`. The non-recursive form made `web/field-guide/guide.js` invisible to
+    #: this guard the moment the sub-route landed — a whole page exempt from the repo's most
+    #: expensive check, silently, because of one missing letter.
+    for path in sorted((EXERCISE / "web").rglob("*.js")):
         if path.name == "data.js":  # generated
             continue
         in_speller = False

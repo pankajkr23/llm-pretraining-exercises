@@ -29,6 +29,7 @@ from playwright.sync_api import sync_playwright  # noqa: E402
 REPO_ROOT = Path(__file__).resolve().parents[4]
 PUBLIC = REPO_ROOT / "public"
 SLUG = "08-modern-attention-variants"
+EXERCISE_WEB = REPO_ROOT / "src" / "exercises" / SLUG / "web"
 
 pytestmark = pytest.mark.integration
 
@@ -39,8 +40,13 @@ def _bundle() -> dict:
 
 
 @pytest.fixture(scope="module")
-def drawn():
-    """Every mechanism's diagram, rendered once, as `{key: {markup, box, label}}`."""
+def site():
+    """One server and one browser for this module.
+
+    Playwright's sync API refuses a second `sync_playwright()` while the first is open, so two
+    fixtures that each start their own fail — but only when the file runs whole, never when either
+    is run alone. That is a nasty shape for a test to have, so there is one of each.
+    """
     if not (PUBLIC / SLUG / "index.html").is_file():
         pytest.skip("run deploy/vercel/build.sh first")
     handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(PUBLIC))
@@ -52,41 +58,49 @@ def drawn():
                 browser = p.chromium.launch()
             except Exception as exc:
                 pytest.skip(f"chromium unavailable: {exc}")
-            page = browser.new_page(viewport={"width": 1000, "height": 900})
-            problems: list[str] = []
-            page.on("pageerror", lambda e: problems.append(str(e)))
-            page.on("console", lambda m: problems.append(m.text) if m.type == "error" else None)
-            page.goto(f"http://127.0.0.1:{httpd.server_address[1]}/{SLUG}/index.html")
-            page.wait_for_selector("section#reproduce", timeout=15_000)
-            out = page.evaluate(
-                """() => Promise.all([import('./diagrams.js'), import('./data.js')]).then(
-                  ([D, d]) => {
-                    const host = document.createElement('div');
-                    host.style.cssText = 'position:absolute;left:-9999px;width:760px';
-                    document.body.appendChild(host);
-                    const res = {};
-                    for (const m of d.M.mechanisms) {
-                      const svg = D.diagramSvg(m);
-                      host.appendChild(svg);
-                      const vb = svg.viewBox.baseVal;
-                      const b = svg.getBBox();
-                      res[m.key] = {
-                        markup: svg.innerHTML,
-                        label: svg.getAttribute('aria-label') || '',
-                        bbox: [b.x, b.y, b.width, b.height],
-                        view: [vb.x, vb.y, vb.width, vb.height],
-                        nodes: svg.querySelectorAll('*').length,
-                      };
-                    }
-                    host.remove();
-                    return res;
-                  })"""
-            )
-            assert not problems, f"rendering the diagrams threw: {problems}"
-            yield out
+            yield browser, f"http://127.0.0.1:{httpd.server_address[1]}/{SLUG}"
             browser.close()
     finally:
         httpd.shutdown()
+
+
+@pytest.fixture(scope="module")
+def drawn(site):
+    """Every mechanism's diagram, rendered once, as `{key: {markup, box, label}}`."""
+    browser, base = site
+    page = browser.new_page(viewport={"width": 1000, "height": 900})
+    problems: list[str] = []
+    page.on("pageerror", lambda e: problems.append(str(e)))
+    page.on("console", lambda m: problems.append(m.text) if m.type == "error" else None)
+    page.goto(f"{base}/index.html")
+    page.wait_for_selector("section#reproduce", timeout=15_000)
+    out = page.evaluate(
+        """() => Promise.all([import('./diagrams.js'), import('./data.js')]).then(
+          ([D, d]) => {
+            const host = document.createElement('div');
+            host.style.cssText = 'position:absolute;left:-9999px;width:760px';
+            document.body.appendChild(host);
+            const res = {};
+            for (const m of d.M.mechanisms) {
+              const svg = D.diagramSvg(m);
+              host.appendChild(svg);
+              const vb = svg.viewBox.baseVal;
+              const b = svg.getBBox();
+              res[m.key] = {
+                markup: svg.innerHTML,
+                label: svg.getAttribute('aria-label') || '',
+                bbox: [b.x, b.y, b.width, b.height],
+                view: [vb.x, vb.y, vb.width, vb.height],
+                nodes: svg.querySelectorAll('*').length,
+              };
+            }
+            host.remove();
+            return res;
+          })"""
+    )
+    assert not problems, f"rendering the diagrams threw: {problems}"
+    yield out
+    page.close()
 
 
 def test_every_mechanism_gets_a_diagram(drawn) -> None:
@@ -147,13 +161,22 @@ def test_every_diagram_that_claims_a_scale_states_it(drawn) -> None:
     """
     sized = [m["key"] for m in _bundle()["mechanisms"] if m["glyph"].get("sizes")]
     assert sized, "no mechanism carries sourced sizes yet — this guard would be vacuous"
-    silent = [
-        k
-        for k in sized
-        if "DRAWN TO SCALE" not in drawn[k]["markup"].upper()
-        and "DRAWN SCHEMATICALLY" not in drawn[k]["markup"].upper()
-    ]
-    assert not silent, f"these draw from sourced sizes without stating the scale: {silent}"
+
+    #: Provenance, not one particular phrasing. A grid says whether it is to scale or schematic; a
+    #: bar drawn from a single reported figure carries the citation instead, which is stronger. An
+    #: earlier version demanded the scale line and failed MLA, whose figure quotes its own paper
+    #: verbatim — the guard was asking for the wrong evidence, not finding it missing.
+    def says_where_it_came_from(markup: str) -> bool:
+        up = markup.upper()
+        return (
+            "DRAWN TO SCALE" in up
+            or "DRAWN SCHEMATICALLY" in up
+            or "ARXIV" in up
+            or "ITS OWN PAPER REPORTS" in up
+        )
+
+    silent = [k for k in sized if not says_where_it_came_from(drawn[k]["markup"])]
+    assert not silent, f"these draw from sourced sizes without saying so on the figure: {silent}"
 
 
 def test_the_distinctness_check_can_actually_fail(drawn) -> None:
@@ -164,3 +187,75 @@ def test_the_distinctness_check_can_actually_fail(drawn) -> None:
         digests.setdefault(hashlib.sha256(markup.encode()).hexdigest(), []).append(key)
     collisions = {d: ks for d, ks in digests.items() if len(ks) > 1}
     assert collisions and sorted(next(iter(collisions.values()))) == ["a", "b"]
+
+
+# ---- the field guide ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def guide(site):
+    """The field-guide sub-route, rendered."""
+    browser, base = site
+    if not (PUBLIC / SLUG / "field-guide" / "index.html").is_file():
+        pytest.skip("run deploy/vercel/build.sh first")
+    page = browser.new_page(viewport={"width": 1400, "height": 950})
+    problems: list[str] = []
+    page.on("pageerror", lambda e: problems.append(str(e)))
+    page.on("console", lambda m: problems.append(m.text) if m.type == "error" else None)
+    page.goto(f"{base}/field-guide/")
+    page.wait_for_selector(".fg-card", timeout=15_000)
+    page.wait_for_timeout(1200)
+    page.console_problems = problems
+    yield page
+    page.close()
+
+
+def test_the_field_guide_is_published_by_the_build() -> None:
+    """`build.sh` does `cp -R`, so a sub-route needs no build change — but that is worth asserting
+    rather than assuming, because nothing else would notice it silently stopping."""
+    for name in ("index.html", "guide.js", "guide.css"):
+        assert (PUBLIC / SLUG / "field-guide" / name).is_file(), f"field-guide/{name} not published"
+
+
+def test_the_field_guide_shows_every_mechanism_with_its_diagram(guide) -> None:
+    total = len(_bundle()["mechanisms"])
+    assert guide.eval_on_selector_all(".fg-card", "els => els.length") == total
+    assert guide.eval_on_selector_all(".fg-card .diagram-svg", "els => els.length") == total
+    assert not guide.console_problems, guide.console_problems
+
+
+def test_the_field_guide_links_back_and_the_feature_links_to_it(guide) -> None:
+    """A sub-route a reader cannot get to, or get back from, is a dead end."""
+    back = guide.eval_on_selector(".shellbar .back", "e => e.getAttribute('href')")
+    assert back == "../", f"the guide's back link points at {back!r}"
+    source = (EXERCISE_WEB / "chapters.js").read_text(encoding="utf-8")
+    assert "'field-guide/'" in source, "the feature does not link to the field guide"
+
+
+def test_the_field_guide_filters_actually_filter(guide) -> None:
+    """A chip that changes only its own colour is a decoration."""
+    before = guide.eval_on_selector_all(".fg-card:not([hidden])", "els => els.length")
+    guide.eval_on_selector_all(
+        ".fg-chip", "els => els.find(b => b.dataset.value === 'stack').click()"
+    )
+    guide.wait_for_timeout(200)
+    after = guide.eval_on_selector_all(".fg-card:not([hidden])", "els => els.length")
+    kinds = {m["glyph"]["kind"] for m in _bundle()["mechanisms"]}
+    assert "stack" in kinds
+    expected = sum(1 for m in _bundle()["mechanisms"] if m["glyph"]["kind"] == "stack")
+    assert after == expected, f"filtering to stack showed {after}, expected {expected}"
+    assert after < before
+    guide.eval_on_selector_all(".fg-chip", "els => els[0].click()")
+    guide.wait_for_timeout(200)
+
+
+@pytest.mark.parametrize("width", [1440, 1180, 900, 620, 390, 320])
+def test_the_field_guide_never_scrolls_sideways(guide, width: int) -> None:
+    """`minmax(min(440px, 100%), 1fr)` and never a bare 440px — an auto-fit track cannot shrink
+    below its own minimum, and a fixed floor pushes a 320px phone sideways."""
+    guide.set_viewport_size({"width": width, "height": 900})
+    guide.wait_for_timeout(300)
+    overflow = guide.evaluate(
+        "() => document.documentElement.scrollWidth - document.documentElement.clientWidth"
+    )
+    assert overflow <= 1, f"the field guide scrolls sideways by {overflow}px at {width}px"

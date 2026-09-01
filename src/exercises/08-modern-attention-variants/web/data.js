@@ -772,7 +772,15 @@ export const M = Object.freeze({
         },
         "scale": "illustrative",
         "source": "Keys and values are not stored per head at all; a narrow shared latent is stored and re-expanded. The paper reports a 93.3% cache reduction against its own baseline.",
-        "sizes": {}
+        "sizes": {
+          "cacheReduction": {
+            "value": 93.3,
+            "unit": "percent",
+            "from": "stated",
+            "quote": "reduces the KV cache by 93.3%",
+            "where": "abstract, arXiv:2405.04434v5"
+          }
+        }
       },
       "source": {
         "kind": "paper",
