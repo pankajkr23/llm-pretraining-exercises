@@ -367,12 +367,40 @@ const V = [
   [0.9, 0.3],
 ];
 
+/* THREE COLUMNS, AND THE MIDDLE ONE IS THE POINT: label, plain sentence, then the arithmetic.
+ *
+ * Every bay used to carry one line, and every line was written for somebody who already knew what
+ * a softmax was — "scaled down, so the numbers stay in a range softmax can work with" tells a
+ * newcomer nothing at all, because it answers a question they have not been given yet. This repo's
+ * own rule for the session notebooks says it plainly: plain what-and-why before each step, the
+ * arithmetic and caveats after it. The centrefold is the one figure a first-time reader is most
+ * likely to stop at, and it was the one holding the least help. */
 const STAGES = [
-  ['Q · K', 'Every token scores every other token. Six tokens, thirty-six numbers.'], // count-literal-ok: the 6x6 grid is fixed
-  ['÷ √d', 'Scaled down, so the numbers stay in a range softmax can work with.'],
-  ['+ mask', 'The future is set to minus infinity. A token may only look backwards.'],
-  ['softmax', 'Scores become weights: all positive, each row summing to one. Now they compete.'],
-  ['× V', 'The weights multiply the values and are summed. This vector is what leaves the block.'],
+  [
+    'Q · K',
+    'Every word asks every other word "how much do you matter to me?" and gets a number back.',
+    'The dot product of each query with each key. Six tokens, thirty-six numbers.', // count-literal-ok: the 6x6 grid is fixed
+  ],
+  [
+    '÷ √d',
+    'Those numbers come out too big, and big numbers make the next step pick one winner and ignore everything else. So shrink them all by the same amount.',
+    'Divided by the square root of the head dimension, so the variance of the scores does not grow with width.',
+  ],
+  [
+    '+ mask',
+    'A word is not allowed to read ahead. When the model is guessing word four, letting it see word five would be showing it the answer.',
+    'The upper triangle is set to minus infinity before softmax, so those cells come out as exactly zero weight.',
+  ],
+  [
+    'softmax',
+    'Turn each row of scores into shares of attention that add up to 1 — like splitting a budget. A word with a big score gets a big share, and the others get what is left.',
+    'Exponentiate and normalise per row: every weight positive, every row summing to one. Now the cells compete.',
+  ],
+  [
+    '× V',
+    'Finally, mix. Each word hands over its content, everyone takes the share they just decided on, and the results are added up into one new vector per word.',
+    'The weights multiply the values and are summed. This vector — not the weights — is what leaves the block.',
+  ],
 ];
 
 function scoreMatrix(stage) {
@@ -580,7 +608,15 @@ export function figCentrefold() {
     cancel();
     stage = next;
     buttons.forEach((b, i) => b.setAttribute('aria-pressed', i === next ? 'true' : 'false'));
-    note.textContent = STAGES[next][1];
+    /* Both registers, always. Not a toggle and not a tooltip: a reader who needs the plain
+     * sentence should never have to discover a control to get it, and a reader who does not need
+     * it loses one line. */
+    note.textContent = '';
+    const plain = el('span', 'bay-plain');
+    plain.textContent = STAGES[next][1];
+    const exact = el('span', 'bay-exact');
+    exact.textContent = STAGES[next][2];
+    note.append(plain, exact);
     cancel = animate(550, paint);
   }
 

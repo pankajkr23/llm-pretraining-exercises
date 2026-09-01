@@ -122,6 +122,14 @@ def test_no_markup_reaches_the_reader_as_literal_text(page) -> None:
     for bad in ("<b>", "</b>", "<i>", "**", "[[", "&amp;", "&lt;"):
         assert bad not in body, f"{bad!r} is rendered as literal text"
 
+    #: A LONE ASTERISK PAIR, which none of the strings above contains. `rich()` takes `_italic_`
+    #: and `**bold**`; it has never taken `*italic*`, so a writer reaching for the commoner
+    #: Markdown spelling gets `*this*` printed at the reader. It shipped in the centrefold's
+    #: opening paragraph and in its worked example, and every guard above was green — the failure
+    #: `AGENTS.md` already records as "stray `*` markers", now actually checked.
+    stray = re.findall(r"\*[^\s*][^*]{0,80}\*", body)
+    assert not stray, f"asterisk emphasis reached the reader as literal text: {stray[:3]}"
+
 
 def test_the_page_has_the_required_spine_in_order(page) -> None:
     """Presence is checked lexically by the repo-wide guard; only this can see DOM order.

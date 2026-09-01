@@ -1348,6 +1348,12 @@ svg.plate-tall {
   gap: 0 32px;
   margin: 0 0 20px;
 }
+/* Three parts want three columns. `.guide-bills` floors its tracks at 280px, which is right for
+ * two bills and wraps Q/K/V as 2+1 — a lone V under Q reads as a subsection of it rather than the
+ * third of three. */
+.guide-three {
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+}
 .guide-bills > div {
   border-top: 1px solid var(--line-strong);
   padding-top: 10px;
@@ -1563,6 +1569,25 @@ a.guide-path:focus-visible {
  * var(--ink), which is the right default everywhere else and unreadable here. The ratio is safe in
  * all six themes for the same reason --muted is: it is already a text colour on --bg, and swapping
  * which of the pair is the ground does not change the contrast between them. */
+/* The two registers under the centrefold's bays: the plain sentence set as prose at reading size,
+ * the exact one under it, smaller and quieter. Layered rather than tabbed — a reader must be able
+ * to stop at the first line and still be correct, which a disclosure widget cannot promise. */
+.bay-plain {
+  display: block;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 68ch;
+}
+.bay-exact {
+  display: block;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  max-width: 72ch;
+  margin-top: 5px;
+}
+
 /* The citation under a group of numbers: the same size as the labels, set back so the numbers
  * above it read as the content and the source as its footing. */
 .diagram-svg text.dim {

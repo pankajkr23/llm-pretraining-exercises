@@ -356,6 +356,54 @@ function chapterMechanism(M) {
         'stages, and real arithmetic you can check against the cells.'
     )
   );
+
+  /* THE STORYLINE THE PLATE WAS MISSING.
+   *
+   * The figure was correct and it started at the fourth thing a newcomer needs to know. It showed
+   * Q, K and V as three labelled columns without ever saying what they are, and its bay captions
+   * answered questions the reader had not been given. A reader who does not already know the
+   * mechanism could not begin, and a reader who does gained nothing from the omission.
+   *
+   * The order below is deliberate: the everyday problem, then the three parts in human words, then
+   * the sentence the plate actually runs. Nothing here is notation, and nothing here is optional
+   * reading hidden behind a control — the point a figure teaches must be reachable without
+   * interacting with it. */
+  const setup = el('div', 'guide');
+  setup.append(el('p', 'kicker', 'What you are about to watch'));
+
+  const why = el('p', 'guide-lede');
+  why.innerHTML = rich(
+    'Read this: **the cat sat on the mat**. To know what "sat" means here you had to notice "cat" ' +
+      'a moment earlier — the word on its own does not tell you who is doing the sitting. That is ' +
+      'the whole job. Attention is how a model lets every word go and look at the other words ' +
+      'before deciding what it means in _this_ sentence.'
+  );
+  setup.append(why);
+
+  const parts = el('div', 'guide-bills guide-three');
+  for (const [name, line] of [
+    ['Q — the question', 'What this word is looking for. "sat" is looking for whoever did the sitting.'],
+    ['K — the label', 'What each word advertises about itself, so the questions can be matched against it.'],
+    ['V — the content', 'What a word actually hands over once it has been picked. The answer, not the address.'],
+  ]) {
+    const b = el('div');
+    b.append(el('span', 'lab', name));
+    const v = el('p');
+    v.textContent = line;
+    b.append(v);
+    parts.append(b);
+  }
+  setup.append(parts);
+
+  const how = el('p', 'guide-lede');
+  how.innerHTML = rich(
+    'Every word produces all three. The plate below runs the six words of that sentence through ' +
+      'the five steps that turn those three into one new vector per word — and the numbers in the ' +
+      'grid are the real ones, not an illustration. **Step through the five tabs in order.**'
+  );
+  setup.append(how);
+  s.append(setup);
+
   s.append(
     plate(
       'Plate II',
@@ -370,6 +418,38 @@ function chapterMechanism(M) {
         'computed, which are stored, or whether the grid is built at all.'
     )
   );
+
+  /* ONE ROW, WALKED. The plate shows all thirty-six cells at once, which is the right picture and
+   * the wrong first step: a reader who cannot follow one row cannot read the grid, and the grid is
+   * the object every later glyph on this page abbreviates. Reading a single row out loud is the
+   * cheapest thing that turns the figure from a diagram into something you can check.
+   *
+   * The row is `mat`, deliberately: it is the last token, so its whole row is unmasked and nothing
+   * has to be explained away. */
+  const row = el('div', 'guide');
+  row.append(el('p', 'kicker', 'Read one row'));
+  const walk = el('p', 'guide-lede');
+  walk.innerHTML = rich(
+    'Take the bottom row, **mat**. It is the last word, so it may look at all six — nothing is ' +
+      'masked. Across that row the model asks _how much does each of these matter to me_ and ' +
+      'the strongest answer is **cat**, which is the pairing the sentence is built on. After ' +
+      'softmax those six scores become six shares that add up to 1, and the output for "mat" is ' +
+      'every word\'s V mixed in exactly those proportions. That is one row. The grid is that ' +
+      'question asked once per word, all at once.'
+  );
+  row.append(walk);
+  const so = el('p', 'guide-lede');
+  so.innerHTML = rich(
+    // count-literal-ok: the demo sentence is a fixed six tokens and the 6x6 grid is fixed with it.
+    // "a hundred" rather than "thirty" on purpose — the page already says thirty about the
+    // mechanisms, and two unrelated thirties one scroll apart is a sentence a reader has to
+    // disambiguate for no reason.
+    'Now the part that costs money. Six words needed **36** cells. A hundred words would need ' +
+      '**10,000**. The grid grows with the **square** of the length, and every mechanism after ' +
+      'this on the page is somebody refusing to pay for all of it.'
+  );
+  row.append(so);
+  s.append(row);
   return s;
 }
 
@@ -758,7 +838,7 @@ function chapterResults(M, spreadRef) {
         [
           'Where we are coming from',
           'This is the one entry on the whole timeline that **fixed nothing**. Nothing was invented ' +
-            'here; something was discovered. Softmax has to put its weight *somewhere* — the numbers ' +
+            'here; something was discovered. Softmax has to put its weight _somewhere_ — the numbers ' +
             'are forced to sum to one — so when a model has nothing useful to attend to, it needs ' +
             'somewhere to dump the surplus. It learned to dump it on the first few tokens, which every ' +
             'query can see and which usually carry no meaning. Those tokens became load-bearing by ' +
@@ -917,7 +997,7 @@ function chapterLimits(M) {
         'publish papers, which is a real bias in what a chronology like this can see, not an ' +
         'accident of our searching.',
       '**Attention is not the only architecture, and this page only covers attention.** JEPA and ' +
-        'the world-model line change the training *objective* — predict in representation space ' +
+        'the world-model line change the training _objective_ — predict in representation space ' +
         'rather than reconstruct the input — while their encoders remain transformers running ' +
         'ordinary softmax attention. Nothing in that family between December 2025 and August 2026 ' +
         'proposed a new attention mechanism, so nothing from it is on the plate. That is a finding ' +
