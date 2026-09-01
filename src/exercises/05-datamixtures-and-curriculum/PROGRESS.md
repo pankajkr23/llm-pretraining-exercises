@@ -23,7 +23,8 @@ and is O8 below. What remains is your call.
 | --- | --- | --- | --- |
 | O1 | **Run the proxy** | **done** | 4 arms × 5 seeds × 500 steps on MPS, over all six funded lanes. **2 supported, 1 refuted** — see O8. `EXPERIMENTS.md`. |
 | O2 | **Measure local throughput** | **done** | 5.281 TFLOP/s, measured by `mixture.bench` across six model sizes. `proxy.HARDWARE` no longer says `unknown`. |
-| O3 | **Interactive page** | **done** | Five chapters at `/05-datamixtures-and-curriculum/`. 19 browser tests, 8 agreement tests, both mutation-checked. |
+| O3 | **Interactive page** | **done** | **15 sections** at `/05-datamixtures-and-curriculum/` — the five numbered chapters plus the narrative spine, v0.11.0. **47 browser tests**, 8 agreement tests, both mutation-checked. |
+| O9 | **A mechanism figure for this page** | **open** | It is the only spine page with **no drawn figure** — 06 has 4, 07 has 6. Its chapters are sliders and mark-strips, which show *what happens* and never *why it must*. `METHOD.md` §4 already carries two rendered Mermaid diagrams that were never brought across; copy those rather than redrawing from memory. |
 | O4 | **Colab notebook** | **done** | `notebooks/S05-datamixtures-and-curriculum.ipynb`, 37 code cells, executed end to end in CI's place. **Not tracked** — the notebook *and* its `tools/build_notebook.py` are both local-only, so a clone has neither. Back the builder up outside the repo. |
 | O5 | **Exercise 04's dedup is in-memory** | **done** | `accumulate.py` — append-only shards, persistent signature index, cross-shard dedup. Measured: 40.5 GB vs 0.55 GB at the 1B gate. Exercise 04's published numbers are untouched; the store is a continuation, not a replacement. |
 | O6 | **The 1B rung** | **deprioritised — not scheduled** | Priced at **~34 h and ~$98** on rented H100s against **105 days** locally, and not being spent. It no longer resolves O8; E4 replaced it with the question that could still be asked for nothing. |

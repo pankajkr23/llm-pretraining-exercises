@@ -48,7 +48,7 @@ are deferred by decision rather than pending.
 | O3g | **Stage 8 — replay, fork, audit** | **done** | `replay.py` re-derives a recorded interval from the immutable shards, never from the planner: **32/32 microbatches re-derived**, and one flipped shard bit turns **exactly 1 of the 32** red. It also **refuses a policy it cannot rebuild** rather than reporting a hash mismatch that would read as a tampered shard. `fork.py` verifies a branch by the three things that can actually fail — a fork *inherits* rather than copies, so zero shared events is correct. `verify.py` passes **40 of 40**, and its import closure is asserted transitively. |
 | O4 | **Corpus** | **done** | **10,649,549 training tokens at 1.01 epochs** across 57 shards, six lanes, every licence verified at fetch time from the dataset's own card, plus **1,093,019 held-out tokens** written as `split="heldout"` shards the firewall refuses. `tools/fetch_corpus.py` and `tools/build_corpus.py` are tracked; the build refuses below one epoch. |
 | O5 | **OPUS** | **done** | Ported, not installed. `opus.py` (torch-free record) + `opus_score.py` (the criterion). **128 candidates over 4 passes: 63 accept · 14 reject · 50 defer · 1 floor_override**, each with a score, a rank, an outcome and a reason. Two measurements changed the code — the temperature is now a multiple of the score spread, and the redundancy penalty is published as inert at this learning rate. |
-| O6 | **The web explainer** | **done** | Three chapters, three interaction families, deployed. Every figure derived from the run by `tools/build_web_data.py`. 21 browser tests. |
+| O6 | **The web explainer** | **done** | **14 sections** — the three interactive chapters, three interaction families, plus the narrative spine and a drawn pipeline figure (v0.11.0). Every figure derived from the run by `tools/build_web_data.py`. **25 browser tests**. |
 | O8 | **Rebuild-in-place safety** | **done** | `tools/backup_local_only.py` versions the 113 gitignored, unrecoverable files into a git store outside the repo; `post-checkout`/`post-merge` hooks run it. |
 | O7 | **Cloud (multi-GPU, NCCL, FSDP)** | **deferred — PK's decision** | Local only for now. §"What this cannot establish" in the README states what that costs. |
 
@@ -153,7 +153,7 @@ question, and they stop agreeing), **Destroyer** (a floor that holds until there
 **Adversary** (edit the record; you cannot do it quietly).
 
 `tools/build_web_data.py` derives `web/data.js` from `submission_artifacts/` and `results/`, so no
-figure on the page is typed. **21 browser tests**, including the one the design rests on — that
+figure on the page is typed. **25 browser tests**, including the one the design rests on — that
 advancing a chapter changes what the reader sees, because if it does not the page is decoration and
 every claim on it is unproven.
 
