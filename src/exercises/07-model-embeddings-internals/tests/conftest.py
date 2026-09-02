@@ -1,4 +1,4 @@
-"""The frozen 10k vocabulary, loaded once per session.
+"""The frozen 10k vocabulary, loaded once per topic.
 
 Every count in this exercise -- 407 collisions, a 121-byte maximum, the recovery rate -- is a
 property of a SPECIFIC vocabulary, so the tests use the one the repo froze rather than a fresh one.

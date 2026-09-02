@@ -438,7 +438,8 @@ def check_difficulty_bands(
 def check_language_schedule(entries: tuple, gate: float, tolerance: float = 1e-9) -> list[Finding]:
     """INV-13 · No language gets a budget the tokenizer cannot spend.
 
-    The session asks when each language enters. Two ways to answer that badly, and both look fine
+    The source material asks when each language enters. Two ways to answer that badly, and both
+    look fine
     on a page: give the languages shares that do not sum to the lane, or give a share to a language
     the vocabulary cannot encode. The second is the wishful accounting of this whole exercise
     applied to languages -- a budget written in a script the model would only ever see as the

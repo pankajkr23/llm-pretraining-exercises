@@ -1,6 +1,7 @@
 """A small decoder-only transformer — the one thing in this exercise that needs torch.
 
-**What this is for.** The session is about the data system, not the architecture. This model exists
+**What this is for.** The source material is about the data system, not the architecture. This
+model exists
 so the ledger has something real to record: gradients that actually flow, a loss that actually
 falls, checkpoints that actually restore. It is deliberately small enough to train on a laptop CPU.
 

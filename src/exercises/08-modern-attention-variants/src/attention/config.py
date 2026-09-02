@@ -17,7 +17,7 @@ BYTES_PER_NUMBER: dict[str, int] = {"fp32": 4, "bf16": 2, "fp16": 2, "fp8": 1}
 
 @dataclass(frozen=True)
 class Yardstick:
-    """The model Session 8 costs everything against.
+    """The model Exercise 08 costs everything against.
 
     Attributes:
         layers: Transformer blocks. Each one holds its own K and V cache.

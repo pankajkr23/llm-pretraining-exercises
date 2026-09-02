@@ -102,7 +102,7 @@ torch-free means CI's default sync verifies **all** of it.
 
 **What would overturn it.** A decision to add a toy attention implementation that demonstrates the
 mechanisms numerically. Even then numpy is enough for a six-token example, which is the scale the
-session itself teaches at.
+topic itself teaches at.
 
 ---
 

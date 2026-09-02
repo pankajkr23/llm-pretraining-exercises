@@ -9,7 +9,7 @@ deletes it. Nobody deleted anything. It has already happened twice here: once to
 builders, once to all four of exercises 01–04's briefs.
 
 **Why a git repo rather than a copy.** A timestamped copy protects against deletion and nothing
-else. These files are *regenerated* constantly — a notebook is rebuilt on every session — so the
+else. These files are *regenerated* constantly — a notebook is rebuilt on every topic — so the
 likelier loss is a bad overwrite, and the second backup would faithfully overwrite the good copy
 with the broken one. A git store keeps every version, so `git log` and `git show` reach back past a
 mistake. It costs nothing: the whole set is about 12 MB of text.
@@ -65,7 +65,6 @@ PATTERNS: tuple[str, ...] = (
     "src/exercises/*/tools/build_notebook.py",
     "src/exercises/*/BRIEF.md",
     "docs/BRIEF.md",
-    "docs/SESSIONS.md",
     "docs/EXPLAINER_*.md",
     "TODO.md",
     # Hand-written planning and critique notes that live beside an exercise. Only the untracked ones

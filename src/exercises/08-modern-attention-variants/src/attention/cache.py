@@ -1,6 +1,6 @@
 """The two bills attention sends, as arithmetic rather than as assertion.
 
-Session 8 is organised around one idea: attention charges you twice, and every mechanism after the
+Exercise 08 is organised around one idea: attention charges you twice, and every mechanism after the
 original is somebody paying down one of the two bills.
 
     compute   grows with T^2   -- every token scores against every other token
@@ -9,7 +9,8 @@ original is somebody paying down one of the two bills.
 Both are closed forms. Nothing here is estimated, sampled or trained, which is why this module has
 no torch and no randomness: given the configuration, the answer is the answer.
 
-**Read the formula, not the headline.** The session quotes 6.44 GB for one user at 32K and 51.54 GB
+**Read the formula, not the headline.** The source material quotes 6.44 GB for one user at 32K and
+51.54 GB
 for eight. `kv_cache_bytes` reproduces both exactly, and a test pins them -- so if someone edits the
 yardstick, the documents that quote those numbers break rather than drift.
 """
@@ -34,7 +35,7 @@ def kv_cache_bytes(
     Args:
         yardstick: The model being costed.
         context: Tokens held in the cache.
-        batch: Concurrent sequences (the session calls these "users").
+        batch: Concurrent sequences (the source material calls these "users").
         kv_heads: Override the yardstick's KV-head count, to price MHA against GQA against MQA
             without inventing a second model. Defaults to the yardstick's own.
 
@@ -78,9 +79,10 @@ class Sharing:
 
 
 def sharing_ladder(yardstick: Yardstick) -> tuple[Sharing, ...]:
-    """The three arrangements Session 8 compares, at that session's own head count.
+    """The three arrangements Exercise 08 compares, at that source material's own head count.
 
-    MQA is one KV head by definition. GQA is a free parameter; the session uses two, which is where
+    MQA is one KV head by definition. GQA is a free parameter; the source material uses two, which
+    is where
     its "one quarter of the cache" figure comes from.
     """
     return (

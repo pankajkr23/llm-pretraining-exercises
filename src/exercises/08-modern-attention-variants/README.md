@@ -41,7 +41,7 @@ compute    grows with T²    every token scores against every other token
 KV cache   grows with T     every token's key and value are kept for the next one
 ```
 
-Both are closed forms, so this exercise computes them rather than quoting them. At Session 8's own
+Both are closed forms, so this exercise computes them rather than quoting them. At Exercise 08's own
 yardstick — 48 layers, 8 KV heads, head dimension 128, bf16 — one user at a 32,768-token context
 costs **6.44 GB** of KV cache and eight users cost **51.54 GB**. `src/attention/cache.py`
 reproduces both exactly, and a test pins them, so editing the yardstick breaks the documents that
@@ -55,7 +55,7 @@ without breaking anything else.
 
 | module | owns |
 | --- | --- |
-| `config.py` | the yardstick model every cost is computed against, taken from the session |
+| `config.py` | the yardstick model every cost is computed against, taken from the source material |
 | `cache.py` | the two bills — KV bytes, `T²` scores, head sharing, sequence compression |
 | `sources.py` | the citation model: what was read, from where, quoted verbatim, and when |
 | `catalogue.py` | the mechanisms, their trade-offs, and the coverage list the assignment mandates |
@@ -153,8 +153,8 @@ rather than quietly corrected.
 
 ### One number that does not reproduce
 
-The transcript says eight users at a 1M-token context need about **1 TB**. The session's own
-formula, at the session's own yardstick, gives **1.57 TB**. Both are recorded; neither is published
+The transcript says eight users at a 1M-token context need about **1 TB**. The source material's own
+formula, at the source material's own yardstick, gives **1.57 TB**. Both are recorded; neither is published
 alone. A smaller model, fewer KV heads or fp8 storage would each reconcile them, and the transcript
 does not say which was meant.
 
@@ -268,7 +268,7 @@ were the same thing.
 Top-k attention is now its own entry — **2019-12-25**, [Explicit Sparse Transformer: Concentrated
 Attention Through Explicit Selection](https://arxiv.org/abs/1912.11637), `[v1] Wed, 25 Dec 2019
 10:59:31 UTC (689 KB)` — and `MANDATED` now maps that phrase to *both* keys, so a compound
-requirement can never again be satisfied by half of itself. The session teaches the distinction at
+requirement can never again be satisfied by half of itself. The source material teaches the distinction at
 length, including the catch that makes top-k interesting: naive top-k still has to score every key
 before it can rank them, so it reduces the work *after* selection and not the scoring itself.
 
@@ -323,13 +323,13 @@ ever makes it robust, so the hedge cannot outlive its reason.
 ## What this cannot establish
 
 - **This is a chronology, not an experiment.** Nothing here was trained, and no claim about which
-  mechanism is *better* is measured — the trade-offs are read from the papers and from the session,
+  mechanism is *better* is measured — the trade-offs are read from the papers and from the source material,
   not reproduced. Where a paper reports a number, it is attributed to that paper.
 - **A first-appearance date is not the whole story.** Ideas have precursors, and several entries
   here have contested attributions that the entry records rather than resolves — learned absolute
   positions in particular go back at least to 2016 and arguably to 2015, through a lead we did not
   open.
-- **The arithmetic is the session's, at the session's yardstick.** The cache figures are exact for
+- **The arithmetic is the source material's, at the source material's yardstick.** The cache figures are exact for
   48 layers, 8 KV heads, head dim 128 and bf16, and mean nothing for another configuration. They are
   arithmetic, not measurements of any running system.
 - **The trade-offs are editorial.** *What it buys*, *what it gives up* and *when to choose it* are
@@ -346,7 +346,7 @@ Twelve sections carrying the spine `AGENTS.md` requires, set as a **monograph fe
 numbered plates, six chapters, and the thirty mechanisms as *one object entered thirty times*
 rather than thirty collapsed cards a reader has to click through.
 
-The spine sentence is the thing the session never states, and it is what makes drawing this worth
+The spine sentence is the thing the source material never states, and it is what makes drawing this worth
 doing rather than restating the reading: **attention is one idea that sent two bills, and almost
 everything since is somebody who could not pay one of them.** The two bills are the triangle of
 scores between every pair of tokens, and the cache holding what each past token contributed.

@@ -8,7 +8,7 @@ only, gitignored).
 
 - **Lane supply is summed from named datasets, never quoted from a slot headline.** Everything
   here follows from that. It is what surfaced the 104B STEM gap, the 5.1B Indic residual, and the
-  fact that the session's two widgets disagree with each other. `inventory.NOTES_SLOT_HEADLINES`
+  fact that the source material's two widgets disagree with each other. `inventory.NOTES_SLOT_HEADLINES`
   and `NOTES_SUPPLY_CHECK` are kept **beside** the rows so the disagreement is visible rather
   than resolved in silence — do not delete them to "clean up".
 
@@ -184,7 +184,7 @@ notebook document in Python clothing, and one of its lines is a Colab badge URL 
 
 - `dataframework.mix` — the repetition curve, its ceiling (`16.4×`), and the epoch thresholds, each
   with its citation. Never re-derive these here.
-- `datacleaning.tokens` — counts the reasoning-band traces with the Session 2 vocabulary, and
+- `datacleaning.tokens` — counts the reasoning-band traces with the Exercise 02 vocabulary, and
   supplies the fertility and `[UNK]` tables `TOKENIZER.md` is built from.
 
 ## The corpus has six lanes, and three of them are fetched

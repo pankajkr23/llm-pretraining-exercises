@@ -1,6 +1,7 @@
 """The per-language schedule, and the measurement it rests on.
 
-The session asks when each language enters, naming two: *"Sanskrit if ever, or Urdu"*. This answers
+The source material asks when each language enters, naming two: *"Sanskrit if ever, or Urdu"*.
+This answers
 both from a measurement rather than a judgement, so the tests are mostly about keeping that
 measurement honest — a cached number that nobody re-checks becomes folklore, and a gate that lets a
 language through because someone liked it is the wishful accounting this exercise argues against.

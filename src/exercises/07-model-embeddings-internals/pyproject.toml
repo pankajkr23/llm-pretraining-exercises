@@ -1,7 +1,7 @@
 [project]
 name = "exercise-07-model-embeddings-internals"
 version = "0.1.0"
-description = "Session 7 — Kronecker byte embeddings v2: an invertible codec and a vocabulary-independent output head"
+description = "Exercise 07 — Kronecker byte embeddings v2: an invertible codec and a vocabulary-independent output head"
 requires-python = ">=3.12"
 dependencies = [
     # The frozen 10k tokenizer is the vocabulary every measurement here is made against — the

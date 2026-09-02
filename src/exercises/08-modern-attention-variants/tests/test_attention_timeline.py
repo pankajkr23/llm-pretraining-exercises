@@ -95,7 +95,7 @@ def test_every_period_accounts_for_every_mechanism_in_it() -> None:
 
 
 def test_both_bills_are_attacked_and_position_is_its_own_story() -> None:
-    """Session 8's organising claim: attention charges twice, and position is a third thread."""
+    """Exercise 08's organising claim: attention charges twice, and position is a third thread."""
     bills = bills_addressed(MECHANISMS)
     for bill in ("compute", "cache", "position", "both"):
         assert bills.get(bill, 0) >= 3, f"only {bills.get(bill, 0)} mechanisms address {bill}"

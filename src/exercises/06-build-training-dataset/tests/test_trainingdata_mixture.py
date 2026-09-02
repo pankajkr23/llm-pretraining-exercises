@@ -1,6 +1,6 @@
-"""Session 5's recipe, and the arithmetic a corpus is sized from.
+"""Exercise 05's recipe, and the arithmetic a corpus is sized from.
 
-The claim these tests protect is not "the numbers are right" — session 5 established those. It is
+The claim these tests protect is not "the numbers are right" — exercise 05 established those. It is
 that **the numbers exist in exactly one place**, so a fetcher sizing a download and a report
 checking compliance cannot quietly disagree. A mixture measured against a second copy of its own
 plan is a measurement of nothing.
@@ -19,7 +19,7 @@ def test_the_shares_sum_to_one() -> None:
 def test_long_context_holds_no_tokens() -> None:
     """**It is a schedule over the other lanes, not a corpus.**
 
-    Session 5 retired it on its own evidence: 60 of its 100B was repo-packed code already counted
+    Exercise 05 retired it on its own evidence: 60 of its 100B was repo-packed code already counted
     under `code`. A fetcher that gives it tokens invents a lane, and inflates the code lane twice.
     """
     assert mixture.LANE_SHARES["long_context"] == 0.0
@@ -134,7 +134,7 @@ def test_the_run_size_is_what_the_corpus_was_sized_against() -> None:
     """The number the fetcher's targets are derived from.
 
     It was `10,485,760` against `2,185,575` tokens on disk — **4.8 epochs short**, and under
-    session 5's weights, 30.2 epochs of web against 0.41 of agentic. The fetched corpus now
+    exercise 05's weights, 30.2 epochs of web against 0.41 of agentic. The fetched corpus now
     supplies 10,633,752 training tokens, or **1.01 epochs**, with every lane inside a one-point
     tolerance. That measurement lives in `PROGRESS.md`; what belongs here is the run size it was
     measured against, because if that changes the corpus is the wrong size again.

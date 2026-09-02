@@ -9,7 +9,8 @@ its shape and the model still learns that an address goes there without learning
 
 **The name layer is a declared stand-in.** No NER model has usable Maithili or Dogri support;
 importing one would ship hundreds of megabytes to produce confident nonsense on most of our corpus.
-The session's own widget says "behaviour shown via a small known list", and this matches it: a
+The source material's own widget says "behaviour shown via a small known list", and this matches
+it: a
 gazetteer with an aggressiveness dial. **No precision or recall figure is published for names**,
 because there is no gold set and inventing one would be the same sin as running a fake classifier.
 

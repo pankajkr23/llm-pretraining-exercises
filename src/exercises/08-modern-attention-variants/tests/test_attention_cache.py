@@ -1,4 +1,4 @@
-"""The session's own arithmetic, reproduced rather than quoted.
+"""The source material's own arithmetic, reproduced rather than quoted.
 
 The reference notes state their cache figures as results: 6.44 GB for one user at 32,768
 tokens, 51.54 GB for
@@ -23,7 +23,7 @@ YARDSTICK = Yardstick()
 
 
 def test_the_yardstick_is_the_one_the_notes_used() -> None:
-    """Pinned because every figure below is only "the session's number" for this configuration."""
+    """Pinned because every figure below is only "the source's number" for this configuration."""
     assert (YARDSTICK.layers, YARDSTICK.kv_heads, YARDSTICK.head_dim, YARDSTICK.dtype) == (
         48,
         8,
@@ -48,7 +48,7 @@ def test_eight_users_at_32k_costs_what_the_notes_say() -> None:
 
 
 def test_the_cache_grows_linearly_in_context_and_batch() -> None:
-    """The claim the whole session rests on: linear in T, so it never stops growing."""
+    """The claim the whole topic rests on: linear in T, so it never stops growing."""
     base = kv_cache_bytes(YARDSTICK, context=8_192)
     assert kv_cache_bytes(YARDSTICK, context=16_384) == 2 * base
     assert kv_cache_bytes(YARDSTICK, context=8_192, batch=4) == 4 * base
@@ -72,7 +72,7 @@ def test_the_sharing_ladder_only_moves_kv_heads() -> None:
 
 
 def test_scores_grow_quadratically() -> None:
-    """The other bill. The session's own numbers: 6x6=36, 600x600=360,000."""
+    """The other bill. The source material's own numbers: 6x6=36, 600x600=360,000."""
     assert attention_scores(6) == 36
     assert attention_scores(600) == 360_000
     assert attention_scores(10_000) == 100_000_000

@@ -1,7 +1,7 @@
 [project]
 name = "exercise-08-modern-attention-variants"
 version = "0.1.0"
-description = "Session 8 — modern attention variants, in the order they were launched"
+description = "Exercise 08 — modern attention variants, in the order they were launched"
 requires-python = ">=3.12"
 
 # numpy and nothing else, deliberately.

@@ -2,9 +2,10 @@
 
 This module is assignment items 1-5. Every share carries three things a reviewer can attack
 separately — what it buys (a benchmark), what funds it (inventory rows), and why it is that number
-rather than the session's default.
+rather than the source material's default.
 
-**The starting point is the session's own mixture**, and departing from it needs an argument each
+**The starting point is the source material's own mixture**, and departing from it needs an
+argument each
 time. Three departures are made, all forced by `supply.py`:
 
 - **Long-context 6% -> 0% as a lane.** 60% of its supply is repo-packed code already counted in the
@@ -12,7 +13,7 @@ time. Three departures are made, all forced by `supply.py`:
   benchmark and no tokens of its own. The 6% is not saved; it moves to the lanes the long sequences
   are packed *from*.
 - **Code 24% -> 28%.** It absorbs the repo-packed long sequences, which were its tokens already, and
-  coding is half of the session's stated target capability.
+  coding is half of the source material's stated target capability.
 - **Indic 16% -> 18% and reasoning 6% -> 8%, funded by web 34% -> 32%.** Web is the only lane with a
   6.9x surplus; two points off it cost nothing in supply terms and buy headroom in two lanes that
   are the differentiator and the thinnest real pool respectively.
@@ -21,7 +22,7 @@ The one share that is *not* changed despite failing its supply check is **agenti
 floor**. `supply.py` shows the demand is 3.9x more than infinite repetition of the pool could ever
 be worth. Cutting the share to what supply allows (~0.03%) would satisfy the arithmetic and lose
 the capability, so the share stays and the gap is declared as a **generation bill** instead. That
-is the session's own instruction — agentic data *"must largely be built rather than collected"* —
+is the source's own instruction — agentic data *"must largely be built rather than collected"* —
 and `generation_bill()` prices it rather than waving at it.
 """
 
@@ -45,7 +46,7 @@ class Lane:
         key: Lane key, matching `inventory.LANES`.
         name: How the lane is written in the spec.
         share: Its share of the pre-training budget.
-        session_share: What Session 5's default mixture gave it, for comparison.
+        baseline_share: What Exercise 05's default mixture gave it, for comparison.
         because: Why this number, in the terms a reviewer will push on.
         funded_by: Inventory dataset names that supply it.
         schedule_only: True where the lane holds no tokens of its own and is applied as a schedule
@@ -55,19 +56,19 @@ class Lane:
     key: str
     name: str
     share: float
-    session_share: float
+    baseline_share: float
     because: str
     funded_by: tuple[str, ...]
     schedule_only: bool = False
 
     @property
     def delta(self) -> float:
-        """Change from the session's default share.
+        """Change from the source material's default share.
 
         Returns:
-            Our share minus the session's.
+            Our share minus the source material's.
         """
-        return self.share - self.session_share
+        return self.share - self.baseline_share
 
 
 LANES: tuple[Lane, ...] = (
@@ -75,7 +76,7 @@ LANES: tuple[Lane, ...] = (
         key="web",
         name="General web",
         share=0.32,
-        session_share=0.34,
+        baseline_share=0.34,
         because=(
             "the only lane with real surplus — 4.691T against 640B, 0.14 epochs — so it funds the "
             "two points going to Indic and reasoning. It stays largest because breadth of world "
@@ -87,7 +88,7 @@ LANES: tuple[Lane, ...] = (
         key="code",
         name="Code",
         share=0.28,
-        session_share=0.24,
+        baseline_share=0.24,
         because=(
             "half the stated target capability, and it absorbs the retired long-context slot — 60B "
             "of which was repo-packed code from these same corpora. At 560B against 1.103T it runs "
@@ -99,9 +100,9 @@ LANES: tuple[Lane, ...] = (
         key="indic",
         name="Indic",
         share=0.18,
-        session_share=0.16,
+        baseline_share=0.16,
         because=(
-            "the differentiator, and the reason the project exists. Two points above the session "
+            "the differentiator, and the reason the project exists. Two points above the source "
             "default buys headroom over the 12% floor rather than sitting on it, at 1.33 epochs — "
             "inside the band where repetition is near-free"
         ),
@@ -118,9 +119,9 @@ LANES: tuple[Lane, ...] = (
         key="stem",
         name="STEM / math",
         share=0.12,
-        session_share=0.12,
+        baseline_share=0.12,
         because=(
-            "unchanged, but on 146B of itemised supply rather than the 250B the session's supply "
+            "unchanged, but on 146B of itemised supply rather than the 250B the source's supply "
             "check quotes. That moves it from 0.96 epochs to 1.64 — still fundable, with no margin "
             "left to give away"
         ),
@@ -130,7 +131,7 @@ LANES: tuple[Lane, ...] = (
         key="reasoning",
         name="Reasoning traces",
         share=0.08,
-        session_share=0.06,
+        baseline_share=0.06,
         because=(
             "up two points because this lane reserves a *distribution* of trace lengths, not a "
             "quantity. 85.1B is the thinnest real pool in the mixture and 92% of it sits in one "
@@ -148,9 +149,9 @@ LANES: tuple[Lane, ...] = (
         key="agentic",
         name="Agentic / tool-use",
         share=0.02,
-        session_share=0.02,
+        baseline_share=0.02,
         because=(
-            "held at the session's floor although supply cannot fund it: 40B against 627M is 3.9x "
+            "held at the source's floor although supply cannot fund it: 40B against 627M is 3.9x "
             "more than infinite repetition could be worth. The share commits to *building* the "
             "data, not to holding it — priced in §8"
         ),
@@ -170,7 +171,7 @@ LANES: tuple[Lane, ...] = (
         key="long_context",
         name="Long-context",
         share=0.0,
-        session_share=0.06,
+        baseline_share=0.06,
         because=(
             "retired as a lane, kept as a capability. 60 of its 100B is repo-packed code already "
             "counted under code, so a 6% share would double-count it. It becomes a sequence-length "
@@ -371,8 +372,9 @@ def protected_floor() -> Floor:
 # decision is taken here, while the mixture is composed. Each entry is the fraction of that
 # lane's pool withheld from ordinary sampling.
 RESERVE_FRACTIONS: dict[str, float] = {
-    # All of it. §6: these long trajectories are "Tier A datasets ... protected for the annealing
-    # stage". The lane cannot fund pre-training anyway, so spending it early would waste the only
+    # All of it. §6: these long trajectories are among the most valuable Tier A data and protected
+    # for annealing. The lane cannot fund pre-training anyway, so spending it early would waste
+    # the only
     # agentic data that exists on the phase least able to use it.
     "agentic": 1.00,
     # Of the verified-native tier only — the tier MILU actually measures.
@@ -433,7 +435,8 @@ class Reserve:
         """Whether the reserve is large enough to fill the anneal stage.
 
         Compared with a tolerance rather than exactly. The fractions above are chosen from what
-        each pool can spare, and the stage budget they are checked against is the session's own
+        each pool can spare, and the stage budget they are checked against is the source
+        material's own
         *"~2% of tokens"* — an approximate figure. An exact `>=` made the reserve fail at 1.99%,
         which is a rounding artefact reported as a design fault. The tolerance is stated here so
         it is a decision rather than a fudge: a reserve more than a tenth short of the stage it

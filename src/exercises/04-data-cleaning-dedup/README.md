@@ -19,7 +19,7 @@ Two things make it more than a filter chain:
 
 - **Tokens are counted, never estimated.** Fertility is a property of a *tokenizer*, not of a
   corpus — Manipuri swings 7.6× across the five tokenizers exercise 03 measured. Every count here
-  is produced by our own Session 2 vocabulary, and a count that is more than 5% `[UNK]` is not
+  is produced by our own Exercise 02 vocabulary, and a count that is more than 5% `[UNK]` is not
   published as a count at all. That rule *selected the corpus*: Bengali script measures **82–84%
   `[UNK]`**, which is why the Indic corpus is Devanagari and Telugu.
 - **Three of the nine standard quality rules turned out not to be language-neutral.** Applied
@@ -49,9 +49,9 @@ uv run python -m datacleaning --profile full    # the published corpus
 
 | | |
 |---|---|
-| **The question** | How many cleaning strategies does Session 4 list, and what do they do to a real corpus? |
-| **The answer** | **8** — and the session names two *different* eights. See [`DECISIONS.md`](./DECISIONS.md) §D1. |
-| **The corpus** | ~90M tokens across three datasets, counted with **our own Session 2 tokenizer** |
+| **The question** | How many cleaning strategies does Exercise 04 list, and what do they do to a real corpus? |
+| **The answer** | **8** — and the source material names two *different* eights. See [`DECISIONS.md`](./DECISIONS.md) §D1. |
+| **The corpus** | ~90M tokens across three datasets, counted with **our own Exercise 02 tokenizer** |
 | **The deliverable** | A published page and a manifest per shard |
 
 ## Why these three corpora
@@ -62,7 +62,7 @@ joiner branch never fires on English; PII regexes find nothing worth finding in 
 | corpus | licence | the stage it alone exercises |
 |---|---|---|
 | [`open-thoughts/OpenThoughts-114k`](https://huggingface.co/datasets/open-thoughts/OpenThoughts-114k) | Apache-2.0 | **Format discipline** — the only corpus with chat structure and `<think>` traces |
-| [`ai4bharat/sangraha`](https://huggingface.co/datasets/ai4bharat/sangraha) (Devanagari + Telugu) | CC-BY-4.0 | **Joiner preservation**, **language ID**, and the corpus the session names as never deduplicated |
+| [`ai4bharat/sangraha`](https://huggingface.co/datasets/ai4bharat/sangraha) (Devanagari + Telugu) | CC-BY-4.0 | **Joiner preservation**, **language ID**, and the corpus the source material names as never deduplicated |
 | [`HuggingFaceH4/stack-exchange-preferences`](https://huggingface.co/datasets/HuggingFaceH4/stack-exchange-preferences) | CC-BY-SA-4.0 | **PII** that is really there — plus false positives that are really wrong |
 
 Plus a deliberate **out-of-vocabulary probe** (Manipuri, Kashmiri) that is *excluded* from the token
@@ -72,7 +72,7 @@ budget and exists to produce one number: **84% `[UNK]`**.
 
 **We count tokens; we never estimate them.** The obvious approach — pick a fertility ratio, multiply
 by word count — is wrong, because fertility is a property of *a tokenizer*. Manipuri swings **7.6×**
-across the five tokenizers exercise 03 measured. So we tokenize, with our own Session 2 vocabulary,
+across the five tokenizers exercise 03 measured. So we tokenize, with our own Exercise 02 vocabulary,
 and publish the spread as a finding.
 
 **A count that is mostly `[UNK]` is not a count.** Our 10k vocabulary was trained on English, Hindi,
@@ -139,17 +139,17 @@ data/                 # any cached shards (git-ignored)
 
 | # | stage | what it does |
 |---|---|---|
-| 1 | Extract | Session 3's topic — every corpus here ships extracted text |
+| 1 | Extract | Exercise 03's topic — every corpus here ships extracted text |
 | 2 | Normalize | Unicode, invisibles, entities, whitespace — **joiners preserved**, hash taken after |
 | 2b | Format discipline | Ghost tags are *created* by rendering, not inherited from the data |
 | 3 | Language ID | Detect the language; never trust the folder it came from |
-| 4 | Quality filter | Nine Gopher/C4 rules at the session's thresholds |
+| 4 | Quality filter | Nine Gopher/C4 rules at the source material's thresholds |
 | 5 | Deduplicate | Exact hashes, then MinHash/LSH at FineWeb's preset |
 | 6 | PII scrub | Structured identifiers by regex; names by a declared stand-in |
 | 7 | Decontaminate | Canaries and n-grams against held-out evaluation |
 | 8 | Manifest | Provenance, hashes, and a run id derived from content rather than the clock |
 
-Nine rows, eight strategies: stage 1 is inherited from Session 3 and 2b is the one the session's
+Nine rows, eight strategies: stage 1 is inherited from Exercise 03 and 2b is the one the source material's
 pipeline map never numbers. Which eight you mean depends on which list you read — that ambiguity is
 a real reading result, and [`DECISIONS.md`](./DECISIONS.md) §D1 works through it.
 
@@ -195,7 +195,7 @@ One file per stage — `test_normalize`, `test_langid`, `test_quality`, `test_de
 - **`lite` is deliberately below the assignment's 10M-token floor.** It exists to surface bugs in
   minutes. Only `full` produced the published numbers; a `lite` run reproduces the *pipeline*, not
   the results.
-- **"Eight strategies" is itself a reading.** The session names two different eights. Which one you
+- **"Eight strategies" is itself a reading.** The source material names two different eights. Which one you
   mean changes the table — [`DECISIONS.md`](./DECISIONS.md) §D1 works through it rather than
   picking silently.
 

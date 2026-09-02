@@ -35,7 +35,7 @@ Six words do all the work in these documents.
 | --- | --- |
 | model | 4-layer transformer, 256 wide, 4 heads, **~5.8M parameters** |
 | context | 256 tokens |
-| vocabulary | 10,000 tokens, the Session 2 tokenizer |
+| vocabulary | 10,000 tokens, the Exercise 02 tokenizer |
 | schedule | 500 steps x batch 16 = **2,048,000 tokens seen per run** |
 | repeats | 5 seeds per arm |
 | hardware | `mps:apple-silicon` |
@@ -197,7 +197,7 @@ They are separate runs, not extra arms.
 
 ### E2 · Does a warmup band at a stage seam calm the gradient?
 
-**Why it was asked.** The curriculum puts a warmup band at every stage boundary on the strength of one number from the session — V4 spiked its gradient norm ~150x at a Hindi seam. This specification promised the weaker test it *could* run, and had not run it.
+**Why it was asked.** The curriculum puts a warmup band at every stage boundary on the strength of one number from the source — V4 spiked its gradient norm ~150x at a Hindi seam. This specification promised the weaker test it *could* run, and had not run it.
 
 **How.** Two identical runs — same seeds, same steps, same mixtures either side — where one changes mixture between one step and the next and the other blends across a band. Gradient norm is logged every step so the seam is observed rather than sampled near.
 

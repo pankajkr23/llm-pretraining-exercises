@@ -146,7 +146,7 @@
       "architecture": "moe",
       "tokens": 36000000000000,
       "vocab": null,
-      "source": "docs/ATLAS.md B, session notes",
+      "source": "docs/ATLAS.md B, topic notes",
       "why_here": "The frontier corpus figure, across 119 languages. The ceiling this plan's last rung is aiming at."
     },
     {
@@ -158,7 +158,7 @@
       "architecture": "moe",
       "tokens": 30000000000000,
       "vocab": null,
-      "source": "docs/ATLAS.md B, session notes",
+      "source": "docs/ATLAS.md B, topic notes",
       "why_here": "The other frontier figure: over 30T. Stated as a floor rather than a measurement."
     }
   ],

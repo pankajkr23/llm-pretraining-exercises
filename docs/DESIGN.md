@@ -547,7 +547,7 @@ so it is absent on a fresh clone and the guard above skips there. Build it once 
 **Every invariant is written twice** — once against the real page, once against a deliberately broken
 fixture. When you add a guard, break the thing on purpose and watch it go red before you commit.
 
-**A guard must test the property, not one phrasing of it.** Two guards in one session demanded a
+**A guard must test the property, not one phrasing of it.** Two guards in one topic demanded a
 specific string and failed correct work. Ask the underlying question instead.
 
 ---

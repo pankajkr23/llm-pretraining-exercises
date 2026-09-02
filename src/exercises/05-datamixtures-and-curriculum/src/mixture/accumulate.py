@@ -1,6 +1,6 @@
 """An append-only shard store that deduplicates against every shard before it.
 
-Session 5 says the cleaning continues toward the cumulative target, and the earlier gate
+Exercise 05 says the cleaning continues toward the cumulative target, and the earlier gate
 requires a billion clean
 tokens with documented provenance for every shard. Exercise 04's
 deduplication cannot get there, and the reason is specific rather than general: it holds a **full
@@ -21,7 +21,7 @@ with the text. Measured on real prose from exercise 02's corpus:
 | 10,000 words | 15,371 | 1.07 MB | 896 B | 1,199× |
 
 That gap is the whole argument. Exercise 04's full run holds **2.4 GB** of shingle sets resident;
-extrapolated to Session 1's one-billion-token gate (~616k documents) it would need **40.5 GB** at
+extrapolated to Exercise 01's one-billion-token gate (~616k documents) it would need **40.5 GB** at
 once, which is why it cannot get there. The same corpus costs **0.55 GB** of signatures, and those
 stream from disk rather than living in one process.
 
@@ -72,7 +72,7 @@ def estimate_margin(permutations: int) -> float:
 class ShardManifest:
     """Provenance for one shard, written when the shard is.
 
-    Session 1's gate asks for documented provenance per shard, and this is that document. Every
+    Exercise 01's gate asks for documented provenance per shard, and this is that document. Every
     field is something a later reader would otherwise have to guess.
 
     Attributes:
@@ -148,7 +148,7 @@ class ShardStore:
     """Append-only shards with a persistent MinHash index.
 
     A shard, once written, is never rewritten. That is what makes the store auditable across
-    sessions: the corpus at any point is exactly the shards written so far, and a run can be
+    topics: the corpus at any point is exactly the shards written so far, and a run can be
     resumed by adding the next one.
     """
 

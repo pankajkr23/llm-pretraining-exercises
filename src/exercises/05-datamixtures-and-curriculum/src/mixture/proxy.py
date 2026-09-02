@@ -211,7 +211,7 @@ def arms() -> tuple[Arm, ...]:
                 "does composing a mixture beat crawling whatever is cheapest? if not, every "
                 "argument in this spec is decoration"
             ),
-            # The session's own "crawl what is cheap" preset: web expands and the scarce
+            # The source material's own "crawl what is cheap" preset: web expands and the scarce
             # capabilities collapse.
             shares={
                 "web": 0.70,

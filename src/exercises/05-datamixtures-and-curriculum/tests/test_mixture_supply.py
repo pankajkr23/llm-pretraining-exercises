@@ -44,7 +44,7 @@ def test_the_stem_gap_changes_the_verdict_rather_than_only_the_number():
     demand = lanes.get("stem").share * CFG.run_tokens
     itemised = inventory.lane_supply("stem").counted_tokens
     quoted = inventory.NOTES_SUPPLY_CHECK["stem"]
-    assert demand / quoted < 1.0, "on the session's figure the lane fits inside one pass"
+    assert demand / quoted < 1.0, "on the source material's figure the lane fits inside one pass"
     assert demand / itemised > 1.5, "on the itemised figure it needs repetition"
 
 

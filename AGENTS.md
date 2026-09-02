@@ -94,7 +94,7 @@ the new one, and deletes it. Nobody deleted anything. So:
   It writes a **git** store at `../.llm-pretraining-exercises-local-only`, so every *version* is
   kept, not just the latest. That matters more than it sounds: these files are regenerated
   constantly, so the likelier loss is a **bad overwrite**, and a plain copy would faithfully replace
-  the good version with the broken one. Run it before any branch switch and after any session that
+  the good version with the broken one. Run it before any branch switch and after any topic that
   rebuilds a notebook.
 
 - **The protected set is wider than the three classes named above, and the extra ones were
@@ -229,12 +229,12 @@ repo** — it is the real safety net.
   `git ls-files`, not by reading `.gitignore`, because a file already in the index stays tracked
   whatever the ignore rules say afterwards.
 - **Shared code:** deferred — add `src/common/` (its own member) only when a 2nd exercise needs to reuse something. No premature abstraction.
-- **Notebooks:** top-level `notebooks/`, one per session — see below.
+- **Notebooks:** top-level `notebooks/`, one per topic — see below.
 
-## Every session builds a Colab notebook — locally, never tracked
+## Every topic builds a Colab notebook — locally, never tracked
 
-`notebooks/SNN-slug.ipynb`, zero-padded session id first (`S04-data-cleaning-dedup.ipynb`), so
-lexical sort = session order. **A session's work is not done until its notebook runs the shipped
+`notebooks/SNN-slug.ipynb`, zero-padded topic id first (`S04-data-cleaning-dedup.ipynb`), so
+lexical sort = topic order. **A source material's work is not done until its notebook runs the shipped
 code end to end.** Four rules keep it from rotting:
 
 - **It imports the exercise's package; it never re-implements it.** A notebook that copies logic
@@ -283,7 +283,7 @@ already own, and the one that drifts is the one nobody regenerates.
 The cost is real and worth naming: every rule above is checked by tests that read the notebook,
 and on a fresh clone there is nothing for them to read, so **they all skip**. A rule that only
 skips is not a rule. What stops that from adding up to no coverage is `notebooks/hello.ipynb` — a
-tracked, stdlib-only sample that CI executes top to bottom. It cannot check that a session notebook
+tracked, stdlib-only sample that CI executes top to bottom. It cannot check that a topic notebook
 is correct; it checks that a notebook in this repo opens and runs, which is the part CI can still
 see. Anything stronger has to be run by whoever has the notebook, before the PR.
 
@@ -291,7 +291,7 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
 
 - **Briefs → never tracked, at any level.** `BRIEF.md` is gitignored by name everywhere, as is
   programme-level material — the schedule, the class list, the internal authoring specs
-  (`docs/BRIEF.md`, `docs/SESSIONS.md`, `docs/EXPLAINER_*.md`). A brief is the course's text and
+  (`docs/BRIEF.md`, `docs/EXPLAINER_*.md`). A brief is the course's text and
   is input for whoever builds the exercise; it is not the deliverable. **Never link to one from a
   tracked file** — the link resolves on a working checkout and 404s for everyone else. What we
   *decided*, and why, is published instead: `README.md`, and a tracked `DECISIONS.md` when the
@@ -299,10 +299,10 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
 
   **And `BRIEF.md` is not the authority on what submission requires.** It is the course's text and
   it can be truncated, reformatted or pasted short; the submission platform's own field list is what
-  grades. Check the platform before calling a session done, and record the required *shape* — not
+  grades. Check the platform before calling a topic done, and record the required *shape* — not
   the brief's wording — in the exercise's `PROGRESS.md`. A deliverable specified as a **public URL**
   is not satisfied by a file in the repo, however correct that file is.
-- **Session notebooks** → top-level `notebooks/`, **gitignored** except the tracked
+- **Topic notebooks** → top-level `notebooks/`, **gitignored** except the tracked
   `hello.ipynb` sample. Their generators (`*/tools/build_notebook.py`) are gitignored too — a
   generator is the same material in another form. Keep a backup outside the repo; nothing tracked
   can rebuild either. This does **not** extend to other `tools/` scripts: a dataset fetcher such as
@@ -356,7 +356,7 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
   indistinguishable from a clean run. Three rules follow. Restore in a `finally`, never on the happy
   path, so an early return or an exception cannot leave the mutation behind. Never write the backup
   inside the working tree — `git stash` or `$TMPDIR`, because a backup in the tree is a file
-  `git add -A` will commit. And after any session in which agents ran near the source tree, **stage
+  `git add -A` will commit. And after any topic in which agents ran near the source tree, **stage
   by path and read `git diff --stat` against `origin/main` before committing**: the only reason this
   was caught is that one mutation happened to break a test that ran, and a mutation to a guard whose
   twin is missing would have shipped in silence.
@@ -403,7 +403,7 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
 - **Test the last line of a long job first.** Three experiments in exercise 05 trained to completion and then died writing their results, because the bundle carried a `torch.device` and `json` cannot encode one — one run lost fifteen trained models to its final statement. A two-step run that exercises `save()` costs seconds and would have caught all three. The same applies to any expensive job: the write, the upload, the commit at the end are the parts least covered and most costly to get wrong.
 - **Data-handling invariants are enforced in CI, not in review.** `03-data-collection-framework` defines five that any agent touching a data pipeline should know exist (`tests/test_invariants.py`, full table in that exercise's `docs/README.md`): training never touches eval data · nothing excluded may enter a commercial mix · every judgment carries its reasoning and confidence · a measurement must name what produced it · no source content is silently dropped. Each is paired with a test proving it *fails* when broken — a guard nobody has watched fail is not a guard.
 
-- **A tested feature with no caller is dead code wearing a test.** `masks.loss_mask(context_spans=...)` in exercise 06 is implemented, documented, covered by two passing tests and taught in the session notebook — and `grep -rn context_spans` finds **zero** callers in the pipeline: `feed.py` builds every microbatch with the default mask. The tests are green, so the capability reads as a behaviour of the run, and the documents describing prompt/tool-observation masking describe something that never happens. The test proves the function works; only a caller proves the system uses it. When you add a keyword-only option to a library function, either wire it through the one path that would exercise it in a real run, or state in the module docstring that it is offered and unused — and put the same sentence wherever the feature is described to a reader.
+- **A tested feature with no caller is dead code wearing a test.** `masks.loss_mask(context_spans=...)` in exercise 06 is implemented, documented, covered by two passing tests and taught in the topic notebook — and `grep -rn context_spans` finds **zero** callers in the pipeline: `feed.py` builds every microbatch with the default mask. The tests are green, so the capability reads as a behaviour of the run, and the documents describing prompt/tool-observation masking describe something that never happens. The test proves the function works; only a caller proves the system uses it. When you add a keyword-only option to a library function, either wire it through the one path that would exercise it in a real run, or state in the module docstring that it is offered and unused — and put the same sentence wherever the feature is described to a reader.
 - **A coverage guard built on `--collect-only` is blind to a file that collects nothing.** `tests/test_ci_shards_cover_everything.py` catches an integration file in no CI shard, and an integration file in two. It cannot catch the third case: **in a shard, and contributing zero tests.** A module-level `pytest.importorskip("torch")` raises during *collection*, so `pytest --collect-only -q` prints no `path: count` line for that file at all — I verified this with a throwaway module importorskipping an absent package: output was `no tests collected`, exit 0. The file is therefore absent from `everything` and from `owners` alike, `missing` is empty, and `covered == sum(everything.values())` holds trivially. The consequence is live: all 20 of exercise 06's integration tests (`crash` 11, `model` 3, `train` 6) sit behind `importorskip("torch")`, CI never installs the `train` extra, and CI's integration step maps exit 5 to success — so the `rest` shard runs **zero** of them, reports green, and the coverage guard agrees. A guard must count what the job was *supposed* to run, from a list it does not derive from the same run it is auditing.
 
 ## Reporting a measurement
@@ -416,7 +416,7 @@ Three rules, each learned by getting it wrong in `02-tokenization` (see that exe
 
 When one of these overturns a published claim, correct it where the claim was made and say what changed. A quietly amended number is worse than the original error.
 
-- **Prose that states a number is generated too, or it goes stale while the table beside it stays right.** This is the failure that has cost this repo the most edits. A generated table under a hand-written sentence looks maintained, and only the sentence is wrong — so a reader believes the sentence. Session 5 shipped documents reading "across three lanes", "H3 came back qualified", "Thirteen invariants" and "one verdict did not survive its own noise", every one of them contradicting a correct table directly above or below it, and no test failed. If a sentence contains a count, a verdict or a size, derive it from the same source the table uses. Where prose genuinely must stay hand-written — a row in the root README's exercise table — the number in it went untested long enough for exercise 06's row to read *"Stage 1 of 8"* while the exercise was at stage 7. `tests/test_doc_counts_match.py` now derives that count from the exercise's own stage table. **The prose around the number is still untested**, so a row can carry a correct stage and a wrong description; verify that by hand on every PR that advances an exercise.
+- **Prose that states a number is generated too, or it goes stale while the table beside it stays right.** This is the failure that has cost this repo the most edits. A generated table under a hand-written sentence looks maintained, and only the sentence is wrong — so a reader believes the sentence. Exercise 05 shipped documents reading "across three lanes", "H3 came back qualified", "Thirteen invariants" and "one verdict did not survive its own noise", every one of them contradicting a correct table directly above or below it, and no test failed. If a sentence contains a count, a verdict or a size, derive it from the same source the table uses. Where prose genuinely must stay hand-written — a row in the root README's exercise table — the number in it went untested long enough for exercise 06's row to read *"Stage 1 of 8"* while the exercise was at stage 7. `tests/test_doc_counts_match.py` now derives that count from the exercise's own stage table. **The prose around the number is still untested**, so a row can carry a correct stage and a wrong description; verify that by hand on every PR that advances an exercise.
 
 - **An experiment that cannot see a lane is not evidence about that lane.** Exercise 05's proxy dropped the three lanes it had no text for, and one hypothesis read `qualified` for two weeks because the lane its refutation clause tested was absent. Funding the lane flipped it to `refuted` with the effect size essentially unchanged. **A missing input does not make a hypothesis safer, it makes it untestable — and untestable reads as passing.** Before trusting a result, list what the measurement was blind to.
 
@@ -426,7 +426,7 @@ When one of these overturns a published claim, correct it where the claim was ma
   consumes `ranks × accumulation × microbatch × sequence_length × steps` =
   `4 × 2 × 8 × 512 × 320` = **10,485,760** token positions (read it from `Config.total_tokens`,
   never from memory). Its first corpus held **2,185,575** tokens — **4.8 epochs flat**, and once
-  shaped to session 5's lane weights, **30.2 epochs of the web lane against 0.41 of the agentic
+  shaped to exercise 05's lane weights, **30.2 epochs of the web lane against 0.41 of the agentic
   lane**. The lane the mixture funded most heavily was the one the model saw thirty times over,
   while the lane it funded least was not seen through even once. No mixture claim survives that, and
   nothing in the pipeline failed: the shards read fine and the loss curve looked normal. **It was
@@ -468,7 +468,7 @@ Two more that cost this repo real defects:
   existed. Feed the file on stdin instead — `node --input-type=module --check < "$f"` — which
   parses with the module goal, passes valid modules and catches that.
 
-- **A guard must test the property, not one phrasing of it.** Two guards in one session asked for
+- **A guard must test the property, not one phrasing of it.** Two guards in one topic asked for
   a specific string and failed correct work: one demanded a "drawn to scale" line and red-flagged a
   figure that quotes its own paper verbatim (stronger evidence than the thing being demanded), and
   one demanded a legend headed `THE MARKS` and red-flagged eleven figures keyed by other means — a
@@ -511,7 +511,7 @@ Two more that cost this repo real defects:
   you copy `web/_shared/`, diff what its rules select against what your page emits.
 
 - **Two rules of equal specificity are decided by source order, and the later one wins.** Two fixes
-  in one session changed nothing at all: `grid-template-columns` set on a flex container, and a
+  in one topic changed nothing at all: `grid-template-columns` set on a flex container, and a
   `max-width` override written above the rule it was meant to beat. Both looked like fixes, moved no
   pixels, and passed every test. Before adding a rule, check what is already computing — then edit
   *that* declaration rather than competing with it. A `margin: 16px 0 0` shorthand will also silently

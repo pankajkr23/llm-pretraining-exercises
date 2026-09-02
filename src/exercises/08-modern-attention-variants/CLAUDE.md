@@ -51,7 +51,7 @@ A missing mechanism scores zero, and we were invited to catch errors in the sour
   phrases, so a rename on our side can never silently drop one of his items. Do not reword the left
   side of that dict.
 
-- **Reproduce the session's numbers; never copy them into prose.** `cache.kv_cache_bytes` recomputes
+- **Reproduce the source material's numbers; never copy them into prose.** `cache.kv_cache_bytes` recomputes
   6.44 GB at one user and 51.54 GB at eight, and GQA at two KV heads is exactly a quarter of MHA.
   Tests pin all three, so editing the yardstick breaks the documents that cite it.
 
@@ -70,7 +70,7 @@ and because a reader deserves to know which claims we checked.
   page. June 2017, not 2018.
 
 - **DroPE is two different papers in the source, and the transcript quotes the wrong one's title.**
-  The technique the session describes — pretrain with positional embeddings, drop them, recalibrate
+  The technique the source material describes — pretrain with positional embeddings, drop them, recalibrate
   briefly — is *Extending the Context of Pretrained LLMs by Dropping Their Positional Embeddings*,
   `arXiv:2512.12167` (Sakana AI), v1 **13 Dec 2025**. The transcript's garbled "rotate position
   emitting for efficient" maps instead onto **DRoPE** (capital R), `arXiv:2503.15029`, *Directional
@@ -80,8 +80,8 @@ and because a reader deserves to know which claims we checked.
 
 ## One number that does not reproduce
 
-The transcript says eight users at a 1M-token context need "about 1 TB". The session's **own
-formula**, at the session's own yardstick, gives **1.57 TB**:
+The transcript says eight users at a 1M-token context need "about 1 TB". The source material's **own
+formula**, at the source material's own yardstick, gives **1.57 TB**:
 
     2 x 48 x 8 x 128 x 1,000,000 x 8 x 2 = 1,572,864,000,000 bytes
 
@@ -93,7 +93,7 @@ inputs would reconcile them (a smaller model, fewer KV heads, or fp8 would each 
 The reference notes teach ten of the eighteen mandated mechanisms. **Eight are named in the
 coverage list and never taught**: sinusoidal, learned absolute positions, ALiBi, sliding window,
 attention sinks, NTK-aware scaling, YaRN and MLA. Those are sourced entirely from outside the course
-material, and `taught_in_session` on each entry records which is which — so a reader can see where
+material, and `taught_in_source` on each entry records which is which — so a reader can see where
 our evidence came from rather than assuming it all came from class.
 
 ## The page is a monograph, and four rules keep it one

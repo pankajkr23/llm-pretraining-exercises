@@ -1,6 +1,7 @@
-"""Session 5's recipe, as data — so the fetcher and the compliance check cannot disagree.
+"""Exercise 05's recipe, as data — so the fetcher and the compliance check cannot disagree.
 
-**The problem.** Session 5 decided *how much of each kind of data*. Session 6 executes it. If the
+**The problem.** Exercise 05 decided *how much of each kind of data*. Exercise 06 executes it. If
+the
 fetcher sizes its download from one copy of those numbers and the compliance report checks against
 another, the two drift and the report becomes a measurement of itself. Every number below is
 declared once, here, and everything else derives from it.
@@ -14,14 +15,15 @@ over that is a check on thirty re-reads of the same text.
 
 **And a fetcher must stop on TOKENS, never on rows or bytes.** Measured under the frozen
 `s02-bpe-10000` vocabulary, bytes per token ranges from **1.98 (code) to 8.81 (indic)** — a 4.4×
-spread. A fetcher that counts rows, as session 5's does, lands nowhere near the mixture it is
+spread. A fetcher that counts rows, as exercise 05's does, lands nowhere near the mixture it is
 trying to reproduce.
 
 **Two things the recipe asks for that this run cannot execute, stated rather than quietly dropped.**
-Session 5's curriculum runs a context ladder of 4k → 8k → 16k → 32k; exercise 06 runs a flat 512, so
+Exercise 05's curriculum runs a context ladder of 4k → 8k → 16k → 32k; exercise 06 runs a flat
+512, so
 the ladder cannot be executed as written and the `long_context` lane — whose *only* delivery
 mechanism was that ladder — stays at zero rather than being given tokens it would misrepresent.
-Session 5 also retired that lane on its own evidence: 60 of its 100B was repo-packed code already
+Exercise 05 also retired that lane on its own evidence: 60 of its 100B was repo-packed code already
 counted under `code`.
 """
 
@@ -173,7 +175,7 @@ def compliance(
     Args:
         consumed: Lane name to tokens consumed.
         tolerance: How far a lane may drift from its planned share before it is out of compliance.
-            One point, matching the tolerance session 5 enforces on its own stage schedule.
+            One point, matching the tolerance exercise 05 enforces on its own stage schedule.
 
     Returns:
         Lane name to `{planned, realised, drift, within_tolerance, floor, floor_held}`.

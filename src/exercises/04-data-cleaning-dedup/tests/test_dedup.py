@@ -39,7 +39,7 @@ HINDI = "भारत एक विशाल देश है और यहा�
 
 
 def test_the_lsh_threshold_matches_the_published_formula():
-    """FineWeb's preset is 14 bands of 8. The session quotes ~0.75; the formula gives 0.719."""
+    """FineWeb's preset is 14 bands of 8. The source quotes ~0.75; the formula gives 0.719."""
     assert dedup.lsh_threshold(14, 8) == pytest.approx((1 / 14) ** (1 / 8))
     assert dedup.lsh_threshold(14, 8) == pytest.approx(0.7190, abs=1e-4)
 

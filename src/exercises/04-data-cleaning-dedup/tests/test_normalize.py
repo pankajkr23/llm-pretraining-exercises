@@ -69,7 +69,7 @@ def test_unescaping_resolves_nested_entities():
 
 
 def test_indic_joiners_survive_cleaning():
-    """The session's third commitment, at the character level.
+    """The source material's third commitment, at the character level.
 
     The joiners are protected twice over, and the two mechanisms need separate tests:
 

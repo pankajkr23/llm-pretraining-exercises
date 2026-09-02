@@ -114,7 +114,7 @@ At the most-repeated rung the pool is re-read 18.4 times and costs 6.8% — wors
 
 ### E2 · Does the warmup band at a seam do anything?
 
-Every stage boundary in the curriculum carries a warmup band, scheduled on the strength of one number from the session: V4 spiked its gradient norm ~150× at a Hindi seam. This specification says plainly that the proxy cannot reproduce that spike — wrong scale, no frozen embeddings — but *can* test the weaker claim that a seam with a band spikes less than the same seam without one. That test was written down and never run.
+Every stage boundary in the curriculum carries a warmup band, scheduled on the strength of one number from the source: V4 spiked its gradient norm ~150× at a Hindi seam. This specification says plainly that the proxy cannot reproduce that spike — wrong scale, no frozen embeddings — but *can* test the weaker claim that a seam with a band spikes less than the same seam without one. That test was written down and never run.
 
 Both conditions are identical apart from the band: same seeds, same steps, the same General → Reasoning mixture change at step 240. Gradient norm is logged every step, so the seam is observed rather than sampled around.
 

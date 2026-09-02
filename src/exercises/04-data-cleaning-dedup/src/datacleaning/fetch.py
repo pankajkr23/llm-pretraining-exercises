@@ -123,7 +123,8 @@ def iter_row_groups(
 ) -> Iterator[tuple[int, list[dict[str, object]]]]:
     """Yield a shard's row groups in file order, one at a time.
 
-    File order, never shuffled: the session's reproducibility requirement means the same input must
+    File order, never shuffled: the source material's reproducibility requirement means the same
+    input must
     give the same output, and a random sample would make the corpus un-reproducible for anyone who
     did not also have our seed. Callers stop when their token budget is met, so "first N row groups"
     is the whole selection rule.

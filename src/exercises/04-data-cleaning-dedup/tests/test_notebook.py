@@ -1,10 +1,10 @@
-"""The session notebook, held to the repo's notebook rules.
+"""The topic notebook, held to the repo's notebook rules.
 
-`AGENTS.md` requires every session to ship `notebooks/SNN-slug.ipynb` that imports the exercise's
+`AGENTS.md` requires every topic to ship `notebooks/SNN-slug.ipynb` that imports the exercise's
 package rather than re-implementing it, and that carries no committed outputs. Both rules are
 checkable, so they are checked here rather than remembered.
 
-Session notebooks are **not tracked** — they are gitignored and built locally — so every test in
+Topic notebooks are **not tracked** — they are gitignored and built locally — so every test in
 this file skips on a fresh clone. That is honest rather than decorative only because the tracked
 `notebooks/hello.ipynb` is executed in CI in their place.
 
@@ -27,15 +27,15 @@ NOTEBOOK = REPO_ROOT / "notebooks" / "S04-data-cleaning-dedup.ipynb"
 
 @pytest.fixture(scope="module")
 def nb() -> dict:
-    """The session notebook, when there is one.
+    """The topic notebook, when there is one.
 
-    Skips rather than fails when absent. Session notebooks are gitignored, so a fresh clone and CI
+    Skips rather than fails when absent. Topic notebooks are gitignored, so a fresh clone and CI
     genuinely do not have one, and a hard failure there would be reporting the design as a defect.
     The rules below therefore protect the author's checkout, not the pipeline — which is why
     `notebooks/hello.ipynb` is tracked and executed instead: see `test_the_sample_notebook_runs`.
     """
     if not NOTEBOOK.exists():
-        pytest.skip(f"no session notebook at {NOTEBOOK}; they are local-only and gitignored")
+        pytest.skip(f"no topic notebook at {NOTEBOOK}; they are local-only and gitignored")
     return json.loads(NOTEBOOK.read_text(encoding="utf-8"))
 
 
@@ -124,20 +124,20 @@ def test_the_notebook_carries_a_colab_badge(nb):
 
 
 def test_the_notebook_is_named_with_its_topic_id():
-    """`AGENTS.md`: zero-padded session id first, so lexical sort equals session order."""
+    """`AGENTS.md`: zero-padded topic id first, so lexical sort equals topic order."""
     assert NOTEBOOK.name.startswith("S04-")
     assert NOTEBOOK.suffix == ".ipynb"
 
 
 def test_every_topic_notebook_follows_the_naming_rule():
-    """The rule is repo-wide, so it is checked repo-wide rather than for this session alone.
+    """The rule is repo-wide, so it is checked repo-wide rather than for this topic alone.
 
-    `hello.ipynb` is exempt by name: it is the tracked sample, not a session notebook, and the
-    `SNN-` rule exists so lexical sort equals session order — which a sample has no part in.
+    `hello.ipynb` is exempt by name: it is the tracked sample, not a topic notebook, and the
+    `SNN-` rule exists so lexical sort equals topic order — which a sample has no part in.
     """
     for path in NOTEBOOK.parent.glob("*.ipynb"):
         if path.name == "hello.ipynb":
             continue
         assert path.name[0] == "S" and path.name[1:3].isdigit(), (
-            f"{path.name} does not start with a zero-padded session id (SNN-)"
+            f"{path.name} does not start with a zero-padded topic id (SNN-)"
         )

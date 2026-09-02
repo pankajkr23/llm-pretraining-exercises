@@ -11,7 +11,7 @@ does the work: a reader can compare it against `date` without leaving the page, 
 error shows up as a disagreement between two fields rather than as a number nobody can check.
 
 **`confidence` is allowed to say `unverified`, and that is the point.** A catalogue that cannot
-express doubt will express confidence it has not earned. One mechanism in Session 8 -- DroPE -- is
+express doubt will express confidence it has not earned. One mechanism in Exercise 08 -- DroPE -- is
 described in the course with no paper named and a garbled title, so it may genuinely have no
 findable primary source. Recording that honestly is a result; inventing an arXiv id is a
 fabrication.

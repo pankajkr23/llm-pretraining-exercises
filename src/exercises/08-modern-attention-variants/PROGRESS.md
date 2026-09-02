@@ -1,4 +1,4 @@
-# PROGRESS — Session 8
+# PROGRESS — Exercise 08
 
 A running log of what was built, what was verified, what changed and what is still open. Written so
 the work can be picked up cold. Newest entries at the top of each section.
@@ -6,7 +6,7 @@ the work can be picked up cold. Newest entries at the top of each section.
 **Where the work lives:** on a branch, not yet merged. This file does not name branch or PR numbers
 — `git log` and `gh pr list` answer that correctly and a markdown file goes stale.
 
-**Deliverable shape — read this before calling the session done.** The platform asks for a **live
+**Deliverable shape — read this before calling the source material done.** The platform asks for a **live
 app link** and the **GitHub repo**, and the README must say which sources the dates came from.
 Question 1 is 1000 points for the link and repo; Question 2 is a written answer about what the
 timeline shows, worth a further 1000 if it also names a mechanism the instructor missed, with a date
@@ -21,7 +21,7 @@ pipeline is fine, and the link must resolve for a logged-out stranger.
 | # | item | status | note |
 | --- | --- | --- | --- |
 | O1 | **The catalogue** | **done** | 30 mechanisms, 2014 to Aug 2026, every date read from the primary source and cross-checked against the source's own wording. 19 required by the coverage list + 5 beyond it. |
-| O2 | **The arithmetic** | **done** | The session's 6.44 GB / 51.54 GB / 4× GQA all reproduce exactly from `cache.py`. |
+| O2 | **The arithmetic** | **done** | The source material's 6.44 GB / 51.54 GB / 4× GQA all reproduce exactly from `cache.py`. |
 | O3 | **The page** | **done** | Twelve spine sections, the two-object mechanism figure and the timeline, at `/08-modern-attention-variants/`. Registered in the landing card, `SPINE_ENFORCED` and `OPTIONAL_DEPENDENCY_GATES` in the same change. (The browser-test count this row used to carry went stale four times over; `uv run pytest src/exercises/08-modern-attention-variants -m integration` answers it correctly.) |
 | O4 | **Question 2's written answer** | **ready to submit** | `artifacts/q2_answer.txt` (gitignored) is generated from `catalogue.py` and `timeline.py`, so every count, date and citation in it is derived rather than typed — regenerate it rather than editing it. **The link is live**: v0.13.0 was tagged on 2026-09-02, PK approved the production gate, and `https://llm-pretraining-demos.vercel.app/08-modern-attention-variants/` returns **200** to an anonymous request with no redirect and no login wall — `chapters.js`, `data.js`, `page-extra.css` and `/_shared/tokens.css` all 200 as well, which is the check that matters, because a page that loads while its data file 404s renders empty. Submitting is PK's: the platform takes the app link, the GitHub repo, and the written answer. |
 | O5 | **A mechanism figure** | **done** | Figure 1: the causal score triangle beside the KV-cache column, with eight variants as predicates rather than pictures. Three browser tests make it falsifiable — switching must change the drawing, GQA must touch no score, linear attention must leave no per-position square. |
@@ -88,7 +88,7 @@ Agent Interaction Modeling* — an autonomous-driving trajectory paper. Two pape
 letter apart. Both are recorded so nobody "corrects" us back to the wrong one.
 
 **A cache figure does not reproduce.** The transcript says eight users at 1M tokens need about
-1 TB; the session's own formula at the session's own yardstick gives **1.57 TB**. Both are recorded.
+1 TB; the source material's own formula at the source material's own yardstick gives **1.57 TB**. Both are recorded.
 A smaller model, fewer KV heads or fp8 would each reconcile them and the transcript does not say
 which was meant — so neither number is published alone.
 
@@ -247,7 +247,7 @@ is the part that matters more than any styling.
   trade-off and citation is rendered from `web/data.js`, which `tools/build_web_data.py` derives from
   the catalogue and from the same functions the tests exercise — so the page cannot disagree with the
   evidence, and the derived findings cannot disagree with the code.
-- **Figure 1 draws the framing the session never states**: attention has exactly two objects that
+- **Figure 1 draws the framing the source material never states**: attention has exactly two objects that
   cost anything, and every mechanism is a structural edit to one of them. Eight variants, each a
   predicate rather than a drawing.
 - **One latent bug caught before it shipped.** The "days nobody touched the cost" tile looked its gap
@@ -302,7 +302,7 @@ no graphics, misaligned. Rebuilt as a monograph feature — six numbered plates,
 
 ---
 
-## Completing the session (this pass)
+## Completing the source material (this pass)
 
 - **A mandated mechanism was missing and the guard could not see it.** The coverage list says
   *"sparse and top-k attention"*; we had catalogued the sparse half and the Sparse Transformers

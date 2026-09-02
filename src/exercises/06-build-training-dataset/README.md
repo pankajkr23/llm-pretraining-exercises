@@ -3,7 +3,7 @@
 **A training run eats data for weeks. This is the system that remembers what it ate, why, what the
 model learned from it, and how to reconstruct any of it.**
 
-Session 5 produced a *recipe* — how much of each kind of data, in what order. Session 6 builds the
+Exercise 05 produced a *recipe* — how much of each kind of data, in what order. Exercise 06 builds the
 machine that **executes** it and can prove it did:
 
 ```text
@@ -122,7 +122,7 @@ src/trainingdata/
   checkpoint.py  # weights, optimizer state, and the ledger cut that belongs with them
   resume.py      # bringing a ledger back into agreement with a checkpoint, after a crash
   replay.py      # re-deriving a recorded interval from the shards alone — never from the planner
-  mixture.py     # session 5's recipe as data — lane shares, floors, and the token targets
+  mixture.py     # exercise 05's recipe as data — lane shares, floors, and the token targets
   corpus.py      # fetched text to sealed, admitted shards, with a checkable lineage
   fork.py        # branching from an earlier checkpoint, with the lineage made a fact
   metrics.py     # throughput and packing efficiency, derived from the ledger
@@ -187,7 +187,7 @@ imports from the rest of the package.
 tool: it deliberately imports `ledger`, `masks`, `pack` and `shards`, because its job is to rebuild
 a microbatch the same way the run built it and check the shards still hold what was fed. What it may
 not import is `plan.py` — recomputing the plan instead of reading the record would make the
-measurement circular in exactly the way this session is about — and torch.
+measurement circular in exactly the way this topic is about — and torch.
 `test_replay_cannot_reach_the_planner_or_torch` walks the transitive closure for both, and
 `test_the_closure_check_would_notice_a_new_import` is the twin that fails when the walker stops
 seeing anything. The auditor's wall is stricter, and it is built: `verify.py` imports nothing from

@@ -1150,7 +1150,7 @@ function chapterNegatives(M) {
        * commentary about its own trustworthiness that made me trust it less", and the corrections
        * themselves make the argument. */
       `These ${spell(M.counts.total)} entries were checked against the teaching material this ` +
-        'page was built from — spoken session notes and a transcript, not a paper. ' +
+        'page was built from — spoken topic notes and a transcript, not a paper. ' +
         `${Spell(items.length)} of its claims did not survive that check, and they are here ` +
         'rather than quietly fixed.',
     ],
@@ -1327,7 +1327,7 @@ function chapterLimits(M) {
       'not when it did — which is also why ' +
       `${M.mechanisms.filter((m) => !(m.shippedIn || []).length).length} of the ` +
       `${M.counts.total} entries name no model that shipped them.`,
-    `<b>${M.counts.outsideSession} of the ${M.counts.total} were built from the primary paper ` +
+    `<b>${M.counts.outsideSource} of the ${M.counts.total} were built from the primary paper ` +
       'alone</b>, with no secondary explanation to lean on. Each prints the source’s own date ' +
       'string beside our parsed date, at the back, so you can check the reading.',
     '<b>This page covers attention only.</b> JEPA and the world models built on it change what a ' +
@@ -1541,7 +1541,7 @@ function chapterReproduce(M, spreadRef, plateRef) {
      * required list names 18 items but 19 mechanisms, because one of its phrases covers two
      * different techniques that this catalogue keeps apart. */
     `‡ dated from the primary paper alone, without the teaching material ` +
-      `(${M.counts.outsideSession} of ${M.counts.total}) · ` +
+      `(${M.counts.outsideSource} of ${M.counts.total}) · ` +
       `† ours, beyond the required list (${M.counts.bonus} of ${M.counts.total}) · ` +
       '~ glyph drawn to schema rather than to scale'
   );

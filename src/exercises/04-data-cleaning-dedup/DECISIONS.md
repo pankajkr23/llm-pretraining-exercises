@@ -7,9 +7,9 @@ guess at it.
 The assignment these answer is `BRIEF.md`, which is a local working file — briefs are input for
 the people and agents building an exercise, not public reading.
 
-## D1 · How many strategies? Eight — and the session names two different eights
+## D1 · How many strategies? Eight — and the source material names two different eights
 
-There is no line in the session that says "there are N strategies", so the count has to be derived.
+There is no line in the source material that says "there are N strategies", so the count has to be derived.
 Two lists exist, and both have exactly eight members:
 
 | # | The pipeline map (§2, labelled "STAGE 1…8") | The closing commitments (§14) |
@@ -27,7 +27,7 @@ Two lists exist, and both have exactly eight members:
 §14 drops **Extract**, and §2 says why: it was covered earlier, so it is taken as known and the
 time goes to the stages V4 omitted altogether. In its place
 §14 adds **format discipline**, the ghost-tag trap, which §2's map never numbers at all despite the
-session giving it a full section (§4) and its own widget.
+topic giving it a full section (§4) and its own widget.
 
 So: **the answer is 8**, and the *membership* depends on whether you count the pipeline or the
 commitments. The **union is 9**. Two independent counts corroborate the headline — the
@@ -72,7 +72,7 @@ measured at all. Quoting any single ratio silently smuggles in a tokenizer choic
 as a fact about the data — exactly what `AGENTS.md` §*Reporting a measurement* forbids.
 
 **So we tokenize.** The primary tokenizer is **ours**: `02-tokenization/web/tokenizer.json`, the
-10,000-token BPE vocabulary submitted for Session 2. That is the right choice on the merits, not
+10,000-token BPE vocabulary submitted for Exercise 02. That is the right choice on the merits, not
 just for continuity — it is the tokenizer this project would actually pretrain with, so *"how many
 tokens does this corpus give **us**"* is the operationally correct question. A count under someone
 else's 256k multilingual vocabulary answers a question we are not asking.
@@ -96,11 +96,11 @@ exercise 03) decided the corpus selection:
 | **Assamese / Bengali** | Bengali | 6.61 / 6.66 | **82%** |
 | **Manipuri** | Bengali | 7.17 | **84.0%** |
 
-Session 2 trained on English, Hindi, Telugu and Maithili. Every Devanagari language and Telugu
+Exercise 02 trained on English, Hindi, Telugu and Maithili. Every Devanagari language and Telugu
 therefore tokenize at 0–0.6% `[UNK]`; Bengali script does not exist in the vocabulary.
 
 An earlier draft of this exercise chose Sangraha's **Assamese** shard, on the strength of a genuinely
-good narrative — the session names Sangraha as the corpus that got zero deduplication, and
+good narrative — the source material names Sangraha as the corpus that got zero deduplication, and
 `verified/asm` is the shape of the taught language-ID bug. That draft was wrong: a token count that
 is 82% `[UNK]` is not a token count. **Assamese and Manipuri are kept as an out-of-vocabulary
 probe** — deliberately *excluded* from the token budget and used only to produce the 84% figure,
@@ -132,7 +132,7 @@ Notes that matter:
   through four templates and counts the token waste.
 - **B's card claims nothing about cleaning we would be contradicting.** A grep of the full
   10,925-character card for `dedup`, `PII`, `personal` and `anonym` returns **zero hits**. The
-  session's line — *"Sangraha, our Indic web crawl, had ZERO deduplication"* — stands unchallenged
+  source material's line — *"Sangraha, our Indic web crawl, had ZERO deduplication"* — stands unchallenged
   by the card. `verified/doi/data-0.parquet` row 0 is plain English, a real instance of the taught
   "the folder lied" bug found in a public corpus.
 - **C is chosen for its false positives as much as its true ones.** One row group carries 98 real
@@ -174,7 +174,7 @@ quietly presenting a plausible number:
   the heuristic features, **off by default**, hatched wherever it is drawn, and its output never
   carries `provenance: "measured"`.
 - **The PII name layer** is a gazetteer, not NER. No NER model has usable Maithili or Dogri support,
-  so importing one would ship hundreds of megabytes of confident garbage. The session's own widget
+  so importing one would ship hundreds of megabytes of confident garbage. The source material's own widget
   says "behaviour shown via a small known list"; we match it. **No name precision or recall is
   published** — there is no gold set, and inventing one is the same sin as a fake classifier.
   Precision for the *structured* layer is published, hand-verified on 40 documents.

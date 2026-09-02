@@ -12,7 +12,8 @@ what happens to every share when it is checked against the data that actually ex
 
 **1 · Supply is summed from named datasets, never quoted from a slot headline.** That changed a
 verdict at once: STEM itemises to **146B** (D4 STEM 49B + peS2o 42B +
-proof-pile-2 55B) where the session's supply check says **250B**, with no dataset carrying
+proof-pile-2 55B) where the source material's supply check says **250B**, with no dataset
+carrying
 the missing 104B. Against a 240B demand that is the difference between fitting in
 one pass and needing repetition.
 
@@ -20,7 +21,7 @@ one pass and needing repetition.
 40B of a 627M pool, which the repetition ceiling
 (`unique × 16.4`) caps at 10.3B — **3.9× short before any correction**. §6's loss mask
 makes it far worse, which is exactly why the mask is *not* the argument: reject the supervision
-estimate entirely and the lane is still impossible. That is the session's own point, not an
+estimate entirely and the lane is still impossible. That is the source material's own point, not an
 objection to it — agentic data *"must largely be built rather than collected"*.
 
 **3 · Long-context is not a lane.** 60B of its 100B is repo-packed code the inventory calls
@@ -32,7 +33,7 @@ budget.
 
 ## 1 · A share for every capability lane
 
-| lane | share | session | Δ | demand | supply | epochs | verdict |
+| lane | share | topic | Δ | demand | supply | epochs | verdict |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | General web | **32%** | 34% | -2% | 640B | 4.69T | 0.14 | surplus |
 | Code | **28%** | 24% | +4% | 560B | 1.1T | 0.51 | covered |
@@ -47,19 +48,19 @@ budget.
 nothing else. The verdict is the same either way, and every correction is listed with its argument
 in `supply.py`.
 
-Shares start from Session 5's own mixture; each departure carries its argument.
+Shares start from Exercise 05's own mixture; each departure carries its argument.
 
 **General web — 32%.** The only lane with real surplus — 4.691T against 640B, 0.14 epochs — so it funds the two points going to Indic and reasoning. It stays largest because breadth of world knowledge is what MMLU and HLE measure, and nothing else supplies it. *Buys* `Humanity's Last Exam`, `MMLU`. *From* DCLM-Baseline, FineWeb-Edu, D2 Web-Diverse, D1 Web-Foundation.
 
 **Code — 28%.** Half the stated target capability, and it absorbs the retired long-context slot — 60B of which was repo-packed code from these same corpora. At 560B against 1.103T it runs at 0.51 epochs, so the increase costs no repetition. *Buys* `SWE-bench Verified`, `SWE-bench Live / Pro`, `LiveCodeBench`, `Aider Polyglot`, `Codeforces`. *From* The Stack v2, D3 Code, CommitPack / CommitPackFT.
 
-**Indic — 18%.** The differentiator, and the reason the project exists. Two points above the session default buys headroom over the 12% floor rather than sitting on it, at 1.33 epochs — inside the band where repetition is near-free. *Buys* `MILU`, `IndicGenBench`. *From* Sangraha (verified), Sangraha (unverified), Sangraha (synthetic), IndicCorpV2, Samanantar, BPCC (parallel).
+**Indic — 18%.** The differentiator, and the reason the project exists. Two points above the source default buys headroom over the 12% floor rather than sitting on it, at 1.33 epochs — inside the band where repetition is near-free. *Buys* `MILU`, `IndicGenBench`. *From* Sangraha (verified), Sangraha (unverified), Sangraha (synthetic), IndicCorpV2, Samanantar, BPCC (parallel).
 
-**STEM / math — 12%.** Unchanged, but on 146B of itemised supply rather than the 250B the session's supply check quotes. That moves it from 0.96 epochs to 1.64 — still fundable, with no margin left to give away. *Buys* `AIME 2024 / 2025`, `FrontierMath`, `GPQA Diamond`, `Humanity's Last Exam`, `MMLU`. *From* D4 STEM, peS2o, proof-pile-2.
+**STEM / math — 12%.** Unchanged, but on 146B of itemised supply rather than the 250B the source's supply check quotes. That moves it from 0.96 epochs to 1.64 — still fundable, with no margin left to give away. *Buys* `AIME 2024 / 2025`, `FrontierMath`, `GPQA Diamond`, `Humanity's Last Exam`, `MMLU`. *From* D4 STEM, peS2o, proof-pile-2.
 
 **Reasoning traces — 8%.** Up two points because this lane reserves a *distribution* of trace lengths, not a quantity. 85.1B is the thinnest real pool in the mixture and 92% of it sits in one V4-lineage dataset, so the band structure has to be bought deliberately. *Buys* `LiveCodeBench`, `Codeforces`, `AIME 2024 / 2025`, `FrontierMath`, `GPQA Diamond`. *From* AON, OpenMathReasoning, OpenThoughts2, NuminaMath, OpenR1-Math.
 
-**Agentic / tool-use — 2%.** Held at the session's floor although supply cannot fund it: 40B against 627M is 3.9x more than infinite repetition could be worth. The share commits to *building* the data, not to holding it — priced in §8. *Buys* `SWE-bench Verified`, `SWE-bench Live / Pro`, `Terminal-Bench`, `tau-bench / tau2-bench`, `BFCL v3`. *From* SWE-Gym, SWE-smith, OpenHands rollouts, ToolBench, ToolACE, Glaive function-calling v2, Nexus / NexusRaven, xLAM / APIGen, Hermes function-calling.
+**Agentic / tool-use — 2%.** Held at the source's floor although supply cannot fund it: 40B against 627M is 3.9x more than infinite repetition could be worth. The share commits to *building* the data, not to holding it — priced in §8. *Buys* `SWE-bench Verified`, `SWE-bench Live / Pro`, `Terminal-Bench`, `tau-bench / tau2-bench`, `BFCL v3`. *From* SWE-Gym, SWE-smith, OpenHands rollouts, ToolBench, ToolACE, Glaive function-calling v2, Nexus / NexusRaven, xLAM / APIGen, Hermes function-calling.
 
 **Long-context — 0%.** Retired as a lane, kept as a capability. 60 of its 100B is repo-packed code already counted under code, so a 6% share would double-count it. It becomes a sequence-length schedule over code, books and web — its own benchmark, no budget. *Buys* `GAIA`, `BrowseComp`, `long-eval`. *From* Repo-packed code (32K+), Book-length corpora (packed).
 
@@ -68,7 +69,7 @@ Shares start from Session 5's own mixture; each departure carries its argument.
 ## 2 · The Indic split, across four provenance tiers
 
 Lane demand 360B. Our tier split against the
-session's default of 40/25/20/15.
+source material's default of 40/25/20/15.
 
 | tier | | share | demand | supply | epochs | to generate | datasets |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
@@ -102,12 +103,13 @@ Tier D is reserved for model-generated novel text, of which the inventory lists 
 
 ### Which languages, and when
 
-The session asks this by name — *"when am I going to train on Sanskrit if ever, or Urdu?"* — and a
+The source material asks this by name — *"when am I going to train on Sanskrit if ever, or Urdu?"*
+— and a
 plan that answers "Indic 18%" has not answered it. The tier split above divides the lane by
 **provenance**; this divides it by **language and time**.
 
 **The gate is measured, not chosen.** Every South Asian language in FLORES-200 was tokenised with
-our own Session 2 vocabulary. A language above 5% `[UNK]` is not scheduled at all,
+our own Exercise 02 vocabulary. A language above 5% `[UNK]` is not scheduled at all,
 because those tokens would train the unknown-token id rather than the language — the wishful
 accounting this document argues against, applied to languages.
 
@@ -115,14 +117,14 @@ accounting this document argues against, applied to languages.
 | --- | --- | ---: | ---: | --- | ---: | --- |
 | **Hindi** | Deva | 0.0% | 2.13 | seed | 42% | the largest verified-native pool in Sangraha and the language MILU weights most |
 | **Telugu** | Telu | 0.2% | 3.77 | seed | 20% | the only non-Devanagari script the vocabulary reads, and exercise 04's Indic corpus is Devanagari and Telugu for exactly that reason |
-| **Maithili** | Deva | 0.0% | 2.56 | seed | 6% | carried from Session 2, where it was up-weighted x3 because it shares Devanagari with Hindi and won almost no merges of its own |
+| **Maithili** | Deva | 0.0% | 2.56 | seed | 6% | carried from Exercise 02, where it was up-weighted x3 for sharing Devanagari with Hindi while winning almost no merges of its own |
 | **Marathi** | Deva | 0.6% | 3.63 | general | 12% | readable at 0.6% and the largest Devanagari language after Hindi |
 | **Nepali** | Deva | 0.0% | 3.36 | general | 7% | readable at 0.0%; arrives free with the script |
 | **Bhojpuri** | Deva | 0.0% | 2.29 | general | 5% | readable at 0.0%; arrives free with the script |
 | **Chhattisgarhi** | Deva | 0.0% | 2.41 | general | 3% | readable at 0.0%; arrives free with the script |
 | **Magahi** | Deva | 0.1% | 2.43 | general | 3% | readable at 0.1%; arrives free with the script |
 | **Kashmiri (Devanagari)** | Deva | 0.0% | 2.94 | general | 1% | readable at 0.0% in Devanagari, while the same language in Perso-Arabic is at 80.4% -- the clearest evidence that the gate is about script, not language |
-| **Sanskrit** | Deva | 0.1% | 4.00 | general | 1% | **the session asks about this one by name.** Readable at 0.1% because it is Devanagari, so it can enter; held to 1% because its supply is thin and its fertility is the worst of the readable set at 4.00 tokens per word |
+| **Sanskrit** | Deva | 0.1% | 4.00 | general | 1% | **the source asks about this one by name.** Readable at 0.1% because it is Devanagari, so it can enter; held to 1% because its supply is thin and its fertility is the worst of the readable set at 4.00 tokens per word |
 
 **Blocked until the vocabulary is retrained** — 14 languages, none scheduled, no share:
 
@@ -159,9 +161,10 @@ asserting.
 
 ## 3 · Agentic, reasoning and long-context, named and pointed at datasets
 
-Every benchmark is derived to a lane through the chain Session 5 §3 sets out —
+Every benchmark is derived to a lane through the chain Exercise 05 §3 sets out —
 **benchmark → loss map → training-data format → lane** — across the 20
-benchmarks the session names. The step that is easy to skip is the second: a benchmark's *token*
+benchmarks the source material names. The step that is easy to skip is the second: a benchmark's
+*token*
 count is not what it costs to train for, its **supervised** token count is.
 
 | capability | share | supply | the constraint |
@@ -263,12 +266,12 @@ by any amount and both look fine.
 | **32K** | long_context | 1.71T | 1.96T | x2 |
 | **32K** | anneal | 1.96T | 2T | x1 |
 
-Three rules from the session govern it, none of them ours and all of them binding on Session 6's
+Three rules from the source material govern it, none of them ours and all of them binding on
+Exercise 06's
 dataloader. **One length per batch** — *"in a batch all examples have the same length"* — so this
 is a schedule of batch shapes, not a filter on documents. **No padding short samples up** —
 *"shorter one is a loss of compute for us"* — they are packed instead. And **the model is trained
-at every length it is claimed to support**: *"when you say 100k context, you have to train on
-100k."*
+at every length it is claimed to support**: a claimed 100k context means training at 100k.
 
 It doubles at every step, checked by `INV-14`. An earlier version jumped 8K straight to 32K, which
 is the same coarse sweep exercise 02 was caught by when 2 → 5 → 6 named the wrong optimum — and it
@@ -354,7 +357,7 @@ All four solve one worked problem — *How many integers from 1 to 750 are divis
 | **long** | High | 213 | 20% | 32B | derives, then checks the method on a case small enough to enumerate |
 | **ultra** | Ultra | 358 | 10% | 16B | interrogates the statement itself, finds the ambiguity that changes the answer, and verifies by a second independent route |
 
-Lengths are **counted with our own Session 2 vocabulary**, not estimated; a band boundary quoted
+Lengths are **counted with our own Exercise 02 vocabulary**, not estimated; a band boundary quoted
 without a named tokenizer is not a measurement. The ultra band earns its length rather than padding
 to it: its contribution is noticing that the range is ambiguous at its upper end and that the
 ambiguity changes the answer — the bound is itself divisible, so the inclusive reading gives
@@ -446,7 +449,8 @@ available is comparative and local.
 | **indic-D** | 54B | the synthetic Indic tier has no supply at all: the inventory's one row named 'synthetic' is tagged as translated and is counted in tier C. Tier D is the long-tail language coverage no native corpus provides, so it is generated or the tier is dropped |
 | **agentic** | 38.9B | 627M of real trajectories cap at 1.1B under infinite repetition, against a 40B share. The existing pool is committed whole to the anneal reserve (627M), so the pre-training share is a commitment to synthesise trajectories and verify them with executable checks |
 
-Naming these is the point. A share whose gap is undeclared is the *wishful accounting* the session
+Naming these is the point. A share whose gap is undeclared is the *wishful accounting* the source
+material
 exists to prevent; a share whose gap is priced is a commitment.
 
 ---
@@ -461,7 +465,7 @@ repetition.
 | --- | --- | ---: | ---: | --- |
 | 1 | Agentic / tool-use | 588.88 | 38.9B | nothing to clean — this lane is generated, not collected. The bill is in §8 |
 | 2 | Reasoning traces | 1.88 | — | the thinnest real pool, and 92% of it is one V4-lineage set; new sources here reduce a single point of failure as much as they add tokens |
-| 3 | STEM / math | 1.64 | — | the 104B the session's supply check claims and no dataset carries. Either find it or the lane runs at 1.64 epochs |
+| 3 | STEM / math | 1.64 | — | the 104B the source's supply check claims and no dataset carries. Either find it or the lane runs at 1.64 epochs |
 | 4 | Indic | 1.33 | — | verified-native text in the ten scheduled languages, which is what tier A is short of; nothing in a blocked script until the vocabulary is retrained |
 | 5 | Code | 0.51 | — | no action — 0.51 epochs with 1.1T behind it |
 | 6 | General web | 0.14 | — | no action — 0.14 epochs with 4.69T behind it |
@@ -471,7 +475,7 @@ volume; §8 prices it as generation. And the Indic shortfall is bounded by the v
 is bounded by the crawler: fourteen languages are unreachable until retokenisation, so cleaning
 Bengali or Tamil today produces tokens the model would read as `[UNK]`.
 
-**The gate this feeds.** Session 1 asks for a billion clean tokens with documented provenance per
+**The gate this feeds.** Exercise 01 asks for a billion clean tokens with documented provenance per
 shard before a mixture is trusted. `accumulate.py` is the store that reaches it: append-only
 shards, a persistent signature index so shard N is deduplicated against every earlier one, and
 held-out splits and the anneal reserve both flagged at write time.
@@ -497,7 +501,8 @@ Each is paired with a twin that proves it *fails* when broken, and
 
 ```bash
 uv run python -m mixture                 # rebuild this file from measured supply
-uv run python -m mixture.inventory       # lane supplies, itemised vs the session's headlines
+uv run python -m mixture.inventory       # lane supplies, itemised vs the source material's
+headlines
 uv run python -m mixture.checks          # the invariants
 uv run pytest src/exercises/05-datamixtures-and-curriculum
 uv run pytest src/exercises/05-datamixtures-and-curriculum -m integration   # mutation testing

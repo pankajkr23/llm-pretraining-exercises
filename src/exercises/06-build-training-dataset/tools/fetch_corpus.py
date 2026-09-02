@@ -1,13 +1,13 @@
 """Fetch exercise 06's training corpus, sized in tokens against the run.
 
-**Why this exists rather than reusing session 5's fetcher.** Two reasons, both hard. `AGENTS.md`
-forbids overwriting anything under `src/exercises/*/tools/`; and session 5 pins its lane set in a
+**Why this exists rather than reusing exercise 05's fetcher.** Two reasons, both hard. `AGENTS.md`
+forbids overwriting anything under `src/exercises/*/tools/`; and exercise 05 pins its lane set in a
 test while its committed `results/step0.json` renders from that exact corpus, so extending it in
 place would trip the rule and invalidate published evidence in the same edit. The *pattern* is
 copied deliberately — the `Source` shape, the fetch-time licence gate, the retry policy — and the
 file is new.
 
-**The bug this fixes.** Session 5's fetcher stops on **rows**. Bytes per token under the frozen
+**The bug this fixes.** Exercise 05's fetcher stops on **rows**. Bytes per token under the frozen
 `s02-bpe-10000` vocabulary ranges from **1.98 (code) to 8.81 (indic)** — a 4.4× spread — so a
 row-counting fetcher lands nowhere near the mixture it is trying to reproduce. The corpus on disk
 before this ran held 2,185,575 tokens against a run consuming 10,485,760: **30.2 epochs of web
@@ -117,7 +117,7 @@ class Source:
 class LocalSource:
     """A lane already on disk, fetched and licence-checked by another exercise.
 
-    Reused rather than re-downloaded: session 5 fetched it under the same rule, and re-fetching
+    Reused rather than re-downloaded: exercise 05 fetched it under the same rule, and re-fetching
     would spend the public API's goodwill to obtain a byte-identical file.
     """
 
@@ -222,7 +222,7 @@ SOURCES: tuple[Source, ...] = (
         why=(
             "peS2o is odc-by and ungated but has no dataset viewer at all — script-based, no "
             "parquet export, so `/rows` returns 404 and it cannot be sampled through the public "
-            "API. StackMathQA is CC-BY-4.0 and session 5 already vetted it as a STEM stand-in."
+            "API. StackMathQA is CC-BY-4.0 and exercise 05 already vetted it as a STEM stand-in."
         ),
     ),
 )
@@ -233,7 +233,7 @@ LOCAL_SOURCES: tuple[LocalSource, ...] = (
         lane="agentic",
         path=PROXY_DIR / "agentic.txt",
         licence="apache-2.0",
-        dataset="session 5 proxy corpus",
+        dataset="exercise 05 proxy corpus",
         language="en",
         provenance_tier="C",
         stands_in_for="Agentic traces with tool observations",

@@ -45,7 +45,8 @@ def test_the_agentic_loss_map_masks_more_than_it_supervises():
 def test_no_benchmark_supervises_a_tool_observation():
     """Training on a tool return teaches the model to invent tool results.
 
-    The single most important rule in the session's loss map, checked across every entry rather
+    The single most important rule in the source material's loss map, checked across every entry
+    rather
     than trusted to have been applied consistently by hand.
     """
     forbidden = ("tool return", "tool output", "observation", "shell output", "page content")
@@ -71,7 +72,7 @@ def test_the_stage_schedule_integrates_to_the_headline_mixture():
 
 
 def test_web_falls_and_code_climbs_across_the_run():
-    """The shape Session 5 records from V4: web 70 -> 18, code 13 -> 35, STEM 7 -> 39."""
+    """The shape Exercise 05 records from V4: web 70 -> 18, code 13 -> 35, STEM 7 -> 39."""
     first, last = curriculum.STAGES[0], curriculum.STAGES[-1]
     assert first.shares["web"] > last.shares["web"]
     assert first.shares["code"] < last.shares["code"]
@@ -232,7 +233,7 @@ def test_each_arm_differs_from_the_baseline_in_the_way_it_says_it_does():
 
 
 def test_arm_b_collapses_the_scarce_capabilities():
-    """The session's crawl-what-is-cheap preset, which is the arm the whole spec is measured
+    """The source material's crawl-what-is-cheap preset, which is the arm the whole spec is measured
     against — if composition does not beat it, every argument here is decoration.
     """
     naive = {arm.key: arm for arm in proxy.arms()}["B"]
@@ -446,7 +447,7 @@ def test_the_bands_overlap_rather_than_switching_at_a_line():
 
 
 def test_the_sequence_ladder_doubles_at_every_step():
-    """V4 went 4K then 8K, and the session's answer to going further was 16K.
+    """V4 went 4K then 8K, and the source material's answer to going further was 16K.
 
     An earlier version of this ladder jumped 8K to 32K. Skipping a rung is the same coarse sweep
     exercise 02 was caught by at 2 -> 5 -> 6, and it hides where generalisation stops.
@@ -468,7 +469,7 @@ def test_the_ladder_covers_the_whole_run_without_gaps():
 
 
 def test_the_packing_rules_the_notes_state_are_recorded():
-    """All three are constraints on Session 6's dataloader, not preferences of ours."""
+    """All three are constraints on Exercise 06's dataloader, not preferences of ours."""
     rules = " ".join(curriculum.PACKING_RULES).lower()
     assert "one sequence length per batch" in rules
     assert "never padded" in rules
@@ -476,7 +477,7 @@ def test_the_packing_rules_the_notes_state_are_recorded():
 
 
 def test_each_stage_agrees_with_the_ladder_it_sits_on():
-    """A stage that advertised one length while the ladder ran another would mislead Session 6."""
+    """A stage that advertised one length while the ladder ran another would mislead Exercise 06."""
     by_stage: dict[str, list[int]] = {}
     for length, stage in curriculum.SEQUENCE_LADDER:
         by_stage.setdefault(stage, []).append(length)

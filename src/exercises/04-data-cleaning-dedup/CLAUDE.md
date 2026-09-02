@@ -9,7 +9,7 @@ not part of the published work.
 
 - **Count tokens; never estimate them.** Fertility is a property of a *tokenizer*, not of a corpus:
   Manipuri swings 7.6× across the five tokenizers exercise 03 measured. `tokens.py` counts with our
-  own Session 2 vocabulary, and any figure without a named tokenizer is not a measurement.
+  own Exercise 02 vocabulary, and any figure without a named tokenizer is not a measurement.
 
 - **A count that is mostly `[UNK]` is not a count.** `TokenCount.usable` gates publication at 5%
   `[UNK]`. Above it, `as_figure()` returns `value=None` with provenance `unknown` and the reason in
@@ -67,7 +67,7 @@ stray letter. If you touch either side of a duplicated rule, this test is the re
 
 `dedup.py` holds a **full shingle set for every document** at once, and only ever sees one run's
 documents — so shard N is never compared with shard N-1. Both are fine here and neither reaches
-Session 1's one-billion-token gate.
+Exercise 01's one-billion-token gate.
 
 Measured on real prose: a 500-word document's shingle set is **73×** the size of its MinHash
 signature, and the gap widens with length (1,199× at 10,000 words). This exercise's full run holds

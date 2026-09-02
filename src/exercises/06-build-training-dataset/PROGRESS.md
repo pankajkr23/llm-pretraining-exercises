@@ -1,10 +1,10 @@
-# PROGRESS — Session 6
+# PROGRESS — Exercise 06
 
 A running log of what was built, what was measured, what changed and what is still open. Written so
 the work can be picked up cold. Newest entries at the top of each section.
 
 **Where the work lives:** on `main`. This file does not name branches or in-flight PR numbers —
-that sentence went stale twice in Session 5, because `git log` and `gh pr list` already answer it
+that sentence went stale twice in Exercise 05, because `git log` and `gh pr list` already answer it
 correctly and a markdown file cannot.
 
 **Deliverable:** the generated `submission_artifacts/` bundle — `run.log`, `evidence.json`,
@@ -29,7 +29,7 @@ replay, fork, OPUS, the evidence bundle and the auditor.
 
 `run_demo.py` regenerates the bundle at **9 of 9 requirements**; `verify.py` re-derives every claim
 from it and passes **40 of 40**. The corpus is **10,649,549 training tokens at 1.01 epochs**, the
-session notebook covers all eight stages, and the `web/` explainer is deployed.
+topic notebook covers all eight stages, and the `web/` explainer is deployed.
 
 **Nothing in the assignment is outstanding.** What remains is listed under O7 and O8 below, and both
 are deferred by decision rather than pending.
@@ -286,9 +286,9 @@ reported success, leaving half a patch applied in `verify.py`.
 ### 2026-08-25 (milestone 3 — the corpus, measured)
 
 **The problem, restated with the number.** The run consumes **10,485,760** token positions. The
-corpus on disk held **2,185,575** — 4.8 epochs short, and shaped to session 5's weights, **30.2
+corpus on disk held **2,185,575** — 4.8 epochs short, and shaped to exercise 05's weights, **30.2
 epochs of web against 0.41 of agentic**. Mixture compliance and the protected-floor requirement
-would have been measured on thirty re-reads of the same text: the H3 failure session 5 already paid
+would have been measured on thirty re-reads of the same text: the H3 failure exercise 05 already paid
 for once.
 
 **Fetched, licence-verified at download time, sized in tokens:**
@@ -300,7 +300,7 @@ for once.
 | indic | ai4bharat/sangraha (hin·tel·mai) | cc-by-4.0 | 2,283 | 1,858,440 | 10 | 0.081% |
 | stem | math-ai/StackMathQA | cc-by-4.0 | 2,223 | 1,259,198 | 7 | 0.196% |
 | reasoning | open-r1/OpenR1-Math-220k | apache-2.0 | 1,443 | 840,510 | 5 | 0.086% |
-| agentic | session 5 proxy | apache-2.0 | 6,872 | 306,140 | 2 | 0.007% |
+| agentic | exercise 05 proxy | apache-2.0 | 6,872 | 306,140 | 2 | 0.007% |
 | **total** | | | **9,233** | **10,649,549** | **57** | |
 
 **57 shards, all hash-verified on open, all 57 admitted by the gate. 1.01 epochs of supply.**
@@ -442,7 +442,7 @@ Full reasoning in `DECISIONS.md`. Summary:
 | --- | --- | --- |
 | D1 | Replay reads the ledger, never recomputes | nothing plausible |
 | D2 | The data system is torch-free | a requirement that the data path use tensors — there is none |
-| D3 | Sentinels sit outside the tokenizer's vocabulary | retraining the tokenizer, which is a Session 2 decision |
+| D3 | Sentinels sit outside the tokenizer's vocabulary | retraining the tokenizer, which is a Exercise 02 decision |
 | D4 | `submission_artifacts/` tracked, `artifacts/` not | a grader requiring the checkpoints themselves; the assignment regenerates them |
 | D5 | `defer` and `floor_override` are ours | a course source that defines them; none found |
 | D6 | OPUS is ported, not installed | — |

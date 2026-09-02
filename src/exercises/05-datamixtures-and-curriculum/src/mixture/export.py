@@ -45,7 +45,7 @@ def _mixture_table(config: Config) -> str:
     """The headline mixture, priced against supply."""
     verdicts = supply.evaluate(lanes.shares(), config)
     rows = [
-        "| lane | share | session | Δ | demand | supply | epochs | verdict |",
+        "| lane | share | topic | Δ | demand | supply | epochs | verdict |",
         "| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
     ]
     for lane in lanes.LANES:
@@ -53,12 +53,12 @@ def _mixture_table(config: Config) -> str:
         delta = f"{lane.delta:+.0%}" if lane.delta else "—"
         if lane.schedule_only:
             rows.append(
-                f"| {lane.name} | **0%** | {lane.session_share:.0%} | {delta} | — | — | — | "
+                f"| {lane.name} | **0%** | {lane.baseline_share:.0%} | {delta} | — | — | — | "
                 "schedule, not a lane |"
             )
             continue
         rows.append(
-            f"| {lane.name} | **{lane.share:.0%}** | {lane.session_share:.0%} | {delta} | "
+            f"| {lane.name} | **{lane.share:.0%}** | {lane.baseline_share:.0%} | {delta} | "
             f"{humanise(verdict.demand)} | {humanise(verdict.supply)} | "
             f"{verdict.epochs:.2f} | {verdict.verdict} |"
         )
@@ -534,7 +534,7 @@ def _followups() -> str:
         sections.append(
             "### E2 · Does the warmup band at a seam do anything?\n\n"
             "Every stage boundary in the curriculum carries a warmup band, scheduled on the "
-            "strength of one number from the session: V4 spiked its gradient norm ~150× at a Hindi "
+            "strength of one number from the source: V4 spiked its gradient norm ~150× at a Hindi "
             "seam. This specification says plainly that the proxy cannot reproduce that spike — "
             "wrong scale, no frozen embeddings — but *can* test the weaker claim that a seam with "
             "a band spikes less than the same seam without one. That test was written down and "
@@ -693,7 +693,7 @@ def _clean_next_table(config: Config) -> str:
         "agentic": "nothing to clean — this lane is generated, not collected. The bill is in §8",
         "reasoning": "the thinnest real pool, and 92% of it is one V4-lineage set; new sources "
         "here reduce a single point of failure as much as they add tokens",
-        "stem": "the 104B the session's supply check claims and no dataset carries. Either find "
+        "stem": "the 104B the source's supply check claims and no dataset carries. Either find "
         "it or the lane runs at 1.64 epochs",
         "indic": "verified-native text in the ten scheduled languages, which is what tier A is "
         "short of; nothing in a blocked script until the vocabulary is retrained",
@@ -765,7 +765,8 @@ what happens to every share when it is checked against the data that actually ex
 
 **1 · Supply is summed from named datasets, never quoted from a slot headline.** That changed a
 verdict at once: STEM itemises to **{humanise(stem.counted_tokens)}** (D4 STEM 49B + peS2o 42B +
-proof-pile-2 55B) where the session's supply check says **{stem_quoted}**, with no dataset carrying
+proof-pile-2 55B) where the source material's supply check says **{stem_quoted}**, with no dataset
+carrying
 the missing {stem_gap}. Against a {stem_demand} demand that is the difference between fitting in
 one pass and needing repetition.
 
@@ -773,7 +774,7 @@ one pass and needing repetition.
 {humanise(agentic.demand)} of a {humanise(agentic.raw_supply)} pool, which the repetition ceiling
 (`unique × 16.4`) caps at {agentic_ceiling} — **3.9× short before any correction**. §6's loss mask
 makes it far worse, which is exactly why the mask is *not* the argument: reject the supervision
-estimate entirely and the lane is still impossible. That is the session's own point, not an
+estimate entirely and the lane is still impossible. That is the source material's own point, not an
 objection to it — agentic data *"must largely be built rather than collected"*.
 
 **3 · Long-context is not a lane.** 60B of its 100B is repo-packed code the inventory calls
@@ -792,7 +793,7 @@ budget.
 nothing else. The verdict is the same either way, and every correction is listed with its argument
 in `supply.py`.
 
-Shares start from Session 5's own mixture; each departure carries its argument.
+Shares start from Exercise 05's own mixture; each departure carries its argument.
 
 {_lane_arguments()}
 
@@ -801,7 +802,7 @@ Shares start from Session 5's own mixture; each departure carries its argument.
 ## 2 · The Indic split, across four provenance tiers
 
 Lane demand {indic_demand}. Our tier split against the
-session's default of 40/25/20/15.
+source material's default of 40/25/20/15.
 
 {_indic_table(config)}
 
@@ -815,12 +816,13 @@ from exercise 03, not a measured limit, and is labelled as such wherever it is u
 
 ### Which languages, and when
 
-The session asks this by name — *"when am I going to train on Sanskrit if ever, or Urdu?"* — and a
+The source material asks this by name — *"when am I going to train on Sanskrit if ever, or Urdu?"*
+— and a
 plan that answers "Indic 18%" has not answered it. The tier split above divides the lane by
 **provenance**; this divides it by **language and time**.
 
 **The gate is measured, not chosen.** Every South Asian language in FLORES-200 was tokenised with
-our own Session 2 vocabulary. A language above {unk_gate:.0%} `[UNK]` is not scheduled at all,
+our own Exercise 02 vocabulary. A language above {unk_gate:.0%} `[UNK]` is not scheduled at all,
 because those tokens would train the unknown-token id rather than the language — the wishful
 accounting this document argues against, applied to languages.
 
@@ -846,9 +848,10 @@ asserting.
 
 ## 3 · Agentic, reasoning and long-context, named and pointed at datasets
 
-Every benchmark is derived to a lane through the chain Session 5 §3 sets out —
+Every benchmark is derived to a lane through the chain Exercise 05 §3 sets out —
 **benchmark → loss map → training-data format → lane** — across the {len(benchmarks.BENCHMARKS)}
-benchmarks the session names. The step that is easy to skip is the second: a benchmark's *token*
+benchmarks the source material names. The step that is easy to skip is the second: a benchmark's
+*token*
 count is not what it costs to train for, its **supervised** token count is.
 
 {_capability_table(config)}
@@ -906,12 +909,12 @@ by any amount and both look fine.
 
 {_sequence_table(config)}
 
-Three rules from the session govern it, none of them ours and all of them binding on Session 6's
+Three rules from the source material govern it, none of them ours and all of them binding on
+Exercise 06's
 dataloader. **One length per batch** — *"in a batch all examples have the same length"* — so this
 is a schedule of batch shapes, not a filter on documents. **No padding short samples up** —
 *"shorter one is a loss of compute for us"* — they are packed instead. And **the model is trained
-at every length it is claimed to support**: *"when you say 100k context, you have to train on
-100k."*
+at every length it is claimed to support**: a claimed 100k context means training at 100k.
 
 It doubles at every step, checked by `INV-14`. An earlier version jumped 8K straight to 32K, which
 is the same coarse sweep exercise 02 was caught by when 2 → 5 → 6 named the wrong optimum — and it
@@ -946,7 +949,7 @@ All four solve one worked problem — *{curriculum.REASONING_PROBLEM}* — whose
 
 {_reasoning_table(config)}
 
-Lengths are **counted with our own Session 2 vocabulary**, not estimated; a band boundary quoted
+Lengths are **counted with our own Exercise 02 vocabulary**, not estimated; a band boundary quoted
 without a named tokenizer is not a measurement. The ultra band earns its length rather than padding
 to it: its contribution is noticing that the range is ambiguous at its upper end and that the
 ambiguity changes the answer — the bound is itself divisible, so the inclusive reading gives
@@ -1004,7 +1007,8 @@ available is comparative and local.
 | --- | ---: | --- |
 {bill_rows}
 
-Naming these is the point. A share whose gap is undeclared is the *wishful accounting* the session
+Naming these is the point. A share whose gap is undeclared is the *wishful accounting* the source
+material
 exists to prevent; a share whose gap is priced is a commitment.
 
 ---
@@ -1022,7 +1026,7 @@ volume; §8 prices it as generation. And the Indic shortfall is bounded by the v
 is bounded by the crawler: fourteen languages are unreachable until retokenisation, so cleaning
 Bengali or Tamil today produces tokens the model would read as `[UNK]`.
 
-**The gate this feeds.** Session 1 asks for a billion clean tokens with documented provenance per
+**The gate this feeds.** Exercise 01 asks for a billion clean tokens with documented provenance per
 shard before a mixture is trusted. `accumulate.py` is the store that reaches it: append-only
 shards, a persistent signature index so shard N is deduplicated against every earlier one, and
 held-out splits and the anneal reserve both flagged at write time.
@@ -1048,7 +1052,8 @@ Each is paired with a twin that proves it *fails* when broken, and
 
 ```bash
 uv run python -m mixture                 # rebuild this file from measured supply
-uv run python -m mixture.inventory       # lane supplies, itemised vs the session's headlines
+uv run python -m mixture.inventory       # lane supplies, itemised vs the source material's
+headlines
 uv run python -m mixture.checks          # the invariants
 uv run pytest src/exercises/05-datamixtures-and-curriculum
 uv run pytest src/exercises/05-datamixtures-and-curriculum -m integration   # mutation testing
@@ -1276,7 +1281,8 @@ def _pipeline_summary(config: Config) -> str:
 each, and a curriculum that decides the order the model meets them in.
 
 **The method is one sentence.** Every share is composed backward from a benchmark the model has to
-win, then checked against the data that actually exists — and three of the session's own numbers
+win, then checked against the data that actually exists — and three of the source material's own
+numbers
 did not survive that check.
 
 {table}
@@ -1384,7 +1390,7 @@ data that actually exists.**
 > tokens · counts denominated in `{config.tokenizer_id}`.
 
 Anyone can write seven percentages that add to 100. The work is answering one question for each of
-them — **out of what?** Do that honestly and three of the session's own numbers stop being
+them — **out of what?** Do that honestly and three of the source material's own numbers stop being
 affordable: one lane asks for more than any amount of re-reading could ever be worth, one is
 missing a third of the supply it was credited with, and one turns out to be counting the same text
 twice.
@@ -1422,7 +1428,8 @@ caps any pool's worth at **unique × 16.4**, which is what separates *expensive*
 
 ### Why each share is the number it is
 
-Every share below is a change from, or a deliberate hold at, the session's own default — and each
+Every share below is a change from, or a deliberate hold at, the source material's own default —
+and each
 one is argued from supply rather than preference. `Buys` names the benchmark the lane exists to
 move; `From` names the datasets that fund it.
 
@@ -1431,7 +1438,8 @@ move; `From` names the datasets that fund it.
 **Three findings, in the order they hurt.**
 
 **1 · STEM is short by {stem_gap}.** Itemised, the lane holds {humanise(stem.counted_tokens)};
-the session's own supply check says {stem_quoted}. No dataset carries the difference. Against a
+the source material's own supply check says {stem_quoted}. No dataset carries the difference.
+Against a
 {humanise(lanes.get("stem").share * config.run_tokens)} demand, that is the gap between fitting in
 one pass and needing repetition.
 
@@ -1439,7 +1447,8 @@ one pass and needing repetition.
 asks {humanise(agentic.demand)} of a {humanise(agentic.raw_supply)} pool. The ceiling caps that
 pool's lifetime worth at {agentic_ceiling}, so it is **3.9× short before a single correction is
 applied**. Reject our supervision estimate entirely and it is still impossible. The share stays,
-because the session fixes it and because it is a commitment to *build*: the gap is priced as a
+because the source material fixes it and because it is a commitment to *build*: the gap is priced
+as a
 generation bill rather than quietly reduced.
 
 **3 · Long-context was double-counting.** Most of its supply is repo-packed code and packed books
@@ -1526,7 +1535,7 @@ excerpts; a test now checks every such claim against its source.
 
 {_reasoning_table(config)}
 
-Token counts are measured with the Session 2 vocabulary, not estimated.
+Token counts are measured with the Exercise 02 vocabulary, not estimated.
 
 ---
 
@@ -1566,7 +1575,8 @@ fail is not a guard.
 
 ```bash
 uv run python -m mixture              # rebuild SPEC.md, TOKENIZER.md, EXPERIMENTS.md, README.md
-uv run python -m mixture.inventory    # lane supplies, itemised against the session's headlines
+uv run python -m mixture.inventory    # lane supplies, itemised against the source material's
+headlines
 uv run python -m mixture.checks       # the invariants
 uv run python -m mixture.bench        # measure this machine's throughput
 uv run python -m mixture.experiment   # run the four arms
@@ -1700,7 +1710,7 @@ def _method_experiments() -> str:
             "`mixture.seam`",
             SEAM_RESULTS,
             "The curriculum puts a warmup band at every stage boundary on the strength of one "
-            "number from the session — V4 spiked its gradient norm ~150x at a Hindi seam. This "
+            "number from the source — V4 spiked its gradient norm ~150x at a Hindi seam. This "
             "specification promised the weaker test it *could* run, and had not run it.",
             "Two identical runs — same seeds, same steps, same mixtures either side — where one "
             "changes mixture between one step and the next and the other blends across a band. "
@@ -1838,7 +1848,7 @@ def render_method(config: Config | None = None) -> str:
             f"| model | {model['layers']}-layer transformer, {model['width']} wide, "
             f"{model['heads']} heads, **~{params} parameters** |",
             f"| context | {model['context']} tokens |",
-            f"| vocabulary | {model['vocab_size']:,} tokens, the Session 2 tokenizer |",
+            f"| vocabulary | {model['vocab_size']:,} tokens, the Exercise 02 tokenizer |",
             f"| schedule | {steps} steps x batch {batch} = **{tokens_seen:,} tokens seen per "
             "run** |",
             f"| repeats | {seeds} seeds per arm |",
@@ -2096,10 +2106,10 @@ re-counted by exercise 04, never annotated.
 
 ## The decision
 
-**Session 2's 10,000-token vocabulary stays as the measuring instrument. It is not V5's
+**Exercise 02's 10,000-token vocabulary stays as the measuring instrument. It is not V5's
 vocabulary.**
 
-Two measurements decide that, and neither is a criticism of the Session 2 work — which reproduced
+Two measurements decide that, and neither is a criticism of the Exercise 02 work — which reproduced
 the reference recipe exactly, then beat it on both of the numbers it reports. What follows is about
 **scope**: a vocabulary built to balance four languages is being asked to carry twenty-nine.
 
@@ -2120,7 +2130,7 @@ IndicGenBench covers **29 languages across 13 scripts**. Our vocabulary reads a 
 ### 2 · Its fertility is an order of magnitude off the frontier on Indic
 
 Tokens per faithful unit; **lower is better**, best in each row in bold. `ours` is **this
-project's own Session 2 submission** — the 10,000-token vocabulary at
+project's own Exercise 02 submission** — the 10,000-token vocabulary at
 `02-tokenization/web/tokenizer.json`, read in place — not the reference `tokenizer.json` that ships
 with the assignment solution.
 
@@ -2137,9 +2147,9 @@ Two things a reviewer should take from this table, both of which cut against eas
   **{table["rows"]["mni"]["hf/sarvamai/sarvam-105b"]:.2f}**, roughly a third of ours and an eighth
   of `o200k_base`.
 
-### 3 · Session 2 optimised a different objective, and optimised it well
+### 3 · Exercise 02 optimised a different objective, and optimised it well
 
-Session 2's score is `1000 / (X_max − X_min)`: it rewards *evenness* across four named languages.
+Exercise 02's score is `1000 / (X_max − X_min)`: it rewards *evenness* across four named languages.
 V5 needs *low* fertility across 29. Those are different objectives, and the second is not a
 correction of the first — it is a different question asked at a different scope.
 
@@ -2158,7 +2168,7 @@ against 191,266 — having first reproduced that reference exactly at 6502.56, o
 languages its recipe uses. And of every configuration in that table scoring above the reference,
 the submission is the one that uses the fewest tokens: it did not buy its score.
 
-So nothing here is a reason to distrust the Session 2 work. The reasons to train a new vocabulary
+So nothing here is a reason to distrust the Exercise 02 work. The reasons to train a new vocabulary
 for V5 are the two above: three scripts it cannot read, and a vocabulary an order of magnitude too
 small for 13 scripts.
 
@@ -2594,7 +2604,7 @@ def web_bundle(config: Config | None = None) -> dict:
                 "key": lane.key,
                 "name": lane.name,
                 "share": lane.share,
-                "session_share": lane.session_share,
+                "baseline_share": lane.baseline_share,
                 "because": lane.because,
                 "schedule_only": lane.schedule_only,
                 "raw_supply": verdicts[lane.key].raw_supply,

@@ -110,7 +110,7 @@ const ref = (label, anchor) => {
 
 /* ------------------------------------------------------------------ 1 · run the ledger (Diff) */
 
-/* The claim is the session's thesis, stated by the instructor as: "I will not run the code —
+/* The claim is the source material's thesis, stated by the instructor as: "I will not run the code —
  * because I know some nondeterminism can creep in. I'm going to run the ledger. I will not
  * calculate it."
  *
@@ -713,7 +713,7 @@ function chapterProblem() {
     para(
       'That is the motivation. The deliverable is therefore not a data loader but a ',
       term('ledger'),
-      ' — an append-only record written as training happens — so the run can be interrogated afterwards. Session 5 produced a ',
+      ' — an append-only record written as training happens — so the run can be interrogated afterwards. Exercise 05 produced a ',
       $('i', '', 'recipe'),
       ': how much of each kind of data, in what order. This builds the machine that executes it and can prove it did.',
     ),
@@ -918,7 +918,7 @@ function chapterNegatives(data) {
         ],
         [
           b('A masking feature was documented as a behaviour of the run, and had zero callers. '),
-          'It was implemented, tested, and taught in the session notebook, while the pipeline built every microbatch with the default mask. The tests proved the function worked; only a caller proves the system uses it. It is now wired end to end.',
+          'It was implemented, tested, and taught in the topic notebook, while the pipeline built every microbatch with the default mask. The tests proved the function worked; only a caller proves the system uses it. It is now wired end to end.',
         ],
         [
           b('A number in the telemetry was arithmetic wearing a statistic’s clothes. '),

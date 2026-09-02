@@ -67,7 +67,7 @@ def test_every_source_belongs_to_a_funded_lane(fetcher) -> None:
 def test_every_funded_lane_has_at_least_one_source(fetcher) -> None:
     """**The failure mode `AGENTS.md` names: a missing input reads as passing.**
 
-    Session 5's corpus silently falls back to three lanes when `data/proxy/` is absent, and a
+    Exercise 05's corpus silently falls back to three lanes when `data/proxy/` is absent, and a
     fresh clone reproduces a three-lane corpus with no error at all. A lane with no source here
     would fetch zero tokens and report a mixture computed over the lanes that happened to work.
     """
@@ -79,7 +79,7 @@ def test_every_funded_lane_has_at_least_one_source(fetcher) -> None:
 def test_the_retired_lane_has_no_source(fetcher) -> None:
     """`long_context` is a schedule over the other lanes, not a corpus.
 
-    Giving it text would invent a lane session 5 retired, and double-count code.
+    Giving it text would invent a lane exercise 05 retired, and double-count code.
     """
     lanes = {s.lane for s in fetcher.SOURCES} | {s.lane for s in fetcher.LOCAL_SOURCES}
     assert "long_context" not in lanes

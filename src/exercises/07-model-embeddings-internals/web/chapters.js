@@ -185,7 +185,7 @@ function chapterProblem(M) {
        costs <b>${int(a.vocab_size)} × ${a.d_model}</b> numbers. Kronecker embeddings replace the
        first table with a rule that works each row out from the word’s spelling. The second is left
        alone.`,
-      `The session’s brief asks whether that second one can go too, and states the prize:`,
+      `The source material’s brief asks whether that second one can go too, and states the prize:`,
     ],
     { short: 'What was asked', sub: 'the brief, quoted' }
   );
@@ -195,7 +195,7 @@ function chapterProblem(M) {
     `“Kronecker is forward deterministic (same word will always give same embedding). How do I make
      a reverse of this (same embedding gives the same Kronecker)? <b>If we can do this, then we can
      get rid of the final head as well!</b> Then we can have a vocab of 1M as well without any
-     issues!”<cite>Session 7 assignment, problem 5 of 5</cite>`;
+     issues!”<cite>Exercise 07 assignment, problem 5 of 5</cite>`;
   s.append(q);
 
   s.append(

@@ -1,4 +1,4 @@
-# Decisions — Session 6
+# Decisions — Exercise 06
 
 What was chosen, what was inherited, and what was invented. Each entry says what would overturn it.
 
@@ -48,7 +48,7 @@ none of it. Exercise 05 already proved the pattern works.
 
 **Decided.** `EOS = 10000`, `PAD = 10001`, model vocabulary `10_002`. No BOS.
 
-**Why.** The frozen Session 2 tokenizer has **no EOS, no BOS and no PAD** — a contiguous `0..9999`
+**Why.** The frozen Exercise 02 tokenizer has **no EOS, no BOS and no PAD** — a contiguous `0..9999`
 with no post-processor. Packing needs a document terminator and padding needs a meaningless token,
 and neither exists. Adding them to the file would change its bytes and **void the tokenizer hash that
 every shard manifest pins**, silently invalidating the provenance of every shard ever built with it.
@@ -57,7 +57,7 @@ So they are assigned out of vocabulary and materialised into the shard at tokeni
 No BOS because it creates an ambiguous "which document owns position 0" case once documents are
 packed, and nothing here needs one.
 
-**Would overturn it.** Retraining the tokenizer with real special tokens — which is a Session 2
+**Would overturn it.** Retraining the tokenizer with real special tokens — which is a Exercise 02
 decision, not ours, and would invalidate every existing count.
 
 ---

@@ -1,10 +1,10 @@
 """The order the model learns in: stages, difficulty bands, reasoning-length bands.
 
 Assignment item 6, plus the stage schedule the mixture is actually delivered by. A mixture decides
-*how much*; a curriculum decides *when*, and Session 5 §9 is clear that the second matters almost
+*how much*; a curriculum decides *when*, and Exercise 05 §9 is clear that the second matters almost
 as much as the first.
 
-**The headline mixture is the run's average, not a constant.** Session 5 makes this concrete with
+**The headline mixture is the run's average, not a constant.** Exercise 05 makes this concrete with
 V4's own numbers — general web fell from roughly 70% toward 18%, code climbed 13% to 35%, science
 and mathematics 7% to 39%, with a protected channel pinned at 8% throughout. So a spec that states
 one set of shares and one set of stages owes an arithmetic obligation: **the stages, weighted by
@@ -21,7 +21,7 @@ Three things are declared honestly rather than implied:
 - **Difficulty bands are assigned from the source, not from a readability score**, and that is a
   measured decision rather than a preference: Flesch-Kincaid is not monotone over these bands' own
   examples, and inverts on real documents. See `READABILITY_REJECTED`.
-- **The reasoning-band token counts are counted, not estimated** — with our own Session 2
+- **The reasoning-band token counts are counted, not estimated** — with our own Exercise 02
   vocabulary, via `datacleaning.tokens`, because a length band whose boundaries were guessed is not
   a band.
 - **Warmup bands are sized from V4's mitigation, and our proxy cannot reproduce the failure they
@@ -719,7 +719,7 @@ def measure_reasoning_bands() -> list[dict[str, object]]:
 
     Exercise 04's rule, applied to a length band: fertility is a property of a tokenizer, not of a
     text, so a band boundary quoted without one is not a measurement. These are counted with the
-    Session 2 vocabulary and the counts move if the vocabulary does.
+    Exercise 02 vocabulary and the counts move if the vocabulary does.
 
     Returns:
         One row per band with counted tokens, words, fertility and the tokenizer that produced

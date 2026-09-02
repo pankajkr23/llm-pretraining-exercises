@@ -1,6 +1,7 @@
 """Stage 2 — `clean_text()`, and the two orderings that decide whether it works.
 
-Eight operations, in the session's list: NFC normalize · strip control and zero-width · strip bidi
+Eight operations, in the source material's list: NFC normalize · strip control and zero-width ·
+strip bidi
 and BOM · unescape HTML · strip U+FFFD · collapse whitespace · flag ghost special tokens ·
 **preserve the Indic joiners**.
 
@@ -11,12 +12,14 @@ zero-width space yet — it is five ASCII characters. Strip invisibles before un
 survives; unescape first and it is caught. Extraction bugs produce escaped invisibles constantly,
 so this is the common case rather than the exotic one.
 
-**Hashing runs last.** The session is explicit that `clean_text()` runs *before* the content hash.
+**Hashing runs last.** The source material is explicit that `clean_text()` runs *before* the
+content hash.
 Hash the raw text and two documents differing only in an invisible character get two hashes, so
 deduplication keeps both — the cleaning stage silently defeats the deduplication stage. `manifest.
 content_hash` is therefore only ever called on cleaned text, and a test pins it.
 
-The joiners are the third commitment of the session: ZWNJ (U+200C) and ZWJ (U+200D) are *letters'
+The joiners are the third commitment of the source material: ZWNJ (U+200C) and ZWJ (U+200D) are
+*letters'
 business* in a Brahmic script, not noise. A cleaner that strips every `Cf` codepoint — the obvious
 implementation — mangles Devanagari and Telugu words. They are excluded by name, always.
 """
@@ -68,7 +71,8 @@ def unescape_fully(text: str) -> str:
 
     The trade-off, stated plainly: text that *legitimately* contains `&amp;lt;` and means it
     literally will be over-unescaped to `<`. In a web-crawled corpus, double-escaping is almost
-    always an extraction bug — the session's own V4 vocabulary audit found 20 garbage tokens from
+    always an extraction bug — the source material's own V4 vocabulary audit found 20 garbage
+    tokens from
     "HTML artifact / broken utf-8" — so resolving it is the better default here. It would be the
     wrong default for, say, a corpus of HTML tutorials.
 

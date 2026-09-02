@@ -1,6 +1,6 @@
 """Modern attention variants, in the order they were launched.
 
-Session 8 covers roughly twenty ways of computing attention and of telling a model where a token
+Exercise 08 covers roughly twenty ways of computing attention and of telling a model where a token
 sits. The assignment is not to describe them — it is to put them in **chronological order by the
 date each one actually appeared**, and to explain each as an answer to a problem that existed at
 that moment.
@@ -20,7 +20,7 @@ That framing is what makes the exercise unusual, and it decides the shape of thi
   construct without a stated trade-off, because the assignment says so and because it is true.
 
 Modules:
-    `config`     the yardstick model every cost is computed against, from the session itself
+    `config`     the yardstick model every cost is computed against, from the source material itself
     `cache`      the two bills: T^2 scores and a KV cache linear in T
     `sources`    the citation model — what was read, from where, quoted, and when
     `catalogue`  the mechanisms, their trade-offs, and the coverage list the assignment mandates

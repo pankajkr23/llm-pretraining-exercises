@@ -38,7 +38,7 @@ lines and 14 tests.
 
 ## The rules this exercise adds
 
-- **Replay reads the ledger. It never recomputes.** This is the session's whole thesis, and the
+- **Replay reads the ledger. It never recomputes.** This is the source material's whole thesis, and the
   reason is not stylistic: once OPUS scores depend on the current checkpoint, the plan stops being a
   pure function of position, so re-deriving it can never be bit-identical. `replay.py` keeps an
   import closure with **no torch and no planner**, and `test_replay_cannot_reach_the_planner_or_torch`
@@ -61,7 +61,7 @@ lines and 14 tests.
   that only fires at call time would not show up there.
 
 - **The sentinels are out of vocabulary, and the tokenizer file is never edited.** The frozen
-  Session 2 vocabulary is a contiguous `0..9999` with no EOS, BOS or PAD. Editing the file to add
+  Exercise 02 vocabulary is a contiguous `0..9999` with no EOS, BOS or PAD. Editing the file to add
   them would change its bytes and **void the tokenizer hash every shard manifest pins**. So
   `EOS=10000`, `PAD=10001`, model vocab `10_002`. Checked against the real file, never a remembered
   number.
@@ -254,7 +254,7 @@ lines and 14 tests.
   can show, or delete the field — do not leave a constant in the ledger dressed as a statistic.
 
 - **The corpus is sized against the RUN, and that took a refetch.** It was once 2,185,575 tokens
-  against `Config.total_tokens` = 10,485,760 positions — **4.8 epochs**, and shaped to session 5's
+  against `Config.total_tokens` = 10,485,760 positions — **4.8 epochs**, and shaped to exercise 05's
   weights, **30.2 epochs of web against 0.41 of agentic**: the heaviest-funded lane memorised thirty
   times over, the lightest never read through once. Nothing failed; the shards read fine and the
   loss curve looked normal. It is now **10,649,549 training tokens at 1.01 epochs**, every lane

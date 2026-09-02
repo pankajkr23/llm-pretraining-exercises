@@ -1,4 +1,4 @@
-# PROGRESS — Session 7
+# PROGRESS — Exercise 07
 
 A running log of what was built, what was measured, what changed and what is still open. Written so
 the work can be picked up cold. Newest entries at the top of each section.
@@ -8,11 +8,11 @@ branch or PR numbers — `git log` and `gh pr list` answer that correctly and a 
 stale. (It said *"on a branch, not yet merged"* for two releases after it was merged, which is the
 same failure this paragraph is warning about, one line further down.)
 
-**Deliverable shape — read this before calling the session done.** The platform asks **two** fields:
+**Deliverable shape — read this before calling the source material done.** The platform asks **two** fields:
 *"Which Problem did you work on?"* (0 pts) and *"GitHub README or App link"* (**1000 pts**), and it
 records *"I tested this link in an incognito window — it's publicly accessible."* So the entire score
 sits on **one public URL that resolves for a logged-out stranger**. A correct file on a local branch
-scores zero. Unlike Session 6 there is no second scoring surface.
+scores zero. Unlike Exercise 06 there is no second scoring surface.
 
 **The brief says the five problems are separate:** *"each are separate, don't try and mix them."*
 Every result below is therefore labelled with the problem it answers, and anything spanning two is
@@ -87,7 +87,7 @@ Registered in the root README table, the CI `rest` shard, and `OPTIONAL_DEPENDEN
 **The notebook.** `notebooks/S07-model-embeddings-internals.ipynb`, 27 cells, every code cell
 executed and verified, outputs stripped. Builder at `tools/build_notebook.py`. Both are gitignored
 and both are in the outside-the-repo backup store. **Do not quote its size here** — this line said
-*"115 files, 19.5 MB"* long after it held 132; a snapshot of a store that grows every session is a
+*"115 files, 19.5 MB"* long after it held 132; a snapshot of a store that grows every topic is a
 number that is wrong by the next one. `uv run python tools/backup_local_only.py --verify` reports it
 and exits non-zero when it is behind, which is the only form of that claim worth making.
 
@@ -115,7 +115,7 @@ styles reserve 260px of left gutter on `.wrap` whether or not a page builds a ra
 rendered an empty margin), and the shared `section` rule has no top spacing, which only shows on a
 page without a summary panel.
 
-**The measurements**, all from `k2/` in the session scratchpad:
+**The measurements**, all from `k2/` in the source material scratchpad:
 
 - Invertibility: matched filter 86.7% → block-OMP + coordinate descent **100.00%** at `d_model=384`,
   for Gaussian, semi-orthogonal and block-tight `W`. Certificate agrees with ground truth on 100.0%.
@@ -142,5 +142,5 @@ Kept because a quietly amended number is worse than the original error.
   19.1% — because permutations make every position swap available.
 - An earlier recovery table read `exact_full`, which scores every truncated token as a decoder
   failure by construction. It is the vocabulary's truncation rate, not a decoder result.
-- The assignment was worked from a paraphrase for several sessions. The assignment text (local reference only) md`
+- The assignment was worked from a paraphrase for several topics. The assignment text (local reference only) md`
   was in the repo the whole time, and reading it changed the scoping.

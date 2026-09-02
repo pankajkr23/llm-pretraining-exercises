@@ -1,6 +1,6 @@
 """Benchmarks, and the chain that turns each one into a lane share.
 
-Session 5 §3 sets the method and this module is it, in four links:
+Exercise 05 §3 sets the method and this module is it, in four links:
 
     benchmark  ->  loss map  ->  training-data format  ->  lane
 
@@ -40,8 +40,8 @@ class Benchmark:
 
     Attributes:
         key: Short identifier.
-        name: The benchmark as the session names it.
-        family: Grouping used by the session — agentic, coding, reasoning, indic, general.
+        name: The benchmark as the source material names it.
+        family: Grouping used by the source material — agentic, coding, reasoning, indic, general.
         measures: What the model is actually asked to do.
         metric: How it is scored.
         training_format: The shape of training data that improves it. This is the output of the
@@ -80,9 +80,10 @@ class Benchmark:
     def supervised_share_of_segments(self) -> float:
         """Fraction of the example's segments that carry loss.
 
-        A coarse proxy: segments are not equal in length, and the session is explicit that the
-        masked ones are the long ones (*"A whole run yields only a few hundred supervised
-        tokens"*). So this **overstates** supervision for trajectory data and is used only to rank
+        A coarse proxy: segments are not equal in length, and the source material is explicit that
+        the
+        masked ones are the long ones — a whole run yields only a few hundred supervised tokens.
+        So this **overstates** supervision for trajectory data and is used only to rank
         formats against each other, never as a token discount. The token discount lives in
         `supervised_ratio()`, which says where its numbers come from.
 
@@ -110,7 +111,7 @@ BENCHMARKS: tuple[Benchmark, ...] = (
         lanes=("agentic", "code"),
         stage="anneal",
         note=(
-            "the session's worked loss map: two supervised segments against three masked ones and "
+            "the source's worked loss map: two supervised segments against three masked ones and "
             "a reward, and the masked segments are a whole repository checkout"
         ),
     ),
@@ -172,7 +173,7 @@ BENCHMARKS: tuple[Benchmark, ...] = (
         lanes=("agentic",),
         stage="sft",
         note=(
-            "the contrast case the session draws: millions of samples but few tokens each, so "
+            "the contrast case the source draws: millions of samples but few tokens each, so "
             "sample count badly overstates its weight in a token budget"
         ),
     ),
@@ -282,7 +283,7 @@ BENCHMARKS: tuple[Benchmark, ...] = (
         stage="rlvr",
         note=(
             "structure is learned from traces in pre-training and anneal; the effort dial itself "
-            "is finished by RLVR in sessions 17-18, so this lane is provisioning for later"
+            "is finished by RLVR in topics 17-18, so this lane is provisioning for later"
         ),
     ),
     Benchmark(

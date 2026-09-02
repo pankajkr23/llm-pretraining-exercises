@@ -1,13 +1,14 @@
-"""The Session 5 dataset inventory, transcribed as data rather than quoted as prose.
+"""The Exercise 05 dataset inventory, transcribed as data rather than quoted as prose.
 
 The argument this module implements: a shopping list is only worth having if the data on it exists,
 so every capability slot is sized against the datasets that can actually feed it. So the lane
 supplies used everywhere downstream are **summed from these rows**, never quoted
-from the session's slot headlines.
+from the source material's slot headlines.
 
 That distinction is not pedantry — it caught two things.
 
-**One.** The session's two widgets disagree with each other. Its inventory groups general web and
+**One.** The source material's two widgets disagree with each other. Its inventory groups general
+web and
 STEM into a single slot of 4.8T, while its supply check prices them separately at 4.5T and 250B.
 Summing the named datasets gives 4.691T of web and 146B of STEM. The STEM gap is the one that
 matters: 146B against a 240B demand is a lane that cannot be funded from unique text, where 250B
@@ -21,8 +22,10 @@ this exercise is written against.
 
 Every row's figures are typed by where they came from:
 
-- ``confirmed``  the session states it is confirmed from its own sources (Sangraha and V4 rows)
-- ``approximate`` the session's own caveat: *"Dataset sizes are approximate and being verified"*
+- ``confirmed``  the source material states it is confirmed from its own sources (Sangraha and V4
+rows)
+- ``approximate`` the source material's own caveat: *"Dataset sizes are approximate and being
+verified"*
 - ``unstated``   the inventory lists the dataset but gives no figure
 """
 
@@ -41,7 +44,7 @@ _CONFIRMED_SOURCES = ("AI4Bharat", "V4 run (confirmed)", "V4 corpus")
 
 @dataclass(frozen=True)
 class Dataset:
-    """One row of the Session 5 inventory.
+    """One row of the Exercise 05 inventory.
 
     Attributes:
         name: The dataset as the inventory names it.
@@ -50,7 +53,7 @@ class Dataset:
         samples: Approximate sample count, or None where the inventory gives none.
         tokens: Approximate token count, or None where the inventory gives none.
         licence: Licence as stated, or None where unstated.
-        tier: Session 3 provenance tier (A/B/C/D), or None where the inventory leaves it blank.
+        tier: Exercise 03 provenance tier (A/B/C/D), or None where the inventory leaves it blank.
         provenance: How much the figures can be leaned on — see the module docstring.
         note: Anything about the row that changes how it may be counted.
     """
@@ -76,7 +79,7 @@ def _row(
     tier: str | None = None,
     note: str = "",
 ) -> Dataset:
-    """Build a row, deriving its provenance from the source the session named.
+    """Build a row, deriving its provenance from the source the source material named.
 
     Args:
         name: Dataset name.
@@ -90,7 +93,7 @@ def _row(
 
     Returns:
         The row, with `provenance` set to `unstated` when it carries no token count, `confirmed`
-        when the session vouches for the source, and `approximate` otherwise.
+        when the source material vouches for the source, and `approximate` otherwise.
     """
     if tokens is None:
         provenance = "unstated"
@@ -409,7 +412,8 @@ class LaneSupply:
         rows: The datasets feeding it.
         counted_tokens: Sum over rows that carry a token count.
         rows_without_tokens: How many rows carry none.
-        headline: The slot total the session printed, where it printed one for this lane alone.
+        headline: The slot total the source material printed, where it printed one for this lane
+        alone.
         residual: headline − counted_tokens, when a headline exists. What the uncounted rows must
             hold between them, stated as one number because the inventory does not divide it.
     """
@@ -431,7 +435,7 @@ def lane_supply(lane: str) -> LaneSupply:
 
     Returns:
         The lane's counted supply, the count of rows with no figure, and the residual against the
-        session's headline where one exists for this lane on its own.
+        source material's headline where one exists for this lane on its own.
 
     Raises:
         ValueError: If `lane` is not a known lane.
@@ -470,14 +474,15 @@ def all_supply() -> dict[str, LaneSupply]:
 
 
 def headline_disagreements() -> list[dict[str, object]]:
-    """Where the session's two widgets price the same lane differently.
+    """Where the source material's two widgets price the same lane differently.
 
     The inventory prints a slot total above its rows; the supply check prints a supply figure for
     the same lane. They are not always the same number, and neither always equals the rows.
 
     Returns:
         One entry per lane, each with the itemised sum, both quoted figures, and the gap that
-        matters — itemised against the supply check, which is the figure the session's own demand
+        matters — itemised against the supply check, which is the figure the source material's own
+        demand
         arithmetic is compared to.
     """
     findings: list[dict[str, object]] = []
@@ -520,7 +525,11 @@ def humanise(value: float | None) -> str:
 
 
 def main() -> None:
-    """Print the itemised lane supplies beside the two figures the session quotes for them."""
+    """Print the itemised lane supplies beside the two figures quoted for them.
+
+    The itemised sums and the quoted headlines disagree, and both are shown so the disagreement is
+    visible rather than resolved in silence.
+    """
     header = (
         f"{'lane':<13} {'itemised':>10} {'supply check':>13} {'headline':>10} {'gap':>10}  rows"
     )

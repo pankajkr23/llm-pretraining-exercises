@@ -5,7 +5,7 @@ alwaysApply: true
 
 All conventions for this repo — layout, zero-padded exercise folders, the five data concerns,
 Python/PEP style enforced by ruff, tests, and CI/CD — live in `AGENTS.md` at the repo root.
-**Read `AGENTS.md` before your first edit in a session.**
+**Read `AGENTS.md` before your first edit in a topic.**
 
 Two rules are repeated here because this file is injected on every request while `AGENTS.md` is
 not, and both are irreversible if you learn them late:

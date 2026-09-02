@@ -679,7 +679,7 @@ const V = [
  * Every bay used to carry one line, and every line was written for somebody who already knew what
  * a softmax was — "scaled down, so the numbers stay in a range softmax can work with" tells a
  * newcomer nothing at all, because it answers a question they have not been given yet. This repo's
- * own rule for the session notebooks says it plainly: plain what-and-why before each step, the
+ * own rule for the topic notebooks says it plainly: plain what-and-why before each step, the
  * arithmetic and caveats after it. The centrefold is the one figure a first-time reader is most
  * likely to stop at, and it was the one holding the least help. */
 const STAGES = [

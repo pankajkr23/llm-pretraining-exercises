@@ -1,4 +1,4 @@
-# Session 5 — the 26 questions, answered or declined
+# Exercise 05 — the 26 questions, answered or declined
 
 Every question we were asked to answer for this topic. Each carries a verdict on whether it can be
 answered **from sources on this machine**, and the answer where it can.
@@ -31,10 +31,10 @@ Sangraha) that figure is used and the repo's differing value is named.
 than refusing:
 
 - **Q23 ⚠️** — the OPUS figure checks out; the LightningLM "5B-stage-only ~17%" appears in no
-  session file here, so that half is declined and the methodological answer given in full.
+  topic file here, so that half is declined and the methodological answer given in full.
 - **Q25 ⚠️** — the course defers this to S17–18, so there is no course position to report. Answered
   from standard policy-gradient RL and labelled as mine.
-- **Q26 ❌** — the session asks it and does not answer it; the Admin's reply breaks off mid-sentence.
+- **Q26 ❌** — the source material asks it and does not answer it; the Admin's reply breaks off mid-sentence.
   Nothing to retrieve, so a mechanism-level answer is offered and labelled as mine.
 
 Nothing here is answered from memory of the course. Where a claim comes from the notes or the
@@ -97,7 +97,7 @@ slack is `supply ÷ demand`, and the only lane where that ratio is comfortable i
 
 ## §3 · BrowseComp, composed backward ✅
 
-BrowseComp is in the session's own target list: *"Hard, verifiable web-browsing for hard-to-locate
+BrowseComp is in the source material's own target list: *"Hard, verifiable web-browsing for hard-to-locate
 facts."* Traced backward through the notes' `benchmark → loss map → data format → lane share`:
 
 | step | answer |
@@ -134,7 +134,7 @@ it is worth nothing and some runs diverge.
 2. **A supervised-token accounting**, because 80B of raw trajectory is not 80B of gradient. At the
    masked rate a trajectory yields a few hundred supervised tokens, so the bill is larger again.
 3. **A cutoff** — the share the plan will actually fund from real data, with the remainder either
-   generated or moved to SFT/RLVR, which is where the session says agentic ability is taught.
+   generated or moved to SFT/RLVR, which is where the source material says agentic ability is taught.
 4. **The date the data exists**, since a share that cannot be filled by the run's start is a hole
    the selector will fill with something else.
 
@@ -142,7 +142,7 @@ Without those four, 4% is a number that describes an intention rather than a cor
 
 ## §5 · "We'll fix it in SFT" ✅
 
-**Why it is weak.** The session's lifecycle timeline shows post-training stages as visibly tiny
+**Why it is weak.** The source material's lifecycle timeline shows post-training stages as visibly tiny
 next to pretraining. SFT can *elicit* a behaviour the base model can already represent; it cannot
 install a capability that was never trained. Multi-turn tool policy is exactly the kind of thing
 that needs to be in the base — long-horizon credit assignment across tool calls is not learned from
@@ -272,7 +272,7 @@ longer a smoothing choice but the only tool left, and should be sized far above 
 
 ---
 
-# B · Session-level (11–13)
+# B · Topic-level (11–13)
 
 ## 11 · Why mask tool observations ✅
 
@@ -433,13 +433,13 @@ same lane needs 7.0 epochs and leaves that regime entirely.
 
 ## Judgement
 
-### 22 · Anneal at 30% Tier-A — what it forces, and what the session leaves to you ✅
+### 22 · Anneal at 30% Tier-A — what it forces, and what the source material leaves to you ✅
 
 **Forces** (arithmetic in §9): 12B of the 64B verified pool is withheld, raising main-run Tier-A
 from 2.53 to **3.12 epochs**. Either accept that, lower Tier-A's 45% share of the Indic lane, or
 shrink the anneal's Indic fraction.
 
-**What the session does not specify and you must decide:**
+**What the source material does not specify and you must decide:**
 
 - **Which 12B.** "Tier-A verified" names a pool, not a selection. Reserve the newest? The
   highest-scoring? A language-stratified slice? A reserve that is 80% Hindi anneals a Hindi model.
@@ -454,7 +454,7 @@ shrink the anneal's Indic fraction.
 
 **Declined in part, and the reason matters.** The OPUS half checks out: the S5 notes state V4 kept
 ~40% of candidates for ~6× effective tokens at 4.7% overhead. **The LightningLM figure does not
-appear in any session file on this machine.** `grep` across all sessions finds LightningLM only as
+appear in any topic file on this machine.** `grep` across all topics finds LightningLM only as
 the project's own model name (S1, S3, S7); "stage-only" appears nowhere, and the single "17%" in S5
 is a *code share* in a stage mixture, not a selection overhead. I will not reconstruct a number I
 cannot find.
@@ -507,7 +507,7 @@ the right unit and the floor is doing exactly what it says. The two readings dif
 spec should say which it means. **This exercise's floor is token-denominated and does not say —
 that is a real gap.**
 
-*(One measured caveat from this repo: under our own Session 2 10k vocabulary the gap is far
+*(One measured caveat from this repo: under our own Exercise 02 10k vocabulary the gap is far
 narrower — Hindi 2.13 vs English 2.05 tokens/word on FLORES — because that vocabulary was trained
 on Indic text. The 2.1/1.1 spread is a property of English-centric tokenizers. Which tokenizer V5
 ships changes the size of this problem, though not its direction.)*
@@ -541,14 +541,14 @@ answer.** In RLVR specifically the reward is *verifiable* — from executing a t
 comparing to a known answer — rather than from a learned reward model, which is what makes the
 scalar trustworthy enough to multiply a gradient by.
 
-*(Marked as my answer from standard RL, not the course's — the session defers this to S17–18.)*
+*(Marked as my answer from standard RL, not the course's — the source material defers this to S17–18.)*
 
 ### 26 · Nikhil's reward-hacking case ❌ — no course answer exists to recover
 
 **Declined as a retrieval question, and the transcript confirms why.** The exchange is at line 419:
 Nikhil asks whether there are checks for a model that writes `return 42` instead of computing it,
 and the Admin's reply is *"we have Okay,…"* before the topic moves on. **There is no answer in the
-session to recall.** Treating one as recoverable would mean inventing it.
+topic to recall.** Treating one as recoverable would mean inventing it.
 
 **What follows is mine, offered because "the harness will catch it" is indeed a hope rather than a
 mechanism.** The defence is not one check; it is denying the policy the information it would need to
@@ -580,8 +580,8 @@ carry rather than assume.
 
 | # | limit |
 | --- | --- |
-| **23** | The LightningLM "5B-stage-only ~17%" figure is in no session file here. The OPUS half and the whole methodological answer stand; the comparison against a number I cannot find does not. |
-| **26** | The session does not answer it — the Admin's reply is cut off mid-sentence. My answer is standard verifier design, labelled as mine. |
+| **23** | The LightningLM "5B-stage-only ~17%" figure is in no topic file here. The OPUS half and the whole methodological answer stand; the comparison against a number I cannot find does not. |
+| **26** | The source material does not answer it — the Admin's reply is cut off mid-sentence. My answer is standard verifier design, labelled as mine. |
 | **25** | Deferred by the course to S17–18, so there is no course position to report; answered from standard RL and labelled. |
 
 Two further honesty notes. Every arithmetic answer uses the figure the question supplies (627M

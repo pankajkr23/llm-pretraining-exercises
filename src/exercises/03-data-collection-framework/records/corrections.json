@@ -100,7 +100,7 @@
     "before": "The main document framed the programme as which 300B to train from scratch — §1.2 recommends architecting for 15T tokens, and §16/§19 sequence a from-scratch run.",
     "after": "The $1B question is not \"which 300B do we train\" but \"scratch vs grow\", and the burden of proof now sits on scratch. Insert, before any capital commitment, a 4-week head-to-head at ~2B scale: from-scratch on your mix versus grown/upcycled, on identical data, judged on Indic + code held-out loss.",
     "why": "LightningLM grew a 120B sparse MoE (460 routed experts, top-12 routing, 5.93B active ≈ 5% of 118.67B stored) in four stages from a 1.78B dense seed, trained end-to-end on a single eight-GPU node at ~67 days and ~$100K-class economics; Grove-MoE upcycled Qwen3-30B-A3B-Base into a 33B MoE; and Sarvam-105B is Apache 2.0 with its full MoE recipe on the model card (X01). Growing inherits both the tokenizer and Indic competence at a large multiple less pre-training cost. For calibration, Llama 4 trained on >30T tokens and Qwen3 on 36T across 119 languages — the 15T target is respectable but not frontier-scale, which is why the effective-token and growth machinery matter more than raw collection.",
-    "source": "arXiv:2606.07404 — LightningLM 0.1V (in-project); Grove-MoE (in its reference list); Hugging Face model cards per §A.1; in-project Session-3 notes",
+    "source": "arXiv:2606.07404 — LightningLM 0.1V (in-project); Grove-MoE (in its reference list); Hugging Face model cards per §A.1; in-project Topic-3 notes",
     "severity": "minor"
   },
   {

@@ -102,13 +102,13 @@ def test_no_topic_notebook_has_gone_missing() -> None:
     if not present and not is_a_working_checkout():
         pytest.skip("no local-only files anywhere — this is a fresh clone, not a loss")
     assert present, (
-        f"all {len(EXPECTED_NOTEBOOKS)} session notebooks are gone, and this checkout still has "
+        f"all {len(EXPECTED_NOTEBOOKS)} topic notebooks are gone, and this checkout still has "
         f"other local-only files — so it is not a clone. Restore from the backup store: "
         f"`uv run python tools/backup_local_only.py --verify` names what it holds."
     )
     missing = [p.name for p in EXPECTED_NOTEBOOKS if not p.is_file()]
     assert not missing, (
-        f"{len(present)} session notebooks are present but {missing} are gone. These are "
+        f"{len(present)} topic notebooks are present but {missing} are gone. These are "
         f"gitignored and have no second copy. Rebuild them from the exercise's "
         f"tools/build_notebook.py before doing anything else, and do not delete anything under "
         f"notebooks/ without PK's explicit permission (see AGENTS.md)."
@@ -164,7 +164,7 @@ def test_the_reference_corpus_has_not_shrunk() -> None:
     """The course material — transcripts, assignments, notes — is the biggest unguarded exposure.
 
     **Measured against the backup store, not against a hand-written floor.** The first version
-    required at least one session note per exercise, which tolerated losing two thirds of the
+    required at least one topic note per exercise, which tolerated losing two thirds of the
     corpus and ignored the forty-two diagrams entirely: a floor somebody typed is a floor that
     stops meaning anything the moment the corpus grows. The store is a high-water mark that moves
     on its own, so "fewer files than last time" is the question, and it is the right one.
@@ -244,7 +244,7 @@ def test_every_topic_notebook_is_still_valid_json() -> None:
         if not payload.get("cells"):
             broken.append(f"{path.name}: parses but has no cells")
 
-    assert not broken, f"session notebooks that no longer read as notebooks: {broken}"
+    assert not broken, f"topic notebooks that no longer read as notebooks: {broken}"
 
 
 def test_the_backup_store_is_named_somewhere_a_reader_will_find_it() -> None:

@@ -1264,7 +1264,7 @@ The main report's central scarcity claim — "only ~0.3T naturally-occurring Ind
 
 ## B.2 🔴 REVISION — Dynamic data selection: the production prior from LightningLM's own run
 
-The main report's pipeline (§17) treated the mixture as static and phase-scheduled. The course's Session 5 material and the LightningLM 0.1V technical report (arXiv:2606.07404, **in this project**) contain a rare artifact: **a production post-mortem of running a per-iteration data selector (OPUS) at scale.** The findings should govern your architecture:
+The main report's pipeline (§17) treated the mixture as static and phase-scheduled. The course's Exercise 05 material and the LightningLM 0.1V technical report (arXiv:2606.07404, **in this project**) contain a rare artifact: **a production post-mortem of running a per-iteration data selector (OPUS) at scale.** The findings should govern your architecture:
 
 **The corpus it was run on (the closest existing blueprint to your project):**
 
@@ -1322,7 +1322,7 @@ Combined with Addendum A's finding that **Sarvam-105B is Apache 2.0 with its ful
 | **Upcycle/grow from an open checkpoint** (Sarvam-105B, or a staged seed) | LightningLM 4-stage growth (in-project, at 120B); Grove-MoE; the entire dense-to-MoE upcycling literature | **Large multiple cheaper**; inherits tokenizer + Indic competence |
 | Buy capability via data quality + RL environments at smaller active size | Muennighoff allocation rule (§B.1); Qwen3.6-27B ≈ SWE-bench frontier reports (§A.6, secondary) | Cheapest per benchmark point |
 
-For calibration of what "frontier corpus" means today (from the Session-3 notes, in-project): **Llama 4 trained on >30T tokens; Qwen3 on 36T across 119 languages.** The 15T target of §16 is respectable but not frontier-scale — which is precisely why the effective-token machinery of §B.1 and the growth machinery here matter more than raw collection.
+For calibration of what "frontier corpus" means today (from the Topic-3 notes, in-project): **Llama 4 trained on >30T tokens; Qwen3 on 36T across 119 languages.** The 15T target of §16 is respectable but not frontier-scale — which is precisely why the effective-token machinery of §B.1 and the growth machinery here matter more than raw collection.
 
 **Revised recommendation:** the $1B question is not "which 300B do we train" but "**scratch vs grow**" — and the burden of proof now sits on scratch. Insert, before any capital commitment: a 4-week head-to-head at ~2B scale of (a) from-scratch on your mix vs (b) grown/upcycled, on identical data, judged on Indic + code held-out loss.
 

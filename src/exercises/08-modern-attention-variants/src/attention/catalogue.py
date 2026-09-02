@@ -227,7 +227,7 @@ class Mechanism:
         buys: One clause: what you get.
         gives_up: One clause: what you pay.
         when_to_choose: The workload it is right for.
-        taught_in_session: Whether Session 8 covered it, or whether we sourced it from outside.
+        taught_in_source: Whether Exercise 08 covered it, or whether we sourced it from outside.
         bonus: True for a mechanism the instructor did not list at all.
         shipped_in: Models that use it, each with the sentence from its own paper.
             Empty where no paper we read claims it, which is itself a finding.
@@ -246,7 +246,7 @@ class Mechanism:
     buys: str
     gives_up: str
     when_to_choose: str
-    taught_in_session: bool = True
+    taught_in_source: bool = True
     bonus: bool = False
     aka: tuple[str, ...] = field(default_factory=tuple)
     shipped_in: tuple[Adoption, ...] = ()

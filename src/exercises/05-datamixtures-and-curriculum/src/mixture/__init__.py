@@ -1,14 +1,14 @@
 """The V5 data mixture and curriculum, composed backward from benchmarks and sized against supply.
 
-Session 5's assignment is a written specification. This package is what makes that specification
+Exercise 05's assignment is a written specification. This package is what makes that specification
 checkable: every share, every supply figure and every verdict in `SPEC.md` is computed here from
-the Session 5 inventory rather than typed into the document by hand, so a reviewer pushing on any
+the Exercise 05 inventory rather than typed into the document by hand, so a reviewer pushing on any
 number gets an answer that names its source.
 
 Read in this order:
 
 - `config.py`      every threshold, in one frozen dataclass with a fingerprint
-- `inventory.py`   the Session 5 dataset inventory as data; lane supplies are summed, not quoted
+- `inventory.py`   the Exercise 05 dataset inventory as data; lane supplies are summed, not quoted
 - `benchmarks.py`  benchmark -> loss map -> training format -> lane, the derivation §3 asks for
 - `supply.py`      demand against supply, with the repetition ceiling and the supervision discount
 - `lanes.py`       the mixture itself: shares, Indic tiers, protected floor, anneal reserve

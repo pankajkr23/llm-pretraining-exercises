@@ -28,7 +28,7 @@ were sound from the start; readability and design were the work.
 | 1.7 | Notebook re-read to the same standard | done — 28 cells, backed up |
 | 1.8 | Docs at every level | done |
 | 1.9 | **O4 — Q2 answer** | **ready to submit** — v0.13.0 released 2026-09-02, production gate approved, and the app link returns 200 anonymously with every asset resolving. Submitting is PK's. |
-| 1.10 | O6 — session notebook | done |
+| 1.10 | O6 — topic notebook | done |
 
 ## Stage 1b — The readability rebuild · done
 

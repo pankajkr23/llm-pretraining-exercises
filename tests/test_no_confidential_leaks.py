@@ -50,7 +50,17 @@ NOTES = backup.EXTERNAL_SOURCES["notes"]
 #: The shape, in words: a lowercase `s`, one or two digits, optionally an underscore and a
 #: descriptive tail, then a document extension. Publishing such a name tells a reader what the
 #: directory holds even though its bytes never left the machine.
-_CONFIDENTIAL_NAME = re.compile(r"\bs\d{1,2}(?:_[a-z0-9_]+)?\.(?:md|html|txt|pdf)\b", re.IGNORECASE)
+_CONFIDENTIAL_NAME = re.compile(
+    # A literal name, OR the same shape with the digits interpolated. An f-string template
+    # publishes the scheme just as plainly as a literal does, and the scaffolder carried one for
+    # months precisely because the interpolated form slipped past the first version of this pattern.
+    #
+    # No example is written out here. Twice now this file has been caught leaking through its own
+    # explanation of itself — a guard over tracked files is a tracked file, and prose that
+    # illustrates the forbidden shape *is* the forbidden shape.
+    r"\bs(?:\d{1,2}|\{[^}]{1,40}\})(?:_[a-z0-9_]+)?\.(?:md|html|txt|pdf)\b",
+    re.IGNORECASE,
+)
 
 #: Files that must name the path for the protection to work at all. `.gitignore` cannot exclude a
 #: directory without writing it down, and `PATTERNS` cannot back it up without the same. Both are

@@ -88,7 +88,7 @@ def generated(tmp_path_factory) -> tuple:
         title="Loss functions and output heads",
         package="lossheads",
         summary="What the model is actually scored on.",
-        session="09",
+        topic="09",
     )
     return spec, exercises / spec.dirname
 

@@ -133,12 +133,12 @@ def test_the_json_records_which_mechanisms_the_notes_actually_taught() -> None:
     """Eight of the mandated list are named in the assignment and never taught.
 
     Recording which is which is how a reader can tell where our evidence came from. If every entry
-    claimed to be taught in the session, that would be false and this catches it.
+    claimed to be taught in the source material, that would be false and this catches it.
     """
-    outside = [m.key for m in MECHANISMS if not m.taught_in_session]
+    outside = [m.key for m in MECHANISMS if not m.taught_in_source]
     assert len(outside) >= 8, (
-        f"only {len(outside)} entries are marked as sourced from outside the session; the "
-        f"assignment names eight mechanisms the session never covers"
+        f"only {len(outside)} entries are marked as sourced from outside the source material; the "
+        f"assignment names eight mechanisms the source material never covers"
     )
 
 

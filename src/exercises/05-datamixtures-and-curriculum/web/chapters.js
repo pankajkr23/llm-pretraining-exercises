@@ -817,7 +817,7 @@ function chapterAgentic(data) {
       `**${tok(raw)}**. Drag the share and find the setting where the arithmetic works. There is ` +
       'one, and it is far too small to teach the capability.',
     big: '3.9×',
-    bigSub: `more than the whole agentic pool could ever be worth, at the 2% the session fixes`,
+    bigSub: `more than the whole agentic pool could ever be worth, at the 2% the source material fixes`,
     body: [input, out],
     arithmetic: [
       richP(
@@ -1032,7 +1032,7 @@ function chapterTiers(data) {
       richP(
         'The honest part is what the switch shows: this is a judgment that **relocates** a ' +
           'shortfall rather than removing it. A plan that quietly filed the row wherever left its ' +
-          'tiers looking full would be the wishful accounting the session exists to prevent.',
+          'tiers looking full would be the wishful accounting the source material exists to prevent.',
       ),
     ],
   });
@@ -1380,7 +1380,7 @@ function chapterProblem(data) {
       'claim',
     ),
     richP(
-      `Anyone can write ${lanes.length} percentages that add to 100. The work is answering one question for each of them — **out of what?** Do that honestly and three of the session's own numbers stop being affordable: one [[lane|lane]] asks for more than any amount of re-reading could ever be worth, one is missing a third of the [[supply|supply]] it was credited with, and one turns out to be counting the same text twice.`,
+      `Anyone can write ${lanes.length} percentages that add to 100. The work is answering one question for each of them — **out of what?** Do that honestly and three of the source material's own numbers stop being affordable: one [[lane|lane]] asks for more than any amount of re-reading could ever be worth, one is missing a third of the [[supply|supply]] it was credited with, and one turns out to be counting the same text twice.`,
     ),
     richP(
       'Those percentages cannot be tested at full scale — a single attempt costs months and a large amount of money. So they are tested on a model small enough to train in seconds, and this page is explicit throughout about what that does and does not prove.',
@@ -1405,7 +1405,7 @@ function chapterMethod(data) {
     [
       ['model', `${m.layers}-layer transformer, ${m.width} wide, ${m.heads} heads`],
       ['context', `${m.context} tokens`],
-      ['vocabulary', `${m.vocab_size.toLocaleString()} tokens, the session 2 tokenizer`],
+      ['vocabulary', `${m.vocab_size.toLocaleString()} tokens, the exercise 02 tokenizer`],
       ['schedule', `${exp.steps} steps per run`],
       ['repeats', `${exp.seeds.length} seeds per arm`],
       ['device', exp.device],
@@ -1550,7 +1550,7 @@ function chapterReproduce() {
       '# rebuild every generated document from the modules',
       'uv run python -m mixture',
       '',
-      "# the lane supplies, itemised against the session's own headline numbers",
+      "# the lane supplies, itemised against the source material's own headline numbers",
       'uv run python -m mixture.inventory',
       '',
       '# the invariants, each paired with a test that proves it can fail',

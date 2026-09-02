@@ -1,4 +1,4 @@
-# PROGRESS — Session 5
+# PROGRESS — Exercise 05
 
 A running log of what was built, what was measured, what changed and what is still open. Written
 so the work can be picked up cold. Newest entries at the top of each section.
@@ -32,7 +32,7 @@ and is O8 below. What remains is your call.
 | O8 | **H3 is refuted; 18% stands as an upper bound** | **decided, not deferred** | Refuted under **two** independent STEM stand-ins (gain 1.12% and 1.72%, each clearing its own spread), so the finding is not an artefact of the substitution. The share does not move, because every measurement behind it is proxy-scale and this spec does not let a 4-layer model set a 40B share. What changes is the burden of proof: 18% is now the number that has to justify itself, instrumented against its 12% floor at real scale. |
 | O9 | **E1–E4 — the free experiments** | **done** | Repetition curve, seam warmup band, scale transfer, and the STEM stand-in sensitivity check that replaced the 1B rung. All local, all $0. See `EXPERIMENTS.md`. |
 
-### F11 · The two lessons to carry into every later session
+### F11 · The two lessons to carry into every later topic
 
 Both cost real time here, both are now in the root `AGENTS.md`, and both are recorded again in this
 log because a convention file is read once and a log is read when something goes wrong.
@@ -40,7 +40,7 @@ log because a convention file is read once and a log is read when something goes
 **1 · Prose that states a number has to be generated too, or it goes stale while the table beside
 it stays right.**
 
-This is the most expensive failure of the session, measured in edits. Every stale claim shipped
+This is the most expensive failure of the source material, measured in edits. Every stale claim shipped
 sat *directly above or below a correct, generated table*:
 
 | the sentence said | the table said | who was wrong |
@@ -179,7 +179,7 @@ stated. A quietly amended number is worse than the original error.
 
 ### C1 · `TOKENIZER.md` §3 mischaracterised exercise 02's scoring protocol
 
-**What it said.** That Session 2's score "rewards equalising rather than minimising" and that "a
+**What it said.** That Exercise 02's score "rewards equalising rather than minimising" and that "a
 metric that can be bought by getting worse is the wrong objective for V5", citing the 35,604
 configuration as evidence.
 
@@ -199,7 +199,7 @@ uses the fewest tokens of any row that out-scores the reference.
 **What replaces it.** §3 is now a statement about **scope**: S2 optimised evenness across four
 languages and did it well; V5 needs low fertility across 29. The reasons to train a new vocabulary
 are the two measurements either side of it — three unreadable scripts, and 10k being an order of
-magnitude small for 13 scripts. Neither is a criticism of the Session 2 work.
+magnitude small for 13 scripts. Neither is a criticism of the Exercise 02 work.
 
 **Guards added.** `test_mixture_spec_render.py` now reads exercise 02's ablation table and checks
 both surviving claims against it, and requires the retracted phrasing to appear only alongside its
@@ -214,23 +214,23 @@ misreading of it.
 
 Measured or derived, each traceable to a file. These are the things a reviewer would push on.
 
-### F1 · The STEM lane's supply is overstated by 41.6% in the session's own supply check
+### F1 · The STEM lane's supply is overstated by 41.6% in the source material's own supply check
 
-`inventory.py` sums the three STEM datasets the session names — D4 STEM (49B), peS2o (42B),
-proof-pile-2 (55B) — to **146B**. The session's supply-check widget prices the same lane at
+`inventory.py` sums the three STEM datasets the source material names — D4 STEM (49B), peS2o (42B),
+proof-pile-2 (55B) — to **146B**. The source material's supply-check widget prices the same lane at
 **250B**. No dataset in the inventory carries the missing 104B.
 
 This is not cosmetic. STEM's demand at a 12% share of a 2T run is 240B:
 
 | supply used | epochs needed | verdict |
 | --- | ---: | --- |
-| 250B (session's supply check) | 0.96 | fits inside one pass |
+| 250B (source material's supply check) | 0.96 | fits inside one pass |
 | **146B (itemised from named datasets)** | **1.64** | **needs repetition** |
 
 The spec uses the itemised figure, because it is the one that can be traced to rows. Reproduce
 with `uv run python -m mixture.inventory`.
 
-### F2 · The session's two widgets disagree about web supply too
+### F2 · The source material's two widgets disagree about web supply too
 
 Itemised **4.691T** against a supply check of **4.5T** (+4.2%). Immaterial — both are far above
 the 680B demand — but it is the same class of error as F1 and is recorded so the STEM finding does
@@ -247,7 +247,7 @@ It holds a full shingle set per document. Measured on real prose from exercise 0
 | 2,000 words | 3,548 | 258 KB | 896 B | 288× |
 | 10,000 words | 15,371 | 1.07 MB | 896 B | 1,199× |
 
-Exercise 04's full run holds ~2.4 GB resident. At Session 1's one-billion-token gate (~616k
+Exercise 04's full run holds ~2.4 GB resident. At Exercise 01's one-billion-token gate (~616k
 documents) it would need **40.5 GB**; the same corpus is **0.55 GB** of signatures, streamed from
 disk. `accumulate.py` is the store that does that, and it declares what it trades: cross-shard
 similarity is the MinHash *estimate*, not exact Jaccard, so its threshold is widened by one
@@ -290,7 +290,7 @@ runs settle it in neither direction. `EXPERIMENTS.md` carries the whole thing.
 
 ### F4 · The 2% agentic share cannot be funded, and the finding survives every objection to it
 
-At the session's own default mixture and a 2T run, the agentic lane asks for **40B tokens** against
+At the source material's own default mixture and a 2T run, the agentic lane asks for **40B tokens** against
 **627M** of itemised supply. That is **63.8 epochs** before any correction, against a repetition
 ceiling — `unique × 16.4`, from the fit in `dataframework.mix` — of **10.3B**. The demand is
 **3.9× more than infinite repetition of that pool could ever be worth.**
@@ -300,7 +300,7 @@ worse — 588 epochs, 35.9× the ceiling — but the discount is deliberately **
 lane fails the ceiling test on raw, uncorrected, unmasked tokens. A reviewer who rejects the
 supervision estimate entirely still lands on impossible.
 
-This is not a reason to drop the lane. It is the session's own point: agentic data *"must largely
+This is not a reason to drop the lane. It is the source material's own point: agentic data *"must largely
 be built rather than collected"*. The spec keeps the 2% floor and states the generation bill.
 
 ### F5 · The long-context lane is 60% re-counted code
@@ -383,7 +383,7 @@ plausible numbers nobody measured.
   row — dropping the count would have retired the guard rather than satisfied it.
 - **A guard written for the split survived its own mutant.** It asserted `"SPEC.md" in section`,
   which a front door that names the deliverable and never links it satisfies. It asserts the
-  markdown link now, and both mutants die. That is the **second** time this session an assertion
+  markdown link now, and both mutants die. That is the **second** time this topic an assertion
   was satisfied by the very string it was meant to be checking the meaning of — the first was
   `"per byte" in caption`. Recorded here because the pattern, not the instance, is the lesson:
   **assert the thing that would break, not a word that appears near it.**
@@ -408,7 +408,7 @@ plausible numbers nobody measured.
 
 ### 2026-08-18 (later)
 
-- **The session notebook**, `notebooks/S05-datamixtures-and-curriculum.ipynb` — 34 code cells, all
+- **The topic notebook**, `notebooks/S05-datamixtures-and-curriculum.ipynb` — 34 code cells, all
   executed top to bottom before commit, outputs stripped. It imports the package rather than
   re-implementing anything, and ends by breaching the protected floor, over-allocating a lane with
   no generation bill, and building four reasoning bands of identical length, so a reader watches
@@ -420,7 +420,7 @@ plausible numbers nobody measured.
 
 ### 2026-08-18
 
-- **`benchmarks.py`** — the derivation chain the session asks for, across 20 benchmarks. Each
+- **`benchmarks.py`** — the derivation chain the source material asks for, across 20 benchmarks. Each
   records its loss map in three parts (supervised / masked / reward-only) rather than one token
   figure, and the stage at which its capability is genuinely taught, so a pre-training share cannot
   be claimed to buy an RLVR capability.
@@ -447,9 +447,9 @@ plausible numbers nobody measured.
   so the repetition arithmetic and the token counter are imported rather than re-derived),
   `src/mixture/{__init__,config,inventory}.py`, `BRIEF.md`, this file.
 - **`config.py`** — every threshold in one frozen dataclass with a `fingerprint()`, so a changed
-  threshold is a visibly different spec. Defaults taken from Session 5 itself: 2T run, Indic floor
+  threshold is a visibly different spec. Defaults taken from Exercise 05 itself: 2T run, Indic floor
   12%, agentic floor 2%, anneal 2% of tokens, 3B-token warmup bands, OPUS keep-fraction 40%.
-- **`inventory.py`** — the Session 5 dataset inventory transcribed as 30 rows, each carrying its
+- **`inventory.py`** — the Exercise 05 dataset inventory transcribed as 30 rows, each carrying its
   source, licence, tier and a provenance type (`confirmed` / `approximate` / `unstated`). Lane
   supplies are **summed from the rows**, never quoted from a slot headline. That is what surfaced
   F1, F2 and F3 on the first run.
@@ -460,15 +460,15 @@ plausible numbers nobody measured.
 
 | # | decision | overturned by |
 | --- | --- | --- |
-| D1 | Lane supply is the **itemised sum of named datasets**, not the session's slot headline. | A source for the missing 104B of STEM. Then the headline is right and the rows are incomplete. |
+| D1 | Lane supply is the **itemised sum of named datasets**, not the source material's slot headline. | A source for the missing 104B of STEM. Then the headline is right and the rows are incomplete. |
 | D2 | **Long-context is retired as a lane** and becomes a sequence-length schedule; its 6% moves to code. | Evidence that the 60B of repo-packed code is *not* drawn from the same corpora as the code lane. |
 | D3 | **Agentic stays at the 2% floor** even though supply cannot fund it; the gap is a declared generation bill. | Nothing in the supply arithmetic — this is a capability judgment. Cutting the share to 0.03% would satisfy the arithmetic and lose the capability. |
 | D4 | Sangraha's 162B "synthetic" row is filed as **translated (tier C)**, following the inventory's tag rather than its name. | Evidence that the component is model-generated rather than machine-translated. Note this moves the hole rather than filling it — see the dispute note in `lanes.py`. |
-| D5 | Indic tiers demanded at **A 45 / B 20 / C 20 / D 15**, against the session's 40/25/20/15. | A measurement showing tier-A repetition past 2.5 epochs costs more than the unverified crawl it displaced. |
+| D5 | Indic tiers demanded at **A 45 / B 20 / C 20 / D 15**, against the source material's 40/25/20/15. | A measurement showing tier-A repetition past 2.5 epochs costs more than the unverified crawl it displaced. |
 
 ## The mixture
 
-| lane | V5 | session | Δ | demand @2T | supply | epochs | verdict |
+| lane | V5 | topic | Δ | demand @2T | supply | epochs | verdict |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | General web | 32% | 34% | −2 | 640B | 4.691T | 0.14 | surplus |
 | Code | 28% | 24% | +4 | 560B | 1.103T | 0.51 | covered |
