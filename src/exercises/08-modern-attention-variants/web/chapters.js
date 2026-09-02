@@ -30,6 +30,7 @@ import {
   figCorrection,
   figEviction,
   figInvoice,
+  figFamilies,
   figKeyShapes,
   figKeyYardstick,
   figMasthead,
@@ -836,6 +837,14 @@ function chapterResults(M, spreadRef) {
    * once, which is here. A reader who met them there had forgotten them by now and a reader who
    * skipped that section never met them at all. The ~ disclaimer travels with them, because a
    * mark that means "not to scale" is worth nothing six thousand words from the mark. */
+  /* THE FOUR FAMILIES AS A DRAWING, BEFORE THE FOUR FAMILIES AS AN ALPHABET.
+   *
+   * A reader found the taxonomy hard: "the analogy behind field, band, stack and state" was four
+   * abstract marks and four terse sentences, and a mark means nothing before you have seen the
+   * thing it abbreviates. The families are four answers to one question, so the same grid is drawn
+   * four ways and the reader watches it change. The alphabet still follows — it is the reference
+   * for the marks used on the chronology below — but it is no longer where the idea is taught. */
+  s.append(figFamilies(M, KIND_LABEL, glyphSvg));
   s.append(figKeyShapes(M, glyphSvg, KIND_LABEL, KIND_GLOSS));
 
   const spread = readingSpread(M);

@@ -194,6 +194,219 @@ export function figMasthead() {
  * sits immediately above the invoice, which is the first number it decides.
  */
 
+/* ============================================ THE FOUR FAMILIES, AS ONE OBJECT FOUR WAYS
+ *
+ * A reader: "I am finding a bit challenging the analogy behind field, band, stack and state. Is it
+ * possible to make it more intuitive and more interactive rather than just prose."
+ *
+ * The old key gave four abstract marks, four terse mono labels and a sentence each. A mark means
+ * nothing before you have seen the thing it abbreviates, so a first-time reader met four glyphs
+ * standing for four ideas they had not been given yet — and those four ideas are the page's whole
+ * taxonomy.
+ *
+ * THE FIX IS TO DRAW THE SAME OBJECT FOUR TIMES. The families are four answers to one question —
+ * *what do you do about the score grid?* — so the grid is drawn once and each tab changes only what
+ * happens to it. Build it and cross cells out; build it and change what goes in; build it and shrink
+ * what you keep; refuse to build it at all. Seeing the same eight words under all four IS the
+ * lesson, and no amount of prose substitutes for it.
+ *
+ * EVERY ANALOGY IS VISIBLE WITHOUT CLICKING. `AGENTS.md` is explicit that an interaction must never
+ * be the only route to a lesson: the tabs change the drawing, and all four plain-language rows sit
+ * under it always. A print reader, a reduced-motion reader and a reader who never touches the
+ * control still get the whole taxonomy.
+ */
+const FAMILIES = [
+  [
+    'field',
+    'Cross names off the list',
+    'Everyone could ask everyone. Some pairs are struck out, so those questions are never asked — ' +
+      'cheaper, and you lose whatever those pairs would have said.',
+    'The grid is built, then cells are removed.',
+  ],
+  [
+    'bands',
+    'Give everyone a numbered badge',
+    'The same questions get asked, but each answer is nudged by how far apart the two words sit. ' +
+      'Without the badges, "dog bites man" and "man bites dog" look identical.',
+    'The grid is built; what goes into each cell changes with distance.',
+  ],
+  [
+    'stack',
+    'Share the notebooks',
+    'Everyone was keeping their own notes for the others to read. Now groups share one notebook. ' +
+      'The same questions, far less paper.',
+    'The grid is built; what you keep from it shrinks.',
+  ],
+  [
+    'state',
+    'One running summary, no questions',
+    'Nobody asks anybody anything. One summary is kept and rewritten as each new word arrives, so ' +
+      'memory stops growing — and whatever the summary dropped is gone for good.',
+    'No grid at all.',
+  ],
+];
+
+/** The same eight words under each of the four families. */
+export function figFamilies(M, KIND_LABEL, glyphSvg) {
+  const T = 8;
+  const CELL = 26;
+  const GX = 16;
+  const GY = 40;
+  const W = 520;
+  /* The viewBox is cropped to what is actually drawn. At 560x300 with the grid starting at x=150 it
+   * floated in the middle of a box a third of which was never painted, and the whole figure read as
+   * small and off-centre. */
+  const H = GY + T * CELL + 34;
+
+  const wrap = el('div', 'fam');
+  const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'fam-svg', role: 'img' });
+  const title = svg('title', {});
+  title.textContent = 'One score grid, shown under each of the four families.';
+  s.append(title);
+
+  const cells = [];
+  const grid = svg('g', {});
+  for (let i = 0; i < T; i += 1) {
+    for (let j = 0; j <= i; j += 1) {
+      const r = svg('rect', {
+        x: GX + j * CELL,
+        y: GY + i * CELL,
+        width: CELL - 3,
+        height: CELL - 3,
+        class: 'f-ink',
+      });
+      r.dataset.i = String(i);
+      r.dataset.j = String(j);
+      cells.push(r);
+      grid.append(r);
+    }
+  }
+  s.append(grid);
+  const gridLab = svgText(GX, GY - 14, 'ax', 'THE SCORE GRID / EIGHT WORDS');
+  s.append(gridLab);
+
+  const store = svg('g', {});
+  const boxes = [];
+  for (let k = 0; k < T; k += 1) {
+    const b = svg('rect', {
+      x: GX + T * CELL + 54,
+      y: GY + k * CELL,
+      width: CELL - 3,
+      height: CELL - 3,
+      class: 'f-muted',
+    });
+    boxes.push(b);
+    store.append(b);
+  }
+  store.append(svgText(GX + T * CELL + 54, GY - 14, 'ax', 'WHAT IS KEPT'));
+  s.append(store);
+
+  const summary = svg('g', {});
+  summary.append(
+    svg('rect', { x: GX + 44, y: GY + 56, width: 116, height: 76, rx: 6, class: 'f-ink' })
+  );
+  /* The loop is STROKED, not filled. `.f-accent` sets `fill: var(--accent)` and a CSS declaration
+   * beats a presentation attribute, so `fill: 'none'` was ignored and the arc rendered as a solid
+   * blue blob. `style` wins over both. */
+  const loop = svg('path', {
+    d: `M ${GX + 160} ${GY + 74} q 62 -34 62 20 q 0 54 -62 20`,
+    'stroke-width': 2,
+  });
+  loop.setAttribute('style', 'fill:none;stroke:var(--accent)');
+  summary.append(loop);
+  /* The eight words arriving, one at a time. Without them the state view was one box in an empty
+   * frame, which shows that the grid is gone and nothing about what replaces it. */
+  for (let k = 0; k < T; k += 1) {
+    summary.append(
+      svg('rect', {
+        x: GX,
+        y: GY + 4 + k * 20,
+        width: 12,
+        height: 12,
+        class: k === 3 ? 'f-accent' : 'f-muted',
+      })
+    );
+  }
+  summary.append(svgText(GX, GY + T * CELL + 16, 'ax', 'EIGHT WORDS ARRIVE ONE AT A TIME'));
+  summary.append(svgText(GX + 44, GY + T * CELL - 6, 'ax', 'ONE SUMMARY, REWRITTEN EACH TIME'));
+  s.append(summary);
+
+  const legend = el('p', 'fam-what');
+
+  /* A fixed, reproducible scatter rather than anything random, so the drawing is identical on every
+   * load and in every screenshot. */
+  const struck = (i, j) => (i * 7 + j * 3) % 5 === 0 && i !== j;
+
+  function show(k) {
+    const [kind, , , what] = FAMILIES[k];
+    grid.style.display = kind === 'state' ? 'none' : '';
+    gridLab.style.display = kind === 'state' ? 'none' : '';
+    store.style.display = kind === 'stack' ? '' : 'none';
+    summary.style.display = kind === 'state' ? '' : 'none';
+    for (const r of cells) {
+      const i = Number(r.dataset.i);
+      const j = Number(r.dataset.j);
+      r.setAttribute('class', kind === 'field' && struck(i, j) ? 'f-hollow' : 'f-ink');
+      /* BANDS keeps every cell and changes what is IN them, which is the distinction the whole
+       * taxonomy turns on. Fading by distance is the cheapest honest way to draw "the contents
+       * depend on the gap" without inventing numbers the catalogue does not hold. */
+      r.setAttribute('opacity', kind === 'bands' ? String(1 - Math.min(0.72, (i - j) * 0.12)) : '1');
+    }
+    boxes.forEach((b, n) => b.setAttribute('opacity', kind === 'stack' && n % 4 !== 0 ? '0.16' : '1'));
+    legend.textContent = `${what}  ·  ${M.counts.glyphKinds[kind]} of ${M.counts.total} do this.`;
+  }
+
+  const tabs = el('div', 'tabs');
+  const buttons = FAMILIES.map(([kind, name], i) => {
+    const b = el('button', null, `${kind.toUpperCase()} — ${name.toLowerCase()}`);
+    b.type = 'button';
+    b.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+    b.addEventListener('click', () => {
+      buttons.forEach((x, n) => x.setAttribute('aria-pressed', n === i ? 'true' : 'false'));
+      show(i);
+    });
+    tabs.append(b);
+    return b;
+  });
+
+  const holder = el('div');
+  holder.setAttribute('role', 'group');
+  holder.setAttribute('aria-label', 'One score grid under each of the four families');
+  holder.append(s);
+
+  /* The mark rides with its family, which is what lets the old alphabet block go. Two blocks
+   * explaining the same four things — one with glyphs and counts, one with analogies and counts —
+   * is the duplication this page keeps being caught for. The exemplar is still drawn by the SAME
+   * generator the chronology uses, so the key cannot describe a shape the plate does not draw. */
+  const byKind = new Map();
+  for (const m of M.mechanisms) if (!byKind.has(m.glyph.kind)) byKind.set(m.glyph.kind, m);
+
+  const rows = el('div', 'fam-rows');
+  for (const [kind, name, plain] of FAMILIES) {
+    const row = el('div', 'fam-row');
+    const head = el('div', 'fam-head');
+    if (glyphSvg && byKind.has(kind)) head.append(glyphSvg(byKind.get(kind), 30));
+    const lab = el('span', 'fam-lab');
+    lab.textContent = `${kind.toUpperCase()} · ${M.counts.glyphKinds[kind]} of ${M.counts.total}`;
+    head.append(lab);
+    row.append(head);
+    const body = el('p');
+    /* The formal label is its OWN line. Appended to the analogy it read as a fragment — "…you lose
+     * whatever those pairs would have said. which scores survive." — lowercase and ungrammatical,
+     * because `KIND_LABEL` is a phrase written to sit after a dash in the key, not a sentence. */
+    body.innerHTML = `<b>${name}.</b> ${plain}`;
+    row.append(body);
+    const formal = el('span', 'fam-formal');
+    formal.textContent = `on the chronology: ${KIND_LABEL[kind]}`;
+    row.append(formal);
+    rows.append(row);
+  }
+
+  wrap.append(tabs, holder, legend, rows);
+  show(0);
+  return wrap;
+}
+
 export function figKeyShapes(M, glyphSvg, KIND_LABEL, KIND_GLOSS) {
   const wrap = el('div', 'key bleed');
   const alpha = el('section');
@@ -255,7 +468,10 @@ export function figKeyShapes(M, glyphSvg, KIND_LABEL, KIND_GLOSS) {
   }
   bills.append(bl);
 
-  wrap.append(alpha, bills);
+  /* THE ALPHABET HAS MOVED INTO `figFamilies`, where the mark sits beside the analogy that
+   * explains it. What is left here is the five-label taxonomy, which is a different question —
+   * "what does this mechanism attack" rather than "what shape is it". */
+  wrap.append(bills);
   return wrap;
 }
 

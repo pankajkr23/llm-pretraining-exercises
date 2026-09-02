@@ -2069,7 +2069,13 @@ a.guide-path:focus-visible {
  * figures instead.
  */
 :root[data-measure='b'] #main {
-  font-size: clamp(17px, 1.15vw + 0.9px, 22px);
+  /* THE FLOOR IS 19px, NOT 17px, AND THAT IS THE WHOLE POINT OF THE VARIANT.
+   *
+   * The first ramp was tuned to reach 50% at 1920 and allowed to taper below it, which made the
+   * difference at 1440 exactly **1.46px of type and 84px of width** — a reader comparing the two on
+   * a laptop could not see any change at all, and said so. A variant that is a no-op at the width
+   * the reader uses cannot be chosen or rejected; it just wastes their time. */
+  font-size: clamp(19px, 1.2vw + 1.7px, 22px);
   grid-template-columns:
     [full-start] minmax(14px, 1fr)
     [wide-start] minmax(0, 150px)
@@ -2446,4 +2452,76 @@ a.guide-path:focus-visible {
 }
 .guide-three p {
   font-size: 13.5px;
+}
+
+/* ------------------------------------------------------- the four families */
+/* One score grid drawn four ways. The tabs change the drawing; the four rows underneath are always
+ * visible, because an interaction must never be the only route to a lesson. */
+.fam {
+  border-top: 2px solid var(--ink);
+  margin: 26px 0 8px;
+  padding-top: 14px;
+}
+.fam-svg {
+  display: block;
+  width: 100%;
+  max-width: 620px;
+  height: auto;
+  margin: 16px 0 4px;
+}
+.fam-svg .f-hollow {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1.5;
+}
+.fam-what {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  margin: 4px 0 0;
+  max-width: 72ch;
+}
+.fam-rows {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr));
+  gap: 16px 30px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.fam-row p {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 5px 0 0;
+  /* At 2560 an `auto-fit` column of this grid is wide enough to run the analogy past the ceiling —
+   * 82 characters, caught by the measures guard. The cap is on the element carrying the type. */
+  max-width: 64ch;
+}
+.fam-row p b {
+  color: var(--ink);
+}
+.fam-row p i {
+  font-style: normal;
+  color: var(--faint);
+}
+.fam-lab {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--faint);
+}
+.fam-formal {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+}
+.fam-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
