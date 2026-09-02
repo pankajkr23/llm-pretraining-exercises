@@ -71,14 +71,21 @@ on**: `07` → `06` → `05` → `04` → `03` → `02` → `01`.
 no longer "do what 08 did and work out what that means" — it is a list. Per exercise: review →
 plan → fix → test → screenshot at five widths in four themes → docs → local commits.
 
-Known work waiting, found while auditing 08:
+A five-lens audit on 2026-09-02 inventoried what actually diverges. The full list is in
+[`TODO.md`](TODO.md); the headlines:
 
-- **05, 06 and 07 build a contents rail and never mark position.** The vendored stylesheet has
-  styled `.rail-link.on` since before any of them existed. Exercise 03 is the only page in the repo
-  that ever set the class.
-- **06 and 07 reserve a 260px rail gutter and never fill it** — `_shared/page.css` sets the padding
-  unconditionally.
-- **All six exercises vendor `_shared/explainer.css` in full; only 03 and 06 use it.**
+- **Exercise 01's dark themes are broken on all four deployed proof pages** — 26 custom-property
+  declarations with no semicolons, so four of the five diagram tokens are never declared in the dark
+  blocks and a dark-theme reader gets light diagram colours. A live defect, awaiting PK's word on
+  whether it jumps the queue.
+- **04 names seven custom properties that exist in no theme**, so the fallback always wins.
+- **05, 06 and 07 build a contents rail and never mark position**; **06 and 07 reserve a 260px rail
+  gutter and never fill it**.
+- **`anim.js` is imported by nothing** — 1,002 lines across six vendored copies. `explainer.css` is
+  linked by six pages and used by two.
+- **Seven names for two controls; five figure treatments; fifteen distinct `ch` measures.**
+- **The theme and contrast guards exist only in exercise 08**, while six exercises link the
+  six-theme token file.
 
 ## Stage 3 — Exercise 09 · queued
 
