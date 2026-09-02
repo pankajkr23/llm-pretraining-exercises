@@ -2369,3 +2369,81 @@ a.guide-path:focus-visible {
 .limitlist li b {
   color: var(--ink);
 }
+
+/* ============================================ blocks that take the width they were sized for
+ *
+ * Four of these were not decisions, they were half-implemented intentions: the element carries the
+ * class or the measure that says "be wide", and no rule ever matched it.
+ */
+
+/* THE INVOICE HAS BEEN TRAPPED AT 685px SINCE IT WAS WRITTEN. `figInvoice` returns
+ * `div.invoice.bleed`, but `plate()` appends it INSIDE `figure.plate`, and the only `.bleed` rules
+ * are `#main > .bleed`, `#main > section > .bleed` and `#main > section > .well > .bleed`. None
+ * matches a grandchild, so `.plate > * { grid-column: text }` won at 685px and the class did
+ * nothing. The page's most important figure — the one five of six review readers quoted — has been
+ * rendering in a third of the width available to it at every viewport. */
+.plate > .bleed {
+  grid-column: full;
+}
+
+/* THE COLOPHON'S OWN MEASURE SAYS 1025px, WHICH IS EXACTLY THE `wide` TRACK — and the element was
+ * never put in it, so `min(1025px, 100%)` resolved to 685px and its two mono columns came out at
+ * 47 characters. Its comment already described the intended fix; only the max-width half of it had
+ * been written. */
+#main > section > .colophon {
+  grid-column: wide;
+}
+
+/* THE PAGE'S NARROWEST PROSE WAS PRODUCED BY ITS WIDEST SCREEN. The reading spread's ledger splits
+ * its right-hand column in two, so at 1920 Credit and Debit read at 36 and 38 characters — under
+ * the repo's own floor — while at 1440 the spread stacks and they read at 57. The guard could not
+ * see it because `.val` is a `div` and the selector only takes `p`, `li`, `figcaption` and `.say`.
+ * One column, like the index ledger it mirrors. */
+.spread .ledger {
+  grid-template-columns: 1fr;
+}
+.spread .ledger > div + div {
+  padding-left: 0;
+  border-left: 0;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+/* Q, K AND V AT 23 CHARACTERS A LINE. Three 207px columns inside the 685px text track, at every
+ * width — and invisible to the measures guard twice over, because the strings are under its
+ * 90-character sampling threshold. The block is a three-part definition and it earns the full
+ * width; the prose inside keeps its own cap. */
+#main > section > .guide-setup {
+  grid-column: full;
+  padding-inline: clamp(14px, 3vw, 42px);
+}
+
+/* THE FOUR READER DOORS read at 27 characters at 1440 and 35 at 1920: `auto-fit` puts all four
+ * across whenever four floors fit, and four 240px floors fit almost everywhere. Four items want an
+ * explicit answer, not a formula — two rows of two until there is genuinely room for one row. */
+.guide-paths {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 1600px) {
+  .guide-paths {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 620px) {
+  .guide-paths {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Both of the fixes above overshot, and in opposite directions — worth recording because it is the
+ * same mistake twice: freeing a block from a track it was trapped in is not the same as giving it a
+ * measure. Un-splitting the spread's ledger took it from 36 characters to 91, straight past the
+ * ceiling; the Q/K/V block gained 200px and still read at 40 at 1440, two under the floor, because
+ * three columns of a 1,072px container cannot be wider than 336px whatever the container does. */
+.spread .ledger .val {
+  max-width: 66ch;
+}
+.guide-three p {
+  font-size: 13.5px;
+}

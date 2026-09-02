@@ -455,7 +455,7 @@ function chapterMechanism(M) {
    * the sentence the plate actually runs. Nothing here is notation, and nothing here is optional
    * reading hidden behind a control — the point a figure teaches must be reachable without
    * interacting with it. */
-  const setup = el('div', 'guide');
+  const setup = el('div', 'guide guide-setup');
   setup.append(el('p', 'kicker', 'What you are about to watch'));
 
   const why = el('p', 'guide-lede');
