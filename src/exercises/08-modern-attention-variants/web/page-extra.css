@@ -72,7 +72,72 @@
 #main > section > .bleed.plate {
   padding-inline: 0;
 }
-.plate > *:not(svg):not(.plate-head) {
+
+/* THE PLATE CARRIES THE GRID INWARD TOO, so its prose sits in the same text column as every other
+ * paragraph on the page.
+ *
+ * Before this, one figure had four different left edges — the stepper note at 442, the recipe at
+ * 634, its labels at 676 and the caption at 786, while the standfirst above and the section below
+ * both sat at 775. Each block had been given its own `margin-inline: auto`, so each centred inside
+ * a different parent and landed somewhere different. Centring things independently is what makes a
+ * layout look random; they were never sharing an edge.
+ *
+ * Sections already do this (see "Sections carry the grid inward"), so the drawing keeps `full`
+ * while everything written stays on `text`. One text edge for the whole page. */
+/* `.plate`, not `#main > section > .plate`: the plates inside the six wells are nested one level
+ * deeper (`section.well > figure.plate`), so a child selector reached Plates I and II and left
+ * III to VI with their prose still on the figure's own edge — sixteen blocks at x=400 against
+ * fourteen at 775 in the same section. */
+.plate {
+  display: grid;
+  grid-template-columns:
+    [full-start] minmax(14px, 1fr)
+    [wide-start] minmax(0, 170px)
+    [text-start] min(68ch, 100% - 28px)
+    [text-end] minmax(0, 170px)
+    [wide-end] minmax(14px, 1fr)
+    [full-end];
+}
+.plate > * {
+  grid-column: text;
+  min-width: 0;
+}
+.plate > svg,
+.plate > .plate-pair,
+.plate > .plate-body,
+.plate > div:has(> svg) {
+  grid-column: full;
+}
+
+/* The centrefold's own wrapper carries the grid one level further, because it holds BOTH the
+ * drawing and prose about it. Putting the whole wrapper on `text` squeezed the drawing into a
+ * 601px column — the opposite of what a plate is for. */
+.plate > .plate-body {
+  display: grid;
+  grid-template-columns:
+    [full-start] minmax(14px, 1fr)
+    [wide-start] minmax(0, 170px)
+    [text-start] min(68ch, 100% - 28px)
+    [text-end] minmax(0, 170px)
+    [wide-end] minmax(14px, 1fr)
+    [full-end];
+}
+.plate-body > * {
+  grid-column: full;
+  min-width: 0;
+}
+.plate-body > .tabs,
+.plate-body > .bay-note,
+.plate-body > .bay-recipe {
+  grid-column: text;
+}
+/* No padding on a plate's children any more: the grid above puts prose on the `text` column, and
+ * padding on top of that pushed each block a further 42px in — which is how the row labels ended
+ * up on their own edge while the paragraphs beside them sat on the page's. The drawing keeps its
+ * inset below, because a full-bleed figure still needs one. */
+.plate > svg,
+.plate > .plate-pair,
+.plate > .plate-body > div:has(> svg) {
   padding-inline: clamp(14px, 3vw, 42px);
 }
 .plate > .plate-head,
@@ -93,7 +158,7 @@
   /* 34ch measured at 34 characters a line across eleven standfirsts — at 24px that breaks a line
    * every four or five words, which is the "too narrow" a reader actually sees. A standfirst
    * SHOULD be short, and short is 45 to 60; 34 is a column of fragments. */
-  --lede-measure: 48ch;
+  --lede-measure: 52ch;
 }
 
 /* The kicker. Every section and every well opens with one; it is the page's smallest type and its
@@ -199,8 +264,8 @@
    * the drawing; a `margin: 16px 0 0` shorthand here silently cancelled that in a first attempt,
    * which is also why the override lives in this rule rather than in a later one of equal
    * specificity that source order would have beaten. */
-  max-width: min(78ch, 1025px);
-  margin: 16px auto 0;
+  max-width: 78ch;
+  margin: 16px 0 0;
   padding-left: 14px;
   border-left: 2px solid var(--line);
 }
@@ -1151,7 +1216,7 @@ text.quiet-lab {
  * widths the narrower one fell to 40 characters a line — readable as a caption, not as the panel a
  * reader lands on after clicking a mechanism. Measured across five viewport widths; 1180 is where
  * it stops clearing 45. */
-@media (max-width: 1360px) {
+@media (max-width: 1600px) {
   .spread {
     grid-template-columns: 1fr;
   }
@@ -1481,12 +1546,20 @@ a.guide-path:focus-visible {
 /* A brief: orientation ABOVE a figure. A caption argues after; this says what you are looking at
  * before you have to guess. Set at prose measure, not full bleed, because it is read not scanned. */
 .brief {
-  max-width: 74ch;
+  /* NO `ch` MEASURE HERE. `ch` resolves against the element that declares it, and this one is
+   * 16px while the text inside it is 15px — so `74ch` produced 81 characters, and it only showed
+   * up once the padding that had been hiding it was removed. The measure belongs on the element
+   * carrying the type. AGENTS.md records this exact trap from a pull quote. */
   margin: 0 0 26px;
-  padding-inline: clamp(14px, 3vw, 42px);
+  /* No inline padding. It was here to inset the block from a full-bleed figure's edge, and the
+   * plate grid now does that — leaving this in put the recipe's rows 42px right of every other
+   * paragraph, which is the last of the four competing left edges this figure had. */
 }
 .brief-row + .brief-row {
   margin-top: 13px;
+}
+.brief-row p {
+  max-width: 68ch;
 }
 .brief-lab {
   display: block;
@@ -1701,7 +1774,10 @@ a.guide-path:focus-visible {
   line-height: 1.5;
   color: var(--muted);
   margin: 4px 0 0;
-  max-width: 46ch;
+  /* 46ch left only a character of headroom over the 45 floor, and the same pixel width measures
+   * about 4% fewer characters on CI's Linux fonts than on macOS — so a design sitting on the limit
+   * passes on one machine and fails on the other. Headroom is part of the fix, not the threshold. */
+  max-width: 58ch;
 }
 .key-tally {
   display: inline-block;
@@ -1742,14 +1818,10 @@ a.guide-path:focus-visible {
    * content. The width is handled by centring under the figure instead, the same way the caption
    * is — the block was hanging at the figure's own left edge, 495px left of every other line of
    * prose on the page. */
-  max-width: min(96ch, 1025px);
-  margin-inline: auto;
 }
 /* The stepper's note is prose belonging to the figure, so it is centred under it like the caption
  * and the recipe — not left at the drawing's own edge, where it read as a stranded fragment. */
 .bay-note {
-  max-width: min(96ch, 1025px);
-  margin-inline: auto;
 }
 
 .bay-recipe .brief-row {
@@ -1758,7 +1830,7 @@ a.guide-path:focus-visible {
 .bay-recipe .brief-row p {
   font-size: 14.5px;
   line-height: 1.5;
-  max-width: 62ch;
+  max-width: 68ch;
   margin: 0;
 }
 

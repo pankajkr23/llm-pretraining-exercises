@@ -481,7 +481,7 @@ export function outputs() {
 }
 
 export function figCentrefold() {
-  const wrap = el('div');
+  const wrap = el('div', 'plate-body')
   const W = 1240;
   const H = 560;
   const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img' });

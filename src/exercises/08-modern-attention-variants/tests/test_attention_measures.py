@@ -38,7 +38,16 @@ PUBLIC = REPO_ROOT / "public"
 SLUG = "08-modern-attention-variants"
 
 #: Running prose. Below this a paragraph reads as fragments; above it the eye loses the line.
-NARROWEST, WIDEST = 45, 80
+#:
+#: **The floor carries a margin on purpose.** Characters-per-line is measured from the rendered
+#: font, and the same pixel width measures about 4% fewer characters on CI's Linux fonts than on
+#: macOS — so a threshold set at exactly what the design produces passes on one machine and fails
+#: on the other. It did: this guard was written at 45, the design's narrowest block measured 46
+#: locally, and CI reported 44. The answer is not to tune the design until it scrapes past on both;
+#: it is to leave room. The design targets 46 and above, the guard fails below 42, and the gap is
+#: the platform difference plus a little. Both numbers still catch what this was written for — the
+#: standfirsts at 34 and the captions at 40.
+NARROWEST, WIDEST = 42, 80
 
 #: A short block is only a defect if it is also leaving room unused.
 ROOM_TO_SPARE = 0.70
@@ -85,6 +94,22 @@ MEASURE_JS = """() => {
   return out;
 }"""
 
+
+EDGES_JS = """() => {
+  const out = {};
+  for (const sec of document.querySelectorAll('#main > section')) {
+    const seen = {};
+    for (const el of sec.querySelectorAll('p, figcaption, .brief-lab, li')) {
+      if (el.innerText.trim().length < 40) continue;
+      if (el.closest('.ledger, .idx-row, .key, .colophon, table')) continue;
+      const x = Math.round(el.getBoundingClientRect().left);
+      seen[x] = (seen[x] || 0) + 1;
+    }
+    out[sec.dataset.role || '?'] = seen;
+  }
+  return out;
+}"""
+
 pytestmark = pytest.mark.integration
 
 
@@ -114,7 +139,10 @@ def measured():
                 for row in page.evaluate(MEASURE_JS):
                     row["at"] = width
                     rows.append(row)
-            yield rows
+            page.set_viewport_size({"width": 2000, "height": 1200})
+            page.wait_for_timeout(400)
+            edges = page.evaluate(EDGES_JS)
+            yield {"blocks": rows, "edges": edges}
             page.close()
             browser.close()
     finally:
@@ -123,8 +151,9 @@ def measured():
 
 def test_enough_prose_was_measured_for_this_to_mean_anything(measured) -> None:
     """A selector that stops matching would make every assertion below pass on an empty list."""
-    assert len(measured) >= 50 * len(WIDTHS), (
-        f"only {len(measured)} measurements across {len(WIDTHS)} widths; the selector has rotted"
+    assert len(measured["blocks"]) >= 50 * len(WIDTHS), (
+        f"only {len(measured['blocks'])} measurements across {len(WIDTHS)} widths; "
+        f"the selector has rotted"
     )
 
 
@@ -132,7 +161,7 @@ def test_no_block_of_prose_is_too_narrow_when_it_could_be_wider(measured) -> Non
     """Eleven standfirsts sat at 34 characters and six captions at 40, and nothing failed."""
     narrow = [
         (r["at"], r["sec"], r["cls"], r["chars"])
-        for r in measured
+        for r in measured["blocks"]
         if r["chars"] < NARROWEST and r["fill"] < ROOM_TO_SPARE
     ]
     assert not narrow, (
@@ -143,7 +172,9 @@ def test_no_block_of_prose_is_too_narrow_when_it_could_be_wider(measured) -> Non
 
 def test_no_block_of_prose_is_too_wide_to_track(measured) -> None:
     """The opposite failure, and just as real: the colophon ran to 99 characters under 800px."""
-    wide = [(r["at"], r["sec"], r["cls"], r["chars"]) for r in measured if r["chars"] > WIDEST]
+    wide = [
+        (r["at"], r["sec"], r["cls"], r["chars"]) for r in measured["blocks"] if r["chars"] > WIDEST
+    ]
     assert not wide, f"{len(wide)} blocks read over {WIDEST} characters a line:\n" + "\n".join(
         f"    at {w}px  {s:11} {c:28} {n:>3} chars" for w, s, c, n in wide[:10]
     )
@@ -158,9 +189,39 @@ def test_nothing_is_split_into_columns_too_narrow_to_be_worth_splitting(measured
     """
     bad = [
         (r["at"], r["sec"], r["cls"], r["cols"], r["chars"])
-        for r in measured
+        for r in measured["blocks"]
         if r["cols"] > 1 and r["chars"] < 55
     ]
     assert not bad, "these are split into columns too narrow to read:\n" + "\n".join(
         f"    at {w}px  {s:11} {c:26} {n} cols, {ch} chars each" for w, s, c, n, ch in bad
+    )
+
+
+def test_every_line_of_prose_in_a_section_shares_one_left_edge(measured) -> None:
+    """Four competing left edges inside one figure is what "looks random" actually means.
+
+    The centrefold had the stepper note at x=442, the recipe at 634, its row labels at 676 and the
+    caption at 786 — while the standfirst above and the section below both sat at 775. Each block
+    had been given its own `margin-inline: auto`, so each centred inside a different parent and
+    landed somewhere different. **Centring things independently is what makes a layout look
+    random**; they were never sharing an edge.
+
+    The plate now carries the page grid inward the way a section already does, so its prose lands
+    on the same `text` column as every other paragraph while the drawing keeps the full width.
+    """
+    #: A section may legitimately hold more than one edge — a three-column key, a two-column
+    #: orientation block, a full-bleed figure's own labels. What it may not do is scatter: most of
+    #: its running prose should share one edge, and a block sitting alone on its own is the thing
+    #: that reads as random. So the test is a DOMINANT edge, not a single one.
+    scattered = {}
+    for role, seen in measured["edges"].items():
+        counts = sorted(seen.items(), key=lambda kv: -kv[1])
+        total = sum(seen.values())
+        if total < 6:
+            continue
+        if counts[0][1] / total < 0.55:
+            scattered[role] = counts
+    assert not scattered, (
+        "these sections scatter their prose across left edges with no dominant one:\n"
+        + "\n".join(f"    {r:11} {e}" for r, e in scattered.items())
     )

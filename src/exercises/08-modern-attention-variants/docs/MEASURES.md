@@ -52,3 +52,19 @@ characters only under 800. One viewport would have found two of the five.
 It was verified against the reader's own saved copy of the page — the same 88 blocks, the same 11
 standfirsts at 34 and 6 captions at 40 — so the diagnosis is of what was actually on screen rather
 than of a rebuild.
+
+## One more thing the guard taught, after it failed on CI and passed here
+
+Characters-per-line is measured from the **rendered font**, and the fonts differ by machine: the
+same pixel width came out **46 characters on macOS and 44 on CI's Linux**, about a 4% spread. The
+guard was written with a floor of 45 and the design's narrowest block measured 46, so it passed
+locally and failed in CI — a green suite on one machine and a red one on another, for a page that
+had not changed.
+
+The fix is not to tune the design until it scrapes past on both. It is to leave room: **the design
+targets 46 characters and above, the guard fails below 42**, and the gap absorbs the platform
+difference. Both thresholds still catch what this was written for — 34 and 40.
+
+Worth generalising: any guard whose measurement depends on font rendering, device pixel ratio or
+platform text metrics needs a margin between the threshold and the value the design actually
+produces. A threshold set at exactly the design's value is a coin flip.
