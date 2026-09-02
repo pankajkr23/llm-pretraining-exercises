@@ -142,5 +142,5 @@ Kept because a quietly amended number is worse than the original error.
   19.1% — because permutations make every position swap available.
 - An earlier recovery table read `exact_full`, which scores every truncated token as a decoder
   failure by construction. It is the vocabulary's truncation rate, not a decoder result.
-- The assignment was worked from a paraphrase for several sessions. `docs/sessions/s7_assignment.md`
+- The assignment was worked from a paraphrase for several sessions. `docs/notes/s7_assignment.md`
   was in the repo the whole time, and reading it changed the scoping.

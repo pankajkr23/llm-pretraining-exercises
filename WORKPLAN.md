@@ -14,7 +14,7 @@ Status keys: `done` · `in progress` · `queued` · `blocked`
 ## Stage 1 — Exercise 08, finished to the benchmark · complete
 
 The benchmark is Sebastian Raschka's *A Visual Guide to Attention Variants in Modern LLMs*
-(`docs/sessions/s8_visual_attention_variants_sebastian.html`, local-only, backed up). Logic and data
+(`docs/notes/s8_visual_attention_variants_sebastian.html`, local-only, backed up). Logic and data
 were sound from the start; readability and design were the work.
 
 | # | item | status |
@@ -90,7 +90,7 @@ A five-lens audit on 2026-09-02 inventoried what actually diverges. The full lis
 ## Stage 3 — Exercise 09 · queued
 
 `src/exercises/09-loss-functions-output-heads` (currently an empty directory). Sources
-`docs/sessions/s9.md`, `s9_transcript.md`, `s9_assignment.md`. Own branch, own PR. **Scaffold with
+`docs/notes/s9.md`, `s9_transcript.md`, `s9_assignment.md`. Own branch, own PR. **Scaffold with
 `tools/new_exercise.py`, never by hand** — six test families apply the moment `pyproject.toml`
 lands, three of them checking for gitignored files a fresh clone will never have.
 
@@ -98,7 +98,7 @@ Build it to `docs/DESIGN.md` from the first commit rather than retro-fitting it 
 
 ## Stage 4 — Exercise 10 · queued
 
-`src/exercises/10-training-loop` (currently an empty directory). Sources `docs/sessions/s10.md`,
+`src/exercises/10-training-loop` (currently an empty directory). Sources `docs/notes/s10.md`,
 `s10_transcript.md`, `s10_assignment.md`. Own branch, own PR.
 
 ## Release — v0.13.0 · ready when PR #83 merges

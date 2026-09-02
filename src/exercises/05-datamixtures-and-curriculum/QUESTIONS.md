@@ -8,8 +8,8 @@ and the answer where it can.
 
 | source | status | used for |
 | --- | --- | --- |
-| `docs/sessions/s5.md` | present, 249 lines | the notes: masking rule, OPUS widget, stage table, benchmark list |
-| `docs/sessions/s5_transcript.md` | present, 943 lines | the spoken session, including things the notes do not say |
+| `docs/notes/s5.md` | present, 249 lines | the notes: masking rule, OPUS widget, stage table, benchmark list |
+| `docs/notes/s5_transcript.md` | present, 943 lines | the spoken session, including things the notes do not say |
 | `SPEC.md`, `inventory.py`, `lanes.py` | this exercise | every supply figure and epoch count below |
 | `results/*.json` | this exercise | the proxy measurements |
 

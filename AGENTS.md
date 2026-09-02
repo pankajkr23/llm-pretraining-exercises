@@ -48,7 +48,7 @@ the new one, and deletes it. Nobody deleted anything. So:
   rebuilds a notebook.
 
 - **The protected set is wider than the three classes named above, and the extra ones were
-  unguarded for months.** `docs/sessions/**` is the entire course corpus — every session's notes,
+  unguarded for months.** `docs/notes/**` is the entire course corpus — every session's notes,
   transcripts and assignments, including sessions this repo has not reached — and
   `docs/EXPLAINER_PROMPT.md` / `docs/EXPLAINER_PATTERN.md` are the two documents any explainer is
   required to be built from. All gitignored, none regenerable, none watched by the tripwire until
@@ -150,7 +150,7 @@ repo** — it is the real safety net.
       --summary "One sentence for the root README row." [--dry-run]
   ```
   It writes the whole skeleton, **including the three gitignored files** (`BRIEF.md`, seeded from
-  `docs/sessions/sN_assignment.md` when one exists; `tools/build_notebook.py`; and the notebook it
+  `docs/notes/sN_assignment.md` when one exists; `tools/build_notebook.py`; and the notebook it
   builds), joins the `rest` CI shard, adds the root README row, and prints what is left for you.
 
   **The sequencing is the reason it exists.** `tests/_exercises.py::exercises_in` only counts a

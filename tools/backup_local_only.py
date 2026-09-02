@@ -16,7 +16,7 @@ mistake. It costs nothing: the whole set is about 12 MB of text.
 
 **What it covers, and why that is wider than the tripwire.** The tripwire
 (`tests/test_local_only_files_present.py`) watches notebooks, builders and briefs — the three
-classes `AGENTS.md` names. But `docs/sessions/`
+classes `AGENTS.md` names. But `docs/notes/`
 holds the entire course corpus (transcripts, assignments, and material for sessions this repo has
 not reached yet), and `docs/EXPLAINER_*.md` are the two files any explainer is meant to be built
 from. All of it is gitignored, none of it is regenerable, and none of it was in the tripwire. A
@@ -70,7 +70,7 @@ PATTERNS: tuple[str, ...] = (
     # so a `.pdf`, a `.txt` or a `.png` added to the course corpus is exactly as unrecoverable as a
     # `.md` — and an allowlist would have skipped it without a word, in the one area both this file
     # and AGENTS.md call the largest exposure.
-    "docs/sessions/**/*",
+    "docs/notes/**/*",
     "TODO.md",
     # Hand-written planning and critique notes that live beside an exercise. Only the untracked ones
     # are taken: `collect` drops anything git already has, so this cannot quietly start duplicating
@@ -393,7 +393,7 @@ def snapshot(root: Path, dest: Path, files: list[Path], *, message: str) -> int:
             "# local-only backup\n\n"
             "Versioned snapshots of the gitignored, non-regenerable files in "
             f"`{root.name}` — notebooks, notebook builders, briefs and the course corpus under "
-            "`docs/sessions/`. Git cannot restore those from the repo itself, because git has "
+            "`docs/notes/`. Git cannot restore those from the repo itself, because git has "
             "never seen them.\n\n"
             "Written by `tools/backup_local_only.py`. Restore a file with:\n\n"
             "```bash\n"

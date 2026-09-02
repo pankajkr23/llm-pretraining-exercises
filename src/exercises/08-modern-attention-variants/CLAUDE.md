@@ -93,7 +93,7 @@ inputs would reconcile them (a smaller model, fewer KV heads, or fp8 would each 
 
 ## Where the material actually comes from
 
-`docs/sessions/s8.md` teaches ten of the eighteen mandated mechanisms. **Eight are named in the
+`docs/notes/s8.md` teaches ten of the eighteen mandated mechanisms. **Eight are named in the
 coverage list and never taught**: sinusoidal, learned absolute positions, ALiBi, sliding window,
 attention sinks, NTK-aware scaling, YaRN and MLA. Those are sourced entirely from outside the course
 material, and `taught_in_session` on each entry records which is which — so a reader can see where
@@ -247,7 +247,7 @@ module describing any mechanism, and `web/field-guide/` is a second route over t
 ## The readability pass, and the two defects it turned up that were not readability
 
 The page was audited section by section against Sebastian Raschka's *A Visual Guide to Attention
-Variants in Modern LLMs* (local-only, `docs/sessions/`) and against `AGENTS.md`'s ladder of readers.
+Variants in Modern LLMs* (local-only, `docs/notes/`) and against `AGENTS.md`'s ladder of readers.
 75 findings, 37 edits. Most were wording. Two were not, and both are the kind this exercise exists
 to catch.
 

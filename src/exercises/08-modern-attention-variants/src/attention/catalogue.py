@@ -29,7 +29,7 @@ from attention.sources import Source
 EXERCISE = Path(__file__).resolve().parents[2]
 CATALOGUE = EXERCISE / "results" / "mechanisms.json"
 
-#: The coverage list, verbatim from `docs/sessions/s8_assignment.md`, mapped to catalogue keys.
+#: The coverage list, verbatim from `docs/notes/s8_assignment.md`, mapped to catalogue keys.
 #:
 #: Left side is the instructor's phrase exactly as written; right side is every key that phrase
 #: requires. Splitting them means a rename on our side can never quietly drop one of his items:

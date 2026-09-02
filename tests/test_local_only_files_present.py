@@ -42,7 +42,7 @@ EXPECTED_BRIEFS = [p / "BRIEF.md" for p in EXERCISES]
 #: watched it.**
 #:
 #: The three lists above are the classes `AGENTS.md` names, and they were the only ones guarded.
-#: But `docs/sessions/` holds every session's notes, transcripts and assignments — including
+#: But `docs/notes/` holds every session's notes, transcripts and assignments — including
 #: material for sessions this repo has not reached yet — and `docs/EXPLAINER_*.md` are the two
 #: files any explainer is supposed to be built from. All gitignored, none regenerable, none
 #: guarded. A tripwire that covers the documented cases and not the biggest one is a tripwire that
@@ -50,7 +50,7 @@ EXPECTED_BRIEFS = [p / "BRIEF.md" for p in EXERCISES]
 #:
 #: Counted rather than enumerated: the corpus grows a file per session, so a fixed list would go
 #: stale and a stale list here fails silently in the safe-looking direction.
-SESSION_CORPUS = REPO_ROOT / "docs" / "sessions"
+NOTES_CORPUS = REPO_ROOT / "docs" / "notes"
 
 #: Where `tools/backup_local_only.py` writes. Read here as a **high-water mark**: a file the store
 #: holds and this checkout does not is a loss, and no hand-written floor can notice that.
@@ -82,7 +82,7 @@ def is_a_working_checkout() -> bool:
     Returns:
         True when any watched file exists anywhere.
     """
-    return any(p.is_file() for p in _ALL_WATCHED) or SESSION_CORPUS.is_dir()
+    return any(p.is_file() for p in _ALL_WATCHED) or NOTES_CORPUS.is_dir()
 
 
 def _partial(paths: list[Path]) -> bool:
@@ -155,7 +155,7 @@ def test_no_programme_level_document_has_gone_missing() -> None:
     )
 
 
-def test_the_session_corpus_has_not_shrunk() -> None:
+def test_the_reference_corpus_has_not_shrunk() -> None:
     """The course material — transcripts, assignments, notes — is the biggest unguarded exposure.
 
     **Measured against the backup store, not against a hand-written floor.** The first version
@@ -164,33 +164,33 @@ def test_the_session_corpus_has_not_shrunk() -> None:
     stops meaning anything the moment the corpus grows. The store is a high-water mark that moves
     on its own, so "fewer files than last time" is the question, and it is the right one.
     """
-    if not SESSION_CORPUS.is_dir():
+    if not NOTES_CORPUS.is_dir():
         if is_a_working_checkout():
             pytest.fail(
-                "docs/sessions is gone entirely and this checkout still has other local-only "
+                "docs/notes is gone entirely and this checkout still has other local-only "
                 "files, so it is not a clone. That directory is the whole course corpus."
             )
-        pytest.skip("no docs/sessions here — a fresh clone has none (it is gitignored)")
+        pytest.skip("no docs/notes here — a fresh clone has none (it is gitignored)")
 
-    here = {p for p in SESSION_CORPUS.rglob("*") if p.is_file() and p.name != ".DS_Store"}
+    here = {p for p in NOTES_CORPUS.rglob("*") if p.is_file() and p.name != ".DS_Store"}
 
-    backed_up = STORE / "docs" / "sessions"
+    backed_up = STORE / "docs" / "notes"
     if backed_up.is_dir():
         was = {
             p.relative_to(backed_up)
             for p in backed_up.rglob("*")
             if p.is_file() and p.name != ".DS_Store"
         }
-        gone = sorted(str(r) for r in was - {p.relative_to(SESSION_CORPUS) for p in here})
+        gone = sorted(str(r) for r in was - {p.relative_to(NOTES_CORPUS) for p in here})
         assert not gone, (
-            f"{len(gone)} files the backup store holds are missing from docs/sessions: "
+            f"{len(gone)} files the backup store holds are missing from docs/notes: "
             f"{gone[:6]}. Restore them from {backed_up} before doing anything else."
         )
     else:
         # No store on this machine yet, so fall back to the shape check. Weaker on purpose: it is
         # better than nothing and it says so.
         assert len(here) >= len(EXERCISES), (
-            f"docs/sessions holds {len(here)} files for {len(EXERCISES)} exercises, and there is "
+            f"docs/notes holds {len(here)} files for {len(EXERCISES)} exercises, and there is "
             f"no backup store to compare against. Run tools/backup_local_only.py."
         )
 

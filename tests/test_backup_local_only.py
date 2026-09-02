@@ -54,9 +54,9 @@ def fake_repo(tmp_path: Path) -> Path:
         "docs/BRIEF.md",
         "docs/EXPLAINER_PROMPT.md",
         "docs/EXPLAINER_PATTERN.md",
-        "docs/sessions/s1.md",
-        "docs/sessions/s1_transcript.md",
-        "docs/sessions/media/s1/diagram.svg",
+        "docs/notes/s1.md",
+        "docs/notes/s1_transcript.md",
+        "docs/notes/media/s1/diagram.svg",
         "TODO.md",
     ):
         _make(root, relative, f"contents of {relative}")
@@ -75,8 +75,8 @@ def test_it_collects_every_protected_class(fake_repo: Path) -> None:
         "src/exercises/01-introductions/BRIEF.md",
         "docs/BRIEF.md",
         "docs/EXPLAINER_PROMPT.md",
-        "docs/sessions/s1.md",
-        "docs/sessions/media/s1/diagram.svg",
+        "docs/notes/s1.md",
+        "docs/notes/media/s1/diagram.svg",
     ):
         assert expected in found, f"{expected} would not be backed up"
 
@@ -84,14 +84,14 @@ def test_it_collects_every_protected_class(fake_repo: Path) -> None:
 def test_the_session_corpus_glob_reaches_both_depths(fake_repo: Path) -> None:
     """**The glob most likely to be silently wrong.**
 
-    `docs/sessions/**/*.md` must match `docs/sessions/s1.md` — a file directly in the directory —
+    `docs/notes/**/*.md` must match `docs/notes/s1.md` — a file directly in the directory —
     as well as one nested under `media/`. Python's `**` matches zero directories, but that is worth
     an assertion rather than a memory: if it did not, the entire course corpus would be skipped and
     the tool would still report success.
     """
     found = {str(p) for p in backup.collect(fake_repo)[0]}
-    assert "docs/sessions/s1.md" in found, "a file directly under docs/sessions/ was not matched"
-    assert "docs/sessions/media/s1/diagram.svg" in found, "a nested file was not matched"
+    assert "docs/notes/s1.md" in found, "a file directly under docs/notes/ was not matched"
+    assert "docs/notes/media/s1/diagram.svg" in found, "a nested file was not matched"
 
 
 def test_a_regenerable_artifact_is_not_collected(fake_repo: Path) -> None:
@@ -131,7 +131,7 @@ def test_a_credential_shaped_name_is_recognised(name: str) -> None:
     this test cannot run, and creating credential-shaped fixtures is itself how one ends up copied
     somewhere later.
     """
-    assert backup.looks_like_a_credential(Path("docs/sessions") / name)
+    assert backup.looks_like_a_credential(Path("docs/notes") / name)
 
 
 @pytest.mark.parametrize(
@@ -139,7 +139,7 @@ def test_a_credential_shaped_name_is_recognised(name: str) -> None:
 )
 def test_an_ordinary_name_is_not_flagged(name: str) -> None:
     """**The twin.** A rule broad enough to refuse everything would look like perfect safety."""
-    assert not backup.looks_like_a_credential(Path("docs/sessions") / name)
+    assert not backup.looks_like_a_credential(Path("docs/notes") / name)
 
 
 def test_collect_skips_a_credential_and_names_it_rather_than_aborting(fake_repo: Path) -> None:
@@ -152,10 +152,10 @@ def test_collect_skips_a_credential_and_names_it_rather_than_aborting(fake_repo:
     `deploy.env` is used because the sandbox permits it while still matching `*.env`; the
     dot-prefixed forms are covered by the predicate test above.
     """
-    _make(fake_repo, "docs/sessions/deploy.env", "SECRET")
+    _make(fake_repo, "docs/notes/deploy.env", "SECRET")
     files, skipped = backup.collect(fake_repo)
 
-    assert skipped == ["docs/sessions/deploy.env"]
+    assert skipped == ["docs/notes/deploy.env"]
     assert not any("deploy.env" in str(f) for f in files), "the credential was collected anyway"
     assert len(files) >= 9, "skipping one file cost the rest their backup"
 
@@ -421,11 +421,11 @@ def test_the_verify_command_exits_non_zero_on_a_loss(fake_repo: Path, tmp_path: 
 def test_finder_metadata_is_not_stored(fake_repo: Path, tmp_path: Path) -> None:
     """`.DS_Store` is not content, and storing it makes the store and the checkout disagree.
 
-    The directory sweep over `docs/sessions/` picks it up, and once stored, any Finder visit to
+    The directory sweep over `docs/notes/` picks it up, and once stored, any Finder visit to
     either side reads as drift — a guard that cries wolf gets ignored, which is how a real loss
     gets missed.
     """
-    _make(fake_repo, "docs/sessions/.DS_Store", "finder noise")
+    _make(fake_repo, "docs/notes/.DS_Store", "finder noise")
     files, _ = backup.collect(fake_repo)
     assert not any(f.name == ".DS_Store" for f in files)
 

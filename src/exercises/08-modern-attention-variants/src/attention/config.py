@@ -32,7 +32,7 @@ class Yardstick:
     query_heads: int = 8
     head_dim: int = 128
     dtype: str = "bf16"
-    source: str = "docs/sessions/s8.md — the configuration used throughout the cache section"
+    source: str = "docs/notes/s8.md — the configuration used throughout the cache section"
 
     @property
     def bytes_per_number(self) -> int:

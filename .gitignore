@@ -227,7 +227,7 @@ artifacts/
 **/artifacts/
 # Personal, machine-local agent instructions (never shared)
 CLAUDE.local.md
-# Claude Code local session state (worktrees, jobs, memory, scratch) — never shared
+# Claude Code local working state (worktrees, jobs, memory, scratch) — never shared
 .claude/
 # Local planning scratchpads — not tracked
 TODO.md
@@ -248,12 +248,12 @@ public/
 # unpublished source documents that inform the work but are not ours to redistribute.
 **/docs/*.html
 
-# Session transcripts and working notes — reference material only, never versioned.
-# Nothing under any docs/sessions/ directory goes on the repo, in any form.
-docs/sessions/
-docs/sessions/**
-**/docs/sessions/
-**/docs/sessions/**
+# Reference material — source documents that inform the work, never versioned.
+# Nothing under any docs/notes/ directory goes on the repo, in any form.
+docs/notes/
+docs/notes/**
+**/docs/notes/
+**/docs/notes/**
 
 # Working handoff notes, wherever they are — a local scratchpad, like TODO.md above.
 HANDOFF.md
@@ -275,7 +275,7 @@ docs/EXPLAINER_PATTERN.md
 # Self-critique of a shipped build — useful to us, not part of the published work.
 **/docs/DESIGN_CRITIQUE.md
 
-# Session notebooks are local-only. They are the course's own material rather than this repo's
+# Topic notebooks are local-only. They are source material rather than this repo's
 # deliverable, and executing one bakes real corpus text into a tracked file. `notebooks/hello.ipynb`
 # is deliberately NOT matched: it is the tracked sample that keeps the notebook harness under test
 # on a fresh clone.

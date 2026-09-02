@@ -2149,7 +2149,7 @@ export const M = Object.freeze({
     "queryHeads": 8,
     "headDim": 128,
     "dtype": "bf16",
-    "source": "docs/sessions/s8.md — the configuration used throughout the cache section"
+    "source": "docs/notes/s8.md — the configuration used throughout the cache section"
   },
   "cache": {
     "contexts": [
