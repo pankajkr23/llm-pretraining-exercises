@@ -2338,3 +2338,34 @@ a.guide-path:focus-visible {
   color: var(--faint);
   margin: 14px 0 0;
 }
+
+/* ---------------------------------------------------------------- notices */
+/* A section that is apparatus rather than argument. A reader on the limits section: "this is some
+ * sort of disclaimer or notice not an actual heading on the page. Why do we need so much space for
+ * this text while it is purely informational."
+ *
+ * It is still fully visible — `AGENTS.md` is explicit that a limitation a reader has to open a
+ * drawer to find is one the page is hiding. What changes is that it stops wearing the masthead's
+ * display type: a modest heading, smaller body, and the list device exercise 07 already uses. */
+.notice > h2 {
+  font-size: 21px !important;
+  line-height: 1.2;
+  letter-spacing: -0.012em;
+}
+.notice {
+  padding-block: clamp(32px, 4vw, 52px) 0 !important;
+}
+.limitlist {
+  max-width: 80ch;
+  margin: 14px 0 0;
+  padding-left: 20px;
+}
+.limitlist li {
+  margin: 0 0 11px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.limitlist li b {
+  color: var(--ink);
+}

@@ -1304,50 +1304,59 @@ function chapterConclusion(M) {
 /* --------------------------------------------------------------------- 9 · limits */
 
 function chapterLimits(M) {
-  return section(
-    'limits',
-    'limits',
-    'In the open',
-    'What this page cannot tell you',
-    [
-      /* "IT IS A CHRONOLOGY, NOT A BENCHMARK" IS NOT HERE ANY MORE — it opens the page, beside the
-       * reader doors, because it tells a reader what this is NOT and it was sitting eight thousand
-       * words after the point where they had already decided. What is left here is the narrower
-       * claim about provenance, which is the one a reader checking us needs. */
-      `**Every date was read from the source's own abstract page**, and each entry prints that ` +
-        `page's date string beside our parsed date so you can check the reading. ` +
-        `${M.counts.outsideSession} of the ${M.counts.total} were built from the primary paper ` +
-        'alone, with no secondary explanation to lean on.',
-      '**The glyphs are shapes, not measurements.** Where a paper states a size we used it; where ' +
-        `it does not, the proportion is ours and means nothing — ${M.counts.schematic} of ` +
-        `${M.counts.total} are marked ~ for that reason, as the key above the chronology says.`,
-      '**Launch date is not adoption date.** An arXiv v1 is when an idea became public, not when ' +
-        'it became the default, so the chart shows when the field could have moved, not when it ' +
-        'did.',
-      /* THE PUBLICATION-BIAS FINDING IS IN THE OPENING TILES NOW. A review reader called it "the
-       * most interesting sentence on the page, buried in the limits section and framed as an
-       * apology — it is a finding". AGENTS.md wants a failure in the opening tiles and this is the
-       * honest one. What stays here is the consequence for coverage, which is a limit. */
-      /* THE CLAIM AND ITS EVIDENCE, IN ONE PLACE. An earlier edit promoted this to the opening
-       * tiles and left a clause here saying so — but the tile that went up carries the *shipping*
-       * gap, which is a different finding, so the pointer aimed at a sentence that does not exist.
-       * A cross-reference to a thing you decided not to write is worse than no cross-reference.
-       * The finding is stated here in full instead, with the window it was checked over. */
-      '**The recent end of this chart is drawn almost entirely from labs that publish papers.** ' +
-        'Between December 2025 and 31 August 2026 we checked the three labs whose models are most ' +
-        'used and which publish least — OpenAI, Anthropic and Meta — for a new attention ' +
-        'mechanism, and found no architecture at all: only **system cards**, which name no ' +
-        'attention mechanism, no positional scheme and no parameter count. That is a real bias in ' +
-        'what a chronology can see, not an accident of our searching.',
-      /* JEPA IN ONE LINE. This ran to 115 words introducing a brand-new acronym eight thousand
-       * words in, for a family that then turns out not to be on the page at all. Four readers
-       * flagged it and every one asked for a sentence. */
-      '**This page covers attention only.** JEPA and the world models built on it change what a ' +
-        'model is trained to guess, not how attention works — and nothing in that family proposed ' +
-        'a new attention mechanism in the window we checked, so nothing from it is here.',
-    ],
-    { short: 'Limits', sub: 'What it cannot establish' }
-  );
+  /* A NOTICE, NOT A CHAPTER — and four of its five paragraphs were saying something the page had
+   * already said.
+   *
+   * A reader: "this is some sort of disclaimer or notice not an actual heading on the page. Why do
+   * we need so much space for this text while it is purely informational." He was right twice
+   * over. It ran 265 words under a `clamp(30px, 5vw, 48px)` display heading — the same type the
+   * masthead uses — and the content survey found:
+   *
+   *   [1] provenance      the same sentence as the colophon, almost word for word
+   *   [2] the ~ mark      the FIFTH of six copies, and it said so itself: "as the key above says"
+   *   [3] launch date     a restatement of what 22 empty `Shipped in` rows already show
+   *   [4] publication     the only load-bearing claim on the page and it appears nowhere else
+   *   [5] JEPA            a scope note about a family that is, by its own admission, not here
+   *
+   * So [4] keeps its full statement, [3] survives in a clause, and [1], [2] and [5] go — each is
+   * still on the page, once, where the reader first needs it. The list device is exercise 07's
+   * `.limitlist`, reused rather than reinvented.
+   *
+   * What does NOT happen: this is not moved into a `<details>`. `AGENTS.md` is explicit — a
+   * limitation a reader has to open a drawer to find is a limitation the page is hiding. Smaller
+   * type, fewer words, always visible.
+   */
+  const s = section('limits', 'limits', 'In the open', 'What this page cannot tell you', [], {
+    short: 'Limits',
+    sub: 'What it cannot establish',
+  });
+  s.classList.add('notice');
+
+  const ul = el('ul', 'limitlist');
+  for (const line of [
+    '<b>The recent end of this chart is drawn almost entirely from labs that publish papers.</b> ' +
+      'Between December 2025 and 31 August 2026 we checked the three labs whose models are most ' +
+      'used and which publish least — OpenAI, Anthropic and Meta — for a new attention mechanism, ' +
+      'and found no architecture at all: only <b>system cards</b>, which name no attention ' +
+      'mechanism, no positional scheme and no parameter count. That is a real bias in what a ' +
+      'chronology can see, not an accident of our searching.',
+    '<b>Launch date is not adoption date</b>, so the chart shows when the field could have moved, ' +
+      'not when it did — which is also why ' +
+      `${M.mechanisms.filter((m) => !(m.shippedIn || []).length).length} of the ` +
+      `${M.counts.total} entries name no model that shipped them.`,
+    `<b>${M.counts.outsideSession} of the ${M.counts.total} were built from the primary paper ` +
+      'alone</b>, with no secondary explanation to lean on. Each prints the source’s own date ' +
+      'string beside our parsed date, at the back, so you can check the reading.',
+    '<b>This page covers attention only.</b> JEPA and the world models built on it change what a ' +
+      'model is trained to guess, not how attention works, and nothing in that family proposed a ' +
+      'new attention mechanism in the window we checked.',
+  ]) {
+    const li = el('li');
+    li.innerHTML = line;
+    ul.append(li);
+  }
+  s.append(ul);
+  return s;
 }
 
 /* ----------------------------------------------------------------------- 10 · next */
@@ -1612,6 +1621,9 @@ function chapterMethod(M) {
     short: 'Colophon',
     sub: 'What the numbers rest on',
   });
+  /* Apparatus, so it wears the notice treatment rather than the masthead's display type — the same
+   * reason the limits section does. Its position in the spine is fixed repo-wide and stays. */
+  s.classList.add('notice');
   const c = el('div', 'colophon');
   const paras = [
     'Dates are the arXiv <b>v1</b> submission date, because later versions move by months and ' +
