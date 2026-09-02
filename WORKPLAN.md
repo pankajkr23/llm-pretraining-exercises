@@ -1,8 +1,8 @@
 # Work plan — the standing backlog
 
 Written down because the queue got long and things were being asked for faster than they were being
-finished. Ordered exactly as PK asked for it. **Exercise 08 is pushed: PR #83 is open, all checks green, awaiting merge and the production
-gate — both PK's.** Later stages land as local commits on their own branch and are pushed when
+finished. Ordered exactly as PK asked for it. **Exercise 08 is released.** PR #83 and the v0.13.0 release PR are merged, the tag is pushed,
+the production gate was approved and the page is live. Later stages land as local commits on their own branch and are pushed when
 PK asks — one PR per exercise.
 
 Status keys: `done` · `in progress` · `queued` · `blocked`
@@ -11,7 +11,7 @@ Status keys: `done` · `in progress` · `queued` · `blocked`
 
 ---
 
-## Stage 1 — Exercise 08, finished to the benchmark · complete except O4
+## Stage 1 — Exercise 08, finished to the benchmark · complete
 
 The benchmark is Sebastian Raschka's *A Visual Guide to Attention Variants in Modern LLMs*
 (`docs/sessions/s8_visual_attention_variants_sebastian.html`, local-only, backed up). Logic and data
@@ -27,7 +27,7 @@ were sound from the start; readability and design were the work.
 | 1.6 | Full screenshot pass, six themes, 1400px and 390px | done |
 | 1.7 | Notebook re-read to the same standard | done — 28 cells, backed up |
 | 1.8 | Docs at every level | done |
-| 1.9 | **O4 — Q2 answer** | **blocked**: `artifacts/q2_answer.txt` is generated and correct, but the app link 404s until PR #83 merges and the gated production workflow runs. A preview URL is login-walled and cannot satisfy a public-link requirement. |
+| 1.9 | **O4 — Q2 answer** | **ready to submit** — v0.13.0 released 2026-09-02, production gate approved, and the app link returns 200 anonymously with every asset resolving. Submitting is PK's. |
 | 1.10 | O6 — session notebook | done |
 
 ## Stage 1b — The readability rebuild · done

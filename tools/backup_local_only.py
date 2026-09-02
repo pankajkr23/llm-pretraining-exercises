@@ -40,9 +40,11 @@ tree dies with the working tree.
 
 import argparse
 import hashlib
+import json
 import logging
 import subprocess
 import sys
+import textwrap
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -405,11 +407,35 @@ def snapshot(root: Path, dest: Path, files: list[Path], *, message: str) -> int:
     changed = 0
     for relative in files:
         target = dest / relative
-        target.parent.mkdir(parents=True, exist_ok=True)
         payload = (root / relative).read_bytes()
-        if not target.is_file() or target.read_bytes() != payload:
-            changed += 1
-        target.write_bytes(payload)
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if not target.is_file() or target.read_bytes() != payload:
+                changed += 1
+            target.write_bytes(payload)
+        except PermissionError as exc:
+            # The store lives OUTSIDE the repo, which is the whole point of it and also the one
+            # thing a sandboxed agent is normally refused. Raising the bare PermissionError printed
+            # a twelve-line Python traceback from inside a git hook, naming pathlib rather than the
+            # cause — indistinguishable, to a reader, from the backup being broken.
+            #
+            # It still FAILS. It must: a backup that quietly does not run is worse than none, the
+            # same reason the secret scan errors rather than skips when gitleaks is absent. What
+            # changes is that the message says which of the two it is and what to do about it.
+            grant = json.dumps({"sandbox": {"filesystem": {"allowWrite": [str(dest)]}}}, indent=2)
+            raise SystemExit(
+                f"\ncannot write to the backup store: {exc.filename}\n"
+                f"  store: {dest}\n\n"
+                "The store is outside the repository by design, so this is usually a sandbox\n"
+                "or permissions restriction rather than a broken backup. Two fixes:\n\n"
+                "  1. Run it yourself, outside the restriction:\n"
+                "       uv run python tools/backup_local_only.py\n\n"
+                "  2. Or grant write access to the store once, in the project-local\n"
+                "     .claude/settings.local.json:\n\n"
+                f"{textwrap.indent(grant, '       ')}\n\n"
+                "Do NOT skip this hook to get past it — the files it copies are the ones git\n"
+                "cannot restore, and this hook runs on checkout/merge for exactly that reason.\n"
+            ) from exc
 
     _git(dest, "add", "-A")
     if _git(dest, "status", "--porcelain").stdout.strip():
