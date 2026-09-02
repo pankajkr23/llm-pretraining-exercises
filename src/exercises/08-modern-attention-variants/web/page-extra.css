@@ -655,6 +655,24 @@ figcaption strong {
 }
 
 /* ---------------------------------------------------------- the index plate */
+/* The index row's second band — the same three-column body the chapter entries use, and for the
+ * same reason: `does`, the ledger and `when you'd pick it` each spanning the row is three more
+ * bands on top of the identity line, which is what made a row 306px. The 315px floor is a
+ * 42-character line at 13px, so the column count follows the width the page actually has. */
+.ix-body {
+  /* `2 / -1`, not `3 / span 2`. Spanning only the last two columns gave the body 920px of the
+   * row's 1,156 and it fell to two columns at 262px tall; from column 2 it gets 1,024 and fits
+   * three at 175px. The narrowness was the height here too. */
+  grid-column: 2 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(315px, 100%), 1fr));
+  gap: 6px 26px;
+  align-items: baseline;
+}
+.ix-body > * {
+  min-width: 0;
+}
+
 .index-plate {
   border-top: 2px solid var(--ink);
   margin-top: 18px;
@@ -673,7 +691,7 @@ figcaption strong {
   background: var(--accent-soft);
 }
 .ix-glyph {
-  grid-row: 1 / span 3;
+  grid-row: 1 / span 2;
 }
 .ix-date {
   font-family: var(--mono);
@@ -710,12 +728,10 @@ figcaption strong {
   padding-top: 3px;
 }
 .ix-ledger {
-  grid-column: 3 / span 2;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px 18px;
-  font-size: 12.5px;
-  line-height: 1.5;
+  gap: 3px;
+  font-size: 13px;
+  line-height: 1.55;
 }
 .ix-ledger .c {
   color: var(--ink);
@@ -724,11 +740,9 @@ figcaption strong {
   color: var(--muted);
 }
 .ix-pick {
-  grid-column: 3 / span 2;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--ink);
-  max-width: 78ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
 }
 .ix-pick .k,
 .ix-ledger .k {
@@ -1845,12 +1859,18 @@ a.guide-path:focus-visible {
 }
 
 /* Who ships a mechanism, under what it does. */
+/* On the identity line, not a band of its own. It is a short list of model names and it was
+ * costing a full row's height plus its margin, thirty times over. */
 .ix-ship {
-  grid-column: 1 / -1;
-  font-size: 12.5px;
-  line-height: 1.6;
-  margin: 0 0 8px;
-  color: var(--ink);
+  grid-column: 4;
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 0;
+  text-align: right;
+  color: var(--muted);
+}
+.ix-ship.empty {
+  color: var(--faint);
 }
 .ix-ship .k {
   display: inline-block;
@@ -1923,12 +1943,10 @@ a.guide-path:focus-visible {
 /* What the mechanism does, above its ledger. Set as prose at reading size, because it is the one
  * field in the row a newcomer needs and the rest are reference. */
 .ix-does {
-  grid-column: 1 / -1;
-  font-size: 14.5px;
+  font-size: 13px;
   line-height: 1.55;
   color: var(--ink);
-  /* 78ch measured at 80 characters a line, the one prose measure on the page over the limit. */
-  max-width: 70ch;
+  max-width: none;
   margin: 2px 0 8px;
 }
 
@@ -2165,4 +2183,148 @@ a.guide-path:focus-visible {
   border: 1px solid var(--line);
   border-radius: 980px;
   padding: 5px 10px;
+}
+
+/* ================================================================== VARIANT: story = b
+ *
+ * TEMPORARY — the other half of the A/B, deleted with the harness once PK picks.
+ *
+ * Chapters I, II and VI were a heading and nothing else; III, IV and V were a heading plus one
+ * figure. The thirty mechanisms they are chapters ABOUT were named in none of them. Here each
+ * chapter carries its own, in date order.
+ *
+ * TWO BANDS, NOT SIX. The index at the back stacks nine fields vertically on a four-column grid,
+ * which is why a row is 306px and why widening the plate from 720px to 1,676px only takes it to
+ * 292px — the extra width shortens lines that were already short. An identity line and a prose
+ * line, with the prose in real columns, is ~120px.
+ */
+.ch-entries {
+  border-top: 2px solid var(--ink);
+  margin-top: 26px;
+}
+.ce-row {
+  display: grid;
+  /* Five columns, so the family and the shipped-in list both sit on the identity line. With four,
+   * auto-placement put `shipped in` on a row of its own under the date — a whole band for a short
+   * list of model names, thirty times over. */
+  grid-template-columns: 30px 92px minmax(180px, 1fr) auto auto;
+  column-gap: 18px;
+  row-gap: 7px;
+  align-items: baseline;
+  padding: 15px 0 17px;
+  border-bottom: 1px solid var(--line);
+  scroll-margin-top: 24px;
+}
+.ce-row:target {
+  background: var(--accent-soft);
+}
+.ce-glyph {
+  grid-row: 1 / span 2;
+  align-self: start;
+  padding-top: 2px;
+}
+.ce-date {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.ce-name {
+  font-size: 15px;
+  line-height: 1.3;
+  color: var(--ink);
+}
+.ce-name b {
+  font-weight: 600;
+}
+.ce-mark {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--faint);
+}
+.ce-bill {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  white-space: nowrap;
+}
+.ce-does {
+  color: var(--ink);
+}
+/* Band two: the ledger, when to pick it, who shipped it — SIDE BY SIDE. Four cells each spanning
+ * the row is four bands, which is exactly what makes the index at the back 306px tall. One band of
+ * columns is the height saving, and the width to do it is already there and unused. */
+.ce-body {
+  grid-column: 2 / -1;
+  display: grid;
+  /* THE FLOOR SETS THE COLUMN COUNT, not the other way round. At 13px a 42-character line — the
+   * repo's own minimum — needs about 315px, so three columns need 997px and two need 682px. An
+   * `auto-fit` track with that floor picks the count the width can actually carry: three at 1440
+   * and above, two below it, one on a phone. Fixed `fr` weights were tried first and put the
+   * `pick` column at 35 characters at 1440. */
+  grid-template-columns: repeat(auto-fit, minmax(min(315px, 100%), 1fr));
+  gap: 6px 26px;
+  align-items: baseline;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.ce-led {
+  display: grid;
+  gap: 3px;
+  color: var(--muted);
+}
+.ce-led .c {
+  color: var(--ink);
+}
+.ce-pick {
+  color: var(--muted);
+}
+.ce-ship {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  text-align: right;
+}
+.ce-ship .k {
+  display: none;
+}
+.ce-ship.empty {
+  color: var(--faint);
+}
+.ce-ship .none {
+  font-style: normal;
+}
+.ce-led .k,
+.ce-pick .k,
+.ce-ship .k {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--faint);
+  margin-right: 8px;
+}
+
+/* Below the point where four columns stop being four columns. */
+@media (max-width: 760px) {
+  .ce-row {
+    grid-template-columns: 30px 1fr;
+  }
+  .ce-glyph {
+    grid-row: 1;
+  }
+  .ce-bill,
+  .ce-ship,
+  .ce-body {
+    grid-column: 1 / -1;
+  }
+  .ce-ship {
+    text-align: left;
+  }
+  .ce-body {
+    grid-template-columns: 1fr;
+    gap: 10px 0;
+  }
 }

@@ -2207,7 +2207,7 @@ export const M = Object.freeze({
       "numeral": "I",
       "subject": "Attention before the Transformer",
       "headline": "By the end of the sentence it had forgotten the beginning.",
-      "standfirst": "One fixed vector had to carry a whole source sentence. Attention's first form let the decoder look at every input position directly -- and it arrives three years before the architecture everyone now associates it with.",
+      "standfirst": "One fixed vector had to carry a whole source sentence. Attention's first form let the decoder look at every input position directly — and it arrives three years before the architecture everyone now associates it with.",
       "keys": [
         "bahdanau_attention"
       ],
@@ -2231,7 +2231,7 @@ export const M = Object.freeze({
       "numeral": "III",
       "subject": "Compute and cache split the field",
       "headline": "Two bills, two crowds.",
-      "standfirst": "The compute bill and the cache bill were attacked by different people for different reasons, and a date-ordered list interleaves them into apparent nonsense. Read as two crowds, the entries here are two arguments running in parallel -- until the last two, which stop choosing and go after both at once.",
+      "standfirst": "The compute bill and the cache bill were attacked by different people for different reasons, and a date-ordered list interleaves them into apparent nonsense. Read as two crowds, the entries here are two arguments running in parallel — until the last two, which stop choosing and go after both at once.",
       "keys": [
         "sparse_attention",
         "topk_attention",
@@ -2251,7 +2251,7 @@ export const M = Object.freeze({
       "numeral": "IV",
       "subject": "Rotary embeddings, and the three repairs",
       "headline": "We shipped a position scheme in 2021 and we are still arguing about it.",
-      "standfirst": "The worked example above leaves one thing out on purpose: position. Both copies of \"the\" get identical vectors there, and this chapter is the gap that opens. Rotary embeddings solved relative distance elegantly and left one bomb: run past the trained length and the rotation keeps going. Three repairs follow. Then one paper concludes the answer is to delete positional embeddings entirely -- and the next one concludes the answer is to make them richer. Both cannot be right.",
+      "standfirst": "The worked example above leaves one thing out on purpose: position. Both copies of \"the\" get identical vectors there, and this chapter is the gap that opens. Rotary embeddings solved relative distance elegantly and left one bomb: run past the trained length and the rotation keeps going. Three repairs follow. Then one paper concludes the answer is to delete positional embeddings entirely — and the next one concludes the answer is to make them richer. Both cannot be right.",
       "keys": [
         "rope",
         "alibi",
@@ -2279,7 +2279,7 @@ export const M = Object.freeze({
       "numeral": "VI",
       "subject": "Throw the cache away, keep a fixed-size state",
       "headline": "Then stop keeping everything.",
-      "standfirst": "If the cache is the bill, refuse to hold a cache. Fold the past into a fixed-size state instead. Each entry here fixes the last one's way of forgetting -- and every one of them pays in the same single way.",
+      "standfirst": "If the cache is the bill, refuse to hold a cache. Fold the past into a fixed-size state instead. Each entry here fixes the last one's way of forgetting — and every one of them pays in the same single way.",
       "keys": [
         "linear_attention",
         "delta_rule",

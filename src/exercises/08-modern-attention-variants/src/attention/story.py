@@ -13,7 +13,7 @@ it is. Neither shows up as a broken page, so neither would be found by looking a
 
 What the guard does NOT check is whether a well's headline is true of its members, and that is
 where this file has been wrong. Well VI is headed "keep a fixed-size state" and its standfirst
-promised "every one of them pays in the same single way" -- while it held NSA and DeepSeek's
+promised "every one of them pays in the same single way" — while it held NSA and DeepSeek's
 compressed sparse attention, both of which build a score grid and keep a KV cache. They select
 from the cache; they do not replace it. They now sit in Well III with the other entries that
 attack a bill without abandoning the grid, which leaves Well VI as exactly the STATE family --
@@ -40,7 +40,7 @@ class Well:
     Attributes:
         numeral: The Roman numeral the page sets as the chapter's kicker.
         subject: What the chapter is ABOUT, in three or four plain words. The hooks below are the
-            chapter titles and they are deliberately oblique -- "Two bills, two crowds." is a good
+            chapter titles and they are deliberately oblique — "Two bills, two crowds." is a good
             hook and tells a reader scanning the longest section on the page nothing about what is
             in it. The subject rides beside the numeral so the rail, the kicker and a returning
             reader all have something to navigate by.
@@ -63,7 +63,7 @@ WELLS: tuple[Well, ...] = (
         headline="By the end of the sentence it had forgotten the beginning.",
         standfirst=(
             "One fixed vector had to carry a whole source sentence. Attention's first form let "
-            "the decoder look at every input position directly -- and it arrives three years "
+            "the decoder look at every input position directly — and it arrives three years "
             "before the architecture everyone now associates it with."
         ),
         keys=("bahdanau_attention",),
@@ -85,7 +85,7 @@ WELLS: tuple[Well, ...] = (
         standfirst=(
             "The compute bill and the cache bill were attacked by different people for different "
             "reasons, and a date-ordered list interleaves them into apparent nonsense. Read as "
-            "two crowds, the entries here are two arguments running in parallel -- until the last "
+            "two crowds, the entries here are two arguments running in parallel — until the last "
             "two, which stop choosing and go after both at once."
         ),
         keys=(
@@ -110,7 +110,7 @@ WELLS: tuple[Well, ...] = (
             '"the" get identical vectors there, and this chapter is the gap that opens. Rotary '
             "embeddings solved relative distance elegantly and left one bomb: run past the trained "
             "length and the rotation keeps going. Three repairs follow. Then one paper concludes "
-            "the answer is to delete positional embeddings entirely -- and the next one concludes "
+            "the answer is to delete positional embeddings entirely — and the next one concludes "
             "the answer is to make them richer. Both cannot be right."
         ),
         keys=("rope", "alibi", "ntk_aware", "yarn", "drope", "hd_rope"),
@@ -136,7 +136,7 @@ WELLS: tuple[Well, ...] = (
         headline="Then stop keeping everything.",
         standfirst=(
             "If the cache is the bill, refuse to hold a cache. Fold the past into a fixed-size "
-            "state instead. Each entry here fixes the last one's way of forgetting -- and every "
+            "state instead. Each entry here fixes the last one's way of forgetting — and every "
             "one of them pays in the same single way."
         ),
         keys=(
@@ -201,7 +201,7 @@ def span(well: Well, mechanisms: list[Mechanism]) -> tuple[date, date]:
     """The first and last date a well covers.
 
     Computed from the mechanisms rather than written down, because a well is not necessarily a
-    contiguous run of the catalogue -- Wells III to VI overlap in time on purpose.
+    contiguous run of the catalogue — Wells III to VI overlap in time on purpose.
 
     Args:
         well: The chapter.
