@@ -1280,7 +1280,7 @@ LightningLM V4: **1,118B tokens across 33,353 shards** (~**1,254B effective** af
 | Golden Proxy | GP | 6.8M (11 shards) | **Never trained on.** Supplies only the direction the selector steers toward |
 | Dropped | B2 | 31.3B | **Cut for contamination** |
 
-**Why the Always-ON tier exists — the single most important design fact in the whole project:** the golden proxy is **English-heavy (cosine 0.876 with the English web band)**, so OPUS **systematically under-values Indic data and would reject it** if allowed to govern everything. The report's stated principle: *"A single selector should not govern data whose value it cannot see."*
+**Why the Always-ON tier exists — the single most important design fact in the whole project:** the golden proxy correlates far more strongly with the English web band than with any Indic one, so OPUS **under-values Indic data and would reject it** if allowed to govern everything. The report's stated principle: *"A single selector should not govern data whose value it cannot see."*
 
 **The selector's real economics at scale:**
 

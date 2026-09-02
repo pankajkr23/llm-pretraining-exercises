@@ -367,8 +367,8 @@ def protected_floor() -> Floor:
 
 # ------------------------------------------------------------------------ the anneal reserve
 
-# Assignment item 5. §9: "the best data must be saved deliberately, not merely discovered at the
-# end", and reserving it "is decided here, at composition time". Each entry is the fraction of that
+# Assignment item 5. The best data is set aside on purpose rather than noticed at the end, and the
+# decision is taken here, while the mixture is composed. Each entry is the fraction of that
 # lane's pool withheld from ordinary sampling.
 RESERVE_FRACTIONS: dict[str, float] = {
     # All of it. §6: these long trajectories are "Tier A datasets ... protected for the annealing

@@ -2,17 +2,14 @@
 
 **The problem.** If evaluation data reaches a loss-bearing batch, every benchmark score becomes
 fiction — and the failure is silent in the worst way, because it looks like success. The lecture's
-tell is a model that beats a frontier lab in its first two hundred steps:
-
-> *"if you start training a model and within first 100 200 samples we see that model beating OpenAI
-> we should restart… it's cheating basically, the neat paper is leaked and it has all the answers."*
+tell is a model that beats a frontier lab within its first couple of hundred steps: that is not a
+breakthrough, it is the benchmark answers having reached the training set, and the run should be
+restarted rather than celebrated.
 
 **The strategy — two-sided, and deliberately redundant.** The shard carries a `never-train` tag,
 **and** the trainer independently asks the registry before consuming anything. The instructor is
-explicit that this belt-and-braces is on purpose:
-
-> *"we going to do both the side because who knows maybe a mistake in copying or something may
-> still happen."*
+explicit that the belt-and-braces is on purpose: a copying slip or a missed
+registration is always possible, so neither side is trusted alone.
 
 So `manifest.admit` already refuses a shard whose split is not `train` (that is side one). This
 module is side two: an independent registry the loader consults by shard id, which does not trust

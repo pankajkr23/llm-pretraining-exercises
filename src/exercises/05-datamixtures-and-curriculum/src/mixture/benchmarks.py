@@ -7,8 +7,9 @@ Session 5 §3 sets the method and this module is it, in four links:
 The link that is easy to skip is the second, and skipping it is what makes a mixture wishful.
 A benchmark's *token count* is not what it costs to train for; its **supervised** token count is.
 §6 states the masking rule exactly: in an agentic trajectory only the assistant's own tokens are
-supervised, because *"the model must never learn to invent the output of a tool it has not really
-run"*. The issue text, the repository, the tool observations and the test output are all context.
+supervised. A model trained on a tool's return value learns to produce that value itself rather
+than to call the tool. The issue text, the repository, the tool observations and the test output
+are all context.
 
 That is why every entry here records its loss map in three parts — supervised, masked, reward-only
 — rather than a single "tokens" figure. `supply.py` uses `supervised_ratio()` to discount a lane's
@@ -16,9 +17,9 @@ raw supply down to the part a loss can actually see, and the agentic lane is whe
 stops being an accounting detail and becomes the finding.
 
 The `stage` field carries the other thing §5 insists on: **where a capability is actually taught.**
-Long reasoning traces are not poured into pretraining and expected to produce a reasoning model
-(*"They are taught later"*), and the scarcest agentic trajectories are *"reserved for the annealing
-stage"*. A benchmark whose stage is `rlvr` cannot be bought with a pre-training share at all, and
+A reasoning model does not fall out of pouring long traces into pretraining; that capability is
+taught in a later stage — and the scarcest agentic trajectories are held back for the annealing
+stage. A benchmark whose stage is `rlvr` cannot be bought with a pre-training share at all, and
 saying so is the difference between a defended number and a hopeful one.
 """
 
@@ -98,8 +99,8 @@ BENCHMARKS: tuple[Benchmark, ...] = (
         name="SWE-bench Verified",
         family="agentic",
         measures=(
-            "repo-level bug fixing: navigate a real codebase, localise the fault, and edit code "
-            "that makes hidden tests pass"
+            "repo-level bug fixing: find the fault in a real codebase and change the code so a "
+            "hidden test suite passes"
         ),
         metric="% resolved (pass@1) over 500 engineer-verified tasks",
         training_format="code-editing trajectories where the loss falls on the generated patch",

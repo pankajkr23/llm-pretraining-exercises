@@ -99,8 +99,8 @@ lines and 14 tests.
   only evidence anything moved.
 
 - **The firewall is two-sided on purpose, and both sides must stay.** The manifest carries the
-  split *and* the registry is asked independently. The instructor's reason: *"who knows maybe a
-  mistake in copying or something may still happen."* Removing either side leaves a single point of
+  split *and* the registry is asked independently. The stated reason is that a copying slip
+  or a missed registration is always possible. Removing either side leaves a single point of
   failure for the one mistake that makes every benchmark score fiction.
 
 - **The firewall stores no evaluation text, ever.** Benchmark items are 8-byte truncated digests of
@@ -277,8 +277,7 @@ lines and 14 tests.
   | Github `evidence.json` link | 50 | the same path, `evidence.json` |
   | Github `evidence.md` link | 50 | the same path, `evidence.md` |
 
-  Each field carries the note *"I tested this link in an incognito window — it's publicly
-  accessible (not private)."* So **"public" is a property of the repository, not a demand for
+  Each field asks you to confirm the link resolves for a logged-out stranger. So **"public" is a property of the repository, not a demand for
   separate hosting** — the repo is already public, and the three files are already tracked. An
   earlier version of this note called them *"PUBLIC URLS, not repo files"* and treated hosting them
   elsewhere as outstanding work. That was wrong, and it was wrong in the expensive direction:

@@ -1,7 +1,8 @@
 """An append-only shard store that deduplicates against every shard before it.
 
-Session 5 says the cleaning continues toward the cumulative target, and Session 1's gate needs *"at
-least one billion clean tokens, with documented provenance for each shard"*. Exercise 04's
+Session 5 says the cleaning continues toward the cumulative target, and the earlier gate
+requires a billion clean
+tokens with documented provenance for every shard. Exercise 04's
 deduplication cannot get there, and the reason is specific rather than general: it holds a **full
 shingle set for every document** in memory at once, and it only ever sees one run's documents, so
 shard N is never compared with shard N-1 at all.

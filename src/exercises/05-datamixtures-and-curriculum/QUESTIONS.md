@@ -48,8 +48,8 @@ transcript it is quoted.
 
 **Yes, the masking argument still applies, and `12` must stay masked.**
 
-The rule in the notes is not "mask because the tool might be wrong". It is: *"the model must never
-learn to invent the output of a tool it has not really run."* Determinism does not touch that.
+The rule is not "mask because the tool might be wrong". It is that a model must never learn to
+produce the output of a tool it has not actually run. Determinism does not touch that.
 
 What concretely goes wrong if you train on `12`:
 
@@ -203,22 +203,22 @@ of thinking everywhere rather than the same number of tokens.
 
 **No.** The transcript is explicit, and it is the half the notes leave out.
 
-The notes give **mechanism one**: the V4 proxy was English-heavy (cosine 0.876 with the English web
-band), so it scored Indic and agentic batches low and rejected them. A balanced proxy with MILU and
+The first mechanism is proxy composition: V4's proxy correlated far more strongly with the English
+web band than with any Indic one, so it scored Indic and agentic batches low and rejected them. A balanced proxy with MILU and
 IndicGenBench **does** fix that one — for Indic.
 
 The transcript gives **mechanism two**, which balance cannot touch:
 
-> *"because agentic text looks like a Log is not a high quality data. So opus will just throw it."*
-
-Agentic trajectories are *shaped* like low-quality text — tool calls, stack traces, retry noise,
+A second reason is the shape of the data itself: a trajectory reads like a log rather than like
+prose, so a quality-scoring selector discards it. Agentic trajectories are *shaped* like low-quality
+text — tool calls, stack traces, retry noise,
 JSON. The selector's judgement of usefulness is a gradient-alignment score, and a log-shaped
 trajectory whose informative tokens are masked produces a weak, scattered update. It is discarded
 on **form**, not on language. Adding Indic benchmarks to the proxy changes which *languages* score
 well; it does not make a trajectory stop looking like a log.
 
-There is a third edge in the same passage: the proxy is built from *benchmarks*, and
-*"if the agentic part was not there in the opus then we'll throw the example"*. MILU and
+There is a third edge in the same argument: the proxy is built from *benchmarks*, so a candidate
+with no agentic counterpart in the proxy is discarded whatever its merits. MILU and
 IndicGenBench are Indic knowledge and generation benchmarks — neither is agentic. So a
 "perfectly balanced multilingual" proxy is still not an *agentic* proxy.
 
@@ -277,8 +277,8 @@ longer a smoothing choice but the only tool left, and should be sized far above 
 ## 11 · Why mask tool observations ✅
 
 Because the model must never learn to produce a token that, at inference, comes from the
-environment. The notes state the rule directly: apply loss to observations and you *"teach the
-model to invent tool results instead of calling the tool."*
+environment. Apply loss to observations and the model is taught to
+produce tool results itself rather than to call the tool.
 
 **What specifically breaks**, in the order you would notice it:
 
@@ -299,12 +299,12 @@ model to invent tool results instead of calling the tool."*
 Two independent mechanisms — and the question's framing is right that only one is in the notes.
 
 **Mechanism 1 — proxy composition (notes).** OPUS scores a candidate batch by how much it moves the
-weights that matter for a *golden proxy* built from target benchmarks. V4's proxy was English-heavy
-(cosine 0.876 with the English web band). Indic batches move those weights less, so they score
+weights that matter for a *golden proxy* built from target benchmarks. V4's proxy correlated far more strongly with the
+English web band than with any Indic one. Indic batches move those weights less, so they score
 below the keep cut and are discarded. This is a property of the proxy, and a better proxy fixes it.
 
-**Mechanism 2 — the form of agentic data (transcript only).** *"agentic text looks like a Log is not
-a high quality data. So opus will just throw it."* A trajectory is tool calls, errors and JSON,
+**Mechanism 2 — the form of agentic data.** A trajectory reads like a log rather than like prose, so
+a quality-scoring selector discards it on shape alone. It is tool calls, errors and JSON,
 with its observations masked. Whatever the proxy contains, that batch produces a weak update and
 loses to clean prose. This is a property of the *data*, not of the proxy, so **it survives a
 perfectly balanced multilingual proxy**.
@@ -327,8 +327,8 @@ Because a reserve discovered at the end does not exist. Three reasons, each suff
 2. **You cannot un-train.** The anneal's leverage comes from *unseen* high-quality data at low
    learning rate. Data the model has seen at full learning rate cannot be restored to that state.
 3. **It has to be enforceable.** "Reserved" only means something if a reserved shard is invisible to
-   the sampler — a flag written at ingest, not an intention. The notes put it plainly: *"Reserving
-   it is decided here, at composition time, not discovered at the end."*
+   the sampler — a flag written at ingest, not an intention. Reserving is a decision taken while the mixture is
+   composed, not a discovery made once the run is over.
 
 The general form: **any decision whose options are destroyed by the process must be taken before the
 process runs.** The mixture is full of these, and the reserve is the clearest.
@@ -373,8 +373,8 @@ the layers least suited to absorb it.
 
 ### 17 · The three OPUS tiers ✅
 
-From the selector's own widget — *"kept by OPUS (top score) · rejected (below the keep cut) ·
-forced by the Always-On lane"*:
+The selector sorts every candidate into three outcomes — kept on score, rejected below the keep cut,
+or admitted because an always-on lane demanded it:
 
 | tier | relationship to the scorer | trained on? |
 | --- | --- | --- |

@@ -77,9 +77,9 @@ def check_shares_sum(shares: dict[str, float], tolerance: float = 1e-9) -> list[
 def check_within_supply(verdicts: dict[str, Any], declared: set[str]) -> list[Finding]:
     """INV-2 · No lane is funded past what repetition can be worth, unless it is declared.
 
-    This is the invariant the assignment names by number: *"a plan that quietly hands a large share
-    to a lane that has almost no real data behind it will lose marks."* The word doing the work is
-    **quietly**. Over-allocating a lane is allowed; doing it without a generation bill is not.
+    This is the invariant the assignment names by number: a share handed to a lane with almost no
+    real data behind it loses marks when it is handed over **quietly**. Over-allocating a lane
+    is allowed; doing it without a generation bill is not.
 
     Args:
         verdicts: Lane key to `supply.LaneVerdict`.
@@ -156,8 +156,8 @@ def check_every_lane_names_a_benchmark(
 ) -> list[Finding]:
     """INV-4 · A lane with a budget names what it buys.
 
-    Session 5 §3: *"A capability that is never measured is a capability nobody can verify was
-    built."* A funded lane with no benchmark is a share nobody can defend.
+    An unmeasured capability is one nobody can verify was built. A funded lane with no
+    benchmark is a share nobody can defend.
 
     Args:
         shares: Lane key to share.

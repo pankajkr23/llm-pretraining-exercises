@@ -42,8 +42,8 @@ def test_an_unregistered_shard_is_allowed() -> None:
 def test_the_firewall_is_two_sided() -> None:
     """The manifest AND the registry must each refuse, independently.
 
-    The instructor's reason for the redundancy: *"who knows maybe a mistake in copying or something
-    may still happen."* If either side alone were relied on, a shard whose manifest was copied
+    The reason for the redundancy is that a copying slip or a missed registration is always
+    possible. If either side alone were relied on, a shard whose manifest was copied
     wrongly — or whose registration was missed — would get through.
     """
     # Side one: the manifest, without consulting any registry.

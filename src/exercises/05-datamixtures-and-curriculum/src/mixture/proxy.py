@@ -1,7 +1,7 @@
 """The proxy experiment: four arms, one metric, and thresholds fixed before anything runs.
 
-Assignment item 7, and the item the grading ladder puts highest — *"a data decision is a hypothesis
-until a cheap experiment has tested it."*
+Assignment item 7, and the one the grading ladder puts highest: a data decision stays a hypothesis
+until some cheap experiment has actually tested it.
 
 Three things make this a hypothesis rather than a plan to look at some numbers.
 

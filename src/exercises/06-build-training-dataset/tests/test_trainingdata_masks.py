@@ -151,8 +151,7 @@ def test_a_pad_token_inside_a_document_still_earns_no_loss() -> None:
 def test_context_spans_are_excluded_from_loss() -> None:
     """SFT and agentic data: the prompt is context, only the answer is graded.
 
-    The lecture: *"the loss is not calculated on the question, it is only calculated on the
-    answer."*
+    Loss is not taken on the question, only on the answer.
     """
     seg = masks.segment_ids([8], window=8)
     tokens = np.arange(8, dtype=np.int64)

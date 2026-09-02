@@ -84,8 +84,8 @@ small for 13 scripts.
 
 **Reuse the instructor's own training script.** The reference solution we were given ships
 `train_tokenizer.py` with the recipe already settled: HuggingFace BPE, `min_frequency=1`, NFKC
-normalisation only, **Metaspace** rather than ByteLevel (*"ByteLevel spends too many tokens on
-UTF-8 bytes for Indic scripts"* — which the Manipuri column above confirms), and a hard round-trip
+normalisation only, **Metaspace** rather than ByteLevel — which spends too many tokens on the
+UTF-8 bytes of Indic scripts, as the Manipuri column above confirms — and a hard round-trip
 rule that `decode(encode(text))` preserves every non-whitespace character.
 
 Two changes: `vocab_size` from 10,000 to roughly **200,000**, and the corpus from four Wikipedia

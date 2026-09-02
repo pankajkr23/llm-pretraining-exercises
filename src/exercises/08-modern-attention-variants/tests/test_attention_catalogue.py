@@ -25,12 +25,11 @@ def test_the_catalogue_loads_and_is_not_empty() -> None:
 def test_every_mechanism_the_assignment_names_is_covered() -> None:
     """The score-zero clause, as a test.
 
-    > "At minimum cover: standard attention, absolute learned positions, sinusoidal, RoPE, ALiBi,
-    >  MQA, GQA, sliding window, attention sinks, NTK-aware scaling, YaRN, linear attention, the
-    >  delta rule and Gated DeltaNet, MLA, sparse and top-k attention, compressed and sparse
-    >  attention as DeepSeek does it, and DroPE."
+    A minimum coverage list is mandated and omitting any of it scores zero. The list lives in
+    `MANDATED`, mapped to catalogue keys, so this asserts against data rather than restating it.
 
-    The failure message names his phrases, not our keys, so it reads in the words he grades against.
+    The failure message names the required phrases rather than our keys, so it reads in the terms
+    the work is graded against.
     """
     missing = missing_mandated(MECHANISMS)
     assert not missing, (
@@ -39,10 +38,10 @@ def test_every_mechanism_the_assignment_names_is_covered() -> None:
 
 
 def test_no_date_is_published_without_a_source_a_reader_can_open() -> None:
-    """The instructor's one warning, as a test.
+    """The one warning we were given, as a test.
 
-    > "Your agent will happily invent a launch date and describe a technique it has half
-    >  remembered. Check every date against the actual paper or release."
+    An agent asked for a launch date will supply a confident one it has half remembered, so every
+    date is checked against the paper or release itself.
     """
     unchecked = unverified(MECHANISMS)
     assert not unchecked, (
@@ -90,7 +89,7 @@ def test_every_arxiv_entry_quotes_the_first_version() -> None:
 
 
 def test_no_mechanism_is_all_upside() -> None:
-    """> "If you write down a technique with only pros, you have not understood it yet."
+    """A technique written down with only upside has not been understood yet.
 
     `Mechanism.__post_init__` rejects an empty trade-off at construction, so this asserts the
     stronger property: that each one says something substantive rather than a placeholder word.

@@ -344,8 +344,8 @@ marking it.
 
 ### Reasoning-length bands
 
-All four solve the session's own worked problem — *"How many integers between 1 and 1000 are
-divisible by 3 or 5?"*, answer **467**, computed rather than quoted.
+All four solve one worked problem — *How many integers from 1 to 750 are divisible by 6 or 10?* — whose answer,
+**175**, is computed here rather than quoted.
 
 | band | tier | counted tokens | share of lane | budget | what the depth adds |
 | --- | --- | ---: | ---: | ---: | --- |
@@ -356,9 +356,9 @@ divisible by 3 or 5?"*, answer **467**, computed rather than quoted.
 
 Lengths are **counted with our own Session 2 vocabulary**, not estimated; a band boundary quoted
 without a named tokenizer is not a measurement. The ultra band earns its length rather than padding
-to it: its contribution is noticing that *"between 1 and 1000"* is ambiguous and that the ambiguity
-changes the answer — 1000 is divisible by 5, so the inclusive reading gives
-**467** and the exclusive gives **466**. It
+to it: its contribution is noticing that the range is ambiguous at its upper end and that the
+ambiguity changes the answer — the bound is itself divisible, so the inclusive reading gives
+**175** and the exclusive gives **174**. It
 then verifies by a second route sharing no arithmetic with the first.
 
 ---

@@ -63,6 +63,30 @@ _MAY_NAME_THE_DIRECTORY = {
     "tests/test_no_confidential_leaks.py",
 }
 
+#: Files whose overlap is a **functional contract**, not quoted prose — kept with a reason each.
+#:
+#: The distinction that matters: a paraphrase of prose loses nothing, while a paraphrase of an
+#: identifier breaks the thing it identifies. `run.log`'s event names are checked verbatim by the
+#: auditor, so rewording them would fail the deliverable rather than protect anything; the pipeline
+#: diagram names the same stages in the same order because it describes the same pipeline. Stage
+#: names are shared vocabulary, not somebody's wording.
+#:
+#: **Say what this costs.** The exemption is whole-file, so a genuine quote added to one of these
+#: two files would not be caught. It is deliberately two files, each with a reason, and
+#: `test_the_functional_ledger_has_no_stale_entries` fails when an entry stops overlapping — so the
+#: list cannot quietly grow stale, only quietly grow. Keep it short, and never add to it to make a
+#: red test go away.
+FUNCTIONAL_OVERLAP: dict[str, str] = {
+    "src/exercises/06-build-training-dataset/src/trainingdata/spec.py": (
+        "REQUIRED_SEQUENCE holds the literal run.log event names the audit checks for."
+    ),
+    "src/exercises/06-build-training-dataset/README.md": (
+        "The pipeline diagram names the same stages in the same order, as it describes the "
+        "same pipeline."
+    ),
+}
+
+
 #: How many consecutive words count as a quote. Short enough to catch a lifted sentence, long enough
 #: that ordinary shared phrasing ("the model must never") does not trip it.
 _SHINGLE = 12
@@ -103,6 +127,21 @@ def _shingles(text: str) -> set[str]:
         hashlib.blake2b(" ".join(words[i : i + _SHINGLE]).encode(), digest_size=8).hexdigest()
         for i in range(max(0, len(words) - _SHINGLE + 1))
     }
+
+
+def _source_shingles() -> set[str]:
+    """Hashed windows over the reference material's prose. Empty when it is not on this machine."""
+    out: set[str] = set()
+    if not NOTES.is_dir():
+        return out
+    for path in NOTES.rglob("*"):
+        if not path.is_file() or path.suffix.lower() not in {".md", ".txt"}:
+            continue
+        try:
+            out |= _shingles(path.read_text(encoding="utf-8"))
+        except (UnicodeDecodeError, OSError):
+            continue
+    return out
 
 
 def test_no_tracked_file_names_a_confidential_source() -> None:
@@ -158,14 +197,7 @@ def test_no_tracked_file_quotes_the_confidential_material() -> None:
     if not NOTES.is_dir():
         pytest.skip("the reference material is not present here — nothing to compare against")
 
-    source: set[str] = set()
-    for path in NOTES.rglob("*"):
-        if not path.is_file() or path.suffix.lower() not in {".md", ".txt"}:
-            continue
-        try:
-            source |= _shingles(path.read_text(encoding="utf-8"))
-        except (UnicodeDecodeError, OSError):
-            continue
+    source = _source_shingles()
     if not source:
         pytest.skip("no readable text in the reference material to compare against")
 
@@ -177,14 +209,37 @@ def test_no_tracked_file_quotes_the_confidential_material() -> None:
             text = path.read_text(encoding="utf-8")
         except (UnicodeDecodeError, OSError):
             continue
+        rel = str(path.relative_to(REPO_ROOT))
         overlap = _shingles(text) & source
-        if overlap:
-            offenders.append(
-                f"{path.relative_to(REPO_ROOT)} ({len(overlap)} run(s) of {_SHINGLE} words)"
-            )
+        if overlap and rel not in FUNCTIONAL_OVERLAP:
+            offenders.append(f"{rel} ({len(overlap)} run(s) of {_SHINGLE} words)")
 
     assert not offenders, (
         f"tracked files contain runs of {_SHINGLE}+ words copied from the confidential reference "
         "material. Paraphrase, or state the decision rather than the source's wording:\n  "
         + "\n  ".join(offenders)
+    )
+
+
+def test_the_functional_ledger_has_no_stale_entries() -> None:
+    """An exemption for a file that no longer overlaps is an exemption nobody is watching.
+
+    This is the half that keeps the list from rotting into a general-purpose silencer: the moment a
+    file stops matching, its entry has to go, so the ledger only ever describes live exceptions.
+    """
+    source = _source_shingles()
+    if not source:
+        pytest.skip("no readable reference text to compare against")
+
+    stale = []
+    for rel in FUNCTIONAL_OVERLAP:
+        path = REPO_ROOT / rel
+        if not path.is_file():
+            stale.append(f"{rel} (no such file)")
+        elif not (_shingles(path.read_text(encoding="utf-8")) & source):
+            stale.append(f"{rel} (no longer overlaps)")
+
+    assert not stale, (
+        "FUNCTIONAL_OVERLAP lists files that no longer need an exemption — remove them, so the "
+        f"ledger keeps describing only live exceptions: {stale}"
     )

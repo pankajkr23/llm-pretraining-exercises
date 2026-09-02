@@ -30,9 +30,17 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   half runs everywhere and rejects the scheme; it needed refining first, because exercise 01's own
   published pages match that shape, so the property is "matches the scheme **and** is not a file we
   ship". The quote half compares tracked prose against the material and can only run where that
-  material is present — never in CI — so it is documented as a pre-push step rather than a gate.
-  **It is currently red:** a backlog of passages still quote the source verbatim, and the failing
-  test is that list.
+  material is present — never in CI. **Both halves now gate on commit**, so CI proves no filename
+  leaked and the hook proves no sentence did.
+
+- **Every passage that quoted the source verbatim has been paraphrased** — around sixty of them
+  across exercises 02 to 08, mostly rubric wording used to justify a code rule. Each says the same
+  thing in our own words. The reasoning ladder's worked example was replaced with one of ours,
+  chosen to keep the property the ladder needs: an upper bound that is itself divisible, so the
+  inclusive and exclusive readings still differ and the deepest band still has something real to
+  notice. Two overlaps remain by design and are listed in `FUNCTIONAL_OVERLAP` with a reason each —
+  a required log-event sequence the auditor checks verbatim, and a pipeline diagram naming the same
+  stages — because paraphrasing an identifier breaks the thing it identifies.
 
 ### Changed
 

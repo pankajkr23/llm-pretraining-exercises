@@ -11,8 +11,8 @@ That framing is what makes the exercise unusual, and it decides the shape of thi
   a set of dates, each read from the primary source, plus closed-form arithmetic for the costs the
   dates are a response to. So there is no torch, and CI verifies the whole exercise rather than
   skipping its heaviest part.
-- **A date with no source is not publishable.** The instructor's warning — *"Your agent will happily
-  invent a launch date and describe a technique it has half remembered"* — is the failure mode this
+- **A date with no source is not publishable.** We were warned that an agent asked for a launch
+  date will supply a confident one it has half remembered, and that is the failure mode this
   package is built to make impossible. `sources.Source` will not construct a `verified` citation
   without a URL and the verbatim string the date was read from, and `catalogue.unverified` reports
   any entry a reader could not check.

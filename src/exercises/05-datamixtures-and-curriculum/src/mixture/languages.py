@@ -1,9 +1,7 @@
 """Which Indic languages enter the run, and when — decided by measurement, not by preference.
 
-The session asks this directly. From the transcript, stating the assignment in his own words:
-
-    *"...reason when I going to train on Sanskrit if ever or urdu or other languages — right, so
-    you need to come up with everything now."*
+The assignment asks this directly: when does each language enter the run — Sanskrit, Urdu and the
+rest — and the answer has to be worked out up front rather than deferred.
 
 A plan that answers with a single "Indic 18%" has not answered it. `lanes.py` splits that 18% by
 **provenance**; this module splits it by **language and time**, which is the other half.

@@ -92,18 +92,17 @@ repos:
       # The confidentiality gate, on COMMIT rather than on checkout: the damage here is something
       # entering a commit, not something leaving the working tree.
       #
-      # Only the naming half is wired up. The other half compares tracked prose against the
-      # material itself and is currently red — a backlog of passages still quote it verbatim —
-      # so gating on it today would block every commit in the repo. Run it before you push:
+      # BOTH halves run. The naming half needs nothing but the repo, so it also runs in CI. The
+      # quoting half compares tracked prose against the reference material and therefore only has
+      # anything to say on a machine that holds it — it skips elsewhere, CI included, and says so.
+      # That is the honest division: CI can prove no filename leaked, and only this hook can prove
+      # no sentence did.
       #
-      #     uv run pytest tests/test_no_confidential_leaks.py
-      #
-      # and move it into this hook once it is green, which is the point of writing it down here.
+      # It ran with the quoting half disabled for exactly as long as that check was red. It is
+      # green now, so it gates.
       - id: no-confidential-leaks
-        name: no tracked file names a confidential source
-        entry: >-
-          uv run pytest tests/test_no_confidential_leaks.py -q
-          -k "names_a_confidential_source or planted_reference"
+        name: no tracked file names or quotes a confidential source
+        entry: uv run pytest tests/test_no_confidential_leaks.py -q
         language: system
         stages: [pre-commit]
         always_run: true

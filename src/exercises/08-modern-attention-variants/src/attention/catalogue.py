@@ -7,11 +7,11 @@ catalogue cannot disagree with the sources it cites.
 **The shape is the instructor's, not ours.** The assignment specifies the narrative each entry
 must carry:
 
-    here is what existed -> here is the problem people hit -> here is the new mechanism
-    -> here is what it fixed -> here is the new trade-off it introduced
+    what came before -> the problem it ran into -> the mechanism introduced
+    -> what that fixed -> what it cost in exchange
 
-and three questions each entry must answer: *what does it buy*, *what does it give up*, *when would
-I actually choose it*. Those are fields below, not prose conventions, because a field can be
+and three questions each entry has to answer: what it buys, what it gives up, and when it is
+actually the right choice. Those are fields below, not prose conventions, because a field can be
 checked for emptiness and a paragraph cannot.
 
 **`MANDATED` is the assignment's own list, quoted.** The instructor said he will score zero for a
@@ -255,8 +255,8 @@ class Mechanism:
     def __post_init__(self) -> None:
         """Refuse an entry that has only upside.
 
-        The assignment is explicit: *"If you write down a technique with only pros, you have not
-        understood it yet."* An empty `new_tradeoff` or `gives_up` is how that failure would enter
+        The assignment is explicit that a technique written down with only upside has not been
+        understood yet. An empty `new_tradeoff` or `gives_up` is how that failure would enter
         the catalogue, so it is rejected at construction rather than noticed in review.
         """
         if self.bill not in BILLS:

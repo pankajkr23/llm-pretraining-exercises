@@ -1,15 +1,14 @@
 """What falls out of the order, computed rather than asserted.
 
-Question 2 of the assignment asks: *"What does the timeline actually show? Write what you saw once
-the mechanisms were in date order that you could not see as a list."* The instructor's own answer,
-in the brief, is a claimed arc:
+Question 2 of the assignment asks what the timeline actually shows — what becomes visible once the
+mechanisms are in date order that a list cannot show. The brief supplies its own answer, a claimed
+arc:
 
     exactness, then memory, then length, then memory again
 
-and, at length, in the reference notes: exact global attention -> cheaper decoding memory ->
-better position
-handling -> longer contexts -> recurrent state returning -> sparsity returning -> compression
-becoming more aggressive.
+and, spelled out at more length in the reference material, as a longer chain running from exact
+global attention through cheaper decoding memory, better position handling and longer contexts, to
+recurrent state and sparsity returning and compression growing more aggressive.
 
 **That claim is testable, so this module tests it rather than repeating it.** `pressure_by_period`
 groups the catalogue into windows and reports which bill each window is dominated by. If the arc is

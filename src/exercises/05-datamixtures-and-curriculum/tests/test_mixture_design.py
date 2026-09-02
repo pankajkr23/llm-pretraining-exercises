@@ -177,8 +177,10 @@ def test_the_band_budgets_sum_to_the_reasoning_lane():
     assert sum(budgets.values()) == pytest.approx(expected)
 
 
-def test_the_worked_answer_matches_the_notes_and_is_computed_not_quoted():
-    assert curriculum.inclusive_answer() == curriculum.REASONING_ANSWER == 467
+def test_the_worked_answer_is_computed_not_quoted():
+    """The published answer must come out of the arithmetic, not out of a constant somebody
+    typed."""
+    assert curriculum.inclusive_answer() == curriculum.REASONING_ANSWER == 175
 
 
 def test_the_ultra_band_earns_its_length_on_a_real_ambiguity():
@@ -188,7 +190,7 @@ def test_the_ultra_band_earns_its_length_on_a_real_ambiguity():
     length band invites, and the reason this is checked rather than asserted in prose.
     """
     assert curriculum.inclusive_answer() != curriculum.exclusive_answer()
-    assert curriculum.exclusive_answer() == 466
+    assert curriculum.exclusive_answer() == 174
 
 
 def test_the_ultra_trace_actually_contains_the_finding_it_is_credited_with():

@@ -44,8 +44,8 @@ A missing mechanism scores zero, and we were invited to catch errors in the sour
   that cannot express doubt will express confidence it has not earned.
 
 - **A mechanism with no stated cost is rejected.** `catalogue.Mechanism.__post_init__` raises when
-  `new_tradeoff`, `gives_up` or `when_to_choose` is empty. The assignment: *"If you write down a
-  technique with only pros, you have not understood it yet."*
+  `new_tradeoff`, `gives_up` or `when_to_choose` is empty. A technique written down with only upside has not been
+  understood yet, and the assignment says so.
 
 - **`MANDATED` is the instructor's own list, quoted, mapped to our keys.** The test reads his
   phrases, so a rename on our side can never silently drop one of his items. Do not reword the left

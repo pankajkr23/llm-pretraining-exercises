@@ -44,20 +44,17 @@ public branch:**
 | check | where it runs | catches |
 | --- | --- | --- |
 | `test_no_confidential_leaks.py::…names_a_confidential_source` | **CI and pre-commit** | the naming scheme |
-| `…quotes_the_confidential_material` | **only where the material is present** — never CI | verbatim text |
+| `…quotes_the_confidential_material` | **pre-commit only** — skips where the material is absent, CI included | verbatim text |
 
-The second is the stronger check and the one CI cannot run, because CI has no copy to compare
-against. So **quoting is caught on the machine that holds the material, or nowhere.** Run the whole
-file before pushing:
+Both are gated on commit. The second cannot run in CI, because CI has no copy to compare against,
+so **CI can prove no filename leaked and only the hook can prove no sentence did.** If you commit
+from a machine without the material, that half silently skips — which is the one gap left, and it
+is a property of where the material lives rather than of the check.
 
-```bash
-uv run pytest tests/test_no_confidential_leaks.py
-```
-
-**It is currently red**, and that is the backlog rather than a broken test: a set of passages in
-tracked documents still quote the source verbatim, mostly rubric text used to justify a code rule.
-Paraphrase them where you touch them. Once it is green, move it into the `no-confidential-leaks`
-pre-commit hook, which today runs only the naming half for exactly this reason.
+**Paraphrase; do not quote.** Every rule this repo takes from the source is stated in our own words,
+including where the original was more quotable. The exception is a *functional* overlap — an
+identifier the work is graded against, like a required log event name — and those live in
+`FUNCTIONAL_OVERLAP` with a reason each, plus a twin that fails when an entry stops being needed.
 
 **A lexical guard cannot see itself until it is tracked.** The first version of this one listed four
 real filenames in its own docstring to explain the pattern, passed locally because it was not yet in

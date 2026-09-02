@@ -309,8 +309,8 @@ def recheck_numbers(bundle: Path, events: list[dict]) -> list[Finding]:
 def check_firewall(bundle: Path, events: list[dict]) -> list[Finding]:
     """No shard the manifests refuse may appear in any loss-bearing batch.
 
-    The single failure the brief names outright: *"if evaluation data enters a loss-bearing batch,
-    the firewall section fails."* Checked against the ledger's own spans, not against the run's
+    The brief names one failure outright: evaluation data reaching a loss-bearing batch fails the
+    firewall section. Checked against the ledger's own spans, not against the run's
     account of itself.
 
     Args:

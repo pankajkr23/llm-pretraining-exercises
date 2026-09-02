@@ -372,8 +372,8 @@ holds the **v1** tokenizers. Each section names the denominator it is scored in 
 that its numbers do not travel to the other — a `units` column header over word counts is exactly
 how two measurements get quietly conflated.
 
-The download and the encoder are the point. *"A vocab list without the actual encoding algorithm is
-not enough to reproduce your score"* — so `data.json` carries the **ordered merges**, and
+The download and the encoder are the point: a vocabulary list on its own does not let anyone
+reproduce a score, because the merges have to be replayed in order. So `data.json` carries the **ordered merges**, and
 [`web/encoder.js`](./web/encoder.js) is the algorithm that replays them. The submitted tokenizer
 also ships in HuggingFace's own format at [`web/tokenizer.json`](./web/tokenizer.json), so
 `Tokenizer.from_file(...)` reproduces our counts directly. Characters outside the vocabulary render

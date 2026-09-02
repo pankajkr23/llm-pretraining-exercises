@@ -24,8 +24,8 @@ Two lists exist, and both have exactly eight members:
 | 7 | Decontaminate | decontamination |
 | 8 | Manifest | the manifest |
 
-§14 drops **Extract** — §2 says why, explicitly: *"We studied this in Session 3"*, and *"we treat it
-as known here and spend our time on the stages that were missing from V4 entirely."* In its place
+§14 drops **Extract**, and §2 says why: it was covered earlier, so it is taken as known and the
+time goes to the stages V4 omitted altogether. In its place
 §14 adds **format discipline**, the ghost-tag trap, which §2's map never numbers at all despite the
 session giving it a full section (§4) and its own widget.
 

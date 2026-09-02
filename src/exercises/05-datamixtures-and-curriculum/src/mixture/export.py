@@ -941,15 +941,15 @@ marking it.
 
 ### Reasoning-length bands
 
-All four solve the session's own worked problem — *"How many integers between 1 and 1000 are
-divisible by 3 or 5?"*, answer **{curriculum.inclusive_answer()}**, computed rather than quoted.
+All four solve one worked problem — *{curriculum.REASONING_PROBLEM}* — whose answer,
+**{curriculum.inclusive_answer()}**, is computed here rather than quoted.
 
 {_reasoning_table(config)}
 
 Lengths are **counted with our own Session 2 vocabulary**, not estimated; a band boundary quoted
 without a named tokenizer is not a measurement. The ultra band earns its length rather than padding
-to it: its contribution is noticing that *"between 1 and 1000"* is ambiguous and that the ambiguity
-changes the answer — 1000 is divisible by 5, so the inclusive reading gives
+to it: its contribution is noticing that the range is ambiguous at its upper end and that the
+ambiguity changes the answer — the bound is itself divisible, so the inclusive reading gives
 **{curriculum.inclusive_answer()}** and the exclusive gives **{curriculum.exclusive_answer()}**. It
 then verifies by a second route sharing no arithmetic with the first.
 
@@ -2166,8 +2166,8 @@ small for 13 scripts.
 
 **Reuse the instructor's own training script.** The reference solution we were given ships
 `train_tokenizer.py` with the recipe already settled: HuggingFace BPE, `min_frequency=1`, NFKC
-normalisation only, **Metaspace** rather than ByteLevel (*"ByteLevel spends too many tokens on
-UTF-8 bytes for Indic scripts"* — which the Manipuri column above confirms), and a hard round-trip
+normalisation only, **Metaspace** rather than ByteLevel — which spends too many tokens on the
+UTF-8 bytes of Indic scripts, as the Manipuri column above confirms — and a hard round-trip
 rule that `decode(encode(text))` preserves every non-whitespace character.
 
 Two changes: `vocab_size` from 10,000 to roughly **200,000**, and the corpus from four Wikipedia

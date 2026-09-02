@@ -1,8 +1,8 @@
 """The Session 5 dataset inventory, transcribed as data rather than quoted as prose.
 
-Session 5 §4 makes the argument this module implements: *"A shopping list only works when the data
-actually exists... each capability slot must be sized against the actual datasets that can feed
-it."* So the lane supplies used everywhere downstream are **summed from these rows**, never quoted
+The argument this module implements: a shopping list is only worth having if the data on it exists,
+so every capability slot is sized against the datasets that can actually feed it. So the lane
+supplies used everywhere downstream are **summed from these rows**, never quoted
 from the session's slot headlines.
 
 That distinction is not pedantry — it caught two things.

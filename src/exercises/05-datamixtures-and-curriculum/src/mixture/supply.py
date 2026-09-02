@@ -1,8 +1,8 @@
 """Demand against supply, priced three ways, with a verdict per lane.
 
-This is the module the assignment's warning is aimed at: *"a plan that quietly hands a large share
-to a lane that has almost no real data behind it will lose marks for exactly the wishful accounting
-this session exists to prevent."* So no share here is allowed to stand without an answer to "out of
+This is the module the assignment's warning is aimed at: quietly handing a large share to a lane
+with almost no real data behind it is exactly the wishful accounting the work exists to prevent.
+So no share here is allowed to stand without an answer to "out of
 what?".
 
 Every lane is priced in three currencies, because they say different things:
@@ -112,9 +112,9 @@ def supervised_ratio(lane: str) -> Correction | None:
     In **pre-training** the loss is on every token, so for web, code, STEM, Indic and reasoning
     text the ratio is 1.0 and no discount applies. The distinction matters for one lane.
 
-    Session 5 places agentic trajectories in the anneal and post-training stages — *"These long
-    trajectories are scarce, expensive and among the most valuable Tier A datasets available. They
-    should therefore be protected for the annealing stage"* — where the masking rule of §6 applies:
+    Agentic trajectories belong in the anneal and post-training stages: they are scarce, costly and
+    among the most valuable Tier A data there is, so they are protected for annealing rather than
+    spent early. There the masking rule of §6 applies:
     only the assistant's own tokens are supervised. And it sizes the result: *"A whole run yields
     only a few hundred supervised tokens."*
 

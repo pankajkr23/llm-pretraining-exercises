@@ -31,9 +31,10 @@ does not have to hunt.
 
 **Which problem did I work on? — Problem 5.**
 
-> *"Kronecker is forward deterministic (same word will always give same embedding). How do I make a
-> reverse of this (same embedding gives the same Kronecker)? If we can do this, then we can get rid
-> of the final head as well! Then we can have a vocab of 1M as well without any issues!"*
+The Kronecker construction runs one way: a given word always produces the same embedding. The
+question is whether it can be inverted — whether an embedding can be taken back to the factors that
+produced it. If it can, the output head becomes unnecessary, and vocabulary size stops being a
+constraint on the parameter count at all.
 
 Three clauses, three answers, all measured:
 

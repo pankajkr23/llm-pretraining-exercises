@@ -1,9 +1,8 @@
 """Where a date came from, recorded so a reader can check it rather than trust it.
 
-The assignment's one warning is the reason this module exists:
-
-    "Your agent will happily invent a launch date and describe a technique it has half remembered.
-     Check every date against the actual paper or release."
+The assignment's one warning is the reason this module exists: an agent asked for a launch date
+will supply a confident one it has half remembered, so every date must be checked against the paper
+or release itself rather than recalled.
 
 A date with no source is not a weaker claim than a sourced one -- it is a different kind of object,
 and this exercise refuses to publish it. So every date carries the URL it was read from, the

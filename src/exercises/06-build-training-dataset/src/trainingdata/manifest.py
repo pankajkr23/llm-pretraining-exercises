@@ -5,10 +5,8 @@ those bytes are *allowed* into a training batch — whether they were deduplicat
 personal information, checked against the evaluation sets, or licensed for this use at all.
 
 **The strategy.** Every shard carries a manifest, and admission is a function of the manifest
-rather than a habit of the caller. The lecture states the minimum bluntly:
-
-> *"we are not going to be training on a shard that does not have any of these hash token as a
-> minimum cleaning hash, dedup plus eval, PII."*
+rather than a habit of the caller. The stated minimum is blunt: no shard is
+trained on unless it carries the cleaning hashes — dedup, eval and PII.
 
 So the gate refuses on a **missing** hash, not only on a failing one. An unanswered question is not
 a pass — which is the same rule exercise 03 enforces on its dataset grades, arrived at

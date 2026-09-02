@@ -1,7 +1,7 @@
 """Throughput and packing efficiency, derived from the ledger rather than reported alongside it.
 
-**The problem.** *"If reported packing or throughput numbers cannot be reconstructed, those claims
-will not receive credit."* A number a run prints while it happens is a number nobody can check
+**The problem.** A packing or throughput figure that cannot be reconstructed earns no credit, and
+rightly so. A number a run prints while it happens is a number nobody can check
 afterwards. Every figure here is computed from artifacts that survive the run — the ledger and the
 per-rank telemetry — so an auditor with the folder and none of the code can arrive at the same one.
 

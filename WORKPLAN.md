@@ -74,8 +74,8 @@ tracked document could still name its files, publish their sizes, describe them 
 | Paths, filenames, sizes and content summaries scrubbed, including one served to the live site | done |
 | Naming guard in CI **and** pre-commit | done |
 | Quote guard written; runs only where the material is present | done |
-| **Paraphrase the passages that still quote the source verbatim** | **open — the failing test is the list** |
-| Move the quote guard into the pre-commit hook once green | open |
+| Paraphrase the passages that quoted the source verbatim (~60, exercises 02–08) | done |
+| Both halves of the guard gating on commit | done |
 | Purge git history and old PR descriptions | **PK's decision** — needs a force-push |
 
 ## Stage 2 — Retro-fix readability and design, one exercise at a time · queued
