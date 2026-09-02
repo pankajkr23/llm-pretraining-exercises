@@ -302,7 +302,7 @@ function chapterThesis(M) {
     /* THE FOURTH DOOR. Three of the four readers this page was written for arrive with a decision
      * rather than a question, and every one of them went looking for a table and found an essay.
      * The table now exists, and this is the sentence that admits they need not read the rest. */
-    ['Here to pick one', `All ${spell(M.counts.total)} on one line each, with when you would pick it, before any argument about them.`, '#glance'],
+    ['Here to pick one', `The index: all ${spell(M.counts.total)}, every field, including when you would pick each one.`, '#reproduce'],
     ['Here to check us', 'Every entry, its trade-off, and the source its date was read from, on one page.', '#reproduce'],
   ]) {
     const a = el('a', 'guide-path');
@@ -335,97 +335,6 @@ function chapterThesis(M) {
    * chronology". The figures and chapters have their own names now, so there is nothing to
    * define. Eighty-three words, and the reader's first minute back. */
   s.append(guide);
-  return s;
-}
-
-/* ------------------------------------------------------ 1a · at a glance (no role) */
-
-/* A SECTION WITH NO `data-role`, ON PURPOSE.
- *
- * The spine is twelve roles in a fixed order and three other exercises read the same tuple, so a
- * thirteenth role would be a repo-wide change to publish one table. This section declares no role,
- * which makes it invisible to `tests/test_page_spine.py` (which collects declared roles) and to
- * `test_the_page_has_the_required_spine_in_order` (which filters `#main > section` down to spine
- * roles). It carries `data-nav` instead so the rail still lists it.
- *
- * WHY IT EXISTS. `whenToChoose` is present on all thirty entries and the page rendered it exactly
- * once — inside the reading spread, which shows one mechanism at a time and only after a click. So
- * the one field a reader arriving with a decision to make actually needs was the least reachable
- * thing on the page. Every other column here is data the page already holds. Nothing new was
- * written to build this; it was written to be *comparable*, which is what a table is for and what
- * eight thousand words of chronology is not.
- */
-function chapterGlance(M) {
-  const s = el('section');
-  s.id = 'glance';
-  sectionCount += 1;
-  s.dataset.n = String(sectionCount);
-  s.dataset.nav = 'At a glance';
-  s.dataset.title = 'At a glance';
-  s.dataset.sub = `All ${spell(M.counts.total)}, one line each`;
-  s.append(el('p', 'role', 'At a glance'));
-  s.append(el('h2', null, `Every mechanism, one line each`));
-  document.getElementById('main').append(s);
-
-  const shipped = M.mechanisms.filter((m) => (m.shippedIn || []).length);
-  s.append(
-    standfirst(
-      `The whole catalogue before the argument about it. **When you would pick it** is the column ` +
-        'to read if you came here with a decision rather than a question; every row links to its ' +
-        'full entry, with the source its date was read from, at the back.'
-    )
-  );
-
-  const note = el('p', 'say');
-  note.innerHTML = rich(
-    `**Shipped in** is empty on ${spell(M.counts.total - shipped.length)} of the ` +
-      `${spell(M.counts.total)} rows, and that is a finding rather than a gap: only ` +
-      `${spell(shipped.length)} of these are named as adopted by a model whose own paper we read. ` +
-      'The rest are what the field admired. A blank is never a judgement on the idea — several of ' +
-      'them are too recent for any model paper to exist yet.'
-  );
-  s.append(note);
-
-  const grid = el('div', 'glance bleed');
-
-  const head = el('div', 'gl-row gl-head');
-  for (const [cls, label] of [
-    ['gl-date', 'Date'],
-    ['gl-name', 'Mechanism'],
-    ['gl-bill', 'Attacks'],
-    ['gl-shape', 'Shape'],
-    ['gl-ship', 'Shipped in'],
-    ['gl-pick', 'When you would pick it'],
-  ]) {
-    head.append(el('span', cls, label));
-  }
-  grid.append(head);
-
-  for (const m of M.mechanisms) {
-    const row = el('a', 'gl-row');
-    row.href = `#m-${m.key}`;
-
-    row.append(el('span', 'gl-date', m.date));
-
-    const name = el('span', 'gl-name');
-    name.append(glyphSvg(m, 18), el('b', null, m.name));
-    row.append(name);
-
-    row.append(el('span', 'gl-bill', m.bill));
-    row.append(el('span', 'gl-shape', m.glyph.kind));
-
-    const ship = el('span', 'gl-ship');
-    if ((m.shippedIn || []).length) ship.textContent = m.shippedIn.map((a) => a.model).join(' · ');
-    else {
-      ship.classList.add('empty');
-      ship.append(el('i', 'none', '—'));
-    }
-    row.append(ship);
-
-    row.append(el('span', 'gl-pick', m.whenToChoose));
-    grid.append(row);
-  }
-  s.append(grid);
   return s;
 }
 
@@ -1464,8 +1373,12 @@ function chapterReproduce(M, spreadRef, plateRef) {
     }
     row.append(n);
 
+    /* BILL AND SHAPE ON THE NAME'S LINE. A reader running an eye down thirty rows is looking for
+     * a name and a family, and those two words are the family. They also replace the at-a-glance
+     * table that briefly existed above this one: a second thirty-row table of the same catalogue
+     * was 978 words of duplication, and the honest fix was one table with every field in it. */
     const bill = el('div', 'ix-bill');
-    bill.textContent = m.bill;
+    bill.textContent = `${m.bill} · ${m.glyph.kind}`;
     row.append(bill);
 
     /* WHAT IT DOES, WHICH THE INDEX NEVER SAID. Thirty rows gave a date, a name, a family and two
@@ -1508,6 +1421,14 @@ function chapterReproduce(M, spreadRef, plateRef) {
     dd.append(el('span', 'k', 'Debit'), document.createTextNode(m.givesUp));
     led.append(c, dd);
     row.append(led);
+
+    /* WHEN YOU'D PICK IT, HERE, ON ALL THIRTY. It is present on every catalogue entry and the page
+     * used to render it exactly once — inside the reading spread, which shows one mechanism at a
+     * time and only after a click. It briefly got a table of its own; a second thirty-row table was
+     * the wrong fix for a field that simply belonged in the first one. */
+    const pick = el('div', 'ix-pick');
+    pick.append(el('span', 'k', 'When you’d pick it'), document.createTextNode(m.whenToChoose));
+    row.append(pick);
 
     const src = el('div', 'ix-src');
     const a = el('a');
@@ -1625,10 +1546,7 @@ function buildRail(root) {
   head.append(el('span', 'rail-title', 'Contents'));
   inner.append(head);
   const list = el('div', 'rail-list');
-  /* `[data-nav]` as well as `[data-role]`: the at-a-glance table is deliberately role-less so
-   * the twelve-part spine stays twelve, and a reference a reader is sent to has to be in the
-   * contents or the sending is a link nobody finds twice. */
-  for (const sec of root.querySelectorAll('section[data-role], section[data-nav]')) {
+  for (const sec of root.querySelectorAll('section[data-role]')) {
     const a = el('a', 'rail-link');
     a.href = `#${sec.id}`;
     a.append(el('span', 'rail-n', String(sec.dataset.n).padStart(2, '0')));
@@ -1658,7 +1576,6 @@ export function buildPage(M) {
   const plateRef = {};
 
   chapterThesis(M);
-  chapterGlance(M);
   chapterGlossary(M);
   chapterProblem(M);
   chapterMechanism(M);

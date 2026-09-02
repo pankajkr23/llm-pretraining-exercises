@@ -233,69 +233,57 @@ def test_the_index_plate_shows_all_of_them_without_any_clicking(page) -> None:
     )
 
 
-def test_the_at_a_glance_table_carries_every_mechanism_on_one_line(page) -> None:
-    """The reference form of the catalogue, before any argument about it.
-
-    Six of six review readers went looking for a table and found an essay; two of them read only
-    the index at the back and never met the argument at all. This is the contents page they wanted.
-    """
-    bundle = _bundle()
-    rows = page.eval_on_selector_all(
-        "#glance .gl-row:not(.gl-head)", "els => els.map(e => e.getAttribute('href'))"
-    )
-    assert rows == [f"#m-{m['key']}" for m in bundle["mechanisms"]], (
-        "the glance table is not the catalogue in date order, or a row does not link its entry"
-    )
-
-
 def test_when_you_would_pick_it_reaches_the_reader_for_every_mechanism(page) -> None:
     """The field a reader with a decision needs, printed once per mechanism rather than once.
 
-    `whenToChoose` is present on all thirty entries and the page rendered it exactly once — inside
+    `whenToChoose` is on all thirty catalogue entries and the page rendered it exactly once — inside
     the reading spread, which shows one mechanism at a time and only after a click. So the most
-    decision-relevant thing in the catalogue was the least reachable thing on the page, and a
-    reader could not compare any two of them. This asserts the text is *in the document*, which is
-    the part a click cannot be required for.
+    decision-relevant thing in the catalogue was the least reachable thing on the page, and a reader
+    could not compare any two of them.
+
+    It briefly got a table of its own near the top of the page. That was the wrong fix and a reader
+    caught it: a second thirty-row table of the same catalogue is 978 words of duplication, and the
+    field simply belonged in the table that already existed. The guard is written against the
+    *property* — the text is in the document, no click required — so it survived the table being
+    deleted with only its selector changed.
     """
     bundle = _bundle()
-    picks = page.eval_on_selector_all("#glance .gl-pick", "els => els.map(e => e.textContent)")
+    picks = page.eval_on_selector_all("#reproduce .ix-pick", "els => els.map(e => e.textContent)")
+    assert picks, "no when-you-would-pick-it cells rendered at all"
     expected = [m["whenToChoose"] for m in bundle["mechanisms"]]
-    missing = [e for e in expected if e not in picks]
+    missing = [e for e in expected if not any(e in p for p in picks)]
     assert not missing, f"whenToChoose never reaches the reader for: {missing[:2]}"
 
 
-def test_the_glance_table_declares_no_role_so_the_spine_stays_twelve(page) -> None:
-    """A thirteenth role would be a repo-wide change to publish one table.
+def test_the_catalogue_is_tabulated_exactly_once(page) -> None:
+    """One table of the thirty, not two. A reader found the second one and called it duplication.
 
-    The spine tuple is read by 05, 06 and 07 as well, and both spine guards work off declared
-    roles — so this section is deliberately role-less and navigable by `data-nav` instead. If a
-    later edit gives it a role, this goes red before the repo-wide guard does, and says why.
+    The index at the back carries every mechanism with every field. A second thirty-row table was
+    added near the top to surface `whenToChoose`, and it restated the date, the name, the bill and
+    the shipped-in column that the index already had — 43% of the page became two tables of the same
+    catalogue. The field belonged in the existing table.
+
+    This asserts the property rather than naming the deleted section: no two containers on the page
+    may each hold a row per mechanism. A future table of all thirty is a decision someone has to
+    make deliberately, not one that can be added on top of the index without noticing.
     """
-    role = page.eval_on_selector("#glance", "e => e.dataset.role || ''")
-    assert role == "", (
-        "the glance table declared a spine role; the spine is fixed at twelve and shared with "
-        "three other exercises"
+    counts = page.evaluate(
+        r"""(total) => {
+          const out = [];
+          const sel = '#main div, #main section, #main table, #main ul';
+          for (const e of document.querySelectorAll(sel)) {
+            // Direct children only: a wrapper around the index must not count as a second table.
+            const rows = [...e.children].filter(c => c.id && /^m-/.test(c.id)).length;
+            if (rows >= total) out.push(e.className || e.tagName);
+          }
+          return out;
+        }""",
+        len(_bundle()["mechanisms"]),
     )
-    assert page.eval_on_selector("#glance", "e => e.dataset.nav || ''"), (
-        "a role-less section still has to reach the contents rail, via data-nav"
+    assert len(counts) == 1, (
+        f"the catalogue is tabulated {len(counts)} times on one page: {counts}. "
+        "One table with every field beats two tables that restate each other."
     )
-
-
-def test_the_column_heads_are_hidden_once_the_row_stops_being_a_row(page) -> None:
-    """Below 900px the six columns become a stacked card, and a head row would be five orphans.
-
-    This shipped broken: `display: none` was written *above* `display: flex` in the same media
-    query at the same specificity, so it lost on source order and every phone got a list reading
-    DATE / MECHANISM / ATTACKS / SHAPE / SHIPPED IN before the first entry. Nothing was red.
-    """
-    page.set_viewport_size({"width": 390, "height": 900})
-    try:
-        shown = page.eval_on_selector(
-            "#glance .gl-head", "e => getComputedStyle(e).display !== 'none'"
-        )
-        assert not shown, "the column heads are still painted where there are no columns"
-    finally:
-        page.set_viewport_size({"width": 1440, "height": 1000})
 
 
 def test_the_index_plate_is_in_date_order_on_screen(page) -> None:
