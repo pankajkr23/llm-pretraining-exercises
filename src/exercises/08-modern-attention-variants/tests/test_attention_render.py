@@ -147,6 +147,63 @@ def test_the_page_has_the_required_spine_in_order(page) -> None:
     assert first == list(spine), f"the spine is out of order: {first}"
 
 
+def test_a_reader_who_stops_at_the_exit_line_has_read_a_complete_argument(page) -> None:
+    """The short read must be *correct*, not merely comforted — which is a property, not a claim.
+
+    The page invites a reader to stop after the chronology. That invitation is only honest if the
+    findings are above the line rather than in the verdict at word 7,900, which is where every one
+    of them used to sit. So: the exit line exists, it comes after the chronology, and every finding
+    tile is above it.
+
+    The word budget is asserted too. "Stop here and you have the whole of it" is a promise about
+    length as much as content, and prose grows.
+    """
+    got = page.evaluate(
+        r"""() => {
+          const exit = document.querySelector('.exit-line');
+          if (!exit) return null;
+          const tiles = [...document.querySelectorAll('.find .v')].map(e => e.textContent.trim());
+          const before = [...document.querySelectorAll('#main *')]
+            .filter(e => exit.compareDocumentPosition(e) & Node.DOCUMENT_POSITION_PRECEDING);
+          const plate = document.querySelector('#results .plate-pair');
+          const all = document.querySelector('#main').innerText;
+          const upto = all.slice(0, all.indexOf(exit.innerText));
+          const count = (t) => (t.match(/\S+/g) || []).length;
+          // Prose only. The at-a-glance table and the reading-spread panel are reference matter a
+          // reader scans or skips, not sentences read in sequence, so counting them would make the
+          // budget insensitive to the thing it is watching — prose growing back.
+          const reference = ['.glance', '.spread']
+            .map(sel => document.querySelector(sel))
+            .filter(Boolean)
+            .reduce((n, e) => n + count(e.innerText), 0);
+          return {
+            tiles,
+            afterPlate: !!plate && !!(exit.compareDocumentPosition(plate)
+                                      & Node.DOCUMENT_POSITION_PRECEDING),
+            tilesBefore: tiles.length > 0 && before.some(e => e.classList.contains('find-grid')),
+            words: count(upto) - reference,
+          };
+        }"""
+    )
+    assert got, "there is no exit line; a reader is never told where the argument ends"
+    assert got["afterPlate"], "the exit line comes before the chronology it is meant to close"
+    assert got["tilesBefore"], (
+        "the findings are not above the exit line, so stopping is a partial read"
+    )
+    assert len(got["tiles"]) >= 3, f"too few findings in the opening: {got['tiles']}"
+
+    # Prose to the exit line, table and spread excluded: **2,770 words today**, against a whole
+    # page of about 9,000. The review that asked for this section estimated 800, which counted
+    # only the paragraphs it enumerated and silently omitted the key, the plate caption, the
+    # colophon and the reading spread. The measured number is recorded here rather than the
+    # target, because a ceiling set to a wrong estimate is a test that fails honest work — and
+    # 2,770 is still a complete argument in under a third of the page, which is the point.
+    assert got["words"] < 2900, (
+        f"prose to the exit line is {got['words']} words and the ceiling is 2,900. The exit line "
+        "tells a reader they have the whole argument by here; that stops being kind past a point."
+    )
+
+
 def test_the_page_shows_no_shell_commands(page) -> None:
     """Commands live in the README. A page that opens with `uv sync` is written for its author."""
     body = page.inner_text("main")

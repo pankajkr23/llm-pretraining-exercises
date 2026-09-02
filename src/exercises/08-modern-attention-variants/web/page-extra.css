@@ -275,6 +275,23 @@ figcaption strong {
   font-weight: 600;
 }
 
+/* ------------------------------------------------------------------ the exit line */
+/* Set after the chronology, where a reader who has had enough is deciding. It is the only
+ * paragraph on the page addressed to somebody about to leave. */
+.exit-line {
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--line);
+  margin: 40px 0 10px;
+  padding: 18px 0 20px;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 62ch;
+}
+.exit-line b {
+  font-weight: 700;
+}
+
 /* ---------------------------------------------------------------- the wells
  * A well carries the grid inward, exactly as a section does. Without this its plates are trapped
  * in the 68ch prose column: PLATE IV was rendered at 685px inside a 1116px page, which is the one
@@ -1251,6 +1268,53 @@ text.quiet-lab {
   font-size: 11px;
   color: var(--faint);
   margin-top: 5px;
+}
+
+/* ----------------------------------------------------------- the finding tiles */
+/* The four findings, in the opening, one of them a failure. Every one of them used to sit between
+ * word six thousand and word eight thousand, so a reader who stopped early left with the invoice
+ * and none of the conclusions. */
+.findings {
+  border-top: 2px solid var(--ink);
+  margin: 34px 0 4px;
+  padding-top: 14px;
+}
+.find-grid {
+  display: grid;
+  /* 360px, not 230px. At 230 the four tiles held four columns up to 1920px and each caption read
+   * 39 characters a line — below the 42-character floor `docs/MEASURES.md` sets, and caught by
+   * `test_no_block_of_prose_is_too_narrow_when_it_could_be_wider` rather than by eye. An auto-fit
+   * floor is a readability decision, not a packing one. */
+  grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr));
+  gap: 26px 34px;
+  margin-top: 14px;
+}
+.find {
+  min-width: 0;
+}
+.find .v {
+  font-family: var(--mono);
+  font-size: clamp(21px, 2.4vw, 27px);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--line-strong);
+}
+.find .k {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 10px 0 0;
+  /* On `.k`, which carries the 13px — not on `.find`, whose own font-size is 16px, where 60ch
+   * would resolve to a measure a third too wide for the text inside it. AGENTS.md records this
+   * exact trap from a pull quote that came out one word per line. */
+  max-width: 60ch;
+}
+.find .k b {
+  color: var(--ink);
 }
 
 /* ------------------------------------------------------------- departments */

@@ -154,8 +154,17 @@ export function figMasthead() {
     rows.push(r);
     s.append(r);
   }
-  // The one query line: row 32, in accent. The only accent mark on the masthead.
-  s.append(svg('rect', { x: 0, y: 32 * 10 + 3, width: 33 * 10, height: 2.5, class: 'f-accent' }));
+  /* The one query line: row 32, in accent — and at the field's own opacity, not full.
+   *
+   * It used to paint at opacity 1, which made a decorative background carry the single most
+   * saturated mark on the page. The body text sits ON this field (it overlaps at every width from
+   * 1440 down, by design, because the rest of the field is 7-13% ink) — so at 1440px the accent
+   * bar ran straight through the words "every one of" in the opening sentence and read as a
+   * strikethrough. A decorative field has to stay decorative at every width, since where the text
+   * falls across it is not something the SVG can know. */
+  const q = svg('rect', { x: 0, y: 32 * 10 + 2, width: 33 * 10, height: 4, class: 'f-accent' });
+  q.setAttribute('opacity', '0.3');
+  s.append(q);
 
   const target = (i) => 0.07 + 0.06 * (i / (T - 1));
   animate(480, (t) => {

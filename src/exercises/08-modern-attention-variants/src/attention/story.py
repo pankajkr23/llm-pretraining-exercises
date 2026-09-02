@@ -106,10 +106,12 @@ WELLS: tuple[Well, ...] = (
         subject="Rotary embeddings, and the three repairs",
         headline="We shipped a position scheme in 2021 and we are still arguing about it.",
         standfirst=(
-            "Rotary embeddings solved relative distance elegantly and left one bomb: run past the "
-            "trained length and the rotation keeps going. Three repairs follow. Then one paper "
-            "concludes the answer is to delete positional embeddings entirely -- and the next one "
-            "concludes the answer is to make them richer. Both cannot be right."
+            "The worked example above leaves one thing out on purpose: position. Both copies of "
+            '"the" get identical vectors there, and this chapter is the gap that opens. Rotary '
+            "embeddings solved relative distance elegantly and left one bomb: run past the trained "
+            "length and the rotation keeps going. Three repairs follow. Then one paper concludes "
+            "the answer is to delete positional embeddings entirely -- and the next one concludes "
+            "the answer is to make them richer. Both cannot be right."
         ),
         keys=("rope", "alibi", "ntk_aware", "yarn", "drope", "hd_rope"),
     ),

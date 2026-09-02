@@ -168,8 +168,8 @@ function chapterThesis(M) {
        * before the mechanism, and the mechanism arrives before its price. */
       'Attention lets every word in a piece of text look at every other word before deciding what ' +
         'it means. That is why it works, and it is why it costs — twice over. This page calls ' +
-        `those two costs the **bills**, and almost every one of these ${spell(M.counts.total)} ` +
-        'mechanisms is somebody refusing to pay one of them. In the order they were actually ' +
+        `those two costs the **bills**, and two thirds of these ${spell(M.counts.total)} ` +
+        'mechanisms are somebody refusing to pay one of them. In the order they were actually ' +
         'launched, every date read from the paper it came from.'
     )
   );
@@ -195,6 +195,63 @@ function chapterThesis(M) {
    * orientation: what the page is, the one idea everything hangs off, and three ways in depending
    * on why you came. It sits inside the opening rather than as its own section because it is
    * furniture, not an argument. */
+  /* THE FOUR FINDINGS, AT THE TOP, WITH THE FAILURE AMONG THEM.
+   *
+   * Every one of these sat somewhere between word 6,000 and word 8,000 — the score-grid count in
+   * the key, the shipping gap in the index, the 1,015 days in the verdict, the robustness re-run in
+   * the verdict. A reader who stops early therefore left with the invoice and none of the findings,
+   * which is what made an early stop a partial read rather than a complete short one. Putting them
+   * here is what lets somebody close the page after the worked example and still be *correct*
+   * rather than merely comforted.
+   *
+   * AGENTS.md: put a failure in the opening tiles. The fourth is ours — this page tested three of
+   * its own conclusions against a shifted set of bucket edges and one of them did not survive. It
+   * is counted from the same robustness object the verdict renders, so it cannot drift from it.
+   */
+  const shipped = M.mechanisms.filter((m) => (m.shippedIn || []).length).length;
+  const rb = M.arc.robust;
+  const survived = [
+    rb.matchesAnywhere === false,
+    rb.cacheNeverDominates === true,
+    rb.settlesEverywhere !== null,
+  ];
+  const findings = el('div', 'findings bleed');
+  findings.append(el('p', 'kicker', 'What the dates turned out to say'));
+  const fg = el('div', 'find-grid');
+  for (const [value, line] of [
+    [
+      `${M.counts.glyphKinds.state} of ${M.counts.total}`,
+      'refuse to build a score grid at all. The other ' +
+        `${M.counts.total - M.counts.glyphKinds.state} still build the triangle and argue about ` +
+        'which cells to compute, what to feed it, or what to keep.',
+    ],
+    [
+      `${shipped} of ${M.counts.total}`,
+      'are named by a model’s own paper as having shipped. The rest is what the field admired. ' +
+        'That gap is the largest single thing this catalogue found.',
+    ],
+    [
+      `${int(daysBetween(M, 'bahdanau_attention', 'standard_attention'))} days`,
+      'separate the invention of attention from the invention of the Transformer — most of three ' +
+        'years, which is why teaching them together reads as though one contained the other.',
+    ],
+    [
+      `${survived.filter((x) => !x).length} of ${survived.length}`,
+      'of this page’s own conclusions did **not** survive shifting its arbitrary bucket edges by ' +
+        'a year. It is named in the verdict rather than dropped, and the two that did survive are ' +
+        'stated as surviving.',
+    ],
+  ]) {
+    const tile = el('div', 'find');
+    tile.append(el('div', 'v', value));
+    const k = el('p', 'k');
+    k.innerHTML = rich(line);
+    tile.append(k);
+    fg.append(tile);
+  }
+  findings.append(fg);
+  s.append(findings);
+
   const guide = el('div', 'guide bleed');
   guide.append(el('p', 'kicker', 'How to read this'));
 
@@ -224,11 +281,17 @@ function chapterThesis(M) {
   }
   guide.append(bills);
 
+  /* "NEARLY EVERY" WAS FALSE, AND THE KEY CONTRADICTED IT TWO SCREENS LATER. Adding up the
+   * label counts: the ORIGIN and POSITION entries attack neither bill, which is a third of the
+   * catalogue. The fraction is derived from the same counts the key prints, so the two can no
+   * longer disagree. */
+  const onBills = M.counts.bills.compute + M.counts.bills.cache + M.counts.bills.both;
   const close = el('p', 'guide-lede');
   close.innerHTML = rich(
-    `Nearly every mechanism here is somebody looking at one of those two bills and trying to pay ` +
-      'less of it. Ordering them **by the date they were actually launched** — rather than by ' +
-      'family, which is how they are usually taught — is what makes the pattern visible.'
+    `**${onBills} of the ${M.counts.total}** go after one of those two bills. The rest are about ` +
+      '**where a word sits** in the sentence, which is a third problem the bills do not cover. ' +
+      'Ordering them **by the date they were actually launched** — rather than by family, which ' +
+      'is how they are usually taught — is what makes the pattern visible.'
   );
   guide.append(close);
 
@@ -262,15 +325,6 @@ function chapterThesis(M) {
       'paper states no size, the drawing says so.'
   );
   guide.append(scope);
-
-  const marks = el('p', 'guide-marks');
-  marks.innerHTML = rich(
-    'Two conventions worth knowing before you meet them. Each mechanism carries a small **drawn ' +
-      'mark** — a shape standing for what it changes, explained in the key below. A **~** on a ' +
-      'mark means it is drawn to schema rather than to scale: where a paper states a size we used ' +
-      'it, and where it does not, the proportions are ours and mean nothing.'
-  );
-  guide.append(marks);
 
   /* THE BORROWED VOCABULARY IS GONE, AND SO IS THE PARAGRAPH THAT EXPLAINED IT.
    *
@@ -520,13 +574,19 @@ function chapterMechanism(M) {
 
   const how = el('p', 'guide-lede');
   how.innerHTML = rich(
-    'Every word produces all three. The figure below runs the six words of that sentence through ' +
-      'the five steps that turn those three into one new vector per word — and the numbers in the ' +
-      'grid are computed rather than drawn — every dot product is worked live in your browser, ' +
-      'so the arithmetic can be checked against the cells. One thing is left out on purpose: ' +
-      'position. The two copies of "the" get identical vectors here, which is exactly the gap the ' +
-      'position mechanisms later on this page exist to fill. **Step through the five tabs in ' +
-      'order.**'
+    /* WHAT A READER NEEDED, AND WHAT THEY DID NOT. "Vector" and "dot product" were used without
+     * ever being said in plain words, and a reader at the start of this page has met neither. What
+     * went in their place was a boast about provenance — "computed rather than drawn", "worked
+     * live in your browser" — which a sceptical reader correctly discounted, since the Q, K and V
+     * values are illustrative and what the browser computes is arithmetic on made-up numbers. The
+     * forward reference to position moved to the chapter where position is the subject. */
+    'Every word produces all three, each of them a **vector** — just a list of numbers. The ' +
+      'figure below runs the six words of that sentence through the five steps that turn those ' +
+      'three into one new vector per word. Matching a question against a label is a **dot ' +
+      'product**: multiply the two lists position by position and add up the results, so a big ' +
+      'number means they point the same way. The Q, K and V values here are illustrative; the ' +
+      'arithmetic on them is real and you can check it against the cells. **Step through the five ' +
+      'tabs in order.**'
   );
   setup.append(how);
   s.append(setup);
@@ -540,10 +600,7 @@ function chapterMechanism(M) {
         'that was already computed, which is <b>why the triangle exists</b> in every glyph after ' +
         'this. Scale it to a 32,768-token context and the same picture has <b>536,887,296</b> ' +
         'useful cells, per head, per layer, of which this model has 8 and 48. Watch the last ' +
-        'stage: attention does not output weights, it outputs a vector. And nothing later on this ' +
-        `page changes the <b>arithmetic inside</b> these five stages — what the ` +
-        `${spell(M.counts.total)} mechanisms change is which cells get computed, which get ` +
-        'stored, and in a few cases whether the grid is built at all.'
+        'stage: attention does not output weights, it outputs a vector.'
     )
   );
 
@@ -559,12 +616,10 @@ function chapterMechanism(M) {
   const walk = el('p', 'guide-lede');
   walk.innerHTML = rich(
     'Take the bottom row, **mat**. It is the last word, so it may look at all six — nothing is ' +
-      'masked. Across that row the model asks _how much does each of these matter to me_ and ' +
-      'the strongest answer is **cat** — the only word in the sentence that tells you what the ' +
-      'mat has to do with anything. After ' +
-      'softmax those six scores become six shares that add up to 1, and the output for "mat" is ' +
-      'every word\'s V mixed in exactly those proportions. That is one row. The grid is that ' +
-      'question asked once per word, all at once.'
+      'masked. Across that row the model asks _how much does each of these matter to me_, and ' +
+      'the strongest answer is **cat**. Softmax turns those six scores into six shares that add ' +
+      'up to 1 — a budget being split — and the output for "mat" is every word\'s V mixed in ' +
+      'exactly those proportions.'
   );
   row.append(walk);
   const so = el('p', 'guide-lede');
@@ -591,25 +646,26 @@ function chapterExpected(M) {
     'Before the evidence',
     'What we expected to find',
     [
-      /* THREE PROBLEMS IN THREE SENTENCES, and the first was the worst. "exactness / memory /
-       * length" is a THIRD vocabulary for a thing the page has already named twice — two bills,
-       * then five labels — and "memory" appears in it twice with nothing to map it onto, so the
-       * prediction and the figure that tests it were phrased in different words. The section also
-       * answered its own prediction in the same breath, and never stated the decision rule, which
-       * then surfaced for the first time in the verdict where it reads as chosen after the count. */
-      'The story usually told is a tidy arc, and the key has already given it its words: first the ' +
+      /* THE SECOND SENTENCE DISPROVED THE FIRST, AND THE WHOLE VERDICT RESTS ON IT.
+       *
+       * This read "Here is the test, fixed before anything was ordered" and then, in the same
+       * sentence, "two years rather than one because several single years contain nothing at all"
+       * — which is a choice made *after* looking at the chronology. A review reader caught it in
+       * one pass. Pre-registration is exactly what the refutation below is worth anything for, so
+       * the claim is now the narrower one that is true: the window width was chosen after seeing
+       * how sparse single years are; everything after that was fixed before the tally ran. Saying
+       * so costs less than a reader finding it. */
+      'The story usually told is a tidy arc, and the key has already given it its words: the ' +
         'field got attention working at all (**origin**), then went after the score grid ' +
-        '(**compute**), then after the stored keys (**cache**), then after both at once ' +
-        '(**both**).',
-      `Here is the test, fixed before anything was ordered. Group the ${spell(M.counts.total)} into ` +
-        'two-year windows — two years rather than one because several single years on the chronology ' +
-        'contain nothing at all. Count which bill each window attacked most, and where two draw, ' +
-        'return **no winner** rather than picking one. If the arc is real, one bill dominates ' +
-        'nearly every window and they fall in that order.',
-      'We also expected the invention of attention and the invention of the Transformer to sit ' +
-        'close together — attention being the idea of letting a model look back at every input ' +
-        'word, the Transformer being the model built out of almost nothing else. Whether they do ' +
-        'is on the chronology above; the number is in the verdict below.',
+        '(**compute**), then the stored keys (**cache**), then both at once (**both**).',
+      `Here is the test. Group the ${spell(M.counts.total)} into two-year windows, count which ` +
+        'bill each window attacked most, and where two draw return **no winner** rather than ' +
+        'picking one. If the arc is real, one bill dominates nearly every window and they fall in ' +
+        'that order. **The window width is the one choice made after looking** — single years on ' +
+        'this chronology are often empty. Everything after it was fixed before the tally ran, and ' +
+        'the edges are re-run shifted a year in the verdict below.',
+      'We also expected attention and the Transformer to have been invented close together. ' +
+        'Whether they were is on the chronology above; the number is in the verdict below.',
     ],
     { short: 'The prediction', sub: 'Stated before the evidence' }
   );
@@ -917,6 +973,24 @@ function chapterResults(M, spreadRef) {
   plateIII.insertBefore(controls, plateIII.querySelector('figcaption'));
   s.append(plateIII, spread);
 
+  /* THE EXIT. A reader who stops here has read about eight hundred words and has all four
+   * findings, the invoice, one attention step worked end to end, and the whole catalogue in the
+   * table near the top. That is a *complete* short read rather than a partial long one — which is
+   * only true because the findings moved to the opening tiles; before that, stopping here meant
+   * leaving with the arithmetic and none of the conclusions.
+   *
+   * Saying so costs one sentence and is the difference between a page somebody abandons and a
+   * page somebody finishes. Nothing below this line is withheld from a reader who stops: the
+   * chapters are the evidence for what has already been stated. */
+  const exit = el('p', 'exit-line');
+  exit.innerHTML = rich(
+    '**That is the argument.** Everything below is the evidence for it: six chapters, ' +
+      `${spell(M.counts.total)} entries, and the index they were all read from. If you stop ` +
+      'here you have the whole of it — the two bills, one attention step end to end, and the ' +
+      'four findings at the top of the page.'
+  );
+  s.append(exit);
+
   // The six wells: the storyline. Every mechanism belongs to exactly one, checked in Python.
   const wells = M.wells;
   well(s, wells[0], M);
@@ -1155,7 +1229,6 @@ function chapterConclusion(M) {
    * it is built from the same source the figure uses. That includes the plural. */
   const total = M.periods.length;
   const ties = M.periods.filter((p) => !p.dominant).length;
-  const held = total - ties;
   const tie = ties === 1 ? 'window' : 'windows';
   const isare = ties === 1 ? 'is an exact tie' : 'are exact ties';
 
@@ -1174,7 +1247,8 @@ function chapterConclusion(M) {
     position: 'where a word sits',
     both: 'both bills at once',
   };
-  const seq = (xs) => xs.map((x) => (x ? NAME[x] || x : 'no winner')).join(' → ');
+  /* The two sequences are rendered by `figArcs` now, from this same NAME map, so the chain
+   * builder that used to live here has no caller. NAME stays: the prose below names bills. */
 
   const headline = arc.matches
     ? 'The tidy arc holds'
