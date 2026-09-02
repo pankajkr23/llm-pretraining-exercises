@@ -77,6 +77,23 @@ things to distinguish can exceed the palette, encode it in **form** — an ordin
 — and let colour keep its one job. A semantic palette of four asked to distinguish six steps
 silently rendered two of them identically.
 
+**Data-viz hues** — for plot series and categorical marks only, **never for UI chrome**. Apple
+system colours, distinct in both themes:
+
+| Role | Light | Dark |
+| --- | --- | --- |
+| blue | `#0071e3` | `#2997ff` |
+| orange | `#d1730a` | `#ff9f0a` |
+| green | `#248a3d` | `#30d158` |
+| purple | `#a03fce` | `#bf5af2` |
+| indigo | `#5856d6` | `#5e5ce6` |
+
+**The blue here is deliberately not `--accent`** (`#0068d1`). `--accent` is text and UI chrome, so
+it is held to 4.5:1 — it shipped at `#0071e3` and measured **4.31:1**, one of four contrast failures
+that got onto this site by being chosen by eye. A categorical mark sits *on* a panel rather than
+behind prose, so it keeps the brighter value. Two roles, two values; conflating them is what
+darkened the accent in the first place.
+
 ---
 
 ## Layout
@@ -282,6 +299,45 @@ is a limitation the page is hiding. Smaller type, fewer words, always on screen.
 - **`.brief`** is the orientation *before* the figure — a mono label over a short paragraph, saying
   what you are looking at. **Once is orientation; three times is a template readers skip**, so keep
   it to one or two rows and put the argument in the caption.
+- **Figures are inline SVG built from the page's own data, never a chart library.** Exercise 07
+  draws six from `data.js` with `createElementNS`: a scatter on a grid, a flow diagram, two bar
+  charts and a paired-lines plot. No dependency, no CDN, and they inherit the theme for free because
+  **every colour is a token**. Never a literal — a literal is right in one of the six themes and
+  wrong in the other five, and the theme picker shows it instantly.
+- **Every figure sits in `<figure>` with a `<figcaption>`.** Number them (`Figure 3.`). `figure`
+  gets `overflow-x: auto` and the svg a `min-width`, so a wide diagram scrolls inside its own box
+  and the page body never does.
+- **Draw the whole object, not the part that fits.** 07's grid figure originally stopped at column
+  32, so the discarded bytes landed outside the viewBox and stacked into one dot — a figure whose
+  caption said nineteen bytes were thrown away while showing one. Extend the domain and shade the
+  region being lost.
+- **Check a mechanism figure's mapping against the data, not against how it looks.** The same page
+  shipped a draft with two of four labelled points on the wrong rows: a correct-looking rectangle,
+  wrongly labelled, which is the one thing a mechanism figure must never be.
+
+### Pipeline figures
+
+- **A pipeline figure is boxes and arrows that wrap** (`.flow`): `display: flex` with
+  `flex-wrap: wrap` and `overflow-x: auto`, arrows as separate `.flow-arrow` siblings between the
+  boxes.
+- **Mark the stages that matter with an explicit class, never `:nth-child`** — the arrows are
+  siblings of the boxes, so any positional rule counts them too and selects the wrong stages the
+  moment one is added.
+- **Let it wrap rather than scroll.** 06's first version put the two stages its caption called out
+  off-screen behind a horizontal scroll, so the figure's punchline was invisible.
+
+### Glossary
+
+- **A glossary is a table of terms, not a paragraph of them** (`dl.defs`): a two-column grid,
+  `minmax(110px, 165px)` for the term and `1fr` for the definition, collapsing to **one column below
+  640px** — a 110px term column beside a definition is unreadable on a phone. The term is `--mono`,
+  the definition `--muted`. A grid rather than a float, so a long definition wraps under itself
+  instead of under the term.
+- **A glossary must not be hover-only.** Exercise 06 defined ten terms as tooltips and nothing else,
+  which is a definition that does not exist on a touch screen, does not survive printing, and cannot
+  be reached with a keyboard. Render the *same object* as a visible section and keep the tooltips —
+  two presentations, one source, so they cannot disagree. If the heading states a count, derive it
+  from the list it heads and test it.
 
 ### Interactive figures
 
@@ -299,6 +355,28 @@ is a limitation the page is hiding. Smaller type, fewer words, always on screen.
 - **An `IntersectionObserver` on a detached node never fires.** Every figure builder returns its
   element before the page appends it, so register the observer from the code that appends, or defer
   a frame and check `isConnected`.
+
+### Command blocks
+
+`pre.code`: `--panel` on `--line`, `border-radius: 10px`, `--mono` at 12.5px/1.65, `overflow-x:
+auto`. A `reproduce` section is mostly these, so they have to read as **runnable** rather than as
+decoration.
+
+### The landing page
+
+- **The landing page is two measures, not one.** Prose keeps a readable line length (`.head` at
+  54ch, the lede at 52ch) while the exercise cards go wide as a grid —
+  `repeat(auto-fill, minmax(min(340px, 100%), 1fr))`, three columns at 1440px, one on a phone. It
+  was a single 640px column at every width for a long time, using a third of a 1920px screen.
+  Widening the *column* instead would have made the sentences unreadable, so **both halves are
+  tested**: that the grid uses the screen, and that the prose does not widen with it.
+- **`min(340px, 100%)`, never a bare `340px`** — an auto-fill track cannot shrink below its own
+  minimum and pushes a 320px phone sideways.
+- **Cards in a row share a height.** `align-items: stretch` on the grid, and the meta line pinned
+  with `margin-top: auto`, so a row does not end at three different depths. Watch the selectors: the
+  index label is *also* a direct-child `span`, so `a.item > span { flex: 1 }` gives it flex-grow and
+  it stretches to fill the card — 93px tall for one line, pushing the title into the middle. Scope
+  it `:not(.idx)`.
 
 ### Reference tables
 

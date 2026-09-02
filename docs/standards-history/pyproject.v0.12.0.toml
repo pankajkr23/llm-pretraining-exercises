@@ -1,0 +1,81 @@
+# **FROZEN COPY — NOT IN FORCE.** This is `pyproject.toml` exactly as it shipped in **v0.12.0**, kept
+# so a rewrite can be diffed against what it replaced. It is history, not policy: the live
+# file at `pyproject.toml` is the one in force, and this copy is never edited. Snapshots are
+# written by `tools/snapshot_standards.py` and checked by `tests/test_standards_history.py`.
+#
+
+[project]
+name = "llm-pretraining-exercises"
+version = "0.4.0"
+description = "LLM Pretraining exercises/examples and toy projects"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv.workspace]
+members = ["src/exercises/[0-9][0-9]-*"]
+
+[dependency-groups]
+dev = [
+    # Executing the session notebooks, not just parsing them. `test_mixture_notebook.py` skips
+    # without these, and a guard that always skips protects nothing — so they are in the default
+    # group CI syncs, and they are small: no CUDA wheel hides in here.
+    "ipykernel>=6",
+    "nbclient>=0.10",
+    "playwright>=1.62.0",
+    "pre-commit>=4.6.2",
+    "pytest>=8",
+    "pytest-xdist>=3.6",
+    "pyyaml>=6",
+    "ruff>=0.6",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["src", "tests"]
+markers = ["integration: slower end-to-end tests (tiny train runs, browser rendering)"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# Session notebooks are teaching documents, and ruff lints .ipynb by default. Notebook idioms are
+# deliberate there — imports arrive with the concept that needs them rather than all in cell one,
+# and a plotting cell ends `plt.tight_layout(); plt.show()` — so E402/E401/E702 fire on exactly the
+# choices that make a notebook readable. They are held to a different standard instead: every code
+# cell is executed top to bottom before commit, and `tests/test_notebook.py` checks the structural
+# rules that matter (imports the package, no committed outputs, covers every stage).
+# The same reasoning covers a notebook *builder*: `tools/build_notebook.py` is a notebook document
+# in Python clothing — its long lines are markdown prose and cell source, and one of them is a
+# Colab badge URL that cannot be wrapped at all. It is held to the notebook standard instead:
+# every cell is executed before commit, and `test_mixture_notebook.py` checks the structural rules.
+extend-exclude = ["notebooks/", "**/tools/build_notebook.py"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "B", "SIM", "C4", "D"]
+ignore = ["D203", "D213"]  # pick one of each conflicting docstring-style pair
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/*" = ["D"]  # tests don't need docstrings
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+docstring-code-format = true
+
+# --- PyTorch: CPU-only wheels on Linux ------------------------------------------------------------
+# torch is an optional extra (`--extra train`), needed by exercise 05's proxy run and exercise 06's
+# model, training and crash tests. On PyPI the Linux wheel bundles CUDA and pulls ~2.7 GB of nvidia-*
+# packages; the CPU build is 191.8 MB. Nothing in this repo trains on a GPU — the graded run is
+# CPU + gloo precisely so it behaves the same on a grader's machine — so the CUDA payload buys
+# nothing and made installing torch in CI look unaffordable.
+#
+# Scoped to Linux by marker: macOS arm64 has no CUDA build, so its PyPI wheel is already CPU-only
+# and pinning an index there would only add a way for the two platforms to disagree.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]

@@ -12,6 +12,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **The last two released versions of every standard file are now frozen in
+  `docs/standards-history/`, tracked on the same branch.** Git already held them; finding one meant
+  knowing a rewrite had happened and hunting the commit that did it, and the rewrites worth
+  comparing are exactly the ones nobody remembers making. `tools/snapshot_standards.py` writes them
+  at a release tag and `tests/test_standards_history.py` asserts each is byte-identical to the tag
+  it names, carries a `FROZEN COPY — NOT IN FORCE` banner, and does not silently exceed the
+  two-version retention. Snapshotting is now a step in the release ritual.
+
 - **Exercise 08's body type is fluid, 19px to 22px, and its prose is half the screen.** The
   complaint was that the page narrowed too much; the lever turned out to be type size rather than
   measure. **77 characters a line at every width** — not one longer line — with the prose going
@@ -204,6 +212,16 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   commands live in the README, and a test now enforces it.
 
 ### Fixed
+
+- **Rewriting `docs/DESIGN.md` as the design standard dropped nine rules that were not replaced
+  anywhere in the repo.** The file went 199 → 488 lines in one commit; of its 30 original rules 19
+  survived reworded, and nine vanished — figures are inline SVG and never a chart library · draw the
+  whole object, not the part that fits · check a mechanism figure's mapping against the data · every
+  figure sits in `<figure>` with a `<figcaption>` · a glossary must not be hover-only · a pipeline
+  figure wraps rather than scrolls · mark pipeline stages with an explicit class, never `:nth-child`
+  · cards in a row share a height · data-viz hues are for plot series and never UI chrome. Each was
+  a lesson from a defect that had already cost a page, and nothing went red while they were gone,
+  because no guard can cover a rule that used to be written down. All nine are restored.
 
 - **Two of exercise 05's data-handling invariants were dead on the branch for four commits.** A
   mutation experiment during a documentation audit injected `return []` into

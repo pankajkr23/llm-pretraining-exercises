@@ -1,0 +1,104 @@
+# **FROZEN COPY — NOT IN FORCE.** This is `.pre-commit-config.yaml` exactly as it shipped in **v0.11.0**, kept
+# so a rewrite can be diffed against what it replaced. It is history, not policy: the live
+# file at `.pre-commit-config.yaml` is the one in force, and this copy is never edited. Snapshots are
+# written by `tools/snapshot_standards.py` and checked by `tests/test_standards_history.py`.
+#
+
+# Local gates, run before a commit exists.
+#
+# These are a fast feedback loop, NOT the enforcement point. A hook can be skipped with
+# `--no-verify` and is not installed on a fresh clone, so CI remains the thing that decides.
+# What this buys is finding a problem in two seconds instead of two minutes, on your machine
+# instead of in a pull request — which is exactly what was missing when a test placeholder named
+# `plan_key_digest` failed CI's secret scan on PR #67.
+#
+# Install once per clone:
+#     uv sync --all-packages && uv run pre-commit install
+#
+# Run over everything (not just staged files):
+#     uv run pre-commit run --all-files
+
+# The local-only files are destroyed by CHECKOUT and MERGE, not by committing — so a config that
+# only declares `pre-commit` protects them at the one moment they were never at risk. Declaring the
+# hook types here means `pre-commit install` wires all four, and the snapshot happens on the
+# operation that does the damage rather than whenever somebody remembers.
+default_install_hook_types: [pre-commit, post-checkout, post-merge, post-rewrite]
+
+repos:
+  # --- secrets ---------------------------------------------------------------------------------
+  # A local hook rather than the upstream one on purpose: the upstream hook builds gitleaks from
+  # source with Go, and this way the binary that runs here is the same one available to run
+  # `gitleaks detect` by hand when a finding needs investigating. It FAILS rather than skips when
+  # gitleaks is absent — a secret scan that quietly does not run is worse than none, because it
+  # reads as coverage.
+  - repo: local
+    hooks:
+      - id: gitleaks
+        name: scan staged changes for secrets
+        entry: bash -c 'command -v gitleaks >/dev/null || { echo "gitleaks is not installed. brew install gitleaks — or https://github.com/gitleaks/gitleaks/releases"; exit 1; }; exec gitleaks protect --staged --redact --verbose'
+        language: system
+        pass_filenames: false
+
+  # --- lint and format -------------------------------------------------------------------------
+  # Through `uv run`, so this is the ruff pinned in pyproject.toml and not a second copy that can
+  # drift from the one CI uses.
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check --fix
+        entry: uv run ruff check --fix --force-exclude
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format --force-exclude
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+
+  # --- hygiene ---------------------------------------------------------------------------------
+  # Every hook here is a CHECK. None of them rewrites a file.
+  #
+  # `end-of-file-fixer` and `trailing-whitespace` were in the first draft of this config and are
+  # deliberately absent now: run once over the repo, they rewrote `02-tokenization/web/tokenizer.json`
+  # — the frozen tokenizer whose bytes are hashed and whose hash every shard manifest in exercise 06
+  # pins. A cosmetic newline would have voided that hash and invalidated every manifest, and the diff
+  # would have looked like tidying. They also touched the corpus text files, which are data, not
+  # source. Nothing in this repo may silently rewrite content; ruff already formats the Python, which
+  # is the only thing here that wants formatting.
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: [--maxkb=2048] # the tracked submission bundle's cap; anything larger wants a decision
+      - id: check-yaml
+      - id: check-toml
+
+  # --- the files git cannot restore -------------------------------------------------------------
+  # `notebooks/`, the notebook builders, every BRIEF.md, the whole course corpus and the course's
+  # reference solution are gitignored, so git has never seen them and cannot bring them back. They
+  # have already been destroyed twice by ordinary checkouts.
+  #
+  # These run on checkout, merge and rewrite — the operations that do the damage — and NOT on
+  # commit, where they would cost two seconds for nothing. `always_run` with `pass_filenames: false`
+  # because the question is about the working tree, not about which files are staged.
+  - repo: local
+    hooks:
+      - id: backup-local-only
+        name: snapshot the files git cannot restore
+        entry: 'uv run python tools/backup_local_only.py --message "auto post-checkout"'
+        language: system
+        stages: [post-checkout, post-merge, post-rewrite]
+        always_run: true
+        pass_filenames: false
+
+      - id: local-only-tripwire
+        name: check nothing local-only went missing
+        entry: uv run pytest tests/test_local_only_files_present.py -q
+        language: system
+        stages: [post-checkout, post-merge, post-rewrite]
+        always_run: true
+        pass_filenames: false
