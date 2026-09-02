@@ -186,9 +186,9 @@
 }
 
 #main .say {
-  font-size: 16px;
+  /* Size and measure are set in THE TYPE SCALE below, which is the one place they live. This rule
+   * carries only what does not change with the scale. */
   line-height: 1.62;
-  max-width: 68ch;
   margin: 0 0 16px;
   color: var(--ink);
 }
@@ -2054,11 +2054,9 @@ a.guide-path:focus-visible {
 
 /* ============================================================== THE TYPE SCALE
  *
- * Chosen over a fixed 16px after a reader compared both on the deployed page and picked this
- * one. The complaint it answers was "why do you narrow too much".
- *
- * The complaint was "why do you narrow too much", and the answer is that the lever is TYPE SIZE,
- * not measure. A 77-character line at 22px is 981px; the same 77 characters at 16px is 685px. The
+ * Chosen over a fixed 16px after a reader compared both on the deployed page. The complaint it
+ * answers was "why do you narrow too much", and the answer is that the lever is TYPE SIZE, not
+ * measure. A 77-character line at 22px is 981px; the same 77 characters at 16px is 685px. The
  * reader gets 43% more of their screen and not one longer line.
  *
  * The mechanism, which is subtler than it looks. `ch` resolves against the element's OWN computed
