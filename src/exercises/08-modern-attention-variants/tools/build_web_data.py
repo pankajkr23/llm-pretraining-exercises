@@ -208,7 +208,6 @@ def payload() -> dict:
                 "subject": w.subject,
                 "headline": w.headline,
                 "standfirst": w.standfirst,
-                "pullQuote": w.pull_quote,
                 "keys": list(w.keys),
                 "from": span(w, mechanisms)[0].isoformat(),
                 "to": span(w, mechanisms)[1].isoformat(),

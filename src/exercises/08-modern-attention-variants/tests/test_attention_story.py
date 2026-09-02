@@ -1,9 +1,11 @@
-"""The wells must partition the catalogue, and the page's loud typography must quote its evidence.
+"""The wells must partition the catalogue, and the state chapter must hold exactly the state family.
 
 Both invariants here fail silently on the page rather than loudly. A mechanism in no well is
-simply never rendered, and the page looks complete; a pull quote that paraphrases the catalogue
-instead of quoting it reads exactly like one that quotes it. So each is written twice -- once
-against the real story, once against a deliberately broken copy.
+simply never rendered and the page still looks complete. And a chapter can hold a mechanism its
+own headline is false of, which reads as an opinion rather than as the data error it is -- Well VI
+promised "a fixed-size state" and "every one of them pays in the same single way" while holding
+NSA and DeepSeek CSA, which both keep a KV cache. Nothing was red. So each invariant is written
+twice -- once against the real story, once against a deliberately broken copy.
 """
 
 import re
@@ -75,43 +77,49 @@ def _normalise(text: str) -> str:
     return re.sub(r"\s+", " ", flat).strip(" .\"'")
 
 
-def test_every_pull_quote_is_a_phrase_the_catalogue_already_contains(
+def _state_well(mechanisms: list[catalogue.Mechanism], wells: tuple[story.Well, ...]) -> str | None:
+    """The numeral of the well whose members are exactly the STATE family, or ``None``."""
+    state = {m.key for m in mechanisms if m.glyph is not None and m.glyph.kind == "state"}
+    for well in wells:
+        if set(well.keys) == state:
+            return well.numeral
+    return None
+
+
+def test_one_chapter_is_exactly_the_mechanisms_that_refuse_to_build_a_grid(
     mechanisms: list[catalogue.Mechanism],
 ) -> None:
-    """The page's largest type quotes its own evidence rather than authoring a slogan.
+    """The glossary counts the STATE family; one chapter tells it. They must be the same set.
 
-    A pull quote is the most-read text on a magazine page. If it paraphrases, the sentence a
-    reader remembers is the one nothing verified.
+    The page states a number -- "only N of the thirty refuse to build that grid at all" -- and then,
+    six thousand words later, gives that family its own chapter. A reader who counts the chapter and
+    a reader who reads the key must land on the same N. They did not: the chapter held ten entries
+    and two of them keep a cache, so the chapter's own headline was false of a fifth of its members
+    and the two numbers disagreed with nothing to say so.
+
+    This asserts the property rather than the membership, so moving a genuinely-state mechanism into
+    the chapter keeps it green and moving a cache-keeping one in does not.
     """
-    corpus = _normalise(
-        " ".join(
-            " ".join(
-                (
-                    m.what_existed,
-                    m.problem,
-                    m.mechanism,
-                    m.what_it_fixed,
-                    m.new_tradeoff,
-                    m.buys,
-                    m.gives_up,
-                    m.when_to_choose,
-                )
-            )
-            for m in mechanisms
-        )
+    assert _state_well(mechanisms, story.WELLS) is not None, (
+        "no chapter holds exactly the STATE mechanisms: "
+        f"{sorted(m.key for m in mechanisms if m.glyph is not None and m.glyph.kind == 'state')}"
     )
-    unsourced = [w.numeral for w in story.WELLS if _normalise(w.pull_quote) not in corpus]
-    assert not unsourced, f"pull quotes not found anywhere in the catalogue: {unsourced}"
 
 
-def test_the_pull_quote_guard_rejects_an_authored_slogan(
+def test_the_state_chapter_guard_rejects_a_cache_keeping_intruder(
     mechanisms: list[catalogue.Mechanism],
 ) -> None:
-    """Break it on purpose: the guard above is worthless if any string satisfies it."""
-    corpus = _normalise(
-        " ".join(m.problem + " " + m.new_tradeoff + " " + m.when_to_choose for m in mechanisms)
+    """Break it on purpose: put a FIELD mechanism back into the state chapter.
+
+    This is the exact defect that shipped, reproduced. Without this twin the guard above would pass
+    on any partition at all if it were written slightly wrong.
+    """
+    numeral = _state_well(mechanisms, story.WELLS)
+    intruder = next(m.key for m in mechanisms if m.glyph is not None and m.glyph.kind == "field")
+    broken = tuple(
+        replace(w, keys=w.keys + (intruder,)) if w.numeral == numeral else w for w in story.WELLS
     )
-    assert _normalise("Attention is all you really need, and then some.") not in corpus
+    assert _state_well(mechanisms, broken) is None
 
 
 def test_a_wells_span_is_read_from_the_dates_not_assumed_contiguous(

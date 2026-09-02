@@ -141,16 +141,6 @@ function brief(rows) {
   return d;
 }
 
-/** A pull quote. Every one of these is a phrase the catalogue already contains — a test asserts it. */
-function pull(quote, source) {
-  const d = el('div', 'pull');
-  const q = el('div', 'q');
-  q.textContent = `“${quote}”`;
-  d.append(q);
-  if (source) d.append(el('span', 'src', source));
-  return d;
-}
-
 /* --------------------------------------------------------------------- 1 · thesis */
 
 function chapterThesis(M) {
@@ -655,12 +645,16 @@ function well(parent, w, M, extras) {
   const h = el('h3', 'well-h');
   h.textContent = w.headline;
   sec.append(h);
+  /* SPAN, NOT RANGE. This read as a date range, which is how a reader reads a partition of a
+   * timeline — and the chapters are not a partition of time. They overlap and zig-zag on
+   * purpose, and that interleaving is the finding the chapters exist to show. A range promises
+   * an ordering the structure does not deliver; the years it spans promise nothing. */
   const dates = el('p', 'well-dates');
-  dates.textContent = `${nice(w.from)} — ${nice(w.to)} · ${w.keys.length} of ${M.counts.total}`;
+  dates.textContent =
+    `${w.keys.length} of ${M.counts.total} · spans ${w.from.slice(0, 4)}–${w.to.slice(0, 4)}`;
   sec.append(dates);
   sec.append(standfirst(w.standfirst));
   for (const node of extras || []) sec.append(node);
-  sec.append(pull(w.pullQuote, 'from this page’s own catalogue'));
   parent.append(sec);
   return sec;
 }

@@ -2208,7 +2208,6 @@ export const M = Object.freeze({
       "subject": "Attention before the Transformer",
       "headline": "By the end of the sentence it had forgotten the beginning.",
       "standfirst": "One fixed vector had to carry a whole source sentence. Attention's first form let the decoder look at every input position directly -- and it arrives three years before the architecture everyone now associates it with.",
-      "pullQuote": "Attention existed for three years before anyone removed the recurrence around it.",
       "keys": [
         "bahdanau_attention"
       ],
@@ -2220,7 +2219,6 @@ export const M = Object.freeze({
       "subject": "The Transformer, and the two bills it opens",
       "headline": "The hardware was parallel and the model was not.",
       "standfirst": "Dropping recurrence bought parallel training and cost the model any idea of order. One paper ships the fix, the architecture, and both of the bills this page is about.",
-      "pullQuote": "Everything after this on the timeline is somebody paying less of one of those two.",
       "keys": [
         "learned_absolute",
         "standard_attention",
@@ -2233,8 +2231,7 @@ export const M = Object.freeze({
       "numeral": "III",
       "subject": "Compute and cache split the field",
       "headline": "Two bills, two crowds.",
-      "standfirst": "The compute bill and the cache bill were attacked by different people for different reasons, and a date-ordered list interleaves them into apparent nonsense. Read as two crowds, the entries here are two arguments running in parallel.",
-      "pullQuote": "It moves along the same line rather than leaving it.",
+      "standfirst": "The compute bill and the cache bill were attacked by different people for different reasons, and a date-ordered list interleaves them into apparent nonsense. Read as two crowds, the entries here are two arguments running in parallel -- until the last two, which stop choosing and go after both at once.",
       "keys": [
         "sparse_attention",
         "topk_attention",
@@ -2243,7 +2240,9 @@ export const M = Object.freeze({
         "mqa",
         "gqa",
         "mla",
-        "msa"
+        "msa",
+        "nsa",
+        "deepseek_csa"
       ],
       "from": "2019-04-23",
       "to": "2026-06-11"
@@ -2253,7 +2252,6 @@ export const M = Object.freeze({
       "subject": "Rotary embeddings, and the three repairs",
       "headline": "We shipped a position scheme in 2021 and we are still arguing about it.",
       "standfirst": "Rotary embeddings solved relative distance elegantly and left one bomb: run past the trained length and the rotation keeps going. Three repairs follow. Then one paper concludes the answer is to delete positional embeddings entirely -- and the next one concludes the answer is to make them richer. Both cannot be right.",
-      "pullQuote": "Stop repairing it and remove it.",
       "keys": [
         "rope",
         "alibi",
@@ -2270,7 +2268,6 @@ export const M = Object.freeze({
       "subject": "Two discoveries, not two optimisations",
       "headline": "Two things we were wrong about.",
       "standfirst": "Neither of these is an optimisation. Both are discoveries about what was already happening — one about where the cost actually was, one about what models had quietly been doing with the first few tokens all along. The first is FlashAttention. Everyone had assumed attention was slow because of the arithmetic; it was actually slow because of shuttling the score grid out to memory and back, so reordering the same maths to keep the grid on chip made it several times faster with a bit-for-bit identical result. Nothing was approximated — the bill had simply been misread.",
-      "pullQuote": "Nothing mathematically - which is why it is on this list as the exception.",
       "keys": [
         "flashattention",
         "attention_sinks"
@@ -2282,8 +2279,7 @@ export const M = Object.freeze({
       "numeral": "VI",
       "subject": "Throw the cache away, keep a fixed-size state",
       "headline": "Then stop keeping everything.",
-      "standfirst": "If the cache is the bill, refuse to hold a cache. Fold the past into a fixed-size state instead. Four generations of that idea are here, each fixing the last one's way of forgetting -- and every one of them pays in the same single way.",
-      "pullQuote": "The state is a lossy summary, and what it lost is not recoverable.",
+      "standfirst": "If the cache is the bill, refuse to hold a cache. Fold the past into a fixed-size state instead. Each entry here fixes the last one's way of forgetting -- and every one of them pays in the same single way.",
       "keys": [
         "linear_attention",
         "delta_rule",
@@ -2291,9 +2287,7 @@ export const M = Object.freeze({
         "deltanet_parallel",
         "gated_deltanet",
         "kda",
-        "nsa",
         "mamba3",
-        "deepseek_csa",
         "gated_deltanet2"
       ],
       "from": "2020-06-29",

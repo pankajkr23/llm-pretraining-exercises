@@ -275,40 +275,6 @@ figcaption strong {
   font-weight: 600;
 }
 
-/* ------------------------------------------------------------ the pull quote */
-.pull {
-  margin: 38px 0 32px;
-  /* Not `ch`: that unit resolves against THIS element's 16px font-size, not the 38px quote inside
-   * it, so a 24ch measure came out at 192px and set the quote one word per line. */
-  max-width: min(100%, 30rem);
-}
-.pull::before {
-  content: '';
-  display: block;
-  width: 64px;
-  height: 3px;
-  background: var(--accent);
-  margin-bottom: 16px;
-}
-.pull q,
-.pull .q {
-  display: block;
-  font-size: clamp(22px, 3.6vw, 38px);
-  line-height: 1.14;
-  letter-spacing: -0.022em;
-  font-weight: 600;
-  color: var(--ink);
-  quotes: none;
-}
-.pull .src {
-  display: block;
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var(--faint);
-  margin-top: 12px;
-}
-
 /* ---------------------------------------------------------------- the wells
  * A well carries the grid inward, exactly as a section does. Without this its plates are trapped
  * in the 68ch prose column: PLATE IV was rendered at 685px inside a 1116px page, which is the one

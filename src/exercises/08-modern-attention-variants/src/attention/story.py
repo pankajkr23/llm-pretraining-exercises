@@ -5,11 +5,20 @@ grouping is editorial and it is a claim, so it lives here as tracked data rather
 inside the page's JavaScript, and :func:`check` refuses a partition that does not cover the
 catalogue exactly once.
 
-Why that guard is load-bearing: the wells are how a reader navigates twenty-three mechanisms,
-and the two ways this can rot are both silent. A mechanism named in no well simply stops being
-shown, and the page still renders twenty-two entries with no gap where the missing one was. A
-mechanism named in two wells is told twice, which reads as an editing mistake rather than as the
-data error it is. Neither shows up as a broken page, so neither would be found by looking at one.
+Why that guard is load-bearing: the wells are how a reader navigates the whole catalogue, and
+the two ways this can rot are both silent. A mechanism named in no well simply stops being shown,
+and the page still renders one entry short with no gap where the missing one was. A mechanism
+named in two wells is told twice, which reads as an editing mistake rather than as the data error
+it is. Neither shows up as a broken page, so neither would be found by looking at one.
+
+What the guard does NOT check is whether a well's headline is true of its members, and that is
+where this file has been wrong. Well VI is headed "keep a fixed-size state" and its standfirst
+promised "every one of them pays in the same single way" -- while it held NSA and DeepSeek's
+compressed sparse attention, both of which build a score grid and keep a KV cache. They select
+from the cache; they do not replace it. They now sit in Well III with the other entries that
+attack a bill without abandoning the grid, which leaves Well VI as exactly the STATE family --
+the same eight the glossary counts as refusing to build a grid at all. The chapter and the shape
+are now one object, so a future disagreement between them is visible rather than editorial.
 
 The ordering claim is separate and stronger: a well is a contiguous run of the date-ordered
 catalogue only where the storyline says it is, and Wells III to VI deliberately interleave --
@@ -37,9 +46,6 @@ class Well:
             reader all have something to navigate by.
         headline: The chapter's problem, stated in plain words rather than named as a technique.
         standfirst: One sentence of orientation, set under the headline.
-        pull_quote: A line lifted from the catalogue's own text, set large. Not authored here --
-            every one of these is a phrase that already appears in a mechanism's fields, so the
-            page's loudest typography is quoting its own evidence.
         keys: The mechanisms in this chapter, in the order the chapter tells them.
     """
 
@@ -47,7 +53,6 @@ class Well:
     subject: str
     headline: str
     standfirst: str
-    pull_quote: str
     keys: tuple[str, ...]
 
 
@@ -61,9 +66,6 @@ WELLS: tuple[Well, ...] = (
             "the decoder look at every input position directly -- and it arrives three years "
             "before the architecture everyone now associates it with."
         ),
-        pull_quote=(
-            "Attention existed for three years before anyone removed the recurrence around it."
-        ),
         keys=("bahdanau_attention",),
     ),
     Well(
@@ -74,9 +76,6 @@ WELLS: tuple[Well, ...] = (
             "Dropping recurrence bought parallel training and cost the model any idea of order. "
             "One paper ships the fix, the architecture, and both of the bills this page is about."
         ),
-        pull_quote=(
-            "Everything after this on the timeline is somebody paying less of one of those two."
-        ),
         keys=("learned_absolute", "standard_attention", "sinusoidal"),
     ),
     Well(
@@ -86,9 +85,9 @@ WELLS: tuple[Well, ...] = (
         standfirst=(
             "The compute bill and the cache bill were attacked by different people for different "
             "reasons, and a date-ordered list interleaves them into apparent nonsense. Read as "
-            "two crowds, the entries here are two arguments running in parallel."
+            "two crowds, the entries here are two arguments running in parallel -- until the last "
+            "two, which stop choosing and go after both at once."
         ),
-        pull_quote="It moves along the same line rather than leaving it.",
         keys=(
             "sparse_attention",
             "topk_attention",
@@ -98,6 +97,8 @@ WELLS: tuple[Well, ...] = (
             "gqa",
             "mla",
             "msa",
+            "nsa",
+            "deepseek_csa",
         ),
     ),
     Well(
@@ -110,7 +111,6 @@ WELLS: tuple[Well, ...] = (
             "concludes the answer is to delete positional embeddings entirely -- and the next one "
             "concludes the answer is to make them richer. Both cannot be right."
         ),
-        pull_quote="Stop repairing it and remove it.",
         keys=("rope", "alibi", "ntk_aware", "yarn", "drope", "hd_rope"),
     ),
     Well(
@@ -126,7 +126,6 @@ WELLS: tuple[Well, ...] = (
             "same maths to keep the grid on chip made it several times faster with a bit-for-bit "
             "identical result. Nothing was approximated \u2014 the bill had simply been misread."
         ),
-        pull_quote="Nothing mathematically - which is why it is on this list as the exception.",
         keys=("flashattention", "attention_sinks"),
     ),
     Well(
@@ -135,10 +134,9 @@ WELLS: tuple[Well, ...] = (
         headline="Then stop keeping everything.",
         standfirst=(
             "If the cache is the bill, refuse to hold a cache. Fold the past into a fixed-size "
-            "state instead. Four generations of that idea are here, each fixing the last one's "
-            "way of forgetting -- and every one of them pays in the same single way."
+            "state instead. Each entry here fixes the last one's way of forgetting -- and every "
+            "one of them pays in the same single way."
         ),
-        pull_quote="The state is a lossy summary, and what it lost is not recoverable.",
         keys=(
             "linear_attention",
             "delta_rule",
@@ -146,9 +144,7 @@ WELLS: tuple[Well, ...] = (
             "deltanet_parallel",
             "gated_deltanet",
             "kda",
-            "nsa",
             "mamba3",
-            "deepseek_csa",
             "gated_deltanet2",
         ),
     ),
