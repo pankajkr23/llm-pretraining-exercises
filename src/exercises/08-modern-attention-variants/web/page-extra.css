@@ -2328,3 +2328,13 @@ a.guide-path:focus-visible {
     gap: 10px 0;
   }
 }
+
+/* The read-time, under the contents. Derived from the rendered word count, so it cannot go stale
+ * the way a typed one would. */
+.rail-time {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+  margin: 14px 0 0;
+}

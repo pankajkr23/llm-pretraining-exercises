@@ -634,6 +634,38 @@ def test_the_left_rail_is_built_and_fills_the_gutter_it_reserves(page) -> None:
         assert rail > padding * 0.5, f"a {padding}px gutter is reserved and the rail fills {rail}px"
 
 
+def test_the_rail_marks_the_section_the_reader_is_in(page) -> None:
+    """A reader said they got lost: "I just get lost on the page without knowing where I am".
+
+    The vendored `_shared/page.css` has styled `.rail-link.on` — an accent bar and a bold label —
+    since before this page existed, and this page never set the class. 05, 06 and 07 have the same
+    dead CSS; exercise 03 is the only one in the repo that ever set it.
+
+    The property asserted is *exactly one* link marked, and it is the section scrolled to. Exactly
+    one matters: the first implementation of this elsewhere scored sections by distance and could
+    mark none at the top of the page and two across a boundary.
+    """
+    for section_id in ("thesis", "mechanism", "results", "conclusion", "reproduce"):
+        page.eval_on_selector(f"#{section_id}", "e => e.scrollIntoView()")
+        page.wait_for_timeout(220)
+        on = page.eval_on_selector_all(".rail-link.on", "els => els.map(e => e.hash.slice(1))")
+        assert on == [section_id], f"at #{section_id} the rail marks {on}"
+
+
+def test_the_rail_says_how_long_the_page_is(page) -> None:
+    """The rail is where somebody decides whether to start, and the page is thirty screens.
+
+    Derived from the rendered word count rather than typed, so it cannot go stale — which is the
+    repo's most expensive documented failure, and the reason the typed-count guard exists beside
+    this one.
+    """
+    text = page.eval_on_selector(".rail-time", "e => e.textContent")
+    minutes = int(re.search(r"\d+", text).group())
+    words = page.eval_on_selector("#main", "e => (e.innerText.match(/\\S+/g) || []).length")
+    assert minutes == round(words / 220), f"'{text}' does not match {words} words"
+    assert minutes > 0
+
+
 def test_the_rail_lists_every_section_in_order(page) -> None:
     links = page.eval_on_selector_all("#rail .rail-link", "els => els.map(e => e.hash.slice(1))")
     roles = page.eval_on_selector_all("#main > section", "els => els.map(e => e.id)")

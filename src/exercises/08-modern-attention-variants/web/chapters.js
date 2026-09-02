@@ -1658,7 +1658,7 @@ function buildRail(root) {
   head.append(el('span', 'rail-title', 'Contents'));
   inner.append(head);
   const list = el('div', 'rail-list');
-  for (const sec of root.querySelectorAll('section[data-role]')) {
+  const links = [...root.querySelectorAll('section[data-role]')].map((sec) => {
     const a = el('a', 'rail-link');
     a.href = `#${sec.id}`;
     a.append(el('span', 'rail-n', String(sec.dataset.n).padStart(2, '0')));
@@ -1667,9 +1667,47 @@ function buildRail(root) {
     if (sec.dataset.sub) body.append(el('span', 'rail-sub', sec.dataset.sub));
     a.append(body);
     list.append(a);
-  }
+    return { sec, a };
+  });
   inner.append(list);
+
+  /* HOW LONG THIS IS, BEFORE A READER COMMITS TO IT. The rail is where somebody decides whether to
+   * start, and the page is thirty screens; saying so is a courtesy, and it is derived so it cannot
+   * go stale. 220 words a minute is the usual figure for considered reading of technical prose. */
+  const words = (root.innerText.match(/\S+/g) || []).length;
+  inner.append(el('p', 'rail-time', `~${Math.round(words / 220)} min read`));
+
   rail.append(inner);
+
+  /* MARK THE SECTION THE READER IS IN. The vendored `_shared/page.css` has styled `.rail-link.on`
+   * — an accent bar and a bold label — since before this page existed, and this page never set the
+   * class. So did 05, 06 and 07; exercise 03 is the only one that ever did, and this is its logic.
+   *
+   * "The last heading whose top has gone past the first third of the viewport", not "the nearest
+   * heading". Nearest sounds more reasonable and is wrong on half the page: sections here run
+   * several screens, so from the middle of one the NEXT heading is often closer than the one behind
+   * you, and the rail runs a section ahead of the reader. A proportion of the viewport rather than
+   * a pixel count, so it means the same thing on a laptop and a tall monitor. */
+  const mark = () => {
+    const arrived = window.innerHeight / 3;
+    let best = 0;
+    links.forEach(({ sec }, k) => {
+      if (sec.getBoundingClientRect().top - arrived <= 0) best = k;
+    });
+    links.forEach(({ a }, k) => a.classList.toggle('on', k === best));
+  };
+  let queued = false;
+  const onMove = () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      mark();
+    });
+  };
+  window.addEventListener('scroll', onMove, { passive: true });
+  window.addEventListener('resize', onMove, { passive: true });
+  mark();
 }
 
 function buildFooter(M) {
