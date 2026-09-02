@@ -37,6 +37,30 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   quantity claimed — which caught "Figure 4: The KV cache of StreamingLLM" offered as evidence for
   four attention sinks, and a *Communications of the ACM* volume number offered as a head dimension.
 
+- **Exercise 08's page rewritten for readability against a named benchmark**, after a six-agent
+  audit against Sebastian Raschka's visual guide to attention variants and this repo's own
+  ladder-of-readers rubric: 75 findings, 37 edits. The masthead now says what attention *does*
+  before what it costs; the centrefold's five stages each carry a plain sentence that is always
+  visible rather than one at a time behind a tab; the score grid, the KV cache, a head, a system
+  card and JEPA are defined where a reader first meets them; and the page no longer contradicts
+  itself by teaching "two bills" and then heading a block "the five bills".
+
+- **Every mechanism now names the models that ship it**, quoted from that model's own paper — 21
+  records across 8 models, with each arXiv identifier found through the search API rather than
+  recalled. Twenty-two of the thirty deliberately name none, which is what separates the mechanisms
+  the field adopted from the ones it admired.
+
+### Fixed
+
+- **A published finding was refuting nothing, and a second did not survive its own noise floor.**
+  Exercise 08's verdict said *"the claimed arc holds in 6 of these 7 two-year windows"* — a derived
+  number that counted windows producing *a* winner rather than windows matching the claimed order.
+  Six windows decide, not in that order, and the cache bill the story has the field returning to
+  twice never dominates one at all. Testing it properly then exposed the second problem: nothing had
+  ever varied the bucket edges, which start in 2014 only because attention does. Shifting them a
+  year kept two conclusions and destroyed a third that had been published an hour earlier; it is
+  corrected in place and demoted to one reading of the chronology.
+
 - **A theme test, which this repo had never had** — all six themes render with no console error,
   every token resolves, body text clears 4.5:1 on its own ground, and no painted mark falls into its
   background. Plus a deliberately broken twin, because a contrast checker nobody has watched fail is

@@ -6,7 +6,7 @@ commits on its own branch, and PRs are raised only when PK says so — one PR pe
 
 Status keys: `done` · `in progress` · `queued` · `blocked`
 
-## Stage 1 — Exercise 08, finished to the benchmark  ·  in progress
+## Stage 1 — Exercise 08, finished to the benchmark  ·  complete except O4, which is blocked
 
 The benchmark is Sebastian Raschka's *A Visual Guide to Attention Variants in Modern LLMs*
 (`docs/sessions/s8_visual_attention_variants_sebastian.html`, local-only, backed up). Logic and data
@@ -20,8 +20,8 @@ are sound; readability and design are the work.
 | 1.4 | All 37 audit edits | done |
 | 1.5 | Name real models per mechanism, verified not guessed | done — 21 claims, 8 models, 0 rejected by the gate |
 | 1.6 | Full screenshot pass, six themes, 1400px and 390px | done — clean console, no sideways scroll, all twelve |
-| 1.7 | Notebook re-read to the same standard | queued |
-| 1.8 | Docs: exercise README/CLAUDE/PROGRESS/DECISIONS, root README, AGENTS.md, CHANGELOG | queued |
+| 1.7 | Notebook re-read to the same standard | done — 28 cells, every code cell executed in order, backed up |
+| 1.8 | Docs at every level | done |
 | 1.9 | O4 — Q2 answer drafted from data | blocked: the app link 404s until PR #83 merges and the production gate runs |
 | 1.10 | O6 — session notebook | done (the log had said "stub" and was wrong) |
 

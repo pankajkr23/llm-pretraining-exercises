@@ -241,3 +241,48 @@ fragments. The agent's judgement about *which sentence says the thing* was the p
 quoted from a different document: it was announced in a Reddit post that cannot be retrieved, and
 YaRN's authors are its authors. The `where` field says so on the figure rather than in a footnote.
 
+## D13 — A model name is a claim, and an empty row is a result
+
+The page names the models that ship each mechanism. Without that a reader cannot tell whether this
+is history, a research frontier, or the thing inside the chatbot they used this morning — and
+*"almost every open model uses them"* asks for trust while offering nothing to check. It is the
+habit the benchmark this page was measured against never drops.
+
+So adoption is sourced exactly like a date. **No arXiv identifier was typed from memory:** the
+eight model papers were located through arXiv's own search API by title, downloaded, read by one
+agent each and adversarially re-checked by another, then every quote gated as a contiguous
+substring of that paper. `Adoption.__post_init__` refuses a model name with no quote, no location
+or no link, the same way `Source` refuses a verified citation with no URL.
+
+**Twenty-two of the thirty are deliberately empty, and that is the most informative column on the
+plate.** It separates the mechanisms the field adopted from the ones it admired. Filling those in
+with plausible names would destroy exactly that signal, so a test asserts Reformer stays empty
+until a paper says otherwise, and a second refuses to let the empty set shrink below a third of the
+catalogue without someone looking.
+
+Two claims were overridden after reading them rather than trusting the pipeline, which is the point
+of reading them: Falcon → MQA was dropped because its quote is *"we suspect that multiquery … is a
+very aggressive configuration"* — a hedged retrospective remark, not a statement of what the model
+does — and PaLM's quote was replaced, because the agent offered a section heading rather than the
+sentence that states the mechanism.
+
+## D14 — Test the claim that was made, then vary the arbitrary choice
+
+The brief's arc is `compute → cache → position → cache`. The page tested it and got the answer
+backwards, twice, in ways worth separating.
+
+**First, a derived number answered the wrong question.** *"The claimed arc holds in 6 of these 7
+windows"* counted windows that produced *a* clear winner — not windows whose winner the arc
+predicted. Six do decide; the order is not the claimed one; and the cache bill the story has the
+field returning to twice never dominates a window on its own. The verdict was the opposite of the
+truth, and it was convincing **because** the number was real. That is the failure mode to watch:
+a wrong number gets caught, a right number answering an adjacent question does not.
+
+**Second, nothing had varied the bucket edges.** They start in 2014 because attention does, not
+because the field turned on that boundary. `arc_robustness` shifts them a year and reports what
+survives: the arc fails under both slicings and cache wins no window under either, but the claim
+that the field settles on both bills from 2020 onward **does not survive** — and that claim had
+been published an hour before. It is corrected in place and demoted to one reading of the
+chronology, with a test that fails if a future catalogue ever makes it robust, so the hedge cannot
+outlive its reason.
+

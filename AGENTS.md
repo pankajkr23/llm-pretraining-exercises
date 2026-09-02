@@ -417,6 +417,33 @@ Two more that cost this repo real defects:
   misplaced, ask — a layout complaint names a symptom, and the element the reader blames is often
   not the one that moved.
 
+- **A DERIVED number can answer the wrong question, and that is far harder to catch than a wrong
+  one.** Exercise 08 published *"the claimed arc holds in 6 of these 7 two-year windows"*. The
+  number was real, generated from the data, and evidence for nothing: it counted windows that
+  produced *a* clear winner, not windows whose winner the claim predicted. Six windows do decide,
+  the order is not the claimed one, and the verdict was therefore the exact opposite of the truth —
+  published confidently **because** the arithmetic was sound. A wrong number gets caught by a
+  reader; a right number answering an adjacent question does not. Before quoting a derived figure,
+  say out loud what question it answers and check that it is the question you asked.
+
+- **Vary every arbitrary choice before quoting anything that rests on it — and be ready to lose a
+  finding.** The same section asserted its count was "not noise" and offered no evidence. Its
+  two-year buckets begin in 2014 because attention does, not because the field changed on that
+  boundary. Shifting the edges by one year kept two conclusions and destroyed a third — one that
+  had been published an hour earlier — so it was corrected in place and demoted to "one reading,
+  not a measurement", with a test that fails if it ever becomes robust so the hedge cannot outlive
+  its reason. The noise-floor rule already in this file is usually described for a metric; it
+  applies just as hard to a *count over buckets you chose*.
+
+- **Naming a real product, model or vendor is a claim, and gets sourced like any other.** Exercise
+  08's page named no real model anywhere in its own voice, so a reader could not tell whether it
+  described history, a research frontier, or the thing inside the chatbot they used that morning,
+  and "almost every open model uses them" asked for trust while offering nothing to check. The fix
+  is not to write the names down: find each source through an API or a search rather than from
+  memory, quote the sentence, gate the quote against the downloaded document, and **leave the field
+  empty where nothing says so**. Twenty-two of thirty ended up empty and that column became the most
+  informative one on the page — it separates what the field adopted from what it admired.
+
 - **When agents gather evidence, make a machine the arbiter — and test the machine first.** Exercise
   08 sourced 80 hyperparameters across 29 papers this way: download every source *before* any agent
   runs, have agents read those local files, then check each proposed quote as a contiguous run of

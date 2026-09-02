@@ -244,6 +244,37 @@ module describing any mechanism, and `web/field-guide/` is a second route over t
   "drawn to scale" from a figure that quotes its paper verbatim, one demanded a `THE MARKS` heading
   from eleven figures keyed by other means. Both ask the underlying question now.
 
+## The readability pass, and the two defects it turned up that were not readability
+
+The page was audited section by section against Sebastian Raschka's *A Visual Guide to Attention
+Variants in Modern LLMs* (local-only, `docs/sessions/`) and against `AGENTS.md`'s ladder of readers.
+75 findings, 37 edits. Most were wording. Two were not, and both are the kind this exercise exists
+to catch.
+
+- **A derived number can answer the wrong question, and that is harder to spot than a wrong number.**
+  The verdict published *"the claimed arc holds in 6 of these 7 windows"*. `held` counted windows
+  with a clear winner; the claim under test is whether the winners come in the predicted order. Six
+  do decide and the order is not the claimed one, so the published verdict was the opposite of the
+  truth — and it was convincing precisely because the number was real. `timeline.arc_verdict`
+  compares sequences now, and its test refuses to pass if `matches` ever stops doing that.
+- **The bucket edges are an arbitrary choice and nothing had varied them.** The section asserted
+  its count was "not noise" with no evidence. `arc_robustness` shifts the edges by a year: the arc
+  fails under both slicings and cache wins no window under either — but the claim that the field
+  settles on both bills from 2020 **does not survive**, and it had been published an hour earlier.
+  Corrected in place, per `AGENTS.md`: a quietly amended number is worse than the original error.
+
+Two rules for anyone editing the page after this:
+
+- **Every count the page presents as a partition must add up, and the guard now checks it.** The
+  required list names **18 phrases but 19 mechanisms** — "sparse and top-k attention" is two
+  techniques — so `counts.mandatedPhrases` and `counts.mandatedMechanisms` are both emitted and the
+  page uses the right one in each place. A first draft used the phrase count against the bonus
+  count and printed 29 of 30.
+- **An interaction must never be the only route to a lesson, and the centrefold was breaking it.**
+  All five bays had good prose in `STAGES`, and `go()` rewrote the note on every tab change, so one
+  was visible at a time and four were unreachable without clicking. They are a static block now;
+  the tab keeps only the arithmetic.
+
 ## Two claims that live in Python because a test must reach them
 
 - **`story.py` holds the six chapters.** The grouping is an editorial claim, so it is tracked data

@@ -260,6 +260,54 @@ requirement can never again be satisfied by half of itself. The session teaches 
 length, including the catch that makes top-k interesting: naive top-k still has to score every key
 before it can rank them, so it reduces the work *after* selection and not the scoring itself.
 
+## Two claims that had to be sourced, not asserted
+
+Everything on the page is generated from `results/mechanisms.json`, and two kinds of claim in it
+would have been easy to write from memory and impossible for a reader to check. Both are now
+sourced the same way the dates are, and both are checked mechanically.
+
+**A size may only enter with the sentence it was read from.** `GLYPH_SCALES` originally held no
+sizes at all, because *"a glyph drawn to specific numbers would be inventing them."* The diagrams
+need real numbers, so provenance became the price of entry: `Glyph._check_sizes` refuses a `stated`
+size without a quote and a location, refuses an `ours` size without a reason, and requires **the
+quote to contain the number it is evidence for**. All thirty carry sizes now — 78 of the 80 quoted
+verbatim from the primary paper.
+
+The method is worth copying. Every paper was downloaded *first*; agents read those local files and
+proposed claims; then each quote was checked as a contiguous run of that file's own characters.
+**82 proposed, 82 verbatim, zero fabrications.** Verbatim is not the same as correct, so a second
+check asked whether each quote talks about the quantity claimed — which caught *"Figure 4: The KV
+cache of StreamingLLM"* offered as evidence for four attention sinks, and a *Communications of the
+ACM* volume number offered as a head dimension.
+
+**A model name is a claim too.** The page names the models that ship each mechanism, because
+otherwise a reader cannot tell whether it describes history, a research frontier, or the thing
+inside the chatbot they used this morning — and *"almost every open model uses them"* asks for
+trust while offering nothing to check. Eight model papers were located through arXiv's search API
+rather than from memory, read, and quoted: 21 adoption records across 8 models.
+
+**Twenty-two of the thirty have no model named, and that is a result.** It separates what the field
+adopted from what it admired. Reformer is the case in point, and a test keeps it empty until a
+paper says otherwise.
+
+## The arc was tested, and the test had to be fixed first
+
+The brief's claim is that the field wanted *exactness, then memory, then length, then memory again*
+— in the catalogue's labels, `compute → cache → position → cache`. `timeline.arc_verdict` tests it.
+
+For a while the page published **"the claimed arc holds in 6 of these 7 two-year windows"**. That
+number was derived, and it was evidence for nothing: it counted windows that produced *a* clear
+winner, not windows whose winner the arc predicted. Six windows do decide, and they decide
+`origin → position → compute → both → (no winner) → both → both`. **The cache bill — the one the
+story has the field returning to twice — never dominates a single window on its own.**
+
+Then the noise floor cost a second finding. The two-year buckets begin in 2014 because attention
+does, not because the field turned on that boundary, so `arc_robustness` re-runs the whole tally
+with the edges shifted one year. The claim that the field settles on both bills from 2020 onward
+**does not survive** — shift the edges and that window goes to position. It is published as one
+reading of the chronology rather than a measurement, and a test will fail if a future catalogue
+ever makes it robust, so the hedge cannot outlive its reason.
+
 ## What this cannot establish
 
 - **This is a chronology, not an experiment.** Nothing here was trained, and no claim about which
