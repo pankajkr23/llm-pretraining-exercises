@@ -12,6 +12,23 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **An at-a-glance table opening exercise 08's page** — all thirty mechanisms on one line each, with
+  date, what it attacks, its shape, which models shipped it, and **when you would pick it**. That
+  last field is present on all thirty catalogue entries and the page rendered it exactly once, inside
+  a panel showing one mechanism at a time and only after a click, so the most decision-relevant thing
+  in the catalogue was the least reachable thing on the page and no two of them could be compared.
+  A fourth reader door in the masthead points at it. Nothing in the table is newly written; it is
+  data the page already held, arranged so a reader's eye makes the comparison instead of the page
+  asserting it.
+
+- **Four finding tiles and an exit line**, so a reader who stops after the chronology has a
+  *complete* short read rather than a partial long one. Every finding on that page used to sit
+  between word 6,000 and word 8,000. One tile is a failure, as the repo's own rule requires: one of
+  the page's three conclusions did not survive shifting its arbitrary bucket edges by a year.
+
+- **`docs/METHOD.md` for exercise 08** — how the page is generated, drawn and themed, and what to
+  run. The on-page colophon keeps the three claims the *numbers* rest on and links out for the rest.
+
 - **A drawn diagram for every one of exercise 08's thirty attention mechanisms**, and a
   **field guide** at `/08-modern-attention-variants/field-guide/` showing all thirty at once in one
   convention so they can be compared rather than read in sequence. Four scenes cover the lot —
@@ -50,7 +67,56 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   recalled. Twenty-two of the thirty deliberately name none, which is what separates the mechanisms
   the field adopted from the ones it admired.
 
+### Changed
+
+- **Exercise 08's page is shorter and its definitions moved to where the reader meets the thing.**
+  The glossary carried an alphabet of four shapes, a taxonomy of five labels and a reference model
+  shape four thousand words before the first glyph is used at size; it is ninety-five words now, with
+  the alphabet above the chronology and the yardstick above the invoice. The colophon went from seven
+  paragraphs to three claims plus a link. The three figure orientation blocks went from 217, 265 and
+  279 words to 52, 50 and 59 — with both transferable lessons moved into captions *first*, because a
+  lesson may not live only where a reader skips. The verdict's two arrow chains became a figure. Six
+  pull quotes were deleted: each was set in the page's largest type and attributed to "this page's
+  own catalogue", which is the visual grammar of a citation with none of its function.
+
 ### Fixed
+
+- **Exercise 08's headline claim was false.** It read *"Only 13 of the 30 build a score grid at all.
+  That is the finding the rest of the page is built on."* Thirteen is the count of mechanisms that
+  edit *which cells survive*; position schemes build a grid and change what goes into it, and
+  head-sharing schemes build one and change what is kept from it. Only the eight state-space entries
+  refuse to build one. The sentence conflated *edits the grid* with *builds one*, and the key's own
+  counts had been right the whole time.
+
+- **Its state chapter held two mechanisms that keep a cache.** The chapter is headed "keep a
+  fixed-size state" and promised "every one of them pays in the same single way" while holding NSA
+  and DeepSeek's compressed sparse attention, both of which build a score grid and keep a KV cache.
+  They now sit with the other entries that attack a bill without abandoning the grid, which leaves
+  the chapter as exactly the eight the key counts.
+
+- **Three sentences claimed "almost every mechanism" attacks one of the two bills.** Ten of the
+  thirty attack neither — they are about where a word sits — and the key said so two screens later.
+
+- **Two unsound numbers.** A correction figure printed `+57.3%`, three significant figures of a
+  difference computed against a source that states "about 1 TB"; and a caption invited the reader to
+  weigh head diversity against memory from a figure with one axis and no quality axis at all.
+
+- **A section headed "Three things this opens" above four items**, with its contents-rail entry
+  agreeing. The repo's lexical count guard starts at *eleven*, so a heading counting its own contents
+  was outside it.
+
+- **Five reader-facing defects that the whole suite passed clean**: the invoice's cut line was
+  `white-space: nowrap` inside `overflow: hidden`, so the sentence carrying the page's argument read
+  "…needs a second ma" at every width; the masthead's decorative field painted its one accent mark at
+  full opacity and it struck through the opening sentence; the new table's column heads survived on
+  phones because `display: none` was written above the `display: flex` it had to beat; the key's
+  schema note rendered at full body size, larger than every label it explained; and a cross-reference
+  pointed at a statement that was never written.
+
+- **Five new guards, each watched failing before it was trusted**: one chapter is exactly the
+  state-space family · no sentence is clipped by its own box, at four widths · no heading or rail
+  label types a count · the glance table carries every mechanism and its *when you would pick it* ·
+  a reader stopping at the exit line has read the complete argument.
 
 - **The pinned rail's contents hung at the top of the column instead of centring**, on exercise 08
   alone. `_shared/page.css` centres the rail with `.rail-inner { margin-block: auto }` — a rule that
@@ -80,7 +146,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   every token resolves, body text clears 4.5:1 on its own ground, and no painted mark falls into its
   background. Plus a deliberately broken twin, because a contrast checker nobody has watched fail is
   not a checker.
-
 
 - **Exercise 08's page** at `/08-modern-attention-variants/` — twelve spine sections set as a
   **monograph feature**: six numbered plates, six chapters, and the 24 mechanisms as *one object
@@ -994,7 +1059,6 @@ being edited until the claim comes out true.
   `05-…/tools/fetch_proxy_corpus.py` is still versioned, because a corpus needs a tracked way to
   fetch and licence-check it.
 
-
 - **The root README no longer carries a generated section for exercise 05.** The brief says the
   root is the front door and must reach `SPEC.md` "without a detour", and the obvious reading was
   that the front door should therefore summarise the exercise under submission. It should not: the
@@ -1007,7 +1071,6 @@ being edited until the claim comes out true.
   more, and the routing guard now asserts the row rather than a generated block. Three mutants
   confirmed failing: a row that names `SPEC.md` without linking it, one that drops the exercise
   guide, and one that hides the refuted result.
-
 
 - **The root README is a map again, not five deep-dives.** It had reached 307 lines, **211 of them
   per-exercise sections** — and none of that prose existed in the exercise READMEs, so the root was
@@ -1055,7 +1118,6 @@ being edited until the claim comes out true.
   including here".** The published bundle carries 34 fertility values marked `measured` against one
   `estimated`, and that one is a parity *target*. Corrected, keeping the half that still holds: the
   size of the deduplicated Indic web really is unmeasured.
-
 
 - **A bare scaffold directory was reported as a lost notebook.** Creating an empty
   `src/exercises/06-build-training-dataset/` turned both notebook tripwires red — "5 session
@@ -1865,7 +1927,6 @@ that four datasets are committable today.
   the model width, a quality filter that deletes twelve of twenty-two languages until the protected
   lane restores them, and a confidence ledger that narrows to the nine claims that would survive
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
-
 
 - **Every dataset now says how it relates to the others.** FineWeb's 15T sat beside FineWeb-Edu's
   1.3T with nothing to say the second is *inside* the first — likewise FinePDFs/FinePDFs-Edu and

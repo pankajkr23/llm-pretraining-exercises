@@ -31,6 +31,10 @@ construct.
 - **Deciding whether to believe it** — go to [The evidence](#the-evidence), which explains how each
   date was verified and what we found wrong, then
   [What this cannot establish](#what-this-cannot-establish).
+- **Wanting to pick a mechanism rather than read an argument** — the published page opens with an
+  at-a-glance table: all thirty on one line each, with *when you would pick it* against every one.
+  That field is on all thirty entries in the catalogue and the page used to render it exactly once,
+  inside a panel that shows one mechanism at a time and only after a click.
 
 ## What the two bills are
 
@@ -81,6 +85,19 @@ had its own copy.
 
 `results/mechanisms.json` is the tracked evidence. Nothing derives it; it was assembled by hand from
 primary sources and is validated by `catalogue.py`.
+
+Three documents sit beside the code, and each has one job:
+
+| document | holds |
+| --- | --- |
+| [`DECISIONS.md`](DECISIONS.md) | the reasoning behind a choice, and what it cost — including the corrections that were true and still moved off the page |
+| [`docs/METHOD.md`](docs/METHOD.md) | the apparatus: how the page is generated, drawn and themed, and what to run |
+| [`docs/MEASURES.md`](docs/MEASURES.md) | the width and readability audit, and what looked wrong in the numbers and is not |
+
+`docs/METHOD.md` exists because the page's own colophon reached 358 words of production notes and
+five of six review readers stalled in it. The colophon keeps the three claims the *numbers* rest on
+— how a date was read, how a byte figure is computed, what an entry must state to be admitted — and
+links out for the rest.
 
 Two of those modules exist because a claim needed somewhere to live where a test could reach it.
 `story.py` holds the page's chapter grouping — an editorial claim, so it is data with a guard rather

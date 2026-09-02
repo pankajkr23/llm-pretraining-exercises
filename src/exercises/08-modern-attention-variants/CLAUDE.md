@@ -281,9 +281,22 @@ Two rules for anyone editing the page after this:
   with a guard rather than prose inside `chapters.js`. `story.check()` refuses a partition that does
   not cover the catalogue exactly once, and `build_web_data.py` calls it before emitting — both ways
   it rots are invisible on the rendered page: a mechanism in no well is simply never drawn, and one
-  in two wells reads as an editing slip. Its **pull-quote guard** asserts every quote the page sets
-  large is a phrase the catalogue already contains, and caught two of the six on the day it was
-  written — one differing from its source only by an em dash, one invented outright.
+  in two wells reads as an editing slip.
+
+  **What that guard could not see, and now can.** `check()` asserts the partition and says nothing
+  about whether a chapter's headline is *true of its members*. Chapter VI was headed "keep a
+  fixed-size state" and promised "every one of them pays in the same single way" while holding NSA
+  and DeepSeek CSA — both of which build a score grid and keep a KV cache. They select from the
+  cache; they do not replace it. The chapter's own headline was false of a fifth of its members and
+  nothing was red. They are in Chapter III now, which leaves VI as exactly the eight STATE entries —
+  the same eight the key counts as refusing to build a grid, so the chapter and the shape are one
+  object. `test_one_chapter_is_exactly_the_mechanisms_that_refuse_to_build_a_grid` asserts that
+  property, with a twin that puts a FIELD mechanism back and watches it go red.
+
+  **The pull-quote guard is gone with the pull quotes.** Six quotes set in the page's largest type,
+  each attributed to "this page's own catalogue" — the visual grammar of a citation with none of its
+  function, since a page quoting itself corroborates nothing. The field, the guard and its twin were
+  deleted rather than left as data nothing reads; `DECISIONS.md` records why.
 - **`cache.tokens_before_wall()` holds the race's three crossings** — 406,901 / 1,627,604 /
   3,255,208 tokens — as the invoice's own arithmetic solved for the context instead of the bytes, so
   the figure and the table cannot disagree. `ACCELERATOR_BYTES` is decimal and the page says so;
@@ -301,6 +314,93 @@ commonest misreading of the formula there is.
 looked its gap up out of the top-five list, which meant a new mechanism displacing it would have made
 the tile silently show a *different* gap under the same label. `data.js` carries `quietStretch`
 explicitly now.
+
+## The page was rebuilt around six readers, and two of them found factual defects
+
+Six personas read the page end to end — a fifteen-year-old, a practising engineer, a frontier
+researcher, an adversarial sceptic, an assignment grader, and a reader who had just come from
+Raschka's *Visual Guide to Attention Variants*. What they changed, and the rules that came out of it.
+
+**The page's headline claim was false, and the key's own counts had been right all along.** The
+glossary ended *"Only 13 of the 30 build a score grid at all. That is the finding the rest of the
+page is built on."* Thirteen is the **FIELD** count — the mechanisms that edit *which cells survive*.
+RoPE and ALiBi build a grid and change what goes into it; MQA, GQA and MLA build one and change what
+is kept from it. Only the eight STATE entries refuse. So the sentence conflated *edits the grid* with
+*builds one*, and it was found by a reader adding up the four counts printed directly above it. It
+is derived from `M.counts.glyphKinds.state` now, with a guard refusing the field count there.
+
+**A definition belongs where the reader first meets the thing, not where the page finds it
+convenient.** The glossary carried an alphabet of four shapes, a sorting into five labels and a
+reference model shape — four thousand words before the first glyph is used at size and five thousand
+before the first byte figure it governs. Every reader stalled in it; the teenager stopped there.
+`figKey` is `figKeyShapes` (above the chronology, where thirty glyphs have to be read at once) and
+`figKeyYardstick` (above the invoice, the first number it decides). The glossary is ninety-five words
+defining the score grid.
+
+**`whenToChoose` was on all thirty entries and rendered exactly once.** It lived inside the reading
+spread, which shows one mechanism at a time and only after a click — so the field a reader arriving
+with a decision needs was the least reachable thing on the page and no two could be compared. The
+**at-a-glance table** (`chapterGlance`) is thirty rows of data the page already held. It declares no
+`data-role` on purpose: the spine is twelve roles in a fixed order and 05, 06 and 07 read the same
+tuple, so a thirteenth would be a repo-wide change to publish one table. It carries `data-nav`, and
+`buildRail`'s selector matches both.
+
+**A short read has to be *correct*, not merely comforted.** Every finding sat between word 6,000 and
+word 8,000, so stopping early was a partial read by construction. Four tiles in the opening carry
+them now — one of them a failure, as `AGENTS.md` requires — and an exit line after the chronology
+says the argument ends there. `test_a_reader_who_stops_at_the_exit_line_has_read_a_complete_argument`
+asserts the property rather than the wording. **It is 2,770 words of prose, not the 800 the review
+estimated**; the estimate omitted the key, the plate caption, the colophon and the reading spread,
+and the ceiling is set against the measured number because a ceiling set to a wrong estimate fails
+honest work.
+
+**Two numbers were unsound rather than long.** The correction figure printed `+57.3%` — three
+significant figures of a difference computed against a source stating "about 1 TB". One significant
+figure in, one out. And Figure 4's caption invited the reader to *"decide whether that much head
+diversity was worth it"* from a figure with one axis, bytes against tokens, and no quality axis at
+all.
+
+**A caption may not claim what the drawing cannot show.** Figure 5's said the animation showed cause
+"where two static curves would only show correlation". Animating a schematic does not make it causal;
+the dial illustrates an assumed mechanism and this page has no measurement of a deployed model.
+
+**Once is orientation; three times is a template readers skip.** The three figure `brief()` blocks
+ran 217, 265 and 279 words in the same five-heading shape, and two readers said they were skipping
+the good sentences with the boilerplate. They are 52, 50 and 59 now — and both lessons that lived
+only inside a deleted block moved into a caption **first**, because `AGENTS.md` forbids leaving a
+lesson only where a reader skips.
+
+**The lexical count guard starts at *eleven*, and the defect was at four.** `next` was headed "Three
+things this opens" above four items, with the rail agreeing — the repo's most expensive documented
+failure, live, green. Widening the pattern would have meant marking thirty-six legitimate fixed
+quantities (`six words`, `five stages`, `eight readers`) with `count-literal-ok`, and a marker on
+thirty-six lines is noise nobody reads. `test_no_heading_or_rail_label_types_a_count` narrows the
+scope instead: inside a heading or a rail label a spelled number is *always* a count of that
+section's contents, so there it must be derived. "one" is excluded and only "one" — it is a
+determiner far more often than a count.
+
+**Four defects were found by looking at the page with the whole suite green**, which is the pattern
+this repo keeps re-learning:
+
+- The invoice's cut line was `white-space: nowrap` inside `overflow: hidden`, so the sentence
+  carrying the argument read *"…needs a second ma"* at every width. `test_the_invoice_cut_line_is_visible`
+  passed throughout — *visible* and *legible* are different assertions and only one was being made.
+  `test_no_sentence_on_the_page_is_silently_cut_off` now asserts the general property at four widths.
+- The masthead's decorative field painted its one accent mark at full opacity, and the body text sits
+  on that field at every width from 1440 down by design. The bar ran through the words "every one of"
+  in the opening sentence and read as a strikethrough.
+- The at-a-glance head row's `display: none` was written *above* the `display: flex` it had to beat,
+  at equal specificity, so it lost on source order and every phone opened the table with five
+  orphaned column labels.
+- The key's ~ note carried `.lab`, which is only styled *inside* `.key-alpha`; as a sibling it
+  rendered at full body size, larger than every label it explained.
+
+**On the plate/well vocabulary, the readers partly disagreed with the complaint.** All six said
+"well" hindered — read as a hole in the ground, or as a section number. All six said the *numbering*
+helped: one wrote *"I have already written 'Plate I' and 'Plate IV' three times in this response
+without thinking about it, which is the test."* So the referent stayed and the jargon went: figures
+are `Figure 1`–`Figure 6`, chapters are titled by subject, and the 83-word paragraph teaching the
+vocabulary is deleted.
 
 ## Running it
 

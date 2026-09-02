@@ -600,6 +600,62 @@ The rules that follow from it:
   guard could not see the first two — it looks for `[[`, `**` and backticks, and neither string
   contains any. Render the section, read it, *then* write the guard for what you found.
 
+- **A guard that asserts an element is VISIBLE has not asserted it is LEGIBLE.** Exercise 08's
+  invoice cut line — the sentence the whole figure exists to deliver — was `white-space: nowrap`
+  inside `overflow: hidden`, which truncates with no ellipsis and no warning. It read *"…the cache
+  alone needs a second ma"* at every width narrower than the sentence, for as long as the figure had
+  existed, and `test_the_invoice_cut_line_is_visible` passed the entire time. The general property is
+  cheap to assert and catches the whole class: no element whose `scrollWidth` exceeds its
+  `clientWidth`, at several widths, allowing 1px for sub-pixel rounding.
+
+- **A count in a heading or a navigation label is always a count of that section's own contents, so
+  it must be derived — and the lexical guards for this start too high to see it.** Exercise 08's
+  `next` section was headed *"Three things this opens"* above **four** items, with its rail entry
+  agreeing, live and green: `test_no_count_is_typed_into_the_page_as_a_word` scans for *eleven* and
+  up, deliberately, since these pages say "two bills" and "six words" constantly and those are fixed
+  quantities. Widening that pattern would have meant marking **thirty-six** legitimate lines with
+  `count-literal-ok`, and a marker on thirty-six lines is noise nobody reads. Narrow the *scope*
+  instead of widening the pattern: inside a heading or a rail label the small numbers can be
+  forbidden as literals with no false positives at all. Exclude `one` and only `one` — it is a
+  determiner far more often than a count ("One step, taken apart").
+
+- **A `display: none` in a media query loses to a `display: flex` written below it at the same
+  specificity.** This is ordinary cascade and it is worth naming because the symptom is invisible on
+  the machine you are working on: exercise 08's at-a-glance table hid its column heads below 900px,
+  the rule was written above the one that re-laid the row, and every phone opened the table with five
+  orphaned column labels. `AGENTS.md` already records a `max-width` lost the same way. When a media
+  query both re-lays an element and hides part of it, put the hide *after* the re-lay, or raise its
+  specificity, and screenshot the narrow width.
+
+- **A decorative background is only decorative if it stays decorative at every width.** Exercise 08's
+  masthead field is 7–13% ink and the body text sits on it by design; one accent rule inside it
+  painted at full opacity, and at 1440px it ran straight through the words "every one of" in the
+  opening sentence and read as a strikethrough. Where the text falls across a background is not
+  something the graphic can know, so the graphic cannot own a mark that would be a defect anywhere
+  the text might land.
+
+- **A cross-reference to something you decided not to write is worse than no cross-reference.**
+  Promoting a finding to the top of exercise 08's page left a clause in its limits section reading
+  "it is stated at the top of the page" — but the tile that actually went up carried a *different*
+  finding. The pointer survived the edit that invalidated it, which is the normal way this happens:
+  the sentence you edit and the sentence that refers to it are rarely on the same screen. After
+  moving anything, grep for the words that pointed at it.
+
+- **Do not delete a feature and leave its guard behind, or leave the data the guard reads.** Exercise
+  08's six pull quotes were removed for a good reason — each was set in the page's largest type and
+  attributed to "this page's own catalogue", which is the visual grammar of a citation with none of
+  its function. The `pull_quote` field, its sourced-from-the-catalogue guard and that guard's broken
+  twin went with them, because a tested field with no renderer is `AGENTS.md`'s own "dead code
+  wearing a test" one level up: the guard passes, so the capability reads as a behaviour of the page.
+
+- **A partition guard does not check that a group's headline is true of its members.** Exercise 08's
+  `story.check()` refuses a chapter grouping that does not cover the catalogue exactly once, and it
+  was green while a chapter headed "keep a fixed-size state" — promising "every one of them pays in
+  the same single way" — held two mechanisms that build a score grid and keep a KV cache. Coverage
+  and truth are different properties. Where a group's title makes a claim about its members, assert
+  that claim: the fix here was that one chapter must be *exactly* the set the page's key counts, so
+  a reader counting the chapter and a reader counting the key land on the same number.
+
 
 - **Every term used as shorthand is defined in exactly one findable place, and everything else links there.** `SPEC.md` is the decision; `METHOD.md` is the apparatus. Splitting them is deliberate — an adversarially-graded specification cannot carry a glossary and two architecture diagrams without paying for it, and a first-time reader cannot do without them.
 - **Explain the metric, not just its name.** "Held-out BPB, lower is better" names a measure. What it measures, what it is divided by, and why *that* denominator, is the part that lets a reader judge the table.

@@ -32,6 +32,9 @@ pipeline is fine, and the link must resolve for a logged-out stranger.
 | O7 | **A diagram per mechanism** | **done** | Thirty, four scenes, generated from the `pattern` block each catalogue entry already carried. Sourced sizes carry a citation as the price of entry. |
 | O8 | **The field guide** | **done** | `/08-modern-attention-variants/field-guide/` — all thirty at once, filters derived from the data, deep links both ways. No build change needed. |
 | O9 | **A theme test** | **done** | Six themes × render, tokens, text contrast, mark separation. The first in the repo; it closed a gap that predates this exercise. |
+| O14 | **Six-persona rebuild for readability** | **done** | A teenager, an engineer, a researcher, a sceptic, a grader and a Raschka reader read the page end to end. Two found factual defects. Five changes applied: the borrowed plate/well vocabulary removed, ~900 words cut and 190 moved to `docs/METHOD.md`, the key split to where the glyphs and the byte figures are first used, an at-a-glance table of all thirty, and an exit line after the chronology. |
+| O15 | **The state chapter held two mechanisms that keep a cache** | **done** | Chapter VI promised "a fixed-size state" and "every one of them pays in the same single way" while holding NSA and DeepSeek CSA, both of which build a score grid and keep a KV cache. Moved to Chapter III; VI is now exactly the eight STATE entries. A guard asserts that property with a broken twin. |
+| O16 | **Five reader-facing defects with a green suite** | **done** | The invoice's cut line truncated mid-word at every width; the masthead's accent bar struck through the opening sentence; the table's column heads survived on phones because `display:none` lost on source order; the key's ~ note rendered at body size; and the page claimed "almost every mechanism" attacks a bill when ten of thirty attack neither. Each found by looking; three new guards, each watched failing. |
 | O6 | **The notebook** | **done** | `notebooks/S08-modern-attention-variants.ipynb`, 24 cells, built by a 314-line builder that imports `attention.*` in six code cells rather than re-implementing anything. Outputs stripped. `tests/test_notebook_builders.py` passes locally — the only place it can, since both files are gitignored. |
 
 ---
@@ -89,6 +92,46 @@ which was meant — so neither number is published alone.
 ---
 
 ## Change log
+
+### 2026-09-02 (the six-persona rebuild)
+
+Six readers with different stakes read the page end to end. Two of them found factual defects, which
+is the part that matters more than any styling.
+
+- **The page's central claim was false.** The key ended *"Only 13 of the 30 build a score grid at
+  all. That is the finding the rest of the page is built on."* Thirteen is the FIELD count — the
+  mechanisms that edit *which cells survive*. Position schemes build a grid and change what goes
+  into it; head-sharing schemes build one and change what is kept from it. Only the eight STATE
+  entries refuse. Found by a reader adding up the four counts printed directly above the sentence.
+- **The state chapter held two mechanisms that keep a cache.** NSA and DeepSeek CSA are `field`, not
+  `state`; the chapter's headline was false of a fifth of its members. They moved to Chapter III,
+  leaving Chapter VI as exactly the eight the key counts.
+- **A caption had gone stale against the data beside it** — *"1,698 days of repair work, and the
+  last repair was to delete it"*, when that chapter's last entry is HD-RoPE, 260 days later, arguing
+  the opposite. Both numbers derived now.
+- **`whenToChoose` was on all thirty entries and rendered exactly once.** The at-a-glance table is
+  thirty rows of data the page already held, arranged so a reader can compare. It declares no
+  `data-role`, so the twelve-part spine stays twelve.
+- **The key split to where the glyphs and the byte figures are first used**; the glossary is
+  ninety-five words. Every reader stalled in the old one; the teenager stopped there.
+- **Four finding tiles and an exit line** — every finding used to sit between word 6,000 and word
+  8,000, so stopping early was a partial read by construction. Prose to the exit line is 2,770
+  words, not the 800 the review estimated; the estimate omitted the key, the plate caption, the
+  colophon and the reading spread.
+- **~900 words cut** and 190 moved to `docs/METHOD.md`; the correction that was true and obvious
+  moved to `DECISIONS.md`. The three figure orientation blocks went from 217/265/279 words to
+  52/50/59, with both transferable lessons moved into captions *before* their blocks were deleted.
+- **Two numbers were unsound rather than long** — `+57.3%` computed against a source stating "about
+  1 TB", and a caption inviting a quality judgement from a figure with no quality axis.
+- **Five reader-facing defects, all with a green suite**, all found by looking: the invoice's cut
+  line truncated mid-word; the masthead's accent bar struck through the opening sentence; the
+  table's column heads survived on phones because `display: none` lost on source order; the key's ~
+  note rendered at body size; and three separate sentences claimed "almost every mechanism" attacks
+  a bill when ten of thirty attack neither.
+- **Five new guards, each watched failing**: one chapter is exactly the STATE family · no sentence
+  is clipped by its own box · no heading or rail label types a count · the glance table carries
+  every mechanism with `whenToChoose` reaching the reader · a reader stopping at the exit line has
+  the complete argument.
 
 ### 2026-09-01 (the page)
 
