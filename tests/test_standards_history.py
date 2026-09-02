@@ -34,7 +34,7 @@ from snapshot_standards import (  # noqa: E402
     _BANNER_MARK,
     _COMMENT_PREFIX,
     ARCHIVE,
-    RETENTION,
+    MIN_VERSIONS,
     STANDARDS,
     _banner,
     archive_name,
@@ -150,12 +150,30 @@ def test_every_standard_file_is_snapshotted_at_least_once():
 
 
 @_NO_ARCHIVE
-def test_retention_is_not_silently_exceeded():
-    """Two per file. `--prune` lists what is over; it never deletes on its own."""
-    over = {s: [p.name for p in existing(s)] for s in STANDARDS if len(existing(s)) > RETENTION}
-    assert not over, (
-        f"past the retention limit of {RETENTION} — run "
-        f"`uv run python tools/snapshot_standards.py --prune` and remove them deliberately: {over}"
+def test_every_standard_keeps_enough_history_to_compare_against():
+    """A floor, not a cap — and the direction matters more than the number.
+
+    This asserted the opposite for one release: no *more* than two versions per file. That inverted
+    the request ("at least keeping 1-2 versions"), and it made the guard go red after every single
+    release with a message asking someone to delete part of the archive. A recurring instruction to
+    delete history, inside the thing built to keep history, eventually gets followed.
+
+    It was also paid for in the wrong currency. A release's snapshots are ~141 KB, so a hundred
+    releases is 13.8 MB — there is no size argument here at all. Nothing is retired on a schedule
+    now; `--prune` only lists, and only when asked.
+
+    A file below the floor means the archive stopped being maintained, or a new entry in STANDARDS
+    was snapshotted once and forgotten — both worth catching. One version is tolerated only while
+    the repo genuinely has one release.
+    """
+    releases = len({_tag_of(p) for p in _archived()})
+    if releases < MIN_VERSIONS:
+        pytest.skip(f"only {releases} release(s) snapshotted — the floor cannot apply yet")
+
+    thin = {s: [p.name for p in existing(s)] for s in STANDARDS if len(existing(s)) < MIN_VERSIONS}
+    assert not thin, (
+        f"fewer than {MIN_VERSIONS} versions kept, so a rewrite has nothing to be compared "
+        f"against — snapshot an older tag with `--ref <tag>`: {thin}"
     )
 
 

@@ -10,6 +10,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The standards archive's retention limit was a cap when it should have been a floor**, so the
+  guard went red after every release with a message asking someone to delete part of the archive —
+  a standing instruction to delete history, inside the thing built to keep history. It also bought
+  nothing: a release's snapshots are **141 KB**, so a hundred releases would be 13.8 MB. Every
+  release is kept now; the guard fails when a file has *fewer* than two versions, never more, and
+  `--prune` only lists what is older than the newest `--keep` (default 5) without deleting anything.
+- **`backup_local_only.py` raised a raw twelve-line Python traceback when it could not write the
+  store**, naming `pathlib` rather than the cause. The store lives outside the repository by design,
+  so the usual cause is a sandbox or permissions restriction rather than a broken backup — and from
+  inside a git hook the two were indistinguishable. It still **fails** rather than skipping, for the
+  same reason the secret scan errors when gitleaks is absent, but now it says which case it is and
+  prints the exact settings block that grants access.
+
 ## [0.13.0] — 2026-09-02
 
 ### Added
@@ -20,7 +35,9 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   comparing are exactly the ones nobody remembers making. `tools/snapshot_standards.py` writes them
   at a release tag and `tests/test_standards_history.py` asserts each is byte-identical to the tag
   it names, carries a `FROZEN COPY — NOT IN FORCE` banner, and does not silently exceed the
-  two-version retention. Snapshotting is now a step in the release ritual.
+  floor of two versions per file. Snapshotting is now a step in the release ritual, and **nothing
+  is ever retired on a schedule** — a release's snapshots are 141 KB, so there is no size argument
+  for deleting history from the archive that exists to keep it.
 
   Eight files: `AGENTS.md`, `docs/DESIGN.md`, `ci.yml`, `.pre-commit-config.yaml`,
   `pyproject.toml`, `.gitignore`, `vercel.json` and `.gitleaksignore` — chosen because a bad

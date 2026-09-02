@@ -14,11 +14,12 @@ and rebuildable from any tag that still exists.
     uv run python tools/snapshot_standards.py            # snapshot the latest tag
     uv run python tools/snapshot_standards.py --ref v0.12.0
     uv run python tools/snapshot_standards.py --check    # non-zero if a snapshot is missing
-    uv run python tools/snapshot_standards.py --prune    # retire versions past the retention limit
+    uv run python tools/snapshot_standards.py --prune    # list old versions (deletes nothing)
 
-**Nothing is deleted without `--prune`**, which prints what it would remove and needs confirming.
-A snapshot that outlives its usefulness is clutter; one deleted by a tool nobody watched is the
-failure this repo keeps paying for.
+**Nothing is ever deleted, by anything, on any schedule.** A release adds 141 KB, so there is no
+size argument for retiring history from the archive that exists to keep it — and a guard that goes
+red after every release, asking someone to delete something, eventually gets obeyed. `--prune` only
+*lists* what is older than the newest `--keep`, for the day the directory genuinely gets unwieldy.
 """
 
 import argparse
@@ -53,10 +54,17 @@ STANDARDS: tuple[str, ...] = (
     ".gitleaksignore",
 )
 
-#: How many released versions to keep per file. Two is the smallest number that answers both
-#: questions worth asking — "what did this look like before the rewrite?" and "was it already
-#: drifting before that?"
-RETENTION = 2
+#: How many released versions each file should have **at least** — a floor, not a cap.
+#:
+#: This was a ceiling for one release and that was a mistake worth recording, because it inverted
+#: the request ("at least keeping 1-2 versions") and it was expensive in the wrong currency. One
+#: release's snapshots are **141 KB**; a hundred releases would be 13.8 MB. So capping saved nothing
+#: and cost a guard that went red after every single release, each time asking someone to delete
+#: history from the archive that exists to keep history. Nothing is retired on a schedule now.
+#:
+#: Two is still the right floor: it is the smallest number that answers both questions worth asking
+#: — "what did this look like before the rewrite?" and "was it already drifting before that?"
+MIN_VERSIONS = 2
 
 _BANNER_MARK = "FROZEN COPY — NOT IN FORCE"
 
@@ -158,7 +166,12 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--ref", help="tag to snapshot (default: the newest v* tag)")
     ap.add_argument("--check", action="store_true", help="report gaps, write nothing")
-    ap.add_argument("--prune", action="store_true", help="retire versions past the retention limit")
+    ap.add_argument(
+        "--prune", action="store_true", help="list versions older than the newest --keep"
+    )
+    ap.add_argument(
+        "--keep", type=int, default=5, help="with --prune, how many newest versions to keep (5)"
+    )
     ap.add_argument("--force", action="store_true", help="rewrite a snapshot that already exists")
     args = ap.parse_args()
 
@@ -174,9 +187,10 @@ def main() -> int:
         return 1 if missing else 0
 
     if args.prune:
-        stale = [p for s in STANDARDS for p in existing(s)[:-RETENTION]]
+        keep = args.keep
+        stale = [p for s in STANDARDS for p in existing(s)[:-keep]]
         if not stale:
-            print(f"nothing past the retention limit of {RETENTION}")
+            print(f"every file already has {keep} or fewer versions")
             return 0
         for p in stale:
             print(f"would retire: {p.relative_to(REPO_ROOT)}")
@@ -194,10 +208,14 @@ def main() -> int:
         out, fresh = snapshot(source, version, force=args.force)
         print(f"{'wrote' if fresh else 'kept '} {out.relative_to(REPO_ROOT)}")
         wrote += fresh
-    print(f"\n{wrote} new snapshot(s) at {version}; retention is {RETENTION} per file.")
-    over = [s for s in STANDARDS if len(existing(s)) > RETENTION]
-    if over:
-        print(f"{len(over)} file(s) now exceed retention — run --prune to see them.")
+    print(f"\n{wrote} new snapshot(s) at {version}.")
+    thin = [s for s in STANDARDS if len(existing(s)) < MIN_VERSIONS]
+    if thin:
+        print(
+            f"{len(thin)} file(s) have fewer than {MIN_VERSIONS} versions — snapshot an older tag"
+        )
+    kept = len(existing(STANDARDS[0])) if STANDARDS else 0
+    print(f"{kept} version(s) kept per file. Nothing is retired on a schedule; --prune is manual.")
     return 0
 
 

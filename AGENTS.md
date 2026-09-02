@@ -871,7 +871,7 @@ building or changing a page; the rules that matter across exercises are below.
   ritual**, alongside moving `[Unreleased]` in the changelog. `tests/test_standards_history.py`
   asserts each copy is byte-identical to the tag it names, carries its `FROZEN COPY — NOT IN FORCE`
   banner (an agent reading an archived `AGENTS.md` as live policy is the obvious failure), and that
-  retention is not silently exceeded. **Rewriting a standard file is not the same as editing one:**
+  at least two versions are kept, so a rewrite always has something to be compared against. **Rewriting a standard file is not the same as editing one:**
   list what the rewrite drops before you commit it, and put anything you are keeping back.
 
   **The archive is gitignored, and that is a decision with two consequences.** Tracking it would put
