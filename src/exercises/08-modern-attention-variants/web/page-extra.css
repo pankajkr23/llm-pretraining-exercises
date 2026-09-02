@@ -90,7 +90,10 @@
 
 /* ------------------------------------------------------------ the typography */
 #main {
-  --lede-measure: 34ch;
+  /* 34ch measured at 34 characters a line across eleven standfirsts — at 24px that breaks a line
+   * every four or five words, which is the "too narrow" a reader actually sees. A standfirst
+   * SHOULD be short, and short is 45 to 60; 34 is a column of fragments. */
+  --lede-measure: 48ch;
 }
 
 /* The kicker. Every section and every well opens with one; it is the page's smallest type and its
@@ -477,10 +480,18 @@ figcaption strong {
   color: var(--ink);
   margin: 0;
 }
+.sp-problem {
+  /* Capped for the same reason as `.sp-arc`: once the spread stacks, this column is the full text
+   * track and ran to 89 characters. */
+  max-width: 72ch;
+}
 .sp-arc {
   font-size: 15px;
   line-height: 1.62;
   color: var(--ink);
+  /* 90 characters a line without this — the widest prose on the page, in the panel a reader lands
+   * on after clicking a mechanism. See `docs/MEASURES.md`. */
+  max-width: 72ch;
   margin: 0 0 16px;
 }
 .sp-arc .mk {
@@ -638,7 +649,12 @@ figcaption strong {
   border-top: 2px solid var(--ink);
   border-bottom: 1px solid var(--line);
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  /* 240px was chosen when these columns held labels; they hold PROSE now — a gloss per shape, a
+   * note reconciling the five labels with the two bills, and the yardstick explained. At 1440px
+   * three 240px tracks gave 340px columns and 34 characters a line, the same defect the
+   * standfirsts had. The floor is the narrowest column that still reads, so the grid drops to two
+   * columns and then one rather than squeezing three. */
+  grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
 }
 .key > section {
   padding: 16px 20px 20px 0;
@@ -1049,13 +1065,20 @@ text.quiet-lab {
   font-size: 11.5px;
   line-height: 1.7;
   color: var(--muted);
+  /* Two columns inside the 685px text track gave 325px each — 47 characters of mono. The columns
+   * are worth keeping (this is small print at the back, and a magazine sets it that way), so the
+   * block takes the `wide` measure instead and the columns come out readable. */
   columns: 2;
-  column-gap: 36px;
-  max-width: 100%;
+  column-gap: 40px;
+  max-width: min(1025px, 100%);
 }
 .colophon p {
   margin: 0 0 12px;
   break-inside: avoid;
+  /* Below ~800px the two columns collapse to one and this ran to 99 characters of mono — the
+   * mirror image of the 47 it read at when the columns were too narrow. Both failures came from
+   * the same rule; the measure has to be capped for either. */
+  max-width: 78ch;
 }
 .colophon a {
   color: var(--muted);
@@ -1123,6 +1146,17 @@ text.quiet-lab {
 }
 
 /* --------------------------------------------------------------- responsive */
+
+/* The reading spread stacks at 1180px, not 860px. Its two columns are prose, and between those two
+ * widths the narrower one fell to 40 characters a line — readable as a caption, not as the panel a
+ * reader lands on after clicking a mechanism. Measured across five viewport widths; 1180 is where
+ * it stops clearing 45. */
+@media (max-width: 1360px) {
+  .spread {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 860px) {
   .spread {
     grid-template-columns: 1fr;
@@ -1351,7 +1385,10 @@ svg.plate-tall {
 }
 .guide-bills {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  /* A 280px floor let the two bills sit side by side at 397px each — 43 characters a line, in the
+   * paragraph that teaches the page's central idea. The floor is the narrowest column that still
+   * reads as prose, so they stack rather than squeeze. */
+  grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr));
   gap: 0 32px;
   margin: 0 0 20px;
 }
@@ -1364,6 +1401,11 @@ svg.plate-tall {
 .guide-bills > div {
   border-top: 1px solid var(--line-strong);
   padding-top: 10px;
+}
+/* The two bills are the first thing a reader is taught, and at a wide viewport each column ran to
+ * 87 characters — the widest prose on the page, in the paragraph that matters most. */
+.guide-bills p {
+  max-width: 62ch;
 }
 .guide-bills .lab {
   display: block;
@@ -1720,14 +1762,11 @@ a.guide-path:focus-visible {
   margin: 0;
 }
 
-/* A plate's caption is prose, and it was keeping a narrow measure inside a bleed area now up to
- * 1,960px wide — so it read as a stranded column. Two columns on a wide screen, one below. */
-@media (min-width: 1800px) {
-  .plate > figcaption {
-    columns: 2;
-    column-gap: 46px;
-  }
-}
+/* NO COLUMNS HERE. A first attempt split a plate's caption into two on wide screens, to stop it
+ * reading as a stranded column. It was capped at 663px, so two columns gave 332px each — forty
+ * characters a line, and the fix was worse than the thing it fixed. Splitting a narrow block in
+ * two makes two narrower blocks. It stays one column and is centred under its figure instead;
+ * `docs/MEASURES.md` has the full audit. */
 
 /* A short reconciling note under a key heading — prose, not a data row. */
 .key-note {
