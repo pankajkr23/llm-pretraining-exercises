@@ -242,3 +242,36 @@ def test_the_counts_the_page_presents_as_a_partition_actually_add_up() -> None:
             "the list's phrase and mechanism counts now agree; drop the parenthetical that "
             "explains why they differ"
         )
+
+
+def test_the_page_does_not_confuse_editing_the_grid_with_building_one() -> None:
+    """The page's central claim was wrong, in the sentence saying everything rested on it.
+
+    It read *"Only 13 of the 30 build a score grid at all"*. Thirteen is the FIELD count — the
+    mechanisms that edit which cells survive. The position schemes build a grid and change what
+    goes into it; the head-sharing family builds one and changes what is kept from it. Only the
+    STATE family refuses to build one, and there are eight of those.
+
+    Found by a reader checking the arithmetic against the key's own counts, which were right the
+    whole time. The claim conflated two different things and the page called it the finding
+    everything else rested on.
+    """
+    import json
+
+    text = (EXERCISE / "web" / "data.js").read_text(encoding="utf-8")
+    kinds = json.loads(text.split("Object.freeze(", 1)[1].rsplit(");", 1)[0])["counts"][
+        "glyphKinds"
+    ]
+    source = (EXERCISE / "web" / "chapters.js").read_text(encoding="utf-8")
+
+    assert kinds["field"] + kinds["bands"] + kinds["stack"] + kinds["state"] > 0
+
+    #: Only the state family replaces the grid. Any sentence about how many "build" one must use
+    #: that count, never the field count.
+    assert "glyphKinds.field} of the ${M.counts.total} build" not in source, (
+        "the field count is being used for how many mechanisms build a grid; field is how many "
+        "EDIT it — bands and stack build one too, and only state does not"
+    )
+    assert "never build that grid at all" not in source, (
+        "'most of them never build that grid' is the same conflation in the section opener"
+    )

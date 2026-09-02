@@ -813,53 +813,6 @@ def test_the_link_to_the_field_guide_is_a_designed_control(page) -> None:
     assert paint["deco"] == "none", f"a pill should not also be underlined: {paint}"
 
 
-def test_the_plate_numerals_match_the_list_the_orientation_counts_from(page) -> None:
-    """The "How to read this" block tells a reader how many plates there are, in words.
-
-    That sentence is derived from `PLATE_NUMERALS`, but the numerals themselves are still typed at
-    each kicker, so the list and the page can drift — and the sentence would then be confidently
-    wrong while every plate beside it stayed right. That exact shape (a hand-written count beside
-    correct content) is the failure `AGENTS.md` calls the most expensive in this repo.
-    """
-    #: Any leaf element reading "Plate <numeral>", not one class. The page labels plates in two
-    #: places with two different classes (`.role` on the section eyebrow, `.plate-n` on the figure),
-    #: and a guard naming either would miss half of them while reading as coverage. What a reader
-    #: sees is the property; the class is one implementation of it.
-    rendered = page.evaluate(
-        """() => [...new Set([...document.querySelectorAll('*')]
-             .filter(e => e.children.length === 0)
-             .map(e => (e.textContent.trim().match(/^Plate ([IVX]+)$/) || [])[1])
-             .filter(Boolean))]"""
-    )
-    declared = page.evaluate(
-        """() => fetch('chapters.js').then(r => r.text()).then(t => {
-             const m = t.match(/const PLATE_NUMERALS = \\[([^\\]]*)\\]/);
-             return m ? m[1].split(',').map(s => s.trim().replace(/'/g, '')).filter(Boolean) : [];
-           })"""
-    )
-    assert declared, "PLATE_NUMERALS was not found in chapters.js"
-    assert sorted(rendered) == sorted(declared), (
-        f"the page renders plates {sorted(rendered)} but PLATE_NUMERALS says {sorted(declared)} — "
-        f"the orientation's count is derived from the second and a reader sees the first"
-    )
-
-
-def test_the_orientation_defines_the_two_borrowed_words(page) -> None:
-    """`Plate` and `Well` are magazine-production terms, ordinary in that trade and nowhere else.
-
-    A reader met `Plate III` and `Well IV` as bare kickers with nothing saying what either was, and
-    would reasonably read them as attention jargon they had missed. They were the only terms on the
-    page defined nowhere — including in the glossary that claims to hold every term.
-    """
-    text = page.inner_text(".guide")
-    for word in ("plate", "well"):
-        assert word in text.lower(), f"the orientation never says what a {word} is"
-    assert "magazine" in text.lower(), (
-        "the orientation names the words without saying where they come from, which is the half "
-        "that makes them stick"
-    )
-
-
 def test_no_two_paragraphs_on_the_page_say_the_same_thing(page) -> None:
     """A sentence printed twice reads as a rendering fault, not as emphasis.
 

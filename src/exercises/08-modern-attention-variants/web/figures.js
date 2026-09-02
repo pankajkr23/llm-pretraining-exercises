@@ -115,7 +115,13 @@ export function plate(numeral, title, node, caption, briefNode) {
   }
   const f = el('figure', 'plate bleed');
   const head = el('div', 'plate-head');
-  head.append(el('span', 'plate-n', numeral), el('span', 'plate-t', title));
+  /* The figures used to be numbered "Plate I" to "Plate VI", with the numeral in its own span
+   * styled as a short nowrap label. They carry their own names now — "The invoice", "The
+   * chronology" — because a numeral told a reader nothing and cost them a borrowed vocabulary to
+   * learn first. When there is no numeral the name takes the whole head; leaving it in the numeral
+   * span made a 285px nowrap label that scrolled a 320px phone sideways. */
+  if (title) head.append(el('span', 'plate-n', numeral), el('span', 'plate-t', title));
+  else head.append(el('span', 'plate-t', numeral));
   f.append(head);
   if (briefNode) f.append(briefNode);
   f.append(node);

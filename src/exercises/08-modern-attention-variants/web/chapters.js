@@ -52,12 +52,6 @@ const int = (n) => Number(n).toLocaleString('en-US');
  * tables beside them stayed right — which is the failure `AGENTS.md` calls the most expensive one
  * in this repo, because only the sentence is wrong and a reader believes the sentence.
  */
-/* The plates, in order. One source of truth for a count the orientation states in words -- the
- * numerals themselves are still typed at each kicker, so `test_attention_render.py` asserts the
- * rendered set matches this list. A count typed into prose is the failure this page has paid for
- * more than any other. */
-const PLATE_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI'];
-
 const SPELLED = [
   'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
   'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen',
@@ -263,32 +257,21 @@ function chapterThesis(M) {
 
   const marks = el('p', 'guide-marks');
   marks.innerHTML = rich(
-    'Three conventions worth knowing before you meet them. Each mechanism carries a small **drawn ' +
+    'Two conventions worth knowing before you meet them. Each mechanism carries a small **drawn ' +
       'mark** — a shape standing for what it changes, explained in the key below. A **~** on a ' +
       'mark means it is drawn to schema rather than to scale: where a paper states a size we used ' +
       'it, and where it does not, the proportions are ours and mean nothing.'
   );
   guide.append(marks);
 
-  /* THE TWO BORROWED WORDS. The page is set as a monograph and takes its furniture vocabulary from
-   * magazine production, where "plate" and "well" are ordinary trade terms and nowhere else. A
-   * reader meets `Plate III` and `Well IV` as bare kickers with nothing telling them what either
-   * is, and infers - reasonably - that they are jargon from attention research they have missed.
-   * `AGENTS.md` says define every term where the reader first meets it; these two were the only
-   * ones on the page that were never defined anywhere, including in the glossary that claims to
-   * hold every term. Counts derived, because a hand-typed "six" here is the failure this page has
-   * paid for more than any other. */
-  const vocab = el('p', 'guide-marks');
-  vocab.innerHTML = rich(
-    `And the page borrows two words from how magazines are made. A **plate** is a full-page ` +
-      `figure, numbered separately from the text the way printed illustrations always were — ` +
-      `there are ${spell(PLATE_NUMERALS.length)}, and each carries an argument the prose cannot ` +
-      `make. ` +
-      `A **well** is the trade name for the run of pages holding a magazine's main feature; here ` +
-      `each of the ${spell(M.wells.length)} is one chapter of the story, and every mechanism ` +
-      `belongs to exactly one.`
-  );
-  guide.append(vocab);
+  /* THE BORROWED VOCABULARY IS GONE, AND SO IS THE PARAGRAPH THAT EXPLAINED IT.
+   *
+   * The page used to number its figures "Plate I" to "Plate VI" and call its chapters "wells",
+   * after magazine production, and this is where it taught a reader those two words. Defining
+   * them was the wrong fix for the right complaint: a reader had to learn a vocabulary that told
+   * them nothing about attention, and "Plate III" carries strictly less information than "The
+   * chronology". The figures and chapters have their own names now, so there is nothing to
+   * define. Eighty-three words, and the reader's first minute back. */
   s.append(guide);
   return s;
 }
@@ -313,17 +296,27 @@ function chapterGlossary(M) {
         'always drawn as a triangle. Six words make 36 cells and use 21 of them.', // count-literal-ok: the 6x6 demo grid is fixed
       'Every term on this page is defined here, and every definition carries a figure from our own ' +
         `arithmetic rather than a textbook gloss. ${Spell(Object.keys(M.counts.glyphKinds).length)} ` +
-        `shapes cover all ${spell(M.counts.total)} mechanisms — and the first thing the key tells ` +
-        'you is that most of them never build that grid at all.',
+        `shapes cover all ${spell(M.counts.total)} mechanisms, and they divide by what each one ` +
+        'does to that grid: edit which cells survive, change what goes into it, change what is ' +
+        'kept from it — or refuse to build one at all.',
     ],
     { short: 'The key', sub: 'One grid, four shapes, one yardstick' }
   );
   s.append(figKey(M, glyphSvg, KIND_LABEL, KIND_GLOSS));
   const cap = el('p', 'say');
   cap.innerHTML = rich(
-    `Only ${M.counts.glyphKinds.field} of the ${M.counts.total} build a score grid at all. ` +
-      'That is the finding the rest of the page is built on: after 2020 the field largely stopped ' +
-      'editing the triangle and started replacing it.'
+    /* THIS SENTENCE WAS WRONG, AND IT WAS THE ONE THE PAGE SAID EVERYTHING RESTED ON.
+     *
+     * It read "Only 13 of the 30 build a score grid at all" — but 13 is the FIELD count, the
+     * mechanisms that edit *which cells survive*. RoPE, ALiBi and the other position schemes build
+     * a grid and change what goes into it; MQA, GQA and MLA build one and change what is cached
+     * from it. Only the STATE family refuses to build one. So 22 of 30 build a grid, not 13, and
+     * the claim conflated "edits the grid" with "builds one". Caught by a reader checking the
+     * arithmetic against the key's own counts, which were right the whole time. */
+    `Only ${M.counts.glyphKinds.state} of the ${M.counts.total} refuse to build that grid at all — ` +
+      'they keep a fixed-size summary instead. That is the finding the rest of the page is built ' +
+      'on, and it is a smaller number than it sounds: everything else still builds the triangle ' +
+      'and argues about which cells to compute, what to feed it, or what to keep from it.'
   );
   s.append(cap);
   return s;
@@ -335,7 +328,7 @@ function chapterProblem(M) {
   const s = section(
     'problem',
     'problem',
-    'Plate I',
+    'What it costs',
     'The bill',
     [],
     { short: 'The bill', sub: 'One token, 192 KiB, forever' }
@@ -356,7 +349,7 @@ function chapterProblem(M) {
   const last = M.cache.contexts[M.cache.contexts.length - 1];
   s.append(
     plate(
-      'Plate I',
+      'Figure 1',
       'The invoice',
       figInvoice(M),
       'These are not estimates. Read the last row: one person at a million tokens needs ' +
@@ -372,7 +365,7 @@ function chapterProblem(M) {
 /* ------------------------------------------------------------------ 4 · mechanism */
 
 function chapterMechanism(M) {
-  const s = section('mechanism', 'mechanism', 'Plate II', 'One step, taken apart', [], {
+  const s = section('mechanism', 'mechanism', 'How it works', 'One step, taken apart', [], {
     short: 'The centrefold',
     sub: 'Q·K → scale → mask → softmax → ×V',
   });
@@ -423,7 +416,7 @@ function chapterMechanism(M) {
 
   const how = el('p', 'guide-lede');
   how.innerHTML = rich(
-    'Every word produces all three. The plate below runs the six words of that sentence through ' +
+    'Every word produces all three. The figure below runs the six words of that sentence through ' +
       'the five steps that turn those three into one new vector per word — and the numbers in the ' +
       'grid are computed rather than drawn — every dot product is worked live in your browser, ' +
       'so the arithmetic can be checked against the cells. One thing is left out on purpose: ' +
@@ -436,8 +429,8 @@ function chapterMechanism(M) {
 
   s.append(
     plate(
-      'Plate II',
-      'One attention step, in five bays',
+      'Figure 2',
+      'One attention step, in five stages',
       figCentrefold(),
       'Six tokens produce 36 scores and use 21 of them — the mask throws away the upper triangle ' +
         'that was already computed, which is <b>why the triangle exists</b> in every glyph after ' +
@@ -505,14 +498,14 @@ function chapterExpected(M) {
         '(**compute**), then after the stored keys (**cache**), then after both at once ' +
         '(**both**).',
       `Here is the test, fixed before anything was ordered. Group the ${spell(M.counts.total)} into ` +
-        'two-year windows — two years rather than one because several single years on the plate ' +
+        'two-year windows — two years rather than one because several single years on the chronology ' +
         'contain nothing at all. Count which bill each window attacked most, and where two draw, ' +
         'return **no winner** rather than picking one. If the arc is real, one bill dominates ' +
         'nearly every window and they fall in that order.',
       'We also expected the invention of attention and the invention of the Transformer to sit ' +
         'close together — attention being the idea of letting a model look back at every input ' +
         'word, the Transformer being the model built out of almost nothing else. Whether they do ' +
-        'is on the plate above; the number is in the verdict below.',
+        'is on the chronology above; the number is in the verdict below.',
     ],
     { short: 'The prediction', sub: 'Stated before the evidence' }
   );
@@ -656,7 +649,9 @@ function well(parent, w, M, extras) {
   /* The kicker carries the SUBJECT as well as the numeral. The hooks below are deliberately
    * oblique — "Two bills, two crowds." is a good chapter title and tells a reader scanning the
    * longest section on the page nothing about what is in it. */
-  sec.append(el('p', 'kicker', `Well ${w.numeral} · ${w.subject}`));
+  /* The subject alone. "Well IV" told a reader nothing about attention and cost them a
+   * borrowed vocabulary to learn first; the chapter's subject is what they needed. */
+  sec.append(el('p', 'kicker', w.subject));
   const h = el('h3', 'well-h');
   h.textContent = w.headline;
   sec.append(h);
@@ -671,7 +666,7 @@ function well(parent, w, M, extras) {
 }
 
 function chapterResults(M, spreadRef) {
-  const s = section('results', 'results', 'Plate III', `All ${spell(M.counts.total)}, at once`, [], {
+  const s = section('results', 'results', 'The chronology', `All ${spell(M.counts.total)}, at once`, [], {
     short: 'The plate',
     sub: 'Every mechanism, on real time',
   });
@@ -732,7 +727,7 @@ function chapterResults(M, spreadRef) {
    * is no terminal state for a sweep, and a figure that cannot degrade should not be forced to. */
   const controls = el('div', 'ctl sweep-ctl');
   if (!REDUCED) {
-    const run = el('button', 'runbtn', 'Read the plate');
+    const run = el('button', 'runbtn', 'Read the chart');
     run.type = 'button';
     const note = el('span', 'read', '');
     let raf = null;
@@ -743,7 +738,7 @@ function chapterResults(M, spreadRef) {
       raf = null;
       p.sweepOff();
       note.textContent = '';
-      run.textContent = 'Read the plate';
+      run.textContent = 'Read the chart';
       if (stop) stop();
       stop = null;
     };
@@ -770,7 +765,7 @@ function chapterResults(M, spreadRef) {
         if (frac < 1) raf = requestAnimationFrame(tick);
         else {
           raf = null;
-          run.textContent = 'Read the plate';
+          run.textContent = 'Read the chart';
           note.textContent = 'the whole field, in one pass';
         }
       };
@@ -790,10 +785,10 @@ function chapterResults(M, spreadRef) {
 
   const gap = M.quietStretch;
   const plateIII = plate(
-      'Plate III',
+      'Figure 3',
       'The chronology',
       p,
-      'Two things this shape shows that no list can. Attention sits on the plate <b>three years ' +
+      'Two things this shape shows that no list can. Attention sits on the chronology <b>three years ' +
         'before the Transformer</b> — the idea and the architecture are separate inventions. And ' +
         `the shaded band is <b>${int(gap.days)} days</b> in which nobody attacked either bill, ` +
         'because contexts were short enough that the bill was small. Read the staves downward and ' +
@@ -813,7 +808,7 @@ function chapterResults(M, spreadRef) {
   well(s, wells[1], M);
   well(s, wells[2], M, [
     plate(
-      'Plate IV',
+      'Figure 4',
       'The race',
       figRace(M),
       /* THE ONLY PLATE IN THIS SECTION WITH NO ORIENTATION BLOCK. Plates V and VI each open with
@@ -875,7 +870,7 @@ function chapterResults(M, spreadRef) {
   ]);
   well(s, wells[3], M, [
     plate(
-      'Plate V',
+      'Figure 5',
       'The wrap',
       figWrap(),
       brief([
@@ -905,20 +900,28 @@ function chapterResults(M, spreadRef) {
         [
           'Why it matters',
           'If you have ever seen a model degrade well before its advertised context limit, this curve ' +
-            'is the reason. One design decision in April 2021 produced three separate repairs — and ' +
-            'the last of them proposes deleting positional embeddings altogether.',
+            'is the reason. One design decision in April 2021 produced three separate repairs — ' +
+            'and then two papers that flatly disagree about what to do next.',
         ],
       ]),
+      /* THIS CAPTION WENT STALE AGAINST THE DATA BESIDE IT. It read "1,698 days of repair work,
+       * and the last repair was to delete it" — 1,698 days runs to DroPE, but this chapter's last
+       * entry is HD-RoPE, 260 days later, which proposes the opposite. The chapter's own opening
+       * says so ("Both cannot be right") and the caption did not. Both numbers are derived now,
+       * so neither can drift again. */
       'The wobble past the blue rule is not a rendering artefact; it is the reason NTK-aware ' +
-        'scaling, YaRN and finally DroPE exist. Watch the fast dial lap the slow one tens of times ' +
-        'before the curve stops behaving — that is cause, where two static curves would only show ' +
-        'correlation. One design decision in April 2021 generated <b>1,698 days</b> of repair ' +
-        'work, and the last repair was to delete it.'
+        'scaling, YaRN and finally DroPE exist. Watch the fast dial lap the slow one tens of ' +
+        'times before the curve stops behaving — that is cause, where two static curves would ' +
+        `only show correlation. One design decision in April 2021 has generated <b>` +
+        `${int(daysBetween(M, 'rope', 'hd_rope'))} days</b> of argument and is still going: at ` +
+        `${int(daysBetween(M, 'rope', 'drope'))} days one paper concluded the answer was to ` +
+        'delete positional embeddings entirely, and the next one concluded it was to make them ' +
+        'richer.'
     ),
   ]);
   well(s, wells[4], M, [
     plate(
-      'Plate VI',
+      'Figure 6',
       'The eviction',
       figEviction(),
       brief([
@@ -1155,14 +1158,14 @@ function chapterLimits(M) {
         `${M.counts.total} glyphs are drawn to schema and marked ~. Where a paper states a size ` +
         'we used it; where it does not, the proportion on the page is ours and means nothing.',
       '**Launch date is not adoption date.** An arXiv v1 is when an idea became public, not when ' +
-        'it became the default. The plate therefore shows when the field could have moved, not ' +
+        'it became the default. The chart therefore shows when the field could have moved, not ' +
         'when it did.',
       '**The most-used models are the least documented.** Between December 2025 and 31 August ' +
         '2026 we checked the labs whose models are most used and which publish least — OpenAI, ' +
         'Anthropic and Meta — for a new attention mechanism. They published no architecture at ' +
         'all in that window: only **system cards**, the release documents describing how a model ' +
         'behaves and what it refuses, which name no attention mechanism, no positional scheme and ' +
-        'no parameter count. So the recent end of this plate is drawn almost entirely from labs that ' +
+        'no parameter count. So the recent end of this chart is drawn almost entirely from labs that ' +
         'publish papers, which is a real bias in what a chronology like this can see, not an ' +
         'accident of our searching.',
       '**Attention is not the only architecture, and this page only covers attention.** There is a ' +
@@ -1172,7 +1175,7 @@ function chapterLimits(M) {
         'on the argument that predicting every pixel or character wastes effort on detail that ' +
         'does not matter. That is a change to the _objective_, not to attention — their encoders ' +
         'are still transformers running ordinary softmax attention. Nothing in that family between December 2025 and August 2026 ' +
-        'proposed a new attention mechanism, so nothing from it is on the plate. That is a finding ' +
+        'proposed a new attention mechanism, so nothing from it is on the chronology. That is a finding ' +
         'about where the innovation is happening, not a gap in coverage.',
     ],
     { short: 'Limits', sub: 'What it cannot establish' }
@@ -1193,12 +1196,12 @@ function chapterNext() {
       '**The sizes.** Read window widths, sink counts, block sizes and latent dimensions out of ' +
         'each paper, and the glyphs stop being schematic.',
       '**A cost model that ranks.** The invoice prices the cache exactly. Pricing the compute bill ' +
-        'the same way would let the plate be sorted by what a mechanism actually saves.',
-      '**Settle the position argument.** The last two entries on this plate disagree outright. One ' +
+        'the same way would let the chart be sorted by what a mechanism actually saves.',
+      '**Settle the position argument.** The last two entries on this chart disagree outright. One ' +
         'concludes that positional embeddings should be deleted and the model left to infer order ' +
         'from the causal mask; the next concludes they should be made richer, rotating in higher ' +
         'dimensions rather than independent planes. Both report gains. Nothing here can say which ' +
-        'is right, and the plate ends on an open question rather than a conclusion — which is the ' +
+        'is right, and the chart ends on an open question rather than a conclusion — which is the ' +
         'honest place for it to end.',
     ],
     { short: 'Next', sub: 'Three follow-ons' }
