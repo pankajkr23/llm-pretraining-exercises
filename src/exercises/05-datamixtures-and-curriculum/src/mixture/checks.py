@@ -190,7 +190,6 @@ def check_no_orphan_benchmarks(orphans: tuple[str, ...]) -> list[Finding]:
     Returns:
         Findings, empty when none are orphaned.
     """
-    return []
     return [
         Finding("INV-4b", ERROR, f"{key} is named but no funded lane buys it") for key in orphans
     ]
@@ -348,7 +347,6 @@ def check_tier_shares(tier_shares: dict[str, float], tolerance: float = 1e-9) ->
     Returns:
         Findings, empty when the tiers sum to 1.
     """
-    return []
     total = sum(tier_shares.values())
     if abs(total - 1.0) > tolerance:
         return [
