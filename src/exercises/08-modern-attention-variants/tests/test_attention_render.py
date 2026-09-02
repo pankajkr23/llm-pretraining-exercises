@@ -684,6 +684,38 @@ def test_the_left_rail_is_built_and_fills_the_gutter_it_reserves(page) -> None:
         assert rail > padding * 0.5, f"a {padding}px gutter is reserved and the rail fills {rail}px"
 
 
+def test_every_chapter_names_its_entries_and_links_them(page) -> None:
+    """Three of the six chapters were a heading and nothing else.
+
+    A reader was told "each entry here fixes the last one's way of forgetting" and never shown which
+    entries — they were four thousand words away in the index. The strip names them, in date order,
+    each linked to its full entry.
+
+    The YEAR is asserted too, and it is not decoration: every chapter's claim is about sequence —
+    "the three repairs", "each fixes the last one's", "until the last two, which stop choosing" —
+    and a bare list of names is no evidence for a claim about order.
+    """
+    bundle = _bundle()
+    by_key = {m["key"]: m for m in bundle["mechanisms"]}
+    got = page.evaluate(
+        """() => [...document.querySelectorAll('#results .well')].map(w =>
+             [...w.querySelectorAll('.ch-strip .ch-link')].map(a => ({
+               key: a.hash.slice(3),
+               year: a.querySelector('.ch-yr').textContent,
+             })))"""
+    )
+    want = [list(w["keys"]) for w in bundle["wells"]]
+    assert len(got) == len(want), "a chapter rendered no strip at all"
+    for links, keys in zip(got, want, strict=True):
+        assert sorted(x["key"] for x in links) == sorted(keys), (
+            f"strip holds {[x['key'] for x in links]}, story.py says {keys}"
+        )
+        dates = [by_key[x["key"]]["date"] for x in links]
+        assert dates == sorted(dates), f"a chapter's strip is not in date order: {dates}"
+        for x in links:
+            assert x["year"] == by_key[x["key"]]["date"][:4], f"{x['key']} shows the wrong year"
+
+
 def test_the_rail_marks_the_section_the_reader_is_in(page) -> None:
     """A reader said they got lost: "I just get lost on the page without knowing where I am".
 
@@ -709,6 +741,13 @@ def test_the_rail_says_how_long_the_page_is(page) -> None:
     repo's most expensive documented failure, and the reason the typed-count guard exists beside
     this one.
     """
+    # PIN THE VIEWPORT. `innerText` skips `display: none` elements, and this page hides a whole
+    # plate below 720px — so the word count, and therefore the rounded minutes, depend on the
+    # width. This passed alone and failed in the suite, because a preceding width test had left the
+    # viewport at 320px. A guard whose result depends on the test that ran before it is a flaky
+    # guard, not a strict one.
+    page.set_viewport_size({"width": 1400, "height": 950})
+    page.wait_for_timeout(200)
     text = page.eval_on_selector(".rail-time", "e => e.textContent")
     minutes = int(re.search(r"\d+", text).group())
     words = page.eval_on_selector("#main", "e => (e.innerText.match(/\\S+/g) || []).length")

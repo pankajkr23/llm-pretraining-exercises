@@ -2538,3 +2538,56 @@ a.guide-path:focus-visible {
   align-items: center;
   gap: 10px;
 }
+
+/* ------------------------------------------------------- the chapter strip */
+/* What this chapter is about, in one line, linked to the full entry at the back. The year is the
+ * part that earns its place: every chapter's claim is about sequence, and a bare list of names is
+ * no evidence for a claim about order. */
+.ch-strip {
+  margin: 20px 0 26px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.ch-strip-lab {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 8px;
+}
+.ch-strip-list {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.85;
+  /* 64ch, not 74. This is a <p>, so the measures guard sees it, and 74ch at 14px renders right on
+   * the 80-character ceiling — which on macOS passes and on CI's narrower fonts would too, but
+   * with no margin in either direction. */
+  max-width: 64ch;
+}
+.ch-link {
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+}
+.ch-link:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.ch-yr {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--faint);
+  margin-right: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.ch-link:hover .ch-yr {
+  color: var(--accent);
+}
+.ch-sep {
+  color: var(--faint);
+  margin: 0 9px;
+}

@@ -796,22 +796,60 @@ function well(parent, w, M, extras) {
 
   const lede = standfirst(`**${w.headline}** ${w.standfirst}`);
   sec.append(lede);
-  for (const node of extras || []) sec.append(node);
 
   /* THE CHAPTER GETS A BODY. Three of the six were a heading and nothing else, and the thirty
    * mechanisms they are chapters ABOUT were named in none of them — they sat four thousand words
    * later in the index. Under `story = b` each chapter names its own, in date order, so the
    * mechanism arrives inside the argument for it. */
+  const byKey = new Map(M.mechanisms.map((m) => [m.key, m]));
+  const entries = w.keys
+    .map((k) => byKey.get(k))
+    .filter(Boolean)
+    .sort((a, b) => (a.date < b.date ? -1 : 1));
+
   if (V.story === 'b') {
-    const byKey = new Map(M.mechanisms.map((m) => [m.key, m]));
-    const entries = w.keys
-      .map((k) => byKey.get(k))
-      .filter(Boolean)
-      .sort((a, b) => (a.date < b.date ? -1 : 1));
     const box = el('div', 'ch-entries bleed');
     for (const m of entries) box.append(chapterEntry(m));
     sec.append(box);
+  } else {
+    /* THE CHAPTER NAMES WHAT IT IS ABOUT, AND SAYS WHEN.
+     *
+     * Under `story = a` the entries live in the index at the back, so three of the six chapters
+     * were a heading and nothing else — a reader was told "each entry here fixes the last one's
+     * way of forgetting" and never shown which entries.
+     *
+     * PK proposed a list of names linked to the index. The year is the addition, and it is not
+     * decoration: every chapter's claim is about SEQUENCE — "the three repairs", "each fixes the
+     * last one's way of forgetting", "until the last two, which stop choosing" — and a bare list
+     * of names is no evidence for a claim about order. With the years the strip IS the evidence,
+     * and it costs four characters an entry.
+     *
+     * A strip, not the entries: repeating what the index already holds is the duplication this
+     * page has been rebuilt twice to remove. */
+    const strip = el('div', 'ch-strip');
+    strip.append(el('span', 'ch-strip-lab', 'In this chapter'));
+    const list = el('p', 'ch-strip-list');
+    entries.forEach((m, i) => {
+      if (i) list.append(el('span', 'ch-sep', '·'));
+      const a = el('a', 'ch-link');
+      a.href = `#m-${m.key}`;
+      a.append(el('span', 'ch-yr', m.date.slice(0, 4)));
+      /* A REAL SPACE, not just a margin. Without whitespace between them the browser reads
+       * "2025Kimi" as one word and will not break there, so at 320px the link ran 39px past the
+       * viewport and the page scrolled sideways — caught by `test_the_page_never_scrolls_sideways`,
+       * which is exactly what it is for. A margin moves pixels; it creates no break opportunity. */
+      a.append(document.createTextNode(` ${m.name}`));
+      list.append(a);
+    });
+    strip.append(list);
+    sec.append(strip);
   }
+
+  /* THE FIGURE COMES AFTER THE STRIP. `extras` used to be appended straight after the standfirst,
+   * which put Figure 4 between the chapter's claim and the entries that are evidence for it — the
+   * reader met the argument, then a full-width figure, and only then found out which mechanisms the
+   * chapter was about. Contents first, then the illustration. */
+  for (const node of extras || []) sec.append(node);
 
   parent.append(sec);
   return sec;
@@ -1007,7 +1045,7 @@ function chapterResults(M, spreadRef) {
         [
           'What you are looking at',
           'Three model designs generating text side by side; each line is how much memory that ' +
-            "model's cache has eaten so far, and the finish line is one 80&nbsp;GB accelerator.",
+            "model's cache has eaten so far, and the finish line is one 80 GB accelerator.",
         ],
         [
           'The word everything turns on',
@@ -1695,8 +1733,17 @@ function buildRail(root) {
   /* HOW LONG THIS IS, BEFORE A READER COMMITS TO IT. The rail is where somebody decides whether to
    * start, and the page is thirty screens; saying so is a courtesy, and it is derived so it cannot
    * go stale. 220 words a minute is the usual figure for considered reading of technical prose. */
-  const words = (root.innerText.match(/\S+/g) || []).length;
-  inner.append(el('p', 'rail-time', `~${Math.round(words / 220)} min read`));
+  /* Filled after a frame, not during the build. `buildRail` runs with the DOM complete but before
+   * layout has settled, and `innerText` is a LAID-OUT measurement — it skips what is not displayed
+   * yet — so counting here came out about 150 words short and the rail said 41 minutes for a
+   * 42-minute page. One frame later the number is the one a reader's browser actually renders. */
+  const time = el('p', 'rail-time');
+  inner.append(time);
+  const fill = () => {
+    const words = (root.innerText.match(/\S+/g) || []).length;
+    time.textContent = `~${Math.round(words / 220)} min read`;
+  };
+  requestAnimationFrame(fill);
 
   rail.append(inner);
 

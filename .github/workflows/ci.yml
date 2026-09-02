@@ -118,9 +118,18 @@ jobs:
           echo "cores: $(nproc)"
           uv run python -c "import os; print('pytest -n auto will use', os.cpu_count(), 'workers')"
 
+      # `playwright.__version__` does not exist — the module has never exported one — so this step
+      # raised `AttributeError`, printed nothing, and the cache key came out as
+      # `playwright-Linux-` with an empty version. It therefore matched every previous run's empty
+      # key, or none, and the browser download ran anyway. `importlib.metadata` reads the installed
+      # distribution, which is what the key was always meant to name. A cache step that silently
+      # never hits costs a browser download on every integration shard, three times per run.
       - name: Resolve the Playwright version (for the cache key)
         id: pw
-        run: echo "version=$(uv run python -c 'import playwright; print(playwright.__version__)')" >> "$GITHUB_OUTPUT"
+        run: |
+          v=$(uv run python -c "from importlib.metadata import version; print(version('playwright'))")
+          test -n "$v" || { echo "could not resolve the playwright version" >&2; exit 1; }
+          echo "version=$v" >> "$GITHUB_OUTPUT"
 
       - name: Cache the Playwright browser
         uses: actions/cache@v4
