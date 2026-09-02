@@ -86,18 +86,26 @@ More exercises are added each week.
 
 Every exercise follows the same skeleton, so the repo stays predictable:
 
+**Do not scaffold one by hand. There is a generator**, and the sequencing is the reason it
+exists — `tests/_exercises.py` only counts a directory once it has a `pyproject.toml`, so a new
+exercise is invisible to every guard until that file lands and then six test families apply at once.
+
 ```bash
-mkdir -p src/exercises/08-slug/{src,tests,tools}
-# add pyproject.toml (workspace member), README.md AND CLAUDE.md — tests/test_exercise_skeleton.py
-# requires all three files plus tests/, and the PR fails without them
-uv sync --all-packages   # the members = ["src/exercises/[0-9][0-9]-*"] glob picks it up automatically
+uv run python tools/new_exercise.py 09 loss-functions-output-heads \
+    --title "Loss functions and output heads" --package lossheads \
+    --summary "One sentence for the root README row." [--dry-run]
 ```
 
-Match the conventions in [`AGENTS.md`](AGENTS.md): zero-padded `NN-slug` folders, a `CLAUDE.md`
-alongside the `README.md`, code in one place (`src/` or `web/`), `artifacts/` for outputs, tests in
-`tests/`. Set the folder up **before** writing code — `tests/test_exercise_skeleton.py` enforces the
-universal files and asserts no `BRIEF.md` is ever tracked. Introduce a shared `src/common/` package
-only once a second exercise needs to reuse something.
+It writes the whole skeleton — including the three gitignored files — joins the CI shard, adds the
+row to the table above, and prints what is left for you. It deliberately does **not** touch the two
+web-gated registrations (the landing card and the `SPINE_ENFORCED` ledger), because both guards
+assert in two directions and a premature entry is exactly as red as a missing one.
+
+Then match the conventions in [`AGENTS.md`](AGENTS.md) and build the page to
+[`docs/DESIGN.md`](docs/DESIGN.md) from the first commit rather than retro-fitting it later.
+`tests/test_exercise_skeleton.py` requires `README.md`, `CLAUDE.md`, `pyproject.toml` and `tests/`,
+and asserts no `BRIEF.md` is ever tracked. Introduce a shared `src/common/` package only once a
+second exercise needs to reuse something.
 
 ## 💳 Credits
 

@@ -157,7 +157,11 @@ repo** — it is the real safety net.
   was scaffolded with `pyproject.toml` and modules but no `CLAUDE.md`, `PROGRESS.md`, `NOTICE` or
   `BRIEF.md`, because a convention that lives only in prose gets skipped under momentum.
   `tests/test_exercise_skeleton.py` now checks the universal ones (`README.md`, `CLAUDE.md`,
-  `pyproject.toml`, `tests/`, `tools/`) and asserts **no `BRIEF.md` is ever tracked** — checked with
+  `pyproject.toml`, `tests/`) — **`tools/` is deliberately not among them**, because the only
+  file some exercises keep there is the gitignored `build_notebook.py` and git does not track
+  empty directories, so `tools/` exists on a working checkout and not in a clone. Requiring it
+  passed locally and failed CI: write the guard for what a clone has, not for what your machine
+  has and asserts **no `BRIEF.md` is ever tracked** — checked with
   `git ls-files`, not by reading `.gitignore`, because a file already in the index stays tracked
   whatever the ignore rules say afterwards.
 - **Shared code:** deferred — add `src/common/` (its own member) only when a 2nd exercise needs to reuse something. No premature abstraction.
@@ -713,7 +717,11 @@ uv run pre-commit run --all-files                        # over everything, not 
 
 ## Web UI & content
 
-Every deployable exercise's static `web/` bundle shares **one design system** — full reference in `docs/DESIGN.md`. The rules that matter across exercises:
+Every deployable exercise's static `web/` bundle shares **one design system** — full reference in
+`docs/DESIGN.md`, which carries the grid, the type scale, the components, what enforces each rule,
+and a **numbered retro-fit checklist** for bringing an older exercise up to standard. Exercise 08 is
+the reference implementation and every number in that document was measured on it. Read it before
+building or changing a page; the rules that matter across exercises are below.
 
 - **Interactive explainers follow two local files.** `docs/EXPLAINER_PROMPT.md` decides *what* one must be (the claim, the interaction that proves it, the topology and family, when **not** to build one). `docs/EXPLAINER_PATTERN.md` records *how* — DOM skeleton, class names, the state-and-render shape, copy voice. Both are gitignored, so they are on a working checkout but not on the remote; read both before building an explainer and don't re-invent the skeleton. Shipped references: `02-tokenization/web/how-it-works.html` and §1 of `03-data-collection-framework/web/chapters.js`.
 
@@ -762,6 +770,38 @@ Every deployable exercise's static `web/` bundle shares **one design system** �
 - **A full-bleed element still needs its own inset.** A `full` grid track runs edge to edge by
   design; that is what makes a plate span the page. Padding belongs on the element, not the track,
   or every full-width figure prints flush against the window on both sides.
+
+- **The narrowness IS the length, and the lever is type size rather than measure.** A page is long
+  because its content is narrow far more often than because it has too many words. Exercise 08's
+  index was 30 rows at 306px; widening its container from 720px to 1,676px — more than double —
+  moved a row to 292px, because a row was **six stacked bands on a four-column grid** and the extra
+  width only shortened lines that were already short. Two bands with the prose in columns is 238px.
+  Separately, a reader asking why a page "narrows too much" is not asking for longer lines: a
+  77-character line at 22px is 951px and at 16px is 685px, so raising the body size gave 39% more
+  screen at the *same* words per line. Size the columns by the character floor —
+  `minmax(min(315px, 100%), 1fr)` is a 42-character line at 13px — and let the count follow the
+  width the page actually has.
+
+- **A variant nobody measures is a variant that ships broken.** While exercise 08 carried an A/B,
+  `test_attention_measures.py` drove only the default, and the other variant shipped prose at **111
+  characters a line** for two commits with the whole suite green. A guard that measures one of two
+  shipped layouts has a hole exactly the size of the other one. While a flag lives, every guard that
+  can differ between its values runs against both — and the flag carries a written end date, or a
+  temporary switch quietly becomes permanent.
+
+- **Deleting a branch can delete the declaration above it.** Cutting a conditional out of a loop in
+  exercise 08 took a `const body = …` with it, because the branch had been inserted directly above
+  that line. The page threw `body is not defined` half way through building its index — thirty rows
+  became none — and it was caught only because one test fixture listens for `pageerror` on the real
+  page rather than asserting solely about its own harness. **Point at least one browser fixture at
+  the real page and fail on any console or page error.**
+
+- **A rule with no guard decays, and the dead CSS proves it.** `web/_shared/page.css` has styled
+  `.rail-link.on` — the active-section marker — since before most of these pages existed, and only
+  exercise 03 ever sets the class. 05, 06 and 07 build a contents rail that never marks where the
+  reader is; 06 and 07 reserve a 260px rail gutter they never fill; all six vendor
+  `_shared/explainer.css` and only two use it. When you vendor a shared stylesheet, diff what its
+  rules select against what your page emits, and write down what you chose not to build.
 
 - **Editing non-ASCII HTML** (`—`, `→`, `·`, math glyphs): use the Edit/Write tools. **Never** `perl -0pi`/`sed` with wide-char escapes — byte-mode rewrites double-encode UTF-8 into mojibake.
 

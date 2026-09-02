@@ -437,7 +437,7 @@ Put the measure on the element carrying the type, every time.
 only the default, so the 111-character line existed for two commits with the suite green. While a
 harness lives, every guard that can differ between variants has to run against both.
 
-## Running it## Running it
+## Running it
 
 ```bash
 uv sync --all-packages                                    # no extras: this exercise needs no torch

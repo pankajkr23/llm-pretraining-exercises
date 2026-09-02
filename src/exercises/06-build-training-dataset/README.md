@@ -98,6 +98,7 @@ Each ends in something you can run and see. Nothing advances until the previous 
 
 ```text
 run_demo.py      # ONE command: regenerates the whole submission bundle, no interaction
+web/             # the deployed page — index.html, chapters.js, data.js, page-extra.css, _shared/
 verify.py        # the auditor: re-derives every claim from the bundle alone, importing only spec
 BRIEF.md         # the assignment — LOCAL ONLY, gitignored, never the deliverable
 CLAUDE.md        # rules specific to this exercise, for whoever changes the code
