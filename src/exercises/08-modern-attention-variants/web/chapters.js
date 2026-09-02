@@ -45,7 +45,6 @@ import {
 } from './figures.js';
 import { KIND_GLOSS, KIND_LABEL, glyph, glyphSvg } from './glyphs.js';
 import { diagramSvg } from './diagrams.js';
-import { V } from './variants.js';
 
 const int = (n) => Number(n).toLocaleString('en-US');
 
@@ -715,65 +714,6 @@ function readingSpread(M) {
   return spread;
 }
 
-/** One mechanism, inside the chapter that explains why it exists. `story = b` only.
- *
- * The fields are the index row's, minus the source citation, which stays at the back where a
- * reader checking us will look for it. So no fact leaves the page and none is printed twice —
- * `test_the_catalogue_is_tabulated_exactly_once` holds the line.
- */
-function chapterEntry(m) {
-  const row = el('div', 'ce-row');
-  row.id = `m-${m.key}`;
-
-  const g = el('div', 'ce-glyph');
-  g.append(glyphSvg(m, 26));
-  row.append(g);
-
-  row.append(el('div', 'ce-date', m.date));
-
-  const name = el('div', 'ce-name');
-  name.append(el('b', null, m.name));
-  const marks = [m.taught ? '' : '‡', m.bonus ? '†' : ''].join('');
-  if (marks) name.append(el('span', 'ce-mark', ` ${marks}`));
-  row.append(name);
-
-  row.append(el('div', 'ce-bill', `${m.bill} · ${m.glyph.kind}`));
-
-  /* BAND TWO IS A ROW OF COLUMNS, NOT FOUR MORE STACKED CELLS. This is the entire height saving
-   * and the first attempt missed it: four cells each spanning `2 / -1` is four bands, which is what
-   * makes the index at the back 306px a row. Side by side they are one band, and the width the page
-   * already has does the work. */
-  const body = el('div', 'ce-body');
-
-  const led = el('div', 'ce-led');
-  const c = el('div', 'c');
-  c.append(el('span', 'k', 'Credit'), document.createTextNode(m.buys));
-  const dd = el('div', 'd');
-  dd.append(el('span', 'k', 'Debit'), document.createTextNode(m.givesUp));
-  led.append(c, dd);
-
-  const pick = el('div', 'ce-pick');
-  pick.append(el('span', 'k', 'When you’d pick it'), document.createTextNode(m.whenToChoose));
-
-  const ship = el('div', 'ce-ship');
-  ship.append(el('span', 'k', 'Shipped in'));
-  if ((m.shippedIn || []).length) {
-    ship.append(document.createTextNode(m.shippedIn.map((a) => a.model).join(' · ')));
-  } else {
-    ship.classList.add('empty');
-    ship.append(el('i', 'none', 'none we found'));
-  }
-
-  const does = el('div', 'ce-does');
-  does.textContent = m.mechanism;
-
-  row.append(ship);
-  body.append(does, led, pick);
-  row.append(body);
-
-  return row;
-}
-
 function well(parent, w, M, extras) {
   const sec = el('section', 'well');
   /* ONE TITLE, NOT TWO. The kicker carried the subject and the h3 carried the headline, and in
@@ -807,19 +747,15 @@ function well(parent, w, M, extras) {
     .filter(Boolean)
     .sort((a, b) => (a.date < b.date ? -1 : 1));
 
-  if (V.story === 'b') {
-    const box = el('div', 'ch-entries bleed');
-    for (const m of entries) box.append(chapterEntry(m));
-    sec.append(box);
-  } else {
+  {
     /* THE CHAPTER NAMES WHAT IT IS ABOUT, AND SAYS WHEN.
      *
-     * Under `story = a` the entries live in the index at the back, so three of the six chapters
-     * were a heading and nothing else — a reader was told "each entry here fixes the last one's
-     * way of forgetting" and never shown which entries.
+     * A reader was told "each entry here fixes the last one's way of forgetting" and never shown
+     * which entries.
      *
-     * PK proposed a list of names linked to the index. The year is the addition, and it is not
-     * decoration: every chapter's claim is about SEQUENCE — "the three repairs", "each fixes the
+     * The entries live in the index at the back, so three of the six chapters were a heading and
+     * nothing else. The year is the addition and it is not decoration: every chapter's claim is
+     * about SEQUENCE — "the three repairs", "each fixes the
      * last one's way of forgetting", "until the last two, which stop choosing" — and a bare list
      * of names is no evidence for a claim about order. With the years the strip IS the evidence,
      * and it costs four characters an entry.
@@ -1449,12 +1385,7 @@ function chapterReproduce(M, spreadRef, plateRef) {
       /* SAY WHAT THE COLUMNS MEAN. "Credit" and "Debit" were bare labels, and the Debit lines are
        * noun phrases with the verb left out — read cold, "Debit: A constant-size interface" states
        * a feature rather than a loss. One sentence turns the whole column back into what it is. */
-      V.story === 'b'
-        ? `${Spell(M.counts.total)} rows, and the point of them is the last column: the paper ` +
-            'this page read, and **the date string that paper prints**, beside the date we parsed ' +
-            'from it. Every entry itself is in the chapter that explains why it exists — this is ' +
-            'where you check us, not where you meet them.'
-        : `${Spell(M.counts.total)} rows, the same fields in the same places, so the comparison ` +
+      `${Spell(M.counts.total)} rows, the same fields in the same places, so the comparison ` +
             'is one your eye makes rather than one this page asserts. **Credit** is what the ' +
             'mechanism buys; **Debit** is what it gives up in order to buy it — read every Debit ' +
             'line as beginning "gives up". Every date was read from the string printed beside it.'
@@ -1486,12 +1417,7 @@ function chapterReproduce(M, spreadRef, plateRef) {
       grid.append(el('div', 'ix-year', y));
     }
     const row = el('div', 'ix-row');
-    /* THE ANCHOR BELONGS TO WHICHEVER CONTAINER HOLDS THE ENTRY. Under `story = b` the chapter
-     * carries it, so this row must not — two elements with the same id is invalid, the deep link
-     * lands on whichever comes first, and `test_the_catalogue_is_tabulated_exactly_once` would
-     * count the catalogue twice and be right to. */
-    if (V.story === 'a') row.id = `m-${m.key}`;
-    else row.dataset.key = m.key;
+    row.id = `m-${m.key}`;
 
     const g = el('div', 'ix-glyph');
     g.append(glyphSvg(m, 30));
@@ -1530,28 +1456,9 @@ function chapterReproduce(M, spreadRef, plateRef) {
      * no prose chapter anywhere else on the page, so for those a reader met only the trade-off of
      * a mechanism they had not been told about. The sentence is not new: `mechanism` has been in
      * the catalogue since it was written, and the index simply never rendered it. */
-    /* UNDER `story = b` THE INDEX IS A RECEIPT, NOT A SECOND TELLING. The entry itself — what it
-     * does, its credit and debit, when you would pick it, who shipped it — is in the chapter that
-     * explains why it exists. What stays here is the thing "reproduce" actually means: the source,
-     * and the date string that source prints, so a reader can check our reading against it. */
-    if (V.story === 'b') {
-      const src = el('div', 'ix-src');
-      const a = el('a');
-      a.href = m.source.url;
-      a.textContent = m.source.title;
-      a.rel = 'noopener';
-      a.target = '_blank';
-      src.append(a);
-      src.append(el('span', 'q', ` — ${m.source.quoted}`));
-      row.append(src);
-      grid.append(row);
-      continue;
-    }
-
-    /* TWO BANDS, NOT SIX — the same fix the chapter entries get, because it is the layout that was
-     * making a row 306px tall, not the amount of text in it. Widening the plate from 720px to
-     * 1,676px moved a row only from 350px to 292px: six cells each spanning the row are six bands,
-     * and extra width just shortens lines that were already short. */
+    /* TWO BANDS, NOT SIX — the layout that was making a row 306px tall, not the amount of text in
+     * it. Widening the plate from 720px to 1,676px moved a row only to 292px: six cells each
+     * spanning the row are six bands, and extra width just shortens lines that were already short. */
     const body = el('div', 'ix-body');
 
     const does = el('div', 'ix-does');

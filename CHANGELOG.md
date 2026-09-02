@@ -12,13 +12,17 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
-- **A reading switch on exercise 08's page, and a tool that measures both sides of it.** A reader
-  rejected the page and two of the fixes could reasonably go either way, so rather than decide on
-  his behalf the page ships both behind a labelled control — **Reading: story · index** and
-  **Type: standard · large** — with `tools/compare_variants.py` printing page height, prose share,
-  characters a line, where the entries live and transferred bytes for all four combinations, read
-  off the rendered page. The losing branch and the whole harness are deleted once the choice is
-  made; that end date is written into the module rather than left implied.
+- **Exercise 08's body type is fluid, 19px to 22px, and its prose is half the screen.** The
+  complaint was that the page narrowed too much; the lever turned out to be type size rather than
+  measure. **77 characters a line at every width** — not one longer line — with the prose going
+  from 36% of a 1920px viewport to 50%, and 58% at 1440. Chosen by a reader comparing both against
+  measured numbers rather than by argument; the A/B harness that carried the comparison, and the
+  tool that measured it, were deleted once the choice was made.
+
+- **Every chapter names its own entries, with the year, linked to the index.** Three of the six
+  were a heading and nothing else — a reader was told "each entry here fixes the last one's way of
+  forgetting" and never shown which entries. The year is not decoration: every chapter's claim is
+  about sequence, and a bare list of names is no evidence for a claim about order.
 
 - **The contents rail marks the section you are in, and says how long the page is.** A reader: "I
   just get lost on the page without knowing where I am reading from." The vendored shared

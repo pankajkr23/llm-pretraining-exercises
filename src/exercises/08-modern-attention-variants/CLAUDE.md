@@ -402,35 +402,42 @@ without thinking about it, which is the test."* So the referent stayed and the j
 are `Figure 1`–`Figure 6`, chapters are titled by subject, and the 83-word paragraph teaching the
 vocabulary is deleted.
 
-## Two decisions are behind an A/B switch, and it has an end date
+## Two decisions were settled by an A/B, and the harness is gone
 
-`web/variants.js` and the head bootstrap in `index.html` carry two flags, both defaulting to `a`,
-which is today's page — so `a` is a true baseline and the diff between them is readable.
+Two things about this page could reasonably have gone either way, so rather than decide on the
+reader's behalf both shipped behind a labelled switch with a tool that measured all four
+combinations. PK read them on the deployed preview and chose. **The harness, its CSS, its guards,
+`web/variants.js` and `tools/compare_variants.py` were then deleted** — a temporary switch with no
+end date is a permanent one, and this one had its end date written into it from the first commit.
 
-| flag | `a` | `b` |
-| --- | --- | --- |
-| `story` | the six chapters are openers; the index at the back carries all thirty | each chapter carries its own entries; the index becomes the receipt |
-| `measure` | 16px prose on a 68ch track — 36% of a 1920px viewport | fluid 17→22px on a 70ch track — 50% of it, at the **same 77 characters a line** |
+**What won, and why it is worth knowing.**
 
-The lever in `measure` is type size, not measure, and the mechanism is subtler than it looks: `ch`
+*The index carries the thirty; the chapters name them.* The alternative gave each chapter its own
+full entries and made the index a receipt. It read well and it cost ~3,900px more, because it kept
+both a chapter body and a source table. What the chapters get instead is a **strip**: every entry,
+with its year, in date order, linked to the index. The year is the part that earns its place —
+every chapter's claim is about sequence ("the three repairs", "each fixes the last one's way of
+forgetting", "until the last two, which stop choosing"), and a bare list of names is no evidence
+for a claim about order.
+
+*The type is fluid, 19→22px.* The complaint was "why do you narrow too much", and the lever turned
+out to be type size rather than measure: **77 characters a line at every width**, with the prose
+going from 36% of a 1920px viewport to 50%, and 58% at 1440.
+
+**The mechanism is subtler than it looks and is the reason the first attempt did nothing.** `ch`
 resolves against the element's *own* computed font-size, so `#main .say { font-size: 16px;
-max-width: 68ch }` pins the paragraph at 685px whatever `#main` does. Growing the grid track alone
-changes nothing. `.say` has to **inherit** the fluid size, and then its own `ch` cap scales with it.
+max-width: 68ch }` pins the paragraph at 685px whatever `#main` does — growing the grid track alone
+changes nothing, because the paragraph is the binding constraint. `.say` has to **inherit** the
+fluid size, and then its own `ch` cap scales with it for free. The same trap bit twice more in
+blocks written *after* that was understood: `.limitlist`'s `80ch` sat on the `ul`, which inherits
+`#main`'s size, so the limits read at **111 characters a line** in one variant and 80 in the other.
+Put the measure on the element carrying the type, every time.
 
-**The head script in `index.html` is the only place a value is decided** — it must run before first
-paint or the page renders at 16px and repaints at 22px — and `variants.js` reads the stamp back off
-`document.documentElement.dataset`. Two derivations would be two chances to disagree, and the
-disagreement would be invisible: CSS would use one and JS the other.
+**And a variant nobody measures is a variant that ships broken.** `test_attention_measures.py` drove
+only the default, so the 111-character line existed for two commits with the suite green. While a
+harness lives, every guard that can differ between variants has to run against both.
 
-**This is scaffolding with an end date.** When PK picks, the losing branch, its CSS, the guard
-parameterisation and `variants.js` all come out. A temporary switch with no stated end date is a
-permanent one.
-
-Only genuinely contested decisions branch. A defect has a right answer and is simply fixed — the
-invoice that carried a `bleed` class no rule ever matched, the rail that never marked position,
-prose reading at 23 characters a line, a fact printed six times.
-
-## Running it
+## Running it## Running it
 
 ```bash
 uv sync --all-packages                                    # no extras: this exercise needs no torch

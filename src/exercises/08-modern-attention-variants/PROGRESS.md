@@ -35,7 +35,7 @@ pipeline is fine, and the link must resolve for a logged-out stranger.
 | O17 | **The A/B: two readings of the same page, and a decision waiting on PK** | **shipped, awaiting a choice** | A reader rejected the page for duplication, apparatus dressed as argument, and a prose column using a third of the screen. Two of the fixes could reasonably go either way, so both ship behind a labelled switch and the losing branch is deleted once PK picks. Numbers below. |
 | O18 | **The rail marks where you are** | **done** | A reader: "I just get lost on the page without knowing where I am reading from." The vendored stylesheet has styled `.rail-link.on` since before this page existed and this page never set the class — nor do 05, 06 or 07. Exercise 03's logic, copied. Plus a derived read-time. |
 | O19 | **Four blocks written to be wide that silently were not** | **done** | The invoice carried a `.bleed` class no rule ever matched and had rendered at 685px at every width since it was written; the colophon's `min(1025px, 100%)` never applied because nothing put it in the `wide` track; the reading spread's ledger read at 36 characters at 1920 — the page's narrowest prose produced by its widest screen; Q/K/V read at 23. |
-| O17 | **The A/B: two readings of the same page** | **shipped, awaiting PK's choice** | A reader rejected the page for duplication, apparatus dressed as argument, and a prose column using a third of the screen. Two of the fixes could reasonably go either way, so both ship behind a labelled switch and the losing branch is deleted once PK picks. |
+| O17 | **The A/B: two readings of the same page** | **decided, harness removed** | A reader rejected the page for duplication, apparatus dressed as argument, and a prose column using a third of the screen. Two of the fixes could reasonably go either way, so both shipped behind a labelled switch. PK read them on the preview and chose **the index, and the large type**. The losing branch, the switch, `variants.js`, `compare_variants.py` and the variant guards are deleted. |
 | O18 | **The rail marks where you are** | **done** | "I just get lost on the page without knowing where I am reading from." The vendored stylesheet has styled `.rail-link.on` since before this page existed and this page never set the class — nor do 05, 06 or 07. Exercise 03's logic, copied. Plus a derived read-time. |
 | O19 | **Four blocks written to be wide that silently were not** | **done** | The invoice carried a `.bleed` class no rule ever matched and rendered at 685px at every width since it was written; the colophon's `min(1025px, 100%)` never applied because nothing put it in the `wide` track; the reading spread's ledger read at 36 characters at 1920 — the page's narrowest prose produced by its widest screen; Q/K/V read at 23. |
 | O14 | **Six-persona rebuild for readability** | **done** | A teenager, an engineer, a researcher, a sceptic, a grader and a Raschka reader read the page end to end. Two found factual defects. Five changes applied: the borrowed plate/well vocabulary removed, ~900 words cut and 190 moved to `docs/METHOD.md`, the key split to where the glyphs and the byte figures are first used, an at-a-glance table of all thirty, and an exit line after the chronology. |
@@ -98,6 +98,34 @@ which was meant — so neither number is published alone.
 ---
 
 ## Change log
+
+### 2026-09-02 (the A/B decided, and the harness retired)
+
+PK read both variants on the deployed preview and chose **the index, and the large type**. The
+harness came out in the same pass — `web/variants.js`, the head bootstrap, the switch, the
+`story = b` branch, `tools/compare_variants.py` and `tests/test_attention_variants.py`. A temporary
+switch with no stated end date is a permanent one; this one carried its end date from its first
+commit and it was honoured.
+
+**What the chapters get instead of full entries.** Three of the six were a heading and nothing else,
+so each now carries a strip: every entry, with its **year**, in date order, linked to the index. PK
+proposed names alone; the year is the addition, because every chapter's claim is about sequence and
+a bare list is no evidence for a claim about order.
+
+**Where the page ended up**, measured, against the 29,999px / 33.3-screen baseline this pass began
+from — and note the type is 19% to 38% larger at every one of these widths:
+
+| viewport | height | prose | share | body type |
+| --- | --- | --- | --- | --- |
+| 2560 | 30,321px | 951px | 37% | 22px |
+| 1920 | 29,911px | 951px | **50%** | 22px |
+| 1440 | 28,508px | 835px | **58%** | 19px |
+| 1180 | 29,943px | 835px | 71% | 19px |
+
+The page is shorter than it started **while carrying larger type, six chapter strips and a new
+four-families figure** — the duplication that came out paid for all three. It is not the 18,000px
+the plan hoped for, and the reason is stated plainly: thirty entries of catalogue prose have a
+floor, and PK's instruction was to keep the facts.
 
 ### 2026-09-02 (the readability rebuild, and an A/B)
 

@@ -43,8 +43,6 @@ OPTIONAL_DEPENDENCY_GATES: dict[str, str] = {
     "src/exercises/06-build-training-dataset/tests/test_trainingdata_render.py": "playwright",
     "src/exercises/07-model-embeddings-internals/tests/test_embeddings_render.py": "playwright",
     "src/exercises/08-modern-attention-variants/tests/test_attention_render.py": "playwright",
-    # TEMPORARY, with the A/B harness it tests. Delete both together.
-    "src/exercises/08-modern-attention-variants/tests/test_attention_variants.py": "playwright",
     "src/exercises/08-modern-attention-variants/tests/test_attention_themes.py": "playwright",
     "src/exercises/08-modern-attention-variants/tests/test_attention_diagrams.py": "playwright",
     "src/exercises/08-modern-attention-variants/tests/test_attention_measures.py": "playwright",
