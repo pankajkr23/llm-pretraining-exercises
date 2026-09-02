@@ -296,9 +296,10 @@ is a limitation the page is hiding. Smaller type, fewer words, always on screen.
   falsify it. A caption that repeats the figure's title has made the reader do the interpreting.
 - **A caption may not claim what the drawing cannot show.** A figure with one axis cannot invite a
   judgement about a second.
-- **`.requirements document`** is the orientation *before* the figure — a mono label over a short paragraph, saying
-  what you are looking at. **Once is orientation; three times is a template readers skip**, so keep
-  it to one or two rows and put the argument in the caption.
+- **`.preamble`** is the orientation *before* the figure — a mono label (`.preamble-lab`) over a
+  short paragraph, one `.preamble-row` each, saying what you are looking at. **Once is orientation;
+  three times is a template readers skip**, so keep it to one or two rows and put the argument in
+  the caption.
 - **Figures are inline SVG built from the page's own data, never a chart library.** Exercise 07
   draws six from `data.js` with `createElementNS`: a scatter on a grid, a flow diagram, two bar
   charts and a paired-lines plot. No dependency, no CDN, and they inherit the theme for free because

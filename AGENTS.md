@@ -603,7 +603,7 @@ was not summarising the exercises, it was the only place they were described.
 - **Exercise:** everything end to end — the argument, the numbers, how to reproduce, what it cannot
   establish. This is where a reader who wants depth is sent, and it must reward the trip.
 
-The root's job is **routing, not retelling**. Where the requirements requires the root to reach a
+The root's job is **routing, not retelling**. Where the requirements require the root to reach a
 deliverable "without a detour", that is a property of its links, not of how much it repeats — and
 the test for it should assert the *link*, since asserting the filename passes against a front door
 that names the file and never links it.

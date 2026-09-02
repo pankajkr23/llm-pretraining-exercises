@@ -633,7 +633,7 @@ export function figInvoice(M) {
 
 /* ====================================================== PLATE II · the centrefold, five bays
  *
- * One attention step, taken apart. The requirements requires plain scaled dot-product attention
+ * One attention step, taken apart. The requirements require plain scaled dot-product attention
  * first, because nothing after it makes sense without it — and it names five steps, not four:
  * Q·K, scale, mask, softmax, and the weighted sum of V. An earlier version of this figure stopped
  * at softmax, which is precisely the step at which a reader would conclude that attention outputs
