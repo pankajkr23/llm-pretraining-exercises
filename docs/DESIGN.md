@@ -322,6 +322,75 @@ is a limitation the page is hiding. Smaller type, fewer words, always on screen.
 
 ---
 
+## The shared bundle — `web/_shared/`
+
+Every deployable exercise vendors a **byte-identical** copy of six files, with exercise 03 as the de
+facto origin. They are copies, not a package: editing one changes one page, and a fix has to be
+re-vendored to all of them.
+
+| file | owns | actually used by |
+| --- | --- | --- |
+| `page.css` | the shell — wrap, shellbar, back pill, theme picker, rail, `.jump`, `.disclaim` | all |
+| `tokens.css` | **misnamed** — exercise 03's *component* sheet, not the token file | all |
+| `explainer.css` | the scrollytelling vocabulary — `.scrolly`, `.step`, `.sticky`, `.fig-*`, `.qbox` | 03, 06 |
+| `explainer.js` | `makeExplainer` — the scrollytelling builder | 03, 06 |
+| `anim.js` | reveal-on-enter helpers | **nobody** |
+| `num.js` | number formatting | some |
+
+**Vendoring copies the styles and not the markup they assume.** Three defects have come from that:
+a 260px rail gutter reserved on pages that build no rail; `.rail-inner` centring a wrapper the page
+never created; and marks whose colours resolve only when the real token file is also linked. When
+you vendor this directory, **diff what its rules select against what your page emits**, and write
+down what you chose not to build.
+
+**Dead weight is real and is on the retro-fit list.** `anim.js` is imported by nothing anywhere —
+1,002 lines across six copies. `explainer.css` is 527 lines linked by six pages and used by two.
+Fifteen classes in `page.css` are emitted nowhere. Several families in it are exercise 03's alone
+and belong in its own `page-extra.css`.
+
+---
+
+## Motion, reduced motion, and print
+
+- **Scroll-triggered reveals and state morphs**: ~550ms, `easeInOutCubic`. Cancel any in-flight
+  animation before starting the next, and keep the framing stable so panels do not resize mid-toggle.
+- **Control responses**: ≤200ms. A control that takes half a second feels broken.
+- **`prefers-reduced-motion: reduce` is not optional.** Jump straight to the end state — no sweep, no
+  auto-play, no reveal. The state must be *painted*, not merely reachable.
+- **Prefer a painted terminal state to an animated one wherever the motion buys nothing.**
+  Reveal-on-scroll is a decision to hide something by default; never make it for the one element
+  that carries the point. A cut line that faded in was invisible in every screenshot, print and
+  in-page anchor for as long as it existed.
+- **Print**: the page must be readable on paper. Pinned columns unpin, steps stop reserving a
+  viewport of height, and anything that only exists to be interacted with is hidden.
+- **An `IntersectionObserver` on a detached node never fires and reports nothing.** Builders return
+  their element before the page appends it — register from the appending code, or defer a frame and
+  check `isConnected`.
+
+---
+
+## Numbers and provenance
+
+The most repeated rule across every page here, and the one that decides whether a reader can check
+anything.
+
+- **Every number a page displays is generated from tracked data**, never typed into prose. A
+  generated table under a hand-written sentence looks maintained, and only the sentence is wrong —
+  this is the most expensive recurring defect in the repo.
+- **A displayed number carries where it came from.** Measured by this exercise, quoted from a named
+  source, or constructed by us — and a constructed figure says so rather than borrowing the
+  authority of a measured one.
+- **A quote is gated mechanically**, as a contiguous run of the source document's own characters,
+  before it is allowed on the page. Verbatim is not the same as correct: check separately that the
+  quote is about the quantity being claimed.
+- **Where nothing states a value, the field stays empty.** An empty column is often the most
+  informative one on the page — it separates what the field adopted from what it admired.
+- **A quantity pinned to a constant by construction is not a measurement.** Before publishing a
+  derived number, ask what input would change it; if none can, give it a denominator that varies or
+  delete the field.
+
+---
+
 ## Interaction and accessibility
 
 - Keyboard: every control reachable and operable; `:focus-visible` always has a visible ring.

@@ -1,8 +1,9 @@
 # Work plan — the standing backlog
 
 Written down because the queue got long and things were being asked for faster than they were being
-finished. Ordered exactly as PK asked for it. **Nothing is pushed without asking; work lands as
-local commits on its own branch, and PRs are raised when PK says so — one PR per exercise.**
+finished. Ordered exactly as PK asked for it. **Exercise 08 is pushed: PR #83 is open, all checks green, awaiting merge and the production
+gate — both PK's.** Later stages land as local commits on their own branch and are pushed when
+PK asks — one PR per exercise.
 
 Status keys: `done` · `in progress` · `queued` · `blocked`
 

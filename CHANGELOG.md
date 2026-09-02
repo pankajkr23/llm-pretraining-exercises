@@ -88,6 +88,98 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   recalled. Twenty-two of the thirty deliberately name none, which is what separates the mechanisms
   the field adopted from the ones it admired.
 
+- **A theme test, which this repo had never had** — all six themes render with no console error,
+  every token resolves, body text clears 4.5:1 on its own ground, and no painted mark falls into its
+  background. Plus a deliberately broken twin, because a contrast checker nobody has watched fail is
+  not a checker.
+
+- **Exercise 08's page** at `/08-modern-attention-variants/` — twelve spine sections set as a
+  **monograph feature**: six numbered plates, six chapters, and the 24 mechanisms as *one object
+  entered once per mechanism* rather than 24 collapsed cards. Three views answer three different
+  questions and two of them need no interaction at all: **Plate III** places all 24 on real time,
+  one stave per bill, with the both-bill entries drawn as ties between the compute and cache staves
+  — so the finding that no tie exists before 2020 is visible rather than asserted; a **reading
+  spread** re-typesets on click; an **index plate** prints all 24 with the same six fields in the
+  same six places. Every mechanism carries a glyph drawn by one of four generators from a `pattern`
+  block in the catalogue, so a glyph is derived from data rather than hand-drawn.
+
+  The plates each carry an argument the prose cannot make: the KV cache typeset as a printed
+  **invoice** with a cut line where one 80 GB accelerator is exhausted; one attention step
+  **exploded into five bays**, ending in the weighted sum of V that produces the vector leaving the
+  block; and three cache arrangements **racing one wall**, which shows head sharing moving along the
+  same line rather than leaving it — the thing a bar chart provably cannot show.
+
+  Thirty-six browser assertions back it, each named after a defect the page actually shipped with a
+  green suite: a verdict grid of invisible chips, an invoice cut line revealed by an observer that
+  never fired, plate labels printing over each other, and glyph marks escaping their own viewBox
+  onto a neighbour's caption.
+
+- **The timeline now runs to 31 August 2026.** Six mechanisms added after a sweep of everything
+  published since DroPE, each verified by opening its arXiv abstract page and copying the
+  submission-history line: **Kimi Delta Attention** (2025-10-30, arXiv:2510.26692 — a gap, not an
+  extension: it predates DroPE), **Mamba-3** (2026-03-16), **DeepSeek-V4's compressed sparse
+  attention** (2026-04-26), **Gated DeltaNet-2** (2026-05-21), **MiniMax sparse attention**
+  (2026-06-11) and **higher-dimensional RoPE** (2026-08-30). Thirty mechanisms in total.
+
+- **Negative results recorded as results.** OpenAI, Anthropic and Meta published no architecture at
+  all in the window; GLM-5, Qwen, Gemma, ERNIE and Kimi K3 describe their attention with mechanisms
+  already on the plate; and JEPA and the world-model line change the training objective while their
+  encoders keep running ordinary softmax attention. All three are in the page's *limits*, because
+  the recent end of the plate is drawn almost entirely from labs that publish papers.
+
+- **A "How to read this" opening**, explaining the two costs the whole page hangs off in
+  plain words and offering three ways in; and **orientation briefs above Plates V and VI**, which
+  showed objects — two rotary dials, forty tokens under a sliding window — that were not guessable
+  from a caption written to argue after the fact.
+
+- **Top-k attention (2019-12-25)** — a required mechanism that was missing, and mis-described. The
+  coverage list names *"sparse and top-k attention"*; only the sparse half was catalogued, and its
+  entry claimed "top-k attention" as an alias, asserting that a fixed pattern chosen before the
+  model sees any data is the same technique as a per-query choice made from the scores. Sourced to
+  *Explicit Sparse Transformer* (arXiv:1912.11637), v1 date read from the abstract page. `MANDATED`
+  now maps a phrase to every key it names, so a compound requirement cannot be satisfied by half of
+  itself.
+
+- **A portrait plate for phones.** The landscape plate is a 1440-unit SVG and is unreadable in a
+  342px column; below 720px time now runs down the page instead, keeping the lanes, the to-scale
+  gaps and the ties, and dropping the names — which a tap or the index plate supplies.
+
+- **"Read the plate"** — a playhead that sweeps the whole chronology in one pass, lighting each
+  entry as it goes and advancing the reading spread. Interruptible, and not built at all under
+  reduced motion, because a sweep has no terminal state.
+
+- **`src/attention/story.py`** — the page's six chapters as tracked data with a guard, because the
+  grouping is an editorial claim. `story.check()` refuses a partition that does not cover the
+  catalogue exactly once, and its pull-quote guard asserts every line the page sets large is a
+  phrase the catalogue already contains.
+
+- **`cache.tokens_before_wall()`** — how many tokens fit in one accelerator before the KV cache
+  exhausts it: **406,901** at 8 KV heads, **1,627,604** at 2, **3,255,208** at 1. The same
+  arithmetic as the invoice solved for the context instead of the bytes, so the figure and the table
+  cannot disagree.
+
+- **`tools/new_exercise.py` — scaffold a new exercise in one command.** It writes the whole skeleton
+  including the three gitignored files, joins the `rest` CI shard and adds the root README row, then
+  prints what is left. It deliberately does **not** add the landing card or the `SPINE_ENFORCED`
+  entry: both guards assert in two directions, so an entry without a `web/` directory is exactly as
+  red as a missing one.
+
+  `tests/test_new_exercise.py` runs it for real into a temporary directory and checks the output
+  against the **real** guards — importing `REQUIRED`, `REQUIRED_DIRS` and `_READERS` from the guard
+  modules rather than restating them, so the generator cannot drift from the conventions it encodes.
+  It caught the generator inserting the CI path after the shard's trailing `tests` entry.
+
+- **Exercise 08 — modern attention variants, scaffolded with a verified chronology.** Session 8 asks
+  for a web app placing every attention mechanism in the order it was launched, and states the graded
+  axis plainly: *"Your job is to be right about the dates."* So the first artifact is not the page but
+  `results/mechanisms.json` — **24 mechanisms** from Bahdanau (2014) to DroPE (2025), each date read
+  from the primary source, with the URL and the source's **own wording** stored beside it so a reader
+  can check the two against each other.
+- **Guards that make an invented date a test failure.** A citation claiming `verified` will not
+  construct without a URL and a quoted date; a test parses the quoted string and compares it to the
+  recorded date; another asserts every mechanism the assignment names is present, failing in the
+  instructor's own words. All three were watched failing on a deliberately broken catalogue — a
+  dropped mechanism, a transposed date (`2021-04-20` → `2021-04-02`), and a stripped URL.
 ### Changed
 
 - **Exercise 08's page is shorter and its definitions moved to where the reader meets the thing.**
@@ -99,6 +191,17 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   lesson may not live only where a reader skips. The verdict's two arrow chains became a figure. Six
   pull quotes were deleted: each was set in the page's largest type and attributed to "this page's
   own catalogue", which is the visual grammar of a citation with none of its function.
+
+- **The position lane ends on a contradiction, and the page says so.** DroPE concludes positional
+  embeddings should be deleted; HD-RoPE, eight months later, concludes they should be made richer.
+  Both report gains over standard RoPE. The page ends on the open question rather than resolving it.
+
+- **Neutral voice throughout.** Every word tying the page to a particular class or assignment is
+  gone from the page, the served NOTICE and the meta description. The corrections are unchanged in
+  substance; they now correct "our sources".
+
+- **The page no longer prints shell commands.** `uv sync` and `pytest` were on a public page;
+  commands live in the README, and a test now enforces it.
 
 ### Fixed
 
@@ -191,119 +294,16 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   year kept two conclusions and destroyed a third that had been published an hour earlier; it is
   corrected in place and demoted to one reading of the chronology.
 
-- **A theme test, which this repo had never had** — all six themes render with no console error,
-  every token resolves, body text clears 4.5:1 on its own ground, and no painted mark falls into its
-  background. Plus a deliberately broken twin, because a contrast checker nobody has watched fail is
-  not a checker.
-
-- **Exercise 08's page** at `/08-modern-attention-variants/` — twelve spine sections set as a
-  **monograph feature**: six numbered plates, six chapters, and the 24 mechanisms as *one object
-  entered once per mechanism* rather than 24 collapsed cards. Three views answer three different
-  questions and two of them need no interaction at all: **Plate III** places all 24 on real time,
-  one stave per bill, with the both-bill entries drawn as ties between the compute and cache staves
-  — so the finding that no tie exists before 2020 is visible rather than asserted; a **reading
-  spread** re-typesets on click; an **index plate** prints all 24 with the same six fields in the
-  same six places. Every mechanism carries a glyph drawn by one of four generators from a `pattern`
-  block in the catalogue, so a glyph is derived from data rather than hand-drawn.
-
-  The plates each carry an argument the prose cannot make: the KV cache typeset as a printed
-  **invoice** with a cut line where one 80 GB accelerator is exhausted; one attention step
-  **exploded into five bays**, ending in the weighted sum of V that produces the vector leaving the
-  block; and three cache arrangements **racing one wall**, which shows head sharing moving along the
-  same line rather than leaving it — the thing a bar chart provably cannot show.
-
-  Thirty-six browser assertions back it, each named after a defect the page actually shipped with a
-  green suite: a verdict grid of invisible chips, an invoice cut line revealed by an observer that
-  never fired, plate labels printing over each other, and glyph marks escaping their own viewBox
-  onto a neighbour's caption.
-
-- **The timeline now runs to 31 August 2026.** Six mechanisms added after a sweep of everything
-  published since DroPE, each verified by opening its arXiv abstract page and copying the
-  submission-history line: **Kimi Delta Attention** (2025-10-30, arXiv:2510.26692 — a gap, not an
-  extension: it predates DroPE), **Mamba-3** (2026-03-16), **DeepSeek-V4's compressed sparse
-  attention** (2026-04-26), **Gated DeltaNet-2** (2026-05-21), **MiniMax sparse attention**
-  (2026-06-11) and **higher-dimensional RoPE** (2026-08-30). Thirty mechanisms in total.
-
-- **The position lane ends on a contradiction, and the page says so.** DroPE concludes positional
-  embeddings should be deleted; HD-RoPE, eight months later, concludes they should be made richer.
-  Both report gains over standard RoPE. The page ends on the open question rather than resolving it.
-
-- **Negative results recorded as results.** OpenAI, Anthropic and Meta published no architecture at
-  all in the window; GLM-5, Qwen, Gemma, ERNIE and Kimi K3 describe their attention with mechanisms
-  already on the plate; and JEPA and the world-model line change the training objective while their
-  encoders keep running ordinary softmax attention. All three are in the page's *limits*, because
-  the recent end of the plate is drawn almost entirely from labs that publish papers.
-
-- **Fixed: the plate's sweep control threw on every click.** The wrapper holding both plates
+- **the plate's sweep control threw on every click.** The wrapper holding both plates
   forwarded `select` and not `sweep`, so the animation died on frame one and the button stuck on
   "Stop". The existing test called `sweep()` on the SVG directly and so never touched the wiring.
 
-- **Fixed: the sweep control straddled the reading spread's rule**, and Plate V had no way to
+- **the sweep control straddled the reading spread's rule**, and Plate V had no way to
   replay its animation.
 
-- **Added: a "How to read this" opening**, explaining the two costs the whole page hangs off in
-  plain words and offering three ways in; and **orientation briefs above Plates V and VI**, which
-  showed objects — two rotary dials, forty tokens under a sliding window — that were not guessable
-  from a caption written to argue after the fact.
-
-- **Neutral voice throughout.** Every word tying the page to a particular class or assignment is
-  gone from the page, the served NOTICE and the meta description. The corrections are unchanged in
-  substance; they now correct "our sources".
-
-- **Top-k attention (2019-12-25)** — a required mechanism that was missing, and mis-described. The
-  coverage list names *"sparse and top-k attention"*; only the sparse half was catalogued, and its
-  entry claimed "top-k attention" as an alias, asserting that a fixed pattern chosen before the
-  model sees any data is the same technique as a per-query choice made from the scores. Sourced to
-  *Explicit Sparse Transformer* (arXiv:1912.11637), v1 date read from the abstract page. `MANDATED`
-  now maps a phrase to every key it names, so a compound requirement cannot be satisfied by half of
-  itself.
-
-- **Corrected: one undecided pressure window, not two.** Adding a second 2019 compute entry breaks
+- **one undecided pressure window, not two.** Adding a second 2019 compute entry breaks
   the 2018–19 tie. The exercise README records the change rather than amending the number quietly.
 
-- **A portrait plate for phones.** The landscape plate is a 1440-unit SVG and is unreadable in a
-  342px column; below 720px time now runs down the page instead, keeping the lanes, the to-scale
-  gaps and the ties, and dropping the names — which a tap or the index plate supplies.
-
-- **"Read the plate"** — a playhead that sweeps the whole chronology in one pass, lighting each
-  entry as it goes and advancing the reading spread. Interruptible, and not built at all under
-  reduced motion, because a sweep has no terminal state.
-
-- **The page no longer prints shell commands.** `uv sync` and `pytest` were on a public page;
-  commands live in the README, and a test now enforces it.
-
-- **`src/attention/story.py`** — the page's six chapters as tracked data with a guard, because the
-  grouping is an editorial claim. `story.check()` refuses a partition that does not cover the
-  catalogue exactly once, and its pull-quote guard asserts every line the page sets large is a
-  phrase the catalogue already contains.
-
-- **`cache.tokens_before_wall()`** — how many tokens fit in one accelerator before the KV cache
-  exhausts it: **406,901** at 8 KV heads, **1,627,604** at 2, **3,255,208** at 1. The same
-  arithmetic as the invoice solved for the context instead of the bytes, so the figure and the table
-  cannot disagree.
-
-- **`tools/new_exercise.py` — scaffold a new exercise in one command.** It writes the whole skeleton
-  including the three gitignored files, joins the `rest` CI shard and adds the root README row, then
-  prints what is left. It deliberately does **not** add the landing card or the `SPINE_ENFORCED`
-  entry: both guards assert in two directions, so an entry without a `web/` directory is exactly as
-  red as a missing one.
-
-  `tests/test_new_exercise.py` runs it for real into a temporary directory and checks the output
-  against the **real** guards — importing `REQUIRED`, `REQUIRED_DIRS` and `_READERS` from the guard
-  modules rather than restating them, so the generator cannot drift from the conventions it encodes.
-  It caught the generator inserting the CI path after the shard's trailing `tests` entry.
-
-- **Exercise 08 — modern attention variants, scaffolded with a verified chronology.** Session 8 asks
-  for a web app placing every attention mechanism in the order it was launched, and states the graded
-  axis plainly: *"Your job is to be right about the dates."* So the first artifact is not the page but
-  `results/mechanisms.json` — **24 mechanisms** from Bahdanau (2014) to DroPE (2025), each date read
-  from the primary source, with the URL and the source's **own wording** stored beside it so a reader
-  can check the two against each other.
-- **Guards that make an invented date a test failure.** A citation claiming `verified` will not
-  construct without a URL and a quoted date; a test parses the quoted string and compares it to the
-  recorded date; another asserts every mechanism the assignment names is present, failing in the
-  instructor's own words. All three were watched failing on a deliberately broken catalogue — a
-  dropped mechanism, a transposed date (`2021-04-20` → `2021-04-02`), and a stripped URL.
 - **Two errors in the course material, recorded with sources.** The transcript dates the transformer
   to "2018 and 17" (it is 12 June 2017), and it describes DroPE while quoting the title of **DRoPE** —
   a different paper, one capital letter apart, about autonomous-driving trajectories. A third

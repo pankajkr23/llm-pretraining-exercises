@@ -1850,16 +1850,10 @@ a.guide-path:focus-visible {
  *
  * Two breakpoints rather than a fluid width, because a plate is a drawn composition with labels
  * laddered at measured widths; it wants a few known sizes, not a continuum. */
-@media (min-width: 1800px) {
-  .wrap {
-    max-width: 1720px;
-  }
-}
-@media (min-width: 2200px) {
-  .wrap {
-    max-width: 1960px;
-  }
-}
+/* The two breakpoints live with the type scale below, which is what decides them — see there. The
+ * pair that used to sit here (1720/1960) was superseded when the scale changed and was left in
+ * place: same selector, same property, same two queries, different values, and source order
+ * silently picked the later pair. Two rules that disagree are worse than either. */
 
 /* Who ships a mechanism, under what it does. */
 /* On the identity line, not a band of its own. It is a short list of model names and it was
@@ -2139,6 +2133,9 @@ a.guide-path:focus-visible {
 
 /* The wrap grows with the type, or the wider prose simply eats the margin it was meant to share
  * with the figures. */
+/* The wrap grows with the type, or the wider prose eats the margin it was meant to share with the
+ * figures. Two breakpoints rather than a fluid width, because a plate is a drawn composition with
+ * labels laddered at measured widths: it wants a few known sizes, not a continuum. */
 @media (min-width: 1800px) {
   .wrap {
     max-width: 1840px;
