@@ -38,7 +38,7 @@ than refusing:
   Nothing to retrieve, so a mechanism-level answer is offered and labelled as mine.
 
 Nothing here is answered from memory of the course. Where a claim comes from the notes or the
-transcript it is quoted.
+source it is quoted.
 
 ---
 
@@ -201,13 +201,13 @@ of thinking everywhere rather than the same number of tokens.
 
 ## §8 · Does a balanced multilingual proxy fix agentic starvation? ✅
 
-**No.** The transcript is explicit, and it is the half the notes leave out.
+**No.** The source is explicit, and it is the half the notes leave out.
 
 The first mechanism is proxy composition: V4's proxy correlated far more strongly with the English
 web band than with any Indic one, so it scored Indic and agentic batches low and rejected them. A balanced proxy with MILU and
 IndicGenBench **does** fix that one — for Indic.
 
-The transcript gives **mechanism two**, which balance cannot touch:
+The source gives **mechanism two**, which balance cannot touch:
 
 A second reason is the shape of the data itself: a trajectory reads like a log rather than like
 prose, so a quality-scoring selector discards it. Agentic trajectories are *shaped* like low-quality
@@ -545,7 +545,7 @@ scalar trustworthy enough to multiply a gradient by.
 
 ### 26 · Nikhil's reward-hacking case ❌ — no course answer exists to recover
 
-**Declined as a retrieval question, and the transcript confirms why.** The exchange is at line 419:
+**Declined as a retrieval question, and the source confirms why.** The exchange is at line 419:
 Nikhil asks whether there are checks for a model that writes `return 42` instead of computing it,
 and the Admin's reply is *"we have Okay,…"* before the topic moves on. **There is no answer in the
 topic to recall.** Treating one as recoverable would mean inventing it.

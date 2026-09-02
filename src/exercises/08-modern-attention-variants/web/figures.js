@@ -1577,9 +1577,9 @@ export function figCorrection(M) {
   const X = 210;
   const FULL = 600;
   const ratio = d.claimedTB / computed;
-  s.append(svgText(X - 12, 46, 'ax end', 'TRANSCRIPT'));
+  s.append(svgText(X - 12, 46, 'ax end', 'AS QUOTED'));
   s.append(svg('rect', { x: X, y: 34, width: FULL * ratio, height: 16, class: 'f-muted' }));
-  /* `about 1 TB`, NOT `1.00 TB`. The transcript states one significant figure and rendering it
+  /* `about 1 TB`, NOT `1.00 TB`. The source states one significant figure and rendering it
    * with two decimal places invents four the source never had. */
   s.append(svgText(X + FULL * ratio + 10, 47, 'num', `about ${d.claimedTB} TB`));
   s.append(svgText(X - 12, 102, 'ax end', 'ITS OWN FORMULA'));

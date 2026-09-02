@@ -142,20 +142,20 @@ capture, and the entry records that. A reader who needs the live page needs a br
 The assignment invites this — *"if you catch me in another one, tell me"* — so both are recorded
 rather than quietly corrected.
 
-- **The transformer is mis-dated.** The transcript says Vaswani "invented in 2018 and 17".
+- **The transformer is mis-dated.** The source says Vaswani "invented in 2018 and 17".
   *Attention Is All You Need* is `arXiv:1706.03762`, v1 **12 June 2017**.
-- **DroPE is two different papers, and the transcript quotes the wrong one's title.** The technique
+- **DroPE is two different papers, and the source quotes the wrong one's title.** The technique
   described in class — pretrain with positional embeddings, drop them, recalibrate briefly — is
   *Extending the Context of Pretrained LLMs by Dropping Their Positional Embeddings*,
-  `arXiv:2512.12167`. The transcript's garbled "rotate position emitting for efficient" maps instead
+  `arXiv:2512.12167`. The source's garbled "rotate position emitting for efficient" maps instead
   onto **DRoPE** with a capital R, `arXiv:2503.15029`, an autonomous-driving trajectory paper with
   no relation to the technique. The two names differ by one capital letter.
 
 ### One number that does not reproduce
 
-The transcript says eight users at a 1M-token context need about **1 TB**. The source material's own
+The source says eight users at a 1M-token context need about **1 TB**. The source material's own
 formula, at the source material's own yardstick, gives **1.57 TB**. Both are recorded; neither is published
-alone. A smaller model, fewer KV heads or fp8 storage would each reconcile them, and the transcript
+alone. A smaller model, fewer KV heads or fp8 storage would each reconcile them, and the source
 does not say which was meant.
 
 ### What the order shows

@@ -75,21 +75,21 @@ in the entry, because a reader who needs the live page needs a browser.
 
 The assignment invites these: *"if you catch me in another one, tell me."*
 
-**The transformer is mis-dated in the transcript.** It says Vaswani "invented in 2018 and 17".
+**The transformer is mis-dated in the source.** It says Vaswani "invented in 2018 and 17".
 *Attention Is All You Need* is `arXiv:1706.03762`, v1 **Mon, 12 Jun 2017**, read from the abstract
 page.
 
-**DroPE is two papers, and the transcript quotes the wrong one's title.** The technique taught —
+**DroPE is two papers, and the source quotes the wrong one's title.** The technique taught —
 pretrain with positional embeddings, drop them, recalibrate briefly — is *Extending the Context of
 Pretrained LLMs by Dropping Their Positional Embeddings*, `arXiv:2512.12167` (Sakana AI, v1 13 Dec
-2025). The transcript's garbled *"rotate position emitting for efficient"* maps instead onto
+2025). The source's garbled *"rotate position emitting for efficient"* maps instead onto
 **DRoPE** with a capital R, `arXiv:2503.15029`, *Directional Rotary Position Embedding for Efficient
 Agent Interaction Modeling* — an autonomous-driving trajectory paper. Two papers, one capital
 letter apart. Both are recorded so nobody "corrects" us back to the wrong one.
 
-**A cache figure does not reproduce.** The transcript says eight users at 1M tokens need about
+**A cache figure does not reproduce.** The source says eight users at 1M tokens need about
 1 TB; the source material's own formula at the source material's own yardstick gives **1.57 TB**. Both are recorded.
-A smaller model, fewer KV heads or fp8 would each reconcile them and the transcript does not say
+A smaller model, fewer KV heads or fp8 would each reconcile them and the source does not say
 which was meant — so neither number is published alone.
 
 ---

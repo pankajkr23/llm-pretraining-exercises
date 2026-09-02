@@ -12,6 +12,25 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Security
 
+- **A third guard, `tests/test_forbidden_vocabulary.py`, bans the words themselves — in CI and in a
+  pre-commit hook.** The other two guard the material: its filenames, and sentences copied from it.
+  Neither catches a document that names no file and quotes no sentence and still describes the
+  source by the kind of thing it is. This one is lexical, so unlike the quoting check it needs
+  nothing but the repo and actually runs where a public branch is decided. Watched it refuse a real
+  commit with the word planted, not just fail a test run.
+
+  `FORBIDDEN` carries each word with the reason. Unrelated senses live in `ALLOWED` and are matched
+  **per line, never per file** — a file-wide exemption is a hole the size of the file. Both lists
+  fail in the other direction: an exemption for a sense nothing uses is reported and removed, so the
+  list can only grow deliberately. That check earned itself immediately by flagging one entry as
+  redundant with an existing path exemption.
+
+- **A published figure on the live page carried a label naming the kind of document a quoted number
+  came from.** It reads `AS QUOTED` now, which pairs with the `ITS OWN FORMULA` label beside it and
+  says the same thing without describing the source. Found by the new guard rather than by review.
+
+### Security
+
 - **The confidential reference material now lives outside the repository entirely.** It was inside
   the working tree, gitignored — which protected its bytes and nothing else. A tracked document
   could still name its files, publish their sizes, describe what they held, or quote them, and
@@ -431,10 +450,10 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 - **one undecided pressure window, not two.** Adding a second 2019 compute entry breaks
   the 2018–19 tie. The exercise README records the change rather than amending the number quietly.
 
-- **Two errors in the course material, recorded with sources.** The transcript dates the transformer
+- **Two errors in the course material, recorded with sources.** The source dates the transformer
   to "2018 and 17" (it is 12 June 2017), and it describes DroPE while quoting the title of **DRoPE** —
   a different paper, one capital letter apart, about autonomous-driving trajectories. A third
-  discrepancy is recorded rather than resolved: a cache figure the transcript gives as ~1 TB comes out
+  discrepancy is recorded rather than resolved: a cache figure the source gives as ~1 TB comes out
   at 1.57 TB from the source material's own formula.
 
 ## [0.12.0] — 2026-09-01

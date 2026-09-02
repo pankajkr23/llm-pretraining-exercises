@@ -110,7 +110,7 @@ lines and 14 tests.
   `reject` are the selector's. `defer` and `floor_override` appear in **none** of the OPUS paper,
   its reference implementation, or LightningLM — all three were searched. See `DECISIONS.md` D5.
 
-- **The lecture's description of OPUS is wrong; build from the paper.** The transcript describes a
+- **The lecture's description of OPUS is wrong; build from the paper.** The source describes a
   weight *mask*. There is no weight mask in either implementation — it is a continuous
   preconditioned gradient inner product, minus a redundancy penalty the lecture never mentions.
   `DECISIONS.md` D7.

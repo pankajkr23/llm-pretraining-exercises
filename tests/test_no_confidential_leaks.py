@@ -188,7 +188,7 @@ def test_the_name_check_catches_a_planted_reference(tmp_path: Path) -> None:
     """The twin. A guard nobody has watched fail is not a guard."""
     planted = tmp_path / "leak.md"
     # Assembled rather than written out, so this file never contains the scheme as a literal.
-    name = "s" + "5" + "_" + "transcript" + ".md"
+    name = "s" + "5" + "_" + "source" + ".md"
     planted.write_text(f"As set out in `{name}`, the rule is.\n", encoding="utf-8")
     assert _CONFIDENTIAL_NAME.search(planted.read_text(encoding="utf-8")), (
         "the pattern no longer recognises the confidential naming scheme"

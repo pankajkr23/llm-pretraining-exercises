@@ -231,7 +231,7 @@ export const M = Object.freeze({
         "arxiv": "1706.03762",
         "quoted": "[v1] Mon, 12 Jun 2017 17:57:34 UTC (1,102 KB)",
         "verifiedOn": "2026-09-01",
-        "note": "The course transcript dates this as 'invented in 2018 and 17'. It is June 2017."
+        "note": "The course source dates this as 'invented in 2018 and 17'. It is June 2017."
       }
     },
     {
@@ -1253,7 +1253,7 @@ export const M = Object.freeze({
         "arxiv": "2406.06484",
         "quoted": "[v1] Mon, 10 Jun 2024 17:24:42 UTC (124 KB)",
         "verifiedOn": "2026-09-01",
-        "note": "Yang et al. The course transcript's claim that 'that paper came out in 2024' is correct for this one. The delta rule itself is three years older - see delta_rule."
+        "note": "Yang et al. The course source's claim that 'that paper came out in 2024' is correct for this one. The delta rule itself is three years older - see delta_rule."
       }
     },
     {
@@ -1536,7 +1536,7 @@ export const M = Object.freeze({
         "arxiv": "2512.12167",
         "quoted": "[v1] Sat, 13 Dec 2025 04:23:47 UTC (2,135 KB)",
         "verifiedOn": "2026-09-01",
-        "note": "Gelberg, Eguchi, Akiba, Cetin (Sakana AI). CAUTION: a different paper, DRoPE with a capital R (arXiv:2503.15029, 'Directional Rotary Position Embedding for Efficient Agent Interaction Modeling', 19 Mar 2025), is an autonomous-driving trajectory paper and is NOT this technique - the course transcript quotes its title while describing this mechanism. The two differ by one capital letter."
+        "note": "Gelberg, Eguchi, Akiba, Cetin (Sakana AI). CAUTION: a different paper, DRoPE with a capital R (arXiv:2503.15029, 'Directional Rotary Position Embedding for Efficient Agent Interaction Modeling', 19 Mar 2025), is an autonomous-driving trajectory paper and is NOT this technique - the course source quotes its title while describing this mechanism. The two differ by one capital letter."
       }
     },
     {

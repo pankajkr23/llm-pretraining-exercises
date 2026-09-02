@@ -45,7 +45,7 @@ publishing numbers nobody can check, on the one axis the assignment grades.
 **Decision.** The schema permits an entry to say its date could not be confirmed.
 
 **Why.** A catalogue that cannot express doubt will express confidence it has not earned. Going in,
-DroPE looked likely to have no findable source — the course names no paper and the transcript
+DroPE looked likely to have no findable source — the course names no paper and the source
 garbles the title — and the honest outcome would have been an entry marked unverified. In the end it
 was found, but the option had to exist first, or the pressure would have been to invent something
 plausible.
@@ -291,7 +291,7 @@ outlive its reason.
 The page's **Corrections** section published three disagreements with the teaching material it was
 built from. One of them has been moved here.
 
-**The Transformer is mis-dated.** The transcript says Vaswani *"invented in 2018 and 17"*.
+**The Transformer is mis-dated.** The source says Vaswani *"invented in 2018 and 17"*.
 *Attention Is All You Need* is arXiv:1706.03762, **v1 dated Mon, 12 Jun 2017** — read from the
 abstract page, not from memory. June 2017, not 2018.
 

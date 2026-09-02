@@ -1121,14 +1121,14 @@ function chapterNegatives(M) {
     [
       'DroPE is two papers, one capital letter apart',
       'The technique usually described under this name — pretrain with positional embeddings, ' +
-        'drop them, recalibrate briefly — is arXiv:2512.12167. The transcript’s title instead ' +
+        'drop them, recalibrate briefly — is arXiv:2512.12167. The source’s title instead ' +
         'matches <b>DRoPE</b>, arXiv:2503.15029, an autonomous-driving trajectory paper with no ' +
         'relation to it. We cite the first and footnote the second so nobody re-finds it and ' +
         '“corrects” us.',
     ],
     [
       'The million-token figure does not reproduce on our yardstick',
-      `The transcript gives about ${M.transcriptDiscrepancy.claimedTB} TB for ` +
+      `The source gives about ${M.transcriptDiscrepancy.claimedTB} TB for ` +
         `${M.transcriptDiscrepancy.users} readers at a ` +
         `${int(M.transcriptDiscrepancy.context)}-token context. The same formula at this page’s ` +
         `model shape gives ${(M.transcriptDiscrepancy.computedBytes / 1e12).toFixed(2)} TB — ` +
@@ -1143,14 +1143,14 @@ function chapterNegatives(M) {
     'Corrections',
     `${Spell(items.length)} things the source material gets wrong`,
     [
-      /* NAME THE SOURCE BEFORE REBUTTING IT. These corrections were aimed at "the transcript" and
+      /* NAME THE SOURCE BEFORE REBUTTING IT. These corrections were aimed at "the source" and
        * "the source material", named nowhere on the page — so a newcomer read rebuttals of a
        * document they had no idea existed. The second paragraph, which explained at length why
        * correcting one's sources builds trust, is gone: a review reader called it "a running
        * commentary about its own trustworthiness that made me trust it less", and the corrections
        * themselves make the argument. */
       `These ${spell(M.counts.total)} entries were checked against the teaching material this ` +
-        'page was built from — spoken topic notes and a transcript, not a paper. ' +
+        'page was built from — spoken topic notes and a source, not a paper. ' +
         `${Spell(items.length)} of its claims did not survive that check, and they are here ` +
         'rather than quietly fixed.',
     ],

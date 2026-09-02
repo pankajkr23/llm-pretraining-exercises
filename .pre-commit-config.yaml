@@ -108,6 +108,18 @@ repos:
         always_run: true
         pass_filenames: false
 
+      # The vocabulary gate. Separate from the hook above because it guards a different thing and
+      # runs in a different place: that one needs the material to compare against and is therefore
+      # local-only, while this one needs nothing but the repo and so also runs in CI. A word can
+      # come back without any filename or sentence coming back with it.
+      - id: no-forbidden-vocabulary
+        name: no tracked file uses the forbidden vocabulary
+        entry: uv run pytest tests/test_forbidden_vocabulary.py -q
+        language: system
+        stages: [pre-commit]
+        always_run: true
+        pass_filenames: false
+
       - id: local-only-tripwire
         name: check nothing local-only went missing
         entry: uv run pytest tests/test_local_only_files_present.py -q

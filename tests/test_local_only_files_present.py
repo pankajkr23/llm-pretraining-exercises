@@ -161,7 +161,7 @@ def test_no_programme_level_document_has_gone_missing() -> None:
 
 
 def test_the_reference_corpus_has_not_shrunk() -> None:
-    """The course material — transcripts, assignments, notes — is the biggest unguarded exposure.
+    """The course material — records, assignments, notes — is the biggest unguarded exposure.
 
     **Measured against the backup store, not against a hand-written floor.** The first version
     required at least one topic note per exercise, which tolerated losing two thirds of the

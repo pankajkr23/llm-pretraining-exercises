@@ -41,5 +41,5 @@ class Yardstick:
         return BYTES_PER_NUMBER[self.dtype]
 
 
-#: The context lengths the notes and their transcript quote figures at.
+#: The context lengths the notes and their source quote figures at.
 YARDSTICK_CONTEXTS: tuple[int, ...] = (8_192, 32_768, 262_144, 1_000_000)

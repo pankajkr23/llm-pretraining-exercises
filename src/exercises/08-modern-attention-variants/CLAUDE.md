@@ -65,14 +65,14 @@ A missing mechanism scores zero, and we were invited to catch errors in the sour
 Recorded because the assignment explicitly invites it — *"if you catch me in another one, tell me"* —
 and because a reader deserves to know which claims we checked.
 
-- **The transformer is mis-dated in the transcript.** It says Vaswani "invented in 2018 and 17";
+- **The transformer is mis-dated in the source.** It says Vaswani "invented in 2018 and 17";
   *Attention Is All You Need* is `arXiv:1706.03762`, v1 **Mon, 12 Jun 2017**, read from the abstract
   page. June 2017, not 2018.
 
-- **DroPE is two different papers in the source, and the transcript quotes the wrong one's title.**
+- **DroPE is two different papers in the source, and the source quotes the wrong one's title.**
   The technique the source material describes — pretrain with positional embeddings, drop them, recalibrate
   briefly — is *Extending the Context of Pretrained LLMs by Dropping Their Positional Embeddings*,
-  `arXiv:2512.12167` (Sakana AI), v1 **13 Dec 2025**. The transcript's garbled "rotate position
+  `arXiv:2512.12167` (Sakana AI), v1 **13 Dec 2025**. The source's garbled "rotate position
   emitting for efficient" maps instead onto **DRoPE** (capital R), `arXiv:2503.15029`, *Directional
   Rotary Position Embedding for Efficient Agent Interaction Modeling* — an autonomous-driving
   trajectory paper with no relation to the technique. Two papers whose names differ by one
@@ -80,7 +80,7 @@ and because a reader deserves to know which claims we checked.
 
 ## One number that does not reproduce
 
-The transcript says eight users at a 1M-token context need "about 1 TB". The source material's **own
+The source says eight users at a 1M-token context need "about 1 TB". The source material's **own
 formula**, at the source material's own yardstick, gives **1.57 TB**:
 
     2 x 48 x 8 x 128 x 1,000,000 x 8 x 2 = 1,572,864,000,000 bytes

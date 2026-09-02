@@ -43,13 +43,32 @@ public branch:**
 
 | check | where it runs | catches |
 | --- | --- | --- |
+| `test_forbidden_vocabulary.py` | **CI and pre-commit** | the words themselves |
 | `test_no_confidential_leaks.py::…names_a_confidential_source` | **CI and pre-commit** | the naming scheme |
 | `…quotes_the_confidential_material` | **pre-commit only** — skips where the material is absent, CI included | verbatim text |
+
+**Three checks, because a leak has three shapes and none of them implies the others.** A document
+can name no file and copy no sentence and still describe the source by the kind of thing it is. The
+vocabulary check is lexical, needs nothing but the repo, and is therefore the one that actually
+stands between a working tree and a public branch — the other two are stronger and narrower.
+
+`FORBIDDEN` in that file is the list, each word with the reason it is banned. Unrelated senses live
+in `ALLOWED` and are matched **per line**, never per file: a file-wide exemption is a hole the size
+of the file. Both lists fail in the other direction too — an exemption for a sense nothing uses is
+removed, so the list can only grow by someone's decision and never as the quick way to clear a red
+gate. Two path exemptions exist and both are content that would be *wrong* to edit: the frozen
+release snapshots, and the tokenizer's own corpus, whose bytes are a measured input rather than
+prose.
 
 Both are gated on commit. The second cannot run in CI, because CI has no copy to compare against,
 so **CI can prove no filename leaked and only the hook can prove no sentence did.** If you commit
 from a machine without the material, that half silently skips — which is the one gap left, and it
 is a property of where the material lives rather than of the check.
+
+**Name the exercise, not the source's own unit of material.** A topic is referred to by the exercise
+that covers it; the material itself is "the source". The banned words came back three times after
+being removed by hand, which is why this is a gate rather than a habit — they are cheap to type and
+expensive to notice, and a sweep that rewrites five hundred leaves four indistinguishable ones.
 
 **Paraphrase; do not quote.** Every rule this repo takes from the source is stated in our own words,
 including where the original was more quotable. The exception is a *functional* overlap — an

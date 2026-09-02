@@ -21,7 +21,7 @@ idea. Selection is therefore **sequential greedy**: pick one, add its `u` to `G`
 else, pick again.
 
 **The lecture describes this wrongly in the load-bearing detail, and `DECISIONS.md` D7 records it.**
-The transcript describes recording *"which particular weight is acting bad"* and selecting
+The source describes recording *"which particular weight is acting bad"* and selecting
 candidates that update those weights — a weight **mask**. There is no weight mask in the paper or in
 either implementation; it is a continuous preconditioned inner product. The lecture also omits the
 redundancy penalty entirely, which is most of the reported benefit (greedy top-k 40.49 → full OPUS

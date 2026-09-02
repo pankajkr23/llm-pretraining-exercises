@@ -200,7 +200,7 @@ def payload() -> dict:
             ],
             "acceleratorBytes": ACCELERATOR_BYTES,
         },
-        # The source material's transcript gives ~1 TB for eight users at 1M tokens; its own
+        # The source material's source gives ~1 TB for eight users at 1M tokens; its own
         # formula gives
         # something else. Both travel to the page so it can show the disagreement rather than pick.
         "wells": [

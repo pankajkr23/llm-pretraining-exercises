@@ -72,7 +72,7 @@ def test_the_cache_figures_in_the_readme_are_the_ones_the_code_computes() -> Non
 
 
 def test_the_one_million_context_figure_is_the_one_the_formula_gives() -> None:
-    """The number that disagrees with the transcript. Both documents must state ours, not theirs."""
+    """The number that disagrees with the source. Both documents must state ours, not theirs."""
     tb = kv_cache_bytes(Yardstick(), context=1_000_000, batch=8) / 1e12
     assert f"**{tb:.2f} TB**" in TEXT, f"README does not state the computed figure {tb:.2f} TB"
     assert f"**{tb:.2f} TB**" in CLAUDE.read_text(encoding="utf-8")

@@ -182,7 +182,7 @@
         "url": "https://arxiv.org/abs/1706.03762",
         "quoted_date": "[v1] Mon, 12 Jun 2017 17:57:34 UTC (1,102 KB)",
         "verified_on": "2026-09-01",
-        "note": "The course transcript dates this as 'invented in 2018 and 17'. It is June 2017."
+        "note": "The course source dates this as 'invented in 2018 and 17'. It is June 2017."
       },
       "what_existed": "Attention worked, but it was bolted onto a recurrent network that still had to process tokens one at a time.",
       "problem": "Recurrence made training sequential, so it could not use the parallelism the hardware had.",
@@ -1181,7 +1181,7 @@
         "url": "https://arxiv.org/abs/2406.06484",
         "quoted_date": "[v1] Mon, 10 Jun 2024 17:24:42 UTC (124 KB)",
         "verified_on": "2026-09-01",
-        "note": "Yang et al. The course transcript's claim that 'that paper came out in 2024' is correct for this one. The delta rule itself is three years older - see delta_rule."
+        "note": "Yang et al. The course source's claim that 'that paper came out in 2024' is correct for this one. The delta rule itself is three years older - see delta_rule."
       },
       "what_existed": "The delta rule, three years old, correct, and slow to train because each update depends on the previous one.",
       "problem": "A sequential recurrence cannot use the parallelism that made transformers trainable, so a good idea stayed impractical at scale.",
@@ -1427,7 +1427,7 @@
         "url": "https://arxiv.org/abs/2512.12167",
         "quoted_date": "[v1] Sat, 13 Dec 2025 04:23:47 UTC (2,135 KB)",
         "verified_on": "2026-09-01",
-        "note": "Gelberg, Eguchi, Akiba, Cetin (Sakana AI). CAUTION: a different paper, DRoPE with a capital R (arXiv:2503.15029, 'Directional Rotary Position Embedding for Efficient Agent Interaction Modeling', 19 Mar 2025), is an autonomous-driving trajectory paper and is NOT this technique - the course transcript quotes its title while describing this mechanism. The two differ by one capital letter."
+        "note": "Gelberg, Eguchi, Akiba, Cetin (Sakana AI). CAUTION: a different paper, DRoPE with a capital R (arXiv:2503.15029, 'Directional Rotary Position Embedding for Efficient Agent Interaction Modeling', 19 Mar 2025), is an autonomous-driving trajectory paper and is NOT this technique - the course source quotes its title while describing this mechanism. The two differ by one capital letter."
       },
       "what_existed": "A decade of work adding positional information, then a further generation of work repairing it for longer contexts - interpolation, NTK-aware scaling, YaRN.",
       "problem": "Every repair assumed the rotary structure was worth keeping. But a rotation that has turned tens of thousands of times no longer usefully relates a distant token to an early one, and no rescaling fully fixes that.",

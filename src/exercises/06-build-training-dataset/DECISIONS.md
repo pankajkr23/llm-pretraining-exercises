@@ -142,7 +142,7 @@ code rather than about us.
 **Decided.** Implement paper Eq. 23 — alignment of the *preconditioned* candidate gradient with a
 proxy direction, minus a redundancy penalty against already-selected candidates.
 
-**Why this is a decision at all.** The transcript says the proxy pass records *"which particular
+**Why this is a decision at all.** The source says the proxy pass records *"which particular
 weight is acting bad… store this map"* and selects candidates *"updating those weights"* — a weight
 mask. **There is no weight mask in either implementation.** It is a continuous preconditioned inner
 product. The lecture also omits the redundancy penalty, which is most of the benefit: greedy top-k

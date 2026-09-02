@@ -58,7 +58,7 @@ are deferred by decision rather than pending.
 
 ### F1 · The lecture's description of OPUS is wrong in the load-bearing detail
 
-The transcript says the proxy pass records *"which particular weight of the model is acting bad…
+The source says the proxy pass records *"which particular weight of the model is acting bad…
 we're going to store this map"* and that candidates are selected for *"updating those weights"* — a
 weight mask.
 
