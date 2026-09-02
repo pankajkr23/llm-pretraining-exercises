@@ -30,7 +30,8 @@ import {
   figCorrection,
   figEviction,
   figInvoice,
-  figKey,
+  figKeyShapes,
+  figKeyYardstick,
   figMasthead,
   figPlate,
   figPlateTall,
@@ -376,30 +377,29 @@ function chapterGlance(M) {
 /* ------------------------------------------------------------------- 2 · glossary */
 
 function chapterGlossary(M) {
+  /* NINETY-FIVE WORDS, AND THE OTHER THREE HUNDRED HAVE MOVED TO WHERE THEY ARE USED.
+   *
+   * This section used to carry an alphabet of four shapes, a sorting of the thirty into five
+   * labels, and a reference model shape — before the reader had met a single glyph, a single
+   * label or a single byte figure. It was the page's first wall and every review reader hit it;
+   * the one reading as a fifteen-year-old stopped there. The alphabet and the labels are now
+   * above the chronology, where thirty glyphs have to be read at once, and the yardstick is above
+   * the invoice, which is the first number it decides. What is left is the one object every
+   * mechanism below edits, defined before it is counted.
+   */
   const s = section(
     'glossary',
     'glossary',
-    'The key',
-    'The words, and a number against each',
+    'The one object',
+    `What all ${spell(M.counts.total)} of them are arguing about`,
     [
-      /* THE ONE OBJECT THE PAGE TURNS ON, DEFINED BEFORE IT IS COUNTED. This section opened by
-       * telling the reader how many mechanisms are "not the attention matrix" — a term used here
-       * for the first time, never defined, and called three different things across the page (the
-       * attention matrix, a score grid, the triangle). You cannot be told that most of thirty
-       * things are not an X before you are told what an X is. One name from here on: score grid. */
-      'First, the object everything below edits. Attention builds a **score grid**: one row per ' +
-        'word, one column per word, each cell holding how much that pair matters. A word may not ' +
-        'look at words that come after it, so the top half is thrown away — which is why it is ' +
-        'always drawn as a triangle. Six words make 36 cells and use 21 of them.', // count-literal-ok: the 6x6 demo grid is fixed
-      'Every term on this page is defined here, and every definition carries a figure from our own ' +
-        `arithmetic rather than a textbook gloss. ${Spell(Object.keys(M.counts.glyphKinds).length)} ` +
-        `shapes cover all ${spell(M.counts.total)} mechanisms, and they divide by what each one ` +
-        'does to that grid: edit which cells survive, change what goes into it, change what is ' +
-        'kept from it — or refuse to build one at all.',
+      'Attention builds a **score grid**: one row per word, one column per word, each cell ' +
+        'holding how much that pair matters. A word may not look at words that come after it, so ' +
+        'the top half is thrown away — which is why it is always drawn as a triangle. Six words ' +
+        'make 36 cells and use 21 of them.', // count-literal-ok: the 6x6 demo grid is fixed
     ],
-    { short: 'The key', sub: 'One grid, four shapes, one yardstick' }
+    { short: 'The score grid', sub: 'The object every entry edits' }
   );
-  s.append(figKey(M, glyphSvg, KIND_LABEL, KIND_GLOSS));
   const cap = el('p', 'say');
   cap.innerHTML = rich(
     /* THIS SENTENCE WAS WRONG, AND IT WAS THE ONE THE PAGE SAID EVERYTHING RESTED ON.
@@ -442,6 +442,12 @@ function chapterProblem(M) {
         'the next word — and it is what every row of the invoice below is priced in.'
     )
   );
+
+  /* THE YARDSTICK, MOVED UP FROM THE GLOSSARY. Every byte figure on this page is computed for
+   * one reference model shape, and that shape was declared four thousand words earlier beside
+   * an alphabet the reader could not use yet. It is a premise, not a definition, and a premise
+   * belongs immediately above the first number it decides. */
+  s.append(figKeyYardstick(M));
 
   const last = M.cache.contexts[M.cache.contexts.length - 1];
   s.append(
@@ -780,6 +786,13 @@ function chapterResults(M, spreadRef) {
         'as visible as the entries. Click any mechanism and the panel below fills in with its entry.'
     )
   );
+
+  /* THE KEY, WHERE THE GLYPHS ARE FIRST USED. Four shapes and five labels were taught in the
+   * glossary at section 2 — four thousand words before a reader had to read thirty glyphs at
+   * once, which is here. A reader who met them there had forgotten them by now and a reader who
+   * skipped that section never met them at all. The ~ disclaimer travels with them, because a
+   * mark that means "not to scale" is worth nothing six thousand words from the mark. */
+  s.append(figKeyShapes(M, glyphSvg, KIND_LABEL, KIND_GLOSS));
 
   const spread = readingSpread(M);
   spreadRef.node = spread;

@@ -457,6 +457,19 @@ figcaption strong {
   color: var(--accent);
   white-space: nowrap;
 }
+/* The consequence, on its own line and free to wrap. It used to ride on the rule above under
+ * `nowrap` inside `overflow: hidden`, so it was cut off mid-word on every screen narrower than the
+ * sentence — an ellipsis-free truncation of the one sentence the figure exists to deliver. */
+.inv-cut-note {
+  grid-column: 1 / -1;
+  margin: 0 0 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.55;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  max-width: 74ch;
+}
 .inv-foot {
   font-family: var(--mono);
   font-size: 10px;
@@ -811,6 +824,14 @@ a.gl-row:hover .gl-name b {
 }
 .key > section {
   padding: 16px 20px 20px 0;
+}
+/* One section, in the text column: no column machinery, no right-hand gutter to leave empty. */
+.key-solo {
+  grid-template-columns: 1fr;
+  margin: 26px 0 4px;
+}
+.key-solo > section {
+  padding: 14px 0 16px;
 }
 .key > section + section {
   padding-left: 22px;

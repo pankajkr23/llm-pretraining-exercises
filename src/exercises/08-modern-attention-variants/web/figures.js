@@ -173,9 +173,20 @@ export function figMasthead() {
  * The glyph exemplars are drawn by the SAME generators the plate uses, so the key cannot drift
  * from the figures it explains.
  */
-export function figKey(M, glyphSvg, KIND_LABEL, KIND_GLOSS) {
-  const wrap = el('div', 'key bleed');
+/* THE KEY, IN THREE PIECES, EACH BESIDE THE THING IT EXPLAINS.
+ *
+ * This was one block inside the glossary at section 2 — an alphabet of four shapes, a sorting of
+ * the thirty into five labels, and a reference model shape — roughly four thousand words before
+ * the first glyph is used at size, and five thousand before the first byte figure it governs.
+ * Every review reader stalled in it; the one reading as a fifteen-year-old stopped there outright.
+ * A definition is not useful where the page finds it convenient to give, it is useful where the
+ * reader first meets the thing. So the alphabet and the labels now sit immediately above the
+ * chronology, which is where a reader first has to read thirty glyphs at once, and the yardstick
+ * sits immediately above the invoice, which is the first number it decides.
+ */
 
+export function figKeyShapes(M, glyphSvg, KIND_LABEL, KIND_GLOSS) {
+  const wrap = el('div', 'key bleed');
   const alpha = el('section');
   alpha.append(el('h3', null, 'The alphabet'));
   const strip = el('div', 'key-alpha');
@@ -235,6 +246,17 @@ export function figKey(M, glyphSvg, KIND_LABEL, KIND_GLOSS) {
   }
   bills.append(bl);
 
+  wrap.append(alpha, bills);
+  return wrap;
+}
+
+export function figKeyYardstick(M) {
+  /* NOT `.bleed`. The other key block is two columns of reference material and earns the full
+   * width; this one is a premise — one paragraph and four numbers — and full-bleed left it as a
+   * 62-character column of prose against an empty right half, starting at a left edge no other
+   * element on the page shares. `#main > section > *` defaults to the text column, which is
+   * where a premise belongs: in the same measure as the sentence that leads into it. */
+  const wrap = el('div', 'key key-solo');
   /* THIS BLOCK SAT UNDER "every term on this page is defined here" AND DEFINED NOTHING. Four of
    * the page's most jargon-heavy labels appeared as bare words with numbers beside them, and the
    * reader was never told what the yardstick is a yardstick FOR. */
@@ -272,7 +294,7 @@ export function figKey(M, glyphSvg, KIND_LABEL, KIND_GLOSS) {
   y.append(d);
   yard.append(y);
 
-  wrap.append(alpha, bills, yard);
+  wrap.append(yard);
   return wrap;
 }
 
@@ -319,19 +341,26 @@ export function figInvoice(M) {
   wrap.append(who);
 
   const budget = M.cache.acceleratorBytes;
+  /* TWO LINES, BECAUSE ONE WAS SILENTLY CUT IN HALF.
+   *
+   * This was a single `white-space: nowrap` label inside an `overflow: hidden` flex row, which is
+   * a truncation with no ellipsis and no warning: at 1440px the reader saw "…needs a second ma"
+   * and the sentence carrying the whole argument stopped there. `test_the_invoice_cut_line_is_visible`
+   * passed throughout, because the element was visible — visible and legible are different
+   * assertions and only one of them was being made. The name stays on the rule where it labels
+   * the thing; the consequence gets a line of its own that is allowed to wrap. */
   const cutRow = el('div', 'inv-cut');
   const cutLab = el('span', 'lab');
-  /* NAME IT. "The cut line" is used as a term in the caption and the footnote below, and this is
-   * the only place it appears on the figure — as a description, never as the name. */
-  cutLab.textContent =
-    `the cut line — one ${int(budget / 1e9)} GB accelerator, exhausted. Below this the cache ` +
-    'alone needs a second machine, before a single model weight is loaded.';
+  cutLab.textContent = `the cut line — one ${int(budget / 1e9)} GB accelerator, exhausted`;
   cutRow.append(cutLab);
+  const cutNote = el('p', 'inv-cut-note');
+  cutNote.textContent =
+    'Below this the cache alone needs a second machine, before a single model weight is loaded.';
 
   let cutDrawn = false;
   for (const row of M.cache.contexts) {
     if (!cutDrawn && row.oneUser > budget) {
-      g.append(cutRow);
+      g.append(cutRow, cutNote);
       cutDrawn = true;
     }
     const over = cutDrawn ? ' over' : '';
