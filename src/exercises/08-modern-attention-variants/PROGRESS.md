@@ -11,7 +11,7 @@ app link** and the **GitHub repo**, and the README must say which sources the da
 Question 1 is 1000 points for the link and repo; Question 2 is a written answer about what the
 timeline shows, worth a further 1000 if it also names a mechanism the instructor missed, with a date
 and a primary source; Question 3 is an optional 250 for sharing publicly. The submission field is
-labelled "Netlify Link" but the requirements says "Netlify or Vercel or wherever you like" — our Vercel
+labelled "Netlify Link" but the requirements say "Netlify or Vercel or wherever you like" — our Vercel
 pipeline is fine, and the link must resolve for a logged-out stranger.
 
 ---
