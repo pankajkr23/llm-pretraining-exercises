@@ -31,6 +31,37 @@
         /* Private mode or blocked storage: the system theme is a fine answer. */
       }
     </script>
+    <!--
+      The A/B flags, applied before first paint for the same reason the theme is: `measure` changes
+      the body type scale, so resolving it in a module would render the page at 16px and repaint at
+      22px. This is the ONLY place that decides the value; `variants.js` reads the stamp back, so
+      the two cannot disagree. Temporary — it comes out with the harness.
+    -->
+    <script>
+      (function () {
+        var names = { story: 'a', measure: 'a' };
+        var held = {};
+        try {
+          held = JSON.parse(localStorage.getItem('era5-s8-variants') || '{}');
+        } catch (e) {
+          /* blocked storage: the defaults are what a first-time reader gets anyway */
+        }
+        var q = {};
+        try {
+          var raw = new URLSearchParams(location.search).get('v') || '';
+          raw.split(',').forEach(function (pair) {
+            var bits = pair.split(':');
+            q[(bits[0] || '').trim()] = (bits[1] || '').trim();
+          });
+        } catch (e) {
+          /* a hand-edited URL should not blank the page */
+        }
+        Object.keys(names).forEach(function (k) {
+          var v = q[k] || held[k] || names[k];
+          document.documentElement.dataset[k] = v === 'b' ? 'b' : 'a';
+        });
+      })();
+    </script>
   </head>
   <body>
     <div class="wrap">
@@ -55,8 +86,10 @@
     <script type="module">
       import { buildPage } from './chapters.js';
       import { M } from './data.js';
+      import { buildSwitch } from './variants.js';
 
       buildPage(M);
+      buildSwitch(document.querySelector('.shellbar'));
 
       /* The picker. The head script already applied the stored choice; this only keeps the control
        * in step with it and writes changes back. "system" removes the attribute rather than setting

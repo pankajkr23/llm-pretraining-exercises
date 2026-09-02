@@ -402,6 +402,34 @@ without thinking about it, which is the test."* So the referent stayed and the j
 are `Figure 1`–`Figure 6`, chapters are titled by subject, and the 83-word paragraph teaching the
 vocabulary is deleted.
 
+## Two decisions are behind an A/B switch, and it has an end date
+
+`web/variants.js` and the head bootstrap in `index.html` carry two flags, both defaulting to `a`,
+which is today's page — so `a` is a true baseline and the diff between them is readable.
+
+| flag | `a` | `b` |
+| --- | --- | --- |
+| `story` | the six chapters are openers; the index at the back carries all thirty | each chapter carries its own entries; the index becomes the receipt |
+| `measure` | 16px prose on a 68ch track — 36% of a 1920px viewport | fluid 17→22px on a 70ch track — 50% of it, at the **same 77 characters a line** |
+
+The lever in `measure` is type size, not measure, and the mechanism is subtler than it looks: `ch`
+resolves against the element's *own* computed font-size, so `#main .say { font-size: 16px;
+max-width: 68ch }` pins the paragraph at 685px whatever `#main` does. Growing the grid track alone
+changes nothing. `.say` has to **inherit** the fluid size, and then its own `ch` cap scales with it.
+
+**The head script in `index.html` is the only place a value is decided** — it must run before first
+paint or the page renders at 16px and repaints at 22px — and `variants.js` reads the stamp back off
+`document.documentElement.dataset`. Two derivations would be two chances to disagree, and the
+disagreement would be invisible: CSS would use one and JS the other.
+
+**This is scaffolding with an end date.** When PK picks, the losing branch, its CSS, the guard
+parameterisation and `variants.js` all come out. A temporary switch with no stated end date is a
+permanent one.
+
+Only genuinely contested decisions branch. A defect has a right answer and is simply fixed — the
+invoice that carried a `bleed` class no rule ever matched, the rail that never marked position,
+prose reading at 23 characters a line, a fact printed six times.
+
 ## Running it
 
 ```bash

@@ -2030,3 +2030,139 @@ a.guide-path:focus-visible {
     grid-column: 1;
   }
 }
+
+/* ================================================================== VARIANT: measure = b
+ *
+ * TEMPORARY — one half of the A/B PK asked for, deleted with the harness once he picks.
+ *
+ * The complaint was "why do you narrow too much", and the answer is that the lever is TYPE SIZE,
+ * not measure. A 77-character line at 22px is 981px; the same 77 characters at 16px is 685px. The
+ * reader gets 43% more of their screen and not one longer line.
+ *
+ * The mechanism, which is subtler than it looks. `ch` resolves against the element's OWN computed
+ * font-size, so `#main .say { font-size: 16px; max-width: 68ch }` pins the paragraph at 685px no
+ * matter what `#main` does. Growing the grid track alone therefore changes nothing — the paragraph
+ * is the binding constraint. `.say` has to INHERIT the fluid size, and then its own `ch` cap scales
+ * with it for free.
+ *
+ * Measured, holding the repo's own 42-80 character guard: 758px/64% at 1180, 778px/54% at 1440,
+ * 981px/51% at 1920 — 77 characters a line at every one of them. At 2560 it is 38%, and going
+ * further would need 29px body type, which is heading size; that width is served by the full-bleed
+ * figures instead.
+ */
+:root[data-measure='b'] #main {
+  font-size: clamp(17px, 1.15vw + 0.9px, 22px);
+  grid-template-columns:
+    [full-start] minmax(14px, 1fr)
+    [wide-start] minmax(0, 150px)
+    [text-start] min(70ch, 100% - 28px)
+    [text-end] minmax(0, 150px)
+    [wide-end] minmax(14px, 1fr)
+    [full-end];
+}
+:root[data-measure='b'] #main > section,
+:root[data-measure='b'] .plate,
+:root[data-measure='b'] .plate > .plate-body,
+:root[data-measure='b'] #main > section > .well {
+  grid-template-columns:
+    [full-start] minmax(14px, 1fr)
+    [wide-start] minmax(0, 150px)
+    [text-start] min(70ch, 100% - 28px)
+    [text-end] minmax(0, 150px)
+    [wide-end] minmax(14px, 1fr)
+    [full-end];
+}
+:root[data-measure='b'] #main .say {
+  font-size: inherit;
+  max-width: 70ch;
+}
+
+/* Secondary type scales WITH the body, or a 22px paragraph sits beside a 13.5px caption and the
+ * hierarchy reads as a rendering fault. `em` against the inherited fluid size, so each keeps the
+ * character count it was tuned to. The mono micro-labels (9.5-11px) are deliberately left alone:
+ * they are furniture, not reading, and they stop being legible if they shrink further. */
+:root[data-measure='b'] #main figcaption {
+  font-size: 0.63em;
+}
+:root[data-measure='b'] #main .brief-row p {
+  font-size: 0.7em;
+}
+:root[data-measure='b'] #main .guide-lede {
+  font-size: 0.8em;
+}
+:root[data-measure='b'] #main .guide-bills p {
+  font-size: 0.68em;
+}
+:root[data-measure='b'] #main .colophon {
+  font-size: 0.56em;
+}
+:root[data-measure='b'] #main .key-gloss {
+  font-size: 0.61em;
+}
+:root[data-measure='b'] #main .ix-does,
+:root[data-measure='b'] #main .ix-pick {
+  font-size: 0.66em;
+}
+:root[data-measure='b'] #main .ix-ledger {
+  font-size: 0.6em;
+}
+:root[data-measure='b'] #main .ledger .val,
+:root[data-measure='b'] #main .sp-arc {
+  font-size: 0.68em;
+}
+
+/* The wrap grows with the type, or the wider prose simply eats the margin it was meant to share
+ * with the figures. */
+@media (min-width: 1800px) {
+  :root[data-measure='b'] .wrap {
+    max-width: 1840px;
+  }
+}
+@media (min-width: 2200px) {
+  :root[data-measure='b'] .wrap {
+    max-width: 2200px;
+  }
+}
+
+/* The A/B switch, matching the theme picker beside it so it reads as a reading preference rather
+ * than a test control. TEMPORARY — out with the harness.
+ *
+ * The shellbar is a `space-between` flex row in the vendored sheet with no `flex-wrap`, so two more
+ * controls pushed the page 256px sideways at 320px — caught by
+ * `test_the_page_never_scrolls_sideways`, which is exactly what it is for. Wrapping is set here
+ * rather than in `_shared/page.css` because that file is byte-identical across exercises 03-08 and
+ * this control exists only on this page. */
+.shellbar {
+  flex-wrap: wrap;
+  row-gap: 10px;
+}
+/* `space-between` in the vendored sheet spread four controls across the whole bar, so Back, Theme,
+ * Reading and Type sat in four corners with no relationship to each other. The three pickers are
+ * one group; pushing the first of them off `auto` collects them on the right. */
+.shellbar .themepick {
+  margin-left: auto;
+}
+.shellbar .vpick {
+  margin-left: 22px;
+}
+.vpick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.vpick label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+}
+.vpick select {
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 980px;
+  padding: 5px 10px;
+}

@@ -78,6 +78,7 @@ reader regenerates the site without:
 | `web/support.js` | the predicate itself — which query-key pairs survive, at any resolution |
 | `web/diagrams.js` | the full-size diagram per mechanism, four scenes over the same `pattern` block |
 | `web/field-guide/` | the second route: all thirty diagrams at once, in one convention |
+| `web/variants.js` | **temporary** — the A/B switch, and the flags the page branches on |
 
 `web/support.js` is extracted rather than inlined so a glyph at 26px and a diagram at 720 units call
 the *same* predicate — they cannot disagree about what a mechanism does, which they could while each
