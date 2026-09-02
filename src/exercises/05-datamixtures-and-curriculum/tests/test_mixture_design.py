@@ -177,7 +177,7 @@ def test_the_band_budgets_sum_to_the_reasoning_lane():
     assert sum(budgets.values()) == pytest.approx(expected)
 
 
-def test_the_worked_answer_matches_the_session_and_is_computed_not_quoted():
+def test_the_worked_answer_matches_the_notes_and_is_computed_not_quoted():
     assert curriculum.inclusive_answer() == curriculum.REASONING_ANSWER == 467
 
 
@@ -465,7 +465,7 @@ def test_the_ladder_covers_the_whole_run_without_gaps():
         assert earlier["to_tokens"] == pytest.approx(later["from_tokens"]), "a gap in the ladder"
 
 
-def test_the_packing_rules_the_session_states_are_recorded():
+def test_the_packing_rules_the_notes_state_are_recorded():
     """All three are constraints on Session 6's dataloader, not preferences of ours."""
     rules = " ".join(curriculum.PACKING_RULES).lower()
     assert "one sequence length per batch" in rules

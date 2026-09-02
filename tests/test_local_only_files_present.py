@@ -42,13 +42,13 @@ EXPECTED_BRIEFS = [p / "BRIEF.md" for p in EXERCISES]
 #: watched it.**
 #:
 #: The three lists above are the classes `AGENTS.md` names, and they were the only ones guarded.
-#: But `docs/notes/` holds every session's notes, transcripts and assignments — including
-#: material for sessions this repo has not reached yet — and `docs/EXPLAINER_*.md` are the two
+#: But `docs/notes/` holds every topic's notes, transcripts and assignments — including
+#: material for topics this repo has not reached yet — and `docs/EXPLAINER_*.md` are the two
 #: files any explainer is supposed to be built from. All gitignored, none regenerable, none
 #: guarded. A tripwire that covers the documented cases and not the biggest one is a tripwire that
 #: reads as coverage.
 #:
-#: Counted rather than enumerated: the corpus grows a file per session, so a fixed list would go
+#: Counted rather than enumerated: the corpus grows a file per topic, so a fixed list would go
 #: stale and a stale list here fails silently in the safe-looking direction.
 NOTES_CORPUS = REPO_ROOT / "docs" / "notes"
 
@@ -91,7 +91,7 @@ def _partial(paths: list[Path]) -> bool:
     return 0 < len(present) < len(paths)
 
 
-def test_no_session_notebook_has_gone_missing() -> None:
+def test_no_topic_notebook_has_gone_missing() -> None:
     """All of them or none of them. A gap means one was destroyed on this machine."""
     present = [p for p in EXPECTED_NOTEBOOKS if p.is_file()]
     if not present and not is_a_working_checkout():
@@ -219,7 +219,7 @@ def test_no_watched_file_has_been_emptied() -> None:
     )
 
 
-def test_every_session_notebook_is_still_valid_json() -> None:
+def test_every_topic_notebook_is_still_valid_json() -> None:
     """A notebook that no longer parses is lost, whatever its size says.
 
     The builder writes JSON; an interrupted write produces a file that opens, has a plausible

@@ -41,7 +41,7 @@ CATALOGUE = EXERCISE / "results" / "mechanisms.json"
 #: an alias, so the catalogue asserted the two were the same technique and the guard agreed.
 #: They are not the same technique: a fixed sparse pattern decides which pairs can ever interact
 #: before the model sees any data, while top-k decides per query from the scores themselves, and
-#: the session teaches the difference at length (`s8.md`, "How do we know which keys are best?").
+#: the notes teach the difference at length (`s8.md`, "How do we know which keys are best?").
 #: Covering half a phrase and passing is exactly the "missing or mis-explained mechanism" the
 #: assignment scores zero for.
 MANDATED: dict[str, tuple[str, ...]] = {
@@ -81,7 +81,7 @@ GLYPH_KINDS: frozenset[str] = frozenset({"field", "stack", "state", "bands"})
 GLYPH_SCALES: frozenset[str] = frozenset({"illustrative", "schematic"})
 
 
-#: Which bill a mechanism pays down. Session 8's organising idea: attention charges twice, and
+#: Which bill a mechanism pays down. Exercise 08's organising idea: attention charges twice, and
 #: everything after the original is somebody paying less of one of them.
 #:
 #: `origin` exists because the first entries on the timeline do not pay a bill — they *create* the

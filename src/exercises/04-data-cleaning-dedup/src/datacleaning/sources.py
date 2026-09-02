@@ -112,8 +112,8 @@ REASONING = CorpusSpec(
 # --------------------------------------------------------------------------------------------
 # B · Indic web crawl.
 #
-# Devanagari and Telugu only: our Session 2 tokenizer reads these at 0-0.6% [UNK] and cannot read
-# Bengali script at all (DECISIONS.md §D4). The session names Sangraha as the corpus that received
+# Devanagari and Telugu only: our exercise 02 tokenizer reads these at 0-0.6% [UNK] and cannot read
+# Bengali script at all (DECISIONS.md §D4). The notes name Sangraha as the corpus that received
 # zero deduplication, and its card claims nothing to the contrary.
 # --------------------------------------------------------------------------------------------
 INDIC = CorpusSpec(

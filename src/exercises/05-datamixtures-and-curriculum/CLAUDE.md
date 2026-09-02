@@ -8,8 +8,8 @@ only, gitignored).
 
 - **Lane supply is summed from named datasets, never quoted from a slot headline.** Everything
   here follows from that. It is what surfaced the 104B STEM gap, the 5.1B Indic residual, and the
-  fact that the session's two widgets disagree with each other. `inventory.SESSION_SLOT_HEADLINES`
-  and `SESSION_SUPPLY_CHECK` are kept **beside** the rows so the disagreement is visible rather
+  fact that the session's two widgets disagree with each other. `inventory.NOTES_SLOT_HEADLINES`
+  and `NOTES_SUPPLY_CHECK` are kept **beside** the rows so the disagreement is visible rather
   than resolved in silence — do not delete them to "clean up".
 
 - **`SPEC.md` and `TOKENIZER.md` are generated. Never edit them.** `export.py` renders both from

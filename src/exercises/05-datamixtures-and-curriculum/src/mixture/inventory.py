@@ -28,13 +28,13 @@ Every row's figures are typed by where they came from:
 
 from dataclasses import dataclass, field
 
-# Lane keys. Seven, matching the seven bands of the session's mixture composer, except that the
+# Lane keys. Seven, matching the seven bands of the notes' mixture composer, except that the
 # inventory's single "General web & STEM" slot is split in two — the composer gives web and STEM
 # separate shares (34% and 12%), so they cannot share one supply pool without one of them borrowing
 # the other's headroom.
 LANES = ("web", "code", "stem", "indic", "reasoning", "long_context", "agentic")
 
-# The session flags these as confirmed from its own sources rather than approximate:
+# The notes flag these as confirmed from its own sources rather than approximate:
 # "Sangraha and V4 numbers are confirmed from our sources."
 _CONFIRMED_SOURCES = ("AI4Bharat", "V4 run (confirmed)", "V4 corpus")
 
@@ -375,10 +375,10 @@ DATASETS: tuple[Dataset, ...] = (
 )
 
 
-# The slot totals the session prints above its own rows, kept so the itemised sums can be checked
+# The slot totals the notes print above its own rows, kept so the itemised sums can be checked
 # against them rather than silently replacing them. Where the two disagree, the disagreement is the
 # finding.
-SESSION_SLOT_HEADLINES: dict[str, float] = {
+NOTES_SLOT_HEADLINES: dict[str, float] = {
     "code": 1.1e12,
     "agentic": 627e6,
     "reasoning": 85.1e9,
@@ -388,8 +388,8 @@ SESSION_SLOT_HEADLINES: dict[str, float] = {
     "web+stem": 4.8e12,
 }
 
-# The session's supply-check widget prices the same lanes again, and not identically.
-SESSION_SUPPLY_CHECK: dict[str, float] = {
+# The notes' supply-check widget prices the same lanes again, and not identically.
+NOTES_SUPPLY_CHECK: dict[str, float] = {
     "code": 1.1e12,
     "agentic": 0.63e9,
     "reasoning": 85e9,
@@ -442,7 +442,7 @@ def lane_supply(lane: str) -> LaneSupply:
     rows = tuple(row for row in DATASETS if row.lane == lane)
     counted = sum(row.tokens for row in rows if row.tokens is not None)
     missing = sum(1 for row in rows if row.tokens is None)
-    headline = SESSION_SLOT_HEADLINES.get(lane)
+    headline = NOTES_SLOT_HEADLINES.get(lane)
     residual = None if headline is None else headline - counted
 
     notes: list[str] = []
@@ -482,7 +482,7 @@ def headline_disagreements() -> list[dict[str, object]]:
     """
     findings: list[dict[str, object]] = []
     for lane, supply in all_supply().items():
-        quoted = SESSION_SUPPLY_CHECK.get(lane)
+        quoted = NOTES_SUPPLY_CHECK.get(lane)
         if quoted is None:
             continue
         gap = supply.counted_tokens - quoted
@@ -527,7 +527,7 @@ def main() -> None:
     print(header)
     print("-" * len(header))
     for lane, supply in all_supply().items():
-        quoted = SESSION_SUPPLY_CHECK.get(lane)
+        quoted = NOTES_SUPPLY_CHECK.get(lane)
         gap = None if quoted is None else supply.counted_tokens - quoted
         print(
             f"{lane:<13} {humanise(supply.counted_tokens):>10} {humanise(quoted):>13} "

@@ -10,6 +10,24 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- **`docs/sessions/` is now `docs/notes/`**, still gitignored and still backed up. 133 files, moved
+  in the local-only store as a `git mv` so every file's history survives under the new path — the
+  store is an append-only high-water mark, so without that commit the tripwire would have gone red
+  permanently, asking why 133 files it holds had vanished from the working tree. 42 path references
+  updated across 15 files, plus two paths built from parts (`REPO_ROOT / "docs" / "sessions"`) that
+  a string replacement could not have caught.
+- **`.gitignore` no longer contains the word "session" anywhere**, including in its comments.
+- **Code comments and internal test identifiers no longer refer to numbered teaching sessions** —
+  they name the exercise (`exercise 05's headline mixture`) or the source notes (`the notes' own
+  words`) instead. Four identifiers were deliberately left alone because they are serialized into
+  `results/` or `web/` and renaming them would rewrite published data: `session_share`,
+  `taught_in_session`, `session_illustrative` and `outsideSession`.
+- **Commit messages now carry a `Co-Authored-By` trailer and nothing else** — no links back to an
+  agent conversation, which point at something nobody outside the machine can open. Branch names and
+  PR titles say what a change does rather than naming the source material.
+
 ### Fixed
 
 - **The standards archive's retention limit was a cap when it should have been a floor**, so the

@@ -103,7 +103,7 @@ def test_no_mechanism_is_all_upside() -> None:
             )
 
 
-def test_every_mechanism_carries_the_narrative_the_session_requires() -> None:
+def test_every_mechanism_carries_the_narrative_the_notes_require() -> None:
     """The five-step shape `s8.md` mandates: what existed, the problem, the mechanism, what it
     fixed, and the new trade-off it introduced."""
     for mechanism in MECHANISMS:
@@ -129,7 +129,7 @@ def test_at_least_one_mechanism_the_instructor_did_not_cover() -> None:
         assert mechanism.source.is_checkable, f"bonus entry {mechanism.key} has an uncheckable date"
 
 
-def test_the_json_records_which_mechanisms_the_session_actually_taught() -> None:
+def test_the_json_records_which_mechanisms_the_notes_actually_taught() -> None:
     """Eight of the mandated list are named in the assignment and never taught.
 
     Recording which is which is how a reader can tell where our evidence came from. If every entry

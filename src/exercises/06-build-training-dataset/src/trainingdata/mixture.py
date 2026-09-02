@@ -30,7 +30,7 @@ from typing import Final
 from . import spec
 from .config import Config
 
-#: Session 5's headline mixture, re-exported from `spec.py`.
+#: Exercise 05's headline mixture, re-exported from `spec.py`.
 #:
 #: **Declared there, not here**, because the auditor needs them too and may not import this module
 #: to get them — `verify.py` re-derives a run's mixture and compares it against the plan, and a
@@ -38,7 +38,7 @@ from .config import Config
 #: place both sides may read: shared facts, no shared logic.
 #:
 #: `long_context` is deliberately **zero**. It is a schedule over the other lanes, not a corpus, and
-#: a fetcher that gives it tokens is inventing a lane session 5 explicitly retired.
+#: a fetcher that gives it tokens is inventing a lane exercise 05 explicitly retired.
 LANE_SHARES: Final[dict[str, float]] = spec.LANE_SHARES
 
 #: The minimum share of every batch a lane keeps, whatever a selector would prefer.
@@ -48,7 +48,7 @@ LANE_SHARES: Final[dict[str, float]] = spec.LANE_SHARES
 #: why any floor breach there is immediately visible rather than absorbed.
 FLOORS: Final[dict[str, float]] = spec.FLOORS
 
-#: Protected lanes may not claim more than this between them. Session 5's number.
+#: Protected lanes may not claim more than this between them. Exercise 05's number.
 FLOOR_CEILING: Final[float] = 0.20
 
 #: Extra supply a protected lane is fetched with, above its planned share.

@@ -282,7 +282,7 @@ def seams(config: Config | None = None) -> tuple[Seam, ...]:
 
 # ------------------------------------------------------------------- the sequence-length ladder
 
-# Three rules from the session, none of them ours, all of them binding on Session 6's dataloader.
+# Three rules from the notes, none of them ours, all of them binding on exercise 06's dataloader.
 #
 #   * **One length per batch.** *"In a batch all examples have the same length."* So a run does not
 #     mix 4K and 8K samples; it moves between homogeneous batches, and the ladder is a schedule of
@@ -293,7 +293,7 @@ def seams(config: Config | None = None) -> tuple[Seam, ...]:
 #     100k."* A model that only ever saw 8K does not acquire 32K by being asked at inference.
 #
 # V4's own ladder is the precedent: it trained at 4K "because it was fast", then moved to 8K, and
-# the session's answer to going further was 16K. Doubling is the step, so this ladder doubles --
+# the notes' answer to going further was 16K. Doubling is the step, so this ladder doubles --
 # an earlier version of this file jumped 8K to 32K and skipped a rung, which is the same coarse
 # sweep exercise 02 was caught by when it went 2 -> 5 -> 6 and named the wrong optimum.
 SEQUENCE_LADDER: tuple[tuple[int, str], ...] = (
@@ -619,9 +619,9 @@ def real_example_coverage() -> dict[str, bool]:
 
 # ----------------------------------------------------------------- reasoning-length bands
 
-# One problem, four depths. The problem and its answer are Session 5's own worked example
+# One problem, four depths. The problem and its answer are exercise 05's own worked example
 # ("How many integers between 1 and 1000 are divisible by 3 or 5?", answer 467), so the ladder is
-# anchored to something the session states rather than to something invented here.
+# anchored to something the notes state rather than to something invented here.
 REASONING_PROBLEM = "How many integers between 1 and 1000 are divisible by 3 or 5?"
 REASONING_ANSWER = 467
 

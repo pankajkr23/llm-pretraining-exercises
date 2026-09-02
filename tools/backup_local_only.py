@@ -115,7 +115,7 @@ PATTERNS: tuple[str, ...] = (
 #: the file, naming it, and returning non-zero gives both the protection and the alarm.
 #:
 #: The patterns are deliberately narrow. `*secret*` and `*credentials*` were here and would match
-#: ordinary prose filenames — a session note about secrets, a document about credentialing — so
+#: ordinary prose filenames — a topic note about secrets, a document about credentialing — so
 #: they are anchored to the shapes real credential files actually take.
 FORBIDDEN: tuple[str, ...] = (
     "*.env",

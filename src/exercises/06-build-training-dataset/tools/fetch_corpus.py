@@ -56,7 +56,7 @@ logger = logging.getLogger("fetch_corpus")
 #: Where the fetched text lands. Gitignored — the corpus is data, not source.
 OUT_DIR = REPO_ROOT / "data" / "corpus"
 
-#: Session 5's proxy text, already fetched and licence-checked by that exercise's own fetcher.
+#: Exercise 05's proxy text, already fetched and licence-checked by that exercise's own fetcher.
 PROXY_DIR = REPO_ROOT / "data" / "proxy"
 
 #: Verified at fetch time against the dataset card. A licence we cannot read is a licence we do not
@@ -227,7 +227,7 @@ SOURCES: tuple[Source, ...] = (
     ),
 )
 
-#: Lanes already funded on disk by session 5's fetcher, under the same licence gate.
+#: Lanes already funded on disk by exercise 05's fetcher, under the same licence gate.
 LOCAL_SOURCES: tuple[LocalSource, ...] = (
     LocalSource(
         lane="agentic",

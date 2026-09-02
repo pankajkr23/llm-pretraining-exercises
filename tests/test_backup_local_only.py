@@ -81,7 +81,7 @@ def test_it_collects_every_protected_class(fake_repo: Path) -> None:
         assert expected in found, f"{expected} would not be backed up"
 
 
-def test_the_session_corpus_glob_reaches_both_depths(fake_repo: Path) -> None:
+def test_the_notes_corpus_glob_reaches_both_depths(fake_repo: Path) -> None:
     """**The glob most likely to be silently wrong.**
 
     `docs/notes/**/*.md` must match `docs/notes/s1.md` — a file directly in the directory —

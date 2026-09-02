@@ -728,9 +728,9 @@ def render_spec(config: Config | None = None) -> str:
     invariant_count = len([n for n in dir(checks) if n.startswith("check_")])
 
     run_size = humanise(config.run_tokens)
-    stem_gap = humanise(inventory.SESSION_SUPPLY_CHECK["stem"] - stem.counted_tokens)
+    stem_gap = humanise(inventory.NOTES_SUPPLY_CHECK["stem"] - stem.counted_tokens)
     agentic_ceiling = humanise(agentic.raw_supply * 16.4)
-    stem_quoted = humanise(inventory.SESSION_SUPPLY_CHECK["stem"])
+    stem_quoted = humanise(inventory.NOTES_SUPPLY_CHECK["stem"])
     stem_demand = humanise(lanes.get("stem").share * config.run_tokens)
     local_tflops = f"{proxy.hardware('m4-max').tflops:g}"
     indic_demand = humanise(lanes.get("indic").share * config.run_tokens)
@@ -1366,8 +1366,8 @@ def render_readme(config: Config | None = None) -> str:
     )
 
     run_size = humanise(config.run_tokens)
-    stem_quoted = humanise(inventory.SESSION_SUPPLY_CHECK["stem"])
-    stem_gap = humanise(inventory.SESSION_SUPPLY_CHECK["stem"] - stem.counted_tokens)
+    stem_quoted = humanise(inventory.NOTES_SUPPLY_CHECK["stem"])
+    stem_gap = humanise(inventory.NOTES_SUPPLY_CHECK["stem"] - stem.counted_tokens)
     agentic_ceiling = humanise(agentic.raw_supply * 16.4)
     invariant_count = len([n for n in dir(checks) if n.startswith("check_")])
     corpus_tokens = f"{_proxy_corpus_tokens():,}"
@@ -2661,7 +2661,7 @@ def web_bundle(config: Config | None = None) -> dict:
             for row in inventory.DATASETS
         ],
         "headline_disagreements": inventory.headline_disagreements(),
-        "supply_check": inventory.SESSION_SUPPLY_CHECK,
+        "supply_check": inventory.NOTES_SUPPLY_CHECK,
     }
 
     if RESULTS.exists():

@@ -42,7 +42,7 @@ REQUIRED_SEQUENCE: Final[tuple[str, ...]] = (
 
 #: Sentinel token ids.
 #:
-#: The frozen Session 2 tokenizer has **no EOS, no BOS and no PAD** — its vocabulary is contiguous
+#: The frozen exercise 02 tokenizer has **no EOS, no BOS and no PAD** — its vocabulary is contiguous
 #: `0..9999` with no `post_processor`. Adding them to the file would change its bytes and void the
 #: tokenizer hash that every shard manifest pins, so the sentinels are assigned **out of
 #: vocabulary** and materialised into the shard at tokenize time instead.
@@ -101,7 +101,7 @@ ATTENTION_POLICIES: Final[tuple[str, ...]] = ("block-diagonal-causal", "causal")
 LOSS_POLICIES: Final[tuple[str, ...]] = ("grade-all-but-document-final", "context-masked")
 
 
-#: Session 5's headline mixture, and the floors that protect two of its lanes.
+#: Exercise 05's headline mixture, and the floors that protect two of its lanes.
 #:
 #: These live here rather than in `mixture.py` because the **auditor** needs them. `verify.py`
 #: re-derives the mixture from a run's ledger and has to compare it against the plan — and it may

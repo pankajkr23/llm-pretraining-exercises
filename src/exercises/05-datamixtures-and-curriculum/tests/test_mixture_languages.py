@@ -14,7 +14,7 @@ from mixture.config import Config
 CFG = Config()
 
 
-def test_the_two_languages_the_session_names_are_both_answered():
+def test_the_two_languages_the_notes_name_are_both_answered():
     """The question is asked by name, so it is answered by name."""
     plan = {p.code: p for p in languages.plan()}
     assert "san_Deva" in plan and "urd_Arab" in plan

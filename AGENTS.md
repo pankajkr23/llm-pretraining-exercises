@@ -709,7 +709,13 @@ The rules that follow from it:
 - **Every change lands on `main` via a pull request.** Branch → push → open a PR → merge. **Never push, merge, or force-push directly to `main`** — it's the protected branch that production is promoted from, and the base every PR previews against.
 - Keep PRs scoped to one concern; unrelated edits get their own branch/PR.
 - **Changelog:** record every user-facing change under `CHANGELOG.md`'s `[Unreleased]` section **in the same PR** (Keep a Changelog + SemVer).
-- **Commit & PR messages** carry no AI co-author or session-link trailers — keep the public history clean.
+- **Commit messages carry a `Co-Authored-By` trailer for the agent that wrote them, and nothing
+  else.** No links back to an agent conversation, no run ids, no tool banners — those point at
+  something nobody outside this machine can open, and they date badly. Attribution is useful;
+  a dead link in the permanent history is not.
+- **Neither a branch name nor a PR title names the source material.** Say what the change does
+  (`refactor: rename the reference-material folder`), not which numbered topic it came from. The
+  public history is the engineering work; the course's own structure stays out of it.
 
 ## Local gates before a commit exists
 

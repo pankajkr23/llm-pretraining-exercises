@@ -211,7 +211,7 @@ def get(key: str) -> Lane:
 
 # ------------------------------------------------------------------------- the Indic tier split
 
-# Assignment item 2. The tiers are Session 3's provenance ladder, and which row belongs in which is
+# Assignment item 2. The tiers are exercise 03's provenance ladder, and which row belongs where is
 # the single most contested judgment in this spec — see `TIER_C_DISPUTE`.
 INDIC_TIER_ROWS: dict[str, tuple[str, ...]] = {
     "A": ("Sangraha (verified)",),
@@ -227,9 +227,9 @@ TIER_NAMES: dict[str, str] = {
     "D": "synthetic",
 }
 
-# Our demanded split, against the session's default of 40/25/20/15.
+# Our demanded split, against the notes' default of 40/25/20/15.
 INDIC_TIER_SHARES: dict[str, float] = {"A": 0.45, "B": 0.20, "C": 0.20, "D": 0.15}
-SESSION_INDIC_TIER_SHARES: dict[str, float] = {"A": 0.40, "B": 0.25, "C": 0.20, "D": 0.15}
+NOTES_INDIC_TIER_SHARES: dict[str, float] = {"A": 0.40, "B": 0.25, "C": 0.20, "D": 0.15}
 
 TIER_C_DISPUTE = """\
 The inventory's largest Indic row is named "Sangraha (synthetic)" and tagged tier **C**, which is
@@ -322,7 +322,7 @@ def indic_tiers(config: Config | None = None) -> dict[str, IndicTier]:
 
 # Assignment item 4. V4 pinned an Always-On lane at 8% of every batch, outside the selector's
 # control, because an English-heavy proxy (cosine 0.876 with the English web band) starves exactly
-# the lanes we are trying to build. V5 extends the same protection and the session fixes the two
+# the lanes we are trying to build. V5 extends the same protection and the notes fix the two
 # numbers.
 FLOOR: dict[str, float] = {"indic": 0.12, "agentic": 0.02}
 

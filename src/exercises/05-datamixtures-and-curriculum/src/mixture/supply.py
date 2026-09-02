@@ -101,7 +101,7 @@ def double_counted() -> dict[str, Correction]:
     }
 
 
-# The session's own words for how much of an agentic trajectory carries loss. Turned into a number
+# The notes' own words for how much of an agentic trajectory carries loss. Turned into a number
 # below, with the arithmetic shown rather than the conclusion asserted.
 _SUPERVISED_TOKENS_PER_TRAJECTORY = (200.0, 500.0)  # "a few hundred supervised tokens"
 

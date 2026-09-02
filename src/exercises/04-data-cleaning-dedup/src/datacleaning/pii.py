@@ -108,7 +108,7 @@ PATTERNS: tuple[Pattern, ...] = (
 )
 
 # A deliberately small gazetteer. Not a linguistic resource and not pretending to be one: it exists
-# so the *behaviour* of a name layer can be shown and operated, as the session's widget does.
+# so the *behaviour* of a name layer can be shown and operated, as the notes' widget does.
 GIVEN_NAMES: frozenset[str] = frozenset(
     {
         "ananya",

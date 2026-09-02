@@ -24,7 +24,7 @@ saying so is the difference between a defended number and a hopeful one.
 
 from dataclasses import dataclass
 
-# The three colours of the session's loss map, named once.
+# The three colours of the notes' loss map, named once.
 SUPERVISED = "supervised"  # green — in the cross-entropy loss
 MASKED = "masked"  # grey — prompt, problem, or observation; context only
 REWARD_ONLY = "reward"  # violet — a verifier scores the outcome; no token loss

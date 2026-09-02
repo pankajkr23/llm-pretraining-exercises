@@ -123,13 +123,13 @@ def test_the_notebook_carries_a_colab_badge(nb):
     assert NOTEBOOK.name in text, "the badge must point at this notebook, not another"
 
 
-def test_the_notebook_is_named_with_its_session_id():
+def test_the_notebook_is_named_with_its_topic_id():
     """`AGENTS.md`: zero-padded session id first, so lexical sort equals session order."""
     assert NOTEBOOK.name.startswith("S04-")
     assert NOTEBOOK.suffix == ".ipynb"
 
 
-def test_every_session_notebook_follows_the_naming_rule():
+def test_every_topic_notebook_follows_the_naming_rule():
     """The rule is repo-wide, so it is checked repo-wide rather than for this session alone.
 
     `hello.ipynb` is exempt by name: it is the tracked sample, not a session notebook, and the

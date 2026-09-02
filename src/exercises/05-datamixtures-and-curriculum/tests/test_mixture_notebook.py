@@ -127,7 +127,7 @@ def test_the_notebook_says_how_to_open_it_on_colab(nb):
     assert "Upload notebook" in text, "the notebook must say how to open it on Colab instead"
 
 
-def test_the_notebook_is_named_with_its_session_id():
+def test_the_notebook_is_named_with_its_topic_id():
     """`AGENTS.md`: zero-padded session id first, so lexical sort equals session order."""
     assert NOTEBOOK.name.startswith("S05-")
     assert NOTEBOOK.suffix == ".ipynb"
@@ -166,7 +166,7 @@ def test_the_notebook_declares_the_stand_ins_it_uses(nb):
     assert "UNMEASURED" in text or "unmeasured" in text, "the throughput refusal must be visible"
 
 
-def test_every_session_notebook_follows_the_naming_rule():
+def test_every_topic_notebook_follows_the_naming_rule():
     """The rule is repo-wide, so it is checked repo-wide rather than for this session alone.
 
     `hello.ipynb` is exempt by name. It is not a session notebook — it is the tracked sample, and
@@ -259,7 +259,7 @@ def test_the_sample_notebook_runs() -> None:
 
 
 @pytest.mark.integration
-def test_the_session_notebook_runs_end_to_end() -> None:
+def test_the_topic_notebook_runs_end_to_end() -> None:
     """Every code cell executes without raising.
 
     AGENTS.md: "a session's work is not done until its notebook runs the shipped code end to end."

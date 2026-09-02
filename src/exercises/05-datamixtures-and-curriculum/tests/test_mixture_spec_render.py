@@ -423,7 +423,7 @@ def _ablation_rows() -> list[tuple[int, float, str]]:
 
 
 @pytest.mark.skipif(not EX02_README.exists(), reason="exercise 02 is not present")
-def test_the_tokenizer_doc_does_not_overclaim_about_the_session_2_submission(tokenizer_doc: str):
+def test_the_tokenizer_doc_does_not_overclaim_about_the_earlier_submission(tokenizer_doc: str):
     """The claim in TOKENIZER.md §3, checked against exercise 02's own table.
 
     An earlier draft said the submission had "the lowest total token count in the whole table". It
