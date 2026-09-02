@@ -20,6 +20,7 @@ is the one that matters: an archive that is neither tracked nor backed up is the
 repo has already lost twice.
 """
 
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -31,14 +32,14 @@ sys.path.insert(0, str(REPO_ROOT / "tools"))
 
 from snapshot_standards import (  # noqa: E402
     _BANNER_MARK,
+    _COMMENT_PREFIX,
     ARCHIVE,
     RETENTION,
     STANDARDS,
+    _banner,
     archive_name,
     existing,
 )
-
-_MD_BODY_SEPARATOR = "---\n\n"
 
 
 def _archived() -> list[Path]:
@@ -58,15 +59,16 @@ _NO_ARCHIVE = pytest.mark.skipif(
 
 
 def _tag_of(path: Path) -> str:
-    """`DESIGN.v0.12.0.md` -> `v0.12.0`."""
-    for part in path.name.split("."):
-        if part.startswith("v") and part[1:].isdigit():
-            i = path.name.index(part)
-            rest = path.name[i:]
-            return (
-                "v" + rest[1:].split(".md")[0].split(".yml")[0].split(".yaml")[0].split(".toml")[0]
-            )
-    raise AssertionError(f"no version in {path.name}")
+    """`DESIGN.v0.12.0.md` -> `v0.12.0`, whatever extensions follow.
+
+    Matched, not stripped. The first version of this walked a list of known suffixes off the end,
+    which silently produced `v0.12.0.json.txt` the moment a snapshot carried two extensions — and
+    the tag it names is the whole basis of the byte-identical guard.
+    """
+    match = re.search(r"\.(v\d+(?:\.\d+)*)(?:\.|$)", path.name)
+    if not match:
+        raise AssertionError(f"no version in {path.name}")
+    return match.group(1)
 
 
 def _source_of(path: Path) -> str:
@@ -114,18 +116,23 @@ def test_every_snapshot_is_byte_identical_to_the_tag_it_names(snapshot):
     if shown.returncode != 0:
         pytest.skip(f"{tag} is not reachable in this checkout (a shallow clone has no tags)")
 
-    text = snapshot.read_text(encoding="utf-8")
-    if snapshot.suffix == ".md":
-        body = text.split(_MD_BODY_SEPARATOR, 1)[1]
-    else:
-        body = "".join(
-            line for line in text.splitlines(keepends=True) if not line.startswith("#")
-        ).lstrip("\n")
-        shown.stdout = "".join(
-            line for line in shown.stdout.splitlines(keepends=True) if not line.startswith("#")
-        ).lstrip("\n")
+    # Strip EXACTLY the banner, reconstructed from the same function that wrote it — not "every
+    # line starting with #". That shortcut stripped the file's own comments too, from both sides,
+    # so an edited comment inside a .gitleaksignore or .pre-commit-config snapshot compared equal
+    # and the guard passed. Removing a known prefix leaves every remaining byte under assertion.
+    suffix = Path(source).suffix
+    comment = None if suffix == ".md" else _COMMENT_PREFIX.get(suffix, "#")
+    banner = _banner(source, tag, comment)
 
-    assert body == shown.stdout, f"{snapshot.name} has drifted from {tag}:{source}"
+    text = snapshot.read_text(encoding="utf-8")
+    assert text.startswith(banner), (
+        f"{snapshot.name} does not open with the exact banner for {source} at {tag}.\n"
+        "Either it was edited, or the banner text changed since it was written — the banner\n"
+        "is part of the file, so editing `_banner()` invalidates every snapshot at once.\n"
+        "If the wording changed on purpose, regenerate from the tags (content is re-read):\n"
+        f"  uv run python tools/snapshot_standards.py --ref {tag} --force"
+    )
+    assert text[len(banner) :] == shown.stdout, f"{snapshot.name} has drifted from {tag}:{source}"
 
 
 @_NO_ARCHIVE
@@ -208,5 +215,24 @@ def test_archive_names_are_derivable_from_the_source_and_the_tag():
     """The naming is a function, not a convention someone remembers."""
     assert archive_name("docs/DESIGN.md", "v0.12.0") == "DESIGN.v0.12.0.md"
     assert archive_name(".gitignore", "v0.12.0") == "gitignore.v0.12.0"
+    assert archive_name(".gitleaksignore", "v0.12.0") == "gitleaksignore.v0.12.0"
     assert archive_name(".pre-commit-config.yaml", "v0.9.0") == "pre-commit-config.v0.9.0.yaml"
     assert archive_name(".github/workflows/ci.yml", "v0.12.0") == "ci.v0.12.0.yml"
+    # JSON has no comment syntax, so a bannered snapshot is not valid JSON — it must not keep an
+    # extension that claims otherwise.
+    assert archive_name("vercel.json", "v0.12.0") == "vercel.v0.12.0.json.txt"
+
+
+@_NO_ARCHIVE
+def test_no_snapshot_wears_an_extension_it_can_no_longer_be_parsed_as():
+    """A bannered `.json` would parse as nothing while looking like config. Assert the property.
+
+    Written against the whole archive rather than against JSON, so adding a `.toml`-with-no-comments
+    or any other silent-comment format later is caught rather than assumed.
+    """
+    import json
+
+    for snap in _archived():
+        if snap.suffix != ".json":
+            continue
+        json.loads(snap.read_text(encoding="utf-8"))  # must not raise, or it is misnamed

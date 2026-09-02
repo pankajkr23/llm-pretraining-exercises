@@ -865,7 +865,9 @@ building or changing a page; the rules that matter across exercises are below.
   ```
 
   The set is `tools/snapshot_standards.py::STANDARDS` — `AGENTS.md`, `docs/DESIGN.md`, `ci.yml`,
-  `.pre-commit-config.yaml`, `pyproject.toml`, `.gitignore`. **Add the snapshot to the release
+  `.pre-commit-config.yaml`, `pyproject.toml`, `.gitignore`, `vercel.json` (13 lines, one of which
+  decides whether production deploys itself) and `.gitleaksignore` (where a broad entry silently
+  disables the secret scan). **Add the snapshot to the release
   ritual**, alongside moving `[Unreleased]` in the changelog. `tests/test_standards_history.py`
   asserts each copy is byte-identical to the tag it names, carries its `FROZEN COPY — NOT IN FORCE`
   banner (an agent reading an archived `AGENTS.md` as live policy is the obvious failure), and that

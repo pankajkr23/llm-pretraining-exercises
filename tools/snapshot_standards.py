@@ -43,6 +43,14 @@ STANDARDS: tuple[str, ...] = (
     ".pre-commit-config.yaml",
     "pyproject.toml",
     ".gitignore",
+    # 13 lines holding `git.deploymentEnabled.main: false`. One character there flips production
+    # from "deploys only through the gated environment" to "deploys itself on every push to main",
+    # and nothing fails — the symptom is that a deploy happens. Highest consequence per line here.
+    "vercel.json",
+    # A broad entry silently disables secret scanning while still reading as coverage. Every entry
+    # today is a full `<commit>:<path>:<rule>:<line>` fingerprint, which expires when the line
+    # changes; a snapshot makes a widening visible as a diff rather than as an absence of alerts.
+    ".gitleaksignore",
 )
 
 #: How many released versions to keep per file. Two is the smallest number that answers both
@@ -54,9 +62,26 @@ _BANNER_MARK = "FROZEN COPY — NOT IN FORCE"
 
 _COMMENT_PREFIX = {".yml": "#", ".yaml": "#", ".toml": "#", "": "#"}
 
+#: Formats with **no comment syntax at all**, where a banner cannot legally live inside the file.
+#: JSON is the case that forced this: prefixing `vercel.json` with `#` lines produces a file that is
+#: not valid JSON while still wearing a `.json` extension — a trap for the next tool or person to
+#: open it. Their snapshots get `.txt` appended instead, which says what the file now is: a text
+#: record, not a config. The banner still goes in, because every snapshot must carry one.
+_NO_COMMENT_SYNTAX = frozenset({".json"})
+
 
 def _banner(source: str, version: str, comment: str | None) -> str:
-    """Build the header that stops an agent reading an archived copy as live instructions."""
+    """Build the header that stops an agent reading an archived copy as live instructions.
+
+    **Editing this text invalidates every snapshot already on disk.** The banner is part of the
+    file, and `tests/test_standards_history.py` strips exactly this prefix before comparing the rest
+    to the tag — deliberately, because the looser "drop every line starting with `#`" it replaced
+    also dropped the snapshotted file's *own* comments, so an edited comment inside a
+    `.gitleaksignore` or `pyproject.toml` snapshot compared equal and the guard passed. Shortening
+    one line here for a lint fix duly turned all twelve snapshots red at once. That is the guard
+    working. Re-run with `--ref <tag> --force`, which re-reads content from the tag rather than
+    preserving what is on disk.
+    """
     lines = [
         f"**{_BANNER_MARK}.** This is `{source}` exactly as it shipped in **{version}**, kept",
         "so a rewrite can be diffed against what it replaced. It is history, not policy: the live",
@@ -87,12 +112,17 @@ def latest_tag() -> str:
 
 
 def archive_name(source: str, version: str) -> str:
-    """`docs/DESIGN.md` at `v0.12.0` -> `DESIGN.v0.12.0.md`; dotfiles keep their leading dot."""
+    """`docs/DESIGN.md` at `v0.12.0` -> `DESIGN.v0.12.0.md`; dotfiles lose their leading dot.
+
+    A format with no comment syntax gets `.txt` appended, so a bannered snapshot never wears an
+    extension claiming to be something it can no longer parse as.
+    """
     stem = Path(source).name
-    if stem.startswith("."):  # .gitignore, .pre-commit-config.yaml
+    tail = ".txt" if Path(stem).suffix in _NO_COMMENT_SYNTAX else ""
+    if stem.startswith("."):  # .gitignore, .pre-commit-config.yaml, .gitleaksignore
         base, _, ext = stem[1:].partition(".")
-        return f"{base}.{version}.{ext}" if ext else f"{base}.{version}"
-    return f"{Path(stem).stem}.{version}{Path(stem).suffix}"
+        return f"{base}.{version}.{ext}{tail}" if ext else f"{base}.{version}{tail}"
+    return f"{Path(stem).stem}.{version}{Path(stem).suffix}{tail}"
 
 
 def existing(source: str) -> list[Path]:

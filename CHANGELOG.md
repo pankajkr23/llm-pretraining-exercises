@@ -20,6 +20,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   it names, carries a `FROZEN COPY — NOT IN FORCE` banner, and does not silently exceed the
   two-version retention. Snapshotting is now a step in the release ritual.
 
+  Eight files: `AGENTS.md`, `docs/DESIGN.md`, `ci.yml`, `.pre-commit-config.yaml`,
+  `pyproject.toml`, `.gitignore`, `vercel.json` and `.gitleaksignore` — chosen because a bad
+  edit to each breaks something far from the edit. `vercel.json` is thirteen lines, one of
+  which decides whether production deploys itself; a broad `.gitleaksignore` entry silently
+  disables the secret scan while still reading as coverage. `uv.lock` is excluded (generated,
+  and regenerable), as are `CLAUDE.md`, the Copilot and Cursor pointer files (each is a
+  pointer to `AGENTS.md`, so a snapshot would archive the pointer).
+
   The archive is **gitignored**: tracking it would put a second copy of `AGENTS.md` and
   `docs/DESIGN.md` on the remote, which is the argument that untracked the notebooks. So it joins
   the protected local-only set — in `backup_local_only.py::PATTERNS` and under the tripwire — and
