@@ -91,10 +91,14 @@ function card(m, cache) {
 export function buildGuide(M) {
   const total = M.mechanisms.length;
 
+  /* `spell(kinds)`, not "Four". A typed count of a data-derived quantity is the repo's most
+   * expensive documented failure, and this one sat below the guard's floor of eleven. */
+  const nKinds = new Set(M.mechanisms.map((m) => m.glyph.kind)).size;
   document.getElementById('fg-lede').textContent =
     `All ${spell(total)} mechanisms, each drawn the same way so the differences are the ` +
-    'mechanisms rather than the drawing. Four shapes cover the lot: which scores survive, what ' +
-    'the cache keeps, one fixed-size state, and how position enters.';
+    `mechanisms rather than the drawing. ${spell(nKinds)[0].toUpperCase()}${spell(nKinds).slice(1)} ` +
+    'shapes cover the lot: which scores survive, what the cache keeps, one fixed-size state, and ' +
+    'how position enters.';
 
   /* The key: one exemplar per family, drawn by the same generator the cards use, so it cannot
    * describe a shape the guide does not draw. */

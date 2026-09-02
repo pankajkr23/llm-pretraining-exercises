@@ -135,6 +135,55 @@ def test_the_readme_links_the_catalogue_it_describes() -> None:
     )
 
 
+def test_no_heading_or_rail_label_types_a_count() -> None:
+    """A count in a heading or a rail label must be derived, never typed.
+
+    The guard below it starts at *eleven* on purpose — this page says "two bills" and "six words"
+    constantly and those are fixed quantities, not catalogue sizes, so extending it downward would
+    mean marking thirty-six legitimate lines with `count-literal-ok` and a marker on thirty-six
+    lines is noise nobody reads.
+
+    The consequence was live and green: the *next* section was headed **"Three things this opens"**
+    above **four** items, and its rail entry read "Three follow-ons". Both hand-typed, both wrong,
+    nothing red — the repo's most expensive documented failure, in the one place the guard for it
+    could not look.
+
+    This narrows the scope instead of widening the pattern. Headings and rail labels are the three
+    places on this page where a spelled number is *always* a count of the section's own contents, so
+    inside them the small numbers can be forbidden as literals with no false positives at all. A
+    derived heading is a template literal — `All ${spell(M.counts.total)}, at once` — and passes.
+    """
+    import re as _re
+
+    #: "one" is excluded, and only "one". It is a determiner far more often than a count on this
+    #: page — "One step, taken apart", "One token, 192 KiB, forever" — and it is never the count of
+    #: a variable-length list, which is the defect this exists for. Every real instance of that
+    #: defect in this repo's history used three or more.
+    numbers = (
+        r"\b(two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen"
+        r"|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty)\b"
+    )
+    source = (EXERCISE / "web" / "chapters.js").read_text(encoding="utf-8")
+
+    labels: list[str] = []
+    #: The rail's two labels, wherever a section declares them.
+    labels += _re.findall(r"\b(?:short|sub):\s*'([^']*)'", source)
+    #: The section title: the fourth positional argument of `section(id, role, eyebrow, title, …)`.
+    #: A template literal is a derived title and is deliberately not matched here.
+    labels += _re.findall(
+        r"\bsection\(\s*'[\w-]+',\s*'[a-z]+',\s*(?:null|'[^']*'|`[^`]*`),\s*'([^']*)'",
+        source,
+        _re.S,
+    )
+    assert labels, "no headings or rail labels matched; the patterns have gone stale"
+
+    offenders = [label for label in labels if _re.search(numbers, label, _re.I)]
+    assert not offenders, (
+        "a heading or rail label types a count instead of deriving it: "
+        f"{offenders}. Derive it, or drop the count — a heading names its subject."
+    )
+
+
 def test_no_count_is_typed_into_the_page_as_a_word() -> None:
     """The page may not carry a spelled count as a source literal. It must derive every one.
 

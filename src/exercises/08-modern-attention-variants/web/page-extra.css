@@ -479,6 +479,61 @@ figcaption strong {
   max-width: 80ch;
 }
 
+/* ---------------------------------------------------------------- the two arcs */
+/* The claimed order and the observed order, as two labelled rows. They were fourteen labelled
+ * steps inside running prose, which is a chain a reader has to parse rather than scan. */
+.arcs {
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--line);
+  margin: 26px 0 8px;
+  padding: 4px 0;
+}
+.arc-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 168px) 1fr;
+  gap: 6px 20px;
+  align-items: baseline;
+  padding: 13px 0;
+}
+.arc-row + .arc-row {
+  border-top: 1px solid var(--line);
+}
+.arc-lab {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.arc-chain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 9px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.arc-observed .arc-step {
+  font-weight: 600;
+  color: var(--ink);
+}
+.arc-claimed .arc-step {
+  color: var(--muted);
+}
+.arc-step.none {
+  font-style: italic;
+  color: var(--faint);
+}
+.arc-sep {
+  color: var(--faint);
+}
+@media (max-width: 620px) {
+  .arc-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ------------------------------------------------------- the reading spread */
 .spread {
   display: grid;

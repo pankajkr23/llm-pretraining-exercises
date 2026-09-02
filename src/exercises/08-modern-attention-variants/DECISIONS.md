@@ -286,3 +286,34 @@ been published an hour before. It is corrected in place and demoted to one readi
 chronology, with a test that fails if a future catalogue ever makes it robust, so the hedge cannot
 outlive its reason.
 
+
+## D15 — A correction can be true, checked, and still not worth a reader's screen
+
+The page's **Corrections** section published three disagreements with the teaching material it was
+built from. One of them has been moved here.
+
+**The Transformer is mis-dated.** The transcript says Vaswani *"invented in 2018 and 17"*.
+*Attention Is All You Need* is arXiv:1706.03762, **v1 dated Mon, 12 Jun 2017** — read from the
+abstract page, not from memory. June 2017, not 2018.
+
+That is correct and it was checked the same way every other date on this page was. It is off the
+page because of what it costs to publish rather than anything wrong with it: nobody outside the
+classroom this page was built from believed the Transformer was 2018, so the correction spends a
+reader's attention establishing that we can read a date — housekeeping performed as a virtue. A
+review reader put it exactly that way, and two others named only the DroPE collision as the
+correction that taught them something.
+
+The two that stayed are both ones a specialist could get wrong: a genuine arXiv title collision
+between DroPE and DRoPE, and a widely quoted million-token figure that does not reproduce on this
+page's model shape.
+
+**The general rule, which is the reason to write this down.** A corrections section earns trust in
+proportion to how hard the corrections were to find. A correction anybody would have caught reads
+as ceremony, and enough of them turn the section into the page arguing about its own honesty
+instead of demonstrating it. Check everything; publish the ones a careful reader could have got
+wrong; record the rest here.
+
+**And the count in that headline is derived from the list.** It read *"Three things the source
+material gets wrong"* as hand-written prose above a generated list of three — one edit from saying
+three above two, with nothing red. It is `Spell(items.length)` now. This is the repo's most
+expensive documented failure and it was one deletion away in the section about being wrong.

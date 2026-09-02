@@ -37,6 +37,7 @@ import {
   figPlateTall,
   REDUCED,
   figRace,
+  figArcs,
   figVerdict,
   figWrap,
   plate,
@@ -925,61 +926,45 @@ function chapterResults(M, spreadRef) {
       'Figure 4',
       'The race',
       figRace(M),
-      /* THE ONLY PLATE IN THIS SECTION WITH NO ORIENTATION BLOCK. Plates V and VI each open with
-       * four labelled rows and read at exactly the level this page is aiming for; this one raced
-       * three unexpanded acronyms whose entire mechanism turns on the word "head", which the page
-       * never defined in plain words anywhere. Same `brief()` shape as its neighbours. */
+      /* ONE ORIENTATION LINE, NOT FIVE HEADED BLOCKS. Five review readers said the same thing
+       * about this template: once is orientation, three times is a form they start skipping — and
+       * by the third figure they were skipping the good sentences along with the boilerplate. What
+       * survives is the definition the whole figure turns on, which the page defines nowhere else,
+       * and the one sentence naming the three racers. "Who ships which" went to the index, which
+       * carries it for all thirty; "why it is worth understanding" went into the caption, which is
+       * where an argument belongs. */
       brief([
         [
           'What you are looking at',
-          'Three model designs generating text side by side. Each line is how much memory that ' +
-            "model's cache has eaten so far, and the finish line is one 80 GB accelerator.",
+          'Three model designs generating text side by side; each line is how much memory that ' +
+            "model's cache has eaten so far, and the finish line is one 80&nbsp;GB accelerator.",
         ],
         [
           'The word everything turns on',
           'Inside every layer, attention runs several times in parallel, and each parallel copy ' +
-            'is a **head**. Heads let the model look for different kinds of relationship at once ' +
-            '— one for the word right before, another for the subject of the sentence. Normally ' +
-            'every head stores its own keys and values, and that store is the whole cache bill.',
-        ],
-        [
-          'What the three are doing',
-          '**MHA** (multi-head attention) keeps a separate set for all ' +
-            `${M.yardstick.kvHeads} heads. **GQA** (grouped-query attention) makes groups of ` +
-            'heads share one set. **MQA** (multi-query attention) takes it to the limit: every ' +
-            'head shares a single set.',
-        ],
-        [
-          'Who ships which',
-          /* Generated from the same sourced field the index uses, so the two can never disagree
-           * and no model name on this page is here on our say-so. */
-          ['gqa', 'mqa']
-            .map((k) => {
-              const m = (M.mechanisms || []).find((x) => x.key === k) || {};
-              const who = (m.shippedIn || []).map((a) => a.model);
-              return who.length ? `**${m.name}** — ${who.join(', ')}` : null;
-            })
-            .filter(Boolean)
-            .join('. ') +
-            '. Every one of those was read out of that model\'s own paper; hover a name in the ' +
-            'index below to see the sentence.',
-        ],
-        [
-          'Why it is worth understanding',
-          'This is the cheapest large saving anyone found, and every frontier model uses some ' +
-            'point on it. It is also the clearest example of the page\'s whole argument: the ' +
-            'saving is a constant factor, and a constant factor does not change the slope.',
+            'is a **head**. Normally every head stores its own keys and values, and that store is ' +
+            `the whole cache bill. **MHA** keeps a separate set for all ${M.yardstick.kvHeads} ` +
+            'heads; **GQA** makes groups of heads share one set; **MQA** gives every head the ' +
+            'same single set.',
         ],
       ]),
       /* The last sentence did not parse: "Read the crossings against X, that Y, and Z" is a list
        * of three things that are not the same kind of thing. Split into two sentences. */
+      /* THE CAPTION CLAIMED THE AXIS THE FIGURE DOES NOT HAVE. It closed by inviting the reader
+       * to "decide whether that much head diversity was worth it" — but this figure has one axis,
+       * bytes against tokens, and no quality axis at all. The invitation was to weigh a cost
+       * against a benefit the drawing cannot show. The three real numbers say more and claim less;
+       * they come from `M.cache.sharing`, the same arithmetic the invoice uses. */
       'Head sharing buys 4× and then 8×, and it buys nothing else: all three lines are straight ' +
         'and all three hit the wall. That is the difference between this and a bar chart — a bar ' +
-        'chart says GQA is smaller, the race shows GQA is <b>on the same line</b>. Now read the ' +
-        'crossings against what the sharing costs: heads that share keys and values lose some of ' +
-        'their ability to attend to genuinely different things. The trade is then visible rather ' +
-        'than asserted — you can see exactly how much context each design buys, and decide ' +
-        'whether that much head diversity was worth it.'
+        'chart says GQA is smaller, the race shows GQA is <b>on the same line</b>. <b>The saving ' +
+        'is a constant factor, and a constant factor does not change the slope.</b> Per token the ' +
+        `cache costs ${M.cache.sharing
+          .map((sh) => `${sh.bytesPerToken / 1024}&nbsp;KiB (${sh.name})`)
+          .join(', ')} — read those against ` +
+        'what sharing costs, which is that heads reading the same keys and values lose some of ' +
+        'their ability to attend to genuinely different things. This figure prices the saving; ' +
+        'nothing on this page measures that loss.'
     ),
   ]);
   well(s, wells[3], M, [
@@ -987,35 +972,27 @@ function chapterResults(M, spreadRef) {
       'Figure 5',
       'The wrap',
       figWrap(),
+      /* TWO BLOCKS, NOT FOUR. "Why this is elegant" restated the mechanism in praise, and "why it
+       * matters" carried one sentence worth keeping — the reader who has watched a model degrade
+       * before its advertised limit — which is now in the caption where it argues instead of
+       * announcing. What is left is what the drawing is, and the walk through a real number. */
       brief([
         [
           'What you are looking at',
           'Rotary embeddings tell a model where a word sits by **rotating** its query and key ' +
             'vectors — a little for nearby positions, a lot for distant ones. The vector is split ' +
-            'into bands and each band rotates at its own speed; the two dials are one fast band and ' +
-            'one slow one. The curve on the right is the resulting attention score between two ' +
-            'words as the gap between them grows.',
-        ],
-        [
-          'Why this is elegant',
-          'The score depends only on the **gap** between two positions, never on where the pair sits ' +
-            'in the text. "The cat" scores the same at position 5 and at position 5,000. That is why ' +
-            'rotary embeddings won, and why almost every open model shipped since 2021 uses them.',
+            'into bands and each band rotates at its own speed; the two dials are one fast band ' +
+            'and one slow one. The curve on the right is the resulting attention score between ' +
+            'two words as the gap between them grows, and it depends only on that **gap** — "the ' +
+            'cat" scores the same at position 5 and at position 5,000.', // count-literal-ok: an illustrative position, not a catalogue size
         ],
         [
           'A concrete example',
-          'Take a model trained on 4,096 tokens. At a gap of 4,000 the fast band has turned a handful ' +
-            'of times and the score still behaves. Now feed it 16,000 tokens — **four times what it ' +
-            'was trained on**. The fast band has now turned tens of times and lands in combinations ' +
-            'the model never saw once during training. Drag the slider past the blue rule and watch ' +
-            'the curve stop settling: that is the moment a model starts producing worse answers about ' +
-            'text it can technically still read.',
-        ],
-        [
-          'Why it matters',
-          'If you have ever seen a model degrade well before its advertised context limit, this curve ' +
-            'is the reason. One design decision in April 2021 produced three separate repairs — ' +
-            'and then two papers that flatly disagree about what to do next.',
+          'Take a model trained on 4,096 tokens. At a gap of 4,000 the fast band has turned a ' + // count-literal-ok: an illustrative context length
+            'handful of times and the score still behaves. Now feed it 16,000 — **four times ' + // count-literal-ok: an illustrative context length
+            'what it was trained on**. The fast band lands in combinations the model never saw ' +
+            'once during training. Drag the slider past the blue rule and watch the curve stop ' +
+            'settling.',
         ],
       ]),
       /* THIS CAPTION WENT STALE AGAINST THE DATA BESIDE IT. It read "1,698 days of repair work,
@@ -1023,10 +1000,14 @@ function chapterResults(M, spreadRef) {
        * entry is HD-RoPE, 260 days later, which proposes the opposite. The chapter's own opening
        * says so ("Both cannot be right") and the caption did not. Both numbers are derived now,
        * so neither can drift again. */
-      'The wobble past the blue rule is not a rendering artefact; it is the reason NTK-aware ' +
-        'scaling, YaRN and finally DroPE exist. Watch the fast dial lap the slow one tens of ' +
-        'times before the curve stops behaving — that is cause, where two static curves would ' +
-        `only show correlation. One design decision in April 2021 has generated <b>` +
+      /* "THAT IS CAUSE, WHERE TWO STATIC CURVES WOULD ONLY SHOW CORRELATION" IS GONE. Animating a
+       * schematic does not make it causal. The dial is an illustration of an assumed mechanism and
+       * this page has no measurement of a deployed model behind it — claiming causation from a
+       * drawing is exactly the move the rest of the page refuses. */
+      'If you have ever seen a model degrade well before its advertised context limit, this curve ' +
+        'is the reason. The wobble past the blue rule is not a rendering artefact; it is why ' +
+        'NTK-aware scaling, YaRN and finally DroPE exist. One design decision in April 2021 has ' +
+        'generated <b>' +
         `${int(daysBetween(M, 'rope', 'hd_rope'))} days</b> of argument and is still going: at ` +
         `${int(daysBetween(M, 'rope', 'drope'))} days one paper concluded the answer was to ` +
         'delete positional embeddings entirely, and the next one concluded it was to make them ' +
@@ -1038,43 +1019,38 @@ function chapterResults(M, spreadRef) {
       'Figure 6',
       'The eviction',
       figEviction(),
+      /* TWO BLOCKS, NOT FOUR — AND THE TRANSFERABLE SENTENCE MOVED BEFORE THE BLOCK WAS DELETED.
+       * "A working system can depend on behaviour that no one specified" was the one sentence a
+       * review reader named as the transferable thing on the page, and it was sitting in the
+       * fourth headed block of the third figure using the same template, which two readers said
+       * they had stopped reading by. AGENTS.md forbids leaving a lesson only where a reader skips,
+       * so it is in the caption now. The sinks explanation stays whole: it is on the do-not-cut
+       * list, four readers quoted it, and it is the only place the page explains WHY anything on
+       * the timeline happened by accident. */
       brief([
         [
           'What you are looking at',
           'Forty words in a row along the bottom. The bar above each one is how much **attention ' +
-            'mass** it receives — how much the model is looking at it. The shaded box is a sliding ' +
-            'window: to keep memory constant while generating forever, you keep only the most recent ' +
-            'words and throw the rest away. Watch it move right.',
+            'mass** it receives — how much the model is looking at it. The shaded box is a ' +
+            'sliding window: to stream forever on fixed memory you keep only the most recent ' +
+            'words and throw the rest away. Watch it move right. Models did not degrade ' +
+            'gracefully as old words fell out — they **collapsed**, at one specific moment: the ' +
+            'instant the window passed the very first tokens of the text.',
         ],
         [
-          'Why we have this',
-          'A sliding window is the obvious way to stream indefinitely on a fixed budget, and it broke ' +
-            'in a way nobody could explain. Models did not degrade gracefully as old words fell out ' +
-            'of the window — they **collapsed**, and they collapsed at a specific moment: the instant ' +
-            'the window passed the very first tokens of the text.',
-        ],
-        [
-          'Where we are coming from',
-          'This is the one entry on the whole timeline that **fixed nothing**. Nothing was invented ' +
-            'here; something was discovered. Softmax has to put its weight _somewhere_ — the numbers ' +
-            'are forced to sum to one — so when a model has nothing useful to attend to, it needs ' +
-            'somewhere to dump the surplus. It learned to dump it on the first few tokens, which every ' +
-            'query can see and which usually carry no meaning. Those tokens became load-bearing by ' +
-            'accident, and nobody wrote that down because nobody designed it.',
-        ],
-        [
-          'Why it is worth understanding',
-          'A working system can depend on behaviour that no one specified and no one documented, and ' +
-            'you find out by removing it. The repair is almost insultingly cheap — keep four tokens ' +
-            'that carry no meaning and never evict them — but it was invisible until someone asked ' +
-            'why the obvious optimisation kept failing.',
+          'Why that happens',
+          'Softmax has to put its weight _somewhere_ — the numbers are forced to sum to one — so ' +
+            'when a model has nothing useful to attend to it needs somewhere to dump the surplus. ' +
+            'It learned to dump it on the first few tokens, which every query can see and which ' +
+            'usually carry no meaning. Those tokens became load-bearing by accident, and nobody ' +
+            'wrote that down because nobody designed it.',
         ],
       ]),
-      'Nothing was fixed here — something was discovered. Models were already dumping surplus ' +
-        'softmax mass onto the first few tokens, which made those tokens load-bearing while ' +
-        'carrying no meaning. The fix — keep the first few tokens forever and never evict them ' +
-        '— costs a handful of cache slots and buys indefinite streaming; ' +
-        'it does not buy memory. Everything the window has passed is genuinely gone.'
+      '<b>A working system can depend on behaviour that no one specified, and you find out by ' +
+        'removing it.</b> Nothing was fixed here — something was discovered, and the repair is ' +
+        'almost insultingly cheap: keep the first few tokens forever and never evict them. It ' +
+        'costs a handful of cache slots and buys indefinite streaming; it does not buy memory. ' +
+        'Everything the window has passed is genuinely gone.'
     ),
   ]);
   well(s, wells[5], M);
@@ -1084,52 +1060,59 @@ function chapterResults(M, spreadRef) {
 /* ------------------------------------------------------------------ 7 · negatives */
 
 function chapterNegatives(M) {
+  /* THE COUNT IN THE HEADLINE IS DERIVED, AND THAT IS NOT PEDANTRY HERE.
+   *
+   * This is the repo's most expensive documented failure — a hand-written sentence stating a count
+   * above a generated list — and it is one edit away in this exact section: the headline read
+   * "Three things the source material gets wrong" while the list had three items, and dropping one
+   * would have left it reading three with two below it. Nothing would have failed.
+   *
+   * The Transformer mis-dating went to DECISIONS.md. It was true, checked and worth recording, and
+   * it was housekeeping performed as a virtue: nobody outside the classroom this page was built
+   * from believed the Transformer was 2018, so correcting it in public spent a reader's attention
+   * establishing that we can read a date. The two that stayed are both ones a specialist could
+   * get wrong — a genuine arXiv title collision, and a figure that does not reproduce.
+   */
+  const items = [
+    [
+      'DroPE is two papers, one capital letter apart',
+      'The technique usually described under this name — pretrain with positional embeddings, ' +
+        'drop them, recalibrate briefly — is arXiv:2512.12167. The transcript’s title instead ' +
+        'matches <b>DRoPE</b>, arXiv:2503.15029, an autonomous-driving trajectory paper with no ' +
+        'relation to it. We cite the first and footnote the second so nobody re-finds it and ' +
+        '“corrects” us.',
+    ],
+    [
+      'The million-token figure does not reproduce on our yardstick',
+      `The transcript gives about ${M.transcriptDiscrepancy.claimedTB} TB for ` +
+        `${M.transcriptDiscrepancy.users} readers at a ` +
+        `${int(M.transcriptDiscrepancy.context)}-token context. The same formula at this page’s ` +
+        `model shape gives ${(M.transcriptDiscrepancy.computedBytes / 1e12).toFixed(2)} TB — ` +
+        'ours is the larger. A smaller model, fewer KV heads, or fp8 would each reconcile them; ' +
+        'we publish both rather than quietly adopting the rounder one.',
+    ],
+  ];
+
   const s = section(
     'negatives',
     'negatives',
     'Corrections',
-    'Three things the source material gets wrong',
+    `${Spell(items.length)} things the source material gets wrong`,
     [
-      /* NAME THE SOURCE BEFORE REBUTTING IT. Three careful corrections were aimed at "the
-       * transcript" and "the source material", named nowhere on the page — so a newcomer read
-       * three rebuttals of a document they had no idea existed. */
+      /* NAME THE SOURCE BEFORE REBUTTING IT. These corrections were aimed at "the transcript" and
+       * "the source material", named nowhere on the page — so a newcomer read rebuttals of a
+       * document they had no idea existed. The second paragraph, which explained at length why
+       * correcting one's sources builds trust, is gone: a review reader called it "a running
+       * commentary about its own trustworthiness that made me trust it less", and the corrections
+       * themselves make the argument. */
       `These ${spell(M.counts.total)} entries were checked against the teaching material this ` +
-        'page was built from — ' +
-        'spoken session notes and a transcript, not a paper. Three of its claims did not survive ' +
-        'that check, and they are here rather than quietly fixed.',
-      'Recorded because a reader deserves to know which claims we checked rather than copied — ' +
-        'and because a page that corrects its own sources in the open is easier to trust about ' +
-        'the ones it does not.',
+        'page was built from — spoken session notes and a transcript, not a paper. ' +
+        `${Spell(items.length)} of its claims did not survive that check, and they are here ` +
+        'rather than quietly fixed.',
     ],
     { short: 'Corrections', sub: 'Where we disagree with our sources' }
   );
 
-  const items = [
-    [
-      'The Transformer is mis-dated',
-      'The transcript says Vaswani “invented in 2018 and 17”. <i>Attention Is All You Need</i> is ' +
-        'arXiv:1706.03762, v1 dated Mon, 12 Jun 2017 — read from the abstract page, not from ' +
-        'memory. June 2017, not 2018.',
-    ],
-    [
-      'DroPE is two papers, one capital letter apart',
-      'The technique usually described under this name — pretrain with positional embeddings, ' +
-        'drop them, ' +
-        'recalibrate briefly — is arXiv:2512.12167. The transcript’s title instead matches ' +
-        '<b>DRoPE</b>, arXiv:2503.15029, an autonomous-driving trajectory paper with no relation ' +
-        'to it. We cite the first and footnote the second so nobody re-finds it and “corrects” us.',
-    ],
-    [
-      'The million-token figure does not reproduce on our yardstick',
-      `The transcript gives about ${M.transcriptDiscrepancy.claimedTB.toFixed(0)} TB for ` +
-        `${M.transcriptDiscrepancy.users} readers at a ` +
-        `${int(M.transcriptDiscrepancy.context)}-token context. The formula that figure comes ` +
-        'from, at the same model shape, gives ' +
-        `${(M.transcriptDiscrepancy.computedBytes / 1e12).toFixed(2)} TB. A smaller model, fewer ` +
-        'KV heads, or fp8 would each reconcile them; we publish both rather than quietly adopting ' +
-        'the rounder one.',
-    ],
-  ];
   for (const [label, body] of items) {
     const c = el('div', 'correction');
     c.append(el('span', 'clab', label));
@@ -1152,9 +1135,7 @@ function chapterNegatives(M) {
     'We cannot tell which machine the larger figure was for, and we are not going to guess. On ' +
     `this page's yardstick — ${M.yardstick.layers} layers, ${M.yardstick.kvHeads} key-value ` +
     `heads, head dimension ${M.yardstick.headDim}, ${M.yardstick.dtype} — the arithmetic gives ` +
-    `${(M.transcriptDiscrepancy.computedBytes / 1e12).toFixed(2)} TB, and we publish both rather ` +
-    'than quietly adopting the rounder one. A page that shows its disagreements in the open is ' +
-    `the one to believe about the other ${spell(M.counts.total - 1)} dates.`;
+    `${(M.transcriptDiscrepancy.computedBytes / 1e12).toFixed(2)} TB. Both are published.`;
   f.append(cap);
   s.append(f);
   return s;
@@ -1199,54 +1180,60 @@ function chapterConclusion(M) {
     ? 'The tidy arc holds'
     : 'The tidy arc is not what happened';
 
-  const s = section('conclusion', 'conclusion', 'The verdict', headline, [
-    `The story usually told is that the field wanted exactness, then memory back, then length, ` +
-      `then memory again — in our labels, **${seq(arc.claimed)}**. Sorting the ` +
-      `${spell(M.counts.total)} by launch date and asking which bill each two-year window went ` +
-      `after hardest gives **${seq(arc.observed)}**.`,
-    `**${Spell(arc.decided)} of the ${spell(total)} windows do produce a clear winner**, and they ` +
-      'do not come in the claimed order. The bill the story has the field returning to twice — ' +
-      `**${NAME[arc.neverDominates[0]] || arc.neverDominates[0]}** — never dominates a single ` +
-      'window on its own.',
-    /* THE NOISE FLOOR, WHICH THIS SECTION ASSERTED AND DID NOT MEASURE. The two-year buckets begin
-     * in 2014 because attention does, not because the field turned on that boundary, so the edges
-     * are an arbitrary choice — and the page said its count was "not noise" while offering no
-     * evidence at all. Re-running with the edges shifted one year is the cheapest available test
-     * and it cost this section a finding: the claim that the field settles on both bills from 2020
-     * does not survive it. Both findings that do survive are stated as surviving. */
-    `Those buckets are an arbitrary choice — they start at ${M.periods[0].start} because attention ` +
-      'does, not because anything happened to the field that year. So the same tally re-run with ' +
-      'the edges shifted by one year gives ' +
-      `**${seq(arc.robust.sequences[1])}**. Two conclusions survive that and one does not. ` +
-      'Surviving: the claimed order matches under neither slicing, and ' +
-      `**${NAME[arc.neverDominates[0]]}** wins no window under either. Not surviving: on the ` +
-      `original edges the field appears to settle on **${NAME[arc.settlesOn]}** from ` +
-      `**${arc.settlesFrom}** onward and never go back — shift the edges and that window goes to ` +
-      '**where a word sits** instead. Treat the settling as one reading of the chronology, not a ' +
-      'measurement.',
-    `The remaining ${tie} ${isare}, and the code returns no winner rather than picking one. That ` +
-      'is why this reads as a refutation rather than a story: a tie was allowed to stay a tie.',
-    /* THE SECOND PREDICTION, ANSWERED WHERE IT IS ANSWERED. "Before the evidence" states both
-     * predictions and deliberately gives away neither; this is the one that turned out right, and
-     * without it that section's pointer to "the number is in the verdict below" is a promise the
-     * page does not keep. */
-    `And the other prediction — that the invention of attention and the invention of the ` +
-      'Transformer would sit close together — was wrong in the direction that matters. They are ' +
-      `**${int(daysBetween(M, 'bahdanau_attention', 'standard_attention'))} days** apart, most of ` +
-      'three years, which is why a list of names ordered by family reads as though attention were ' +
-      'a part of the Transformer rather than something the Transformer was built out of.',
-  ], { short: 'The verdict', sub: arc.matches ? 'the arc holds' : 'the arc does not hold' });
+  const s = section(
+    'conclusion',
+    'conclusion',
+    'The verdict',
+    headline,
+    [
+      /* THE TWO ARROW CHAINS ARE OUT OF THE PROSE AND INTO A FIGURE. Fourteen labelled steps
+       * inside running sentences is where the review's teenage reader stopped dead and where the
+       * grader said the section cost the most time — and nobody defended them. They are not
+       * droppable: the claimed arc is the thing being refuted and the grid below never shows it,
+       * and it has four steps against seven windows so it cannot be folded in. `figArcs` sets them
+       * as two labelled rows instead, read in a glance, directly above the evidence. */
+      `Sorting the ${spell(M.counts.total)} by launch date and asking which bill each two-year ` +
+        'window went after hardest gives an order that is not the one the story tells. The two ' +
+        'are set side by side below.',
+      `**${Spell(arc.decided)} of the ${spell(total)} windows produce a clear winner**, and the ` +
+        'bill the story has the field returning to twice — ' +
+        `**${NAME[arc.neverDominates[0]] || arc.neverDominates[0]}** — never dominates a single ` +
+        `window on its own. The remaining ${tie} ${isare}, and the code returns no winner rather ` +
+        'than picking one: a tie was allowed to stay a tie.',
+      /* THE NOISE FLOOR, WHICH THIS SECTION ASSERTED AND DID NOT MEASURE. The two-year buckets
+       * begin in 2014 because attention does, not because the field turned on that boundary, so
+       * the edges are an arbitrary choice — and the page said its count was "not noise" while
+       * offering no evidence at all. Re-running with the edges shifted one year is the cheapest
+       * available test and it cost this section a finding. Shrunk to its result, per the review;
+       * the grader called this the paragraph the page earns the most on, so it stays. */
+      `Those buckets are arbitrary — they start at ${M.periods[0].start} because attention does, ` +
+        'not because anything happened that year — so the same tally was re-run with the edges ' +
+        'shifted a year. **Two findings survive and one does not.** Surviving: the claimed order ' +
+        `matches under neither slicing, and **${NAME[arc.neverDominates[0]]}** wins no window ` +
+        `under either. Not surviving: that the field settles on **${NAME[arc.settlesOn]}** from ` +
+        `**${arc.settlesFrom}** onward — shift the edges and that window goes to **where a word ` +
+        'sits** instead, so treat the settling as one reading, not a measurement. The five labels ' +
+        'are also ours, and a different labelling would move the tally; only the edges were tested.',
+      /* THE SECOND PREDICTION, ANSWERED WHERE IT IS ANSWERED. "Before the evidence" states both
+       * predictions and deliberately gives away neither; this is the one that turned out right. */
+      `The other prediction — that attention and the Transformer were invented close together — ` +
+        `was wrong. They are **${int(daysBetween(M, 'bahdanau_attention', 'standard_attention'))} ` +
+        'days** apart, most of three years, which is why a list ordered by family reads as though ' +
+        'attention were a part of the Transformer rather than something it was built out of.',
+    ],
+    { short: 'The verdict', sub: arc.matches ? 'the arc holds' : 'the arc does not hold' }
+  );
+
+  s.append(figArcs(M));
 
   const f = el('figure', 'wide');
   f.append(figVerdict(M, glyphSvg));
   const cap = el('figcaption');
   cap.innerHTML = rich(
-    `A framed cell is that window's dominant bill; a **NO WINNER** stamp marks a window where no ` +
-      `bill was attacked more than the others — ` +
-      `${ties} of ${total}. That is not the same as a **BOTH** entry: BOTH is one mechanism ` +
-      'attacking the compute bill and the cache bill together, and this is a two-year window in ' +
-      'which no single bill won. A cleaner story was available here and it would have been false ' +
-      '— and for a while this page printed it, with a derived number attached.'
+    `A framed cell is that window's dominant bill. A **NO WINNER** stamp — ${ties} of ${total} — ` +
+      'marks a window where no bill was attacked more than the others, which is **not** the same ' +
+      'as a **BOTH** entry: BOTH is one mechanism going after the compute bill and the cache bill ' +
+      'together, this is a two-year window in which no single bill won.'
   );
   f.append(cap);
   s.append(f);
@@ -1262,35 +1249,34 @@ function chapterLimits(M) {
     'In the open',
     'What this page cannot tell you',
     [
-      `**It is a chronology, not a benchmark.** Nothing here was trained or measured against ` +
-        'anything else. Every trade-off is what the primary source reports, not what we observed.',
-      `**${M.counts.outsideSession} of the ${M.counts.total} entries were built from the primary ` +
-        'paper alone**, with no secondary explanation to lean on. Each carries the URL and the ' +
-        'source’s own date string, so you can check our reading against it.',
-      '**The glyphs are shapes, not measurements.** The catalogue records no window size, sink ' +
-        `count, latent width, block size or state dimension, so ${M.counts.schematic} of ` +
-        `${M.counts.total} glyphs are drawn to schema and marked ~. Where a paper states a size ` +
-        'we used it; where it does not, the proportion on the page is ours and means nothing.',
+      /* "IT IS A CHRONOLOGY, NOT A BENCHMARK" IS NOT HERE ANY MORE — it opens the page, beside the
+       * reader doors, because it tells a reader what this is NOT and it was sitting eight thousand
+       * words after the point where they had already decided. What is left here is the narrower
+       * claim about provenance, which is the one a reader checking us needs. */
+      `**Every date was read from the source's own abstract page**, and each entry prints that ` +
+        `page's date string beside our parsed date so you can check the reading. ` +
+        `${M.counts.outsideSession} of the ${M.counts.total} were built from the primary paper ` +
+        'alone, with no secondary explanation to lean on.',
+      '**The glyphs are shapes, not measurements.** Where a paper states a size we used it; where ' +
+        `it does not, the proportion is ours and means nothing — ${M.counts.schematic} of ` +
+        `${M.counts.total} are marked ~ for that reason, as the key above the chronology says.`,
       '**Launch date is not adoption date.** An arXiv v1 is when an idea became public, not when ' +
-        'it became the default. The chart therefore shows when the field could have moved, not ' +
-        'when it did.',
-      '**The most-used models are the least documented.** Between December 2025 and 31 August ' +
-        '2026 we checked the labs whose models are most used and which publish least — OpenAI, ' +
-        'Anthropic and Meta — for a new attention mechanism. They published no architecture at ' +
-        'all in that window: only **system cards**, the release documents describing how a model ' +
-        'behaves and what it refuses, which name no attention mechanism, no positional scheme and ' +
-        'no parameter count. So the recent end of this chart is drawn almost entirely from labs that ' +
-        'publish papers, which is a real bias in what a chronology like this can see, not an ' +
-        'accident of our searching.',
-      '**Attention is not the only architecture, and this page only covers attention.** There is a ' +
-        'rival line of research — **JEPA**, short for Joint-Embedding Predictive Architecture, and ' +
-        'the world models built on it. It changes what the model is trained to guess: instead of ' +
-        'reproducing the next piece of input exactly, it guesses a compressed description of it, ' +
-        'on the argument that predicting every pixel or character wastes effort on detail that ' +
-        'does not matter. That is a change to the _objective_, not to attention — their encoders ' +
-        'are still transformers running ordinary softmax attention. Nothing in that family between December 2025 and August 2026 ' +
-        'proposed a new attention mechanism, so nothing from it is on the chronology. That is a finding ' +
-        'about where the innovation is happening, not a gap in coverage.',
+        'it became the default, so the chart shows when the field could have moved, not when it ' +
+        'did.',
+      /* THE PUBLICATION-BIAS FINDING IS IN THE OPENING TILES NOW. A review reader called it "the
+       * most interesting sentence on the page, buried in the limits section and framed as an
+       * apology — it is a finding". AGENTS.md wants a failure in the opening tiles and this is the
+       * honest one. What stays here is the consequence for coverage, which is a limit. */
+      '**The recent end of this chart is drawn almost entirely from labs that publish papers.** ' +
+        'That is a real bias in what a chronology can see rather than an accident of our ' +
+        'searching, and it is stated at the top of the page because it is a finding as well as a ' +
+        'limit.',
+      /* JEPA IN ONE LINE. This ran to 115 words introducing a brand-new acronym eight thousand
+       * words in, for a family that then turns out not to be on the page at all. Four readers
+       * flagged it and every one asked for a sentence. */
+      '**This page covers attention only.** JEPA and the world models built on it change what a ' +
+        'model is trained to guess, not how attention works — and nothing in that family proposed ' +
+        'a new attention mechanism in the window we checked, so nothing from it is here.',
     ],
     { short: 'Limits', sub: 'What it cannot establish' }
   );
@@ -1299,26 +1285,31 @@ function chapterLimits(M) {
 /* ----------------------------------------------------------------------- 10 · next */
 
 function chapterNext() {
+  /* THE HEADLINE SAID "THREE THINGS THIS OPENS" ABOVE FOUR ITEMS, AND THE RAIL AGREED WITH IT.
+   *
+   * Both were hand-typed and both were wrong, live, with a green suite — because
+   * `test_no_count_is_typed_into_the_page_as_a_word` only scans for eleven and up, so a section
+   * heading counting its own contents was outside the repo's most expensive guard. The rule now is
+   * blunter and needs no arithmetic: a heading names its subject and never states a count. Counts
+   * live in the body where they are derived. A rendered guard enforces it across every section.
+   */
   return section(
     'next',
     'next',
     'Next issue',
-    'Three things this opens',
+    'What this opens',
     [
-      '**Adoption against invention.** Plot the date each mechanism entered a shipped open-weights ' +
-        'model beside its launch date. The gap is the thing this page cannot see.',
+      '**Adoption against invention.** Plot the date each mechanism entered a shipped ' +
+        'open-weights model beside its launch date. That gap is what this page cannot see.',
       '**The sizes.** Read window widths, sink counts, block sizes and latent dimensions out of ' +
         'each paper, and the glyphs stop being schematic.',
-      '**A cost model that ranks.** The invoice prices the cache exactly. Pricing the compute bill ' +
-        'the same way would let the chart be sorted by what a mechanism actually saves.',
-      '**Settle the position argument.** The last two entries on this chart disagree outright. One ' +
-        'concludes that positional embeddings should be deleted and the model left to infer order ' +
-        'from the causal mask; the next concludes they should be made richer, rotating in higher ' +
-        'dimensions rather than independent planes. Both report gains. Nothing here can say which ' +
-        'is right, and the chart ends on an open question rather than a conclusion — which is the ' +
-        'honest place for it to end.',
+      '**A cost model that ranks.** The invoice prices the cache exactly. Pricing the compute ' +
+        'bill the same way would let the chronology be sorted by what a mechanism actually saves.',
+      '**Settle the position argument.** The last two entries disagree outright — delete ' +
+        'positional embeddings, or make them richer — and both report gains. Nothing here can say ' +
+        'which is right, which is the honest place for a chronology to end.',
     ],
-    { short: 'Next', sub: 'Three follow-ons' }
+    { short: 'Next', sub: 'Follow-ons' }
   );
 }
 
@@ -1340,6 +1331,22 @@ function chapterReproduce(M, spreadRef, plateRef) {
         'beginning "gives up". Every date was read from the string printed beside it.'
     )
   );
+
+  /* THE RULE FOR ADMISSION, BESIDE THE THING IT GOVERNS. This was the opening paragraph of the
+   * colophon at section 5, where two readers went looking for it and neither found it: "what got
+   * in" is the question a sceptical reader most wants answered about a chronology, and the answer
+   * belongs at the head of the list it decided. */
+  const got = el('p', 'say');
+  got.innerHTML = rich(
+    `**What got in.** ${Spell(M.counts.total)} entries, one rule: a paper that changes how ` +
+      'attention scores its tokens, what it stores for them, or what replaces the score grid ' +
+      'entirely — and that states what the change costs. ' +
+      `${Spell(M.counts.mandatedMechanisms)} come from the required reading list this page was ` +
+      `built against; the other ${spell(M.counts.bonus)} are ours, marked †. (That list names ` +
+      `${spell(M.counts.mandatedPhrases)} items but ${spell(M.counts.mandatedMechanisms)} ` +
+      'mechanisms — one of its phrases covers two techniques this catalogue keeps apart.)'
+  );
+  s.append(got);
 
   const grid = el('div', 'index-plate bleed');
   let year = null;
@@ -1468,44 +1475,44 @@ function chapterReproduce(M, spreadRef, plateRef) {
 /* ------------------------------------------------------------------- 12 · method */
 
 function chapterMethod(M) {
+  /* THREE SENTENCES, AND THE REST IS A LINK.
+   *
+   * This ran to seven paragraphs and 358 words, and every review reader but the grader stalled in
+   * it — one called the closing paragraph "internal repo politics being litigated in front of a
+   * stranger". What a reader of this page needs from a colophon is the three claims the numbers
+   * above rest on: how a date was read, how a byte figure was computed, and what a catalogue entry
+   * has to state before it is allowed in. The production notes — that nothing here is typed, that
+   * every figure is inline SVG with no third-party request, that no colour is fixed — are true,
+   * checkable, and of interest to somebody rebuilding the page rather than reading it. They are in
+   * `docs/METHOD.md` now.
+   *
+   * "What got in" moved to the head of the index instead, beside the thirty rows it governs, which
+   * is where two readers went looking for it.
+   *
+   * The section KEEPS `data-role="method"` at spine position 5. The spine is fixed repo-wide and
+   * three other exercises read the same tuple; a magazine would put production notes on the last
+   * page, and one exercise quietly reordering a shared standard is worse than a colophon in an
+   * unusual place.
+   */
   const s = section('method', 'method', 'Colophon', 'How this was made', [], {
     short: 'Colophon',
-    sub: 'Production notes',
+    sub: 'What the numbers rest on',
   });
   const c = el('div', 'colophon');
   const paras = [
-    /* THE RULE FOR ADMISSION FIRST. A reader reaching the end of this section could not say how
-     * the entries were chosen, because the section opened on typography — and "what got in" is the
-     * question a sceptical reader most wants answered about a chronology. */
-    `<b>What got in.</b> ${Spell(M.counts.total)} entries, one rule: a paper that changes how ` +
-      'attention scores its tokens, what it stores for them, or what replaces the score grid ' +
-      'entirely — and that states what the change costs. ' +
-      `${Spell(M.counts.mandatedMechanisms)} of them come from the required reading list this page ` +
-      `was built against; the other ${spell(M.counts.bonus)} are ours, marked †. (That list names ` +
-      `${spell(M.counts.mandatedPhrases)} items but ${spell(M.counts.mandatedMechanisms)} ` +
-      'mechanisms — one of its phrases covers two different techniques, and this catalogue keeps ' +
-      'them apart.)',
-    'Nothing on this page is typed by hand: every date, count, byte figure and trade-off is ' +
-      'generated from <code>results/mechanisms.json</code> and from the same Python functions the ' +
-      'test suite exercises. It is set in whatever sans-serif your system uses.',
     'Dates are the arXiv <b>v1</b> submission date, because later versions move by months and ' +
       'sometimes years — Bahdanau’s v1 is Sep 2014 and its v7 is May 2016, a twenty-month spread. ' + // count-literal-ok: a duration, not a catalogue size
-      'Each entry stores the source’s own date string beside our parsed date so a reader compares ' +
+      'Each entry stores the source’s own date string beside our parsed date, so a reader compares ' +
       'two fields rather than trusting one.',
     'The cache arithmetic is 2 × layers × kv_heads × head_dim × context × batch × bytes, at ' +
       `${M.yardstick.layers} layers, ${M.yardstick.kvHeads} KV heads, head dimension ` +
-      `${M.yardstick.headDim} and ${M.yardstick.dtype}. Accelerator capacity is quoted in decimal ` +
-      'GB, as accelerators are sold.',
+      `${M.yardstick.headDim} and ${M.yardstick.dtype} — evaluated, not estimated. Accelerator ` +
+      'capacity is quoted in decimal GB, as accelerators are sold.',
     'A mechanism with no stated cost is rejected at construction — the catalogue refuses an entry ' +
       'whose trade-off, debit or when-to-choose field is empty, because a technique written down ' +
       'with only advantages has not been understood yet.',
-    'Every figure is inline SVG built from that data, with no chart library and no third-party ' +
-      'request of any kind. No colour here is fixed: each is named and then looked up from whichever ' +
-      'of the six colour themes you are reading in, so a figure legible in one stays legible in ' +
-      'all six rather than being right in one and unreadable in the rest.',
-    'Every command needed to rebuild this page, regenerate the catalogue and run its tests is in ' +
-      '<b>this exercise’s own README</b> in the repository — not the root README, which is a map ' +
-      'rather than a manual. Commands belong where the thing they build lives.',
+    'How the page itself is generated, drawn and themed is in <b>docs/METHOD.md</b> in the ' +
+      'repository, with the commands to rebuild it.',
   ];
   for (const p of paras) {
     const node = el('p');

@@ -1267,6 +1267,41 @@ export function figEviction() {
  * dominant bill is null gets no frame and a TIE stamp — the code refuses to break a tie, and so
  * does the figure.
  */
+/** The two arcs, side by side, as a scannable band rather than two sentences.
+ *
+ * They used to be two seven-item arrow chains inside running prose, which is where the review's
+ * fifteen-year-old reader stopped dead and where the grader said the section cost the most time.
+ * They cannot be folded into the grid below — the claimed arc has four steps and the chronology
+ * has seven windows, so they do not align row to row — and they cannot be dropped either, because
+ * the claimed arc is the thing being refuted and the grid never shows it. So they become
+ * typography: two labelled rows, read in a glance, immediately above the evidence.
+ */
+export function figArcs(M) {
+  const NAME = {
+    origin: 'inventing it',
+    compute: 'the score grid',
+    cache: 'the stored keys',
+    position: 'where a word sits',
+    both: 'both bills at once',
+  };
+  const wrap = el('div', 'arcs');
+  for (const [label, seq, cls] of [
+    ['The story usually told', M.arc.claimed, 'arc-claimed'],
+    ['What the dates show', M.arc.observed, 'arc-observed'],
+  ]) {
+    const row = el('div', `arc-row ${cls}`);
+    row.append(el('span', 'arc-lab', label));
+    const chain = el('span', 'arc-chain');
+    seq.forEach((step, i) => {
+      if (i) chain.append(el('span', 'arc-sep', '→'));
+      chain.append(el('span', step ? 'arc-step' : 'arc-step none', step ? NAME[step] : 'no winner'));
+    });
+    row.append(chain);
+    wrap.append(row);
+  }
+  return wrap;
+}
+
 export function figVerdict(M, glyphSvg) {
   /* glyphSvg, NOT glyph. `glyph()` returns an SVG <g>, which is correct for embedding inside an
    * existing <svg> — the plate — and renders as absolutely nothing when appended to an HTML <div>.
@@ -1319,12 +1354,19 @@ export function figCorrection(M) {
   const ratio = d.claimedTB / computed;
   s.append(svgText(X - 12, 46, 'ax end', 'TRANSCRIPT'));
   s.append(svg('rect', { x: X, y: 34, width: FULL * ratio, height: 16, class: 'f-muted' }));
-  s.append(svgText(X + FULL * ratio + 10, 47, 'num', `${d.claimedTB.toFixed(2)} TB`));
+  /* `about 1 TB`, NOT `1.00 TB`. The transcript states one significant figure and rendering it
+   * with two decimal places invents four the source never had. */
+  s.append(svgText(X + FULL * ratio + 10, 47, 'num', `about ${d.claimedTB} TB`));
   s.append(svgText(X - 12, 102, 'ax end', 'ITS OWN FORMULA'));
   s.append(svg('rect', { x: X, y: 90, width: FULL, height: 16, class: 'f-ink' }));
   s.append(svgText(X + FULL + 10, 103, 'num', `${computed.toFixed(2)} TB`));
+  /* ONE SIGNIFICANT FIGURE IN, ONE SIGNIFICANT FIGURE OUT. This read `+57.3%` — three significant
+   * figures of a difference computed against an input the source states as "about 1 TB". On a page
+   * whose whole method is reading dates from abstracts rather than from memory, that was the only
+   * unsound arithmetic on it. Rounding to the precision the input supports is not hedging; the
+   * extra digits were never information. */
   const pct = ((computed - d.claimedTB) / d.claimedTB) * 100;
-  s.append(svgText(X + 12, 78, 'big', `+${pct.toFixed(1)}%`));
+  s.append(svgText(X + 12, 78, 'big', `about +${Math.round(pct / 10) * 10}%`));
   s.append(
     svgText(
       X,
