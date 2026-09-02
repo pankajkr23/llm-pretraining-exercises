@@ -15,6 +15,59 @@ folder under `src/exercises/`.
 - `uv sync --all-packages` — install every workspace member + its deps into the shared `.venv` (plain `uv sync` installs only the root). `uv run <cmd>` — run inside the env. `uv add <pkg>` — add a dep (never hand-edit `uv.lock`).
 - Each exercise is a workspace member matched by `members = ["src/exercises/[0-9][0-9]-*"]`.
 
+## The reference material is confidential, and it lives OUTSIDE this repository
+
+Source material this project is built from is **not ours to redistribute**. It is held at a sibling
+path resolved by `tools/backup_local_only.py::EXTERNAL_SOURCES` and overridable with `LLM_NOTES_DIR`.
+
+**It used to live inside the working tree, gitignored, and that was not enough.** Gitignoring a
+directory protects its bytes and does nothing about a tracked document that *describes* them. While
+`.gitignore` worked perfectly, a public branch carried: a table naming two source files with their
+line counts and a summary of each one's contents; a source path served to the **live site** in an
+exercise's `records.json`; module docstrings citing sources by name; a scaffolder that wrote a source
+path into every new exercise's brief; and test fixtures whose invented filenames published the real
+naming scheme. Moving the material out removes the whole class — there is no path inside the repo to
+leak, nothing for `.gitignore` to name, and no way to commit it by accident.
+
+**Three rules, and none of them is about the bytes:**
+
+- **Never name a file in it.** A filename is a disclosure on its own: it says what the directory
+  holds. Neither may a tracked file publish a count of them, or their sizes.
+- **Never quote it.** Say what *we decided* and why. The published artefact is our reasoning, not
+  the source's wording.
+- **Never describe its contents or how it is processed.** What kinds of document it holds, and what
+  is done to them before an agent reads them, are both confidential.
+
+**What is automatic, and what is not — be precise, because the difference decides what reaches a
+public branch:**
+
+| check | where it runs | catches |
+| --- | --- | --- |
+| `test_no_confidential_leaks.py::…names_a_confidential_source` | **CI and pre-commit** | the naming scheme |
+| `…quotes_the_confidential_material` | **only where the material is present** — never CI | verbatim text |
+
+The second is the stronger check and the one CI cannot run, because CI has no copy to compare
+against. So **quoting is caught on the machine that holds the material, or nowhere.** Run the whole
+file before pushing:
+
+```bash
+uv run pytest tests/test_no_confidential_leaks.py
+```
+
+**It is currently red**, and that is the backlog rather than a broken test: a set of passages in
+tracked documents still quote the source verbatim, mostly rubric text used to justify a code rule.
+Paraphrase them where you touch them. Once it is green, move it into the `no-confidential-leaks`
+pre-commit hook, which today runs only the naming half for exactly this reason.
+
+**A lexical guard cannot see itself until it is tracked.** The first version of this one listed four
+real filenames in its own docstring to explain the pattern, passed locally because it was not yet in
+`git ls-files`, and was caught by CI flagging its own source. The first CI run after adding a guard
+of this shape is the first real run.
+
+**Removing a leak from the working tree does not remove it from history.** Everything scrubbed is
+still in earlier commits and in any PR description that quoted it. PR bodies are editable; history
+is not, without rewriting published commits.
+
 ## MANDATORY — never remove anything under `notebooks/` or any `tools/`
 
 **Nothing in `notebooks/` or in any `src/exercises/*/tools/` directory may be deleted, moved,
@@ -48,13 +101,7 @@ the new one, and deletes it. Nobody deleted anything. So:
   rebuilds a notebook.
 
 - **The protected set is wider than the three classes named above, and the extra ones were
-  unguarded for months.** the confidential reference material **lives outside the repository entirely**
-  (`tools/backup_local_only.py::EXTERNAL_SOURCES`, overridable with `LLM_NOTES_DIR`). It was inside,
-  gitignored, and that protected the bytes and nothing else: a tracked document could still name its
-  files, describe them or quote them, and several did. Moving it out removes the class — there is no
-  path inside the repo to leak and nothing to commit by accident. **Never name a file in it, quote
-  it, or describe its contents in a tracked document**; `tests/test_no_confidential_leaks.py` checks
-  both. Alongside it,
+  unguarded for months.** Alongside them,
   `docs/EXPLAINER_PROMPT.md` / `docs/EXPLAINER_PATTERN.md` are the two documents any explainer is
   required to be built from. All gitignored, none regenerable, none watched by the tripwire until
   now. **85 files, 12 MB.** A guard that covers the documented cases and misses the largest one

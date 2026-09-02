@@ -62,6 +62,22 @@ Shorter than it started while carrying larger type, six chapter strips and a new
 figure. **Not** the ~18,000px the plan hoped for: thirty entries of catalogue prose have a floor,
 and the instruction was to keep the facts.
 
+## Confidentiality · in progress
+
+The source material this project is built from is confidential. It moved **outside the repository**
+on 2026-09-02: keeping it inside and gitignored protected its bytes and nothing else, since a
+tracked document could still name its files, publish their sizes, describe them or quote them.
+
+| item | status |
+| --- | --- |
+| Material moved out; no tracked file names the directory or anything in it | done |
+| Paths, filenames, sizes and content summaries scrubbed, including one served to the live site | done |
+| Naming guard in CI **and** pre-commit | done |
+| Quote guard written; runs only where the material is present | done |
+| **Paraphrase the passages that still quote the source verbatim** | **open — the failing test is the list** |
+| Move the quote guard into the pre-commit hook once green | open |
+| Purge git history and old PR descriptions | **PK's decision** — needs a force-push |
+
 ## Stage 2 — Retro-fix readability and design, one exercise at a time · queued
 
 Same treatment as 08, in this order, **each on its own branch with full e2e testing before moving

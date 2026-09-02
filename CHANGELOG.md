@@ -10,6 +10,30 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Security
+
+- **The confidential reference material now lives outside the repository entirely.** It was inside
+  the working tree, gitignored — which protected its bytes and nothing else. A tracked document
+  could still name its files, publish their sizes, describe what they held, or quote them, and
+  several did on a public branch while `.gitignore` worked perfectly. Removed in the process: a
+  table naming two sources with their line counts and a summary of each one's contents; a source
+  path **served to the live site** in exercise 03's `records.json`; module docstrings citing sources
+  by name; a scaffolder that wrote a source path into every new exercise's brief; and test fixtures
+  whose invented filenames published the real naming scheme.
+
+  The material is resolved by `tools/backup_local_only.py::EXTERNAL_SOURCES` and overridable with
+  `LLM_NOTES_DIR`. It is still backed up and still verified — confirmed by tampering with a stored
+  copy and watching the check report it. `git grep` across every tracked file now returns nothing
+  for the directory or for the naming scheme, and `.gitignore` needs no entry for it at all.
+
+- **New guard, `tests/test_no_confidential_leaks.py`, wired into CI and pre-commit.** The naming
+  half runs everywhere and rejects the scheme; it needed refining first, because exercise 01's own
+  published pages match that shape, so the property is "matches the scheme **and** is not a file we
+  ship". The quote half compares tracked prose against the material and can only run where that
+  material is present — never in CI — so it is documented as a pre-push step rather than a gate.
+  **It is currently red:** a backlog of passages still quote the source verbatim, and the failing
+  test is that list.
+
 ### Changed
 
 - **The local reference directory was renamed**, and is still gitignored and still backed up. It was
