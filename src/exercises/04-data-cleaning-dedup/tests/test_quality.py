@@ -65,7 +65,7 @@ def test_a_well_formed_document_passes_every_rule():
 
 
 def test_the_rule_table_has_exactly_nine_rules():
-    """The session's cascade is nine rules. A tenth appearing silently would change the yield."""
+    """The source's cascade is nine rules. A tenth appearing silently would change the yield."""
     assert len({r.rule for r in quality.run_rules(GOOD_ENGLISH, CFG)}) == 9
 
 

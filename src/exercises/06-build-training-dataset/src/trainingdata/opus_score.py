@@ -20,12 +20,12 @@ The second term is what stops the selector filling a batch with sixty-four copie
 idea. Selection is therefore **sequential greedy**: pick one, add its `u` to `G`, rescore everything
 else, pick again.
 
-**The lecture describes this wrongly in the load-bearing detail, and `DECISIONS.md` D7 records it.**
-The transcript describes recording *"which particular weight is acting bad"* and selecting
+**The source describes this wrongly in the load-bearing detail, and `DECISIONS.md` D7 records it.**
+The source describes recording *"which particular weight is acting bad"* and selecting
 candidates that update those weights — a weight **mask**. There is no weight mask in the paper or in
-either implementation; it is a continuous preconditioned inner product. The lecture also omits the
+either implementation; it is a continuous preconditioned inner product. The source also omits the
 redundancy penalty entirely, which is most of the reported benefit (greedy top-k 40.49 → full OPUS
-41.75, against random 40.29). Building from the lecture alone produces a different algorithm.
+41.75, against random 40.29). Building from the source alone produces a different algorithm.
 
 **This module is the only part of selection that needs torch**, which is why it is separate from
 `opus.py`. The decision record, the floors, the noise band and the conservation laws are all

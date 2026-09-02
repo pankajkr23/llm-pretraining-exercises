@@ -1,7 +1,7 @@
 """E2 — does a warmup band at a stage seam calm the gradient, or is it ceremony?
 
 `SPEC.md` schedules a warmup band at every stage boundary on the strength of one number from the
-session: V4 spiked its gradient norm about **150x** at a Hindi seam against frozen embeddings, and
+topic: V4 spiked its gradient norm about **150x** at a Hindi seam against frozen embeddings, and
 the fix was a ~3B-token 60/40 band that overlaps the two mixtures rather than stepping between
 them. The specification is explicit that this proxy **cannot reproduce a 150x spike** -- wrong
 scale, no frozen embeddings -- but that it *can* test the weaker, still-falsifiable claim: a seam

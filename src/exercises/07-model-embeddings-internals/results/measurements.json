@@ -1,5 +1,5 @@
 {
-  "_": "Every number the README and the web page render. Tracked, because AGENTS.md requires the evidence a published document renders to survive a clone. Written by hand from the runs in the session scratchpad; each entry names the script that produced it.",
+  "_": "Every number the README and the web page render. Tracked, because AGENTS.md requires the evidence a published document renders to survive a clone. Written by hand from the runs in the source material scratchpad; each entry names the script that produced it.",
   "setup": {
     "source": "k2/experiment.py",
     "layers": 2,

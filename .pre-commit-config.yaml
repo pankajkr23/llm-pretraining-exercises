@@ -72,7 +72,7 @@ repos:
       - id: check-toml
 
   # --- the files git cannot restore -------------------------------------------------------------
-  # `notebooks/`, the notebook builders, every BRIEF.md, the whole course corpus and the course's
+  # `notebooks/`, the notebook builders, every REQUIREMENTS.md, the whole course corpus and the course's
   # reference solution are gitignored, so git has never seen them and cannot bring them back. They
   # have already been destroyed twice by ordinary checkouts.
   #
@@ -86,6 +86,37 @@ repos:
         entry: 'uv run python tools/backup_local_only.py --message "auto post-checkout"'
         language: system
         stages: [post-checkout, post-merge, post-rewrite]
+        always_run: true
+        pass_filenames: false
+
+      # The confidentiality gate, on COMMIT rather than on checkout: the damage here is something
+      # entering a commit, not something leaving the working tree.
+      #
+      # BOTH halves run. The naming half needs nothing but the repo, so it also runs in CI. The
+      # quoting half compares tracked prose against the reference material and therefore only has
+      # anything to say on a machine that holds it — it skips elsewhere, CI included, and says so.
+      # That is the honest division: CI can prove no filename leaked, and only this hook can prove
+      # no sentence did.
+      #
+      # It ran with the quoting half disabled for exactly as long as that check was red. It is
+      # green now, so it gates.
+      - id: no-confidential-leaks
+        name: no tracked file names or quotes a confidential source
+        entry: uv run pytest tests/test_no_confidential_leaks.py -q
+        language: system
+        stages: [pre-commit]
+        always_run: true
+        pass_filenames: false
+
+      # The vocabulary gate. Separate from the hook above because it guards a different thing and
+      # runs in a different place: that one needs the material to compare against and is therefore
+      # local-only, while this one needs nothing but the repo and so also runs in CI. A word can
+      # come back without any filename or sentence coming back with it.
+      - id: no-forbidden-vocabulary
+        name: no tracked file uses the forbidden vocabulary
+        entry: uv run pytest tests/test_forbidden_vocabulary.py -q
+        language: system
+        stages: [pre-commit]
         always_run: true
         pass_filenames: false
 

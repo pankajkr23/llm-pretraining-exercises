@@ -6,7 +6,8 @@ every step; overlap would train twice on the same tokens while claiming otherwis
 data the ledger says was consumed.
 
 **The strategy — an odometer.** Give every sequence in the entire run one number, and make that
-number decodable. This is the "sample index" idea the session's references point at (Megatron Core's
+number decodable. This is the "sample index" idea the source material's references point at
+(Megatron Core's
 document/sample/shuffle indices, Mosaic's deterministic ordering): *look up* which sample belongs at
 a position, never shuffle a list you then have to remember.
 

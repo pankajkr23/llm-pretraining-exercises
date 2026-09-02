@@ -100,7 +100,7 @@ def test_a_new_store_is_empty(tmp_path):
 
 
 def test_adding_a_shard_writes_a_manifest_with_its_provenance(tmp_path):
-    """Session 1's gate asks for documented provenance per shard. This is that document."""
+    """Exercise 01's gate asks for documented provenance per shard. This is that document."""
     store = ShardStore(tmp_path)
     store.add(
         [doc("d1", BASE)],

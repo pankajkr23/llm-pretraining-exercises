@@ -117,7 +117,7 @@
     "severity": "high",
     "risk": "Bharat Data Sagar's claimed ~20 trillion tokens / ~3 petabytes is unaudited. It is a CEO statement from February 2026, echoed in DST press material, flagged [VENDOR CLAIM] throughout — and \"tokens\" is a soft unit for a 3PB multimodal store. The corpus is also not publicly redistributable.",
     "mitigation": "Treat as directional (§18.3). §A.7: \"Do not build a plan that depends on this being true.\" §3.6: pursue a formal data-sharing MoU with BharatGen and/or AIKosh contributor status rather than a download; §15.4 ranks the MoU second by value-per-rupee at ₹0–small.",
-    "note": "§18.3, §3.6, §0 honesty note, §A.7 (\"Low confidence — treat as directional only\"). Severity \"high\" is assigned by this extraction brief; §18.3 states no severity. ₹1,293 crore of public investment sits behind the corpus (§3.6), and §A.6 adds a further ₹988.6 crore to BharatGen for a 1-trillion-parameter LLM."
+    "note": "§18.3, §3.6, §0 honesty note, §A.7 (\"Low confidence — treat as directional only\"). Severity \"high\" is assigned by this extraction requirements document; §18.3 states no severity. ₹1,293 crore of public investment sits behind the corpus (§3.6), and §A.6 adds a further ₹988.6 crore to BharatGen for a 1-trillion-parameter LLM."
   },
   {
     "id": "R16",
@@ -141,7 +141,7 @@
     "severity": "high",
     "risk": "Whether model weights are a derivative work of CC BY-SA training data is unresolved anywhere in the world. It governs Wikipedia / Wikisource / Wikibooks / FineWiki, FLORES-200, People's Speech and Stack Exchange / Stack Overflow dumps.",
     "mitigation": "§13.3: most labs proceed; document your position. §10.2 notes Wikimedia has signed 6 AI licensing deals, so a commercial channel exists; §13.3 notes Stack Overflow now licenses data commercially, making free bulk use contested.",
-    "note": "§18.3 and §13.3. Severity \"high\" is assigned by this extraction brief; §18.3 states no severity. §10.2 calls the share-alike obligation on Wikipedia \"a live legal question\"."
+    "note": "§18.3 and §13.3. Severity \"high\" is assigned by this extraction requirements document; §18.3 states no severity. §10.2 calls the share-alike obligation on Wikipedia \"a live legal question\"."
   },
   {
     "id": "R19",
@@ -149,7 +149,7 @@
     "severity": "high",
     "risk": "The real deduplicated natural-Indic text volume has never been measured across all sources jointly, by anyone. The document's 250–500B-token figure across all 22 scheduled languages is an inference from Sangraha, FineWeb-2, IndicCorp and HPLT figures — not a measurement — and it drives the entire corpus architecture.",
     "mitigation": "§19 item 2 / §A.7: measure it in week one. Ingest Sangraha + IndicCorp v2 + FineWeb-2 Indic + HPLT 3.0 Indic + MADLAD Indic, run global MinHash, and publish the number internally. A two-week job, not a six-month one — and a publishable contribution in itself.",
-    "note": "§18.3 and §A.7 (\"Low confidence — treat as directional only\"). §A.7 calls it \"the single most important unverified number in the entire document\". Severity \"high\" is assigned by this extraction brief; the document states no severity."
+    "note": "§18.3 and §A.7 (\"Low confidence — treat as directional only\"). §A.7 calls it \"the single most important unverified number in the entire document\". Severity \"high\" is assigned by this extraction requirements document; the document states no severity."
   },
   {
     "id": "R20",
@@ -157,6 +157,6 @@
     "severity": "high",
     "risk": "R*_D — the repetition decay constant — has never been measured for Indic text, translated text, or synthetic text. Muennighoff et al. measured R*_D ≈ 15 only on English web data (C4-family), at ≤9B parameters and ≤900B tokens. Synthetic data plausibly has a lower repetition ceiling, having less latent diversity per token.",
     "mitigation": "§B.1 / §B.6: run an Indic repetition-value ablation at 1.5B scale — a one-week job — as a pre-capital gate, before the epoch schedule is fixed.",
-    "note": "§B.1 (\"Two honest limits\"), §B.6 and §B.7. Called \"the second-most-important unmeasured number after the total-unique-Indic-pool measurement of §A.7\". Severity \"high\" is assigned by this extraction brief; the document states no severity. It is load-bearing because §B.1's reframe of the natural-Indic effective share from ~2% to ~7–8% rests on ≤4-epoch repetition holding for Indic, translated and synthetic text. Not listed in §18.3 — it appears only in Addendum B."
+    "note": "§B.1 (\"Two honest limits\"), §B.6 and §B.7. Called \"the second-most-important unmeasured number after the total-unique-Indic-pool measurement of §A.7\". Severity \"high\" is assigned by this extraction requirements document; the document states no severity. It is load-bearing because §B.1's reframe of the natural-Indic effective share from ~2% to ~7–8% rests on ≤4-epoch repetition holding for Indic, translated and synthetic text. Not listed in §18.3 — it appears only in Addendum B."
   }
 ]

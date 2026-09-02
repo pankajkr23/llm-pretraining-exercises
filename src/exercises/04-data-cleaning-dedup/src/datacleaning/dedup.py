@@ -1,4 +1,4 @@
-r"""Stage 5 — deduplication, the stage the session says this corpus never had.
+r"""Stage 5 — deduplication, the stage the source material says this corpus never had.
 
 Two passes, because they catch different things:
 
@@ -11,7 +11,8 @@ Two passes, because they catch different things:
    that differs only in its navigation.
 
 The parameters are FineWeb's: `k=5`, 112 permutations arranged as 14 bands of 8. The banding
-approximation puts the similarity threshold at `(1/b)**(1/r)` = **0.719** — the session quotes this
+approximation puts the similarity threshold at `(1/b)**(1/r)` = **0.719** — the source material
+quotes this
 preset as "target ~0.75", and we report what the arithmetic actually gives rather than the quoted
 figure.
 
@@ -356,7 +357,7 @@ def dedup_stage(docs: list[Document], cfg: Config) -> tuple[list[Document], Stag
                 "preset": "FineWeb (k=5, 112 = 14x8)",
                 "quoted_target": 0.75,
                 "note": (
-                    "The session quotes this preset as target ~0.75; the banding approximation "
+                    "The source quotes this preset as target ~0.75; the banding approximation "
                     "gives 0.719. We publish what the code computes."
                 ),
             },

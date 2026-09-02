@@ -1,6 +1,6 @@
 """The admission gate, and the append-only manifest log.
 
-The rule under test throughout: **a missing answer is a refusal, not a pass.** The lecture is
+The rule under test throughout: **a missing answer is a refusal, not a pass.** The source is
 explicit that a shard without dedup, PII and eval-overlap hashes is not trained on, and the failure
 mode this guards against is the quiet one — a shard admitted because nobody had got round to
 checking it yet.
@@ -53,7 +53,7 @@ def test_the_required_hashes_are_the_three_the_lecture_names() -> None:
 
     The refusal tests below iterate `REQUIRED_HASHES`, so deleting an entry from it makes them test
     fewer cases and stay green — a guard derived from the thing it guards. This is the twin that
-    catches that: the three are a contract from the lecture (*"a minimum cleaning hash, dedup plus
+    catches that: the three are a contract from the source (*"a minimum cleaning hash, dedup plus
     eval, PII"*), not a tunable.
     """
     assert set(m.REQUIRED_HASHES) == {"dedup_hash", "pii_hash", "eval_overlap_hash"}, (
@@ -64,7 +64,7 @@ def test_the_required_hashes_are_the_three_the_lecture_names() -> None:
 
 @pytest.mark.parametrize("missing", m.REQUIRED_HASHES)
 def test_a_missing_required_hash_refuses_the_shard(missing: str) -> None:
-    """The lecture's minimum: dedup, PII, eval-overlap. Absent means refused."""
+    """The source's minimum: dedup, PII, eval-overlap. Absent means refused."""
     refusal = m.admit(_clean(**{missing: None}))
     assert refusal, f"{missing} was missing and the shard was still admitted"
     assert any(missing in r for r in refusal.reasons)

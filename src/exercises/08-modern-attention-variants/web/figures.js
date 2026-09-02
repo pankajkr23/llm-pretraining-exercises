@@ -105,9 +105,9 @@ const int = (n) => Math.round(n).toLocaleString('en-US');
 
 /** A plate: a numbered rule, a title, the figure, and a caption that argues. */
 export function plate(numeral, title, node, caption, briefNode) {
-  /* The brief may be passed in either slot. A caption is a string and a brief is a Node, so the
+  /* The requirements may be passed in either slot. A caption is a string and a requirements document is a Node, so the
    * two are unambiguous, and the call site is allowed to list them in the order the READER meets
-   * them: brief above the figure, caption below it. */
+   * them: requirements document above the figure, caption below it. */
   if (caption && typeof caption !== 'string') {
     const swap = caption;
     caption = briefNode;
@@ -633,7 +633,7 @@ export function figInvoice(M) {
 
 /* ====================================================== PLATE II · the centrefold, five bays
  *
- * One attention step, taken apart. The assignment requires plain scaled dot-product attention
+ * One attention step, taken apart. The requirements requires plain scaled dot-product attention
  * first, because nothing after it makes sense without it — and it names five steps, not four:
  * Q·K, scale, mask, softmax, and the weighted sum of V. An earlier version of this figure stopped
  * at softmax, which is precisely the step at which a reader would conclude that attention outputs
@@ -679,7 +679,7 @@ const V = [
  * Every bay used to carry one line, and every line was written for somebody who already knew what
  * a softmax was — "scaled down, so the numbers stay in a range softmax can work with" tells a
  * newcomer nothing at all, because it answers a question they have not been given yet. This repo's
- * own rule for the session notebooks says it plainly: plain what-and-why before each step, the
+ * own rule for the topic notebooks says it plainly: plain what-and-why before each step, the
  * arithmetic and caveats after it. The centrefold is the one figure a first-time reader is most
  * likely to stop at, and it was the one holding the least help. */
 const STAGES = [
@@ -946,10 +946,10 @@ export function figCentrefold() {
    * rule broken in the figure it matters most in: an interaction must never be the only route to a
    * lesson. A reader who does not click, or who prints, or who arrives on an in-page anchor, now
    * gets the whole recipe in order. The tab keeps the second register, which is the arithmetic. */
-  const recipe = el('div', 'brief bay-recipe');
+  const recipe = el('div', 'preamble bay-recipe');
   for (const [label, plain] of STAGES) {
-    const row = el('div', 'brief-row');
-    row.append(el('span', 'brief-lab', label));
+    const row = el('div', 'preamble-row');
+    row.append(el('span', 'preamble-lab', label));
     const v = el('p');
     v.textContent = plain;
     row.append(v);
@@ -1577,9 +1577,9 @@ export function figCorrection(M) {
   const X = 210;
   const FULL = 600;
   const ratio = d.claimedTB / computed;
-  s.append(svgText(X - 12, 46, 'ax end', 'TRANSCRIPT'));
+  s.append(svgText(X - 12, 46, 'ax end', 'AS QUOTED'));
   s.append(svg('rect', { x: X, y: 34, width: FULL * ratio, height: 16, class: 'f-muted' }));
-  /* `about 1 TB`, NOT `1.00 TB`. The transcript states one significant figure and rendering it
+  /* `about 1 TB`, NOT `1.00 TB`. The source states one significant figure and rendering it
    * with two decimal places invents four the source never had. */
   s.append(svgText(X + FULL * ratio + 10, 47, 'num', `about ${d.claimedTB} TB`));
   s.append(svgText(X - 12, 102, 'ax end', 'ITS OWN FORMULA'));

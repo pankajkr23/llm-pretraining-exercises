@@ -4,7 +4,8 @@ A manifest records where a shard came from, what was done to it, and what it con
 licence, contributor, the exact cleaning code that produced it, a content hash, a token count, and
 a language breakdown. A contribution that cannot produce one has not shipped clean data.
 
-The three defects the session says a manifest would have caught in the previous run are worth
+The three defects the source material says a manifest would have caught in the previous run are
+worth
 naming, because each maps to a field here: copy-pasted file sizes (`shards[].size_bytes`, read from
 the server rather than typed), identifiers that changed on every run (`run_id`, derived from content
 rather than from the clock), and token counts estimated with a ratio wrong for Indic by several
@@ -30,7 +31,8 @@ PACKAGE_DIR = Path(__file__).resolve().parent
 def script_hash(package_dir: Path = PACKAGE_DIR) -> str:
     """Hash every `.py` file in the package, in sorted order.
 
-    The session asks for the *cleaning script's* hash beside the content hash, so a shard records
+    The source material asks for the *cleaning script's* hash beside the content hash, so a shard
+    records
     not just what it contains but which code produced it. Sorted so the digest does not depend on
     filesystem ordering.
 

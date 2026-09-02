@@ -1,7 +1,7 @@
 [project]
 name = "exercise-02-tokenization"
 version = "0.1.0"
-description = "Session 2 — a shared 10k BPE vocabulary balanced across English, Hindi, Telugu, and one more language"
+description = "Exercise 02 — a shared 10k BPE vocabulary balanced across English, Hindi, Telugu, and one more language"
 requires-python = ">=3.12"
 dependencies = [
   "tokenizers>=0.20",

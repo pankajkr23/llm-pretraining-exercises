@@ -55,7 +55,7 @@
     "stage": "growth",
     "ladder": true,
     "recommended": true,
-    "verdict": "The assignment — 40B",
+    "verdict": "The requirements — 40B",
     "feasibility": "Derived, because the comparator does not disclose its own. Gemma 4's technical report and its model card both describe the training data without ever stating a token count; Gemma 3's card does state one, verbatim: the 27B was trained with 14 trillion tokens. 16.8T is that figure plus 20% for one generation of growth. It is a stated estimate with a stated method, not a published number, and it is labelled that way everywhere it appears.",
     "requirement": "Everything the 10T rung lists, plus the volume that only arrives when the licence questions are answered. This catalogue can commit 6.57T today, so the seed as specified is 10.2T short — and the shortfall is a stack of unwritten letters rather than a collection problem."
   },

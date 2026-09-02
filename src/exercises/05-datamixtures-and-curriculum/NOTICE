@@ -19,7 +19,7 @@ or approved anything here.
 
 WHERE THE DATASET FIGURES COME FROM
 
-The inventory in src/mixture/inventory.py is transcribed from the Session 5 course
+The inventory in src/mixture/inventory.py is transcribed from the Exercise 05 course
 material, which states of its own figures that "dataset sizes are approximate and
 being verified". That caveat is carried through: every row is typed `confirmed`,
 `approximate` or `unstated`, and rows with no token count are recorded as having
@@ -40,7 +40,7 @@ record is a reading of public material and may be out of date.
 WHAT IS MEASURED AND WHAT IS NOT
 
 - MEASURED: the reasoning-band token counts (counted with this project's own
-  Session 2 vocabulary), the tokenizer fertility and [UNK] tables (measured in
+  Exercise 02 vocabulary), the tokenizer fertility and [UNK] tables (measured in
   exercises 03 and 04), and every arithmetic result derived from the inventory.
 
 - ESTIMATED, AND LABELLED SO: the supervised-token ratio for agentic trajectories,

@@ -5,10 +5,10 @@ re-counted by exercise 04, never annotated.
 
 ## The decision
 
-**Session 2's 10,000-token vocabulary stays as the measuring instrument. It is not V5's
+**Exercise 02's 10,000-token vocabulary stays as the measuring instrument. It is not V5's
 vocabulary.**
 
-Two measurements decide that, and neither is a criticism of the Session 2 work — which reproduced
+Two measurements decide that, and neither is a criticism of the Exercise 02 work — which reproduced
 the reference recipe exactly, then beat it on both of the numbers it reports. What follows is about
 **scope**: a vocabulary built to balance four languages is being asked to carry twenty-nine.
 
@@ -31,9 +31,9 @@ IndicGenBench covers **29 languages across 13 scripts**. Our vocabulary reads a 
 ### 2 · Its fertility is an order of magnitude off the frontier on Indic
 
 Tokens per faithful unit; **lower is better**, best in each row in bold. `ours` is **this
-project's own Session 2 submission** — the 10,000-token vocabulary at
+project's own Exercise 02 submission** — the 10,000-token vocabulary at
 `02-tokenization/web/tokenizer.json`, read in place — not the reference `tokenizer.json` that ships
-with the assignment solution.
+with the requirements solution.
 
 | language | `ours` | `cl100k_base` | `o200k_base` | `gemma-4-31b` | `sarvam-105b` | `xlm-roberta-base` |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -55,9 +55,9 @@ Two things a reviewer should take from this table, both of which cut against eas
   **2.19**, roughly a third of ours and an eighth
   of `o200k_base`.
 
-### 3 · Session 2 optimised a different objective, and optimised it well
+### 3 · Exercise 02 optimised a different objective, and optimised it well
 
-Session 2's score is `1000 / (X_max − X_min)`: it rewards *evenness* across four named languages.
+Exercise 02's score is `1000 / (X_max − X_min)`: it rewards *evenness* across four named languages.
 V5 needs *low* fertility across 29. Those are different objectives, and the second is not a
 correction of the first — it is a different question asked at a different scope.
 
@@ -76,16 +76,16 @@ against 191,266 — having first reproduced that reference exactly at 6502.56, o
 languages its recipe uses. And of every configuration in that table scoring above the reference,
 the submission is the one that uses the fewest tokens: it did not buy its score.
 
-So nothing here is a reason to distrust the Session 2 work. The reasons to train a new vocabulary
+So nothing here is a reason to distrust the Exercise 02 work. The reasons to train a new vocabulary
 for V5 are the two above: three scripts it cannot read, and a vocabulary an order of magnitude too
 small for 13 scripts.
 
 ## What V5's vocabulary should be, and what it costs
 
-**Reuse the instructor's own training script.** `docs/sessions/s2_assignment_solution.md` ships
+**Reuse the instructor's own training script.** The reference solution we were given ships
 `train_tokenizer.py` with the recipe already settled: HuggingFace BPE, `min_frequency=1`, NFKC
-normalisation only, **Metaspace** rather than ByteLevel (*"ByteLevel spends too many tokens on
-UTF-8 bytes for Indic scripts"* — which the Manipuri column above confirms), and a hard round-trip
+normalisation only, **Metaspace** rather than ByteLevel — which spends too many tokens on the
+UTF-8 bytes of Indic scripts, as the Manipuri column above confirms — and a hard round-trip
 rule that `decode(encode(text))` preserves every non-whitespace character.
 
 Two changes: `vocab_size` from 10,000 to roughly **200,000**, and the corpus from four Wikipedia

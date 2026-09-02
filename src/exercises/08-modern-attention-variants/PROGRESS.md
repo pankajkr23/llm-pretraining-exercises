@@ -1,4 +1,4 @@
-# PROGRESS — Session 8
+# PROGRESS — Exercise 08
 
 A running log of what was built, what was verified, what changed and what is still open. Written so
 the work can be picked up cold. Newest entries at the top of each section.
@@ -6,12 +6,12 @@ the work can be picked up cold. Newest entries at the top of each section.
 **Where the work lives:** on a branch, not yet merged. This file does not name branch or PR numbers
 — `git log` and `gh pr list` answer that correctly and a markdown file goes stale.
 
-**Deliverable shape — read this before calling the session done.** The platform asks for a **live
+**Deliverable shape — read this before calling the source material done.** The platform asks for a **live
 app link** and the **GitHub repo**, and the README must say which sources the dates came from.
 Question 1 is 1000 points for the link and repo; Question 2 is a written answer about what the
 timeline shows, worth a further 1000 if it also names a mechanism the instructor missed, with a date
 and a primary source; Question 3 is an optional 250 for sharing publicly. The submission field is
-labelled "Netlify Link" but the brief says "Netlify or Vercel or wherever you like" — our Vercel
+labelled "Netlify Link" but the requirements says "Netlify or Vercel or wherever you like" — our Vercel
 pipeline is fine, and the link must resolve for a logged-out stranger.
 
 ---
@@ -21,7 +21,7 @@ pipeline is fine, and the link must resolve for a logged-out stranger.
 | # | item | status | note |
 | --- | --- | --- | --- |
 | O1 | **The catalogue** | **done** | 30 mechanisms, 2014 to Aug 2026, every date read from the primary source and cross-checked against the source's own wording. 19 required by the coverage list + 5 beyond it. |
-| O2 | **The arithmetic** | **done** | The session's 6.44 GB / 51.54 GB / 4× GQA all reproduce exactly from `cache.py`. |
+| O2 | **The arithmetic** | **done** | The source material's 6.44 GB / 51.54 GB / 4× GQA all reproduce exactly from `cache.py`. |
 | O3 | **The page** | **done** | Twelve spine sections, the two-object mechanism figure and the timeline, at `/08-modern-attention-variants/`. Registered in the landing card, `SPINE_ENFORCED` and `OPTIONAL_DEPENDENCY_GATES` in the same change. (The browser-test count this row used to carry went stale four times over; `uv run pytest src/exercises/08-modern-attention-variants -m integration` answers it correctly.) |
 | O4 | **Question 2's written answer** | **ready to submit** | `artifacts/q2_answer.txt` (gitignored) is generated from `catalogue.py` and `timeline.py`, so every count, date and citation in it is derived rather than typed — regenerate it rather than editing it. **The link is live**: v0.13.0 was tagged on 2026-09-02, PK approved the production gate, and `https://llm-pretraining-demos.vercel.app/08-modern-attention-variants/` returns **200** to an anonymous request with no redirect and no login wall — `chapters.js`, `data.js`, `page-extra.css` and `/_shared/tokens.css` all 200 as well, which is the check that matters, because a page that loads while its data file 404s renders empty. Submitting is PK's: the platform takes the app link, the GitHub repo, and the written answer. |
 | O5 | **A mechanism figure** | **done** | Figure 1: the causal score triangle beside the KV-cache column, with eight variants as predicates rather than pictures. Three browser tests make it falsifiable — switching must change the drawing, GQA must touch no score, linear attention must leave no per-position square. |
@@ -45,7 +45,7 @@ pipeline is fine, and the link must resolve for a logged-out stranger.
 ## Findings
 
 **The instructor's tidy arc is not what the data shows, and that is the interesting part.** The
-brief predicts "exactness → memory → length → memory again". Deriving the dominant pressure per
+requirements document predicts "exactness → memory → length → memory again". Deriving the dominant pressure per
 two-year window gives something messier: **two of the six windows have no single dominant pressure
 at all** (2018–19 and 2022–23). In those periods the field was attacking compute, cache and position
 simultaneously. `timeline.Period.dominant` returns `None` on a tie rather than picking a winner, and
@@ -73,23 +73,23 @@ in the entry, because a reader who needs the live page needs a browser.
 
 ## Corrections — errors found in the course material
 
-The assignment invites these: *"if you catch me in another one, tell me."*
+The requirements invites these: *"if you catch me in another one, tell me."*
 
-**The transformer is mis-dated in the transcript.** It says Vaswani "invented in 2018 and 17".
+**The transformer is mis-dated in the source.** It says Vaswani "invented in 2018 and 17".
 *Attention Is All You Need* is `arXiv:1706.03762`, v1 **Mon, 12 Jun 2017**, read from the abstract
 page.
 
-**DroPE is two papers, and the transcript quotes the wrong one's title.** The technique taught —
+**DroPE is two papers, and the source quotes the wrong one's title.** The technique taught —
 pretrain with positional embeddings, drop them, recalibrate briefly — is *Extending the Context of
 Pretrained LLMs by Dropping Their Positional Embeddings*, `arXiv:2512.12167` (Sakana AI, v1 13 Dec
-2025). The transcript's garbled *"rotate position emitting for efficient"* maps instead onto
+2025). The source's garbled *"rotate position emitting for efficient"* maps instead onto
 **DRoPE** with a capital R, `arXiv:2503.15029`, *Directional Rotary Position Embedding for Efficient
 Agent Interaction Modeling* — an autonomous-driving trajectory paper. Two papers, one capital
 letter apart. Both are recorded so nobody "corrects" us back to the wrong one.
 
-**A cache figure does not reproduce.** The transcript says eight users at 1M tokens need about
-1 TB; the session's own formula at the session's own yardstick gives **1.57 TB**. Both are recorded.
-A smaller model, fewer KV heads or fp8 would each reconcile them and the transcript does not say
+**A cache figure does not reproduce.** The source says eight users at 1M tokens need about
+1 TB; the source material's own formula at the source material's own yardstick gives **1.57 TB**. Both are recorded.
+A smaller model, fewer KV heads or fp8 would each reconcile them and the source does not say
 which was meant — so neither number is published alone.
 
 ---
@@ -247,7 +247,7 @@ is the part that matters more than any styling.
   trade-off and citation is rendered from `web/data.js`, which `tools/build_web_data.py` derives from
   the catalogue and from the same functions the tests exercise — so the page cannot disagree with the
   evidence, and the derived findings cannot disagree with the code.
-- **Figure 1 draws the framing the session never states**: attention has exactly two objects that
+- **Figure 1 draws the framing the source material never states**: attention has exactly two objects that
   cost anything, and every mechanism is a structural edit to one of them. Eight variants, each a
   predicate rather than a drawing.
 - **One latent bug caught before it shipped.** The "days nobody touched the cost" tile looked its gap
@@ -302,7 +302,7 @@ no graphics, misaligned. Rebuilt as a monograph feature — six numbered plates,
 
 ---
 
-## Completing the session (this pass)
+## Completing the source material (this pass)
 
 - **A mandated mechanism was missing and the guard could not see it.** The coverage list says
   *"sparse and top-k attention"*; we had catalogued the sparse half and the Sparse Transformers
@@ -345,7 +345,7 @@ no graphics, misaligned. Rebuilt as a monograph feature — six numbered plates,
   world models change the objective, not the attention. Gnani.ai has published no mechanism at all.
 - **Two page bugs found by PK that no test caught**: the sweep control threw on every click because
   the plate wrapper forwarded `select` and not `sweep`, and Plate V had no replay control.
-- **Neutral voice.** Every word tying the page to a particular class or assignment is gone from the
+- **Neutral voice.** Every word tying the page to a particular class or requirement is gone from the
   page, the served NOTICE and the meta description.
 
 ---

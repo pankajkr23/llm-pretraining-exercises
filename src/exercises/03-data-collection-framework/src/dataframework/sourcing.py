@@ -64,7 +64,7 @@ USABLE_GRADES = ("A", "B")
 # The training lifecycle, read from the `stage` tag every catalogue record already carries. The
 # first build of this framework mapped `category` onto pre-training tiers and dropped everything
 # that did not fit — 36 of 145 records, including every preference, RL-only and safety dataset.
-# Grouping by stage instead is how the catalogue answers the whole assignment rather than a third
+# Grouping by stage instead is how the catalogue answers the whole requirement rather than a third
 # of it.
 LIFECYCLE: dict[str, tuple[str, ...]] = {
     "pre-training": ("PT", "PT (multimodal)", "MT"),

@@ -1,6 +1,6 @@
 """The submission bundle must be trackable, and the heavy output must not be.
 
-The assignment wants a repository containing a generated execution log and evidence bundle, so
+The requirements wants a repository containing a generated execution log and evidence bundle, so
 those files have to be **in git**. Everything else a run produces — checkpoints at ~67 MiB each,
 shard arrays, full token traces — must stay out of it.
 
@@ -49,7 +49,7 @@ def _ignored(rel: str) -> bool:
     ["run.log", "evidence.json", "evidence.md", "performance.json", "manifests/shards.json"],
 )
 def test_the_submission_bundle_is_trackable(name: str) -> None:
-    """Every deliverable the assignment names must be committable."""
+    """Every deliverable the requirements names must be committable."""
     rel = f"{EXERCISE}/submission_artifacts/{name}"
     assert not _ignored(rel), (
         f"{rel} is ignored, so the submission bundle could not be committed. If this is `run.log`, "

@@ -1,10 +1,10 @@
 """The order the model learns in: stages, difficulty bands, reasoning-length bands.
 
-Assignment item 6, plus the stage schedule the mixture is actually delivered by. A mixture decides
-*how much*; a curriculum decides *when*, and Session 5 §9 is clear that the second matters almost
+Requirement 6, plus the stage schedule the mixture is actually delivered by. A mixture decides
+*how much*; a curriculum decides *when*, and Exercise 05 §9 is clear that the second matters almost
 as much as the first.
 
-**The headline mixture is the run's average, not a constant.** Session 5 makes this concrete with
+**The headline mixture is the run's average, not a constant.** Exercise 05 makes this concrete with
 V4's own numbers — general web fell from roughly 70% toward 18%, code climbed 13% to 35%, science
 and mathematics 7% to 39%, with a protected channel pinned at 8% throughout. So a spec that states
 one set of shares and one set of stages owes an arithmetic obligation: **the stages, weighted by
@@ -21,7 +21,7 @@ Three things are declared honestly rather than implied:
 - **Difficulty bands are assigned from the source, not from a readability score**, and that is a
   measured decision rather than a preference: Flesch-Kincaid is not monotone over these bands' own
   examples, and inverts on real documents. See `READABILITY_REJECTED`.
-- **The reasoning-band token counts are counted, not estimated** — with our own Session 2
+- **The reasoning-band token counts are counted, not estimated** — with our own Exercise 02
   vocabulary, via `datacleaning.tokens`, because a length band whose boundaries were guessed is not
   a band.
 - **Warmup bands are sized from V4's mitigation, and our proxy cannot reproduce the failure they
@@ -244,8 +244,8 @@ class Seam:
 def seams(config: Config | None = None) -> tuple[Seam, ...]:
     """Every mixture transition in the run, with the lane that moves most at each.
 
-    V4's mitigation is the design here: *"never change the mixture in one hard step"*. Every
-    transition is blended across a warmup band of several billion tokens — a ~3B-token 60/40 blend
+    V4's mitigation is the design here: no hard step between mixtures. Each transition is spread
+    over a warm-up band billions of tokens wide — a ~3B-token 60/40 blend
     — so the model moves gradually from the old distribution to the new one. The band overlaps the
     boundary rather than stepping at it.
 
@@ -282,18 +282,18 @@ def seams(config: Config | None = None) -> tuple[Seam, ...]:
 
 # ------------------------------------------------------------------- the sequence-length ladder
 
-# Three rules from the session, none of them ours, all of them binding on Session 6's dataloader.
+# Three rules from the notes, none of them ours, all of them binding on exercise 06's dataloader.
 #
 #   * **One length per batch.** *"In a batch all examples have the same length."* So a run does not
 #     mix 4K and 8K samples; it moves between homogeneous batches, and the ladder is a schedule of
 #     batch shapes rather than a filter on documents.
-#   * **No padding short samples up.** *"Shorter one is a loss of compute for us. So we don't make
-#     a shorter one."* Short documents are packed, never padded to the rung.
-#   * **You must train at the length you claim.** *"When you say 100k context, you have to train on
-#     100k."* A model that only ever saw 8K does not acquire 32K by being asked at inference.
+#   * **No padding short samples up.** A padded sequence spends compute on nothing. Short
+#   documents are packed, never padded to the rung.
+#   * **You must train at the length you claim.** A claimed 100k context means training at 100k.
+#     A model that only ever saw 8K does not acquire 32K by being asked at inference.
 #
 # V4's own ladder is the precedent: it trained at 4K "because it was fast", then moved to 8K, and
-# the session's answer to going further was 16K. Doubling is the step, so this ladder doubles --
+# the notes' answer to going further was 16K. Doubling is the step, so this ladder doubles --
 # an earlier version of this file jumped 8K to 32K and skipped a rung, which is the same coarse
 # sweep exercise 02 was caught by when it went 2 -> 5 -> 6 and named the wrong optimum.
 SEQUENCE_LADDER: tuple[tuple[int, str], ...] = (
@@ -405,9 +405,10 @@ BAND_MIX: dict[str, dict[str, float]] = {
 
 # The width over which two adjacent bands overlap at a boundary, in tokens.
 #
-# §9 of the transcript is explicit that a band edge is not a line: *"not only you need the band, you
-# need to have a band overlap as well... there is going to be some sort of diffusion of the band B1
-# and B2 going in also together"*. This is a different mechanism from the stage-seam warmup in
+# The source material is explicit that a band edge is not a line: the bands have to overlap, so
+# that
+# one diffuses into the next rather than switching at a boundary. This is a different mechanism
+# from the stage-seam warmup in
 # `seams()`: that one blends the *lane mixture* at a stage boundary, this one blends the *difficulty
 # distribution* at a band boundary, and a run can get the first right and still hit a wall on the
 # second.
@@ -619,11 +620,12 @@ def real_example_coverage() -> dict[str, bool]:
 
 # ----------------------------------------------------------------- reasoning-length bands
 
-# One problem, four depths. The problem and its answer are Session 5's own worked example
-# ("How many integers between 1 and 1000 are divisible by 3 or 5?", answer 467), so the ladder is
-# anchored to something the session states rather than to something invented here.
-REASONING_PROBLEM = "How many integers between 1 and 1000 are divisible by 3 or 5?"
-REASONING_ANSWER = 467
+# One problem, four depths. It is ours rather than the source material's — the reference version
+# cannot be reproduced here — but it is chosen to keep the property the ladder needs: an upper
+# bound that is itself divisible, so the inclusive and exclusive readings genuinely differ and the
+# deepest band has something real to notice.
+REASONING_PROBLEM = "How many integers from 1 to 750 are divisible by 6 or 10?"
+REASONING_ANSWER = 175
 
 
 @dataclass(frozen=True)
@@ -717,7 +719,7 @@ def measure_reasoning_bands() -> list[dict[str, object]]:
 
     Exercise 04's rule, applied to a length band: fertility is a property of a tokenizer, not of a
     text, so a band boundary quoted without one is not a measurement. These are counted with the
-    Session 2 vocabulary and the counts move if the vocabulary does.
+    Exercise 02 vocabulary and the counts move if the vocabulary does.
 
     Returns:
         One row per band with counted tokens, words, fertility and the tokenizer that produced
@@ -756,24 +758,24 @@ def band_tokens(config: Config | None = None) -> dict[str, float]:
 
 
 def inclusive_answer() -> int:
-    """The count under the reading that includes 1000, computed rather than quoted.
+    """The count under the reading that includes the upper bound, computed rather than quoted.
 
     Returns:
-        Integers in 1..1000 divisible by 3 or 5.
+        Integers in 1..750 divisible by 6 or 10.
     """
-    return sum(1 for n in range(1, 1001) if n % 3 == 0 or n % 5 == 0)
+    return sum(1 for n in range(1, 751) if n % 6 == 0 or n % 10 == 0)
 
 
 def exclusive_answer() -> int:
-    """The count under the reading that excludes 1000.
+    """The count under the reading that excludes the upper bound.
 
     The ultra band's whole contribution is noticing that these differ. If they did not, the trace
     would be padding rather than depth, which is the failure mode a length band invites.
 
     Returns:
-        Integers in 1..999 divisible by 3 or 5.
+        Integers in 1..749 divisible by 6 or 10.
     """
-    return sum(1 for n in range(1, 1000) if n % 3 == 0 or n % 5 == 0)
+    return sum(1 for n in range(1, 750) if n % 6 == 0 or n % 10 == 0)
 
 
 def seam_blend(

@@ -1,8 +1,8 @@
-"""What the order shows, and whether it shows what the brief says it shows.
+"""What the order shows, and whether it shows what the requirements says it shows.
 
-Question 2 asks what the timeline reveals that a list cannot. The brief supplies an answer —
-*"first it wants exactness, then it wants memory back, then it wants length, then it wants memory
-back again"* — and the temptation is to print that sentence over a chart and call it a finding.
+Question 2 asks what the timeline reveals that a list cannot. The requirements supplies an answer —
+exactness, then memory, then length, then memory again — and the temptation is to print that
+sentence over a chart and call it a finding.
 
 These tests exist so the exercise cannot do that. `pressure_by_period` counts what each window
 actually contains, and `Period.dominant` returns `None` on a tie rather than picking a winner. If
@@ -16,7 +16,7 @@ MECHANISMS = load()
 
 
 def test_the_order_is_chronological_and_stable() -> None:
-    """The assignment's central requirement, and the one thing the page must not get wrong."""
+    """The requirements' central requirement, and the one thing the page must not get wrong."""
     ordered = in_order(MECHANISMS)
     assert [m.date for m in ordered] == sorted(m.date for m in MECHANISMS)
     assert in_order(ordered) == ordered, "the sort is not stable across a second application"
@@ -69,7 +69,8 @@ def test_the_field_left_the_cost_alone_for_years_after_the_transformer() -> None
 def test_some_periods_have_no_single_dominant_pressure() -> None:
     """**The test that keeps the exercise honest.**
 
-    The brief describes a clean sequence of one pressure after another. The data does not show that:
+    The requirements describes a clean sequence of one pressure after another. The data does not
+    show that:
     there are windows in which the field was attacking several bills at once, and `dominant` reports
     `None` for them rather than manufacturing a winner.
 
@@ -80,7 +81,7 @@ def test_some_periods_have_no_single_dominant_pressure() -> None:
     assert periods, "no periods derived; the catalogue may be empty"
     ties = [p for p in periods if p.dominant is None]
     assert ties, (
-        "every window has a single dominant pressure, which would make the brief's arc exactly "
+        "every window has a single dominant pressure, which would make the arc exactly "
         "right — check the data before believing it"
     )
 
@@ -95,7 +96,7 @@ def test_every_period_accounts_for_every_mechanism_in_it() -> None:
 
 
 def test_both_bills_are_attacked_and_position_is_its_own_story() -> None:
-    """Session 8's organising claim: attention charges twice, and position is a third thread."""
+    """Exercise 08's organising claim: attention charges twice, and position is a third thread."""
     bills = bills_addressed(MECHANISMS)
     for bill in ("compute", "cache", "position", "both"):
         assert bills.get(bill, 0) >= 3, f"only {bills.get(bill, 0)} mechanisms address {bill}"
@@ -110,11 +111,11 @@ def test_the_gaps_are_computable_and_never_negative() -> None:
 def test_the_arc_verdict_answers_the_question_that_was_asked() -> None:
     """The page published "the claimed arc holds in 6 of these 7 windows" and it was wrong.
 
-    `held` counted windows that produced *a* clear winner. The claim under test is not "does each
-    window decide" — it is "do the windows decide in the order the brief predicts". Six of seven do
-    decide, and the order is not the claimed one, so the honest verdict is the opposite of the
-    published one. What made it convincing was that the number was derived; deriving a number does
-    not make it an answer to the question you asked.
+       `held` counted windows that produced *a* clear winner. The claim under test is not "does each
+    window decide" — it is whether they decide in the order predicted. Six of seven do
+       decide, and the order is not the claimed one, so the honest verdict is the opposite of the
+       published one. It convinced because the number was derived; deriving a number does
+       not make it an answer to the question you asked.
     """
     from attention.timeline import CLAIMED_ARC, arc_verdict
 

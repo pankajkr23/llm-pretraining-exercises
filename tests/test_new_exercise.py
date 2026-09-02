@@ -88,7 +88,7 @@ def generated(tmp_path_factory) -> tuple:
         title="Loss functions and output heads",
         package="lossheads",
         summary="What the model is actually scored on.",
-        session="09",
+        topic="09",
     )
     return spec, exercises / spec.dirname
 
@@ -137,15 +137,17 @@ def test_the_generated_readme_satisfies_the_structure_guard(generated) -> None:
 
 
 def test_the_generated_brief_is_never_tracked(generated) -> None:
-    """`BRIEF.md` is written, and `.gitignore` must already cover it by name everywhere."""
+    """`REQUIREMENTS.md` is written, and `.gitignore` must already cover it by name everywhere."""
     _, root = generated
-    assert (root / "BRIEF.md").is_file(), "the generator must write a BRIEF.md"
+    assert (root / "REQUIREMENTS.md").is_file(), "the generator must write a REQUIREMENTS.md"
     ignored = subprocess.run(
-        ["git", "check-ignore", "-q", f"src/exercises/{root.name}/BRIEF.md"],
+        ["git", "check-ignore", "-q", f"src/exercises/{root.name}/REQUIREMENTS.md"],
         cwd=REPO,
         capture_output=True,
     )
-    assert ignored.returncode == 0, "BRIEF.md would be tracked; .gitignore no longer covers it"
+    assert ignored.returncode == 0, (
+        "REQUIREMENTS.md would be tracked; .gitignore no longer covers it"
+    )
 
 
 def test_it_writes_the_three_local_only_files(generated) -> None:
@@ -156,7 +158,7 @@ def test_it_writes_the_three_local_only_files(generated) -> None:
     with a message about files "going missing" that were never there.
     """
     spec, root = generated
-    assert (root / "BRIEF.md").is_file()
+    assert (root / "REQUIREMENTS.md").is_file()
     assert (root / "tools" / "build_notebook.py").is_file()
     assert (new_exercise.REPO / "notebooks" / f"{spec.notebook}.ipynb").is_file(), (
         "the generator did not run the notebook builder"

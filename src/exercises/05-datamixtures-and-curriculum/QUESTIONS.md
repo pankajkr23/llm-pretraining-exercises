@@ -1,17 +1,19 @@
-# Session 5 — the 26 questions, answered or declined
+# Exercise 05 — the 26 questions, answered or declined
 
-Every question from the check-yourself set, the session-level three, the retrieval deck and the
-open ledger. Each carries a verdict on whether it can be answered **from sources on this machine**,
-and the answer where it can.
+Every question we were asked to answer for this topic. Each carries a verdict on whether it can be
+answered **from sources on this machine**, and the answer where it can.
 
 ## What counts as a source
 
 | source | status | used for |
 | --- | --- | --- |
-| `docs/sessions/s5.md` | present, 249 lines | the notes: masking rule, OPUS widget, stage table, benchmark list |
-| `docs/sessions/s5_transcript.md` | present, 943 lines | the spoken session, including things the notes do not say |
+| local reference material | on this machine only, never in the repo | the requirements the questions below are answered against |
 | `SPEC.md`, `inventory.py`, `lanes.py` | this exercise | every supply figure and epoch count below |
 | `results/*.json` | this exercise | the proxy measurements |
+
+The first row is deliberately vague. That material is confidential, it is not ours to redistribute,
+and **naming its files or describing their contents in a tracked document publishes exactly what
+gitignoring it was meant to prevent.** What is published here is what we decided and why.
 
 **Arithmetic is computed, not recalled.** Every number below was produced by running the repo's own
 constants; where a question supplies its own figure (627M agentic, 114B non-synthetic Indic, 64B
@@ -29,14 +31,14 @@ Sangraha) that figure is used and the repo's differing value is named.
 than refusing:
 
 - **Q23 ⚠️** — the OPUS figure checks out; the LightningLM "5B-stage-only ~17%" appears in no
-  session file here, so that half is declined and the methodological answer given in full.
+  topic file here, so that half is declined and the methodological answer given in full.
 - **Q25 ⚠️** — the course defers this to S17–18, so there is no course position to report. Answered
   from standard policy-gradient RL and labelled as mine.
-- **Q26 ❌** — the session asks it and does not answer it; the Admin's reply breaks off mid-sentence.
+- **Q26 ❌** — the source material asks it and does not answer it; the Admin's reply breaks off mid-sentence.
   Nothing to retrieve, so a mechanism-level answer is offered and labelled as mine.
 
 Nothing here is answered from memory of the course. Where a claim comes from the notes or the
-transcript it is quoted.
+source it is quoted.
 
 ---
 
@@ -46,8 +48,8 @@ transcript it is quoted.
 
 **Yes, the masking argument still applies, and `12` must stay masked.**
 
-The rule in the notes is not "mask because the tool might be wrong". It is: *"the model must never
-learn to invent the output of a tool it has not really run."* Determinism does not touch that.
+The rule is not "mask because the tool might be wrong". It is that a model must never learn to
+produce the output of a tool it has not actually run. Determinism does not touch that.
 
 What concretely goes wrong if you train on `12`:
 
@@ -95,7 +97,7 @@ slack is `supply ÷ demand`, and the only lane where that ratio is comfortable i
 
 ## §3 · BrowseComp, composed backward ✅
 
-BrowseComp is in the session's own target list: *"Hard, verifiable web-browsing for hard-to-locate
+BrowseComp is in the source material's own target list: *"Hard, verifiable web-browsing for hard-to-locate
 facts."* Traced backward through the notes' `benchmark → loss map → data format → lane share`:
 
 | step | answer |
@@ -132,7 +134,7 @@ it is worth nothing and some runs diverge.
 2. **A supervised-token accounting**, because 80B of raw trajectory is not 80B of gradient. At the
    masked rate a trajectory yields a few hundred supervised tokens, so the bill is larger again.
 3. **A cutoff** — the share the plan will actually fund from real data, with the remainder either
-   generated or moved to SFT/RLVR, which is where the session says agentic ability is taught.
+   generated or moved to SFT/RLVR, which is where the source material says agentic ability is taught.
 4. **The date the data exists**, since a share that cannot be filled by the run's start is a hole
    the selector will fill with something else.
 
@@ -140,10 +142,10 @@ Without those four, 4% is a number that describes an intention rather than a cor
 
 ## §5 · "We'll fix it in SFT" ✅
 
-**Why it is weak.** The session's lifecycle timeline shows post-training stages as visibly tiny
+**Why it is weak.** The source material's lifecycle timeline shows post-training stages as visibly tiny
 next to pretraining. SFT can *elicit* a behaviour the base model can already represent; it cannot
 install a capability that was never trained. Multi-turn tool policy is exactly the kind of thing
-that needs to be in the base — long-horizon credit assignment across tool calls is not learned from
+that needs to be in the base — long-horizon credit requirement across tool calls is not learned from
 a small SFT set. You are proposing to fix a distributional problem with a budget two orders of
 magnitude smaller than the one that created it.
 
@@ -199,24 +201,24 @@ of thinking everywhere rather than the same number of tokens.
 
 ## §8 · Does a balanced multilingual proxy fix agentic starvation? ✅
 
-**No.** The transcript is explicit, and it is the half the notes leave out.
+**No.** The source is explicit, and it is the half the notes leave out.
 
-The notes give **mechanism one**: the V4 proxy was English-heavy (cosine 0.876 with the English web
-band), so it scored Indic and agentic batches low and rejected them. A balanced proxy with MILU and
+The first mechanism is proxy composition: V4's proxy correlated far more strongly with the English
+web band than with any Indic one, so it scored Indic and agentic batches low and rejected them. A balanced proxy with MILU and
 IndicGenBench **does** fix that one — for Indic.
 
-The transcript gives **mechanism two**, which balance cannot touch:
+The source gives **mechanism two**, which balance cannot touch:
 
-> *"because agentic text looks like a Log is not a high quality data. So opus will just throw it."*
-
-Agentic trajectories are *shaped* like low-quality text — tool calls, stack traces, retry noise,
+A second reason is the shape of the data itself: a trajectory reads like a log rather than like
+prose, so a quality-scoring selector discards it. Agentic trajectories are *shaped* like low-quality
+text — tool calls, stack traces, retry noise,
 JSON. The selector's judgement of usefulness is a gradient-alignment score, and a log-shaped
 trajectory whose informative tokens are masked produces a weak, scattered update. It is discarded
 on **form**, not on language. Adding Indic benchmarks to the proxy changes which *languages* score
 well; it does not make a trajectory stop looking like a log.
 
-There is a third edge in the same passage: the proxy is built from *benchmarks*, and
-*"if the agentic part was not there in the opus then we'll throw the example"*. MILU and
+There is a third edge in the same argument: the proxy is built from *benchmarks*, so a candidate
+with no agentic counterpart in the proxy is discarded whatever its merits. MILU and
 IndicGenBench are Indic knowledge and generation benchmarks — neither is agentic. So a
 "perfectly balanced multilingual" proxy is still not an *agentic* proxy.
 
@@ -270,13 +272,13 @@ longer a smoothing choice but the only tool left, and should be sized far above 
 
 ---
 
-# B · Session-level (11–13)
+# B · Topic-level (11–13)
 
 ## 11 · Why mask tool observations ✅
 
 Because the model must never learn to produce a token that, at inference, comes from the
-environment. The notes state the rule directly: apply loss to observations and you *"teach the
-model to invent tool results instead of calling the tool."*
+environment. Apply loss to observations and the model is taught to
+produce tool results itself rather than to call the tool.
 
 **What specifically breaks**, in the order you would notice it:
 
@@ -297,12 +299,12 @@ model to invent tool results instead of calling the tool."*
 Two independent mechanisms — and the question's framing is right that only one is in the notes.
 
 **Mechanism 1 — proxy composition (notes).** OPUS scores a candidate batch by how much it moves the
-weights that matter for a *golden proxy* built from target benchmarks. V4's proxy was English-heavy
-(cosine 0.876 with the English web band). Indic batches move those weights less, so they score
+weights that matter for a *golden proxy* built from target benchmarks. V4's proxy correlated far more strongly with the
+English web band than with any Indic one. Indic batches move those weights less, so they score
 below the keep cut and are discarded. This is a property of the proxy, and a better proxy fixes it.
 
-**Mechanism 2 — the form of agentic data (transcript only).** *"agentic text looks like a Log is not
-a high quality data. So opus will just throw it."* A trajectory is tool calls, errors and JSON,
+**Mechanism 2 — the form of agentic data.** A trajectory reads like a log rather than like prose, so
+a quality-scoring selector discards it on shape alone. It is tool calls, errors and JSON,
 with its observations masked. Whatever the proxy contains, that batch produces a weak update and
 loses to clean prose. This is a property of the *data*, not of the proxy, so **it survives a
 perfectly balanced multilingual proxy**.
@@ -325,8 +327,8 @@ Because a reserve discovered at the end does not exist. Three reasons, each suff
 2. **You cannot un-train.** The anneal's leverage comes from *unseen* high-quality data at low
    learning rate. Data the model has seen at full learning rate cannot be restored to that state.
 3. **It has to be enforceable.** "Reserved" only means something if a reserved shard is invisible to
-   the sampler — a flag written at ingest, not an intention. The notes put it plainly: *"Reserving
-   it is decided here, at composition time, not discovered at the end."*
+   the sampler — a flag written at ingest, not an intention. Reserving is a decision taken while the mixture is
+   composed, not a discovery made once the run is over.
 
 The general form: **any decision whose options are destroyed by the process must be taken before the
 process runs.** The mixture is full of these, and the reserve is the clearest.
@@ -371,8 +373,8 @@ the layers least suited to absorb it.
 
 ### 17 · The three OPUS tiers ✅
 
-From the selector's own widget — *"kept by OPUS (top score) · rejected (below the keep cut) ·
-forced by the Always-On lane"*:
+The selector sorts every candidate into three outcomes — kept on score, rejected below the keep cut,
+or admitted because an always-on lane demanded it:
 
 | tier | relationship to the scorer | trained on? |
 | --- | --- | --- |
@@ -431,13 +433,13 @@ same lane needs 7.0 epochs and leaves that regime entirely.
 
 ## Judgement
 
-### 22 · Anneal at 30% Tier-A — what it forces, and what the session leaves to you ✅
+### 22 · Anneal at 30% Tier-A — what it forces, and what the source material leaves to you ✅
 
 **Forces** (arithmetic in §9): 12B of the 64B verified pool is withheld, raising main-run Tier-A
 from 2.53 to **3.12 epochs**. Either accept that, lower Tier-A's 45% share of the Indic lane, or
 shrink the anneal's Indic fraction.
 
-**What the session does not specify and you must decide:**
+**What the source material does not specify and you must decide:**
 
 - **Which 12B.** "Tier-A verified" names a pool, not a selection. Reserve the newest? The
   highest-scoring? A language-stratified slice? A reserve that is 80% Hindi anneals a Hindi model.
@@ -452,7 +454,7 @@ shrink the anneal's Indic fraction.
 
 **Declined in part, and the reason matters.** The OPUS half checks out: the S5 notes state V4 kept
 ~40% of candidates for ~6× effective tokens at 4.7% overhead. **The LightningLM figure does not
-appear in any session file on this machine.** `grep` across all sessions finds LightningLM only as
+appear in any topic file on this machine.** `grep` across all topics finds LightningLM only as
 the project's own model name (S1, S3, S7); "stage-only" appears nowhere, and the single "17%" in S5
 is a *code share* in a stage mixture, not a selection overhead. I will not reconstruct a number I
 cannot find.
@@ -505,7 +507,7 @@ the right unit and the floor is doing exactly what it says. The two readings dif
 spec should say which it means. **This exercise's floor is token-denominated and does not say —
 that is a real gap.**
 
-*(One measured caveat from this repo: under our own Session 2 10k vocabulary the gap is far
+*(One measured caveat from this repo: under our own Exercise 02 10k vocabulary the gap is far
 narrower — Hindi 2.13 vs English 2.05 tokens/word on FLORES — because that vocabulary was trained
 on Indic text. The 2.1/1.1 spread is a property of English-centric tokenizers. Which tokenizer V5
 ships changes the size of this problem, though not its direction.)*
@@ -539,14 +541,14 @@ answer.** In RLVR specifically the reward is *verifiable* — from executing a t
 comparing to a known answer — rather than from a learned reward model, which is what makes the
 scalar trustworthy enough to multiply a gradient by.
 
-*(Marked as my answer from standard RL, not the course's — the session defers this to S17–18.)*
+*(Marked as my answer from standard RL, not the course's — the source material defers this to S17–18.)*
 
 ### 26 · Nikhil's reward-hacking case ❌ — no course answer exists to recover
 
-**Declined as a retrieval question, and the transcript confirms why.** The exchange is at line 419:
+**Declined as a retrieval question, and the source confirms why.** The exchange is at line 419:
 Nikhil asks whether there are checks for a model that writes `return 42` instead of computing it,
 and the Admin's reply is *"we have Okay,…"* before the topic moves on. **There is no answer in the
-session to recall.** Treating one as recoverable would mean inventing it.
+topic to recall.** Treating one as recoverable would mean inventing it.
 
 **What follows is mine, offered because "the harness will catch it" is indeed a hope rather than a
 mechanism.** The defence is not one check; it is denying the policy the information it would need to
@@ -578,8 +580,8 @@ carry rather than assume.
 
 | # | limit |
 | --- | --- |
-| **23** | The LightningLM "5B-stage-only ~17%" figure is in no session file here. The OPUS half and the whole methodological answer stand; the comparison against a number I cannot find does not. |
-| **26** | The session does not answer it — the Admin's reply is cut off mid-sentence. My answer is standard verifier design, labelled as mine. |
+| **23** | The LightningLM "5B-stage-only ~17%" figure is in no topic file here. The OPUS half and the whole methodological answer stand; the comparison against a number I cannot find does not. |
+| **26** | The source material does not answer it — the Admin's reply is cut off mid-sentence. My answer is standard verifier design, labelled as mine. |
 | **25** | Deferred by the course to S17–18, so there is no course position to report; answered from standard RL and labelled. |
 
 Two further honesty notes. Every arithmetic answer uses the figure the question supplies (627M

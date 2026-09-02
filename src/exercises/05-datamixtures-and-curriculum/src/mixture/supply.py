@@ -1,9 +1,8 @@
 """Demand against supply, priced three ways, with a verdict per lane.
 
-This is the module the assignment's warning is aimed at: *"a plan that quietly hands a large share
-to a lane that has almost no real data behind it will lose marks for exactly the wishful accounting
-this session exists to prevent."* So no share here is allowed to stand without an answer to "out of
-what?".
+This is the module the requirements' warning is aimed at: quietly handing a large share to a lane
+with almost no real data behind it is exactly the wishful accounting the work exists to prevent.
+So no share here is allowed to stand without an answer to "out of what?".
 
 Every lane is priced in three currencies, because they say different things:
 
@@ -19,7 +18,7 @@ epoch threshold and still be asking a pool for more than repetition can ever yie
 Two corrections to the raw inventory are applied here, both argued in the functions that apply
 them:
 
-- **`supervised_ratio`** discounts a lane whose data is used with a loss mask. Session 5 §6 is
+- **`supervised_ratio`** discounts a lane whose data is used with a loss mask. Exercise 05 §6 is
   explicit that in an agentic trajectory only the assistant's own tokens are supervised, so the
   agentic lane's raw token count is not the quantity a loss can see.
 - **`double_counted`** removes text a lane claims that another lane already counted. The
@@ -55,7 +54,7 @@ class Correction:
         factor: Multiplier applied to raw supply.
         because: Why, in one sentence a reviewer can disagree with.
         provenance: `derived` where it follows from figures in the inventory, `estimated` where a
-            session statement had to be turned into a number.
+            topic statement had to be turned into a number.
     """
 
     lane: str
@@ -101,7 +100,7 @@ def double_counted() -> dict[str, Correction]:
     }
 
 
-# The session's own words for how much of an agentic trajectory carries loss. Turned into a number
+# The notes' own words for how much of an agentic trajectory carries loss. Turned into a number
 # below, with the arithmetic shown rather than the conclusion asserted.
 _SUPERVISED_TOKENS_PER_TRAJECTORY = (200.0, 500.0)  # "a few hundred supervised tokens"
 
@@ -112,11 +111,11 @@ def supervised_ratio(lane: str) -> Correction | None:
     In **pre-training** the loss is on every token, so for web, code, STEM, Indic and reasoning
     text the ratio is 1.0 and no discount applies. The distinction matters for one lane.
 
-    Session 5 places agentic trajectories in the anneal and post-training stages — *"These long
-    trajectories are scarce, expensive and among the most valuable Tier A datasets available. They
-    should therefore be protected for the annealing stage"* — where the masking rule of §6 applies:
-    only the assistant's own tokens are supervised. And it sizes the result: *"A whole run yields
-    only a few hundred supervised tokens."*
+    Agentic trajectories belong in the anneal and post-training stages: they are scarce, costly and
+    among the most valuable Tier A data there is, so they are protected for annealing rather than
+    spent early. There the masking rule of §6 applies:
+    only the assistant's own tokens are supervised. And it sizes the result: a whole run yields
+    only a few hundred supervised tokens.
 
     Three inventory rows are long-trajectory data and turn that phrase into a ratio. SWE-Gym holds
     150M tokens across 2,400 samples (62,500 per trajectory), OpenHands rollouts 90M across 10,000
@@ -165,7 +164,7 @@ def supervised_ratio(lane: str) -> Correction | None:
         because=(
             f"only the assistant's own tokens are supervised (§6); at {low:.1%}-{high:.1%} "
             f"supervised per trajectory, derived from the token-per-sample counts of {names} "
-            "against the session's 'few hundred supervised tokens'. The generous end is applied, "
+            "against the source's 'few hundred supervised tokens'. The generous end is applied, "
             "and the lane is impossible without the discount anyway"
         ),
         provenance="estimated",

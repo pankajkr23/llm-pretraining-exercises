@@ -22,7 +22,7 @@
       ],
       "date": "2014-09-01",
       "bill": "origin",
-      "taught_in_session": false,
+      "taught_in_source": false,
       "bonus": true,
       "source": {
         "kind": "paper",
@@ -64,7 +64,7 @@
       "name": "Learned absolute position embeddings",
       "date": "2017-05-08",
       "bill": "position",
-      "taught_in_session": false,
+      "taught_in_source": false,
       "source": {
         "kind": "paper",
         "arxiv_id": "1705.03122",
@@ -182,7 +182,7 @@
         "url": "https://arxiv.org/abs/1706.03762",
         "quoted_date": "[v1] Mon, 12 Jun 2017 17:57:34 UTC (1,102 KB)",
         "verified_on": "2026-09-01",
-        "note": "The course transcript dates this as 'invented in 2018 and 17'. It is June 2017."
+        "note": "The course source dates this as 'invented in 2018 and 17'. It is June 2017."
       },
       "what_existed": "Attention worked, but it was bolted onto a recurrent network that still had to process tokens one at a time.",
       "problem": "Recurrence made training sequential, so it could not use the parallelism the hardware had.",
@@ -315,7 +315,7 @@
           "of": 8
         },
         "scale": "illustrative",
-        "source": "One key/value head for all query heads, by definition. Head count 8 is the session's own yardstick.",
+        "source": "One key/value head for all query heads, by definition. Head count 8 is the source material's own yardstick.",
         "sizes": {
           "context": {
             "value": 128,
@@ -353,7 +353,7 @@
         "url": "https://arxiv.org/abs/1912.11637",
         "quoted_date": "[v1] Wed, 25 Dec 2019 10:59:31 UTC (689 KB)",
         "verified_on": "2026-09-01",
-        "note": "Zhao, Lin, Zhang, Ren, Su, Sun. Read from the arXiv abstract page. Listed separately from Sparse Transformers on purpose: the session's coverage list names 'sparse and top-k attention' as two things, and they are two things - a fixed pattern decides which pairs survive before seeing any data, while top-k decides per query from the scores themselves."
+        "note": "Zhao, Lin, Zhang, Ren, Su, Sun. Read from the arXiv abstract page. Listed separately from Sparse Transformers on purpose: the source material's coverage list names 'sparse and top-k attention' as two things, and they are two things - a fixed pattern decides which pairs survive before seeing any data, while top-k decides per query from the scores themselves."
       },
       "what_existed": "Fixed sparse patterns - strided, local, factorised - that decided which pairs of positions could ever interact before the model saw a single token.",
       "problem": "A pattern fixed in advance cannot know which earlier tokens matter for this query. Attention mass really is concentrated on a few tokens, but which few is a property of the content, not of the positions.",
@@ -363,7 +363,7 @@
       "buys": "Attention concentrated on the keys that actually matter, chosen per query from the data rather than fixed in advance, with softmax and its normalisation intact over the survivors.",
       "gives_up": "Exactness, and the guarantee of a saving. A dropped key is unrecoverable, and a naive implementation still pays the full quadratic scoring cost it was meant to avoid.",
       "when_to_choose": "When attention genuinely is concentrated on a few tokens and you have a cheap way to propose candidates. It is the ancestor of the selection branch inside native sparse attention, which is what a proposal step looks like once it is designed in from the start.",
-      "taught_in_session": true,
+      "taught_in_source": true,
       "bonus": false,
       "pattern": {
         "kind": "field",
@@ -389,7 +389,7 @@
       "name": "Reformer (LSH attention)",
       "date": "2020-01-13",
       "bill": "compute",
-      "taught_in_session": false,
+      "taught_in_source": false,
       "bonus": true,
       "source": {
         "kind": "paper",
@@ -437,7 +437,7 @@
       ],
       "date": "2020-04-10",
       "bill": "both",
-      "taught_in_session": false,
+      "taught_in_source": false,
       "source": {
         "kind": "paper",
         "arxiv_id": "2004.05150",
@@ -701,7 +701,7 @@
       "name": "ALiBi (attention with linear biases)",
       "date": "2021-08-27",
       "bill": "position",
-      "taught_in_session": false,
+      "taught_in_source": false,
       "source": {
         "kind": "paper",
         "arxiv_id": "2108.12409",
@@ -757,7 +757,7 @@
       "name": "FlashAttention",
       "date": "2022-05-27",
       "bill": "compute",
-      "taught_in_session": false,
+      "taught_in_source": false,
       "bonus": true,
       "source": {
         "kind": "paper",
@@ -835,7 +835,7 @@
       "what_existed": "A binary choice between multi-head attention's large cache and multi-query attention's quality loss.",
       "problem": "MQA saved the most memory and cost the most quality; nobody had asked what the points in between looked like.",
       "mechanism": "Put the query heads into groups and give each group its own key and value head - so the number of KV heads is a dial between one and the number of query heads.",
-      "what_it_fixed": "Most of MQA's memory saving became available at a fraction of its quality cost. At the session's yardstick, two KV heads against eight is exactly a quarter of the cache.",
+      "what_it_fixed": "Most of MQA's memory saving became available at a fraction of its quality cost. At the source material's yardstick, two KV heads against eight is exactly a quarter of the cache.",
       "new_tradeoff": "It moves along the same line rather than leaving it: the cache still grows linearly with context, so GQA makes long context cheaper without making it affordable.",
       "buys": "A tunable trade between cache size and head diversity, and a way to convert an existing multi-head checkpoint rather than retrain.",
       "gives_up": "Some head diversity still, and the underlying linear growth in context length is untouched.",
@@ -847,7 +847,7 @@
           "of": 8
         },
         "scale": "illustrative",
-        "source": "Query heads in groups sharing a key/value head. 2 of 8 is the session's own worked example.",
+        "source": "Query heads in groups sharing a key/value head. 2 of 8 is the source material's own worked example.",
         "sizes": {
           "kvHeads": {
             "value": 8,
@@ -908,7 +908,7 @@
       "name": "NTK-aware scaled RoPE",
       "date": "2023-06-29",
       "bill": "position",
-      "taught_in_session": false,
+      "taught_in_source": false,
       "source": {
         "kind": "post",
         "arxiv_id": null,
@@ -950,7 +950,7 @@
       "name": "YaRN",
       "date": "2023-08-31",
       "bill": "position",
-      "taught_in_session": false,
+      "taught_in_source": false,
       "source": {
         "kind": "paper",
         "arxiv_id": "2309.00071",
@@ -1022,7 +1022,7 @@
       "name": "Attention sinks / StreamingLLM",
       "date": "2023-09-29",
       "bill": "cache",
-      "taught_in_session": false,
+      "taught_in_source": false,
       "source": {
         "kind": "paper",
         "arxiv_id": "2309.17453",
@@ -1065,7 +1065,7 @@
       "name": "Mamba (selective state space)",
       "date": "2023-12-01",
       "bill": "both",
-      "taught_in_session": false,
+      "taught_in_source": false,
       "bonus": true,
       "source": {
         "kind": "paper",
@@ -1121,7 +1121,7 @@
       "name": "Multi-head latent attention (MLA)",
       "date": "2024-05-07",
       "bill": "cache",
-      "taught_in_session": false,
+      "taught_in_source": false,
       "source": {
         "kind": "paper",
         "arxiv_id": "2405.04434",
@@ -1181,7 +1181,7 @@
         "url": "https://arxiv.org/abs/2406.06484",
         "quoted_date": "[v1] Mon, 10 Jun 2024 17:24:42 UTC (124 KB)",
         "verified_on": "2026-09-01",
-        "note": "Yang et al. The course transcript's claim that 'that paper came out in 2024' is correct for this one. The delta rule itself is three years older - see delta_rule."
+        "note": "Yang et al. The course source's claim that 'that paper came out in 2024' is correct for this one. The delta rule itself is three years older - see delta_rule."
       },
       "what_existed": "The delta rule, three years old, correct, and slow to train because each update depends on the previous one.",
       "problem": "A sequential recurrence cannot use the parallelism that made transformers trainable, so a good idea stayed impractical at scale.",
@@ -1273,7 +1273,7 @@
         "url": "https://arxiv.org/abs/2502.11089",
         "quoted_date": "[v1] Sun, 16 Feb 2025 11:53:44 UTC (915 KB)",
         "verified_on": "2026-09-01",
-        "note": "The paper's own framing is compression plus selection. The session calls it 'compressed sparse attention'; the abstract describes a hierarchical strategy, so do not present two branches as the whole design without reading the body."
+        "note": "The paper's own framing is compression plus selection. The source material calls it 'compressed sparse attention'; the abstract describes a hierarchical strategy, so do not present two branches as the whole design without reading the body."
       },
       "what_existed": "Sparsity applied after the fact to a model trained densely, and cache reduction by storing fewer or narrower heads.",
       "problem": "Sparsity bolted on at inference fights a model that learned to attend densely, and the theoretical savings rarely survived contact with real kernels.",
@@ -1412,7 +1412,7 @@
           }
         }
       },
-      "taught_in_session": false,
+      "taught_in_source": false,
       "bonus": true
     },
     {
@@ -1427,7 +1427,7 @@
         "url": "https://arxiv.org/abs/2512.12167",
         "quoted_date": "[v1] Sat, 13 Dec 2025 04:23:47 UTC (2,135 KB)",
         "verified_on": "2026-09-01",
-        "note": "Gelberg, Eguchi, Akiba, Cetin (Sakana AI). CAUTION: a different paper, DRoPE with a capital R (arXiv:2503.15029, 'Directional Rotary Position Embedding for Efficient Agent Interaction Modeling', 19 Mar 2025), is an autonomous-driving trajectory paper and is NOT this technique - the course transcript quotes its title while describing this mechanism. The two differ by one capital letter."
+        "note": "Gelberg, Eguchi, Akiba, Cetin (Sakana AI). CAUTION: a different paper, DRoPE with a capital R (arXiv:2503.15029, 'Directional Rotary Position Embedding for Efficient Agent Interaction Modeling', 19 Mar 2025), is an autonomous-driving trajectory paper and is NOT this technique - the course source quotes its title while describing this mechanism. The two differ by one capital letter."
       },
       "what_existed": "A decade of work adding positional information, then a further generation of work repairing it for longer contexts - interpolation, NTK-aware scaling, YaRN.",
       "problem": "Every repair assumed the rotary structure was worth keeping. But a rotation that has turned tens of thousands of times no longer usefully relates a distant token to an early one, and no rescaling fully fixes that.",
@@ -1541,7 +1541,7 @@
           }
         }
       },
-      "taught_in_session": false,
+      "taught_in_source": false,
       "bonus": true
     },
     {
@@ -1628,7 +1628,7 @@
           }
         }
       },
-      "taught_in_session": false,
+      "taught_in_source": false,
       "bonus": true
     },
     {
@@ -1702,7 +1702,7 @@
           }
         }
       },
-      "taught_in_session": false,
+      "taught_in_source": false,
       "bonus": true
     },
     {
@@ -1794,7 +1794,7 @@
           }
         }
       },
-      "taught_in_session": false,
+      "taught_in_source": false,
       "bonus": true
     },
     {
@@ -1847,7 +1847,7 @@
           }
         }
       },
-      "taught_in_session": false,
+      "taught_in_source": false,
       "bonus": true
     }
   ]

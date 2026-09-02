@@ -2,7 +2,8 @@ r"""Stage 7 — keeping the exam out of the textbook.
 
 If a benchmark's questions are sitting in the training corpus, the benchmark stops measuring
 generalisation and starts measuring memorisation, and the reported score becomes a number about the
-pipeline rather than about the model. The session's own example is stark: a band was dropped once
+pipeline rather than about the model. The source material's own example is stark: a band was
+dropped once
 it showed 18.7% leakage.
 
 The check is n-gram overlap. Shingle every document at a fixed width, shingle the held-out
@@ -20,7 +21,8 @@ bill of health. So coverage is reported explicitly, and when there is no index t
 *The second is demonstrability.* A guard nobody has watched fire is not a guard. So the stage
 **injects canary strings** — unique GUIDs that appear nowhere else — into a held-out slice, then
 runs the scanner and confirms it recovers them. That proves the machinery works on every machine,
-gated data or not, and it is exactly the technique the session describes for detecting leakage in a
+gated data or not, and it is exactly the technique the source material describes for detecting
+leakage in a
 trained model.
 """
 

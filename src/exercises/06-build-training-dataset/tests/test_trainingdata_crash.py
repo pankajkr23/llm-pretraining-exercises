@@ -98,7 +98,7 @@ def drill(tmp_path_factory):
     same outcome rather than paying for it again.
 
     Args:
-        tmp_path_factory: pytest's session temporary directory factory.
+        tmp_path_factory: pytest's topic temporary directory factory.
 
     Returns:
         Everything the assertions need.

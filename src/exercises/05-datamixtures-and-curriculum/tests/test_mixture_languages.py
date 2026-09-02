@@ -1,6 +1,7 @@
 """The per-language schedule, and the measurement it rests on.
 
-The session asks when each language enters, naming two: *"Sanskrit if ever, or Urdu"*. This answers
+The source material asks when each language enters, naming two: *"Sanskrit if ever, or Urdu"*.
+This answers
 both from a measurement rather than a judgement, so the tests are mostly about keeping that
 measurement honest — a cached number that nobody re-checks becomes folklore, and a gate that lets a
 language through because someone liked it is the wishful accounting this exercise argues against.
@@ -14,7 +15,7 @@ from mixture.config import Config
 CFG = Config()
 
 
-def test_the_two_languages_the_session_names_are_both_answered():
+def test_the_two_languages_the_notes_name_are_both_answered():
     """The question is asked by name, so it is answered by name."""
     plan = {p.code: p for p in languages.plan()}
     assert "san_Deva" in plan and "urd_Arab" in plan

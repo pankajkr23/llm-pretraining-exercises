@@ -6,10 +6,9 @@ against the current checkpoint, the plan stops being a pure function of position
 can never be bit-identical. It also breaks quietly for duller reasons: a planner change, a different
 shard order, a library upgrade.
 
-**The strategy**, in the session's own words:
-
-> *"I will not run the code — because I know some nondeterminism can creep in. **I'm going to run
-> the ledger.** I'm going to read and send. **I will not calculate it.**"*
+**The strategy**, and it is deliberately not the obvious one: do not re-run the code, because
+nondeterminism creeps in. **Run the ledger instead** — read what was recorded and replay it, rather
+than recomputing it and hoping the second answer matches the first.
 
 So this module never asks `plan.py` anything. It reads the recorded spans, slices the immutable
 shards at exactly those offsets, rebuilds the masks and positions, and hashes the result.

@@ -151,7 +151,7 @@ class ScratchBPE:
         self._set_vocab(vocab)
 
     def _set_vocab(self, vocab: list[str]) -> None:
-        """Freeze the id assignment and the encoding rank table from an ordered ``vocab``."""
+        """Freeze the id requirement and the encoding rank table from an ordered ``vocab``."""
         self._id_to_token = list(vocab)
         self._token_to_id = {tok: i for i, tok in enumerate(vocab)}
         self._ranks = {pair: i for i, pair in enumerate(self.merges)}

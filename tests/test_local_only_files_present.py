@@ -18,10 +18,14 @@ is not meant to. Run it on the checkout that holds the files, especially after a
 pull, merge, rebase or stash.
 """
 
+import sys
 from pathlib import Path
 
 import pytest
 from _exercises import exercises_in
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
+import backup_local_only as backup  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -34,29 +38,30 @@ EXPECTED_NOTEBOOKS = [
 ]
 EXPECTED_BUILDERS = [p / "tools" / "build_notebook.py" for p in EXERCISES]
 
-#: The assignment text for each exercise. Gitignored by name everywhere, so a clone has none and a
+#: The requirements text for each exercise. Gitignored by name everywhere, so a clone has none and a
 #: healthy working checkout has one per exercise.
-EXPECTED_BRIEFS = [p / "BRIEF.md" for p in EXERCISES]
+EXPECTED_BRIEFS = [p / "REQUIREMENTS.md" for p in EXERCISES]
 
 #: Programme-level material — the course corpus. **This was the largest exposure and nothing
 #: watched it.**
 #:
 #: The three lists above are the classes `AGENTS.md` names, and they were the only ones guarded.
-#: But `docs/sessions/` holds every session's notes, transcripts and assignments — including
-#: material for sessions this repo has not reached yet — and `docs/EXPLAINER_*.md` are the two
+#: The confidential reference material now lives **outside the repository entirely**, so it can no
+#: longer be named by a tracked path, ignored by mistake, or committed by accident. It is still
+#: watched here, via the backup tool that knows where it is. `docs/EXPLAINER_*.md` are the two
 #: files any explainer is supposed to be built from. All gitignored, none regenerable, none
 #: guarded. A tripwire that covers the documented cases and not the biggest one is a tripwire that
 #: reads as coverage.
 #:
-#: Counted rather than enumerated: the corpus grows a file per session, so a fixed list would go
+#: Counted rather than enumerated: the corpus grows a file per topic, so a fixed list would go
 #: stale and a stale list here fails silently in the safe-looking direction.
-SESSION_CORPUS = REPO_ROOT / "docs" / "sessions"
+NOTES_CORPUS = backup.EXTERNAL_SOURCES["notes"]
 
 #: Where `tools/backup_local_only.py` writes. Read here as a **high-water mark**: a file the store
 #: holds and this checkout does not is a loss, and no hand-written floor can notice that.
 STORE = REPO_ROOT.parent / f".{REPO_ROOT.name}-local-only"
 EXPECTED_PROGRAMME = [
-    REPO_ROOT / "docs" / "BRIEF.md",
+    REPO_ROOT / "docs" / "REQUIREMENTS.md",
     REPO_ROOT / "docs" / "EXPLAINER_PROMPT.md",
     REPO_ROOT / "docs" / "EXPLAINER_PATTERN.md",
 ]
@@ -82,7 +87,7 @@ def is_a_working_checkout() -> bool:
     Returns:
         True when any watched file exists anywhere.
     """
-    return any(p.is_file() for p in _ALL_WATCHED) or SESSION_CORPUS.is_dir()
+    return any(p.is_file() for p in _ALL_WATCHED) or NOTES_CORPUS.is_dir()
 
 
 def _partial(paths: list[Path]) -> bool:
@@ -91,19 +96,19 @@ def _partial(paths: list[Path]) -> bool:
     return 0 < len(present) < len(paths)
 
 
-def test_no_session_notebook_has_gone_missing() -> None:
+def test_no_topic_notebook_has_gone_missing() -> None:
     """All of them or none of them. A gap means one was destroyed on this machine."""
     present = [p for p in EXPECTED_NOTEBOOKS if p.is_file()]
     if not present and not is_a_working_checkout():
         pytest.skip("no local-only files anywhere — this is a fresh clone, not a loss")
     assert present, (
-        f"all {len(EXPECTED_NOTEBOOKS)} session notebooks are gone, and this checkout still has "
+        f"all {len(EXPECTED_NOTEBOOKS)} topic notebooks are gone, and this checkout still has "
         f"other local-only files — so it is not a clone. Restore from the backup store: "
         f"`uv run python tools/backup_local_only.py --verify` names what it holds."
     )
     missing = [p.name for p in EXPECTED_NOTEBOOKS if not p.is_file()]
     assert not missing, (
-        f"{len(present)} session notebooks are present but {missing} are gone. These are "
+        f"{len(present)} topic notebooks are present but {missing} are gone. These are "
         f"gitignored and have no second copy. Rebuild them from the exercise's "
         f"tools/build_notebook.py before doing anything else, and do not delete anything under "
         f"notebooks/ without PK's explicit permission (see AGENTS.md)."
@@ -126,7 +131,7 @@ def test_no_notebook_builder_has_gone_missing() -> None:
     assert not missing, (
         f"{len(present)} notebook builders are present but {missing} are gone. Nothing tracked "
         f"can restore them. If they were removed by a branch switch or pull, recover with:\n"
-        f'  git checkout "$(git log --all --diff-filter=D --format=%H -1 -- '
+        f' git checkout "$(git log --all --diff-filter=D --format=%H -1 -- '
         f"'src/exercises/*/tools/build_notebook.py')^\" -- "
         f"'src/exercises/*/tools/build_notebook.py'\n"
         f"and keep a backup outside the repo (see AGENTS.md)."
@@ -134,7 +139,7 @@ def test_no_notebook_builder_has_gone_missing() -> None:
 
 
 def test_no_programme_level_document_has_gone_missing() -> None:
-    """`docs/BRIEF.md` and the two explainer specs, which nothing else watched.
+    """`docs/REQUIREMENTS.md` and the two explainer specs, which nothing else watched.
 
     `AGENTS.md` requires both explainer documents to be read before building one, and they exist
     only here. Losing them does not break a build — it silently removes the standard the next
@@ -155,43 +160,43 @@ def test_no_programme_level_document_has_gone_missing() -> None:
     )
 
 
-def test_the_session_corpus_has_not_shrunk() -> None:
-    """The course material — transcripts, assignments, notes — is the biggest unguarded exposure.
+def test_the_reference_corpus_has_not_shrunk() -> None:
+    """The course material — records, requirements, notes — is the biggest unguarded exposure.
 
     **Measured against the backup store, not against a hand-written floor.** The first version
-    required at least one session note per exercise, which tolerated losing two thirds of the
+    required at least one topic note per exercise, which tolerated losing two thirds of the
     corpus and ignored the forty-two diagrams entirely: a floor somebody typed is a floor that
     stops meaning anything the moment the corpus grows. The store is a high-water mark that moves
     on its own, so "fewer files than last time" is the question, and it is the right one.
     """
-    if not SESSION_CORPUS.is_dir():
+    if not NOTES_CORPUS.is_dir():
         if is_a_working_checkout():
             pytest.fail(
-                "docs/sessions is gone entirely and this checkout still has other local-only "
-                "files, so it is not a clone. That directory is the whole course corpus."
+                f"the reference material at {NOTES_CORPUS} is gone entirely and this checkout "
+                "still has other local-only files, so it is not a clone."
             )
-        pytest.skip("no docs/sessions here — a fresh clone has none (it is gitignored)")
+        pytest.skip("the reference material is not present on this machine")
 
-    here = {p for p in SESSION_CORPUS.rglob("*") if p.is_file() and p.name != ".DS_Store"}
+    here = {p for p in NOTES_CORPUS.rglob("*") if p.is_file() and p.name != ".DS_Store"}
 
-    backed_up = STORE / "docs" / "sessions"
+    backed_up = STORE / "notes"
     if backed_up.is_dir():
         was = {
             p.relative_to(backed_up)
             for p in backed_up.rglob("*")
             if p.is_file() and p.name != ".DS_Store"
         }
-        gone = sorted(str(r) for r in was - {p.relative_to(SESSION_CORPUS) for p in here})
+        gone = sorted(str(r) for r in was - {p.relative_to(NOTES_CORPUS) for p in here})
         assert not gone, (
-            f"{len(gone)} files the backup store holds are missing from docs/sessions: "
-            f"{gone[:6]}. Restore them from {backed_up} before doing anything else."
+            f"{len(gone)} files the backup store holds are missing from the reference "
+            f"material. Restore them from {backed_up} before doing anything else."
         )
     else:
         # No store on this machine yet, so fall back to the shape check. Weaker on purpose: it is
         # better than nothing and it says so.
         assert len(here) >= len(EXERCISES), (
-            f"docs/sessions holds {len(here)} files for {len(EXERCISES)} exercises, and there is "
-            f"no backup store to compare against. Run tools/backup_local_only.py."
+            f"the reference material holds {len(here)} files for {len(EXERCISES)} exercises, "
+            f"and there is no backup store to compare against. Run tools/backup_local_only.py."
         )
 
 
@@ -219,7 +224,7 @@ def test_no_watched_file_has_been_emptied() -> None:
     )
 
 
-def test_every_session_notebook_is_still_valid_json() -> None:
+def test_every_topic_notebook_is_still_valid_json() -> None:
     """A notebook that no longer parses is lost, whatever its size says.
 
     The builder writes JSON; an interrupted write produces a file that opens, has a plausible
@@ -239,7 +244,7 @@ def test_every_session_notebook_is_still_valid_json() -> None:
         if not payload.get("cells"):
             broken.append(f"{path.name}: parses but has no cells")
 
-    assert not broken, f"session notebooks that no longer read as notebooks: {broken}"
+    assert not broken, f"topic notebooks that no longer read as notebooks: {broken}"
 
 
 def test_the_backup_store_is_named_somewhere_a_reader_will_find_it() -> None:
@@ -322,21 +327,23 @@ def test_a_file_named_like_an_exercise_is_not_an_exercise(tmp_path: Path) -> Non
 
 
 def test_no_brief_has_gone_missing() -> None:
-    """Briefs are local-only, so nothing tracked can restore one.
+    """Requirement files are local-only, so nothing tracked can restore one.
 
-    This is not hypothetical. All four of exercises 01-04's briefs were destroyed by an ordinary
+    This is not hypothetical. All four of exercises 01-04's requirement documents were destroyed
+    by an ordinary
     branch switch after the commit that untracked them, and were only recoverable because
-    `18015b1^` was still reachable. They had existed in git once; a brief written *after* the
+    `18015b1^` was still reachable. They had existed in git once; a requirements doc written
+    *after* the
     untracking convention would not have that safety net at all.
     """
     present = [p for p in EXPECTED_BRIEFS if p.is_file()]
     if not present:
-        pytest.skip("no briefs here — a fresh clone has none (they are gitignored)")
-    missing = [f"{p.parent.name}/BRIEF.md" for p in EXPECTED_BRIEFS if not p.is_file()]
+        pytest.skip("no requirement documents here — a fresh clone has none (they are gitignored)")
+    missing = [f"{p.parent.name}/REQUIREMENTS.md" for p in EXPECTED_BRIEFS if not p.is_file()]
     assert not missing, (
-        f"{len(present)} briefs are present but {missing} are gone. Nothing tracked can restore "
-        f"a brief written since the untracking convention. If these were lost to a branch switch, "
+        f"{len(present)} present, {missing} gone. Nothing tracked can restore "
+        f"a requirements file written since the untracking convention. If lost to a branch switch, "
         f"recover them with:\n"
-        f"  git show 18015b1^:src/exercises/<slug>/BRIEF.md > src/exercises/<slug>/BRIEF.md\n"
+        f" git show 18015b1^:src/exercises/<slug>/REQUIREMENTS.md > <same path>\n"
         f"and keep a backup outside the repo (see AGENTS.md)."
     )

@@ -192,7 +192,7 @@ def effective_shares(
 ) -> tuple[dict[str, float], list[str]]:
     """Restrict a mixture to the lanes that have a committed corpus, and renormalise.
 
-    Session 5's mixture has seven lanes; the committed corpus funds three. Rather than silently
+    Exercise 05's mixture has seven lanes; the committed corpus funds three. Rather than silently
     training on whatever exists, this returns both the restricted mixture **and** the list of lanes
     that were dropped, so the experiment record can state what the arms did not test.
 

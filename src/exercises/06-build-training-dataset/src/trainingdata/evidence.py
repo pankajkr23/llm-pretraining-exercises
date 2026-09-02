@@ -1,6 +1,6 @@
 """The evidence bundle — nine rows, each derived from an artifact rather than from memory.
 
-**The rule the assignment states in bold: hardcoded evidence will not be accepted**, and a grader
+**The rule the requirements states in bold: hardcoded evidence will not be accepted**, and a grader
 inspects the code specifically to check nothing was simulated. So no row here is written by the
 step that performed the work. Every one is computed *afterwards*, from the ledger, the manifests
 and the telemetry — the same files an auditor gets — and a row whose inputs are missing says

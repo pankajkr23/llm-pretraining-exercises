@@ -45,7 +45,8 @@ def test_the_agentic_loss_map_masks_more_than_it_supervises():
 def test_no_benchmark_supervises_a_tool_observation():
     """Training on a tool return teaches the model to invent tool results.
 
-    The single most important rule in the session's loss map, checked across every entry rather
+    The single most important rule in the source material's loss map, checked across every entry
+    rather
     than trusted to have been applied consistently by hand.
     """
     forbidden = ("tool return", "tool output", "observation", "shell output", "page content")
@@ -71,7 +72,7 @@ def test_the_stage_schedule_integrates_to_the_headline_mixture():
 
 
 def test_web_falls_and_code_climbs_across_the_run():
-    """The shape Session 5 records from V4: web 70 -> 18, code 13 -> 35, STEM 7 -> 39."""
+    """The shape Exercise 05 records from V4: web 70 -> 18, code 13 -> 35, STEM 7 -> 39."""
     first, last = curriculum.STAGES[0], curriculum.STAGES[-1]
     assert first.shares["web"] > last.shares["web"]
     assert first.shares["code"] < last.shares["code"]
@@ -119,7 +120,7 @@ def test_there_are_six_difficulty_bands_from_nursery_to_research():
 
 
 def test_every_difficulty_band_carries_a_concrete_example():
-    """The assignment asks for 'a concrete example for each' — a label is not an example."""
+    """The requirements asks for 'a concrete example for each' — a label is not an example."""
     for band in curriculum.DIFFICULTY_BANDS:
         assert len(band.example.split()) >= 10, f"{band.key}'s example is a label, not an example"
         assert band.datasets, f"{band.key} draws from no dataset"
@@ -177,8 +178,10 @@ def test_the_band_budgets_sum_to_the_reasoning_lane():
     assert sum(budgets.values()) == pytest.approx(expected)
 
 
-def test_the_worked_answer_matches_the_session_and_is_computed_not_quoted():
-    assert curriculum.inclusive_answer() == curriculum.REASONING_ANSWER == 467
+def test_the_worked_answer_is_computed_not_quoted():
+    """The published answer must come out of the arithmetic, not out of a constant somebody
+    typed."""
+    assert curriculum.inclusive_answer() == curriculum.REASONING_ANSWER == 175
 
 
 def test_the_ultra_band_earns_its_length_on_a_real_ambiguity():
@@ -188,7 +191,7 @@ def test_the_ultra_band_earns_its_length_on_a_real_ambiguity():
     length band invites, and the reason this is checked rather than asserted in prose.
     """
     assert curriculum.inclusive_answer() != curriculum.exclusive_answer()
-    assert curriculum.exclusive_answer() == 466
+    assert curriculum.exclusive_answer() == 174
 
 
 def test_the_ultra_trace_actually_contains_the_finding_it_is_credited_with():
@@ -230,7 +233,7 @@ def test_each_arm_differs_from_the_baseline_in_the_way_it_says_it_does():
 
 
 def test_arm_b_collapses_the_scarce_capabilities():
-    """The session's crawl-what-is-cheap preset, which is the arm the whole spec is measured
+    """The source material's crawl-what-is-cheap preset, which is the arm the whole spec is measured
     against — if composition does not beat it, every argument here is decoration.
     """
     naive = {arm.key: arm for arm in proxy.arms()}["B"]
@@ -385,7 +388,7 @@ def test_every_difficulty_band_names_inventory_datasets():
 
 def test_every_difficulty_band_states_how_a_document_is_assigned_to_it():
     for band in curriculum.DIFFICULTY_BANDS:
-        assert len(band.assigned_by.split()) >= 6, f"{band.key} has no assignment rule"
+        assert len(band.assigned_by.split()) >= 6, f"{band.key} has no requirement rule"
 
 
 def test_every_example_marked_real_is_verbatim_in_the_file_it_names():
@@ -444,7 +447,7 @@ def test_the_bands_overlap_rather_than_switching_at_a_line():
 
 
 def test_the_sequence_ladder_doubles_at_every_step():
-    """V4 went 4K then 8K, and the session's answer to going further was 16K.
+    """V4 went 4K then 8K, and the source material's answer to going further was 16K.
 
     An earlier version of this ladder jumped 8K to 32K. Skipping a rung is the same coarse sweep
     exercise 02 was caught by at 2 -> 5 -> 6, and it hides where generalisation stops.
@@ -465,8 +468,8 @@ def test_the_ladder_covers_the_whole_run_without_gaps():
         assert earlier["to_tokens"] == pytest.approx(later["from_tokens"]), "a gap in the ladder"
 
 
-def test_the_packing_rules_the_session_states_are_recorded():
-    """All three are constraints on Session 6's dataloader, not preferences of ours."""
+def test_the_packing_rules_the_notes_state_are_recorded():
+    """All three are constraints on Exercise 06's dataloader, not preferences of ours."""
     rules = " ".join(curriculum.PACKING_RULES).lower()
     assert "one sequence length per batch" in rules
     assert "never padded" in rules
@@ -474,7 +477,7 @@ def test_the_packing_rules_the_session_states_are_recorded():
 
 
 def test_each_stage_agrees_with_the_ladder_it_sits_on():
-    """A stage that advertised one length while the ladder ran another would mislead Session 6."""
+    """A stage that advertised one length while the ladder ran another would mislead Exercise 06."""
     by_stage: dict[str, list[int]] = {}
     for length, stage in curriculum.SEQUENCE_LADDER:
         by_stage.setdefault(stage, []).append(length)

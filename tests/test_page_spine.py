@@ -86,7 +86,7 @@ SPINE_EXEMPT: dict[str, str] = {
 #: which is the property that keeps this guard able to fail.
 #:
 #:   section('id', 'role', ...)     the helper exercise 07 introduced
-#:   node.dataset.role = 'role'     a direct assignment
+#:   node.dataset.role = 'role'     a direct requirement
 _ROLE_DECLARATION = re.compile(
     r"""\bsection\(\s*['"][\w-]+['"]\s*,\s*['"]([a-z]+)['"]"""
     r"""|\.dataset\.role\s*=\s*['"]([a-z]+)['"]""",

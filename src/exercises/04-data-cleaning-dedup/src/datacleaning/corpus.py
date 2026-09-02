@@ -6,7 +6,8 @@ should not care which. Second, stopping at a token budget in a way that another 
 reproduce exactly.
 
 **The selection rule is: row groups in file order until the budget is met.** No sampling, no
-shuffle, no seed. The session's reproducibility commitment is that the same input gives the same
+shuffle, no seed. The source material's reproducibility commitment is that the same input gives
+the same
 output, and a random sample fails that for anyone who does not also have our seed. "The first N row
 groups" needs no seed to reproduce and is stated in one sentence, which is the whole point.
 

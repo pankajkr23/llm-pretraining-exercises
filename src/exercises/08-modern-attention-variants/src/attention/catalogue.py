@@ -4,16 +4,17 @@
 future page renders comes from there, so the page cannot disagree with the catalogue and the
 catalogue cannot disagree with the sources it cites.
 
-**The shape is the instructor's, not ours.** `s8.md` specifies the narrative each entry must carry:
+**The shape is the instructor's, not ours.** The requirements specifies the narrative each entry
+must carry:
 
-    here is what existed -> here is the problem people hit -> here is the new mechanism
-    -> here is what it fixed -> here is the new trade-off it introduced
+    what came before -> the problem it ran into -> the mechanism introduced
+    -> what that fixed -> what it cost in exchange
 
-and three questions each entry must answer: *what does it buy*, *what does it give up*, *when would
-I actually choose it*. Those are fields below, not prose conventions, because a field can be
+and three questions each entry has to answer: what it buys, what it gives up, and when it is
+actually the right choice. Those are fields below, not prose conventions, because a field can be
 checked for emptiness and a paragraph cannot.
 
-**`MANDATED` is the assignment's own list, quoted.** The instructor said he will score zero for a
+**`MANDATED` is the requirements' own list, quoted.** The instructor said he will score zero for a
 missing mechanism, so "did we cover everything" is a test rather than a memory. Keep the wording as
 he wrote it; the mapping from his phrase to our key lives beside it and is the part allowed to
 change.
@@ -29,7 +30,7 @@ from attention.sources import Source
 EXERCISE = Path(__file__).resolve().parents[2]
 CATALOGUE = EXERCISE / "results" / "mechanisms.json"
 
-#: The coverage list, verbatim from `docs/sessions/s8_assignment.md`, mapped to catalogue keys.
+#: The coverage list, verbatim from the requirements text, mapped to catalogue keys.
 #:
 #: Left side is the instructor's phrase exactly as written; right side is every key that phrase
 #: requires. Splitting them means a rename on our side can never quietly drop one of his items:
@@ -41,9 +42,9 @@ CATALOGUE = EXERCISE / "results" / "mechanisms.json"
 #: an alias, so the catalogue asserted the two were the same technique and the guard agreed.
 #: They are not the same technique: a fixed sparse pattern decides which pairs can ever interact
 #: before the model sees any data, while top-k decides per query from the scores themselves, and
-#: the session teaches the difference at length (`s8.md`, "How do we know which keys are best?").
+#: the reference notes teach the difference at length ("How do we know which keys are best?").
 #: Covering half a phrase and passing is exactly the "missing or mis-explained mechanism" the
-#: assignment scores zero for.
+#: requirement scores zero for.
 MANDATED: dict[str, tuple[str, ...]] = {
     "standard attention": ("standard_attention",),
     "absolute learned positions": ("learned_absolute",),
@@ -81,7 +82,7 @@ GLYPH_KINDS: frozenset[str] = frozenset({"field", "stack", "state", "bands"})
 GLYPH_SCALES: frozenset[str] = frozenset({"illustrative", "schematic"})
 
 
-#: Which bill a mechanism pays down. Session 8's organising idea: attention charges twice, and
+#: Which bill a mechanism pays down. Exercise 08's organising idea: attention charges twice, and
 #: everything after the original is somebody paying less of one of them.
 #:
 #: `origin` exists because the first entries on the timeline do not pay a bill — they *create* the
@@ -226,7 +227,7 @@ class Mechanism:
         buys: One clause: what you get.
         gives_up: One clause: what you pay.
         when_to_choose: The workload it is right for.
-        taught_in_session: Whether Session 8 covered it, or whether we sourced it from outside.
+        taught_in_source: Whether Exercise 08 covered it, or whether we sourced it from outside.
         bonus: True for a mechanism the instructor did not list at all.
         shipped_in: Models that use it, each with the sentence from its own paper.
             Empty where no paper we read claims it, which is itself a finding.
@@ -245,7 +246,7 @@ class Mechanism:
     buys: str
     gives_up: str
     when_to_choose: str
-    taught_in_session: bool = True
+    taught_in_source: bool = True
     bonus: bool = False
     aka: tuple[str, ...] = field(default_factory=tuple)
     shipped_in: tuple[Adoption, ...] = ()
@@ -254,8 +255,8 @@ class Mechanism:
     def __post_init__(self) -> None:
         """Refuse an entry that has only upside.
 
-        The assignment is explicit: *"If you write down a technique with only pros, you have not
-        understood it yet."* An empty `new_tradeoff` or `gives_up` is how that failure would enter
+        The requirements is explicit that a technique written down with only upside has not been
+        understood yet. An empty `new_tradeoff` or `gives_up` is how that failure would enter
         the catalogue, so it is rejected at construction rather than noticed in review.
         """
         if self.bill not in BILLS:

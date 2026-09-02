@@ -10,6 +10,75 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Security
+
+- **A third guard, `tests/test_forbidden_vocabulary.py`, bans the words themselves — in CI and in a
+  pre-commit hook.** The other two guard the material: its filenames, and sentences copied from it.
+  Neither catches a document that names no file and quotes no sentence and still describes the
+  source by the kind of thing it is. This one is lexical, so unlike the quoting check it needs
+  nothing but the repo and actually runs where a public branch is decided. Watched it refuse a real
+  commit with the word planted, not just fail a test run.
+
+  `FORBIDDEN` carries each word with the reason. Unrelated senses live in `ALLOWED` and are matched
+  **per line, never per file** — a file-wide exemption is a hole the size of the file. Both lists
+  fail in the other direction: an exemption for a sense nothing uses is reported and removed, so the
+  list can only grow deliberately. That check earned itself immediately by flagging one entry as
+  redundant with an existing path exemption.
+
+- **A published figure on the live page carried a label naming the kind of document a quoted number
+  came from.** It reads `AS QUOTED` now, which pairs with the `ITS OWN FORMULA` label beside it and
+  says the same thing without describing the source. Found by the new guard rather than by review.
+
+### Security
+
+- **The confidential reference material now lives outside the repository entirely.** It was inside
+  the working tree, gitignored — which protected its bytes and nothing else. A tracked document
+  could still name its files, publish their sizes, describe what they held, or quote them, and
+  several did on a public branch while `.gitignore` worked perfectly. Removed in the process: a
+  table naming two sources with their line counts and a summary of each one's contents; a source
+  path **served to the live site** in exercise 03's `records.json`; module docstrings citing sources
+  by name; a scaffolder that wrote a source path into every new exercise's requirements document; and test fixtures
+  whose invented filenames published the real naming scheme.
+
+  The material is resolved by `tools/backup_local_only.py::EXTERNAL_SOURCES` and overridable with
+  `LLM_NOTES_DIR`. It is still backed up and still verified — confirmed by tampering with a stored
+  copy and watching the check report it. `git grep` across every tracked file now returns nothing
+  for the directory or for the naming scheme, and `.gitignore` needs no entry for it at all.
+
+- **New guard, `tests/test_no_confidential_leaks.py`, wired into CI and pre-commit.** The naming
+  half runs everywhere and rejects the scheme; it needed refining first, because exercise 01's own
+  published pages match that shape, so the property is "matches the scheme **and** is not a file we
+  ship". The quote half compares tracked prose against the material and can only run where that
+  material is present — never in CI. **Both halves now gate on commit**, so CI proves no filename
+  leaked and the hook proves no sentence did.
+
+- **Every passage that quoted the source verbatim has been paraphrased** — around sixty of them
+  across exercises 02 to 08, mostly rubric wording used to justify a code rule. Each says the same
+  thing in our own words. The reasoning ladder's worked example was replaced with one of ours,
+  chosen to keep the property the ladder needs: an upper bound that is itself divisible, so the
+  inclusive and exclusive readings still differ and the deepest band still has something real to
+  notice. Two overlaps remain by design and are listed in `FUNCTIONAL_OVERLAP` with a reason each —
+  a required log-event sequence the auditor checks verbatim, and a pipeline diagram naming the same
+  stages — because paraphrasing an identifier breaks the thing it identifies.
+
+### Changed
+
+- **The local reference directory was renamed**, and is still gitignored and still backed up. It was
+  moved in the local-only store as a `git mv` so every file's history survives under the new path —
+  the store is an append-only high-water mark, so without that commit the tripwire would have gone
+  red permanently, asking why files it holds had vanished from the working tree. Path references
+  were updated across 15 tracked files, including two built from parts rather than quoted, which a
+  string replacement could not have caught.
+- **`.gitignore` no longer contains the word "topic" anywhere**, including in its comments.
+- **Code comments and internal test identifiers no longer refer to numbered teaching topics** —
+  they name the exercise (`exercise 05's headline mixture`) or the source notes (`the notes' own
+  words`) instead. Four identifiers were deliberately left alone because they are serialized into
+  `results/` or `web/` and renaming them would rewrite published data: `baseline_share`,
+  `taught_in_source`, `illustrative_only` and `outsideSource`.
+- **Commit messages now carry a `Co-Authored-By` trailer and nothing else** — no links back to an
+  agent conversation, which point at something nobody outside the machine can open. Branch names and
+  PR titles say what a change does rather than naming the source material.
+
 ### Fixed
 
 - **The standards archive's retention limit was a cap when it should have been a floor**, so the
@@ -169,7 +238,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   the recent end of the plate is drawn almost entirely from labs that publish papers.
 
 - **A "How to read this" opening**, explaining the two costs the whole page hangs off in
-  plain words and offering three ways in; and **orientation briefs above Plates V and VI**, which
+  plain words and offering three ways in; and **orientation requirement documents above Plates V and VI**, which
   showed objects — two rotary dials, forty tokens under a sliding window — that were not guessable
   from a caption written to argue after the fact.
 
@@ -210,7 +279,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   modules rather than restating them, so the generator cannot drift from the conventions it encodes.
   It caught the generator inserting the CI path after the shard's trailing `tests` entry.
 
-- **Exercise 08 — modern attention variants, scaffolded with a verified chronology.** Session 8 asks
+- **Exercise 08 — modern attention variants, scaffolded with a verified chronology.** Exercise 08 asks
   for a web app placing every attention mechanism in the order it was launched, and states the graded
   axis plainly: *"Your job is to be right about the dates."* So the first artifact is not the page but
   `results/mechanisms.json` — **24 mechanisms** from Bahdanau (2014) to DroPE (2025), each date read
@@ -218,7 +287,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   can check the two against each other.
 - **Guards that make an invented date a test failure.** A citation claiming `verified` will not
   construct without a URL and a quoted date; a test parses the quoted string and compares it to the
-  recorded date; another asserts every mechanism the assignment names is present, failing in the
+  recorded date; another asserts every mechanism the requirements names is present, failing in the
   instructor's own words. All three were watched failing on a deliberately broken catalogue — a
   dropped mechanism, a transposed date (`2021-04-20` → `2021-04-02`), and a stripped URL.
 ### Changed
@@ -237,7 +306,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   embeddings should be deleted; HD-RoPE, eight months later, concludes they should be made richer.
   Both report gains over standard RoPE. The page ends on the open question rather than resolving it.
 
-- **Neutral voice throughout.** Every word tying the page to a particular class or assignment is
+- **Neutral voice throughout.** Every word tying the page to a particular class or requirement is
   gone from the page, the served NOTICE and the meta description. The corrections are unchanged in
   substance; they now correct "our sources".
 
@@ -280,7 +349,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   inapplicable to it by construction. The document now points at `PATTERNS` as the authority instead
   of keeping a second copy that drifts.
 - **A sentence in `AGENTS.md`'s exercise-skeleton rule ran two clauses together** and read
-  "not for what your machine has and asserts no `BRIEF.md` is ever tracked".
+  "not for what your machine has and asserts no `REQUIREMENTS.md` is ever tracked".
 
 - **Exercise 08 rendered the same thirty mechanisms in two tables, and three of its six chapters had
   no body at all.** "Every mechanism, one line each" restated "The index" — together 43% of the
@@ -381,11 +450,11 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 - **one undecided pressure window, not two.** Adding a second 2019 compute entry breaks
   the 2018–19 tie. The exercise README records the change rather than amending the number quietly.
 
-- **Two errors in the course material, recorded with sources.** The transcript dates the transformer
+- **Two errors in the course material, recorded with sources.** The source dates the transformer
   to "2018 and 17" (it is 12 June 2017), and it describes DroPE while quoting the title of **DRoPE** —
   a different paper, one capital letter apart, about autonomous-driving trajectories. A third
-  discrepancy is recorded rather than resolved: a cache figure the transcript gives as ~1 TB comes out
-  at 1.57 TB from the session's own formula.
+  discrepancy is recorded rather than resolved: a cache figure the source gives as ~1 TB comes out
+  at 1.57 TB from the source material's own formula.
 
 ## [0.12.0] — 2026-09-01
 
@@ -553,7 +622,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 ### Added
 
 - **Exercise 07 — Kronecker v2: an invertible codec and a vocabulary-independent output head.**
-  Session 7's brief asks whether the Kronecker byte codec can be reversed so the `d_model × |V|`
+  Exercise 07's requirements document asks whether the Kronecker byte codec can be reversed so the `d_model × |V|`
   output head can be deleted. It can. The projection inverts **exactly** at `d_model = 384` with a
   decoder that **certifies its own answer**, and that survives a projection trained to loss 2.45.
   Tying the head to the *induced* embedding `E = K·W_proj` — not to `W_proj`, which is the tie the
@@ -577,7 +646,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   **six inline-SVG figures** built from `results/measurements.json`: the 256×32 grid the exercise is
   about and had never shown, a diagram of the tie itself, the 49× scale bug that made the idea look
   impossible, the four locked tokens drawn as an actual rectangle, and the paired-seed figure that
-  explains why any of the numbers can be believed. Adds a glossary, the brief quoted verbatim, an
+  explains why any of the numbers can be believed. Adds a glossary, the requirements quoted verbatim, an
   expected-vs-found block, a negatives section, a conclusion, limits and what comes next. Four new
   browser tests enforce the spine, and each was broken on purpose to confirm it fails.
 - **The page's lock demonstration showed numbers it invented.** It generated five random values in
@@ -629,7 +698,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   `position_policy: "restart-per-document"` where the pipeline writes
   `"restart-per-document-continue-across-window"` — an event its own `replay.rebuild` would reject,
   in the suite whose job is to say the ledger is well-formed. Fixed, and guarded: a new lexical
-  check reads every test file for policy assignments and validates them against `spec`. It knows to
+  check reads every test file for policy requirements and validates them against `spec`. It knows to
   allow a deliberately-invalid value inside a refusal test, because without that it would have
   flagged the one test proving invalid policies are caught.
 - **The "not shipped" guard could not see a directory.** It matched only `*.py`, so when
@@ -678,7 +747,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   result. The consequence is not hypothetical: an unbounded selector pulls the realised mixture
   toward whatever the model finds hardest, which is what the floors exist to stop.
 
-- **The session notebook covers all eight stages**, up from five. Six new sections — a synthetic
+- **The topic notebook covers all eight stages**, up from five. Six new sections — a synthetic
   corpus, a real training loop and the ledger it writes, crash/cut/resume, replay, forking, and
   OPUS — **79 cells that execute end to end in 2.1 seconds**, from four shards of synthetic
   documents rather than the gitignored 10.6M-token corpus, so it runs on a free Colab tier with
@@ -848,14 +917,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   lane's floor *equals* its share and has no headroom. Protected lanes now carry 5% headroom, so the
   floor is satisfiable rather than knife-edge.
 
-- **Session 5's recipe is now data, in one place.** `mixture.py` holds the lane shares (web .32 ·
+- **Exercise 05's recipe is now data, in one place.** `mixture.py` holds the lane shares (web .32 ·
   code .28 · indic .18 · stem .12 · reasoning .08 · agentic .02 · long_context **0**), the
   protected floors (indic .12, agentic .02) and the per-lane token targets derived from the run
   size. Nothing restates them: a fetcher sizing a download and a compliance report checking against
   a second copy would drift, and the report would become a measurement of itself.
 
 - **`long_context` is deliberately zero and a test says so.** It is a schedule over the other
-  lanes, not a corpus — session 5 retired it on its own evidence, 60 of its 100B being repo-packed
+  lanes, not a corpus — exercise 05 retired it on its own evidence, 60 of its 100B being repo-packed
   code already counted under `code`. A fetcher that gave it tokens would invent a lane and
   double-count another.
 
@@ -916,7 +985,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [0.8.0] - 2026-08-25
 
-Session 6's exercise through stage 7 of 8: a training-data execution system that plans its own
+Exercise 06's exercise through stage 7 of 8: a training-data execution system that plans its own
 work without coordination, feeds four real worker processes, records every microbatch it consumes,
 and — after a real crash — resumes on the same batch ids. The release is a minor rather than a
 patch because it adds an exercise and a repo-wide gate (pre-commit), and a minor rather than a
@@ -1040,7 +1109,7 @@ being edited until the claim comes out true.
   read-only memmap both protect the *handle*, and neither survives a shell — **re-hashing on read**
   is what catches a tampered file, so every ledger entry will carry the shard's hash and replay will
   re-verify before reading.
-- **The admission gate refuses on a missing hash, not only a failing one.** The lecture's minimum is
+- **The admission gate refuses on a missing hash, not only a failing one.** The source's minimum is
   dedup + PII + eval-overlap; an unanswered question is not a pass. Every reason is reported rather
   than the first, so one call says everything wrong with a shard.
 - Proven end to end on real corpus text: 600k chars → **269,439 tokens** → 5 sealed shards, all
@@ -1048,7 +1117,7 @@ being edited until the claim comes out true.
   false and changing the id.
 
 - **Exercise 06 has the full exercise skeleton**, which it should have had before any code was
-  written: `BRIEF.md` (local, gitignored — the assignment), `CLAUDE.md` (rules for whoever changes
+  written: `REQUIREMENTS.md` (local, gitignored — the requirements), `CLAUDE.md` (rules for whoever changes
   the code), `PROGRESS.md` (the running log), `NOTICE` (scope, affiliation and third-party credit
   with both OPUS copyright lines), and `artifacts/`. It is now in the root README's exercise table.
 - **`tests/test_deploy_registration.py`** — every exercise with a `web/` has a card on the site's
@@ -1056,7 +1125,7 @@ being edited until the claim comes out true.
   automatically but the cards are hand-maintained, so an exercise could be deployed and reachable
   while invisible to anyone arriving at the site root, with nothing failing.
 - **`tests/test_exercise_skeleton.py`** makes the skeleton checkable instead of remembered. It
-  requires the genuinely universal files only, and asserts **no `BRIEF.md` is ever tracked** —
+  requires the genuinely universal files only, and asserts **no `REQUIREMENTS.md` is ever tracked** —
   verified with `git ls-files` rather than by reading `.gitignore`, because a file already in the
   index stays tracked no matter what the ignore rules say afterwards.
 
@@ -1071,7 +1140,7 @@ being edited until the claim comes out true.
   plainly it describes stage 1 rather than a finished system, and a notebook builder whose notebook
   executes end to end.
 - **`tests/test_submission_bundle.py`** pins the split the deliverable rests on: everything the
-  assignment names is trackable under `submission_artifacts/`, and heavy output stays ignored under
+  requirement names is trackable under `submission_artifacts/`, and heavy output stays ignored under
   `artifacts/`. It also pins *why* the bundle is not simply called `artifacts/` — `**/artifacts/` is
   a **directory** pattern, and git cannot re-include a file whose parent is excluded, so a negation
   there is inert while `git add -A` reports success.
@@ -1131,11 +1200,11 @@ being edited until the claim comes out true.
   the package is named by both the README and the exercise's `CLAUDE.md`, which failed on its first
   run against six modules.
 
-- **All four of exercises 01–04's `BRIEF.md` files had been destroyed and are restored.** They were
+- **All four of exercises 01–04's `REQUIREMENTS.md` files had been destroyed and are restored.** They were
   tracked until `18015b1` untracked them; the *next* branch switch across that commit then deleted
   the working copies, because git removes a file that was tracked at the old HEAD and is not at the
   new one. Nobody deleted anything. Recovered from `18015b1^`.
-- **The local-only tripwire now covers `BRIEF.md`**, alongside the notebooks and builders, and
+- **The local-only tripwire now covers `REQUIREMENTS.md`**, alongside the notebooks and builders, and
   carries the recovery command in its failure message. `AGENTS.md` explains the mechanism — that
   *untracking* is what makes a file fragile — rather than leaving it to be rediscovered.
 - **The skeleton guard required `tools/`, which no fresh clone has.** For most exercises its only
@@ -1158,7 +1227,7 @@ being edited until the claim comes out true.
 
 - **A mandatory rule: nothing under `notebooks/` or any `tools/` may be removed without explicit
   prior permission** — locally or on the remote, and it does not yield to a tidy-up or to any other
-  rule in `AGENTS.md`. These are the only files with no second copy: both the session notebooks and
+  rule in `AGENTS.md`. These are the only files with no second copy: both the topic notebooks and
   the `build_notebook.py` generators are gitignored, so git cannot restore them.
 - **The rule is written around how they were actually lost.** All five builders were destroyed by an
   ordinary `git checkout main && git pull` immediately after the untracking merge — `checkout`
@@ -1185,7 +1254,7 @@ being edited until the claim comes out true.
   `05-…/tools/fetch_proxy_corpus.py` is still versioned, because a corpus needs a tracked way to
   fetch and licence-check it.
 
-- **The root README no longer carries a generated section for exercise 05.** The brief says the
+- **The root README no longer carries a generated section for exercise 05.** The requirements says the
   root is the front door and must reach `SPEC.md` "without a detour", and the obvious reading was
   that the front door should therefore summarise the exercise under submission. It should not: the
   block grew back into exactly the retelling the root/exercise split exists to prevent — the claim,
@@ -1227,8 +1296,8 @@ being edited until the claim comes out true.
 - **The root README's layout block and Development section now name the repo-wide `tests/`.** The
   repo's own rule is that a new module is not done until every list naming modules includes it, and
   this one had shipped in neither list.
-- **Every exercise now has a tracked notebook builder, and sessions 1-3 have notebooks at all.**
-  `AGENTS.md` has mandated one per session for a while; `git log --all` showed **zero** commits ever
+- **Every exercise now has a tracked notebook builder, and topics 1-3 have notebooks at all.**
+  `AGENTS.md` has mandated one per topic for a while; `git log --all` showed **zero** commits ever
   touching S01, S02 or S03, and exercise 04 had a notebook with no builder — the exact countdown the
   conventions describe, already paid once. S04's builder was generated *from* its notebook and
   reproduces it with every cell source, metadata and nbformat identical. S01, S02 and S03 are new
@@ -1246,7 +1315,7 @@ being edited until the claim comes out true.
   size of the deduplicated Indic web really is unmeasured.
 
 - **A bare scaffold directory was reported as a lost notebook.** Creating an empty
-  `src/exercises/06-build-training-dataset/` turned both notebook tripwires red — "5 session
+  `src/exercises/06-build-training-dataset/` turned both notebook tripwires red — "5 topic
   notebooks are present but `['S06-…ipynb']` are gone" — when nothing had been lost. An exercise is
   now a directory that is a **workspace member** (`NN-slug` with a `pyproject.toml`); the rule lives
   in `tests/_exercises.py`, shared by both guards, with four edge cases pinned. For a tripwire a
@@ -1388,7 +1457,7 @@ being edited until the claim comes out true.
   Each verdict is checked twice in tests — once on numbers that should produce it, once on numbers
   that must not.
 
-- **The session notebook is now executed in CI, not just parsed.** `test_mixture_notebook.py` runs
+- **The topic notebook is now executed in CI, not just parsed.** `test_mixture_notebook.py` runs
   all 37 code cells through `nbclient` and fails if any raises — the one failure a reader meets
   first, and the one the structural tests could never see. Its twin appends a deliberately raising
   cell and requires the runner to catch it. `nbclient` and `ipykernel` join the root `dev` group so
@@ -1452,7 +1521,7 @@ being edited until the claim comes out true.
   to go red. 13 of 13 mutants killed — so no guard in this exercise is decorative.
 
 - **[`TOKENIZER.md`](src/exercises/05-datamixtures-and-curriculum/TOKENIZER.md)** records why
-  Session 2's 10k vocabulary stays as the measuring instrument and not as V5's vocabulary, built
+  Exercise 02's 10k vocabulary stays as the measuring instrument and not as V5's vocabulary, built
   entirely from exercises 03 and 04's measurements. The counter-intuitive one is worth the detour:
   on Manipuri, `o200k_base` (16.50) and Gemma (12.18) are both **worse** than our 10k vocabulary
   (7.17), so a bigger off-the-shelf vocabulary does not buy Indic coverage.
@@ -1486,7 +1555,7 @@ being edited until the claim comes out true.
 
 ### Changed
 
-- **Session notebooks are no longer tracked.** `notebooks/S[0-9][0-9]-*.ipynb` is gitignored; each
+- **Topic notebooks are no longer tracked.** `notebooks/S[0-9][0-9]-*.ipynb` is gitignored; each
   is built locally from its exercise's `tools/build_notebook.py`. The files are untouched on
   existing checkouts and history is unchanged — they simply stop being versioned. A notebook is
   derived from the package it imports, so tracking one versions a second copy of numbers the
@@ -1495,7 +1564,7 @@ being edited until the claim comes out true.
   checked by reading a notebook, so on a fresh clone all of them now skip — and a rule that only
   skips is not a rule. The sample is stdlib-only on purpose: one that imported an exercise package
   would go red whenever that exercise changed. It proves a notebook in this repo opens and runs; it
-  cannot prove a session notebook is correct, and `AGENTS.md` now says so.
+  cannot prove a topic notebook is correct, and `AGENTS.md` now says so.
 - **Dead Colab badges removed** from exercise 04's README, the root README, and — least visible —
   from the notebook `build_notebook.py` generates, all of which pointed at paths GitHub now 404s.
 
@@ -1517,11 +1586,11 @@ being edited until the claim comes out true.
   both go red when the fetch is put back. Exercises 02–04 keep their fetch; exercise 02's bundle is
   2.8 MB, where inlining would block first paint for no gain.
 
-- **Assignment briefs are no longer tracked, at any level.** `BRIEF.md` is gitignored by name
-  everywhere. A brief is the course's text and is input for whoever builds the exercise; it is not
+- **Requirement requirement documents are no longer tracked, at any level.** `REQUIREMENTS.md` is gitignored by name
+  everywhere. A requirements document is the course's text and is input for whoever builds the exercise; it is not
   the deliverable. The files remain on disk and in past commits — no history was rewritten.
 
-  Exercise 04's brief carried a **decision record** (D1–D7: why the answer is eight, why those
+  Exercise 04's requirements document carried a **decision record** (D1–D7: why the answer is eight, why those
   corpora, what may be published) that its README linked into three times. That record moves to a
   tracked [`DECISIONS.md`](src/exercises/04-data-cleaning-dedup/DECISIONS.md) and every citation
   now points there, so nothing published goes dark and no link 404s.
@@ -1556,13 +1625,13 @@ being edited until the claim comes out true.
 
 ## [0.4.0] - 2026-08-16
 
-Session 4's exercise, start to finish: eight cleaning stages over three real corpora, published as
+Exercise 04's exercise, start to finish: eight cleaning stages over three real corpora, published as
 a page you can operate. The release is a minor rather than a patch because it adds an exercise and
-a repo-wide convention — every session now ships a maintained Colab notebook.
+a repo-wide convention — every topic now ships a maintained Colab notebook.
 
 Two findings are worth reading even if you skip the rest. **A token count is not a fact about a
 corpus** — it is a fact about a corpus *and a tokenizer*, and the same Manipuri text varies 7.6×
-across the five we measured; so the pipeline counts with our own Session 2 vocabulary and refuses
+across the five we measured; so the pipeline counts with our own Exercise 02 vocabulary and refuses
 to publish a count that is mostly `[UNK]`. And **three of the nine standard quality rules are not
 language-neutral**: applied unchanged to Indic text they do not filter it, they delete it, while
 reporting a healthy-looking yield. The third of those three was invisible in the rule text and only
@@ -1571,7 +1640,7 @@ showed itself by running it.
 ### Added
 
 - **Exercise 04 is complete and published** at `/04-data-cleaning-dedup/`. All eight of the
-  session's cleaning stages run over three real corpora, and the page turns the result into
+  source material's cleaning stages run over three real corpora, and the page turns the result into
   something a reader can operate rather than read: toggle each cleaning operation and watch the
   content hash collapse two documents into one, drag the deduplication threshold until a real pair
   from the corpus falls out of the candidate set, and turn the PII dial up until it masks a city as
@@ -1607,14 +1676,14 @@ showed itself by running it.
   stages now do work; only PII scrubbing remains a pass-through.
 
   **The quality cascade is run twice, and the gap is the finding.** Gopher's and C4's nine rules at
-  the session's thresholds, once with the published English settings and once script-aware. Three of
+  the source material's thresholds, once with the published English settings and once script-aware. Three of
   the nine turn out not to be language-neutral: terminal punctuation asks for `.`/`!`/`?` where
   Devanagari ends a sentence with the danda; stop words asks for English function words; and
   `mean_word_length` — see *Fixed* below. Applied unchanged to Indic text the rules do not filter
   it, they delete it, while reporting a healthy-looking yield.
 
   **Deduplication runs exact hashing then MinHash/LSH** at FineWeb's preset — `k=5`, 112
-  permutations as 14 bands of 8. The banding formula puts the threshold at **0.719**; the session
+  permutations as 14 bands of 8. The banding formula puts the threshold at **0.719**; the source material
   quotes the preset as "target ~0.75", and the code publishes what it computes. LSH proposes and the
   true Jaccard decides, with rejected candidates published beside confirmed duplicates.
 
@@ -1645,14 +1714,14 @@ showed itself by running it.
   number is the honest one for short web text. `undecided` is a real answer: below 40 characters,
   or in a script with no trained profile, the detector declines rather than guessing.
 
-- **Every session now ships a Colab notebook, and `AGENTS.md` says so.** `notebooks/SNN-slug.ipynb`,
+- **Every topic now ships a Colab notebook, and `AGENTS.md` says so.** `notebooks/SNN-slug.ipynb`,
   which imports the exercise's package rather than re-implementing it, defaults to a profile that
   finishes in under ten minutes on a free tier, and carries no committed outputs. The import rule is
   what stops a notebook drifting from the code it demonstrates; the outputs rule is what stops a
   data exercise baking real PII into a tracked file. Both are enforced by tests, not remembered.
 
 - **Exercise `04-data-cleaning-dedup` has a runnable pipeline spine.** `uv run python -m datacleaning`
-  reads three corpora, folds all eight of the session's stages over them, stamps a manifest and
+  reads three corpora, folds all eight of the source material's stages over them, stamps a manifest and
   writes a budgeted bundle. Seven stages are counting pass-throughs today and *say so* in their own
   output (`real: false`), so a stage nobody has written cannot be mistaken for a stage that found
   nothing. Landing the skeleton first means the pipeline produces a valid, testable artifact from
@@ -1671,7 +1740,7 @@ showed itself by running it.
   of a **tokenizer**, not of a corpus: across the five tokenizers exercise 03 measured, Manipuri
   swings **7.6×** (2.15 to 16.50 tokens/word) and Telugu 5.3×. Quoting one ratio silently smuggles a
   tokenizer choice into what reads as a fact about the data. The pipeline now tokenizes with **our
-  own Session 2 vocabulary** and publishes the cross-tokenizer spread as a finding.
+  own Exercise 02 vocabulary** and publishes the cross-tokenizer spread as a finding.
 
 - **A token count that is mostly `[UNK]` is no longer publishable as a number.** Our 10k vocabulary
   was trained on English, Hindi, Telugu and Maithili, so Bengali script comes back **82–84% `[UNK]`**
@@ -1680,16 +1749,16 @@ showed itself by running it.
   `AGENTS.md`'s "report the number the metric ignores", made structural rather than remembered.
 
   The gate changed the corpus, not just the reporting: an earlier draft chose Sangraha's **Assamese**
-  shard for its narrative (the session names Sangraha as the corpus that got zero deduplication).
+  shard for its narrative (the source material names Sangraha as the corpus that got zero deduplication).
   At 82% `[UNK]` that corpus cannot be measured with our tokenizer, so the Indic corpus is now
   Sangraha's **Devanagari and Telugu** shards — the ones our tokenizer can actually read — and
   Assamese and Manipuri are kept as a deliberate out-of-vocabulary probe, excluded from the token
   budget and used only to produce the 84% figure.
 
-- **The exercise's `BRIEF.md` and `README.md` describe real work** rather than saying the brief is
-  pending. `BRIEF.md` carries the assignment verbatim plus a decision record: why the answer to
-  "how many strategies" is **8** when the session names two *different* eights, why the example link
-  in the assignment is a **model** rather than a dataset, and what may and may not be published.
+- **The exercise's `REQUIREMENTS.md` and `README.md` describe real work** rather than saying the requirements is
+  pending. `REQUIREMENTS.md` carries the requirements verbatim plus a decision record: why the answer to
+  "how many strategies" is **8** when the source material names two *different* eights, why the example link
+  in the requirements is a **model** rather than a dataset, and what may and may not be published.
 
 ### Fixed
 
@@ -1863,16 +1932,16 @@ published.
 ### Removed
 
 - **The programme's schedule and internal authoring specs no longer ship on the remote.**
-  `docs/BRIEF.md` (course structure, 20-class syllabus, capstone staffing) and the two explainer
+  `docs/REQUIREMENTS.md` (course structure, 20-class syllabus, capstone staffing) and the two explainer
   authoring specs — `docs/EXPLAINER_PROMPT.md`, `docs/EXPLAINER_PATTERN.md` — are untracked and
-  gitignored, and the root README's "About the program" section — duration, session times, format,
+  gitignored, and the root README's "About the program" section — duration, topic times, format,
   capstone — is gone with them. The files are unchanged on a working checkout; they simply stop
   being published. This repo carries the engineering work; the course calendar is not part of it.
   Every tracked link to them has been removed, because a link to an untracked file is dead for
   everyone but us.
 - **`DESIGN_CRITIQUE.md` is local too.** Exercise 03's self-critique of its own first build is a
   useful record for whoever works on it next, but it is not part of the published work — untracked,
-  gitignored, unchanged on disk, and no longer linked from the root README or the exercise brief.
+  gitignored, unchanged on disk, and no longer linked from the root README or the exercise requirements document.
 
 ### Fixed
 
@@ -1899,7 +1968,7 @@ than overwritten, and the widget can now tokenize text you paste into it.
 
 - **Exercise 02 now carries two evaluation profiles, both retained and neither deprecated.**
   **v1** is the original work — clipped article prose, scored in tokens per whitespace word, no
-  Hindi penalty, en/hi/te/ta — and **v2** is the measurement the assignment grades — wiki-faithful
+  Hindi penalty, en/hi/te/ta — and **v2** is the measurement the requirements grades — wiki-faithful
   Markdown, faithful units, Hindi penalty, en/hi/te/mai. Their scores can never be ranked against
   each other: the same tokenizer reads ≈ 2.13 under v1 and ≈ 0.60 under v2. `ablate.sweep` raises
   if handed rows from both, and the widget renders one labelled section per profile with the
@@ -1961,7 +2030,7 @@ than overwritten, and the widget can now tokenize text you paste into it.
   rejected experiment or an ablation. The render test fails if a config reaches the page without
   an explanation: a row of numbers with no story is not a finding.
 - **The submitted tokenizer ships in the bundle**, in HuggingFace's own format at
-  `web/tokenizer.json` — `artifacts/` is gitignored by design, and the assignment asks for the exact
+  `web/tokenizer.json` — `artifacts/` is gitignored by design, and the requirements asks for the exact
   file. `tests/test_submission.py` trains nothing: it loads that file, scores it on the committed
   corpus, and asserts the figures the README prints, so the artifact and the documentation cannot
   drift apart unnoticed. It also pins the corpus unit counts, making a re-fetched snapshot loud.
@@ -1972,7 +2041,7 @@ than overwritten, and the widget can now tokenize text you paste into it.
 
 ### Changed
 
-- **Exercise 02's graded numbers now come from the corpus and denominator the assignment
+- **Exercise 02's graded numbers now come from the corpus and denominator the requirements
   specifies.** The submission is trained and measured on committed **wiki-faithful Markdown** —
   Wikipedia's REST HTML with its links, URLs, tables and categories intact — against a
   **faithful-unit** denominator, with the Hindi penalty and adjusted score computed throughout.
@@ -1988,7 +2057,7 @@ than overwritten, and the widget can now tokenize text you paste into it.
 
 ### Fixed
 
-- **Exercise 02's README and BRIEF no longer describe a denominator the code stopped using**, and
+- **Exercise 02's README and requirements no longer describe a denominator the code stopped using**, and
   the stale "connecting Vercel is the remaining one-time step" note is gone from both the exercise
   and the root README — the site has been live for some time.
 - **The tokenizer page no longer scrolls sideways on a phone.** Its two-column grid used a bare
@@ -2042,7 +2111,7 @@ that four datasets are committable today.
   78% of it, independently corroborating the published figures the atlas cites (8.0× and 73%); we
   measure Malayalam at ×13.0 on our own text, which is the paper's own headline example.
 - **Gemma 4 is the worst Indic tokenizer of the three serious candidates.** ×2.49 mean tax against
-  Sarvam-105B's ×1.81 and XLM-R's ×1.66, and ×8.84 worst-case against ×2.90. It is the assignment's
+  Sarvam-105B's ×1.81 and XLM-R's ×1.66, and ×8.84 worst-case against ×2.90. It is the requirements'
   named target, so `docs/DECISIONS.md` now prices the "continue-pretrain from Gemma-4-31B" fork with
   that number attached: continue-pretraining inherits the tokenizer, and the tokenizer is not free.
 - **Contamination coverage is no longer `none`.** MILU's validation split is indexed — 126,044
@@ -2362,7 +2431,7 @@ that four datasets are committable today.
   supplies it.
 - **A second lens on the mixture.** Ten tiers is more than a reader holds in mind, so each is also
   labelled *skills* or *knowledge*. The mixture now runs 40% skills / 60% knowledge, raised from 28%
-  because the assignment names coding and agentic work as primary capabilities.
+  because the requirements names coding and agentic work as primary capabilities.
 - **A comparison table for the corpus budget** (`records/scaling_reference.json`): thirteen models
   with their parameters, architecture and pre-training tokens, every row carrying its source. The
   finding that matters is that a corpus is not sized by the model reading it — Llama 3.1 trained 8B,
@@ -2407,7 +2476,7 @@ that four datasets are committable today.
   because the same rule lived in Python for the bundle and in JavaScript for the page, and only one
   got fixed. Auditing for the same shape found `tierOf` written out **four times** in `chapters.js`
   and the natural-Indic token rule twice; all are now single module-scope functions. The
-  cross-implementation guard was extended from blockers alone to also compare tier assignment and
+  cross-implementation guard was extended from blockers alone to also compare tier requirement and
   countable tokens per dataset, by running the real browser code against the real bundle, plus a
   check that the deduplication band's fallback literal still matches `DEDUP_SURVIVAL`.
 - **Index headroom, not just a pass mark.** 99.2KB against a 100KB budget left no room for a
@@ -2527,8 +2596,8 @@ that four datasets are committable today.
   The index now records the window width each item was hashed at and checks the document at each
   width; items too short to identify anything are refused and counted rather than silently
   accepted.
-- **The framework answered a third of its own assignment.** The class brief scopes this exercise as
-  the full lifecycle — pre-training, SFT, preference, safety and evaluation — and the exercise brief
+- **The framework answered a third of its own requirement.** The class requirements document scopes this exercise as
+  the full lifecycle — pre-training, SFT, preference, safety and evaluation — and the exercise requirements document
   narrowed it to "the pre-training data mix". Every one of the 145 catalogue records already carried
   a training-stage tag (101 pre-training, 47 SFT, 17 RL, 15 evaluation, 1 safety); it was rendered in
   one place and read by no module, while the tier mapping silently dropped 36 records including every
@@ -2574,9 +2643,9 @@ First tagged release: two interactive exercises live on Vercel with a gated depl
 
 ### Added
 
-- **Session 1 — Introductions:** four live, in-browser, dependency-free proofs of why neural
+- **Exercise 01 — Introductions:** four live, in-browser, dependency-free proofs of why neural
   networks work (nonlinearity, depth, learned embeddings, and the role of data).
-- **Session 2 — Tokenization:** a single 10,000-token multilingual BPE shared across four
+- **Exercise 02 — Tokenization:** a single 10,000-token multilingual BPE shared across four
   languages, scored by cross-language fertility spread.
   - An ablation harness sweeping algorithm × representation × normalization × vocab size ×
     corpus weighting.

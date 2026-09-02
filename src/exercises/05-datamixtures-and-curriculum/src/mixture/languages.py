@@ -1,15 +1,13 @@
 """Which Indic languages enter the run, and when — decided by measurement, not by preference.
 
-The session asks this directly. From the transcript, stating the assignment in his own words:
-
-    *"...reason when I going to train on Sanskrit if ever or urdu or other languages — right, so
-    you need to come up with everything now."*
+The requirements asks this directly: when does each language enter the run — Sanskrit, Urdu and the
+rest — and the answer has to be worked out up front rather than deferred.
 
 A plan that answers with a single "Indic 18%" has not answered it. `lanes.py` splits that 18% by
 **provenance**; this module splits it by **language and time**, which is the other half.
 
 **The gate is measured, and it is brutal.** Every South Asian language in FLORES-200 was tokenised
-with our own Session 2 vocabulary. Exercise 04's rule is that a count which is mostly `[UNK]` is
+with our own Exercise 02 vocabulary. Exercise 04's rule is that a count which is mostly `[UNK]` is
 not a count; applied to training text, a language above the gate cannot be trained on at all,
 because the model would be fitting the unknown-token id rather than the language.
 
@@ -21,7 +19,8 @@ The result is a clean split along **script**, not language:
   Kashmiri-in-Perso-Arabic; Bengali, Assamese and Manipuri-in-Bengali; Punjabi, Gujarati, Odia,
   Sinhala, Santali, Kannada, Tamil, Malayalam.
 
-So the honest answers to the two languages named in the session are **Sanskrit: yes, and it can
+So the honest answers to the two languages named in the source material are **Sanskrit: yes, and
+it can
 start early — 0.1% `[UNK]`, because it shares Devanagari with Hindi. Urdu: not until the
 vocabulary is retrained — 77.7%.** Nine Devanagari languages arrived free with Hindi; fourteen
 languages are shut out by script alone. That single measurement is the strongest argument in
@@ -154,8 +153,8 @@ _WHY = {
     "hin_Deva": "the largest verified-native pool in Sangraha and the language MILU weights most",
     "tel_Telu": "the only non-Devanagari script the vocabulary reads, and exercise 04's Indic "
     "corpus is Devanagari and Telugu for exactly that reason",
-    "mai_Deva": "carried from Session 2, where it was up-weighted x3 because it shares Devanagari "
-    "with Hindi and won almost no merges of its own",
+    "mai_Deva": "carried from Exercise 02, where it was up-weighted x3 for sharing Devanagari "
+    "with Hindi while winning almost no merges of its own",
     "mar_Deva": "readable at 0.6% and the largest Devanagari language after Hindi",
     "npi_Deva": "readable at 0.0%; arrives free with the script",
     "bho_Deva": "readable at 0.0%; arrives free with the script",
@@ -163,7 +162,7 @@ _WHY = {
     "hne_Deva": "readable at 0.0%; arrives free with the script",
     "kas_Deva": "readable at 0.0% in Devanagari, while the same language in Perso-Arabic is at "
     "80.4% -- the clearest evidence that the gate is about script, not language",
-    "san_Deva": "**the session asks about this one by name.** Readable at 0.1% because it is "
+    "san_Deva": "**the source asks about this one by name.** Readable at 0.1% because it is "
     "Devanagari, so it can enter; held to 1% because its supply is thin and its "
     "fertility is the worst of the readable set at 4.00 tokens per word",
 }

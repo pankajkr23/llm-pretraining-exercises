@@ -5,8 +5,9 @@
 re-reading it, and an audit tracing a checkpoint back to it all rest on the bytes having stayed put.
 
 **The strategy.** Tokenize once, seal the result, and make the shard's *name* its content hash. A
-modified shard is then a *different* shard by construction rather than by convention, which is what
-the lecture means by "if we modify it, it becomes a new shard with a new hash and a new lineage".
+modified shard is then a *different* shard by construction rather than by convention, A
+modification therefore produces a
+new shard, with a new hash and a new lineage, rather than a mutated one.
 Three mechanisms, deliberately overlapping:
 
 - the id is derived from the bytes, so a change renames it;

@@ -1,7 +1,8 @@
-"""Scoring: per-language fertility, cross-language spread, and the assignment's final score.
+"""Scoring: per-language fertility, cross-language spread, and the requirements' final score.
 
-The graded denominator is the **faithful unit** — one contiguous Unicode letter/mark/number run,
-or one visible non-space punctuation/symbol character. It is the countable atom of the
+The graded denominator is the **faithful unit**: either an unbroken run of Unicode letters, marks
+and numbers, or a single visible character that is none of those and is not whitespace. It is the
+countable atom of the
 faithfulness rule (every visible non-whitespace character must survive ``decode(encode(x))``, so
 every visible character is counted). Whitespace is excluded from both the rule and the count:
 tokenizers legitimately transform it (Metaspace ``▁``, byte-level ``Ġ``), and counting it would
@@ -20,7 +21,7 @@ from dataclasses import dataclass
 
 import regex
 
-# One contiguous letter/mark/number run, or one visible non-space punctuation/symbol character.
+# An unbroken letter/mark/number run, or a single visible character that is none of those.
 # ``\p{M}`` is load-bearing: it keeps Devanagari/Telugu combining marks attached to their base
 # character, so ``भारत`` counts as one unit rather than fragmenting at every matra.
 _UNIT = regex.compile(r"[\p{L}\p{M}\p{N}]+|[^\s\p{L}\p{M}\p{N}]")

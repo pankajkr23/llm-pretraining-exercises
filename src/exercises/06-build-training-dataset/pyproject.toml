@@ -1,7 +1,7 @@
 [project]
 name = "exercise-06-build-training-dataset"
 version = "0.1.0"
-description = "Session 6 — the training data execution system: shards, ledgers, replay, audit"
+description = "Exercise 06 — the training data execution system: shards, ledgers, replay, audit"
 requires-python = ">=3.12"
 dependencies = [
     # Content hashing, script hashing and content-derived run ids already exist and are already

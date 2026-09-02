@@ -26,28 +26,29 @@ output side and the saving becomes real.
 
 ## The submission, in one block
 
-The brief asks two things: *which problem*, and *how are you proving it*. Answered here so a grader
+The requirements asks two things: *which problem*, and *how are you proving it*. Answered here so a grader
 does not have to hunt.
 
 **Which problem did I work on? — Problem 5.**
 
-> *"Kronecker is forward deterministic (same word will always give same embedding). How do I make a
-> reverse of this (same embedding gives the same Kronecker)? If we can do this, then we can get rid
-> of the final head as well! Then we can have a vocab of 1M as well without any issues!"*
+The Kronecker construction runs one way: a given word always produces the same embedding. The
+question is whether it can be inverted — whether an embedding can be taken back to the factors that
+produced it. If it can, the output head becomes unnecessary, and vocabulary size stops being a
+constraint on the parameter count at all.
 
 Three clauses, three answers, all measured:
 
-| the brief asks | answer |
+| the requirements asks | answer |
 | --- | --- |
 | *"make a reverse of this"* | Exact recovery at `d_model = 384` — and the decoder **certifies its own answer** without being shown the truth. Holds on a **trained** projection (loss 2.45). |
 | *"get rid of the final head"* | The `d_model × V` head is **deleted** — tied to the induced embedding `E = K·W_proj`. Zero vocabulary-sized parameters. |
 | *"a vocab of 1M without any issues"* | **6,291,457 vs 768,000,000** parameters, and ~72 ms / 0.75 GB per step **flat in V** with sampled scoring. |
 
 **A second, separate solution to Problem 3** — the 32-byte cap — is included and labelled as such,
-never merged into the #5 result. The brief says the problems are separate; the measurements keep
+never merged into the #5 result. The requirements says the problems are separate; the measurements keep
 them separate.
 
-**How is it proved?** The brief says to write a small transformer and train it, so that is what the
+**How is it proved?** The requirements says to write a small transformer and train it, so that is what the
 evidence is:
 
 - **Trained comparisons, 5 seeds, paired.** Every arm shares a transformer body, the same seeds and
@@ -69,7 +70,7 @@ README.md         # this file
 CLAUDE.md         # rules specific to this exercise, for whoever changes the code
 PROGRESS.md       # the running log: what was built, verified, and what is still open
 NOTICE            # affiliation and licence disclaimer
-BRIEF.md          # the assignment — LOCAL ONLY, gitignored, never the deliverable
+REQUIREMENTS.md          # the requirements — LOCAL ONLY, gitignored, never the deliverable
 pyproject.toml    # workspace member
 src/embeddings/   # the modules tabulated above
 results/          # tracked evidence the documents render — a run that writes only to artifacts/
@@ -127,9 +128,9 @@ parameter. Its size does not mention `V`.
 
 ---
 
-## Which assignment problem each result answers
+## Which requirement problem each result answers
 
-The brief states its five problems are separate — *"each are separate, don't try and mix them."* So
+The requirements states its five problems are separate — *"each are separate, don't try and mix them."* So
 every result here is labelled with the problem it answers, and the gain is **split by which problem
 produced it** rather than reported as one number.
 
@@ -189,7 +190,7 @@ And the parameter count does not move with the vocabulary:
 | 200,000 | 52,512,000 | **3,409,153** |
 
 At **V = 1,000,000, d = 768** the head is **6,291,457 against 768,000,000** — 122× smaller. That is
-the assignment's *"vocab of 1M without any issues"*, as arithmetic.
+the requirements' *"vocab of 1M without any issues"*, as arithmetic.
 
 ---
 

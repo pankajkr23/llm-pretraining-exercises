@@ -69,7 +69,7 @@ def payload() -> dict:
                 "date": m.date.isoformat(),
                 "year": m.date.year,
                 "bill": m.bill,
-                "taught": m.taught_in_session,
+                "taught": m.taught_in_source,
                 "bonus": m.bonus,
                 "whatExisted": m.what_existed,
                 "problem": m.problem,
@@ -106,7 +106,7 @@ def payload() -> dict:
             "total": len(mechanisms),
             "mandated": len(MANDATED),
             "bonus": sum(m.bonus for m in mechanisms),
-            "outsideSession": sum(not m.taught_in_session for m in mechanisms),
+            "outsideSource": sum(not m.taught_in_source for m in mechanisms),
             "schematic": sum(m.glyph.scale == "schematic" for m in mechanisms),
             "glyphKinds": {
                 k: sum(m.glyph.kind == k for m in mechanisms)
@@ -130,7 +130,8 @@ def payload() -> dict:
             }
             for p in pressure_by_period(mechanisms, window=2)
         ],
-        # The arc is an editorial claim from the brief, so the page must not restate it — it must
+        # The arc is an editorial claim from the requirements, so the page must not restate it —
+        # it must
         # render the result of testing it. Every field here is derived; `chapters.js` asserts none
         # of it. The number it replaces ("holds in 6 of 7 windows") counted windows that produced a
         # winner, not windows whose winner the arc predicted, and the arc does not survive that.
@@ -200,7 +201,8 @@ def payload() -> dict:
             ],
             "acceleratorBytes": ACCELERATOR_BYTES,
         },
-        # The session's transcript gives ~1 TB for eight users at 1M tokens; its own formula gives
+        # The source material's source gives ~1 TB for eight users at 1M tokens; its own
+        # formula gives
         # something else. Both travel to the page so it can show the disagreement rather than pick.
         "wells": [
             {

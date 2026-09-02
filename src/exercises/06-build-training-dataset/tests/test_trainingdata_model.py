@@ -1,6 +1,6 @@
 """The model, tested for the things the data system depends on.
 
-Not architecture quality — that is not what this session is about. What is tested here is that the
+Not architecture quality — that is not what this topic is about. What is tested here is that the
 boundaries `masks.py` and `pack.py` construct **survive the attention kernel**, because that is the
 one place they can be silently discarded, and that a checkpoint restores what it saved.
 

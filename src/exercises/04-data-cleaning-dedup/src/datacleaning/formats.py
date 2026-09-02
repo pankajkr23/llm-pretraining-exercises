@@ -1,6 +1,6 @@
 """Stage 2b — format discipline, and why ghost tags are made rather than found.
 
-The session's fourth section describes a defect worth restating precisely: four conversation
+The source material's fourth section describes a defect worth restating precisely: four conversation
 sources used four different formats, none of them the tokenizer's real special tokens, and the
 literal markers ended up in pre-training shards as ordinary text. `[USER]` is not one token there —
 it is `[`, `USER`, `]`, three tokens of pure overhead repeated once per turn across the corpus.
@@ -193,7 +193,7 @@ def format_stage(docs: list[Document], cfg: Config) -> tuple[list[Document], Sta
     # Overhead per *turn* is the number that transfers. The share-of-corpus figure is dominated by
     # document length: a reasoning trace is thousands of tokens with a handful of turns, so the
     # markers vanish into a rounding error. The same markers on short chat turns are the 33% waste
-    # the session describes. Reporting only the share would make the problem look solved for
+    # the source material describes. Reporting only the share would make the problem look solved for
     # everyone, when it is really solved for long documents and severe for short ones.
     total_turns = sum(int(m["turns"]) for m in measurements) or 1
     per_turn = {k: round((v - floor) / total_turns, 2) for k, v in totals.items()}
@@ -237,7 +237,7 @@ def format_stage(docs: list[Document], cfg: Config) -> tuple[list[Document], Sta
             f"{per_turn.get(worst, 0):.1f} extra tokens per turn. That is only "
             f"{overhead.get(worst, 0):.1%} of this corpus because a reasoning trace averages "
             f"{tokens_per_turn:,.0f} tokens per turn; on short chat turns the same markers are the "
-            "double-digit waste the session describes."
+            "double-digit waste the source material describes."
         ),
     )
 
@@ -252,7 +252,8 @@ def _project(per_turn: dict[str, float]) -> dict[str, dict[str, float]]:
     The measured share on this corpus is under one percent, and quoting only that would suggest
     format discipline is a solved problem. It is not — it is *invisible here* because a reasoning
     trace averages a couple of thousand tokens per turn, so a fixed marker cost disappears into it.
-    The same markers on a fifteen-token chat turn are the double-digit waste the session describes.
+    The same markers on a fifteen-token chat turn are the double-digit waste the source material
+    describes.
 
     The per-turn cost is what was measured; these are arithmetic on it, and are labelled `derived`
     on the page rather than presented as observations.

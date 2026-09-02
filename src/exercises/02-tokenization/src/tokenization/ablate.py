@@ -414,7 +414,7 @@ V2_SUITE: list[Spec] = [
     _documents("documents · mai ×4", en=3, hi=4, te=4, mai=4),
     _documents("documents · mai ×5", en=3, hi=4, te=4, mai=5),
     _documents("documents · mai ×6", en=3, hi=4, te=4, mai=6),
-    # E3/E4 — algorithm ablations. The brief asks for BPE, so neither is the submission.
+    # E3/E4 — algorithm ablations. The requirements asks for BPE, so neither is the submission.
     Spec(
         algo="unigram",
         level="char",

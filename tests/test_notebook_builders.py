@@ -1,6 +1,6 @@
 """The notebook builders still run — checked on whoever has them, because CI does not.
 
-`AGENTS.md` requires a Colab notebook per session. Both the notebook and the
+`AGENTS.md` requires a Colab notebook per topic. Both the notebook and the
 `tools/build_notebook.py` that generates it are local-only: a generator is the notebook in another
 form, so versioning it would keep the same course material in the repo as Python.
 
@@ -13,7 +13,7 @@ checkout, before opening a PR:
     uv run pytest tests/test_notebook_builders.py
 
 The remaining automated coverage is `notebooks/hello.ipynb`, a tracked stdlib-only sample CI
-executes. It cannot tell you a session notebook is correct; it tells you a notebook in this repo
+executes. It cannot tell you a topic notebook is correct; it tells you a notebook in this repo
 opens and runs, which is the part CI can still see.
 """
 

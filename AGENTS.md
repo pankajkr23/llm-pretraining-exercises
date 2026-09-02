@@ -15,6 +15,75 @@ folder under `src/exercises/`.
 - `uv sync --all-packages` — install every workspace member + its deps into the shared `.venv` (plain `uv sync` installs only the root). `uv run <cmd>` — run inside the env. `uv add <pkg>` — add a dep (never hand-edit `uv.lock`).
 - Each exercise is a workspace member matched by `members = ["src/exercises/[0-9][0-9]-*"]`.
 
+## The reference material is confidential, and it lives OUTSIDE this repository
+
+Source material this project is built from is **not ours to redistribute**. It is held at a sibling
+path resolved by `tools/backup_local_only.py::EXTERNAL_SOURCES` and overridable with `LLM_NOTES_DIR`.
+
+**It used to live inside the working tree, gitignored, and that was not enough.** Gitignoring a
+directory protects its bytes and does nothing about a tracked document that *describes* them. While
+`.gitignore` worked perfectly, a public branch carried: a table naming two source files with their
+line counts and a summary of each one's contents; a source path served to the **live site** in an
+exercise's `records.json`; module docstrings citing sources by name; a scaffolder that wrote a source
+path into every new exercise's requirements document; and test fixtures whose invented filenames published the real
+naming scheme. Moving the material out removes the whole class — there is no path inside the repo to
+leak, nothing for `.gitignore` to name, and no way to commit it by accident.
+
+**Three rules, and none of them is about the bytes:**
+
+- **Never name a file in it.** A filename is a disclosure on its own: it says what the directory
+  holds. Neither may a tracked file publish a count of them, or their sizes.
+- **Never quote it.** Say what *we decided* and why. The published artefact is our reasoning, not
+  the source's wording.
+- **Never describe its contents or how it is processed.** What kinds of document it holds, and what
+  is done to them before an agent reads them, are both confidential.
+
+**What is automatic, and what is not — be precise, because the difference decides what reaches a
+public branch:**
+
+| check | where it runs | catches |
+| --- | --- | --- |
+| `test_forbidden_vocabulary.py` | **CI and pre-commit** | the words themselves |
+| `test_no_confidential_leaks.py::…names_a_confidential_source` | **CI and pre-commit** | the naming scheme |
+| `…quotes_the_confidential_material` | **pre-commit only** — skips where the material is absent, CI included | verbatim text |
+
+**Three checks, because a leak has three shapes and none of them implies the others.** A document
+can name no file and copy no sentence and still describe the source by the kind of thing it is. The
+vocabulary check is lexical, needs nothing but the repo, and is therefore the one that actually
+stands between a working tree and a public branch — the other two are stronger and narrower.
+
+`FORBIDDEN` in that file is the list, each word with the reason it is banned. Unrelated senses live
+in `ALLOWED` and are matched **per line**, never per file: a file-wide exemption is a hole the size
+of the file. Both lists fail in the other direction too — an exemption for a sense nothing uses is
+removed, so the list can only grow by someone's decision and never as the quick way to clear a red
+gate. Two path exemptions exist and both are content that would be *wrong* to edit: the frozen
+release snapshots, and the tokenizer's own corpus, whose bytes are a measured input rather than
+prose.
+
+Both are gated on commit. The second cannot run in CI, because CI has no copy to compare against,
+so **CI can prove no filename leaked and only the hook can prove no sentence did.** If you commit
+from a machine without the material, that half silently skips — which is the one gap left, and it
+is a property of where the material lives rather than of the check.
+
+**Name the exercise, not the source's own unit of material.** A topic is referred to by the exercise
+that covers it; the material itself is "the source". The banned words came back three times after
+being removed by hand, which is why this is a gate rather than a habit — they are cheap to type and
+expensive to notice, and a sweep that rewrites five hundred leaves four indistinguishable ones.
+
+**Paraphrase; do not quote.** Every rule this repo takes from the source is stated in our own words,
+including where the original was more quotable. The exception is a *functional* overlap — an
+identifier the work is graded against, like a required log event name — and those live in
+`FUNCTIONAL_OVERLAP` with a reason each, plus a twin that fails when an entry stops being needed.
+
+**A lexical guard cannot see itself until it is tracked.** The first version of this one listed four
+real filenames in its own docstring to explain the pattern, passed locally because it was not yet in
+`git ls-files`, and was caught by CI flagging its own source. The first CI run after adding a guard
+of this shape is the first real run.
+
+**Removing a leak from the working tree does not remove it from history.** Everything scrubbed is
+still in earlier commits and in any PR description that quoted it. PR bodies are editable; history
+is not, without rewriting published commits.
+
 ## MANDATORY — never remove anything under `notebooks/` or any `tools/`
 
 **Nothing in `notebooks/` or in any `src/exercises/*/tools/` directory may be deleted, moved,
@@ -26,9 +95,9 @@ These are the only files in the repo with **no second copy**. Both are gitignore
 restore them: `notebooks/S[0-9][0-9]-*.ipynb` and `src/exercises/*/tools/build_notebook.py`. A
 deletion here is permanent in a way that no other deletion in this repo is.
 
-**This now covers `BRIEF.md` too.** All four of exercises 01–04's briefs were destroyed by an
+**This now covers `REQUIREMENTS.md` too.** All four of exercises 01–04's requirement documents were destroyed by an
 ordinary branch switch after the commit that untracked them, and were recoverable only because
-`18015b1^` was still reachable. A brief written *after* the untracking convention has no such
+`18015b1^` was still reachable. A requirements document written *after* the untracking convention has no such
 safety net.
 
 **Untracking a file is what makes it fragile, and the mechanism is worth understanding.** `git rm
@@ -44,12 +113,11 @@ the new one, and deletes it. Nobody deleted anything. So:
   It writes a **git** store at `../.llm-pretraining-exercises-local-only`, so every *version* is
   kept, not just the latest. That matters more than it sounds: these files are regenerated
   constantly, so the likelier loss is a **bad overwrite**, and a plain copy would faithfully replace
-  the good version with the broken one. Run it before any branch switch and after any session that
+  the good version with the broken one. Run it before any branch switch and after any topic that
   rebuilds a notebook.
 
 - **The protected set is wider than the three classes named above, and the extra ones were
-  unguarded for months.** `docs/sessions/**` is the entire course corpus — every session's notes,
-  transcripts and assignments, including sessions this repo has not reached — and
+  unguarded for months.** Alongside them,
   `docs/EXPLAINER_PROMPT.md` / `docs/EXPLAINER_PATTERN.md` are the two documents any explainer is
   required to be built from. All gitignored, none regenerable, none watched by the tripwire until
   now. **85 files, 12 MB.** A guard that covers the documented cases and misses the largest one
@@ -78,7 +146,7 @@ the new one, and deletes it. Nobody deleted anything. So:
   uv run python tools/backup_local_only.py --verify              # 1. does the store have it?
   cp ../.llm-pretraining-exercises-local-only/<path> <path>      #    restore the latest
   git -C ../.llm-pretraining-exercises-local-only log -- <path>  #    or an earlier version
-  git show <untracking-commit>^:<path> > <path>                  # 2. e.g. 18015b1^ for the briefs
+  git show <untracking-commit>^:<path> > <path>                  # 2. e.g. 18015b1^ for the requirement documents
   ```
   Step 2 works only while the removal commit is still reachable, which is why step 1 exists.
 
@@ -142,15 +210,15 @@ repo** — it is the real safety net.
 ## Repo layout & naming
 
 - **Exercise folders:** `src/exercises/NN-slug/` — numeric, **zero-padded**, slugged (e.g. `01-introductions`). Zero-pad so lexical sort = numeric order.
-- **Identical skeleton per exercise:** `BRIEF.md` (assignment — **local only, gitignored**) · `README.md` (what/how) · `pyproject.toml` (member) · code in one place (`src/` or `web/`) · `artifacts/` (gitignored outputs). Long reasoning gets its own tracked `DECISIONS.md`.
+- **Identical skeleton per exercise:** `REQUIREMENTS.md` (requirement — **local only, gitignored**) · `README.md` (what/how) · `pyproject.toml` (member) · code in one place (`src/` or `web/`) · `artifacts/` (gitignored outputs). Long reasoning gets its own tracked `DECISIONS.md`.
 - **Do not scaffold an exercise by hand. There is a generator.**
   ```bash
   uv run python tools/new_exercise.py 09 loss-functions-output-heads \
       --title "Loss functions and output heads" --package lossheads \
       --summary "One sentence for the root README row." [--dry-run]
   ```
-  It writes the whole skeleton, **including the three gitignored files** (`BRIEF.md`, seeded from
-  `docs/sessions/sN_assignment.md` when one exists; `tools/build_notebook.py`; and the notebook it
+  It writes the whole skeleton, **including the three gitignored files** (`REQUIREMENTS.md`, seeded from the local
+  requirement text when one exists; `tools/build_notebook.py`; and the notebook it
   builds), joins the `rest` CI shard, adds the root README row, and prints what is left for you.
 
   **The sequencing is the reason it exists.** `tests/_exercises.py::exercises_in` only counts a
@@ -170,22 +238,22 @@ repo** — it is the real safety net.
   keep — it caught the generator inserting the CI path *after* the shard's trailing `tests` entry.
 - **Set the folder up BEFORE writing code.** The skeleton is not paperwork to backfill. Exercise 06
   was scaffolded with `pyproject.toml` and modules but no `CLAUDE.md`, `PROGRESS.md`, `NOTICE` or
-  `BRIEF.md`, because a convention that lives only in prose gets skipped under momentum.
+  `REQUIREMENTS.md`, because a convention that lives only in prose gets skipped under momentum.
   `tests/test_exercise_skeleton.py` now checks the universal ones (`README.md`, `CLAUDE.md`,
   `pyproject.toml`, `tests/`) — **`tools/` is deliberately not among them**, because the only
   file some exercises keep there is the gitignored `build_notebook.py` and git does not track
   empty directories, so `tools/` exists on a working checkout and not in a clone. Requiring it
   passed locally and failed CI: write the guard for what a clone has, not for what your machine
-  has. It also asserts **no `BRIEF.md` is ever tracked** — checked with
+  has. It also asserts **no `REQUIREMENTS.md` is ever tracked** — checked with
   `git ls-files`, not by reading `.gitignore`, because a file already in the index stays tracked
   whatever the ignore rules say afterwards.
 - **Shared code:** deferred — add `src/common/` (its own member) only when a 2nd exercise needs to reuse something. No premature abstraction.
-- **Notebooks:** top-level `notebooks/`, one per session — see below.
+- **Notebooks:** top-level `notebooks/`, one per topic — see below.
 
-## Every session builds a Colab notebook — locally, never tracked
+## Every topic builds a Colab notebook — locally, never tracked
 
-`notebooks/SNN-slug.ipynb`, zero-padded session id first (`S04-data-cleaning-dedup.ipynb`), so
-lexical sort = session order. **A session's work is not done until its notebook runs the shipped
+`notebooks/SNN-slug.ipynb`, zero-padded topic id first (`S04-data-cleaning-dedup.ipynb`), so
+lexical sort = topic order. **A source material's work is not done until its notebook runs the shipped
 code end to end.** Four rules keep it from rotting:
 
 - **It imports the exercise's package; it never re-implements it.** A notebook that copies logic
@@ -234,26 +302,26 @@ already own, and the one that drifts is the one nobody regenerates.
 The cost is real and worth naming: every rule above is checked by tests that read the notebook,
 and on a fresh clone there is nothing for them to read, so **they all skip**. A rule that only
 skips is not a rule. What stops that from adding up to no coverage is `notebooks/hello.ipynb` — a
-tracked, stdlib-only sample that CI executes top to bottom. It cannot check that a session notebook
+tracked, stdlib-only sample that CI executes top to bottom. It cannot check that a topic notebook
 is correct; it checks that a notebook in this repo opens and runs, which is the part CI can still
 see. Anything stronger has to be run by whoever has the notebook, before the PR.
 
 ## Five data concerns — keep them physically separate
 
-- **Briefs → never tracked, at any level.** `BRIEF.md` is gitignored by name everywhere, as is
+- **Requirement documents → never tracked, at any level.** `REQUIREMENTS.md` is gitignored by name everywhere, as is
   programme-level material — the schedule, the class list, the internal authoring specs
-  (`docs/BRIEF.md`, `docs/SESSIONS.md`, `docs/EXPLAINER_*.md`). A brief is the course's text and
+  (`docs/REQUIREMENTS.md`, `docs/EXPLAINER_*.md`). A requirements document is the course's text and
   is input for whoever builds the exercise; it is not the deliverable. **Never link to one from a
   tracked file** — the link resolves on a working checkout and 404s for everyone else. What we
   *decided*, and why, is published instead: `README.md`, and a tracked `DECISIONS.md` when the
   reasoning needs room (see `04-data-cleaning-dedup/DECISIONS.md`).
 
-  **And `BRIEF.md` is not the authority on what submission requires.** It is the course's text and
+  **And `REQUIREMENTS.md` is not the authority on what submission requires.** It is the course's text and
   it can be truncated, reformatted or pasted short; the submission platform's own field list is what
-  grades. Check the platform before calling a session done, and record the required *shape* — not
-  the brief's wording — in the exercise's `PROGRESS.md`. A deliverable specified as a **public URL**
+  grades. Check the platform before calling a topic done, and record the required *shape* — not
+  the requirements' wording — in the exercise's `PROGRESS.md`. A deliverable specified as a **public URL**
   is not satisfied by a file in the repo, however correct that file is.
-- **Session notebooks** → top-level `notebooks/`, **gitignored** except the tracked
+- **Topic notebooks** → top-level `notebooks/`, **gitignored** except the tracked
   `hello.ipynb` sample. Their generators (`*/tools/build_notebook.py`) are gitignored too — a
   generator is the same material in another form. Keep a backup outside the repo; nothing tracked
   can rebuild either. This does **not** extend to other `tools/` scripts: a dataset fetcher such as
@@ -307,7 +375,7 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
   indistinguishable from a clean run. Three rules follow. Restore in a `finally`, never on the happy
   path, so an early return or an exception cannot leave the mutation behind. Never write the backup
   inside the working tree — `git stash` or `$TMPDIR`, because a backup in the tree is a file
-  `git add -A` will commit. And after any session in which agents ran near the source tree, **stage
+  `git add -A` will commit. And after any topic in which agents ran near the source tree, **stage
   by path and read `git diff --stat` against `origin/main` before committing**: the only reason this
   was caught is that one mutation happened to break a test that ran, and a mutation to a guard whose
   twin is missing would have shipped in silence.
@@ -354,7 +422,7 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
 - **Test the last line of a long job first.** Three experiments in exercise 05 trained to completion and then died writing their results, because the bundle carried a `torch.device` and `json` cannot encode one — one run lost fifteen trained models to its final statement. A two-step run that exercises `save()` costs seconds and would have caught all three. The same applies to any expensive job: the write, the upload, the commit at the end are the parts least covered and most costly to get wrong.
 - **Data-handling invariants are enforced in CI, not in review.** `03-data-collection-framework` defines five that any agent touching a data pipeline should know exist (`tests/test_invariants.py`, full table in that exercise's `docs/README.md`): training never touches eval data · nothing excluded may enter a commercial mix · every judgment carries its reasoning and confidence · a measurement must name what produced it · no source content is silently dropped. Each is paired with a test proving it *fails* when broken — a guard nobody has watched fail is not a guard.
 
-- **A tested feature with no caller is dead code wearing a test.** `masks.loss_mask(context_spans=...)` in exercise 06 is implemented, documented, covered by two passing tests and taught in the session notebook — and `grep -rn context_spans` finds **zero** callers in the pipeline: `feed.py` builds every microbatch with the default mask. The tests are green, so the capability reads as a behaviour of the run, and the documents describing prompt/tool-observation masking describe something that never happens. The test proves the function works; only a caller proves the system uses it. When you add a keyword-only option to a library function, either wire it through the one path that would exercise it in a real run, or state in the module docstring that it is offered and unused — and put the same sentence wherever the feature is described to a reader.
+- **A tested feature with no caller is dead code wearing a test.** `masks.loss_mask(context_spans=...)` in exercise 06 is implemented, documented, covered by two passing tests and taught in the topic notebook — and `grep -rn context_spans` finds **zero** callers in the pipeline: `feed.py` builds every microbatch with the default mask. The tests are green, so the capability reads as a behaviour of the run, and the documents describing prompt/tool-observation masking describe something that never happens. The test proves the function works; only a caller proves the system uses it. When you add a keyword-only option to a library function, either wire it through the one path that would exercise it in a real run, or state in the module docstring that it is offered and unused — and put the same sentence wherever the feature is described to a reader.
 - **A coverage guard built on `--collect-only` is blind to a file that collects nothing.** `tests/test_ci_shards_cover_everything.py` catches an integration file in no CI shard, and an integration file in two. It cannot catch the third case: **in a shard, and contributing zero tests.** A module-level `pytest.importorskip("torch")` raises during *collection*, so `pytest --collect-only -q` prints no `path: count` line for that file at all — I verified this with a throwaway module importorskipping an absent package: output was `no tests collected`, exit 0. The file is therefore absent from `everything` and from `owners` alike, `missing` is empty, and `covered == sum(everything.values())` holds trivially. The consequence is live: all 20 of exercise 06's integration tests (`crash` 11, `model` 3, `train` 6) sit behind `importorskip("torch")`, CI never installs the `train` extra, and CI's integration step maps exit 5 to success — so the `rest` shard runs **zero** of them, reports green, and the coverage guard agrees. A guard must count what the job was *supposed* to run, from a list it does not derive from the same run it is auditing.
 
 ## Reporting a measurement
@@ -367,7 +435,7 @@ Three rules, each learned by getting it wrong in `02-tokenization` (see that exe
 
 When one of these overturns a published claim, correct it where the claim was made and say what changed. A quietly amended number is worse than the original error.
 
-- **Prose that states a number is generated too, or it goes stale while the table beside it stays right.** This is the failure that has cost this repo the most edits. A generated table under a hand-written sentence looks maintained, and only the sentence is wrong — so a reader believes the sentence. Session 5 shipped documents reading "across three lanes", "H3 came back qualified", "Thirteen invariants" and "one verdict did not survive its own noise", every one of them contradicting a correct table directly above or below it, and no test failed. If a sentence contains a count, a verdict or a size, derive it from the same source the table uses. Where prose genuinely must stay hand-written — a row in the root README's exercise table — the number in it went untested long enough for exercise 06's row to read *"Stage 1 of 8"* while the exercise was at stage 7. `tests/test_doc_counts_match.py` now derives that count from the exercise's own stage table. **The prose around the number is still untested**, so a row can carry a correct stage and a wrong description; verify that by hand on every PR that advances an exercise.
+- **Prose that states a number is generated too, or it goes stale while the table beside it stays right.** This is the failure that has cost this repo the most edits. A generated table under a hand-written sentence looks maintained, and only the sentence is wrong — so a reader believes the sentence. Exercise 05 shipped documents reading "across three lanes", "H3 came back qualified", "Thirteen invariants" and "one verdict did not survive its own noise", every one of them contradicting a correct table directly above or below it, and no test failed. If a sentence contains a count, a verdict or a size, derive it from the same source the table uses. Where prose genuinely must stay hand-written — a row in the root README's exercise table — the number in it went untested long enough for exercise 06's row to read *"Stage 1 of 8"* while the exercise was at stage 7. `tests/test_doc_counts_match.py` now derives that count from the exercise's own stage table. **The prose around the number is still untested**, so a row can carry a correct stage and a wrong description; verify that by hand on every PR that advances an exercise.
 
 - **An experiment that cannot see a lane is not evidence about that lane.** Exercise 05's proxy dropped the three lanes it had no text for, and one hypothesis read `qualified` for two weeks because the lane its refutation clause tested was absent. Funding the lane flipped it to `refuted` with the effect size essentially unchanged. **A missing input does not make a hypothesis safer, it makes it untestable — and untestable reads as passing.** Before trusting a result, list what the measurement was blind to.
 
@@ -377,7 +445,7 @@ When one of these overturns a published claim, correct it where the claim was ma
   consumes `ranks × accumulation × microbatch × sequence_length × steps` =
   `4 × 2 × 8 × 512 × 320` = **10,485,760** token positions (read it from `Config.total_tokens`,
   never from memory). Its first corpus held **2,185,575** tokens — **4.8 epochs flat**, and once
-  shaped to session 5's lane weights, **30.2 epochs of the web lane against 0.41 of the agentic
+  shaped to exercise 05's lane weights, **30.2 epochs of the web lane against 0.41 of the agentic
   lane**. The lane the mixture funded most heavily was the one the model saw thirty times over,
   while the lane it funded least was not seen through even once. No mixture claim survives that, and
   nothing in the pipeline failed: the shards read fine and the loss curve looked normal. **It was
@@ -419,7 +487,7 @@ Two more that cost this repo real defects:
   existed. Feed the file on stdin instead — `node --input-type=module --check < "$f"` — which
   parses with the module goal, passes valid modules and catches that.
 
-- **A guard must test the property, not one phrasing of it.** Two guards in one session asked for
+- **A guard must test the property, not one phrasing of it.** Two guards in one topic asked for
   a specific string and failed correct work: one demanded a "drawn to scale" line and red-flagged a
   figure that quotes its own paper verbatim (stronger evidence than the thing being demanded), and
   one demanded a legend headed `THE MARKS` and red-flagged eleven figures keyed by other means — a
@@ -462,7 +530,7 @@ Two more that cost this repo real defects:
   you copy `web/_shared/`, diff what its rules select against what your page emits.
 
 - **Two rules of equal specificity are decided by source order, and the later one wins.** Two fixes
-  in one session changed nothing at all: `grid-template-columns` set on a flex container, and a
+  in one topic changed nothing at all: `grid-template-columns` set on a flex container, and a
   `max-width` override written above the rule it was meant to beat. Both looked like fixes, moved no
   pixels, and passed every test. Before adding a rule, check what is already computing — then edit
   *that* declaration rather than competing with it. A `margin: 16px 0 0` shorthand will also silently
@@ -535,12 +603,12 @@ was not summarising the exercises, it was the only place they were described.
 - **Exercise:** everything end to end — the argument, the numbers, how to reproduce, what it cannot
   establish. This is where a reader who wants depth is sent, and it must reward the trip.
 
-The root's job is **routing, not retelling**. Where the brief requires the root to reach a
+The root's job is **routing, not retelling**. Where the requirements requires the root to reach a
 deliverable "without a detour", that is a property of its links, not of how much it repeats — and
 the test for it should assert the *link*, since asserting the filename passes against a front door
 that names the file and never links it.
 
-**"Without a detour" is satisfied by a link, not by a section.** The brief for the exercise under
+**"Without a detour" is satisfied by a link, not by a section.** The requirements for the exercise under
 submission says the root README *is* the front door — a grader lands there and nowhere else — and
 the obvious reading is that the root should therefore carry a summary block for that exercise. It
 should not. That block was tried and it grew back into the retelling the split exists to prevent:
@@ -709,7 +777,13 @@ The rules that follow from it:
 - **Every change lands on `main` via a pull request.** Branch → push → open a PR → merge. **Never push, merge, or force-push directly to `main`** — it's the protected branch that production is promoted from, and the base every PR previews against.
 - Keep PRs scoped to one concern; unrelated edits get their own branch/PR.
 - **Changelog:** record every user-facing change under `CHANGELOG.md`'s `[Unreleased]` section **in the same PR** (Keep a Changelog + SemVer).
-- **Commit & PR messages** carry no AI co-author or session-link trailers — keep the public history clean.
+- **Commit messages carry a `Co-Authored-By` trailer for the agent that wrote them, and nothing
+  else.** No links back to an agent conversation, no run ids, no tool banners — those point at
+  something nobody outside this machine can open, and they date badly. Attribution is useful;
+  a dead link in the permanent history is not.
+- **Neither a branch name nor a PR title names the source material.** Say what the change does
+  (`refactor: rename the reference-material folder`), not which numbered topic it came from. The
+  public history is the engineering work; the course's own structure stays out of it.
 
 ## Local gates before a commit exists
 

@@ -143,7 +143,7 @@
     "id": "C21",
     "claim": "Addendum B's figures in §B.1–B.4 are verbatim from documents inside the project, and §B.5's characterisations come from abstracts fetched directly rather than inferred from titles.",
     "band": "high",
-    "basis": "§B.7 grounding statement, naming arXiv:2305.16264, 2606.07404, 2602.05400, 2605.29379, 2605.29459, 2511.03237 plus s3.md and s5.md, retrieved via project knowledge; §B.5's six headline abstracts were fetched from the 28 July 2026 cs.CL listing before characterisation.",
+    "basis": "§B.7 grounding statement, naming arXiv:2305.16264, 2606.07404, 2602.05400, 2605.29379, 2605.29459, 2511.03237 plus local reference material, retrieved via project knowledge; §B.5's six headline abstracts were fetched from the 28 July 2026 cs.CL listing before characterisation.",
     "note": "§B.7. The same statement flags one exception explicitly: Sardana & Frankle (arXiv:2401.00448) is cited at thesis level only, not from the paper's accounting. AMBIGUITY: arXiv:2602.05400 is named in §B.7 but never cited or identified anywhere else in the document."
   }
 ]

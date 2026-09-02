@@ -8,7 +8,7 @@ data that actually exists.**
 > tokens · counts denominated in `s02-bpe-10000`.
 
 Anyone can write seven percentages that add to 100. The work is answering one question for each of
-them — **out of what?** Do that honestly and three of the session's own numbers stop being
+them — **out of what?** Do that honestly and three of the source material's own numbers stop being
 affordable: one lane asks for more than any amount of re-reading could ever be worth, one is
 missing a third of the supply it was credited with, and one turns out to be counting the same text
 twice.
@@ -35,7 +35,8 @@ Four documents, and the right one depends on what you came for. Start with your 
 each, and a curriculum that decides the order the model meets them in.
 
 **The method is one sentence.** Every share is composed backward from a benchmark the model has to
-win, then checked against the data that actually exists — and three of the session's own numbers
+win, then checked against the data that actually exists — and three of the source material's own
+numbers
 did not survive that check.
 
 | step | what happens |
@@ -58,7 +59,7 @@ believes. Config fingerprint `740cb808dbf2`.
 
 ## Where each required answer lives
 
-| # | the assignment asks for | where |
+| # | the requirements asks for | where |
 | --- | --- | --- |
 | 1 | a share of the budget for every capability slot | Part 1 · the mixture — `SPEC.md` §1 |
 | 2 | the Indic split, four provenance tiers | Part 1 · the Indic split — `SPEC.md` §2 |
@@ -77,7 +78,7 @@ believes. Config fingerprint `740cb808dbf2`.
 **One rule produced every finding below: a lane's supply is summed from the datasets named in the
 inventory, never quoted from a slot headline.** It is a boring rule and it changed three verdicts.
 
-| lane | share | session | Δ | demand | supply | epochs | verdict |
+| lane | share | topic | Δ | demand | supply | epochs | verdict |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | General web | **32%** | 34% | -2% | 640B | 4.69T | 0.14 | surplus |
 | Code | **28%** | 24% | +4% | 560B | 1.1T | 0.51 | covered |
@@ -93,7 +94,8 @@ caps any pool's worth at **unique × 16.4**, which is what separates *expensive*
 
 ### Why each share is the number it is
 
-Every share below is a change from, or a deliberate hold at, the session's own default — and each
+Every share below is a change from, or a deliberate hold at, the source material's own default —
+and each
 one is argued from supply rather than preference. `Buys` names the benchmark the lane exists to
 move; `From` names the datasets that fund it.
 
@@ -101,20 +103,21 @@ move; `From` names the datasets that fund it.
 
 **Code — 28%.** Half the stated target capability, and it absorbs the retired long-context slot — 60B of which was repo-packed code from these same corpora. At 560B against 1.103T it runs at 0.51 epochs, so the increase costs no repetition. *Buys* `SWE-bench Verified`, `SWE-bench Live / Pro`, `LiveCodeBench`, `Aider Polyglot`, `Codeforces`. *From* The Stack v2, D3 Code, CommitPack / CommitPackFT.
 
-**Indic — 18%.** The differentiator, and the reason the project exists. Two points above the session default buys headroom over the 12% floor rather than sitting on it, at 1.33 epochs — inside the band where repetition is near-free. *Buys* `MILU`, `IndicGenBench`. *From* Sangraha (verified), Sangraha (unverified), Sangraha (synthetic), IndicCorpV2, Samanantar, BPCC (parallel).
+**Indic — 18%.** The differentiator, and the reason the project exists. Two points above the source default buys headroom over the 12% floor rather than sitting on it, at 1.33 epochs — inside the band where repetition is near-free. *Buys* `MILU`, `IndicGenBench`. *From* Sangraha (verified), Sangraha (unverified), Sangraha (synthetic), IndicCorpV2, Samanantar, BPCC (parallel).
 
-**STEM / math — 12%.** Unchanged, but on 146B of itemised supply rather than the 250B the session's supply check quotes. That moves it from 0.96 epochs to 1.64 — still fundable, with no margin left to give away. *Buys* `AIME 2024 / 2025`, `FrontierMath`, `GPQA Diamond`, `Humanity's Last Exam`, `MMLU`. *From* D4 STEM, peS2o, proof-pile-2.
+**STEM / math — 12%.** Unchanged, but on 146B of itemised supply rather than the 250B the source's supply check quotes. That moves it from 0.96 epochs to 1.64 — still fundable, with no margin left to give away. *Buys* `AIME 2024 / 2025`, `FrontierMath`, `GPQA Diamond`, `Humanity's Last Exam`, `MMLU`. *From* D4 STEM, peS2o, proof-pile-2.
 
 **Reasoning traces — 8%.** Up two points because this lane reserves a *distribution* of trace lengths, not a quantity. 85.1B is the thinnest real pool in the mixture and 92% of it sits in one V4-lineage dataset, so the band structure has to be bought deliberately. *Buys* `LiveCodeBench`, `Codeforces`, `AIME 2024 / 2025`, `FrontierMath`, `GPQA Diamond`. *From* AON, OpenMathReasoning, OpenThoughts2, NuminaMath, OpenR1-Math.
 
-**Agentic / tool-use — 2%.** Held at the session's floor although supply cannot fund it: 40B against 627M is 3.9x more than infinite repetition could be worth. The share commits to *building* the data, not to holding it — priced in §8. *Buys* `SWE-bench Verified`, `SWE-bench Live / Pro`, `Terminal-Bench`, `tau-bench / tau2-bench`, `BFCL v3`. *From* SWE-Gym, SWE-smith, OpenHands rollouts, ToolBench, ToolACE, Glaive function-calling v2, Nexus / NexusRaven, xLAM / APIGen, Hermes function-calling.
+**Agentic / tool-use — 2%.** Held at the source's floor although supply cannot fund it: 40B against 627M is 3.9x more than infinite repetition could be worth. The share commits to *building* the data, not to holding it — priced in §8. *Buys* `SWE-bench Verified`, `SWE-bench Live / Pro`, `Terminal-Bench`, `tau-bench / tau2-bench`, `BFCL v3`. *From* SWE-Gym, SWE-smith, OpenHands rollouts, ToolBench, ToolACE, Glaive function-calling v2, Nexus / NexusRaven, xLAM / APIGen, Hermes function-calling.
 
 **Long-context — 0%.** Retired as a lane, kept as a capability. 60 of its 100B is repo-packed code already counted under code, so a 6% share would double-count it. It becomes a sequence-length schedule over code, books and web — its own benchmark, no budget. *Buys* `GAIA`, `BrowseComp`, `long-eval`. *From* Repo-packed code (32K+), Book-length corpora (packed).
 
 **Three findings, in the order they hurt.**
 
 **1 · STEM is short by 104B.** Itemised, the lane holds 146B;
-the session's own supply check says 250B. No dataset carries the difference. Against a
+the source material's own supply check says 250B. No dataset carries the difference.
+Against a
 240B demand, that is the gap between fitting in
 one pass and needing repetition.
 
@@ -122,7 +125,8 @@ one pass and needing repetition.
 asks 40B of a 627M pool. The ceiling caps that
 pool's lifetime worth at 10.3B, so it is **3.9× short before a single correction is
 applied**. Reject our supervision estimate entirely and it is still impossible. The share stays,
-because the session fixes it and because it is a commitment to *build*: the gap is priced as a
+because the source material fixes it and because it is a commitment to *build*: the gap is priced
+as a
 generation bill rather than quietly reduced.
 
 **3 · Long-context was double-counting.** Most of its supply is repo-packed code and packed books
@@ -147,7 +151,7 @@ synthetic and is *tagged* translated. Which reading wins decides whether tier C 
 tier D is fundable. `SPEC.md` §2 publishes both readings side by side under a heading inviting a
 reviewer to push on it, because choosing the other reading moves the hole rather than filling it.
 
-## The three lanes the assignment names
+## The three lanes the requirements names
 
 | capability | share | supply | the constraint |
 | --- | ---: | ---: | --- |
@@ -260,7 +264,7 @@ excerpts; a test now checks every such claim against its source.
 | **long** | High | 213 | 20% | 32B | derives, then checks the method on a case small enough to enumerate |
 | **ultra** | Ultra | 358 | 10% | 16B | interrogates the statement itself, finds the ambiguity that changes the answer, and verifies by a second independent route |
 
-Token counts are measured with the Session 2 vocabulary, not estimated.
+Token counts are measured with the Exercise 02 vocabulary, not estimated.
 
 ---
 
@@ -330,7 +334,8 @@ fail is not a guard.
 
 ```bash
 uv run python -m mixture              # rebuild SPEC.md, TOKENIZER.md, EXPERIMENTS.md, README.md
-uv run python -m mixture.inventory    # lane supplies, itemised against the session's headlines
+uv run python -m mixture.inventory    # lane supplies, itemised against the source material's
+headlines
 uv run python -m mixture.checks       # the invariants
 uv run python -m mixture.bench        # measure this machine's throughput
 uv run python -m mixture.experiment   # run the four arms

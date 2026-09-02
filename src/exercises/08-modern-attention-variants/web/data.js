@@ -231,7 +231,7 @@ export const M = Object.freeze({
         "arxiv": "1706.03762",
         "quoted": "[v1] Mon, 12 Jun 2017 17:57:34 UTC (1,102 KB)",
         "verifiedOn": "2026-09-01",
-        "note": "The course transcript dates this as 'invented in 2018 and 17'. It is June 2017."
+        "note": "The course source dates this as 'invented in 2018 and 17'. It is June 2017."
       }
     },
     {
@@ -330,7 +330,7 @@ export const M = Object.freeze({
           "of": 8
         },
         "scale": "illustrative",
-        "source": "One key/value head for all query heads, by definition. Head count 8 is the session's own yardstick.",
+        "source": "One key/value head for all query heads, by definition. Head count 8 is the source material's own yardstick.",
         "sizes": {
           "context": {
             "value": 128,
@@ -398,7 +398,7 @@ export const M = Object.freeze({
         "arxiv": "1912.11637",
         "quoted": "[v1] Wed, 25 Dec 2019 10:59:31 UTC (689 KB)",
         "verifiedOn": "2026-09-01",
-        "note": "Zhao, Lin, Zhang, Ren, Su, Sun. Read from the arXiv abstract page. Listed separately from Sparse Transformers on purpose: the session's coverage list names 'sparse and top-k attention' as two things, and they are two things - a fixed pattern decides which pairs survive before seeing any data, while top-k decides per query from the scores themselves."
+        "note": "Zhao, Lin, Zhang, Ren, Su, Sun. Read from the arXiv abstract page. Listed separately from Sparse Transformers on purpose: the source material's coverage list names 'sparse and top-k attention' as two things, and they are two things - a fixed pattern decides which pairs survive before seeing any data, while top-k decides per query from the scores themselves."
       }
     },
     {
@@ -859,7 +859,7 @@ export const M = Object.freeze({
       "whatExisted": "A binary choice between multi-head attention's large cache and multi-query attention's quality loss.",
       "problem": "MQA saved the most memory and cost the most quality; nobody had asked what the points in between looked like.",
       "mechanism": "Put the query heads into groups and give each group its own key and value head - so the number of KV heads is a dial between one and the number of query heads.",
-      "whatItFixed": "Most of MQA's memory saving became available at a fraction of its quality cost. At the session's yardstick, two KV heads against eight is exactly a quarter of the cache.",
+      "whatItFixed": "Most of MQA's memory saving became available at a fraction of its quality cost. At the source material's yardstick, two KV heads against eight is exactly a quarter of the cache.",
       "newTradeoff": "It moves along the same line rather than leaving it: the cache still grows linearly with context, so GQA makes long context cheaper without making it affordable.",
       "buys": "A tunable trade between cache size and head diversity, and a way to convert an existing multi-head checkpoint rather than retrain.",
       "givesUp": "Some head diversity still, and the underlying linear growth in context length is untouched.",
@@ -903,7 +903,7 @@ export const M = Object.freeze({
           "of": 8
         },
         "scale": "illustrative",
-        "source": "Query heads in groups sharing a key/value head. 2 of 8 is the session's own worked example.",
+        "source": "Query heads in groups sharing a key/value head. 2 of 8 is the source material's own worked example.",
         "sizes": {
           "kvHeads": {
             "value": 8,
@@ -1253,7 +1253,7 @@ export const M = Object.freeze({
         "arxiv": "2406.06484",
         "quoted": "[v1] Mon, 10 Jun 2024 17:24:42 UTC (124 KB)",
         "verifiedOn": "2026-09-01",
-        "note": "Yang et al. The course transcript's claim that 'that paper came out in 2024' is correct for this one. The delta rule itself is three years older - see delta_rule."
+        "note": "Yang et al. The course source's claim that 'that paper came out in 2024' is correct for this one. The delta rule itself is three years older - see delta_rule."
       }
     },
     {
@@ -1392,7 +1392,7 @@ export const M = Object.freeze({
         "arxiv": "2502.11089",
         "quoted": "[v1] Sun, 16 Feb 2025 11:53:44 UTC (915 KB)",
         "verifiedOn": "2026-09-01",
-        "note": "The paper's own framing is compression plus selection. The session calls it 'compressed sparse attention'; the abstract describes a hierarchical strategy, so do not present two branches as the whole design without reading the body."
+        "note": "The paper's own framing is compression plus selection. The source material calls it 'compressed sparse attention'; the abstract describes a hierarchical strategy, so do not present two branches as the whole design without reading the body."
       }
     },
     {
@@ -1536,7 +1536,7 @@ export const M = Object.freeze({
         "arxiv": "2512.12167",
         "quoted": "[v1] Sat, 13 Dec 2025 04:23:47 UTC (2,135 KB)",
         "verifiedOn": "2026-09-01",
-        "note": "Gelberg, Eguchi, Akiba, Cetin (Sakana AI). CAUTION: a different paper, DRoPE with a capital R (arXiv:2503.15029, 'Directional Rotary Position Embedding for Efficient Agent Interaction Modeling', 19 Mar 2025), is an autonomous-driving trajectory paper and is NOT this technique - the course transcript quotes its title while describing this mechanism. The two differ by one capital letter."
+        "note": "Gelberg, Eguchi, Akiba, Cetin (Sakana AI). CAUTION: a different paper, DRoPE with a capital R (arXiv:2503.15029, 'Directional Rotary Position Embedding for Efficient Agent Interaction Modeling', 19 Mar 2025), is an autonomous-driving trajectory paper and is NOT this technique - the course source quotes its title while describing this mechanism. The two differ by one capital letter."
       }
     },
     {
@@ -1927,7 +1927,7 @@ export const M = Object.freeze({
     "total": 30,
     "mandated": 18,
     "bonus": 11,
-    "outsideSession": 17,
+    "outsideSource": 17,
     "schematic": 25,
     "glyphKinds": {
       "bands": 6,
@@ -2149,7 +2149,7 @@ export const M = Object.freeze({
     "queryHeads": 8,
     "headDim": 128,
     "dtype": "bf16",
-    "source": "docs/sessions/s8.md — the configuration used throughout the cache section"
+    "source": "the reference notes — the configuration used throughout the cache section"
   },
   "cache": {
     "contexts": [

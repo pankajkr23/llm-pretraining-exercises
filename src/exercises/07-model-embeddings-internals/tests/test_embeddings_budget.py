@@ -29,7 +29,7 @@ def test_the_crossover_is_exactly_the_code_width():
 
 
 def test_the_saving_at_a_million_tokens():
-    """The assignment's "vocab of 1M without any issues", as arithmetic."""
+    """The requirements' "vocab of 1M without any issues", as arithmetic."""
     b = budget(1_000_000, 768, d_p=32)
     assert b.dense_tied == 768_000_000
     assert b.saving > 100

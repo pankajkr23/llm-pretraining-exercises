@@ -1,15 +1,15 @@
 # CLAUDE.md — 05-datamixtures-and-curriculum
 
 Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is `SPEC.md`, the
-running log of findings and decisions is `PROGRESS.md`, and `BRIEF.md` is the assignment (local
+running log of findings and decisions is `PROGRESS.md`, and `REQUIREMENTS.md` is the requirements (local
 only, gitignored).
 
 ## The rules this exercise adds
 
 - **Lane supply is summed from named datasets, never quoted from a slot headline.** Everything
   here follows from that. It is what surfaced the 104B STEM gap, the 5.1B Indic residual, and the
-  fact that the session's two widgets disagree with each other. `inventory.SESSION_SLOT_HEADLINES`
-  and `SESSION_SUPPLY_CHECK` are kept **beside** the rows so the disagreement is visible rather
+  fact that the source material's two widgets disagree with each other. `inventory.NOTES_SLOT_HEADLINES`
+  and `NOTES_SUPPLY_CHECK` are kept **beside** the rows so the disagreement is visible rather
   than resolved in silence — do not delete them to "clean up".
 
 - **`SPEC.md` and `TOKENIZER.md` are generated. Never edit them.** `export.py` renders both from
@@ -162,7 +162,7 @@ emits, and the cells are diffable as Python.
 
 **The loop is: edit the builder → run it → execute every code cell → commit.** The middle step is
 not optional. `test_mixture_notebook.py` checks the structural rules (imports the package, no
-committed outputs, covers all seven assignment items, shows a guard failing) *and* now executes it:
+committed outputs, covers all seven requirement items, shows a guard failing) *and* now executes it:
 `test_the_notebook_runs_end_to_end` runs all 37 code cells through nbclient, and its twin appends a
 raising cell and requires the runner to catch it. `nbclient` and `ipykernel` are in the root `dev`
 group so the runner is installed there.
@@ -184,7 +184,7 @@ notebook document in Python clothing, and one of its lines is a Colab badge URL 
 
 - `dataframework.mix` — the repetition curve, its ceiling (`16.4×`), and the epoch thresholds, each
   with its citation. Never re-derive these here.
-- `datacleaning.tokens` — counts the reasoning-band traces with the Session 2 vocabulary, and
+- `datacleaning.tokens` — counts the reasoning-band traces with the Exercise 02 vocabulary, and
   supplies the fertility and `[UNK]` tables `TOKENIZER.md` is built from.
 
 ## The corpus has six lanes, and three of them are fetched

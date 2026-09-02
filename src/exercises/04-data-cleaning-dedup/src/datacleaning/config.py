@@ -2,7 +2,8 @@
 
 One `@dataclass` holds every knob (per the repo convention), so a threshold is changed in one place
 and the config hash in the manifest moves when it does. The thresholds are not ours: the nine
-quality rules are Gopher's and C4's at the values the session quotes, and the deduplication preset
+quality rules are Gopher's and C4's at the values the source material quotes, and the
+deduplication preset
 is FineWeb's. Where a value *is* ours, the docstring says so and says why.
 
 The corpora themselves live in `sources.py`; this module holds the parameters applied to them.
@@ -22,7 +23,7 @@ EXERCISE_ROOT = Path(__file__).resolve().parents[2]
 EXERCISES_ROOT = EXERCISE_ROOT.parent
 
 OUR_TOKENIZER = EXERCISES_ROOT / "02-tokenization" / "web" / "tokenizer.json"
-"""Our own 10k BPE vocabulary, submitted for Session 2.
+"""Our own 10k BPE vocabulary, submitted for Exercise 02.
 
 Read in place rather than copied. One tokenizer, one location — a copy is a second thing to keep in
 step, and the S2 page already serves this exact file.
@@ -77,7 +78,8 @@ class Config:
     preserve_joiners: tuple[str, ...] = ("‌", "‍")
     """ZWNJ and ZWJ. Never stripped: in a Brahmic script these are letters' business, not noise.
 
-    The session's third commitment is that the sovereign thread runs to the character level, and a
+    The source material's third commitment is that the sovereign thread runs to the character
+    level, and a
     cleaner that strips these is as broken as one that leaves garbage in.
     """
 
@@ -124,7 +126,8 @@ class Config:
     langid_min_chars: int = 40
     """Below this we answer `undecided`. A detector that always answers cannot be graded."""
 
-    # ---- stage 4 · quality (Gopher / C4, at the session's thresholds) ------------------------
+    # ---- stage 4 · quality (Gopher / C4, at the source material's thresholds)
+    # ------------------------
     mean_word_len: tuple[float, float] = (3.0, 10.0)
     max_symbol_word_ratio: float = 0.10
     min_terminal_punct_frac: float = 0.30
@@ -151,7 +154,8 @@ class Config:
     rows_per_band: int = 8
     """FineWeb's preset: 112 permutations as 14 bands of 8.
 
-    The session quotes this preset as "target ~0.75". The banding approximation actually puts it at
+    The source material quotes this preset as "target ~0.75". The banding approximation actually
+    puts it at
     `(1/14) ** (1/8)` = **0.719**, and `lsh_threshold` computes it rather than repeating the quoted
     figure — the number on the page is the one the code uses.
     """

@@ -15,10 +15,10 @@ needing no network at all. It is also **small**, and `EXPERIMENTS.md` says so in
 every number derived from it. What Step 0 is for is proving the harness runs and the metric
 responds to a mixture — not for producing a result about 40B models.
 
-Three rules carried forward from earlier sessions:
+Three rules carried forward from earlier topics:
 
 - **Tamil is excluded, by measurement rather than by preference.** Exercise 02 ships a Tamil corpus
-  and our Session 2 vocabulary reads it at **77.7% `[UNK]`**. Exercise 04's rule is that a count
+  and our Exercise 02 vocabulary reads it at **77.7% `[UNK]`**. Exercise 04's rule is that a count
   which is mostly `[UNK]` is not a count, and the same rule decides what may be trained on: a lane
   the tokenizer cannot encode would train the model on the unknown-token id.
 - **Held-out splits are reserved at write time**, never sampled at train time. It is the only way

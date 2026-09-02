@@ -7,7 +7,7 @@ different measurements, retained side by side:
   scored in tokens per whitespace **word**. This is where the representation findings came from
   (byte-level vs char-level, NFKC, Unigram, the hand-written BPE), and those findings still hold.
 * **v2** — the reference solution's measurement. Wiki-faithful Markdown, scored in tokens per
-  **faithful unit**, with the Hindi penalty. This is what the assignment grades.
+  **faithful unit**, with the Hindi penalty. This is what the requirements grades.
 
 A score from one profile can never be ranked against a score from the other: different corpus,
 different denominator. The same tokenizer reads ≈ 2.13 under v1 and ≈ 0.60 under v2. Everything

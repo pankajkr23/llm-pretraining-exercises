@@ -14,7 +14,7 @@ Status keys: `done` · `in progress` · `queued` · `blocked`
 ## Stage 1 — Exercise 08, finished to the benchmark · complete
 
 The benchmark is Sebastian Raschka's *A Visual Guide to Attention Variants in Modern LLMs*
-(`docs/sessions/s8_visual_attention_variants_sebastian.html`, local-only, backed up). Logic and data
+(held locally, not in the repo). Logic and data
 were sound from the start; readability and design were the work.
 
 | # | item | status |
@@ -28,7 +28,7 @@ were sound from the start; readability and design were the work.
 | 1.7 | Notebook re-read to the same standard | done — 28 cells, backed up |
 | 1.8 | Docs at every level | done |
 | 1.9 | **O4 — Q2 answer** | **ready to submit** — v0.13.0 released 2026-09-02, production gate approved, and the app link returns 200 anonymously with every asset resolving. Submitting is PK's. |
-| 1.10 | O6 — session notebook | done |
+| 1.10 | O6 — topic notebook | done |
 
 ## Stage 1b — The readability rebuild · done
 
@@ -62,6 +62,23 @@ Shorter than it started while carrying larger type, six chapter strips and a new
 figure. **Not** the ~18,000px the plan hoped for: thirty entries of catalogue prose have a floor,
 and the instruction was to keep the facts.
 
+## Confidentiality · complete
+
+The source material this project is built from is confidential. It moved **outside the repository**
+on 2026-09-02: keeping it inside and gitignored protected its bytes and nothing else, since a
+tracked document could still name its files, publish their sizes, describe them or quote them.
+
+| item | status |
+| --- | --- |
+| Material moved out; no tracked file names the directory or anything in it | done |
+| Paths, filenames, sizes and content summaries scrubbed, including one served to the live site | done |
+| Naming guard in CI **and** pre-commit | done |
+| Quote guard written; runs only where the material is present | done |
+| Paraphrase the passages that quoted the source verbatim (~60, exercises 02–08) | done |
+| Both halves of the guard gating on commit | done |
+| Five words banned and gated in CI and pre-commit; the per-topic file renamed | done |
+| Git history | **left as it is, by decision.** PR descriptions were rewritten and scan clean |
+
 ## Stage 2 — Retro-fix readability and design, one exercise at a time · queued
 
 Same treatment as 08, in this order, **each on its own branch with full e2e testing before moving
@@ -89,8 +106,8 @@ A five-lens audit on 2026-09-02 inventoried what actually diverges. The full lis
 
 ## Stage 3 — Exercise 09 · queued
 
-`src/exercises/09-loss-functions-output-heads` (currently an empty directory). Sources
-`docs/sessions/s9.md`, `s9_transcript.md`, `s9_assignment.md`. Own branch, own PR. **Scaffold with
+`src/exercises/09-loss-functions-output-heads` (currently an empty directory). Sources are the local
+reference material for that topic. Own branch, own PR. **Scaffold with
 `tools/new_exercise.py`, never by hand** — six test families apply the moment `pyproject.toml`
 lands, three of them checking for gitignored files a fresh clone will never have.
 
@@ -98,8 +115,8 @@ Build it to `docs/DESIGN.md` from the first commit rather than retro-fitting it 
 
 ## Stage 4 — Exercise 10 · queued
 
-`src/exercises/10-training-loop` (currently an empty directory). Sources `docs/sessions/s10.md`,
-`s10_transcript.md`, `s10_assignment.md`. Own branch, own PR.
+`src/exercises/10-training-loop` (currently an empty directory). Sources are the local reference
+material for that topic. Own branch, own PR.
 
 ## Release — v0.13.0 · ready when PR #83 merges
 

@@ -1,4 +1,4 @@
-"""Replay — the session's thesis, and the one line of code that separates it from worthless.
+"""Replay — the source material's thesis, and the one line of code that separates it from worthless.
 
 Reading a recorded hash back and printing it proves nothing. Re-deriving it from the shard bytes and
 finding it equal proves the shard still holds what the run was fed. Every test here is written so it
@@ -522,7 +522,7 @@ def test_the_summary_names_a_tampered_shard_even_when_every_batch_matched() -> N
     reader quotes said `all match` while the object it came from knew a shard no longer hashed to
     its manifest.
 
-    Found by building the session notebook, which is the point of making the notebook import the
+    Found by building the topic notebook, which is the point of making the notebook import the
     package rather than restate it.
     """
     report = replay.ReplayReport(

@@ -12,7 +12,8 @@ them at the end — ships three changes that cannot produce the artifact anyone 
 A pass-through is honest about itself: `StageStat.real` is False and its note says so, so a stage
 that has not been written yet cannot be mistaken for a stage that found nothing.
 
-The stage list is the session's, and the numbering is the session's too — including `2b` for format
+The stage list is the source material's, and the numbering is the source material's too —
+including `2b` for format
 discipline, which the pipeline map never numbers even though §14 counts it. See `DECISIONS.md` §D1.
 """
 
@@ -41,11 +42,11 @@ StageFn = Callable[[list[Document], Config], tuple[list[Document], StageStat]]
 
 
 STAGES: tuple[tuple[str, str, str, str], ...] = (
-    ("1", "extract", "Extract", "Session 3's topic — Sangraha and the rest ship extracted text."),
+    ("1", "extract", "Extract", "Exercise 03's topic — Sangraha and the rest ship extracted text."),
     ("2", "normalize", "Normalize", "Unicode, invisibles, entities, whitespace — joiners kept."),
     ("2b", "formats", "Format discipline", "Ghost tags are created by rendering, not inherited."),
     ("3", "langid", "Language ID", "Detect the language; never trust the folder it came from."),
-    ("4", "quality", "Quality filter", "Nine Gopher/C4 rules at the session's thresholds."),
+    ("4", "quality", "Quality filter", "Nine Gopher/C4 rules at the source material's thresholds."),
     ("5", "dedup", "Deduplicate", "Exact hashes, then MinHash/LSH for near-duplicates."),
     ("6", "pii", "PII scrub", "Structured identifiers by regex; names by a declared stand-in."),
     ("7", "decontaminate", "Decontaminate", "Canaries and n-grams against held-out evaluation."),
@@ -53,7 +54,7 @@ STAGES: tuple[tuple[str, str, str, str], ...] = (
 )
 """`(number, id, name, one-line description)` for each stage, in pipeline order.
 
-Nine entries for eight strategies: `1 Extract` is inherited from Session 3 and `2b` is the
+Nine entries for eight strategies: `1 Extract` is inherited from Exercise 03 and `2b` is the
 never-numbered ninth. Both are rendered, neither is double-counted — the count is argued in
 `DECISIONS.md` §D1.
 """
@@ -204,7 +205,8 @@ def yield_descent(stages: list[StageStat]) -> dict[str, object]:
         stages: Every stage record, in order.
 
     Returns:
-        Labels and parallel document/token/share series, plus the session's illustrative descent
+        Labels and parallel document/token/share series, plus the source material's illustrative
+        descent
         for comparison.
     """
     labels = [s.name for s in stages]
@@ -218,9 +220,9 @@ def yield_descent(stages: list[StageStat]) -> dict[str, object]:
         "tokens": toks,
         "share": share,
         "real": [s.real for s in stages],
-        "session_illustrative": [100, 92, 88, 61, 44, 43, 42, 42],
+        "illustrative_only": [100, 92, 88, 61, 44, 43, 42, 42],
         "note": (
-            "The session's descent is illustrative and covers eight stages; ours is measured and "
+            "The source's descent is illustrative and covers eight stages; ours is measured and "
             "covers nine rows, because format discipline is counted separately."
         ),
     }

@@ -1,7 +1,7 @@
 """The proxy experiment: four arms, one metric, and thresholds fixed before anything runs.
 
-Assignment item 7, and the item the grading ladder puts highest — *"a data decision is a hypothesis
-until a cheap experiment has tested it."*
+Requirement 7, and the one the grading ladder puts highest: a data decision stays a hypothesis
+until some cheap experiment has actually tested it.
 
 Three things make this a hypothesis rather than a plan to look at some numbers.
 
@@ -211,7 +211,7 @@ def arms() -> tuple[Arm, ...]:
                 "does composing a mixture beat crawling whatever is cheapest? if not, every "
                 "argument in this spec is decoration"
             ),
-            # The session's own "crawl what is cheap" preset: web expands and the scarce
+            # The source material's own "crawl what is cheap" preset: web expands and the scarce
             # capabilities collapse.
             shares={
                 "web": 0.70,

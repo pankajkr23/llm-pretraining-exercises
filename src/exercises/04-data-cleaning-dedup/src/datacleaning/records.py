@@ -111,7 +111,7 @@ class StageStat:
     without saying which rule did the cutting, which is the number that is actually actionable.
 
     Attributes:
-        n: Stage number as the session labels it (`"2"`, `"2b"`, `"5"`).
+        n: Stage number as the source material labels it (`"2"`, `"2b"`, `"5"`).
         stage_id: Machine key (`normalize`, `dedup`).
         name: Human label as it appears on the page.
         real: False when the stage is a declared stand-in rather than the real thing.

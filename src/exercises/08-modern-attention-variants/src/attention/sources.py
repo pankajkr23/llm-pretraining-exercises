@@ -1,9 +1,8 @@
 """Where a date came from, recorded so a reader can check it rather than trust it.
 
-The assignment's one warning is the reason this module exists:
-
-    "Your agent will happily invent a launch date and describe a technique it has half remembered.
-     Check every date against the actual paper or release."
+The requirements' one warning is the reason this module exists: an agent asked for a launch date
+will supply a confident one it has half remembered, so every date must be checked against the paper
+or release itself rather than recalled.
 
 A date with no source is not a weaker claim than a sourced one -- it is a different kind of object,
 and this exercise refuses to publish it. So every date carries the URL it was read from, the
@@ -12,7 +11,7 @@ does the work: a reader can compare it against `date` without leaving the page, 
 error shows up as a disagreement between two fields rather than as a number nobody can check.
 
 **`confidence` is allowed to say `unverified`, and that is the point.** A catalogue that cannot
-express doubt will express confidence it has not earned. One mechanism in Session 8 -- DroPE -- is
+express doubt will express confidence it has not earned. One mechanism in Exercise 08 -- DroPE -- is
 described in the course with no paper named and a garbled title, so it may genuinely have no
 findable primary source. Recording that honestly is a result; inventing an arXiv id is a
 fabrication.
@@ -26,7 +25,7 @@ from datetime import date, datetime
 #:
 #: Parsed rather than trusted so the recorded ISO date can be checked against the string it was
 #: read from. A transcription slip -- reading 2102.11174 as "11 Feb" when v1 is 22 Feb -- is exactly
-#: the error the assignment warns about, and it is invisible unless something compares the two.
+#: the error the requirements warns about, and it is invisible unless something compares the two.
 _ARXIV_QUOTE = re.compile(r"\[v(\d+)\]\s+\w{3},\s+(\d{1,2})\s+(\w{3})\s+(\d{4})")
 
 

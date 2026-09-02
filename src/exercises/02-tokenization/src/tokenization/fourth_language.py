@@ -1,6 +1,6 @@
 """Which fourth language, and what does the choice actually change?
 
-English, Hindi and Telugu are fixed by the assignment; the fourth is ours. The reference solution
+English, Hindi and Telugu are fixed by the requirements; the fourth is ours. The reference solution
 chose Maithili, we chose Tamil, and both snapshots sit in ``corpus/`` — so the swap can be
 measured rather than argued about. Run it with::
 

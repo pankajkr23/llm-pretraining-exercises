@@ -48,7 +48,7 @@ def test_a_document_cannot_attend_to_another_document() -> None:
     """**The leak with no symptom.**
 
     Nothing crashes if this is wrong. The loss curve looks fine. The model learns that unrelated
-    text is a natural continuation — which is exactly what the lecture warns about, and why
+    text is a natural continuation — which is exactly what the source warns about, and why
     boundaries exist at all.
     """
     seg = masks.segment_ids([3, 3], window=6)
@@ -122,7 +122,7 @@ def test_the_last_token_of_a_document_earns_no_loss() -> None:
 
 
 def test_padding_never_earns_loss() -> None:
-    """The lecture's warning: asked to predict padding 4,000 times the model does it effortlessly.
+    """The source's warning: asked to predict padding 4,000 times the model does it effortlessly.
 
     The loss goes to zero and means nothing.
     """
@@ -151,8 +151,7 @@ def test_a_pad_token_inside_a_document_still_earns_no_loss() -> None:
 def test_context_spans_are_excluded_from_loss() -> None:
     """SFT and agentic data: the prompt is context, only the answer is graded.
 
-    The lecture: *"the loss is not calculated on the question, it is only calculated on the
-    answer."*
+    Loss is not taken on the question, only on the answer.
     """
     seg = masks.segment_ids([8], window=8)
     tokens = np.arange(8, dtype=np.int64)

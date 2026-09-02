@@ -1,10 +1,11 @@
 """The consumption ledger — an append-only record of what training actually consumed.
 
 **The problem.** A planned order is not what happened. Workers restart, ranks retry, checkpoints are
-restored, a selector rejects a batch. The lecture's opening: fifty days into a run you want to know
+restored, a selector rejects a batch. The source's opening: fifty days into a run you want to know
 what the model read on day forty, and all you have is a folder.
 
-**The strategy — write it down as it happens, and make the record authoritative.** The session's own
+**The strategy — write it down as it happens, and make the record authoritative.** The source
+material's own
 answer to "how is this reproducible without a seed":
 
 > *"I will not run the code… I'm going to run the ledger. I'm going to read and send. **I will not

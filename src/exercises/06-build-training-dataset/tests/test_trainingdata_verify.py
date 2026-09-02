@@ -1,6 +1,6 @@
 """The producer/auditor wall, and the checks that would be tautologies without it.
 
-The assignment refuses hardcoded evidence and inspects the code to confirm nothing was simulated.
+The requirements refuses hardcoded evidence and inspects the code to confirm nothing was simulated.
 `verify.py` is the answer to that — but only while it re-derives claims **independently**. One
 convenient `from trainingdata import metrics` would turn every number check into the producer's
 arithmetic checked against the producer's arithmetic, agreeing with itself no matter what either

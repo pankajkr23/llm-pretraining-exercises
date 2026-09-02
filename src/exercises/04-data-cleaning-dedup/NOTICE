@@ -17,8 +17,8 @@ Licence: Apache-2.0
 Attribution: OpenThoughts (open-thoughts/OpenThoughts-114k)
 https://huggingface.co/datasets/open-thoughts/OpenThoughts-114k
 
-Used as the reasoning-distillation corpus: the public analogue of the dataset the session's
-assignment points at.
+Used as the reasoning-distillation corpus: the public analogue of the dataset the source material's
+requirement points at.
 
 ## ai4bharat/sangraha
 
@@ -44,7 +44,7 @@ authors under CC-BY-SA; this attribution carries that requirement forward.
 
 - **FLORES-200** (Meta AI, CC-BY-SA-4.0) — parallel evaluation text, via exercise 03, for grading
   language identification and measuring tokenizer fertility. Not part of the training corpus.
-- **Our own Session 2 tokenizer**, `src/exercises/02-tokenization/web/tokenizer.json`, produced in
+- **Our own Exercise 02 tokenizer**, `src/exercises/02-tokenization/web/tokenizer.json`, produced in
   this repository.
 
 Quality-filter thresholds are Gopher's (arXiv:2112.11446) and C4's (arXiv:1910.10683). The

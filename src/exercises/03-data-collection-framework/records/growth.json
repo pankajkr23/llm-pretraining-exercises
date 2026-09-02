@@ -1,5 +1,5 @@
 {
-  "note": "The lineage runs 3B to 200B in four stages. The 40B the assignment names is stage three, not the start: it is grown from a trained 8B, which was grown from a trained 3B. The method is the four-stage state-preserving growth of arXiv:2606.07404, this project's own prior work, which grew one lineage from a small dense seed through 5B and 9B mixtures of experts to a 120B model. Sizes below are the plan; the corpus figures are what this project is responsible for, and the 40B's is the only one derived rather than proposed.",
+  "note": "The lineage runs 3B to 200B in four stages. The 40B the requirements names is stage three, not the start: it is grown from a trained 8B, which was grown from a trained 3B. The method is the four-stage state-preserving growth of arXiv:2606.07404, this project's own prior work, which grew one lineage from a small dense seed through 5B and 9B mixtures of experts to a 120B model. Sizes below are the plan; the corpus figures are what this project is responsible for, and the 40B's is the only one derived rather than proposed.",
   "method": {
     "source": "arXiv:2606.07404, Reversible Foundations: Training a 120B Sparse MoE through State-Preserving Scaling",
     "relationship": "this project's own prior work",
@@ -104,14 +104,14 @@
     {
       "n": 3,
       "id": "target",
-      "name": "The assignment",
+      "name": "The requirements",
       "params_total": 40000000000,
       "params_active": 40000000000,
       "architecture": "dense",
       "corpus": 16800000000000,
       "corpus_basis": "Gemma-4 class, and the only corpus figure here that is derived: Gemma 3's officially stated 14T for the 27B, plus 20% for one generation. Gemma 4 discloses no token count of its own.",
       "asks_of_the_corpus": "336B unique natural Indian tokens, four times what the catalogue can commit. This is the model the whole page is about, and it is the stage where the Indic gap stops being a rounding error and becomes the plan's binding constraint.",
-      "status": "the assignment",
+      "status": "the requirements",
       "config": {
         "sequence_length": 8192,
         "web_data": "full corpus",

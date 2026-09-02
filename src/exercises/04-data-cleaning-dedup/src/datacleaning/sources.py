@@ -19,9 +19,9 @@ from typing import Literal
 Profile = Literal["lite", "full"]
 """Sizing profiles.
 
-- `lite` — a smoke run, deliberately *below* the assignment's 10M floor. For CI, a first pass
+- `lite` — a smoke run, deliberately *below* the requirements' 10M floor. For CI, a first pass
   through the notebook, and any machine where waiting 40 minutes to see a bug is intolerable.
-- `full` — the published corpus, inside the assignment's 10–100M window.
+- `full` — the published corpus, inside the requirements' 10–100M window.
 """
 
 
@@ -86,7 +86,7 @@ class CorpusSpec:
 # --------------------------------------------------------------------------------------------
 # A · Reasoning-distilled chat.
 #
-# The assignment points at a model whose training data is ~7,800 Claude Opus 4.7 reasoning traces
+# The requirements points at a model whose training data is ~7,800 Claude Opus 4.7 reasoning traces
 # reformatted as SFT conversations (DECISIONS.md §D2). This is the public corpus of that shape,
 # and the only one of the three with chat structure, so stage 2b has something to act on at all.
 # --------------------------------------------------------------------------------------------
@@ -112,8 +112,8 @@ REASONING = CorpusSpec(
 # --------------------------------------------------------------------------------------------
 # B · Indic web crawl.
 #
-# Devanagari and Telugu only: our Session 2 tokenizer reads these at 0-0.6% [UNK] and cannot read
-# Bengali script at all (DECISIONS.md §D4). The session names Sangraha as the corpus that received
+# Devanagari and Telugu only: our exercise 02 tokenizer reads these at 0-0.6% [UNK] and cannot read
+# Bengali script at all (DECISIONS.md §D4). The notes name Sangraha as the corpus that received
 # zero deduplication, and its card claims nothing to the contrary.
 # --------------------------------------------------------------------------------------------
 INDIC = CorpusSpec(
@@ -239,7 +239,7 @@ PROFILES: dict[str, ProfileSpec] = {
         target_tokens=3_000_000,
         probe_docs=400,
         summary=(
-            "A smoke run of roughly 8M tokens. Deliberately below the assignment's 10M floor — it "
+            "A smoke run of roughly 8M tokens. Deliberately below the requirements' 10M floor — it "
             "exists to surface bugs in minutes, not to be the published corpus."
         ),
     ),
@@ -249,7 +249,7 @@ PROFILES: dict[str, ProfileSpec] = {
         probe_docs=2_000,
         summary=(
             "The published corpus: roughly 90M tokens across three corpora, inside the "
-            "assignment's 10-100M window."
+            "requirements' 10-100M window."
         ),
     ),
 }

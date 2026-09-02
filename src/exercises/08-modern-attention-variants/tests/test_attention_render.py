@@ -215,7 +215,7 @@ def test_the_page_shows_no_shell_commands(page) -> None:
 
 
 def test_every_catalogued_mechanism_appears_on_the_page(page) -> None:
-    """The assignment's score-zero clause, checked against what actually rendered."""
+    """The requirements' score-zero clause, checked against what actually rendered."""
     bundle = _bundle()
     text = page.inner_text("main")
     missing = [m["name"] for m in bundle["mechanisms"] if m["name"] not in text]
@@ -287,7 +287,7 @@ def test_the_catalogue_is_tabulated_exactly_once(page) -> None:
 
 
 def test_the_index_plate_is_in_date_order_on_screen(page) -> None:
-    """The assignment's central requirement, asserted on the rendered order rather than the data.
+    """The requirements' central requirement, asserted on the rendered order rather than the data.
 
     The catalogue being sorted proves nothing about the page: a template that iterated a dictionary
     or reversed a list would still pass every catalogue test.
@@ -300,7 +300,7 @@ def test_the_index_plate_is_in_date_order_on_screen(page) -> None:
 
 
 def test_every_index_row_states_what_it_costs_and_not_only_what_it_buys(page) -> None:
-    """The assignment: a technique written down with only pros has not been understood yet."""
+    """The requirements: a technique written down with only pros has not been understood yet."""
     rows = page.eval_on_selector_all(
         "#reproduce .ix-row",
         "els => els.map(e => [e.id, (e.querySelector('.ix-ledger .c')||{}).textContent || '',"
@@ -409,7 +409,7 @@ def test_clicking_a_plate_entry_retypesets_the_reading_spread(page) -> None:
 
 
 def test_the_centrefold_runs_all_five_stages_including_the_weighted_sum(page) -> None:
-    """The assignment names five steps and an earlier version of this figure had four.
+    """The requirements names five steps and an earlier version of this figure had four.
 
     Stopping at softmax is the one place a reader concludes attention outputs weights. It outputs a
     vector, and the fifth stage is where that happens.

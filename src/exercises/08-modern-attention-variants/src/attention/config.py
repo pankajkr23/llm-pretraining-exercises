@@ -1,9 +1,10 @@
 """Every dimension this exercise measures against, in one place.
 
-The numbers are Session 8's own yardstick, not ours. `s8.md` works its cache arithmetic against a
-48-layer model with 8 KV heads and a head dimension of 128 in bf16, and reports 6.44 GB for one user
-at a 32,768-token context. Recording the configuration here rather than inlining it means the claim
-"we reproduce the session's number" is checkable: change one field and the test that reproduces
+The numbers are the topic's own yardstick, not ours. The reference notes work the cache
+arithmetic against a 48-layer model with 8 KV heads and a head dimension of 128 in bf16, and
+report 6.44 GB for one user at a 32,768-token context. Recording the configuration here rather
+than inlining it means the claim
+"we reproduce the reference number" is checkable: change one field and the test that reproduces
 6.44 GB fails, which is the point.
 """
 
@@ -16,7 +17,7 @@ BYTES_PER_NUMBER: dict[str, int] = {"fp32": 4, "bf16": 2, "fp16": 2, "fp8": 1}
 
 @dataclass(frozen=True)
 class Yardstick:
-    """The model Session 8 costs everything against.
+    """The model Exercise 08 costs everything against.
 
     Attributes:
         layers: Transformer blocks. Each one holds its own K and V cache.
@@ -32,7 +33,7 @@ class Yardstick:
     query_heads: int = 8
     head_dim: int = 128
     dtype: str = "bf16"
-    source: str = "docs/sessions/s8.md — the configuration used throughout the cache section"
+    source: str = "the reference notes — the configuration used throughout the cache section"
 
     @property
     def bytes_per_number(self) -> int:
@@ -40,5 +41,5 @@ class Yardstick:
         return BYTES_PER_NUMBER[self.dtype]
 
 
-#: The context lengths the session and its transcript quote figures at.
+#: The context lengths the notes and their source quote figures at.
 YARDSTICK_CONTEXTS: tuple[int, ...] = (8_192, 32_768, 262_144, 1_000_000)

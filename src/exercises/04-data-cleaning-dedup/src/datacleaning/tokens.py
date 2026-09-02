@@ -7,7 +7,7 @@ Fertility is a property of *a tokenizer*, not of a corpus. Across the five token
 measured, Manipuri swings 7.6x (2.15 to 16.50 tokens/word) and Assamese 3.3x. A single quoted ratio
 smuggles a tokenizer choice into what looks like a fact about the data. So we count.
 
-The primary tokenizer is **ours** — the 10,000-token BPE vocabulary submitted for Session 2. That
+The primary tokenizer is **ours** — the 10,000-token BPE vocabulary submitted for Exercise 02. That
 is the operationally correct choice, not merely a sentimental one: it is the tokenizer this project
 would pretrain with, so "how many tokens does this corpus give *us*" is the question that decides
 anything.
@@ -115,7 +115,7 @@ def load_tokenizer(path: str = str(OUR_TOKENIZER)) -> Tokenizer:
     """Load a tokenizer from a `tokenizer.json`, cached.
 
     Args:
-        path: Path to the tokenizer file. Defaults to our Session 2 vocabulary.
+        path: Path to the tokenizer file. Defaults to our Exercise 02 vocabulary.
 
     Returns:
         The loaded tokenizer.

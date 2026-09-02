@@ -31,7 +31,7 @@ def test_the_stem_gap_is_the_published_one():
     146B itemised against a 250B supply check, with no dataset carrying the missing 104B.
     """
     stem = inventory.lane_supply("stem").counted_tokens
-    quoted = inventory.SESSION_SUPPLY_CHECK["stem"]
+    quoted = inventory.NOTES_SUPPLY_CHECK["stem"]
     assert stem == pytest.approx(146e9)
     assert quoted == pytest.approx(250e9)
     assert quoted - stem == pytest.approx(104e9)
@@ -43,8 +43,8 @@ def test_the_stem_gap_changes_the_verdict_rather_than_only_the_number():
     """
     demand = lanes.get("stem").share * CFG.run_tokens
     itemised = inventory.lane_supply("stem").counted_tokens
-    quoted = inventory.SESSION_SUPPLY_CHECK["stem"]
-    assert demand / quoted < 1.0, "on the session's figure the lane fits inside one pass"
+    quoted = inventory.NOTES_SUPPLY_CHECK["stem"]
+    assert demand / quoted < 1.0, "on the source material's figure the lane fits inside one pass"
     assert demand / itemised > 1.5, "on the itemised figure it needs repetition"
 
 
@@ -65,7 +65,7 @@ def test_rows_without_a_token_count_are_typed_unstated():
     assert unstated and all(row.tokens is None for row in unstated)
 
 
-def test_the_confirmed_rows_are_the_ones_the_session_vouches_for():
+def test_the_confirmed_rows_are_the_ones_the_notes_vouch_for():
     """'Sangraha and V4 numbers are confirmed from our sources' — everything else is approximate."""
     confirmed = {row.source for row in inventory.DATASETS if row.provenance == "confirmed"}
     assert confirmed <= {"AI4Bharat", "V4 run (confirmed)", "V4 corpus"}

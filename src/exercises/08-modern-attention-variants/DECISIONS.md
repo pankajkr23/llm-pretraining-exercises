@@ -11,12 +11,12 @@ here so `README.md` can stay a guide and `CLAUDE.md` can stay a rule list.
 rather than measurements from a model we trained.
 
 **Why.** Every previous exercise in this repo measured something it ran, so the instinct was to
-find something to train. That instinct is wrong here. The assignment's graded axis is stated
-plainly — *"Your job is to be right about the dates, right about the trade-offs, and clear about the
-story"* — and a training run would be effort spent away from the thing being graded. A wrong date is
+find something to train. That instinct is wrong here. The graded axis is the dates, the
+trade-offs and the clarity of the story, so a training run would be effort spent away from the thing
+being graded. A wrong date is
 the failure mode; a missing experiment is not.
 
-**What would overturn it.** An assignment revision asking for a measured comparison between
+**What would overturn it.** An requirement revision asking for a measured comparison between
 mechanisms. Note that would be a much larger exercise: comparing MQA against GQA on quality needs
 two pretrained models, not two forward passes.
 
@@ -28,15 +28,15 @@ two pretrained models, not two forward passes.
 `quoted_date`. `quoted_date` holds the source's **own** wording; a test parses it and compares it to
 the recorded ISO date.
 
-**Why.** The instructor's warning is specific: *"Your agent will happily invent a launch date and
-describe a technique it has half remembered."* A convention would not have been enough — the whole
+**Why.** The warning we were given is specific: an agent asked for a launch date will supply a
+confident one it has half remembered. A convention would not have been enough — the whole
 point is that a fabricated date looks exactly like a real one. Storing the source's own string turns
 "is this date right?" into a comparison between two fields a reader can do in their head, and turns
 a transcription slip into a test failure. It caught a deliberately transposed `2021-04-20` →
 `2021-04-02` in exactly that way.
 
 **What would overturn it.** Nothing. The cost is a few extra fields per entry; the alternative is
-publishing numbers nobody can check, on the one axis the assignment grades.
+publishing numbers nobody can check, on the one axis the requirements grades.
 
 ---
 
@@ -45,7 +45,7 @@ publishing numbers nobody can check, on the one axis the assignment grades.
 **Decision.** The schema permits an entry to say its date could not be confirmed.
 
 **Why.** A catalogue that cannot express doubt will express confidence it has not earned. Going in,
-DroPE looked likely to have no findable source — the course names no paper and the transcript
+DroPE looked likely to have no findable source — the course names no paper and the source
 garbles the title — and the honest outcome would have been an entry marked unverified. In the end it
 was found, but the option had to exist first, or the pressure would have been to invent something
 plausible.
@@ -63,7 +63,7 @@ quotes a later revision.
 **Why.** The alternatives are all worse and all common. Conference dates run months late. The arXiv
 id prefix is the announcement month, not the submission date — YaRN's id begins `2309` and its v1 is
 31 August. And revisions drift badly: Bahdanau's v1 and v7 are twenty months apart. Since the
-assignment is *ordering* by date, any of those errors reorders the timeline rather than merely
+requirement is *ordering* by date, any of those errors reorders the timeline rather than merely
 misreporting one row.
 
 **What would overturn it.** A mechanism whose v1 preprint is genuinely not its first public
@@ -77,8 +77,7 @@ with `kind: "release"`, which the schema already supports.
 **Decision.** `timeline.pressure_by_period` counts what each window contains, and `Period.dominant`
 returns `None` on a tie instead of choosing.
 
-**Why.** The brief hands us an answer to Question 2 — *"first it wants exactness, then it wants
-memory back, then it wants length, then it wants memory back again"* — and printing that sentence
+**Why.** The requirements hands us an answer to Question 2 — *exactness, then memory, then length, then memory again* — and printing that sentence
 over a chart would be the easiest thing in this exercise. It would also be the same failure as an
 unsourced date: a claim presented as a finding without being one.
 
@@ -103,7 +102,7 @@ torch-free means CI's default sync verifies **all** of it.
 
 **What would overturn it.** A decision to add a toy attention implementation that demonstrates the
 mechanisms numerically. Even then numpy is enough for a six-token example, which is the scale the
-session itself teaches at.
+topic itself teaches at.
 
 ---
 
@@ -133,7 +132,7 @@ it makes a claim about what the timeline shows, and a claim needs the spine's `e
 **Decision.** The transformer's date, the DroPE/DRoPE confusion and the non-reproducing cache figure
 are all written down in `README.md`, `CLAUDE.md` and `PROGRESS.md`, with sources.
 
-**Why.** The assignment asks for it directly: *"if you catch me in another one, tell me."* But the
+**Why.** The requirements asks for it directly: *"if you catch me in another one, tell me."* But the
 stronger reason is the DroPE case. Two papers exist whose names differ by one capital letter, and
 the course describes one while quoting the other's title. Silently citing the right one would leave
 the next reader — or the next agent — free to "fix" it back to the wrong one. Naming both, and
@@ -268,7 +267,7 @@ sentence that states the mechanism.
 
 ## D14 — Test the claim that was made, then vary the arbitrary choice
 
-The brief's arc is `compute → cache → position → cache`. The page tested it and got the answer
+The requirements' arc is `compute → cache → position → cache`. The page tested it and got the answer
 backwards, twice, in ways worth separating.
 
 **First, a derived number answered the wrong question.** *"The claimed arc holds in 6 of these 7
@@ -292,7 +291,7 @@ outlive its reason.
 The page's **Corrections** section published three disagreements with the teaching material it was
 built from. One of them has been moved here.
 
-**The Transformer is mis-dated.** The transcript says Vaswani *"invented in 2018 and 17"*.
+**The Transformer is mis-dated.** The source says Vaswani *"invented in 2018 and 17"*.
 *Attention Is All You Need* is arXiv:1706.03762, **v1 dated Mon, 12 Jun 2017** — read from the
 abstract page, not from memory. June 2017, not 2018.
 

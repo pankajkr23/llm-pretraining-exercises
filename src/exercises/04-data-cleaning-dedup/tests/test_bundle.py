@@ -119,7 +119,7 @@ def test_the_out_of_vocabulary_probe_is_excluded_from_the_budget(bundle):
     assert all(c["key"] == "oov" for c in probe)
 
 
-def test_the_strategy_list_covers_the_sessions_stages(bundle):
+def test_the_strategy_list_covers_the_notes_stages(bundle):
     """Eight strategies, rendered as nine rows: Extract is inherited and 2b is never numbered."""
     ids = [s["id"] for s in bundle["strategies"]]
     assert ids == [s[1] for s in pipeline.STAGES]

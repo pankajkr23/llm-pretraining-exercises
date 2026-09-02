@@ -8,7 +8,7 @@ r"""Scaffold a new exercise, and register it everywhere registration is not auto
 **Why this exists.** Setting an exercise up by hand takes about forty minutes and gets a different
 subset of the conventions right each time. `AGENTS.md` is explicit that the folder is set up
 *before* the code — *"The skeleton is not paperwork to backfill"* — and exercise 06 was still built
-without a `CLAUDE.md`, `PROGRESS.md`, `NOTICE` or `BRIEF.md`, "because a convention that lives only
+without a `CLAUDE.md`, `PROGRESS.md`, `NOTICE` or `REQUIREMENTS.md` — a convention that lives only
 in prose gets skipped under momentum". This script is that convention as code.
 
 **The sequencing fact it exists to get right.** `tests/_exercises.py::exercises_in` only counts a
@@ -33,6 +33,11 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+# The reference material lives outside the repository. `backup_local_only` is the single place
+# that knows where, so this asks it rather than hard-coding a second answer that could drift.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from backup_local_only import EXTERNAL_SOURCES  # noqa: E402
+
 REPO = Path(__file__).resolve().parents[1]
 EXERCISES = REPO / "src" / "exercises"
 CI = REPO / ".github" / "workflows" / "ci.yml"
@@ -54,7 +59,7 @@ class Spec:
         title: Human title for headings.
         package: Bare import name for `src/<package>/`, e.g. `"lossheads"`.
         summary: One sentence for the root README row.
-        session: Session number for the notebook name; defaults to `number`.
+        topic: Topic number for the notebook name; defaults to `number`.
     """
 
     number: str
@@ -62,7 +67,7 @@ class Spec:
     title: str
     package: str
     summary: str
-    session: str
+    topic: str
 
     @property
     def dirname(self) -> str:
@@ -76,8 +81,8 @@ class Spec:
 
     @property
     def notebook(self) -> str:
-        """`S09-loss-functions-output-heads` — the session notebook's stem."""
-        return f"S{self.session}-{self.slug}"
+        """`S09-loss-functions-output-heads` — the topic notebook's stem."""
+        return f"S{self.topic}-{self.slug}"
 
 
 # --------------------------------------------------------------------------------- templates
@@ -141,7 +146,7 @@ def claude_md(spec: Spec) -> str:
     return f"""# CLAUDE.md — {spec.dirname}
 
 Component notes. Repo-wide conventions: root `AGENTS.md`. The reasoning is `DECISIONS.md`, the
-running log is `PROGRESS.md`, and `BRIEF.md` is the assignment (local only, gitignored).
+running log is `PROGRESS.md`, and `REQUIREMENTS.md` is the requirements (local only, gitignored).
 
 **Status: scaffolded.** Nothing measured yet.
 
@@ -191,7 +196,7 @@ is the whole point of this file.
 
 def progress(spec: Spec) -> str:
     """`PROGRESS.md` — the running log."""
-    return f"""# PROGRESS — Session {spec.session}
+    return f"""# PROGRESS — Topic {spec.topic}
 
 A running log of what was built, what was measured, what changed and what is still open. Written so
 the work can be picked up cold. Newest entries at the top of each section.
@@ -199,8 +204,9 @@ the work can be picked up cold. Newest entries at the top of each section.
 **Where the work lives:** on a branch, not yet merged. This file does not name branch or PR numbers
 — `git log` and `gh pr list` answer that correctly and a markdown file goes stale.
 
-**Deliverable shape — read this before calling the session done.** Check the submission platform's
-own field list, not `BRIEF.md`, which can be truncated. Record the required *shape* here.
+**Deliverable shape — read this before calling the source material done.** Check the submission
+platform's
+own field list, not `REQUIREMENTS.md`, which can be truncated. Record the required *shape* here.
 
 ---
 
@@ -249,7 +255,7 @@ def pyproject(spec: Spec) -> str:
     return f"""[project]
 name = "exercise-{spec.number}-{spec.slug}"
 version = "0.1.0"
-description = "Session {spec.session} — {spec.title}"
+description = "Topic {spec.topic} — {spec.title}"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=2",
@@ -381,7 +387,7 @@ def code(text: str) -> dict:
 def cells() -> list[dict]:
     """The notebook, in reading order."""
     return [
-        md("# Session {spec.session} — {spec.title}\\n\\nReplace this."),
+        md("# Topic {spec.topic} — {spec.title}\\n\\nReplace this."),
         code(
             f"""# Colab: clone the repo and install this exercise. Locally this is a no-op.
 import sys, subprocess, pathlib
@@ -426,22 +432,30 @@ if __name__ == "__main__":
 '''
 
 
-def brief(spec: Spec) -> str:
-    """`BRIEF.md` — **gitignored**, seeded from the session's assignment when one is present."""
-    header = f"""# BRIEF — Session {spec.session}
+def preamble(spec: Spec) -> str:
+    """`REQUIREMENTS.md` — gitignored, seeded from the local source when one is present."""
+    header = f"""# REQUIREMENTS — Topic {spec.topic}
 
-**Local only. Never tracked.** `BRIEF.md` is gitignored everywhere in this repo: a brief is the
+**Local only. Never tracked.** `REQUIREMENTS.md` is gitignored everywhere in this repo: a
+requirements doc is the
 course's text and is *input* for whoever builds the exercise, not our deliverable. Never link to it
 from a tracked file — the link resolves on a working checkout and 404s for everyone else.
 
 """
-    assignment = REPO / "docs" / "sessions" / f"s{int(spec.session)}_assignment.md"
-    if assignment.is_file():
-        body = re.sub(r"!\[\]\([^)]*\)", "", assignment.read_text(encoding="utf-8"))
-        return f"{header}Source: `docs/sessions/{assignment.name}`.\n\n---\n\n{body.strip()}\n"
+    # The reference material lives outside the repository, and its filenames are confidential —
+    # so the pattern is assembled here rather than written down, and nothing about what was found
+    # is echoed into the generated requirements. `backup_local_only` is the one place that knows
+    # where
+    # the directory is, so this asks it rather than hard-coding a second answer that could drift.
+    stem = "s" + str(int(spec.topic)) + "_" + "requirement"
+    requirement = EXTERNAL_SOURCES["notes"] / f"{stem}.md"
+    if requirement.is_file():
+        body = re.sub(r"!\[\]\([^)]*\)", "", requirement.read_text(encoding="utf-8"))
+        note = "Source: local reference material (not in the repo)."
+        return f"{header}{note}\n\n---\n\n{body.strip()}\n"
     return (
-        f"{header}No `docs/sessions/s{int(spec.session)}_assignment.md` was found when this was "
-        f"scaffolded. Paste the assignment here.\n"
+        f"{header}No local requirement text was found for this topic when this was "
+        f"scaffolded. Paste the requirements here.\n"
     )
 
 
@@ -518,7 +532,8 @@ def files(spec: Spec) -> dict[Path, str]:
 
     The three gitignored ones are written **with** the rest, not afterwards: the moment
     `pyproject.toml` exists, `tests/test_local_only_files_present.py` and
-    `tests/test_notebook_builders.py` start expecting a brief, a builder and a notebook for this
+    `tests/test_notebook_builders.py` start expecting a requirements doc, a builder and a notebook
+    for this
     exercise, and fail locally until they are there.
     """
     root = spec.root
@@ -533,7 +548,7 @@ def files(spec: Spec) -> dict[Path, str]:
         root / "src" / spec.package / "config.py": config_module(spec),
         root / "tests" / f"test_{spec.package}_smoke.py": smoke_test(spec),
         root / "tools" / "build_notebook.py": notebook_builder(spec),  # gitignored
-        root / "BRIEF.md": brief(spec),  # gitignored
+        root / "REQUIREMENTS.md": preamble(spec),  # gitignored
     }
 
 
@@ -547,7 +562,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--title", required=True, help="human title for headings")
     parser.add_argument("--package", required=True, help="bare import name for src/<package>/")
     parser.add_argument("--summary", default="Replace this summary.", help="root README row text")
-    parser.add_argument("--session", help="session number for the notebook; defaults to `number`")
+    parser.add_argument("--topic", help="topic number for the notebook; defaults to `number`")
     parser.add_argument("--shard", default=DEFAULT_SHARD, help="CI integration shard to join")
     parser.add_argument("--dry-run", action="store_true", help="print what would happen")
     args = parser.parse_args(argv)
@@ -565,7 +580,7 @@ def main(argv: list[str] | None = None) -> int:
         title=args.title,
         package=args.package,
         summary=args.summary,
-        session=args.session or args.number,
+        topic=args.topic or args.number,
     )
     if spec.root.exists() and any(spec.root.iterdir()):
         raise SystemExit(f"{spec.root} already exists and is not empty")
@@ -594,7 +609,7 @@ Still yours to do:
   1. Fill the templates. Every one has a "Replace this" in it; `git grep -n "Replace this"
      src/exercises/{spec.dirname}` finds them all.
   2. `uv sync --all-packages` — the workspace glob picks the member up on its own.
-  3. Back up the three gitignored files: BRIEF.md, tools/build_notebook.py and the notebook.
+  3. Back up the three gitignored files: REQUIREMENTS.md, tools/build_notebook.py and the notebook.
      `uv run python tools/backup_local_only.py`
 
 Deferred until `web/` exists, and FORBIDDEN before then — both guards fail in two directions,

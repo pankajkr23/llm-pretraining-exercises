@@ -2,7 +2,7 @@
 
 Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is the generated
 `submission_artifacts/` bundle, the reasoning is `DECISIONS.md`, the running log is `PROGRESS.md`,
-and `BRIEF.md` is the assignment (local only, gitignored).
+and `REQUIREMENTS.md` is the requirements (local only, gitignored).
 
 **Status: all eight stages done.** Shipped: `spec.py`, `config.py`, `shards.py`,
 `manifest.py`, `firewall.py`, `plan.py`, `masks.py`, `pack.py`, `feed.py`, `ledger.py`, `model.py`,
@@ -38,7 +38,7 @@ lines and 14 tests.
 
 ## The rules this exercise adds
 
-- **Replay reads the ledger. It never recomputes.** This is the session's whole thesis, and the
+- **Replay reads the ledger. It never recomputes.** This is the source material's whole thesis, and the
   reason is not stylistic: once OPUS scores depend on the current checkpoint, the plan stops being a
   pure function of position, so re-deriving it can never be bit-identical. `replay.py` keeps an
   import closure with **no torch and no planner**, and `test_replay_cannot_reach_the_planner_or_torch`
@@ -56,12 +56,12 @@ lines and 14 tests.
 
 - **`spec.py` is shared with the auditor. Shared facts, never shared logic.** `verify.py` re-derives
   every published claim from artifacts alone; if it imported the producer it would inherit the
-  producer's bugs and agree with itself, which is the hardcoded evidence the assignment refuses.
+  producer's bugs and agree with itself, which is the hardcoded evidence the requirements refuses.
   `tests/test_trainingdata_spec.py` parses `spec.py`'s AST — not `sys.modules`, because an import
   that only fires at call time would not show up there.
 
 - **The sentinels are out of vocabulary, and the tokenizer file is never edited.** The frozen
-  Session 2 vocabulary is a contiguous `0..9999` with no EOS, BOS or PAD. Editing the file to add
+  Exercise 02 vocabulary is a contiguous `0..9999` with no EOS, BOS or PAD. Editing the file to add
   them would change its bytes and **void the tokenizer hash every shard manifest pins**. So
   `EOS=10000`, `PAD=10001`, model vocab `10_002`. Checked against the real file, never a remembered
   number.
@@ -99,8 +99,8 @@ lines and 14 tests.
   only evidence anything moved.
 
 - **The firewall is two-sided on purpose, and both sides must stay.** The manifest carries the
-  split *and* the registry is asked independently. The instructor's reason: *"who knows maybe a
-  mistake in copying or something may still happen."* Removing either side leaves a single point of
+  split *and* the registry is asked independently. The stated reason is that a copying slip
+  or a missed registration is always possible. Removing either side leaves a single point of
   failure for the one mistake that makes every benchmark score fiction.
 
 - **The firewall stores no evaluation text, ever.** Benchmark items are 8-byte truncated digests of
@@ -110,9 +110,9 @@ lines and 14 tests.
   `reject` are the selector's. `defer` and `floor_override` appear in **none** of the OPUS paper,
   its reference implementation, or LightningLM — all three were searched. See `DECISIONS.md` D5.
 
-- **The lecture's description of OPUS is wrong; build from the paper.** The transcript describes a
+- **The source's description of OPUS is wrong; build from the paper.** The source describes a
   weight *mask*. There is no weight mask in either implementation — it is a continuous
-  preconditioned gradient inner product, minus a redundancy penalty the lecture never mentions.
+  preconditioned gradient inner product, minus a redundancy penalty the source never mentions.
   `DECISIONS.md` D7.
 
 - **The ledger is a chain, and that is a bounded claim.** Each event carries the previous event's
@@ -254,7 +254,7 @@ lines and 14 tests.
   can show, or delete the field — do not leave a constant in the ledger dressed as a statistic.
 
 - **The corpus is sized against the RUN, and that took a refetch.** It was once 2,185,575 tokens
-  against `Config.total_tokens` = 10,485,760 positions — **4.8 epochs**, and shaped to session 5's
+  against `Config.total_tokens` = 10,485,760 positions — **4.8 epochs**, and shaped to exercise 05's
   weights, **30.2 epochs of web against 0.41 of agentic**: the heaviest-funded lane memorised thirty
   times over, the lightest never read through once. Nothing failed; the shards read fine and the
   loss curve looked normal. It is now **10,649,549 training tokens at 1.01 epochs**, every lane
@@ -267,7 +267,7 @@ lines and 14 tests.
   was never fully read, and neither shows up in a loss curve.
 
 - **The platform has FOUR fields, and three of them are direct links to files in this repo.** Read
-  from the platform's own submission page, not from `BRIEF.md`, which truncates at the words *"Your
+  from the platform's own submission page, not from `REQUIREMENTS.md`, which truncates at the words *"Your
   submission"* and never lists them:
 
   | field | points | what goes in it |
@@ -277,8 +277,7 @@ lines and 14 tests.
   | Github `evidence.json` link | 50 | the same path, `evidence.json` |
   | Github `evidence.md` link | 50 | the same path, `evidence.md` |
 
-  Each field carries the note *"I tested this link in an incognito window — it's publicly
-  accessible (not private)."* So **"public" is a property of the repository, not a demand for
+  Each field asks you to confirm the link resolves for a logged-out stranger. So **"public" is a property of the repository, not a demand for
   separate hosting** — the repo is already public, and the three files are already tracked. An
   earlier version of this note called them *"PUBLIC URLS, not repo files"* and treated hosting them
   elsewhere as outstanding work. That was wrong, and it was wrong in the expensive direction:

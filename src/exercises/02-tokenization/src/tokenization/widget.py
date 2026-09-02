@@ -84,7 +84,7 @@ SECTION_NOTES = {
         "bytes; moving to character level collapses the gap between languages."
     ),
     "v2": (
-        "The measurement the assignment grades: wiki-faithful Markdown — links, URLs, tables and "
+        "The measurement the requirements grades: wiki-faithful Markdown — links, URLs, tables and "
         "all — scored in tokens per faithful unit. The reference solution is shown exactly as "
         "published; everything after it is ours."
     ),
@@ -117,7 +117,7 @@ BLURBS = {
     ),
     "Unigram (ablation)": (
         "A different algorithm: rather than merging pairs upward, it starts with a large candidate "
-        "vocabulary and prunes downward. It scores well, but the brief asks for BPE, so it stays "
+        "vocabulary and prunes downward. It scores well, but BPE was asked for, so it stays "
         "an ablation — useful evidence, not a candidate for submission."
     ),
     "Unigram · char · NFKC": (

@@ -1,6 +1,7 @@
 r"""Stage 4 — nine heuristic rules, and what they do to a language they were not written for.
 
-The rules are Gopher's and C4's, at the thresholds the session quotes: mean word length in [3, 10],
+The rules are Gopher's and C4's, at the thresholds the source material quotes: mean word length in
+[3, 10],
 symbol-to-word ratio below 0.10, at least 30% of lines ending in terminal punctuation, duplicate
 lines below 30%, top bigram below 20%, at least two common stop words, bullet lines below 90%,
 ellipsis lines below 30%, and 50 to 100,000 words. They are cheap, they are the industry default,
@@ -22,7 +23,8 @@ failure.** Two are visible in the rule text; the third was only visible by runni
 
 So a pipeline that applies the published thresholds to an Indic corpus does not filter it — it
 deletes it, and reports a healthy-looking yield while doing so. That is precisely the shape of the
-defect the session describes in V4's data selector, which leaned on an English-heavy proxy and
+defect the source material describes in V4's data selector, which leaned on an English-heavy proxy
+and
 systematically under-valued Indic text.
 
 This module therefore runs the cascade **twice**: once with the published English thresholds and
@@ -132,7 +134,7 @@ def run_rules(text: str, cfg: Config, script_aware: bool = True) -> list[RuleRes
             pipelines do, and what this module exists to price.
 
     Returns:
-        One `RuleResult` per rule, in the session's order.
+        One `RuleResult` per rule, in the source material's order.
     """
     words = WORD_RE.findall(text)
     lines = _lines(text)

@@ -1,7 +1,7 @@
 [project]
 name = "exercise-05-datamixtures-and-curriculum"
 version = "0.1.0"
-description = "Session 5 — the V5 data mixture and curriculum, sized against real supply"
+description = "Exercise 05 — the V5 data mixture and curriculum, sized against real supply"
 requires-python = ">=3.12"
 dependencies = [
     # The repetition arithmetic lives in `dataframework.mix` with its citation attached
@@ -9,7 +9,7 @@ dependencies = [
     # constant that no test compares — and the whole point of this exercise is that a number is
     # only as good as the thing it can be traced to.
     "exercise-03-data-collection-framework",
-    # Fertility is measured, never estimated: `datacleaning.tokens` counts with our own Session 2
+    # Fertility is measured, never estimated: `datacleaning.tokens` counts with our own Exercise 02
     # vocabulary and refuses to publish a count that is mostly [UNK]. TOKENIZER.md is built on it.
     "exercise-04-data-cleaning-dedup",
 ]

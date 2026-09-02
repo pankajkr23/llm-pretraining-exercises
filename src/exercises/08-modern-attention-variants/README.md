@@ -3,18 +3,14 @@
 **Thirty ways of computing attention and of telling a model where a token sits, ordered by the
 date each one actually appeared, with every date read from the primary source.**
 
-Session 8's assignment is not to describe attention mechanisms. It is to put them in **chronological
-order** and explain each as an answer to a problem that existed *at that moment* — because the order
-shows something a list cannot:
+The task here is not to describe attention mechanisms. It is to put them in **chronological order**
+and explain each as an answer to a problem that existed *at that moment*, because the order shows
+something a list cannot: read in sequence, the field visibly changes its mind, and having seen it
+change you can make a reasonable guess at what comes next. A list flattens that away.
 
-> "When you lay them out on a timeline you can watch the field change its mind … You cannot see that
-> from a list. You can see it from a timeline, and once you see it you can guess what comes next,
-> which is the whole reason I am asking."
-
-The graded axis is therefore the **dates**, and the instructor was explicit about the failure mode:
-
-> "Your agent will happily invent a launch date and describe a technique it has half remembered.
-> Check every date against the actual paper or release."
+The graded axis is therefore the **dates**, and we were warned about the failure mode specifically:
+an agent asked for a launch date will supply a confident one it has half remembered, so every date
+has to be checked against the paper or release itself rather than recalled.
 
 So this exercise treats a date the way the other exercises treat a measurement. Every entry in
 [`results/mechanisms.json`](results/mechanisms.json) carries the URL it was read from, the source's
@@ -45,7 +41,7 @@ compute    grows with T²    every token scores against every other token
 KV cache   grows with T     every token's key and value are kept for the next one
 ```
 
-Both are closed forms, so this exercise computes them rather than quoting them. At Session 8's own
+Both are closed forms, so this exercise computes them rather than quoting them. At Exercise 08's own
 yardstick — 48 layers, 8 KV heads, head dimension 128, bf16 — one user at a 32,768-token context
 costs **6.44 GB** of KV cache and eight users cost **51.54 GB**. `src/attention/cache.py`
 reproduces both exactly, and a test pins them, so editing the yardstick breaks the documents that
@@ -59,10 +55,10 @@ without breaking anything else.
 
 | module | owns |
 | --- | --- |
-| `config.py` | the yardstick model every cost is computed against, taken from the session |
+| `config.py` | the yardstick model every cost is computed against, taken from the source material |
 | `cache.py` | the two bills — KV bytes, `T²` scores, head sharing, sequence compression |
 | `sources.py` | the citation model: what was read, from where, quoted verbatim, and when |
-| `catalogue.py` | the mechanisms, their trade-offs, and the coverage list the assignment mandates |
+| `catalogue.py` | the mechanisms, their trade-offs, and the coverage list the requirements mandates |
 | `timeline.py` | ordering, the gaps, and which bill each period was paying down |
 | `story.py` | the six chapters the page tells, and the rule that every mechanism is in exactly one |
 
@@ -143,30 +139,29 @@ capture, and the entry records that. A reader who needs the live page needs a br
 
 ### Two errors in the course material
 
-The assignment invites this — *"if you catch me in another one, tell me"* — so both are recorded
+The requirements invites this — *"if you catch me in another one, tell me"* — so both are recorded
 rather than quietly corrected.
 
-- **The transformer is mis-dated.** The transcript says Vaswani "invented in 2018 and 17".
+- **The transformer is mis-dated.** The source says Vaswani "invented in 2018 and 17".
   *Attention Is All You Need* is `arXiv:1706.03762`, v1 **12 June 2017**.
-- **DroPE is two different papers, and the transcript quotes the wrong one's title.** The technique
+- **DroPE is two different papers, and the source quotes the wrong one's title.** The technique
   described in class — pretrain with positional embeddings, drop them, recalibrate briefly — is
   *Extending the Context of Pretrained LLMs by Dropping Their Positional Embeddings*,
-  `arXiv:2512.12167`. The transcript's garbled "rotate position emitting for efficient" maps instead
+  `arXiv:2512.12167`. The source's garbled "rotate position emitting for efficient" maps instead
   onto **DRoPE** with a capital R, `arXiv:2503.15029`, an autonomous-driving trajectory paper with
   no relation to the technique. The two names differ by one capital letter.
 
 ### One number that does not reproduce
 
-The transcript says eight users at a 1M-token context need about **1 TB**. The session's own
-formula, at the session's own yardstick, gives **1.57 TB**. Both are recorded; neither is published
-alone. A smaller model, fewer KV heads or fp8 storage would each reconcile them, and the transcript
+The source says eight users at a 1M-token context need about **1 TB**. The source material's own
+formula, at the source material's own yardstick, gives **1.57 TB**. Both are recorded; neither is published
+alone. A smaller model, fewer KV heads or fp8 storage would each reconcile them, and the source
 does not say which was meant.
 
 ### What the order shows
 
-Derived by `timeline.pressure_by_period`, not asserted. The brief predicts a tidy sequence —
-*"first it wants exactness, then it wants memory back, then it wants length, then it wants memory
-back again"* — and the data is messier than that: **one of the seven two-year windows has no single
+Derived by `timeline.pressure_by_period`, not asserted. The requirements predicts a tidy sequence —
+exactness, then memory, then length, then memory again — and the data is messier than that: **one of the seven two-year windows has no single
 dominant pressure at all.** In that period the field was attacking several bills at once, and a test
 fails if that ever stops being true, so the finding cannot quietly become the tidy story.
 
@@ -273,7 +268,7 @@ were the same thing.
 Top-k attention is now its own entry — **2019-12-25**, [Explicit Sparse Transformer: Concentrated
 Attention Through Explicit Selection](https://arxiv.org/abs/1912.11637), `[v1] Wed, 25 Dec 2019
 10:59:31 UTC (689 KB)` — and `MANDATED` now maps that phrase to *both* keys, so a compound
-requirement can never again be satisfied by half of itself. The session teaches the distinction at
+requirement can never again be satisfied by half of itself. The source material teaches the distinction at
 length, including the catch that makes top-k interesting: naive top-k still has to score every key
 before it can rank them, so it reduces the work *after* selection and not the scoring itself.
 
@@ -309,7 +304,7 @@ paper says otherwise.
 
 ## The arc was tested, and the test had to be fixed first
 
-The brief's claim is that the field wanted *exactness, then memory, then length, then memory again*
+The requirements' claim is that the field wanted *exactness, then memory, then length, then memory again*
 — in the catalogue's labels, `compute → cache → position → cache`. `timeline.arc_verdict` tests it.
 
 For a while the page published **"the claimed arc holds in 6 of these 7 two-year windows"**. That
@@ -328,13 +323,13 @@ ever makes it robust, so the hedge cannot outlive its reason.
 ## What this cannot establish
 
 - **This is a chronology, not an experiment.** Nothing here was trained, and no claim about which
-  mechanism is *better* is measured — the trade-offs are read from the papers and from the session,
+  mechanism is *better* is measured — the trade-offs are read from the papers and from the source material,
   not reproduced. Where a paper reports a number, it is attributed to that paper.
 - **A first-appearance date is not the whole story.** Ideas have precursors, and several entries
   here have contested attributions that the entry records rather than resolves — learned absolute
   positions in particular go back at least to 2016 and arguably to 2015, through a lead we did not
   open.
-- **The arithmetic is the session's, at the session's yardstick.** The cache figures are exact for
+- **The arithmetic is the source material's, at the source material's yardstick.** The cache figures are exact for
   48 layers, 8 KV heads, head dim 128 and bf16, and mean nothing for another configuration. They are
   arithmetic, not measurements of any running system.
 - **The trade-offs are editorial.** *What it buys*, *what it gives up* and *when to choose it* are
@@ -351,7 +346,7 @@ Twelve sections carrying the spine `AGENTS.md` requires, set as a **monograph fe
 numbered plates, six chapters, and the thirty mechanisms as *one object entered thirty times*
 rather than thirty collapsed cards a reader has to click through.
 
-The spine sentence is the thing the session never states, and it is what makes drawing this worth
+The spine sentence is the thing the source material never states, and it is what makes drawing this worth
 doing rather than restating the reading: **attention is one idea that sent two bills, and almost
 everything since is somebody who could not pay one of them.** The two bills are the triangle of
 scores between every pair of tokens, and the cache holding what each past token contributed.

@@ -1,4 +1,4 @@
-"""The Session 6 training data execution system.
+"""The Exercise 06 training data execution system.
 
 A training run eats data for weeks. This package is the part that remembers what it ate, why, what
 the model learned from it, and how to reconstruct any of it.

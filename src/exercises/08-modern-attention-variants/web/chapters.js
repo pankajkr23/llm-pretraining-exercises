@@ -2,7 +2,7 @@
  *
  * Everything rendered here comes from `data.js`, which `tools/build_web_data.py` derives from the
  * tracked catalogue and from the same functions the tests exercise. No date, count or trade-off is
- * typed into this file. That is not fastidiousness: the assignment is graded on the dates, and a
+ * typed into this file. That is not fastidiousness: the requirements is graded on the dates, and a
  * number inside a <script> block is read far more often than any file in the repo and tested by
  * none of them.
  *
@@ -131,11 +131,11 @@ function standfirst(text) {
  * plates show objects nobody has seen before (a pair of rotary dials; forty tokens under a sliding
  * window) and both were unreadable cold. This is the half that was missing.
  */
-function brief(rows) {
-  const d = el('div', 'brief');
+function preamble(rows) {
+  const d = el('div', 'preamble');
   for (const [label, text] of rows) {
-    const r = el('div', 'brief-row');
-    r.append(el('span', 'brief-lab', label));
+    const r = el('div', 'preamble-row');
+    r.append(el('span', 'preamble-lab', label));
     const v = el('p');
     v.innerHTML = rich(text);
     r.append(v);
@@ -977,7 +977,7 @@ function chapterResults(M, spreadRef) {
        * and the one sentence naming the three racers. "Who ships which" went to the index, which
        * carries it for all thirty; "why it is worth understanding" went into the caption, which is
        * where an argument belongs. */
-      brief([
+      preamble([
         [
           'What you are looking at',
           'Three model designs generating text side by side; each line is how much memory that ' +
@@ -1020,7 +1020,7 @@ function chapterResults(M, spreadRef) {
        * matters" carried one sentence worth keeping — the reader who has watched a model degrade
        * before its advertised limit — which is now in the caption where it argues instead of
        * announcing. What is left is what the drawing is, and the walk through a real number. */
-      brief([
+      preamble([
         [
           'What you are looking at',
           'Rotary embeddings tell a model where a word sits by **rotating** its query and key ' +
@@ -1071,7 +1071,7 @@ function chapterResults(M, spreadRef) {
        * so it is in the caption now. The sinks explanation stays whole: it is on the do-not-cut
        * list, four readers quoted it, and it is the only place the page explains WHY anything on
        * the timeline happened by accident. */
-      brief([
+      preamble([
         [
           'What you are looking at',
           'Forty words in a row along the bottom. The bar above each one is how much **attention ' +
@@ -1121,14 +1121,14 @@ function chapterNegatives(M) {
     [
       'DroPE is two papers, one capital letter apart',
       'The technique usually described under this name — pretrain with positional embeddings, ' +
-        'drop them, recalibrate briefly — is arXiv:2512.12167. The transcript’s title instead ' +
+        'drop them, recalibrate briefly — is arXiv:2512.12167. The source’s title instead ' +
         'matches <b>DRoPE</b>, arXiv:2503.15029, an autonomous-driving trajectory paper with no ' +
         'relation to it. We cite the first and footnote the second so nobody re-finds it and ' +
         '“corrects” us.',
     ],
     [
       'The million-token figure does not reproduce on our yardstick',
-      `The transcript gives about ${M.transcriptDiscrepancy.claimedTB} TB for ` +
+      `The source gives about ${M.transcriptDiscrepancy.claimedTB} TB for ` +
         `${M.transcriptDiscrepancy.users} readers at a ` +
         `${int(M.transcriptDiscrepancy.context)}-token context. The same formula at this page’s ` +
         `model shape gives ${(M.transcriptDiscrepancy.computedBytes / 1e12).toFixed(2)} TB — ` +
@@ -1143,14 +1143,14 @@ function chapterNegatives(M) {
     'Corrections',
     `${Spell(items.length)} things the source material gets wrong`,
     [
-      /* NAME THE SOURCE BEFORE REBUTTING IT. These corrections were aimed at "the transcript" and
+      /* NAME THE SOURCE BEFORE REBUTTING IT. These corrections were aimed at "the source" and
        * "the source material", named nowhere on the page — so a newcomer read rebuttals of a
        * document they had no idea existed. The second paragraph, which explained at length why
        * correcting one's sources builds trust, is gone: a review reader called it "a running
        * commentary about its own trustworthiness that made me trust it less", and the corrections
        * themselves make the argument. */
       `These ${spell(M.counts.total)} entries were checked against the teaching material this ` +
-        'page was built from — spoken session notes and a transcript, not a paper. ' +
+        'page was built from — spoken topic notes and a source, not a paper. ' +
         `${Spell(items.length)} of its claims did not survive that check, and they are here ` +
         'rather than quietly fixed.',
     ],
@@ -1327,7 +1327,7 @@ function chapterLimits(M) {
       'not when it did — which is also why ' +
       `${M.mechanisms.filter((m) => !(m.shippedIn || []).length).length} of the ` +
       `${M.counts.total} entries name no model that shipped them.`,
-    `<b>${M.counts.outsideSession} of the ${M.counts.total} were built from the primary paper ` +
+    `<b>${M.counts.outsideSource} of the ${M.counts.total} were built from the primary paper ` +
       'alone</b>, with no secondary explanation to lean on. Each prints the source’s own date ' +
       'string beside our parsed date, at the back, so you can check the reading.',
     '<b>This page covers attention only.</b> JEPA and the world models built on it change what a ' +
@@ -1541,7 +1541,7 @@ function chapterReproduce(M, spreadRef, plateRef) {
      * required list names 18 items but 19 mechanisms, because one of its phrases covers two
      * different techniques that this catalogue keeps apart. */
     `‡ dated from the primary paper alone, without the teaching material ` +
-      `(${M.counts.outsideSession} of ${M.counts.total}) · ` +
+      `(${M.counts.outsideSource} of ${M.counts.total}) · ` +
       `† ours, beyond the required list (${M.counts.bonus} of ${M.counts.total}) · ` +
       '~ glyph drawn to schema rather than to scale'
   );

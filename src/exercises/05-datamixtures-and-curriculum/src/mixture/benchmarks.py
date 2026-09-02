@@ -1,14 +1,15 @@
 """Benchmarks, and the chain that turns each one into a lane share.
 
-Session 5 §3 sets the method and this module is it, in four links:
+Exercise 05 §3 sets the method and this module is it, in four links:
 
     benchmark  ->  loss map  ->  training-data format  ->  lane
 
 The link that is easy to skip is the second, and skipping it is what makes a mixture wishful.
 A benchmark's *token count* is not what it costs to train for; its **supervised** token count is.
 §6 states the masking rule exactly: in an agentic trajectory only the assistant's own tokens are
-supervised, because *"the model must never learn to invent the output of a tool it has not really
-run"*. The issue text, the repository, the tool observations and the test output are all context.
+supervised. A model trained on a tool's return value learns to produce that value itself rather
+than to call the tool. The issue text, the repository, the tool observations and the test output
+are all context.
 
 That is why every entry here records its loss map in three parts — supervised, masked, reward-only
 — rather than a single "tokens" figure. `supply.py` uses `supervised_ratio()` to discount a lane's
@@ -16,15 +17,15 @@ raw supply down to the part a loss can actually see, and the agentic lane is whe
 stops being an accounting detail and becomes the finding.
 
 The `stage` field carries the other thing §5 insists on: **where a capability is actually taught.**
-Long reasoning traces are not poured into pretraining and expected to produce a reasoning model
-(*"They are taught later"*), and the scarcest agentic trajectories are *"reserved for the annealing
-stage"*. A benchmark whose stage is `rlvr` cannot be bought with a pre-training share at all, and
+A reasoning model does not fall out of pouring long traces into pretraining; that capability is
+taught in a later stage — and the scarcest agentic trajectories are held back for the annealing
+stage. A benchmark whose stage is `rlvr` cannot be bought with a pre-training share at all, and
 saying so is the difference between a defended number and a hopeful one.
 """
 
 from dataclasses import dataclass
 
-# The three colours of the session's loss map, named once.
+# The three colours of the notes' loss map, named once.
 SUPERVISED = "supervised"  # green — in the cross-entropy loss
 MASKED = "masked"  # grey — prompt, problem, or observation; context only
 REWARD_ONLY = "reward"  # violet — a verifier scores the outcome; no token loss
@@ -39,8 +40,8 @@ class Benchmark:
 
     Attributes:
         key: Short identifier.
-        name: The benchmark as the session names it.
-        family: Grouping used by the session — agentic, coding, reasoning, indic, general.
+        name: The benchmark as the source material names it.
+        family: Grouping used by the source material — agentic, coding, reasoning, indic, general.
         measures: What the model is actually asked to do.
         metric: How it is scored.
         training_format: The shape of training data that improves it. This is the output of the
@@ -79,9 +80,10 @@ class Benchmark:
     def supervised_share_of_segments(self) -> float:
         """Fraction of the example's segments that carry loss.
 
-        A coarse proxy: segments are not equal in length, and the session is explicit that the
-        masked ones are the long ones (*"A whole run yields only a few hundred supervised
-        tokens"*). So this **overstates** supervision for trajectory data and is used only to rank
+        A coarse proxy: segments are not equal in length, and the source material is explicit that
+        the
+        masked ones are the long ones — a whole run yields only a few hundred supervised tokens.
+        So this **overstates** supervision for trajectory data and is used only to rank
         formats against each other, never as a token discount. The token discount lives in
         `supervised_ratio()`, which says where its numbers come from.
 
@@ -98,8 +100,8 @@ BENCHMARKS: tuple[Benchmark, ...] = (
         name="SWE-bench Verified",
         family="agentic",
         measures=(
-            "repo-level bug fixing: navigate a real codebase, localise the fault, and edit code "
-            "that makes hidden tests pass"
+            "repo-level bug fixing: find the fault in a real codebase and change the code so a "
+            "hidden test suite passes"
         ),
         metric="% resolved (pass@1) over 500 engineer-verified tasks",
         training_format="code-editing trajectories where the loss falls on the generated patch",
@@ -109,7 +111,7 @@ BENCHMARKS: tuple[Benchmark, ...] = (
         lanes=("agentic", "code"),
         stage="anneal",
         note=(
-            "the session's worked loss map: two supervised segments against three masked ones and "
+            "the source's worked loss map: two supervised segments against three masked ones and "
             "a reward, and the masked segments are a whole repository checkout"
         ),
     ),
@@ -171,7 +173,7 @@ BENCHMARKS: tuple[Benchmark, ...] = (
         lanes=("agentic",),
         stage="sft",
         note=(
-            "the contrast case the session draws: millions of samples but few tokens each, so "
+            "the contrast case the source draws: millions of samples but few tokens each, so "
             "sample count badly overstates its weight in a token budget"
         ),
     ),
@@ -281,7 +283,7 @@ BENCHMARKS: tuple[Benchmark, ...] = (
         stage="rlvr",
         note=(
             "structure is learned from traces in pre-training and anneal; the effort dial itself "
-            "is finished by RLVR in sessions 17-18, so this lane is provisioning for later"
+            "is finished by RLVR in topics 17-18, so this lane is provisioning for later"
         ),
     ),
     Benchmark(

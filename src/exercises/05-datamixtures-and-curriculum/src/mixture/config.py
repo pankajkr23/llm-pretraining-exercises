@@ -6,13 +6,14 @@ produced two different corpora under the same run id, and nothing in the manifes
 `Config.fingerprint()` hashes every field and lands in the rendered bundle. Change the run size
 from 2T to 5T and every downstream verdict changes; the fingerprint changes with it.
 
-Defaults come from Session 5 itself, not from preference:
+Defaults come from Exercise 05 itself, not from preference:
 
-- `run_tokens` is the session's own default run in the supply check (`Run · 1T · 2T · 5T · 10T`,
+- `run_tokens` is the source material's own default run in the supply check (`Run · 1T · 2T · 5T ·
+10T`,
   with the quoted demands — 480B for a 24% code lane — matching the 2T column).
-- `indic_floor` and `agentic_floor` are the two protected floors the session names by number
+- `indic_floor` and `agentic_floor` are the two protected floors the source material names by number
   (*"Indic ≥ 12%"*, *"Agentic ≥ 2%"*).
-- `anneal_share` is Session 5's own stage budget for mid-training (*"STAGE 2 · Mid-training /
+- `anneal_share` is Exercise 05's own stage budget for mid-training (*"STAGE 2 · Mid-training /
   Anneal · ~2% of tokens"*).
 """
 

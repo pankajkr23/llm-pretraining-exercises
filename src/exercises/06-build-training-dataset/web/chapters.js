@@ -110,7 +110,7 @@ const ref = (label, anchor) => {
 
 /* ------------------------------------------------------------------ 1 · run the ledger (Diff) */
 
-/* The claim is the session's thesis, stated by the instructor as: "I will not run the code —
+/* The claim is the source material's thesis, stated by the instructor as: "I will not run the code —
  * because I know some nondeterminism can creep in. I'm going to run the ledger. I will not
  * calculate it."
  *
@@ -713,7 +713,7 @@ function chapterProblem() {
     para(
       'That is the motivation. The deliverable is therefore not a data loader but a ',
       term('ledger'),
-      ' — an append-only record written as training happens — so the run can be interrogated afterwards. Session 5 produced a ',
+      ' — an append-only record written as training happens — so the run can be interrogated afterwards. Exercise 05 produced a ',
       $('i', '', 'recipe'),
       ': how much of each kind of data, in what order. This builds the machine that executes it and can prove it did.',
     ),
@@ -913,12 +913,12 @@ function chapterNegatives(data) {
           ' tokens above, and the corpus builder now refuses to build below one epoch.',
         ],
         [
-          b('The selector was built from the lecture’s description, which is not what the paper says. '),
-          'The lecture describes a weight mask stored as a map. There is no weight mask in the paper or in the reference implementation — it is a continuous preconditioned gradient inner product, minus a redundancy penalty the lecture never mentions. Building from the lecture alone would have produced the wrong system.',
+          b('The selector was built from the source’s description, which is not what the paper says. '),
+          'The source describes a weight mask stored as a map. There is no weight mask in the paper or in the reference implementation — it is a continuous preconditioned gradient inner product, minus a redundancy penalty the source never mentions. Building from the source alone would have produced the wrong system.',
         ],
         [
           b('A masking feature was documented as a behaviour of the run, and had zero callers. '),
-          'It was implemented, tested, and taught in the session notebook, while the pipeline built every microbatch with the default mask. The tests proved the function worked; only a caller proves the system uses it. It is now wired end to end.',
+          'It was implemented, tested, and taught in the topic notebook, while the pipeline built every microbatch with the default mask. The tests proved the function worked; only a caller proves the system uses it. It is now wired end to end.',
         ],
         [
           b('A number in the telemetry was arithmetic wearing a statistic’s clothes. '),
@@ -1037,7 +1037,7 @@ function chapterLimits() {
 function chapterNext() {
   return section('next', 'next', 'What comes next', 'Four open items, and no roadmap beyond them', [
     para(
-      'Everything the assignment asked for is done. What follows is the honest remainder — three known defects and one unresolved question — rather than an invented plan.',
+      'Everything the requirements asked for is done. What follows is the honest remainder — three known defects and one unresolved question — rather than an invented plan.',
     ),
     bullets([
       [

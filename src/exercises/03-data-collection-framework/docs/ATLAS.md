@@ -1264,7 +1264,7 @@ The main report's central scarcity claim — "only ~0.3T naturally-occurring Ind
 
 ## B.2 🔴 REVISION — Dynamic data selection: the production prior from LightningLM's own run
 
-The main report's pipeline (§17) treated the mixture as static and phase-scheduled. The course's Session 5 material and the LightningLM 0.1V technical report (arXiv:2606.07404, **in this project**) contain a rare artifact: **a production post-mortem of running a per-iteration data selector (OPUS) at scale.** The findings should govern your architecture:
+The main report's pipeline (§17) treated the mixture as static and phase-scheduled. The course's Exercise 05 material and the LightningLM 0.1V technical report (arXiv:2606.07404, **in this project**) contain a rare artifact: **a production post-mortem of running a per-iteration data selector (OPUS) at scale.** The findings should govern your architecture:
 
 **The corpus it was run on (the closest existing blueprint to your project):**
 
@@ -1280,7 +1280,7 @@ LightningLM V4: **1,118B tokens across 33,353 shards** (~**1,254B effective** af
 | Golden Proxy | GP | 6.8M (11 shards) | **Never trained on.** Supplies only the direction the selector steers toward |
 | Dropped | B2 | 31.3B | **Cut for contamination** |
 
-**Why the Always-ON tier exists — the single most important design fact in the whole project:** the golden proxy is **English-heavy (cosine 0.876 with the English web band)**, so OPUS **systematically under-values Indic data and would reject it** if allowed to govern everything. The report's stated principle: *"A single selector should not govern data whose value it cannot see."*
+**Why the Always-ON tier exists — the single most important design fact in the whole project:** the golden proxy correlates far more strongly with the English web band than with any Indic one, so OPUS **under-values Indic data and would reject it** if allowed to govern everything. The report's stated principle: *"A single selector should not govern data whose value it cannot see."*
 
 **The selector's real economics at scale:**
 
@@ -1322,7 +1322,7 @@ Combined with Addendum A's finding that **Sarvam-105B is Apache 2.0 with its ful
 | **Upcycle/grow from an open checkpoint** (Sarvam-105B, or a staged seed) | LightningLM 4-stage growth (in-project, at 120B); Grove-MoE; the entire dense-to-MoE upcycling literature | **Large multiple cheaper**; inherits tokenizer + Indic competence |
 | Buy capability via data quality + RL environments at smaller active size | Muennighoff allocation rule (§B.1); Qwen3.6-27B ≈ SWE-bench frontier reports (§A.6, secondary) | Cheapest per benchmark point |
 
-For calibration of what "frontier corpus" means today (from the Session-3 notes, in-project): **Llama 4 trained on >30T tokens; Qwen3 on 36T across 119 languages.** The 15T target of §16 is respectable but not frontier-scale — which is precisely why the effective-token machinery of §B.1 and the growth machinery here matter more than raw collection.
+For calibration of what "frontier corpus" means today (from the Topic-3 notes, in-project): **Llama 4 trained on >30T tokens; Qwen3 on 36T across 119 languages.** The 15T target of §16 is respectable but not frontier-scale — which is precisely why the effective-token machinery of §B.1 and the growth machinery here matter more than raw collection.
 
 **Revised recommendation:** the $1B question is not "which 300B do we train" but "**scratch vs grow**" — and the burden of proof now sits on scratch. Insert, before any capital commitment: a 4-week head-to-head at ~2B scale of (a) from-scratch on your mix vs (b) grown/upcycled, on identical data, judged on Indic + code held-out loss.
 
@@ -1361,6 +1361,6 @@ For calibration of what "frontier corpus" means today (from the Session-3 notes,
 
 ## B.7 Grounding statement
 
-Everything in B.1–B.4 is extracted from documents **inside this project** (2305.16264, 2606.07404, 2602.05400, 2605.29379, 2605.29459, 2511.03237, s3.md, s5.md) via project-knowledge retrieval — quotes and figures are verbatim from those retrievals. Everything in B.5 is from **today's cs.CL announcement**, parsed live from arxiv.org, with all six headline abstracts fetched directly before characterization. Sardana & Frankle is cited at thesis level only and flagged as such. Still unverified, unchanged from A.7: real-time X/Twitter; whether IndicTalk / IKS-Instruct data files are actually uploaded; R\*_D for Indic/synthetic text (nobody has measured it — you should be first).
+Everything in B.1–B.4 is extracted from documents **inside this project** (2305.16264, 2606.07404, 2602.05400, 2605.29379, 2605.29459, 2511.03237, plus local reference material) via project-knowledge retrieval — quotes and figures are verbatim from those retrievals. Everything in B.5 is from **today's cs.CL announcement**, parsed live from arxiv.org, with all six headline abstracts fetched directly before characterization. Sardana & Frankle is cited at thesis level only and flagged as such. Still unverified, unchanged from A.7: real-time X/Twitter; whether IndicTalk / IKS-Instruct data files are actually uploaded; R\*_D for Indic/synthetic text (nobody has measured it — you should be first).
 
 *End of Addendum B.*

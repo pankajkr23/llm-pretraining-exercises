@@ -2,7 +2,7 @@
 
 Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is a public web app plus
 a sourced chronology; the reasoning is `DECISIONS.md`, the running log is `PROGRESS.md`, and
-`BRIEF.md` is the assignment (local only, gitignored).
+`REQUIREMENTS.md` is the requirements (local only, gitignored).
 
 **Status: shipped.** `config.py`, `cache.py`, `sources.py`, `catalogue.py`, `timeline.py`,
 `results/mechanisms.json`, and the page at `web/` — twelve spine sections, the two-object mechanism
@@ -22,15 +22,12 @@ uv run pytest src/exercises/08-modern-attention-variants -m integration
 ## What makes this exercise different
 
 Every previous exercise measured something it ran. This one's central claim is a **chronology**, and
-the instructor grades on it:
+it is graded on three things: the dates, the trade-offs,
+and the clarity of the story. We were also warned about the specific failure mode — an agent asked
+for a launch date supplies a confident one it has half remembered — so every date is checked against
+the paper or release itself.
 
-> "Your job is to be right about the dates, right about the trade-offs, and clear about the story."
->
-> "Your agent will happily invent a launch date and describe a technique it has half remembered.
-> Check every date against the actual paper or release."
-
-He also says plainly that a missing mechanism scores zero, and invites us to catch errors in his own
-material. So the rules below are all about evidence, not about code.
+A missing mechanism scores zero, and we were invited to catch errors in the source material. So the rules below are all about evidence, not about code.
 
 ## The rules this exercise adds
 
@@ -47,35 +44,35 @@ material. So the rules below are all about evidence, not about code.
   that cannot express doubt will express confidence it has not earned.
 
 - **A mechanism with no stated cost is rejected.** `catalogue.Mechanism.__post_init__` raises when
-  `new_tradeoff`, `gives_up` or `when_to_choose` is empty. The assignment: *"If you write down a
-  technique with only pros, you have not understood it yet."*
+  `new_tradeoff`, `gives_up` or `when_to_choose` is empty. A technique written down with only upside has not been
+  understood yet, and the requirements says so.
 
 - **`MANDATED` is the instructor's own list, quoted, mapped to our keys.** The test reads his
   phrases, so a rename on our side can never silently drop one of his items. Do not reword the left
   side of that dict.
 
-- **Reproduce the session's numbers; never copy them into prose.** `cache.kv_cache_bytes` recomputes
+- **Reproduce the source material's numbers; never copy them into prose.** `cache.kv_cache_bytes` recomputes
   6.44 GB at one user and 51.54 GB at eight, and GQA at two KV heads is exactly a quarter of MHA.
   Tests pin all three, so editing the yardstick breaks the documents that cite it.
 
-- **The claimed arc is derived, not repeated.** The brief says the field went "exactness → memory →
+- **The claimed arc is derived, not repeated.** The requirements says the field went "exactness → memory →
   length → memory again". `timeline.pressure_by_period` counts which bill each window addressed, and
   `Period.dominant` returns `None` on a tie instead of picking a winner. If the arc is not in the
   data, say so.
 
 ## Two errors in the course material, both verified
 
-Recorded because the assignment explicitly invites it — *"if you catch me in another one, tell me"* —
+Recorded because the requirements explicitly invites it — *"if you catch me in another one, tell me"* —
 and because a reader deserves to know which claims we checked.
 
-- **The transformer is mis-dated in the transcript.** It says Vaswani "invented in 2018 and 17";
+- **The transformer is mis-dated in the source.** It says Vaswani "invented in 2018 and 17";
   *Attention Is All You Need* is `arXiv:1706.03762`, v1 **Mon, 12 Jun 2017**, read from the abstract
   page. June 2017, not 2018.
 
-- **DroPE is two different papers in the source, and the transcript quotes the wrong one's title.**
-  The technique the session describes — pretrain with positional embeddings, drop them, recalibrate
+- **DroPE is two different papers in the source, and the source quotes the wrong one's title.**
+  The technique the source material describes — pretrain with positional embeddings, drop them, recalibrate
   briefly — is *Extending the Context of Pretrained LLMs by Dropping Their Positional Embeddings*,
-  `arXiv:2512.12167` (Sakana AI), v1 **13 Dec 2025**. The transcript's garbled "rotate position
+  `arXiv:2512.12167` (Sakana AI), v1 **13 Dec 2025**. The source's garbled "rotate position
   emitting for efficient" maps instead onto **DRoPE** (capital R), `arXiv:2503.15029`, *Directional
   Rotary Position Embedding for Efficient Agent Interaction Modeling* — an autonomous-driving
   trajectory paper with no relation to the technique. Two papers whose names differ by one
@@ -83,8 +80,8 @@ and because a reader deserves to know which claims we checked.
 
 ## One number that does not reproduce
 
-The transcript says eight users at a 1M-token context need "about 1 TB". The session's **own
-formula**, at the session's own yardstick, gives **1.57 TB**:
+The source says eight users at a 1M-token context need "about 1 TB". The source material's **own
+formula**, at the source material's own yardstick, gives **1.57 TB**:
 
     2 x 48 x 8 x 128 x 1,000,000 x 8 x 2 = 1,572,864,000,000 bytes
 
@@ -93,10 +90,10 @@ inputs would reconcile them (a smaller model, fewer KV heads, or fp8 would each 
 
 ## Where the material actually comes from
 
-`docs/sessions/s8.md` teaches ten of the eighteen mandated mechanisms. **Eight are named in the
+The reference notes teach ten of the eighteen mandated mechanisms. **Eight are named in the
 coverage list and never taught**: sinusoidal, learned absolute positions, ALiBi, sliding window,
 attention sinks, NTK-aware scaling, YaRN and MLA. Those are sourced entirely from outside the course
-material, and `taught_in_session` on each entry records which is which — so a reader can see where
+material, and `taught_in_source` on each entry records which is which — so a reader can see where
 our evidence came from rather than assuming it all came from class.
 
 ## The page is a monograph, and four rules keep it one
@@ -247,7 +244,7 @@ module describing any mechanism, and `web/field-guide/` is a second route over t
 ## The readability pass, and the two defects it turned up that were not readability
 
 The page was audited section by section against Sebastian Raschka's *A Visual Guide to Attention
-Variants in Modern LLMs* (local-only, `docs/sessions/`) and against `AGENTS.md`'s ladder of readers.
+Variants in Modern LLMs* (local reference only) and against `AGENTS.md`'s ladder of readers.
 75 findings, 37 edits. Most were wording. Two were not, and both are the kind this exercise exists
 to catch.
 
@@ -318,7 +315,7 @@ explicitly now.
 ## The page was rebuilt around six readers, and two of them found factual defects
 
 Six personas read the page end to end — a fifteen-year-old, a practising engineer, a frontier
-researcher, an adversarial sceptic, an assignment grader, and a reader who had just come from
+researcher, an adversarial sceptic, an requirement grader, and a reader who had just come from
 Raschka's *Visual Guide to Attention Variants*. What they changed, and the rules that came out of it.
 
 **The page's headline claim was false, and the key's own counts had been right all along.** The
@@ -364,7 +361,7 @@ all.
 "where two static curves would only show correlation". Animating a schematic does not make it causal;
 the dial illustrates an assumed mechanism and this page has no measurement of a deployed model.
 
-**Once is orientation; three times is a template readers skip.** The three figure `brief()` blocks
+**Once is orientation; three times is a template readers skip.** The three figure `requirements document()` blocks
 ran 217, 265 and 279 words in the same five-heading shape, and two readers said they were skipping
 the good sentences with the boilerplate. They are 52, 50 and 59 now — and both lessons that lived
 only inside a deleted block moved into a caption **first**, because `AGENTS.md` forbids leaving a

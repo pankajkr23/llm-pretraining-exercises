@@ -13,7 +13,7 @@
       "n": "1",
       "id": "extract",
       "name": "Extract",
-      "summary": "Session 3's topic — Sangraha and the rest ship extracted text."
+      "summary": "Exercise 03's topic — Sangraha and the rest ship extracted text."
     },
     {
       "n": "2",
@@ -37,7 +37,7 @@
       "n": "4",
       "id": "quality",
       "name": "Quality filter",
-      "summary": "Nine Gopher/C4 rules at the session's thresholds."
+      "summary": "Nine Gopher/C4 rules at the source material's thresholds."
     },
     {
       "n": "5",
@@ -434,7 +434,7 @@
         }
       },
       "runtime_s": 5.954,
-      "note": "The corpus carries 5 literal role markers in 3 documents — ghost tags are created by the renderer, not inherited from the data. Across 1,000 turns, rendering as chatml costs 18.0 extra tokens per turn. That is only 0.8% of this corpus because a reasoning trace averages 2,220 tokens per turn; on short chat turns the same markers are the double-digit waste the session describes."
+      "note": "The corpus carries 5 literal role markers in 3 documents — ghost tags are created by the renderer, not inherited from the data. Across 1,000 turns, rendering as chatml costs 18.0 extra tokens per turn. That is only 0.8% of this corpus because a reasoning trace averages 2,220 tokens per turn; on short chat turns the same markers are the double-digit waste the source material describes."
     },
     {
       "n": "3",
@@ -941,7 +941,7 @@
           "threshold": 0.719,
           "preset": "FineWeb (k=5, 112 = 14x8)",
           "quoted_target": 0.75,
-          "note": "The session quotes this preset as target ~0.75; the banding approximation gives 0.719. We publish what the code computes."
+          "note": "The source material quotes this preset as target ~0.75; the banding approximation gives 0.719. We publish what the code computes."
         },
         "exact": {
           "docs_removed": 85,
@@ -1367,7 +1367,7 @@
       true,
       true
     ],
-    "session_illustrative": [
+    "illustrative_only": [
       100,
       92,
       88,
@@ -1377,7 +1377,7 @@
       42,
       42
     ],
-    "note": "The session's descent is illustrative and covers eight stages; ours is measured and covers nine rows, because format discipline is counted separately."
+    "note": "The source material's descent is illustrative and covers eight stages; ours is measured and covers nine rows, because format discipline is counted separately."
   },
   "tokenizer_spread": {
     "tokenizers": [
@@ -1467,7 +1467,7 @@
     "generated": "2026-08-16T12:52:13Z",
     "profile": {
       "name": "full",
-      "summary": "The published corpus: roughly 90M tokens across three corpora, inside the assignment's 10-100M window."
+      "summary": "The published corpus: roughly 90M tokens across three corpora, inside the requirements' 10-100M window."
     },
     "config_hash": "sha256:7e4cf27b996a06822845d90181c07db6d106cfe92e100c670df98efa74186084",
     "script_hash": "sha256:9f958909cd9063ded8372d02d7ae1e747d7fe1ad1d93b47f8313fba47d940c01",

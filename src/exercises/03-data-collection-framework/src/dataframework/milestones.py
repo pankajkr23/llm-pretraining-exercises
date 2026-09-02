@@ -155,7 +155,7 @@ TIER_SHAPE: tuple[dict[str, Any], ...] = (
             "Breadth — everyday knowledge and common sense, and the least interesting tier per "
             "token. It used to be the largest here, and gave up seven points to code, maths and "
             "tool use, "
-            "because the assignment names those as primary capabilities and a mixture is zero-sum."
+            "because those are named primary capabilities and a mixture is zero-sum."
         ),
     },
 )
