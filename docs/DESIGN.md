@@ -296,7 +296,7 @@ is a limitation the page is hiding. Smaller type, fewer words, always on screen.
   falsify it. A caption that repeats the figure's title has made the reader do the interpreting.
 - **A caption may not claim what the drawing cannot show.** A figure with one axis cannot invite a
   judgement about a second.
-- **`.brief`** is the orientation *before* the figure — a mono label over a short paragraph, saying
+- **`.requirements document`** is the orientation *before* the figure — a mono label over a short paragraph, saying
   what you are looking at. **Once is orientation; three times is a template readers skip**, so keep
   it to one or two rows and put the argument in the caption.
 - **Figures are inline SVG built from the page's own data, never a chart library.** Exercise 07
@@ -520,7 +520,7 @@ A rule with no guard decays. The repo-wide guards live in `tests/`; per-exercise
 | every deployable exercise is enforced or exempt, with a reason | `tests/test_page_spine.py` |
 | README reading path, command, limits section | `tests/test_readme_structure.py` |
 | every relative link resolves from its own directory | `tests/test_readme_links.py` |
-| exercise skeleton present; no `BRIEF.md` ever tracked | `tests/test_exercise_skeleton.py` |
+| exercise skeleton present; no `REQUIREMENTS.md` ever tracked | `tests/test_exercise_skeleton.py` |
 | the rail is built and fills the gutter it reserves | `tests/test_rail_centring.py` |
 | every test file is in a CI shard **and collects there** | `tests/test_ci_shards_cover_everything.py` |
 | 42–80 characters a line, ten widths | `test_attention_measures.py` (the pattern to copy) |

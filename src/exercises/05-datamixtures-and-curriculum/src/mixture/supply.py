@@ -1,6 +1,6 @@
 """Demand against supply, priced three ways, with a verdict per lane.
 
-This is the module the assignment's warning is aimed at: quietly handing a large share to a lane
+This is the module the requirements' warning is aimed at: quietly handing a large share to a lane
 with almost no real data behind it is exactly the wishful accounting the work exists to prevent.
 So no share here is allowed to stand without an answer to "out of what?".
 

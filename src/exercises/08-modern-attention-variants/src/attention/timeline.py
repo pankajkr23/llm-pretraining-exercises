@@ -1,7 +1,8 @@
 """What falls out of the order, computed rather than asserted.
 
-Question 2 of the assignment asks what the timeline actually shows — what becomes visible once the
-mechanisms are in date order that a list cannot show. The brief supplies its own answer, a claimed
+Question 2 of the requirements asks what the timeline actually shows — what becomes visible once the
+mechanisms are in date order that a list cannot show. The requirements supplies its own answer, a
+claimed
 arc:
 
     exactness, then memory, then length, then memory again
@@ -13,7 +14,8 @@ recurrent state and sparsity returning and compression growing more aggressive.
 **That claim is testable, so this module tests it rather than repeating it.** `pressure_by_period`
 groups the catalogue into windows and reports which bill each window is dominated by. If the arc is
 real it appears in the counts; if it does not appear, this exercise says so. An arc quoted from the
-brief and printed over a chart that does not show it would be the same failure as an unsourced date.
+requirements and printed over a chart that does not show it would be the same failure as an
+unsourced date.
 """
 
 from collections import Counter
@@ -55,7 +57,7 @@ class Period:
 
 
 def in_order(mechanisms: list[Mechanism]) -> list[Mechanism]:
-    """The catalogue by date, oldest first — the order the assignment requires.
+    """The catalogue by date, oldest first — the order the requirements requires.
 
     Ties break on key so the order is stable across runs; two mechanisms genuinely sharing a date
     (sinusoidal and standard attention share a paper) must not reorder between builds.
@@ -131,7 +133,7 @@ class ArcVerdict:
     """Whether the claimed arc survives the dates.
 
     Attributes:
-        claimed: The arc as the brief states it, in our labels.
+        claimed: The arc as the requirements states it, in our labels.
         observed: The dominant bill of each window in order, `None` where no bill dominated.
         decided: Windows that produced a clear winner.
         undecided: Windows that came back a tie.

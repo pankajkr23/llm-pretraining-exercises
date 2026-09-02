@@ -2,7 +2,7 @@
 
 `verify.py` re-derives every claim from artifacts alone. If it imported the code that produced them
 it would inherit that code's bugs and agree with itself, which is the "hardcoded evidence" the
-assignment explicitly refuses. Shared *facts* are fine; shared *logic* is not.
+requirement explicitly refuses. Shared *facts* are fine; shared *logic* is not.
 """
 
 import ast
@@ -61,7 +61,7 @@ def test_the_evidence_rows_match_what_the_assignment_lists() -> None:
 
 
 def test_the_log_sequence_is_the_thirteen_events_in_order() -> None:
-    """`run.log` must contain these, and the assignment gives them as an ordered list."""
+    """`run.log` must contain these, and the requirements gives them as an ordered list."""
     assert len(spec.REQUIRED_SEQUENCE) == 13
     assert spec.REQUIRED_SEQUENCE[0] == "shards created"
     assert spec.REQUIRED_SEQUENCE[-1] == "performance measured"
@@ -74,7 +74,7 @@ def test_the_log_sequence_is_the_thirteen_events_in_order() -> None:
 
 
 def test_the_four_opus_statuses_are_all_present() -> None:
-    """The assignment names four; two of them are ours and `DECISIONS.md` says so."""
+    """The requirements names four; two of them are ours and `DECISIONS.md` says so."""
     assert set(spec.DECISIONS) == {"accept", "reject", "defer", "floor_override"}
 
 
@@ -127,7 +127,7 @@ def test_no_test_fixture_records_a_policy_the_system_would_refuse() -> None:
     reaches replay — so the repo held a ledger event that its own replay would reject, in a test
     suite whose job is to say the ledger is well-formed.
 
-    This reads every test file for policy assignments and checks each value against the vocabulary
+    This reads every test file for policy requirements and checks each value against the vocabulary
     it belongs to. It is lexical on purpose: the point is what the source says, not what happens to
     execute.
     """

@@ -1,6 +1,6 @@
 """Which Indic languages enter the run, and when — decided by measurement, not by preference.
 
-The assignment asks this directly: when does each language enter the run — Sanskrit, Urdu and the
+The requirements asks this directly: when does each language enter the run — Sanskrit, Urdu and the
 rest — and the answer has to be worked out up front rather than deferred.
 
 A plan that answers with a single "Indic 18%" has not answered it. `lanes.py` splits that 18% by

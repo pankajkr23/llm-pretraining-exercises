@@ -37,7 +37,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   several did on a public branch while `.gitignore` worked perfectly. Removed in the process: a
   table naming two sources with their line counts and a summary of each one's contents; a source
   path **served to the live site** in exercise 03's `records.json`; module docstrings citing sources
-  by name; a scaffolder that wrote a source path into every new exercise's brief; and test fixtures
+  by name; a scaffolder that wrote a source path into every new exercise's requirements document; and test fixtures
   whose invented filenames published the real naming scheme.
 
   The material is resolved by `tools/backup_local_only.py::EXTERNAL_SOURCES` and overridable with
@@ -238,7 +238,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   the recent end of the plate is drawn almost entirely from labs that publish papers.
 
 - **A "How to read this" opening**, explaining the two costs the whole page hangs off in
-  plain words and offering three ways in; and **orientation briefs above Plates V and VI**, which
+  plain words and offering three ways in; and **orientation requirement documents above Plates V and VI**, which
   showed objects — two rotary dials, forty tokens under a sliding window — that were not guessable
   from a caption written to argue after the fact.
 
@@ -287,7 +287,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   can check the two against each other.
 - **Guards that make an invented date a test failure.** A citation claiming `verified` will not
   construct without a URL and a quoted date; a test parses the quoted string and compares it to the
-  recorded date; another asserts every mechanism the assignment names is present, failing in the
+  recorded date; another asserts every mechanism the requirements names is present, failing in the
   instructor's own words. All three were watched failing on a deliberately broken catalogue — a
   dropped mechanism, a transposed date (`2021-04-20` → `2021-04-02`), and a stripped URL.
 ### Changed
@@ -306,7 +306,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   embeddings should be deleted; HD-RoPE, eight months later, concludes they should be made richer.
   Both report gains over standard RoPE. The page ends on the open question rather than resolving it.
 
-- **Neutral voice throughout.** Every word tying the page to a particular class or assignment is
+- **Neutral voice throughout.** Every word tying the page to a particular class or requirement is
   gone from the page, the served NOTICE and the meta description. The corrections are unchanged in
   substance; they now correct "our sources".
 
@@ -349,7 +349,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   inapplicable to it by construction. The document now points at `PATTERNS` as the authority instead
   of keeping a second copy that drifts.
 - **A sentence in `AGENTS.md`'s exercise-skeleton rule ran two clauses together** and read
-  "not for what your machine has and asserts no `BRIEF.md` is ever tracked".
+  "not for what your machine has and asserts no `REQUIREMENTS.md` is ever tracked".
 
 - **Exercise 08 rendered the same thirty mechanisms in two tables, and three of its six chapters had
   no body at all.** "Every mechanism, one line each" restated "The index" — together 43% of the
@@ -622,7 +622,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 ### Added
 
 - **Exercise 07 — Kronecker v2: an invertible codec and a vocabulary-independent output head.**
-  Exercise 07's brief asks whether the Kronecker byte codec can be reversed so the `d_model × |V|`
+  Exercise 07's requirements document asks whether the Kronecker byte codec can be reversed so the `d_model × |V|`
   output head can be deleted. It can. The projection inverts **exactly** at `d_model = 384` with a
   decoder that **certifies its own answer**, and that survives a projection trained to loss 2.45.
   Tying the head to the *induced* embedding `E = K·W_proj` — not to `W_proj`, which is the tie the
@@ -646,7 +646,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   **six inline-SVG figures** built from `results/measurements.json`: the 256×32 grid the exercise is
   about and had never shown, a diagram of the tie itself, the 49× scale bug that made the idea look
   impossible, the four locked tokens drawn as an actual rectangle, and the paired-seed figure that
-  explains why any of the numbers can be believed. Adds a glossary, the brief quoted verbatim, an
+  explains why any of the numbers can be believed. Adds a glossary, the requirements quoted verbatim, an
   expected-vs-found block, a negatives section, a conclusion, limits and what comes next. Four new
   browser tests enforce the spine, and each was broken on purpose to confirm it fails.
 - **The page's lock demonstration showed numbers it invented.** It generated five random values in
@@ -698,7 +698,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   `position_policy: "restart-per-document"` where the pipeline writes
   `"restart-per-document-continue-across-window"` — an event its own `replay.rebuild` would reject,
   in the suite whose job is to say the ledger is well-formed. Fixed, and guarded: a new lexical
-  check reads every test file for policy assignments and validates them against `spec`. It knows to
+  check reads every test file for policy requirements and validates them against `spec`. It knows to
   allow a deliberately-invalid value inside a refusal test, because without that it would have
   flagged the one test proving invalid policies are caught.
 - **The "not shipped" guard could not see a directory.** It matched only `*.py`, so when
@@ -1109,7 +1109,7 @@ being edited until the claim comes out true.
   read-only memmap both protect the *handle*, and neither survives a shell — **re-hashing on read**
   is what catches a tampered file, so every ledger entry will carry the shard's hash and replay will
   re-verify before reading.
-- **The admission gate refuses on a missing hash, not only a failing one.** The lecture's minimum is
+- **The admission gate refuses on a missing hash, not only a failing one.** The source's minimum is
   dedup + PII + eval-overlap; an unanswered question is not a pass. Every reason is reported rather
   than the first, so one call says everything wrong with a shard.
 - Proven end to end on real corpus text: 600k chars → **269,439 tokens** → 5 sealed shards, all
@@ -1117,7 +1117,7 @@ being edited until the claim comes out true.
   false and changing the id.
 
 - **Exercise 06 has the full exercise skeleton**, which it should have had before any code was
-  written: `BRIEF.md` (local, gitignored — the assignment), `CLAUDE.md` (rules for whoever changes
+  written: `REQUIREMENTS.md` (local, gitignored — the requirements), `CLAUDE.md` (rules for whoever changes
   the code), `PROGRESS.md` (the running log), `NOTICE` (scope, affiliation and third-party credit
   with both OPUS copyright lines), and `artifacts/`. It is now in the root README's exercise table.
 - **`tests/test_deploy_registration.py`** — every exercise with a `web/` has a card on the site's
@@ -1125,7 +1125,7 @@ being edited until the claim comes out true.
   automatically but the cards are hand-maintained, so an exercise could be deployed and reachable
   while invisible to anyone arriving at the site root, with nothing failing.
 - **`tests/test_exercise_skeleton.py`** makes the skeleton checkable instead of remembered. It
-  requires the genuinely universal files only, and asserts **no `BRIEF.md` is ever tracked** —
+  requires the genuinely universal files only, and asserts **no `REQUIREMENTS.md` is ever tracked** —
   verified with `git ls-files` rather than by reading `.gitignore`, because a file already in the
   index stays tracked no matter what the ignore rules say afterwards.
 
@@ -1140,7 +1140,7 @@ being edited until the claim comes out true.
   plainly it describes stage 1 rather than a finished system, and a notebook builder whose notebook
   executes end to end.
 - **`tests/test_submission_bundle.py`** pins the split the deliverable rests on: everything the
-  assignment names is trackable under `submission_artifacts/`, and heavy output stays ignored under
+  requirement names is trackable under `submission_artifacts/`, and heavy output stays ignored under
   `artifacts/`. It also pins *why* the bundle is not simply called `artifacts/` — `**/artifacts/` is
   a **directory** pattern, and git cannot re-include a file whose parent is excluded, so a negation
   there is inert while `git add -A` reports success.
@@ -1200,11 +1200,11 @@ being edited until the claim comes out true.
   the package is named by both the README and the exercise's `CLAUDE.md`, which failed on its first
   run against six modules.
 
-- **All four of exercises 01–04's `BRIEF.md` files had been destroyed and are restored.** They were
+- **All four of exercises 01–04's `REQUIREMENTS.md` files had been destroyed and are restored.** They were
   tracked until `18015b1` untracked them; the *next* branch switch across that commit then deleted
   the working copies, because git removes a file that was tracked at the old HEAD and is not at the
   new one. Nobody deleted anything. Recovered from `18015b1^`.
-- **The local-only tripwire now covers `BRIEF.md`**, alongside the notebooks and builders, and
+- **The local-only tripwire now covers `REQUIREMENTS.md`**, alongside the notebooks and builders, and
   carries the recovery command in its failure message. `AGENTS.md` explains the mechanism — that
   *untracking* is what makes a file fragile — rather than leaving it to be rediscovered.
 - **The skeleton guard required `tools/`, which no fresh clone has.** For most exercises its only
@@ -1254,7 +1254,7 @@ being edited until the claim comes out true.
   `05-…/tools/fetch_proxy_corpus.py` is still versioned, because a corpus needs a tracked way to
   fetch and licence-check it.
 
-- **The root README no longer carries a generated section for exercise 05.** The brief says the
+- **The root README no longer carries a generated section for exercise 05.** The requirements says the
   root is the front door and must reach `SPEC.md` "without a detour", and the obvious reading was
   that the front door should therefore summarise the exercise under submission. It should not: the
   block grew back into exactly the retelling the root/exercise split exists to prevent — the claim,
@@ -1586,11 +1586,11 @@ being edited until the claim comes out true.
   both go red when the fetch is put back. Exercises 02–04 keep their fetch; exercise 02's bundle is
   2.8 MB, where inlining would block first paint for no gain.
 
-- **Assignment briefs are no longer tracked, at any level.** `BRIEF.md` is gitignored by name
-  everywhere. A brief is the course's text and is input for whoever builds the exercise; it is not
+- **Requirement requirement documents are no longer tracked, at any level.** `REQUIREMENTS.md` is gitignored by name
+  everywhere. A requirements document is the course's text and is input for whoever builds the exercise; it is not
   the deliverable. The files remain on disk and in past commits — no history was rewritten.
 
-  Exercise 04's brief carried a **decision record** (D1–D7: why the answer is eight, why those
+  Exercise 04's requirements document carried a **decision record** (D1–D7: why the answer is eight, why those
   corpora, what may be published) that its README linked into three times. That record moves to a
   tracked [`DECISIONS.md`](src/exercises/04-data-cleaning-dedup/DECISIONS.md) and every citation
   now points there, so nothing published goes dark and no link 404s.
@@ -1755,10 +1755,10 @@ showed itself by running it.
   Assamese and Manipuri are kept as a deliberate out-of-vocabulary probe, excluded from the token
   budget and used only to produce the 84% figure.
 
-- **The exercise's `BRIEF.md` and `README.md` describe real work** rather than saying the brief is
-  pending. `BRIEF.md` carries the assignment verbatim plus a decision record: why the answer to
+- **The exercise's `REQUIREMENTS.md` and `README.md` describe real work** rather than saying the requirements is
+  pending. `REQUIREMENTS.md` carries the requirements verbatim plus a decision record: why the answer to
   "how many strategies" is **8** when the source material names two *different* eights, why the example link
-  in the assignment is a **model** rather than a dataset, and what may and may not be published.
+  in the requirements is a **model** rather than a dataset, and what may and may not be published.
 
 ### Fixed
 
@@ -1932,7 +1932,7 @@ published.
 ### Removed
 
 - **The programme's schedule and internal authoring specs no longer ship on the remote.**
-  `docs/BRIEF.md` (course structure, 20-class syllabus, capstone staffing) and the two explainer
+  `docs/REQUIREMENTS.md` (course structure, 20-class syllabus, capstone staffing) and the two explainer
   authoring specs — `docs/EXPLAINER_PROMPT.md`, `docs/EXPLAINER_PATTERN.md` — are untracked and
   gitignored, and the root README's "About the program" section — duration, topic times, format,
   capstone — is gone with them. The files are unchanged on a working checkout; they simply stop
@@ -1941,7 +1941,7 @@ published.
   everyone but us.
 - **`DESIGN_CRITIQUE.md` is local too.** Exercise 03's self-critique of its own first build is a
   useful record for whoever works on it next, but it is not part of the published work — untracked,
-  gitignored, unchanged on disk, and no longer linked from the root README or the exercise brief.
+  gitignored, unchanged on disk, and no longer linked from the root README or the exercise requirements document.
 
 ### Fixed
 
@@ -1968,7 +1968,7 @@ than overwritten, and the widget can now tokenize text you paste into it.
 
 - **Exercise 02 now carries two evaluation profiles, both retained and neither deprecated.**
   **v1** is the original work — clipped article prose, scored in tokens per whitespace word, no
-  Hindi penalty, en/hi/te/ta — and **v2** is the measurement the assignment grades — wiki-faithful
+  Hindi penalty, en/hi/te/ta — and **v2** is the measurement the requirements grades — wiki-faithful
   Markdown, faithful units, Hindi penalty, en/hi/te/mai. Their scores can never be ranked against
   each other: the same tokenizer reads ≈ 2.13 under v1 and ≈ 0.60 under v2. `ablate.sweep` raises
   if handed rows from both, and the widget renders one labelled section per profile with the
@@ -2030,7 +2030,7 @@ than overwritten, and the widget can now tokenize text you paste into it.
   rejected experiment or an ablation. The render test fails if a config reaches the page without
   an explanation: a row of numbers with no story is not a finding.
 - **The submitted tokenizer ships in the bundle**, in HuggingFace's own format at
-  `web/tokenizer.json` — `artifacts/` is gitignored by design, and the assignment asks for the exact
+  `web/tokenizer.json` — `artifacts/` is gitignored by design, and the requirements asks for the exact
   file. `tests/test_submission.py` trains nothing: it loads that file, scores it on the committed
   corpus, and asserts the figures the README prints, so the artifact and the documentation cannot
   drift apart unnoticed. It also pins the corpus unit counts, making a re-fetched snapshot loud.
@@ -2041,7 +2041,7 @@ than overwritten, and the widget can now tokenize text you paste into it.
 
 ### Changed
 
-- **Exercise 02's graded numbers now come from the corpus and denominator the assignment
+- **Exercise 02's graded numbers now come from the corpus and denominator the requirements
   specifies.** The submission is trained and measured on committed **wiki-faithful Markdown** —
   Wikipedia's REST HTML with its links, URLs, tables and categories intact — against a
   **faithful-unit** denominator, with the Hindi penalty and adjusted score computed throughout.
@@ -2057,7 +2057,7 @@ than overwritten, and the widget can now tokenize text you paste into it.
 
 ### Fixed
 
-- **Exercise 02's README and BRIEF no longer describe a denominator the code stopped using**, and
+- **Exercise 02's README and requirements no longer describe a denominator the code stopped using**, and
   the stale "connecting Vercel is the remaining one-time step" note is gone from both the exercise
   and the root README — the site has been live for some time.
 - **The tokenizer page no longer scrolls sideways on a phone.** Its two-column grid used a bare
@@ -2111,7 +2111,7 @@ that four datasets are committable today.
   78% of it, independently corroborating the published figures the atlas cites (8.0× and 73%); we
   measure Malayalam at ×13.0 on our own text, which is the paper's own headline example.
 - **Gemma 4 is the worst Indic tokenizer of the three serious candidates.** ×2.49 mean tax against
-  Sarvam-105B's ×1.81 and XLM-R's ×1.66, and ×8.84 worst-case against ×2.90. It is the assignment's
+  Sarvam-105B's ×1.81 and XLM-R's ×1.66, and ×8.84 worst-case against ×2.90. It is the requirements'
   named target, so `docs/DECISIONS.md` now prices the "continue-pretrain from Gemma-4-31B" fork with
   that number attached: continue-pretraining inherits the tokenizer, and the tokenizer is not free.
 - **Contamination coverage is no longer `none`.** MILU's validation split is indexed — 126,044
@@ -2431,7 +2431,7 @@ that four datasets are committable today.
   supplies it.
 - **A second lens on the mixture.** Ten tiers is more than a reader holds in mind, so each is also
   labelled *skills* or *knowledge*. The mixture now runs 40% skills / 60% knowledge, raised from 28%
-  because the assignment names coding and agentic work as primary capabilities.
+  because the requirements names coding and agentic work as primary capabilities.
 - **A comparison table for the corpus budget** (`records/scaling_reference.json`): thirteen models
   with their parameters, architecture and pre-training tokens, every row carrying its source. The
   finding that matters is that a corpus is not sized by the model reading it — Llama 3.1 trained 8B,
@@ -2476,7 +2476,7 @@ that four datasets are committable today.
   because the same rule lived in Python for the bundle and in JavaScript for the page, and only one
   got fixed. Auditing for the same shape found `tierOf` written out **four times** in `chapters.js`
   and the natural-Indic token rule twice; all are now single module-scope functions. The
-  cross-implementation guard was extended from blockers alone to also compare tier assignment and
+  cross-implementation guard was extended from blockers alone to also compare tier requirement and
   countable tokens per dataset, by running the real browser code against the real bundle, plus a
   check that the deduplication band's fallback literal still matches `DEDUP_SURVIVAL`.
 - **Index headroom, not just a pass mark.** 99.2KB against a 100KB budget left no room for a
@@ -2596,8 +2596,8 @@ that four datasets are committable today.
   The index now records the window width each item was hashed at and checks the document at each
   width; items too short to identify anything are refused and counted rather than silently
   accepted.
-- **The framework answered a third of its own assignment.** The class brief scopes this exercise as
-  the full lifecycle — pre-training, SFT, preference, safety and evaluation — and the exercise brief
+- **The framework answered a third of its own requirement.** The class requirements document scopes this exercise as
+  the full lifecycle — pre-training, SFT, preference, safety and evaluation — and the exercise requirements document
   narrowed it to "the pre-training data mix". Every one of the 145 catalogue records already carried
   a training-stage tag (101 pre-training, 47 SFT, 17 RL, 15 evaluation, 1 safety); it was rendered in
   one place and read by no module, while the tier mapping silently dropped 36 records including every

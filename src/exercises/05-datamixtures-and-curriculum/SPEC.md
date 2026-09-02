@@ -296,7 +296,7 @@ against frozen embeddings. Per-seam detail: [`curriculum.py`](src/mixture/curric
 The shares are not chosen; they are the duration-weighted integral of a per-stage band mix, the
 same discipline the lane shares are held to, and `INV-12` fails if they do not sum to one.
 
-**Why the assignment rule is source-derived, and not a readability score.** Flesch-Kincaid Grade Level, computed over these bands' own examples, is not monotone: B5 scores
+**Why the requirements rule is source-derived, and not a readability score.** Flesch-Kincaid Grade Level, computed over these bands' own examples, is not monotone: B5 scores
 **14.2** against B4's **21.1**. On real documents it inverts -- research-framing prose in this
 repository scores **8.3** where encyclopaedic Wikipedia text scores **9.4**. FKGL is a function of
 sentence and word length, so clearly written research measures as easy prose. Difficulty bands are
@@ -457,7 +457,7 @@ exists to prevent; a share whose gap is priced is a commitment.
 
 ## 10 · The cleaning continues, aimed at the starved slots
 
-The assignment's closing instruction. The mixture above is what says which slots are starved, so
+The requirements' closing instruction. The mixture above is what says which slots are starved, so
 this is its output rather than a separate exercise — ranked by how hard each lane is leaning on
 repetition.
 

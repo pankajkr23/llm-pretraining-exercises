@@ -25,7 +25,7 @@ from typing import Literal
 #: benchmark suite and never read by training at all.
 Split = Literal["train", "heldout", "eval"]
 
-#: The three hashes the lecture names as the minimum for admission. Absent means refused.
+#: The three hashes the source names as the minimum for admission. Absent means refused.
 REQUIRED_HASHES = ("dedup_hash", "pii_hash", "eval_overlap_hash")
 
 #: Filename of the append-only manifest log inside a shard directory.
@@ -36,7 +36,7 @@ MANIFEST_FILE = "manifests.jsonl"
 class ShardManifest:
     """What a training system needs to know about a shard before it consumes one.
 
-    The field list follows the lecture's, with the names it uses. Several are `str | None` on
+    The field list follows the source's, with the names it uses. Several are `str | None` on
     purpose: `None` means *nobody has answered this*, which the gate treats as a refusal rather
     than as a pass. A field that could only ever hold a truthy value would make the gate
     unfalsifiable.

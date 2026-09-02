@@ -7,7 +7,8 @@ forks a branch, measures throughput, and writes `submission_artifacts/`.
 **What it will not do is claim an event it did not produce.** `spec.REQUIRED_SEQUENCE` names
 thirteen; two of them — `OPUS decisions recorded` and `audit completed` — depend on code that is
 not built. Those lines are written as `[SKIP]` with the reason, and `verify.py` reports them as
-missing. A run that logged them anyway would be fabricating exactly the evidence the brief says a
+missing. A run that logged them anyway would be fabricating exactly the evidence the requirements
+says a
 grader will inspect for.
 
 **The crash is real.** A child process is killed with `os._exit(137)`: no `finally`, no `atexit`,
@@ -93,7 +94,8 @@ class RunLog:
             produced: False when this run cannot produce the event at all.
 
         Raises:
-            ValueError: If the name is not one the assignment asks for — a typo here would make the
+            ValueError: If the name is not one the requirements asks for — a typo here would make
+            the
                 event invisible to the auditor while looking present in the log.
         """
         if name not in spec.REQUIRED_SEQUENCE:

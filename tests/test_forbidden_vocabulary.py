@@ -44,6 +44,18 @@ FORBIDDEN: dict[str, str] = {
         "Unrelated senses — a shell record used as training data, speech-to-text, a run writing "
         "its own record — are cleared by the patterns below."
     ),
+    "assign" + "ment": (
+        "names the graded task as the source hands it over. Say 'the requirements' — what we were "
+        "asked for is publishable; that it arrived as a numbered task from somewhere is not."
+    ),
+    "lect" + "ure": (
+        "names the form the material was delivered in. Public speech corpora that happen to use "
+        "the word as a dataset name are cleared below."
+    ),
+    "br" + "ief": (
+        "named the per-exercise requirements document, which is why that file is REQUIREMENTS.md "
+        "now. 'briefly' and 'debrief' are ordinary English and are cleared below."
+    ),
 }
 
 #: Uses that are **not** the forbidden sense, each with the reason it is exempt.
@@ -65,6 +77,8 @@ ALLOWED: tuple[tuple[str, str], ...] = (
         "named public speech corpora in the data catalogue — a dataset, not our source",
     ),
     (r"agent conversation|Claude Code", "this repo's own tooling, unrelated to the material"),
+    (r"\bbr" + r"iefly\b|\bdebr" + r"ief", "ordinary English adverb and verb, unrelated senses"),
+    (r"IIT/IISc|recordings", "a named public speech corpus, described as the dataset it is"),
 )
 
 #: Paths this guard does not read, each with the reason.
@@ -72,6 +86,18 @@ EXEMPT_PATHS: dict[str, str] = {
     "docs/standards-history/": (
         "frozen copies of past releases. They are records of what shipped, are never edited, and "
         "rewriting one would make it a record of nothing."
+    ),
+    "src/exercises/02-tokenization/web/tokenizer.json": (
+        "the frozen vocabulary. Its entries are BPE tokens learned from real text, not prose, and "
+        "its bytes are hashed — every shard manifest in exercise 06 pins that hash. A sweep did "
+        "rewrite a token here once; the build caught it, and this exemption is what stops the gate "
+        "from ever asking someone to do it deliberately."
+    ),
+    "src/exercises/02-tokenization/web/data.json": (
+        "derived from that vocabulary and carrying the same tokens."
+    ),
+    "src/exercises/01-introductions/package-lock.json": (
+        "npm writes it, including the upstream deprecation notices quoted inside it."
     ),
     "src/exercises/02-tokenization/corpus/": (
         "the tokenizer's training corpus. Its bytes are the measured input the vocabulary is "

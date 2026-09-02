@@ -1,6 +1,6 @@
 """The V5 mixture: a share for every lane, the Indic tier split, the floor and the reserve.
 
-This module is assignment items 1-5. Every share carries three things a reviewer can attack
+This module is requirement items 1-5. Every share carries three things a reviewer can attack
 separately — what it buys (a benchmark), what funds it (inventory rows), and why it is that number
 rather than the source material's default.
 
@@ -212,7 +212,7 @@ def get(key: str) -> Lane:
 
 # ------------------------------------------------------------------------- the Indic tier split
 
-# Assignment item 2. The tiers are exercise 03's provenance ladder, and which row belongs where is
+# Requirement 2. The tiers are exercise 03's provenance ladder, and which row belongs where is
 # the single most contested judgment in this spec — see `TIER_C_DISPUTE`.
 INDIC_TIER_ROWS: dict[str, tuple[str, ...]] = {
     "A": ("Sangraha (verified)",),
@@ -321,7 +321,7 @@ def indic_tiers(config: Config | None = None) -> dict[str, IndicTier]:
 
 # ------------------------------------------------------------------------ the protected floor
 
-# Assignment item 4. V4 pinned an Always-On lane at 8% of every batch, outside the selector's
+# Requirement 4. V4 pinned an Always-On lane at 8% of every batch, outside the selector's
 # control, because an English-heavy proxy (cosine 0.876 with the English web band) starves exactly
 # the lanes we are trying to build. V5 extends the same protection and the notes fix the two
 # numbers.
@@ -368,7 +368,7 @@ def protected_floor() -> Floor:
 
 # ------------------------------------------------------------------------ the anneal reserve
 
-# Assignment item 5. The best data is set aside on purpose rather than noticed at the end, and the
+# Requirement 5. The best data is set aside on purpose rather than noticed at the end, and the
 # decision is taken here, while the mixture is composed. Each entry is the fraction of that
 # lane's pool withheld from ordinary sampling.
 RESERVE_FRACTIONS: dict[str, float] = {

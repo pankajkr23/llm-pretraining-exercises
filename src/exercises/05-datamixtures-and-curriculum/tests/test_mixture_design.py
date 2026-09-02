@@ -120,7 +120,7 @@ def test_there_are_six_difficulty_bands_from_nursery_to_research():
 
 
 def test_every_difficulty_band_carries_a_concrete_example():
-    """The assignment asks for 'a concrete example for each' — a label is not an example."""
+    """The requirements asks for 'a concrete example for each' — a label is not an example."""
     for band in curriculum.DIFFICULTY_BANDS:
         assert len(band.example.split()) >= 10, f"{band.key}'s example is a label, not an example"
         assert band.datasets, f"{band.key} draws from no dataset"
@@ -388,7 +388,7 @@ def test_every_difficulty_band_names_inventory_datasets():
 
 def test_every_difficulty_band_states_how_a_document_is_assigned_to_it():
     for band in curriculum.DIFFICULTY_BANDS:
-        assert len(band.assigned_by.split()) >= 6, f"{band.key} has no assignment rule"
+        assert len(band.assigned_by.split()) >= 6, f"{band.key} has no requirement rule"
 
 
 def test_every_example_marked_real_is_verbatim_in_the_file_it_names():

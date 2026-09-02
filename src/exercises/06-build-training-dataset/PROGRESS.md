@@ -13,7 +13,7 @@ re-checked by a second that reads only the artifacts.
 
 **The platform asks for four fields totalling 1,150 points, not one link.** 1,000 is the rubric,
 submitted as the repository link. The remaining 150 is **3 × 50 for three separate public URLs** —
-`run.log`, `evidence.json` and `evidence.md`, each independently reachable. `BRIEF.md` truncates
+`run.log`, `evidence.json` and `evidence.md`, each independently reachable. `REQUIREMENTS.md` truncates
 before those fields, which is why they are written down here: submitting the repo link alone caps
 the score at 1,000 and nothing in the repo would notice.
 
@@ -31,12 +31,12 @@ replay, fork, OPUS, the evidence bundle and the auditor.
 from it and passes **40 of 40**. The corpus is **10,649,549 training tokens at 1.01 epochs**, the
 topic notebook covers all eight stages, and the `web/` explainer is deployed.
 
-**Nothing in the assignment is outstanding.** What remains is listed under O7 and O8 below, and both
+**Nothing in the requirements is outstanding.** What remains is listed under O7 and O8 below, and both
 are deferred by decision rather than pending.
 
 | # | item | status | note |
 | --- | --- | --- | --- |
-| O1 | **Exercise skeleton** | **done** | `BRIEF.md` (local), `README.md`, `CLAUDE.md`, `DECISIONS.md`, `PROGRESS.md`, `NOTICE`, `pyproject.toml`, `src/`, `tests/`, `tools/`, `artifacts/`. |
+| O1 | **Exercise skeleton** | **done** | `REQUIREMENTS.md` (local), `README.md`, `CLAUDE.md`, `DECISIONS.md`, `PROGRESS.md`, `NOTICE`, `pyproject.toml`, `src/`, `tests/`, `tools/`, `artifacts/`. |
 | O2 | **Stage 1 — config and spec** | **done** | Frozen `Config` + fingerprint, `spec.py` behind the producer/auditor wall, 19 tests. |
 | O3 | **Stage 2 — shards and manifests** | **done** | Immutable `uint16` shards sealed `0444`, content-addressed ids, append-only manifests, admission gate. Proven on real corpus text: 600k chars → 269,439 tokens → 5 shards, all sealed and verifying; one flipped bit turns `verify()` false and changes the id. |
 | O3b | **Stage 3 — the evaluation firewall** | **done** | Two-sided: the manifest carries the split *and* the registry is asked independently. Stores no evaluation text — 8-byte digests of 13-word shingles. A paraphrase evades it, and a test asserts that rather than leaving it to be discovered. |
@@ -56,7 +56,7 @@ are deferred by decision rather than pending.
 
 ## Findings
 
-### F1 · The lecture's description of OPUS is wrong in the load-bearing detail
+### F1 · The source's description of OPUS is wrong in the load-bearing detail
 
 The source says the proxy pass records *"which particular weight of the model is acting bad…
 we're going to store this map"* and that candidates are selected for *"updating those weights"* — a
@@ -66,10 +66,10 @@ weight mask.
 and against every one of the 25 files in the MIT reference repo. The score is a **continuous
 preconditioned gradient inner product**: the candidate's gradient, multiplied by AdamW's live
 diagonal preconditioner read out of `optimizer.state`, dotted against a proxy direction — minus a
-**redundancy penalty** against already-selected candidates that the lecture never mentions, and
+**redundancy penalty** against already-selected candidates that the source never mentions, and
 which is most of the benefit (greedy top-k 40.49, full OPUS 41.75, random 40.29).
 
-Building from the lecture alone would have produced the wrong system.
+Building from the source alone would have produced the wrong system.
 
 ### F2 · `defer` and `protected floor` are not OPUS
 
@@ -88,12 +88,12 @@ cut — is principled and is **ours**, and `DECISIONS.md` D5 says so.
 ### F3 · The course's own model has the selector and lacks the accountability
 
 LightningLM ships a complete 1,324-line OPUS implementation and **none** of the audit trail this
-assignment asks for. Verified in their repo: one `opus_metrics` dict per *scoring pass* rather than
+requirement asks for. Verified in their repo: one `opus_metrics` dict per *scoring pass* rather than
 per candidate; `mark_batch_consumed()` defined and **never called**; `batch["_pool"]` provenance
 computed and discarded; the floor override a mutable `/tmp/moe_hotconfig.json` with no reason,
 timestamp or run linkage; zero tests on the module; and `enabled: false` for the flagship 120B run.
 
-**The gap is the assignment's real content.**
+**The gap is the requirements' real content.**
 
 ### F4 · The frozen tokenizer has no EOS, no BOS and no PAD
 
@@ -277,7 +277,7 @@ reported success, leaving half a patch applied in `verify.py`.
 - **Shards are immutable three ways over**, deliberately: the id *is* the content hash so a change
   renames the file; `0444` plus `mode="r"` memmap makes a careless write raise; and every read
   re-verifies the hash. Only the third survives a shell, which is why it exists.
-- **The admission gate refuses on a missing hash, not only a failing one.** The lecture's minimum is
+- **The admission gate refuses on a missing hash, not only a failing one.** The source's minimum is
   dedup + PII + eval-overlap, and an unanswered question is not a pass.
 - **A mutation survived and was fixed.** The refusal tests parametrize over `REQUIRED_HASHES`, so
   deleting an entry made them test *fewer cases* and stay green — a guard derived from the thing it
@@ -422,7 +422,7 @@ to decide deliberately rather than by default.
 
 ### 2026-08-25 (skeleton and stage 1)
 
-- **Exercise skeleton completed** to match every other exercise: `BRIEF.md` (local, gitignored),
+- **Exercise skeleton completed** to match every other exercise: `REQUIREMENTS.md` (local, gitignored),
   `CLAUDE.md`, `PROGRESS.md`, `NOTICE`, `artifacts/`. These should have existed before any code was
   written; they did not, and that was the wrong order.
 - **Stage 1**: frozen `Config` with a run fingerprint; `spec.py` behind the producer/auditor wall,
@@ -443,10 +443,10 @@ Full reasoning in `DECISIONS.md`. Summary:
 | D1 | Replay reads the ledger, never recomputes | nothing plausible |
 | D2 | The data system is torch-free | a requirement that the data path use tensors — there is none |
 | D3 | Sentinels sit outside the tokenizer's vocabulary | retraining the tokenizer, which is a Exercise 02 decision |
-| D4 | `submission_artifacts/` tracked, `artifacts/` not | a grader requiring the checkpoints themselves; the assignment regenerates them |
+| D4 | `submission_artifacts/` tracked, `artifacts/` not | a grader requiring the checkpoints themselves; the requirements regenerates them |
 | D5 | `defer` and `floor_override` are ours | a course source that defines them; none found |
 | D6 | OPUS is ported, not installed | — |
-| D7 | Build OPUS from the paper, not the lecture | nothing; verified against paper and code |
+| D7 | Build OPUS from the paper, not the source | nothing; verified against paper and code |
 | D18 | Boltzmann temperature is a multiple of the score spread | a source showing the paper's is already normalised |
 | D19 | `redundancy_weight` defaults to Eq. 23 unmodified | reading the paper's definition of η directly |
 | D20 | The held-out split is written to disk, not just counted | nothing — a count with no data is uncheckable |

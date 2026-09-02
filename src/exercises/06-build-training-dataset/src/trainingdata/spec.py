@@ -10,7 +10,7 @@ contains nothing else from `trainingdata`.
 
 from typing import Final
 
-#: The nine rows `evidence.md` must carry, in the order the assignment lists them.
+#: The nine rows `evidence.md` must carry, in the order the requirements lists them.
 REQUIREMENTS: Final[tuple[str, ...]] = (
     "tokenizer_integrity",
     "evaluation_firewall",
@@ -23,7 +23,7 @@ REQUIREMENTS: Final[tuple[str, ...]] = (
     "throughput",
 )
 
-#: The event sequence `run.log` must contain, in order. The assignment names these verbatim.
+#: The event sequence `run.log` must contain, in order. The requirements names these verbatim.
 REQUIRED_SEQUENCE: Final[tuple[str, ...]] = (
     "shards created",
     "manifests validated",

@@ -913,8 +913,8 @@ function chapterNegatives(data) {
           ' tokens above, and the corpus builder now refuses to build below one epoch.',
         ],
         [
-          b('The selector was built from the lecture’s description, which is not what the paper says. '),
-          'The lecture describes a weight mask stored as a map. There is no weight mask in the paper or in the reference implementation — it is a continuous preconditioned gradient inner product, minus a redundancy penalty the lecture never mentions. Building from the lecture alone would have produced the wrong system.',
+          b('The selector was built from the source’s description, which is not what the paper says. '),
+          'The source describes a weight mask stored as a map. There is no weight mask in the paper or in the reference implementation — it is a continuous preconditioned gradient inner product, minus a redundancy penalty the source never mentions. Building from the source alone would have produced the wrong system.',
         ],
         [
           b('A masking feature was documented as a behaviour of the run, and had zero callers. '),
@@ -1037,7 +1037,7 @@ function chapterLimits() {
 function chapterNext() {
   return section('next', 'next', 'What comes next', 'Four open items, and no roadmap beyond them', [
     para(
-      'Everything the assignment asked for is done. What follows is the honest remainder — three known defects and one unresolved question — rather than an invented plan.',
+      'Everything the requirements asked for is done. What follows is the honest remainder — three known defects and one unresolved question — rather than an invented plan.',
     ),
     bullets([
       [

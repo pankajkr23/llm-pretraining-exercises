@@ -43,7 +43,7 @@ on day 40. You open the folder, find 30 GB of files, and there is no way to answ
 
 That is the motivation, in the instructor's own words. The deliverable is therefore not a data
 loader but a **ledger** — an append-only record written as training happens — so the run can be
-interrogated afterwards. The assignment says the system is complete only when it can prove four
+interrogated afterwards. The requirements says the system is complete only when it can prove four
 things, and each maps onto one subsystem:
 
 | the question | the subsystem |
@@ -100,7 +100,7 @@ Each ends in something you can run and see. Nothing advances until the previous 
 run_demo.py      # ONE command: regenerates the whole submission bundle, no interaction
 web/             # the deployed page — index.html, chapters.js, data.js, page-extra.css, _shared/
 verify.py        # the auditor: re-derives every claim from the bundle alone, importing only spec
-BRIEF.md         # the assignment — LOCAL ONLY, gitignored, never the deliverable
+REQUIREMENTS.md         # the requirements — LOCAL ONLY, gitignored, never the deliverable
 CLAUDE.md        # rules specific to this exercise, for whoever changes the code
 DECISIONS.md     # what was chosen, and what would overturn each choice
 PROGRESS.md      # the running log — findings, changes, what is still open
@@ -173,7 +173,7 @@ tests still skip inside a sandbox that blocks it; a GitHub runner allows it.
 
 ## The producer/auditor wall
 
-The assignment refuses hardcoded evidence and inspects the code to check the behaviour was not
+The requirements refuses hardcoded evidence and inspects the code to check the behaviour was not
 simulated. So the auditor — `verify.py` — re-derives every published claim from the artifacts on
 disk **without importing the code that produced them**, and passes **40 of 40 checks**. If it
 imported the producer it would inherit the producer's bugs and agree with itself, and the printed

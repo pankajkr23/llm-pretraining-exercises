@@ -1,5 +1,5 @@
 {
-  "note": "What comparable models were actually trained on. Gathered by web research in August 2026 rather than extracted from docs/ATLAS.md, because the Atlas carries only the Indian models and two frontier figures — and the question this record answers (how big a corpus does a 40B seed need, and how does it grow) cannot be settled from five rows. Every entry names the source it was read from. Where a figure is undisclosed it is recorded as null rather than estimated: Gemma 4's token budget is the assignment's own comparator and its technical report does not state it, which is itself the finding.",
+  "note": "What comparable models were actually trained on. Gathered by web research in August 2026 rather than extracted from docs/ATLAS.md, because the Atlas carries only the Indian models and two frontier figures — and the question this record answers (how big a corpus does a 40B seed need, and how does it grow) cannot be settled from five rows. Every entry names the source it was read from. Where a figure is undisclosed it is recorded as null rather than estimated: Gemma 4's token budget is the requirements' own comparator and its technical report does not state it, which is itself the finding.",
   "gathered": "2026-08-05",
   "models": [
     {
@@ -10,10 +10,10 @@
       "params_active": 30700000000,
       "architecture": "dense",
       "tokens": null,
-      "tokens_note": "Not disclosed. The technical report's data section (2.4) states only the domains — web documents, code, images, audio — and a January 2025 cutoff. Table 1 gives 29,290M LLM parameters, which is the non-embedding count; the 30.7B here is the total the assignment brief names, and the 262,144 x 6,144 embedding table accounts for the difference.",
+      "tokens_note": "Not disclosed. The technical report's data section (2.4) states only the domains — web documents, code, images, audio — and a January 2025 cutoff. Table 1 gives 29,290M LLM parameters, which is the non-embedding count; the 30.7B here is the total the requirements requirements document names, and the 262,144 x 6,144 embedding table accounts for the difference.",
       "vocab": 262144,
       "source": "arXiv:2607.02770, Gemma 4 technical report, Table 1 and section 2.4",
-      "why_here": "The assignment's named comparator. That its budget is undisclosed is why this project cannot simply match it and has to derive its own."
+      "why_here": "The requirements' named comparator. That its budget is undisclosed is why this project cannot simply match it and has to derive its own."
     },
     {
       "id": "gemma-4-26b-a4b",

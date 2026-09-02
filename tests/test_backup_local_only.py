@@ -50,8 +50,8 @@ def fake_repo(tmp_path: Path) -> Path:
     for relative in (
         "notebooks/S01-introductions.ipynb",
         "src/exercises/01-introductions/tools/build_notebook.py",
-        "src/exercises/01-introductions/BRIEF.md",
-        "docs/BRIEF.md",
+        "src/exercises/01-introductions/REQUIREMENTS.md",
+        "docs/REQUIREMENTS.md",
         "docs/EXPLAINER_PROMPT.md",
         "docs/EXPLAINER_PATTERN.md",
         "src/exercises/01-x/docs/topic-a.md",
@@ -72,8 +72,8 @@ def test_it_collects_every_protected_class(fake_repo: Path) -> None:
     for expected in (
         "notebooks/S01-introductions.ipynb",
         "src/exercises/01-introductions/tools/build_notebook.py",
-        "src/exercises/01-introductions/BRIEF.md",
-        "docs/BRIEF.md",
+        "src/exercises/01-introductions/REQUIREMENTS.md",
+        "docs/REQUIREMENTS.md",
         "docs/EXPLAINER_PROMPT.md",
         "src/exercises/01-x/docs/topic-a.md",
         "src/exercises/01-x/docs/topic-a.html",
@@ -138,7 +138,13 @@ def test_a_credential_shaped_name_is_recognised(name: str) -> None:
 
 @pytest.mark.parametrize(
     "name",
-    ["topic-a.md", "BRIEF.md", "build_notebook.py", "S01-introductions.ipynb", "diagram.svg"],
+    [
+        "topic-a.md",
+        "REQUIREMENTS.md",
+        "build_notebook.py",
+        "S01-introductions.ipynb",
+        "diagram.svg",
+    ],
 )
 def test_an_ordinary_name_is_not_flagged(name: str) -> None:
     """**The twin.** A rule broad enough to refuse everything would look like perfect safety."""

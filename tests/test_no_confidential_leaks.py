@@ -6,7 +6,7 @@ Every leak this guard exists for got onto a public branch while `.gitignore` wor
 
 - a table listing two filenames, their line counts, and a summary of what each contained
 - a module docstring citing a source file by name
-- a scaffolder that wrote the assignment's path into every new exercise's brief
+- a scaffolder that wrote the requirements' path into every new exercise's requirements document
 - test fixtures whose invented filenames published the real naming scheme
 
 **Gitignoring a directory protects the bytes. It does nothing about a tracked document that

@@ -11,7 +11,7 @@ Two rules are repeated here because this file is injected on every request while
 not, and both are irreversible if you learn them late:
 
 - **Never delete, move, rename or overwrite anything under `notebooks/` or any
-  `src/exercises/*/tools/`, and never any `BRIEF.md`.** Those files are gitignored, so git cannot
+  `src/exercises/*/tools/`, and never any `REQUIREMENTS.md`.** Those files are gitignored, so git cannot
   restore them and there is no second copy. This does not yield to a tidy-up or a "stale" file. If
   something there looks wrong, say so and stop. Prohibited on those paths without explicit
   permission naming the file: `rm`, `git clean`, `git checkout --`, `git restore`,

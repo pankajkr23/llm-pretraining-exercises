@@ -11,7 +11,7 @@ app link** and the **GitHub repo**, and the README must say which sources the da
 Question 1 is 1000 points for the link and repo; Question 2 is a written answer about what the
 timeline shows, worth a further 1000 if it also names a mechanism the instructor missed, with a date
 and a primary source; Question 3 is an optional 250 for sharing publicly. The submission field is
-labelled "Netlify Link" but the brief says "Netlify or Vercel or wherever you like" — our Vercel
+labelled "Netlify Link" but the requirements says "Netlify or Vercel or wherever you like" — our Vercel
 pipeline is fine, and the link must resolve for a logged-out stranger.
 
 ---
@@ -45,7 +45,7 @@ pipeline is fine, and the link must resolve for a logged-out stranger.
 ## Findings
 
 **The instructor's tidy arc is not what the data shows, and that is the interesting part.** The
-brief predicts "exactness → memory → length → memory again". Deriving the dominant pressure per
+requirements document predicts "exactness → memory → length → memory again". Deriving the dominant pressure per
 two-year window gives something messier: **two of the six windows have no single dominant pressure
 at all** (2018–19 and 2022–23). In those periods the field was attacking compute, cache and position
 simultaneously. `timeline.Period.dominant` returns `None` on a tie rather than picking a winner, and
@@ -73,7 +73,7 @@ in the entry, because a reader who needs the live page needs a browser.
 
 ## Corrections — errors found in the course material
 
-The assignment invites these: *"if you catch me in another one, tell me."*
+The requirements invites these: *"if you catch me in another one, tell me."*
 
 **The transformer is mis-dated in the source.** It says Vaswani "invented in 2018 and 17".
 *Attention Is All You Need* is `arXiv:1706.03762`, v1 **Mon, 12 Jun 2017**, read from the abstract
@@ -345,7 +345,7 @@ no graphics, misaligned. Rebuilt as a monograph feature — six numbered plates,
   world models change the objective, not the attention. Gnani.ai has published no mechanism at all.
 - **Two page bugs found by PK that no test caught**: the sweep control threw on every click because
   the plate wrapper forwarded `select` and not `sweep`, and Plate V had no replay control.
-- **Neutral voice.** Every word tying the page to a particular class or assignment is gone from the
+- **Neutral voice.** Every word tying the page to a particular class or requirement is gone from the
   page, the served NOTICE and the meta description.
 
 ---

@@ -1,7 +1,7 @@
 """The evaluation firewall: data the system knows about precisely so it can refuse it.
 
 **The problem.** If evaluation data reaches a loss-bearing batch, every benchmark score becomes
-fiction — and the failure is silent in the worst way, because it looks like success. The lecture's
+fiction — and the failure is silent in the worst way, because it looks like success. The source's
 tell is a model that beats a frontier lab within its first couple of hundred steps: that is not a
 breakthrough, it is the benchmark answers having reached the training set, and the run should be
 restarted rather than celebrated.

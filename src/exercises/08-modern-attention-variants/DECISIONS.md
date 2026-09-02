@@ -16,7 +16,7 @@ trade-offs and the clarity of the story, so a training run would be effort spent
 being graded. A wrong date is
 the failure mode; a missing experiment is not.
 
-**What would overturn it.** An assignment revision asking for a measured comparison between
+**What would overturn it.** An requirement revision asking for a measured comparison between
 mechanisms. Note that would be a much larger exercise: comparing MQA against GQA on quality needs
 two pretrained models, not two forward passes.
 
@@ -36,7 +36,7 @@ a transcription slip into a test failure. It caught a deliberately transposed `2
 `2021-04-02` in exactly that way.
 
 **What would overturn it.** Nothing. The cost is a few extra fields per entry; the alternative is
-publishing numbers nobody can check, on the one axis the assignment grades.
+publishing numbers nobody can check, on the one axis the requirements grades.
 
 ---
 
@@ -63,7 +63,7 @@ quotes a later revision.
 **Why.** The alternatives are all worse and all common. Conference dates run months late. The arXiv
 id prefix is the announcement month, not the submission date — YaRN's id begins `2309` and its v1 is
 31 August. And revisions drift badly: Bahdanau's v1 and v7 are twenty months apart. Since the
-assignment is *ordering* by date, any of those errors reorders the timeline rather than merely
+requirement is *ordering* by date, any of those errors reorders the timeline rather than merely
 misreporting one row.
 
 **What would overturn it.** A mechanism whose v1 preprint is genuinely not its first public
@@ -77,7 +77,7 @@ with `kind: "release"`, which the schema already supports.
 **Decision.** `timeline.pressure_by_period` counts what each window contains, and `Period.dominant`
 returns `None` on a tie instead of choosing.
 
-**Why.** The brief hands us an answer to Question 2 — *exactness, then memory, then length, then memory again* — and printing that sentence
+**Why.** The requirements hands us an answer to Question 2 — *exactness, then memory, then length, then memory again* — and printing that sentence
 over a chart would be the easiest thing in this exercise. It would also be the same failure as an
 unsourced date: a claim presented as a finding without being one.
 
@@ -132,7 +132,7 @@ it makes a claim about what the timeline shows, and a claim needs the spine's `e
 **Decision.** The transformer's date, the DroPE/DRoPE confusion and the non-reproducing cache figure
 are all written down in `README.md`, `CLAUDE.md` and `PROGRESS.md`, with sources.
 
-**Why.** The assignment asks for it directly: *"if you catch me in another one, tell me."* But the
+**Why.** The requirements asks for it directly: *"if you catch me in another one, tell me."* But the
 stronger reason is the DroPE case. Two papers exist whose names differ by one capital letter, and
 the course describes one while quoting the other's title. Silently citing the right one would leave
 the next reader — or the next agent — free to "fix" it back to the wrong one. Naming both, and
@@ -267,7 +267,7 @@ sentence that states the mechanism.
 
 ## D14 — Test the claim that was made, then vary the arbitrary choice
 
-The brief's arc is `compute → cache → position → cache`. The page tested it and got the answer
+The requirements' arc is `compute → cache → position → cache`. The page tested it and got the answer
 backwards, twice, in ways worth separating.
 
 **First, a derived number answered the wrong question.** *"The claimed arc holds in 6 of these 7

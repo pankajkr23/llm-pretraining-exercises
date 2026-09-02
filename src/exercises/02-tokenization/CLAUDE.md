@@ -23,7 +23,7 @@ Component notes. Repo-wide conventions: root `AGENTS.md`.
   Re-fetching is a separate explicit command (`python -m tokenization.corpus <code>`) because
   Wikipedia has drifted: refetch one article and it silently stops being comparable with the rest.
   The clipped-prose fetcher (`corpus.fetch_article`) is how `corpus/v1/` was built; **nothing in
-  v2 may come from it** — the assignment forbids grading numbers from a clipped page.
+  v2 may come from it** — the requirements forbids grading numbers from a clipped page.
 - **`ablate.train_spec` is the only trainer.** Do not add a second one. Whether HuggingFace is
   handed *files* or *whole documents* silently changes every token count by ~0.6% (it splits files
   into lines, so no merge may span a newline), which is enough to move the score 6502 → 6771. That
@@ -85,5 +85,5 @@ Component notes. Repo-wide conventions: root `AGENTS.md`.
   punctuation (`\p{M}` is load-bearing — it keeps Devanagari matras attached), `ratio =
   tokens/units` (fertility; lower is better; below 1.0 is normal because merges span punctuation).
   `count_words` is retained and reported for contrast but **nothing is scored on it**.
-  Keep the local `BRIEF.md` (gitignored — the assignment, not part of the published work),
+  Keep the local `REQUIREMENTS.md` (gitignored — the requirements, not part of the published work),
   `README.md` and `metrics.py` in sync.

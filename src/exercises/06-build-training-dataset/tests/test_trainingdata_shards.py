@@ -61,7 +61,7 @@ def test_a_shard_is_sealed_on_disk_and_read_only_in_memory(tmp_path) -> None:
 
 
 def test_writing_through_the_handle_raises(tmp_path) -> None:
-    """A careless assignment must fail loudly rather than corrupt a shard in place."""
+    """A careless requirement must fail loudly rather than corrupt a shard in place."""
     _, path = shards.write(_tokens(), tmp_path)
     view = shards.read(path)
     with pytest.raises(ValueError):

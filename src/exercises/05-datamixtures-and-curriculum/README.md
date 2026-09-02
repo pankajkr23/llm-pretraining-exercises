@@ -59,7 +59,7 @@ believes. Config fingerprint `740cb808dbf2`.
 
 ## Where each required answer lives
 
-| # | the assignment asks for | where |
+| # | the requirements asks for | where |
 | --- | --- | --- |
 | 1 | a share of the budget for every capability slot | Part 1 · the mixture — `SPEC.md` §1 |
 | 2 | the Indic split, four provenance tiers | Part 1 · the Indic split — `SPEC.md` §2 |
@@ -151,7 +151,7 @@ synthetic and is *tagged* translated. Which reading wins decides whether tier C 
 tier D is fundable. `SPEC.md` §2 publishes both readings side by side under a heading inviting a
 reviewer to push on it, because choosing the other reading moves the hole rather than filling it.
 
-## The three lanes the assignment names
+## The three lanes the requirements names
 
 | capability | share | supply | the constraint |
 | --- | ---: | ---: | --- |

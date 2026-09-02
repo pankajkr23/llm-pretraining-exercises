@@ -99,7 +99,7 @@ uv run pytest src/exercises/04-data-cleaning-dedup -m integration
 cd src/exercises/04-data-cleaning-dedup/web && python3 -m http.server 8000   # preview locally
 ```
 
-`lite` is deliberately *below* the assignment's 10M-token floor — it exists to surface bugs in
+`lite` is deliberately *below* the requirements' 10M-token floor — it exists to surface bugs in
 minutes. The published corpus is `full`.
 
 **Prefer the notebook.** `notebooks/S04-data-cleaning-dedup.ipynb` — **not in a clone.** It and
@@ -192,7 +192,7 @@ One file per stage — `test_normalize`, `test_langid`, `test_quality`, `test_de
 - **Three corpora is not a sample.** They were chosen because between them they are the smallest set
   that fires all eight stages — no single corpus does. Yields are properties of these three, at
   these thresholds, and generalise no further.
-- **`lite` is deliberately below the assignment's 10M-token floor.** It exists to surface bugs in
+- **`lite` is deliberately below the requirements' 10M-token floor.** It exists to surface bugs in
   minutes. Only `full` produced the published numbers; a `lite` run reproduces the *pipeline*, not
   the results.
 - **"Eight strategies" is itself a reading.** The source material names two different eights. Which one you

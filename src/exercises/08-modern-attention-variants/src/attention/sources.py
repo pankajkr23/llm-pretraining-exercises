@@ -1,6 +1,6 @@
 """Where a date came from, recorded so a reader can check it rather than trust it.
 
-The assignment's one warning is the reason this module exists: an agent asked for a launch date
+The requirements' one warning is the reason this module exists: an agent asked for a launch date
 will supply a confident one it has half remembered, so every date must be checked against the paper
 or release itself rather than recalled.
 
@@ -25,7 +25,7 @@ from datetime import date, datetime
 #:
 #: Parsed rather than trusted so the recorded ISO date can be checked against the string it was
 #: read from. A transcription slip -- reading 2102.11174 as "11 Feb" when v1 is 22 Feb -- is exactly
-#: the error the assignment warns about, and it is invisible unless something compares the two.
+#: the error the requirements warns about, and it is invisible unless something compares the two.
 _ARXIV_QUOTE = re.compile(r"\[v(\d+)\]\s+\w{3},\s+(\d{1,2})\s+(\w{3})\s+(\d{4})")
 
 

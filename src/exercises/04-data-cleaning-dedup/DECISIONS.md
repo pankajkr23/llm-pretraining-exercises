@@ -4,7 +4,7 @@ Decisions the code cannot explain about itself. Each was a fork where a differen
 defensible; the reasoning is here so a later reader can disagree with the reasoning rather than
 guess at it.
 
-The assignment these answer is `BRIEF.md`, which is a local working file — briefs are input for
+The requirements these answer is `REQUIREMENTS.md`, which is a local working file — requirement documents are input for
 the people and agents building an exercise, not public reading.
 
 ## D1 · How many strategies? Eight — and the source material names two different eights
@@ -154,7 +154,7 @@ are stripped before commit for the same reason: executing a PII cell would other
 addresses into a tracked file.
 
 **Corpus excerpts: bounded, and only where seeing is the point.** The deduplication chapter is
-unconvincing without two genuinely near-identical documents on screen — the assignment asks us to
+unconvincing without two genuinely near-identical documents on screen — the requirements asks us to
 *show* the dedup working. So: at most **12 excerpts of at most 300 characters**, emitted by
 `export.py` from post-scrub text, never hand-written, each recorded with its `doc_id` and
 re-derived by a test.

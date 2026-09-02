@@ -9,7 +9,7 @@
 
 | Tokenizer | Vocab | Source | Why it's in the set |
 |---|---|---|---|
-| **Gemma 4** | **262,144** | HF `google/gemma-4-31b` | ★ The assignment's named target. Everything is measured against this |
+| **Gemma 4** | **262,144** | HF `google/gemma-4-31b` | ★ The requirements' named target. Everything is measured against this |
 | Sarvam-105B | ~200K | HF `sarvamai/sarvam-105b` (Apache 2.0) | The Indic-optimised comparator; claims fertility 1.4–2.1 |
 | o200k_base | ~200K | `tiktoken` | The retrofit base for BrahmicTokenizer-131K |
 | cl100k_base | ~100K | `tiktoken` | The Tokenizer Tax paper's baseline — keeps your numbers comparable to published work |
@@ -103,7 +103,7 @@ Every field stamps corpus version, normalization rules, sample count and run dat
 
 Three things, and they're worth one sentence each in the report:
 
-1. **Measured against Gemma 4's actual 262,144 tokenizer** — the assignment's named comparator. Published work benchmarks cl100k, o200k and XLM-R. Nobody has published Gemma-4 Indic fertility.
+1. **Measured against Gemma 4's actual 262,144 tokenizer** — the requirements' named comparator. Published work benchmarks cl100k, o200k and XLM-R. Nobody has published Gemma-4 Indic fertility.
 2. **All 22 scheduled languages on source-original content.** The Tokenizer Tax paper covers 14 on FLORES (translated). IN22-Gen extends to 22 and removes translationese.
 3. **Dual-script rows and P95, not just mean.** Both are standard omissions. Reporting them is cheap and immediately distinguishes the work.
 

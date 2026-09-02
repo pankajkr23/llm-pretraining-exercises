@@ -1,4 +1,4 @@
-"""Scoring: per-language fertility, cross-language spread, and the assignment's final score.
+"""Scoring: per-language fertility, cross-language spread, and the requirements' final score.
 
 The graded denominator is the **faithful unit**: either an unbroken run of Unicode letters, marks
 and numbers, or a single visible character that is none of those and is not whitespace. It is the

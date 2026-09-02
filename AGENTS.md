@@ -25,7 +25,7 @@ directory protects its bytes and does nothing about a tracked document that *des
 `.gitignore` worked perfectly, a public branch carried: a table naming two source files with their
 line counts and a summary of each one's contents; a source path served to the **live site** in an
 exercise's `records.json`; module docstrings citing sources by name; a scaffolder that wrote a source
-path into every new exercise's brief; and test fixtures whose invented filenames published the real
+path into every new exercise's requirements document; and test fixtures whose invented filenames published the real
 naming scheme. Moving the material out removes the whole class — there is no path inside the repo to
 leak, nothing for `.gitignore` to name, and no way to commit it by accident.
 
@@ -95,9 +95,9 @@ These are the only files in the repo with **no second copy**. Both are gitignore
 restore them: `notebooks/S[0-9][0-9]-*.ipynb` and `src/exercises/*/tools/build_notebook.py`. A
 deletion here is permanent in a way that no other deletion in this repo is.
 
-**This now covers `BRIEF.md` too.** All four of exercises 01–04's briefs were destroyed by an
+**This now covers `REQUIREMENTS.md` too.** All four of exercises 01–04's requirement documents were destroyed by an
 ordinary branch switch after the commit that untracked them, and were recoverable only because
-`18015b1^` was still reachable. A brief written *after* the untracking convention has no such
+`18015b1^` was still reachable. A requirements document written *after* the untracking convention has no such
 safety net.
 
 **Untracking a file is what makes it fragile, and the mechanism is worth understanding.** `git rm
@@ -146,7 +146,7 @@ the new one, and deletes it. Nobody deleted anything. So:
   uv run python tools/backup_local_only.py --verify              # 1. does the store have it?
   cp ../.llm-pretraining-exercises-local-only/<path> <path>      #    restore the latest
   git -C ../.llm-pretraining-exercises-local-only log -- <path>  #    or an earlier version
-  git show <untracking-commit>^:<path> > <path>                  # 2. e.g. 18015b1^ for the briefs
+  git show <untracking-commit>^:<path> > <path>                  # 2. e.g. 18015b1^ for the requirement documents
   ```
   Step 2 works only while the removal commit is still reachable, which is why step 1 exists.
 
@@ -210,15 +210,15 @@ repo** — it is the real safety net.
 ## Repo layout & naming
 
 - **Exercise folders:** `src/exercises/NN-slug/` — numeric, **zero-padded**, slugged (e.g. `01-introductions`). Zero-pad so lexical sort = numeric order.
-- **Identical skeleton per exercise:** `BRIEF.md` (assignment — **local only, gitignored**) · `README.md` (what/how) · `pyproject.toml` (member) · code in one place (`src/` or `web/`) · `artifacts/` (gitignored outputs). Long reasoning gets its own tracked `DECISIONS.md`.
+- **Identical skeleton per exercise:** `REQUIREMENTS.md` (requirement — **local only, gitignored**) · `README.md` (what/how) · `pyproject.toml` (member) · code in one place (`src/` or `web/`) · `artifacts/` (gitignored outputs). Long reasoning gets its own tracked `DECISIONS.md`.
 - **Do not scaffold an exercise by hand. There is a generator.**
   ```bash
   uv run python tools/new_exercise.py 09 loss-functions-output-heads \
       --title "Loss functions and output heads" --package lossheads \
       --summary "One sentence for the root README row." [--dry-run]
   ```
-  It writes the whole skeleton, **including the three gitignored files** (`BRIEF.md`, seeded from the local
-  assignment text when one exists; `tools/build_notebook.py`; and the notebook it
+  It writes the whole skeleton, **including the three gitignored files** (`REQUIREMENTS.md`, seeded from the local
+  requirement text when one exists; `tools/build_notebook.py`; and the notebook it
   builds), joins the `rest` CI shard, adds the root README row, and prints what is left for you.
 
   **The sequencing is the reason it exists.** `tests/_exercises.py::exercises_in` only counts a
@@ -238,13 +238,13 @@ repo** — it is the real safety net.
   keep — it caught the generator inserting the CI path *after* the shard's trailing `tests` entry.
 - **Set the folder up BEFORE writing code.** The skeleton is not paperwork to backfill. Exercise 06
   was scaffolded with `pyproject.toml` and modules but no `CLAUDE.md`, `PROGRESS.md`, `NOTICE` or
-  `BRIEF.md`, because a convention that lives only in prose gets skipped under momentum.
+  `REQUIREMENTS.md`, because a convention that lives only in prose gets skipped under momentum.
   `tests/test_exercise_skeleton.py` now checks the universal ones (`README.md`, `CLAUDE.md`,
   `pyproject.toml`, `tests/`) — **`tools/` is deliberately not among them**, because the only
   file some exercises keep there is the gitignored `build_notebook.py` and git does not track
   empty directories, so `tools/` exists on a working checkout and not in a clone. Requiring it
   passed locally and failed CI: write the guard for what a clone has, not for what your machine
-  has. It also asserts **no `BRIEF.md` is ever tracked** — checked with
+  has. It also asserts **no `REQUIREMENTS.md` is ever tracked** — checked with
   `git ls-files`, not by reading `.gitignore`, because a file already in the index stays tracked
   whatever the ignore rules say afterwards.
 - **Shared code:** deferred — add `src/common/` (its own member) only when a 2nd exercise needs to reuse something. No premature abstraction.
@@ -308,18 +308,18 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
 
 ## Five data concerns — keep them physically separate
 
-- **Briefs → never tracked, at any level.** `BRIEF.md` is gitignored by name everywhere, as is
+- **Requirement documents → never tracked, at any level.** `REQUIREMENTS.md` is gitignored by name everywhere, as is
   programme-level material — the schedule, the class list, the internal authoring specs
-  (`docs/BRIEF.md`, `docs/EXPLAINER_*.md`). A brief is the course's text and
+  (`docs/REQUIREMENTS.md`, `docs/EXPLAINER_*.md`). A requirements document is the course's text and
   is input for whoever builds the exercise; it is not the deliverable. **Never link to one from a
   tracked file** — the link resolves on a working checkout and 404s for everyone else. What we
   *decided*, and why, is published instead: `README.md`, and a tracked `DECISIONS.md` when the
   reasoning needs room (see `04-data-cleaning-dedup/DECISIONS.md`).
 
-  **And `BRIEF.md` is not the authority on what submission requires.** It is the course's text and
+  **And `REQUIREMENTS.md` is not the authority on what submission requires.** It is the course's text and
   it can be truncated, reformatted or pasted short; the submission platform's own field list is what
   grades. Check the platform before calling a topic done, and record the required *shape* — not
-  the brief's wording — in the exercise's `PROGRESS.md`. A deliverable specified as a **public URL**
+  the requirements' wording — in the exercise's `PROGRESS.md`. A deliverable specified as a **public URL**
   is not satisfied by a file in the repo, however correct that file is.
 - **Topic notebooks** → top-level `notebooks/`, **gitignored** except the tracked
   `hello.ipynb` sample. Their generators (`*/tools/build_notebook.py`) are gitignored too — a
@@ -603,12 +603,12 @@ was not summarising the exercises, it was the only place they were described.
 - **Exercise:** everything end to end — the argument, the numbers, how to reproduce, what it cannot
   establish. This is where a reader who wants depth is sent, and it must reward the trip.
 
-The root's job is **routing, not retelling**. Where the brief requires the root to reach a
+The root's job is **routing, not retelling**. Where the requirements requires the root to reach a
 deliverable "without a detour", that is a property of its links, not of how much it repeats — and
 the test for it should assert the *link*, since asserting the filename passes against a front door
 that names the file and never links it.
 
-**"Without a detour" is satisfied by a link, not by a section.** The brief for the exercise under
+**"Without a detour" is satisfied by a link, not by a section.** The requirements for the exercise under
 submission says the root README *is* the front door — a grader lands there and nowhere else — and
 the obvious reading is that the root should therefore carry a summary block for that exercise. It
 should not. That block was tried and it grew back into the retelling the split exists to prevent:

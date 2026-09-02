@@ -175,7 +175,7 @@ def pin_gloo_to_loopback() -> str | None:
     file rendezvous was meant to remove — a grader on a VPN, a runner with an unusual interface, or
     a laptop that changed networks would all hit it.
 
-    `setdefault`, not an assignment: a genuine multi-node run has to be able to name its real
+    `setdefault`, not an requirement: a genuine multi-node run has to be able to name its real
     interface, and this only supplies a default for the single-machine case.
 
     Returns:

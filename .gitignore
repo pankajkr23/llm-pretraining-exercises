@@ -257,13 +257,13 @@ HANDOFF.md
 
 # Programme material — the schedule, the class list, and the internal authoring specs. The public
 # repo carries the engineering work; the course's own calendar and playbooks stay local.
-docs/BRIEF.md
-# Assignment briefs, at every level. A brief is input for the people and agents building an
+docs/REQUIREMENTS.md
+# Requirement requirement documents, at every level. A requirements document is input for the people and agents building an
 # exercise, not public reading, and it is the course's text rather than ours. What we decided and
 # why is published instead — each exercise's README.md, and DECISIONS.md where the reasoning is
-# long enough to need its own file. Never link to a brief from a tracked file: the link resolves
+# long enough to need its own file. Never link to a requirements document from a tracked file: the link resolves
 # on a working checkout and 404s for everyone else.
-BRIEF.md
+REQUIREMENTS.md
 docs/EXPLAINER_PROMPT.md
 docs/EXPLAINER_PATTERN.md
 # Self-critique of a shipped build — useful to us, not part of the published work.
@@ -284,7 +284,7 @@ notebooks/S[0-9][0-9]-*.ipynb
 # longer check that a builder exists or still runs. Back these up outside the repo.
 src/exercises/*/tools/build_notebook.py
 
-# ...but the submission bundle IS the deliverable, and the assignment names `run.log` specifically.
+# ...but the submission bundle IS the deliverable, and the requirements names `run.log` specifically.
 #
 # This negation WORKS because `*.log` (line 59) is a FILE pattern. The same trick under
 # `artifacts/` would be inert: `**/artifacts/` is a DIRECTORY pattern, and git cannot re-include a

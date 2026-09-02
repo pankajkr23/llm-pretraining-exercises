@@ -1,6 +1,6 @@
 # 01 · Introductions — Four Live Proofs
 
-Exercise 01 assignment. A small site that *proves* four foundational ML claims by training tiny
+Exercise 01 requirement. A small site that *proves* four foundational ML claims by training tiny
 models **live in the browser** — no server, no pre-baked figures, and **no dependencies at all**.
 Every page inlines its own CSS and JS; the neural networks (forward pass, backprop, Adam) are
 hand-written in plain JavaScript, and nothing is fetched from a CDN.

@@ -1,6 +1,6 @@
 """The V5 data mixture and curriculum, composed backward from benchmarks and sized against supply.
 
-Exercise 05's assignment is a written specification. This package is what makes that specification
+Exercise 05's requirement is a written specification. This package is what makes that specification
 checkable: every share, every supply figure and every verdict in `SPEC.md` is computed here from
 the Exercise 05 inventory rather than typed into the document by hand, so a reviewer pushing on any
 number gets an answer that names its source.

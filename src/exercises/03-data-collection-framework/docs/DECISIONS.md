@@ -210,7 +210,7 @@ Task 2.2b measured what that costs, on IN22-Gen, all 22 scheduled languages, run
 | Sarvam-105B | ×1.81 | ×2.90 |
 | XLM-R (2019, general-purpose) | ×1.66 | ×2.42 |
 
-Gemma 4 is the assignment's named target and the worst of the three on Indic. Against Sarvam that is
+Gemma 4 is the requirements' named target and the worst of the three on Indic. Against Sarvam that is
 roughly **37% more tokens for the same Indic text**, paid on every step of the entire run and on every
 token served afterwards. Vocabulary expansion mitigates it — new tokens can be added — but the merges
 already learned stay as they are, so expansion narrows the gap rather than closing it.

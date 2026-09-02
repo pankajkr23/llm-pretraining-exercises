@@ -130,7 +130,8 @@ def payload() -> dict:
             }
             for p in pressure_by_period(mechanisms, window=2)
         ],
-        # The arc is an editorial claim from the brief, so the page must not restate it — it must
+        # The arc is an editorial claim from the requirements, so the page must not restate it —
+        # it must
         # render the result of testing it. Every field here is derived; `chapters.js` asserts none
         # of it. The number it replaces ("holds in 6 of 7 windows") counted windows that produced a
         # winner, not windows whose winner the arc predicted, and the arc does not survive that.

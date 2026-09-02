@@ -2,7 +2,7 @@
 
 Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is a public web app plus
 a sourced chronology; the reasoning is `DECISIONS.md`, the running log is `PROGRESS.md`, and
-`BRIEF.md` is the assignment (local only, gitignored).
+`REQUIREMENTS.md` is the requirements (local only, gitignored).
 
 **Status: shipped.** `config.py`, `cache.py`, `sources.py`, `catalogue.py`, `timeline.py`,
 `results/mechanisms.json`, and the page at `web/` — twelve spine sections, the two-object mechanism
@@ -45,7 +45,7 @@ A missing mechanism scores zero, and we were invited to catch errors in the sour
 
 - **A mechanism with no stated cost is rejected.** `catalogue.Mechanism.__post_init__` raises when
   `new_tradeoff`, `gives_up` or `when_to_choose` is empty. A technique written down with only upside has not been
-  understood yet, and the assignment says so.
+  understood yet, and the requirements says so.
 
 - **`MANDATED` is the instructor's own list, quoted, mapped to our keys.** The test reads his
   phrases, so a rename on our side can never silently drop one of his items. Do not reword the left
@@ -55,14 +55,14 @@ A missing mechanism scores zero, and we were invited to catch errors in the sour
   6.44 GB at one user and 51.54 GB at eight, and GQA at two KV heads is exactly a quarter of MHA.
   Tests pin all three, so editing the yardstick breaks the documents that cite it.
 
-- **The claimed arc is derived, not repeated.** The brief says the field went "exactness → memory →
+- **The claimed arc is derived, not repeated.** The requirements says the field went "exactness → memory →
   length → memory again". `timeline.pressure_by_period` counts which bill each window addressed, and
   `Period.dominant` returns `None` on a tie instead of picking a winner. If the arc is not in the
   data, say so.
 
 ## Two errors in the course material, both verified
 
-Recorded because the assignment explicitly invites it — *"if you catch me in another one, tell me"* —
+Recorded because the requirements explicitly invites it — *"if you catch me in another one, tell me"* —
 and because a reader deserves to know which claims we checked.
 
 - **The transformer is mis-dated in the source.** It says Vaswani "invented in 2018 and 17";
@@ -315,7 +315,7 @@ explicitly now.
 ## The page was rebuilt around six readers, and two of them found factual defects
 
 Six personas read the page end to end — a fifteen-year-old, a practising engineer, a frontier
-researcher, an adversarial sceptic, an assignment grader, and a reader who had just come from
+researcher, an adversarial sceptic, an requirement grader, and a reader who had just come from
 Raschka's *Visual Guide to Attention Variants*. What they changed, and the rules that came out of it.
 
 **The page's headline claim was false, and the key's own counts had been right all along.** The
@@ -361,7 +361,7 @@ all.
 "where two static curves would only show correlation". Animating a schematic does not make it causal;
 the dial illustrates an assumed mechanism and this page has no measurement of a deployed model.
 
-**Once is orientation; three times is a template readers skip.** The three figure `brief()` blocks
+**Once is orientation; three times is a template readers skip.** The three figure `requirements document()` blocks
 ran 217, 265 and 279 words in the same five-heading shape, and two readers said they were skipping
 the good sentences with the boilerplate. They are 52, 50 and 59 now — and both lessons that lived
 only inside a deleted block moved into a caption **first**, because `AGENTS.md` forbids leaving a

@@ -1,6 +1,6 @@
 """The catalogue is the deliverable, so these are the tests that matter most.
 
-The assignment is graded on three things — the dates, the trade-offs, and the coverage — and the
+The requirements is graded on three things — the dates, the trade-offs, and the coverage — and the
 instructor said plainly that a missing mechanism scores zero. Each of those is a test here rather
 than something somebody remembers to check.
 
@@ -33,7 +33,7 @@ def test_every_mechanism_the_assignment_names_is_covered() -> None:
     """
     missing = missing_mandated(MECHANISMS)
     assert not missing, (
-        f"the assignment requires these and the catalogue has none of them: {missing}"
+        f"the requirements requires these and the catalogue has none of them: {missing}"
     )
 
 
@@ -54,7 +54,7 @@ def test_the_recorded_date_agrees_with_the_string_it_was_read_from() -> None:
     """The transcription check, and the reason `quoted_date` exists at all.
 
     Every arXiv source quotes its submission-history line verbatim. Parsing that line and comparing
-    it to the ISO date catches the specific error the assignment warns about — a date that was
+    it to the ISO date catches the specific error the requirements warns about — a date that was
     looked up correctly and then written down wrong. A source whose quote is not in arXiv's format
     (a forum post, a model release) parses to None and is skipped, which is why the count of
     cross-checked entries is asserted too: a regex that silently stopped matching would make this
@@ -103,7 +103,7 @@ def test_no_mechanism_is_all_upside() -> None:
 
 
 def test_every_mechanism_carries_the_narrative_the_notes_require() -> None:
-    """The five-step shape the assignment mandates: what existed, the problem, the mechanism,
+    """The five-step shape the requirements mandates: what existed, the problem, the mechanism,
     what it
     fixed, and the new trade-off it introduced."""
     for mechanism in MECHANISMS:
@@ -130,7 +130,7 @@ def test_at_least_one_mechanism_the_instructor_did_not_cover() -> None:
 
 
 def test_the_json_records_which_mechanisms_the_notes_actually_taught() -> None:
-    """Eight of the mandated list are named in the assignment and never taught.
+    """Eight of the mandated list are named in the requirements and never taught.
 
     Recording which is which is how a reader can tell where our evidence came from. If every entry
     claimed to be taught in the source material, that would be false and this catches it.
@@ -138,7 +138,7 @@ def test_the_json_records_which_mechanisms_the_notes_actually_taught() -> None:
     outside = [m.key for m in MECHANISMS if not m.taught_in_source]
     assert len(outside) >= 8, (
         f"only {len(outside)} entries are marked as sourced from outside the source material; the "
-        f"assignment names eight mechanisms the source material never covers"
+        f"requirement names eight mechanisms the source material never covers"
     )
 
 
@@ -160,9 +160,9 @@ def test_each_required_mechanism_individually(phrase: str, key: str) -> None:
     test passed on half a phrase — while the catalogue additionally claimed "top-k attention" as an
     alias of Sparse Transformers, which is a different technique with a different date and a
     different failure mode. Covering half a phrase and reporting success is exactly the "missing or
-    mis-explained mechanism" the assignment scores zero for.
+    mis-explained mechanism" the requirements scores zero for.
     """
-    assert any(m.key == key for m in MECHANISMS), f"the assignment requires {phrase!r} ({key})"
+    assert any(m.key == key for m in MECHANISMS), f"the requirements requires {phrase!r} ({key})"
 
 
 def test_no_phrase_is_satisfied_by_only_part_of_itself() -> None:
@@ -185,7 +185,7 @@ def test_every_mechanism_can_be_drawn() -> None:
     """The plate shows all twenty-three or it is not the plate.
 
     An entry with no glyph would be a silent hole in a figure whose entire claim is completeness —
-    and a reader counting the plate against the assignment's list would find it before we did.
+    and a reader counting the plate against the requirements' list would find it before we did.
     """
     from attention.catalogue import undrawn
 

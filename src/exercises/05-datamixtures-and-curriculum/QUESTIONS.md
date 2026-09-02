@@ -145,7 +145,7 @@ Without those four, 4% is a number that describes an intention rather than a cor
 **Why it is weak.** The source material's lifecycle timeline shows post-training stages as visibly tiny
 next to pretraining. SFT can *elicit* a behaviour the base model can already represent; it cannot
 install a capability that was never trained. Multi-turn tool policy is exactly the kind of thing
-that needs to be in the base — long-horizon credit assignment across tool calls is not learned from
+that needs to be in the base — long-horizon credit requirement across tool calls is not learned from
 a small SFT set. You are proposing to fix a distributional problem with a budget two orders of
 magnitude smaller than the one that created it.
 

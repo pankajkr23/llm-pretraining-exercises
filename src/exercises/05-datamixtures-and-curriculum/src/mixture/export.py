@@ -89,7 +89,7 @@ def _lane_arguments() -> str:
         names = ", ".join(f"`{b.name}`" for b in grouped.get(lane.key, ())[:5])
         # One paragraph per lane rather than three lines. The rubric wants each share tied to the
         # benchmarks it buys and the datasets that fund it; it does not want them on separate rows.
-        # Every dataset, never a count. The assignment asks the plan to point each slot at the
+        # Every dataset, never a count. The requirements asks the plan to point each slot at the
         # datasets from the inventory that will fill it; an earlier tightening pass truncated this
         # to four with "+5 more", which is exactly the headline number the clause warns against.
         funders = ", ".join(lane.funded_by)
@@ -258,7 +258,7 @@ def _cost_table(config: Config) -> str:
 
 
 def _capability_table(config: Config) -> str:
-    """The three capabilities the assignment asks to be named explicitly."""
+    """The three capabilities the requirements asks to be named explicitly."""
     agentic = supply.evaluate_lane("agentic", lanes.get("agentic").share, config)
     reasoning = inventory.lane_supply("reasoning")
     long_context = supply.double_counted()["long_context"]
@@ -281,7 +281,7 @@ def _capability_table(config: Config) -> str:
 
 
 def _slot_datasets_table() -> str:
-    """Every dataset behind the three slots the assignment names, with its token count."""
+    """Every dataset behind the three slots the requirements names, with its token count."""
     rows = ["| slot | dataset | tokens | licence | tier |", "| --- | --- | ---: | --- | --- |"]
     for lane in ("agentic", "reasoning", "long_context"):
         for row in sorted(
@@ -932,7 +932,7 @@ against frozen embeddings. Per-seam detail: [`curriculum.py`](src/mixture/curric
 The shares are not chosen; they are the duration-weighted integral of a per-stage band mix, the
 same discipline the lane shares are held to, and `INV-12` fails if they do not sum to one.
 
-**Why the assignment rule is source-derived, and not a readability score.** {readability}
+**Why the requirements rule is source-derived, and not a readability score.** {readability}
 
 ### A real example at each level
 
@@ -1015,7 +1015,7 @@ exists to prevent; a share whose gap is priced is a commitment.
 
 ## 10 · The cleaning continues, aimed at the starved slots
 
-The assignment's closing instruction. The mixture above is what says which slots are starved, so
+The requirements' closing instruction. The mixture above is what says which slots are starved, so
 this is its output rather than a separate exercise — ranked by how hard each lane is leaning on
 repetition.
 
@@ -1401,7 +1401,7 @@ the proxy it commits to was actually run. This page is the recipe itself.
 
 {_READING_PATH}{pipeline_summary}## Where each required answer lives
 
-| # | the assignment asks for | where |
+| # | the requirements asks for | where |
 | --- | --- | --- |
 | 1 | a share of the budget for every capability slot | Part 1 · the mixture — `SPEC.md` §1 |
 | 2 | the Indic split, four provenance tiers | Part 1 · the Indic split — `SPEC.md` §2 |
@@ -1468,7 +1468,7 @@ synthetic and is *tagged* translated. Which reading wins decides whether tier C 
 tier D is fundable. `SPEC.md` §2 publishes both readings side by side under a heading inviting a
 reviewer to push on it, because choosing the other reading moves the hole rather than filling it.
 
-## The three lanes the assignment names
+## The three lanes the requirements names
 
 {_capability_table(config)}
 
@@ -1783,7 +1783,8 @@ def _method_experiments() -> str:
 def render_method(config: Config | None = None) -> str:
     """Build `METHOD.md` — how the whole thing works, for a reader who has not seen it before.
 
-    Deliberately NOT part of `SPEC.md`. The specification is graded adversarially and its brief
+    Deliberately NOT part of `SPEC.md`. The specification is graded adversarially and its
+    requirements
     says a tightly argued short plan scores well while padding earns nothing, so architecture
     diagrams and a glossary belong beside it rather than inside it. `SPEC.md` links here.
 
@@ -2132,7 +2133,7 @@ IndicGenBench covers **29 languages across 13 scripts**. Our vocabulary reads a 
 Tokens per faithful unit; **lower is better**, best in each row in bold. `ours` is **this
 project's own Exercise 02 submission** — the 10,000-token vocabulary at
 `02-tokenization/web/tokenizer.json`, read in place — not the reference `tokenizer.json` that ships
-with the assignment solution.
+with the requirements solution.
 
 {fertility_table}
 

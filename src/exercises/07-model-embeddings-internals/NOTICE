@@ -62,9 +62,9 @@ figure that came from reading a metric which scores truncated tokens as decoder
 failures by construction. The Fourier position variant is also a negative
 result: it removes every collision and trains worse than doing nothing.
 
-WHICH ASSIGNMENT PROBLEM EACH RESULT ANSWERS
+WHICH PROBLEM EACH RESULT ANSWERS
 
-The brief states that its five problems are separate. Every result here is
+The requirements states that its five problems are separate. Every result here is
 labelled with the problem it addresses, and any result that spans two is
 labelled as spanning two rather than being presented as a single-problem
 solution. See README.md.

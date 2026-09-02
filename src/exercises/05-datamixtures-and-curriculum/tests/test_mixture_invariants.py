@@ -120,7 +120,7 @@ def test_inv2_every_impossible_lane_is_a_declared_one():
 
 
 def test_inv2_twin_an_undeclared_impossible_lane_is_caught():
-    """The assignment's named failure: a large share handed to a lane with no data behind it.
+    """The requirements' named failure: a large share handed to a lane with no data behind it.
 
     Agentic really is impossible; the twin removes its generation bill and checks that being
     impossible *and undeclared* is what fires.

@@ -81,7 +81,7 @@ def test_the_readme_answers_all_seven_required_items():
     for item in (
         "share for every capability lane",
         "Indic split",
-        "three lanes the assignment names",
+        "three lanes the requirements names",
         "floor the selector may not cross",
         "anneal reserve",
         "Difficulty bands",
@@ -97,7 +97,7 @@ def test_the_root_readme_routes_to_the_deliverable_without_a_detour():
     It has been narrowed twice. First it asserted the root carried the share table and the
     curriculum stages; then it asserted a generated per-exercise block routed to the four
     documents. Both were the root retelling the exercise. The root is a map now — one table row per
-    exercise, no generated section — so what is checked is the row, and the brief's actual
+    exercise, no generated section — so what is checked is the row, and the requirements' actual
     requirement: *"the root README is the front door, and it has to carry the reader to `SPEC.md`
     without a detour"*. That is a routing property, not a content one.
     """
@@ -107,7 +107,8 @@ def test_the_root_readme_routes_to_the_deliverable_without_a_detour():
         if line.startswith("| 05 |")
     )
     # The LINK, not the filename. `"SPEC.md" in row` is satisfied by a bare mention, so it passes
-    # against a front door that names the deliverable and never links it — the detour the brief
+    # against a front door that names the deliverable and never links it — the detour the
+    # requirements
     # rules out. One hop from the row a reader is already reading is what "without a detour" means.
     assert f"]({export.SPEC_LINK})" in row, "the exercise table row does not link SPEC.md"
     assert f"]({export.EXERCISE_LINK})" in row, "the row does not link the exercise's own guide"

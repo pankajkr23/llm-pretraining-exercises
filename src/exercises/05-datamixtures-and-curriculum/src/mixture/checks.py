@@ -77,7 +77,7 @@ def check_shares_sum(shares: dict[str, float], tolerance: float = 1e-9) -> list[
 def check_within_supply(verdicts: dict[str, Any], declared: set[str]) -> list[Finding]:
     """INV-2 · No lane is funded past what repetition can be worth, unless it is declared.
 
-    This is the invariant the assignment names by number: a share handed to a lane with almost no
+    This is the invariant the requirements names by number: a share handed to a lane with almost no
     real data behind it loses marks when it is handed over **quietly**. Over-allocating a lane
     is allowed; doing it without a generation bill is not.
 

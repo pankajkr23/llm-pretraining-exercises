@@ -1,7 +1,7 @@
 # CLAUDE.md — 05-datamixtures-and-curriculum
 
 Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is `SPEC.md`, the
-running log of findings and decisions is `PROGRESS.md`, and `BRIEF.md` is the assignment (local
+running log of findings and decisions is `PROGRESS.md`, and `REQUIREMENTS.md` is the requirements (local
 only, gitignored).
 
 ## The rules this exercise adds
@@ -162,7 +162,7 @@ emits, and the cells are diffable as Python.
 
 **The loop is: edit the builder → run it → execute every code cell → commit.** The middle step is
 not optional. `test_mixture_notebook.py` checks the structural rules (imports the package, no
-committed outputs, covers all seven assignment items, shows a guard failing) *and* now executes it:
+committed outputs, covers all seven requirement items, shows a guard failing) *and* now executes it:
 `test_the_notebook_runs_end_to_end` runs all 37 code cells through nbclient, and its twin appends a
 raising cell and requires the runner to catch it. `nbclient` and `ipykernel` are in the root `dev`
 group so the runner is installed there.

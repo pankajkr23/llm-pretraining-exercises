@@ -185,17 +185,17 @@ function chapterProblem(M) {
        costs <b>${int(a.vocab_size)} × ${a.d_model}</b> numbers. Kronecker embeddings replace the
        first table with a rule that works each row out from the word’s spelling. The second is left
        alone.`,
-      `The source material’s brief asks whether that second one can go too, and states the prize:`,
+      `The source material’s requirements document asks whether that second one can go too, and states the prize:`,
     ],
-    { short: 'What was asked', sub: 'the brief, quoted' }
+    { short: 'What was asked', sub: 'the requirements, quoted' }
   );
 
-  const q = el('blockquote', 'brief');
+  const q = el('blockquote', 'preamble');
   q.innerHTML =
     `“Kronecker is forward deterministic (same word will always give same embedding). How do I make
      a reverse of this (same embedding gives the same Kronecker)? <b>If we can do this, then we can
      get rid of the final head as well!</b> Then we can have a vocab of 1M as well without any
-     issues!”<cite>Exercise 07 assignment, problem 5 of 5</cite>`;
+     issues!”<cite>Exercise 07 requirement, problem 5 of 5</cite>`;
   s.append(q);
 
   s.append(
@@ -715,7 +715,7 @@ function chapterResults(M) {
     el(
       'p',
       'say',
-      `The brief says its five problems are separate, so the gain is split by which problem produced
+      `The requirements says its five problems are separate, so the gain is split by which problem produced
        it rather than reported as one number. Both solutions stand on their own, and they roughly
        add.`
     )
@@ -887,12 +887,12 @@ function chapterConclusion(M) {
     'conclusion',
     'Where that leaves it',
     'The second table is gone, and the model got better',
-    [`The brief asked three things, and all three are answered with measurements rather than argument.`],
+    [`The requirements asked three things, and all three are answered with measurements rather than argument.`],
     { short: 'Where that leaves it', sub: 'all three clauses answered' }
   );
   s.append(
     table(
-      ['the brief asked', 'the answer'],
+      ['the requirements asked', 'the answer'],
       [
         {
           __mark: 'good',

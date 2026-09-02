@@ -1,6 +1,6 @@
 # 02 · Tokenization — a balanced multilingual BPE
 
-Exercise 02 assignment. Build **one 10,000-token BPE vocabulary**
+Exercise 02 requirement. Build **one 10,000-token BPE vocabulary**
 shared across India's Wikipedia article in **English, Hindi, Telugu, and a fourth language**, tuned
 so all four are tokenized about equally efficiently.
 

@@ -144,7 +144,7 @@ def _load_records(cfg: Config) -> dict[str, Any]:
         records["market"] = load_json(market_path)
 
     # Documents rather than record arrays: these were extracted from the prose in DECISIONS.md and
-    # ATLAS.md, where the answers to the assignment's questions had been written and never
+    # ATLAS.md, where the answers to the requirements' questions had been written and never
     # published. They are object-shaped, so they load by name instead of through EXPECTED_COUNTS,
     # whose check is a length.
     for name in (

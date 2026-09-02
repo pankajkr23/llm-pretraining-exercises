@@ -2,7 +2,7 @@
  *
  * Everything rendered here comes from `data.js`, which `tools/build_web_data.py` derives from the
  * tracked catalogue and from the same functions the tests exercise. No date, count or trade-off is
- * typed into this file. That is not fastidiousness: the assignment is graded on the dates, and a
+ * typed into this file. That is not fastidiousness: the requirements is graded on the dates, and a
  * number inside a <script> block is read far more often than any file in the repo and tested by
  * none of them.
  *
@@ -131,11 +131,11 @@ function standfirst(text) {
  * plates show objects nobody has seen before (a pair of rotary dials; forty tokens under a sliding
  * window) and both were unreadable cold. This is the half that was missing.
  */
-function brief(rows) {
-  const d = el('div', 'brief');
+function preamble(rows) {
+  const d = el('div', 'preamble');
   for (const [label, text] of rows) {
-    const r = el('div', 'brief-row');
-    r.append(el('span', 'brief-lab', label));
+    const r = el('div', 'preamble-row');
+    r.append(el('span', 'preamble-lab', label));
     const v = el('p');
     v.innerHTML = rich(text);
     r.append(v);
@@ -977,7 +977,7 @@ function chapterResults(M, spreadRef) {
        * and the one sentence naming the three racers. "Who ships which" went to the index, which
        * carries it for all thirty; "why it is worth understanding" went into the caption, which is
        * where an argument belongs. */
-      brief([
+      preamble([
         [
           'What you are looking at',
           'Three model designs generating text side by side; each line is how much memory that ' +
@@ -1020,7 +1020,7 @@ function chapterResults(M, spreadRef) {
        * matters" carried one sentence worth keeping — the reader who has watched a model degrade
        * before its advertised limit — which is now in the caption where it argues instead of
        * announcing. What is left is what the drawing is, and the walk through a real number. */
-      brief([
+      preamble([
         [
           'What you are looking at',
           'Rotary embeddings tell a model where a word sits by **rotating** its query and key ' +
@@ -1071,7 +1071,7 @@ function chapterResults(M, spreadRef) {
        * so it is in the caption now. The sinks explanation stays whole: it is on the do-not-cut
        * list, four readers quoted it, and it is the only place the page explains WHY anything on
        * the timeline happened by accident. */
-      brief([
+      preamble([
         [
           'What you are looking at',
           'Forty words in a row along the bottom. The bar above each one is how much **attention ' +

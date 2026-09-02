@@ -58,7 +58,7 @@ without breaking anything else.
 | `config.py` | the yardstick model every cost is computed against, taken from the source material |
 | `cache.py` | the two bills — KV bytes, `T²` scores, head sharing, sequence compression |
 | `sources.py` | the citation model: what was read, from where, quoted verbatim, and when |
-| `catalogue.py` | the mechanisms, their trade-offs, and the coverage list the assignment mandates |
+| `catalogue.py` | the mechanisms, their trade-offs, and the coverage list the requirements mandates |
 | `timeline.py` | ordering, the gaps, and which bill each period was paying down |
 | `story.py` | the six chapters the page tells, and the rule that every mechanism is in exactly one |
 
@@ -139,7 +139,7 @@ capture, and the entry records that. A reader who needs the live page needs a br
 
 ### Two errors in the course material
 
-The assignment invites this — *"if you catch me in another one, tell me"* — so both are recorded
+The requirements invites this — *"if you catch me in another one, tell me"* — so both are recorded
 rather than quietly corrected.
 
 - **The transformer is mis-dated.** The source says Vaswani "invented in 2018 and 17".
@@ -160,7 +160,7 @@ does not say which was meant.
 
 ### What the order shows
 
-Derived by `timeline.pressure_by_period`, not asserted. The brief predicts a tidy sequence —
+Derived by `timeline.pressure_by_period`, not asserted. The requirements predicts a tidy sequence —
 exactness, then memory, then length, then memory again — and the data is messier than that: **one of the seven two-year windows has no single
 dominant pressure at all.** In that period the field was attacking several bills at once, and a test
 fails if that ever stops being true, so the finding cannot quietly become the tidy story.
@@ -304,7 +304,7 @@ paper says otherwise.
 
 ## The arc was tested, and the test had to be fixed first
 
-The brief's claim is that the field wanted *exactness, then memory, then length, then memory again*
+The requirements' claim is that the field wanted *exactness, then memory, then length, then memory again*
 — in the catalogue's labels, `compute → cache → position → cache`. `timeline.arc_verdict` tests it.
 
 For a while the page published **"the claimed arc holds in 6 of these 7 two-year windows"**. That

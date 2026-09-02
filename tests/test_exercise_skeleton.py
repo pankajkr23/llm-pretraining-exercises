@@ -1,8 +1,9 @@
-"""Every exercise carries the same skeleton, and briefs are never versioned.
+"""Every exercise carries the same skeleton, and requirement documents are never versioned.
 
 `AGENTS.md` has specified this since the repo began — *"identical skeleton per exercise"* — and it
 was still skipped when exercise 06 was created: code was written before `CLAUDE.md`, `PROGRESS.md`,
-`NOTICE` and `BRIEF.md` existed. A convention that lives only in prose is a convention that gets
+`NOTICE` and `REQUIREMENTS.md` existed. A convention that lives only in prose is a convention that
+gets
 skipped under momentum, so this makes it checkable.
 
 Only the genuinely universal files are required. `DECISIONS.md`, `PROGRESS.md` and `NOTICE` are
@@ -55,20 +56,25 @@ def test_the_exercise_has_the_required_directories(exercise: Path) -> None:
 
 @pytest.mark.parametrize("exercise", EXERCISES, ids=_ids)
 def test_no_brief_is_ever_tracked(exercise: Path) -> None:
-    """A brief is the course's text and is input, never the deliverable.
+    """A requirements document is the course's text and is input, never the deliverable.
 
-    `AGENTS.md`: *"`BRIEF.md` is gitignored by name everywhere."* Checked with `git ls-files`
+    `AGENTS.md`: *"`REQUIREMENTS.md` is gitignored by name everywhere."* Checked with `git ls-files`
     rather than by looking at `.gitignore`, because a file already added to the index stays tracked
     no matter what the ignore rules say afterwards — which is exactly how this would go wrong.
     """
     tracked = subprocess.run(
-        ["git", "ls-files", "--error-unmatch", f"{exercise.relative_to(REPO_ROOT)}/BRIEF.md"],
+        [
+            "git",
+            "ls-files",
+            "--error-unmatch",
+            f"{exercise.relative_to(REPO_ROOT)}/REQUIREMENTS.md",
+        ],
         cwd=REPO_ROOT,
         capture_output=True,
         check=False,
     )
     assert tracked.returncode != 0, (
-        f"{exercise.name}/BRIEF.md is TRACKED. A brief is the course's text, not our deliverable, "
+        f"{exercise.name}/REQUIREMENTS.md is TRACKED. It is input, not our deliverable, "
         f"and it must never be versioned. Remove it from the index with "
         f"`git rm --cached` — the file itself stays on disk."
     )

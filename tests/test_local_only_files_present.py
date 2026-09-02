@@ -38,9 +38,9 @@ EXPECTED_NOTEBOOKS = [
 ]
 EXPECTED_BUILDERS = [p / "tools" / "build_notebook.py" for p in EXERCISES]
 
-#: The assignment text for each exercise. Gitignored by name everywhere, so a clone has none and a
+#: The requirements text for each exercise. Gitignored by name everywhere, so a clone has none and a
 #: healthy working checkout has one per exercise.
-EXPECTED_BRIEFS = [p / "BRIEF.md" for p in EXERCISES]
+EXPECTED_BRIEFS = [p / "REQUIREMENTS.md" for p in EXERCISES]
 
 #: Programme-level material — the course corpus. **This was the largest exposure and nothing
 #: watched it.**
@@ -61,7 +61,7 @@ NOTES_CORPUS = backup.EXTERNAL_SOURCES["notes"]
 #: holds and this checkout does not is a loss, and no hand-written floor can notice that.
 STORE = REPO_ROOT.parent / f".{REPO_ROOT.name}-local-only"
 EXPECTED_PROGRAMME = [
-    REPO_ROOT / "docs" / "BRIEF.md",
+    REPO_ROOT / "docs" / "REQUIREMENTS.md",
     REPO_ROOT / "docs" / "EXPLAINER_PROMPT.md",
     REPO_ROOT / "docs" / "EXPLAINER_PATTERN.md",
 ]
@@ -131,7 +131,7 @@ def test_no_notebook_builder_has_gone_missing() -> None:
     assert not missing, (
         f"{len(present)} notebook builders are present but {missing} are gone. Nothing tracked "
         f"can restore them. If they were removed by a branch switch or pull, recover with:\n"
-        f'  git checkout "$(git log --all --diff-filter=D --format=%H -1 -- '
+        f' git checkout "$(git log --all --diff-filter=D --format=%H -1 -- '
         f"'src/exercises/*/tools/build_notebook.py')^\" -- "
         f"'src/exercises/*/tools/build_notebook.py'\n"
         f"and keep a backup outside the repo (see AGENTS.md)."
@@ -139,7 +139,7 @@ def test_no_notebook_builder_has_gone_missing() -> None:
 
 
 def test_no_programme_level_document_has_gone_missing() -> None:
-    """`docs/BRIEF.md` and the two explainer specs, which nothing else watched.
+    """`docs/REQUIREMENTS.md` and the two explainer specs, which nothing else watched.
 
     `AGENTS.md` requires both explainer documents to be read before building one, and they exist
     only here. Losing them does not break a build — it silently removes the standard the next
@@ -161,7 +161,7 @@ def test_no_programme_level_document_has_gone_missing() -> None:
 
 
 def test_the_reference_corpus_has_not_shrunk() -> None:
-    """The course material — records, assignments, notes — is the biggest unguarded exposure.
+    """The course material — records, requirements, notes — is the biggest unguarded exposure.
 
     **Measured against the backup store, not against a hand-written floor.** The first version
     required at least one topic note per exercise, which tolerated losing two thirds of the
@@ -327,21 +327,23 @@ def test_a_file_named_like_an_exercise_is_not_an_exercise(tmp_path: Path) -> Non
 
 
 def test_no_brief_has_gone_missing() -> None:
-    """Briefs are local-only, so nothing tracked can restore one.
+    """Requirement files are local-only, so nothing tracked can restore one.
 
-    This is not hypothetical. All four of exercises 01-04's briefs were destroyed by an ordinary
+    This is not hypothetical. All four of exercises 01-04's requirement documents were destroyed
+    by an ordinary
     branch switch after the commit that untracked them, and were only recoverable because
-    `18015b1^` was still reachable. They had existed in git once; a brief written *after* the
+    `18015b1^` was still reachable. They had existed in git once; a requirements doc written
+    *after* the
     untracking convention would not have that safety net at all.
     """
     present = [p for p in EXPECTED_BRIEFS if p.is_file()]
     if not present:
-        pytest.skip("no briefs here — a fresh clone has none (they are gitignored)")
-    missing = [f"{p.parent.name}/BRIEF.md" for p in EXPECTED_BRIEFS if not p.is_file()]
+        pytest.skip("no requirement documents here — a fresh clone has none (they are gitignored)")
+    missing = [f"{p.parent.name}/REQUIREMENTS.md" for p in EXPECTED_BRIEFS if not p.is_file()]
     assert not missing, (
-        f"{len(present)} briefs are present but {missing} are gone. Nothing tracked can restore "
-        f"a brief written since the untracking convention. If these were lost to a branch switch, "
+        f"{len(present)} present, {missing} gone. Nothing tracked can restore "
+        f"a requirements file written since the untracking convention. If lost to a branch switch, "
         f"recover them with:\n"
-        f"  git show 18015b1^:src/exercises/<slug>/BRIEF.md > src/exercises/<slug>/BRIEF.md\n"
+        f" git show 18015b1^:src/exercises/<slug>/REQUIREMENTS.md > <same path>\n"
         f"and keep a backup outside the repo (see AGENTS.md)."
     )

@@ -8,7 +8,7 @@ r"""Scaffold a new exercise, and register it everywhere registration is not auto
 **Why this exists.** Setting an exercise up by hand takes about forty minutes and gets a different
 subset of the conventions right each time. `AGENTS.md` is explicit that the folder is set up
 *before* the code — *"The skeleton is not paperwork to backfill"* — and exercise 06 was still built
-without a `CLAUDE.md`, `PROGRESS.md`, `NOTICE` or `BRIEF.md`, "because a convention that lives only
+without a `CLAUDE.md`, `PROGRESS.md`, `NOTICE` or `REQUIREMENTS.md` — a convention that lives only
 in prose gets skipped under momentum". This script is that convention as code.
 
 **The sequencing fact it exists to get right.** `tests/_exercises.py::exercises_in` only counts a
@@ -146,7 +146,7 @@ def claude_md(spec: Spec) -> str:
     return f"""# CLAUDE.md — {spec.dirname}
 
 Component notes. Repo-wide conventions: root `AGENTS.md`. The reasoning is `DECISIONS.md`, the
-running log is `PROGRESS.md`, and `BRIEF.md` is the assignment (local only, gitignored).
+running log is `PROGRESS.md`, and `REQUIREMENTS.md` is the requirements (local only, gitignored).
 
 **Status: scaffolded.** Nothing measured yet.
 
@@ -206,7 +206,7 @@ the work can be picked up cold. Newest entries at the top of each section.
 
 **Deliverable shape — read this before calling the source material done.** Check the submission
 platform's
-own field list, not `BRIEF.md`, which can be truncated. Record the required *shape* here.
+own field list, not `REQUIREMENTS.md`, which can be truncated. Record the required *shape* here.
 
 ---
 
@@ -432,28 +432,30 @@ if __name__ == "__main__":
 '''
 
 
-def brief(spec: Spec) -> str:
-    """`BRIEF.md` — **gitignored**, seeded from the source's assignment when one is present."""
-    header = f"""# BRIEF — Topic {spec.topic}
+def preamble(spec: Spec) -> str:
+    """`REQUIREMENTS.md` — gitignored, seeded from the local source when one is present."""
+    header = f"""# REQUIREMENTS — Topic {spec.topic}
 
-**Local only. Never tracked.** `BRIEF.md` is gitignored everywhere in this repo: a brief is the
+**Local only. Never tracked.** `REQUIREMENTS.md` is gitignored everywhere in this repo: a
+requirements doc is the
 course's text and is *input* for whoever builds the exercise, not our deliverable. Never link to it
 from a tracked file — the link resolves on a working checkout and 404s for everyone else.
 
 """
     # The reference material lives outside the repository, and its filenames are confidential —
     # so the pattern is assembled here rather than written down, and nothing about what was found
-    # is echoed into the generated brief. `backup_local_only` is the one place that knows where
+    # is echoed into the generated requirements. `backup_local_only` is the one place that knows
+    # where
     # the directory is, so this asks it rather than hard-coding a second answer that could drift.
-    stem = "s" + str(int(spec.topic)) + "_" + "assignment"
-    assignment = EXTERNAL_SOURCES["notes"] / f"{stem}.md"
-    if assignment.is_file():
-        body = re.sub(r"!\[\]\([^)]*\)", "", assignment.read_text(encoding="utf-8"))
+    stem = "s" + str(int(spec.topic)) + "_" + "requirement"
+    requirement = EXTERNAL_SOURCES["notes"] / f"{stem}.md"
+    if requirement.is_file():
+        body = re.sub(r"!\[\]\([^)]*\)", "", requirement.read_text(encoding="utf-8"))
         note = "Source: local reference material (not in the repo)."
         return f"{header}{note}\n\n---\n\n{body.strip()}\n"
     return (
-        f"{header}No local assignment text was found for this topic when this was "
-        f"scaffolded. Paste the assignment here.\n"
+        f"{header}No local requirement text was found for this topic when this was "
+        f"scaffolded. Paste the requirements here.\n"
     )
 
 
@@ -530,7 +532,8 @@ def files(spec: Spec) -> dict[Path, str]:
 
     The three gitignored ones are written **with** the rest, not afterwards: the moment
     `pyproject.toml` exists, `tests/test_local_only_files_present.py` and
-    `tests/test_notebook_builders.py` start expecting a brief, a builder and a notebook for this
+    `tests/test_notebook_builders.py` start expecting a requirements doc, a builder and a notebook
+    for this
     exercise, and fail locally until they are there.
     """
     root = spec.root
@@ -545,7 +548,7 @@ def files(spec: Spec) -> dict[Path, str]:
         root / "src" / spec.package / "config.py": config_module(spec),
         root / "tests" / f"test_{spec.package}_smoke.py": smoke_test(spec),
         root / "tools" / "build_notebook.py": notebook_builder(spec),  # gitignored
-        root / "BRIEF.md": brief(spec),  # gitignored
+        root / "REQUIREMENTS.md": preamble(spec),  # gitignored
     }
 
 
@@ -606,7 +609,7 @@ Still yours to do:
   1. Fill the templates. Every one has a "Replace this" in it; `git grep -n "Replace this"
      src/exercises/{spec.dirname}` finds them all.
   2. `uv sync --all-packages` — the workspace glob picks the member up on its own.
-  3. Back up the three gitignored files: BRIEF.md, tools/build_notebook.py and the notebook.
+  3. Back up the three gitignored files: REQUIREMENTS.md, tools/build_notebook.py and the notebook.
      `uv run python tools/backup_local_only.py`
 
 Deferred until `web/` exists, and FORBIDDEN before then — both guards fail in two directions,

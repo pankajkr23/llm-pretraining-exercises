@@ -2,7 +2,7 @@
 
 Component notes. Repo-wide conventions: root `AGENTS.md`. The deliverable is the generated
 `submission_artifacts/` bundle, the reasoning is `DECISIONS.md`, the running log is `PROGRESS.md`,
-and `BRIEF.md` is the assignment (local only, gitignored).
+and `REQUIREMENTS.md` is the requirements (local only, gitignored).
 
 **Status: all eight stages done.** Shipped: `spec.py`, `config.py`, `shards.py`,
 `manifest.py`, `firewall.py`, `plan.py`, `masks.py`, `pack.py`, `feed.py`, `ledger.py`, `model.py`,
@@ -56,7 +56,7 @@ lines and 14 tests.
 
 - **`spec.py` is shared with the auditor. Shared facts, never shared logic.** `verify.py` re-derives
   every published claim from artifacts alone; if it imported the producer it would inherit the
-  producer's bugs and agree with itself, which is the hardcoded evidence the assignment refuses.
+  producer's bugs and agree with itself, which is the hardcoded evidence the requirements refuses.
   `tests/test_trainingdata_spec.py` parses `spec.py`'s AST — not `sys.modules`, because an import
   that only fires at call time would not show up there.
 
@@ -110,9 +110,9 @@ lines and 14 tests.
   `reject` are the selector's. `defer` and `floor_override` appear in **none** of the OPUS paper,
   its reference implementation, or LightningLM — all three were searched. See `DECISIONS.md` D5.
 
-- **The lecture's description of OPUS is wrong; build from the paper.** The source describes a
+- **The source's description of OPUS is wrong; build from the paper.** The source describes a
   weight *mask*. There is no weight mask in either implementation — it is a continuous
-  preconditioned gradient inner product, minus a redundancy penalty the lecture never mentions.
+  preconditioned gradient inner product, minus a redundancy penalty the source never mentions.
   `DECISIONS.md` D7.
 
 - **The ledger is a chain, and that is a bounded claim.** Each event carries the previous event's
@@ -267,7 +267,7 @@ lines and 14 tests.
   was never fully read, and neither shows up in a loss curve.
 
 - **The platform has FOUR fields, and three of them are direct links to files in this repo.** Read
-  from the platform's own submission page, not from `BRIEF.md`, which truncates at the words *"Your
+  from the platform's own submission page, not from `REQUIREMENTS.md`, which truncates at the words *"Your
   submission"* and never lists them:
 
   | field | points | what goes in it |

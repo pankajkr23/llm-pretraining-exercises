@@ -14,7 +14,7 @@ records *"I tested this link in an incognito window — it's publicly accessible
 sits on **one public URL that resolves for a logged-out stranger**. A correct file on a local branch
 scores zero. Unlike Exercise 06 there is no second scoring surface.
 
-**The brief says the five problems are separate:** *"each are separate, don't try and mix them."*
+**The requirements says the five problems are separate:** *"each are separate, don't try and mix them."*
 Every result below is therefore labelled with the problem it answers, and anything spanning two is
 labelled as spanning two.
 
@@ -142,5 +142,5 @@ Kept because a quietly amended number is worse than the original error.
   19.1% — because permutations make every position swap available.
 - An earlier recovery table read `exact_full`, which scores every truncated token as a decoder
   failure by construction. It is the vocabulary's truncation rate, not a decoder result.
-- The assignment was worked from a paraphrase for several topics. The assignment text (local reference only) md`
+- The requirements was worked from a paraphrase for several topics. The requirements text (local reference only) md`
   was in the repo the whole time, and reading it changed the scoping.

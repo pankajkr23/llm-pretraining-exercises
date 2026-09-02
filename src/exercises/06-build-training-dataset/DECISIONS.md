@@ -13,7 +13,7 @@ seeing new imports. Measured over a recorded interval: **32/32 microbatches re-d
 flipped bit in one shard turns **exactly 1 of the 32** red — the damage is local, and the rest of
 the replay stays green as evidence of that.
 
-**Why.** The lecture's own answer to "how is this reproducible without a seed":
+**Why.** The source's own answer to "how is this reproducible without a seed":
 
 > *"I will not run the code… I'm going to run the ledger. I'm going to read and send. I will not
 > calculate it."*
@@ -64,7 +64,7 @@ decision, not ours, and would invalidate every existing count.
 
 ## D4 · `submission_artifacts/` is tracked; `artifacts/` is not.
 
-**Decided.** The bundle the assignment names lives in `submission_artifacts/`, in git, capped at
+**Decided.** The bundle the requirements names lives in `submission_artifacts/`, in git, capped at
 2 MiB. Checkpoints, shard arrays and full token traces stay in gitignored `artifacts/`, with their
 sha256 recorded in the tracked bundle so integrity is still provable.
 
@@ -77,7 +77,7 @@ a negation can override — `tests/test_submission_bundle.py` pins both halves.
 **Why not track everything.** A checkpoint is ~67 MiB; eight of them is 536 MB against a repository
 whose entire history is ~39 MiB.
 
-**Would overturn it.** A grader requiring the checkpoints themselves — the assignment does not; it
+**Would overturn it.** A grader requiring the checkpoints themselves — the requirements does not; it
 regenerates them by running the command.
 
 ---
@@ -137,7 +137,7 @@ code rather than about us.
 
 ---
 
-## D7 · The lecture's description of OPUS is wrong, and we build the real thing.
+## D7 · The source's description of OPUS is wrong, and we build the real thing.
 
 **Decided.** Implement paper Eq. 23 — alignment of the *preconditioned* candidate gradient with a
 proxy direction, minus a redundancy penalty against already-selected candidates.
@@ -145,10 +145,10 @@ proxy direction, minus a redundancy penalty against already-selected candidates.
 **Why this is a decision at all.** The source says the proxy pass records *"which particular
 weight is acting bad… store this map"* and selects candidates *"updating those weights"* — a weight
 mask. **There is no weight mask in either implementation.** It is a continuous preconditioned inner
-product. The lecture also omits the redundancy penalty, which is most of the benefit: greedy top-k
+product. The source also omits the redundancy penalty, which is most of the benefit: greedy top-k
 scores 40.49 against full OPUS at 41.75, with random at 40.29.
 
-Building from the lecture alone would have produced the wrong system.
+Building from the source alone would have produced the wrong system.
 
 **Would overturn it.** Nothing — this is verified against both the paper and the code.
 

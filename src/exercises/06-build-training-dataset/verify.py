@@ -231,7 +231,7 @@ def check_evidence(bundle: Path) -> list[Finding]:
 def recheck_numbers(bundle: Path, events: list[dict]) -> list[Finding]:
     """Re-derive the published counts from the ledger and compare.
 
-    **This is the check the assignment's "hardcoded evidence" rule is about.** Every number below
+    **This is the check the requirements' "hardcoded evidence" rule is about.** Every number below
     is summed here, from the same events an auditor can read, and compared against what the bundle
     claims. A figure that was invented disagrees.
 
@@ -309,7 +309,8 @@ def recheck_numbers(bundle: Path, events: list[dict]) -> list[Finding]:
 def check_firewall(bundle: Path, events: list[dict]) -> list[Finding]:
     """No shard the manifests refuse may appear in any loss-bearing batch.
 
-    The brief names one failure outright: evaluation data reaching a loss-bearing batch fails the
+    The requirements names one failure outright: evaluation data reaching a loss-bearing batch
+    fails the
     firewall section. Checked against the ledger's own spans, not against the run's
     account of itself.
 

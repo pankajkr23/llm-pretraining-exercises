@@ -105,9 +105,9 @@ const int = (n) => Math.round(n).toLocaleString('en-US');
 
 /** A plate: a numbered rule, a title, the figure, and a caption that argues. */
 export function plate(numeral, title, node, caption, briefNode) {
-  /* The brief may be passed in either slot. A caption is a string and a brief is a Node, so the
+  /* The requirements may be passed in either slot. A caption is a string and a requirements document is a Node, so the
    * two are unambiguous, and the call site is allowed to list them in the order the READER meets
-   * them: brief above the figure, caption below it. */
+   * them: requirements document above the figure, caption below it. */
   if (caption && typeof caption !== 'string') {
     const swap = caption;
     caption = briefNode;
@@ -633,7 +633,7 @@ export function figInvoice(M) {
 
 /* ====================================================== PLATE II · the centrefold, five bays
  *
- * One attention step, taken apart. The assignment requires plain scaled dot-product attention
+ * One attention step, taken apart. The requirements requires plain scaled dot-product attention
  * first, because nothing after it makes sense without it — and it names five steps, not four:
  * Q·K, scale, mask, softmax, and the weighted sum of V. An earlier version of this figure stopped
  * at softmax, which is precisely the step at which a reader would conclude that attention outputs
@@ -946,10 +946,10 @@ export function figCentrefold() {
    * rule broken in the figure it matters most in: an interaction must never be the only route to a
    * lesson. A reader who does not click, or who prints, or who arrives on an in-page anchor, now
    * gets the whole recipe in order. The tab keeps the second register, which is the arithmetic. */
-  const recipe = el('div', 'brief bay-recipe');
+  const recipe = el('div', 'preamble bay-recipe');
   for (const [label, plain] of STAGES) {
-    const row = el('div', 'brief-row');
-    row.append(el('span', 'brief-lab', label));
+    const row = el('div', 'preamble-row');
+    row.append(el('span', 'preamble-lab', label));
     const v = el('p');
     v.textContent = plain;
     row.append(v);

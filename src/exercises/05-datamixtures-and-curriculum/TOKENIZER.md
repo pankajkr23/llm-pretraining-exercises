@@ -33,7 +33,7 @@ IndicGenBench covers **29 languages across 13 scripts**. Our vocabulary reads a 
 Tokens per faithful unit; **lower is better**, best in each row in bold. `ours` is **this
 project's own Exercise 02 submission** — the 10,000-token vocabulary at
 `02-tokenization/web/tokenizer.json`, read in place — not the reference `tokenizer.json` that ships
-with the assignment solution.
+with the requirements solution.
 
 | language | `ours` | `cl100k_base` | `o200k_base` | `gemma-4-31b` | `sarvam-105b` | `xlm-roberta-base` |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |

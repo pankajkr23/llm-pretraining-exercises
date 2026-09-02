@@ -72,7 +72,7 @@ repos:
       - id: check-toml
 
   # --- the files git cannot restore -------------------------------------------------------------
-  # `notebooks/`, the notebook builders, every BRIEF.md, the whole course corpus and the course's
+  # `notebooks/`, the notebook builders, every REQUIREMENTS.md, the whole course corpus and the course's
   # reference solution are gitignored, so git has never seen them and cannot bring them back. They
   # have already been destroyed twice by ordinary checkouts.
   #

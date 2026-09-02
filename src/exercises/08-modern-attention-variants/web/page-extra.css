@@ -1692,9 +1692,9 @@ a.guide-path:focus-visible {
   }
 }
 
-/* A brief: orientation ABOVE a figure. A caption argues after; this says what you are looking at
+/* A requirements document: orientation ABOVE a figure. A caption argues after; this says what you are looking at
  * before you have to guess. Set at prose measure, not full bleed, because it is read not scanned. */
-.brief {
+.preamble {
   /* NO `ch` MEASURE HERE. `ch` resolves against the element that declares it, and this one is
    * 16px while the text inside it is 15px — so `74ch` produced 81 characters, and it only showed
    * up once the padding that had been hiding it was removed. The measure belongs on the element
@@ -1704,13 +1704,13 @@ a.guide-path:focus-visible {
    * plate grid now does that — leaving this in put the recipe's rows 42px right of every other
    * paragraph, which is the last of the four competing left edges this figure had. */
 }
-.brief-row + .brief-row {
+.preamble-row + .preamble-row {
   margin-top: 13px;
 }
-.brief-row p {
+.preamble-row p {
   max-width: 68ch;
 }
-.brief-lab {
+.preamble-lab {
   display: block;
   font-family: var(--mono);
   font-size: 10px;
@@ -1720,7 +1720,7 @@ a.guide-path:focus-visible {
   color: var(--faint);
   margin-bottom: 4px;
 }
-.brief-row p {
+.preamble-row p {
   margin: 0;
   font-size: 15px;
   line-height: 1.6;
@@ -1971,10 +1971,10 @@ a.guide-path:focus-visible {
 .bay-note {
 }
 
-.bay-recipe .brief-row {
+.bay-recipe .preamble-row {
   padding: 7px 0;
 }
-.bay-recipe .brief-row p {
+.bay-recipe .preamble-row p {
   font-size: 14.5px;
   line-height: 1.5;
   max-width: 68ch;
@@ -2104,7 +2104,7 @@ a.guide-path:focus-visible {
 #main figcaption {
   font-size: 0.63em;
 }
-#main .brief-row p {
+#main .preamble-row p {
   font-size: 0.7em;
 }
 #main .guide-lede {

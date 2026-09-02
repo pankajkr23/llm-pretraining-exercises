@@ -18,7 +18,7 @@ Attribution: OpenThoughts (open-thoughts/OpenThoughts-114k)
 https://huggingface.co/datasets/open-thoughts/OpenThoughts-114k
 
 Used as the reasoning-distillation corpus: the public analogue of the dataset the source material's
-assignment points at.
+requirement points at.
 
 ## ai4bharat/sangraha
 

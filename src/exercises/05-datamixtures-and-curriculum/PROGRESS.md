@@ -8,13 +8,13 @@ within a day both times — `git log` and `gh pr list` answer that question corr
 cannot, so it no longer tries.
 
 **Submission:** the repository's root `README.md`. It is a map, not a summary: the exercise-05 row
-links [`SPEC.md`](SPEC.md) — the deliverable — directly, which is the brief's "without a detour".
+links [`SPEC.md`](SPEC.md) — the deliverable — directly, which is the requirements' "without a detour".
 
 ---
 
 ## Open items — for review
 
-**Tracks A and B are done.** All seven assignment items are specified, the proxy the
+**Tracks A and B are done.** All seven requirement items are specified, the proxy the
 specification commits to has been run over every funded lane, and three further experiments have
 run at no cost. One hypothesis came back **refuted**, which is the most useful line in the results
 and is O8 below. What remains is your call.
@@ -416,7 +416,7 @@ plausible numbers nobody measured.
 - **`tools/build_notebook.py`** emits it. The notebook is never edited in place — a hand-edited
   notebook accumulates execution counts and stray outputs that make every diff unreadable.
 - `test_mixture_notebook.py` caught a real gap: the notebook explained the floor without ever
-  naming it a *protected floor* or an *always-on lane*, which is how the assignment names it.
+  naming it a *protected floor* or an *always-on lane*, which is how the requirements names it.
 
 ### 2026-08-18
 
@@ -438,14 +438,14 @@ plausible numbers nobody measured.
   output rather than trusting it.
 - **Root README** — repaired the exercises table (a stray blank line had split it in two), wrote
   the missing `### 04` section and a new `### 05`.
-- **Briefs untracked repo-wide** at your request, with exercise 04's decision record relocated to a
+- **Requirement documents untracked repo-wide** at your request, with exercise 04's decision record relocated to a
   tracked `DECISIONS.md` so nothing published went dark.
 
 ### 2026-08-17
 
 - **Scaffolded the exercise.** `pyproject.toml` (workspace member, depending on exercises 03 and 04
   so the repetition arithmetic and the token counter are imported rather than re-derived),
-  `src/mixture/{__init__,config,inventory}.py`, `BRIEF.md`, this file.
+  `src/mixture/{__init__,config,inventory}.py`, `REQUIREMENTS.md`, this file.
 - **`config.py`** — every threshold in one frozen dataclass with a `fingerprint()`, so a changed
   threshold is a visibly different spec. Defaults taken from Exercise 05 itself: 2T run, Indic floor
   12%, agentic floor 2%, anneal 2% of tokens, 3B-token warmup bands, OPUS keep-fraction 40%.

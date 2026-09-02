@@ -66,7 +66,7 @@ MEASURE_JS = """() => {
     return probe.getBoundingClientRect().width / 100;
   };
   const out = [], seen = new Set();
-  const sel = '#main p, #main li, #main figcaption, #main .say, #main .brief-row p';
+  const sel = '#main p, #main li, #main figcaption, #main .say, #main .preamble-row p';
   for (const el of document.querySelectorAll(sel)) {
     const txt = el.innerText.trim();
     if (txt.length < 90) continue;
@@ -99,7 +99,7 @@ EDGES_JS = """() => {
   const out = {};
   for (const sec of document.querySelectorAll('#main > section')) {
     const seen = {};
-    for (const el of sec.querySelectorAll('p, figcaption, .brief-lab, li')) {
+    for (const el of sec.querySelectorAll('p, figcaption, .preamble-lab, li')) {
       if (el.innerText.trim().length < 40) continue;
       if (el.closest('.ledger, .idx-row, .key, .colophon, table')) continue;
       const x = Math.round(el.getBoundingClientRect().left);

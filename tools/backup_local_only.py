@@ -6,7 +6,7 @@ mechanism that destroys them, and it is not carelessness: `git rm --cached` plus
 entry leaves the working copy in place, but the *next* `checkout` or `pull` that crosses the
 untracking commit sees a file that was tracked at the old HEAD and is not at the new one — and
 deletes it. Nobody deleted anything. It has already happened twice here: once to all five notebook
-builders, once to all four of exercises 01–04's briefs.
+builders, once to all four of exercises 01–04's requirement documents.
 
 **Why a git repo rather than a copy.** A timestamped copy protects against deletion and nothing
 else. These files are *regenerated* constantly — a notebook is rebuilt on every topic — so the
@@ -15,7 +15,8 @@ with the broken one. A git store keeps every version, so `git log` and `git show
 mistake. It costs nothing: the whole set is about 12 MB of text.
 
 **What it covers, and why that is wider than the tripwire.** The tripwire
-(`tests/test_local_only_files_present.py`) watches notebooks, builders and briefs — the three
+(`tests/test_local_only_files_present.py`) watches notebooks, builders and requirement documents —
+the three
 classes `AGENTS.md` names. The confidential reference material lives **outside the repository**
 (see `EXTERNAL_SOURCES`) and is snapshotted here too, and `docs/EXPLAINER_*.md` are the two files
 any explainer is meant to be built from. All of it is gitignored, none of it is
@@ -63,8 +64,8 @@ DEFAULT_DEST = REPO_ROOT.parent / f".{REPO_ROOT.name}-local-only"
 PATTERNS: tuple[str, ...] = (
     "notebooks/S[0-9][0-9]-*.ipynb",
     "src/exercises/*/tools/build_notebook.py",
-    "src/exercises/*/BRIEF.md",
-    "docs/BRIEF.md",
+    "src/exercises/*/REQUIREMENTS.md",
+    "docs/REQUIREMENTS.md",
     "docs/EXPLAINER_*.md",
     "TODO.md",
     # Hand-written planning and critique notes that live beside an exercise. Only the untracked ones
@@ -429,7 +430,7 @@ def snapshot(root: Path, dest: Path, files: list[Path], *, message: str) -> int:
         (dest / "README.md").write_text(
             "# local-only backup\n\n"
             "Versioned snapshots of the gitignored, non-regenerable files in "
-            f"`{root.name}` — notebooks, notebook builders, briefs — plus the reference material "
+            f"`{root.name}` — notebooks, builders, requirement files — plus the reference material "
             "that lives outside the repo entirely. Git cannot restore any of it from the repo "
             "itself, because git has never seen it.\n\n"
             "Written by `tools/backup_local_only.py`. Restore a file with:\n\n"

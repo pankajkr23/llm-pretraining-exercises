@@ -1,6 +1,6 @@
 """The order the model learns in: stages, difficulty bands, reasoning-length bands.
 
-Assignment item 6, plus the stage schedule the mixture is actually delivered by. A mixture decides
+Requirement 6, plus the stage schedule the mixture is actually delivered by. A mixture decides
 *how much*; a curriculum decides *when*, and Exercise 05 §9 is clear that the second matters almost
 as much as the first.
 
