@@ -55,6 +55,21 @@ the new one, and deletes it. Nobody deleted anything. So:
   now. **85 files, 12 MB.** A guard that covers the documented cases and misses the largest one
   reads as coverage without being any.
 
+- **The authoritative list is `tools/backup_local_only.py::PATTERNS`, not this document.** Prose that
+  enumerates the set is a second copy of it, and the second copy is the one that drifts — this
+  paragraph named three classes while `PATTERNS` protected eleven, so an agent reading only the
+  rulebook would have believed `rm TODO.md` was recoverable. **Read `PATTERNS` before touching
+  anything gitignored.** Each entry there carries a comment saying why it cannot be regenerated, and
+  six are named nowhere else: `TODO.md` · `.claude/settings.local.json` (losing it silently changes
+  what agents may run without asking, rather than failing) · `src/exercises/*/docs/*.md` (planning
+  and critique notes) · `src/exercises/*/docs/*.html` (saved reference pages, snapshots of things
+  that change) · `docs/standards-history/*` (the frozen standard files — the only member that is
+  **re-creatable**, via `snapshot_standards.py --ref <tag>`, so long as the tag still exists) · and
+  **`src/exercises/*/src/solution/**/*`, the one class with no recovery path at
+  all** — it has never been in git on any branch, so the `git show <untracking-commit>^:<path>`
+  fallback below is inapplicable by construction, and its `corpus/*.raw.html` inputs pin no revision,
+  so re-fetching returns a different article. The backup store is the only copy that exists.
+
 - **After any branch switch, pull, merge, rebase or stash, run the tripwire** —
   `uv run pytest tests/test_local_only_files_present.py`. It fails when *some* of these files are
   present and others gone, and skips when all are absent (a clone, not a loss).
@@ -128,11 +143,40 @@ repo** — it is the real safety net.
 
 - **Exercise folders:** `src/exercises/NN-slug/` — numeric, **zero-padded**, slugged (e.g. `01-introductions`). Zero-pad so lexical sort = numeric order.
 - **Identical skeleton per exercise:** `BRIEF.md` (assignment — **local only, gitignored**) · `README.md` (what/how) · `pyproject.toml` (member) · code in one place (`src/` or `web/`) · `artifacts/` (gitignored outputs). Long reasoning gets its own tracked `DECISIONS.md`.
+- **Do not scaffold an exercise by hand. There is a generator.**
+  ```bash
+  uv run python tools/new_exercise.py 09 loss-functions-output-heads \
+      --title "Loss functions and output heads" --package lossheads \
+      --summary "One sentence for the root README row." [--dry-run]
+  ```
+  It writes the whole skeleton, **including the three gitignored files** (`BRIEF.md`, seeded from
+  `docs/sessions/sN_assignment.md` when one exists; `tools/build_notebook.py`; and the notebook it
+  builds), joins the `rest` CI shard, adds the root README row, and prints what is left for you.
+
+  **The sequencing is the reason it exists.** `tests/_exercises.py::exercises_in` only counts a
+  directory that has a `pyproject.toml`, so a new exercise is invisible to every guard until that
+  file lands — and the moment it does, six test families apply at once, three of them checking for
+  gitignored files a fresh clone will never have. Do it by hand and the suite goes red locally with
+  a message about files "going missing" that were never there.
+
+  **It deliberately does not touch the two web-gated registrations** — the landing card and the
+  `SPINE_ENFORCED` ledger — because both guards assert in *two* directions and a premature entry is
+  exactly as red as a missing one. It prints them as deferred instead.
+
+  `tests/test_new_exercise.py` runs the generator for real into a temporary directory and checks the
+  result against the **real** guards, importing `REQUIRED`, `REQUIRED_DIRS` and `_READERS` from the
+  guard modules rather than restating them. That is the point: a generator whose templates encode
+  the conventions is a second copy of them, and a second copy drifts. It has already earned its
+  keep — it caught the generator inserting the CI path *after* the shard's trailing `tests` entry.
 - **Set the folder up BEFORE writing code.** The skeleton is not paperwork to backfill. Exercise 06
   was scaffolded with `pyproject.toml` and modules but no `CLAUDE.md`, `PROGRESS.md`, `NOTICE` or
   `BRIEF.md`, because a convention that lives only in prose gets skipped under momentum.
   `tests/test_exercise_skeleton.py` now checks the universal ones (`README.md`, `CLAUDE.md`,
-  `pyproject.toml`, `tests/`, `tools/`) and asserts **no `BRIEF.md` is ever tracked** — checked with
+  `pyproject.toml`, `tests/`) — **`tools/` is deliberately not among them**, because the only
+  file some exercises keep there is the gitignored `build_notebook.py` and git does not track
+  empty directories, so `tools/` exists on a working checkout and not in a clone. Requiring it
+  passed locally and failed CI: write the guard for what a clone has, not for what your machine
+  has. It also asserts **no `BRIEF.md` is ever tracked** — checked with
   `git ls-files`, not by reading `.gitignore`, because a file already in the index stays tracked
   whatever the ignore rules say afterwards.
 - **Shared code:** deferred — add `src/common/` (its own member) only when a 2nd exercise needs to reuse something. No premature abstraction.
@@ -253,6 +297,36 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
   is written twice — once against the real spine, once against a deliberately broken fixture — and
   when you add one, break the thing on purpose and watch it go red before you commit.
 
+- **Break it in a `finally`, and stage by path — the rule above is what invites this failure.** On
+  2026-09-02 an agent auditing this repo did exactly what the previous bullet asks: it backed up
+  exercise 05's `checks.py`, injected `return []` into `check_no_orphan_benchmarks` and
+  `check_tier_shares` to watch their guards go red, and then restored **one** of the two. A
+  `git add -A` swept the mid-experiment tree into a commit, along with the backup file — which was
+  itself already mutated, so it could not have restored anything. **Two data-handling invariants
+  were dead on this branch for four commits**, returning "no findings" for every input, which is
+  indistinguishable from a clean run. Three rules follow. Restore in a `finally`, never on the happy
+  path, so an early return or an exception cannot leave the mutation behind. Never write the backup
+  inside the working tree — `git stash` or `$TMPDIR`, because a backup in the tree is a file
+  `git add -A` will commit. And after any session in which agents ran near the source tree, **stage
+  by path and read `git diff --stat` against `origin/main` before committing**: the only reason this
+  was caught is that one mutation happened to break a test that ran, and a mutation to a guard whose
+  twin is missing would have shipped in silence.
+
+- **A guard must not trigger the behaviour it is testing for.** Exercise 08's invoice cut line
+  starts hidden and is revealed by an `IntersectionObserver`. The guard asserting it was visible
+  called `scrollIntoView()` first, then measured — so it fired the observer and then checked the
+  result of its own action. It passed for the entire time the cut line was invisible to every reader
+  who had not scrolled: a screenshot, a print, a PDF, anyone landing on an in-page anchor. The rule
+  generalises past scrolling: if a test clicks, focuses, hovers or scrolls before asserting, ask
+  whether the assertion is about the state after that action or about the state the reader actually
+  arrives in — and if it is the second, do not perform the action.
+
+- **Prefer a painted terminal state to an animated one wherever the motion buys nothing.** The same
+  cut line was a 300ms fade that said nothing the dashed rule did not already say standing still,
+  and it cost the plate its entire argument in every non-scrolling context. Reveal-on-scroll is a
+  decision to hide something by default; make it deliberately, and never for the one element that
+  carries the point.
+
 - **A coverage guard must ask whether a test can RUN, not whether it is listed.**
   `tests/test_ci_shards_cover_everything.py` was written for the obvious failure — a file outside
   every shard is never run and CI is green — and was blind to the adjacent one: a file that *is*
@@ -319,6 +393,10 @@ When one of these overturns a published claim, correct it where the claim was ma
 
 Two more that cost this repo real defects:
 
+- **Registering a new exercise: five lists, two automatic, and `tools/new_exercise.py` does three
+  of the rest.** The generator handles the CI shard and the root README row; the landing card and the
+  spine ledger are deferred to whenever `web/` lands, because both fail in two directions. The
+  paragraph below is what the generator encodes — read it when it goes wrong, not before.
 - **Registering a new exercise: three lists, two of them automatic.** `deploy/vercel/build.sh`
   publishes any `src/exercises/*/web/` on its own, and the workspace glob picks up any
   `NN-slug/pyproject.toml` on its own. The two that are **hand-maintained** are the root README's
@@ -331,6 +409,117 @@ Two more that cost this repo real defects:
   does **not** check is the prose around the number, so treat that as hand-verified on every PR that
   moves an exercise forward.
 - **A new module is not done until every list that names modules includes it.** `explainer.py` shipped and stayed missing from three places — the README's *Run it*, the README's layout block, and the exercise's `CLAUDE.md`. Exercise 06 now checks two of those three: `tests/test_trainingdata_docs.py::test_every_module_is_named_in_the_documents_that_list_modules` asserts every `src/trainingdata/*.py` is named somewhere in **both** README.md and CLAUDE.md. It was red when written — `replay.py` had shipped and the README never learned about it — and is green now, including `opus.py` and `opus_score.py`. Copy that guard into any exercise that grows past a handful of modules. Note its limit: it checks the *document*, not the *list*, so a module named once in prose satisfies it while the layout block a reader actually follows stays wrong. The consequence was not cosmetic: a reader regenerating the site would have run `widget` without `explainer` and published a page whose figures contradicted its own tool.
+- **`node --check` does NOT parse a `.js` file as an ES module, and CI's syntax gate depended on
+  it.** Node parses a lone `.js` with the *script* goal, which means wrapping the source in the
+  CommonJS function wrapper first — so a stray `}` merely closes that wrapper early and the file
+  passes. It is not theoretical: `node --check` exited 0 on a `diagrams.js` with an unbalanced
+  brace and the browser refused the same file with `Unexpected token '}'`. Verified on a
+  four-line throwaway module. Every file the gate checks (`find src/exercises -path '*/web/*'
+  -name '*.js'`) is an ES module, so the gate was weaker than it read for as long as it has
+  existed. Feed the file on stdin instead — `node --input-type=module --check < "$f"` — which
+  parses with the module goal, passes valid modules and catches that.
+
+- **A guard must test the property, not one phrasing of it.** Two guards in one session asked for
+  a specific string and failed correct work: one demanded a "drawn to scale" line and red-flagged a
+  figure that quotes its own paper verbatim (stronger evidence than the thing being demanded), and
+  one demanded a legend headed `THE MARKS` and red-flagged eleven figures keyed by other means — a
+  legend headed *"what the update does"*, or marks labelled in place. Both times the honest fix was
+  to ask the underlying question: *is this attributed?* and *is this colour explained anywhere on
+  the figure?* A guard that names one implementation of a property will fail every other
+  implementation, and the pressure is then to reword good work to satisfy the test.
+
+- **Colour can only carry semantics while there are more colours than meanings.** A semantic
+  palette of four (`--part-q/k/v/store`) was asked to distinguish up to six update steps, and two
+  of them (`dg-local`, `dg-k`) resolved to the same token — so a six-step recipe rendered five
+  marks and nobody could see which two had merged. The same bug had already shipped once in the
+  same exercise, in a different family, and been fixed locally rather than as a rule. When the
+  count of things to distinguish can exceed the count of colours, encode it in **form** — an
+  ordinal, a shape, a texture — and let colour keep its one job. Here the ordinal was also *more*
+  informative than the colour it replaced: the steps happen in that order.
+
+- **Measure the invariant a design already holds before you change it — and never write a guard
+  from a misreading.** Asked to fix a wide-screen layout, I read "shouldn't the rail be centred?"
+  as "the rail is too far left", moved the rail inward to sit against the text, and wrote a guard
+  demanding a gap of at most 60px. Every railed page (05, 06, 07, 08) already centred the reading
+  column in the space the rail leaves — equal air either side, 554px at 2560 and 24px at 1180 — and
+  the change destroyed that symmetry, leaving dead space on both sides of the rail and pushing the
+  column off centre, which is what the reader had actually been reporting. **The guard was the
+  worst part**: green, wrong, and it would have made the misreading permanent by failing anyone who
+  restored the correct layout. Two rules follow. Measure what the existing design does across the
+  full width range *first*; symmetry, ratios and the relationship between elements are visible in
+  numbers and settle what prose cannot. And when a report is ambiguous about which element is
+  misplaced, ask — a layout complaint names a symptom, and the element the reader blames is often
+  not the one that moved.
+
+- **When a vendored stylesheet centres, reserves or positions something, check the page actually
+  builds the element it targets.** `_shared/page.css` centres a pinned rail with
+  `.rail-inner { margin-block: auto }`. Exercises 03, 05, 06 and 07 create that wrapper; exercise 08
+  did not, so its contents hung at the top of a full-height column while every sibling page sat
+  centred — no console error, no failing test, and it took three rounds of feedback to find because
+  the symptom ("the rail isn't centred") pointed at a rule that was working. This is the **third**
+  time this directory has cost something the same way: it also reserves a 260px gutter only some
+  pages fill, and vendors marks whose colours resolve only when the real token file is linked. When
+  you copy `web/_shared/`, diff what its rules select against what your page emits.
+
+- **Two rules of equal specificity are decided by source order, and the later one wins.** Two fixes
+  in one session changed nothing at all: `grid-template-columns` set on a flex container, and a
+  `max-width` override written above the rule it was meant to beat. Both looked like fixes, moved no
+  pixels, and passed every test. Before adding a rule, check what is already computing — then edit
+  *that* declaration rather than competing with it. A `margin: 16px 0 0` shorthand will also silently
+  cancel a `margin-inline: auto` you added elsewhere.
+
+- **A DERIVED number can answer the wrong question, and that is far harder to catch than a wrong
+  one.** Exercise 08 published *"the claimed arc holds in 6 of these 7 two-year windows"*. The
+  number was real, generated from the data, and evidence for nothing: it counted windows that
+  produced *a* clear winner, not windows whose winner the claim predicted. Six windows do decide,
+  the order is not the claimed one, and the verdict was therefore the exact opposite of the truth —
+  published confidently **because** the arithmetic was sound. A wrong number gets caught by a
+  reader; a right number answering an adjacent question does not. Before quoting a derived figure,
+  say out loud what question it answers and check that it is the question you asked.
+
+- **Vary every arbitrary choice before quoting anything that rests on it — and be ready to lose a
+  finding.** The same section asserted its count was "not noise" and offered no evidence. Its
+  two-year buckets begin in 2014 because attention does, not because the field changed on that
+  boundary. Shifting the edges by one year kept two conclusions and destroyed a third — one that
+  had been published an hour earlier — so it was corrected in place and demoted to "one reading,
+  not a measurement", with a test that fails if it ever becomes robust so the hedge cannot outlive
+  its reason. The noise-floor rule already in this file is usually described for a metric; it
+  applies just as hard to a *count over buckets you chose*.
+
+- **Naming a real product, model or vendor is a claim, and gets sourced like any other.** Exercise
+  08's page named no real model anywhere in its own voice, so a reader could not tell whether it
+  described history, a research frontier, or the thing inside the chatbot they used that morning,
+  and "almost every open model uses them" asked for trust while offering nothing to check. The fix
+  is not to write the names down: find each source through an API or a search rather than from
+  memory, quote the sentence, gate the quote against the downloaded document, and **leave the field
+  empty where nothing says so**. Twenty-two of thirty ended up empty and that column became the most
+  informative one on the page — it separates what the field adopted from what it admired.
+
+- **When agents gather evidence, make a machine the arbiter — and test the machine first.** Exercise
+  08 sourced 80 hyperparameters across 29 papers this way: download every source *before* any agent
+  runs, have agents read those local files, then check each proposed quote as a contiguous run of
+  that file's own characters. 82 proposed, 82 verbatim, zero fabrications — a result worth having
+  because the gate was built to catch the opposite. **The gate needed three fixes before it could be
+  trusted**, each found by running it against quotes already known to be good: arXiv's HTML prints
+  every equation twice (rendered, then LaTeX source), hides `U+200B` inside numbers where Python's
+  `\s` will not match it, and papers write `1 M` as often as `1M`. Every one made it report a
+  hand-verified quote as absent from its own paper. **A guard with false negatives is not the safe
+  direction to err in** — here it silently converts sourced numbers into unsourced ones, which reads
+  as caution and is a loss of provenance.
+
+- **Verbatim is not the same as correct, and the second question is the one that catches real
+  errors.** A quote can be a genuine sentence from the right paper and still be evidence for
+  something else: "Figure 4: The KV cache of StreamingLLM" offered for four attention sinks, "we set
+  D = 256" offered as a context length, a *Communications of the ACM* volume number offered as a
+  head dimension. All three survive an authenticity check. Ask separately whether the quote talks
+  about the quantity being claimed.
+
+- **An absent number is not a zero, and a percentage that rounds to zero is not a measurement.** A
+  published figure read "16 of 7,813 blocks plus a **0-token window** — about **0%** of a
+  1,000,000-token context." The mechanism has a local window whose size we had not sourced, and its
+  true share is 0.2% — which is the entire claim of the paper. Omit the clause when the input is
+  missing, and give a small ratio enough significant figures to be sayable out loud.
+
 - **Render a diagram before committing it.** A Mermaid block is not verified by reading it. A semicolon inside a `Note over` is a statement separator, so the note terminated mid-sentence and GitHub would have rendered a parse error where a diagram should be — caught only by running it through `npx @mermaid-js/mermaid-cli`. The same applies to every number inside one: read them back from the code.
 
 ## The root README is a map; each exercise's README is the guide
@@ -415,11 +604,18 @@ lands in neither, and the guard goes red — which is the whole point, because t
 this rule lived only in prose and applied to whoever remembered it. 01–04 are exempt: the spine
 describes an exercise that ran an experiment and reports a result, and those four do not.
 
-Exercise 07 is the reference implementation. It was rebuilt after an audit found the previous page
-was **nine tables, one button and no diagram of any kind** — ~1,300 words that never said what an
-embedding is, never stated the question being answered, never explained the method, and had no
-summary, conclusion or next step. The rewrite runs ~3,300 words with six figures, and the shared
-`web/_shared/` helpers it needed had been sitting vendored and unused the whole time.
+**Exercise 08 is the reference implementation, and `docs/DESIGN.md` is the canonical standard** —
+grid, type scale, components, what enforces each rule, and a numbered retro-fit checklist, every
+number in it measured on 08. This section carries the short version; where the two disagree,
+`docs/DESIGN.md` wins and this file is the one to correct.
+
+**Exercise 07 is where the rules below were learned**, which is why they are stated in its terms. It
+was rebuilt after an audit found the previous page was **nine tables, one button and no diagram of
+any kind** — ~1,300 words that never said what an embedding is, never stated the question being
+answered, never explained the method, and had no summary, conclusion or next step. The rewrite runs
+~3,300 words with six figures, and the shared `web/_shared/` helpers it needed had been sitting
+vendored and unused the whole time. 08 then took the same rules further — fluid type, the chapter
+strip, a rail that marks position — and 07 is itself queued for the retro-fix.
 
 The rules that follow from it:
 
@@ -444,6 +640,62 @@ The rules that follow from it:
   caption pointed at two boxes that sat off-screen behind a horizontal scroll. The existing markup
   guard could not see the first two — it looks for `[[`, `**` and backticks, and neither string
   contains any. Render the section, read it, *then* write the guard for what you found.
+
+- **A guard that asserts an element is VISIBLE has not asserted it is LEGIBLE.** Exercise 08's
+  invoice cut line — the sentence the whole figure exists to deliver — was `white-space: nowrap`
+  inside `overflow: hidden`, which truncates with no ellipsis and no warning. It read *"…the cache
+  alone needs a second ma"* at every width narrower than the sentence, for as long as the figure had
+  existed, and `test_the_invoice_cut_line_is_visible` passed the entire time. The general property is
+  cheap to assert and catches the whole class: no element whose `scrollWidth` exceeds its
+  `clientWidth`, at several widths, allowing 1px for sub-pixel rounding.
+
+- **A count in a heading or a navigation label is always a count of that section's own contents, so
+  it must be derived — and the lexical guards for this start too high to see it.** Exercise 08's
+  `next` section was headed *"Three things this opens"* above **four** items, with its rail entry
+  agreeing, live and green: `test_no_count_is_typed_into_the_page_as_a_word` scans for *eleven* and
+  up, deliberately, since these pages say "two bills" and "six words" constantly and those are fixed
+  quantities. Widening that pattern would have meant marking **thirty-six** legitimate lines with
+  `count-literal-ok`, and a marker on thirty-six lines is noise nobody reads. Narrow the *scope*
+  instead of widening the pattern: inside a heading or a rail label the small numbers can be
+  forbidden as literals with no false positives at all. Exclude `one` and only `one` — it is a
+  determiner far more often than a count ("One step, taken apart").
+
+- **A `display: none` in a media query loses to a `display: flex` written below it at the same
+  specificity.** This is ordinary cascade and it is worth naming because the symptom is invisible on
+  the machine you are working on: exercise 08's at-a-glance table hid its column heads below 900px,
+  the rule was written above the one that re-laid the row, and every phone opened the table with five
+  orphaned column labels. `AGENTS.md` already records a `max-width` lost the same way. When a media
+  query both re-lays an element and hides part of it, put the hide *after* the re-lay, or raise its
+  specificity, and screenshot the narrow width.
+
+- **A decorative background is only decorative if it stays decorative at every width.** Exercise 08's
+  masthead field is 7–13% ink and the body text sits on it by design; one accent rule inside it
+  painted at full opacity, and at 1440px it ran straight through the words "every one of" in the
+  opening sentence and read as a strikethrough. Where the text falls across a background is not
+  something the graphic can know, so the graphic cannot own a mark that would be a defect anywhere
+  the text might land.
+
+- **A cross-reference to something you decided not to write is worse than no cross-reference.**
+  Promoting a finding to the top of exercise 08's page left a clause in its limits section reading
+  "it is stated at the top of the page" — but the tile that actually went up carried a *different*
+  finding. The pointer survived the edit that invalidated it, which is the normal way this happens:
+  the sentence you edit and the sentence that refers to it are rarely on the same screen. After
+  moving anything, grep for the words that pointed at it.
+
+- **Do not delete a feature and leave its guard behind, or leave the data the guard reads.** Exercise
+  08's six pull quotes were removed for a good reason — each was set in the page's largest type and
+  attributed to "this page's own catalogue", which is the visual grammar of a citation with none of
+  its function. The `pull_quote` field, its sourced-from-the-catalogue guard and that guard's broken
+  twin went with them, because a tested field with no renderer is `AGENTS.md`'s own "dead code
+  wearing a test" one level up: the guard passes, so the capability reads as a behaviour of the page.
+
+- **A partition guard does not check that a group's headline is true of its members.** Exercise 08's
+  `story.check()` refuses a chapter grouping that does not cover the catalogue exactly once, and it
+  was green while a chapter headed "keep a fixed-size state" — promising "every one of them pays in
+  the same single way" — held two mechanisms that build a score grid and keep a KV cache. Coverage
+  and truth are different properties. Where a group's title makes a claim about its members, assert
+  that claim: the fix here was that one chapter must be *exactly* the set the page's key counts, so
+  a reader counting the chapter and a reader counting the key land on the same number.
 
 
 - **Every term used as shorthand is defined in exactly one findable place, and everything else links there.** `SPEC.md` is the decision; `METHOD.md` is the apparatus. Splitting them is deliberate — an adversarially-graded specification cannot carry a glossary and two architecture diagrams without paying for it, and a first-time reader cannot do without them.
@@ -498,15 +750,19 @@ uv run pre-commit run --all-files                        # over everything, not 
   skip them entirely.
 - CD: **Vercel**, gated. **Previews auto-deploy per PR**; **production never auto-deploys** (`vercel.json` → `git.deploymentEnabled.main: false`). One project serves every exercise's static `web/` under its slug (`/NN-slug/`) via `deploy/vercel/build.sh` → `public/`. (Netlify was the prior host — deactivated config retained in `deploy/netlify/`, pending decommission.)
 - Production deploys go through the reusable `deploy-production.yml` (single source of truth, gated by the `production` environment), invoked two ways: **`deploy.yml`** (`workflow_dispatch`) for an ad-hoc deploy of `main`, and **`release.yml`** for a versioned release.
-- **Releasing:** move `CHANGELOG.md`'s `[Unreleased]` → `[X.Y.Z]` (dated) and merge, then `git tag vX.Y.Z && git push origin vX.Y.Z`. `release.yml` creates a GitHub Release from that changelog section and deploys the tagged commit to production.
+- **Releasing:** move `CHANGELOG.md`'s `[Unreleased]` → `[X.Y.Z]` (dated) and merge, then `git tag vX.Y.Z && git push origin vX.Y.Z`. `release.yml` creates a GitHub Release from that changelog section and deploys the tagged commit to production. **Then snapshot the standard files** — `uv run python tools/snapshot_standards.py` — so the release's `AGENTS.md`, `DESIGN.md` and configs are diffable from the next rewrite without going through git history. It must run *after* the tag exists, since it reads the tag.
 
 ## Web UI & content
 
-Every deployable exercise's static `web/` bundle shares **one design system** — full reference in `docs/DESIGN.md`. The rules that matter across exercises:
+Every deployable exercise's static `web/` bundle shares **one design system** — full reference in
+`docs/DESIGN.md`, which carries the grid, the type scale, the components, what enforces each rule,
+and a **numbered retro-fit checklist** for bringing an older exercise up to standard. Exercise 08 is
+the reference implementation and every number in that document was measured on it. Read it before
+building or changing a page; the rules that matter across exercises are below.
 
 - **Interactive explainers follow two local files.** `docs/EXPLAINER_PROMPT.md` decides *what* one must be (the claim, the interaction that proves it, the topology and family, when **not** to build one). `docs/EXPLAINER_PATTERN.md` records *how* — DOM skeleton, class names, the state-and-render shape, copy voice. Both are gitignored, so they are on a working checkout but not on the remote; read both before building an explainer and don't re-invent the skeleton. Shipped references: `02-tokenization/web/how-it-works.html` and §1 of `03-data-collection-framework/web/chapters.js`.
 
-- **One Apple-style design language** on every page: cool-gray/black surfaces, a single bright-blue accent (`#0071e3` light / `#2997ff` dark), system sans (no serif), soft-shadow rounded panels, and a `← Back` pill to the site root. Style light **and** dark via `prefers-color-scheme`. Reuse the token names in `docs/DESIGN.md` — don't invent a per-exercise palette.
+- **One Apple-style design language** on every page: cool-gray/black surfaces, a single bright-blue accent (`#0068d1` light / `#2997ff` dark), system sans (no serif), soft-shadow rounded panels, and a `← Back` pill to the site root. **Six themes**, not two: the system light/dark pair plus `soft-light`, `tinted-dark`, `high-contrast` and `neon`, each defining the whole token set. A page styled for two of them is unreadable in the other four. Reuse the token names in `docs/DESIGN.md` — don't invent a per-exercise palette.
 - **Write for a general audience.** The public pages are standalone, blog-style demos of an idea — a first-time visitor should be able to enjoy them without any course context. Favor plain, explanatory copy; the numbered topic eyebrow (`NN · Topic`) makes a nice light section label.
 - **Credit the source course in one place.** A single **Credits** section at the bottom of the root `README.md` gives clear, warm credit to the course, instructor, and platform. Keeping it in one prominent spot — rather than repeating it across pages — keeps both the credit and the demos easy to read.
 - **Canvas state changes animate** — morph with a short eased transition (≈550ms), not an instant redraw, keeping the framing stable so panels don't resize mid-toggle.
@@ -528,6 +784,62 @@ Every deployable exercise's static `web/` bundle shares **one design system** �
   `minmax(min(340px, 100%), 1fr)` and never a bare `340px`: an auto-fill track cannot shrink below
   its own minimum and will push a 320px phone sideways.
 
+- **An `IntersectionObserver` on a detached node never fires, and says nothing.** Every figure
+  builder returns its element before the page appends it, so registering the observer inside the
+  builder observes a node that is not in the document yet. Three of exercise 08's plates never
+  animated and one was invisible outright, with a clean console and a green suite. Defer by one
+  frame and check `isConnected`, or register the observer from the code that does the appending.
+
+- **`web/_shared/tokens.css` is NOT the token file, in any exercise, and the name has already cost
+  time.** Every deployable exercise (03–08) vendors a byte-identical copy of exercise 03's
+  *component* stylesheet under that name — its own first line says so. The real six-theme token file
+  is `deploy/vercel/_shared/tokens.css`, served at `/_shared/tokens.css`, and each `index.html`
+  links **both**. A scratch harness that linked only the vendored one rendered every glyph mark
+  invisible, because `var(--bg)` was undefined and a `stroke: var(--bg)` simply does not paint. When
+  you build a test page for an exercise, link `/_shared/tokens.css` the way `index.html` does. (The
+  file is misnamed in six places; renaming it is its own change, not a drive-by.)
+
+- **A `ch` or `em` measure resolves against the element that declares it, not the text inside it.**
+  A pull quote wrapper at `max-width: 24ch` with `font-size: 16px` is 192px wide however large the
+  38px quote inside it is set — one word per line. Put the measure on the element that carries the
+  type, or use `rem`.
+
+- **A full-bleed element still needs its own inset.** A `full` grid track runs edge to edge by
+  design; that is what makes a plate span the page. Padding belongs on the element, not the track,
+  or every full-width figure prints flush against the window on both sides.
+
+- **The narrowness IS the length, and the lever is type size rather than measure.** A page is long
+  because its content is narrow far more often than because it has too many words. Exercise 08's
+  index was 30 rows at 306px; widening its container from 720px to 1,676px — more than double —
+  moved a row to 292px, because a row was **six stacked bands on a four-column grid** and the extra
+  width only shortened lines that were already short. Two bands with the prose in columns is 238px.
+  Separately, a reader asking why a page "narrows too much" is not asking for longer lines: a
+  77-character line at 22px is 951px and at 16px is 685px, so raising the body size gave 39% more
+  screen at the *same* words per line. Size the columns by the character floor —
+  `minmax(min(315px, 100%), 1fr)` is a 42-character line at 13px — and let the count follow the
+  width the page actually has.
+
+- **A variant nobody measures is a variant that ships broken.** While exercise 08 carried an A/B,
+  `test_attention_measures.py` drove only the default, and the other variant shipped prose at **111
+  characters a line** for two commits with the whole suite green. A guard that measures one of two
+  shipped layouts has a hole exactly the size of the other one. While a flag lives, every guard that
+  can differ between its values runs against both — and the flag carries a written end date, or a
+  temporary switch quietly becomes permanent.
+
+- **Deleting a branch can delete the declaration above it.** Cutting a conditional out of a loop in
+  exercise 08 took a `const body = …` with it, because the branch had been inserted directly above
+  that line. The page threw `body is not defined` half way through building its index — thirty rows
+  became none — and it was caught only because one test fixture listens for `pageerror` on the real
+  page rather than asserting solely about its own harness. **Point at least one browser fixture at
+  the real page and fail on any console or page error.**
+
+- **A rule with no guard decays, and the dead CSS proves it.** `web/_shared/page.css` has styled
+  `.rail-link.on` — the active-section marker — since before most of these pages existed, and only
+  exercise 03 ever sets the class. 05, 06 and 07 build a contents rail that never marks where the
+  reader is; 06 and 07 reserve a 260px rail gutter they never fill; all six vendor
+  `_shared/explainer.css` and only two use it. When you vendor a shared stylesheet, diff what its
+  rules select against what your page emits, and write down what you chose not to build.
+
 - **Editing non-ASCII HTML** (`—`, `→`, `·`, math glyphs): use the Edit/Write tools. **Never** `perl -0pi`/`sed` with wide-char escapes — byte-mode rewrites double-encode UTF-8 into mojibake.
 
 ## Instruction files (this system)
@@ -535,3 +847,40 @@ Every deployable exercise's static `web/` bundle shares **one design system** �
 - `AGENTS.md` (this file) is the single source of truth. `CLAUDE.md` = `@AGENTS.md`. `.github/copilot-instructions.md` and `.cursor/rules/conventions.mdc` point here.
 - Component-specific notes live in a nested `CLAUDE.md` inside that exercise folder.
 - Machine-enforceable rules live in tooling (`pyproject.toml`), not prose — this file references the tooling rather than restating it.
+
+- **The last two released versions of every standard file are frozen in `docs/standards-history/`,
+  and you diff against them before rewriting one.** Git has every version; the problem is that
+  finding one means first knowing a rewrite happened, and the rewrites worth comparing are the ones
+  nobody remembers making. `docs/DESIGN.md` went **199 → 488 lines in a single commit** and, of its
+  30 rules, 19 survived reworded and **nine were dropped with no replacement anywhere in the repo** —
+  including "never a chart library", "a glossary must not be hover-only", and "mark pipeline stages
+  with an explicit class, never `:nth-child`", each one a lesson from a defect that had already cost
+  a page. Nothing went red, because **no guard can cover a rule that used to be written down.**
+
+  ```bash
+  diff docs/standards-history/DESIGN.v0.12.0.md docs/DESIGN.md   # what a rewrite actually dropped
+  uv run python tools/snapshot_standards.py --check              # is the newest release captured?
+  uv run python tools/snapshot_standards.py                      # capture it, after a release
+  uv run python tools/snapshot_standards.py --ref v0.11.0        # rebuild an older one, any time
+  ```
+
+  The set is `tools/snapshot_standards.py::STANDARDS` — `AGENTS.md`, `docs/DESIGN.md`, `ci.yml`,
+  `.pre-commit-config.yaml`, `pyproject.toml`, `.gitignore`, `vercel.json` (13 lines, one of which
+  decides whether production deploys itself) and `.gitleaksignore` (where a broad entry silently
+  disables the secret scan). **Add the snapshot to the release
+  ritual**, alongside moving `[Unreleased]` in the changelog. `tests/test_standards_history.py`
+  asserts each copy is byte-identical to the tag it names, carries its `FROZEN COPY — NOT IN FORCE`
+  banner (an agent reading an archived `AGENTS.md` as live policy is the obvious failure), and that
+  retention is not silently exceeded. **Rewriting a standard file is not the same as editing one:**
+  list what the rewrite drops before you commit it, and put anything you are keeping back.
+
+  **The archive is gitignored, and that is a decision with two consequences.** Tracking it would put
+  a second copy of `AGENTS.md` and `DESIGN.md` on the remote — the same argument that untracked the
+  notebooks — and it is only ever read on the machine doing the rewriting. So: every guard that
+  reads it **skips** on a clone and in CI, which means this rule is enforced by whoever has the
+  archive or by nobody; and it joins the protected local-only set, in `PATTERNS` and under the
+  tripwire, because *untracked and unbacked-up* is precisely the class this repo has already lost
+  twice. Unlike the notebooks it is **re-creatable** — `--ref <tag>` rebuilds any snapshot whose tag
+  still exists — so the irrecoverable case is narrow: a snapshot of a deleted tag. Two guards that
+  run everywhere hold the pair together: one fails if a snapshot is ever committed, one fails if the
+  ignore rule disappears. It must be exactly one of tracked or ignored, never neither.

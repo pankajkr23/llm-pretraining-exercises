@@ -98,6 +98,7 @@ Each ends in something you can run and see. Nothing advances until the previous 
 
 ```text
 run_demo.py      # ONE command: regenerates the whole submission bundle, no interaction
+web/             # the deployed page — index.html, chapters.js, data.js, page-extra.css, _shared/
 verify.py        # the auditor: re-derives every claim from the bundle alone, importing only spec
 BRIEF.md         # the assignment — LOCAL ONLY, gitignored, never the deliverable
 CLAUDE.md        # rules specific to this exercise, for whoever changes the code
@@ -210,6 +211,29 @@ Stated here, and it will be stated again beside the numbers when there are numbe
   [`DECISIONS.md`](DECISIONS.md) records that we defined them.
 - **The redundancy penalty is inert at the learning rate this run uses**, and the run says so
   rather than implying a diversity term that is doing work. See [Selection](#selection) below.
+
+## The page
+
+**[What did it read on day forty?](https://llm-pretraining-demos.vercel.app/06-build-training-dataset/)**
+— a real crash, a resume onto the same batch ids, and an auditor that shares no code with the run.
+
+Three explainers, deliberately in **three different interaction families**, because a page of three
+inspectors is monotonous however well each one is built: a **diff** (two routes to the same question,
+until they stop agreeing), a **destroyer** (a guarantee that holds, until there is nothing left for
+it to hold), and an **adversary** (try to edit the record quietly — you cannot). Those three are the
+page's `results` block; the twelve-part spine `AGENTS.md` requires wraps them with the question, the
+vocabulary, the mechanism, the apparatus, the limits and how to reproduce any of it.
+
+**Every figure on the page comes from `web/data.js`, which `tools/build_web_data.py` derives from the
+run's own artifacts** — nothing is typed from memory. That is not fastidiousness: a number inside a
+`<script>` block is read more often than any Markdown file here and tested by none of them, so it is
+the easiest place in the repo for a stale figure to survive. Rebuild it after any run whose numbers
+the page quotes:
+
+```bash
+uv run python src/exercises/06-build-training-dataset/tools/build_web_data.py
+bash deploy/vercel/build.sh     # assemble the site locally at public/
+```
 
 ## Selection
 

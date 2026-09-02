@@ -1,0 +1,1854 @@
+{
+  "_": [
+    "The tracked evidence for exercise 08. Every date here was read from the primary source on the",
+    "date in `verified_on`, and `source.quoted_date` holds the source's own wording so a reader can",
+    "check the ISO date against it without leaving this file.",
+    "",
+    "For arXiv entries the quoted string is the v1 submission-history line. v1 and not a conference",
+    "date, and not the arXiv id's month prefix: YaRN's id begins 2309 but v1 is 31 Aug 2023, and",
+    "Bahdanau's v1 and v7 are twenty months apart. Either mistake reorders the timeline.",
+    "",
+    "`confidence: unverified` is a legitimate value and means a reader could not check it the way we",
+    "did. Nothing here carries it today; leave the field rather than delete it."
+  ],
+  "generated_by": "hand, from primary sources; validated by src/attention/catalogue.py",
+  "mechanisms": [
+    {
+      "key": "bahdanau_attention",
+      "name": "Additive (Bahdanau) attention",
+      "aka": [
+        "soft alignment",
+        "RNN attention"
+      ],
+      "date": "2014-09-01",
+      "bill": "origin",
+      "taught_in_session": false,
+      "bonus": true,
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "1409.0473",
+        "title": "Neural Machine Translation by Jointly Learning to Align and Translate",
+        "url": "https://arxiv.org/abs/1409.0473",
+        "quoted_date": "[v1] Mon, 1 Sep 2014 16:33:02 UTC (83 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Seven versions; v7 is 19 May 2016, twenty months after v1. Quote v1."
+      },
+      "what_existed": "Encoder-decoder translation squeezed a whole source sentence into one fixed-length vector.",
+      "problem": "That single vector was a bottleneck: the longer the sentence, the more the decoder had already forgotten by the time it needed the beginning.",
+      "mechanism": "Let the decoder compute a weighted average over every encoder state at each output step, with the weights learned from a small alignment network.",
+      "what_it_fixed": "Long sentences stopped degrading, because nothing had to be remembered through a bottleneck any more.",
+      "new_tradeoff": "Cost became a product of the two sequence lengths rather than a constant, and the recurrence it sat on top of still forced sequential computation.",
+      "buys": "Direct access to every input position, so distance stops causing forgetting.",
+      "gives_up": "A constant-size interface, in exchange for one that grows with the input.",
+      "when_to_choose": "Historical. It matters because it is the origin: attention existed for three years before anyone removed the recurrence around it.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": false
+        },
+        "scale": "schematic",
+        "source": "Cross-attention over a source sentence: every target position may see every source position, so there is no mask. Shape from the paper's description; grid size is ours.",
+        "sizes": {
+          "context": {
+            "value": 50,
+            "unit": "words",
+            "from": "stated",
+            "quote": "sentences of length up to 50 word (RNNenc-50, RNNsearch-50)",
+            "where": "S4.2 Models, arXiv:1409.0473v1"
+          }
+        }
+      }
+    },
+    {
+      "key": "learned_absolute",
+      "name": "Learned absolute position embeddings",
+      "date": "2017-05-08",
+      "bill": "position",
+      "taught_in_session": false,
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "1705.03122",
+        "title": "Convolutional Sequence to Sequence Learning",
+        "url": "https://arxiv.org/abs/1705.03122",
+        "quoted_date": "[v1] Mon, 8 May 2017 23:25:30 UTC (1,489 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Attribution is contested and the honest answer is a range. This is the source 'Attention Is All You Need' itself cites as [9] for learned positional encodings. The same authors used them six months earlier in arXiv:1611.02344 (v1 7 Nov 2016), which in turn credits Sukhbaatar et al. 2015 - a lead we did not open and therefore do not assert."
+      },
+      "what_existed": "Recurrent and convolutional encoders got word order for free from their own structure.",
+      "problem": "A model that mixes tokens by content alone cannot tell which token came first; 'dog bites man' and 'man bites dog' look identical.",
+      "mechanism": "Keep one learned vector per absolute position and add it to the token embedding before the first layer.",
+      "what_it_fixed": "Order became available to an architecture that had no inherent notion of it.",
+      "new_tradeoff": "The table has a fixed number of rows, so the model has no representation at all for a position it never trained on - a hard wall rather than a graceful decline.",
+      "buys": "Order information at almost no compute cost, learned rather than designed.",
+      "gives_up": "Any ability to run past the trained length, and parameters that scale with the maximum context.",
+      "when_to_choose": "When the context length is fixed and known in advance, and you would rather the model learn positional structure than be told it.",
+      "pattern": {
+        "kind": "bands",
+        "params": {
+          "rows": 6,
+          "hardEdge": true,
+          "table": true
+        },
+        "scale": "schematic",
+        "source": "One learned row per position, with nothing beyond the trained length. Drawn as a table rather than a frequency decomposition, because that is what it is: no row is faster or slower than another. Row count is illustrative.",
+        "sizes": {
+          "dims": {
+            "value": 512,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "All embeddings, including the output produced by the decoder before the final linear layer, have dimensionality 512",
+            "where": "S4.2 Model Parameters and Optimization, arXiv:1705.03122v1"
+          }
+        }
+      }
+    },
+    {
+      "key": "sinusoidal",
+      "name": "Sinusoidal positional encoding",
+      "date": "2017-06-12",
+      "bill": "position",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "1706.03762",
+        "title": "Attention Is All You Need",
+        "url": "https://arxiv.org/abs/1706.03762",
+        "quoted_date": "[v1] Mon, 12 Jun 2017 17:57:34 UTC (1,102 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Same paper and same date as standard_attention - introduced in section 3.5, not in the abstract. It is not a separate release and must not be given a separate date."
+      },
+      "what_existed": "Learned absolute position tables, with a hard limit at the trained length.",
+      "problem": "The table cannot answer a question about a position it never saw, and it spends parameters on something that might be computable instead.",
+      "mechanism": "Replace the table with fixed sine and cosine functions of different frequencies, one pair per embedding dimension.",
+      "what_it_fixed": "Positions became defined at any index without training or parameters, and nearby positions got similar encodings by construction.",
+      "new_tradeoff": "Defined is not the same as learned: the function returns a value past the trained length, but the model has never been taught what to do with it, so quality still falls away.",
+      "buys": "Positions at any length, for zero parameters.",
+      "gives_up": "The chance to learn a positional structure that suits the data, and any guarantee that extrapolation actually works.",
+      "when_to_choose": "When you want a simple, parameter-free baseline, or a fixed encoding you can reason about analytically.",
+      "pattern": {
+        "kind": "bands",
+        "params": {
+          "rows": 6,
+          "hardEdge": false,
+          "continues": true
+        },
+        "scale": "schematic",
+        "source": "Fixed sine and cosine bands at different frequencies, defined past the trained length. Band count is illustrative.",
+        "sizes": {
+          "dims": {
+            "value": 512,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "produce outputs of dimension d model = 512",
+            "where": "S3.1 Encoder and Decoder Stacks, arXiv:1706.03762v1 (same value in the 'base' row of Table 3, S6.2)"
+          },
+          "headDim": {
+            "value": 64,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "we use d k = d v = d model / h = 64",
+            "where": "S3.2.2 Multi-Head Attention, arXiv:1706.03762v1 (d_k = d_v = 64 in the 'base' row of Table 3, S6.2)"
+          },
+          "heads": {
+            "value": 8,
+            "unit": "heads",
+            "from": "stated",
+            "quote": "we employ h = 8 parallel attention layers, or heads",
+            "where": "S3.2.2 Multi-Head Attention, arXiv:1706.03762v1 ('base' row of Table 3, S6.2)"
+          },
+          "base": {
+            "value": 10000,
+            "unit": "dimensionless",
+            "from": "stated",
+            "quote": "The wavelengths form a geometric progression from 2 π to 10000 ⋅ 2 π",
+            "where": "S3.5 Positional Encoding, arXiv:1706.03762v1"
+          }
+        }
+      }
+    },
+    {
+      "key": "standard_attention",
+      "name": "Scaled dot-product attention",
+      "aka": [
+        "vanilla attention",
+        "softmax attention",
+        "MHA"
+      ],
+      "date": "2017-06-12",
+      "bill": "origin",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "1706.03762",
+        "title": "Attention Is All You Need",
+        "url": "https://arxiv.org/abs/1706.03762",
+        "quoted_date": "[v1] Mon, 12 Jun 2017 17:57:34 UTC (1,102 KB)",
+        "verified_on": "2026-09-01",
+        "note": "The course transcript dates this as 'invented in 2018 and 17'. It is June 2017."
+      },
+      "what_existed": "Attention worked, but it was bolted onto a recurrent network that still had to process tokens one at a time.",
+      "problem": "Recurrence made training sequential, so it could not use the parallelism the hardware had.",
+      "mechanism": "Drop the recurrence entirely. Project each token to a query, key and value; score every query against every key; scale by the square root of the head dimension; mask the future; softmax; take the weighted sum of values.",
+      "what_it_fixed": "Training parallelised across the whole sequence at once, and every token could reach every other token in one step.",
+      "new_tradeoff": "It sends two bills that nothing before it sent: scores grow with the square of the sequence length, and generation must keep every past key and value in memory.",
+      "buys": "Exact, global, parallel mixing - every token sees every other token, with no approximation anywhere.",
+      "gives_up": "Quadratic compute and a cache that grows without limit. Everything after this on the timeline is somebody paying less of one of those two.",
+      "when_to_choose": "Short contexts, and as the baseline any alternative has to beat. It is not obsolete; it is exact, and exactness is what the rest of the list trades away.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true
+        },
+        "scale": "illustrative",
+        "source": "The full causal triangle — the reference every other field glyph is drawn against. Exact by construction.",
+        "sizes": {
+          "heads": {
+            "value": 8,
+            "unit": "heads",
+            "from": "stated",
+            "quote": "In this work we employ h = 8 parallel attention layers, or heads",
+            "where": "S3.2.2 Multi-Head Attention, arXiv:1706.03762v1"
+          },
+          "headDim": {
+            "value": 64,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "For each of these we use d k = d v = d model / h = 64",
+            "where": "S3.2.2 Multi-Head Attention, arXiv:1706.03762v1"
+          }
+        }
+      },
+      "shipped_in": [
+        {
+          "model": "OLMo",
+          "quote": "Attention variant \n full",
+          "where": "Table 2 (architecture comparison against LLaMA2-7B / OpenLM-7B / Falcon-7B / PaLM-8B), row \"Attention variant\", OLMo-7B column (file lines 388-389). arXiv:2402.00838",
+          "url": "https://arxiv.org/abs/2402.00838",
+          "confidence": "implied"
+        }
+      ]
+    },
+    {
+      "key": "sparse_attention",
+      "name": "Sparse (factorised) attention",
+      "aka": [
+        "Sparse Transformer",
+        "strided attention"
+      ],
+      "date": "2019-04-23",
+      "bill": "compute",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "1904.10509",
+        "title": "Generating Long Sequences with Sparse Transformers",
+        "url": "https://arxiv.org/abs/1904.10509",
+        "quoted_date": "[v1] Tue, 23 Apr 2019 19:29:47 UTC (4,004 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Child, Gray, Radford, Sutskever. The earliest cost-reduction entry on this timeline - it predates MQA by about six months."
+      },
+      "what_existed": "Dense attention over every pair of positions, at quadratic cost.",
+      "problem": "Most of that attention matrix carries almost no weight, so most of the compute buys almost nothing.",
+      "mechanism": "Attend over a fixed sparse pattern instead of all pairs - strided and local factorisations that together still connect any two positions in a few hops.",
+      "what_it_fixed": "Cost dropped from quadratic toward n-root-n, making far longer sequences reachable at the same budget.",
+      "new_tradeoff": "The pattern is chosen in advance, so a genuinely important long-range pair that the pattern does not connect is simply unavailable - it cannot be recovered by anything downstream.",
+      "buys": "A large constant-factor reduction in attention compute, with softmax and its normalisation intact.",
+      "gives_up": "Exactness. The model can no longer reach every position directly, and which pairs it loses is a design decision rather than a learned one.",
+      "when_to_choose": "Long sequences with structure you understand - images, audio, code - where a fixed pattern plausibly covers the dependencies that matter.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "local": 2,
+          "stride": 4
+        },
+        "scale": "schematic",
+        "source": "Strided plus local factorisation. The paper gives O(n sqrt n); the specific stride and local width here are ours.",
+        "sizes": {
+          "context": {
+            "value": 12288,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "We trained with a context length of 12,288, which is longer than previous approaches",
+            "where": "S7.2 Text (Enwik8), arXiv:1904.10509v1"
+          },
+          "stride": {
+            "value": 128,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "We used a stride of 128, c = 32 , and merged the factorized attention heads",
+            "where": "S7.2 Text (Enwik8), arXiv:1904.10509v1"
+          },
+          "heads": {
+            "value": 8,
+            "unit": "heads",
+            "from": "stated",
+            "quote": "fixed Sparse Transformers with 8 heads",
+            "where": "S7.2 Text (Enwik8), arXiv:1904.10509v1"
+          }
+        }
+      }
+    },
+    {
+      "key": "mqa",
+      "name": "Multi-query attention (MQA)",
+      "date": "2019-11-06",
+      "bill": "cache",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "1911.02150",
+        "title": "Fast Transformer Decoding: One Write-Head is All You Need",
+        "url": "https://arxiv.org/abs/1911.02150",
+        "quoted_date": "[v1] Wed, 6 Nov 2019 00:19:05 UTC (10 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Single author (Noam Shazeer), single version."
+      },
+      "what_existed": "Multi-head attention, where every query head has its own key and value head.",
+      "problem": "During generation the model reloads the whole KV cache for every single token, so decoding is bound by memory bandwidth rather than arithmetic.",
+      "mechanism": "Keep all the query heads, but give them one shared key head and one shared value head.",
+      "what_it_fixed": "The cache shrank by the number of heads - eight times smaller at eight heads - and decoding stopped waiting on memory.",
+      "new_tradeoff": "Every query head now reads the same keys and values, so the heads lose the ability to attend to genuinely different things, and quality can fall.",
+      "buys": "The largest cache reduction available from head sharing, and a matching speedup in generation.",
+      "gives_up": "Head diversity, and with it some model quality - the paper reports the degradation rather than hiding it.",
+      "when_to_choose": "Generation-heavy serving where memory bandwidth is the binding constraint and a small quality cost is acceptable.",
+      "pattern": {
+        "kind": "stack",
+        "params": {
+          "kv": 1,
+          "of": 8
+        },
+        "scale": "illustrative",
+        "source": "One key/value head for all query heads, by definition. Head count 8 is the session's own yardstick.",
+        "sizes": {
+          "context": {
+            "value": 128,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "WMT14 EN-DE Translation Task with sequence length 128",
+            "where": "Table 2 caption, S4.3 Speed, arXiv:1911.02150v1"
+          }
+        }
+      },
+      "shipped_in": [
+        {
+          "model": "PaLM",
+          "quote": "the key/value projections are shared for each head",
+          "where": "Section 2, Model Architecture — bulleted list of modifications (arXiv:2204.02311)",
+          "url": "https://arxiv.org/abs/2204.02311",
+          "confidence": "explicit"
+        }
+      ]
+    },
+    {
+      "key": "topk_attention",
+      "name": "Top-k (explicit sparse) attention",
+      "aka": [
+        "Explicit Sparse Transformer",
+        "explicit selection",
+        "top-k selection"
+      ],
+      "date": "2019-12-25",
+      "bill": "compute",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "1912.11637",
+        "title": "Explicit Sparse Transformer: Concentrated Attention Through Explicit Selection",
+        "url": "https://arxiv.org/abs/1912.11637",
+        "quoted_date": "[v1] Wed, 25 Dec 2019 10:59:31 UTC (689 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Zhao, Lin, Zhang, Ren, Su, Sun. Read from the arXiv abstract page. Listed separately from Sparse Transformers on purpose: the session's coverage list names 'sparse and top-k attention' as two things, and they are two things - a fixed pattern decides which pairs survive before seeing any data, while top-k decides per query from the scores themselves."
+      },
+      "what_existed": "Fixed sparse patterns - strided, local, factorised - that decided which pairs of positions could ever interact before the model saw a single token.",
+      "problem": "A pattern fixed in advance cannot know which earlier tokens matter for this query. Attention mass really is concentrated on a few tokens, but which few is a property of the content, not of the positions.",
+      "mechanism": "Score the candidate keys, keep only the k highest-scoring ones for each query, and run softmax over just those k before combining their values.",
+      "what_it_fixed": "Selection became content-based rather than positional, so the keys a query keeps are the ones that actually scored highly for it, and the softmax is no longer diluted by keys carrying almost no weight.",
+      "new_tradeoff": "Naive top-k still has to score every key before it can rank them, so it cuts the work after selection and not the scoring itself - if scoring was the expensive part, nothing was saved. Making it a real reduction needs a cheaper proposal step, and every proposal step can fail to suggest a key that mattered.",
+      "buys": "Attention concentrated on the keys that actually matter, chosen per query from the data rather than fixed in advance, with softmax and its normalisation intact over the survivors.",
+      "gives_up": "Exactness, and the guarantee of a saving. A dropped key is unrecoverable, and a naive implementation still pays the full quadratic scoring cost it was meant to avoid.",
+      "when_to_choose": "When attention genuinely is concentrated on a few tokens and you have a cheap way to propose candidates. It is the ancestor of the selection branch inside native sparse attention, which is what a proposal step looks like once it is designed in from the start.",
+      "taught_in_session": true,
+      "bonus": false,
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "topk": 3
+        },
+        "scale": "schematic",
+        "source": "Three surviving cells per row, scattered rather than patterned, because which cells survive depends on the scores and therefore on the data. A tidy fixed shape here would be a lie a reader cannot detect - the whole point of top-k is that the shape is not knowable in advance.",
+        "sizes": {
+          "topk": {
+            "value": 8,
+            "unit": "keys",
+            "from": "stated",
+            "quote": "setting the value of k to 8 achieves consistent improvements over the transformer baseline",
+            "where": "S4.2 How to Select a Proper k?, arXiv:1912.11637v1"
+          }
+        }
+      }
+    },
+    {
+      "key": "reformer",
+      "name": "Reformer (LSH attention)",
+      "date": "2020-01-13",
+      "bill": "compute",
+      "taught_in_session": false,
+      "bonus": true,
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2001.04451",
+        "title": "Reformer: The Efficient Transformer",
+        "url": "https://arxiv.org/abs/2001.04451",
+        "quoted_date": "[v1] Mon, 13 Jan 2020 18:38:28 UTC (421 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Kitaev, Kaiser, Levskaya. Included as a bonus because it dates the field's first attempt to make sparsity *learned* rather than fixed."
+      },
+      "what_existed": "Sparse attention with a hand-designed pattern.",
+      "problem": "A fixed pattern cannot adapt to the data; the pairs that matter are not always the pairs a designer picked.",
+      "mechanism": "Hash queries and keys into buckets with locality-sensitive hashing, and attend only within a bucket - so tokens that would have scored highly land together without computing the scores first.",
+      "what_it_fixed": "Sparsity became content-dependent rather than positional, at n-log-n cost.",
+      "new_tradeoff": "Hashing is probabilistic, so a relevant pair can miss each other by luck; and the scheme needs several hash rounds plus shared query-key projections to work, which constrains the architecture.",
+      "buys": "Learned, content-aware sparsity without scoring every pair.",
+      "gives_up": "Determinism and simplicity - and in practice the constants were high enough that it saw little production use.",
+      "when_to_choose": "Rarely today. It earns its place on the timeline as the moment the field tried to learn the sparsity pattern instead of designing it.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "permuted": true,
+          "blocks": 3
+        },
+        "scale": "schematic",
+        "source": "Block-diagonal on a reordered sequence, with the reordering drawn above it. Buckets come from hashing the content, so which cells are live depends on the data and not on position; a fixed pattern here would be a lie a reader cannot detect.",
+        "sizes": {
+          "hashes": {
+            "value": 8,
+            "unit": "rounds",
+            "from": "stated",
+            "quote": "At n rounds = 8 , it already almost matches full attention",
+            "where": "S5 Experiments, arXiv:2001.04451v1"
+          }
+        }
+      }
+    },
+    {
+      "key": "sliding_window",
+      "name": "Sliding-window attention",
+      "aka": [
+        "local attention",
+        "Longformer window"
+      ],
+      "date": "2020-04-10",
+      "bill": "both",
+      "taught_in_session": false,
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2004.05150",
+        "title": "Longformer: The Long-Document Transformer",
+        "url": "https://arxiv.org/abs/2004.05150",
+        "quoted_date": "[v1] Fri, 10 Apr 2020 17:54:09 UTC (228 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Longformer names and introduces the mechanism. Mistral 7B (arXiv:2310.06825, v1 10 Oct 2023) popularised it in a decoder LLM three and a half years later; that is a popularisation, not an origin. Neither is the first use of local attention - Sparse Transformers already used local factorisations in 2019."
+      },
+      "what_existed": "Dense attention, or sparsity with a globally designed pattern.",
+      "problem": "Long documents were unreachable at quadratic cost, and most linguistic dependencies are local anyway.",
+      "mechanism": "Each token attends only to a fixed window of neighbours, with a few designated tokens attending globally; stacking layers lets information travel further than one window.",
+      "what_it_fixed": "Cost became linear in sequence length, and the KV cache became bounded rather than growing forever.",
+      "new_tradeoff": "Anything outside the window is reachable only through several layers of indirection, and a fact that must be recalled verbatim from far away can be lost entirely.",
+      "buys": "Linear cost and a cache that stops growing - the only entry here that bounds both bills with one idea.",
+      "gives_up": "Direct long-range access. Retrieval across the whole context becomes a function of depth rather than a guarantee.",
+      "when_to_choose": "Long inputs whose important dependencies really are local, or as one component of a hybrid that pairs it with something global.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "window": 4
+        },
+        "scale": "schematic",
+        "source": "A band of recent positions. Window width is ours; the papers use several.",
+        "sizes": {
+          "window": {
+            "value": 512,
+            "unit": "tokens",
+            "from": "ours",
+            "note": "a representative window; Longformer varies it by layer and we could not read a single stated value out of the PDF, so this is ours rather than attributed"
+          },
+          "context": {
+            "value": 2048,
+            "unit": "tokens",
+            "from": "ours",
+            "note": "four times the window, chosen so both the band and what it excludes are visible"
+          }
+        }
+      },
+      "shipped_in": [
+        {
+          "model": "Gemma 2",
+          "quote": "We alternate between a local sliding window attention",
+          "where": "Section 2 (Model Architecture), \"Local Sliding Window and Global Attention\" paragraph, line 208; Table 1 row \"Sliding window\" — arXiv:2408.00118",
+          "url": "https://arxiv.org/abs/2408.00118",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Mistral 7B",
+          "quote": "we use sliding window attention: each token can attend to at most W tokens from the previous layer",
+          "where": "Figure 1 caption, Section 2 (Architectural details), arXiv:2310.06825",
+          "url": "https://arxiv.org/abs/2310.06825",
+          "confidence": "explicit"
+        }
+      ]
+    },
+    {
+      "key": "linear_attention",
+      "name": "Linear attention",
+      "aka": [
+        "Transformers are RNNs",
+        "kernel attention"
+      ],
+      "date": "2020-06-29",
+      "bill": "both",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2006.16236",
+        "title": "Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention",
+        "url": "https://arxiv.org/abs/2006.16236",
+        "quoted_date": "[v1] Mon, 29 Jun 2020 17:55:38 UTC (1,626 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Katharopoulos, Vyas, Pappas, Fleuret. Cite v1, not the ICML 2020 conference date."
+      },
+      "what_existed": "Softmax attention, exact and quadratic, keeping every past key.",
+      "problem": "The softmax is what forces you to keep every key: because it normalises across all of them, no partial sum can be computed in advance.",
+      "mechanism": "Replace the exponential with a feature map so the score factorises. Then the sum over past tokens regroups into a single running state matrix, and each new query multiplies that state instead of visiting the history.",
+      "what_it_fixed": "Compute became linear in sequence length, and the cache became a fixed-size state - the same size after a million tokens as after ten.",
+      "new_tradeoff": "Four things go at once: weights are no longer positive, they no longer sum to one, keys no longer compete with each other, and there is no fresh query-specific distribution over the exact old keys. Memories interfere, and unnormalised scores can grow.",
+      "buys": "Constant memory and linear time, with a state that never grows.",
+      "gives_up": "Exact recall. The state is a lossy summary, and what it lost is not recoverable.",
+      "when_to_choose": "Very long streams where a bounded state is a hard requirement, and where approximate recall of the distant past is acceptable.",
+      "pattern": {
+        "kind": "state",
+        "params": {
+          "write": "add"
+        },
+        "scale": "schematic",
+        "source": "A fixed-size running state, the same size at any context. Deliberately NOT a diagonal, which would wrongly suggest a token attends only to itself. State dimensions are ours.",
+        "sizes": {
+          "heads": {
+            "value": 8,
+            "unit": "heads",
+            "from": "stated",
+            "quote": "comprises 8 attention layers with 8 attention heads each",
+            "where": "S4.2.1 MNIST, arXiv:2006.16236v1"
+          },
+          "context": {
+            "value": 784,
+            "unit": "pixels",
+            "from": "stated",
+            "quote": "Since the sequence length is realtively small, namely only 784 pixels",
+            "where": "S4.2.1 MNIST, arXiv:2006.16236v1"
+          },
+          "headDim": {
+            "value": 32,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "We set the embedding size to 256 which is 32 dimensions per head",
+            "where": "S4.2.1 MNIST, arXiv:2006.16236v1"
+          }
+        }
+      }
+    },
+    {
+      "key": "delta_rule",
+      "name": "The delta rule",
+      "aka": [
+        "fast weight programmers",
+        "DeltaNet"
+      ],
+      "date": "2021-02-22",
+      "bill": "both",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2102.11174",
+        "title": "Linear Transformers Are Secretly Fast Weight Programmers",
+        "url": "https://arxiv.org/abs/2102.11174",
+        "quoted_date": "[v1] Mon, 22 Feb 2021 16:51:38 UTC (1,548 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Schlag, Irie, Schmidhuber. The id prefix 2102 is February 2021 and v1 is the 22nd - do not read the id as a day."
+      },
+      "what_existed": "Linear attention with an add-only state: each new key-value pair is added to the running matrix.",
+      "problem": "Adding never removes. If a key's value should change from 40 to 55, an add-only write leaves 40 + 55 = 95, and the old contribution is carried forward forever.",
+      "mechanism": "Read what the state currently returns for this key, compute the difference from what it should return, and write only that difference.",
+      "what_it_fixed": "The state can now be updated rather than only appended to, so a linear model can correct itself instead of accumulating interference.",
+      "new_tradeoff": "The update is sequential by construction - each write depends on the read before it - which made it hard to train efficiently until the parallelisation work three years later.",
+      "buys": "A fixed-size state that can actually be edited, removing linear attention's worst failure mode.",
+      "gives_up": "The simple parallel form of plain linear attention, and it still has no exact record of the past.",
+      "when_to_choose": "Whenever you want linear attention's economics but the task involves overwriting facts rather than only accumulating them.",
+      "pattern": {
+        "kind": "state",
+        "params": {
+          "write": "add+correct"
+        },
+        "scale": "schematic",
+        "source": "The same fixed state, written by reading first and applying only the difference.",
+        "sizes": {
+          "context": {
+            "value": 256,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "and the training and evaluation context length L to 256",
+            "where": "S6.3 Language Modelling Experiments (small configuration), arXiv:2102.11174v1"
+          }
+        }
+      }
+    },
+    {
+      "key": "rope",
+      "name": "RoPE (rotary position embedding)",
+      "date": "2021-04-20",
+      "bill": "position",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2104.09864",
+        "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+        "url": "https://arxiv.org/abs/2104.09864",
+        "quoted_date": "[v1] Tue, 20 Apr 2021 09:54:06 UTC (91 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Verified twice independently."
+      },
+      "what_existed": "Position added to the token embedding once, before the first layer, as an absolute value.",
+      "problem": "What attention actually needs is relative distance, and an absolute vector added at the input is a roundabout way of supplying it - it also has to survive every layer unchanged.",
+      "mechanism": "Rotate each pair of dimensions in the query and key by an angle proportional to the token's position. The dot product of two rotated vectors then depends only on the difference of their positions.",
+      "what_it_fixed": "Relative position became a property of the attention score itself rather than a signal added to the input, and different dimension pairs rotate at different rates to carry distance at several scales.",
+      "new_tradeoff": "The rotation keeps turning past the trained length. Somewhere beyond the context the model saw, a very distant pair has rotated so far that the relationship degrades - which is what every extension method after this is trying to repair.",
+      "buys": "Clean relative position, no parameters, and a form that composes with efficient attention kernels.",
+      "gives_up": "Reliable behaviour outside the trained range - defined everywhere, trustworthy only where it was trained.",
+      "when_to_choose": "Almost every decoder-only model today. It is the default, and the entries after it are about extending it rather than replacing it.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "graded": "relative"
+        },
+        "scale": "schematic",
+        "source": "A graded field constant along each diagonal, oscillating with the gap under a slow decay envelope, because the score is a sum of cosines of the gap times theta. Frequency and envelope are illustrative; the oscillation is the mechanism.",
+        "sizes": {
+          "base": {
+            "value": 10000,
+            "unit": "dimensionless",
+            "from": "stated",
+            "quote": "we choose θ i = 10000 - 2 i / d",
+            "where": "S3.3 Properties of RoPE / Long-term decay, arXiv:2104.09864v1"
+          },
+          "context": {
+            "value": 1024,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "when increase the maximum input text length to 1024 RoFormer outperforms WoBERT",
+            "where": "S4.4 Results (text accompanying Table 4), arXiv:2104.09864v1"
+          }
+        }
+      },
+      "shipped_in": [
+        {
+          "model": "DeepSeek-V3",
+          "quote": "the matrix used to produce the decoupled key that carries Rotary Positional Embedding (RoPE)",
+          "where": "Section 2.1.1, notation defining W^KR after Eq. (1)-(5) (arXiv:2412.19437)",
+          "url": "https://arxiv.org/abs/2412.19437",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Falcon",
+          "quote": "we adopt rotary positionnal embeddings, and use custom kernels to mitigate the overhead",
+          "where": "§4.3.2 \"Rotary positionnal embeddings may only offer a limited edge over ALiBi\", Recipe decision (line 891); restated in §5.2 Architecture: \"we use rotary embeddings ( Su et al.,, 2021 )\" (line 1341) (arXiv:2311.16867)",
+          "url": "https://arxiv.org/abs/2311.16867",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Gemma 2",
+          "quote": "architectural elements are similar to the first version of Gemma models; namely, a context length of 8192 tokens, the use of Rotary Position Embeddings (RoPE)",
+          "where": "Section 2 (Model Architecture), opening paragraph, line 206 — arXiv:2408.00118",
+          "url": "https://arxiv.org/abs/2408.00118",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Llama 2",
+          "quote": "and rotary positional embeddings (RoPE, Su et al. 2022 )",
+          "where": "§2.2 Training Details — arXiv:2307.09288",
+          "url": "https://arxiv.org/abs/2307.09288",
+          "confidence": "explicit"
+        },
+        {
+          "model": "OLMo",
+          "quote": "we replace absolute positional embeddings with rotary positional embeddings (RoPE; Su et al., 2021 )",
+          "where": "Section 2.1 (OLMo Model and Architecture), enumerated change #4 in \"Our main changes over the vanilla transformer architecture\"; restated in Table 2 row \"Positional embeddings\", OLMo-7B column. arXiv:2402.00838",
+          "url": "https://arxiv.org/abs/2402.00838",
+          "confidence": "explicit"
+        },
+        {
+          "model": "PaLM",
+          "quote": "RoPE Embeddings - We use RoPE embeddings ( Su et al., 2021 ) rather than absolute or relative position embeddings",
+          "where": "Section 2, Model Architecture — bulleted list of modifications (arXiv:2204.02311)",
+          "url": "https://arxiv.org/abs/2204.02311",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Qwen2.5",
+          "quote": "Rotary Positional Embeddings (RoPE, Su et al., 2024 ) for encoding position information",
+          "where": "Section 2 (Architecture & Tokenizer), line 169, arXiv:2412.15115",
+          "url": "https://arxiv.org/abs/2412.15115",
+          "confidence": "explicit"
+        }
+      ]
+    },
+    {
+      "key": "alibi",
+      "name": "ALiBi (attention with linear biases)",
+      "date": "2021-08-27",
+      "bill": "position",
+      "taught_in_session": false,
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2108.12409",
+        "title": "Train Short, Test Long: Attention with Linear Biases Enables Input Length Extrapolation",
+        "url": "https://arxiv.org/abs/2108.12409",
+        "quoted_date": "[v1] Fri, 27 Aug 2021 17:35:06 UTC (187 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Ofir Press et al. v2 is the ICLR 2022 revision."
+      },
+      "what_existed": "Positional information encoded into the token or query-key representation, which stops behaving past the trained length.",
+      "problem": "Everybody wanted to train short and run long, and no encoding then in use survived the transition.",
+      "mechanism": "Add no positional embedding at all. Instead subtract a penalty from each attention score in proportion to the distance between the two tokens, with a different slope per head.",
+      "what_it_fixed": "Extrapolation became the default rather than a repair: a linear penalty is defined and sensible at any distance, so a model trained at one length degrades gently at longer ones.",
+      "new_tradeoff": "The penalty is a fixed monotonic prior that says nearer is always more relevant. A task needing a specific far-away token fights that prior, and unlike a learned scheme there is no way for the model to override it.",
+      "buys": "Length extrapolation with no extra parameters and almost no compute.",
+      "gives_up": "The ability to attend strongly to something distant, and any positional structure more expressive than 'closer is better'.",
+      "when_to_choose": "When train-short-run-long matters more than exact long-range recall, and the task is largely local.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "graded": "linear"
+        },
+        "scale": "schematic",
+        "source": "A linear penalty growing with distance, subtracted before softmax. Per-head slopes exist in the paper; the one drawn is illustrative.",
+        "sizes": {
+          "heads": {
+            "value": 8,
+            "unit": "heads",
+            "from": "stated",
+            "quote": "For our models that have 8 heads the slopes that we used are the geometric sequence",
+            "where": "S3 Attention with Linear Biases (ALiBi), arXiv:2108.12409v1"
+          },
+          "trainedLength": {
+            "value": 1024,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "training a 1.3 billion parameter model on input sequences of length 1024",
+            "where": "Abstract, arXiv:2108.12409v1"
+          },
+          "extendedLength": {
+            "value": 2048,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "extrapolates to input sequences of length 2048",
+            "where": "Abstract, arXiv:2108.12409v1"
+          }
+        }
+      }
+    },
+    {
+      "key": "flashattention",
+      "name": "FlashAttention",
+      "date": "2022-05-27",
+      "bill": "compute",
+      "taught_in_session": false,
+      "bonus": true,
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2205.14135",
+        "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+        "url": "https://arxiv.org/abs/2205.14135",
+        "quoted_date": "[v1] Fri, 27 May 2022 17:53:09 UTC (1,325 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Dao, Fu, Ermon, Rudra, Re. FlashAttention-2 is a separate paper with a separate id, not verified here."
+      },
+      "what_existed": "Two branches of work: exact attention that was too slow, and approximate attention that gave up exactness to be fast.",
+      "problem": "Both branches assumed the cost was arithmetic. It was not - it was memory traffic, moving the attention matrix to and from high-bandwidth memory.",
+      "mechanism": "Never materialise the full attention matrix. Tile the computation, keep tiles in fast on-chip memory, and use a running softmax so the result is exact without ever writing the intermediate.",
+      "what_it_fixed": "Attention got several times faster and used far less memory, with a bit-for-bit exact result - no approximation anywhere.",
+      "new_tradeoff": "The saving is in memory movement, not arithmetic, so the asymptotic cost is still quadratic; and the gain comes from hardware-specific kernels that must be rewritten for each new accelerator.",
+      "buys": "A large constant-factor speedup and a big memory saving, while staying exact.",
+      "gives_up": "Nothing mathematically - which is why it is on this list as the exception. What it costs is portability: it is a kernel, not an idea you can express in a few lines of framework code.",
+      "when_to_choose": "Always, where a kernel exists for your hardware. It is the reason exact attention stayed competitive long after the approximations arrived.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "tiled": true
+        },
+        "scale": "illustrative",
+        "source": "Byte-identical to the standard-attention field, because FlashAttention is EXACT — it changes memory traffic, not one score. The only difference drawn is the tiling overlay.",
+        "sizes": {
+          "context": {
+            "value": 1024,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "(seq. length 1024, head dim. 64, 16 heads, batch size 64)",
+            "where": "Figure 2 caption (Left/Middle panels, S3.2 IO-complexity analysis), arXiv:2205.14135v1"
+          },
+          "headDim": {
+            "value": 64,
+            "unit": "dimensions per head",
+            "from": "stated",
+            "quote": "8 heads of dimension 64, and batch size 128",
+            "where": "Appendix E.5 Full Benchmarking Results, 'Setup', arXiv:2205.14135v1"
+          }
+        }
+      },
+      "shipped_in": [
+        {
+          "model": "Falcon",
+          "quote": "We note that the use of FlashAttention is the main driver of improved throughput during training.",
+          "where": "§5.3.2 \"State-of-the-art throughput with dedicated Triton kernels\" (line 1569) (arXiv:2311.16867)",
+          "url": "https://arxiv.org/abs/2311.16867",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Mistral 7B",
+          "quote": "changes made to FlashAttention [ 11 ] and xFormers [ 18 ] yield a 2x speed improvement over a vanilla attention baseline",
+          "where": "Section 2 (Architectural details), Sliding Window Attention paragraph, arXiv:2310.06825",
+          "url": "https://arxiv.org/abs/2310.06825",
+          "confidence": "implied"
+        }
+      ]
+    },
+    {
+      "key": "gqa",
+      "name": "Grouped-query attention (GQA)",
+      "date": "2023-05-22",
+      "bill": "cache",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2305.13245",
+        "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+        "url": "https://arxiv.org/abs/2305.13245",
+        "quoted_date": "[v1] Mon, 22 May 2023 17:16:38 UTC (140 KB)",
+        "verified_on": "2026-09-01",
+        "note": "EMNLP 2023 corresponds to v2/v3; v1 is the first appearance."
+      },
+      "what_existed": "A binary choice between multi-head attention's large cache and multi-query attention's quality loss.",
+      "problem": "MQA saved the most memory and cost the most quality; nobody had asked what the points in between looked like.",
+      "mechanism": "Put the query heads into groups and give each group its own key and value head - so the number of KV heads is a dial between one and the number of query heads.",
+      "what_it_fixed": "Most of MQA's memory saving became available at a fraction of its quality cost. At the session's yardstick, two KV heads against eight is exactly a quarter of the cache.",
+      "new_tradeoff": "It moves along the same line rather than leaving it: the cache still grows linearly with context, so GQA makes long context cheaper without making it affordable.",
+      "buys": "A tunable trade between cache size and head diversity, and a way to convert an existing multi-head checkpoint rather than retrain.",
+      "gives_up": "Some head diversity still, and the underlying linear growth in context length is untouched.",
+      "when_to_choose": "Almost any production decoder today - it is the practical default. Not a solution to long context on its own.",
+      "pattern": {
+        "kind": "stack",
+        "params": {
+          "kv": 2,
+          "of": 8
+        },
+        "scale": "illustrative",
+        "source": "Query heads in groups sharing a key/value head. 2 of 8 is the session's own worked example.",
+        "sizes": {
+          "kvHeads": {
+            "value": 8,
+            "unit": "groups",
+            "from": "stated",
+            "quote": "We selected 8 groups as a favorable middle ground",
+            "where": "S3.3 Ablations, \"Number of groups\" (discussion of Figure 6), arXiv:2305.13245v1"
+          },
+          "context": {
+            "value": 2048,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "as a function of the number of GQA groups with input length 2048 and output length 512",
+            "where": "Figure 6 caption, S3.3 Ablations (\"Number of groups\"), arXiv:2305.13245v1"
+          }
+        }
+      },
+      "shipped_in": [
+        {
+          "model": "Falcon",
+          "quote": "the Falcon series implement multigroup with KV=TP for all models (respectively 1/8/8 for Falcon-7/40/180B)",
+          "where": "§4.3.1 \"Extending multiquery into multigroup for tensor parallel training and inference\", Recipe decision (line 782); restated in §5.2 Architecture (line 1341) and Table 16 in §5.2.1 (arXiv:2311.16867)",
+          "url": "https://arxiv.org/abs/2311.16867",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Gemma 2",
+          "quote": "We use GQA with num_groups = 2 , based on ablations showing increased speed at inference time",
+          "where": "Section 2 (Model Architecture), \"Grouped-Query Attention (Ainslie et al., 2023)\" paragraph, line 244; also Abstract and Introduction, and Table 1 row \"Head type\" — arXiv:2408.00118",
+          "url": "https://arxiv.org/abs/2408.00118",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Llama 2",
+          "quote": "for the 34B and 70B Llama 2 models we chose to use GQA instead of MQA.",
+          "where": "Appendix A.2.1 \"Grouped-Query Attention\" (also §2.1 Table 1 and §2.2) — arXiv:2307.09288",
+          "url": "https://arxiv.org/abs/2307.09288",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Mistral 7B",
+          "quote": "Mistral 7B leverages grouped-query attention (GQA)",
+          "where": "Section 1 (Introduction), arXiv:2310.06825",
+          "url": "https://arxiv.org/abs/2310.06825",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Qwen2.5",
+          "quote": "Grouped Query Attention (GQA, Ainslie et al., 2023 ) for efficient KV cache utilization",
+          "where": "Section 2 (Architecture & Tokenizer), line 169 + Table 1, arXiv:2412.15115",
+          "url": "https://arxiv.org/abs/2412.15115",
+          "confidence": "explicit"
+        }
+      ]
+    },
+    {
+      "key": "ntk_aware",
+      "name": "NTK-aware scaled RoPE",
+      "date": "2023-06-29",
+      "bill": "position",
+      "taught_in_session": false,
+      "source": {
+        "kind": "post",
+        "arxiv_id": null,
+        "title": "NTK-Aware Scaled RoPE allows LLaMA models to have extended (8k+) context size without any fine-tuning and minimal perplexity degradation.",
+        "url": "https://www.reddit.com/r/LocalLLaMA/comments/14lz7j5/ntkaware_scaled_rope_allows_llama_models_to_have/",
+        "quoted_date": "created-timestamp=\"2023-06-29T08:21:29.413000+0000\"",
+        "verified_on": "2026-09-01",
+        "note": "There is no paper. This is a Reddit post by user bloc97, and the date is Reddit's own machine-readable created-timestamp field. reddit.com refused our requests, so the field was read from a Wayback Machine raw capture taken 2023-06-29 08:58 UTC rather than from the live page - a reader wanting the live source needs a browser. The first peer-reviewable write-up is the YaRN paper, which cites this post. Note 08:21 UTC is still 28 June in US time zones, which is why secondary sources disagree by a day."
+      },
+      "what_existed": "RoPE, working well inside its trained context and degrading beyond it. The obvious repair was position interpolation - squeeze the positions so a longer context fits the trained range.",
+      "problem": "Interpolating every frequency equally crushes the high-frequency dimensions, which is where fine-grained local distance lives - so the model gets longer context and worse local resolution.",
+      "mechanism": "Scale the frequencies unevenly instead: change the low frequencies, which carry long-range structure, and leave the high frequencies that carry local detail nearly alone.",
+      "what_it_fixed": "Context extended several times over with little quality loss and, notably, without any fine-tuning at all.",
+      "new_tradeoff": "It is a heuristic reparameterisation with no training behind it, so the gain is bounded and it stops helping well before the extreme lengths later methods reach.",
+      "buys": "A large context extension for free - no training, no data, a few lines of change.",
+      "gives_up": "Principled grounding and headroom; it is a patch on a mismatch rather than a fix for it.",
+      "when_to_choose": "When you need more context from an existing checkpoint today and cannot afford to train anything.",
+      "pattern": {
+        "kind": "bands",
+        "params": {
+          "rows": 6,
+          "stretch": "low"
+        },
+        "scale": "schematic",
+        "source": "Bands with the low-frequency ones stretched and the high-frequency ones left nearly alone. NTK-aware was announced in a Reddit post rather than a paper, and that post is not retrievable, so this is the only entry whose one sourced number is quoted from a different document — YaRN, by the same authors. Which bands and by how much is illustrative.",
+        "sizes": {
+          "base": {
+            "value": 10000,
+            "unit": "dimensionless",
+            "from": "stated",
+            "quote": "and b = 10000",
+            "where": "S2.1, arXiv:2309.00071 (YaRN) — NTK-aware's own authors, describing the base their method rescales; NTK-aware itself was posted to Reddit, not published"
+          }
+        }
+      }
+    },
+    {
+      "key": "yarn",
+      "name": "YaRN",
+      "date": "2023-08-31",
+      "bill": "position",
+      "taught_in_session": false,
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2309.00071",
+        "title": "YaRN: Efficient Context Window Extension of Large Language Models",
+        "url": "https://arxiv.org/abs/2309.00071",
+        "quoted_date": "[v1] Thu, 31 Aug 2023 18:18:07 UTC (42 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Often cited as September 2023 from the 2309 id prefix; v1 is 31 August. This paper is also the citable source for the NTK-aware method above."
+      },
+      "what_existed": "Position interpolation and the NTK-aware heuristic, both applied uniformly across the whole embedding.",
+      "problem": "Neither treated the frequency bands according to what they actually do, and both left quality on the table at large extension factors.",
+      "mechanism": "Split the frequencies into bands by how many full rotations they complete inside the trained window - interpolate the ones that wrapped many times, leave the ones that did not, and blend in between - plus a temperature correction to the attention softmax.",
+      "what_it_fixed": "Much larger extension factors became reachable, with far less fine-tuning data than earlier methods needed.",
+      "new_tradeoff": "It still needs some fine-tuning to reach its best results, and it inherits the assumption that the trained rotary structure is worth preserving at all - an assumption DroPE later attacks directly.",
+      "buys": "The strongest RoPE extension of its generation, at a small fraction of the training cost.",
+      "gives_up": "The zero-training property of the pure heuristic, and it adds hyperparameters that need setting per model.",
+      "when_to_choose": "When you have an existing RoPE model, need a large context extension, and can afford a short fine-tune.",
+      "pattern": {
+        "kind": "bands",
+        "params": {
+          "rows": 6,
+          "stretch": "banded"
+        },
+        "scale": "schematic",
+        "source": "Frequencies split into bands and treated differently by band. The split points are illustrative.",
+        "sizes": {
+          "base": {
+            "value": 10000,
+            "unit": "dimensionless",
+            "from": "stated",
+            "quote": "and b = 10000",
+            "where": "S2.1 Rotary Position Embeddings, arXiv:2309.00071v1"
+          },
+          "extension": {
+            "value": 16,
+            "unit": "multiple",
+            "from": "stated",
+            "quote": "For s = 16 we fine-tuned for 400 steps",
+            "where": "S4.1 Training, arXiv:2309.00071v1"
+          },
+          "extendedLength": {
+            "value": 65536,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "fine-tuned using YaRN with 64k and 128k context windows",
+            "where": "Abstract, arXiv:2309.00071v1"
+          }
+        }
+      },
+      "shipped_in": [
+        {
+          "model": "DeepSeek-V3",
+          "quote": "we apply YaRN ( Peng et al., 2023a ) for context extension",
+          "where": "Section 4.3 Long Context Extension (arXiv:2412.19437)",
+          "url": "https://arxiv.org/abs/2412.19437",
+          "confidence": "explicit"
+        },
+        {
+          "model": "Qwen2.5",
+          "quote": "we implement two key strategies: YARN ( Peng et al., 2023 )",
+          "where": "Section 3.3 (Long-context Pre-training), line 273, arXiv:2412.15115",
+          "url": "https://arxiv.org/abs/2412.15115",
+          "confidence": "explicit"
+        }
+      ]
+    },
+    {
+      "key": "attention_sinks",
+      "name": "Attention sinks / StreamingLLM",
+      "date": "2023-09-29",
+      "bill": "cache",
+      "taught_in_session": false,
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2309.17453",
+        "title": "Efficient Streaming Language Models with Attention Sinks",
+        "url": "https://arxiv.org/abs/2309.17453",
+        "quoted_date": "[v1] Fri, 29 Sep 2023 17:59:56 UTC (9,548 KB)",
+        "verified_on": "2026-09-01",
+        "note": "The 'attention sink' is the observation; StreamingLLM is the method built on it - they are not synonyms. v1 predates Mistral 7B's v1 by eleven days, which reverses the usual telling of this period."
+      },
+      "what_existed": "Windowed attention, which bounds the cache by evicting the oldest tokens.",
+      "problem": "Evicting the very first tokens made models collapse, and nobody knew why. It turned out that softmax must put its weight somewhere, so models learn to dump surplus attention onto the first few tokens - which are therefore load-bearing despite carrying no meaning.",
+      "mechanism": "Keep a handful of initial tokens permanently in the cache as a place for that surplus attention to go, and slide the window over everything after them.",
+      "what_it_fixed": "Streaming generation over inputs far longer than the trained window became stable, with a cache of fixed size.",
+      "new_tradeoff": "It stabilises the model without extending it: everything evicted is genuinely gone, so this buys unbounded generation, not unbounded memory.",
+      "buys": "Indefinite streaming at constant memory, from an existing checkpoint, with no training.",
+      "gives_up": "Any access to the middle of a long history - which makes it wrong for tasks that need recall rather than continuation.",
+      "when_to_choose": "Long-running conversation or streaming where recent context is what matters and the distant past can be forgotten.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "window": 4,
+          "sinks": 4
+        },
+        "scale": "schematic",
+        "source": "A sliding window plus the first few positions held permanently — literally the union of two earlier glyphs. Sink count is illustrative.",
+        "sizes": {
+          "sinks": {
+            "value": 4,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "introducing 4 initial tokens as attention sinks in StreamingLLM",
+            "where": "S4.4 Ablation Studies, \"Numbers of Initial Tokens\", arXiv:2309.17453v1"
+          }
+        }
+      }
+    },
+    {
+      "key": "mamba",
+      "name": "Mamba (selective state space)",
+      "date": "2023-12-01",
+      "bill": "both",
+      "taught_in_session": false,
+      "bonus": true,
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2312.00752",
+        "title": "Mamba: Linear-Time Sequence Modeling with Selective State Spaces",
+        "url": "https://arxiv.org/abs/2312.00752",
+        "quoted_date": "[v1] Fri, 1 Dec 2023 18:01:34 UTC (1,264 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Gu and Dao. Mamba-2 is a separate paper with a separate id, not verified here. Included as a bonus because Gated DeltaNet's own subtitle is 'Improving Mamba2 with Delta Rule' - the recurrent thread runs through it."
+      },
+      "what_existed": "Linear attention and state space models, both offering constant state but both mixing information in a way that does not depend on the content.",
+      "problem": "A fixed recurrence cannot choose what to remember, so it compresses everything equally - and most of a sequence is not worth remembering.",
+      "mechanism": "Make the state space parameters functions of the input, so the model can decide per token whether to store, ignore or forget, with a hardware-aware scan to keep it fast.",
+      "what_it_fixed": "A constant-state model became selective, closing much of the quality gap to attention while keeping linear time and a bounded cache.",
+      "new_tradeoff": "The state is still a fixed-size summary, so exact recall of an arbitrary earlier token is not available - which is why the strongest systems pair it with a few attention layers rather than replacing them.",
+      "buys": "Linear time, constant memory, and content-dependent selection.",
+      "gives_up": "Exact retrieval, and the simplicity of a single uniform layer type in practice.",
+      "when_to_choose": "Very long sequences where throughput dominates, usually interleaved with attention layers rather than used alone.",
+      "pattern": {
+        "kind": "state",
+        "params": {
+          "write": "select"
+        },
+        "scale": "schematic",
+        "source": "A fixed state whose write is input-dependent: store, ignore or forget per token.",
+        "sizes": {
+          "stateSize": {
+            "value": 16,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "We use a model dimension of D = 1024 and state dimension N = 16",
+            "where": "E.5 Efficiency Benchmark (Scan Operation), arXiv:2312.00752v2"
+          },
+          "expansion": {
+            "value": 2,
+            "unit": "multiple",
+            "from": "stated",
+            "quote": "We always fix to E = 2 in our experiments",
+            "where": "S3.4 A Simplified SSM Architecture, arXiv:2312.00752v2"
+          },
+          "context": {
+            "value": 2048,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "Mamba and Pythia are trained with context length 2048",
+            "where": "S4.2.2 Downstream Evaluations, arXiv:2312.00752v2"
+          }
+        }
+      }
+    },
+    {
+      "key": "mla",
+      "name": "Multi-head latent attention (MLA)",
+      "date": "2024-05-07",
+      "bill": "cache",
+      "taught_in_session": false,
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2405.04434",
+        "title": "DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model",
+        "url": "https://arxiv.org/abs/2405.04434",
+        "quoted_date": "[v1] Tue, 7 May 2024 15:56:43 UTC (431 KB)",
+        "verified_on": "2026-09-01",
+        "note": "MLA is introduced inside the DeepSeek-V2 model paper; there is no standalone MLA paper. The abstract states the KV cache is reduced by 93.3%."
+      },
+      "what_existed": "Head sharing - MQA and GQA - which reduces the cache by storing fewer heads.",
+      "problem": "Head sharing pays for memory with head diversity, and it still stores full-width keys and values for every position.",
+      "mechanism": "Store neither. Project the keys and values down to a small shared latent vector per position, cache that, and reconstruct the per-head keys and values on the fly when attending.",
+      "what_it_fixed": "The cache shrank far more than head sharing allows, while keeping the heads distinct - the paper reports a 93.3% reduction against its own baseline.",
+      "new_tradeoff": "Reconstruction is extra arithmetic at every step, the latent width is a new capacity bottleneck, and it interacts awkwardly with RoPE - which is why the design carries a separate small set of dimensions just for position.",
+      "buys": "A large cache reduction without giving up head diversity.",
+      "gives_up": "Simplicity and some compute; and it must be trained in from the start rather than converted from a checkpoint.",
+      "when_to_choose": "Large-scale serving where the KV cache is the binding constraint and you control pretraining.",
+      "pattern": {
+        "kind": "stack",
+        "params": {
+          "kv": 1,
+          "of": 8,
+          "latent": true
+        },
+        "scale": "illustrative",
+        "source": "Keys and values are not stored per head at all; a narrow shared latent is stored and re-expanded. The paper reports a 93.3% cache reduction against its own baseline.",
+        "sizes": {
+          "cacheReduction": {
+            "value": 93.3,
+            "unit": "percent",
+            "from": "stated",
+            "quote": "reduces the KV cache by 93.3%",
+            "where": "abstract, arXiv:2405.04434v5"
+          }
+        }
+      },
+      "shipped_in": [
+        {
+          "model": "DeepSeek-V3",
+          "quote": "For attention, DeepSeek-V3 adopts the MLA architecture.",
+          "where": "Section 2.1.1 Multi-Head Latent Attention (arXiv:2412.19437)",
+          "url": "https://arxiv.org/abs/2412.19437",
+          "confidence": "explicit"
+        }
+      ]
+    },
+    {
+      "key": "deltanet_parallel",
+      "name": "Parallelised DeltaNet",
+      "date": "2024-06-10",
+      "bill": "both",
+      "bonus": true,
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2406.06484",
+        "title": "Parallelizing Linear Transformers with the Delta Rule over Sequence Length",
+        "url": "https://arxiv.org/abs/2406.06484",
+        "quoted_date": "[v1] Mon, 10 Jun 2024 17:24:42 UTC (124 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Yang et al. The course transcript's claim that 'that paper came out in 2024' is correct for this one. The delta rule itself is three years older - see delta_rule."
+      },
+      "what_existed": "The delta rule, three years old, correct, and slow to train because each update depends on the previous one.",
+      "problem": "A sequential recurrence cannot use the parallelism that made transformers trainable, so a good idea stayed impractical at scale.",
+      "mechanism": "Reformulate the delta-rule recurrence as a matrix product that can be chunked, so a whole block of tokens is updated in parallel rather than one at a time.",
+      "what_it_fixed": "Delta-rule models became trainable at competitive scale, which is what moved the idea from a paper into architectures.",
+      "new_tradeoff": "The chunked form is more complex to implement and reason about, and it does not change what the state can hold - the recall limits of a fixed-size state are untouched.",
+      "buys": "Practical training speed for an update rule that was already known to be better.",
+      "gives_up": "Implementation simplicity; the arithmetic is no longer something you can read off in a line.",
+      "when_to_choose": "Any serious use of the delta rule at scale - this is the version that made it deployable.",
+      "pattern": {
+        "kind": "state",
+        "params": {
+          "write": "add+correct",
+          "chunked": true
+        },
+        "scale": "schematic",
+        "source": "The delta-rule state, written a chunk at a time so it can be trained in parallel.",
+        "sizes": {
+          "headDim": {
+            "value": 128,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "The head dimension of DeltaNet is set to 128",
+            "where": "S4.2 Language Modeling, 'Hyperparameters' paragraph, arXiv:2406.06484v1"
+          }
+        }
+      }
+    },
+    {
+      "key": "gated_deltanet",
+      "name": "Gated DeltaNet",
+      "date": "2024-12-09",
+      "bill": "both",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2412.06464",
+        "title": "Gated Delta Networks: Improving Mamba2 with Delta Rule",
+        "url": "https://arxiv.org/abs/2412.06464",
+        "quoted_date": "[v1] Mon, 9 Dec 2024 13:09:04 UTC (261 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Yang, Kautz, Hatamizadeh (NVIDIA). Exactly six months after parallelised DeltaNet."
+      },
+      "what_existed": "Two separate good ideas: the delta rule, which edits the state precisely, and gating, which lets a model forget wholesale.",
+      "problem": "Precise editing alone cannot clear a state that has drifted; wholesale forgetting alone cannot make a targeted correction. Each fails where the other works.",
+      "mechanism": "Combine them - a gated decay that can flush the state, plus a delta update that can correct one association without touching the rest.",
+      "what_it_fixed": "Better recall and length behaviour than either mechanism alone, at the same constant state size.",
+      "new_tradeoff": "More moving parts and more to tune, and it remains a fixed-size state - better bookkeeping does not become exact memory.",
+      "buys": "The strongest linear-recurrent quality of its generation, still at constant memory.",
+      "gives_up": "Simplicity, and exact recall remains out of reach - a better-managed fixed state is still a fixed state.",
+      "when_to_choose": "As the recurrent half of a hybrid stack, where most layers carry a bounded state and a few attention layers supply exact lookup.",
+      "pattern": {
+        "kind": "state",
+        "params": {
+          "write": "add+correct+flush"
+        },
+        "scale": "schematic",
+        "source": "The delta-rule state plus a gate that can clear it wholesale.",
+        "sizes": {
+          "context": {
+            "value": 4096,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "we set the training length to 4K tokens",
+            "where": "S4 Experiments, \"Setup\" paragraph, arXiv:2412.06464v1"
+          },
+          "headDim": {
+            "value": 128,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "a head dimension of 128 provides an optimal trade-off",
+            "where": "Appendix A.2 Ablation Study, prose discussing Table S.1, arXiv:2412.06464v1"
+          }
+        }
+      }
+    },
+    {
+      "key": "nsa",
+      "name": "Native sparse attention (NSA)",
+      "aka": [
+        "DeepSeek compressed sparse attention",
+        "CSA"
+      ],
+      "date": "2025-02-16",
+      "bill": "both",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2502.11089",
+        "title": "Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention",
+        "url": "https://arxiv.org/abs/2502.11089",
+        "quoted_date": "[v1] Sun, 16 Feb 2025 11:53:44 UTC (915 KB)",
+        "verified_on": "2026-09-01",
+        "note": "The paper's own framing is compression plus selection. The session calls it 'compressed sparse attention'; the abstract describes a hierarchical strategy, so do not present two branches as the whole design without reading the body."
+      },
+      "what_existed": "Sparsity applied after the fact to a model trained densely, and cache reduction by storing fewer or narrower heads.",
+      "problem": "Sparsity bolted on at inference fights a model that learned to attend densely, and the theoretical savings rarely survived contact with real kernels.",
+      "mechanism": "Compress nearby tokens into block summaries, select the most useful blocks with a cheap index, and keep a local window for detail - trained this way from the start, with kernels designed for the access pattern.",
+      "what_it_fixed": "Sparsity that the model is trained to use, with speedups that show up in wall-clock time rather than only in flop counts, and a cache reduced along positions rather than heads.",
+      "new_tradeoff": "Compression discards token-level detail permanently, the selector can miss a block that mattered, and the whole design must be committed to before pretraining rather than added later.",
+      "buys": "Long context at a cost that is affordable in practice, reducing both bills at once.",
+      "gives_up": "Exactness twice over - once in the compression, once in the selection - and any option to change your mind after training.",
+      "when_to_choose": "When you are pretraining for very long context and can design the architecture and the kernels together.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "blocks": 3,
+          "selected": 2,
+          "window": 3,
+          "selectBy": "score"
+        },
+        "scale": "schematic",
+        "source": "Three branches drawn separately - a local window, blocks selected per query by score, and the compressed summaries the selector reads. Every size is the paper's own; the grid is drawn at a reduced context so the window is visible at all, and the figure states the reduction and the true proportion beside it.",
+        "sizes": {
+          "compressBlock": {
+            "value": 32,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "we set compression block size l=32",
+            "where": "§4.1 Pretraining Setup, arXiv:2502.11089v1"
+          },
+          "compressStride": {
+            "value": 16,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "sliding stride d=16",
+            "where": "§4.1 Pretraining Setup, arXiv:2502.11089v1"
+          },
+          "blockSize": {
+            "value": 64,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "selected block size l′=64",
+            "where": "§4.1 Pretraining Setup, arXiv:2502.11089v1"
+          },
+          "selected": {
+            "value": 16,
+            "unit": "blocks",
+            "from": "stated",
+            "quote": "selected block count n=16 (including fixed activating the 1 initial block and 2 local blocks)",
+            "where": "§4.1 Pretraining Setup, arXiv:2502.11089v1"
+          },
+          "window": {
+            "value": 512,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "sliding window size w=512",
+            "where": "§4.1 Pretraining Setup, arXiv:2502.11089v1"
+          },
+          "context": {
+            "value": 32768,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "followed by continued training and supervised fine-tuning on 32k-length texts",
+            "where": "§4.1 Pretraining Setup, arXiv:2502.11089v1"
+          }
+        }
+      }
+    },
+    {
+      "key": "kda",
+      "name": "Kimi Delta Attention (KDA)",
+      "aka": [
+        "Kimi Linear",
+        "KDA"
+      ],
+      "date": "2025-10-30",
+      "bill": "both",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2510.26692",
+        "title": "Kimi Linear: An Expressive, Efficient Attention Architecture",
+        "url": "https://arxiv.org/abs/2510.26692",
+        "quoted_date": "[v1] Thu, 30 Oct 2025 16:59:43 UTC (645 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Kimi Team (Moonshot AI). Read from the arXiv abstract page. A v2 followed on 1 Nov 2025; the v1 date is the one recorded, as everywhere else on this timeline."
+      },
+      "what_existed": "Gated DeltaNet had made a fixed-size state forgetful, with one scalar gate deciding how much of the old state to keep.",
+      "problem": "A scalar gate applies the same decay to every channel of the state at once, so a model cannot forget one kind of association while holding on to another.",
+      "mechanism": "Extend the gated delta rule with channel-wise gating so each dimension of the state decays at its own rate, run through a chunkwise algorithm built on a restricted diagonal-plus-low-rank transition, and interleave three such layers with one full-attention layer.",
+      "what_it_fixed": "Finer control of a finite state. The hybrid beat full multi-head latent attention on every task its authors evaluated, at up to 75% less KV cache and up to six times the decoding throughput at a million tokens.",
+      "new_tradeoff": "It is a hybrid, not a replacement: one layer in four is still full attention, so the cache still grows with the sequence - just four times more slowly. The saving depends on that ratio continuing to hold at scale.",
+      "buys": "Most of full attention's quality at a quarter of its cache, with fixed-state layers doing the bulk of the sequence mixing.",
+      "gives_up": "Architectural simplicity, and exact recall in three layers out of every four.",
+      "when_to_choose": "Long-context serving where the cache is the binding constraint and you can design the layer stack around a fixed ratio.",
+      "pattern": {
+        "kind": "state",
+        "params": {
+          "write": "add+correct",
+          "gated": "channelwise"
+        },
+        "scale": "schematic",
+        "source": "A state box whose gate is drawn per channel rather than as one mark, because the whole change is that decay is no longer a single scalar. The number of channels drawn is ours.",
+        "sizes": {
+          "context": {
+            "value": 4096,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "All models are pretrained using a 4,096-token context window",
+            "where": "S5.4.1 Pre-training recipe, arXiv:2510.26692v1"
+          },
+          "stateSize": {
+            "value": 128,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "a fixed-sized state ( d k x d v per head, with d k = d v = 128 )",
+            "where": "S6.3 Inference strategy and cost, arXiv:2510.26692v1"
+          },
+          "chunk": {
+            "value": 64,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "a fixed chunk size C = 64",
+            "where": "S6.3 Complexity Analysis (Training flops), arXiv:2510.26692v1"
+          },
+          "headDim": {
+            "value": 128,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "the key and value head dimensions, which are set to 128 for all experiments",
+            "where": "S4 The Kimi Linear Model Architecture, Neural Parameterization, arXiv:2510.26692v1"
+          },
+          "cacheReduction": {
+            "value": 75,
+            "unit": "percent",
+            "from": "stated",
+            "quote": "reducing KV cache usage by up to 75%",
+            "where": "Abstract (repeated in S1 Contributions), arXiv:2510.26692v1"
+          }
+        }
+      },
+      "taught_in_session": false,
+      "bonus": true
+    },
+    {
+      "key": "drope",
+      "name": "DroPE",
+      "date": "2025-12-13",
+      "bill": "position",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2512.12167",
+        "title": "Extending the Context of Pretrained LLMs by Dropping Their Positional Embeddings",
+        "url": "https://arxiv.org/abs/2512.12167",
+        "quoted_date": "[v1] Sat, 13 Dec 2025 04:23:47 UTC (2,135 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Gelberg, Eguchi, Akiba, Cetin (Sakana AI). CAUTION: a different paper, DRoPE with a capital R (arXiv:2503.15029, 'Directional Rotary Position Embedding for Efficient Agent Interaction Modeling', 19 Mar 2025), is an autonomous-driving trajectory paper and is NOT this technique - the course transcript quotes its title while describing this mechanism. The two differ by one capital letter."
+      },
+      "what_existed": "A decade of work adding positional information, then a further generation of work repairing it for longer contexts - interpolation, NTK-aware scaling, YaRN.",
+      "problem": "Every repair assumed the rotary structure was worth keeping. But a rotation that has turned tens of thousands of times no longer usefully relates a distant token to an early one, and no rescaling fully fixes that.",
+      "mechanism": "Stop repairing it and remove it. Pretrain with positional embeddings, then drop them and continue training briefly at a very low learning rate so the model recalibrates without them.",
+      "what_it_fixed": "Context extended by a large factor without long-context fine-tuning, on the argument that positional embeddings are a training scaffold rather than a permanent architectural requirement.",
+      "new_tradeoff": "It requires access to training - this cannot be applied to a checkpoint you can only run - and the loss spikes when the embeddings are removed before it recovers. It is also the newest entry here, with correspondingly less independent replication.",
+      "buys": "Very large context extension without the long-context training data every earlier method needed.",
+      "gives_up": "The ability to apply it post-hoc, and the comfort of a well-replicated result.",
+      "when_to_choose": "When you control pretraining, need context far beyond what you trained on, and cannot afford to train at that length.",
+      "pattern": {
+        "kind": "bands",
+        "params": {
+          "rows": 6,
+          "emptying": true
+        },
+        "scale": "schematic",
+        "source": "The positional bands being removed after pretraining, which is the mechanism itself.",
+        "sizes": {
+          "trainedLength": {
+            "value": 2048,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "SmolLM 's pretraining context ( 2048 tokens)",
+            "where": "S5.1 Large-scale empirical evaluation ('Extending the context of LMs in the wild with DroPE'), arXiv:2512.12167v1"
+          },
+          "dims": {
+            "value": 64,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "Head dimension 64",
+            "where": "Table 4 (Appendix C.1 Training), 'Model architectures' block, arXiv:2512.12167v1"
+          },
+          "extension": {
+            "value": 2,
+            "unit": "multiple",
+            "from": "stated",
+            "quote": "Table 1: Zero-shot NIAH at 2 x training context",
+            "where": "Table 1 caption, S5.1 (matching Figure 1's caption), arXiv:2512.12167v1"
+          },
+          "base": {
+            "value": 10000,
+            "unit": "dimensionless",
+            "from": "stated",
+            "quote": "RoPE θ 1,000,000 10,000",
+            "where": "Table 4 (Appendix C.1 Training), SmolLM column, arXiv:2512.12167v1"
+          }
+        }
+      }
+    },
+    {
+      "key": "mamba3",
+      "name": "Mamba-3",
+      "aka": [
+        "Mamba 3"
+      ],
+      "date": "2026-03-16",
+      "bill": "both",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2603.15569",
+        "title": "Mamba-3: Improved Sequence Modeling using State Space Principles",
+        "url": "https://arxiv.org/abs/2603.15569",
+        "quoted_date": "[v1] Mon, 16 Mar 2026 17:30:08 UTC (247 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Lahoti, Li, Chen, Wang, Bick, Kolter, Dao, Gu - including both original Mamba authors. Read from the arXiv abstract page."
+      },
+      "what_existed": "Mamba-2 and the gated delta rule had shown a selective fixed-size state could compete with attention on language modelling.",
+      "problem": "Those models bought efficiency by giving up capability - they failed at tracking state through a sequence - and their theoretical linearity did not translate into hardware efficiency in practice.",
+      "mechanism": "Three changes taken from the state-space view: a more expressive recurrence from a better discretisation, a complex-valued state update that permits richer state tracking, and a multi-input multi-output formulation that adds capacity without adding decode latency.",
+      "what_it_fixed": "Retrieval and state tracking both improved. At 1.5B parameters it beat Gated DeltaNet by 0.6 points of average downstream accuracy and its MIMO variant by 1.8, and matched Mamba-2's perplexity on half the state.",
+      "new_tradeoff": "The gains are measured at 1.5B parameters against other sub-quadratic models, not against full attention at frontier scale, and a complex-valued state is a commitment made in the kernel.",
+      "buys": "A fixed-size state that finally tracks state, at half the memory its predecessor needed for the same perplexity.",
+      "gives_up": "What every fixed state gives up - exact recall of an arbitrary earlier token - plus simplicity of implementation.",
+      "when_to_choose": "When you want constant-memory decoding and your workload includes tasks that need the model to follow state rather than only retrieve.",
+      "pattern": {
+        "kind": "state",
+        "params": {
+          "write": "selective",
+          "rotating": true
+        },
+        "scale": "schematic",
+        "source": "A state box with a rotation mark, for the complex-valued update that is the paper's distinguishing change. The mark is a symbol, not a measurement.",
+        "sizes": {
+          "context": {
+            "value": 2048,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "Context Length 2048",
+            "where": "Table 4 (Context Length row), S4.1 Language Modeling, arXiv:2603.15569v1"
+          },
+          "stateSize": {
+            "value": 128,
+            "unit": "dimensions (N per head)",
+            "from": "stated",
+            "quote": "For Mamba variants we set state size as 128 and head dimension 64",
+            "where": "Appendix G Latency Benchmark Details (1.5B models), arXiv:2603.15569v1"
+          },
+          "expansion": {
+            "value": 2,
+            "unit": "multiple of the model dimension",
+            "from": "stated",
+            "quote": "the standard expand factor of 2",
+            "where": "Appendix D Experimental Details, Language Modeling, arXiv:2603.15569v1"
+          },
+          "headDim": {
+            "value": 64,
+            "unit": "dimensions (P per head)",
+            "from": "stated",
+            "quote": "head dimension of 64",
+            "where": "Appendix D Experimental Details, Language Modeling, arXiv:2603.15569v1"
+          }
+        }
+      },
+      "taught_in_session": false,
+      "bonus": true
+    },
+    {
+      "key": "deepseek_csa",
+      "name": "Compressed sparse attention (DeepSeek-V4)",
+      "aka": [
+        "CSA",
+        "HCA",
+        "DeepSeek-V4 hybrid attention"
+      ],
+      "date": "2026-04-26",
+      "bill": "both",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2606.19348",
+        "title": "DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence",
+        "url": "https://arxiv.org/abs/2606.19348",
+        "quoted_date": "[v1] Sun, 26 Apr 2026 14:49:33 UTC (2,854 KB)",
+        "verified_on": "2026-09-01",
+        "note": "DeepSeek-AI, 538 authors. Read from the arXiv abstract page. NOTE A DISCREPANCY WE DID NOT RESOLVE: the identifier is 2606, which normally encodes June 2026, while the submission-history line says 26 April 2026. The usual cause is a hold between submission and announcement. We record the v1 line because that is this catalogue's stated convention everywhere else, and we flag the disagreement rather than choosing silently."
+      },
+      "what_existed": "DeepSeek's own line: multi-head latent attention to shrink the cache, then natively sparse attention to choose what to read.",
+      "problem": "At a million tokens neither compression nor selection is enough alone. Both the per-token compute and the cache have to come down, and by a large factor, in the same architecture.",
+      "mechanism": "Two interleaved layer types. Compressed sparse attention folds the KV cache of every m tokens into one entry and then runs sparse selection over the result; heavily compressed attention consolidates far more tokens per entry and stays dense.",
+      "what_it_fixed": "At a one-million-token context the model reports 27% of the per-token inference FLOPs and 10% of the KV cache of its own predecessor.",
+      "new_tradeoff": "A query cannot see the other tokens inside its own compressed block, which the design patches with a sliding-window branch for local detail. Compression is permanent: what a block summary drops is not recoverable by anything downstream.",
+      "buys": "A tenfold cache reduction at a million tokens, in a shipped frontier model rather than in a benchmark.",
+      "gives_up": "Token-level detail inside every compressed block, and any ability to revisit the compression ratio after pretraining.",
+      "when_to_choose": "When a million-token context is the product requirement and you control the architecture from pretraining onward.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "blocks": 3,
+          "selected": 2,
+          "window": 3,
+          "compressed": true,
+          "selectBy": "score"
+        },
+        "scale": "schematic",
+        "source": "Selected blocks plus a local window, with a compression mark, because it layers compression underneath the selection its predecessor already did. Block size and how many are selected are ours. Blocks are chosen per query BY SCORE, not by position: an earlier version of this drawing turned on the first N blocks, which asserts that the mechanism always attends to the oldest text. It does not. Which blocks survive depends on the scores and therefore on the data, so the selection is drawn as a reproducible scatter and labelled as one.",
+        "sizes": {
+          "context": {
+            "value": 1000000,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "these two models can natively and efficiently support 1M-length contexts",
+            "where": "S1 Introduction, arXiv:2606.19348v1"
+          },
+          "topk": {
+            "value": 1024,
+            "unit": "compressed KV entries",
+            "from": "stated",
+            "quote": "the number of KV entries selected for sparse attention (i.e., attention top-k) to 1024",
+            "where": "S4.2.1 Model Setups, DeepSeek-V4-Pro, arXiv:2606.19348v1"
+          },
+          "window": {
+            "value": 128,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "the window size n win is set to 128",
+            "where": "S4.2.1 Model Setups (stated identically for DeepSeek-V4-Flash and DeepSeek-V4-Pro), arXiv:2606.19348v1"
+          },
+          "heads": {
+            "value": 128,
+            "unit": "query heads",
+            "from": "stated",
+            "quote": "we set the number of query heads n h to 128",
+            "where": "S4.2.1 Model Setups, DeepSeek-V4-Pro, arXiv:2606.19348v1"
+          },
+          "headDim": {
+            "value": 512,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "the head dimension c to 512",
+            "where": "S4.2.1 Model Setups (stated identically for DeepSeek-V4-Flash and DeepSeek-V4-Pro), arXiv:2606.19348v1"
+          },
+          "dims": {
+            "value": 64,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "we apply RoPE to its last 64 dimensions",
+            "where": "S2.3.3 Other Details, 'Partial Rotary Positional Embedding', arXiv:2606.19348v1"
+          }
+        }
+      },
+      "taught_in_session": false,
+      "bonus": true
+    },
+    {
+      "key": "gated_deltanet2",
+      "name": "Gated DeltaNet-2",
+      "aka": [
+        "Gated Delta Rule-2"
+      ],
+      "date": "2026-05-21",
+      "bill": "both",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2605.22791",
+        "title": "Gated DeltaNet-2: Decoupling Erase and Write in Linear Attention",
+        "url": "https://arxiv.org/abs/2605.22791",
+        "quoted_date": "[v1] Thu, 21 May 2026 17:44:57 UTC (94 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Hatamizadeh, Choi, Kautz (NVIDIA). Read from the arXiv abstract page."
+      },
+      "what_existed": "Gated DeltaNet combined the delta rule's corrective write with adaptive forgetting, and Kimi Delta Attention sharpened the forgetting into a per-channel decay.",
+      "problem": "Both still used a single scalar gate to control two different things: how much old content to erase on the key side, and how much new content to commit on the value side.",
+      "mechanism": "Separate the two roles into a channel-wise erase gate and a channel-wise write gate, with a chunkwise algorithm that absorbs the decay into asymmetric erase factors. It collapses back to Kimi Delta Attention when both gates agree, and to Gated DeltaNet when the decay collapses too.",
+      "what_it_fixed": "At 1.3B parameters on 100B tokens it was the strongest of Mamba-2, Gated DeltaNet, Kimi Delta Attention and Mamba-3 across language modelling, commonsense reasoning and retrieval, with its largest margin on long-context needle-in-a-haystack retrieval.",
+      "new_tradeoff": "Two gates mean more parameters and a more intricate backward pass, for a gain demonstrated at 1.3B - the scale at which linear-attention comparisons are usually run, and well below the scale at which the cache actually hurts.",
+      "buys": "Independent control of forgetting and writing, which is what a fixed state needs in order to edit itself without scrambling what it already holds.",
+      "gives_up": "Simplicity, and the exact recall every fixed-size state gives up.",
+      "when_to_choose": "As the current default for the linear-attention layers of a hybrid, where it strictly generalises both of the mechanisms it replaces.",
+      "pattern": {
+        "kind": "state",
+        "params": {
+          "write": "add+correct",
+          "gates": 2
+        },
+        "scale": "schematic",
+        "source": "Two separate gate marks on the state box, for the erase gate and the write gate the paper decouples. Their size and placement are ours.",
+        "sizes": {
+          "context": {
+            "value": 4096,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "The training sequence length is 4K tokens",
+            "where": "Appendix E.1 Training, arXiv:2605.22791v1"
+          },
+          "heads": {
+            "value": 16,
+            "unit": "heads",
+            "from": "stated",
+            "quote": "Gated DeltaNet-2 use H = 16 heads with d k = 128 and d v = 128",
+            "where": "Appendix E.1 Training, arXiv:2605.22791v1"
+          },
+          "stateSize": {
+            "value": 128,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "Gated DeltaNet-2 use H = 16 heads with d k = 128 and d v = 128",
+            "where": "Appendix E.1 Training, arXiv:2605.22791v1"
+          },
+          "headDim": {
+            "value": 128,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "Gated DeltaNet-2 use H = 16 heads with d k = 128 and d v = 128",
+            "where": "Appendix E.1 Training, arXiv:2605.22791v1"
+          },
+          "chunk": {
+            "value": 64,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "The chunk size is fixed to C = 64",
+            "where": "Appendix C.2 Forward kernels, arXiv:2605.22791v1"
+          }
+        }
+      },
+      "taught_in_session": false,
+      "bonus": true
+    },
+    {
+      "key": "msa",
+      "name": "MiniMax sparse attention (MSA)",
+      "aka": [
+        "MSA"
+      ],
+      "date": "2026-06-11",
+      "bill": "compute",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2606.13392",
+        "title": "MiniMax Sparse Attention",
+        "url": "https://arxiv.org/abs/2606.13392",
+        "quoted_date": "[v1] Thu, 11 Jun 2026 14:23:41 UTC (3,976 KB)",
+        "verified_on": "2026-09-01",
+        "note": "MiniMax. Read from the arXiv abstract page. A v2 followed the next day; the v1 date is recorded, as everywhere else here."
+      },
+      "what_existed": "Grouped-query attention as the standard cache saving, and a decade of sparse-attention proposals whose savings rarely survived contact with real kernels.",
+      "problem": "Agentic workflows and repository-scale reasoning need hundreds of thousands to millions of tokens attended jointly, and softmax's quadratic cost makes that untenable at deployment scale.",
+      "mechanism": "Blockwise sparsity built on top of grouped-query attention: a lightweight index branch scores key-value blocks and selects a top-k subset independently for each query group, and a main branch then runs exact block-sparse attention over only the selected blocks.",
+      "what_it_fixed": "On a 109B natively multimodal model it matched grouped-query attention while cutting per-token attention compute by 28.4x at a million tokens - and, unusually, reported the wall-clock result too: 14.2x prefill and 7.6x decoding speedups on H800.",
+      "new_tradeoff": "The wall-clock speedup is far below the FLOP reduction, because index construction, top-k selection and load balancing eat the difference. And each query attends to roughly two thousand tokens however long the context is.",
+      "buys": "Sparsity that shows up on a clock rather than only in a flop count, on hardware people actually have.",
+      "gives_up": "Exactness outside the selected blocks, and any growth in what a single query can see as the context grows.",
+      "when_to_choose": "Ultra-long-context serving where deployment cost is the constraint and a bounded per-query budget is acceptable.",
+      "pattern": {
+        "kind": "field",
+        "params": {
+          "causal": true,
+          "blocks": 4,
+          "selected": 2,
+          "window": 2,
+          "grouped": true,
+          "selectBy": "score"
+        },
+        "scale": "schematic",
+        "source": "Blocks selected per query group, drawn as selection with a grouping mark. How many blocks and how many are selected are ours; the paper's point is that selection is per group. Blocks are chosen per query BY SCORE, not by position: an earlier version of this drawing turned on the first N blocks, which asserts that the mechanism always attends to the oldest text. It does not. Which blocks survive depends on the scores and therefore on the data, so the selection is drawn as a reproducible scatter and labelled as one.",
+        "sizes": {
+          "blockSize": {
+            "value": 128,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "both MSA models use block size B k = 128 and keep k = 16 key-value blocks per query and GQA group",
+            "where": "S5.1 Setup, Model Structure, arXiv:2606.13392v1"
+          },
+          "selected": {
+            "value": 16,
+            "unit": "blocks",
+            "from": "stated",
+            "quote": "both MSA models use block size B k = 128 and keep k = 16 key-value blocks per query and GQA group",
+            "where": "S5.1 Setup, Model Structure, arXiv:2606.13392v1"
+          },
+          "context": {
+            "value": 1000000,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "speedups at 1M context length",
+            "where": "S1 Introduction, arXiv:2606.13392v1"
+          },
+          "heads": {
+            "value": 64,
+            "unit": "heads",
+            "from": "stated",
+            "quote": "Each attention module uses MSA with 64 query heads, 4 KV heads, head dimension 128, and RoPE dimension 64",
+            "where": "S5.1 Setup, Model Structure, arXiv:2606.13392v1"
+          },
+          "kvHeads": {
+            "value": 4,
+            "unit": "heads",
+            "from": "stated",
+            "quote": "Each attention module uses MSA with 64 query heads, 4 KV heads, head dimension 128, and RoPE dimension 64",
+            "where": "S5.1 Setup, Model Structure, arXiv:2606.13392v1"
+          },
+          "headDim": {
+            "value": 128,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "Each attention module uses MSA with 64 query heads, 4 KV heads, head dimension 128, and RoPE dimension 64",
+            "where": "S5.1 Setup, Model Structure, arXiv:2606.13392v1"
+          },
+          "dims": {
+            "value": 64,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "Each attention module uses MSA with 64 query heads, 4 KV heads, head dimension 128, and RoPE dimension 64",
+            "where": "S5.1 Setup, Model Structure, arXiv:2606.13392v1"
+          }
+        }
+      },
+      "taught_in_session": false,
+      "bonus": true
+    },
+    {
+      "key": "hd_rope",
+      "name": "Higher-dimensional RoPE (HD-RoPE)",
+      "aka": [
+        "HD-RoPE"
+      ],
+      "date": "2026-08-30",
+      "bill": "position",
+      "source": {
+        "kind": "paper",
+        "arxiv_id": "2608.29715",
+        "title": "Higher-Dimensional Rotary Position Embedding",
+        "url": "https://arxiv.org/abs/2608.29715",
+        "quoted_date": "[v1] Sun, 30 Aug 2026 10:46:24 UTC (1,372 KB)",
+        "verified_on": "2026-09-01",
+        "note": "Li, Xie, Zhang, Bai, Sun, Cheng. Read from the arXiv abstract page. The most recent entry on this timeline, and the reason the timeline ends where it does rather than at a round number."
+      },
+      "what_existed": "Rotary embeddings, and five years of repairs to how they behave past the trained length - ending in a proposal to delete positional embeddings altogether.",
+      "problem": "RoPE rotates independent two-dimensional pairs, so its structure is pairwise, block-based and decoupled. Channels barely mix, which its authors argue limits both the depth of mixing and robustness across channels.",
+      "mechanism": "Extend the rotation from independent 2D planes to higher-dimensional rotations, using a Paley-I orthogonal basis to get balanced, isotropic, dense phase mixing inside each rotation subspace - while keeping orthogonality and the relative-position closure that made RoPE work in the first place.",
+      "what_it_fixed": "Reported improvements over standard RoPE across benchmarks in both long and short contexts, with no additional trainable parameters.",
+      "new_tradeoff": "It reaches the opposite conclusion to the entry before it. Where DroPE proposes removing positional embeddings, this makes them richer - and both cannot be right.",
+      "buys": "Denser channel coupling and more rotational freedom, at no parameter cost and no inference cost.",
+      "gives_up": "The simplicity of independent 2D rotations, and the engineering familiarity of the most widely deployed positional scheme there is.",
+      "when_to_choose": "When you are pretraining and can pay a small implementation cost for a positional scheme that mixes channels rather than isolating them.",
+      "pattern": {
+        "kind": "bands",
+        "params": {
+          "rows": 6,
+          "coupled": true
+        },
+        "scale": "schematic",
+        "source": "Bands with coupling marks between them, because the change is that rotation subspaces mix rather than staying independent. The number of bands drawn is ours.",
+        "sizes": {
+          "dims": {
+            "value": 64,
+            "unit": "dimensions",
+            "from": "stated",
+            "quote": "Head Dim. 64",
+            "where": "Table 6 (A.3.1 Model Architecture), arXiv:2608.29715v1"
+          },
+          "extendedLength": {
+            "value": 32768,
+            "unit": "tokens",
+            "from": "stated",
+            "quote": "utilizing a sequence length of 32,768 and a total of 13.4B training tokens",
+            "where": "S4.6 Effect of HD-RoPE with Long-Context Continue Pre-training, arXiv:2608.29715v1"
+          }
+        }
+      },
+      "taught_in_session": false,
+      "bonus": true
+    }
+  ]
+}

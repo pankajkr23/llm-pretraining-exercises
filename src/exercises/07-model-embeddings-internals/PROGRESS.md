@@ -67,15 +67,14 @@ labelled as spanning two.
    Attribution now decomposes cleanly: #5 alone −0.141 · #3 alone −0.029 · combined −0.164, with
    wrap adding −0.024 on top of #5. **The two solutions are separable and roughly additive.**
 
-**Repo state:** `ruff` clean, **1,262 tests pass**, 1 skipped, 0 failures. `BRIEF.md`, `NOTICE` and
-this file now exist, so every skeleton and tripwire test is green.
+**Repo state:** `ruff` clean and the suite green. The count is deliberately not written down here —
+it said **1,262** for three releases after it stopped being true, which is the same failure this
+file's own header warns about one paragraph up. Run `uv run pytest -m "not integration"` for the
+number that is correct today.
 
-**Not yet done and needed for submission: the public URL.** Everything is on a branch with an
-open PR and all CI green; the page is built and browser-tested, but production only publishes after
-the PR merges **and** the production environment gate is approved. Until then
-`/07-model-embeddings-internals/` is a 404 on the live site and the assignment cannot be submitted —
-the preview deployment is behind Vercel's login wall, so it does not satisfy the brief's
-incognito-accessible requirement.
+**The public URL is live.** `/07-model-embeddings-internals/` publishes from production; the merge
+and the production gate that this section once described as pending both happened, and the paragraph
+that said otherwise outlived them by two releases.
 
 ---
 

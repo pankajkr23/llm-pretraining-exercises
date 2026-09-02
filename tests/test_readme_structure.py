@@ -66,9 +66,19 @@ def test_every_exercise_readme_states_how_to_run_it_and_what_it_cannot_do(doc: P
     # A *heading*, not a mention. Checking the whole document passes on the reading path's own
     # link text -- "[What it cannot tell you](#what-it-cannot-tell-you)" -- so renaming the section
     # away left the guard green. It was watched surviving that exact mutation before this changed.
-    headings = [
-        line.lstrip("#").strip().lower() for line in text.splitlines() if line.startswith("#")
-    ]
+    #
+    # Fenced code is skipped, because a `#` shell comment is not a heading. Every README here opens
+    # a ```bash block, and several of them carry commented commands -- so without this the guard
+    # could be satisfied by a comment line rather than by a section, which is the same false pass
+    # in a different disguise.
+    headings = []
+    fenced = False
+    for line in text.splitlines():
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        if not fenced and line.startswith("#"):
+            headings.append(line.lstrip("#").strip().lower())
     assert any(
         phrase in heading
         for heading in headings

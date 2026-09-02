@@ -10,6 +10,364 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **The last two released versions of every standard file are now frozen in
+  `docs/standards-history/`, local-only on the working checkout.** Git already held them; finding one meant
+  knowing a rewrite had happened and hunting the commit that did it, and the rewrites worth
+  comparing are exactly the ones nobody remembers making. `tools/snapshot_standards.py` writes them
+  at a release tag and `tests/test_standards_history.py` asserts each is byte-identical to the tag
+  it names, carries a `FROZEN COPY — NOT IN FORCE` banner, and does not silently exceed the
+  two-version retention. Snapshotting is now a step in the release ritual.
+
+  Eight files: `AGENTS.md`, `docs/DESIGN.md`, `ci.yml`, `.pre-commit-config.yaml`,
+  `pyproject.toml`, `.gitignore`, `vercel.json` and `.gitleaksignore` — chosen because a bad
+  edit to each breaks something far from the edit. `vercel.json` is thirteen lines, one of
+  which decides whether production deploys itself; a broad `.gitleaksignore` entry silently
+  disables the secret scan while still reading as coverage. `uv.lock` is excluded (generated,
+  and regenerable), as are `CLAUDE.md`, the Copilot and Cursor pointer files (each is a
+  pointer to `AGENTS.md`, so a snapshot would archive the pointer).
+
+  The archive is **gitignored**: tracking it would put a second copy of `AGENTS.md` and
+  `docs/DESIGN.md` on the remote, which is the argument that untracked the notebooks. So it joins
+  the protected local-only set — in `backup_local_only.py::PATTERNS` and under the tripwire — and
+  the guards that read it skip on a clone and in CI. Two that run everywhere hold the pair together:
+  one fails if a snapshot is ever committed, one fails if the ignore rule disappears.
+
+- **Exercise 08's body type is fluid, 19px to 22px, and its prose is half the screen.** The
+  complaint was that the page narrowed too much; the lever turned out to be type size rather than
+  measure. **77 characters a line at every width** — not one longer line — with the prose going
+  from 36% of a 1920px viewport to 50%, and 58% at 1440. Chosen by a reader comparing both against
+  measured numbers rather than by argument; the A/B harness that carried the comparison, and the
+  tool that measured it, were deleted once the choice was made.
+
+- **Every chapter names its own entries, with the year, linked to the index.** Three of the six
+  were a heading and nothing else — a reader was told "each entry here fixes the last one's way of
+  forgetting" and never shown which entries. The year is not decoration: every chapter's claim is
+  about sequence, and a bare list of names is no evidence for a claim about order.
+
+- **The contents rail marks the section you are in, and says how long the page is.** A reader: "I
+  just get lost on the page without knowing where I am reading from." The vendored shared
+  stylesheet has styled `.rail-link.on` — an accent bar and a bold label — since before this page
+  existed, and this page never set the class; neither do exercises 05, 06 or 07. The logic is
+  exercise 03's, copied rather than reinvented: *the last heading whose top has passed the first
+  third of the viewport*, which is right where "the nearest heading" is wrong on any page whose
+  sections run longer than a screen. The read-time is derived from the rendered word count.
+
+
+- **An at-a-glance table opening exercise 08's page** — all thirty mechanisms on one line each, with
+  date, what it attacks, its shape, which models shipped it, and **when you would pick it**. That
+  last field is present on all thirty catalogue entries and the page rendered it exactly once, inside
+  a panel showing one mechanism at a time and only after a click, so the most decision-relevant thing
+  in the catalogue was the least reachable thing on the page and no two of them could be compared.
+  A fourth reader door in the masthead points at it. Nothing in the table is newly written; it is
+  data the page already held, arranged so a reader's eye makes the comparison instead of the page
+  asserting it.
+
+- **Four finding tiles and an exit line**, so a reader who stops after the chronology has a
+  *complete* short read rather than a partial long one. Every finding on that page used to sit
+  between word 6,000 and word 8,000. One tile is a failure, as the repo's own rule requires: one of
+  the page's three conclusions did not survive shifting its arbitrary bucket edges by a year.
+
+- **`docs/METHOD.md` for exercise 08** — how the page is generated, drawn and themed, and what to
+  run. The on-page colophon keeps the three claims the *numbers* rest on and links out for the rest.
+
+- **A drawn diagram for every one of exercise 08's thirty attention mechanisms**, and a
+  **field guide** at `/08-modern-attention-variants/field-guide/` showing all thirty at once in one
+  convention so they can be compared rather than read in sequence. Four scenes cover the lot —
+  which query-key pairs survive, what the cache keeps, what one fixed state does per token, and how
+  position enters — each generated from the `pattern` block the catalogue already carried, so a
+  thirty-first mechanism gets a diagram with no new drawing. Filters derive from the data; deep
+  links work both ways.
+
+  Form carries the meaning (solid, hollow, hatched, ruled) and colour carries only the parts, via
+  four new `--part-*` tokens valued across all six themes. That order is not conservatism: under
+  `high-contrast` the `--muted` and `--ink` tokens are the *same* `#000000`, so any encoding leaning
+  on one against the other reads in five themes and vanishes in the sixth.
+
+- **Every one of exercise 08's thirty mechanisms now draws from sourced numbers** — 80 sizes, 78 of
+  them quoted verbatim from the primary paper with the section and arXiv version named, rendered as
+  a provenance block under every diagram in one convention. The grids that can be drawn to scale now
+  are; the ones that cannot say so and state the true proportion beside the picture.
+
+  The method is the point, and it is recorded in `DECISIONS.md` D12: every paper was downloaded
+  before any agent ran, agents read those local files, and **every quote was then checked
+  mechanically as a contiguous run of the paper's own characters**. 82 proposed, 82 verbatim, zero
+  fabrications. Verbatim is not correct, so a second check asked whether each quote talks about the
+  quantity claimed — which caught "Figure 4: The KV cache of StreamingLLM" offered as evidence for
+  four attention sinks, and a *Communications of the ACM* volume number offered as a head dimension.
+
+- **Exercise 08's page rewritten for readability against a named benchmark**, after a six-agent
+  audit against Sebastian Raschka's visual guide to attention variants and this repo's own
+  ladder-of-readers rubric: 75 findings, 37 edits. The masthead now says what attention *does*
+  before what it costs; the centrefold's five stages each carry a plain sentence that is always
+  visible rather than one at a time behind a tab; the score grid, the KV cache, a head, a system
+  card and JEPA are defined where a reader first meets them; and the page no longer contradicts
+  itself by teaching "two bills" and then heading a block "the five bills".
+
+- **Every mechanism now names the models that ship it**, quoted from that model's own paper — 21
+  records across 8 models, with each arXiv identifier found through the search API rather than
+  recalled. Twenty-two of the thirty deliberately name none, which is what separates the mechanisms
+  the field adopted from the ones it admired.
+
+- **A theme test, which this repo had never had** — all six themes render with no console error,
+  every token resolves, body text clears 4.5:1 on its own ground, and no painted mark falls into its
+  background. Plus a deliberately broken twin, because a contrast checker nobody has watched fail is
+  not a checker.
+
+- **Exercise 08's page** at `/08-modern-attention-variants/` — twelve spine sections set as a
+  **monograph feature**: six numbered plates, six chapters, and the 24 mechanisms as *one object
+  entered once per mechanism* rather than 24 collapsed cards. Three views answer three different
+  questions and two of them need no interaction at all: **Plate III** places all 24 on real time,
+  one stave per bill, with the both-bill entries drawn as ties between the compute and cache staves
+  — so the finding that no tie exists before 2020 is visible rather than asserted; a **reading
+  spread** re-typesets on click; an **index plate** prints all 24 with the same six fields in the
+  same six places. Every mechanism carries a glyph drawn by one of four generators from a `pattern`
+  block in the catalogue, so a glyph is derived from data rather than hand-drawn.
+
+  The plates each carry an argument the prose cannot make: the KV cache typeset as a printed
+  **invoice** with a cut line where one 80 GB accelerator is exhausted; one attention step
+  **exploded into five bays**, ending in the weighted sum of V that produces the vector leaving the
+  block; and three cache arrangements **racing one wall**, which shows head sharing moving along the
+  same line rather than leaving it — the thing a bar chart provably cannot show.
+
+  Thirty-six browser assertions back it, each named after a defect the page actually shipped with a
+  green suite: a verdict grid of invisible chips, an invoice cut line revealed by an observer that
+  never fired, plate labels printing over each other, and glyph marks escaping their own viewBox
+  onto a neighbour's caption.
+
+- **The timeline now runs to 31 August 2026.** Six mechanisms added after a sweep of everything
+  published since DroPE, each verified by opening its arXiv abstract page and copying the
+  submission-history line: **Kimi Delta Attention** (2025-10-30, arXiv:2510.26692 — a gap, not an
+  extension: it predates DroPE), **Mamba-3** (2026-03-16), **DeepSeek-V4's compressed sparse
+  attention** (2026-04-26), **Gated DeltaNet-2** (2026-05-21), **MiniMax sparse attention**
+  (2026-06-11) and **higher-dimensional RoPE** (2026-08-30). Thirty mechanisms in total.
+
+- **Negative results recorded as results.** OpenAI, Anthropic and Meta published no architecture at
+  all in the window; GLM-5, Qwen, Gemma, ERNIE and Kimi K3 describe their attention with mechanisms
+  already on the plate; and JEPA and the world-model line change the training objective while their
+  encoders keep running ordinary softmax attention. All three are in the page's *limits*, because
+  the recent end of the plate is drawn almost entirely from labs that publish papers.
+
+- **A "How to read this" opening**, explaining the two costs the whole page hangs off in
+  plain words and offering three ways in; and **orientation briefs above Plates V and VI**, which
+  showed objects — two rotary dials, forty tokens under a sliding window — that were not guessable
+  from a caption written to argue after the fact.
+
+- **Top-k attention (2019-12-25)** — a required mechanism that was missing, and mis-described. The
+  coverage list names *"sparse and top-k attention"*; only the sparse half was catalogued, and its
+  entry claimed "top-k attention" as an alias, asserting that a fixed pattern chosen before the
+  model sees any data is the same technique as a per-query choice made from the scores. Sourced to
+  *Explicit Sparse Transformer* (arXiv:1912.11637), v1 date read from the abstract page. `MANDATED`
+  now maps a phrase to every key it names, so a compound requirement cannot be satisfied by half of
+  itself.
+
+- **A portrait plate for phones.** The landscape plate is a 1440-unit SVG and is unreadable in a
+  342px column; below 720px time now runs down the page instead, keeping the lanes, the to-scale
+  gaps and the ties, and dropping the names — which a tap or the index plate supplies.
+
+- **"Read the plate"** — a playhead that sweeps the whole chronology in one pass, lighting each
+  entry as it goes and advancing the reading spread. Interruptible, and not built at all under
+  reduced motion, because a sweep has no terminal state.
+
+- **`src/attention/story.py`** — the page's six chapters as tracked data with a guard, because the
+  grouping is an editorial claim. `story.check()` refuses a partition that does not cover the
+  catalogue exactly once, and its pull-quote guard asserts every line the page sets large is a
+  phrase the catalogue already contains.
+
+- **`cache.tokens_before_wall()`** — how many tokens fit in one accelerator before the KV cache
+  exhausts it: **406,901** at 8 KV heads, **1,627,604** at 2, **3,255,208** at 1. The same
+  arithmetic as the invoice solved for the context instead of the bytes, so the figure and the table
+  cannot disagree.
+
+- **`tools/new_exercise.py` — scaffold a new exercise in one command.** It writes the whole skeleton
+  including the three gitignored files, joins the `rest` CI shard and adds the root README row, then
+  prints what is left. It deliberately does **not** add the landing card or the `SPINE_ENFORCED`
+  entry: both guards assert in two directions, so an entry without a `web/` directory is exactly as
+  red as a missing one.
+
+  `tests/test_new_exercise.py` runs it for real into a temporary directory and checks the output
+  against the **real** guards — importing `REQUIRED`, `REQUIRED_DIRS` and `_READERS` from the guard
+  modules rather than restating them, so the generator cannot drift from the conventions it encodes.
+  It caught the generator inserting the CI path after the shard's trailing `tests` entry.
+
+- **Exercise 08 — modern attention variants, scaffolded with a verified chronology.** Session 8 asks
+  for a web app placing every attention mechanism in the order it was launched, and states the graded
+  axis plainly: *"Your job is to be right about the dates."* So the first artifact is not the page but
+  `results/mechanisms.json` — **24 mechanisms** from Bahdanau (2014) to DroPE (2025), each date read
+  from the primary source, with the URL and the source's **own wording** stored beside it so a reader
+  can check the two against each other.
+- **Guards that make an invented date a test failure.** A citation claiming `verified` will not
+  construct without a URL and a quoted date; a test parses the quoted string and compares it to the
+  recorded date; another asserts every mechanism the assignment names is present, failing in the
+  instructor's own words. All three were watched failing on a deliberately broken catalogue — a
+  dropped mechanism, a transposed date (`2021-04-20` → `2021-04-02`), and a stripped URL.
+### Changed
+
+- **Exercise 08's page is shorter and its definitions moved to where the reader meets the thing.**
+  The glossary carried an alphabet of four shapes, a taxonomy of five labels and a reference model
+  shape four thousand words before the first glyph is used at size; it is ninety-five words now, with
+  the alphabet above the chronology and the yardstick above the invoice. The colophon went from seven
+  paragraphs to three claims plus a link. The three figure orientation blocks went from 217, 265 and
+  279 words to 52, 50 and 59 — with both transferable lessons moved into captions *first*, because a
+  lesson may not live only where a reader skips. The verdict's two arrow chains became a figure. Six
+  pull quotes were deleted: each was set in the page's largest type and attributed to "this page's
+  own catalogue", which is the visual grammar of a citation with none of its function.
+
+- **The position lane ends on a contradiction, and the page says so.** DroPE concludes positional
+  embeddings should be deleted; HD-RoPE, eight months later, concludes they should be made richer.
+  Both report gains over standard RoPE. The page ends on the open question rather than resolving it.
+
+- **Neutral voice throughout.** Every word tying the page to a particular class or assignment is
+  gone from the page, the served NOTICE and the meta description. The corrections are unchanged in
+  substance; they now correct "our sources".
+
+- **The page no longer prints shell commands.** `uv sync` and `pytest` were on a public page;
+  commands live in the README, and a test now enforces it.
+
+### Fixed
+
+- **Rewriting `docs/DESIGN.md` as the design standard dropped nine rules that were not replaced
+  anywhere in the repo.** The file went 199 → 488 lines in one commit; of its 30 original rules 19
+  survived reworded, and nine vanished — figures are inline SVG and never a chart library · draw the
+  whole object, not the part that fits · check a mechanism figure's mapping against the data · every
+  figure sits in `<figure>` with a `<figcaption>` · a glossary must not be hover-only · a pipeline
+  figure wraps rather than scrolls · mark pipeline stages with an explicit class, never `:nth-child`
+  · cards in a row share a height · data-viz hues are for plot series and never UI chrome. Each was
+  a lesson from a defect that had already cost a page, and nothing went red while they were gone,
+  because no guard can cover a rule that used to be written down. All nine are restored.
+
+- **Two of exercise 05's data-handling invariants were dead on the branch for four commits.** A
+  mutation experiment during a documentation audit injected `return []` into
+  `check_no_orphan_benchmarks` and `check_tier_shares` to watch their guards fail, restored only one
+  of the two, and left a `checks.py.mutation-backup` — itself already mutated — in the working tree,
+  where a `git add -A` committed all of it. Both checks returned "no findings" for every input, which
+  is indistinguishable from a clean run. `checks.py` is byte-identical to `main` again and all 50
+  invariant tests pass, including the four deliberately-broken twins that prove the guards can still
+  fail. `AGENTS.md` now carries the rule beside the one that invites the technique: restore in a
+  `finally`, keep the backup out of the working tree, and stage by path.
+- **Exercise 06 was the only deployable exercise whose README never published its live URL.** A
+  reader following the repo's own "the exercise README is the complete guide" rule could not learn
+  from it that the exercise ships a page at all, beyond one line inside a directory listing. It now
+  carries a `## The page` section naming the three explainer families and the command that rebuilds
+  the page's data.
+- **`AGENTS.md` named exercise 07 as the design reference implementation** while `docs/DESIGN.md`,
+  written hours earlier, named 08 and claimed to be canonical. It now says which document wins, and
+  keeps 07 as where the rules were learned rather than as the current standard.
+- **`AGENTS.md`'s protected-file list named three classes while `tools/backup_local_only.py` protects
+  eleven**, so the rulebook implied that `TODO.md`, `.claude/settings.local.json`, the per-exercise
+  `docs/` notes and `src/solution/**` were recoverable. They are not — and `src/solution/**` has
+  never been in git on any branch, so the documented `git show <commit>^:<path>` recovery is
+  inapplicable to it by construction. The document now points at `PATTERNS` as the authority instead
+  of keeping a second copy that drifts.
+- **A sentence in `AGENTS.md`'s exercise-skeleton rule ran two clauses together** and read
+  "not for what your machine has and asserts no `BRIEF.md` is ever tracked".
+
+- **Exercise 08 rendered the same thirty mechanisms in two tables, and three of its six chapters had
+  no body at all.** "Every mechanism, one line each" restated "The index" — together 43% of the
+  page's height — and the chapters those mechanisms belong to named none of them, so a reader met
+  each one twice and understood it neither time. One catalogue now, and under the `story` variant
+  each chapter carries its own entries while the index becomes what its name means: the source and
+  the date string that source prints, for checking.
+
+- **The invoice — the page's most quoted figure — had rendered at 685px at every width since it was
+  written.** It returns `div.invoice.bleed`, but the figure wrapper nests it one level too deep for
+  any `.bleed` rule to match, so the class did nothing. Three more blocks were the same shape of
+  defect: the colophon's `min(1025px, 100%)` never applied because nothing put it in the track that
+  is 1025px wide; the reading spread's ledger read at **36 characters a line at 1920** — the page's
+  narrowest prose produced by its widest screen — because the measures guard only inspects `p`,
+  `li`, `figcaption` and `.say`, and that cell is a `div`; and the Q/K/V block read at **23**.
+
+- **A row was 306px tall because of its layout, not its contents.** Widening the index plate from
+  720px to 1,676px moved a row to 292px — six cells each spanning the row are six bands, and the
+  extra width only shortened lines that were already short. Two bands, with the prose in columns
+  sized to the 42-character floor, is 238px. The narrowness was the length.
+
+- **The limits section was 265 words of disclaimer under the same display type as the masthead**,
+  and four of its five paragraphs repeated something the page had already said — one of them the
+  fifth of six copies, which it admitted itself ("as the key above the chronology says"). It is a
+  compact notice now, reusing exercise 07's existing list pattern, with the one load-bearing claim
+  kept in full. Still fully visible: a limitation behind a disclosure is a limitation the page is
+  hiding.
+
+
+- **Exercise 08's headline claim was false.** It read *"Only 13 of the 30 build a score grid at all.
+  That is the finding the rest of the page is built on."* Thirteen is the count of mechanisms that
+  edit *which cells survive*; position schemes build a grid and change what goes into it, and
+  head-sharing schemes build one and change what is kept from it. Only the eight state-space entries
+  refuse to build one. The sentence conflated *edits the grid* with *builds one*, and the key's own
+  counts had been right the whole time.
+
+- **Its state chapter held two mechanisms that keep a cache.** The chapter is headed "keep a
+  fixed-size state" and promised "every one of them pays in the same single way" while holding NSA
+  and DeepSeek's compressed sparse attention, both of which build a score grid and keep a KV cache.
+  They now sit with the other entries that attack a bill without abandoning the grid, which leaves
+  the chapter as exactly the eight the key counts.
+
+- **Three sentences claimed "almost every mechanism" attacks one of the two bills.** Ten of the
+  thirty attack neither — they are about where a word sits — and the key said so two screens later.
+
+- **Two unsound numbers.** A correction figure printed `+57.3%`, three significant figures of a
+  difference computed against a source that states "about 1 TB"; and a caption invited the reader to
+  weigh head diversity against memory from a figure with one axis and no quality axis at all.
+
+- **A section headed "Three things this opens" above four items**, with its contents-rail entry
+  agreeing. The repo's lexical count guard starts at *eleven*, so a heading counting its own contents
+  was outside it.
+
+- **Five reader-facing defects that the whole suite passed clean**: the invoice's cut line was
+  `white-space: nowrap` inside `overflow: hidden`, so the sentence carrying the page's argument read
+  "…needs a second ma" at every width; the masthead's decorative field painted its one accent mark at
+  full opacity and it struck through the opening sentence; the new table's column heads survived on
+  phones because `display: none` was written above the `display: flex` it had to beat; the key's
+  schema note rendered at full body size, larger than every label it explained; and a cross-reference
+  pointed at a statement that was never written.
+
+- **Five new guards, each watched failing before it was trusted**: one chapter is exactly the
+  state-space family · no sentence is clipped by its own box, at four widths · no heading or rail
+  label types a count · the glance table carries every mechanism and its *when you would pick it* ·
+  a reader stopping at the exit line has read the complete argument.
+
+- **The pinned rail's contents hung at the top of the column instead of centring**, on exercise 08
+  alone. `_shared/page.css` centres the rail with `.rail-inner { margin-block: auto }` — a rule that
+  needs a wrapper each page has to create, and exercises 03, 05, 06 and 07 all create it while 08
+  did not. So the page looked wrong beside its own siblings for a reason no test could see and no
+  console error reported. `tests/test_rail_centring.py` now checks every page that builds a rail,
+  discovered from the filesystem rather than a list. This is the third time the vendored
+  `web/_shared/` directory has cost something by copying styles without the markup they assume.
+
+- **Very wide screens left 41% of the width as margin.** At 2560px the page used 1500px and the
+  plates were squeezed to 1216px. The wrap now grows to 1720px and 1960px at two breakpoints, the
+  plates grow with it, and every prose measure keeps its own cap — verified at 63 to 75 characters a
+  line, with the index's description brought down from 80. A plate's caption, its stepper note and
+  the centrefold's recipe are now centred under the drawing rather than sitting at the figure's own
+  left edge, 495px left of every other line of prose on the page.
+
+- **A published finding was refuting nothing, and a second did not survive its own noise floor.**
+  Exercise 08's verdict said *"the claimed arc holds in 6 of these 7 two-year windows"* — a derived
+  number that counted windows producing *a* winner rather than windows matching the claimed order.
+  Six windows decide, not in that order, and the cache bill the story has the field returning to
+  twice never dominates one at all. Testing it properly then exposed the second problem: nothing had
+  ever varied the bucket edges, which start in 2014 only because attention does. Shifting them a
+  year kept two conclusions and destroyed a third that had been published an hour earlier; it is
+  corrected in place and demoted to one reading of the chronology.
+
+- **the plate's sweep control threw on every click.** The wrapper holding both plates
+  forwarded `select` and not `sweep`, so the animation died on frame one and the button stuck on
+  "Stop". The existing test called `sweep()` on the SVG directly and so never touched the wiring.
+
+- **the sweep control straddled the reading spread's rule**, and Plate V had no way to
+  replay its animation.
+
+- **one undecided pressure window, not two.** Adding a second 2019 compute entry breaks
+  the 2018–19 tie. The exercise README records the change rather than amending the number quietly.
+
+- **Two errors in the course material, recorded with sources.** The transcript dates the transformer
+  to "2018 and 17" (it is 12 June 2017), and it describes DroPE while quoting the title of **DRoPE** —
+  a different paper, one capital letter apart, about autonomous-driving trajectories. A third
+  discrepancy is recorded rather than resolved: a cache figure the transcript gives as ~1 TB comes out
+  at 1.57 TB from the session's own formula.
+
 ## [0.12.0] — 2026-09-01
 
 ### Added
@@ -43,6 +401,55 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   and every one was found by looking at the page while the whole suite passed.
 
 ### Fixed
+
+- **And the disjointness guard was inventing leaks.** It compared comma-joined token ids by
+  substring, which matches mid-number: the needle `,25,537,` is found inside `,325,537,` because
+  `25` is the tail of token `325`'s decimal spelling, not a token. CI reported that as held-out text
+  in the training split while the corpus was clean. Both sides are wrapped in commas now, so a match
+  must begin and end on a token boundary — a flaw the check had since it was written, surfaced only
+  once the sampling widened enough to hit a case.
+
+- **Exercise 05's held-out split is now disjoint from training by construction, not by luck.** Its
+  code lane is this repository's own Python, concatenated in path order and cut once at 90%, and
+  the guard checked a single 32-token window at exactly that cut. Whether it passed depended on
+  where the cut happened to land — so an edit to exercise 08's tests turned exercise 05's data
+  invariant red, two exercises with no relationship to each other. The leak it found was real: a
+  220-character assertion block lives in both exercise 06's render test and exercise 07's, because
+  this repo's own conventions instruct copying guards between exercises. `_drop_shared_blocks` now
+  removes from training every run of eight or more lines that also appears in the held-out split
+  (638 characters of the code lane, 0.037%; nothing from web or indic), the split rule is part of
+  the cache key so an existing cache cannot mask the change, and the guard samples forty windows
+  across the whole held-out split instead of one at its most exposed point.
+
+- **Reverted a rail change that was made from a misreading, and guarded the layout that was always
+  correct.** A wide-screen report was read as "the rail is too far left"; the rail was moved inward
+  to sit against the text. Every railed page (05, 06, 07, 08) already centred the reading column in
+  the space the rail leaves, with equal air either side — 554px at 2560px, 24px at 1180px — and the
+  change destroyed that symmetry, leaving dead space on both sides of the rail and pushing the
+  column off the page's centre, which was the actual complaint. Both copies are back to
+  `left: 0`, and the guard now asserts the symmetry the design holds rather than the offset the
+  misreading invented.
+
+- **Exercise 08's link to the field guide rendered as a raw underlined anchor**, which in dark mode
+  is bare accent blue on near-black. It clears the contrast floor and still reads as broken, because
+  it was the only untreated element on a page where every other control is a designed object. It is
+  now the shared `.jump` pill — `--on-accent` on the accent — which the stylesheet had carried all
+  along and this exercise had never used.
+
+- **CI's web syntax gate could not see an unbalanced brace.** `node --check` parses a `.js` file
+  with the script goal, wrapping it in the CommonJS function wrapper first, so a stray `}` closes
+  the wrapper early and the file passes — while the browser refuses the same file outright. It
+  happened: a `diagrams.js` passed the gate and threw `Unexpected token '}'` on load. The gate now
+  feeds each file on stdin with `--input-type=module`. All 34 web modules pass the stricter check.
+
+- **Four defects on exercise 08's figures, every one found by reading a rendered screenshot with the
+  whole suite green.** Learned absolute position embeddings were drawn as six frequency bands of
+  differing lengths, labelled *fast* and *slow* — it is a lookup table with one row per position and
+  no frequency structure at all, which its own catalogue note had said all along. DroPE drew two
+  surviving bands directly above a caption reading *"the bands are removed entirely"*. Sinusoidal
+  printed its summary twice in slightly different words. And the state scenes' update legends drew
+  `forget` and `write gate` in two classes that resolve to the same token, so a six-step recipe
+  rendered five distinguishable marks.
 
 - **Two documents named things that do not exist.** Exercise 05's generated README claimed
   `SPEC.md`, `TOKENIZER.md`, `EXPERIMENTS.md`, itself *"and the exercise-05 section of the
@@ -759,7 +1166,6 @@ being edited until the claim comes out true.
   `05-…/tools/fetch_proxy_corpus.py` is still versioned, because a corpus needs a tracked way to
   fetch and licence-check it.
 
-
 - **The root README no longer carries a generated section for exercise 05.** The brief says the
   root is the front door and must reach `SPEC.md` "without a detour", and the obvious reading was
   that the front door should therefore summarise the exercise under submission. It should not: the
@@ -772,7 +1178,6 @@ being edited until the claim comes out true.
   more, and the routing guard now asserts the row rather than a generated block. Three mutants
   confirmed failing: a row that names `SPEC.md` without linking it, one that drops the exercise
   guide, and one that hides the refuted result.
-
 
 - **The root README is a map again, not five deep-dives.** It had reached 307 lines, **211 of them
   per-exercise sections** — and none of that prose existed in the exercise READMEs, so the root was
@@ -820,7 +1225,6 @@ being edited until the claim comes out true.
   including here".** The published bundle carries 34 fertility values marked `measured` against one
   `estimated`, and that one is a parity *target*. Corrected, keeping the half that still holds: the
   size of the deduplicated Indic web really is unmeasured.
-
 
 - **A bare scaffold directory was reported as a lost notebook.** Creating an empty
   `src/exercises/06-build-training-dataset/` turned both notebook tripwires red — "5 session
@@ -1630,7 +2034,6 @@ that four datasets are committable today.
   the model width, a quality filter that deletes twelve of twenty-two languages until the protected
   lane restores them, and a confidence ledger that narrows to the nine claims that would survive
   checking. Conventions recorded in `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md`.
-
 
 - **Every dataset now says how it relates to the others.** FineWeb's 15T sat beside FineWeb-Edu's
   1.3T with nothing to say the second is *inside* the first — likewise FinePDFs/FinePDFs-Edu and

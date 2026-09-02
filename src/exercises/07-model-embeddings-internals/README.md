@@ -62,7 +62,26 @@ evidence is:
   stress-tested against the accusation that it is just memorising, and the answer is *partly yes*.
 - **54 tests**, of which a 20-test browser suite checks what a reader actually sees.
 
-**Run it:** [`## Run it`](#run-it) · **the page:** <https://llm-pretraining-demos.vercel.app/07-model-embeddings-internals/>
+**Run it:** [`## Layout
+
+```text
+README.md         # this file
+CLAUDE.md         # rules specific to this exercise, for whoever changes the code
+PROGRESS.md       # the running log: what was built, verified, and what is still open
+NOTICE            # affiliation and licence disclaimer
+BRIEF.md          # the assignment — LOCAL ONLY, gitignored, never the deliverable
+pyproject.toml    # workspace member
+src/embeddings/   # the modules tabulated above
+results/          # tracked evidence the documents render — a run that writes only to artifacts/
+                  #   leaves this untouched and nothing fails
+web/              # the deployed page — index.html, chapters.js, data.js, page-extra.css, _shared/
+tests/            # unit + browser tests; the browser ones are integration-marked
+artifacts/        # gitignored run outputs
+```
+
+The page is built to the repo's design standard in [`docs/DESIGN.md`](../../../docs/DESIGN.md).
+
+## Run it`](#run-it) · **the page:** <https://llm-pretraining-demos.vercel.app/07-model-embeddings-internals/>
 
 ## How to read this
 

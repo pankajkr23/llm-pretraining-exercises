@@ -232,6 +232,11 @@ CLAUDE.local.md
 # Local planning scratchpads — not tracked
 TODO.md
 NEW_TODO.md
+# Frozen copies of the standard files, for diffing a rewrite against its last release.
+# Local-only on purpose: tracking them would ship a second copy of AGENTS.md and DESIGN.md to the
+# remote, which is the same argument that untracked the notebooks. Backed up by
+# tools/backup_local_only.py and re-creatable with tools/snapshot_standards.py --ref <tag>.
+docs/standards-history/
 # macOS finder metadata
 .DS_Store
 # Vercel: assembled static output (deploy/vercel/build.sh) + local state

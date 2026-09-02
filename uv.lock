@@ -15,6 +15,7 @@ members = [
     "exercise-05-datamixtures-and-curriculum",
     "exercise-06-build-training-dataset",
     "exercise-07-model-embeddings-internals",
+    "exercise-08-modern-attention-variants",
     "llm-pretraining-exercises",
 ]
 
@@ -454,6 +455,17 @@ requires-dist = [
     { name = "torch", marker = "sys_platform != 'linux' and extra == 'train'", specifier = ">=2.6" },
 ]
 provides-extras = ["train"]
+
+[[package]]
+name = "exercise-08-modern-attention-variants"
+version = "0.1.0"
+source = { editable = "src/exercises/08-modern-attention-variants" }
+dependencies = [
+    { name = "numpy" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "numpy", specifier = ">=2" }]
 
 [[package]]
 name = "fastjsonschema"

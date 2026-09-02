@@ -1,0 +1,2410 @@
+/* THE LEDGER — the editorial layer for exercise 08.
+ *
+ * The page is set as a monograph feature, not a blog post. Two furniture types recur and nothing
+ * else does: the PLATE (a numbered, full-bleed engraved figure) and the LEDGER (a two-column
+ * credit/debit device carrying `buys` against `givesUp`). Six wells are its chapters; CORRECTIONS,
+ * COLOPHON and THE INDEX PLATE are its departments.
+ *
+ * Two constraints shape everything below and neither is a taste decision.
+ *
+ * 1. `AGENTS.md` and `docs/DESIGN.md` mandate the system sans. So the magazine voice is built from
+ *    Swiss editorial moves rather than Conde Nast ones: violent scale contrast, negative tracking
+ *    on display sizes and +0.16em on kickers, hairline rules used as structure, tabular numerals
+ *    everywhere, and var(--mono) as the credit-line face. No new font is loaded.
+ *
+ * 2. The page renders under SIX themes from `_shared/tokens.css`. So it is monochrome plus one
+ *    accent, and every colour is a token. --accent has exactly ONE job here: the current selection
+ *    or playhead. A second job for it and the plate stops being readable at a glance.
+ */
+
+/* ---------------------------------------------------------------- the grid ---
+ * Named lines, so `.bleed` and `.wide` are declarations rather than negative margins. There is no
+ * 100vw anywhere on this page: 100vw includes the scrollbar, so a full-bleed built on it scrolls
+ * sideways on every desktop browser that reserves one.
+ */
+#main {
+  display: grid;
+  grid-template-columns:
+    [full-start] minmax(14px, 1fr)
+    [wide-start] minmax(0, 170px)
+    [text-start] min(68ch, 100% - 28px)
+    [text-end] minmax(0, 170px)
+    [wide-end] minmax(14px, 1fr)
+    [full-end];
+  row-gap: 0;
+}
+#main > * {
+  grid-column: text;
+  min-width: 0;
+}
+#main > .bleed,
+#main > section {
+  grid-column: full;
+}
+
+/* Sections carry the grid inward so a plate inside one can still go full width. */
+#main > section {
+  display: grid;
+  grid-template-columns: inherit;
+  grid-template-columns:
+    [full-start] minmax(14px, 1fr)
+    [wide-start] minmax(0, 170px)
+    [text-start] min(68ch, 100% - 28px)
+    [text-end] minmax(0, 170px)
+    [wide-end] minmax(14px, 1fr)
+    [full-end];
+  border-bottom: 0;
+  padding: 0;
+  margin: 0;
+}
+#main > section > * {
+  grid-column: text;
+  min-width: 0;
+}
+/* A full-bleed element still needs its own inset, or its text sits on the window edge. The grid's
+ * `full` track runs edge to edge by design — that is what makes a plate span the page — so the
+ * padding belongs on the element, not on the track. Without this every plate, the masthead, the
+ * key and the index plate printed flush to x=0 and ran off the right edge. */
+#main > section > .bleed {
+  grid-column: full;
+  padding-inline: clamp(14px, 3vw, 42px);
+}
+#main > section > .bleed.plate {
+  padding-inline: 0;
+}
+
+/* THE PLATE CARRIES THE GRID INWARD TOO, so its prose sits in the same text column as every other
+ * paragraph on the page.
+ *
+ * Before this, one figure had four different left edges — the stepper note at 442, the recipe at
+ * 634, its labels at 676 and the caption at 786, while the standfirst above and the section below
+ * both sat at 775. Each block had been given its own `margin-inline: auto`, so each centred inside
+ * a different parent and landed somewhere different. Centring things independently is what makes a
+ * layout look random; they were never sharing an edge.
+ *
+ * Sections already do this (see "Sections carry the grid inward"), so the drawing keeps `full`
+ * while everything written stays on `text`. One text edge for the whole page. */
+/* `.plate`, not `#main > section > .plate`: the plates inside the six wells are nested one level
+ * deeper (`section.well > figure.plate`), so a child selector reached Plates I and II and left
+ * III to VI with their prose still on the figure's own edge — sixteen blocks at x=400 against
+ * fourteen at 775 in the same section. */
+.plate {
+  display: grid;
+  grid-template-columns:
+    [full-start] minmax(14px, 1fr)
+    [wide-start] minmax(0, 170px)
+    [text-start] min(68ch, 100% - 28px)
+    [text-end] minmax(0, 170px)
+    [wide-end] minmax(14px, 1fr)
+    [full-end];
+}
+.plate > * {
+  grid-column: text;
+  min-width: 0;
+}
+.plate > svg,
+.plate > .plate-pair,
+.plate > .plate-body,
+.plate > div:has(> svg) {
+  grid-column: full;
+}
+
+/* The centrefold's own wrapper carries the grid one level further, because it holds BOTH the
+ * drawing and prose about it. Putting the whole wrapper on `text` squeezed the drawing into a
+ * 601px column — the opposite of what a plate is for. */
+.plate > .plate-body {
+  display: grid;
+  grid-template-columns:
+    [full-start] minmax(14px, 1fr)
+    [wide-start] minmax(0, 170px)
+    [text-start] min(68ch, 100% - 28px)
+    [text-end] minmax(0, 170px)
+    [wide-end] minmax(14px, 1fr)
+    [full-end];
+}
+.plate-body > * {
+  grid-column: full;
+  min-width: 0;
+}
+.plate-body > .tabs,
+.plate-body > .bay-note,
+.plate-body > .bay-recipe {
+  grid-column: text;
+}
+/* No padding on a plate's children any more: the grid above puts prose on the `text` column, and
+ * padding on top of that pushed each block a further 42px in — which is how the row labels ended
+ * up on their own edge while the paragraphs beside them sat on the page's. The drawing keeps its
+ * inset below, because a full-bleed figure still needs one. */
+.plate > svg,
+.plate > .plate-pair,
+.plate > .plate-body > div:has(> svg) {
+  padding-inline: clamp(14px, 3vw, 42px);
+}
+.plate > .plate-head,
+.plate > figcaption {
+  padding-inline: clamp(14px, 3vw, 42px);
+}
+
+.plate > svg {
+  padding-inline: clamp(6px, 1.5vw, 20px);
+  box-sizing: border-box;
+}
+#main > section > .wide {
+  grid-column: wide;
+}
+
+/* ------------------------------------------------------------ the typography */
+#main {
+  /* 34ch measured at 34 characters a line across eleven standfirsts — at 24px that breaks a line
+   * every four or five words, which is the "too narrow" a reader actually sees. A standfirst
+   * SHOULD be short, and short is 45 to 60; 34 is a column of fragments. */
+  --lede-measure: 52ch;
+}
+
+/* The kicker. Every section and every well opens with one; it is the page's smallest type and its
+ * most repeated element, so it carries the structure. */
+#main .role,
+.kicker {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: 0 0 14px;
+}
+
+#main > section > h2 {
+  font-size: clamp(30px, 5vw, 48px);
+  line-height: 1.02;
+  letter-spacing: -0.032em;
+  font-weight: 700;
+  text-wrap: balance;
+  margin: 0 0 18px;
+  border: 0;
+  padding: 0;
+}
+
+#main .say {
+  /* Size and measure are set in THE TYPE SCALE below, which is the one place they live. This rule
+   * carries only what does not change with the scale. */
+  line-height: 1.62;
+  margin: 0 0 16px;
+  color: var(--ink);
+}
+
+/* The standfirst: one paragraph, set large and short, directly under a headline. Short measure is
+ * the whole device -- at 68ch it stops reading as a standfirst and starts reading as a paragraph. */
+#main .standfirst {
+  font-size: clamp(18px, 2.2vw, 24px);
+  line-height: 1.42;
+  letter-spacing: -0.005em;
+  max-width: var(--lede-measure);
+  font-weight: 400;
+  color: var(--ink);
+  margin: 0 0 22px;
+}
+
+/* Section rhythm: a hairline above every section, and generous air. The rule IS the structure --
+ * there are no boxes on this page. */
+#main > section {
+  padding-block: clamp(48px, 7vw, 96px) 0;
+}
+#main > section + section {
+  border-top: 1px solid var(--line);
+}
+
+/* --------------------------------------------------------------- the plates */
+.plate {
+  margin: 0 0 8px;
+  padding: 0;
+}
+.plate-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin: 0 0 16px;
+}
+.plate-n {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  color: var(--ink);
+  white-space: nowrap;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 3px;
+}
+.plate-t {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.plate svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* A caption argues. It is set in the credit face, not italic browser default, and it is allowed a
+ * real measure because it carries the argument the figure only shows. */
+#main figcaption,
+.plate figcaption {
+  font-family: var(--sans);
+  font-style: normal;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+  /* INSET FROM THE FIGURE IT CAPTIONS, so the page has a hierarchy rather than two competing left
+   * edges. Measured at 2560px, body prose began at x=1055 and a plate's caption at x=560 — 495px
+   * apart, which reads as a stranded column rather than a caption. `auto` margins centre it under
+   * the drawing; a `margin: 16px 0 0` shorthand here silently cancelled that in a first attempt,
+   * which is also why the override lives in this rule rather than in a later one of equal
+   * specificity that source order would have beaten. */
+  max-width: 78ch;
+  margin: 16px 0 0;
+  padding-left: 14px;
+  border-left: 2px solid var(--line);
+}
+figcaption b,
+figcaption strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------ the exit line */
+/* Set after the chronology, where a reader who has had enough is deciding. It is the only
+ * paragraph on the page addressed to somebody about to leave. */
+.exit-line {
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--line);
+  margin: 40px 0 10px;
+  padding: 18px 0 20px;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 62ch;
+}
+.exit-line b {
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------------- the wells
+ * A well carries the grid inward, exactly as a section does. Without this its plates are trapped
+ * in the 68ch prose column: PLATE IV was rendered at 685px inside a 1116px page, which is the one
+ * width a full-bleed figure must never be.
+ */
+#main > section > .well {
+  grid-column: full;
+  display: grid;
+  grid-template-columns:
+    [full-start] minmax(14px, 1fr)
+    [wide-start] minmax(0, 170px)
+    [text-start] min(68ch, 100% - 28px)
+    [text-end] minmax(0, 170px)
+    [wide-end] minmax(14px, 1fr)
+    [full-end];
+}
+#main > section > .well > * {
+  grid-column: text;
+  min-width: 0;
+}
+#main > section > .well > .bleed {
+  grid-column: full;
+  padding-inline: clamp(14px, 3vw, 42px);
+}
+#main > section > .well > .bleed.plate {
+  padding-inline: 0;
+}
+.well {
+  padding-block: clamp(34px, 5vw, 62px) 0;
+}
+.well + .well {
+  border-top: 1px solid var(--line);
+}
+.well-head {
+  margin: 0 0 8px;
+}
+.well-h {
+  font-size: clamp(24px, 3.6vw, 36px);
+  line-height: 1.08;
+  letter-spacing: -0.028em;
+  font-weight: 700;
+  text-wrap: balance;
+  margin: 0 0 14px;
+  color: var(--ink);
+}
+.well-dates {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+  margin: 0 0 12px;
+}
+
+/* --------------------------------------------------------------- the ledger */
+.ledger {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--line);
+  margin: 18px 0;
+}
+.ledger > div {
+  padding: 12px 16px 14px 0;
+}
+.ledger > div + div {
+  padding-left: 18px;
+  border-left: 1px solid var(--line);
+}
+.ledger .lab,
+.sp-when .lab {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--faint);
+  display: block;
+  margin-bottom: 7px;
+}
+.ledger .val {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.ledger .debit .val {
+  color: var(--muted);
+}
+
+/* -------------------------------------------------------------- the invoice */
+.invoice {
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+.inv-co {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 8px;
+}
+.inv-co .acct {
+  color: var(--faint);
+  letter-spacing: 0.08em;
+}
+.inv-grid {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  column-gap: clamp(12px, 3vw, 40px);
+  align-items: baseline;
+}
+.inv-grid > * {
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+}
+.inv-h {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--faint);
+  text-transform: uppercase;
+}
+.inv-h.num,
+.inv-n {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.inv-item {
+  font-size: 14px;
+  color: var(--ink);
+}
+.inv-n {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--ink);
+}
+.inv-grid .over {
+  opacity: 0.55;
+}
+.inv-grid .total {
+  border-bottom: 0;
+  font-weight: 700;
+  padding-top: 14px;
+}
+
+/* The cut line. A 2px dashed accent rule drawn across the table at the row where the running total
+ * passes one accelerator, with a rotated stamp in the margin. This is the argument, as typography.
+ */
+.inv-cut {
+  grid-column: 1 / -1;
+  position: relative;
+  border-bottom: 0;
+  padding: 0;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+.inv-cut::after {
+  content: '';
+  flex: 1;
+  height: 0;
+  border-top: 2px dashed var(--accent);
+  transform-origin: left center;
+}
+.inv-cut .lab {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  white-space: nowrap;
+}
+/* The consequence, on its own line and free to wrap. It used to ride on the rule above under
+ * `nowrap` inside `overflow: hidden`, so it was cut off mid-word on every screen narrower than the
+ * sentence — an ellipsis-free truncation of the one sentence the figure exists to deliver. */
+.inv-cut-note {
+  grid-column: 1 / -1;
+  margin: 0 0 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.55;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  max-width: 74ch;
+}
+.inv-foot {
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--faint);
+  margin: 12px 0 0;
+  max-width: 80ch;
+}
+
+/* ---------------------------------------------------------------- the two arcs */
+/* The claimed order and the observed order, as two labelled rows. They were fourteen labelled
+ * steps inside running prose, which is a chain a reader has to parse rather than scan. */
+.arcs {
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--line);
+  margin: 26px 0 8px;
+  padding: 4px 0;
+}
+.arc-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 168px) 1fr;
+  gap: 6px 20px;
+  align-items: baseline;
+  padding: 13px 0;
+}
+.arc-row + .arc-row {
+  border-top: 1px solid var(--line);
+}
+.arc-lab {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.arc-chain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 9px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.arc-observed .arc-step {
+  font-weight: 600;
+  color: var(--ink);
+}
+.arc-claimed .arc-step {
+  color: var(--muted);
+}
+.arc-step.none {
+  font-style: italic;
+  color: var(--faint);
+}
+.arc-sep {
+  color: var(--faint);
+}
+@media (max-width: 620px) {
+  .arc-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ------------------------------------------------------- the reading spread */
+.spread {
+  display: grid;
+  grid-template-columns: minmax(0, 0.86fr) minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 44px);
+  border-top: 2px solid var(--ink);
+  padding-top: 20px;
+  min-height: 430px;
+  align-content: start;
+}
+.spread.swap {
+  opacity: 0;
+}
+.spread {
+  transition: opacity 220ms ease;
+}
+.sp-glyph {
+  display: block;
+  margin-bottom: 16px;
+}
+.sp-date {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+  margin: 0 0 14px;
+}
+.sp-name {
+  font-size: clamp(24px, 3vw, 33px);
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+  margin: 0 0 14px;
+  text-wrap: balance;
+}
+.sp-problem {
+  font-size: 17px;
+  line-height: 1.48;
+  color: var(--ink);
+  margin: 0;
+}
+.sp-problem {
+  /* Capped for the same reason as `.sp-arc`: once the spread stacks, this column is the full text
+   * track and ran to 89 characters. */
+  max-width: 72ch;
+}
+.sp-arc {
+  font-size: 15px;
+  line-height: 1.62;
+  color: var(--ink);
+  /* 90 characters a line without this — the widest prose on the page, in the panel a reader lands
+   * on after clicking a mechanism. See `docs/MEASURES.md`. */
+  max-width: 72ch;
+  margin: 0 0 16px;
+}
+.sp-arc .mk {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  vertical-align: super;
+  margin-right: 3px;
+  letter-spacing: 0;
+}
+.sp-when {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  margin-top: 4px;
+}
+.sp-src {
+  font-size: 12.5px;
+  line-height: 1.55;
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.sp-src a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--line-strong);
+}
+.sp-src a:hover {
+  color: var(--accent);
+}
+.sp-quoted {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--faint);
+  margin-top: 5px;
+}
+.sp-marks {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--faint);
+  margin-top: 8px;
+}
+
+/* ---------------------------------------------------------- the index plate */
+/* The index row's second band — the same three-column body the chapter entries use, and for the
+ * same reason: `does`, the ledger and `when you'd pick it` each spanning the row is three more
+ * bands on top of the identity line, which is what made a row 306px. The 315px floor is a
+ * 42-character line at 13px, so the column count follows the width the page actually has. */
+.ix-body {
+  /* `2 / -1`, not `3 / span 2`. Spanning only the last two columns gave the body 920px of the
+   * row's 1,156 and it fell to two columns at 262px tall; from column 2 it gets 1,024 and fits
+   * three at 175px. The narrowness was the height here too. */
+  grid-column: 2 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(315px, 100%), 1fr));
+  gap: 6px 26px;
+  align-items: baseline;
+}
+.ix-body > * {
+  min-width: 0;
+}
+
+.index-plate {
+  border-top: 2px solid var(--ink);
+  margin-top: 18px;
+}
+.ix-row {
+  display: grid;
+  grid-template-columns: 34px 86px 1fr auto;
+  column-gap: 16px;
+  row-gap: 6px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+  align-items: start;
+  scroll-margin-top: 24px;
+}
+.ix-row:target {
+  background: var(--accent-soft);
+}
+.ix-glyph {
+  grid-row: 1 / span 2;
+}
+.ix-date {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  padding-top: 2px;
+}
+.ix-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.ix-name button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.ix-name button:hover {
+  color: var(--accent);
+}
+.ix-bill {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  white-space: nowrap;
+  padding-top: 3px;
+}
+.ix-ledger {
+  display: grid;
+  gap: 3px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.ix-ledger .c {
+  color: var(--ink);
+}
+.ix-ledger .d {
+  color: var(--muted);
+}
+.ix-pick {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.ix-pick .k,
+.ix-ledger .k {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--faint);
+  display: block;
+}
+.ix-src {
+  grid-column: 3 / span 2;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.ix-src a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ix-src a:hover {
+  color: var(--accent);
+}
+.ix-src .q {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--faint);
+}
+.ix-year {
+  grid-column: 1 / -1;
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  padding: 20px 0 4px;
+  border-bottom: 0;
+}
+
+/* ---------------------------------------------------------------- the key */
+.key {
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  /* 240px was chosen when these columns held labels; they hold PROSE now — a gloss per shape, a
+   * note reconciling the five labels with the two bills, and the yardstick explained. At 1440px
+   * three 240px tracks gave 340px columns and 34 characters a line, the same defect the
+   * standfirsts had. The floor is the narrowest column that still reads, so the grid drops to two
+   * columns and then one rather than squeezing three. */
+  grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
+}
+.key > section {
+  padding: 16px 20px 20px 0;
+}
+/* One section, in the text column: no column machinery, no right-hand gutter to leave empty. */
+.key-solo {
+  grid-template-columns: 1fr;
+  margin: 26px 0 4px;
+}
+.key-solo > section {
+  padding: 14px 0 16px;
+}
+.key > section + section {
+  padding-left: 22px;
+  border-left: 1px solid var(--line);
+}
+.key h3 {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: 0 0 14px;
+}
+.key-alpha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+.key-alpha .it {
+  width: 118px;
+}
+.key-alpha .lab {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  line-height: 1.35;
+  margin-top: 6px;
+  display: block;
+}
+.key-bills {
+  display: grid;
+  gap: 9px;
+}
+/* A GRID, NOT A FLEX ROW. As flex with `margin-left: auto` on the count, the gloss and the count
+ * shared one line box: the number floated to the right edge of the FIRST line and the gloss wrapped
+ * underneath it, so COMPUTE read "the cost that grows with the square of  5 / the length" and the
+ * count looked like part of the sentence. Three columns keeps each field in its own. */
+.key-bills .b {
+  display: grid;
+  grid-template-columns: minmax(72px, auto) 1fr auto;
+  align-items: baseline;
+  gap: 4px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.key-bills .n {
+  color: var(--faint);
+}
+/* The ~ note explains the alphabet above it and has to read as a caption. It carried `.lab`, which
+ * is only styled INSIDE `.key-alpha` — the note is a sibling of it, so the selector missed and the
+ * note rendered at full body size, larger than every label it was explaining. */
+.key-note-mark {
+  display: block;
+  margin-top: 16px;
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.5;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+}
+.key-yard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.key-yard .k {
+  display: block;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.key-yard .derived {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--line);
+  padding-top: 9px;
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------- the controls
+ * A magazine tab bar, not a button that looks like a button. Ruled, mono, uppercase.
+ */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border-bottom: 1px solid var(--line);
+  margin: 0 0 18px;
+}
+.tabs button {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 9px 15px 8px 0;
+  margin-right: 18px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  cursor: pointer;
+}
+.tabs button:hover {
+  color: var(--ink);
+}
+.tabs button[aria-pressed='true'],
+.tabs button.on {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+.tabs button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.runbtn {
+  appearance: none;
+  background: none;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  padding: 8px 18px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  cursor: pointer;
+}
+.runbtn:hover {
+  background: var(--ink);
+  color: var(--bg);
+}
+.runbtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.ctl {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 14px 0 0;
+}
+.ctl label {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.ctl input[type='range'] {
+  flex: 1;
+  min-width: 180px;
+  accent-color: var(--accent);
+  height: 30px;
+}
+.ctl .read {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  min-width: 8ch;
+}
+
+/* -------------------------------------------------------------- the figures */
+.f-ink {
+  fill: var(--ink);
+}
+.f-muted {
+  fill: var(--muted);
+}
+.f-faint {
+  fill: var(--faint);
+}
+.f-accent {
+  fill: var(--accent);
+}
+.f-panel {
+  fill: var(--panel);
+}
+.f-track {
+  fill: var(--track);
+}
+.f-none {
+  fill: none;
+}
+.s-ink {
+  stroke: var(--ink);
+  fill: none;
+}
+.s-line {
+  stroke: var(--line);
+  fill: none;
+}
+.s-strong {
+  stroke: var(--line-strong);
+  fill: none;
+}
+.s-accent {
+  stroke: var(--accent);
+  fill: none;
+}
+.s-muted {
+  stroke: var(--muted);
+  fill: none;
+}
+
+/* Text inside SVG. `text-anchor` must be set through a class the stylesheet actually defines --
+ * an earlier version of this page used `.ax.mid` and `.ax.end` in eight figures and never defined
+ * either, so every centred and right-aligned label in all of them silently rendered left-anchored
+ * and collided with its neighbour. */
+text.ax {
+  font-family: var(--mono);
+  font-size: 10px;
+  fill: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+text.ax.mid {
+  text-anchor: middle;
+}
+text.ax.end {
+  text-anchor: end;
+}
+text.lbl {
+  font-family: var(--sans);
+  font-size: 11px;
+  fill: var(--ink);
+}
+text.lbl.mid {
+  text-anchor: middle;
+}
+text.lbl.end {
+  text-anchor: end;
+}
+text.num {
+  font-family: var(--mono);
+  font-size: 11px;
+  fill: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+text.num.mid {
+  text-anchor: middle;
+}
+text.num.end {
+  text-anchor: end;
+}
+text.big {
+  font-family: var(--mono);
+  font-size: 26px;
+  fill: var(--ink);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+text.big.mid {
+  text-anchor: middle;
+}
+text.kick {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  fill: var(--faint);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+text.kick.mid {
+  text-anchor: middle;
+}
+text.kick.end {
+  text-anchor: end;
+}
+
+/* --------------------------------------------------------------- the plate */
+.plate-entry {
+  cursor: pointer;
+}
+.plate-entry .pe-glyph {
+  transition: opacity 180ms ease;
+}
+.plate-entry.dim .pe-glyph {
+  opacity: 0.18;
+}
+.plate-entry.on .pe-name {
+  font-weight: 700;
+  fill: var(--ink);
+}
+.plate-entry.on .pe-glyph .gl-on,
+.plate-entry.on .pe-glyph .gl-band,
+.plate-entry.on .pe-glyph .gl-state,
+.plate-entry.on .pe-glyph .gl-kv,
+.plate-entry.on .pe-glyph .gl-q {
+  fill: var(--accent);
+}
+.plate-entry:focus-visible {
+  outline: 2px solid var(--accent);
+}
+text.pe-name {
+  font-family: var(--sans);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  fill: var(--muted);
+}
+.quiet-band {
+  fill: var(--track);
+}
+text.quiet-lab {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  fill: var(--muted);
+  text-anchor: middle;
+}
+
+/* ------------------------------------------------------- the masthead field */
+.masthead {
+  position: relative;
+  padding-block: clamp(28px, 5vw, 56px) 0;
+  /* `preserveAspectRatio="slice"` scales the field to COVER its box, so it is wider than the box
+   * by design. Without this the page scrolled sideways by 86px on a 320px screen. */
+  overflow: hidden;
+}
+.mast-field {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: min(52%, 520px);
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+.mast-body {
+  position: relative;
+  z-index: 1;
+}
+.mast-h {
+  font-size: clamp(38px, 9vw, 84px);
+  line-height: 0.94;
+  letter-spacing: -0.035em;
+  font-weight: 700;
+  margin: 0 0 20px;
+  text-wrap: balance;
+}
+.stat {
+  border-top: 2px solid var(--ink);
+  padding-top: 12px;
+  margin-top: 26px;
+  max-width: 46ch;
+}
+.stat .v {
+  font-family: var(--mono);
+  font-size: clamp(28px, 5vw, 44px);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.stat .k {
+  font-size: 14px;
+  color: var(--ink);
+  margin-top: 9px;
+  line-height: 1.45;
+}
+.stat .sub {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--faint);
+  margin-top: 5px;
+}
+
+/* ----------------------------------------------------------- the finding tiles */
+/* The four findings, in the opening, one of them a failure. Every one of them used to sit between
+ * word six thousand and word eight thousand, so a reader who stopped early left with the invoice
+ * and none of the conclusions. */
+.findings {
+  border-top: 2px solid var(--ink);
+  margin: 34px 0 4px;
+  padding-top: 14px;
+}
+.find-grid {
+  display: grid;
+  /* 360px, not 230px. At 230 the four tiles held four columns up to 1920px and each caption read
+   * 39 characters a line — below the 42-character floor `docs/MEASURES.md` sets, and caught by
+   * `test_no_block_of_prose_is_too_narrow_when_it_could_be_wider` rather than by eye. An auto-fit
+   * floor is a readability decision, not a packing one. */
+  grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr));
+  gap: 26px 34px;
+  margin-top: 14px;
+}
+.find {
+  min-width: 0;
+}
+.find .v {
+  font-family: var(--mono);
+  font-size: clamp(21px, 2.4vw, 27px);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--line-strong);
+}
+.find .k {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 10px 0 0;
+  /* On `.k`, which carries the 13px — not on `.find`, whose own font-size is 16px, where 60ch
+   * would resolve to a measure a third too wide for the text inside it. AGENTS.md records this
+   * exact trap from a pull quote that came out one word per line. */
+  max-width: 60ch;
+}
+.find .k b {
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------- departments */
+.dept {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink);
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 6px;
+  margin: 0 0 18px;
+  display: block;
+}
+.correction {
+  border-bottom: 1px solid var(--line);
+  padding: 14px 0;
+}
+.correction .clab {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 6px;
+}
+.correction .cbody {
+  font-size: 15px;
+  line-height: 1.58;
+  color: var(--ink);
+  margin: 0;
+  /* Uncapped, so it took the whole text track — 80 characters at 16px and **103 at 22px**. The cap
+   * is here, on the element that carries the type, so it holds in both variants. */
+  max-width: 70ch;
+}
+
+/* The colophon carries the method, in small print, at the back -- where a magazine puts its
+ * production notes. No shell commands live on this page; the repo README has them. */
+.colophon {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--muted);
+  /* Two columns inside the 685px text track gave 325px each — 47 characters of mono. The columns
+   * are worth keeping (this is small print at the back, and a magazine sets it that way), so the
+   * block takes the `wide` measure instead and the columns come out readable. */
+  columns: 2;
+  column-gap: 40px;
+  max-width: min(1025px, 100%);
+}
+.colophon p {
+  margin: 0 0 12px;
+  break-inside: avoid;
+  /* Below ~800px the two columns collapse to one and this ran to 99 characters of mono — the
+   * mirror image of the 47 it read at when the columns were too narrow. Both failures came from
+   * the same rule; the measure has to be capped for either. */
+  max-width: 78ch;
+}
+.colophon a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.colophon a:hover {
+  color: var(--accent);
+}
+
+/* ------------------------------------------------------------ the verdict */
+.verdict-wrap {
+  overflow-x: auto;
+  margin: 6px 0 0;
+}
+.verdict {
+  min-width: 460px;
+  display: grid;
+  grid-template-columns: 92px repeat(5, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+.verdict > * {
+  background: var(--bg);
+  padding: 9px 8px;
+  min-height: 46px;
+}
+.verdict .vh {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  min-height: 0;
+}
+.verdict .vr {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+}
+.verdict .cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-content: center;
+}
+.verdict .cell.dom {
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+.verdict .tie {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  align-self: center;
+}
+
+/* --------------------------------------------------------------- responsive */
+
+/* The reading spread stacks at 1180px, not 860px. Its two columns are prose, and between those two
+ * widths the narrower one fell to 40 characters a line — readable as a caption, not as the panel a
+ * reader lands on after clicking a mechanism. Measured across five viewport widths; 1180 is where
+ * it stops clearing 45. */
+@media (max-width: 1600px) {
+  .spread {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  .spread {
+    grid-template-columns: 1fr;
+  }
+  .ledger {
+    grid-template-columns: 1fr;
+  }
+  .ledger > div + div {
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+  .colophon {
+    columns: 1;
+  }
+  .mast-field {
+    width: 100%;
+    opacity: 0.5;
+  }
+}
+
+@media (max-width: 620px) {
+  .inv-grid {
+    grid-template-columns: 1fr auto;
+  }
+  .inv-grid .inv-h.eight,
+  .inv-grid .inv-n.eight {
+    display: none;
+  }
+  .ix-row {
+    grid-template-columns: 30px 1fr;
+  }
+  .ix-glyph {
+    grid-row: 1;
+  }
+  .ix-date {
+    grid-column: 2;
+  }
+  .ix-name,
+  .ix-bill,
+  .ix-ledger,
+  .ix-pick,
+  .ix-src {
+    grid-column: 1 / -1;
+  }
+  .ix-ledger {
+    grid-template-columns: 1fr;
+  }
+  .verdict {
+    grid-template-columns: 76px repeat(5, 1fr);
+    font-size: 10px;
+  }
+  .key > section + section {
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+}
+
+/* Motion is spent, not sprinkled. Under a reduced-motion preference every figure renders directly
+ * into its terminal state rather than reaching it quickly -- that is the only version that
+ * survives a screenshot. */
+@media (prefers-reduced-motion: reduce) {
+  .spread,
+  .plate-entry .pe-glyph {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------- the glyphs
+ * The alphabet. Four generators in `glyphs.js` draw from the `pattern` block each catalogue entry
+ * carries, so a glyph is derived from data rather than hand-drawn per mechanism.
+ */
+.glyph-svg {
+  display: block;
+  overflow: visible;
+}
+.gl-on {
+  fill: var(--ink);
+}
+.gl-q {
+  fill: var(--ink);
+  opacity: 0.55;
+}
+.gl-kv {
+  fill: var(--ink);
+}
+.gl-kv.latent {
+  fill: var(--accent);
+}
+.gl-wire {
+  stroke: var(--ink);
+  stroke-width: 0.7;
+  opacity: 0.35;
+}
+.gl-wire.accent {
+  stroke: var(--accent);
+  opacity: 0.8;
+}
+.gl-state {
+  fill: var(--ink);
+  opacity: 0.9;
+}
+.gl-edit {
+  fill: var(--bg);
+}
+.gl-edit-s {
+  stroke: var(--bg);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.gl-cut {
+  stroke: var(--bg);
+  stroke-width: 1.4;
+}
+.gl-flush {
+  stroke: var(--bg);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+.gl-gate {
+  fill: var(--accent);
+}
+.gl-band {
+  fill: var(--ink);
+  opacity: 0.85;
+}
+.gl-band.banded {
+  opacity: 0.62;
+}
+.gl-band.gone {
+  fill: var(--ink);
+  opacity: 0.12;
+}
+.gl-band.stretched {
+  fill: var(--accent);
+  opacity: 0.75;
+}
+.gl-wall {
+  stroke: var(--grade-x);
+  stroke-width: 1.4;
+}
+.gl-wall.soft {
+  stroke: var(--muted);
+  stroke-dasharray: 2 2;
+  stroke-width: 1;
+}
+.gl-cont {
+  stroke: var(--ink);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+  fill: none;
+}
+.gl-tile {
+  stroke: var(--bg);
+  stroke-width: 1.4;
+  opacity: 1;
+}
+.gl-tilebox {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.2;
+}
+.gl-perm {
+  stroke: var(--accent);
+  stroke-width: 1;
+  fill: none;
+}
+.gl-permblock {
+  fill: var(--ink);
+  opacity: 0.55;
+}
+.gl-unknown {
+  fill: none;
+  stroke: var(--grade-x);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+.gl-schema {
+  fill: var(--faint);
+  font-family: var(--mono);
+  font-size: 9px;
+}
+
+/* Two plates, one at a time. The landscape plate is a 1440-unit SVG; scaled into a phone column
+ * every label is sub-pixel and the page's centrepiece carries no information at all. The portrait
+ * plate runs time down the page instead, keeps the lanes, the to-scale gaps and the ties, and
+ * drops the names — which is a decision, where shrinking them to four pixels is a pretence. */
+/* `svg.` on purpose: `.plate svg { display: block }` above is (0,1,1) and would out-specify a bare
+ * `.plate-tall` at (0,1,0), so both plates rendered at once and the phone got the smear it was
+ * meant to be spared, stacked on top of the fix. */
+svg.plate-tall {
+  display: none;
+}
+@media (max-width: 720px) {
+  svg.plate-wide {
+    display: none;
+  }
+  svg.plate-tall {
+    display: block;
+  }
+}
+
+/* A control belongs to its figure, with air on both sides. Without the bottom margin the sweep
+ * button sat on the reading spread's 2px top rule and the line ran through it. */
+.plate .ctl {
+  margin: 18px 0 6px;
+  padding-inline: clamp(14px, 3vw, 42px);
+}
+
+/* --------------------------------------------------- How to read this
+ * Orientation, not argument: what the page is, the one idea everything hangs off, and three ways
+ * in. Set as furniture — ruled, quiet, and clearly not part of the feature's own voice.
+ */
+.guide {
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--line);
+  padding-block: 22px 26px;
+  margin-top: clamp(28px, 4vw, 52px);
+}
+.guide-lede {
+  font-size: 17px;
+  line-height: 1.55;
+  max-width: 72ch;
+  margin: 0 0 18px;
+  color: var(--ink);
+}
+.guide-bills {
+  display: grid;
+  /* A 280px floor let the two bills sit side by side at 397px each — 43 characters a line, in the
+   * paragraph that teaches the page's central idea. The floor is the narrowest column that still
+   * reads as prose, so they stack rather than squeeze. */
+  grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr));
+  gap: 0 32px;
+  margin: 0 0 20px;
+}
+/* Three parts want three columns. `.guide-bills` floors its tracks at 280px, which is right for
+ * two bills and wraps Q/K/V as 2+1 — a lone V under Q reads as a subsection of it rather than the
+ * third of three. */
+.guide-three {
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+}
+.guide-bills > div {
+  border-top: 1px solid var(--line-strong);
+  padding-top: 10px;
+}
+/* The two bills are the first thing a reader is taught, and at a wide viewport each column ran to
+ * 87 characters — the widest prose on the page, in the paragraph that matters most. */
+.guide-bills p {
+  max-width: 62ch;
+}
+.guide-bills .lab {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.guide-bills p {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.guide-paths {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 0;
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
+}
+a.guide-path {
+  display: block;
+  padding: 14px 20px 16px 0;
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+}
+a.guide-path + a.guide-path {
+  padding-left: 22px;
+  border-left: 1px solid var(--line);
+}
+a.guide-path .who {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 5px;
+}
+a.guide-path .who::after {
+  content: ' →';
+  color: var(--accent);
+}
+a.guide-path .what {
+  display: block;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+a.guide-path:hover .who {
+  color: var(--accent);
+}
+a.guide-path:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.guide-marks {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 78ch;
+  margin: 18px 0 0;
+}
+@media (max-width: 720px) {
+  a.guide-path + a.guide-path {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+/* A brief: orientation ABOVE a figure. A caption argues after; this says what you are looking at
+ * before you have to guess. Set at prose measure, not full bleed, because it is read not scanned. */
+.brief {
+  /* NO `ch` MEASURE HERE. `ch` resolves against the element that declares it, and this one is
+   * 16px while the text inside it is 15px — so `74ch` produced 81 characters, and it only showed
+   * up once the padding that had been hiding it was removed. The measure belongs on the element
+   * carrying the type. AGENTS.md records this exact trap from a pull quote. */
+  margin: 0 0 26px;
+  /* No inline padding. It was here to inset the block from a full-bleed figure's edge, and the
+   * plate grid now does that — leaving this in put the recipe's rows 42px right of every other
+   * paragraph, which is the last of the four competing left edges this figure had. */
+}
+.brief-row + .brief-row {
+  margin-top: 13px;
+}
+.brief-row p {
+  max-width: 68ch;
+}
+.brief-lab {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 4px;
+}
+.brief-row p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+/* ============================================================ the detail diagrams
+ *
+ * Form carries the meaning and colour is the second encoding, never the only one — form survives
+ * greyscale, print, colour blindness, and the high-contrast theme where --muted and --ink are the
+ * same black. Every value here is a token; `tests/test_attention_themes.py` measures each one
+ * against the surface behind it, in all six themes.
+ */
+.diagram-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* The three cell states. This distinction is the whole point of the figure: the glyph could only
+ * say "on", so everything else was simply absent — which conflates "the maths forbids this" with
+ * "this design threw it away". */
+.dg-live {
+  fill: var(--ink);
+}
+.dg-dropped {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 0.75;
+}
+.dg-masked {
+  stroke: none;
+}
+.dg-hatch-line {
+  stroke: var(--faint);
+  stroke-width: 1.1;
+}
+.dg-masked-swatch {
+  fill: none;
+  stroke: var(--faint);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+/* The four parts. */
+.dg-q {
+  fill: var(--part-q);
+}
+.dg-k {
+  fill: var(--part-k);
+}
+.dg-v {
+  fill: var(--part-v);
+}
+.dg-store {
+  fill: var(--part-store);
+}
+.dg-ref {
+  fill: var(--muted);
+}
+.dg-track {
+  fill: var(--track);
+}
+
+/* Why a cell survived. */
+.dg-local {
+  fill: var(--part-k);
+}
+.dg-sink {
+  fill: var(--part-q);
+}
+.dg-stride {
+  fill: var(--part-v);
+}
+.dg-block {
+  fill: var(--part-store);
+}
+.dg-selected {
+  fill: var(--part-v);
+}
+.dg-bucket {
+  fill: var(--part-store);
+}
+
+.dg-wire {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+  fill: none;
+}
+.dg-wire-accent {
+  stroke: var(--part-store);
+  stroke-width: 1.2;
+  fill: none;
+}
+.dg-arrow {
+  stroke: var(--muted);
+  stroke-width: 1.2;
+  fill: none;
+}
+.dg-wall {
+  stroke: var(--part-q);
+  stroke-width: 2;
+}
+.dg-cont {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  fill: none;
+}
+
+/* Text inside a diagram reuses the figure classes, which are already themed and anchored. */
+.diagram-svg text.lbl {
+  font-weight: 600;
+}
+/* A numeral printed ON a painted mark takes the page ground, not the ink. `text.num` fills with
+ * var(--ink), which is the right default everywhere else and unreadable here. The ratio is safe in
+ * all six themes for the same reason --muted is: it is already a text colour on --bg, and swapping
+ * which of the pair is the ground does not change the contrast between them. */
+/* VERY WIDE SCREENS: give the FIGURES the room, not the prose.
+ *
+ * `.wrap` caps at 1500px, so at 2560px the page left 1060px — 41% of the screen — as margin while
+ * the plates were squeezed to 1216px. This repo's own rule is that widening a page is two
+ * decisions, not one: a 1200px line of prose is unreadable, so the measures are split. The wrap
+ * grows, the plates grow with it, and every prose class keeps the cap it already had — measured at
+ * 70 to 75 characters a line, which is where they should be.
+ *
+ * Two breakpoints rather than a fluid width, because a plate is a drawn composition with labels
+ * laddered at measured widths; it wants a few known sizes, not a continuum. */
+/* The two breakpoints live with the type scale below, which is what decides them — see there. The
+ * pair that used to sit here (1720/1960) was superseded when the scale changed and was left in
+ * place: same selector, same property, same two queries, different values, and source order
+ * silently picked the later pair. Two rules that disagree are worse than either. */
+
+/* Who ships a mechanism, under what it does. */
+/* On the identity line, not a band of its own. It is a short list of model names and it was
+ * costing a full row's height plus its margin, thirty times over. */
+.ix-ship {
+  grid-column: 4;
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 0;
+  text-align: right;
+  color: var(--muted);
+}
+.ix-ship.empty {
+  color: var(--faint);
+}
+.ix-ship .k {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-right: 10px;
+}
+.ix-ship a {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-strong);
+}
+.ix-ship a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.ix-ship .none {
+  color: var(--faint);
+  font-style: italic;
+}
+
+/* A short gloss under the invoice's column heads. */
+.inv-note {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 66ch;
+  margin: 10px 0 0;
+}
+
+/* The key's alphabet: one shape per row, wide enough for a sentence.
+ *
+ * `.key-alpha` is a flex row whose items are pinned to 118px, so `grid-template-columns` on it did
+ * nothing at all — a rule that looks like a fix, changes no pixels, and passes every test. The
+ * property that matters is the item width. Two 118px columns crammed a nine-line gloss beside a
+ * two-line one. */
+.key-alpha .it {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  column-gap: 14px;
+  align-items: start;
+}
+.key-alpha .it > svg {
+  grid-row: 1 / span 3;
+}
+.key-gloss {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 4px 0 0;
+  /* 46ch left only a character of headroom over the 45 floor, and the same pixel width measures
+   * about 4% fewer characters on CI's Linux fonts than on macOS — so a design sitting on the limit
+   * passes on one machine and fails on the other. Headroom is part of the fix, not the threshold. */
+  max-width: 58ch;
+}
+.key-tally {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  margin-left: 8px;
+}
+
+/* What the mechanism does, above its ledger. Set as prose at reading size, because it is the one
+ * field in the row a newcomer needs and the rest are reference. */
+.ix-does {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: none;
+  margin: 2px 0 8px;
+}
+
+/* The always-on recipe under the centrefold. Sits below the stepper, so a reader who never touches
+ * a tab still gets all five steps in order. */
+/* Five steps read as a recipe, not as five paragraphs — and on a wide screen they take the width
+ * rather than leaving it empty.
+ *
+ * Widening `.wrap` fixed the plates and created this: the recipe kept a 68ch measure inside a
+ * bleed area that had grown to 1,960px, so two thirds of the row was void. `auto-fit` with a
+ * `min()` floor is the pattern this repo already uses — never a bare pixel minimum, which an
+ * auto-fit track cannot shrink below and which pushes a phone sideways. */
+.bay-recipe {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  /* ONE COLUMN, DELIBERATELY. Three columns fitted and read wrong: this is a five-step sequence
+   * and a grid is read across before down, so the steps came out 1-2-3 / 4-5. Order is the whole
+   * content. The width is handled by centring under the figure instead, the same way the caption
+   * is — the block was hanging at the figure's own left edge, 495px left of every other line of
+   * prose on the page. */
+}
+/* The stepper's note is prose belonging to the figure, so it is centred under it like the caption
+ * and the recipe — not left at the drawing's own edge, where it read as a stranded fragment. */
+.bay-note {
+}
+
+.bay-recipe .brief-row {
+  padding: 7px 0;
+}
+.bay-recipe .brief-row p {
+  font-size: 14.5px;
+  line-height: 1.5;
+  max-width: 68ch;
+  margin: 0;
+}
+
+/* NO COLUMNS HERE. A first attempt split a plate's caption into two on wide screens, to stop it
+ * reading as a stranded column. It was capped at 663px, so two columns gave 332px each — forty
+ * characters a line, and the fix was worse than the thing it fixed. Splitting a narrow block in
+ * two makes two narrower blocks. It stays one column and is centred under its figure instead;
+ * `docs/MEASURES.md` has the full audit. */
+
+/* A short reconciling note under a key heading — prose, not a data row. */
+.key-note {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 64ch;
+  margin: 2px 0 12px;
+}
+
+/* The two registers under the centrefold's bays: the plain sentence set as prose at reading size,
+ * the exact one under it, smaller and quieter. Layered rather than tabbed — a reader must be able
+ * to stop at the first line and still be correct, which a disclosure widget cannot promise. */
+.bay-plain {
+  display: block;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 68ch;
+}
+.bay-exact {
+  display: block;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  max-width: 72ch;
+  margin-top: 5px;
+}
+
+/* The citation under a group of numbers: the same size as the labels, set back so the numbers
+ * above it read as the content and the source as its footing. */
+.diagram-svg text.dim {
+  fill: var(--faint);
+}
+.diagram-svg text.onmark {
+  fill: var(--bg);
+  font-weight: 700;
+}
+
+/* The detail diagram sits beneath the spread's two columns, spanning both. */
+.sp-diagram {
+  grid-column: 1 / -1;
+  margin: 26px 0 0;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+.sp-diagram:empty {
+  border-top: 0;
+  padding-top: 0;
+  margin: 0;
+}
+.sp-diagram figcaption {
+  margin-top: 12px;
+}
+@media (max-width: 860px) {
+  .sp-diagram {
+    grid-column: 1;
+  }
+}
+
+/* ============================================================== THE TYPE SCALE
+ *
+ * Chosen over a fixed 16px after a reader compared both on the deployed page. The complaint it
+ * answers was "why do you narrow too much", and the answer is that the lever is TYPE SIZE, not
+ * measure. A 77-character line at 22px is 981px; the same 77 characters at 16px is 685px. The
+ * reader gets 43% more of their screen and not one longer line.
+ *
+ * The mechanism, which is subtler than it looks. `ch` resolves against the element's OWN computed
+ * font-size, so `#main .say { font-size: 16px; max-width: 68ch }` pins the paragraph at 685px no
+ * matter what `#main` does. Growing the grid track alone therefore changes nothing — the paragraph
+ * is the binding constraint. `.say` has to INHERIT the fluid size, and then its own `ch` cap scales
+ * with it for free.
+ *
+ * Measured, holding the repo's own 42-80 character guard: 758px/64% at 1180, 778px/54% at 1440,
+ * 981px/51% at 1920 — 77 characters a line at every one of them. At 2560 it is 38%, and going
+ * further would need 29px body type, which is heading size; that width is served by the full-bleed
+ * figures instead.
+ */
+#main {
+  /* THE FLOOR IS 19px, NOT 17px, AND THAT IS THE WHOLE POINT OF THE VARIANT.
+   *
+   * The first ramp was tuned to reach 50% at 1920 and allowed to taper below it, which made the
+   * difference at 1440 exactly **1.46px of type and 84px of width** — a reader comparing the two on
+   * a laptop could not see any change at all, and said so. A variant that is a no-op at the width
+   * the reader uses cannot be chosen or rejected; it just wastes their time. */
+  font-size: clamp(19px, 1.2vw + 1.7px, 22px);
+  grid-template-columns:
+    [full-start] minmax(14px, 1fr)
+    [wide-start] minmax(0, 150px)
+    [text-start] min(70ch, 100% - 28px)
+    [text-end] minmax(0, 150px)
+    [wide-end] minmax(14px, 1fr)
+    [full-end];
+}
+#main > section,
+.plate,
+.plate > .plate-body,
+#main > section > .well {
+  grid-template-columns:
+    [full-start] minmax(14px, 1fr)
+    [wide-start] minmax(0, 150px)
+    [text-start] min(70ch, 100% - 28px)
+    [text-end] minmax(0, 150px)
+    [wide-end] minmax(14px, 1fr)
+    [full-end];
+}
+#main .say {
+  font-size: inherit;
+  max-width: 70ch;
+}
+
+/* Secondary type scales WITH the body, or a 22px paragraph sits beside a 13.5px caption and the
+ * hierarchy reads as a rendering fault. `em` against the inherited fluid size, so each keeps the
+ * character count it was tuned to. The mono micro-labels (9.5-11px) are deliberately left alone:
+ * they are furniture, not reading, and they stop being legible if they shrink further. */
+#main figcaption {
+  font-size: 0.63em;
+}
+#main .brief-row p {
+  font-size: 0.7em;
+}
+#main .guide-lede {
+  font-size: 0.8em;
+}
+#main .guide-bills p {
+  font-size: 0.68em;
+}
+#main .colophon {
+  font-size: 0.56em;
+}
+#main .key-gloss {
+  font-size: 0.61em;
+}
+#main .ix-does,
+#main .ix-pick {
+  font-size: 0.66em;
+}
+#main .ix-ledger {
+  font-size: 0.6em;
+}
+#main .ledger .val,
+#main .sp-arc {
+  font-size: 0.68em;
+}
+
+/* The wrap grows with the type, or the wider prose simply eats the margin it was meant to share
+ * with the figures. */
+/* The wrap grows with the type, or the wider prose eats the margin it was meant to share with the
+ * figures. Two breakpoints rather than a fluid width, because a plate is a drawn composition with
+ * labels laddered at measured widths: it wants a few known sizes, not a continuum. */
+@media (min-width: 1800px) {
+  .wrap {
+    max-width: 1840px;
+  }
+}
+@media (min-width: 2200px) {
+  .wrap {
+    max-width: 2200px;
+  }
+}
+
+/* The shellbar wraps. It briefly carried four controls during the A/B and carries two again;
+ * wrapping costs nothing and is what stopped the page scrolling sideways at 320px when it had
+ * four. Set here rather than in `_shared/page.css`, which is byte-identical across 03-08. */
+.shellbar {
+  flex-wrap: wrap;
+  row-gap: 10px;
+}
+
+/* The read-time, under the contents. Derived from the rendered word count, so it cannot go stale
+ * the way a typed one would. */
+.rail-time {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+  margin: 14px 0 0;
+}
+
+/* ---------------------------------------------------------------- notices */
+/* A section that is apparatus rather than argument. A reader on the limits section: "this is some
+ * sort of disclaimer or notice not an actual heading on the page. Why do we need so much space for
+ * this text while it is purely informational."
+ *
+ * It is still fully visible — `AGENTS.md` is explicit that a limitation a reader has to open a
+ * drawer to find is one the page is hiding. What changes is that it stops wearing the masthead's
+ * display type: a modest heading, smaller body, and the list device exercise 07 already uses. */
+.notice > h2 {
+  font-size: 21px !important;
+  line-height: 1.2;
+  letter-spacing: -0.012em;
+}
+.notice {
+  padding-block: clamp(32px, 4vw, 52px) 0 !important;
+}
+/* THE MEASURE GOES ON THE `li`, NOT THE `ul`. `ch` resolves against the element's OWN computed
+ * font-size, and the `ul` inherits `#main`'s — which is 16px under `measure = a` and up to 22px
+ * under `b`. So `80ch` on the list meant 1,230px there while the text inside it stayed at 13.5px,
+ * and the limits read at **111 characters a line** in one variant and 80 in the other. This is the
+ * trap `AGENTS.md` records from a pull quote, hit again in a block written after that audit. */
+.limitlist {
+  margin: 14px 0 0;
+  padding-left: 20px;
+}
+.limitlist li {
+  margin: 0 0 11px;
+  max-width: 72ch;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.limitlist li b {
+  color: var(--ink);
+}
+
+/* ============================================ blocks that take the width they were sized for
+ *
+ * Four of these were not decisions, they were half-implemented intentions: the element carries the
+ * class or the measure that says "be wide", and no rule ever matched it.
+ */
+
+/* THE INVOICE HAS BEEN TRAPPED AT 685px SINCE IT WAS WRITTEN. `figInvoice` returns
+ * `div.invoice.bleed`, but `plate()` appends it INSIDE `figure.plate`, and the only `.bleed` rules
+ * are `#main > .bleed`, `#main > section > .bleed` and `#main > section > .well > .bleed`. None
+ * matches a grandchild, so `.plate > * { grid-column: text }` won at 685px and the class did
+ * nothing. The page's most important figure — the one five of six review readers quoted — has been
+ * rendering in a third of the width available to it at every viewport. */
+.plate > .bleed {
+  grid-column: full;
+}
+
+/* THE COLOPHON'S OWN MEASURE SAYS 1025px, WHICH IS EXACTLY THE `wide` TRACK — and the element was
+ * never put in it, so `min(1025px, 100%)` resolved to 685px and its two mono columns came out at
+ * 47 characters. Its comment already described the intended fix; only the max-width half of it had
+ * been written. */
+#main > section > .colophon {
+  grid-column: wide;
+}
+
+/* THE PAGE'S NARROWEST PROSE WAS PRODUCED BY ITS WIDEST SCREEN. The reading spread's ledger splits
+ * its right-hand column in two, so at 1920 Credit and Debit read at 36 and 38 characters — under
+ * the repo's own floor — while at 1440 the spread stacks and they read at 57. The guard could not
+ * see it because `.val` is a `div` and the selector only takes `p`, `li`, `figcaption` and `.say`.
+ * One column, like the index ledger it mirrors. */
+.spread .ledger {
+  grid-template-columns: 1fr;
+}
+.spread .ledger > div + div {
+  padding-left: 0;
+  border-left: 0;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+/* Q, K AND V AT 23 CHARACTERS A LINE. Three 207px columns inside the 685px text track, at every
+ * width — and invisible to the measures guard twice over, because the strings are under its
+ * 90-character sampling threshold. The block is a three-part definition and it earns the full
+ * width; the prose inside keeps its own cap. */
+#main > section > .guide-setup {
+  grid-column: full;
+  padding-inline: clamp(14px, 3vw, 42px);
+}
+
+/* THE FOUR READER DOORS read at 27 characters at 1440 and 35 at 1920: `auto-fit` puts all four
+ * across whenever four floors fit, and four 240px floors fit almost everywhere. Four items want an
+ * explicit answer, not a formula — two rows of two until there is genuinely room for one row. */
+.guide-paths {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 1600px) {
+  .guide-paths {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 620px) {
+  .guide-paths {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Both of the fixes above overshot, and in opposite directions — worth recording because it is the
+ * same mistake twice: freeing a block from a track it was trapped in is not the same as giving it a
+ * measure. Un-splitting the spread's ledger took it from 36 characters to 91, straight past the
+ * ceiling; the Q/K/V block gained 200px and still read at 40 at 1440, two under the floor, because
+ * three columns of a 1,072px container cannot be wider than 336px whatever the container does. */
+.spread .ledger .val {
+  max-width: 66ch;
+}
+.guide-three p {
+  font-size: 13.5px;
+}
+
+/* ------------------------------------------------------- the four families */
+/* One score grid drawn four ways. The tabs change the drawing; the four rows underneath are always
+ * visible, because an interaction must never be the only route to a lesson. */
+.fam {
+  border-top: 2px solid var(--ink);
+  margin: 26px 0 8px;
+  padding-top: 14px;
+}
+.fam-svg {
+  display: block;
+  width: 100%;
+  max-width: 620px;
+  height: auto;
+  margin: 16px 0 4px;
+}
+.fam-svg .f-hollow {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1.5;
+}
+.fam-what {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  margin: 4px 0 0;
+  max-width: 72ch;
+}
+.fam-rows {
+  display: grid;
+  /* ONE COLUMN INSIDE THE TEXT TRACK. `.fam` sits in the 685px reading column, so a 330px floor
+   * gave two columns of ~327px — 42 characters on macOS and **39 on CI's Linux fonts**, which is
+   * where it was caught. The ~4% platform difference is documented in `docs/MEASURES.md` and the
+   * answer is not to tune until it scrapes past on both: a 520px floor cannot fit two columns in
+   * 685px, so this is one column with the measure cap below doing the work. */
+  grid-template-columns: repeat(auto-fit, minmax(min(520px, 100%), 1fr));
+  gap: 16px 30px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.fam-row p {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 5px 0 0;
+  /* At 2560 an `auto-fit` column of this grid is wide enough to run the analogy past the ceiling —
+   * 82 characters, caught by the measures guard. The cap is on the element carrying the type. */
+  max-width: 64ch;
+}
+.fam-row p b {
+  color: var(--ink);
+}
+.fam-row p i {
+  font-style: normal;
+  color: var(--faint);
+}
+.fam-lab {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--faint);
+}
+.fam-formal {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+}
+.fam-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ------------------------------------------------------- the chapter strip */
+/* What this chapter is about, in one line, linked to the full entry at the back. The year is the
+ * part that earns its place: every chapter's claim is about sequence, and a bare list of names is
+ * no evidence for a claim about order. */
+.ch-strip {
+  margin: 20px 0 26px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.ch-strip-lab {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 8px;
+}
+.ch-strip-list {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.85;
+  /* 64ch, not 74. This is a <p>, so the measures guard sees it, and 74ch at 14px renders right on
+   * the 80-character ceiling — which on macOS passes and on CI's narrower fonts would too, but
+   * with no margin in either direction. */
+  max-width: 64ch;
+}
+.ch-link {
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+}
+.ch-link:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.ch-yr {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--faint);
+  margin-right: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.ch-link:hover .ch-yr {
+  color: var(--accent);
+}
+.ch-sep {
+  color: var(--faint);
+  margin: 0 9px;
+}

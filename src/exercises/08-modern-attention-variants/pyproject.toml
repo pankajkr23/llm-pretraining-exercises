@@ -1,0 +1,24 @@
+[project]
+name = "exercise-08-modern-attention-variants"
+version = "0.1.0"
+description = "Session 8 — modern attention variants, in the order they were launched"
+requires-python = ">=3.12"
+
+# numpy and nothing else, deliberately.
+#
+# This exercise trains no model. Its claims are a sourced chronology and closed-form arithmetic --
+# the KV-cache formula, T^2 score growth, the GQA ratio -- so there is nothing here that needs
+# torch. That matters more than it sounds: CI runs `uv sync --all-packages` with no extras, so a
+# torch-free exercise is one CI verifies *completely* rather than skipping. Exercises 05, 06 and 07
+# each put their heaviest claim behind an optional extra and had to add a separate job to reach it.
+# Do not add torch here without a claim that genuinely requires it.
+dependencies = [
+    "numpy>=2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/attention"]

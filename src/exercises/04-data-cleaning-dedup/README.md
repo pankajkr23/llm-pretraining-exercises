@@ -115,6 +115,9 @@ file. Colab is unaffected.
 
 ```text
 DECISIONS.md          # why the answer is 8, why these corpora, what may be published (read first)
+CLAUDE.md             # rules specific to this exercise, for whoever changes the code
+NOTICE                # affiliation and licence disclaimer
+web/                  # the deployed page — index.html, chapters.js, data.json, page-extra.css, _shared/
 README.md             # this file
 pyproject.toml        # workspace member
 src/datacleaning/

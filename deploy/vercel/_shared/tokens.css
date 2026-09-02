@@ -37,6 +37,22 @@
   --grade-b: #8a6508;
   --grade-c: #6e6e73;
   --grade-x: #c1121f;
+
+  /* The parts of an attention mechanism, for the detail diagrams in exercise 08.
+   *
+   * Four roles, because four is what a reader can hold: the QUERY doing the looking, the KEY it is
+   * matched against, the VALUE that comes back, and the STORE that has to be kept. They are tuned
+   * per theme rather than one set tinted six ways, so each sits on its own ground and stays clear
+   * of that theme's --accent, which is reserved for the current selection.
+   *
+   * Colour is the second encoding, never the only one: the diagrams tell the parts apart by FORM
+   * first (outlined / filled / hatched / stacked), because form survives greyscale, print,
+   * colour-blindness, and the high-contrast theme where --muted and --ink are the same black.
+   * tests/test_attention_themes.py measures every one of these against the surface behind it. */
+  --part-q: #b8570a;
+  --part-k: #0d7a70;
+  --part-v: #a01d6e;
+  --part-store: #55607a;
   --lang-tier-1: #0068d1;
   --lang-tier-2: #0062c4;
   --lang-tier-3: #6f6f74;
@@ -78,6 +94,10 @@
     --grade-b: #ffd60a;
     --grade-c: #a1a1a6;
     --grade-x: #ff453a;
+    --part-q: #ff9f45;
+    --part-k: #2fd4bd;
+    --part-v: #ff6fc4;
+    --part-store: #9aa4bd;
     --lang-tier-1: #2997ff;
     --lang-tier-2: #2997ff;
     --lang-tier-3: #8a8a90;
@@ -114,6 +134,10 @@
   --grade-b: #7d5c07;
   --grade-c: #6b6155;
   --grade-x: #b3121d;
+  --part-q: #a8500a;
+  --part-k: #0c6b62;
+  --part-v: #93195f;
+  --part-store: #5c5a52;
   --lang-tier-1: #0a6ab8;
   --lang-tier-2: #0a63ad;
   --lang-tier-3: #6f6559;
@@ -149,6 +173,10 @@
   --grade-b: #f0c53d;
   --grade-c: #a3adc2;
   --grade-x: #ff6b63;
+  --part-q: #f0a052;
+  --part-k: #46cbb8;
+  --part-v: #f07ac0;
+  --part-store: #93a0bd;
   --lang-tier-1: #5aa9ff;
   --lang-tier-2: #5aa9ff;
   --lang-tier-3: #8f99ae;
@@ -184,6 +212,10 @@
   --grade-b: #5c3d00;
   --grade-c: #3d3d3d;
   --grade-x: #a10000;
+  --part-q: #8a3b00;
+  --part-k: #00544a;
+  --part-v: #8a0055;
+  --part-store: #2b2b2b;
   --lang-tier-1: #0000cc;
   --lang-tier-2: #0000cc;
   --lang-tier-3: #3d3d3d;
@@ -219,6 +251,10 @@
   --grade-b: #ffe14d;
   --grade-c: #9ea0bd;
   --grade-x: #ff5c7a;
+  --part-q: #ffb347;
+  --part-k: #35e0b5;
+  --part-v: #ff7ad9;
+  --part-store: #8f93b8;
   --lang-tier-1: #00e5ff;
   --lang-tier-2: #00e5ff;
   --lang-tier-3: #8e90ad;
