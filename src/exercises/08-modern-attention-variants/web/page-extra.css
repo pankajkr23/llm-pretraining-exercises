@@ -665,7 +665,10 @@ figcaption strong {
 .gl-row {
   display: grid;
   grid-template-columns:
-    84px minmax(176px, 1.3fr) 62px 58px minmax(96px, 0.85fr)
+    /* The name column takes its share from `shipped in`, not from `when you would pick it`: at
+     * 1180px the names were wrapping to three lines while the pick column had room, and the pick
+     * column is the one the table exists for — narrowing it would trip the 42-character floor. */
+    84px minmax(196px, 1.45fr) 62px 58px minmax(92px, 0.7fr)
     minmax(240px, 2.15fr);
   column-gap: 18px;
   row-gap: 4px;
@@ -939,19 +942,36 @@ a.gl-row:hover .gl-name b {
   display: grid;
   gap: 9px;
 }
+/* A GRID, NOT A FLEX ROW. As flex with `margin-left: auto` on the count, the gloss and the count
+ * shared one line box: the number floated to the right edge of the FIRST line and the gloss wrapped
+ * underneath it, so COMPUTE read "the cost that grows with the square of  5 / the length" and the
+ * count looked like part of the sentence. Three columns keeps each field in its own. */
 .key-bills .b {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(72px, auto) 1fr auto;
   align-items: baseline;
-  gap: 10px;
+  gap: 4px 14px;
   font-family: var(--mono);
   font-size: 11px;
+  line-height: 1.5;
   letter-spacing: 0.08em;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 .key-bills .n {
   color: var(--faint);
-  margin-left: auto;
+}
+/* The ~ note explains the alphabet above it and has to read as a caption. It carried `.lab`, which
+ * is only styled INSIDE `.key-alpha` — the note is a sibling of it, so the selector missed and the
+ * note rendered at full body size, larger than every label it was explaining. */
+.key-note-mark {
+  display: block;
+  margin-top: 16px;
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.5;
+  letter-spacing: 0.06em;
+  color: var(--faint);
 }
 .key-yard {
   display: grid;

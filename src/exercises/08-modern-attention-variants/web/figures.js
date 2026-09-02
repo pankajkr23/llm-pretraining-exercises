@@ -218,7 +218,7 @@ export function figKeyShapes(M, glyphSvg, KIND_LABEL, KIND_GLOSS) {
     strip.append(it);
   }
   alpha.append(strip);
-  const note = el('span', 'lab');
+  const note = el('span', 'key-note-mark');
   note.textContent =
     `~ marks a glyph drawn to schema rather than to scale — ` +
     `${M.counts.schematic} of ${M.counts.total} are.`;

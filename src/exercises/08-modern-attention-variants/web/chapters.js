@@ -263,7 +263,7 @@ function chapterThesis(M) {
   const lede = el('p', 'guide-lede');
   lede.innerHTML = rich(
     'Those two costs are the spine of everything below. They are worth separating, because they ' +
-      'behave differently and almost every mechanism here goes after one or the other:'
+      'behave differently and most of the mechanisms here go after one or the other:'
   );
   guide.append(lede);
 
@@ -1341,10 +1341,17 @@ function chapterLimits(M) {
        * most interesting sentence on the page, buried in the limits section and framed as an
        * apology — it is a finding". AGENTS.md wants a failure in the opening tiles and this is the
        * honest one. What stays here is the consequence for coverage, which is a limit. */
+      /* THE CLAIM AND ITS EVIDENCE, IN ONE PLACE. An earlier edit promoted this to the opening
+       * tiles and left a clause here saying so — but the tile that went up carries the *shipping*
+       * gap, which is a different finding, so the pointer aimed at a sentence that does not exist.
+       * A cross-reference to a thing you decided not to write is worse than no cross-reference.
+       * The finding is stated here in full instead, with the window it was checked over. */
       '**The recent end of this chart is drawn almost entirely from labs that publish papers.** ' +
-        'That is a real bias in what a chronology can see rather than an accident of our ' +
-        'searching, and it is stated at the top of the page because it is a finding as well as a ' +
-        'limit.',
+        'Between December 2025 and 31 August 2026 we checked the three labs whose models are most ' +
+        'used and which publish least — OpenAI, Anthropic and Meta — for a new attention ' +
+        'mechanism, and found no architecture at all: only **system cards**, which name no ' +
+        'attention mechanism, no positional scheme and no parameter count. That is a real bias in ' +
+        'what a chronology can see, not an accident of our searching.',
       /* JEPA IN ONE LINE. This ran to 115 words introducing a brand-new acronym eight thousand
        * words in, for a family that then turns out not to be on the page at all. Four readers
        * flagged it and every one asked for a sentence. */
