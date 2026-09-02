@@ -11,9 +11,9 @@ here so `README.md` can stay a guide and `CLAUDE.md` can stay a rule list.
 rather than measurements from a model we trained.
 
 **Why.** Every previous exercise in this repo measured something it ran, so the instinct was to
-find something to train. That instinct is wrong here. The assignment's graded axis is stated
-plainly — *"Your job is to be right about the dates, right about the trade-offs, and clear about the
-story"* — and a training run would be effort spent away from the thing being graded. A wrong date is
+find something to train. That instinct is wrong here. The graded axis is the dates, the
+trade-offs and the clarity of the story, so a training run would be effort spent away from the thing
+being graded. A wrong date is
 the failure mode; a missing experiment is not.
 
 **What would overturn it.** An assignment revision asking for a measured comparison between
@@ -28,8 +28,8 @@ two pretrained models, not two forward passes.
 `quoted_date`. `quoted_date` holds the source's **own** wording; a test parses it and compares it to
 the recorded ISO date.
 
-**Why.** The instructor's warning is specific: *"Your agent will happily invent a launch date and
-describe a technique it has half remembered."* A convention would not have been enough — the whole
+**Why.** The warning we were given is specific: an agent asked for a launch date will supply a
+confident one it has half remembered. A convention would not have been enough — the whole
 point is that a fabricated date looks exactly like a real one. Storing the source's own string turns
 "is this date right?" into a comparison between two fields a reader can do in their head, and turns
 a transcription slip into a test failure. It caught a deliberately transposed `2021-04-20` →
@@ -77,8 +77,7 @@ with `kind: "release"`, which the schema already supports.
 **Decision.** `timeline.pressure_by_period` counts what each window contains, and `Period.dominant`
 returns `None` on a tie instead of choosing.
 
-**Why.** The brief hands us an answer to Question 2 — *"first it wants exactness, then it wants
-memory back, then it wants length, then it wants memory back again"* — and printing that sentence
+**Why.** The brief hands us an answer to Question 2 — *exactness, then memory, then length, then memory again* — and printing that sentence
 over a chart would be the easiest thing in this exercise. It would also be the same failure as an
 unsourced date: a claim presented as a finding without being one.
 

@@ -16,10 +16,10 @@ mistake. It costs nothing: the whole set is about 12 MB of text.
 
 **What it covers, and why that is wider than the tripwire.** The tripwire
 (`tests/test_local_only_files_present.py`) watches notebooks, builders and briefs — the three
-classes `AGENTS.md` names. But `docs/notes/`
-holds the entire course corpus (transcripts, assignments, and material for sessions this repo has
-not reached yet), and `docs/EXPLAINER_*.md` are the two files any explainer is meant to be built
-from. All of it is gitignored, none of it is regenerable, and none of it was in the tripwire. A
+classes `AGENTS.md` names. The confidential reference material lives **outside the repository**
+(see `EXTERNAL_SOURCES`) and is snapshotted here too, and `docs/EXPLAINER_*.md` are the two files
+any explainer is meant to be built from. All of it is gitignored, none of it is
+regenerable, and none of it was in the tripwire. A
 backup that only covered the documented cases would have missed the largest exposure.
 
 **What it deliberately does NOT cover.** Anything regenerable (`artifacts/`, `data/`, `public/`,
@@ -42,6 +42,7 @@ import argparse
 import hashlib
 import json
 import logging
+import os
 import subprocess
 import sys
 import textwrap
@@ -66,11 +67,6 @@ PATTERNS: tuple[str, ...] = (
     "docs/BRIEF.md",
     "docs/SESSIONS.md",
     "docs/EXPLAINER_*.md",
-    # A directory sweep, not an extension allowlist. `.gitignore` excludes this path "in any form",
-    # so a `.pdf`, a `.txt` or a `.png` added to the course corpus is exactly as unrecoverable as a
-    # `.md` — and an allowlist would have skipped it without a word, in the one area both this file
-    # and AGENTS.md call the largest exposure.
-    "docs/notes/**/*",
     "TODO.md",
     # Hand-written planning and critique notes that live beside an exercise. Only the untracked ones
     # are taken: `collect` drops anything git already has, so this cannot quietly start duplicating
@@ -105,6 +101,23 @@ PATTERNS: tuple[str, ...] = (
     # or of a file since rewritten, is gone for good.
     "docs/standards-history/*",
 )
+
+#: Directories that live **outside the repository** and are still backed up here.
+#:
+#: The confidential reference material used to sit inside the working tree, gitignored. That worked
+#: for the bytes and failed for everything else: a tracked document could still name its files or
+#: quote them, and several did. Moving it out removes the whole class — there is no path inside the
+#: repo to leak, nothing for `.gitignore` to name, and no way to commit it by accident.
+#:
+#: It still needs a backup, because "outside the repo" protects it from git and from nothing else.
+#: The location is overridable so a second machine can put it elsewhere; the default is a sibling of
+#: the repo, the same shape as the store itself.
+EXTERNAL_SOURCES: dict[str, Path] = {
+    "notes": Path(
+        os.environ.get("LLM_NOTES_DIR", str(REPO_ROOT.parent / f".{REPO_ROOT.name}-notes"))
+    ),
+}
+
 
 #: Never copied. A match is **skipped and reported**, and the run exits non-zero.
 #:
@@ -349,6 +362,17 @@ def verify(root: Path, dest: Path, files: list[Path]) -> tuple[list[str], list[s
     Returns:
         `(absent from the store, differing in content, lost from the checkout)`.
     """
+
+    def _source_of(relative: Path) -> Path | None:
+        """Where a stored path came from — inside the repo, or an external directory."""
+        head = relative.parts[0] if relative.parts else ""
+        if head in EXTERNAL_SOURCES:
+            source = EXTERNAL_SOURCES[head]
+            # An external directory that is simply not mounted on this machine is not a loss, and
+            # must not be reported as one. Absent source, absent verdict.
+            return source.joinpath(*relative.parts[1:]) if source.is_dir() else None
+        return root / relative
+
     absent, differing = [], []
     for relative in files:
         backed = dest / relative
@@ -356,6 +380,19 @@ def verify(root: Path, dest: Path, files: list[Path]) -> tuple[list[str], list[s
             absent.append(str(relative))
         elif _digest(backed) != _digest(root / relative):
             differing.append(str(relative))
+
+    for name, source in EXTERNAL_SOURCES.items():
+        if not source.is_dir():
+            continue
+        for path in sorted(source.rglob("*")):
+            if not path.is_file() or ".git" in path.parts or path.name == ".DS_Store":
+                continue
+            relative = Path(name) / path.relative_to(source)
+            backed = dest / relative
+            if not backed.is_file():
+                absent.append(str(relative))
+            elif _digest(backed) != _digest(path):
+                differing.append(str(relative))
 
     lost = []
     if dest.is_dir():
@@ -365,7 +402,8 @@ def verify(root: Path, dest: Path, files: list[Path]) -> tuple[list[str], list[s
             relative = backed.relative_to(dest)
             if relative == Path("README.md"):
                 continue  # the store's own note to a reader, with no counterpart in the repo
-            if not (root / relative).is_file():
+            origin = _source_of(relative)
+            if origin is not None and not origin.is_file():
                 lost.append(str(relative))
     return absent, differing, sorted(lost)
 
@@ -392,9 +430,9 @@ def snapshot(root: Path, dest: Path, files: list[Path], *, message: str) -> int:
         (dest / "README.md").write_text(
             "# local-only backup\n\n"
             "Versioned snapshots of the gitignored, non-regenerable files in "
-            f"`{root.name}` — notebooks, notebook builders, briefs and the course corpus under "
-            "`docs/notes/`. Git cannot restore those from the repo itself, because git has "
-            "never seen them.\n\n"
+            f"`{root.name}` — notebooks, notebook builders, briefs — plus the reference material "
+            "that lives outside the repo entirely. Git cannot restore any of it from the repo "
+            "itself, because git has never seen it.\n\n"
             "Written by `tools/backup_local_only.py`. Restore a file with:\n\n"
             "```bash\n"
             "cp <this-repo>/<path> <working-repo>/<path>\n"
@@ -404,10 +442,21 @@ def snapshot(root: Path, dest: Path, files: list[Path], *, message: str) -> int:
             encoding="utf-8",
         )
 
+    # Everything the repo holds, plus every external directory. `pairs` is (store path, source
+    # file); the store does not care that some of these came from outside the working tree.
+    pairs: list[tuple[Path, Path]] = [(rel, root / rel) for rel in files]
+    for name, source in EXTERNAL_SOURCES.items():
+        if not source.is_dir():
+            continue
+        for path in sorted(source.rglob("*")):
+            if not path.is_file() or ".git" in path.parts or path.name == ".DS_Store":
+                continue
+            pairs.append((Path(name) / path.relative_to(source), path))
+
     changed = 0
-    for relative in files:
+    for relative, origin in pairs:
         target = dest / relative
-        payload = (root / relative).read_bytes()
+        payload = origin.read_bytes()
         try:
             target.parent.mkdir(parents=True, exist_ok=True)
             if not target.is_file() or target.read_bytes() != payload:

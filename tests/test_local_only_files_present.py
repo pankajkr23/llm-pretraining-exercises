@@ -18,10 +18,14 @@ is not meant to. Run it on the checkout that holds the files, especially after a
 pull, merge, rebase or stash.
 """
 
+import sys
 from pathlib import Path
 
 import pytest
 from _exercises import exercises_in
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
+import backup_local_only as backup  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -42,15 +46,16 @@ EXPECTED_BRIEFS = [p / "BRIEF.md" for p in EXERCISES]
 #: watched it.**
 #:
 #: The three lists above are the classes `AGENTS.md` names, and they were the only ones guarded.
-#: But `docs/notes/` holds every topic's notes, transcripts and assignments — including
-#: material for topics this repo has not reached yet — and `docs/EXPLAINER_*.md` are the two
+#: The confidential reference material now lives **outside the repository entirely**, so it can no
+#: longer be named by a tracked path, ignored by mistake, or committed by accident. It is still
+#: watched here, via the backup tool that knows where it is. `docs/EXPLAINER_*.md` are the two
 #: files any explainer is supposed to be built from. All gitignored, none regenerable, none
 #: guarded. A tripwire that covers the documented cases and not the biggest one is a tripwire that
 #: reads as coverage.
 #:
 #: Counted rather than enumerated: the corpus grows a file per topic, so a fixed list would go
 #: stale and a stale list here fails silently in the safe-looking direction.
-NOTES_CORPUS = REPO_ROOT / "docs" / "notes"
+NOTES_CORPUS = backup.EXTERNAL_SOURCES["notes"]
 
 #: Where `tools/backup_local_only.py` writes. Read here as a **high-water mark**: a file the store
 #: holds and this checkout does not is a loss, and no hand-written floor can notice that.
@@ -167,14 +172,14 @@ def test_the_reference_corpus_has_not_shrunk() -> None:
     if not NOTES_CORPUS.is_dir():
         if is_a_working_checkout():
             pytest.fail(
-                "docs/notes is gone entirely and this checkout still has other local-only "
-                "files, so it is not a clone. That directory is the whole course corpus."
+                f"the reference material at {NOTES_CORPUS} is gone entirely and this checkout "
+                "still has other local-only files, so it is not a clone."
             )
-        pytest.skip("no docs/notes here — a fresh clone has none (it is gitignored)")
+        pytest.skip("the reference material is not present on this machine")
 
     here = {p for p in NOTES_CORPUS.rglob("*") if p.is_file() and p.name != ".DS_Store"}
 
-    backed_up = STORE / "docs" / "notes"
+    backed_up = STORE / "notes"
     if backed_up.is_dir():
         was = {
             p.relative_to(backed_up)
@@ -183,15 +188,15 @@ def test_the_reference_corpus_has_not_shrunk() -> None:
         }
         gone = sorted(str(r) for r in was - {p.relative_to(NOTES_CORPUS) for p in here})
         assert not gone, (
-            f"{len(gone)} files the backup store holds are missing from docs/notes: "
-            f"{gone[:6]}. Restore them from {backed_up} before doing anything else."
+            f"{len(gone)} files the backup store holds are missing from the reference "
+            f"material. Restore them from {backed_up} before doing anything else."
         )
     else:
         # No store on this machine yet, so fall back to the shape check. Weaker on purpose: it is
         # better than nothing and it says so.
         assert len(here) >= len(EXERCISES), (
-            f"docs/notes holds {len(here)} files for {len(EXERCISES)} exercises, and there is "
-            f"no backup store to compare against. Run tools/backup_local_only.py."
+            f"the reference material holds {len(here)} files for {len(EXERCISES)} exercises, "
+            f"and there is no backup store to compare against. Run tools/backup_local_only.py."
         )
 
 

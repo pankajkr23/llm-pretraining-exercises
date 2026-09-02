@@ -22,15 +22,12 @@ uv run pytest src/exercises/08-modern-attention-variants -m integration
 ## What makes this exercise different
 
 Every previous exercise measured something it ran. This one's central claim is a **chronology**, and
-the instructor grades on it:
+it is graded on three things: the dates, the trade-offs,
+and the clarity of the story. We were also warned about the specific failure mode — an agent asked
+for a launch date supplies a confident one it has half remembered — so every date is checked against
+the paper or release itself.
 
-> "Your job is to be right about the dates, right about the trade-offs, and clear about the story."
->
-> "Your agent will happily invent a launch date and describe a technique it has half remembered.
-> Check every date against the actual paper or release."
-
-He also says plainly that a missing mechanism scores zero, and invites us to catch errors in his own
-material. So the rules below are all about evidence, not about code.
+A missing mechanism scores zero, and we were invited to catch errors in the source material. So the rules below are all about evidence, not about code.
 
 ## The rules this exercise adds
 
@@ -93,7 +90,7 @@ inputs would reconcile them (a smaller model, fewer KV heads, or fp8 would each 
 
 ## Where the material actually comes from
 
-`docs/notes/s8.md` teaches ten of the eighteen mandated mechanisms. **Eight are named in the
+The reference notes teach ten of the eighteen mandated mechanisms. **Eight are named in the
 coverage list and never taught**: sinusoidal, learned absolute positions, ALiBi, sliding window,
 attention sinks, NTK-aware scaling, YaRN and MLA. Those are sourced entirely from outside the course
 material, and `taught_in_session` on each entry records which is which — so a reader can see where
@@ -247,7 +244,7 @@ module describing any mechanism, and `web/field-guide/` is a second route over t
 ## The readability pass, and the two defects it turned up that were not readability
 
 The page was audited section by section against Sebastian Raschka's *A Visual Guide to Attention
-Variants in Modern LLMs* (local-only, `docs/notes/`) and against `AGENTS.md`'s ladder of readers.
+Variants in Modern LLMs* (local reference only) and against `AGENTS.md`'s ladder of readers.
 75 findings, 37 edits. Most were wording. Two were not, and both are the kind this exercise exists
 to catch.
 

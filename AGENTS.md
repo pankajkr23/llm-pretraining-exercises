@@ -48,8 +48,13 @@ the new one, and deletes it. Nobody deleted anything. So:
   rebuilds a notebook.
 
 - **The protected set is wider than the three classes named above, and the extra ones were
-  unguarded for months.** `docs/notes/**` is the entire course corpus — every session's notes,
-  transcripts and assignments, including sessions this repo has not reached — and
+  unguarded for months.** the confidential reference material **lives outside the repository entirely**
+  (`tools/backup_local_only.py::EXTERNAL_SOURCES`, overridable with `LLM_NOTES_DIR`). It was inside,
+  gitignored, and that protected the bytes and nothing else: a tracked document could still name its
+  files, describe them or quote them, and several did. Moving it out removes the class — there is no
+  path inside the repo to leak and nothing to commit by accident. **Never name a file in it, quote
+  it, or describe its contents in a tracked document**; `tests/test_no_confidential_leaks.py` checks
+  both. Alongside it,
   `docs/EXPLAINER_PROMPT.md` / `docs/EXPLAINER_PATTERN.md` are the two documents any explainer is
   required to be built from. All gitignored, none regenerable, none watched by the tripwire until
   now. **85 files, 12 MB.** A guard that covers the documented cases and misses the largest one
@@ -149,8 +154,8 @@ repo** — it is the real safety net.
       --title "Loss functions and output heads" --package lossheads \
       --summary "One sentence for the root README row." [--dry-run]
   ```
-  It writes the whole skeleton, **including the three gitignored files** (`BRIEF.md`, seeded from
-  `docs/notes/sN_assignment.md` when one exists; `tools/build_notebook.py`; and the notebook it
+  It writes the whole skeleton, **including the three gitignored files** (`BRIEF.md`, seeded from the local
+  assignment text when one exists; `tools/build_notebook.py`; and the notebook it
   builds), joins the `rest` CI shard, adds the root README row, and prints what is left for you.
 
   **The sequencing is the reason it exists.** `tests/_exercises.py::exercises_in` only counts a

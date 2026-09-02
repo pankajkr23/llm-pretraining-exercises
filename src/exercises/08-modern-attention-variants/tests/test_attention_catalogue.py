@@ -104,7 +104,8 @@ def test_no_mechanism_is_all_upside() -> None:
 
 
 def test_every_mechanism_carries_the_narrative_the_notes_require() -> None:
-    """The five-step shape `s8.md` mandates: what existed, the problem, the mechanism, what it
+    """The five-step shape the assignment mandates: what existed, the problem, the mechanism,
+    what it
     fixed, and the new trade-off it introduced."""
     for mechanism in MECHANISMS:
         for field in ("what_existed", "problem", "mechanism", "what_it_fixed", "new_tradeoff"):

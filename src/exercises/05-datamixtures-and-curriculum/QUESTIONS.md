@@ -1,17 +1,19 @@
 # Session 5 — the 26 questions, answered or declined
 
-Every question from the check-yourself set, the session-level three, the retrieval deck and the
-open ledger. Each carries a verdict on whether it can be answered **from sources on this machine**,
-and the answer where it can.
+Every question we were asked to answer for this topic. Each carries a verdict on whether it can be
+answered **from sources on this machine**, and the answer where it can.
 
 ## What counts as a source
 
 | source | status | used for |
 | --- | --- | --- |
-| `docs/notes/s5.md` | present, 249 lines | the notes: masking rule, OPUS widget, stage table, benchmark list |
-| `docs/notes/s5_transcript.md` | present, 943 lines | the spoken session, including things the notes do not say |
+| local reference material | on this machine only, never in the repo | the requirements the questions below are answered against |
 | `SPEC.md`, `inventory.py`, `lanes.py` | this exercise | every supply figure and epoch count below |
 | `results/*.json` | this exercise | the proxy measurements |
+
+The first row is deliberately vague. That material is confidential, it is not ours to redistribute,
+and **naming its files or describing their contents in a tracked document publishes exactly what
+gitignoring it was meant to prevent.** What is published here is what we decided and why.
 
 **Arithmetic is computed, not recalled.** Every number below was produced by running the repo's own
 constants; where a question supplies its own figure (627M agentic, 114B non-synthetic Indic, 64B

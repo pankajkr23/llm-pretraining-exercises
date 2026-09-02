@@ -1,9 +1,10 @@
 """Every dimension this exercise measures against, in one place.
 
-The numbers are Session 8's own yardstick, not ours. `s8.md` works its cache arithmetic against a
-48-layer model with 8 KV heads and a head dimension of 128 in bf16, and reports 6.44 GB for one user
-at a 32,768-token context. Recording the configuration here rather than inlining it means the claim
-"we reproduce the session's number" is checkable: change one field and the test that reproduces
+The numbers are the topic's own yardstick, not ours. The reference notes work the cache
+arithmetic against a 48-layer model with 8 KV heads and a head dimension of 128 in bf16, and
+report 6.44 GB for one user at a 32,768-token context. Recording the configuration here rather
+than inlining it means the claim
+"we reproduce the reference number" is checkable: change one field and the test that reproduces
 6.44 GB fails, which is the point.
 """
 
@@ -32,7 +33,7 @@ class Yardstick:
     query_heads: int = 8
     head_dim: int = 128
     dtype: str = "bf16"
-    source: str = "docs/notes/s8.md — the configuration used throughout the cache section"
+    source: str = "the reference notes — the configuration used throughout the cache section"
 
     @property
     def bytes_per_number(self) -> int:

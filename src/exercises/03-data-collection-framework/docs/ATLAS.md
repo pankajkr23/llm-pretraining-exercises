@@ -1361,6 +1361,6 @@ For calibration of what "frontier corpus" means today (from the Session-3 notes,
 
 ## B.7 Grounding statement
 
-Everything in B.1–B.4 is extracted from documents **inside this project** (2305.16264, 2606.07404, 2602.05400, 2605.29379, 2605.29459, 2511.03237, s3.md, s5.md) via project-knowledge retrieval — quotes and figures are verbatim from those retrievals. Everything in B.5 is from **today's cs.CL announcement**, parsed live from arxiv.org, with all six headline abstracts fetched directly before characterization. Sardana & Frankle is cited at thesis level only and flagged as such. Still unverified, unchanged from A.7: real-time X/Twitter; whether IndicTalk / IKS-Instruct data files are actually uploaded; R\*_D for Indic/synthetic text (nobody has measured it — you should be first).
+Everything in B.1–B.4 is extracted from documents **inside this project** (2305.16264, 2606.07404, 2602.05400, 2605.29379, 2605.29459, 2511.03237, plus local reference material) via project-knowledge retrieval — quotes and figures are verbatim from those retrievals. Everything in B.5 is from **today's cs.CL announcement**, parsed live from arxiv.org, with all six headline abstracts fetched directly before characterization. Sardana & Frankle is cited at thesis level only and flagged as such. Still unverified, unchanged from A.7: real-time X/Twitter; whether IndicTalk / IKS-Instruct data files are actually uploaded; R\*_D for Indic/synthetic text (nobody has measured it — you should be first).
 
 *End of Addendum B.*

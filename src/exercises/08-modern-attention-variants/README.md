@@ -3,18 +3,14 @@
 **Thirty ways of computing attention and of telling a model where a token sits, ordered by the
 date each one actually appeared, with every date read from the primary source.**
 
-Session 8's assignment is not to describe attention mechanisms. It is to put them in **chronological
-order** and explain each as an answer to a problem that existed *at that moment* — because the order
-shows something a list cannot:
+The task here is not to describe attention mechanisms. It is to put them in **chronological order**
+and explain each as an answer to a problem that existed *at that moment*, because the order shows
+something a list cannot: read in sequence, the field visibly changes its mind, and having seen it
+change you can make a reasonable guess at what comes next. A list flattens that away.
 
-> "When you lay them out on a timeline you can watch the field change its mind … You cannot see that
-> from a list. You can see it from a timeline, and once you see it you can guess what comes next,
-> which is the whole reason I am asking."
-
-The graded axis is therefore the **dates**, and the instructor was explicit about the failure mode:
-
-> "Your agent will happily invent a launch date and describe a technique it has half remembered.
-> Check every date against the actual paper or release."
+The graded axis is therefore the **dates**, and we were warned about the failure mode specifically:
+an agent asked for a launch date will supply a confident one it has half remembered, so every date
+has to be checked against the paper or release itself rather than recalled.
 
 So this exercise treats a date the way the other exercises treat a measurement. Every entry in
 [`results/mechanisms.json`](results/mechanisms.json) carries the URL it was read from, the source's
@@ -165,8 +161,7 @@ does not say which was meant.
 ### What the order shows
 
 Derived by `timeline.pressure_by_period`, not asserted. The brief predicts a tidy sequence —
-*"first it wants exactness, then it wants memory back, then it wants length, then it wants memory
-back again"* — and the data is messier than that: **one of the seven two-year windows has no single
+exactness, then memory, then length, then memory again — and the data is messier than that: **one of the seven two-year windows has no single
 dominant pressure at all.** In that period the field was attacking several bills at once, and a test
 fails if that ever stops being true, so the finding cannot quietly become the tidy story.
 

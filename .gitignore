@@ -248,12 +248,6 @@ public/
 # unpublished source documents that inform the work but are not ours to redistribute.
 **/docs/*.html
 
-# Reference material — source documents that inform the work, never versioned.
-# Nothing under any docs/notes/ directory goes on the repo, in any form.
-docs/notes/
-docs/notes/**
-**/docs/notes/
-**/docs/notes/**
 
 # Working handoff notes, wherever they are — a local scratchpad, like TODO.md above.
 HANDOFF.md

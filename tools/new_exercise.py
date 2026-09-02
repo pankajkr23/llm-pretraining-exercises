@@ -438,9 +438,10 @@ from a tracked file — the link resolves on a working checkout and 404s for eve
     assignment = REPO / "docs" / "notes" / f"s{int(spec.session)}_assignment.md"
     if assignment.is_file():
         body = re.sub(r"!\[\]\([^)]*\)", "", assignment.read_text(encoding="utf-8"))
-        return f"{header}Source: `docs/notes/{assignment.name}`.\n\n---\n\n{body.strip()}\n"
+        note = "Source: local reference material (not in the repo)."
+        return f"{header}{note}\n\n---\n\n{body.strip()}\n"
     return (
-        f"{header}No `docs/notes/s{int(spec.session)}_assignment.md` was found when this was "
+        f"{header}No local assignment text was found for this topic when this was "
         f"scaffolded. Paste the assignment here.\n"
     )
 

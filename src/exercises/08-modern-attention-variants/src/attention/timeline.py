@@ -4,10 +4,10 @@ Question 2 of the assignment asks: *"What does the timeline actually show? Write
 the mechanisms were in date order that you could not see as a list."* The instructor's own answer,
 in the brief, is a claimed arc:
 
-    "first it wants exactness, then it wants memory back, then it wants length, then it wants
-     memory back again"
+    exactness, then memory, then length, then memory again
 
-and in `s8.md`, longer: exact global attention -> cheaper decoding memory -> better position
+and, at length, in the reference notes: exact global attention -> cheaper decoding memory ->
+better position
 handling -> longer contexts -> recurrent state returning -> sparsity returning -> compression
 becoming more aggressive.
 

@@ -82,7 +82,7 @@ small for 13 scripts.
 
 ## What V5's vocabulary should be, and what it costs
 
-**Reuse the instructor's own training script.** `docs/notes/s2_assignment_solution.md` ships
+**Reuse the instructor's own training script.** The reference solution we were given ships
 `train_tokenizer.py` with the recipe already settled: HuggingFace BPE, `min_frequency=1`, NFKC
 normalisation only, **Metaspace** rather than ByteLevel (*"ByteLevel spends too many tokens on
 UTF-8 bytes for Indic scripts"* — which the Manipuri column above confirms), and a hard round-trip

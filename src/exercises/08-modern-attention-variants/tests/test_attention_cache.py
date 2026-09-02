@@ -1,6 +1,7 @@
 """The session's own arithmetic, reproduced rather than quoted.
 
-`s8.md` states its cache figures as results: 6.44 GB for one user at 32,768 tokens, 51.54 GB for
+The reference notes state their cache figures as results: 6.44 GB for one user at 32,768
+tokens, 51.54 GB for
 eight, and a quarter of the cache for GQA at two KV heads. Those are the numbers this exercise
 builds an argument on, so it recomputes them from the formula instead of copying them into prose.
 
@@ -33,7 +34,7 @@ def test_the_yardstick_is_the_one_the_notes_used() -> None:
 
 
 def test_one_user_at_32k_costs_what_the_notes_say() -> None:
-    """`s8.md`: one user at a 32,768-token context is 6.44 GB of KV cache."""
+    """The reference figure: one user at a 32,768-token context is 6.44 GB of KV cache."""
     got = kv_cache_bytes(YARDSTICK, context=32_768, batch=1)
     assert got == 6_442_450_944
     assert round(got / GB, 2) == 6.44
@@ -54,7 +55,7 @@ def test_the_cache_grows_linearly_in_context_and_batch() -> None:
 
 
 def test_gqa_at_two_heads_is_exactly_a_quarter_of_mha() -> None:
-    """`s8.md`'s headline sharing figure, and it is exact rather than approximate."""
+    """The reference headline sharing figure, and it is exact rather than approximate."""
     mha = kv_cache_bytes(YARDSTICK, context=32_768, kv_heads=8)
     gqa = kv_cache_bytes(YARDSTICK, context=32_768, kv_heads=2)
     mqa = kv_cache_bytes(YARDSTICK, context=32_768, kv_heads=1)

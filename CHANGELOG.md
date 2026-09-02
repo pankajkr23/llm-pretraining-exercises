@@ -12,12 +12,12 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Changed
 
-- **`docs/sessions/` is now `docs/notes/`**, still gitignored and still backed up. 133 files, moved
-  in the local-only store as a `git mv` so every file's history survives under the new path — the
-  store is an append-only high-water mark, so without that commit the tripwire would have gone red
-  permanently, asking why 133 files it holds had vanished from the working tree. 42 path references
-  updated across 15 files, plus two paths built from parts (`REPO_ROOT / "docs" / "sessions"`) that
-  a string replacement could not have caught.
+- **The local reference directory was renamed**, and is still gitignored and still backed up. It was
+  moved in the local-only store as a `git mv` so every file's history survives under the new path —
+  the store is an append-only high-water mark, so without that commit the tripwire would have gone
+  red permanently, asking why files it holds had vanished from the working tree. Path references
+  were updated across 15 tracked files, including two built from parts rather than quoted, which a
+  string replacement could not have caught.
 - **`.gitignore` no longer contains the word "session" anywhere**, including in its comments.
 - **Code comments and internal test identifiers no longer refer to numbered teaching sessions** —
   they name the exercise (`exercise 05's headline mixture`) or the source notes (`the notes' own
