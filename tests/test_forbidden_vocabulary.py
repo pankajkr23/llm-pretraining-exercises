@@ -178,7 +178,26 @@ def test_every_allowed_sense_actually_clears_a_line() -> None:
     )
 
 
-def test_every_exempt_path_still_exists() -> None:
-    """A path exemption outliving its path is an exemption pointing at nothing."""
-    missing = [p for p in EXEMPT_PATHS if not (REPO_ROOT / p).exists()]
-    assert not missing, f"EXEMPT_PATHS names paths that no longer exist: {missing}"
+def test_every_exempt_path_is_real_or_deliberately_local() -> None:
+    """A path exemption outliving its path is an exemption pointing at nothing.
+
+    **"Exists" is the wrong question on a clone**, and asking it turned CI red the first time this
+    ran there: one of the exempt paths is gitignored, so it is present on a working checkout and
+    absent everywhere else by design. A path is stale only when it is neither present nor something
+    git is deliberately keeping out — which is a fact about the repo rather than about the machine.
+    """
+    stale = []
+    for rel in EXEMPT_PATHS:
+        if (REPO_ROOT / rel).exists():
+            continue
+        ignored = subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "check-ignore", "-q", rel],
+            capture_output=True,
+            check=False,
+        )
+        if ignored.returncode != 0:
+            stale.append(rel)
+    assert not stale, (
+        "EXEMPT_PATHS names paths that neither exist nor are gitignored, so they exempt "
+        f"nothing: {stale}"
+    )
