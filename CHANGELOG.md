@@ -13,12 +13,18 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 ### Added
 
 - **The last two released versions of every standard file are now frozen in
-  `docs/standards-history/`, tracked on the same branch.** Git already held them; finding one meant
+  `docs/standards-history/`, local-only on the working checkout.** Git already held them; finding one meant
   knowing a rewrite had happened and hunting the commit that did it, and the rewrites worth
   comparing are exactly the ones nobody remembers making. `tools/snapshot_standards.py` writes them
   at a release tag and `tests/test_standards_history.py` asserts each is byte-identical to the tag
   it names, carries a `FROZEN COPY — NOT IN FORCE` banner, and does not silently exceed the
   two-version retention. Snapshotting is now a step in the release ritual.
+
+  The archive is **gitignored**: tracking it would put a second copy of `AGENTS.md` and
+  `docs/DESIGN.md` on the remote, which is the argument that untracked the notebooks. So it joins
+  the protected local-only set — in `backup_local_only.py::PATTERNS` and under the tripwire — and
+  the guards that read it skip on a clone and in CI. Two that run everywhere hold the pair together:
+  one fails if a snapshot is ever committed, one fails if the ignore rule disappears.
 
 - **Exercise 08's body type is fluid, 19px to 22px, and its prose is half the screen.** The
   complaint was that the page narrowed too much; the lever turned out to be type size rather than

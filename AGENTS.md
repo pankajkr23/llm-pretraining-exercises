@@ -60,10 +60,12 @@ the new one, and deletes it. Nobody deleted anything. So:
   paragraph named three classes while `PATTERNS` protected eleven, so an agent reading only the
   rulebook would have believed `rm TODO.md` was recoverable. **Read `PATTERNS` before touching
   anything gitignored.** Each entry there carries a comment saying why it cannot be regenerated, and
-  five are named nowhere else: `TODO.md` · `.claude/settings.local.json` (losing it silently changes
+  six are named nowhere else: `TODO.md` · `.claude/settings.local.json` (losing it silently changes
   what agents may run without asking, rather than failing) · `src/exercises/*/docs/*.md` (planning
   and critique notes) · `src/exercises/*/docs/*.html` (saved reference pages, snapshots of things
-  that change) · and **`src/exercises/*/src/solution/**/*`, the one class with no recovery path at
+  that change) · `docs/standards-history/*` (the frozen standard files — the only member that is
+  **re-creatable**, via `snapshot_standards.py --ref <tag>`, so long as the tag still exists) · and
+  **`src/exercises/*/src/solution/**/*`, the one class with no recovery path at
   all** — it has never been in git on any branch, so the `git show <untracking-commit>^:<path>`
   fallback below is inapplicable by construction, and its `corpus/*.raw.html` inputs pin no revision,
   so re-fetching returns a different article. The backup store is the only copy that exists.
@@ -859,6 +861,7 @@ building or changing a page; the rules that matter across exercises are below.
   diff docs/standards-history/DESIGN.v0.12.0.md docs/DESIGN.md   # what a rewrite actually dropped
   uv run python tools/snapshot_standards.py --check              # is the newest release captured?
   uv run python tools/snapshot_standards.py                      # capture it, after a release
+  uv run python tools/snapshot_standards.py --ref v0.11.0        # rebuild an older one, any time
   ```
 
   The set is `tools/snapshot_standards.py::STANDARDS` — `AGENTS.md`, `docs/DESIGN.md`, `ci.yml`,
@@ -868,3 +871,14 @@ building or changing a page; the rules that matter across exercises are below.
   banner (an agent reading an archived `AGENTS.md` as live policy is the obvious failure), and that
   retention is not silently exceeded. **Rewriting a standard file is not the same as editing one:**
   list what the rewrite drops before you commit it, and put anything you are keeping back.
+
+  **The archive is gitignored, and that is a decision with two consequences.** Tracking it would put
+  a second copy of `AGENTS.md` and `DESIGN.md` on the remote — the same argument that untracked the
+  notebooks — and it is only ever read on the machine doing the rewriting. So: every guard that
+  reads it **skips** on a clone and in CI, which means this rule is enforced by whoever has the
+  archive or by nobody; and it joins the protected local-only set, in `PATTERNS` and under the
+  tripwire, because *untracked and unbacked-up* is precisely the class this repo has already lost
+  twice. Unlike the notebooks it is **re-creatable** — `--ref <tag>` rebuilds any snapshot whose tag
+  still exists — so the irrecoverable case is narrow: a snapshot of a deleted tag. Two guards that
+  run everywhere hold the pair together: one fails if a snapshot is ever committed, one fails if the
+  ignore rule disappears. It must be exactly one of tracked or ignored, never neither.

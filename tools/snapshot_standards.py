@@ -6,8 +6,10 @@ ones nobody remembers making. `docs/DESIGN.md` went 199 -> 488 lines in a single
 rules, 19 survived reworded and **nine were dropped with no replacement anywhere in the repo**. None
 of that was visible without a deliberate diff against a version somebody had to go looking for.
 
-So the last two released versions of each standard file sit beside the live one, tracked on the
-same branch.
+So the last two released versions of each standard file sit beside the live one. The archive is
+**gitignored** — tracking it would put a second copy of AGENTS.md and DESIGN.md on the remote, which
+is the argument that untracked the notebooks — so it is backed up by `tools/backup_local_only.py`
+and rebuildable from any tag that still exists.
 
     uv run python tools/snapshot_standards.py            # snapshot the latest tag
     uv run python tools/snapshot_standards.py --ref v0.12.0

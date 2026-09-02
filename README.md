@@ -18,6 +18,7 @@ under `src/exercises/NN-slug/` (numeric, zero-padded so folders sort correctly),
 
 ```text
 docs/DESIGN.md                    # the shared web design system (palette, type, tone)
+docs/standards-history/           # last two RELEASED versions of each standard file (LOCAL ONLY)
 src/exercises/NN-slug/            # one self-contained exercise per topic (workspace member)
   ├─ README.md                    # what it is + how to run
   ├─ CLAUDE.md                    # rules specific to this exercise (REQUIRED — a test checks for it)
@@ -80,6 +81,26 @@ More exercises are added each week.
 
 - **Tests:** `uv run pytest` (fast unit) · `uv run pytest -m integration` (slower end-to-end). Each exercise owns its `tests/`; the root `tests/` holds the repo-wide guards that no single exercise can own — every README's relative links and in-page anchors resolve, every exercise README carries a reading path, a runnable command and a statement of what it cannot establish, and **every published page from exercise 05 onward tells the same story in the same order** (`tests/test_page_spine.py`: a twelve-part spine from `thesis` to `reproduce`, declared as `data-role`, with a ledger that fails in *both* directions so a new exercise cannot skip it by accident).
 - **Lint / format:** `uv run ruff check --fix .` and `uv run ruff format .`. The enforceable style spec (PEP 8/257, modern typing, line length 100) lives in `pyproject.toml`.
+- **Before your first PR, install the local gates** — they run the three things CI fails on, in two seconds instead of two minutes:
+
+  ```bash
+  brew install gitleaks                     # the secret scan FAILS when absent; it never skips
+  uv run pre-commit install                 # gitleaks + ruff check + ruff format, on every commit
+  uv run playwright install chromium        # or every browser suite silently SKIPS
+  ```
+
+  A hook is skippable and absent on a fresh clone, so **CI still decides**. Without chromium the integration suites pass by not running — which reads as coverage and is not any.
+- **To see a page locally:** `bash deploy/vercel/build.sh` assembles every exercise's `web/` into `public/`, exactly as the deploy does. Open `public/NN-slug/index.html`.
+- **Changelog:** every user-facing change goes under `CHANGELOG.md`'s `[Unreleased]` **in the same PR** (Keep a Changelog + SemVer). Releasing moves that section to `[X.Y.Z]`, then a tag triggers the release workflow. **Production never auto-deploys** — previews go up per PR, production is gated on a gated environment approval.
+- **Some files exist only on your checkout, and git cannot restore them.** Session notebooks, their builders, every `BRIEF.md`, and the whole `docs/sessions/` corpus are gitignored — 190 files. `uv run python tools/backup_local_only.py` snapshots them to a **git** store outside the repo (so every version is kept, not just the latest), and `uv run pytest tests/test_local_only_files_present.py` is the tripwire to run after any branch switch, pull, merge, rebase or stash. The authoritative list is `tools/backup_local_only.py::PATTERNS`.
+- **Before rewriting a standard file, diff it against its last release.** `docs/standards-history/` keeps the last two released versions of `AGENTS.md`, `docs/DESIGN.md`, `ci.yml`, `.pre-commit-config.yaml`, `pyproject.toml` and `.gitignore`, so a rewrite's losses are a `diff` rather than an archaeology dig — `DESIGN.md` once lost nine rules that way with nothing red. It is **local-only** (tracking it would ship a second copy of the conventions to the remote), so a fresh clone has to build it once:
+
+  ```bash
+  uv run python tools/snapshot_standards.py --ref v0.11.0   # rebuild from any tag, any time
+  uv run python tools/snapshot_standards.py                 # and after each release
+  ```
+
+  Because it is untracked it is also backed up by `tools/backup_local_only.py`, and the guards that read it **skip** where it is absent.
 - **CI** (`.github/workflows/ci.yml`, on every PR and on pushes to `main`): **four concurrent jobs**, not one chain. `test` — `uv sync --all-packages` → `ruff check` → `ruff format --check` → unit tests → `node --check` over every `src/exercises/*/web/**/*.js`. `integration` — a **three-shard matrix** (`tokenization` · `mixtures` · everything else), each shard syncing, installing chromium and assembling the site before running the integration suite. `train` — installs the `train` extra with **CPU-only torch wheels** (191.8 MB rather than 2.7 GB, via a Linux-scoped index) and runs exactly the files whose module-level `importorskip("torch")` would otherwise skip them entirely. `security` — **gitleaks** over the full history.
 
 ## Adding a new exercise

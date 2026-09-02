@@ -7,6 +7,17 @@ reading it as instructions, or the archive silently stops being taken.
 
 Every guard is written twice — once against the real archive, once against a deliberately broken
 copy in a `tmp_path` — because a guard nobody has watched fail is not a guard.
+
+**Say plainly what local-only costs.** The archive is gitignored, so on a fresh clone and in CI
+there is nothing to read and **every test below skips**. A suite that only skips protects nothing,
+and that is the honest trade: the archive exists to be diffed on the machine doing the rewriting,
+and tracking it would ship a second copy of `AGENTS.md` and `DESIGN.md` to the remote — the same
+argument that untracked the notebooks. So these run on a working checkout or nowhere.
+
+What does still run everywhere is `test_the_archive_is_backed_up_because_nothing_else_holds_it`,
+which reads `PATTERNS` rather than the archive. That is the one invariant a clone can check, and it
+is the one that matters: an archive that is neither tracked nor backed up is the class of file this
+repo has already lost twice.
 """
 
 import subprocess
@@ -31,8 +42,19 @@ _MD_BODY_SEPARATOR = "---\n\n"
 
 
 def _archived() -> list[Path]:
-    """Every snapshot in the archive, README excluded."""
+    """Every snapshot in the archive, README excluded. Empty on a clone — the archive is ignored."""
+    if not ARCHIVE.is_dir():
+        return []
     return sorted(p for p in ARCHIVE.glob("*") if p.is_file() and p.name != "README.md")
+
+
+#: Everything that reads the archive skips where there is no archive to read: a fresh clone, and CI.
+#: Deliberately `skipif` rather than `importorskip` — the CI-shard ledger detects the latter, and
+#: this is not a dependency gate, it is a local-artefact gate.
+_NO_ARCHIVE = pytest.mark.skipif(
+    not _archived(),
+    reason="docs/standards-history/ is local-only and absent here (a clone, not a loss)",
+)
 
 
 def _tag_of(path: Path) -> str:
@@ -54,11 +76,13 @@ def _source_of(path: Path) -> str:
     return head[start : head.index("`", start)]
 
 
+@_NO_ARCHIVE
 def test_the_archive_is_not_empty():
     """A convention that stops being applied leaves an archive frozen at an old release."""
     assert _archived(), "docs/standards-history/ holds no snapshots"
 
 
+@_NO_ARCHIVE
 def test_every_snapshot_carries_the_not_in_force_banner():
     """Without it, an agent reads a superseded AGENTS.md as the conventions in force."""
     missing = [p.name for p in _archived() if _BANNER_MARK not in p.read_text(encoding="utf-8")]
@@ -72,6 +96,7 @@ def test_the_banner_check_fails_on_a_snapshot_without_one(tmp_path):
     assert _BANNER_MARK not in stripped.read_text(encoding="utf-8")
 
 
+@_NO_ARCHIVE
 @pytest.mark.parametrize("snapshot", _archived(), ids=lambda p: p.name)
 def test_every_snapshot_is_byte_identical_to_the_tag_it_names(snapshot):
     """A snapshot that has been edited is a record of nothing.
@@ -103,18 +128,21 @@ def test_every_snapshot_is_byte_identical_to_the_tag_it_names(snapshot):
     assert body == shown.stdout, f"{snapshot.name} has drifted from {tag}:{source}"
 
 
+@_NO_ARCHIVE
 def test_every_snapshot_names_a_file_that_still_exists():
     """A snapshot of a file that has been renamed away is a pointer to nothing."""
     orphaned = [p.name for p in _archived() if not (REPO_ROOT / _source_of(p)).exists()]
     assert not orphaned, f"snapshots whose live file is gone: {orphaned}"
 
 
+@_NO_ARCHIVE
 def test_every_standard_file_is_snapshotted_at_least_once():
     """Fails in the other direction: adding to STANDARDS without ever capturing it."""
     never = [s for s in STANDARDS if not existing(s)]
     assert not never, f"in STANDARDS but never snapshotted: {never}"
 
 
+@_NO_ARCHIVE
 def test_retention_is_not_silently_exceeded():
     """Two per file. `--prune` lists what is over; it never deletes on its own."""
     over = {s: [p.name for p in existing(s)] for s in STANDARDS if len(existing(s)) > RETENTION}
@@ -124,19 +152,56 @@ def test_retention_is_not_silently_exceeded():
     )
 
 
-def test_the_archive_is_tracked_by_git():
-    """The whole point is that it survives a clone. `docs/` has several ignore rules."""
+def test_the_archive_is_not_tracked():
+    """It is local-only by decision, and a tracked snapshot is a second copy of the conventions.
+
+    Tracking `AGENTS.v0.12.0.md` would put the same rules on the remote twice, which is the argument
+    that untracked the notebooks. This fails if a snapshot is ever committed by accident — most
+    likely by a `git add -A` that ran before `.gitignore` was read.
+    """
     listed = subprocess.run(
         ["git", "-C", str(REPO_ROOT), "ls-files", "docs/standards-history/"],
         capture_output=True,
         text=True,
         check=False,
     ).stdout.split()
-    if not listed:
-        pytest.skip("nothing committed yet — the archive is staged but not in the index")
-    on_disk = {p.name for p in _archived()}
-    tracked = {Path(p).name for p in listed}
-    assert on_disk <= tracked, f"snapshots on disk but not tracked: {sorted(on_disk - tracked)}"
+    assert not listed, (
+        "snapshots are tracked but the archive is meant to be local-only: "
+        f"{sorted(Path(p).name for p in listed)}"
+    )
+
+
+def test_the_archive_is_backed_up_because_nothing_else_holds_it():
+    """**The one invariant a fresh clone can still check, and the one that matters.**
+
+    Untracked and unbacked-up is the exact class of file this repo has lost twice — most recently
+    when an ordinary `checkout && pull` deleted five notebook builders. Local-only is a legitimate
+    decision; local-only with no store is not a decision, it is an accident waiting for a branch
+    switch. So the archive's membership of `PATTERNS` is asserted from source, where a clone can
+    read it, rather than from the store, which a clone does not have.
+    """
+    sys.path.insert(0, str(REPO_ROOT / "tools"))
+    from backup_local_only import PATTERNS
+
+    covered = [p for p in PATTERNS if p.startswith("docs/standards-history")]
+    assert covered, (
+        "docs/standards-history/ is gitignored but not in tools/backup_local_only.py::PATTERNS — "
+        "so nothing holds it and the next branch switch can take it silently"
+    )
+
+
+def test_the_archive_is_gitignored_so_the_backup_is_load_bearing():
+    """The twin of the pair above: prove the ignore rule is real, not assumed."""
+    ignored = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "check-ignore", "docs/standards-history/DESIGN.v0.12.0.md"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert ignored.returncode == 0, (
+        "docs/standards-history/ is NOT gitignored — either restore the ignore rule, or track the "
+        "archive and invert test_the_archive_is_not_tracked. It must be exactly one of the two."
+    )
 
 
 def test_archive_names_are_derivable_from_the_source_and_the_tag():

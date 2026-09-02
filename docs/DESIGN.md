@@ -527,6 +527,22 @@ A rule with no guard decays. The repo-wide guards live in `tests/`; per-exercise
 | no count typed into page prose, or into a heading or rail label | `test_attention_docs.py` |
 | no text clipped by its own box; no sideways scroll | `test_attention_render.py` |
 | six themes render, contrast holds, no mark equals its ground | `test_attention_themes.py` |
+| **this document's own last two released versions are kept and unedited** | `tests/test_standards_history.py` |
+
+**Nothing here enforces that a rule stays written down, and that is the gap this document fell into.**
+Rewriting it as the standard dropped nine rules with no replacement — never a chart library, a
+glossary must not be hover-only, never `:nth-child` for pipeline stages, and six more, each a lesson
+from a defect that had already cost a page. Every guard above stayed green, because a guard can only
+check the page against a rule that exists. So `docs/standards-history/` keeps the last two released
+versions of this file beside it: **diff before you rewrite, and list what the rewrite drops.**
+
+```bash
+diff docs/standards-history/DESIGN.v0.12.0.md docs/DESIGN.md
+uv run python tools/snapshot_standards.py --ref v0.12.0    # if you do not have it yet
+```
+
+The archive is **local-only** — tracking it would put a second copy of this document on the remote —
+so it is absent on a fresh clone and the guard above skips there. Build it once and it stays.
 
 **Every invariant is written twice** — once against the real page, once against a deliberately broken
 fixture. When you add a guard, break the thing on purpose and watch it go red before you commit.
