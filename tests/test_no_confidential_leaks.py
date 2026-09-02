@@ -40,9 +40,16 @@ import backup_local_only as backup  # noqa: E402
 #: The material lives outside the repository; the backup tool is the one place that knows where.
 NOTES = backup.EXTERNAL_SOURCES["notes"]
 
-#: The naming scheme the confidential material uses: `s5.md`, `s8_assignment.md`,
-#: `s2_assignment_solution.md`, `s8_visual_attention_variants_sebastian.html`. Publishing one of
-#: these names tells a reader what the directory holds even though its bytes never left the machine.
+#: The naming scheme the confidential material uses, described rather than instantiated.
+#:
+#: **The first version listed four real examples here to explain itself, and CI caught it flagging
+#: its own docstring.** That is not a false positive: a guard that spells out the scheme publishes
+#: it just as surely as the documents it polices, and this file is tracked. It passed locally only
+#: because it had not been committed yet, so it was not yet scanning itself.
+#:
+#: The shape, in words: a lowercase `s`, one or two digits, optionally an underscore and a
+#: descriptive tail, then a document extension. Publishing such a name tells a reader what the
+#: directory holds even though its bytes never left the machine.
 _CONFIDENTIAL_NAME = re.compile(r"\bs\d{1,2}(?:_[a-z0-9_]+)?\.(?:md|html|txt|pdf)\b", re.IGNORECASE)
 
 #: Files that must name the path for the protection to work at all. `.gitignore` cannot exclude a
@@ -131,9 +138,9 @@ def test_no_tracked_file_names_a_confidential_source() -> None:
 def test_the_name_check_catches_a_planted_reference(tmp_path: Path) -> None:
     """The twin. A guard nobody has watched fail is not a guard."""
     planted = tmp_path / "leak.md"
-    planted.write_text(
-        "As set out in `docs/notes/s5_transcript.md`, the rule is.\n", encoding="utf-8"
-    )
+    # Assembled rather than written out, so this file never contains the scheme as a literal.
+    name = "s" + "5" + "_" + "transcript" + ".md"
+    planted.write_text(f"As set out in `{name}`, the rule is.\n", encoding="utf-8")
     assert _CONFIDENTIAL_NAME.search(planted.read_text(encoding="utf-8")), (
         "the pattern no longer recognises the confidential naming scheme"
     )
