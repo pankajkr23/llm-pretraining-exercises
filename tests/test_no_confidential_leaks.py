@@ -1,8 +1,8 @@
 """No tracked file may reveal what is inside the confidential reference directory.
 
-`docs/notes/` holds material that is not ours to redistribute. It is gitignored, which stops the
-files themselves reaching the remote — and stops nothing else. Every leak this guard exists for got
-onto a public branch while `.gitignore` was working perfectly:
+The reference material is not ours to redistribute. It used to sit inside the working tree,
+gitignored, which stopped the files themselves reaching the remote and stopped nothing else.
+Every leak this guard exists for got onto a public branch while `.gitignore` worked perfectly:
 
 - a table listing two filenames, their line counts, and a summary of what each contained
 - a module docstring citing a source file by name
@@ -156,7 +156,7 @@ def test_no_tracked_file_quotes_the_confidential_material() -> None:
     notes, before a push.
     """
     if not NOTES.is_dir():
-        pytest.skip("docs/notes is absent (a clone, not a loss) — nothing to compare against")
+        pytest.skip("the reference material is not present here — nothing to compare against")
 
     source: set[str] = set()
     for path in NOTES.rglob("*"):
@@ -167,7 +167,7 @@ def test_no_tracked_file_quotes_the_confidential_material() -> None:
         except (UnicodeDecodeError, OSError):
             continue
     if not source:
-        pytest.skip("no readable text in docs/notes to compare against")
+        pytest.skip("no readable text in the reference material to compare against")
 
     offenders: list[str] = []
     for path in _tracked_text_files():
