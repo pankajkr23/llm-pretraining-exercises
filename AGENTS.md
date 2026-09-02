@@ -55,6 +55,19 @@ the new one, and deletes it. Nobody deleted anything. So:
   now. **85 files, 12 MB.** A guard that covers the documented cases and misses the largest one
   reads as coverage without being any.
 
+- **The authoritative list is `tools/backup_local_only.py::PATTERNS`, not this document.** Prose that
+  enumerates the set is a second copy of it, and the second copy is the one that drifts — this
+  paragraph named three classes while `PATTERNS` protected eleven, so an agent reading only the
+  rulebook would have believed `rm TODO.md` was recoverable. **Read `PATTERNS` before touching
+  anything gitignored.** Each entry there carries a comment saying why it cannot be regenerated, and
+  five are named nowhere else: `TODO.md` · `.claude/settings.local.json` (losing it silently changes
+  what agents may run without asking, rather than failing) · `src/exercises/*/docs/*.md` (planning
+  and critique notes) · `src/exercises/*/docs/*.html` (saved reference pages, snapshots of things
+  that change) · and **`src/exercises/*/src/solution/**/*`, the one class with no recovery path at
+  all** — it has never been in git on any branch, so the `git show <untracking-commit>^:<path>`
+  fallback below is inapplicable by construction, and its `corpus/*.raw.html` inputs pin no revision,
+  so re-fetching returns a different article. The backup store is the only copy that exists.
+
 - **After any branch switch, pull, merge, rebase or stash, run the tripwire** —
   `uv run pytest tests/test_local_only_files_present.py`. It fails when *some* of these files are
   present and others gone, and skips when all are absent (a clone, not a loss).
@@ -161,7 +174,7 @@ repo** — it is the real safety net.
   file some exercises keep there is the gitignored `build_notebook.py` and git does not track
   empty directories, so `tools/` exists on a working checkout and not in a clone. Requiring it
   passed locally and failed CI: write the guard for what a clone has, not for what your machine
-  has and asserts **no `BRIEF.md` is ever tracked** — checked with
+  has. It also asserts **no `BRIEF.md` is ever tracked** — checked with
   `git ls-files`, not by reading `.gitignore`, because a file already in the index stays tracked
   whatever the ignore rules say afterwards.
 - **Shared code:** deferred — add `src/common/` (its own member) only when a 2nd exercise needs to reuse something. No premature abstraction.
@@ -281,6 +294,21 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
 - **A guard that cannot fail is worse than no guard**, because it reads as coverage. Every invariant
   is written twice — once against the real spine, once against a deliberately broken fixture — and
   when you add one, break the thing on purpose and watch it go red before you commit.
+
+- **Break it in a `finally`, and stage by path — the rule above is what invites this failure.** On
+  2026-09-02 an agent auditing this repo did exactly what the previous bullet asks: it backed up
+  exercise 05's `checks.py`, injected `return []` into `check_no_orphan_benchmarks` and
+  `check_tier_shares` to watch their guards go red, and then restored **one** of the two. A
+  `git add -A` swept the mid-experiment tree into a commit, along with the backup file — which was
+  itself already mutated, so it could not have restored anything. **Two data-handling invariants
+  were dead on this branch for four commits**, returning "no findings" for every input, which is
+  indistinguishable from a clean run. Three rules follow. Restore in a `finally`, never on the happy
+  path, so an early return or an exception cannot leave the mutation behind. Never write the backup
+  inside the working tree — `git stash` or `$TMPDIR`, because a backup in the tree is a file
+  `git add -A` will commit. And after any session in which agents ran near the source tree, **stage
+  by path and read `git diff --stat` against `origin/main` before committing**: the only reason this
+  was caught is that one mutation happened to break a test that ran, and a mutation to a guard whose
+  twin is missing would have shipped in silence.
 
 - **A guard must not trigger the behaviour it is testing for.** Exercise 08's invoice cut line
   starts hidden and is revealed by an `IntersectionObserver`. The guard asserting it was visible
@@ -574,11 +602,18 @@ lands in neither, and the guard goes red — which is the whole point, because t
 this rule lived only in prose and applied to whoever remembered it. 01–04 are exempt: the spine
 describes an exercise that ran an experiment and reports a result, and those four do not.
 
-Exercise 07 is the reference implementation. It was rebuilt after an audit found the previous page
-was **nine tables, one button and no diagram of any kind** — ~1,300 words that never said what an
-embedding is, never stated the question being answered, never explained the method, and had no
-summary, conclusion or next step. The rewrite runs ~3,300 words with six figures, and the shared
-`web/_shared/` helpers it needed had been sitting vendored and unused the whole time.
+**Exercise 08 is the reference implementation, and `docs/DESIGN.md` is the canonical standard** —
+grid, type scale, components, what enforces each rule, and a numbered retro-fit checklist, every
+number in it measured on 08. This section carries the short version; where the two disagree,
+`docs/DESIGN.md` wins and this file is the one to correct.
+
+**Exercise 07 is where the rules below were learned**, which is why they are stated in its terms. It
+was rebuilt after an audit found the previous page was **nine tables, one button and no diagram of
+any kind** — ~1,300 words that never said what an embedding is, never stated the question being
+answered, never explained the method, and had no summary, conclusion or next step. The rewrite runs
+~3,300 words with six figures, and the shared `web/_shared/` helpers it needed had been sitting
+vendored and unused the whole time. 08 then took the same rules further — fluid type, the chapter
+strip, a rail that marks position — and 07 is itself queued for the retro-fix.
 
 The rules that follow from it:
 

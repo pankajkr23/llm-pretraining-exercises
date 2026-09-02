@@ -205,6 +205,32 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Two of exercise 05's data-handling invariants were dead on the branch for four commits.** A
+  mutation experiment during a documentation audit injected `return []` into
+  `check_no_orphan_benchmarks` and `check_tier_shares` to watch their guards fail, restored only one
+  of the two, and left a `checks.py.mutation-backup` — itself already mutated — in the working tree,
+  where a `git add -A` committed all of it. Both checks returned "no findings" for every input, which
+  is indistinguishable from a clean run. `checks.py` is byte-identical to `main` again and all 50
+  invariant tests pass, including the four deliberately-broken twins that prove the guards can still
+  fail. `AGENTS.md` now carries the rule beside the one that invites the technique: restore in a
+  `finally`, keep the backup out of the working tree, and stage by path.
+- **Exercise 06 was the only deployable exercise whose README never published its live URL.** A
+  reader following the repo's own "the exercise README is the complete guide" rule could not learn
+  from it that the exercise ships a page at all, beyond one line inside a directory listing. It now
+  carries a `## The page` section naming the three explainer families and the command that rebuilds
+  the page's data.
+- **`AGENTS.md` named exercise 07 as the design reference implementation** while `docs/DESIGN.md`,
+  written hours earlier, named 08 and claimed to be canonical. It now says which document wins, and
+  keeps 07 as where the rules were learned rather than as the current standard.
+- **`AGENTS.md`'s protected-file list named three classes while `tools/backup_local_only.py` protects
+  eleven**, so the rulebook implied that `TODO.md`, `.claude/settings.local.json`, the per-exercise
+  `docs/` notes and `src/solution/**` were recoverable. They are not — and `src/solution/**` has
+  never been in git on any branch, so the documented `git show <commit>^:<path>` recovery is
+  inapplicable to it by construction. The document now points at `PATTERNS` as the authority instead
+  of keeping a second copy that drifts.
+- **A sentence in `AGENTS.md`'s exercise-skeleton rule ran two clauses together** and read
+  "not for what your machine has and asserts no `BRIEF.md` is ever tracked".
+
 - **Exercise 08 rendered the same thirty mechanisms in two tables, and three of its six chapters had
   no body at all.** "Every mechanism, one line each" restated "The index" — together 43% of the
   page's height — and the chapters those mechanisms belong to named none of them, so a reader met
