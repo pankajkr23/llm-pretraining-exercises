@@ -1266,6 +1266,9 @@ text.quiet-lab {
   line-height: 1.58;
   color: var(--ink);
   margin: 0;
+  /* Uncapped, so it took the whole text track — 80 characters at 16px and **103 at 22px**. The cap
+   * is here, on the element that carries the type, so it holds in both variants. */
+  max-width: 70ch;
 }
 
 /* The colophon carries the method, in small print, at the back -- where a magazine puts its
@@ -2361,13 +2364,18 @@ a.guide-path:focus-visible {
 .notice {
   padding-block: clamp(32px, 4vw, 52px) 0 !important;
 }
+/* THE MEASURE GOES ON THE `li`, NOT THE `ul`. `ch` resolves against the element's OWN computed
+ * font-size, and the `ul` inherits `#main`'s — which is 16px under `measure = a` and up to 22px
+ * under `b`. So `80ch` on the list meant 1,230px there while the text inside it stayed at 13.5px,
+ * and the limits read at **111 characters a line** in one variant and 80 in the other. This is the
+ * trap `AGENTS.md` records from a pull quote, hit again in a block written after that audit. */
 .limitlist {
-  max-width: 80ch;
   margin: 14px 0 0;
   padding-left: 20px;
 }
 .limitlist li {
   margin: 0 0 11px;
+  max-width: 72ch;
   font-size: 13.5px;
   line-height: 1.6;
   color: var(--muted);
@@ -2483,7 +2491,12 @@ a.guide-path:focus-visible {
 }
 .fam-rows {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr));
+  /* ONE COLUMN INSIDE THE TEXT TRACK. `.fam` sits in the 685px reading column, so a 330px floor
+   * gave two columns of ~327px — 42 characters on macOS and **39 on CI's Linux fonts**, which is
+   * where it was caught. The ~4% platform difference is documented in `docs/MEASURES.md` and the
+   * answer is not to tune until it scrapes past on both: a 520px floor cannot fit two columns in
+   * 685px, so this is one column with the measure cap below doing the work. */
+  grid-template-columns: repeat(auto-fit, minmax(min(520px, 100%), 1fr));
   gap: 16px 30px;
   margin-top: 22px;
   padding-top: 16px;

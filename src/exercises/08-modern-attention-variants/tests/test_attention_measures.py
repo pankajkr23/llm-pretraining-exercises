@@ -113,9 +113,18 @@ EDGES_JS = """() => {
 pytestmark = pytest.mark.integration
 
 
-@pytest.fixture(scope="module")
-def measured():
-    """Every text block, at every width, with the characters per line it actually renders."""
+#: Both A/B variants. TEMPORARY, and it comes out with the harness — but while the harness lives,
+#: the variant nobody is looking at has to be measured too. It was not, and it shipped prose at
+#: **111 characters a line** under `measure = b` while this file reported the page clean: the
+#: `limitlist`'s `80ch` cap sat on the `ul`, which inherits `#main`'s font-size, so raising that
+#: font-size from 16px to 22px widened the cap and not the 13.5px text inside it. A guard that
+#: measures one of two shipped layouts is a guard with a hole exactly the size of the other one.
+VARIANTS = ("story:a,measure:a", "story:b,measure:b")
+
+
+@pytest.fixture(scope="module", params=VARIANTS, ids=("variant-a", "variant-b"))
+def measured(request):
+    """Every text block, at every width, in one variant, with the characters it actually renders."""
     if not (PUBLIC / SLUG / "index.html").is_file():
         pytest.skip("run deploy/vercel/build.sh first")
     handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(PUBLIC))
@@ -129,7 +138,8 @@ def measured():
                 pytest.skip(f"chromium unavailable: {exc}")
             page = browser.new_page(viewport={"width": WIDTHS[0], "height": 1200})
             page.goto(
-                f"http://127.0.0.1:{httpd.server_address[1]}/{SLUG}/", wait_until="networkidle"
+                f"http://127.0.0.1:{httpd.server_address[1]}/{SLUG}/?v={request.param}",
+                wait_until="networkidle",
             )
             page.wait_for_timeout(2500)
             rows = []
