@@ -52,6 +52,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The pinned rail's contents hung at the top of the column instead of centring**, on exercise 08
+  alone. `_shared/page.css` centres the rail with `.rail-inner { margin-block: auto }` — a rule that
+  needs a wrapper each page has to create, and exercises 03, 05, 06 and 07 all create it while 08
+  did not. So the page looked wrong beside its own siblings for a reason no test could see and no
+  console error reported. `tests/test_rail_centring.py` now checks every page that builds a rail,
+  discovered from the filesystem rather than a list. This is the third time the vendored
+  `web/_shared/` directory has cost something by copying styles without the markup they assume.
+
+- **Very wide screens left 41% of the width as margin.** At 2560px the page used 1500px and the
+  plates were squeezed to 1216px. The wrap now grows to 1720px and 1960px at two breakpoints, the
+  plates grow with it, and every prose measure keeps its own cap — verified at 63 to 75 characters a
+  line, with the index's description brought down from 80. A plate's caption, its stepper note and
+  the centrefold's recipe are now centred under the drawing rather than sitting at the figure's own
+  left edge, 495px left of every other line of prose on the page.
+
 - **A published finding was refuting nothing, and a second did not survive its own noise floor.**
   Exercise 08's verdict said *"the claimed arc holds in 6 of these 7 two-year windows"* — a derived
   number that counted windows producing *a* winner rather than windows matching the claimed order.

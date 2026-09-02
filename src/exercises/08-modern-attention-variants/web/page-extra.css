@@ -79,6 +79,7 @@
 .plate > figcaption {
   padding-inline: clamp(14px, 3vw, 42px);
 }
+
 .plate > svg {
   padding-inline: clamp(6px, 1.5vw, 20px);
   box-sizing: border-box;
@@ -189,8 +190,14 @@
   font-size: 13.5px;
   line-height: 1.6;
   color: var(--muted);
-  max-width: 78ch;
-  margin: 16px 0 0;
+  /* INSET FROM THE FIGURE IT CAPTIONS, so the page has a hierarchy rather than two competing left
+   * edges. Measured at 2560px, body prose began at x=1055 and a plate's caption at x=560 — 495px
+   * apart, which reads as a stranded column rather than a caption. `auto` margins centre it under
+   * the drawing; a `margin: 16px 0 0` shorthand here silently cancelled that in a first attempt,
+   * which is also why the override lives in this rule rather than in a later one of equal
+   * specificity that source order would have beaten. */
+  max-width: min(78ch, 1025px);
+  margin: 16px auto 0;
   padding-left: 14px;
   border-left: 2px solid var(--line);
 }
@@ -1569,6 +1576,27 @@ a.guide-path:focus-visible {
  * var(--ink), which is the right default everywhere else and unreadable here. The ratio is safe in
  * all six themes for the same reason --muted is: it is already a text colour on --bg, and swapping
  * which of the pair is the ground does not change the contrast between them. */
+/* VERY WIDE SCREENS: give the FIGURES the room, not the prose.
+ *
+ * `.wrap` caps at 1500px, so at 2560px the page left 1060px — 41% of the screen — as margin while
+ * the plates were squeezed to 1216px. This repo's own rule is that widening a page is two
+ * decisions, not one: a 1200px line of prose is unreadable, so the measures are split. The wrap
+ * grows, the plates grow with it, and every prose class keeps the cap it already had — measured at
+ * 70 to 75 characters a line, which is where they should be.
+ *
+ * Two breakpoints rather than a fluid width, because a plate is a drawn composition with labels
+ * laddered at measured widths; it wants a few known sizes, not a continuum. */
+@media (min-width: 1800px) {
+  .wrap {
+    max-width: 1720px;
+  }
+}
+@media (min-width: 2200px) {
+  .wrap {
+    max-width: 1960px;
+  }
+}
+
 /* Who ships a mechanism, under what it does. */
 .ix-ship {
   grid-column: 1 / -1;
@@ -1649,16 +1677,56 @@ a.guide-path:focus-visible {
   font-size: 14.5px;
   line-height: 1.55;
   color: var(--ink);
-  max-width: 78ch;
+  /* 78ch measured at 80 characters a line, the one prose measure on the page over the limit. */
+  max-width: 70ch;
   margin: 2px 0 8px;
 }
 
 /* The always-on recipe under the centrefold. Sits below the stepper, so a reader who never touches
  * a tab still gets all five steps in order. */
+/* Five steps read as a recipe, not as five paragraphs — and on a wide screen they take the width
+ * rather than leaving it empty.
+ *
+ * Widening `.wrap` fixed the plates and created this: the recipe kept a 68ch measure inside a
+ * bleed area that had grown to 1,960px, so two thirds of the row was void. `auto-fit` with a
+ * `min()` floor is the pattern this repo already uses — never a bare pixel minimum, which an
+ * auto-fit track cannot shrink below and which pushes a phone sideways. */
 .bay-recipe {
   margin-top: 18px;
   border-top: 1px solid var(--line);
   padding-top: 14px;
+  /* ONE COLUMN, DELIBERATELY. Three columns fitted and read wrong: this is a five-step sequence
+   * and a grid is read across before down, so the steps came out 1-2-3 / 4-5. Order is the whole
+   * content. The width is handled by centring under the figure instead, the same way the caption
+   * is — the block was hanging at the figure's own left edge, 495px left of every other line of
+   * prose on the page. */
+  max-width: min(96ch, 1025px);
+  margin-inline: auto;
+}
+/* The stepper's note is prose belonging to the figure, so it is centred under it like the caption
+ * and the recipe — not left at the drawing's own edge, where it read as a stranded fragment. */
+.bay-note {
+  max-width: min(96ch, 1025px);
+  margin-inline: auto;
+}
+
+.bay-recipe .brief-row {
+  padding: 7px 0;
+}
+.bay-recipe .brief-row p {
+  font-size: 14.5px;
+  line-height: 1.5;
+  max-width: 62ch;
+  margin: 0;
+}
+
+/* A plate's caption is prose, and it was keeping a narrow measure inside a bleed area now up to
+ * 1,960px wide — so it read as a stranded column. Two columns on a wide screen, one below. */
+@media (min-width: 1800px) {
+  .plate > figcaption {
+    columns: 2;
+    column-gap: 46px;
+  }
 }
 
 /* A short reconciling note under a key heading — prose, not a data row. */

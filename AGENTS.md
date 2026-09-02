@@ -417,6 +417,23 @@ Two more that cost this repo real defects:
   misplaced, ask — a layout complaint names a symptom, and the element the reader blames is often
   not the one that moved.
 
+- **When a vendored stylesheet centres, reserves or positions something, check the page actually
+  builds the element it targets.** `_shared/page.css` centres a pinned rail with
+  `.rail-inner { margin-block: auto }`. Exercises 03, 05, 06 and 07 create that wrapper; exercise 08
+  did not, so its contents hung at the top of a full-height column while every sibling page sat
+  centred — no console error, no failing test, and it took three rounds of feedback to find because
+  the symptom ("the rail isn't centred") pointed at a rule that was working. This is the **third**
+  time this directory has cost something the same way: it also reserves a 260px gutter only some
+  pages fill, and vendors marks whose colours resolve only when the real token file is linked. When
+  you copy `web/_shared/`, diff what its rules select against what your page emits.
+
+- **Two rules of equal specificity are decided by source order, and the later one wins.** Two fixes
+  in one session changed nothing at all: `grid-template-columns` set on a flex container, and a
+  `max-width` override written above the rule it was meant to beat. Both looked like fixes, moved no
+  pixels, and passed every test. Before adding a rule, check what is already computing — then edit
+  *that* declaration rather than competing with it. A `margin: 16px 0 0` shorthand will also silently
+  cancel a `margin-inline: auto` you added elsewhere.
+
 - **A DERIVED number can answer the wrong question, and that is far harder to catch than a wrong
   one.** Exercise 08 published *"the claimed arc holds in 6 of these 7 two-year windows"*. The
   number was real, generated from the data, and evidence for nothing: it counted windows that

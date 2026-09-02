@@ -430,23 +430,23 @@ const STAGES = [
   ],
   [
     '÷ √d',
-    'Those numbers come out too big, and big numbers make the next step pick one winner and ignore everything else. So shrink them all by the same amount.',
+    'Big numbers make the next step pick one winner and ignore everyone else, so shrink them all by the same amount.',
     'Divided by the square root of the head dimension. Here d is 2, because the demo gives every '
     + 'word two numbers; in the model priced on Plate I it is 128, so the divisor there is about 11.3.',
   ],
   [
     '+ mask',
-    'A word is not allowed to read ahead. When the model is guessing word four, letting it see word five would be showing it the answer.',
+    'A word may not read ahead. Guessing word four while seeing word five would be showing it the answer.',
     'The upper triangle is set to minus infinity before softmax, so those cells come out as exactly zero weight.',
   ],
   [
     'softmax',
-    'Turn each row of scores into shares of attention that add up to 1 — like splitting a budget. A word with a big score gets a big share, and the others get what is left.',
+    'Turn each row into shares that add up to 1, like splitting a budget. A big score takes a big share; the rest divide what is left.',
     'Exponentiate and normalise per row: every weight positive, every row summing to one. Now the cells compete.',
   ],
   [
     '× V',
-    'Finally, mix. Each word hands over its content, everyone takes the share they just decided on, and the results are added up into one new vector per word.',
+    'Now mix. Each word hands over its content, everyone takes the share just decided, and the results add up to one new vector per word.',
     'The weights multiply the values and are summed. This vector — not the weights — is what leaves the block.',
   ],
 ];
@@ -642,7 +642,7 @@ export function figCentrefold() {
   };
 
   const tabs = el('div', 'tabs');
-  const note = el('p', 'say');
+  const note = el('p', 'say bay-note');
   const buttons = STAGES.map(([label], i) => {
     const b = el('button', null, label);
     b.type = 'button';

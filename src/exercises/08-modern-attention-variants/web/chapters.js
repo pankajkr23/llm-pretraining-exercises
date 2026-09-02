@@ -1404,9 +1404,21 @@ function chapterMethod(M) {
 function buildRail(root) {
   const rail = document.getElementById('rail');
   if (!rail) return;
+  /* THE CONTENTS GO IN `.rail-inner`, AND THAT IS THE WHOLE REASON THEY CENTRE.
+   *
+   * `_shared/page.css` makes the pinned rail a full-height flex column and centres its contents
+   * with `.rail-inner { margin-block: auto }` — a rule that needs an element this page has to
+   * create. Exercises 03, 05, 06 and 07 all create it. This one did not, so its list hung at the
+   * top of a full-height column while every other railed page on the site sat centred, and the
+   * page looked wrong beside its own siblings for reasons no test could see.
+   *
+   * `AGENTS.md` already carries this exact rule — vendoring `web/_shared/` copies styles and not
+   * the markup they assume, so check what the stylesheet expects the page to provide. It was
+   * written after the gutter was reserved and never filled; this is the same bug one level in. */
+  const inner = el('div', 'rail-inner');
   const head = el('div', 'rail-head');
   head.append(el('span', 'rail-title', 'Contents'));
-  rail.append(head);
+  inner.append(head);
   const list = el('div', 'rail-list');
   for (const sec of root.querySelectorAll('section[data-role]')) {
     const a = el('a', 'rail-link');
@@ -1418,7 +1430,8 @@ function buildRail(root) {
     a.append(body);
     list.append(a);
   }
-  rail.append(list);
+  inner.append(list);
+  rail.append(inner);
 }
 
 function buildFooter(M) {
