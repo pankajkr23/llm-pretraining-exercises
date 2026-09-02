@@ -12,6 +12,23 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **A reading switch on exercise 08's page, and a tool that measures both sides of it.** A reader
+  rejected the page and two of the fixes could reasonably go either way, so rather than decide on
+  his behalf the page ships both behind a labelled control — **Reading: story · index** and
+  **Type: standard · large** — with `tools/compare_variants.py` printing page height, prose share,
+  characters a line, where the entries live and transferred bytes for all four combinations, read
+  off the rendered page. The losing branch and the whole harness are deleted once the choice is
+  made; that end date is written into the module rather than left implied.
+
+- **The contents rail marks the section you are in, and says how long the page is.** A reader: "I
+  just get lost on the page without knowing where I am reading from." The vendored shared
+  stylesheet has styled `.rail-link.on` — an accent bar and a bold label — since before this page
+  existed, and this page never set the class; neither do exercises 05, 06 or 07. The logic is
+  exercise 03's, copied rather than reinvented: *the last heading whose top has passed the first
+  third of the viewport*, which is right where "the nearest heading" is wrong on any page whose
+  sections run longer than a screen. The read-time is derived from the rendered word count.
+
+
 - **An at-a-glance table opening exercise 08's page** — all thirty mechanisms on one line each, with
   date, what it attacks, its shape, which models shipped it, and **when you would pick it**. That
   last field is present on all thirty catalogue entries and the page rendered it exactly once, inside
@@ -80,6 +97,34 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   own catalogue", which is the visual grammar of a citation with none of its function.
 
 ### Fixed
+
+- **Exercise 08 rendered the same thirty mechanisms in two tables, and three of its six chapters had
+  no body at all.** "Every mechanism, one line each" restated "The index" — together 43% of the
+  page's height — and the chapters those mechanisms belong to named none of them, so a reader met
+  each one twice and understood it neither time. One catalogue now, and under the `story` variant
+  each chapter carries its own entries while the index becomes what its name means: the source and
+  the date string that source prints, for checking.
+
+- **The invoice — the page's most quoted figure — had rendered at 685px at every width since it was
+  written.** It returns `div.invoice.bleed`, but the figure wrapper nests it one level too deep for
+  any `.bleed` rule to match, so the class did nothing. Three more blocks were the same shape of
+  defect: the colophon's `min(1025px, 100%)` never applied because nothing put it in the track that
+  is 1025px wide; the reading spread's ledger read at **36 characters a line at 1920** — the page's
+  narrowest prose produced by its widest screen — because the measures guard only inspects `p`,
+  `li`, `figcaption` and `.say`, and that cell is a `div`; and the Q/K/V block read at **23**.
+
+- **A row was 306px tall because of its layout, not its contents.** Widening the index plate from
+  720px to 1,676px moved a row to 292px — six cells each spanning the row are six bands, and the
+  extra width only shortened lines that were already short. Two bands, with the prose in columns
+  sized to the 42-character floor, is 238px. The narrowness was the length.
+
+- **The limits section was 265 words of disclaimer under the same display type as the masthead**,
+  and four of its five paragraphs repeated something the page had already said — one of them the
+  fifth of six copies, which it admitted itself ("as the key above the chronology says"). It is a
+  compact notice now, reusing exercise 07's existing list pattern, with the one load-bearing claim
+  kept in full. Still fully visible: a limitation behind a disclosure is a limitation the page is
+  hiding.
+
 
 - **Exercise 08's headline claim was false.** It read *"Only 13 of the 30 build a score grid at all.
   That is the finding the rest of the page is built on."* Thirteen is the count of mechanisms that

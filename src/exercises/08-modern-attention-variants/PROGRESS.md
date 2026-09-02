@@ -32,6 +32,12 @@ pipeline is fine, and the link must resolve for a logged-out stranger.
 | O7 | **A diagram per mechanism** | **done** | Thirty, four scenes, generated from the `pattern` block each catalogue entry already carried. Sourced sizes carry a citation as the price of entry. |
 | O8 | **The field guide** | **done** | `/08-modern-attention-variants/field-guide/` — all thirty at once, filters derived from the data, deep links both ways. No build change needed. |
 | O9 | **A theme test** | **done** | Six themes × render, tokens, text contrast, mark separation. The first in the repo; it closed a gap that predates this exercise. |
+| O17 | **The A/B: two readings of the same page, and a decision waiting on PK** | **shipped, awaiting a choice** | A reader rejected the page for duplication, apparatus dressed as argument, and a prose column using a third of the screen. Two of the fixes could reasonably go either way, so both ship behind a labelled switch and the losing branch is deleted once PK picks. Numbers below. |
+| O18 | **The rail marks where you are** | **done** | A reader: "I just get lost on the page without knowing where I am reading from." The vendored stylesheet has styled `.rail-link.on` since before this page existed and this page never set the class — nor do 05, 06 or 07. Exercise 03's logic, copied. Plus a derived read-time. |
+| O19 | **Four blocks written to be wide that silently were not** | **done** | The invoice carried a `.bleed` class no rule ever matched and had rendered at 685px at every width since it was written; the colophon's `min(1025px, 100%)` never applied because nothing put it in the `wide` track; the reading spread's ledger read at 36 characters at 1920 — the page's narrowest prose produced by its widest screen; Q/K/V read at 23. |
+| O17 | **The A/B: two readings of the same page** | **shipped, awaiting PK's choice** | A reader rejected the page for duplication, apparatus dressed as argument, and a prose column using a third of the screen. Two of the fixes could reasonably go either way, so both ship behind a labelled switch and the losing branch is deleted once PK picks. |
+| O18 | **The rail marks where you are** | **done** | "I just get lost on the page without knowing where I am reading from." The vendored stylesheet has styled `.rail-link.on` since before this page existed and this page never set the class — nor do 05, 06 or 07. Exercise 03's logic, copied. Plus a derived read-time. |
+| O19 | **Four blocks written to be wide that silently were not** | **done** | The invoice carried a `.bleed` class no rule ever matched and rendered at 685px at every width since it was written; the colophon's `min(1025px, 100%)` never applied because nothing put it in the `wide` track; the reading spread's ledger read at 36 characters at 1920 — the page's narrowest prose produced by its widest screen; Q/K/V read at 23. |
 | O14 | **Six-persona rebuild for readability** | **done** | A teenager, an engineer, a researcher, a sceptic, a grader and a Raschka reader read the page end to end. Two found factual defects. Five changes applied: the borrowed plate/well vocabulary removed, ~900 words cut and 190 moved to `docs/METHOD.md`, the key split to where the glyphs and the byte figures are first used, an at-a-glance table of all thirty, and an exit line after the chronology. |
 | O15 | **The state chapter held two mechanisms that keep a cache** | **done** | Chapter VI promised "a fixed-size state" and "every one of them pays in the same single way" while holding NSA and DeepSeek CSA, both of which build a score grid and keep a KV cache. Moved to Chapter III; VI is now exactly the eight STATE entries. A guard asserts that property with a broken twin. |
 | O16 | **Five reader-facing defects with a green suite** | **done** | The invoice's cut line truncated mid-word at every width; the masthead's accent bar struck through the opening sentence; the table's column heads survived on phones because `display:none` lost on source order; the key's ~ note rendered at body size; and the page claimed "almost every mechanism" attacks a bill when ten of thirty attack neither. Each found by looking; three new guards, each watched failing. |
@@ -92,6 +98,83 @@ which was meant — so neither number is published alone.
 ---
 
 ## Change log
+
+### 2026-09-02 (the readability rebuild, and an A/B)
+
+PK rejected the deployed page: duplication ("Every mechanism, one line each" restated "The
+index"), apparatus given display headings, repetitive chapter openers, no sense of place,
+"why do you narrow too much", "the length of the page is too much", and — the one that
+mattered — *"you are eating my time fixing just the UI not the actual content, storytelling
+and experience."*
+
+**Measured before anything changed.** 29,999px, 33.3 screens, prose 27–36% of the viewport
+above 1600px. The index was 30 rows at 306px, and widening its plate from 720px to 1,676px
+moved a row only to 292px — because a row was six stacked bands on a four-column grid, so the
+extra width shortened lines that were already short. **The narrowness was the length.**
+
+**Three chapters had no bodies.** I, II and VI were a heading and nothing else; III, IV and V
+a heading plus one figure. The thirty mechanisms they are chapters *about* were named in none
+of them — the duplication one level below the table PK named.
+
+**Two decisions ship as an A/B**, because PK asked for evidence rather than my judgement.
+`uv run python tools/compare_variants.py` prints this, read off the rendered page:
+
+```
+
+                                  story a / type a  story a / type b  story b / type a  story b / type b
+  ------------------------------------------------------------------------------------------------------
+
+  at 2560px
+  page height                             27,948px          28,437px          28,193px          28,490px
+  screens                                     31.1              31.6              31.3              31.7
+  prose width                          685px (27%)       951px (37%)       685px (27%)       951px (37%)
+  characters a line                             74                77                74                77
+  body type                                   16px              22px              16px              22px
+
+  at 1920px
+  page height                             27,749px          28,027px          27,932px          28,035px
+  screens                                     30.8              31.1              31.0              31.1
+  prose width                          685px (36%)       951px (50%)       685px (36%)       951px (50%)
+  characters a line                             74                77                74                77
+  body type                                   16px              22px              16px              22px
+
+  at 1440px
+  page height                             27,819px          26,042px          28,081px          27,200px
+  screens                                     30.9              28.9              31.2              30.2
+  prose width                          685px (48%)       769px (53%)       685px (48%)       769px (53%)
+  characters a line                             74                77                74                77
+  body type                                   16px           17.46px              16px           17.46px
+
+  structure (width-independent)
+  rendered words                             8,946             8,946             9,147             9,147
+  entries rendered                              30                30                30                30
+  containers holding them                        1                 1                 6                 6
+  chapters with a body                      0 of 6            0 of 6            6 of 6            6 of 6
+  transferred                               460 KB            460 KB            460 KB            460 KB
+
+  where the height is, at 1920px
+    thesis                                 1,601px           1,574px           1,601px           1,574px
+    glossary                                 484px             441px             484px             441px
+    problem                                1,511px           1,479px           1,511px           1,479px
+    mechanism                              2,567px           2,608px           2,567px           2,608px
+    method                                   312px             324px             312px             324px
+    expected                                 529px             600px             529px             600px
+    results                                9,361px           9,510px          13,999px          13,953px
+    negatives                                872px             872px             872px             872px
+    conclusion                             1,390px           1,438px           1,390px           1,438px
+    limits                                   441px             398px             441px             398px
+    next                                     493px             580px             493px             580px
+    reproduce                              7,878px           7,892px           3,423px           3,457px
+
+  Baseline before this pass: 29,999px / 33.3 screens, prose 685px (36% at 1920),
+  74 characters a line, thirty entries in TWO containers — the duplication a reader
+  found — and 3 of 6 chapters with a body.
+```
+
+The one thing the table does not measure is the thing PK will judge: whether meeting a
+mechanism inside the chapter that argues for it beats meeting it in one table at the back.
+That is why it is a switch and not a commit.
+
 
 ### 2026-09-02 (the six-persona rebuild)
 
