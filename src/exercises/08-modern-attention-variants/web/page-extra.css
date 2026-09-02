@@ -569,6 +569,128 @@ figcaption strong {
   margin-top: 8px;
 }
 
+/* ------------------------------------------------------------- at a glance */
+/* The contents page for the catalogue. Deliberately NOT styled like the index plate at the back:
+ * that one is a ledger a reader stops at, this one is a list a reader runs an eye down. One line
+ * per mechanism, and the only column set as prose is the one the table exists for. */
+.glance {
+  border-top: 2px solid var(--ink);
+  margin-top: 20px;
+}
+.gl-row {
+  display: grid;
+  grid-template-columns:
+    84px minmax(176px, 1.3fr) 62px 58px minmax(96px, 0.85fr)
+    minmax(240px, 2.15fr);
+  column-gap: 18px;
+  row-gap: 4px;
+  align-items: baseline;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: inherit;
+}
+a.gl-row:hover {
+  background: var(--accent-soft);
+}
+a.gl-row:hover .gl-name b {
+  color: var(--accent);
+}
+.gl-head {
+  border-bottom: 1px solid var(--line-strong);
+  padding-bottom: 8px;
+}
+.gl-head span {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.gl-date {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.gl-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14.5px;
+  line-height: 1.3;
+  min-width: 0;
+}
+.gl-name b {
+  font-weight: 600;
+  color: var(--ink);
+}
+.gl-bill,
+.gl-shape {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.gl-ship {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.gl-ship .none {
+  color: var(--faint);
+  font-style: normal;
+}
+.gl-pick {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+/* Below the point where six columns stop being six columns, the row becomes a small card: the
+ * name on its own line, then a meta strip of the three short fields, then the two prose fields
+ * full width. Flex rather than grid, because the meta strip is three chips that should sit on one
+ * line and wrap together — grid would put each in a cell of its own and strand them. */
+@media (max-width: 900px) {
+  .gl-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+    padding: 15px 0;
+  }
+  /* AFTER `.gl-row`, not before it. Both selectors are one class, so the later one wins — written
+   * above, `display: none` lost to `display: flex` and the column heads rendered as a stacked list
+   * of five orphaned words at the top of the table. The suite was green; the phone was not. */
+  .gl-head {
+    display: none;
+  }
+  .gl-name {
+    flex: 0 0 100%;
+    font-size: 15px;
+  }
+  .gl-ship,
+  .gl-pick {
+    flex: 0 0 100%;
+  }
+  .gl-ship::before {
+    content: 'Shipped in ';
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  /* Twenty-two of the thirty are empty. On a wide screen that is a column with gaps in it, which
+   * is the finding. Stacked on a phone it is twenty-two lines reading "SHIPPED IN —", which is
+   * noise. The head note states the count either way. */
+  .gl-ship.empty {
+    display: none;
+  }
+}
+
 /* ---------------------------------------------------------- the index plate */
 .index-plate {
   border-top: 2px solid var(--ink);
