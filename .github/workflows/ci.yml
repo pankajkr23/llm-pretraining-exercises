@@ -80,6 +80,13 @@ jobs:
   # Shards are balanced on measured cost, not on tidiness:
   #   02 = 116s   05 = 57s   04 = 34s   03 = 14s   01/06/root = ~1s
   integration:
+    # **Named explicitly, or the check name carries the shard's paths.** With no `name:`, GitHub
+    # builds a matrix job's check name from EVERY matrix value, so this one reported as
+    # `integration (rest, src/exercises/01-introductions src/exercises/03-…)`. Adding an exercise
+    # to a shard rewrites that string — and a required status check whose name changes simply stops
+    # reporting, which blocks every pull request with no error that explains why. Exercises 09 and
+    # 10 join the `rest` shard, so this was days from happening.
+    name: integration (${{ matrix.name }})
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:

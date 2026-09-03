@@ -272,3 +272,50 @@ def test_it_refuses_to_overwrite_an_existing_exercise(tmp_path, monkeypatch) -> 
     monkeypatch.setattr(new_exercise, "EXERCISES", exercises)
     with pytest.raises(SystemExit, match="already exists"):
         new_exercise.main(["09", "taken", "--title", "T", "--package", "p"])
+
+
+def test_the_generated_names_match_what_every_real_exercise_uses() -> None:
+    """The generator must not invent a naming convention the eight shipped exercises do not use.
+
+    It wrote `Topic NN` into the package description and the `PROGRESS.md` heading while **every**
+    tracked artefact in the repo says `Exercise NN` — seven of eight `pyproject.toml` descriptions
+    and all four `PROGRESS.md` headings. Nothing failed, because nothing compared them: a template
+    is a second copy of a convention, and the second copy is the one that drifts.
+
+    So the convention is read out of the real exercises here rather than restated. If they ever move
+    to a different form, this fails and the generator is updated to follow them — which is the right
+    direction of travel, since the exercises are the artefact and the generator only seeds one.
+    """
+    repo = Path(__file__).resolve().parent.parent
+    real = sorted((repo / "src" / "exercises").glob("[0-9][0-9]-*"))
+    assert len(real) >= 4, "not enough shipped exercises to read a convention from"
+
+    prefix = re.compile(r"^Exercise (\d\d)\b")
+    described = [
+        (d.name, m.group(1))
+        for d in real
+        if (m := prefix.match(_description(d / "pyproject.toml") or ""))
+    ]
+    assert len(described) >= len(real) - 1, (
+        "fewer shipped exercises use 'Exercise NN — ' in their package description than this guard "
+        "assumes; re-read the convention before trusting it"
+    )
+    for name, number in described:
+        assert name.startswith(number), f"{name}'s description names exercise {number}"
+
+    source = (repo / "tools" / "new_exercise.py").read_text(encoding="utf-8")
+    assert 'description = "Exercise {spec.number}' in source, (
+        "the generator's package description does not use the 'Exercise NN' form the shipped "
+        "exercises use"
+    )
+    assert "# PROGRESS — Exercise {spec.number}" in source, (
+        "the generator's PROGRESS.md heading does not match the shipped ones"
+    )
+
+
+def _description(pyproject: Path) -> str | None:
+    """The `description` field of a pyproject, or None."""
+    for line in pyproject.read_text(encoding="utf-8").splitlines():
+        if line.startswith("description = "):
+            return line.split("=", 1)[1].strip().strip('"')
+    return None
