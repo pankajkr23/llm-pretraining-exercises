@@ -12,6 +12,18 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two
+  places — tracked under `docs/agents/reviewers/`, and copied by the installer into the gitignored
+  `.claude/agents/` that Claude Code actually reads. They are identical by construction, and
+  **nothing would have noticed if they stopped being so**: `.claude/` is invisible to review, to CI
+  and to every other clone, so a hand-edit there survives until somebody thinks to look.
+
+  **`--drift` is a separate mode from `--check`, and conflating them was the trap.** `--check` asks
+  *is this clone current?* and is non-zero on a fresh clone where nothing is installed yet: correct
+  for a person, wrong for a hook, because it would make every new clone's first `git pull` red about
+  drift when nothing has drifted — and a check that cries wolf is one that gets ignored. `--drift`
+  ignores what is merely absent and fails only where a deployed copy **exists and differs**.
+
 - **The two documents an explainer is built from are now tracked, and exercise 09 is unblocked by
   it.** `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md` were gitignored and filed as
   programme material beside the schedule and the class list. They are not programme material — they
@@ -28,7 +40,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   The generalisable part: **before accepting that something cannot be tracked, measure it against
   the gates that would refuse it.** The original recommendation here was to extract only the rules
   and leave the rest local; the measurement showed there was no "rest" worth leaving.
-
 
 - **The progress log cannot silently fall behind what merged.** `docs/agents/QUEUE.md` is the single
   source of truth for progress, tracked so state survives a crash, a context reset and a fresh clone

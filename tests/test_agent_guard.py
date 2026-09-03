@@ -368,3 +368,44 @@ def test_bash_that_only_reads_a_protected_path_is_allowed(rules) -> None:
     ):
         payload = {"tool_name": "Bash", "cwd": str(REPO_ROOT), "tool_input": {"command": command}}
         assert decide(payload, REPO_ROOT, rules) is None, command
+
+
+def test_drift_is_detected_only_where_a_copy_exists_and_differs(tmp_path, monkeypatch) -> None:
+    """The reviewer definitions live in two places, and nothing noticed when they disagreed.
+
+    `docs/agents/reviewers/` is tracked; `.claude/agents/` is what Claude Code reads and is
+    gitignored in its entirety. An edit to the second is invisible to review, to CI and to every
+    other clone — so it would survive until somebody thought to look.
+
+    **The distinction this asserts is the whole reason `--drift` exists separately from `--check`.**
+    A copy that is merely *absent* is a clone that has not run the installer: ordinary, not a
+    finding, and reporting it as one would make every fresh clone's first `git pull` red and teach
+    the reader to ignore the check. A copy that exists and *differs* is the real case.
+
+    Driven against a temporary tree rather than the live `.claude/`, which the sandbox refuses to
+    write — an earlier attempt to prove this by editing the real file silently did nothing and
+    reported "current", which was evidence of exactly nothing.
+    """
+    import install_agent_fleet as fleet
+
+    source = tmp_path / "reviewers"
+    deployed = tmp_path / "agents"
+    source.mkdir()
+    deployed.mkdir()
+    (source / "reader.md").write_text("tools: Read, Grep, Glob\n", encoding="utf-8")
+    (source / "absent.md").write_text("tools: Read\n", encoding="utf-8")
+    monkeypatch.setattr(fleet, "REVIEWERS", source)
+    monkeypatch.setattr(fleet, "AGENTS_OUT", deployed)
+
+    # Absent from the deployed tree: not drift.
+    assert fleet.drifted_reviewers() == [], "an uninstalled copy must not read as drift"
+
+    # Present and identical: not drift.
+    (deployed / "reader.md").write_text("tools: Read, Grep, Glob\n", encoding="utf-8")
+    assert fleet.drifted_reviewers() == []
+
+    # Present and edited: drift, and it names the file.
+    (deployed / "reader.md").write_text("tools: Read, Grep, Glob, Write\n", encoding="utf-8")
+    found = fleet.drifted_reviewers()
+    assert len(found) == 1, found
+    assert "reader.md" in found[0]
