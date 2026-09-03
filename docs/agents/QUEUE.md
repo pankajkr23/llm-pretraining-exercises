@@ -435,4 +435,12 @@ predates the harness — so it is logged as what it was.
                           check failed on `git pull` after every single merge and the fix — another
                           pull request — needed recording in turn. An entry is now written when a
                           pull request is OPENED, and the regress closes
+2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
+                          hook. A reviewer copied into .claude/ and then edited there diverges
+                          silently from its tracked source, and the installed copy is the one that
+                          runs — so the drift is invisible in review by construction
+2026-09-03  exercise-09   #104 opened: the two explainer standards become tracked, and 09 is
+                          scaffolded. The generator's own test used 09/lossheads as its fixture —
+                          the exact spec 09 would claim — so the collision check found itself the
+                          moment 09 existed. Fixture moved to 99/scaffoldprobe
 ```
