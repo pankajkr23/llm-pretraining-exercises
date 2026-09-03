@@ -12,6 +12,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Both exercises ship a deployable page** carrying the twelve-part spine, with every figure read
+  from the same `results/*.json` the write-ups render — a page is the version of a stale hand-typed
+  figure that the most people see. Both join `SPINE_ENFORCED` and the landing page.
+- Each page draws its **mechanism**, not only its results: exercise 09 draws the target shift as two
+  rows of real token strings offset by one, with the broken version underneath where every pair is a
+  token predicting itself; exercise 10 draws the accumulation bug as bars whose widths *are* their
+  token counts, so the short micro-batch visibly gets a vote it did not earn.
+- A browser test per page, which found seven defects a green suite could not see: token labels
+  rendered past the edge of their own boxes, a label drawn across the arrows, a curve label drawn
+  through its own curve, a sum drawn through a bar, a peak label clipped by its viewBox, an axis
+  anchored at zero that flattened the shape it existed to show, and a caption describing an offset
+  the figure did not draw.
+
+### Added
+
 - **Exercise 10 runs all six of its items** and generates `RESULTS.md` from `results/run.json`: every
   tensor shape in a step; one gradient verified against a central difference swept over seven nudge
   sizes (**8.8 matching decimal digits** at its best, and worse at *both* ends); gradient
