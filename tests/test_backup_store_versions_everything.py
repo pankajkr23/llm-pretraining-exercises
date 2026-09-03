@@ -85,7 +85,32 @@ def test_every_file_the_tool_collects_is_actually_versioned() -> None:
     )
 
 
-def test_snapshot_refuses_to_report_success_when_git_will_not_track_a_file(tmp_path) -> None:
+@pytest.fixture
+def planted(tmp_path, monkeypatch):
+    """A repo and a store built from nothing, with `EXTERNAL_SOURCES` emptied.
+
+    **Emptying it is not tidiness, and the first version of these tests did not.** `snapshot()`
+    copies every directory in `EXTERNAL_SOURCES` alongside the requested files, and one of them is
+    the confidential reference material. A test that calls `snapshot()` without clearing it drags
+    that whole directory into a throwaway store on every local run — and then behaves differently
+    on a machine that does not have it, which is exactly how this was found: the same test passed
+    here and failed in CI, because locally those files gave the store something committable and on
+    a runner there was nothing to commit at all.
+
+    Two files, one of them committable, so `HEAD` exists and the per-file assertion is the one under
+    test rather than the older "files but no commits" check firing first.
+    """
+    monkeypatch.setattr("backup_local_only.EXTERNAL_SOURCES", {})
+    root, store = tmp_path / "repo", tmp_path / "store"
+    (root / "keep").mkdir(parents=True)
+    for name in ("notes.txt", "other.txt"):
+        (root / "keep" / name).write_text("the only copy\n", encoding="utf-8")
+    store.mkdir()
+    subprocess.run(["git", "-C", str(store), "init", "--quiet"], check=True)
+    return root, store, [Path("keep/notes.txt"), Path("keep/other.txt")]
+
+
+def test_snapshot_refuses_to_report_success_when_git_will_not_track_a_file(planted) -> None:
     """The twin, and it runs everywhere — a guard nobody has watched fail is not a guard.
 
     `.git/info/exclude` is used rather than a global ignore because it is the residual risk after
@@ -93,36 +118,30 @@ def test_snapshot_refuses_to_report_success_when_git_will_not_track_a_file(tmp_p
     still silence `git add`. So this proves the assertion fires and documents the one route that
     can still reach it.
     """
-    root, store = tmp_path / "repo", tmp_path / "store"
-    (root / "keep").mkdir(parents=True)
-    wanted = Path("keep/notes.txt")
-    (root / wanted).write_text("the only copy\n", encoding="utf-8")
-
-    subprocess.run(["git", "-C", str(root.parent), "init", "--quiet"], check=False)
-    store.mkdir()
-    subprocess.run(["git", "-C", str(store), "init", "--quiet"], check=True)
+    root, store, wanted = planted
     (store / ".git" / "info").mkdir(parents=True, exist_ok=True)
     (store / ".git" / "info" / "exclude").write_text("keep/notes.txt\n", encoding="utf-8")
 
     with pytest.raises(SystemExit) as raised:
-        snapshot(root, store, [wanted], message="planted")
+        snapshot(root, store, wanted, message="planted")
 
-    assert "no version history" in str(raised.value), str(raised.value)
-    assert "keep/notes.txt" in str(raised.value), str(raised.value)
+    message = str(raised.value)
+    assert "no version history" in message, message
+    assert "keep/notes.txt" in message, message
+    # The other file committed, so HEAD exists and this is the per-file check failing rather than
+    # the older store-wide one.
+    assert "keep/other.txt" not in message, message
 
 
-def test_the_twin_would_pass_without_the_planted_exclude(tmp_path) -> None:
-    """The other half of the twin: the same call succeeds when git is willing to track the file.
+def test_the_twin_would_pass_without_the_planted_exclude(planted) -> None:
+    """The other half of the twin: the same call succeeds when git is willing to track the files.
 
     Without this, the test above would still pass if `snapshot()` raised for some unrelated reason,
     and the pair would prove nothing about the exclude.
     """
-    root, store = tmp_path / "repo", tmp_path / "store"
-    (root / "keep").mkdir(parents=True)
-    wanted = Path("keep/notes.txt")
-    (root / wanted).write_text("the only copy\n", encoding="utf-8")
+    root, store, wanted = planted
 
-    snapshot(root, store, [wanted], message="planted")
+    snapshot(root, store, wanted, message="planted")
 
-    listed = _git(store, "ls-files", "-z")
-    assert "keep/notes.txt" in {n for n in listed.split("\0") if n}
+    listed = {n for n in _git(store, "ls-files", "-z").split("\0") if n}
+    assert {"keep/notes.txt", "keep/other.txt"} <= listed, listed
