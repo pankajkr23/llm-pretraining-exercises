@@ -1,4 +1,4 @@
-"""What the order shows, and whether it shows what the requirements says it shows.
+"""What the order shows, and whether it shows what the requirements say it shows.
 
 Question 2 asks what the timeline reveals that a list cannot. The requirements supplies an answer —
 exactness, then memory, then length, then memory again — and the temptation is to print that

@@ -45,10 +45,10 @@ Three clauses, three answers, all measured:
 | *"a vocab of 1M without any issues"* | **6,291,457 vs 768,000,000** parameters, and ~72 ms / 0.75 GB per step **flat in V** with sampled scoring. |
 
 **A second, separate solution to Problem 3** — the 32-byte cap — is included and labelled as such,
-never merged into the #5 result. The requirements says the problems are separate; the measurements keep
+never merged into the #5 result. The requirements say the problems are separate; the measurements keep
 them separate.
 
-**How is it proved?** The requirements says to write a small transformer and train it, so that is what the
+**How is it proved?** The requirements say to write a small transformer and train it, so that is what the
 evidence is:
 
 - **Trained comparisons, 5 seeds, paired.** Every arm shares a transformer body, the same seeds and
