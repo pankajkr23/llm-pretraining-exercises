@@ -10,6 +10,17 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- **One theme picker, not eight.** `deploy/vercel/_shared/theme.js` gains `bindThemePicker`, which
+  wires a `<select>` a page has already rendered — and six pages drop the eighteen lines each had
+  hand-written. The markup stays in the page, deliberately: a server-rendered control is styled and
+  readable before any module loads.
+- `tests/test_theme_picker.py` guards it, and all four of its assertions were watched failing
+  against a deliberate break first. **One of them was blind and the break is how I found out** — it
+  checked that the string `bindThemePicker` appeared, so deleting the *call* and leaving the
+  `import` satisfied it. It asserts a call now.
+
 ### Added
 
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two

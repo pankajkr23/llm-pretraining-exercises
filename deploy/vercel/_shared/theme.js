@@ -126,3 +126,28 @@ export function mountThemePicker(selector) {
   }
   return picker;
 }
+
+/**
+ * Wire a `<select>` the page has already rendered.
+ *
+ * **This exists because eight pages had hand-written the same eighteen lines.** 03 through 10 each
+ * render the control in their own HTML — which is deliberate and better than building it in JS,
+ * because a server-rendered select is styled and readable before any module loads — and then each
+ * repeated the storage key, the read, the `system`-removes-the-attribute rule and the two
+ * try/catch blocks. Eight copies of a rule is eight places for it to drift, and the rule that
+ * would drift silently is the one about `system`: set `data-theme="system"` instead of removing
+ * the attribute and `prefers-color-scheme` stops working, on that page only, in a way nothing
+ * tests and nobody notices until they change their system theme.
+ *
+ * The markup stays in the page. Only the behaviour comes from here.
+ *
+ * @param {string} [id] - the select's element id.
+ * @returns {HTMLSelectElement|null} the wired control, or null when the page has no such element.
+ */
+export function bindThemePicker(id = 'theme') {
+  const select = document.getElementById(id);
+  if (!(select instanceof HTMLSelectElement)) return null;
+  select.value = storedTheme();
+  select.addEventListener('change', () => applyTheme(select.value));
+  return select;
+}
