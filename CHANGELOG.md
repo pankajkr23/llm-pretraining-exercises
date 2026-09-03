@@ -10,6 +10,30 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Exercise 10 runs all six of its items** and generates `RESULTS.md` from `results/run.json`: every
+  tensor shape in a step; one gradient verified against a central difference swept over seven nudge
+  sizes (**8.8 matching decimal digits** at its best); gradient accumulation broken on purpose, both
+  as arithmetic (**15.4%** out) and as two full training curves; the gradient norm logged pre-clip
+  with the leading-step search reported at five thresholds; MFU; and 0.1 decomposed into fp32, bf16
+  and fp8 E4M3.
+- Its model is exercise 09's, imported rather than restated, so the two cannot disagree about what a
+  loss is.
+
+### Fixed
+
+- **Exercise 10's MFU was 39.13% and meaningless**: it divided FLOPs achieved on the CPU by a GPU's
+  advertised peak. The peak is now measured on the same device and dtype as the run. It also priced
+  the embedding tables — a gather does no arithmetic — which inflated the numerator by 45%. The
+  honest figure is **27.89%**.
+- **The gradient check reported a central difference of exactly 0.0 at every nudge size.** In fp32 a
+  loss near 9.2 resolves to about 5e-7, so a weight whose gradient was -7.8e-7 moved it by nothing.
+  It runs in float64 now, on the largest-magnitude gradient rather than element [0, 0].
+- The test for the gradient sweep drove `logits.square().mean()`, which is quadratic — and a central
+  difference is *exact* for a quadratic, so the U-shaped sweep it was written to assert could not
+  appear. It drives the real cross-entropy now.
+
 ### Fixed
 
 - **Exercise 09's document-boundary mask kept every pad-to-pad pair.** Padding carries document id

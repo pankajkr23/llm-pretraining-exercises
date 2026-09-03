@@ -14,6 +14,7 @@ produce numbers, so the JSON is — and `RESULTS.md` is generated from it, never
 
 from __future__ import annotations
 
+import textwrap
 import time
 from typing import Any
 
@@ -109,15 +110,40 @@ def item_3_accumulation(config: Config) -> dict[str, Any]:
     _line("ITEM 3 — break gradient accumulation on purpose")
     combination = accumulation.compare(config)
     print(str(combination))
+
+    def _say(text: str) -> None:
+        print(textwrap.fill(text, width=92, initial_indent="    ", subsequent_indent="    "))
+        print()
+
+    print()
+    _say(
+        "The short micro-batch holds half as many real tokens as the others and gets exactly the "
+        "same vote, so it drags the average up. A bug of this shape lived inside every major "
+        "training framework until 2024, and it hid because the error is EXACTLY ZERO when every "
+        "micro-batch carries the same number of real tokens — which a hand-built test case almost "
+        "always does. Curves looked ordinary."
+    )
+    _say(
+        "Which is why Config.micro_batch_tokens is uneven by decision, and why compare() REFUSES "
+        "an even configuration rather than reporting a reassuring gap of zero."
+    )
+
+    curves = accumulation.two_curves(config, steps=120)
+    _say(
+        "And the same two reductions driving a real run, 120 steps, everything else held "
+        f"identical — micro-batch widths {curves['micro_batch_widths']} tokens, so one carries "
+        "half the real tokens of the others:"
+    )
+    print(f"    correct reduction : final loss {curves['final_correct']:.4f}")
+    print(f"    wrong reduction   : final loss {curves['final_wrong']:.4f}")
     print(
-        "\n    The short micro-batch holds half as many tokens as the others and is given exactly\n"
-        "    the same vote, so it drags the average up. This bug lived inside every major\n"
-        "    training framework until 2024, and it hid because the error is EXACTLY ZERO\n"
-        "    whenever the micro-batches happen to hold equal token counts — which in casual\n"
-        "    testing they usually do. The loss curves looked reasonable.\n"
-        "\n"
-        "    Which is why Config.micro_batch_tokens is uneven by decision, and why compare()\n"
-        "    REFUSES an even configuration rather than reporting a reassuring gap of zero."
+        f"    gap               : {curves['final_gap']:+.4f}  "
+        f"(mean absolute gap over the run {curves['mean_absolute_gap']:.4f})\n"
+    )
+    _say(
+        "Both curves are in results/run.json under `item_3_accumulation.curves`, ready to plot. "
+        "**The gap is small and that is exactly why the bug survived years** — the wrong curve "
+        "does not look wrong, it looks like the right curve."
     )
     return {
         "token_counts": list(combination.token_counts),
@@ -126,6 +152,7 @@ def item_3_accumulation(config: Config) -> dict[str, Any]:
         "wrong": combination.wrong,
         "absolute_gap": combination.absolute_gap,
         "relative_gap": combination.relative_gap,
+        "curves": curves,
     }
 
 
@@ -188,13 +215,15 @@ def item_5_mfu(trace: telemetry.Trace, facts: dict[str, Any], config: Config) ->
             "multiply — MEASURED here, same device and dtype as the run, not a vendor figure"
         ),
     )
-    print(
-        f"    Priced from {facts['non_embedding_parameters']:,} non-embedding parameters, not the\n"
-        f"    {facts['parameters']:,} total: the {facts['embedding_parameters']:,} in the\n"
-        "    embedding"
-        "    tables are read by a gather and do no arithmetic. Counting them inflated this\n"
-        "    exercise's own first figure by 45%.\n"
+    priced = (
+        f"Priced from {facts['non_embedding_parameters']:,} non-embedding parameters rather than "
+        f"the {facts['parameters']:,} total. The {facts['embedding_parameters']:,} in the "
+        "embedding tables are read by a gather and do no arithmetic at all, so counting them is "
+        "free "
+        "inflation — it raised this exercise's own first figure by 45%."
     )
+    print(textwrap.fill(priced, width=92, initial_indent="    ", subsequent_indent="    "))
+    print()
     print(str(utilisation))
     print()
     print(mfu.distance_to_target(utilisation))

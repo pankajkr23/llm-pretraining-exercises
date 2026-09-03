@@ -184,3 +184,102 @@ def accumulate(
     if correct:
         return (total_loss / total_tokens if total_tokens else total_loss), total_tokens
     return (torch.stack(means).mean() if means else total_loss), total_tokens
+
+
+def two_curves(
+    config: Config | None = None,
+    steps: int = 120,
+    seed: int = 10,
+) -> dict[str, object]:
+    """Train the same model twice, combining micro-batch losses correctly and then wrongly.
+
+    **The arithmetic above shows the bug in four lines; this shows what it does to a run**, which
+    is what the requirements ask to be plotted. Everything is held identical between the two —
+    initialisation, batches, optimiser, order — so the only difference is the reduction.
+
+    **The micro-batches are deliberately uneven, and they are made uneven by truncating.** Each
+    step's three micro-batches are cut to `Config.micro_batch_tokens` proportions, so one carries
+    half the real tokens of the others. With equal lengths the two curves lie exactly on top of
+    each other, which would be a plot of nothing.
+
+    Args:
+        config: Defaults to `Config()`.
+        steps: Optimiser steps per curve.
+        seed: Both curves start from it.
+
+    Returns:
+        Plain data: both curves, the configuration, and the gap between their endpoints.
+
+    Raises:
+        EvenMicroBatchesError: When the configured micro-batches could not show the difference.
+    """
+    import torch
+    from lossheads.shift import shift_for_next_token
+    from lossheads.training import _corpus
+
+    from .step import build
+
+    config = config or Config()
+    if not config.micro_batches_are_uneven:
+        raise EvenMicroBatchesError(
+            f"micro_batch_tokens is {config.micro_batch_tokens}; with equal micro-batches the two "
+            "curves are identical and the plot shows nothing"
+        )
+
+    model = config.model
+    accumulation = len(config.micro_batch_tokens)
+    longest = max(config.micro_batch_tokens)
+    # Each micro-batch is cut to its share of the sequence, so they differ in real token count.
+    widths = [max(8, round(model.seq_len * n / longest)) for n in config.micro_batch_tokens]
+
+    batches = _corpus(model, steps * model.batch_size * accumulation, seed)
+    curves: dict[str, list[float]] = {}
+
+    for name, correct in (("correct", True), ("wrong", False)):
+        torch.manual_seed(seed)
+        trunk, head, optimiser = build(config)
+        series: list[float] = []
+
+        for step in range(steps):
+            optimiser.zero_grad()
+            summed = torch.zeros(())
+            counted = 0
+            means: list[torch.Tensor] = []
+
+            for micro, width in enumerate(widths):
+                start = (step * accumulation + micro) * model.batch_size
+                tokens = batches[start : start + model.batch_size, :width]
+                logits = head(trunk(tokens))
+                _, targets = shift_for_next_token(tokens)
+                flat = logits[:, :-1].reshape(-1, model.vocab_size)
+                block = torch.nn.functional.cross_entropy(
+                    flat, targets.reshape(-1), reduction="sum"
+                )
+                tokens_here = int(targets.numel())
+                summed = summed + block
+                counted += tokens_here
+                means.append(block / tokens_here)
+
+            loss = (summed / counted) if correct else torch.stack(means).mean()
+            loss.backward()
+            optimiser.step()
+            series.append(float(loss.detach()))
+
+        curves[name] = series
+
+    gap = curves["wrong"][-1] - curves["correct"][-1]
+    return {
+        "steps": list(range(1, steps + 1)),
+        "correct": curves["correct"],
+        "wrong": curves["wrong"],
+        "micro_batch_widths": widths,
+        "micro_batch_tokens": list(config.micro_batch_tokens),
+        "final_correct": curves["correct"][-1],
+        "final_wrong": curves["wrong"][-1],
+        "final_gap": gap,
+        "wrong_reads_higher": gap > 0,
+        "mean_absolute_gap": sum(
+            abs(a - b) for a, b in zip(curves["correct"], curves["wrong"], strict=True)
+        )
+        / steps,
+    }
