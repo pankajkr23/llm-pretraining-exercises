@@ -114,7 +114,36 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 - **`addopts` gains `-rs` and `xfail_strict = true` is set.** The skip report is the only place a
   vanished test is visible, and an XPASS reporting green is the same "reads as coverage" shape.
 
+### Removed
+
+- **2,578 lines of vendored JavaScript that no page referenced, shipped to the live site on every
+  deploy.** `anim.js` — 167 lines, vendored **six** times, exporting seven helpers (`onEnterOnce`,
+  `countUp`, `morph` and four more) — was imported by nothing: no exercise, no test, not
+  `build.sh`. `explainer.js` and `num.js` are removed from the four exercises that link neither;
+  03 and 06 keep them and still use them. The assembled site drops from 92 files to 78, and every
+  page still renders with no console error and no failed request.
+
+  **`docs/DESIGN.md` already recorded this**, in a table whose own row read
+  `| anim.js | reveal-on-enter helpers | **nobody** |`. A fact written in prose is not a fact
+  anything enforces, so `tests/test_shared_layer.py` now refuses any file in a vendored
+  `web/_shared/` that the vendoring exercise does not reference.
+
 ### Fixed
+
+- **Three numbers `docs/DESIGN.md` published about the shared layer were wrong, in the direction
+  that would have destroyed working code.** It said `explainer.css` was "527 lines linked by six
+  pages and used by two"; it is used by **01, 02, 03 and 05**, exercise 03 alone emits **36 of its
+  56** classes, and only **12** are orphaned. It said fifteen `page.css` classes are emitted
+  nowhere; it is **10**.
+
+  The first measurement here was worse still — it reported `explainer.css` as *entirely* unused,
+  because it looked for the `el(tag, className)` helper the standard describes while exercise 03
+  almost exclusively calls a local `$(tag, className)`. **Deleting on that evidence would have
+  removed a live stylesheet.** The counts are no longer published in prose: the test derives them
+  and carries the full list of class-setting idioms, and the remaining orphan *classes* are left
+  alone deliberately, because a class emitted by a path an extractor cannot see is
+  indistinguishable from a dead one.
+
 
 - **An integration shard's check name carried its own exercise list, and required checks match by
   name.** With no explicit `name:`, GitHub builds a matrix job's check name from *every* matrix
