@@ -12,6 +12,24 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- Exercise 09 now produces its seven numbers and its two findings from code that runs top to bottom:
+  a harness writing `results/harness.json`, a 300-step training run writing `results/training.json`,
+  and a `RESULTS.md` generated from both by `tools/render_results.py`. No figure in any document is
+  typed by hand, and a test flips the data to prove the *verdict words* are read from the run too.
+- Peak-memory measurement (`memory.py`) that runs each loss path in an isolated child process and
+  reports peak RSS, plus a projection-level chunked cross-entropy — the version the memory claim is
+  actually about, which never materialises the full logits tensor.
+- Multi-token output heads, and a head-cost table with a **third** row: tying is unavailable to any
+  architecture whose input side has no per-token rows, which makes that item a question rather than
+  a lookup.
+
+### Fixed
+
+- `training._corpus` raised a bare `IndexError` from inside torch when `Config.vocab_size` was
+  shrunk below the tokenizer's size. It now refuses with a message naming the cause.
+
+### Added
+
 - Exercise 09 now has a real package rather than a skeleton: a small transformer trunk that owns no
   output head, exercise 02's frozen tokenizer loaded so targets print as **strings**, the `t+1` and
   `t+k` shifts with the off-by-one kept deliberately so a test can watch the loss fall, padding and

@@ -202,3 +202,57 @@ def chunked_cross_entropy(
     if counted == 0:
         return total * 0.0
     return total / counted
+
+
+def chunked_projection_cross_entropy(
+    hidden: torch.Tensor,
+    weight: torch.Tensor,
+    targets: torch.Tensor,
+    chunk_size: int = 128,
+    config: Config | None = None,
+) -> torch.Tensor:
+    """Cross-entropy that never materialises the full logits tensor at all.
+
+    **This is the version the memory claim is actually about, and it differs from
+    `chunked_cross_entropy` in the one way that matters.** That function takes logits that already
+    exist and chunks the *softmax*, so it saves the intermediates and not the tensor. This one
+    takes the hidden states and the head's weight and projects **inside** the loop, so the full
+    `[rows, vocab]` tensor is never allocated — only `[chunk, vocab]` ever exists.
+
+    Peak logit memory is therefore `chunk × vocab × bytes` rather than `rows × vocab × bytes`, which
+    is the reduction the technique is named for. The loss is the same number.
+
+    Args:
+        hidden: `(n, d_model)` final hidden states.
+        weight: `(vocab, d_model)` output head weight, as `torch.nn.Linear` stores it.
+        targets: `(n,)` class indices, or `Config.ignore_index`.
+        chunk_size: Rows per block. Must be positive.
+        config: Supplies `ignore_index`. Defaults to `Config()`.
+
+    Returns:
+        A scalar tensor equal to projecting everything and taking cross-entropy once.
+
+    Raises:
+        ValueError: When `chunk_size` is not positive.
+    """
+    import torch
+    import torch.nn.functional as functional
+
+    config = config or Config()
+    if chunk_size <= 0:
+        raise ValueError(f"chunk_size must be positive, got {chunk_size}")
+
+    total = torch.zeros((), dtype=hidden.dtype, device=hidden.device)
+    counted = 0
+    for start in range(0, hidden.shape[0], chunk_size):
+        stop = start + chunk_size
+        block_targets = targets[start:stop]
+        block_logits = hidden[start:stop] @ weight.T
+        total = total + functional.cross_entropy(
+            block_logits, block_targets, ignore_index=config.ignore_index, reduction="sum"
+        )
+        counted += int((block_targets != config.ignore_index).sum().item())
+
+    if counted == 0:
+        return total * 0.0
+    return total / counted

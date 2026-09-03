@@ -30,6 +30,7 @@ code that runs top to bottom rather than typed into prose.
 | **13 · Notebook** | the Colab notebook, importing the package, never re-implementing | not started |
 | **14 · README** | the write-up, rendering `results/` rather than quoting it | drafted, stale |
 | **15 · Web page** | the deployable explainer, to the twelve-part spine | not started |
+| **15b · Register** | `SPINE_ENFORCED` + the landing card — both fail in two directions | not started |
 | **16 · Submit** | PK's action, after production is live | blocked on 1–15 |
 
 ---
@@ -153,13 +154,23 @@ what happens to head 2 over training relative to head 1.
 
 ---
 
-## Open decisions
+## Decisions taken (2026-09-03)
 
-- **Does this exercise track its notebook?** The requirements say the Colab notebook is *moved to
-  GitHub*; `AGENTS.md` gitignores every topic notebook. The platform's own wording is *"the ipynb
-  file **or** training logs"*, so tracked `results/` plus a README that renders them satisfies it
-  without an exception. **PK's call**, and it goes in `DECISIONS.md` either way. If "ipynb" is read
-  as required, this exercise needs a written, reasoned exception to the convention.
+- **The notebook stays local; `results/` is tracked.** The wording offers *"the ipynb file **or**
+  training logs"*, and training logs are our own output rather than course material — so tracked
+  `results/` plus a README rendering them satisfies it with no exception to the convention.
+  Exercise 10's requirement offers no such alternative, and **its** notebook is tracked under a
+  written exception. Goes in `DECISIONS.md`.
+- **This exercise ships a `web/` page**, built to `docs/DESIGN.md` with the twelve-part spine in
+  order, and joins `SPINE_ENFORCED` and the landing card. PK's call, overriding a recommendation to
+  skip it on deadline grounds. **It is built after stage 10**, because a page whose figures are not
+  yet measured is a page that gets rebuilt.
+- **09 is finished before 10 starts**, timeboxed — 10 reuses this exercise's config, trunk,
+  tokenizer, shift, masks and losses unchanged, so finishing here hands 10 a foundation rather than
+  a blank directory. Exercise 10 is due 5 September and is the only live deadline.
+
+## Still open
+
 - **How much training for Part 2?** Enough to see the ordering hold, not enough to claim a curve.
   The number of steps gets stated next to the result rather than chosen quietly.
 

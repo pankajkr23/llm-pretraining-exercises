@@ -233,7 +233,8 @@ jobs:
             src/exercises/06-build-training-dataset/tests/test_trainingdata_crash.py \
             src/exercises/06-build-training-dataset/tests/test_trainingdata_opus_score.py \
             src/exercises/07-model-embeddings-internals/tests/test_embeddings_heads.py \
-            src/exercises/09-loss-functions-output-heads/tests/test_lossheads_equivalences.py
+            src/exercises/09-loss-functions-output-heads/tests/test_lossheads_equivalences.py \
+            src/exercises/09-loss-functions-output-heads/tests/test_lossheads_harness.py
 
   security:
     runs-on: ubuntu-latest
