@@ -95,6 +95,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The quote-check receipt attested to a check it never ran.** `build()` took the verdict as a
+  *default argument* and `write()` never passed one, so `--write` produced a receipt reading
+  `PASSED` on any machine — including one holding no reference material at all, which is precisely
+  the case the receipt exists to catch. It was this repository's own "reads as coverage" shape,
+  inside the tool written to close a coverage hole. `run_gate()` now calls the real check and
+  reports what it found, the verdict is a required argument so it cannot be defaulted into the file
+  again, and `--write` **refuses and writes nothing** unless the gate genuinely passed. Verified by
+  running it with the material hidden: `UNAVAILABLE`, exit 1, receipt untouched.
+- **The same receipt was invalidated by 181 files the check never opens.** Its digest covered every
+  tracked non-binary file — **474** here — while the quoting half reads only `.md`, `.py` and
+  `.txt`, which is **293**. Every stylesheet, lockfile, manifest and JSON fixture in the repo could
+  therefore make the receipt stale for a reason the check could not see, which teaches a reader that
+  regenerating it is a formality. The digest now covers exactly what the check reads, and a test
+  parses the suffix filter out of the checker's own source so the two cannot drift.
+
 - **The design standard named a CSS class that does not exist, and now a guard says so.** A
   word-substitution sweep rewrote `` `.preamble` `` — a class name — into two English words in
   `docs/DESIGN.md`, and did the same to the `` `preamble()` `` builder in exercise 08's `CLAUDE.md`.
@@ -270,6 +285,31 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   only see what happens after they exist, and the errors thrown while a page builds itself are the
   ones worth having. A twin plants one defect of each class into the live page, asserts all three are
   reported, and removes them in a `finally`.
+
+- **CI can now prove the local-only quoting gate ran, against exactly this prose.** `AGENTS.md` has
+  said outright that *"CI can prove no filename leaked and only the hook can prove no sentence did"*
+  — the quoting half compares tracked prose against reference material that is never on a runner, so
+  it skips there **silently**.
+
+  The check emits a boolean and two digests and never needs to reveal corpus content, which is what
+  makes its *result* publishable without publishing anything it read.
+  `.quote-check-receipt.json` records a digest over the exact tracked prose the check covered plus a
+  digest of the checker itself, and `tests/test_quote_check_receipt.py` recomputes both in CI from
+  the repository alone.
+
+  **The limit is stated rather than implied by the word "digest":** this proves a machine holding
+  the material ran this exact checker against exactly this content. It does **not** prove that
+  machine was honest — anyone who can run the checker can write the file. The failure this repo
+  actually has is forgetfulness and staleness, and those it closes.
+
+  **A circularity showed up immediately and is now guarded.** The receipt is tracked, so it landed
+  inside the checker's own file set — and writing it changed the digest it had just recorded, making
+  it permanently invalid. Caught by staging the first receipt and watching it fail to vouch for the
+  tree it described. It excludes itself, with a test.
+
+  A further test asserts the receipt **names nothing**: keys are fixed, digests are plain hex, and no
+  path or test name appears. This repo has already made the leak-check-becomes-a-leak mistake twice,
+  in the docstrings of the two guards this receipt supports.
 
 ### Security
 
