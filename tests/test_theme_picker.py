@@ -22,6 +22,13 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SHARED = REPO_ROOT / "deploy" / "vercel" / "_shared" / "theme.js"
 
+#: The copies vendored into each exercise. They exist because an exercise's own render test serves
+#: that exercise's `web/` directory rather than the assembled site — so a site-root import 404s
+#: there, and **a failed module import aborts the whole module**, taking the page's `buildPage`
+#: call down with it. Exercise 03 rendered zero sections that way, and the theme picker was the
+#: only thing I had checked.
+VENDORED = sorted(REPO_ROOT.glob("src/exercises/*/web/_shared/theme.js"))
+
 #: Every page that ships a theme control, found rather than listed — a hand-maintained list would
 #: go stale the first time an exercise was added, which is how this class of guard usually fails.
 PAGES = sorted(REPO_ROOT.glob("src/exercises/*/web/*.html")) + [
@@ -81,6 +88,56 @@ def test_every_page_with_a_picker_wires_it_through_the_shared_module() -> None:
         + "\n  ".join(unwired)
         + "\n\nAn import alone does not wire a control, and an unused import is what a page has "
         "after someone deletes the one line that mattered."
+    )
+
+
+def test_every_vendored_copy_is_identical_to_its_source() -> None:
+    """A vendored copy that drifts is a page running different logic from every other page.
+
+    The copies exist for a real reason — see `VENDORED` — but a copy is only safe while it is a
+    copy. This is the same shape as the `--drift` check on the agent reviewers: the installed copy
+    is the one that runs, so divergence is invisible in review by construction.
+    """
+    source = SHARED.read_bytes()
+    drifted = [str(p.relative_to(REPO_ROOT)) for p in VENDORED if p.read_bytes() != source]
+    assert not drifted, (
+        "these vendored copies of theme.js differ from deploy/vercel/_shared/theme.js:\n  "
+        + "\n  ".join(drifted)
+        + "\n\nRe-copy the source. A page running a drifted copy is a page whose theme behaves "
+        "differently from every other page, and nothing else would notice."
+    )
+
+
+def test_a_page_only_imports_a_path_that_exists_where_its_test_serves_from() -> None:
+    """The regression this pair of rules exists to prevent, stated as the property.
+
+    A page that vendors `_shared/` must import the vendored copy relatively; one that does not must
+    use the site root. Getting it backwards 404s, and a failed import aborts the entire module — so
+    the symptom is not "the theme picker is broken", it is **a blank page**.
+    """
+    landing = REPO_ROOT / "deploy" / "vercel" / "index.html"
+    wrong: list[str] = []
+    for page in PAGES:
+        # The landing page IS the site root, so `/_shared/` and `./_shared/` name the same file
+        # for it. The rule below distinguishes two paths that are identical there.
+        if page == landing:
+            continue
+        text = page.read_text(encoding="utf-8")
+        if "_shared/theme.js" not in text:
+            continue
+        vendored_here = (page.parent / "_shared" / "theme.js").is_file()
+        relative = "'./_shared/theme.js'" in text
+        if vendored_here and not relative:
+            wrong.append(
+                f"{page.relative_to(REPO_ROOT)}: vendors _shared/ but imports from the site root"
+            )
+        if not vendored_here and relative:
+            wrong.append(
+                f"{page.relative_to(REPO_ROOT)}: imports './_shared/theme.js' with no such file"
+            )
+
+    assert not wrong, "\n  ".join(
+        ["these imports resolve to nothing where the page is tested:", *wrong]
     )
 
 

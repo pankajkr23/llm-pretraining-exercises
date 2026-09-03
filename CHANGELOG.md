@@ -10,6 +10,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- Consolidating the theme picker broke exercise 03's page outright — it rendered **zero sections**.
+  Its render test serves the exercise's own `web/` directory rather than the assembled site, so a
+  site-root import 404s there, and **a failed module import aborts the whole module**, taking the
+  page's `buildPage` call with it. `theme.js` is vendored alongside the CSS now and imported
+  relatively, and two guards cover it: one that the vendored copies match their source, one that a
+  page's import path resolves where its own test serves from.
+
 ### Changed
 
 - **One theme picker, not eight.** `deploy/vercel/_shared/theme.js` gains `bindThemePicker`, which
