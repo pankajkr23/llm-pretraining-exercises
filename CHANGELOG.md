@@ -12,6 +12,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- `tests/test_shared_layer_orphans.py` pins how much of `_shared/page.css` no page emits — **29 of
+  101 classes**, measured by serving the assembled site and reading `classList` from every element
+  of all 13 pages, after scrolling and after driving every input and button. **Two classes left the
+  list at that last step** (`.filter-none`, `.rail-shut`), which is exactly why the measurement is
+  not a grep, and why nothing was deleted on it.
+
+### Added
+
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two
   places — tracked under `docs/agents/reviewers/`, and copied by the installer into the gitignored
   `.claude/agents/` that Claude Code actually reads. They are identical by construction, and
