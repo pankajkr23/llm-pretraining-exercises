@@ -1,6 +1,6 @@
 """The catalogue is the deliverable, so these are the tests that matter most.
 
-The requirements is graded on three things — the dates, the trade-offs, and the coverage — and the
+The requirements are graded on three things — the dates, the trade-offs, and the coverage — and the
 instructor said plainly that a missing mechanism scores zero. Each of those is a test here rather
 than something somebody remembers to check.
 
@@ -33,7 +33,7 @@ def test_every_mechanism_the_assignment_names_is_covered() -> None:
     """
     missing = missing_mandated(MECHANISMS)
     assert not missing, (
-        f"the requirements requires these and the catalogue has none of them: {missing}"
+        f"the requirements require these and the catalogue has none of them: {missing}"
     )
 
 
@@ -162,7 +162,7 @@ def test_each_required_mechanism_individually(phrase: str, key: str) -> None:
     different failure mode. Covering half a phrase and reporting success is exactly the "missing or
     mis-explained mechanism" the requirements scores zero for.
     """
-    assert any(m.key == key for m in MECHANISMS), f"the requirements requires {phrase!r} ({key})"
+    assert any(m.key == key for m in MECHANISMS), f"the requirements require {phrase!r} ({key})"
 
 
 def test_no_phrase_is_satisfied_by_only_part_of_itself() -> None:

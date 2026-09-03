@@ -12,6 +12,31 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The design standard named a CSS class that does not exist, and now a guard says so.** A
+  word-substitution sweep rewrote `` `.preamble` `` — a class name — into two English words in
+  `docs/DESIGN.md`, and did the same to the `` `preamble()` `` builder in exercise 08's `CLAUDE.md`.
+  The class had been renamed correctly in the stylesheet and the builder, so every page kept working
+  and the whole suite stayed green; only the document a reader consults before implementing a plate
+  was wrong. Both are repaired, and `DESIGN.md` now also names `.preamble-lab` and `.preamble-row`,
+  which it never did.
+
+- **`tests/test_standards_name_real_code.py` asserts every class a standard names is real** —
+  styled in a stylesheet or an inline `<style>` block, or set through `el()`, `class=`, `className`
+  or `classList`. A family reference such as `.fig-*` must have at least one member, rather than
+  being skipped. Paths, rule bodies and shell arguments are not read as selectors, because a false
+  positive here is pressure to reword correct prose until the guard stops catching anything.
+
+  **The first version of this guard passed on the very defect it was written for.** It asked only
+  whether the name appeared inside any quoted string, and this repo's JavaScript is full of
+  narrative strings — so `.requirements` "resolved" against a sentence containing the word. It was
+  caught by breaking `DESIGN.md` on purpose and watching the guard stay green; the twin test now
+  plants that exact prose alongside the fixture so the false negative cannot come back.
+
+- **Twenty-four sentences left ungrammatical by the same sweep.** "The requirements **requires**",
+  "the requirements **says**", "the requirements **is** explicit" across `AGENTS.md`, four
+  exercises' documents, two test modules, `timeline.py`, `catalogue.py`, `chapters.js` and
+  `figures.js`; plus one sentence in exercise 07's `PROGRESS.md` truncated mid-clause. None of this
+  was visible to the vocabulary guards, which are lexical over banned words rather than over grammar.
 - **The backup store inherited the user's global gitignore, so one protected file had been copied
   on every run and committed on none.** The store is a git repository, so `git add` there honours
   `~/.config/git/ignore` exactly as it would anywhere else. A global rule matching
