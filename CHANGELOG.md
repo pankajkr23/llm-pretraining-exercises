@@ -25,6 +25,12 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   byte-identical to its tag, so a second version can never legitimately exist. Across the store's
   whole life the only change ever recorded against a snapshot was a reworded banner.
 
+- **`standards-history` joins `REGENERABLE`, or the change would have traded a redundancy for
+  noise.** `REGENERABLE` exists so that "not backed up" splits into *decided* and *overlooked*, and
+  without the entry the tool printed **25 `NOT COVERED` lines on every run** — which is how a report
+  stops being read. The archive is regenerable in exactly the sense that list means: `--ref <tag>`
+  rebuilds any snapshot byte for byte. The collected set drops from 84 files to 59.
+
 - **The guard was inverted, and now asserts the reason rather than the fact.**
   `test_the_archive_is_backed_up_because_nothing_else_holds_it` became
   `test_the_archive_is_not_backed_up_because_it_is_rebuildable`, which checks **both** halves: the

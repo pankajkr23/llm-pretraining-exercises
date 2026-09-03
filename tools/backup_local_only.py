@@ -180,6 +180,12 @@ REGENERABLE: tuple[str, ...] = (
     "uv.lock",
     ".coverage",
     "htmlcov",
+    # The frozen standard files. Regenerable in the exact sense this list means: a snapshot is
+    # `git show <tag>:<file>` plus a banner, and `snapshot_standards.py --ref <tag>` rebuilds any of
+    # them byte for byte. It sits here rather than in `PATTERNS` so its absence reads as *decided*
+    # — without this entry, dropping it from the backup printed twenty-five NOT COVERED lines on
+    # every single run, which is how a report stops being read.
+    "standards-history",
 )
 
 
