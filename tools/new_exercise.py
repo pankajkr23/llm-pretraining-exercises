@@ -196,7 +196,7 @@ is the whole point of this file.
 
 def progress(spec: Spec) -> str:
     """`PROGRESS.md` — the running log."""
-    return f"""# PROGRESS — Topic {spec.topic}
+    return f"""# PROGRESS — Exercise {spec.number}
 
 A running log of what was built, what was measured, what changed and what is still open. Written so
 the work can be picked up cold. Newest entries at the top of each section.
@@ -255,7 +255,7 @@ def pyproject(spec: Spec) -> str:
     return f"""[project]
 name = "exercise-{spec.number}-{spec.slug}"
 version = "0.1.0"
-description = "Topic {spec.topic} — {spec.title}"
+description = "Exercise {spec.number} — {spec.title}"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=2",
