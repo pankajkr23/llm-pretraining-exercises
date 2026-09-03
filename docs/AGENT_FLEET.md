@@ -19,9 +19,19 @@ agent's own report, that the result is sound.
 submits. Those are not gaps to close later; they are where the automation is deliberately stopped,
 and §8 says why for each.
 
-**One constraint governs every choice below: simplicity.** Not the smallest system that could work,
-but the smallest that a person learning it can hold in their head and debug at 2am. Where a more
-capable design was available and rejected, §7 says which and on what evidence.
+**One constraint governs every choice below, and it is not simplicity: every mechanism must be
+verifiable.** You have to be able to watch it work *and* watch it fail. A capability nobody can see
+failing is not a capability, it is a claim — and this repository has already paid for that lesson
+twice, once when two invariants returned "no findings" for every input across four commits, and once
+when 46 tests ran nowhere for a week with every gate green.
+
+**Nothing here is rejected for being sophisticated.** §7 sorts what is absent into three kinds, and
+the distinction decides whether a gap is a decision or a bug: a handful are refused because
+*measurement says the more capable design does not yet do its job* — a vision gate that hallucinates
+differences in unchanged screenshots is not a more capable gate, it is a broken one; several are
+**sequenced**, each with the written trigger that brings it in; and two are inapplicable at a single
+user and arrive with the second. The ambition is the ceiling, not the floor. What paces the build is
+how fast each piece can be *proven*, never how hard it is to write.
 
 **What is built today, and what this document is describing ahead of itself.** Built and in use: the
 `PreToolUse` guard (§3.1) with its tracked policy, the read-only reviewers (§3.3), the unit queue
@@ -29,9 +39,9 @@ capable design was available and rejected, §7 says which and on what evidence.
 built yet**: machine-readable review verdicts, a `Stop` hook that gates a unit's own completion, a
 mutation-probe suite for the guards, and any form of run telemetry beyond a plain log. Those moved
 to a separate piece of work so that the exercises — which are the point of this repository — are not
-waiting on the machinery that assists them. §7 covers what was rejected outright; this paragraph
-covers what was merely postponed, and the difference matters when you are deciding whether a gap is
-a bug.
+waiting on the machinery that assists them. **Postponed is not rejected**: §7a is the only list of
+things refused, and it refuses them on measurement. Everything in this paragraph is scheduled work,
+and the difference decides whether a gap you find is a decision or a bug.
 
 ---
 
@@ -224,23 +234,39 @@ each means a job's own setup broke and exempting one turns ~200 browser assertio
 
 ---
 
-## 7. What is deliberately not built
+## 7. What is absent, and which of three reasons applies
 
-The state of the art at this scale is mostly a list of things to leave out. Each has a reason.
+**Read the reason, not the absence.** These are three different statements and conflating them is
+how a deferral gets mistaken for a verdict, or a broken tool for a road not taken.
 
-| not building | why |
+### 7a. Refused on measurement — the more capable design does not do its job
+
+Not "too complex". Each was benchmarked and each fails at the thing it would be adopted for. If the
+number moves, so does the decision; every row names the number to watch.
+
+| refused | the measurement |
 |---|---|
-| **Devcontainers** (for now) | Docker bind mounts on macOS measured the same `npm install` at **47 min → 18 min → 4 min** across osxfs/virtiofs/native. `claude --worktree` enforces isolation with four checks, one of which cannot be disabled, on native APFS. Returns for unattended overnight runs — as `sandbox-runtime`, not Docker |
+| **A vision model as a screenshot gate** | **DiffSpot** benchmarked 13 VLMs on fine-grained differences in web interfaces: best **47.2% accuracy, 40.7% recall**, and up to **24.2%** hallucinated differences on *unchanged* pairs. A gate that invents defects in an untouched page is not a stricter gate. Advisory only |
+| **Auto-revert** | Google's culprit finder is **77.4%** accurate; naive auto-revert would wrongly revert 20–130 changes daily. Their SafeRevert needed ML over years of flakiness data to reach a 0.5% bad-revert rate. We auto-*propose* |
+| **Cosign / Sigstore attestation** | Structural, not statistical: a signature proves *who*, not *whether*. An agent on your machine with your identity can sign a receipt for a check it never ran. The receipt has to be a digest over the thing checked |
 | **Agent teams** | Ships disabled by default, `-p`-incompatible, and a stopped teammate cannot be resumed. The docs' own verdict: *"add coordination overhead and use significantly more tokens"* |
-| **Dynamic workflows** for the fleet | The right tool for *"dozens to hundreds of agents per run"*. This is three |
-| **A vision model as a screenshot gate** | **DiffSpot** benchmarked 13 VLMs on fine-grained differences in web interfaces: best **47.2% accuracy, 40.7% recall**, and up to **24.2%** hallucinated differences on *unchanged* pairs. Advisory only |
-| **Cosign / Sigstore attestation** | A signature proves *who*, not *whether*. An agent on your machine with your identity can sign a receipt for a check it never ran |
-| **An OTel → Grafana pipeline** | `/usage` and `/insights` cover one person |
-| **A merge queue** | Overhead below ~5 merges/day |
-| **Auto-revert** | Google's culprit finder is **77.4%** accurate; naive auto-revert would wrongly revert 20–130 changes daily. Their SafeRevert needed ML over years of flakiness data to reach a 0.5% bad-revert rate. We auto-*propose*; a human merges |
+
+### 7b. Sequenced — the trigger is written down, so it arrives on evidence
+
+| not yet | the trigger that brings it in |
+|---|---|
+| **Devcontainers** | Docker bind mounts on macOS measured the same `npm install` at **47 min → 18 min → 4 min** across osxfs/virtiofs/native, and `claude --worktree` enforces isolation with four checks on native APFS. Returns for **unattended overnight runs**, as `sandbox-runtime` rather than Docker |
+| **Dynamic workflows** | The right tool at *"dozens to hundreds of agents per run"*. Arrives with the first programmatic fan-out |
+| **Run telemetry beyond a plain log** | **Not** covered by `/usage` and `/insights` — those answer "what did it cost", not "what did it do, in what order, and why". The stack is chosen and OSS-only: OTLP to an OpenTelemetry Collector as the one component never swapped, a file exporter to NDJSON read with DuckDB on day one, SigNoz (MIT) when a database is warranted. Arrives with the first run nobody watched live |
+| **A merge queue** | Above ~5 merges/day |
+| **Temporal / Restate / Beads** | A git-committed ledger plus "re-run it" is cheaper to debug. Escalate to Beads at ~50 open tasks |
+
+### 7c. Inapplicable at one user — and they arrive with the second
+
+| absent | why, today |
+|---|---|
 | **Managed settings / MDM** | You are the local admin, so any policy is a speed bump against yourself |
-| **CODEOWNERS** | You would be the required reviewer of your own PRs |
-| **Temporal / Restate / Beads** | A git-committed ledger plus "re-run it" is cheaper and more debuggable. Escalate to Beads at ~50 open tasks |
+| **CODEOWNERS** | You would be the required reviewer of your own pull requests |
 
 **One number worth holding onto.** Anthropic's multi-agent research system beat a single agent by
 **90.2%** — and the same post says multi-agent struggles where agents share context or have
