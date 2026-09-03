@@ -89,18 +89,27 @@ PATTERNS: tuple[str, ...] = (
     # different article. The derived `.faithful.txt` IS tracked; its input is not, so losing this
     # destroys the provenance of the number the whole exercise is graded on.
     "src/exercises/*/src/solution/**/*",
-    # The frozen copies of the standard files. Local-only by decision: they exist to be diffed
-    # against on the machine doing the rewriting, and shipping a second copy of AGENTS.md and
-    # DESIGN.md to the remote would put the same conventions in the repo twice — the argument that
-    # untracked the notebooks.
-    #
-    # That decision is what makes this entry mandatory rather than tidy. The whole point of the
-    # archive is to hold a version nothing else holds, so an archive that is neither tracked nor
-    # backed up is the one class of file this repo has already lost twice. `--force-rewrite` is
-    # cheap to re-run for a tag that still exists, but a snapshot of a tag that has been deleted,
-    # or of a file since rewritten, is gone for good.
-    "docs/standards-history/*",
 )
+
+#: **`docs/standards-history/*` is deliberately NOT in PATTERNS, and this note is here so nobody
+#: adds it back on the reasoning that used to be written above it.**
+#:
+#: It was listed, on the argument that an archive neither tracked nor backed up is the class
+#: of file this repo has already lost twice. That argument does not survive contact with what the
+#: archive actually is. Every entry in `PATTERNS` is there because losing it is **permanent**; a
+#: snapshot is `git show <tag>:<file>` plus a banner, so `tools/snapshot_standards.py --ref <tag>`
+#: rebuilds any of them exactly. The old comment also claimed a snapshot "of a file since rewritten"
+#: was gone for good — that is simply wrong: `snapshot()` reads from the tag, never from the working
+#: tree, so rewriting the live file changes nothing.
+#:
+#: What backing it up actually bought was **history of immutable files**. The byte-identical guard
+#: in `tests/test_standards_history.py` means a second version of a snapshot can never legitimately
+#: exist — and in the store's whole life the only change ever recorded against one was a reworded
+#: banner. Twenty-five files and 384 KB of a store whose entire product is earlier versions, for
+#: something that can have none.
+#:
+#: The one irrecoverable case is a snapshot of a **deleted tag**. Tags are not deleted here, and if
+#: that ever changes this decision should change with it.
 
 #: Directories that live **outside the repository** and are still backed up here.
 #:
@@ -171,6 +180,12 @@ REGENERABLE: tuple[str, ...] = (
     "uv.lock",
     ".coverage",
     "htmlcov",
+    # The frozen standard files. Regenerable in the exact sense this list means: a snapshot is
+    # `git show <tag>:<file>` plus a banner, and `snapshot_standards.py --ref <tag>` rebuilds any of
+    # them byte for byte. It sits here rather than in `PATTERNS` so its absence reads as *decided*
+    # — without this entry, dropping it from the backup printed twenty-five NOT COVERED lines on
+    # every single run, which is how a report stops being read.
+    "standards-history",
 )
 
 
@@ -423,10 +438,6 @@ def snapshot(root: Path, dest: Path, files: list[Path], *, message: str) -> int:
     dest.mkdir(parents=True, exist_ok=True)
     if not (dest / ".git").is_dir():
         _git(dest, "init", "--quiet", "--initial-branch=main")
-        # A store-local identity, so a snapshot works on a machine with no global git config.
-        # Without it `git commit` fails, and the failure used to be swallowed.
-        _git(dest, "config", "user.email", "backup@local-only.invalid")
-        _git(dest, "config", "user.name", "backup_local_only.py")
         (dest / "README.md").write_text(
             "# local-only backup\n\n"
             "Versioned snapshots of the gitignored, non-regenerable files in "
@@ -441,6 +452,37 @@ def snapshot(root: Path, dest: Path, files: list[Path], *, message: str) -> int:
             "```\n",
             encoding="utf-8",
         )
+
+    # **The store must not inherit the user's global gitignore, and this is not hypothetical.**
+    # The store is a git repository, so `git add` honours `~/.config/git/ignore` and
+    # `core.excludesFile` exactly as it would anywhere else. A developer whose global ignore holds
+    # `**/.claude/settings.local.json` — a completely reasonable line to have — silently gets a
+    # store where that file is **copied but never committed**: on disk, `--verify` satisfied because
+    # the bytes match, and no history at all. That is the one property the store exists to provide,
+    # and it is the `cp -r` wearing a git directory that the assertion at the end of this function
+    # now refuses. It went unnoticed for months.
+    #
+    # Set on every run rather than only at init, because the stores that need it already exist.
+    _git(dest, "config", "core.excludesFile", os.devnull)
+
+    # **A store-local identity, so a snapshot works on a machine with no global git config** — a
+    # bare CI runner, a fresh container, anyone who has not configured git. Without it `git commit`
+    # fails, and that failure used to be swallowed entirely.
+    #
+    # This was set **only when the store was created**, which is the same "configured at init"
+    # mistake as the excludes rule above and hid the same way: a store made by hand, or by an older
+    # version of this tool, has no identity and cannot commit — so it copies files, reports success,
+    # and versions nothing. Caught by a test that pre-created its own store and then failed on CI
+    # for exactly this reason.
+    #
+    # Written only when absent, so a store owner who set a deliberate identity keeps it. `--get`
+    # finds a global value too, and a global identity is enough to commit with.
+    for key, value in (
+        ("user.email", "backup@local-only.invalid"),
+        ("user.name", "backup_local_only.py"),
+    ):
+        if not _git(dest, "config", "--get", key, must_succeed=False).stdout.strip():
+            _git(dest, "config", key, value)
 
     # Everything the repo holds, plus every external directory. `pairs` is (store path, source
     # file); the store does not care that some of these came from outside the working tree.
@@ -496,6 +538,23 @@ def snapshot(root: Path, dest: Path, files: list[Path], *, message: str) -> int:
         raise SystemExit(
             f"the store at {dest} holds files but no commits — every earlier version of every "
             f"file is unreachable. Something is wrong with git in that directory."
+        )
+
+    # **Per file, not just per store.** The check above asks whether *any* commit exists, and it
+    # passed for months while one file was copied and never versioned. A file git declines to add —
+    # an ignore rule, a nested `.git`, a permission fault — leaves bytes on disk that look like a
+    # backup and carry no history, so the "bad overwrite" this store exists to survive would
+    # silently destroy the only good copy. `-z` because git octal-quotes non-ASCII paths otherwise,
+    # and several stored filenames contain them.
+    listed = _git(dest, "ls-files", "-z").stdout
+    versioned = {name for name in listed.split("\0") if name}
+    unversioned = sorted(str(f) for f in files if str(f) not in versioned)
+    if unversioned:
+        raise SystemExit(
+            f"{len(unversioned)} file(s) were copied into {dest} but git refuses to track them, so "
+            "they have no version history and a bad overwrite would be unrecoverable:\n  "
+            + "\n  ".join(unversioned)
+            + f"\n\nUsually an ignore rule. Check with:\n  git -C {dest} check-ignore -v <path>"
         )
     return changed
 

@@ -2,7 +2,7 @@
  *
  * Everything rendered here comes from `data.js`, which `tools/build_web_data.py` derives from the
  * tracked catalogue and from the same functions the tests exercise. No date, count or trade-off is
- * typed into this file. That is not fastidiousness: the requirements is graded on the dates, and a
+ * typed into this file. That is not fastidiousness: the requirements are graded on the dates, and a
  * number inside a <script> block is read far more often than any file in the repo and tested by
  * none of them.
  *

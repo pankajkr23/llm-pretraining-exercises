@@ -72,3 +72,35 @@ def test_the_gitleaks_hook_fails_rather_than_skips_when_the_binary_is_absent() -
     )
     assert "exit 1" in entry, "a missing gitleaks would let the commit through"
     assert "--staged" in entry, "the hook must scan what is about to be committed"
+
+
+def test_every_stage_a_hook_declares_is_one_pre_commit_install_wires() -> None:
+    """A hook whose stage is missing from `default_install_hook_types` never runs on a real commit.
+
+    It still passes its own tests, still appears in the config, and still reads as enforcement — the
+    "coverage without being any" shape. `commit-scope` shipped in exactly that state for one commit:
+    declared `stages: [commit-msg]` while the install list named only four other stages, so a fresh
+    clone would have wired every hook except that one.
+
+    `pre-commit` is always wired whether or not it is listed, so it is exempt.
+    """
+    parsed = yaml.safe_load(CONFIG.read_text())
+    installed = set(parsed.get("default_install_hook_types", [])) | {"pre-commit"}
+    declared = {
+        stage
+        for repo in parsed["repos"]
+        for hook in repo["hooks"]
+        for stage in hook.get("stages", [])
+    }
+    orphaned = sorted(declared - installed)
+    assert not orphaned, (
+        f"hooks declare stages that `pre-commit install` does not wire: {orphaned}. Add them to "
+        "default_install_hook_types, or those hooks silently never run."
+    )
+
+
+def test_the_stage_guard_catches_a_stage_nobody_installs() -> None:
+    """The twin: a declared stage outside the install list must be reported."""
+    installed = {"pre-commit", "commit-msg"}
+    declared = {"pre-commit", "commit-msg", "pre-push"}
+    assert sorted(declared - installed) == ["pre-push"]

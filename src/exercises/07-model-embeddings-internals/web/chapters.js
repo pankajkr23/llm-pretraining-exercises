@@ -715,7 +715,7 @@ function chapterResults(M) {
     el(
       'p',
       'say',
-      `The requirements says its five problems are separate, so the gain is split by which problem produced
+      `The requirements say the five problems are separate, so the gain is split by which problem produced
        it rather than reported as one number. Both solutions stand on their own, and they roughly
        add.`
     )
