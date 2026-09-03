@@ -159,3 +159,31 @@ def test_an_entry_that_still_calls_a_merged_request_open_is_refused() -> None:
         found = {a or b for a, b in _OPEN_MARKER.findall(line)}
         assert found == {"96"}, f"the open marker did not match in {line!r}: {found}"
     assert not _OPEN_MARKER.findall("#96 merged: something"), "a merged entry must not match"
+
+
+def test_every_unit_the_status_table_names_is_defined_below_it() -> None:
+    """The table and the unit list are two views of one thing, so they can drift apart.
+
+    They did, immediately: the table gained a `unit-arm-the-fleet` row while no such unit existed,
+    which is the "second copy drifts" failure the queue itself was written to end — reproduced
+    inside the queue, in the commit that was fixing it.
+
+    Backtick-quoted `unit-*` names in the table must each have a `### unit-*` heading. Ranges
+    written with an ellipsis (`unit-07-retrofit` … `unit-01-retrofit`) are matched by their
+    endpoints, since the heading covers the span.
+    """
+    import re
+
+    text = QUEUE.read_text(encoding="utf-8")
+    table, _, units = text.partition("## Queue")
+    named = set(re.findall(r"`(unit-[a-z0-9-]+)`", table))
+    defined = set(re.findall(r"^### (unit-[a-z0-9-]+)", units, re.M))
+    # The heading for the retro-fix span names both endpoints on one line.
+    defined |= set(re.findall(r"^### unit-[a-z0-9-]+ … (unit-[a-z0-9-]+)", units, re.M))
+
+    assert named, "the status table names no units, so it cannot be routing anyone anywhere"
+    undefined = sorted(named - defined)
+    assert not undefined, (
+        f"the status table names {undefined}, which no `### unit-…` heading defines. A row that "
+        "points at nothing sends a reader looking for work that is not written down."
+    )
