@@ -5,6 +5,7 @@ description = "Exercise 09 — Loss functions and output heads"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=2",
+    "tokenizers>=0.20",
 ]
 
 [build-system]

@@ -12,6 +12,25 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- Exercise 09 now has a real package rather than a skeleton: a small transformer trunk that owns no
+  output head, exercise 02's frozen tokenizer loaded so targets print as **strings**, the `t+1` and
+  `t+k` shifts with the off-by-one kept deliberately so a test can watch the loss fall, padding and
+  packed-document-boundary masks that return the contributing-token count as evidence, and masked
+  cross-entropy with perplexity, chunking, label smoothing and a z-loss.
+- A step-by-step build plan and status table in that exercise's `PROGRESS.md`, including the trap in
+  each item and what the work cannot establish.
+
+### Fixed
+
+- Chunked cross-entropy divided by the row count rather than by the *contributing* count, so it
+  disagreed with the unchunked loss on any masked input. Every test written on unmasked input passed
+  either way, which is how that ships.
+- An exercise 09 test claimed the output head was "most" of a 128-wide model. It is 44.9%. The test
+  also inherited whatever `n_layer` defaulted to, so it silently became a different claim when that
+  default changed; depth is now pinned, because the claim is about width.
+
+### Added
+
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two
   places — tracked under `docs/agents/reviewers/`, and copied by the installer into the gitignored
   `.claude/agents/` that Claude Code actually reads. They are identical by construction, and
