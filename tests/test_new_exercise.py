@@ -69,26 +69,32 @@ def generated(tmp_path_factory) -> tuple:
     for name, value in overrides:
         setattr(new_exercise, name, value)
 
+    # **A number and package no real exercise will ever claim.** This fixture used to scaffold
+    # `09 / lossheads`, which is exactly the spec exercise 09 was always going to be created with —
+    # and `test_the_generated_test_module_name_cannot_collide` then compared the generated name
+    # against the real tree and found itself. The test broke the day the exercise it modelled was
+    # scaffolded, for a reason that had nothing to do with what it checks. A fixture that mirrors a
+    # real artefact collides with it eventually; one that cannot be real never does.
     code = new_exercise.main(
         [
-            "09",
-            "loss-functions-output-heads",
+            "99",
+            "scaffold-probe",
             "--title",
-            "Loss functions and output heads",
+            "Scaffold probe",
             "--package",
-            "lossheads",
+            "scaffoldprobe",
             "--summary",
-            "What the model is actually scored on.",
+            "A fixture exercise that exists only inside this test.",
         ]
     )
     assert code == 0
     spec = new_exercise.Spec(
-        number="09",
-        slug="loss-functions-output-heads",
-        title="Loss functions and output heads",
-        package="lossheads",
-        summary="What the model is actually scored on.",
-        topic="09",
+        number="99",
+        slug="scaffold-probe",
+        title="Scaffold probe",
+        package="scaffoldprobe",
+        summary="A fixture exercise that exists only inside this test.",
+        topic="99",
     )
     return spec, exercises / spec.dirname
 
