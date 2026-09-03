@@ -115,6 +115,39 @@ it appears in no row above because it is not work — it is a decision.
 
 ---
 
+## How to work the queue — do not stop between rows
+
+**Finishing a unit is not a reason to stop. Opening a pull request is not a reason to stop.**
+Merging, tagging, the production gate and submission are a human's, and they always will be — but
+they are **handoffs, not blocks**. The pull request waits for a person; the agent does not wait for
+the pull request. Open it, then start the next row on a fresh branch off `main`.
+
+After each unit, before moving on, do all four:
+
+1. **Update this file** — the row's state, and a log entry saying what the unit found and what it
+   cost. Write the entry for the *new* pull request when you open it, not after it merges.
+2. **Self-assess against what the unit actually did**, not against what it set out to do. Name what
+   was deliberately left undone and which row now owns it — that is how row 5 inherited
+   `.back:hover` rather than losing it.
+3. **Re-read the order.** The rows are a default, not a schedule. If a unit turned up something
+   that changes the order, change it here and say why.
+4. **Pick the next row and begin.** No pause for acknowledgement.
+
+**The only reasons to stop**, and each is written down elsewhere rather than judged in the moment:
+
+- a decision `AGENTS.md` marks as a human's — deleting a protected path, rewriting history, changing
+  a ruleset, submitting work
+- **two consecutive review rounds producing new BLOCKERs** — the unit is not converging, and a third
+  round is a sunk cost
+- a guard goes red and the honest fix is outside the unit's declared scope
+- an operation the sandbox or the permission layer refuses. That is a boundary doing its job, not an
+  obstacle to route around: report it and take the next row
+
+Anything else — a question, an uncertainty, a finding worth flagging — goes in the log and the pull
+request body, and the work continues.
+
+---
+
 ## Queue
 
 Nothing here is IN FLIGHT until a human says so.

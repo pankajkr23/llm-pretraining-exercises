@@ -109,6 +109,24 @@ of this shape is the first real run.
 still in earlier commits and in any PR description that quoted it. PR bodies are editable; history
 is not, without rewriting published commits.
 
+## Work the queue to the end — a handoff is not a block
+
+`docs/agents/QUEUE.md` is the single source of truth for progress, and **"How to work the queue"**
+in it is binding: finishing a unit is not a reason to stop, and opening a pull request is not a
+reason to stop. Merging, tagging, the production gate and submission are PK's and always will be —
+but they are handoffs. The pull request waits for a person; **the work does not wait for the pull
+request.** Open it, record it in the queue, then start the next row on a fresh branch off `main`.
+
+After each unit: update the queue, self-assess against what the unit *actually did* rather than what
+it set out to do, name what was left undone and which row now owns it, re-read the order in case the
+unit changed it, and begin the next row without pausing for acknowledgement.
+
+**The reasons to stop are enumerated in that section** rather than judged in the moment — a decision
+this document marks as a human's, two consecutive review rounds producing new BLOCKERs, a red guard
+whose honest fix is out of scope, or a refusal from the sandbox or permission layer. A refusal is a
+boundary working, not an obstacle to route around. Everything else — a question, an uncertainty, a
+finding — goes in the log and the pull-request body, and the work continues.
+
 ## MANDATORY — never remove anything under `notebooks/` or any `tools/`
 
 **Nothing in `notebooks/` or in any `src/exercises/*/tools/` directory may be deleted, moved,
