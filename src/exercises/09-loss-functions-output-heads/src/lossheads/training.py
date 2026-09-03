@@ -105,17 +105,51 @@ class TrainingLog:
         return out
 
 
+def corpus_facts(config: Config, sequences: int) -> dict[str, object]:
+    """How much text there is, how much the run consumes, and therefore how many epochs.
+
+    **`AGENTS.md` requires this printed beside any run, and it was missing.** The corpus here is
+    small and the run reads it many times over, which makes every loss quoted a **memorisation**
+    number rather than a generalisation one. That does not invalidate either finding — both are
+    comparisons between two models trained identically on the same repeated text — but a reader
+    who is not told will assume otherwise.
+
+    A digest of the source is recorded too. The corpus is a file in this repository that someone
+    will edit, and without a digest that edit silently changes every published figure with nothing
+    going red.
+    """
+    import hashlib
+
+    tokenizer = load_tokenizer()
+    source = Path(__file__).resolve().parents[5] / "AGENTS.md"
+    text = source.read_text()
+    ids = tokenizer.encode(text).ids
+    needed = sequences * config.seq_len
+    return {
+        "source": "this repository's own AGENTS.md, tokenized with exercise 02's BPE",
+        "source_bytes": len(text.encode()),
+        "source_sha256_prefix": hashlib.sha256(text.encode()).hexdigest()[:16],
+        "corpus_tokens": len(ids),
+        "tokens_consumed": needed,
+        "epochs": needed / len(ids),
+    }
+
+
 def _corpus(config: Config, sequences: int, seed: int) -> torch.Tensor:
     """Real text, tokenized and cut into fixed-length sequences.
 
     Real rather than random ids, because a model cannot learn anything from noise and both findings
     here depend on it learning *something*. The text is this repository's own `AGENTS.md`, which is
     tracked, long enough, and carries no licence question.
+
+    **It is read many times over, and `corpus_facts` says how many.** A corpus this small against a
+    run this long means the model sees the same text repeatedly; that is a property of the setup,
+    stated rather than left to be noticed.
     """
     import torch
 
     tokenizer = load_tokenizer()
-    source = Path(__file__).resolve().parents[4].parent / "AGENTS.md"
+    source = Path(__file__).resolve().parents[5] / "AGENTS.md"
     ids = tokenizer.encode(source.read_text()).ids
 
     largest = max(ids)
@@ -168,7 +202,9 @@ def train(
             "d_model": config.d_model,
             "n_layer": config.n_layer,
             "horizons": list(config.horizons),
-            "corpus": "this repository's own AGENTS.md, tokenized with exercise 02's BPE",
+            "corpus": corpus_facts(
+                config.model if hasattr(config, "model") else config, steps * config.batch_size
+            ),
         }
     )
 
@@ -291,3 +327,94 @@ def run(config: Config | None = None, steps: int = 300) -> TrainingLog:
 
 if __name__ == "__main__":
     run()
+
+
+def sensitivity(
+    config: Config | None = None,
+    step_counts: tuple[int, ...] = (60, 150, 300),
+    memory_repeats: int = 5,
+    memory_rows: int = 4096,
+) -> dict[str, object]:
+    """Re-run both findings at other step counts, and the memory ratio several times over.
+
+    **This exists because the numbers it produces were typed by hand once, and that was the exact
+    failure this repository names as its most expensive.** `RESULTS.md` opened by claiming every
+    figure in it was read from `results/`, and two paragraphs — the step sweep and the memory
+    repetitions — were literals inside the renderer. One of them printed the 300-step correct shift
+    as `4.15` while the generated table sixty lines above read `4.1447`: the same quantity, twice,
+    in one document.
+
+    So the sweep is a run now, and it writes `results/sensitivity.json`.
+
+    **The step counts are separate runs, not truncations, and that distinction matters.** `_corpus`
+    builds exactly `steps × batch_size` sequences and shuffles them, so a 60-step run sees a
+    different 60 batches than the first 60 of a 300-step run. Reading the shorter numbers off the
+    longer run's curve would give different figures and would answer a different question — whether
+    the finding appears *early*, rather than whether it survives *a different run*.
+
+    Args:
+        config: Defaults to `Config()`.
+        step_counts: Step counts to re-run at.
+        memory_repeats: How many times to repeat the memory measurement.
+        memory_rows: Rows to measure the memory paths over.
+
+    Returns:
+        Plain data, JSON-encodable.
+    """
+    from .memory import compare_paths
+
+    config = config or Config()
+
+    by_steps: list[dict[str, object]] = []
+    for steps in step_counts:
+        log = train(config, steps=steps)
+        summary = log.summary()
+        by_steps.append(
+            {
+                "steps": steps,
+                "gap": summary["gap"],
+                "steps_where_further_head_was_higher": summary[
+                    "steps_where_further_head_was_higher"
+                ],
+                "final_correct_shift": summary["final_correct_shift"],
+                "final_broken_shift": summary["final_broken_shift"],
+                "further_head_is_harder": summary["further_head_is_harder"],
+                "broken_shift_is_lower": summary["broken_shift_is_lower"],
+            }
+        )
+
+    ratios = []
+    agreed = True
+    for _ in range(memory_repeats):
+        report = compare_paths(rows=memory_rows, config=config)
+        ratios.append(report.ratio)
+        agreed = agreed and report.losses_agree
+
+    gaps = [row["gap"] for row in by_steps]
+    return {
+        "by_steps": by_steps,
+        "gap_grows_monotonically": gaps == sorted(gaps),
+        "every_run_found_the_further_head_harder": all(
+            row["further_head_is_harder"] for row in by_steps
+        ),
+        "every_run_found_the_broken_shift_lower": all(
+            row["broken_shift_is_lower"] for row in by_steps
+        ),
+        "memory": {
+            "rows": memory_rows,
+            "repeats": memory_repeats,
+            "ratios": ratios,
+            "min": min(ratios),
+            "max": max(ratios),
+            "spread": max(ratios) - min(ratios),
+            "losses_agreed_every_time": agreed,
+        },
+    }
+
+
+def save_sensitivity(data: dict[str, object], path: Path | None = None) -> Path:
+    """Write the sensitivity sweep. Separate from the sweep, for the reason `save` is."""
+    path = path or (RESULTS / "sensitivity.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")
+    return path

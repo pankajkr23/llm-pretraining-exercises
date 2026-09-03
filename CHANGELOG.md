@@ -10,6 +10,40 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Exercise 09's document-boundary mask kept every pad-to-pad pair.** Padding carries document id
+  `-1`, and `-1 == -1` is `True`, so a mask written as `source == destination` reads correctly and
+  drops nothing but the transitions. 68 of 125 "contributing" positions on the published example
+  were padding predicting padding — in the exercise whose item 3 exists to forbid exactly that. The
+  guard agreed with the bug: it asserted the dropped count equalled a count of *transitions*, which
+  is the same expression the implementation used, so it held for any input.
+- **Exercise 09's `RESULTS.md` claimed every figure in it was generated, and fifteen were typed.**
+  They were the sensitivity sweep and the memory repetitions — the two blocks the document leans on
+  hardest — and one printed the 300-step correct shift as `4.15` where the generated table above
+  read `4.1447`. The byte-equality test could not see them: they lived inside the template it
+  compared against. They are now a run, in `results/sensitivity.json`.
+- A `pytest.importorskip` in exercise 09 registered a test file as gated on an optional dependency
+  it did not need, turning `tests/test_ci_shards_cover_everything.py` red. It was also spurious —
+  `sys.path` was set two lines above it, so it could never fire.
+- Exercise 09's harness compared item 2's two losses over unmasked padding, and printed "the loss an
+  untrained model **must** show" beside a different measured number.
+- The memory measurement's child process re-implemented the chunked loss instead of importing the
+  shipped one, and `check=True` buried the child's traceback under the whole embedded script.
+- An `assert ... or True` in exercise 09's tests, which is unconditionally true.
+
+### Added
+
+- `training.corpus_facts` records the corpus size, the tokens consumed, the resulting **8.55
+  epochs**, and a digest of the source. `AGENTS.md` requires that ratio printed beside a run and
+  nothing was printing it — so every loss exercise 09 quotes is a memorisation number, which
+  `RESULTS.md` now says.
+- Exercise 09's `DECISIONS.md`, `NOTICE` and `CLAUDE.md`, which had shipped as generator templates.
+- Exercise 10 scaffolded: `floats.py` (0.1 in fp32/bf16/fp8 E4M3, built from arithmetic and
+  cross-checked against torch), `accumulation.py` (the average-of-averages bug, which refuses an
+  even configuration rather than reporting a reassuring zero), `gradcheck.py` (a central difference
+  swept over epsilon), `telemetry.py`, `mfu.py` and `step.py`.
+
 ### Added
 
 - Exercise 09 now produces its seven numbers and its two findings from code that runs top to bottom:

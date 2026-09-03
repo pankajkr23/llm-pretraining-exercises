@@ -32,7 +32,13 @@ from .losses import (
     cross_entropy,
     perplexity,
 )
-from .masks import keep_non_padding, keep_within_document, masked_targets, pack_documents
+from .masks import (
+    keep_non_padding,
+    keep_within_document,
+    masked_targets,
+    pack_documents,
+    pad_sequences,
+)
 from .memory import compare_paths
 from .model import build_trunk, count_parameters
 from .shift import shift_for_horizon, shift_for_next_token, shift_table, shift_wrong_way
@@ -124,32 +130,42 @@ def item_2_shift(config: Config) -> dict[str, Any]:
 
     trunk = build_trunk(config)
     head = make_multi_token_head(config)
+    if tokens.shape[1] > config.seq_len:
+        tokens = tokens[:, : config.seq_len]
     padded = torch.nn.functional.pad(
         tokens, (0, config.seq_len - tokens.shape[1]), value=config.pad_id
     )
     with torch.no_grad():
         logits = head(trunk(padded))[1]
+    flat_logits = logits[:, :-1].reshape(-1, config.vocab_size)
 
-    _, good_targets = shift_for_next_token(padded)
+    # Both losses are taken over the SAME masked positions. The first version of this masked
+    # neither, so a 30-token document padded to 128 compared two averages that were ~77% padding
+    # predicting padding — in the exercise whose item 3 exists to say that must never happen.
+    padded_inputs, good_targets = shift_for_next_token(padded)
+    keep, _ = keep_non_padding(padded_inputs, good_targets, config)
     good = float(
-        cross_entropy(
-            logits[:, :-1].reshape(-1, config.vocab_size), good_targets.reshape(-1), config
-        )
+        cross_entropy(flat_logits, masked_targets(good_targets, keep, config).reshape(-1), config)
     )
     _, wrong_targets = shift_wrong_way(padded)
     wrong = float(
-        cross_entropy(
-            logits[:, :-1].reshape(-1, config.vocab_size), wrong_targets.reshape(-1), config
-        )
+        cross_entropy(flat_logits, masked_targets(wrong_targets, keep, config).reshape(-1), config)
     )
+    scored = contributing(masked_targets(good_targets, keep, config).reshape(-1), config)
+    print(f"\n  both losses taken over the same {scored:,} non-padding positions")
 
     print(f"\n  loss with the correct shift : {good:.4f}")
     print(f"  loss with the off-by-one    : {wrong:.4f}")
+    verdict = (
+        "the broken one is already LOWER"
+        if wrong < good
+        else f"the broken one is HIGHER, by {wrong - good:.4f}"
+    )
     print(
-        "\n  At INITIALISATION the two are within noise of each other, and that is worth saying\n"
-        "  plainly rather than dressing up: an untrained model is uniform, so it is equally bad\n"
-        "  at predicting the next token and at copying the current one. The bug is invisible.\n"
-        "\n  It becomes visible the moment training starts: copying is trivial to learn and\n"
+        f"\n  At INITIALISATION, {verdict} — and either way the comparison is worthless.\n"
+        "  A model with random weights has arbitrary preferences, not informed ones, so whether\n"
+        "  copying or predicting scores better at step zero is an accident of the seed.\n"
+        "\n  The bug becomes visible the moment training starts: copying is trivial to learn and\n"
         "  predicting is not — see results/training.json, where the broken shift reaches a loss\n"
         "  the correct one never approaches. That is the shape of the trap: not a wrong number,\n"
         "  but a BETTER one.\n"
@@ -160,8 +176,6 @@ def item_2_shift(config: Config) -> dict[str, Any]:
 
 def item_3_padding(config: Config) -> dict[str, Any]:
     """Padding masked, and the contributing count that proves it."""
-    from .masks import pad_sequences
-
     _line("ITEM 3 — mask padding, and watch the contributing count change")
     tokenizer = load_tokenizer()
     sequences = [tokenizer.encode(DOCUMENT_A).ids, tokenizer.encode(DOCUMENT_B).ids[:20]]
@@ -197,24 +211,34 @@ def item_4_boundary(config: Config) -> dict[str, Any]:
     logits = head(trunk(tokens))[1][:, :-1].reshape(-1, config.vocab_size)
     _, targets = shift_for_next_token(tokens)
 
-    unmasked = float(cross_entropy(logits, targets.reshape(-1), config))
-    keep, report = keep_within_document(owners, horizon=1)
-    masked = masked_targets(targets, keep, config)
+    # Padding first, then the boundary — the loss "before" is the one item 3 already left us with,
+    # so the difference reported below is the boundary's alone rather than the two combined.
+    inputs, _ = shift_for_next_token(tokens)
+    pad_keep, pad_report = keep_non_padding(inputs, targets, config)
+    before = masked_targets(targets, pad_keep, config)
+    unmasked = float(cross_entropy(logits, before.reshape(-1), config))
+
+    boundary_keep, report = keep_within_document(owners, horizon=1)
+    masked = masked_targets(targets, pad_keep & boundary_keep, config)
     masked_loss = float(cross_entropy(logits, masked.reshape(-1), config))
 
     join = int((owners[0, :-1] != owners[0, 1:]).nonzero()[0].item())
     print(f"\n  document lengths        : {[len(d) for d in documents]}")
     print(f"  the join sits at position {join}, where document 0 ends and document 1 begins")
     print(f"  {report}")
-    all_positions = contributing(targets.reshape(-1), config)
+    print(f"  {pad_report}")
+    all_positions = contributing(before.reshape(-1), config)
     kept_positions = contributing(masked.reshape(-1), config)
     print(f"\n  loss WITHOUT the boundary mask : {unmasked:.6f}  over {all_positions:,} positions")
     print(f"  loss WITH the boundary mask    : {masked_loss:.6f}  over {kept_positions:,} kept")
+    crossing = all_positions - kept_positions
     print(
-        "\n  The difference is small and that is the point: a handful of positions out of "
-        f"{int(targets.numel()):,}\n"
-        "  moves the number a little, so nothing looks wrong. Score that pair and the gradient\n"
-        "  asserts a continuation between two texts that have nothing to do with one another."
+        f"\n  The boundary mask removed {crossing} position(s) of the {all_positions:,} that\n"
+        f"  survived padding, and moved the loss by {abs(masked_loss - unmasked):.6f}. **The size\n"
+        "  of that difference is the finding**, not a disappointment: a bad pair barely moves\n"
+        "  an average, so nothing looks wrong from the number alone. The gradient there still\n"
+        "  asserts a continuation between two texts with nothing to do with one another, and it\n"
+        "  does so on every packed sequence in a real run rather than once."
     )
     return {
         "join_position": join,
@@ -230,7 +254,7 @@ def item_5_perplexity(config: Config) -> dict[str, Any]:
 
     import torch
 
-    _line("ITEM 5 — perplexity, and where an untrained model must start")
+    _line("ITEM 5 — perplexity, and where a fresh model actually starts")
     trunk = build_trunk(config)
     head = make_multi_token_head(config)
     tokens = torch.randint(0, config.vocab_size, (config.batch_size, config.seq_len))
@@ -242,15 +266,18 @@ def item_5_perplexity(config: Config) -> dict[str, Any]:
     expected_loss = math.log(config.vocab_size)
 
     print(f"\n  vocabulary                     : {config.vocab_size:,}")
-    print(f"  loss an untrained model must show : ln({config.vocab_size:,}) = {expected_loss:.4f}")
+    print(f"  loss a UNIFORM model would show : ln({config.vocab_size:,}) = {expected_loss:.4f}")
     print(f"  loss measured                  : {loss:.4f}")
     print(f"  perplexity measured            : {measured:,.1f}")
     print(f"  ratio to vocabulary            : {measured / config.vocab_size:.3f}")
     print(
         "\n  Read perplexity as a count: the size of the uniform menu the model behaves as though\n"
-        "  it were choosing from. An untrained model knows nothing, so the menu is the whole\n"
-        "  vocabulary. A run that does not start here has a target-alignment bug, and no amount\n"
-        "  of training fixes it.\n"
+        "  it were choosing from. A model that knew nothing at all would show exactly ln(V).\n"
+        "\n  A freshly initialised one shows a little MORE, and the gap above is real rather than\n"
+        "  an error: random weights are not uniform output, so the model has slight, arbitrary\n"
+        "  preferences — and confidently arbitrary is worse than uniform. What matters\n"
+        "  is the ratio to the vocabulary, printed above. Near 1 is healthy; far below it at step\n"
+        "  zero means the targets are misaligned, and no amount of training fixes that.\n"
         "\n  It is NOT comparable across tokenizers: one that splits more finely is asked an\n"
         "  easier question at each step and scores better while being no better."
     )

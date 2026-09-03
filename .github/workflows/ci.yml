@@ -115,6 +115,7 @@ jobs:
               src/exercises/07-model-embeddings-internals
               src/exercises/08-modern-attention-variants
               src/exercises/09-loss-functions-output-heads
+              src/exercises/10-training-loop
               tests
     steps:
       - uses: actions/checkout@v5
@@ -220,7 +221,7 @@ jobs:
                exit 1 ;;
           esac
 
-      # The six files whose module-level importorskip("torch") makes them invisible without the
+      # The files whose module-level importorskip("torch") makes them invisible without the
       # extra. Both markers: their unit AND integration tests are equally unreachable otherwise.
       # This list is hand-maintained, so tests/test_ci_shards_cover_everything.py fails when a new
       # torch-gated file is not added to it — which is how the OPUS scorer got here.

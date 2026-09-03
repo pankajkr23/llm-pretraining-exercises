@@ -133,14 +133,12 @@ if mode != "baseline":
     if mode == "materialised":
         loss = float(functional.cross_entropy(hidden @ weight.T, targets))
     else:
-        total = torch.zeros(())
-        for start in range(0, rows, chunk):
-            total = total + functional.cross_entropy(
-                hidden[start:start + chunk] @ weight.T,
-                targets[start:start + chunk],
-                reduction="sum",
-            )
-        loss = float(total / rows)
+        # The SHIPPED function, imported rather than reimplemented. An earlier version inlined its
+        # own loop here, so the thing being measured was a copy of the thing being claimed about —
+        # and the copy divided by `rows` rather than by the contributing count, which is the exact
+        # denominator bug the shipped function documents.
+        from lossheads.losses import chunked_projection_cross_entropy
+        loss = float(chunked_projection_cross_entropy(hidden, weight, targets, chunk))
 peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 print(json.dumps({"peak": peak, "loss": loss}))
 """

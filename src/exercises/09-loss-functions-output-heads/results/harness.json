@@ -83,8 +83,8 @@
     "trunk_params": 5752576
   },
   "item_2_shift": {
-    "loss_correct_shift": 8.880166053771973,
-    "loss_off_by_one": 8.938465118408203
+    "loss_correct_shift": 9.176828384399414,
+    "loss_off_by_one": 9.446239471435547
   },
   "item_3_padding": {
     "dropped": 206,
@@ -93,9 +93,9 @@
   },
   "item_4_boundary": {
     "join_position": 29,
-    "loss_masked": 9.23681926727295,
-    "loss_unmasked": 9.241706848144531,
-    "positions_dropped": 2
+    "loss_masked": 9.339547157287598,
+    "loss_unmasked": 9.341407775878906,
+    "positions_dropped": 37
   },
   "item_5_perplexity": {
     "expected_loss": 9.210440366976517,
@@ -118,15 +118,15 @@
     "vocab_size": 10001
   },
   "item_7_memory": {
-    "baseline_bytes": 198983680,
+    "baseline_bytes": 198230016,
     "chunk_size": 128,
-    "chunked_bytes": 39108608,
+    "chunked_bytes": 39354368,
     "chunked_loss": 9.254968643188477,
     "logits_bytes": 163856384,
     "losses_agree": true,
-    "materialised_bytes": 356417536,
+    "materialised_bytes": 357335040,
     "materialised_loss": 9.25496768951416,
-    "ratio": 9.113531629660661,
+    "ratio": 9.079933388842631,
     "rows": 4096,
     "vocab_size": 10001
   },

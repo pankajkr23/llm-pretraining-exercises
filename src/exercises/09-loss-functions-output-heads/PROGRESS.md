@@ -21,6 +21,55 @@ code that runs top to bottom rather than typed into prose.
 | **4 · The tokenizer** | exercise 02's frozen BPE loaded, so targets print as *strings* | **done** |
 | **5 · Shift** | `t+1` and `t+k` slices, the string table, the deliberate off-by-one | **done** |
 | **6 · Masks** | padding, packed-document boundaries, contributing-token counts | **done** |
+| **7 · Losses** | masked cross-entropy, perplexity, both chunkings, z-loss, smoothing | **done** |
+| **8 · Heads** | tied / untied / tying-unavailable, and the `t+2` head | **done** |
+| **9 · Memory** | peak RSS in isolated child processes, measured not estimated | **done** |
+| **10 · Harness** | one run producing all seven numbers into `results/harness.json` | **done** |
+| **11 · Training** | 300 steps, both findings, into `results/training.json` | **done** |
+| **11b · Sensitivity** | the same at 60/150/300 steps + five memory repeats | **done** |
+| **12 · Tests** | 44 tests; every claim twinned, the off-by-one watched falling | **done** |
+| **13 · Review** | auditor, engineer and reader run over the finished work | **done** |
+| **14 · Fixes** | three blockers and eleven lesser findings from that review | **done** |
+| **15 · Notebook** | the Colab notebook, importing the package, never re-implementing | not started |
+| **16 · Web page** | the deployable explainer, to the twelve-part spine | not started |
+| **16b · Register** | `SPINE_ENFORCED` + the landing card — both fail in two directions | not started |
+| **17 · Submit** | PK's action, after production is live | blocked on 15–16b |
+
+## What the review found, and what it cost
+
+Three reviewers read the finished work. **Three blockers, and every one was a claim that read as
+checked and was not** — which is the shape this repository keeps paying for:
+
+1. **`keep_within_document` kept every pad-to-pad pair.** `-1 == -1` is `True`, so a mask written
+   as `source == destination` dropped nothing but the two transitions. 68 of 125 "contributing"
+   positions were padding predicting padding, in the exercise whose item 3 exists to forbid exactly
+   that. **The guard agreed with the bug**, because it asserted the dropped count equalled a count
+   of transitions — the same expression the implementation used, so it held for any input at all.
+2. **`RESULTS.md` claimed every figure in it was generated, and fifteen were typed** — the
+   sensitivity sweep and the memory repetitions, which are the two blocks the document leans on
+   hardest. One printed the 300-step correct shift as `4.15` where the generated table above read
+   `4.1447`. The byte-equality test could not see them: they lived *inside* the template it compared
+   against. They are `results/sensitivity.json` now.
+3. **A `pytest.importorskip` turned a repo-wide guard red**, and I had run only this exercise's
+   directory. It was spurious too — `sys.path` was set two lines above it, so it could never fire.
+
+Eleven lesser findings were fixed alongside: an `assert ... or True`, the harness computing item 2's
+comparison over unpadded positions, "the loss an untrained model **must** show" printed beside a
+different measured number, the memory child re-implementing the function it was measuring,
+`check=True` burying a child's traceback, and four documents shipped as unfilled templates.
+
+**One finding was not a defect and is now stated rather than fixed: the corpus is read 8.55 times
+over.** Every loss here is a memorisation number. Both findings survive it — each compares two
+models trained identically on the same repeated text — but the absolute values do not transfer, and
+`RESULTS.md` now says so.
+
+--- | --- | --- |
+| **1 · Scaffold** | generator skeleton, CI shard, root README row | **done** |
+| **2 · Requirement** | `REQUIREMENTS.md` written from the requirements; conflicts named | **done** |
+| **3 · The trunk** | a real 4-block transformer, untrained, laptop-sized | **done** |
+| **4 · The tokenizer** | exercise 02's frozen BPE loaded, so targets print as *strings* | **done** |
+| **5 · Shift** | `t+1` and `t+k` slices, the string table, the deliberate off-by-one | **done** |
+| **6 · Masks** | padding, packed-document boundaries, contributing-token counts | **done** |
 | **7 · Losses** | masked cross-entropy, perplexity, chunked, z-loss, smoothing | **done** |
 | **8 · Heads** | tied vs untied parameter counts; the `t+2` head for Part 2 | in progress |
 | **9 · Memory** | peak bytes, materialised against chunked, measured not estimated | not started |
@@ -133,24 +182,13 @@ what happens to head 2 over training relative to head 1.
 
 ## What is left, in order
 
-1. **Stage 8 · heads** — extend `heads.py` with a `MultiTokenHead` over `Config.horizons`, and make
-   the parameter table carry the third row (tying unavailable).
-2. **Stage 9 · memory** — a `memory.py` that measures peak allocation for both paths on the same
-   input, and asserts the two losses agree before reporting any ratio.
-3. **Stage 10 · harness** — one entry point writing `results/harness.json`. Every number the README
-   renders comes from that file; none is typed.
-4. **Stage 11 · training** — a short run over a real corpus slice, logging both heads' losses per
-   step to `results/`. **Test the last line first:** exercise 05 lost fifteen trained models to a
-   `json` encode failure in a final statement, so the write path gets exercised on a two-step run
-   before any longer one.
-5. **Stage 12 · tests** — twins for every claim, plus the off-by-one watched making the loss fall.
-6. **Stage 13 · notebook** — imports the package, `lite` under ten minutes, MPS and CUDA, outputs
-   stripped, built by the local builder.
-7. **Stage 14 · README** — the three-reader path, the seven numbers rendered from `results/`, and
-   what this cannot establish.
-8. **Stage 15 · web page** — the twelve-part spine, a mechanism figure and not only results, one
-   failure in the opening tiles, six themes.
-9. **Stage 16 · submit** — PK's, once production is live and the link resolves anonymously.
+1. **The notebook** — imports the package, `lite` under ten minutes, MPS and CUDA, outputs stripped,
+   built by the local builder. Gitignored; `results/` is the tracked evidence instead.
+2. **The web page** — the twelve-part spine in order, a mechanism figure and not only results, one
+   failure in the opening tiles, six themes, built to `docs/DESIGN.md`.
+3. **Both registrations** — the landing card in `deploy/vercel/index.html` and the `SPINE_ENFORCED`
+   entry. Neither goes in before the page exists; both guards fail in two directions.
+4. **Submit** — PK's, once production is live and the link resolves anonymously.
 
 ---
 

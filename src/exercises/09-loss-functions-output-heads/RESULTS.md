@@ -1,8 +1,8 @@
 # RESULTS — 09 · Loss functions and output heads
 
-**Generated from `results/harness.json` and `results/training.json`. Do not edit by hand** — run
-`tools/render_results.py`. Every number and every verdict here, including the words *above*,
-*lower* and *identical*, is read from those files rather than written by anyone.
+**Generated from `results/*.json`. Do not edit by hand** — run `tools/render_results.py`. Every
+number and every verdict here, including the words *above*, *lower* and *identical*, is read
+from those files rather than written by anyone.
 
 Configuration: `d_model` 256, 4 blocks, 4 heads, sequence 128, batch 8, vocabulary 10,001.
 
@@ -15,10 +15,10 @@ Configuration: `d_model` 256, 4 blocks, 4 heads, sequence 128, batch 8, vocabula
 | 1 | shapes, with each dimension named | logits are **39.1x** the hidden states |
 | 2 | the shift, verified in strings | broken shift trains to **0.1784** against **4.1447** correct |
 | 3 | padding masked | **48** of 254 contribute (206 dropped) |
-| 4 | a packed boundary masked | **9.236819** masked against **9.241707** unmasked, 2 dropped |
+| 4 | a packed boundary masked | **9.339547** masked against **9.341408** unmasked, 37 dropped |
 | 5 | perplexity, untrained | **12,078.2** against a vocabulary of 10,001 |
 | 6 | tied against untied head | **2,560,256** against **0** added parameters |
-| 7 | peak memory, plain against chunked | **339.9 MiB** against **37.3 MiB** — **9.11x** |
+| 7 | peak memory, plain against chunked | **340.8 MiB** against **37.5 MiB** — **9.08x** |
 
 ### 1 · Shapes
 
@@ -38,8 +38,8 @@ subject of item 7. The trunk holds 5,752,576 parameters and owns **no output hea
 
 ### 2 · The shift
 
-At initialisation the correct shift scores 8.8802 and the off-by-one
-8.9385 — within noise, because an untrained model is equally bad at both.
+At initialisation the correct shift scores 9.1768 and the off-by-one
+9.4462 — within noise, because an untrained model is equally bad at both.
 **Train them and the bug becomes visible in the worst possible way:** over
 300 steps the broken model reaches **0.1784**
 while the correct one is still at **4.1447**. The broken model's loss
@@ -57,8 +57,8 @@ gets worse — the count is what makes that visible.
 ### 4 · The packed boundary
 
 Two documents in one sequence, joining at position 29.
-**2** positions cross a boundary and are dropped, moving the loss from
-9.241707 to 9.236819.
+**37** positions cross a boundary and are dropped, moving the loss from
+9.341408 to 9.339547.
 
 **The difference is small and that is the finding**, not a disappointment: a handful of positions
 barely moves an average, so nothing looks wrong. The gradient still asserts a continuation between
@@ -97,28 +97,36 @@ is the honest price of Part 2.
 
 | path | peak above baseline | loss |
 | --- | --- | --- |
-| materialised | 339.91 MiB | 9.254968 |
-| chunked (128 rows) | 37.30 MiB | 9.254969 |
-| **ratio** | **9.11x** | losses **identical** |
+| materialised | 340.78 MiB | 9.254968 |
+| chunked (128 rows) | 37.53 MiB | 9.254969 |
+| **ratio** | **9.08x** | losses **identical** |
 
 4,096 rows against a 10,001 vocabulary — a logits tensor of
 156.27 MiB in fp32. Baseline (an interpreter with torch loaded, and
-subtracted from both) was 189.77 MiB.
+subtracted from both) was 189.05 MiB.
 
 **The ratio is only meaningful because the losses are identical.** Chunking is not an approximation;
 a difference here would mean the two paths computed different things, not that one was cheaper.
 
-**And the ratio has a noise floor, so it is quoted to two figures and not more.** Peak RSS is the
-operating system's number and it varies run to run — five repetitions of exactly this measurement
-gave **9.21, 9.17, 9.00, 8.89 and 9.57**, a spread of 0.69. The losses agreed on all five. So the
-honest claim is "about 9x", and any comparison finer than that is reading noise.
+The ratio has a noise floor, measured below rather than assumed.
 
 ---
 
 ## Part 2 — the `t+2` head
 
 300 steps, Adam at 0.0003, batch 8 x
-128 tokens, corpus: this repository's own AGENTS.md, tokenized with exercise 02's BPE.
+128 tokens.
+
+**Corpus: this repository's own AGENTS.md, tokenized with exercise 02's BPE** — 35,941 tokens
+(`sha256:19f24ce7db26e4f3`), against 307,200 token positions
+consumed. That is **8.55 epochs**.
+
+**So every loss below is a memorisation number, and saying so is not a caveat but the correct
+reading.** A model that has seen the same text 8.5 times is not being measured on
+its ability to generalise. Both findings survive it — each compares two models trained *identically*
+on that same repeated text, so the repetition is held constant and cancels — but the absolute values
+do not transfer to a run on fresh data, and a reader entitled to assume they might should be told
+they cannot.
 
 | head | final loss |
 | --- | --- |
@@ -136,8 +144,35 @@ argument against dense extra heads at a large vocabulary.
 
 ### The step count was varied before any of this was quoted
 
-The number of steps is the only arbitrary choice in the run, so it was varied. At 60, 150 and 300
-steps the gap is **+0.0199, +0.3171 and +1.0416**, with the further head higher on 57/60, 146/150
-and 297/300 steps; the broken shift lands at **3.05, 0.91 and 0.18** against a correct shift at
-6.21, 5.24 and 4.15. Both effects grow monotonically, so neither is an artefact of where the run
-stopped.
+The number of steps is an arbitrary choice, so the whole run was repeated at other values. **These
+are separate runs, not truncations** — the corpus builder produces exactly `steps x batch_size`
+shuffled sequences, so a 60-step run sees different batches than the first 60 of a 300-step run,
+and reading the short numbers off the long curve would answer a different question.
+
+| steps | gap `t+2` minus `t+1` | further head higher | broken shift | correct shift |
+| --- | --- | --- | --- | --- |
+| 60 | +0.0199 | 57/60 | 3.0485 | 6.2076 |
+| 150 | +0.3171 | 146/150 | 0.9144 | 5.2405 |
+| 300 | +1.0416 | 297/300 | 0.1784 | 4.1447 |
+
+The gap grows monotonically: **yes**. Every run found the further head harder:
+**yes**. Every run found the broken shift lower: **yes**. So neither finding
+is an artefact of where a run happened to stop.
+
+### And the memory ratio has a noise floor
+
+Peak resident set size is the operating system's number and it moves between runs. The same
+measurement repeated 5 times gave **9.09x**, **9.10x**, **9.12x**, **9.11x**, **9.27x** — a spread of
+**0.18** on a ratio of about 9. The losses agreed on every
+repetition: **yes**.
+
+**So the honest claim is "about 9x", and any comparison finer than that is reading
+noise.**
+
+---
+
+*Every figure above, including the ones in this section, is read from `results/harness.json`,
+`results/training.json` and `results/sensitivity.json`. The sensitivity numbers used to be typed
+into this renderer, and one of them printed the 300-step correct shift as 4.15 while the generated
+table sixty lines above read 4.1447 — the same quantity, twice, in one document. That is why they
+are a run now.*

@@ -29,13 +29,14 @@ OUT = EXERCISE / "RESULTS.md"
 MEBIBYTE = 1024 * 1024
 
 
-def _load() -> tuple[dict, dict]:
+def _load() -> tuple[dict, dict, dict]:
     harness = json.loads((RESULTS / "harness.json").read_text())
     training = json.loads((RESULTS / "training.json").read_text())
-    return harness, training
+    sensitivity = json.loads((RESULTS / "sensitivity.json").read_text())
+    return harness, training, sensitivity
 
 
-def render(harness: dict, training: dict) -> str:
+def render(harness: dict, training: dict, sensitivity: dict) -> str:
     """Build the whole document. Every interpolation is a lookup, never a literal."""
     config = harness["config"]
     one, two = harness["item_1_shapes"], harness["item_2_shift"]
@@ -53,9 +54,26 @@ def render(harness: dict, training: dict) -> str:
         f"sequence {config['seq_len']}, batch {config['batch_size']}, "
         f"vocabulary {config['vocab_size']:,}"
     )
+    agree_word = "identical" if seven["losses_agree"] else "DIFFERENT"
     agree = "identical" if seven["losses_agree"] else "DIFFERENT — the ratio below means nothing"
     harder = "above" if summary["further_head_is_harder"] else "below"
     lower = "lower" if summary["broken_shift_is_lower"] else "higher"
+
+    corpus = run["corpus"]
+    memory = sensitivity["memory"]
+    memory_mid = (memory["min"] + memory["max"]) / 2
+    sensitivity_rows = "\n".join(
+        f"| {row['steps']} | {row['gap']:+.4f} | {row['steps_where_further_head_was_higher']}"
+        f"/{row['steps']} | {row['final_broken_shift']:.4f} | {row['final_correct_shift']:.4f} |"
+        for row in sensitivity["by_steps"]
+    )
+    gap_monotone = "yes" if sensitivity["gap_grows_monotonically"] else "NO"
+    always_harder = "yes" if sensitivity["every_run_found_the_further_head_harder"] else "NO"
+    always_lower = "yes" if sensitivity["every_run_found_the_broken_shift_lower"] else "NO"
+    memory_ratios = ", ".join(f"**{r:.2f}x**" for r in memory["ratios"])
+    memory_repeats = memory["repeats"]
+    memory_spread = memory["spread"]
+    memory_agreed = "yes" if memory["losses_agreed_every_time"] else "NO"
 
     shapes = "\n".join(
         f"| `{name}` | `{tuple(shape)}` | {meaning} |" for name, shape, meaning in one["shapes"]
@@ -116,9 +134,9 @@ def render(harness: dict, training: dict) -> str:
 
     return f"""# RESULTS — 09 · Loss functions and output heads
 
-**Generated from `results/harness.json` and `results/training.json`. Do not edit by hand** — run
-`tools/render_results.py`. Every number and every verdict here, including the words *{harder}*,
-*{lower}* and *{agree.split()[0]}*, is read from those files rather than written by anyone.
+**Generated from `results/*.json`. Do not edit by hand** — run `tools/render_results.py`. Every
+number and every verdict here, including the words *{harder}*, *{lower}* and *{agree_word}*, is read
+from those files rather than written by anyone.
 
 Configuration: {configuration}.
 
@@ -210,17 +228,25 @@ subtracted from both) was {seven["baseline_bytes"] / MEBIBYTE:.2f} MiB.
 **The ratio is only meaningful because the losses are {agree}.** Chunking is not an approximation;
 a difference here would mean the two paths computed different things, not that one was cheaper.
 
-**And the ratio has a noise floor, so it is quoted to two figures and not more.** Peak RSS is the
-operating system's number and it varies run to run — five repetitions of exactly this measurement
-gave **9.21, 9.17, 9.00, 8.89 and 9.57**, a spread of 0.69. The losses agreed on all five. So the
-honest claim is "about 9x", and any comparison finer than that is reading noise.
+The ratio has a noise floor, measured below rather than assumed.
 
 ---
 
 ## Part 2 — the `t+2` head
 
 {run["steps"]} steps, Adam at {run["learning_rate"]}, batch {run["batch_size"]} x
-{run["seq_len"]} tokens, corpus: {run["corpus"]}.
+{run["seq_len"]} tokens.
+
+**Corpus: {corpus["source"]}** — {corpus["corpus_tokens"]:,} tokens
+(`sha256:{corpus["source_sha256_prefix"]}`), against {corpus["tokens_consumed"]:,} token positions
+consumed. That is **{corpus["epochs"]:.2f} epochs**.
+
+**So every loss below is a memorisation number, and saying so is not a caveat but the correct
+reading.** A model that has seen the same text {corpus["epochs"]:.1f} times is not being measured on
+its ability to generalise. Both findings survive it — each compares two models trained *identically*
+on that same repeated text, so the repetition is held constant and cancels — but the absolute values
+do not transfer to a run on fresh data, and a reader entitled to assume they might should be told
+they cannot.
 
 | head | final loss |
 | --- | --- |
@@ -238,25 +264,51 @@ argument against dense extra heads at a large vocabulary.
 
 ### The step count was varied before any of this was quoted
 
-The number of steps is the only arbitrary choice in the run, so it was varied. At 60, 150 and 300
-steps the gap is **+0.0199, +0.3171 and +1.0416**, with the further head higher on 57/60, 146/150
-and 297/300 steps; the broken shift lands at **3.05, 0.91 and 0.18** against a correct shift at
-6.21, 5.24 and 4.15. Both effects grow monotonically, so neither is an artefact of where the run
-stopped.
+The number of steps is an arbitrary choice, so the whole run was repeated at other values. **These
+are separate runs, not truncations** — the corpus builder produces exactly `steps x batch_size`
+shuffled sequences, so a 60-step run sees different batches than the first 60 of a 300-step run,
+and reading the short numbers off the long curve would answer a different question.
+
+| steps | gap `t+2` minus `t+1` | further head higher | broken shift | correct shift |
+| --- | --- | --- | --- | --- |
+{sensitivity_rows}
+
+The gap grows monotonically: **{gap_monotone}**. Every run found the further head harder:
+**{always_harder}**. Every run found the broken shift lower: **{always_lower}**. So neither finding
+is an artefact of where a run happened to stop.
+
+### And the memory ratio has a noise floor
+
+Peak resident set size is the operating system's number and it moves between runs. The same
+measurement repeated {memory_repeats} times gave {memory_ratios} — a spread of
+**{memory_spread:.2f}** on a ratio of about {memory_mid:.0f}. The losses agreed on every
+repetition: **{memory_agreed}**.
+
+**So the honest claim is "about {memory_mid:.0f}x", and any comparison finer than that is reading
+noise.**
+
+---
+
+*Every figure above, including the ones in this section, is read from `results/harness.json`,
+`results/training.json` and `results/sensitivity.json`. The sensitivity numbers used to be typed
+into this renderer, and one of them printed the 300-step correct shift as 4.15 while the generated
+table sixty lines above read 4.1447 — the same quantity, twice, in one document. That is why they
+are a run now.*
 """
 
 
 def main() -> int:
     """Write `RESULTS.md`. Returns 0, or 1 when a results file is missing."""
     try:
-        harness, training = _load()
+        harness, training, sensitivity = _load()
     except FileNotFoundError as missing:
         print(
-            f"missing {missing.filename} — run the harness and the training first",
+            f"missing {missing.filename} — run the harness, the training and the "
+            "sensitivity sweep first",
             file=sys.stderr,
         )
         return 1
-    OUT.write_text(render(harness, training))
+    OUT.write_text(render(harness, training, sensitivity))
     print(f"wrote {OUT.name}")
     return 0
 

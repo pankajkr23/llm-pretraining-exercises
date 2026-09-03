@@ -126,13 +126,27 @@ def keep_non_padding(
     return keep, MaskReport(total, contributing, total - contributing, "padding masked")
 
 
+NO_DOCUMENT = -1
+"""The document id padding carries. It is not a document, and it is not a boundary either."""
+
+
 def keep_within_document(
     document_ids: torch.Tensor, horizon: int = 1
 ) -> tuple[torch.Tensor, MaskReport]:
-    """Drop any position whose target belongs to a **different** document than its input.
+    """Drop any position whose target is in a **different** document, or in no document at all.
+
+    **The second half of that sentence was missing, and the bug it caused is worth recording.** The
+    first version was `keep = source == destination`, which reads correctly and is not: padding
+    carries `NO_DOCUMENT`, and `-1 == -1` is `True`, so every pad-to-pad pair was **kept**. On the
+    packed example this exercise publishes, 68 of the 125 "contributing" positions were padding
+    predicting padding — in the exercise whose item 3 exists to say that must never happen.
+
+    Nothing caught it. The guard asserted `report.dropped` equalled a count of *transitions*, which
+    is the same expression the buggy implementation used, so it held for any input at all.
 
     Args:
         document_ids: `[batch, seq_len]`, one id per position saying which document it came from.
+            `NO_DOCUMENT` marks a position that belongs to none — padding.
         horizon: Positions ahead the target sits. A `t+2` head crosses a boundary two positions
             early, so a mask built for `t+1` would leave one crossing pair per join — which is the
             kind of near-miss that survives review.
@@ -142,7 +156,7 @@ def keep_within_document(
     """
     source = document_ids[:, :-horizon]
     destination = document_ids[:, horizon:]
-    keep = source == destination
+    keep = (source == destination) & (source != NO_DOCUMENT) & (destination != NO_DOCUMENT)
     total = int(keep.numel())
     contributing = int(keep.sum().item())
     return (
@@ -165,8 +179,9 @@ def pack_documents(
         config: Supplies `pad_id`. Defaults to `Config()`.
 
     Returns:
-        `(tokens, document_ids)`, both `[1, seq_len]`. Padding carries document id `-1`, which
-        matches no real document and so is dropped by `keep_within_document` as well.
+        `(tokens, document_ids)`, both `[1, seq_len]`. Padding carries `NO_DOCUMENT`, which is not
+        a document — `keep_within_document` drops those positions explicitly rather than by
+        comparing them to each other, since two padding positions do compare equal.
     """
     import torch
 
@@ -181,7 +196,7 @@ def pack_documents(
     owners = owners[:seq_len]
     padding = seq_len - len(tokens)
     tokens.extend([config.pad_id] * padding)
-    owners.extend([-1] * padding)
+    owners.extend([NO_DOCUMENT] * padding)
 
     return (
         torch.tensor([tokens], dtype=torch.long),

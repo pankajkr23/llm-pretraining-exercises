@@ -22,6 +22,7 @@ from lossheads.losses import (  # noqa: E402
     perplexity,
 )
 from lossheads.masks import (  # noqa: E402
+    NO_DOCUMENT,
     keep_non_padding,
     keep_within_document,
     masked_targets,
@@ -60,8 +61,6 @@ def test_the_trunk_owns_no_output_head() -> None:
     different model — which is exactly the coupling this design exists to avoid.
     """
     trunk = build_trunk(SMALL)
-    widths = {p.shape[0] for p in trunk.parameters() if p.dim() == 2}
-    assert SMALL.vocab_size not in widths - {SMALL.vocab_size} or True
     names = [n for n, _ in trunk.named_parameters()]
     assert not any("head" in n for n in names), f"the trunk grew an output head: {names}"
 
@@ -85,17 +84,42 @@ def test_padding_masking_drops_nothing_when_there_is_no_padding() -> None:
     assert report.dropped == 0, "positions were masked in a batch with no padding at all"
 
 
-def test_the_boundary_mask_drops_exactly_the_crossing_pairs() -> None:
-    """Item 4, asserted as a count rather than as a loss difference.
+def test_the_boundary_mask_drops_the_join_and_every_padding_position() -> None:
+    """Item 4, asserted against a hand-counted expectation rather than the implementation's own sum.
 
-    Two documents packed into a sequence long enough to leave padding gives two joins: the one
-    between the documents, and the one where the text runs out.
+    **The first version of this test was tautological and it hid a real bug.** It computed
+    `crossings = (owners[:, :-1] != owners[:, 1:]).sum()` and asserted `report.dropped == crossings`
+    — which is the same expression `keep_within_document` used, so it held for every input. The
+    implementation kept every pad-to-pad pair (`-1 == -1` is `True`) and this test agreed with it.
+
+    So the expectation is now written out. Six real tokens in twelve slots: positions 0-2 are
+    document 0, 3-5 are document 1, 6-11 are padding. Of the eleven `t -> t+1` pairs, exactly two
+    stay: 0->1 and 1->2 inside document 0, and 3->4 and 4->5 inside document 1 — four. Everything
+    else either crosses the join or touches padding.
     """
     tokens, owners = pack_documents([[1, 2, 3], [4, 5, 6]], 12, SMALL)
     keep, report = keep_within_document(owners, horizon=1)
-    crossings = int((owners[:, :-1] != owners[:, 1:]).sum().item())
-    assert report.dropped == crossings
+
     assert keep.shape == (1, 11)
+    assert report.contributing == 4, (
+        f"expected the four within-document pairs, got {report.contributing}: {keep.tolist()}"
+    )
+    assert report.dropped == 7
+
+
+def test_the_boundary_mask_keeps_no_pair_that_touches_padding() -> None:
+    """The twin, stated as the property rather than as a count — it is what actually went wrong."""
+    import torch
+
+    _, owners = pack_documents([[1, 2, 3], [4, 5, 6]], 12, SMALL)
+    keep, _ = keep_within_document(owners, horizon=1)
+
+    touches_padding = (owners[:, :-1] == NO_DOCUMENT) | (owners[:, 1:] == NO_DOCUMENT)
+    assert not bool((keep & touches_padding).any()), (
+        "a pair touching padding survived the boundary mask; two padding positions compare EQUAL, "
+        "so an implementation testing only `source == destination` keeps every one of them"
+    )
+    assert torch.is_tensor(keep)
 
 
 def test_the_boundary_mask_must_be_built_for_the_horizon_it_is_used_at() -> None:

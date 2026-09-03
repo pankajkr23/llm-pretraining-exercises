@@ -79,8 +79,9 @@ uv run pytest src/exercises/09-loss-functions-output-heads
 ```
 
 The harness prints as much as it computes — items 1 to 4 are about what a reader can *see*, so
-running it and reading the output is the point rather than a diagnostic. Training takes about
-35 seconds on a laptop.
+running it and reading the output is the point rather than a diagnostic. The 300-step training run
+takes about 35 seconds on an M-series laptop; the sensitivity sweep repeats it at three step counts
+and re-measures memory five times, so it takes closer to two minutes.
 
 Without `--extra train` the tensor tests **skip** and the suite still reports green — so pass the
 flag, or you are measuring less than you think.
@@ -103,11 +104,18 @@ is to print the strings and read them, and never to watch the number go down.
 **A head predicting two positions ahead sits above one predicting the next token, and stays there.**
 Predicting further out is genuinely harder. It was higher on 297 of 300 steps.
 
-**Both were checked against a different arbitrary choice before being quoted.** The step count is
-the only arbitrary thing in the run, so it was varied — at 60, 150 and 300 steps both effects grow
-monotonically, so neither is an artefact of where the run stopped. The memory ratio has a noise
-floor too: five repetitions of the same measurement spread from 8.89x to 9.57x, so it is reported as
-"about 9x" and no finer.
+**Both were checked against a different arbitrary choice before being quoted.** The whole run was
+repeated at 60, 150 and 300 steps — separate runs, not truncations — and both effects grow
+monotonically, so neither is an artefact of where a run stopped. The memory ratio has a noise floor
+too: repeating the same measurement five times spread it from 9.09x to 9.27x, so it is reported as
+"about 9x" and no finer. Every one of those figures is generated into `results/sensitivity.json`;
+they used to be typed into the renderer, and one of them disagreed with the table sixty lines above
+it.
+
+**And every loss here is a memorisation number.** The corpus is this repository's own `AGENTS.md` —
+35,941 tokens against 307,200 consumed, which is **8.55 epochs**. Both findings survive that, because
+each compares two models trained identically on the same repeated text so the repetition cancels.
+The absolute values do not transfer to a run on fresh data.
 
 Alongside those, five **equivalences** are asserted rather than described — label smoothing at
 `epsilon = 0`, a z-loss weight of `0`, and both kinds of chunking all give back plain cross-entropy;
@@ -115,7 +123,8 @@ a tied head is exactly a linear map with the embedding's weights. Each is writte
 no-op setting and once away from it, because a function that ignored its argument entirely would
 pass the first half.
 
-**Three corrections came out of building this**, and they are more useful than the successes:
+**Six corrections came out of building this**, and they are more useful than the successes. Three
+were found by writing the code; three more by three reviewers reading the finished work:
 
 - Chunked cross-entropy divided by the row count rather than the contributing count, so it
   disagreed with the unchunked loss on any masked input. Every test written on unmasked input passed
@@ -125,6 +134,18 @@ pass the first half.
   and the ratio would have been the quotient of two noise figures.
 - A test claimed the head was "most" of a 128-wide model. It is 44.9%. It had also inherited
   whatever `n_layer` defaulted to, so it silently became a different claim when that default moved.
+- **`keep_within_document` kept every pad-to-pad pair.** Padding carries document id `-1`, and
+  `-1 == -1` is `True`, so a mask written as `source == destination` reads correctly and drops
+  nothing. On the packed example this exercise publishes, 68 of 125 "contributing" positions were
+  padding predicting padding — in the exercise whose item 3 exists to say that must never happen.
+  The guard agreed with the bug, because it asserted the dropped count equalled a count of
+  *transitions*, which is the same expression the implementation used.
+- **`RESULTS.md` opened by claiming every figure in it was generated, and fifteen were typed.** They
+  were the sensitivity and noise-floor numbers — the two blocks the document leans on hardest to
+  argue it should be believed. One printed the 300-step correct shift as `4.15` while the generated
+  table above read `4.1447`. They are a run now, in `results/sensitivity.json`.
+- **A test file registered itself as needing an optional dependency it did not need**, which turned
+  a repo-wide coverage guard red. I had run the exercise's own directory and not the whole suite.
 
 ## What this cannot establish
 
@@ -142,7 +163,10 @@ carried from a larger configuration and labelled as such — not something this 
 that splits text more finely is asked an easier question at each step and scores better while being
 no better. Any perplexity here is a within-tokenizer signal, never a scoreboard.
 
-**The parameter arithmetic is a ratio, not a measurement.** `body_params` uses the standard
-`12 · d_model²` per block, which is approximate by construction. The tests assert the *direction*
-the head's share moves, deliberately, because a hard-coded percentage goes stale — as one already
-did here.
+**The parameter arithmetic is a ratio, not a measurement, and its denominator excludes the
+embedding.** `body_params` uses the standard `12 · d_model²` per block, which is approximate by
+construction and leaves out the token embedding table entirely — so "the head is 44.9% of the
+parameters" is 44.9% of *head plus estimated body*, and against the 5,752,576-parameter trunk
+actually built it is 30.8%. Both numbers appear in `RESULTS.md` and the difference is the embedding,
+which is precisely the matrix tying reuses. The tests assert the *direction* the share moves rather
+than a fixed percentage, because a hard-coded figure goes stale — as one already did here.

@@ -909,7 +909,14 @@
   },
   "config": {
     "batch_size": 8,
-    "corpus": "this repository's own AGENTS.md, tokenized with exercise 02's BPE",
+    "corpus": {
+      "corpus_tokens": 35941,
+      "epochs": 8.547341476308395,
+      "source": "this repository's own AGENTS.md, tokenized with exercise 02's BPE",
+      "source_bytes": 92021,
+      "source_sha256_prefix": "19f24ce7db26e4f3",
+      "tokens_consumed": 307200
+    },
     "d_model": 256,
     "horizons": [
       1,
