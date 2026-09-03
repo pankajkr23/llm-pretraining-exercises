@@ -774,6 +774,24 @@ The rules that follow from it:
 
 ## Git workflow
 
+- **One commit, one decision — at most 10 files and 500 changed lines, or say why.** Gated at the
+  `commit-msg` stage by `tools/check_commit_scope.py`. `CHANGELOG.md` and `uv.lock` are not counted:
+  the conventions already require the first in the same change, and the second is generated.
+
+  **The limit is a prompt to ask "is this one decision or several?", not a measurement.** Where the
+  honest answer is *one decision, five files*, record it and it is allowed:
+
+  ```
+  Wide-change: the hook, the ledger it imports and its guard cannot land separately
+  ```
+
+  **A hard cap with no escape would fight the property it protects.** Landing a `PreToolUse` hook
+  means shipping the hook, the module it imports and its test together; split across three commits,
+  the first two do not import, so `git bisect` lands on a tree that fails for a reason unrelated to
+  what is being bisected — which is exactly what atomic commits exist to prevent. **Small batch is
+  the means; independent revertibility is the end.** A merge or a revert is not judged, because its
+  breadth is a property of the branches rather than a decision anyone is making now.
+
 - **Every change lands on `main` via a pull request.** Branch → push → open a PR → merge. **Never push, merge, or force-push directly to `main`** — it's the protected branch that production is promoted from, and the base every PR previews against.
 - Keep PRs scoped to one concern; unrelated edits get their own branch/PR.
 - **Changelog:** record every user-facing change under `CHANGELOG.md`'s `[Unreleased]` section **in the same PR** (Keep a Changelog + SemVer).
