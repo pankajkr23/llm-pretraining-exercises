@@ -23,8 +23,10 @@ from agent_guard import (  # noqa: E402
     CONTINUE,
     RULES,
     WRITING_TOOLS,
+    bash_write_targets,  # noqa: F401  — imported so a rename breaks here, not silently
     decide,
     load_rules,
+    resolve_root,
 )
 
 
@@ -94,8 +96,12 @@ def test_ordinary_source_is_allowed_with_no_unit_declared(rules) -> None:
 
 
 def test_a_read_only_tool_is_never_blocked(rules) -> None:
-    """The guard is about writes. Blocking a Read would make exploration impossible."""
-    for tool in ("Read", "Grep", "Glob", "Bash"):
+    """The guard is about writes. Blocking a Read would make exploration impossible.
+
+    `Bash` is not in this list because it carries a command rather than a `file_path`; it has its
+    own blocking/allowing pair below.
+    """
+    for tool in ("Read", "Grep", "Glob"):
         assert tool not in WRITING_TOOLS
         payload = {"tool_name": tool, "tool_input": {"file_path": str(REPO_ROOT / "uv.lock")}}
         assert decide(payload, REPO_ROOT, rules) is None, tool
@@ -296,3 +302,69 @@ def test_every_reviewer_declares_read_only_tools() -> None:
         assert allowed <= {"Read", "Grep", "Glob"}, f"{path.name} can do more than read: {allowed}"
         for forbidden in ("Write", "Edit", "Bash", "NotebookEdit"):
             assert forbidden not in allowed, f"{path.name} declares {forbidden}"
+
+
+# --- the two bypasses found by auditing the guard against its own claims -------------------------
+#
+# Both were live when this file was first written, and both are the same shape: the guard was asked
+# a question it answered correctly, about a call it never saw. They are regression tests, so they
+# name the bug rather than the fix.
+
+
+def test_a_write_inside_a_worktree_is_still_guarded(rules, tmp_path) -> None:
+    """The guard used to take the repo root from its own `__file__`, and fail open in a worktree.
+
+    `claude --worktree` checks the branch out under `.claude/worktrees/<name>/`. With the root
+    pinned to wherever the *script* lives, a write to that worktree's `uv.lock` resolved to
+    `.claude/worktrees/<name>/uv.lock`, which matches no pattern in the policy — so every protected
+    path was unprotected in the one mode parallel work depends on. Verified before the fix: the same
+    payload was BLOCKED from the main checkout and ALLOWED from inside a worktree.
+
+    The root now comes from the payload's `cwd`, which is the root the call is actually running in.
+    """
+    worktree = tmp_path / ".claude" / "worktrees" / "unit-07"
+    (worktree / "tools").mkdir(parents=True)
+    payload = {
+        "tool_name": "Write",
+        "cwd": str(worktree),
+        "tool_input": {"file_path": str(worktree / "uv.lock")},
+    }
+    reason = decide(payload, resolve_root(payload, tmp_path), rules)
+    assert reason is not None, "a worktree's uv.lock is measured data exactly as the main one is"
+    assert "uv.lock" in reason
+
+
+def test_a_bash_command_that_writes_a_protected_path_is_refused(rules) -> None:
+    """`WRITING_TOOLS` excluded `Bash`, so `echo >` and `sed -i` sailed straight through.
+
+    This is not a hypothetical gap: the incident the `[guards]` section exists for — `return []`
+    injected into two invariants — is trivially reproducible with `sed -i`, so the guard did not
+    prevent the thing it cites as its reason for existing.
+    """
+    for command in (
+        "echo '{}' > uv.lock",
+        "sed -i '' 's/return findings/return []/' "
+        "src/exercises/05-datamixtures-and-curriculum/src/mixture/checks.py",
+        "cat /dev/null >> tools/agent_guard.py",
+        "rm tests/test_forbidden_vocabulary.py",
+        "cp /tmp/x src/exercises/02-tokenization/web/tokenizer.json",
+    ):
+        payload = {"tool_name": "Bash", "cwd": str(REPO_ROOT), "tool_input": {"command": command}}
+        assert decide(payload, REPO_ROOT, rules) is not None, command
+
+
+def test_bash_that_only_reads_a_protected_path_is_allowed(rules) -> None:
+    """The twin. A guard that blocked every mention of a protected path would block reading them.
+
+    `grep`, `cat`, `wc` and `git log` over a guard file are exactly what an agent should do before
+    reporting a finding about it, and blocking those makes the guard the thing to be worked around.
+    """
+    for command in (
+        "cat uv.lock",
+        "grep -n 'return' src/exercises/05-datamixtures-and-curriculum/src/mixture/checks.py",
+        "wc -l tools/agent_guard.py",
+        "git log --oneline -- tests/test_forbidden_vocabulary.py",
+        "python -m pytest tests/test_forbidden_vocabulary.py -q",
+    ):
+        payload = {"tool_name": "Bash", "cwd": str(REPO_ROOT), "tool_input": {"command": command}}
+        assert decide(payload, REPO_ROOT, rules) is None, command

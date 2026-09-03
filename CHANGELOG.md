@@ -111,6 +111,23 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The agent guard failed open inside a worktree — the one mode parallel work depends on.** It took
+  the repo root from its own `__file__`, so under `claude --worktree` a write to that worktree's
+  `uv.lock` resolved to `.claude/worktrees/<name>/uv.lock`, matched no pattern, and every protected
+  path was unprotected. Verified before the fix by driving the same payload from both places: the
+  main checkout blocked it and the worktree allowed it. The root now comes from the payload's `cwd`,
+  walking up to the nearest `.git` — a *file* in a worktree, a directory in a checkout — so an agent
+  that has changed into a subdirectory still resolves to the root.
+- **`Bash` bypassed the guard completely**, because `WRITING_TOOLS` listed only the file-path tools.
+  `echo >`, `sed -i`, `rm` and `cp` over the top all sailed through, so the guard did not prevent the
+  incident it cites as its reason for existing — `return []` injected into two invariants is one
+  `sed` away. A `Bash` command is now split into segments and read for redirections, in-place
+  editors, and the commands that write or destroy their arguments, with `cp`/`mv` judged on their
+  destination only so `cp uv.lock /tmp/backup` stays allowed. **What this buys is stated in the
+  module docstring rather than implied: a shell is Turing-complete, so this raises the cost of a
+  bypass rather than closing it** — `python -c "open('uv.lock','w')"` builds its path at runtime and
+  no static reader will see it. What it does catch is the whole class of casual writes, which is
+  what both incidents behind this file actually were.
 - **The standards archive's retention limit was a cap when it should have been a floor**, so the
   guard went red after every release with a message asking someone to delete part of the archive —
   a standing instruction to delete history, inside the thing built to keep history. It also bought
