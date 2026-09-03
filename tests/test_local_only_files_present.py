@@ -32,9 +32,41 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 EXERCISES = exercises_in(REPO_ROOT / "src" / "exercises")
 
+
 #: One notebook and one builder per exercise, by convention.
+def _tracked_paths() -> frozenset[Path]:
+    """Everything git tracks, as absolute paths.
+
+    **A tracked file is not in the local-only class, and this guard must not watch one.** Exercise
+    10's notebook is tracked under a written exception (`AGENTS.md`, and a negation in
+    `.gitignore`), because its submission requires the ipynb in the repository. Left in the watched
+    set it made a *fresh clone* — which has that one notebook and none of the others — look like the
+    partial loss this file exists to detect, and CI went red on a healthy checkout.
+
+    `tools/backup_local_only.py::collect` solves the same problem the same way, with
+    `found -= _tracked(root)`.
+    """
+    import subprocess
+
+    done = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "ls-files", "-z"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if done.returncode != 0:  # pragma: no cover - not a git checkout at all
+        return frozenset()
+    return frozenset(REPO_ROOT / name for name in done.stdout.split("\0") if name)
+
+
+TRACKED = _tracked_paths()
+
 EXPECTED_NOTEBOOKS = [
-    REPO_ROOT / "notebooks" / f"S{p.name[:2]}-{p.name[3:]}.ipynb" for p in EXERCISES
+    notebook
+    for notebook in (
+        REPO_ROOT / "notebooks" / f"S{p.name[:2]}-{p.name[3:]}.ipynb" for p in EXERCISES
+    )
+    if notebook not in TRACKED
 ]
 EXPECTED_BUILDERS = [p / "tools" / "build_notebook.py" for p in EXERCISES]
 
@@ -48,10 +80,15 @@ EXPECTED_BRIEFS = [p / "REQUIREMENTS.md" for p in EXERCISES]
 #: The three lists above are the classes `AGENTS.md` names, and they were the only ones guarded.
 #: The confidential reference material now lives **outside the repository entirely**, so it can no
 #: longer be named by a tracked path, ignored by mistake, or committed by accident. It is still
-#: watched here, via the backup tool that knows where it is. `docs/EXPLAINER_*.md` are the two
-#: files any explainer is supposed to be built from. All gitignored, none regenerable, none
-#: guarded. A tripwire that covers the documented cases and not the biggest one is a tripwire that
-#: reads as coverage.
+#: watched here, via the backup tool that knows where it is. Gitignored, not regenerable, and until
+#: recently not guarded — a tripwire that covers the documented cases and not the biggest one is a
+#: tripwire that reads as coverage.
+#:
+#: **`docs/EXPLAINER_*.md` have LEFT this list, because they are tracked now.** They were filed as
+#: programme material and are not: measured against the reference corpus they carry no verbatim runs
+#: and no banned vocabulary. Git holds them, so a clone has them, so their absence is no longer a
+#: loss to detect — and a tripwire that fires on a file git can restore teaches the reader to ignore
+#: it.
 #:
 #: Counted rather than enumerated: the corpus grows a file per topic, so a fixed list would go
 #: stale and a stale list here fails silently in the safe-looking direction.
@@ -62,8 +99,6 @@ NOTES_CORPUS = backup.EXTERNAL_SOURCES["notes"]
 STORE = REPO_ROOT.parent / f".{REPO_ROOT.name}-local-only"
 EXPECTED_PROGRAMME = [
     REPO_ROOT / "docs" / "REQUIREMENTS.md",
-    REPO_ROOT / "docs" / "EXPLAINER_PROMPT.md",
-    REPO_ROOT / "docs" / "EXPLAINER_PATTERN.md",
 ]
 
 

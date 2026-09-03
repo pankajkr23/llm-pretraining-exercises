@@ -56,6 +56,7 @@ OPTIONAL_DEPENDENCY_GATES: dict[str, str] = {
     "src/exercises/07-model-embeddings-internals/tests/test_embeddings_heads.py": "torch",
     "src/exercises/09-loss-functions-output-heads/tests/test_lossheads_equivalences.py": "torch",
     "src/exercises/09-loss-functions-output-heads/tests/test_lossheads_harness.py": "torch",
+    "src/exercises/10-training-loop/tests/test_trainloop_step.py": "torch",
 }
 
 #: Which `uv sync --extra <name>` provides which import.

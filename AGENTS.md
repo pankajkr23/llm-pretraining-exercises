@@ -160,11 +160,10 @@ the new one, and deletes it. Nobody deleted anything. So:
   rebuilds a notebook.
 
 - **The protected set is wider than the three classes named above, and the extra ones were
-  unguarded for months.** Alongside them,
-  `docs/EXPLAINER_PROMPT.md` / `docs/EXPLAINER_PATTERN.md` are the two documents any explainer is
-  required to be built from. All gitignored, none regenerable, none watched by the tripwire until
-  now. **85 files, 12 MB.** A guard that covers the documented cases and misses the largest one
-  reads as coverage without being any.
+  unguarded for months.** All gitignored, none regenerable, none watched by the tripwire until
+  then. A guard that covers the documented cases and misses the largest one reads as coverage
+  without being any. **Read `PATTERNS` for the live set; a count written here would go stale the
+  first time the set changed — as it did.**
 
 - **The authoritative list is `tools/backup_local_only.py::PATTERNS`, not this document.** Prose that
   enumerates the set is a second copy of it, and the second copy is the one that drifts — this
@@ -320,7 +319,12 @@ Write it to be read at two depths: plain what-and-why before each step, the arit
 after it. It is the artifact people learn from and teach from, not a run log.
 
 **Both the notebook and its builder are gitignored** — `notebooks/S[0-9][0-9]-*.ipynb` and
-`src/exercises/*/tools/build_notebook.py`. A generator is the notebook in another form, so tracking
+`src/exercises/*/tools/build_notebook.py`. **One notebook is exempt and it is named in
+`.gitignore`:** `notebooks/S10-training-loop.ipynb`, because exercise 10's submission requires the
+ipynb in the repository and offers no alternative — exercise 09's offered "the ipynb file *or*
+training logs", which is why 09's stays local. The exemption is narrow by construction: it names one
+path, the reason is written where the rule is, and `backup_local_only.py` needs no change because
+`collect` drops anything git already tracks. **A builder is never exempt.** A generator is the notebook in another form, so tracking
 it would keep the same course material in the repo as Python, which is what untracking the notebook
 was for. Every exercise has a builder; they live on a working checkout and are never pushed.
 
@@ -359,8 +363,8 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
 ## Five data concerns — keep them physically separate
 
 - **Requirement documents → never tracked, at any level.** `REQUIREMENTS.md` is gitignored by name everywhere, as is
-  programme-level material — the schedule, the class list, the internal authoring specs
-  (`docs/REQUIREMENTS.md`, `docs/EXPLAINER_*.md`). A requirements document is the course's text and
+  programme-level material — the schedule, the class list, and `docs/REQUIREMENTS.md`. A
+  requirements document is the course's text and
   is input for whoever builds the exercise; it is not the deliverable. **Never link to one from a
   tracked file** — the link resolves on a working checkout and 404s for everyone else. What we
   *decided*, and why, is published instead: `README.md`, and a tracked `DECISIONS.md` when the
@@ -938,7 +942,9 @@ and a **numbered retro-fit checklist** for bringing an older exercise up to stan
 the reference implementation and every number in that document was measured on it. Read it before
 building or changing a page; the rules that matter across exercises are below.
 
-- **Interactive explainers follow two local files.** `docs/EXPLAINER_PROMPT.md` decides *what* one must be (the claim, the interaction that proves it, the topology and family, when **not** to build one). `docs/EXPLAINER_PATTERN.md` records *how* — DOM skeleton, class names, the state-and-render shape, copy voice. Both are gitignored, so they are on a working checkout but not on the remote; read both before building an explainer and don't re-invent the skeleton. Shipped references: `02-tokenization/web/how-it-works.html` and §1 of `03-data-collection-framework/web/chapters.js`.
+- **Interactive explainers follow two TRACKED documents.** `docs/EXPLAINER_PROMPT.md` decides *what* one must be (the claim, the interaction that proves it, the topology and family, when **not** to build one). `docs/EXPLAINER_PATTERN.md` records *how* — DOM skeleton, class names, the state-and-render shape, copy voice. Read both before building an explainer, and don't re-invent the skeleton. Shipped references: `02-tokenization/web/how-it-works.html` and §1 of `03-data-collection-framework/web/chapters.js`.
+
+  **They were gitignored until 2026-09-03, and that was a misclassification with a real cost.** Filed as programme material beside the schedule and the class list, they were invisible to every clone, worktree and CI job — so an agent asked to build an explainer could not read the specification it was graded against, and exercise 09 was blocked on exactly that. The question was settled by measurement rather than argument: against the reference corpus, `EXPLAINER_PATTERN.md` carried **0** verbatim runs and **0** banned terms, and `EXPLAINER_PROMPT.md` carried 2 runs and 1 term — a quoted example and a heading, both reworded, after which both measure 0. They are engineering rules, not course text. **The lesson generalises: before accepting that something cannot be tracked, measure it against the gates that would refuse it.**
 
 - **One Apple-style design language** on every page: cool-gray/black surfaces, a single bright-blue accent (`#0068d1` light / `#2997ff` dark), system sans (no serif), soft-shadow rounded panels, and a `← Back` pill to the site root. **Six themes**, not two: the system light/dark pair plus `soft-light`, `tinted-dark`, `high-contrast` and `neon`, each defining the whole token set. A page styled for two of them is unreadable in the other four. Reuse the token names in `docs/DESIGN.md` — don't invent a per-exercise palette.
 - **Write for a general audience.** The public pages are standalone, blog-style demos of an idea — a first-time visitor should be able to enjoy them without any course context. Favor plain, explanatory copy; the numbered topic eyebrow (`NN · Topic`) makes a nice light section label.

@@ -12,6 +12,42 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 10 runs all six of its items** and generates `RESULTS.md` from `results/run.json`: every
+  tensor shape in a step; one gradient verified against a central difference swept over seven nudge
+  sizes (**8.8 matching decimal digits** at its best, and worse at *both* ends); gradient
+  accumulation broken on purpose, both as arithmetic (**15.4%** out) and as two full training
+  curves; the gradient norm logged pre-clip; MFU; and 0.1 decomposed into fp32, bf16 and fp8 E4M3.
+- Its model is exercise 09's, imported rather than restated, so the two cannot disagree about what a
+  loss is.
+- **Its notebook is tracked**, under a written exception in `AGENTS.md` and a `.gitignore` negation.
+  Exercise 10's submission asks for the ipynb with no alternative, where 09's offered "the ipynb file
+  *or* training logs".
+
+### Fixed
+
+- **`trainloop.floats.decompose` was wrong for most inputs, and right at the only value tested.** An
+  overflow flag computed from the *value's* fraction-field width rather than the fixed 23 made it
+  return numbers **exactly twice too large** on 3.7% of bf16 and 30% of fp8 E4M3 inputs, and raise
+  on others. `0.1` is one of the values where it cannot fire, and `0.1` was the whole test. The
+  cross-check now sweeps 2,000 values per format — which found a second limit nobody had reasoned
+  about, **subnormals**, now refused rather than answered wrongly.
+- **MFU was 39.13% and meaningless**: it divided FLOPs achieved on the CPU by a GPU's advertised
+  peak. The peak is measured now, on the same device and dtype as the run. It also priced the
+  embedding tables — a gather does no arithmetic — making the numerator 45% larger than it should
+  have been. The honest figure is **27.69%**.
+- Item 4's heading claimed the gradient norm moved *before* the loss while the measurement was a
+  same-step magnitude contrast. It now requires the loss to follow within a stated horizon, and
+  **one** step in 200 qualifies rather than nine.
+- The accumulation finding was quoted from one endpoint of a curve whose sign flips 28 times in 120
+  steps; the signed mean, the absolute mean and the flip count are now all reported.
+- Two guards that could not fail on the bugs they named: the accumulation direction was asserted at
+  six steps (a coin flip), and the MFU ceiling was checked against a made-up numerator orders of
+  magnitude below any plausible peak.
+- The local-only tripwire watched exercise 10's now-tracked notebook, so a fresh clone read as
+  exactly the partial loss it exists to detect and CI went red on a healthy checkout.
+
+### Added
+
 - **Exercise 09 is built to its requirements**: seven measured numbers and two findings, all
   generated into `results/*.json`, rendered into `RESULTS.md` by `tools/render_results.py`, and
   drawn on a deployable page whose data file comes from the same runs. No figure in any of the three

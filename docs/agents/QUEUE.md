@@ -446,4 +446,19 @@ predates the harness — so it is logged as what it was.
                           held for any input. RESULTS.md claimed every figure was generated and
                           fifteen were typed — inside the template the byte-equality test compared
                           against. And an importorskip turned a repo-wide guard red
+2026-09-03  exercise-10   10 built: six items, all generated. Two figures were flattering
+                          themselves — MFU divided CPU work by a GPU's peak (39.13%) and priced the
+                          embedding tables, which are gathers. The honest figure is 27.69%
+2026-09-03  review        three reviewers read 10. The central finding is a real bug in shipped
+                          code: decompose() was correct at 0.1 and wrong on 3.7% of bf16 and 30% of
+                          E4M3 inputs, returning values exactly twice too large. 0.1 was the whole
+                          test. The cross-check now sweeps 2,000 values per format, which found a
+                          second limit nobody had reasoned about — subnormals
+2026-09-03  exercise-10   10's notebook is TRACKED, under a written exception in AGENTS.md and a
+                          .gitignore negation. backup_local_only needs no change: collect already
+                          drops tracked files. The tripwire did, because a clone holding one
+                          notebook and not the others reads as a partial loss
+2026-09-03  process       09 and 10 were split onto their own branches after PK pointed out the
+                          convention: one branch and one pull request per exercise. #104 had three
+                          concerns stacked on it
 ```

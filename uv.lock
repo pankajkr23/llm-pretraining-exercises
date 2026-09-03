@@ -17,6 +17,7 @@ members = [
     "exercise-07-model-embeddings-internals",
     "exercise-08-modern-attention-variants",
     "exercise-09-loss-functions-output-heads",
+    "exercise-10-training-loop",
     "llm-pretraining-exercises",
 ]
 
@@ -481,6 +482,21 @@ dependencies = [
 requires-dist = [
     { name = "numpy", specifier = ">=2" },
     { name = "tokenizers", specifier = ">=0.20" },
+]
+
+[[package]]
+name = "exercise-10-training-loop"
+version = "0.1.0"
+source = { editable = "src/exercises/10-training-loop" }
+dependencies = [
+    { name = "exercise-09-loss-functions-output-heads" },
+    { name = "numpy" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "exercise-09-loss-functions-output-heads", editable = "src/exercises/09-loss-functions-output-heads" },
+    { name = "numpy", specifier = ">=2" },
 ]
 
 [[package]]
