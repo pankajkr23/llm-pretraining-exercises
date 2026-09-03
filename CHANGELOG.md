@@ -12,6 +12,13 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- The local-only tripwire watched exercise 10's notebook, which is now **tracked** under a written
+  exception — so a fresh clone, holding that one and none of the others, read as exactly the partial
+  loss the guard exists to detect, and CI went red on a healthy checkout. It now excludes tracked
+  paths, the same way `backup_local_only.py::collect` does.
+
+### Fixed
+
 - **`trainloop.floats.decompose` was wrong for most inputs, and right at the only value tested.**
   `_round_to_nearest_even` computed an overflow flag from the *value's* fraction-field width rather
   than the fixed 23, so `decompose` applied a second exponent increment and returned a number

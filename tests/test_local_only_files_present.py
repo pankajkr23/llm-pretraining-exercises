@@ -32,9 +32,41 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 EXERCISES = exercises_in(REPO_ROOT / "src" / "exercises")
 
+
 #: One notebook and one builder per exercise, by convention.
+def _tracked_paths() -> frozenset[Path]:
+    """Everything git tracks, as absolute paths.
+
+    **A tracked file is not in the local-only class, and this guard must not watch one.** Exercise
+    10's notebook is tracked under a written exception (`AGENTS.md`, and a negation in
+    `.gitignore`), because its submission requires the ipynb in the repository. Left in the watched
+    set it made a *fresh clone* — which has that one notebook and none of the others — look like the
+    partial loss this file exists to detect, and CI went red on a healthy checkout.
+
+    `tools/backup_local_only.py::collect` solves the same problem the same way, with
+    `found -= _tracked(root)`.
+    """
+    import subprocess
+
+    done = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "ls-files", "-z"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if done.returncode != 0:  # pragma: no cover - not a git checkout at all
+        return frozenset()
+    return frozenset(REPO_ROOT / name for name in done.stdout.split("\0") if name)
+
+
+TRACKED = _tracked_paths()
+
 EXPECTED_NOTEBOOKS = [
-    REPO_ROOT / "notebooks" / f"S{p.name[:2]}-{p.name[3:]}.ipynb" for p in EXERCISES
+    notebook
+    for notebook in (
+        REPO_ROOT / "notebooks" / f"S{p.name[:2]}-{p.name[3:]}.ipynb" for p in EXERCISES
+    )
+    if notebook not in TRACKED
 ]
 EXPECTED_BUILDERS = [p / "tools" / "build_notebook.py" for p in EXERCISES]
 
