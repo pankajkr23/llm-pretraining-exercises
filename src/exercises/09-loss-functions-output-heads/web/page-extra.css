@@ -672,6 +672,11 @@ text.ax.good {
   text-anchor: middle;
 }
 
+.shiftfig .fig-divide {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
 .shiftfig .fig-lab {
   fill: var(--muted);
   font-size: 12px;
@@ -729,8 +734,13 @@ text.ax.good {
 }
 
 .curvefig .curve-lab {
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--panel);
+  stroke-width: 4px;
+  stroke-linejoin: round;
 }
 
 .curvefig .curve-lab.correct {

@@ -303,69 +303,80 @@ function shiftFigure(M) {
   const broken = M.shift.broken_pairs;
   const n = Math.min(pairs.length, 7);
 
-  const cell = 92;
+  /* Cell width is derived from the longest string the figure actually has to hold, not guessed.
+   * The first version used a fixed 92px and the token text spilled out of five of seven boxes —
+   * which no test caught, because `scrollWidth`/`clientWidth` mean nothing on an SVG <text> and a
+   * viewBox check only sees the figure's outer edge. */
+  const longest = Math.max(
+    ...pairs.slice(0, n).flat().map((s) => s.length),
+    ...broken.slice(0, n).flat().map((s) => s.length)
+  );
+  const cell = Math.max(76, longest * 9 + 26);
+  const gap = 8;
   const pad = 18;
   const width = pad * 2 + cell * n;
   const node = svg('svg', {
-    viewBox: `0 0 ${width} 250`,
+    viewBox: `0 0 ${width} 348`,
     class: 'fig shiftfig',
     role: 'img',
     'aria-label':
-      'Two rows of token strings offset by one position, showing that each input is followed by its target',
+      'Two rows of token strings offset by one, then the same rows with the broken shift, where ' +
+      'every token is asked to predict itself',
   });
 
-  const row = (y, items, cls, label) => {
-    node.append(svgText(pad, y - 14, 'fig-lab', label));
+  const row = (y, items, cls) =>
     items.forEach((text, i) => {
       const x = pad + i * cell;
-      node.append(svg('rect', { x, y, width: cell - 8, height: 34, rx: 6, class: `tok ${cls}` }));
-      node.append(svgText(x + (cell - 8) / 2, y + 22, 'tok-t', text));
+      node.append(svg('rect', { x, y, width: cell - gap, height: 34, rx: 6, class: `tok ${cls}` }));
+      node.append(svgText(x + (cell - gap) / 2, y + 22, 'tok-t', text));
     });
-  };
+
+  const label = (y, text) => node.append(svgText(pad, y, 'fig-lab', text));
 
   const inputs = pairs.slice(0, n).map((p) => p[0]);
   const targets = pairs.slice(0, n).map((p) => p[1]);
 
-  row(40, inputs, 'tok-in', 'the model reads');
-  row(120, targets, 'tok-out', 'and must predict');
+  /* The label sits ABOVE where the arrows start, not across them. The first version put it at the
+   * midpoint of the gap and the arrows ran straight through the words. */
+  label(24, 'correct — the model reads');
+  row(34, inputs, 'tok-in');
+  label(96, '…and must predict');
+  row(130, targets, 'tok-out');
 
-  /* The offset is the whole point, so it is drawn rather than described: each arrow leaves an
-   * input and lands on the box one place to its right on the row below. */
+  /* The arrow runs straight down its own column: `targets[i]` is what `inputs[i]` must predict.
+   * The offset lives in the DATA — targets is the sequence shifted by one — not in the geometry,
+   * and an arrow drawn diagonally would say something the code does not do. */
   for (let i = 0; i < n; i += 1) {
-    const x0 = pad + i * cell + (cell - 8) / 2;
-    const x1 = pad + i * cell + (cell - 8) / 2;
-    node.append(
-      svg('path', {
-        d: `M ${x0} 78 C ${x0} 100, ${x1} 98, ${x1} 116`,
-        class: 'lead',
-        'marker-end': 'url(#arrow)',
-      })
-    );
+    const x = pad + i * cell + (cell - gap) / 2;
+    node.append(svg('path', { d: `M ${x} 106 L ${x} 126`, class: 'lead', 'marker-end': 'url(#arrow)' }));
   }
 
   const defs = svg('defs');
   const marker = svg('marker', {
     id: 'arrow',
     viewBox: '0 0 8 8',
-    refX: 6,
+    refX: 7,
     refY: 4,
-    markerWidth: 6,
-    markerHeight: 6,
+    markerWidth: 5,
+    markerHeight: 5,
     orient: 'auto',
   });
   marker.append(svg('path', { d: 'M 0 0 L 8 4 L 0 8 z', class: 'arrowhead' }));
   defs.append(marker);
   node.append(defs);
 
-  node.append(svgText(pad, 190, 'fig-lab', 'the off-by-one, on purpose'));
-  broken.slice(0, n).forEach(([a, b], i) => {
-    const x = pad + i * cell;
-    node.append(svg('rect', { x, y: 200, width: cell - 8, height: 34, rx: 6, class: 'tok tok-bad' }));
-    node.append(svgText(x + (cell - 8) / 2, 222, 'tok-t', `${a} → ${b}`));
-  });
+  node.append(
+    svg('line', { x1: pad, x2: width - pad, y1: 196, y2: 196, class: 'fig-divide' })
+  );
+
+  label(226, 'the off-by-one — the model reads');
+  row(236, broken.slice(0, n).map((p) => p[0]), 'tok-in');
+  label(298, '…and must predict ITSELF');
+  row(306, broken.slice(0, n).map((p) => p[1]), 'tok-bad');
 
   return node;
 }
+
 
 function chapterMechanism(M) {
   const s = section(
@@ -388,10 +399,12 @@ function chapterMechanism(M) {
     figure(
       shiftFigure(M),
       1,
-      `Each box on the top row is a token the model reads; the box below and to the left is what it
-       must predict. <b>Read the bottom band.</b> Every pair there is a token predicting
-       <i>itself</i> — that is the entire bug, and it is obvious in text and invisible in integers.
-       A single pair on that band that differed would mean the shift was correct after all.`
+      `Above the rule: each box is a token the model reads, and the arrow points at what it must
+       predict. Below it: <b>the same reading, with the shift reversed</b> — and every arrow would
+       now point at the box it started from. <b>Every pair in the bottom half is a token predicting
+       itself.</b> That is the entire bug. It is obvious in text and invisible in integers, which is
+       why the check is to print the strings. A single pair down there that differed would mean the
+       shift was correct after all.`
     )
   );
 
@@ -557,10 +570,14 @@ function curveFigure(M) {
   path(correct, 'curve-correct');
   path(broken, 'curve-broken');
 
-  const last = steps.length - 1;
+  /* Labels sit where the two curves are furthest apart and are offset AWAY from each other, not
+   * at the last point with a 10px nudge — which put "correct shift" straight through its own
+   * line. The gap is widest around two-thirds along, which is also where neither label can reach
+   * the other curve. */
+  const at = Math.floor(steps.length * 0.62);
   node.append(
-    svgText(x(last) - 6, y(correct[last]) - 10, 'curve-lab end correct', 'correct shift'),
-    svgText(x(last) - 6, y(broken[last]) - 10, 'curve-lab end broken', 'off-by-one')
+    svgText(x(at), y(correct[at]) - 16, 'curve-lab correct', 'correct shift'),
+    svgText(x(at), y(broken[at]) + 26, 'curve-lab broken', 'off-by-one')
   );
   return node;
 }
