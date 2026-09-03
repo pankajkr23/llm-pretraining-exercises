@@ -10,6 +10,33 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **CI can now prove the local-only quoting gate ran, against exactly this prose.** `AGENTS.md` has
+  said outright that *"CI can prove no filename leaked and only the hook can prove no sentence did"*
+  — the quoting half compares tracked prose against reference material that is never on a runner, so
+  it skips there **silently**.
+
+  The check emits a boolean and two digests and never needs to reveal corpus content, which is what
+  makes its *result* publishable without publishing anything it read.
+  `.quote-check-receipt.json` records a digest over the exact tracked prose the check covered plus a
+  digest of the checker itself, and `tests/test_quote_check_receipt.py` recomputes both in CI from
+  the repository alone.
+
+  **The limit is stated rather than implied by the word "digest":** this proves a machine holding
+  the material ran this exact checker against exactly this content. It does **not** prove that
+  machine was honest — anyone who can run the checker can write the file. The failure this repo
+  actually has is forgetfulness and staleness, and those it closes.
+
+  **A circularity showed up immediately and is now guarded.** The receipt is tracked, so it landed
+  inside the checker's own file set — and writing it changed the digest it had just recorded, making
+  it permanently invalid. Caught by staging the first receipt and watching it fail to vouch for the
+  tree it described. It excludes itself, with a test.
+
+  A further test asserts the receipt **names nothing**: keys are fixed, digests are plain hex, and no
+  path or test name appears. This repo has already made the leak-check-becomes-a-leak mistake twice,
+  in the docstrings of the two guards this receipt supports.
+
 ### Security
 
 - **A third guard, `tests/test_forbidden_vocabulary.py`, bans the words themselves — in CI and in a

@@ -62,8 +62,27 @@ prose.
 
 Both are gated on commit. The second cannot run in CI, because CI has no copy to compare against,
 so **CI can prove no filename leaked and only the hook can prove no sentence did.** If you commit
-from a machine without the material, that half silently skips — which is the one gap left, and it
-is a property of where the material lives rather than of the check.
+from a machine without the material, that half silently skips.
+
+**That gap is now closed by a receipt, and the honest limit of it is worth stating.** The quoting
+check emits a boolean and two digests — it never needs to reveal corpus content — so its *result*
+can be published without publishing anything it read. `.quote-check-receipt.json` records a digest
+over the exact tracked prose the check covered, plus a digest of the checker itself, and
+`tests/test_quote_check_receipt.py` recomputes both **in CI** from the repository alone:
+
+```bash
+uv run python tools/quote_check_receipt.py --write    # after the gate passes, where the material is
+uv run python tools/quote_check_receipt.py --verify   # what CI does; non-zero on drift
+```
+
+So CI can now prove *a machine holding the material ran this exact checker against exactly this
+prose*. It **cannot** prove that machine was honest — anyone who can run the checker can write the
+file. The failure this repo actually has is forgetfulness and staleness, and those it does close.
+
+**The consequence is deliberate: changing tracked prose invalidates the receipt**, so it has to be
+regenerated on a machine that can run the gate. That means only someone who can actually run the
+quoting check can change prose, which is the property being bought. Regenerate it as the last step
+before committing, after any change to tracked text.
 
 **Name the exercise, not the source's own unit of material.** A topic is referred to by the exercise
 that covers it; the material itself is "the source". The banned words came back three times after
