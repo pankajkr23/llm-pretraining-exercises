@@ -53,6 +53,7 @@ NOT_SELECTORS: frozenset[str] = frozenset(
         ".env",
         ".mcp.json",
         ".worktreeinclude",
+        ".quote-check-receipt.json",
     }
 )
 

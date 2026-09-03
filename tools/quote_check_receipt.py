@@ -34,6 +34,8 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RECEIPT = REPO_ROOT / ".quote-check-receipt.json"
 CHECKER = REPO_ROOT / "tests" / "test_no_confidential_leaks.py"
@@ -57,6 +59,35 @@ def _checker():
     return module
 
 
+#: The suffixes the quoting half actually opens. **Kept identical to the filter inside
+#: `test_no_tracked_file_quotes_the_confidential_material`, and asserted equal to it by
+#: `tests/test_quote_check_receipt.py`** — a digest wider than the check is not a stricter receipt,
+#: it is a receipt that goes stale for reasons the check cannot see.
+READ_SUFFIXES = frozenset({".md", ".py", ".txt"})
+
+
+def covered_files() -> list[str]:
+    """Repo-relative paths the quoting half reads, sorted.
+
+    `_tracked_text_files()` is every tracked non-binary file — 474 of them here — but the quoting
+    half opens only `.md`, `.py` and `.txt`, which is 293. The first version of this receipt hashed
+    all 474, so **181 files it never inspects could invalidate it**: every stylesheet, lockfile,
+    manifest and JSON fixture in the repo. That is not caution. A receipt invalidated by a file the
+    check does not read teaches the reader that regenerating it is a formality, which is precisely
+    how a gate stops being read.
+    """
+    # **The receipt excludes itself, or it can never be valid.** It is tracked, so it lands in the
+    # checker's own file set — and then writing it changes the digest it just recorded. Caught by
+    # staging the first receipt and watching it immediately fail to vouch for the tree it described.
+    # It is `.json`, so the suffix filter already excludes it; the name check stays as a second
+    # guard in case the filter ever widens.
+    return sorted(
+        rel
+        for rel in (p.relative_to(REPO_ROOT).as_posix() for p in _checker()._tracked_text_files())
+        if rel != RECEIPT.name and Path(rel).suffix in READ_SUFFIXES
+    )
+
+
 def prose_digest() -> str:
     """A digest over the exact tracked prose the quoting half covers.
 
@@ -64,16 +95,7 @@ def prose_digest() -> str:
     blob hash is what CI can recompute from the repository alone, with no working tree state and no
     dependence on line endings or checkout order.
     """
-    # **The receipt excludes itself, or it can never be valid.** It is tracked, so it lands in the
-    # checker's own file set — and then writing it changes the digest it just recorded. Caught by
-    # staging the first receipt and watching it immediately fail to vouch for the tree it described.
-    # Excluding it is sound: it holds digests and a verdict, so it is not prose that could quote
-    # anything, which is the only thing the digest is protecting.
-    files = [
-        rel
-        for rel in (p.relative_to(REPO_ROOT).as_posix() for p in _checker()._tracked_text_files())
-        if rel != RECEIPT.name
-    ]
+    files = covered_files()
     listed = subprocess.run(
         ["git", "-C", str(REPO_ROOT), "ls-files", "-s", "--", *files],
         capture_output=True,
@@ -97,8 +119,39 @@ def checker_digest() -> str:
     return hashlib.blake2b(CHECKER.read_bytes(), digest_size=16).hexdigest()
 
 
-def build(result: str = "PASSED") -> dict:
-    """The receipt body. Digests, a verdict and a timestamp — nothing that names anything."""
+def run_gate() -> tuple[str, str]:
+    """Run the quoting half for real and return `(verdict, detail)`.
+
+    **This is the whole point of the tool and the first version did not do it.** `build()` took the
+    verdict as a default argument and `write()` never passed one, so `--write` produced a receipt
+    reading `PASSED` on any machine — including one holding no reference material at all, which is
+    the exact case the receipt exists to catch. It attested to a check it had not run, which is this
+    repository's own "reads as coverage" shape, in the tool written to close a coverage hole.
+
+    The check is *called*, never reimplemented: a second copy of its logic here would drift, and a
+    receipt that vouches for a different check than the one that ran is worse than no receipt.
+
+    Returns:
+        `("PASSED", "")` when the gate ran and found nothing; `("FAILED", first line)` when it found
+        an offender; `("UNAVAILABLE", reason)` when it could not run — which is what a machine
+        without the material gets, and is never written out as a receipt.
+    """
+    checker = _checker()
+    try:
+        checker.test_no_tracked_file_quotes_the_confidential_material()
+    except AssertionError as exc:
+        return "FAILED", str(exc).strip().splitlines()[0]
+    except pytest.skip.Exception as exc:
+        return "UNAVAILABLE", str(exc)
+    return "PASSED", ""
+
+
+def build(result: str) -> dict:
+    """The receipt body. Digests, a verdict and a timestamp — nothing that names anything.
+
+    `result` is required rather than defaulted. A defaulted verdict is how the first version came to
+    attest to a check it never ran.
+    """
     return {
         "schema": SCHEMA,
         "result": result,
@@ -108,9 +161,23 @@ def build(result: str = "PASSED") -> dict:
     }
 
 
+class GateDidNotPassError(RuntimeError):
+    """`--write` was asked for a receipt the gate did not earn."""
+
+
 def write(path: Path = RECEIPT) -> dict:
-    """Record that the gate passed against the prose as it stands. Returns the receipt."""
-    receipt = build()
+    """Run the gate, and record a pass only if it actually passed. Returns the receipt.
+
+    Raises:
+        GateDidNotPassError: when the gate failed or could not run. **Nothing is written** — a
+            receipt saying anything but PASSED has no reader (`drift()` rejects it), so writing
+            one would only produce a file that looks like evidence and fails later, further from
+            the machine that could explain it.
+    """
+    verdict, detail = run_gate()
+    if verdict != "PASSED":
+        raise GateDidNotPassError(f"{verdict}: {detail}")
+    receipt = build(verdict)
     path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
     return receipt
 
@@ -144,7 +211,21 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.write:
-        receipt = write()
+        try:
+            receipt = write()
+        except GateDidNotPassError as exc:
+            verdict = str(exc).split(":", 1)[0]
+            print(
+                f"refusing to write {RECEIPT.name}: the gate returned {exc}\n\n"
+                + (
+                    "This machine holds no reference material, so the quoting half cannot run\n"
+                    "and there is nothing to attest. Run --write on the machine that has it."
+                    if verdict == "UNAVAILABLE"
+                    else "Fix the offending prose, then run --write again."
+                ),
+                file=sys.stderr,
+            )
+            return 1
         print(f"wrote {RECEIPT.name}: prose {receipt['prose_digest']} @ {receipt['checked_at']}")
         return 0
 

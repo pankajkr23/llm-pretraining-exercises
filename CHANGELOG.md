@@ -95,6 +95,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The quote-check receipt attested to a check it never ran.** `build()` took the verdict as a
+  *default argument* and `write()` never passed one, so `--write` produced a receipt reading
+  `PASSED` on any machine — including one holding no reference material at all, which is precisely
+  the case the receipt exists to catch. It was this repository's own "reads as coverage" shape,
+  inside the tool written to close a coverage hole. `run_gate()` now calls the real check and
+  reports what it found, the verdict is a required argument so it cannot be defaulted into the file
+  again, and `--write` **refuses and writes nothing** unless the gate genuinely passed. Verified by
+  running it with the material hidden: `UNAVAILABLE`, exit 1, receipt untouched.
+- **The same receipt was invalidated by 181 files the check never opens.** Its digest covered every
+  tracked non-binary file — **474** here — while the quoting half reads only `.md`, `.py` and
+  `.txt`, which is **293**. Every stylesheet, lockfile, manifest and JSON fixture in the repo could
+  therefore make the receipt stale for a reason the check could not see, which teaches a reader that
+  regenerating it is a formality. The digest now covers exactly what the check reads, and a test
+  parses the suffix filter out of the checker's own source so the two cannot drift.
+
 - **The design standard named a CSS class that does not exist, and now a guard says so.** A
   word-substitution sweep rewrote `` `.preamble` `` — a class name — into two English words in
   `docs/DESIGN.md`, and did the same to the `` `preamble()` `` builder in exercise 08's `CLAUDE.md`.
