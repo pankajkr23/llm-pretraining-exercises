@@ -10,7 +10,7 @@
       body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
       .wrap { max-width: 860px; margin: 0 auto; padding: 56px 24px 96px; }
       .home { display: inline-flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 500; color: var(--accent); text-decoration: none; margin: 0 0 28px; padding: 7px 15px 7px 12px; border-radius: 980px; background: var(--panel); box-shadow: var(--shadow); transition: background 0.18s, color 0.18s; }
-      .home:hover { background: var(--accent); color: #fff; }
+      .home:hover { background: var(--accent); color: var(--on-accent); }
       .home .arrow { font-size: 16px; line-height: 1; }
       .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin: 0 0 12px; }
       h1 { font-weight: 600; font-size: clamp(2rem, 4.6vw, 3rem); line-height: 1.08; letter-spacing: -0.025em; margin: 0 0 18px; }
@@ -80,7 +80,7 @@
       .bars.slow .bfill { transition: width 550ms cubic-bezier(0.4, 0, 0.2, 1); }
       @media (prefers-reduced-motion: reduce) { .bars .bfill { transition: none; } }
 
-      .cta { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 500; color: #fff; background: var(--accent); text-decoration: none; padding: 10px 20px; border-radius: 980px; margin-top: 12px; transition: opacity 0.18s; }
+      .cta { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 500; color: var(--on-accent); background: var(--accent); text-decoration: none; padding: 10px 20px; border-radius: 980px; margin-top: 12px; transition: opacity 0.18s; }
       .cta:hover { opacity: 0.85; }
       footer { margin-top: 48px; color: var(--faint); font-size: 0.85rem; font-family: var(--mono); }
       .err { color: #b91c1c; font-family: var(--mono); }
