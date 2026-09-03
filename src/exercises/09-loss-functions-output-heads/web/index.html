@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The three lines that decide what a model learns</title>
+    <meta
+      name="description"
+      content="Between a model's output and the one number it is trained against sit three lines of code. Four separate things go wrong in them, none raises an exception, and the worst of them makes the loss look better: a deliberately mis-shifted model trains to 0.18 while the correct one is still at 4.14."
+    />
+    <!-- Inline so it costs no request; a missing favicon is a 404 in every reader's console. -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230071e3'/%3E%3Cg fill='%23fff'%3E%3Crect x='5' y='9' width='16' height='5' rx='1'/%3E%3Crect x='11' y='18' width='16' height='5' rx='1'/%3E%3C/g%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/_shared/tokens.css" />
+    <link rel="stylesheet" href="./_shared/tokens.css" />
+    <link rel="stylesheet" href="./_shared/explainer.css" />
+    <link rel="stylesheet" href="./_shared/page.css" />
+    <link rel="stylesheet" href="./page-extra.css" />
+    <!--
+      Applied before first paint, on purpose. Reading the stored theme from a module would leave
+      the page rendering system colours for a frame and then repainting, which is the flash every
+      theme switcher is judged by.
+    -->
+    <script>
+      try {
+        var t = localStorage.getItem('era5-theme');
+        if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        /* Private mode or blocked storage: the system theme is a fine answer. */
+      }
+    </script>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="shellbar">
+        <a class="back" href="../"><span aria-hidden="true">←</span> Back</a>
+        <div class="themepick">
+          <label for="theme">Theme</label>
+          <select id="theme">
+            <option value="system">System</option>
+            <option value="soft-light">Soft light</option>
+            <option value="tinted-dark">Tinted dark</option>
+            <option value="high-contrast">High contrast</option>
+            <option value="neon">Neon</option>
+          </select>
+        </div>
+      </div>
+      <p class="eyebrow">09 · Loss functions and output heads</p>
+      <h1>The three lines that decide what a model learns</h1>
+      <p class="lede">
+        Nobody labels the text a language model learns from. The right answer is simply
+        <b>the next token</b>, so the entire training signal is manufactured by sliding the text
+        against itself by one position. Three lines of tensor code do it — and
+        <b>four separate things go wrong in them</b>, none of which raises an exception, and two of
+        which make the loss look <i>better</i>. This page builds those three lines, breaks one on
+        purpose, and shows what the break costs.
+      </p>
+      <p class="lede-actions">
+        <a class="jump" href="#results">Skip to what happened <span aria-hidden="true">→</span></a>
+        <a class="jump ghost" href="#glossary">Start with the words you need</a>
+      </p>
+      <aside id="rail" class="rail"></aside>
+      <main id="main"></main>
+      <footer id="foot"></footer>
+    </div>
+
+    <script type="module">
+      import { buildPage } from './chapters.js';
+      import { M } from './data.js';
+
+      buildPage(M);
+
+      /* The picker. The head script already applied the stored choice; this only keeps the control
+       * in step with it and writes changes back. "system" removes the attribute rather than setting
+       * a value, because that is what lets prefers-color-scheme take over again. */
+      const picker = document.getElementById('theme');
+      const stored = (() => {
+        try {
+          return localStorage.getItem('era5-theme');
+        } catch {
+          return null;
+        }
+      })();
+      picker.value = stored || 'system';
+      picker.addEventListener('change', () => {
+        const v = picker.value;
+        if (v === 'system') document.documentElement.removeAttribute('data-theme');
+        else document.documentElement.setAttribute('data-theme', v);
+        try {
+          localStorage.setItem('era5-theme', v);
+        } catch {
+          /* nothing to do */
+        }
+      });
+    </script>
+  </body>
+</html>

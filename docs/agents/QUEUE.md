@@ -435,4 +435,15 @@ predates the harness — so it is logged as what it was.
                           check failed on `git pull` after every single merge and the fix — another
                           pull request — needed recording in turn. An entry is now written when a
                           pull request is OPENED, and the regress closes
+2026-09-03  exercise-09   09 built to its requirements: seven numbers and two findings, all
+                          generated into results/ and rendered into both RESULTS.md and the page's
+                          data file. A t+2 head sits above a t+1 head on 297 of 300 steps; an
+                          off-by-one target shift trains to 0.18 against the correct shift's 4.14 —
+                          the bug makes the loss BETTER
+2026-09-03  review        three reviewers read 09 and found three blockers, every one a claim that
+                          read as checked. The boundary mask kept every pad-to-pad pair (-1 == -1),
+                          and its guard asserted the same expression the implementation used, so it
+                          held for any input. RESULTS.md claimed every figure was generated and
+                          fifteen were typed — inside the template the byte-equality test compared
+                          against. And an importorskip turned a repo-wide guard red
 ```

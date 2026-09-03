@@ -1,0 +1,209 @@
+{
+  "config": {
+    "batch_size": 8,
+    "chunk_size": 128,
+    "d_model": 256,
+    "horizons": [
+      1,
+      2
+    ],
+    "ignore_index": -100,
+    "label_smoothing": 0.0,
+    "n_head": 4,
+    "n_layer": 4,
+    "pad_id": 10000,
+    "reference_d_model": 4096,
+    "reference_vocab_size": 131072,
+    "seq_len": 128,
+    "source": "vocab_size is exercise 02's shipped 10,000-entry BPE vocabulary plus one [PAD] row this exercise adds, because that tokenizer has none; the model shape is this exercise's own, chosen small enough to train on a laptop; reference_* are the course model's dimensions, carried only so the memory table can be quoted at that scale",
+    "vocab_size": 10001,
+    "z_loss_weight": 0.0
+  },
+  "item_1_shapes": {
+    "logits_to_hidden_ratio": 39.06640625,
+    "shapes": [
+      [
+        "tokens",
+        [
+          8,
+          128
+        ],
+        "batch \u00b7 position \u2014 the ids fed in"
+      ],
+      [
+        "hidden",
+        [
+          8,
+          128,
+          256
+        ],
+        "batch \u00b7 position \u00b7 width \u2014 one vector per position"
+      ],
+      [
+        "logits",
+        [
+          8,
+          128,
+          10001
+        ],
+        "batch \u00b7 position \u00b7 vocabulary \u2014 one score per token"
+      ],
+      [
+        "inputs",
+        [
+          8,
+          127
+        ],
+        "batch \u00b7 position \u2014 last dropped, nothing follows it"
+      ],
+      [
+        "targets",
+        [
+          8,
+          127
+        ],
+        "batch \u00b7 position \u2014 first dropped, nothing predicts it"
+      ],
+      [
+        "flat logits",
+        [
+          1016,
+          10001
+        ],
+        "position \u00b7 vocabulary \u2014 batch folded away"
+      ],
+      [
+        "flat targets",
+        [
+          1016
+        ],
+        "position \u2014 one correct id per position"
+      ]
+    ],
+    "trunk_params": 5752576
+  },
+  "item_2_shift": {
+    "broken_pairs": [
+      [
+        "The",
+        "The"
+      ],
+      [
+        "\u2581c",
+        "\u2581c"
+      ],
+      [
+        "apital",
+        "apital"
+      ],
+      [
+        "\u2581of",
+        "\u2581of"
+      ],
+      [
+        "\u2581India",
+        "\u2581India"
+      ],
+      [
+        "\u2581is",
+        "\u2581is"
+      ],
+      [
+        "\u2581New",
+        "\u2581New"
+      ],
+      [
+        "\u2581Delhi",
+        "\u2581Delhi"
+      ]
+    ],
+    "correct_pairs": [
+      [
+        "The",
+        "\u2581c"
+      ],
+      [
+        "\u2581c",
+        "apital"
+      ],
+      [
+        "apital",
+        "\u2581of"
+      ],
+      [
+        "\u2581of",
+        "\u2581India"
+      ],
+      [
+        "\u2581India",
+        "\u2581is"
+      ],
+      [
+        "\u2581is",
+        "\u2581New"
+      ],
+      [
+        "\u2581New",
+        "\u2581Delhi"
+      ],
+      [
+        "\u2581Delhi",
+        "."
+      ]
+    ],
+    "loss_correct_shift": 9.176828384399414,
+    "loss_off_by_one": 9.446239471435547,
+    "scored_positions": 29
+  },
+  "item_3_padding": {
+    "dropped": 206,
+    "positions_after": 48,
+    "positions_before": 254
+  },
+  "item_4_boundary": {
+    "join_position": 29,
+    "loss_masked": 9.339547157287598,
+    "loss_unmasked": 9.341407775878906,
+    "positions_dropped": 37
+  },
+  "item_5_perplexity": {
+    "expected_loss": 9.210440366976517,
+    "expected_perplexity": 10001.0,
+    "loss": 9.399154663085938,
+    "perplexity": 12078.166293682885,
+    "ratio_to_vocab": 1.2076958597823102
+  },
+  "item_6_heads": {
+    "body_params": 3145728,
+    "d_model": 256,
+    "head_share": 0.4486966665171161,
+    "horizons": [
+      1,
+      2
+    ],
+    "multi_head_params": 5120512,
+    "tied_params": 0,
+    "untied_params": 2560256,
+    "vocab_size": 10001
+  },
+  "item_7_memory": {
+    "baseline_bytes": 198246400,
+    "chunk_size": 128,
+    "chunked_bytes": 39403520,
+    "chunked_loss": 9.254968643188477,
+    "logits_bytes": 163856384,
+    "losses_agree": true,
+    "materialised_bytes": 358793216,
+    "materialised_loss": 9.25496768951416,
+    "ratio": 9.105613305613305,
+    "rows": 4096,
+    "vocab_size": 10001
+  },
+  "part_2_at_init": {
+    "losses": {
+      "1": 9.399154663085938,
+      "2": 9.403850555419922
+    },
+    "sum": 18.80300521850586
+  }
+}

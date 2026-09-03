@@ -12,6 +12,47 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 09 is built to its requirements**: seven measured numbers and two findings, all
+  generated into `results/*.json`, rendered into `RESULTS.md` by `tools/render_results.py`, and
+  drawn on a deployable page whose data file comes from the same runs. No figure in any of the three
+  is typed by hand, and a test flips the data to prove the *verdict words* are read from the run too.
+- The package: a trunk that owns no output head, exercise 02's frozen tokenizer so targets print as
+  **strings**, the `t+1`/`t+k` shifts with the off-by-one kept deliberately, padding and
+  document-boundary masks that return the contributing-token count as their evidence, masked
+  cross-entropy with perplexity, two kinds of chunking, tied/untied/tying-unavailable heads, and
+  peak-memory measurement in isolated child processes.
+- Two findings, each predicted before it was measured: a head predicting `t+2` sits above the
+  next-token head on **297 of 300 steps**, and an off-by-one target shift trains to **0.18** while
+  the correct one is still at **4.14** — the bug makes the loss *better*.
+- `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md` are tracked. They were filed as course
+  material and were invisible to every clone and CI job, so an agent asked to build an explainer
+  could not read the specification it is graded against. Measured against both leak gates before
+  the decision: zero verbatim runs, zero banned terms.
+
+### Fixed
+
+- **The document-boundary mask kept every pad-to-pad pair.** Padding carries id `-1`, and
+  `-1 == -1` is `True`, so a mask written as `source == destination` reads correctly and drops
+  nothing but the joins. 68 of 125 "contributing" positions on the published example were padding
+  predicting padding — in the exercise whose item 3 exists to forbid exactly that. **The guard
+  agreed with the bug**: it asserted the dropped count equalled a count of transitions, which is the
+  same expression the implementation used.
+- **`RESULTS.md` claimed every figure was generated and fifteen were typed** — the sensitivity sweep
+  and the memory repetitions, the two blocks it leans on hardest. One printed `4.15` where the
+  generated table read `4.1447`. The byte-equality test could not see them: they lived inside the
+  template it compared against. They are a run now.
+- Chunked cross-entropy divided by the row count rather than the contributing count, so it disagreed
+  with the unchunked loss on any masked input. Every test written on unmasked input passed either
+  way.
+- The memory measurement was first written with `tracemalloc`, which is blind to torch: it reported
+  **429 bytes** for an **81,928,192-byte** logits tensor.
+- The generator's own test used `09`/`lossheads` as its fixture — the exact spec exercise 09 would
+  claim — so its collision check found itself the moment the exercise existed.
+- A builder guard asserted `'clone'` with single quotes, which is one phrasing of the property
+  rather than the property; `ruff format` normalising a builder to double quotes turned it red.
+
+### Added
+
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two
   places — tracked under `docs/agents/reviewers/`, and copied by the installer into the gitignored
   `.claude/agents/` that Claude Code actually reads. They are identical by construction, and
