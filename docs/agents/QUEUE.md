@@ -455,4 +455,8 @@ predates the harness — so it is logged as what it was.
                           weakening it. Two files crossed that line (the explainer standards, and
                           10's notebook), so all four watched lists now drop tracked paths, the
                           way backup_local_only.py::collect already did
+2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
+                          hook. A reviewer copied into .claude/ and then edited there diverges
+                          silently from its tracked source, and the installed copy is the one that
+                          runs — so the drift is invisible in review by construction
 ```
