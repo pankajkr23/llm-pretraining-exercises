@@ -10,6 +10,28 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Tier-1 page invariants — the cheapest useful visual checks, and the ones most often skipped.**
+  `tests/_page_invariants.py` asserts, on any rendered page: no console or page errors, no failed
+  requests, nothing overflowing a box that clips, no text the same colour as what it sits on, and no
+  image that failed to load. They need no baseline and never flake.
+
+  **Each came from a defect this repo shipped.** Deleting a conditional took the `const body = …`
+  line above it with it, and the page threw half way through building its index — thirty rows became
+  none. An invoice cut line read *"…the cache alone needs a second ma"* at every width narrower than
+  the sentence, while `test_the_invoice_cut_line_is_visible` passed throughout, because **visible is
+  not legible**. Four contrast failures shipped by being chosen by eye.
+
+  The alternative is worse than it looks: **DiffSpot** benchmarked 13 vision models on fine-grained
+  differences in *web interfaces* and the best managed **47.2% accuracy and 40.7% recall**, while
+  reporting a difference on up to **24.2%** of pairs that were identical. A model cannot gate a page.
+
+  Wired into the landing page suite, with the recorder attached **before** navigation — listeners
+  only see what happens after they exist, and the errors thrown while a page builds itself are the
+  ones worth having. A twin plants one defect of each class into the live page, asserts all three are
+  reported, and removes them in a `finally`.
+
 ### Security
 
 - **A third guard, `tests/test_forbidden_vocabulary.py`, bans the words themselves — in CI and in a
