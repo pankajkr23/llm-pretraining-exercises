@@ -1,0 +1,78 @@
+# What an agent may never write in this repo, whatever its unit scope says.
+#
+# Tracked on purpose. The `.claude/` tree is gitignored in its entirety, so a policy living there
+# would be invisible to review, absent from a clone, and impossible to test in CI — which is the
+# same "reads as coverage" shape this repo keeps finding. The machinery is tracked; only the thin
+# wiring that points Claude Code at it is local.
+#
+# Every entry names the incident it exists for. A rule with no incident behind it is a rule nobody
+# can judge, and it is the first one somebody deletes when it gets in the way.
+
+[scope]
+# Paths a unit may write are listed in `.claude/UNIT.md`. When that file is absent the guard is
+# INERT for scope — it does not block everything, because a guard that fires constantly gets
+# uninstalled. The other sections below apply regardless.
+unit_file = ".claude/UNIT.md"
+
+[measured_data]
+# **Editing any of these changes a RESULT, not a document.**
+#
+# A word-substitution sweep rewrote BPE tokens inside the frozen tokenizer, whose bytes are hashed
+# and whose hash every shard manifest in exercise 06 pins. It also rewrote a line of the tokenizer's
+# training corpus. Neither was caught by review; the first was caught by a build refusing an
+# out-of-vocabulary token, and the second by reading the diff.
+patterns = [
+  "src/exercises/02-tokenization/web/tokenizer.json",
+  "src/exercises/02-tokenization/web/data.json",
+  "src/exercises/*/corpus/**",
+  "src/exercises/*/results/*.json",
+  "uv.lock",
+  "**/package-lock.json",
+  "docs/standards-history/**",
+]
+why = "measured input or a frozen artefact; editing it changes a result rather than a document"
+
+[guards]
+# **Not writable unless `.claude/UNIT.md` names the file explicitly.**
+#
+# On 2026-09-02 an agent auditing this repo injected `return []` into two data-handling invariants
+# to watch their guards go red, restored one of the two, and a `git add -A` swept the rest into a
+# commit. Both returned "no findings" for every input across four commits — indistinguishable from
+# a clean run.
+#
+# ImpossibleBench measured the general case: GPT-5 exploited test cases 76% of the time, dropping to
+# near zero when test access was made read-only. This is that, applied to the files that matter most.
+patterns = [
+  "tests/test_forbidden_vocabulary.py",
+  "tests/test_no_confidential_leaks.py",
+  "tests/test_skip_ledger.py",
+  "tests/_skips.py",
+  "tests/test_local_only_files_present.py",
+  "tools/backup_local_only.py",
+  "tools/check_commit_scope.py",
+  "tools/agent_guard.py",
+  "tools/agent_fleet/guard_rules.toml",
+  "src/exercises/03-data-collection-framework/tests/test_invariants.py",
+  "src/exercises/05-datamixtures-and-curriculum/src/mixture/checks.py",
+  "conftest.py",
+]
+why = "a guard the agent could weaken to make its own work pass; name it in UNIT.md to edit it"
+
+[standards]
+# Changing the rules mid-unit is how a unit passes by lowering the bar. Allowed only when the unit
+# is explicitly about the standard, which `UNIT.md` has to say.
+patterns = [
+  "AGENTS.md",
+  "CLAUDE.md",
+  "docs/DESIGN.md",
+  "docs/AGENT_FLEET.md",
+  ".pre-commit-config.yaml",
+  ".github/workflows/*.yml",
+  "vercel.json",
+  ".gitleaksignore",
+]
+why = "a standard file; changing it mid-unit lowers the bar the unit is being judged against"
+
+[halt]
+# One `touch` stops the fleet. Checked before anything else, so it stops a run already in flight.
+file = "AGENT_STOP"
