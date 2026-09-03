@@ -772,6 +772,23 @@ The rules that follow from it:
 - **The artefact people open first needs the grounding too.** A deployed page is read far more often than a specification. If its vocabulary is only defined in a Markdown file, it is not defined.
 - **Render every diagram before committing it, and test that it renders.** A mermaid block is not verified by reading it.
 
+## The agent fleet
+
+**`docs/AGENT_FLEET.md` is the architecture**: the unit lifecycle end to end, the five mechanisms
+and what each is for, the enforcement points, what is deliberately *not* built and on what evidence,
+setup, and the growth path. Read it before changing how agents run here.
+
+The one distinction to carry away from it, because confusing these is how a rule becomes decorative:
+
+| kind | example | can an agent ignore it? |
+| --- | --- | --- |
+| **Enforcement** | `PreToolUse` exit 2 · `permissions.deny` · a failing test · a GitHub ruleset | **No** |
+| **Feedback** | pre-commit hooks | Yes — `--no-verify`, and absent on a fresh clone |
+| **Request** | this file's prose · a prompt · `CLAUDE.md` | Yes, silently |
+
+**A rule that must hold every time belongs in a hook or a test, never in prose** — and a rule that
+lives only in prose should say so, rather than reading as a guarantee.
+
 ## Git workflow
 
 - **Every change lands on `main` via a pull request.** Branch → push → open a PR → merge. **Never push, merge, or force-push directly to `main`** — it's the protected branch that production is promoted from, and the base every PR previews against.
