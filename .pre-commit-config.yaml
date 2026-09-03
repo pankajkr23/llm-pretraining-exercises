@@ -16,7 +16,11 @@
 # only declares `pre-commit` protects them at the one moment they were never at risk. Declaring the
 # hook types here means `pre-commit install` wires all four, and the snapshot happens on the
 # operation that does the damage rather than whenever somebody remembers.
-default_install_hook_types: [pre-commit, post-checkout, post-merge, post-rewrite]
+#
+# `commit-msg` is here because the scope guard runs at that stage, and a stage missing from this
+# list is a hook `pre-commit install` never wires — so it would exist, pass its own tests, and
+# never once run on a real commit. `tests/test_precommit_config.py` asserts the two agree.
+default_install_hook_types: [pre-commit, commit-msg, post-checkout, post-merge, post-rewrite]
 
 repos:
   # --- secrets ---------------------------------------------------------------------------------
