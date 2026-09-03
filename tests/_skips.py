@@ -141,14 +141,21 @@ EXPECTED_IN_CI: tuple[Expected, ...] = (
     ),
     Expected(
         path="src/exercises/05-datamixtures-and-curriculum/tests/test_mixture_spec_render.py",
-        pattern=r"mermaid's browser could not start",
+        pattern=r"chromium present at",
         why=(
-            "mermaid-cli downloads its own puppeteer browser rather than reusing the chromium the "
-            "shard installs for playwright, and no CI job provides it — so this is a local gate. "
-            "It is NOT one of the NEVER_IN_CI reasons for that exact reason: those name a browser "
-            "the job installed and then could not launch, which means the job broke. **This entry "
-            "records a real gap**: AGENTS.md requires every diagram to be render-tested, and that "
-            "test has never once run in CI. TODO.md carries the decision about funding it"
+            "**This entry used to record a real gap and no longer does.** It read: mermaid-cli "
+            "downloads its own puppeteer browser, no CI job provides one, so the render test is a "
+            "local gate — while AGENTS.md required every diagram to be render-tested. That test "
+            "had never once run in CI. Two things were needed, not one. Puppeteer honours "
+            "PUPPETEER_EXECUTABLE_PATH and the `mixtures` shard already installs playwright's "
+            "chromium — but the browser also needs `--no-sandbox` on a runner, passed through a "
+            "puppeteer config file. The first fix set only the variable: the install step "
+            "SUCCEEDED, the browser was on disk, and the launch still failed. **With both, this "
+            "skip should not fire in any CI job** — the test is integration-marked, so it runs "
+            "only in shards that install chromium. The line is kept as the honest fallback for a "
+            "machine with no browser at all, and it now reports the resolved path and the launch "
+            "error, because the version that said only 'no chromium available' was misleading "
+            "enough to cost a full CI round-trip"
         ),
     ),
     Expected(

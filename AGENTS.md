@@ -831,7 +831,15 @@ The rules that follow from it:
 - **Explain the metric, not just its name.** "Held-out BPB, lower is better" names a measure. What it measures, what it is divided by, and why *that* denominator, is the part that lets a reader judge the table.
 - **State the scale and the limits in the open text.** Not inside a collapsed disclosure. A qualifier a reader has to go looking for is a qualifier the document is hiding — and the scale of a proxy is the most important thing on the page it appears on.
 - **The artefact people open first needs the grounding too.** A deployed page is read far more often than a specification. If its vocabulary is only defined in a Markdown file, it is not defined.
-- **Render every diagram before committing it, and test that it renders.** A mermaid block is not verified by reading it.
+- **Render every diagram before committing it, and test that it renders — and this is now
+  enforced in CI rather than merely stated.** A mermaid block is not verified by reading it.
+  The render test existed and had **never once run in CI**, because `mermaid-cli` drives
+  puppeteer and puppeteer insists by default on a chromium it downloaded itself. The
+  `mixtures` shard the test lives in had already installed playwright's chromium two steps
+  earlier, so the fix was one environment variable — `PUPPETEER_EXECUTABLE_PATH` — and the
+  rule went from decorative to real at no cost. Resolve that path in a **subprocess**:
+  `sync_playwright()` called inside a live pytest session raises `TargetClosedError` from
+  its own teardown.
 
 ## The agent fleet
 
