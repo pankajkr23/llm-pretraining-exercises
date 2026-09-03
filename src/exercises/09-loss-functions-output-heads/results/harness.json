@@ -83,8 +83,77 @@
     "trunk_params": 5752576
   },
   "item_2_shift": {
+    "broken_pairs": [
+      [
+        "The",
+        "The"
+      ],
+      [
+        "\u2581c",
+        "\u2581c"
+      ],
+      [
+        "apital",
+        "apital"
+      ],
+      [
+        "\u2581of",
+        "\u2581of"
+      ],
+      [
+        "\u2581India",
+        "\u2581India"
+      ],
+      [
+        "\u2581is",
+        "\u2581is"
+      ],
+      [
+        "\u2581New",
+        "\u2581New"
+      ],
+      [
+        "\u2581Delhi",
+        "\u2581Delhi"
+      ]
+    ],
+    "correct_pairs": [
+      [
+        "The",
+        "\u2581c"
+      ],
+      [
+        "\u2581c",
+        "apital"
+      ],
+      [
+        "apital",
+        "\u2581of"
+      ],
+      [
+        "\u2581of",
+        "\u2581India"
+      ],
+      [
+        "\u2581India",
+        "\u2581is"
+      ],
+      [
+        "\u2581is",
+        "\u2581New"
+      ],
+      [
+        "\u2581New",
+        "\u2581Delhi"
+      ],
+      [
+        "\u2581Delhi",
+        "."
+      ]
+    ],
     "loss_correct_shift": 9.176828384399414,
-    "loss_off_by_one": 9.446239471435547
+    "loss_off_by_one": 9.446239471435547,
+    "scored_positions": 29
   },
   "item_3_padding": {
     "dropped": 206,
@@ -118,15 +187,15 @@
     "vocab_size": 10001
   },
   "item_7_memory": {
-    "baseline_bytes": 198230016,
+    "baseline_bytes": 198246400,
     "chunk_size": 128,
-    "chunked_bytes": 39354368,
+    "chunked_bytes": 39403520,
     "chunked_loss": 9.254968643188477,
     "logits_bytes": 163856384,
     "losses_agree": true,
-    "materialised_bytes": 357335040,
+    "materialised_bytes": 358793216,
     "materialised_loss": 9.25496768951416,
-    "ratio": 9.079933388842631,
+    "ratio": 9.105613305613305,
     "rows": 4096,
     "vocab_size": 10001
   },

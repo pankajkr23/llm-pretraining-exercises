@@ -171,7 +171,30 @@ def item_2_shift(config: Config) -> dict[str, Any]:
         "  but a BETTER one.\n"
         "\n  Which is why the table above is the check. It works at step zero, and no loss does."
     )
-    return {"loss_correct_shift": good, "loss_off_by_one": wrong}
+    # The page's mechanism figure draws these, so they are data rather than only print output.
+    # A figure that re-derived them would be a second implementation of the thing being shown.
+    shown = 8
+    correct_pairs = list(
+        zip(
+            pieces(padded_inputs[0, :shown].tolist(), tokenizer, config),
+            pieces(good_targets[0, :shown].tolist(), tokenizer, config),
+            strict=True,
+        )
+    )
+    broken_pairs = list(
+        zip(
+            pieces(bad_inputs[0, :shown].tolist(), tokenizer, config),
+            pieces(bad_targets[0, :shown].tolist(), tokenizer, config),
+            strict=True,
+        )
+    )
+    return {
+        "loss_correct_shift": good,
+        "loss_off_by_one": wrong,
+        "scored_positions": scored,
+        "correct_pairs": [list(pair) for pair in correct_pairs],
+        "broken_pairs": [list(pair) for pair in broken_pairs],
+    }
 
 
 def item_3_padding(config: Config) -> dict[str, Any]:

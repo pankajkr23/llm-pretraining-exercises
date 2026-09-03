@@ -18,7 +18,7 @@ Configuration: `d_model` 256, 4 blocks, 4 heads, sequence 128, batch 8, vocabula
 | 4 | a packed boundary masked | **9.339547** masked against **9.341408** unmasked, 37 dropped |
 | 5 | perplexity, untrained | **12,078.2** against a vocabulary of 10,001 |
 | 6 | tied against untied head | **2,560,256** against **0** added parameters |
-| 7 | peak memory, plain against chunked | **340.8 MiB** against **37.5 MiB** — **9.08x** |
+| 7 | peak memory, plain against chunked | **342.2 MiB** against **37.6 MiB** — **9.11x** |
 
 ### 1 · Shapes
 
@@ -97,13 +97,13 @@ is the honest price of Part 2.
 
 | path | peak above baseline | loss |
 | --- | --- | --- |
-| materialised | 340.78 MiB | 9.254968 |
-| chunked (128 rows) | 37.53 MiB | 9.254969 |
-| **ratio** | **9.08x** | losses **identical** |
+| materialised | 342.17 MiB | 9.254968 |
+| chunked (128 rows) | 37.58 MiB | 9.254969 |
+| **ratio** | **9.11x** | losses **identical** |
 
 4,096 rows against a 10,001 vocabulary — a logits tensor of
 156.27 MiB in fp32. Baseline (an interpreter with torch loaded, and
-subtracted from both) was 189.05 MiB.
+subtracted from both) was 189.06 MiB.
 
 **The ratio is only meaningful because the losses are identical.** Chunking is not an approximation;
 a difference here would mean the two paths computed different things, not that one was cheaper.
