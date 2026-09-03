@@ -9,6 +9,17 @@ the other.
 
     uv run python tools/install_agent_fleet.py            # install or refresh
     uv run python tools/install_agent_fleet.py --check    # non-zero if the clone is behind
+    uv run python tools/install_agent_fleet.py --drift    # non-zero ONLY if a copy was edited
+
+**`--check` and `--drift` answer different questions, and conflating them is why the second
+exists.** `--check` is "is this clone current?", which is non-zero on a fresh clone where nothing is
+installed yet — correct for a human, wrong for a hook, because it would make every new clone's first
+`git pull` fail with a message about drift when nothing has drifted.
+
+`--drift` ignores what is merely *absent* and fails only where a deployed copy **exists and differs
+from its tracked source**. That is the failure worth catching automatically: `.claude/` is
+gitignored, so a hand-edit there is invisible to review, to CI and to a clone, and would otherwise
+survive until somebody thought to look. It is wired to `post-merge`, beside the progress-log check.
 
 **It never overwrites hook wiring that already exists.** `.claude/settings.local.json` holds what
 agents may run without asking, and losing it silently *shrinks* the permission surface rather than
@@ -79,6 +90,25 @@ def install_reviewers(*, dry_run: bool = False) -> list[str]:
     return changed
 
 
+def drifted_reviewers() -> list[str]:
+    """Deployed reviewer copies that **exist and differ** from their tracked source.
+
+    Deliberately not "everything that needs updating". A copy that is simply absent is a clone that
+    has not run the installer, which is an ordinary state and not a finding — reporting it as one
+    would make every fresh clone's first pull red and teach the reader to ignore this check.
+
+    A copy that exists and differs is the real case: `.claude/` is gitignored, so an edit there is
+    invisible to review, to CI and to every other clone. Nothing else in the repository would ever
+    notice it.
+    """
+    out: list[str] = []
+    for source in sorted(REVIEWERS.glob("*.md")):
+        target = Path(AGENTS_OUT) / source.name
+        if target.is_file() and target.read_bytes() != source.read_bytes():
+            out.append(_display(target))
+    return out
+
+
 def install_hooks(*, dry_run: bool = False) -> list[str]:
     """Merge the hook wiring into `.claude/settings.local.json`, leaving existing keys alone.
 
@@ -104,8 +134,28 @@ def install_hooks(*, dry_run: bool = False) -> list[str]:
 def main() -> int:
     """Install or check. Returns a process exit code."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true", help="report drift, write nothing")
+    parser.add_argument("--check", action="store_true", help="non-zero if the clone is behind")
+    parser.add_argument(
+        "--drift",
+        action="store_true",
+        help="non-zero only if a deployed copy exists and differs from its tracked source",
+    )
     args = parser.parse_args()
+
+    if args.drift:
+        drift = drifted_reviewers()
+        if not drift:
+            print("no fleet file has been edited away from its tracked source")
+            return 0
+        print(
+            "a deployed copy has drifted from the tracked source it came from:\n  "
+            + "\n  ".join(drift)
+            + "\n\n`.claude/` is gitignored, so this edit is invisible to review, to CI and to "
+            "every other\nclone. Edit `docs/agents/reviewers/` instead — that is the source — then "
+            "re-run:\n\n    uv run python tools/install_agent_fleet.py",
+            file=sys.stderr,
+        )
+        return 1
 
     pending = install_reviewers(dry_run=args.check) + install_hooks(dry_run=args.check)
     if not pending:
