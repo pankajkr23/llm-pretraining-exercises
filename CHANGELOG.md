@@ -71,23 +71,24 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   the backup is only safe while the second holds, so a deleted tag turns it red instead of letting
   the decision outlive its justification. Watched failing in both directions.
 
-
 - **The local reference directory was renamed**, and is still gitignored and still backed up. It was
   moved in the local-only store as a `git mv` so every file's history survives under the new path —
   the store is an append-only high-water mark, so without that commit the tripwire would have gone
   red permanently, asking why files it holds had vanished from the working tree. Path references
   were updated across 15 tracked files, including two built from parts rather than quoted, which a
   string replacement could not have caught.
+
 - **`.gitignore` no longer contains the word "topic" anywhere**, including in its comments.
+
 - **Code comments and internal test identifiers no longer refer to numbered teaching topics** —
   they name the exercise (`exercise 05's headline mixture`) or the source notes (`the notes' own
   words`) instead. Four identifiers were deliberately left alone because they are serialized into
   `results/` or `web/` and renaming them would rewrite published data: `baseline_share`,
   `taught_in_source`, `illustrative_only` and `outsideSource`.
+
 - **Commit messages now carry a `Co-Authored-By` trailer and nothing else** — no links back to an
   agent conversation, which point at something nobody outside the machine can open. Branch names and
   PR titles say what a change does rather than naming the source material.
-
 
 - **`addopts` gains `-rs` and `xfail_strict = true` is set.** The skip report is the only place a
   vanished test is visible, and an XPASS reporting green is the same "reads as coverage" shape.
@@ -119,6 +120,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   exercises' documents, two test modules, `timeline.py`, `catalogue.py`, `chapters.js` and
   `figures.js`; plus one sentence in exercise 07's `PROGRESS.md` truncated mid-clause. None of this
   was visible to the vocabulary guards, which are lexical over banned words rather than over grammar.
+
 - **The backup store inherited the user's global gitignore, so one protected file had been copied
   on every run and committed on none.** The store is a git repository, so `git add` there honours
   `~/.config/git/ignore` exactly as it would anywhere else. A global rule matching
@@ -162,12 +164,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   nothing: a release's snapshots are **141 KB**, so a hundred releases would be 13.8 MB. Every
   release is kept now; the guard fails when a file has *fewer* than two versions, never more, and
   `--prune` only lists what is older than the newest `--keep` (default 5) without deleting anything.
+
 - **`backup_local_only.py` raised a raw twelve-line Python traceback when it could not write the
   store**, naming `pathlib` rather than the cause. The store lives outside the repository by design,
   so the usual cause is a sandbox or permissions restriction rather than a broken backup — and from
   inside a git hook the two were indistinguishable. It still **fails** rather than skipping, for the
   same reason the secret scan errors when gitleaks is absent, but now it says which case it is and
   prints the exact settings block that grants access.
+
 - **A commit may change at most 10 files and 500 lines, or it has to say why.**
   `tools/check_commit_scope.py` runs at pre-commit's `commit-msg` stage — the only stage that sees
   both the staged diff and the message, which is where the escape hatch lives. `CHANGELOG.md` and
@@ -182,6 +186,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   `Wide-change:` trailer with a real reason in it — and `Wide-change: needed` does not count, which
   is its own test. Merges and reverts are not judged, because their breadth is a property of the
   branches rather than a decision anyone is making now.
+
 - **`docs/AGENT_FLEET.md` — the architecture of how autonomous agents do work here.** The unit
   lifecycle end to end as a rendered diagram (research → plan → implement → test → review → iterate
   → commit → PR → CI → human merge), the five mechanisms and the incident each traces back to, setup,
@@ -198,6 +203,53 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   request** — now summarised in `AGENTS.md` too. A `PreToolUse` hook and a failing test cannot be
   ignored; a pre-commit hook can (`--no-verify`, and it is absent on a fresh clone); prose cannot be
   relied on at all. A rule that must hold every time belongs in a hook or a test.
+
+- **The agent fleet's enforcement layer, and it is tracked rather than hidden in `.claude/`.**
+  `tools/agent_guard.py` is a `PreToolUse` hook — the only layer no permission mode bypasses,
+  including bypass mode. It refuses writes to **measured data** (the frozen tokenizer, corpora,
+  recorded results, lockfiles), to **guard files** an agent could weaken to make its own work pass,
+  to **standard files** mid-unit, and outside the unit's declared scope.
+
+  **`.gitignore` excludes `.claude/` entirely**, so a policy living there would be invisible to
+  review, absent from a clone and untestable in CI — the "reads as coverage" shape this repo keeps
+  finding. So the policy is a tracked TOML file, the reviewers are tracked Markdown, and
+  `tools/install_agent_fleet.py` copies them into the local `.claude/` tree. A test asserts the
+  policy is tracked, so this cannot quietly regress.
+
+  Two design decisions carry more weight than the rules. A refusal returns a **machine-readable
+  instruction** — "expected; log a finding and continue" — because an agent that reads a block as a
+  failure stalls overnight, which fails differently but just as badly. And it **fails closed**:
+  malformed stdin blocks, verified by driving the hook with garbage and asserting exit 2.
+
+- **Four read-only reviewer personas** — `reader`, `engineer`, `auditor`, and `continuity` (retro-fix
+  units only) — each with `tools: Read, Grep, Glob` and no write access, asserted from their own
+  frontmatter. *LLMs Cannot Self-Correct Reasoning Yet* (ICLR 2024) found that without external
+  feedback self-review **decreased** accuracy, so the agent that did the work must not grade it.
+  Each persona carries the incidents from this repo's history that it exists to catch.
+
+- **`docs/agents/QUEUE.md`** — the unit queue and log, tracked so it survives a crash, a context
+  reset and a fresh clone. It replaces `TODO.md` for this purpose because `TODO.md` is gitignored,
+  so no worktree gets it. Entries record **evidence, not prose**: `pytest -q → 0 failures @ a3f21bc`,
+  never "fixed the bug".
+
+- **The agent guard failed open inside a worktree — the one mode parallel work depends on.** It took
+  the repo root from its own `__file__`, so under `claude --worktree` a write to that worktree's
+  `uv.lock` resolved to `.claude/worktrees/<name>/uv.lock`, matched no pattern, and every protected
+  path was unprotected. Verified before the fix by driving the same payload from both places: the
+  main checkout blocked it and the worktree allowed it. The root now comes from the payload's `cwd`,
+  walking up to the nearest `.git` — a *file* in a worktree, a directory in a checkout — so an agent
+  that has changed into a subdirectory still resolves to the root.
+
+- **`Bash` bypassed the guard completely**, because `WRITING_TOOLS` listed only the file-path tools.
+  `echo >`, `sed -i`, `rm` and `cp` over the top all sailed through, so the guard did not prevent the
+  incident it cites as its reason for existing — `return []` injected into two invariants is one
+  `sed` away. A `Bash` command is now split into segments and read for redirections, in-place
+  editors, and the commands that write or destroy their arguments, with `cp`/`mv` judged on their
+  destination only so `cp uv.lock /tmp/backup` stays allowed. **What this buys is stated in the
+  module docstring rather than implied: a shell is Turing-complete, so this raises the cost of a
+  bypass rather than closing it** — `python -c "open('uv.lock','w')"` builds its path at runtime and
+  no static reader will see it. What it does catch is the whole class of casual writes, which is
+  what both incidents behind this file actually were.
 
 ### Security
 
@@ -217,7 +269,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 - **A published figure on the live page carried a label naming the kind of document a quoted number
   came from.** It reads `AS QUOTED` now, which pairs with the `ITS OWN FORMULA` label beside it and
   says the same thing without describing the source. Found by the new guard rather than by review.
-
 
 - **The confidential reference material now lives outside the repository entirely.** It was inside
   the working tree, gitignored — which protected its bytes and nothing else. A tracked document
