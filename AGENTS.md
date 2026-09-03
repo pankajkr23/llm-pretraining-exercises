@@ -153,11 +153,10 @@ the new one, and deletes it. Nobody deleted anything. So:
   paragraph named three classes while `PATTERNS` protected eleven, so an agent reading only the
   rulebook would have believed `rm TODO.md` was recoverable. **Read `PATTERNS` before touching
   anything gitignored.** Each entry there carries a comment saying why it cannot be regenerated, and
-  six are named nowhere else: `TODO.md` · `.claude/settings.local.json` (losing it silently changes
+  five are named nowhere else: `TODO.md` · `.claude/settings.local.json` (losing it silently changes
   what agents may run without asking, rather than failing) · `src/exercises/*/docs/*.md` (planning
   and critique notes) · `src/exercises/*/docs/*.html` (saved reference pages, snapshots of things
-  that change) · `docs/standards-history/*` (the frozen standard files — the only member that is
-  **re-creatable**, via `snapshot_standards.py --ref <tag>`, so long as the tag still exists) · and
+  that change) · and
   **`src/exercises/*/src/solution/**/*`, the one class with no recovery path at
   all** — it has never been in git on any branch, so the `git show <untracking-commit>^:<path>`
   fallback below is inapplicable by construction, and its `corpus/*.raw.html` inputs pin no revision,
@@ -166,6 +165,14 @@ the new one, and deletes it. Nobody deleted anything. So:
 - **After any branch switch, pull, merge, rebase or stash, run the tripwire** —
   `uv run pytest tests/test_local_only_files_present.py`. It fails when *some* of these files are
   present and others gone, and skips when all are absent (a clone, not a loss).
+- **The store is a git repo, so it obeys your global gitignore — and that silently un-versions
+  files.** `~/.config/git/ignore` applies inside the store like anywhere else. A global rule
+  matching `.claude/settings.local.json` meant that file was copied on every run and committed on
+  none: present on disk, `--verify` satisfied because the bytes matched, and **no history at all**,
+  which is the entire product. `snapshot()` now sets `core.excludesFile` to the null device every
+  run and asserts per file that what it copied is what git tracks. A repository-local
+  `.git/info/exclude` can still reach this, which is what the twin test plants.
+
 - **Recovery, in the order to try it:**
   ```bash
   uv run python tools/backup_local_only.py --verify              # 1. does the store have it?
@@ -420,6 +427,17 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
   decision to hide something by default; make it deliberately, and never for the one element that
   carries the point.
 
+- **In CI a skip is a failure unless `tests/_skips.py` declares it, and three reasons can never be
+  declared.** A skip reports as a pass, so the skip report is the only place a vanished test shows
+  up — and nothing read it until the root `conftest.py` landed. The three are `chromium
+  unavailable`, `run deploy/vercel/build.sh first` and `{slug} is not published`: each fires inside
+  a job that has just installed or built the thing it checks for, so each means **that job's own
+  setup broke**, and exempting one turns ~200 browser assertions into a green run. Adding a ledger
+  entry is deliberately expensive — a reason with weight, a pattern too narrow to cover a file, a
+  pinned count of the skip lines it matches. **Never add an entry to clear a red gate.** And `xfail`
+  is refused outright, because an xfail that genuinely fails reports green and no ledger sees it —
+  `xfail_strict` catches XPASS and not that.
+
 - **A coverage guard must ask whether a test can RUN, not whether it is listed.**
   `tests/test_ci_shards_cover_everything.py` was written for the obvious failure — a file outside
   every shard is never run and CI is green — and was blind to the adjacent one: a file that *is*
@@ -628,7 +646,7 @@ was not summarising the exercises, it was the only place they were described.
 - **Exercise:** everything end to end — the argument, the numbers, how to reproduce, what it cannot
   establish. This is where a reader who wants depth is sent, and it must reward the trip.
 
-The root's job is **routing, not retelling**. Where the requirements requires the root to reach a
+The root's job is **routing, not retelling**. Where the requirements require the root to reach a
 deliverable "without a detour", that is a property of its links, not of how much it repeats — and
 the test for it should assert the *link*, since asserting the filename passes against a front door
 that names the file and never links it.
@@ -797,7 +815,42 @@ The rules that follow from it:
 - **The artefact people open first needs the grounding too.** A deployed page is read far more often than a specification. If its vocabulary is only defined in a Markdown file, it is not defined.
 - **Render every diagram before committing it, and test that it renders.** A mermaid block is not verified by reading it.
 
+## The agent fleet
+
+**`docs/AGENT_FLEET.md` is the architecture**: the unit lifecycle end to end, the five mechanisms
+and what each is for, the enforcement points, what is deliberately *not* built and on what evidence,
+setup, and the growth path. Read it before changing how agents run here.
+
+The one distinction to carry away from it, because confusing these is how a rule becomes decorative:
+
+| kind | example | can an agent ignore it? |
+| --- | --- | --- |
+| **Enforcement** | `PreToolUse` exit 2 · `permissions.deny` · a failing test · a GitHub ruleset | **No** |
+| **Feedback** | pre-commit hooks | Yes — `--no-verify`, and absent on a fresh clone |
+| **Request** | this file's prose · a prompt · `CLAUDE.md` | Yes, silently |
+
+**A rule that must hold every time belongs in a hook or a test, never in prose** — and a rule that
+lives only in prose should say so, rather than reading as a guarantee.
+
 ## Git workflow
+
+- **One commit, one decision — at most 10 files and 500 changed lines, or say why.** Gated at the
+  `commit-msg` stage by `tools/check_commit_scope.py`. `CHANGELOG.md` and `uv.lock` are not counted:
+  the conventions already require the first in the same change, and the second is generated.
+
+  **The limit is a prompt to ask "is this one decision or several?", not a measurement.** Where the
+  honest answer is *one decision, five files*, record it and it is allowed:
+
+  ```
+  Wide-change: the hook, the ledger it imports and its guard cannot land separately
+  ```
+
+  **A hard cap with no escape would fight the property it protects.** Landing a `PreToolUse` hook
+  means shipping the hook, the module it imports and its test together; split across three commits,
+  the first two do not import, so `git bisect` lands on a tree that fails for a reason unrelated to
+  what is being bisected — which is exactly what atomic commits exist to prevent. **Small batch is
+  the means; independent revertibility is the end.** A merge or a revert is not judged, because its
+  breadth is a property of the branches rather than a decision anyone is making now.
 
 - **Every change lands on `main` via a pull request.** Branch → push → open a PR → merge. **Never push, merge, or force-push directly to `main`** — it's the protected branch that production is promoted from, and the base every PR previews against.
 - Keep PRs scoped to one concern; unrelated edits get their own branch/PR.
@@ -975,11 +1028,20 @@ building or changing a page; the rules that matter across exercises are below.
 
   **The archive is gitignored, and that is a decision with two consequences.** Tracking it would put
   a second copy of `AGENTS.md` and `DESIGN.md` on the remote — the same argument that untracked the
-  notebooks — and it is only ever read on the machine doing the rewriting. So: every guard that
+  notebooks — and it is only ever read on the machine doing the rewriting. So every guard that
   reads it **skips** on a clone and in CI, which means this rule is enforced by whoever has the
-  archive or by nobody; and it joins the protected local-only set, in `PATTERNS` and under the
-  tripwire, because *untracked and unbacked-up* is precisely the class this repo has already lost
-  twice. Unlike the notebooks it is **re-creatable** — `--ref <tag>` rebuilds any snapshot whose tag
-  still exists — so the irrecoverable case is narrow: a snapshot of a deleted tag. Two guards that
-  run everywhere hold the pair together: one fails if a snapshot is ever committed, one fails if the
-  ignore rule disappears. It must be exactly one of tracked or ignored, never neither.
+  archive or by nobody. Two guards that run everywhere hold the pair together: one fails if a
+  snapshot is ever committed, one fails if the ignore rule disappears. It must be exactly one of
+  tracked or ignored, never neither.
+
+  **It is deliberately NOT in `PATTERNS`, and the reason matters more than the fact.** It was, on
+  the argument that *untracked and unbacked-up* is the class this repo has lost twice — but every
+  entry in `PATTERNS` earns its place by being **permanently** lost, and a snapshot is
+  `git show <tag>:<file>` plus a banner, so `--ref <tag>` rebuilds any of them byte for byte. What
+  the backup actually bought was *history of immutable files*: the byte-identical guard means a
+  second version can never legitimately exist, and across the store's whole life the only change
+  ever recorded against a snapshot was a reworded banner. The one irrecoverable case is a snapshot
+  of a **deleted tag**, so `test_the_archive_is_not_backed_up_because_it_is_rebuildable` asserts
+  both halves — not in `PATTERNS`, *and* every tag a snapshot names is still reachable. If tags ever
+  start being deleted, that guard goes red and this decision gets revisited rather than quietly
+  outlived.

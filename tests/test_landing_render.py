@@ -13,6 +13,7 @@ import http.server
 import os
 import socketserver
 import subprocess
+import sys
 import threading
 from pathlib import Path
 
@@ -20,6 +21,9 @@ import pytest
 
 pytest.importorskip("playwright", reason="browser tests need playwright")
 from playwright.sync_api import sync_playwright  # noqa: E402
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _page_invariants import attach, findings  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 PUBLIC = REPO / "public"
@@ -51,6 +55,10 @@ def page():
             except Exception as exc:  # no browser installed, or a sandbox blocking it
                 pytest.skip(f"chromium unavailable: {exc}")
             view = browser.new_page(viewport={"width": 1440, "height": 1000})
+            # Attached BEFORE `goto`, because console and network listeners only see what happens
+            # after they exist — and the errors thrown while a page builds itself are the ones
+            # worth having. Stashed on the page so the existing tests' signatures do not change.
+            view._invariants = attach(view)
             view.goto(f"http://127.0.0.1:{httpd.server_address[1]}/")
             view.wait_for_selector("a.item", timeout=10_000)
             yield view
@@ -155,3 +163,46 @@ def test_the_grid_actually_uses_the_screen(page):
         }"""
     )
     assert share > 0.5, f"the card grid uses only {share:.0%} of a 1920px viewport"
+
+
+def test_the_page_passes_every_tier_one_invariant(page):
+    """The cheap deterministic checks: no errors, nothing clipped, nothing invisible.
+
+    These need no baseline and never flake, which is why they run before any screenshot comparison
+    and why `_page_invariants.py` exists at all. **DiffSpot** measured the alternative: the best of
+    13 vision models managed 47.2% accuracy on fine-grained web-interface differences, and reported
+    a difference on up to 24.2% of pairs that were identical. A model cannot gate a page.
+    """
+    problems = findings(page, page._invariants)
+    assert not problems, "the landing page fails Tier-1 checks:\n  " + "\n  ".join(problems)
+
+
+def test_the_tier_one_checks_catch_a_planted_defect(page):
+    """The twin. A guard nobody has watched fail is not a guard.
+
+    Plants one of each defect class into the live page, confirms every one is reported, and removes
+    them in a `finally` — never on the happy path, because a mutation left behind by a test would
+    make every later test in the module read a page nobody wrote.
+    """
+    planted = """() => {
+        const box = document.createElement('div');
+        box.id = 'planted-defect';
+        box.style.cssText = 'overflow-x:hidden;width:40px;white-space:nowrap;background:#123456';
+        const clipped = document.createElement('p');
+        clipped.textContent = 'a sentence far wider than forty pixels could ever hope to be';
+        clipped.style.cssText = 'color:#123456;margin:0';
+        const img = document.createElement('img');
+        img.src = '/definitely-not-a-real-image.png';
+        box.append(clipped, img);
+        document.body.append(box);
+    }"""
+    try:
+        page.evaluate(planted)
+        page.wait_for_timeout(300)
+        problems = findings(page, page._invariants)
+        assert any("overflows its own box" in p for p in problems), problems
+        assert any("invisible text" in p for p in problems), problems
+        assert any("image did not load" in p or "failed request" in p for p in problems), problems
+    finally:
+        page.evaluate("() => document.getElementById('planted-defect')?.remove()")
+        page._invariants.requests.clear()
