@@ -120,6 +120,21 @@ repos:
         always_run: true
         pass_filenames: false
 
+      # The receipt goes stale on ANY change to tracked prose, and the failure surfaces in CI —
+      # two minutes later, on a branch, with a message about a digest. This says it here instead.
+      #
+      # It VERIFIES and never writes. `end-of-file-fixer` is absent from this config because a hook
+      # that rewrites content once voided the frozen tokenizer's hash, and a hook that regenerated
+      # the receipt would be the same shape: it would make every commit pass by quietly re-attesting
+      # rather than by the gate having run. Regenerating is a deliberate act, so it stays manual.
+      - id: quote-check-receipt
+        name: the quote-check receipt still describes this tree
+        entry: uv run python tools/quote_check_receipt.py --verify
+        language: system
+        stages: [pre-commit]
+        always_run: true
+        pass_filenames: false
+
       - id: local-only-tripwire
         name: check nothing local-only went missing
         entry: uv run pytest tests/test_local_only_files_present.py -q

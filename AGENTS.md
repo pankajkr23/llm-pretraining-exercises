@@ -81,8 +81,14 @@ file. The failure this repo actually has is forgetfulness and staleness, and tho
 
 **The consequence is deliberate: changing tracked prose invalidates the receipt**, so it has to be
 regenerated on a machine that can run the gate. That means only someone who can actually run the
-quoting check can change prose, which is the property being bought. Regenerate it as the last step
-before committing, after any change to tracked text.
+quoting check can change prose, which is the property being bought. **Regenerate it as the last step
+before committing**, after every change to tracked text.
+
+A pre-commit hook says so at the point of commit rather than two minutes later in CI — it **verifies
+and never writes**. A hook that regenerated the receipt would make every commit pass by quietly
+re-attesting rather than by the gate having run, which is the same shape as the content-rewriting
+hooks this repo removed. Regenerating stays a deliberate act. Getting this wrong twice in one
+afternoon is why the hook exists at all.
 
 **Name the exercise, not the source's own unit of material.** A topic is referred to by the exercise
 that covers it; the material itself is "the source". The banned words came back three times after
