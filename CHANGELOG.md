@@ -182,6 +182,22 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   `Wide-change:` trailer with a real reason in it — and `Wide-change: needed` does not count, which
   is its own test. Merges and reverts are not judged, because their breadth is a property of the
   branches rather than a decision anyone is making now.
+- **`docs/AGENT_FLEET.md` — the architecture of how autonomous agents do work here.** The unit
+  lifecycle end to end as a rendered diagram (research → plan → implement → test → review → iterate
+  → commit → PR → CI → human merge), the five mechanisms and the incident each traces back to, setup,
+  and the growth path from three agents to hundreds.
+
+  **Every claim carries a citation or a measurement**, including the ones that argue *against*
+  building something: DiffSpot's 47.2% on visual diffing, SpecBench's ~27 points of test-gaming per
+  10× of code size, ImpossibleBench's 76% exploit rate falling to near zero under read-only tests,
+  SafeRevert's 77.4% culprit accuracy, and the 47→4 minute Docker bind-mount measurement that
+  settled worktrees over containers. METR's inconclusive productivity result is cited as the reason
+  **no** productivity claim appears anywhere in the document.
+
+  It also names the distinction the repo most needed written down — **enforcement vs feedback vs
+  request** — now summarised in `AGENTS.md` too. A `PreToolUse` hook and a failing test cannot be
+  ignored; a pre-commit hook can (`--no-verify`, and it is absent on a fresh clone); prose cannot be
+  relied on at all. A rule that must hold every time belongs in a hook or a test.
 
 ### Security
 
