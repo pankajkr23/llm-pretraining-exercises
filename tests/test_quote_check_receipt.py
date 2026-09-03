@@ -88,8 +88,15 @@ def test_the_receipt_excludes_itself_from_its_own_digest() -> None:
     quote anything, which is the only thing the digest protects.
     """
     before = prose_digest()
-    RECEIPT.write_text(json.dumps(build(), indent=2) + "\n", encoding="utf-8")
-    assert prose_digest() == before, "the receipt must not be inside its own digest"
+    original = RECEIPT.read_text(encoding="utf-8")
+    try:
+        RECEIPT.write_text(json.dumps(build(), indent=2) + "\n", encoding="utf-8")
+        assert prose_digest() == before, "the receipt must not be inside its own digest"
+    finally:
+        # Restored in a `finally`, never on the happy path: a test that leaves a rewritten receipt
+        # behind dirties the tree for every test after it, and `AGENTS.md` records what a mutation
+        # left behind by a test once cost this repo.
+        RECEIPT.write_text(original, encoding="utf-8")
 
 
 def test_a_receipt_from_different_prose_is_refused() -> None:
