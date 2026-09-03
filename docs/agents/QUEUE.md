@@ -98,9 +98,9 @@ this file does not define, and the answer is the unit name instead.
 | --- | --- | --- | --- |
 | 1 | Unblock the pull-request backlog | — | **done.** The batch in the log below is merged; `main` is linear |
 | 2 | Track progress in one place | — | **done.** This file, enforced by a checker in CI. `WORKPLAN.md` holds the arc, `TODO.md` the scratch |
-| 3 | Arm the fleet | `unit-arm-the-fleet` | **partly done.** The guard, the reviewers and this file are merged — but `tools/install_agent_fleet.py` **has never been run**, so every mechanism is present and none is armed |
-| 4 | Live defects on deployed pages | `unit-live-defects` | **NEXT.** Not started. Readers hit these today |
-| 5 | The shared `web/_shared/` layer | `unit-shared-layer` | not started, and it **gates running anything in parallel** |
+| 3 | Arm the fleet | `unit-arm-the-fleet` | **blocked on a human, not unfinished.** The guard, the reviewers and this file are merged, but `install_agent_fleet.py` has never been run — and an agent cannot run it: the sandbox refuses writes to `.claude/`, which is the boundary that stops an agent rewriting its own permissions. One command, from the repo root |
+| 4 | Live defects on deployed pages | `unit-live-defects` | **done**, pending review — exercise 01's 26 unterminated declarations and exercise 04's 7 orphan properties, both now guarded |
+| 5 | The shared `web/_shared/` layer | `unit-shared-layer` | **NEXT.** Not started, and it **gates running anything in parallel**. Row 4 left it one item: `.back:hover` paints `#fff` on `var(--accent)` in six byte-identical vendored copies |
 | 6 | Exercise 09 | `unit-09` | **blocked** — see the unit for what on |
 | 7 | Exercise 10 | `unit-10` | not started |
 | 8 | Retro-fix 07 → 01 | `unit-07-retrofit` … `unit-01-retrofit` | not started. Deliberately **after** 09 and 10, and able to run alongside them once row 5 lands |
@@ -303,6 +303,20 @@ predates the harness — so it is logged as what it was.
                           about what it was looking at, each time presenting as a clean pass. It
                           also preferred a local `main`, which is stale the moment it is not
                           pulled; `origin/main` is the authority and now comes first
+2026-09-03  live-defects  #99 opened: exercise 01's four proof pages declared every diagram token
+                          inside their dark blocks with NO semicolons — 26 of them, 8 blocks. A
+                          value runs to the next `;` or `}`, so each block declared ONE property
+                          whose value was the rest of the block. Worse than the audit recorded:
+                          the swallowing property is not a colour either, so all five were broken,
+                          not four. Verified by parsing the blocks before and after
+2026-09-03  live-defects  #99 also: exercise 04 referenced 7 properties declared in no stylesheet,
+                          so their hardcoded fallbacks won in all six themes — including a tooltip
+                          that was a dark chip on a light page. Mapped onto the tokens DESIGN.md
+                          publishes. Read back per theme in a browser: the tip now tracks all six
+2026-09-03  live-defects  the `#fff` on `var(--accent)` sweep is PARTLY done and the rest is
+                          row 5's: 8 fixed in files one exercise owns, and `.back:hover` left
+                          alone because it lives in six byte-identical vendored copies that would
+                          drift if one changed
 2026-09-03  tracking      and then the new check flagged the line above THIS one, because that
                           line quoted the marker it searches for. A status and a quotation of a
                           status are lexically the same; only knowledge tells them apart, which is
