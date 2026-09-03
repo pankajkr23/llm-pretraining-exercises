@@ -8,16 +8,16 @@
       
       @media (prefers-color-scheme: dark) {
         :root:not([data-theme]) {
-          --cool: #2997ff
-          --warm: #ff9f0a
+          --cool: #2997ff;
+          --warm: #ff9f0a;
         }
       }
       /* The page's own diagram tokens, for the themes that are dark. Without this a
          reader on Neon with a light OS gets light diagram colours on a dark page. */
       :root[data-theme="tinted-dark"],
       :root[data-theme="neon"] {
-          --cool: #2997ff
-          --warm: #ff9f0a
+          --cool: #2997ff;
+          --warm: #ff9f0a;
       }
       * { box-sizing: border-box; }
       body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
