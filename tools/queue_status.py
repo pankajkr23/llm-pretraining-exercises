@@ -69,9 +69,17 @@ def is_shallow() -> bool:
     return _git("rev-parse", "--is-shallow-repository").strip() == "true"
 
 
-#: Where to look for merges, in order. A local checkout has `main`; a CI pull-request checkout has
-#: only `origin/main` or a detached merge ref, and `HEAD` there already contains main's history.
-_BASE_REFS = ("main", "origin/main", "HEAD")
+#: Where to look for merges, in order, and **the order is the whole point**.
+#:
+#: `origin/main` comes first because it is the authority: a local `main` is whatever was last pulled
+#: and goes stale the moment it is not. That was the third bug of the same family in this file — the
+#: checker being confidently wrong about *what it was looking at* — and it presented identically to
+#: the other two, as a clean pass. It read a local `main` that predated a merge and reported the log
+#: complete, on a branch where the log was demonstrably behind.
+#:
+#: `main` is the fallback for a clone with no remote. `HEAD` is last, for a CI pull-request checkout
+#: where neither branch exists locally but the merge ref already contains main's history.
+_BASE_REFS = ("origin/main", "main", "HEAD")
 
 
 def base_ref() -> str | None:
@@ -109,10 +117,38 @@ def logged_numbers(text: str) -> set[str]:
     return set(re.findall(r"#(\d+)", log))
 
 
+#: A status that is only true while a pull request is open. Written into the log constantly — a unit
+#: in flight is the normal thing to record — and wrong the moment the pull request lands.
+_OPEN_MARKER = re.compile(r"#(\d+)[^\n]*\bPR OPEN\b|(?:\bPR OPEN\b)[^\n]*#(\d+)")
+
+
 def missing(text: str, ref: str) -> list[tuple[str, str]]:
     """Merged pull requests the log does not mention, oldest first so stubs append in order."""
     known = logged_numbers(text)
     return [entry for entry in reversed(merged_pull_requests(ref)) if entry[0] not in known]
+
+
+def stale_open(text: str, ref: str) -> list[str]:
+    """Pull requests the log still calls open that have in fact merged.
+
+    **The check began as mention-or-not, and that was too weak by exactly one case.** An entry
+    reading `#96 PR OPEN` counts as a record of #96, so the log passed while describing a merged
+    pull request as still in flight — which is the log being behind, just less obviously than an
+    omission. Caught the first time the tool ran for real, on its own author's entry.
+
+    Deliberately the only status this understands. Reading further into what an entry *means* would
+    make the checker a parser of prose it does not own, and prose is where the judgement lives.
+
+    **The known false positive, which fired immediately:** a log entry that *quotes* the marker
+    while explaining something trips this, because a status and a quotation of a status are
+    lexically identical and only knowledge separates them. That is the same shape as the
+    hand-maintained dotfile list in `tests/test_standards_name_real_code.py`, and it is resolved the
+    same way — reword the sentence, rather than teaching the checker to parse quotation. The cost is
+    one awkward sentence; the alternative is a matcher that is wrong in ways nobody can predict.
+    """
+    merged = {number for number, _ in merged_pull_requests(ref)}
+    found = {a or b for a, b in _OPEN_MARKER.findall(text.partition(_LOG_HEADING)[2])}
+    return sorted(found & merged, key=int)
 
 
 def stub(number: str, subject: str) -> str:
@@ -168,6 +204,19 @@ def main() -> int:
 
     text = QUEUE.read_text(encoding="utf-8")
     behind = missing(text, ref)
+    stale = stale_open(text, ref)
+
+    if stale and not args.append:
+        print(
+            f"{QUEUE.name} still calls "
+            + ", ".join(f"#{number}" for number in stale)
+            + " open, and they have merged.\n\nAn entry that names a pull request counts as a "
+            "record of it, so this passed while the log\ndescribed landed work as still in flight. "
+            "Update the entry rather than adding a second one.",
+            file=sys.stderr,
+        )
+        return 1
+
     if not behind:
         print(f"{QUEUE.name} records every merged pull request")
         return 0

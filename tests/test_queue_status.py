@@ -135,3 +135,27 @@ def test_the_checker_runs_in_ci_rather_than_declaring_itself_local() -> None:
         "the test job clones shallow again, so queue_status.py cannot see any merges and this "
         "check has quietly become local-only"
     )
+
+
+def test_an_entry_that_still_calls_a_merged_request_open_is_refused() -> None:
+    """Mention alone was too weak by exactly one case, and it fired on its author's own entry.
+
+    An entry naming a pull request counted as a record of it, so a log describing landed work as
+    still in flight passed. That *is* the log being behind, just less obviously than an omission.
+
+    Driven with synthetic text and a ref of `HEAD`, so it asserts the matcher rather than whatever
+    happens to be merged today.
+    """
+    from queue_status import stale_open
+
+    live = _LOG.replace("#88 merged: something", "#88 PR OPEN  something")
+    flagged = stale_open(live, "HEAD")
+    assert isinstance(flagged, list), "stale_open must return a list to join into a message"
+
+    # The matcher itself, independent of what history says: both orderings of the pair.
+    from queue_status import _OPEN_MARKER
+
+    for line in ("#96 PR OPEN  something", "PR OPEN — see #96"):
+        found = {a or b for a, b in _OPEN_MARKER.findall(line)}
+        assert found == {"96"}, f"the open marker did not match in {line!r}: {found}"
+    assert not _OPEN_MARKER.findall("#96 merged: something"), "a merged entry must not match"

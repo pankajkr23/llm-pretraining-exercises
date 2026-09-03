@@ -266,9 +266,20 @@ predates the harness — so it is logged as what it was.
 2026-09-03  ruleset       `update` rule removed by PK, so merges no longer need a bypass.
                           delete_branch_on_merge on. required_status_checks still ABSENT —
                           nothing makes CI green a condition of merging
-2026-09-03  #96 PR OPEN   two prerequisites before exercise 09: the integration shards' check
-                          names carried their own exercise list (a required check pinned to one
-                          would stop reporting the moment 09 joins the rest shard), and the
-                          scaffolder named exercises by a convention none of the eight uses
+2026-09-03  prereqs       #96 merged: two prerequisites before exercise 09. The integration shards'
+                          check names carried their own exercise list, so a required check pinned
+                          to one would have stopped reporting the moment 09 joined the rest shard.
+                          And the scaffolder named exercises by a convention none of the eight uses
+2026-09-03  tracking      the queue checker found its own author's stale entry: the line above
+                          still marked that pull request in flight after it had landed, and the
+                          check passed, because naming a pull request counted as recording it.
+                          Third bug of one family in that tool — the checker confidently wrong
+                          about what it was looking at, each time presenting as a clean pass. It
+                          also preferred a local `main`, which is stale the moment it is not
+                          pulled; `origin/main` is the authority and now comes first
+2026-09-03  tracking      and then the new check flagged the line above THIS one, because that
+                          line quoted the marker it searches for. A status and a quotation of a
+                          status are lexically the same; only knowledge tells them apart, which is
+                          the limit recorded in the tool rather than parsed around
 2026-09-03  fleet         this file reconciled with reality; WORKPLAN.md and TODO.md too
 ```

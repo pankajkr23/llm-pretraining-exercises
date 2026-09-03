@@ -116,6 +116,20 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **An integration shard's check name carried its own exercise list, and required checks match by
+  name.** With no explicit `name:`, GitHub builds a matrix job's check name from *every* matrix
+  value, so the `rest` shard reported as `integration (rest, src/exercises/01-introductions
+  src/exercises/03-…)`. Adding an exercise to that shard rewrites the string — and a required status
+  check whose name changes stops reporting, which blocks every pull request with no error saying
+  why. Exercises 09 and 10 join `rest`, so this was days away. The job is now named
+  `integration (${{ matrix.name }})`, giving three stable checks that survive any shard change.
+- **The scaffolder invented a naming convention the eight shipped exercises do not use.** It wrote
+  `Topic NN` into a new exercise's package description and `PROGRESS.md` heading, while every
+  tracked artefact says `Exercise NN` — seven of eight descriptions and all four `PROGRESS.md`
+  headings. Nothing compared them, because a template is a second copy of a convention and the
+  second copy is the one that drifts. A guard now reads the convention out of the shipped exercises
+  rather than restating it, so if they move, the generator is what fails.
+
 - **The quote-check receipt attested to a check it never ran.** `build()` took the verdict as a
   *default argument* and `write()` never passed one, so `--write` produced a receipt reading
   `PASSED` on any machine — including one holding no reference material at all, which is precisely
