@@ -75,8 +75,11 @@ guesses.
 
 ## Where the work is — read this first
 
-**Updated at the end of every unit, and whenever a pull request merges.** If it disagrees with
-`git log`, git is right and this is the bug; say so rather than working around it.
+**An entry is written when a pull request is OPENED, not after it merges**, and
+`tools/queue_status.py --check` enforces it from pre-commit's `post-merge` stage. Recording after
+the fact cannot work: a pull request cannot log its own merge, so the check failed on every `git
+pull` and the fix needed recording in turn. If this file disagrees with `git log`, git is right and
+this is the bug — say so rather than working around it.
 
 Numbers are deliberately absent here. A count typed into prose goes stale while the thing it counts
 moves, which is a failure this repo has already paid for more than once — so read the live ones:
@@ -90,6 +93,7 @@ uv run pytest -m "not integration" -q       # whether it is green
 | phase | state |
 | --- | --- |
 | **Unblock the pull-request backlog** | **done** — the batch listed in the log below is merged, `main` is linear |
+| **Track progress in one place** | **done** — this file, enforced by a checker in CI. `WORKPLAN.md` holds the arc, `TODO.md` the scratch |
 | **Arm the fleet** | **partly done** — the guard, the reviewers and this file are merged. `tools/install_agent_fleet.py` **has not been run**, so every mechanism is present and none is armed. No `UNIT.md` template yet, no event log |
 | **Live defects on deployed pages** | not started — exercise 01's dark themes, exercise 04's undeclared properties |
 | **The shared `web/_shared/` layer** | not started — and it gates running units in parallel |
@@ -282,4 +286,12 @@ predates the harness — so it is logged as what it was.
                           status are lexically the same; only knowledge tells them apart, which is
                           the limit recorded in the tool rather than parsed around
 2026-09-03  fleet         this file reconciled with reality; WORKPLAN.md and TODO.md too
+2026-09-03  tracking      #97 merged: this file became the single source of truth, WORKPLAN.md and
+                          TODO.md became the arc and the scratch, and the checker began enforcing
+                          it in CI rather than declaring itself local on an unmeasured cost
+2026-09-03  tracking      #98 records itself, which is the convention the checker forced into the
+                          open. A pull request cannot log its own merge after the fact, so the
+                          check failed on `git pull` after every single merge and the fix — another
+                          pull request — needed recording in turn. An entry is now written when a
+                          pull request is OPENED, and the regress closes
 ```
