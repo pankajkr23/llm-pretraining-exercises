@@ -180,3 +180,20 @@ repos:
         stages: [post-merge, post-rewrite]
         always_run: true
         pass_filenames: false
+
+      # The reviewer definitions live in TWO places: tracked under `docs/agents/reviewers/`, and
+      # copied by the installer into the gitignored `.claude/agents/` that Claude Code actually
+      # reads. Identical by construction — and nothing noticed if they stopped being so, because
+      # `.claude/` is invisible to review, to CI and to every other clone.
+      #
+      # `--drift`, NOT `--check`. `--check` asks "is this clone current?" and is non-zero on a fresh
+      # clone where nothing is installed yet: correct for a person, wrong for a hook, because it
+      # would make every new clone's first `git pull` red about drift when nothing has drifted.
+      # `--drift` ignores what is merely absent and fails only where a copy exists and differs.
+      - id: fleet-not-drifted
+        name: no fleet file was edited away from its tracked source
+        entry: uv run python tools/install_agent_fleet.py --drift
+        language: system
+        stages: [post-merge, post-rewrite]
+        always_run: true
+        pass_filenames: false
