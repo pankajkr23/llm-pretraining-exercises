@@ -17,10 +17,14 @@ The convention exists to keep the course's own material off a public remote. A n
 training loop is our work: it imports this package and re-implements nothing, so it carries the
 course's material no more than the package does.
 
-**The exception is written in three places, or it is not a decision.** `AGENTS.md` carries the rule
-and the reason, `.gitignore` carries a negation for this one path, and
-`tools/backup_local_only.py::PATTERNS` stops treating it as local-only — a tracked file is not in
-that class, and leaving it there would leave the tripwire permanently ambiguous.
+**The exception is written where the rule is, or it is not a decision.** `AGENTS.md` carries it
+alongside the rule it excepts, and `.gitignore` carries a negation naming the one path — which works
+because the pattern it excepts is a *file* pattern rather than a directory one.
+
+`tools/backup_local_only.py` needs **no** change, and checking that rather than assuming it is the
+point: `collect` ends with `found -= _tracked(root)`, so a tracked file is dropped from the backup
+set automatically. An earlier draft of this decision said `PATTERNS` had to be edited. It does not,
+and editing it would have been a change with no effect that read as a safeguard.
 
 **What would overturn it.** A grader accepting a rendered export, or the repository going private.
 
@@ -81,7 +85,7 @@ that device rather than replaced with a datasheet number.
 
 **Why.** An embedding lookup is a gather: it reads one row per token and performs no arithmetic. The
 token and position tables here are 2,593,024 parameters, 31% of the total, and counting them
-inflated the numerator by 45% for free. Every published MFU uses the non-embedding count, so mixing
+made the numerator 45% larger than it should have been, for free. Every published MFU uses the non-embedding count, so mixing
 conventions would also make any comparison meaningless.
 
 **What would overturn it.** A tied output head, where the same matrix is both an embedding and a

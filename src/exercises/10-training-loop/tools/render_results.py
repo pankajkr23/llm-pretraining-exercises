@@ -28,24 +28,36 @@ OUT = EXERCISE / "RESULTS.md"
 def render(run: dict) -> str:
     """Build the whole document. Every interpolation is a lookup, never a literal."""
     facts = run["facts"]
+    one = run["item_1_shapes"]
     two, three = run["item_2_gradient"], run["item_3_accumulation"]
     four, five, six = run["item_4_grad_norm"], run["item_5_mfu"], run["item_6_floats"]
     curves = three["curves"]
     trace = run["trace"]
 
+    shape_rows = "\n".join(
+        f"| `{name}` | `{tuple(shape)}` | {meaning} |" for name, shape, meaning in one["table"]
+    )
+    token_positions = five["tokens"] // facts["steps"]
+    raw_positions = facts["batch_size"] * facts["seq_len"]
+
     found = four["found"]
     leading = found[0] if found else None
-    lead_verdict = (
-        f"step **{leading['step']}**" if leading else "**no step qualified**, which is the result"
-    )
-    lead_detail = (
+    lead_block = (
         (
-            f"The gradient norm moved {leading['grad_move']:.1f} typical steps while the loss "
-            f"moved {leading['loss_move']:.1f}. Gradient norm {leading['grad_norm']:.4f}, loss "
-            f"{leading['loss']:.4f}."
+            f"**Step {leading['step']}** is such a step. The gradient norm moved "
+            f"{leading['grad_move']:.1f} typical steps; the loss moved {leading['loss_move']:.1f} "
+            f"at that same step; the loss then moved {leading['later_loss_move']:.1f}, "
+            f"{leading['followed_within']} step(s) later. Gradient norm "
+            f"{leading['grad_norm']:.4f}, loss {leading['loss']:.4f}."
         )
         if leading
-        else "A manufactured example would have been worse than reporting nothing."
+        else (
+            "**No step qualified, and that is the result** rather than a failure of the search. A "
+            "manufactured example would have been worse than reporting nothing."
+        )
+    )
+    robustness_rows = "\n".join(
+        f"| {name.split('=')[1]} | {count} |" for name, count in four["robustness"].items()
     )
     wrong_verdict = "higher" if curves["wrong_reads_higher"] else "lower"
 
@@ -67,7 +79,6 @@ def render(run: dict) -> str:
         f"{d['largest_normal']:.6g} | {d['decimal_digits']:.1f} |"
         for name, d in six.items()
     )
-    robustness = "  ·  ".join(f"{k} → {v}" for k, v in four["robustness"].items())
 
     return f"""# RESULTS — 10 · The training loop
 
@@ -88,10 +99,18 @@ those parameters do no arithmetic and must not be priced.
 
 ### 1 · Every tensor shape in the step
 
-The step's tensors and what each dimension means are printed by the run. The one worth stopping on
-is the loss: it has **no dimensions at all**. Everything above it collapses into that scalar and
-everything the optimiser does flows back out of it, which is why a mistake anywhere between the
-logits and the loss changes training without changing a single shape.
+| tensor | shape | what each dimension is |
+| --- | --- | --- |
+{shape_rows}
+
+**The one worth stopping on is the loss: it has no dimensions at all.** Everything above collapses
+into that scalar, and everything the optimiser does flows back out of it — which is why a mistake
+anywhere between the logits and the loss changes training without changing a single shape.
+
+Two more rows repay a second look. `head.weight.grad` has exactly the shape of the weight it belongs
+to, which is what makes the gradient check below possible at all. And `flat targets` is
+{token_positions:,} rather than {raw_positions:,}: the shift drops the last position of every
+sequence, because nothing follows it.
 
 ### 2 · One gradient, verified by hand
 
@@ -138,8 +157,19 @@ held identical — micro-batch widths {curves["micro_batch_widths"]} tokens:
 | wrong | {curves["final_wrong"]:.4f} |
 | gap | {curves["final_gap"]:+.4f} |
 
-The wrong reduction reads **{wrong_verdict}**, by a mean of {curves["mean_absolute_gap"]:.4f} across
-the run. Both curves are in `results/run.json` under `item_3_accumulation.curves`.
+The wrong reduction reads **{wrong_verdict}** at the end. **But that is one endpoint of a curve
+whose sign is not constant**, and the run length is an arbitrary choice — so the endpoint alone is
+not the finding:
+
+| across all {curves["total_steps"]} steps | value |
+| --- | --- |
+| mean **signed** gap | {curves["mean_signed_gap"]:+.4f} |
+| mean **absolute** gap | {curves["mean_absolute_gap"]:.4f} |
+| steps where the wrong reduction read *lower* | {curves["steps_where_wrong_read_lower"]} |
+
+The signed mean is the one that carries a direction; the absolute mean is non-negative for every
+possible run and would read identically if the finding reversed. Both curves and the per-step gap
+are in `results/run.json` under `item_3_accumulation.curves`.
 
 **The gap is small, and that is exactly why a bug of this shape lived inside every major training
 framework until 2024.** The wrong curve does not look wrong. It looks like the right curve. And the
@@ -149,16 +179,37 @@ caught it.
 
 ### 4 · A step where the gradient norm moved before the loss did
 
-{lead_verdict}, out of {len(trace["steps"])} logged. {lead_detail}
+**A "typical step" is the median absolute change from one step to the next**, computed separately
+for each trace. It is a unit of *size*, not of time — the loss and the gradient norm are in
+different units, so a raw comparison would only measure which number happens to be bigger. Median
+rather than mean, because a single large jump is exactly what is being looked for and must not
+inflate the yardstick used to find it.
 
-{four["count"]} of {len(trace["steps"])} steps qualify at the default threshold.
+**A step qualifies on three conditions**, and the third is what makes this a claim about *before*:
 
-**The threshold is arbitrary, so here is what happens when it moves:** {robustness}
+1. the gradient norm moved at least **3** of its own typical steps,
+2. the loss moved at most **1** of its own at that same step,
+3. and the loss then made a comparably large move **within the next 5 steps**.
 
-**Why the gradient leads.** The loss is an average over a whole batch, so a change in what the model
-is doing has to be large enough to move that average before it is visible. The gradient norm
-measures how hard the optimiser is pushing *right now*. A run that logs only the loss finds out
-about its problems late.
+Drop the third and this becomes a same-step magnitude contrast published under a heading that
+promises a lead in time. An earlier version of this section did exactly that.
+
+{lead_block}
+
+**{four["count"]} of {len(trace["steps"])} steps qualify.** The threshold is arbitrary, so:
+
+| threshold | qualifying steps |
+| --- | --- |
+{robustness_rows}
+
+**Read that spread before believing the count.** Qualifying steps thin out sharply as the threshold
+rises — and vanish entirely at 5 — so this is one reading of an arbitrary cut rather than a stable
+measurement.
+
+**Why the gradient leads at all.** The loss is an average over a whole batch, so a change in what
+the model is doing has to be large enough to move that average before it is visible. The gradient
+norm is not an average over anything: it measures how hard the optimiser is pushing *right now*. A
+run that logs only the loss finds out about its problems late.
 
 The norm is logged **before** clipping. A trace of the post-clip norm flattens at the clip value,
 which hides precisely the spikes the trace exists to show.
@@ -185,7 +236,8 @@ version divided FLOPs achieved on the **CPU** by a **GPU's** advertised peak and
 a figure that looked excellent and compared two different processors. The peak is now *measured*, on
 the same device and dtype as the run, with a large dense matrix multiply. The second counted the
 embedding tables in the parameters: an embedding lookup is a gather that does no arithmetic at all,
-so those parameters are free inflation, and removing them cut the numerator by 45%.
+so those parameters are free inflation: counting them made the numerator **45% larger than it should
+have been**, which is the same thing as saying that removing them cut it by 31%.
 
 What costs the distance to 40%, in the order it costs:
 

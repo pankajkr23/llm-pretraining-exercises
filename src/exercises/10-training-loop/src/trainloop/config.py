@@ -33,10 +33,12 @@ class Config:
         micro_batch_losses: The per-micro-batch average losses that go with those token counts,
             for the arithmetic demonstration that needs no model at all.
         grad_clip: Norm the gradient is clipped to, or `None` for no clipping.
-        device_peak_flops: Peak dense FLOPs per second of the hardware, for MFU. **Named here
-            because MFU is trivially inflated by a wrong denominator**, and a figure whose
-            denominator lives inside a function is a figure nobody can check.
-        device_name: What that peak belongs to. A peak with no device attached is not a source.
+        device_peak_flops: A **fallback** peak, used only when no measured one is supplied.
+            `mfu.measured_peak_flops` is what the harness actually uses, because a configured peak
+            can describe a processor the run never touched — which is exactly what happened here,
+            and reported 39.13%.
+        device_name: What that fallback peak belongs to. A peak with no device attached is not a
+            source, and a peak attached to the wrong device is worse than none.
     """
 
     model: LossConfig = field(default_factory=LossConfig)

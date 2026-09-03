@@ -71,25 +71,38 @@ class Trace:
 
 @dataclass(frozen=True)
 class LeadingStep:
-    """A step where the gradient norm moved and the loss did not.
+    """A step where the gradient norm moved sharply, the loss did not, and the loss then followed.
+
+    **The third clause is the one this class exists for, and an earlier version did not have it.**
+    Without it the measurement is a *same-step magnitude contrast* — "the gradient moved a lot and
+    the loss moved little" — while the heading above it claims something temporal: that the gradient
+    moved *before* the loss did. Those are different claims, the second is the interesting one, and
+    reporting the first under the second's name is a right number answering an adjacent question.
+
+    So `followed_within` records how many steps later the loss actually moved, and a step where it
+    never does is **not** a leading step.
 
     Attributes:
-        step: Which step.
-        grad_move: How far the gradient norm moved, in units of its own typical step.
-        loss_move: The same for the loss.
-        grad_norm: The gradient norm at that step.
-        loss: The loss at that step.
+        step: Which step the gradient moved at.
+        grad_move: How far the gradient norm moved, in units of its own typical step-to-step change.
+        loss_move: The same for the loss, at that same step.
+        followed_within: Steps after `step` at which the loss finally made a comparably large move.
+        later_loss_move: How far the loss moved when it did, in its own units.
+        grad_norm: The gradient norm at `step`.
+        loss: The loss at `step`.
     """
 
     step: int
     grad_move: float
     loss_move: float
+    followed_within: int
+    later_loss_move: float
     grad_norm: float
     loss: float
 
     @property
     def lead(self) -> float:
-        """How much further the gradient moved than the loss, in shared units."""
+        """How much further the gradient moved than the loss did at the same step."""
         return self.grad_move - self.loss_move
 
 
@@ -105,15 +118,22 @@ def _typical_move(series: list[float]) -> float:
 
 
 def find_leading_steps(
-    trace: Trace, threshold: float = 3.0, loss_ceiling: float = 1.0
+    trace: Trace, threshold: float = 3.0, loss_ceiling: float = 1.0, horizon: int = 5
 ) -> list[LeadingStep]:
-    """Steps where the gradient norm moved sharply and the loss barely moved.
+    """Steps where the gradient norm moved sharply, the loss did not, and the loss then followed.
+
+    **All three clauses are required, and the third is what makes this a claim about *before*.** A
+    step where the gradient jumps and the loss never reacts is not evidence that the gradient leads;
+    it is evidence that the gradient is noisy. Only a jump the loss subsequently answers shows the
+    order the section claims.
 
     Args:
         trace: A completed run.
         threshold: How many typical gradient-norm steps the move must exceed.
-        loss_ceiling: How many typical loss steps the loss must stay *within* to count as
-            "did not move".
+        loss_ceiling: How many typical loss steps the loss must stay *within* at that same step, to
+            count as "did not move yet".
+        horizon: How many later steps the loss is allowed to take to follow. A large horizon makes
+            the claim trivially easy to satisfy, so it is a named parameter rather than a constant.
 
     Returns:
         Every qualifying step, in order. **Possibly empty**, which is a real answer.
@@ -128,16 +148,30 @@ def find_leading_steps(
     for i in range(1, len(trace.steps)):
         grad_move = abs(trace.grad_norm[i] - trace.grad_norm[i - 1]) / grad_scale
         loss_move = abs(trace.loss[i] - trace.loss[i - 1]) / loss_scale
-        if grad_move >= threshold and loss_move <= loss_ceiling:
-            found.append(
-                LeadingStep(
-                    step=trace.steps[i],
-                    grad_move=grad_move,
-                    loss_move=loss_move,
-                    grad_norm=trace.grad_norm[i],
-                    loss=trace.loss[i],
-                )
+        if grad_move < threshold or loss_move > loss_ceiling:
+            continue
+
+        # ...and now the part that makes it a lead: did the loss follow?
+        followed, later = 0, 0.0
+        for ahead in range(i + 1, min(i + 1 + horizon, len(trace.steps))):
+            move = abs(trace.loss[ahead] - trace.loss[ahead - 1]) / loss_scale
+            if move >= threshold:
+                followed, later = ahead - i, move
+                break
+        if not followed:
+            continue
+
+        found.append(
+            LeadingStep(
+                step=trace.steps[i],
+                grad_move=grad_move,
+                loss_move=loss_move,
+                followed_within=followed,
+                later_loss_move=later,
+                grad_norm=trace.grad_norm[i],
+                loss=trace.loss[i],
             )
+        )
     return found
 
 

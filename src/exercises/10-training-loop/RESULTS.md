@@ -17,10 +17,26 @@ those parameters do no arithmetic and must not be priced.
 
 ### 1 · Every tensor shape in the step
 
-The step's tensors and what each dimension means are printed by the run. The one worth stopping on
-is the loss: it has **no dimensions at all**. Everything above it collapses into that scalar and
-everything the optimiser does flows back out of it, which is why a mistake anywhere between the
-logits and the loss changes training without changing a single shape.
+| tensor | shape | what each dimension is |
+| --- | --- | --- |
+| `tokens` | `(8, 128)` | batch · position — the ids fed in |
+| `hidden` | `(8, 128, 256)` | batch · position · width — one vector per position |
+| `logits` | `(8, 128, 10001)` | batch · position · vocabulary — one score per token |
+| `inputs` | `(8, 127)` | batch · position — last dropped, nothing follows it |
+| `targets` | `(8, 127)` | batch · position — first dropped, nothing predicts it |
+| `flat logits` | `(1016, 10001)` | position · vocabulary — batch folded away |
+| `flat targets` | `(1016,)` | position — one correct id per position |
+| `loss` | `()` | a scalar — no dimensions at all, which is the point |
+| `head.weight.grad` | `(10001, 256)` | vocabulary · width — one gradient per weight, the weight's own shape |
+
+**The one worth stopping on is the loss: it has no dimensions at all.** Everything above collapses
+into that scalar, and everything the optimiser does flows back out of it — which is why a mistake
+anywhere between the logits and the loss changes training without changing a single shape.
+
+Two more rows repay a second look. `head.weight.grad` has exactly the shape of the weight it belongs
+to, which is what makes the gradient check below possible at all. And `flat targets` is
+1,016 rather than 1,024: the shift drops the last position of every
+sequence, because nothing follows it.
 
 ### 2 · One gradient, verified by hand
 
@@ -69,12 +85,23 @@ held identical — micro-batch widths [128, 128, 64] tokens:
 
 | reduction | final loss |
 | --- | --- |
-| correct | 5.2873 |
-| wrong | 5.3633 |
-| gap | +0.0759 |
+| correct | 5.2658 |
+| wrong | 5.3143 |
+| gap | +0.0484 |
 
-The wrong reduction reads **higher**, by a mean of 0.0200 across
-the run. Both curves are in `results/run.json` under `item_3_accumulation.curves`.
+The wrong reduction reads **higher** at the end. **But that is one endpoint of a curve
+whose sign is not constant**, and the run length is an arbitrary choice — so the endpoint alone is
+not the finding:
+
+| across all 120 steps | value |
+| --- | --- |
+| mean **signed** gap | +0.0137 |
+| mean **absolute** gap | 0.0185 |
+| steps where the wrong reduction read *lower* | 28 |
+
+The signed mean is the one that carries a direction; the absolute mean is non-negative for every
+possible run and would read identically if the finding reversed. Both curves and the per-step gap
+are in `results/run.json` under `item_3_accumulation.curves`.
 
 **The gap is small, and that is exactly why a bug of this shape lived inside every major training
 framework until 2024.** The wrong curve does not look wrong. It looks like the right curve. And the
@@ -84,16 +111,41 @@ caught it.
 
 ### 4 · A step where the gradient norm moved before the loss did
 
-step **24**, out of 200 logged. The gradient norm moved 3.1 typical steps while the loss moved 0.1. Gradient norm 0.9321, loss 7.0616.
+**A "typical step" is the median absolute change from one step to the next**, computed separately
+for each trace. It is a unit of *size*, not of time — the loss and the gradient norm are in
+different units, so a raw comparison would only measure which number happens to be bigger. Median
+rather than mean, because a single large jump is exactly what is being looked for and must not
+inflate the yardstick used to find it.
 
-9 of 200 steps qualify at the default threshold.
+**A step qualifies on three conditions**, and the third is what makes this a claim about *before*:
 
-**The threshold is arbitrary, so here is what happens when it moves:** threshold=2.0 → 19  ·  threshold=2.5 → 13  ·  threshold=3.0 → 9  ·  threshold=4.0 → 3  ·  threshold=5.0 → 2
+1. the gradient norm moved at least **3** of its own typical steps,
+2. the loss moved at most **1** of its own at that same step,
+3. and the loss then made a comparably large move **within the next 5 steps**.
 
-**Why the gradient leads.** The loss is an average over a whole batch, so a change in what the model
-is doing has to be large enough to move that average before it is visible. The gradient norm
-measures how hard the optimiser is pushing *right now*. A run that logs only the loss finds out
-about its problems late.
+Drop the third and this becomes a same-step magnitude contrast published under a heading that
+promises a lead in time. An earlier version of this section did exactly that.
+
+**Step 131** is such a step. The gradient norm moved 4.3 typical steps; the loss moved 0.3 at that same step; the loss then moved 4.0, 4 step(s) later. Gradient norm 0.6089, loss 5.5338.
+
+**1 of 200 steps qualify.** The threshold is arbitrary, so:
+
+| threshold | qualifying steps |
+| --- | --- |
+| 2.0 | 11 |
+| 2.5 | 5 |
+| 3.0 | 1 |
+| 4.0 | 1 |
+| 5.0 | 0 |
+
+**Read that spread before believing the count.** Qualifying steps thin out sharply as the threshold
+rises — and vanish entirely at 5 — so this is one reading of an arbitrary cut rather than a stable
+measurement.
+
+**Why the gradient leads at all.** The loss is an average over a whole batch, so a change in what
+the model is doing has to be large enough to move that average before it is visible. The gradient
+norm is not an average over anything: it measures how hard the optimiser is pushing *right now*. A
+run that logs only the loss finds out about its problems late.
 
 The norm is logged **before** clipping. A trace of the post-clip norm flattens at the clip value,
 which hides precisely the spikes the trace exists to show.
@@ -106,21 +158,22 @@ which hides precisely the spikes the trace exists to show.
 | FLOPs per token | 34,318,848 |
 | convention | 6 x 5,719,808 NON-EMBEDDING parameters — 2 forward, 4 backward; embedding lookups are gathers and do no arithmetic; attention's quadratic term excluded |
 | tokens measured | 203,200 |
-| wall clock | 7.504 s |
-| achieved | 929.35 GFLOP/s |
-| device peak | 3.362 TFLOP/s |
-| device | this machine's CPU, 3.362 TFLOP/s sustained on a 2048^3 fp32 matrix multiply — MEASURED here, same device and dtype as the run, not a vendor figure |
-| **MFU** | **27.64%** |
-| tokens/second | 27,080 |
+| wall clock | 7.535 s |
+| achieved | 925.51 GFLOP/s |
+| device peak | 3.336 TFLOP/s |
+| device | this machine's CPU, 3.336 TFLOP/s sustained on a 2048^3 fp32 matrix multiply — MEASURED here, same device and dtype as the run, not a vendor figure |
+| **MFU** | **27.74%** |
+| tokens/second | 26,968 |
 
-**Target 40%, achieved 27.64%, short by 12.36% of peak.**
+**Target 40%, achieved 27.74%, short by 12.26% of peak.**
 
 **Two errors were caught in this number before it was published, and both flattered it.** The first
 version divided FLOPs achieved on the **CPU** by a **GPU's** advertised peak and reported 39.13% —
 a figure that looked excellent and compared two different processors. The peak is now *measured*, on
 the same device and dtype as the run, with a large dense matrix multiply. The second counted the
 embedding tables in the parameters: an embedding lookup is a gather that does no arithmetic at all,
-so those parameters are free inflation, and removing them cut the numerator by 45%.
+so those parameters are free inflation: counting them made the numerator **45% larger than it should
+have been**, which is the same thing as saying that removing them cut it by 31%.
 
 What costs the distance to 40%, in the order it costs:
 

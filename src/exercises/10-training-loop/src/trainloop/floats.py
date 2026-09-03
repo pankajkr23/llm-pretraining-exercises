@@ -14,9 +14,15 @@ buy range, mantissa bits buy detail.** More of one is always less of the other.
 every format below stores something slightly else, and the question is only *how much* else.
 
 **This module builds the bit patterns from arithmetic rather than reading them out of the machine**,
-which is the point of the exercise. `verify.py`'s tests then check each one against what torch's own
-cast produces, because a decomposition that agrees with itself proves nothing. It needs no torch to
-run — only to be checked.
+which is the point of the exercise. `tests/test_trainloop_step.py` then checks them against what
+torch's own cast produces, because a decomposition that agrees with itself proves nothing.
+
+**And it must check more than one value.** The first version of that cross-check drove `0.1` alone,
+which is one of the values where a real rounding bug in here could not fire — so the bug shipped
+while the test that existed to catch it passed. It now sweeps thousands of values per format, and
+that sweep found a second limit nobody had reasoned about: **subnormals**, which this module refuses
+rather than answering wrongly. Below `smallest_normal` a format drops the implicit leading 1 and
+encodes differently, and every formula here assumes a normal number.
 """
 
 from __future__ import annotations
@@ -170,18 +176,31 @@ def _fp32_fields(value: float) -> tuple[int, int, int]:
     return packed >> 31, (packed >> 23) & 0xFF, packed & 0x7F_FFFF
 
 
-def _round_to_nearest_even(mantissa: int, drop: int) -> tuple[int, bool]:
+def _round_to_nearest_even(mantissa: int, drop: int) -> int:
     """Drop the lowest `drop` bits of `mantissa`, rounding half to even.
 
     Round-to-nearest-even is what every format here uses, and it matters: truncating instead would
     bias every conversion downwards, and the bias would accumulate over a training run rather than
     cancelling.
 
+    **This used to return a second value, an `overflow` flag, and that flag was a real bug that
+    survived because only one input was ever tested.** It read
+    `kept >= (1 << (mantissa.bit_length() - drop))` — using the bit length of *this value's*
+    fraction field rather than the fixed 23. When that length was below `drop` the shift count went
+    negative and the function **raised**; when it did not, the flag fired spuriously and `decompose`
+    applied a second exponent increment on top of its own normalisation, returning a value
+    **exactly twice** the right one. Measured against an independent reference over 200,000 uniform
+    draws: bf16 wrong on 3.7% of them, fp8 E4M3 on 30%.
+
+    It shipped because `0.1` is the only value the tests drove, and `0.1`'s fraction field happens
+    to have bit length 23 and to round without carrying — one of the values where the bug cannot
+    fire. The caller normalises a carry correctly on its own, so the flag was never needed.
+
     Returns:
-        `(rounded mantissa, whether it overflowed into the next exponent)`.
+        The rounded mantissa. It may be `1 << mantissa_bits`, which the caller normalises.
     """
     if drop <= 0:
-        return mantissa, False
+        return mantissa
 
     kept = mantissa >> drop
     remainder = mantissa & ((1 << drop) - 1)
@@ -190,8 +209,7 @@ def _round_to_nearest_even(mantissa: int, drop: int) -> tuple[int, bool]:
     if remainder > half or (remainder == half and kept & 1):
         kept += 1
 
-    overflow = kept >= (1 << (mantissa.bit_length() - drop)) if mantissa else False
-    return kept, overflow
+    return kept
 
 
 def decompose(value: float, fmt: Format) -> Decomposition:
@@ -205,8 +223,9 @@ def decompose(value: float, fmt: Format) -> Decomposition:
         A `Decomposition` carrying the bits and what they actually mean.
 
     Raises:
-        ValueError: When the value is not finite, or overflows the format — silently returning
-            infinity would hide exactly the property this module exists to show.
+        ValueError: When the value is not finite, overflows the format, or is **subnormal** in it.
+            Silently returning infinity would hide exactly the property this module exists to show,
+            and silently returning a wrong answer for a subnormal would be worse.
     """
     import math
 
@@ -216,6 +235,17 @@ def decompose(value: float, fmt: Format) -> Decomposition:
         raise ValueError(
             f"{value} overflows {fmt.name}, whose largest finite value is {fmt.largest_normal}"
         )
+    # Below `smallest_normal` a format drops the implicit leading 1 and encodes a SUBNORMAL, with a
+    # different formula. Everything here assumes a normal number, so a subnormal is refused rather
+    # than answered wrongly. Found by sweeping this function against torch's cast rather than
+    # reasoning about it: one value in 20,000 disagreed, and it was 0.0089 in E4M3.
+    if value != 0.0 and abs(value) < fmt.smallest_normal:
+        raise ValueError(
+            f"{value} is subnormal in {fmt.name} (smallest normal {fmt.smallest_normal:g}). "
+            "Subnormals drop the implicit leading 1 and are encoded differently; this module only "
+            "builds normal numbers, and answering with the normal formula would be wrong rather "
+            "than approximate."
+        )
 
     sign, fp32_exponent, fp32_mantissa = _fp32_fields(value)
 
@@ -223,12 +253,12 @@ def decompose(value: float, fmt: Format) -> Decomposition:
         exponent_field, mantissa_field = fp32_exponent, fp32_mantissa
     else:
         drop = 23 - fmt.mantissa_bits
-        mantissa_field, carried = _round_to_nearest_even(fp32_mantissa, drop)
+        mantissa_field = _round_to_nearest_even(fp32_mantissa, drop)
         exponent_field = fp32_exponent - 127 + fmt.bias
+        # Rounding up from all-ones carries into the exponent. That is the ONLY normalisation
+        # needed; an earlier version applied a second one from a flag and doubled the result.
         if mantissa_field >= (1 << fmt.mantissa_bits):
             mantissa_field = 0
-            exponent_field += 1
-        if carried:  # pragma: no cover - defensive; the branch above already normalises
             exponent_field += 1
 
     significand = 1 + mantissa_field / (1 << fmt.mantissa_bits)

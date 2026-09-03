@@ -77,7 +77,7 @@ uv run pytest            # run every exercise's tests from the root
 
 | 09 | [Loss functions and output heads](src/exercises/09-loss-functions-output-heads/) | The three lines between a model's output and its loss have four ways to be quietly wrong, and the worst makes the number look *better*: a deliberately mis-shifted model trains to 0.18 while the correct one is at 4.14. Also what an output head costs, and computing the same loss in slices for a ninth of the memory. [The argument, the evidence and its limits](src/exercises/09-loss-functions-output-heads/README.md) · [the measured numbers](src/exercises/09-loss-functions-output-heads/RESULTS.md). *Package, runs and evidence complete; notebook and page outstanding.* |
 
-| 10 | [The training loop](src/exercises/10-training-loop/) | One optimiser step, made to tell the truth about itself: verified gradients, a deliberately broken accumulation, grad norms, MFU, and 0.1 in three float formats. [The argument, the evidence and its limits](src/exercises/10-training-loop/README.md). *Scaffolded.* |
+| 10 | [The training loop](src/exercises/10-training-loop/) | One optimiser step, made to tell the truth about itself. The utilisation figure was flattering itself twice over — once in its denominator, once in its numerator — and gradient accumulation is broken on purpose so the gap is visible rather than asserted. [The argument, the evidence and its limits](src/exercises/10-training-loop/README.md) · [the measured numbers](src/exercises/10-training-loop/RESULTS.md) · [the notebook](notebooks/S10-training-loop.ipynb). *Package, runs, evidence and notebook complete; page outstanding.* |
 
 More exercises are added each week.
 

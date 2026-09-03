@@ -267,7 +267,8 @@ def two_curves(
 
         curves[name] = series
 
-    gap = curves["wrong"][-1] - curves["correct"][-1]
+    per_step = [w - c for c, w in zip(curves["correct"], curves["wrong"], strict=True)]
+    gap = per_step[-1]
     return {
         "steps": list(range(1, steps + 1)),
         "correct": curves["correct"],
@@ -278,8 +279,13 @@ def two_curves(
         "final_wrong": curves["wrong"][-1],
         "final_gap": gap,
         "wrong_reads_higher": gap > 0,
-        "mean_absolute_gap": sum(
-            abs(a - b) for a, b in zip(curves["correct"], curves["wrong"], strict=True)
-        )
-        / steps,
+        # The final gap is ONE endpoint of a curve whose sign is not constant, and quoting it
+        # alone would be quoting whichever step the run happened to stop on. So the signed mean,
+        # the absolute mean, and the number of steps where the sign flips are all reported — the
+        # last of those is what says whether the endpoint is representative or lucky.
+        "mean_signed_gap": sum(per_step) / steps,
+        "mean_absolute_gap": sum(abs(g) for g in per_step) / steps,
+        "steps_where_wrong_read_lower": sum(1 for g in per_step if g < 0),
+        "total_steps": steps,
+        "per_step_gap": per_step,
     }

@@ -278,6 +278,18 @@ REQUIREMENTS.md
 # on a fresh clone.
 notebooks/S[0-9][0-9]-*.ipynb
 
+# ...with exactly one exception, and it is a requirement rather than a preference. Exercise 10's
+# submission says the notebook "should also be there" and offers no alternative — where exercise
+# 09's offered "the ipynb file OR training logs", which is why 09's stays local. There is nothing
+# to fall back to here.
+#
+# The rule above exists to keep the course's own material off a public remote. This notebook is our
+# training loop: it imports the exercise's package and re-implements nothing, so it carries no more
+# of that material than the package does. See 10-training-loop/DECISIONS.md D1.
+#
+# The negation WORKS because the pattern above is a FILE pattern, not a directory one.
+!notebooks/S10-training-loop.ipynb
+
 # ...and so is the script that generates one. A generator is the notebook in another form -- keeping
 # it would version the same course material as Python, which is the thing the rule above exists to
 # prevent. Both stay on a working checkout and neither is pushed.

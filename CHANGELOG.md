@@ -10,6 +10,33 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`trainloop.floats.decompose` was wrong for most inputs, and right at the only value tested.**
+  `_round_to_nearest_even` computed an overflow flag from the *value's* fraction-field width rather
+  than the fixed 23, so `decompose` applied a second exponent increment and returned a number
+  **exactly twice too large** — on 3.7% of bf16 inputs and 30% of fp8 E4M3 inputs — and raised
+  `ValueError` on others. `0.1` is one of the values where it could not fire, and `0.1` was the
+  whole test. The cross-check against torch now sweeps 2,000 values per format instead of one.
+- Sweeping it found a second limit nobody had reasoned about: **subnormals**, which every formula in
+  that module got wrong. They are refused with a message naming the reason.
+- **Exercise 10's README quoted an MFU of 27.89% while its generated document said 27.64%** — a
+  stale figure, and the higher of the two, in a document whose headline is that a number was caught
+  flattering itself. `tests/test_trainloop_results.py` now checks the README's own figures against
+  the run, which is the guard exercise 09 has and this one did not.
+- Item 4's heading claimed the gradient norm moved **before** the loss; the measurement was a
+  same-step magnitude contrast. It now requires the loss to actually follow within a stated horizon,
+  and **one** step in 200 qualifies rather than nine.
+- The accumulation finding was quoted from one endpoint of a curve whose sign flips 28 times in 120
+  steps. The signed mean, the absolute mean and the flip count are all reported.
+- Two guards that could not fail on the bugs they named: the accumulation direction was asserted at
+  six steps (a coin flip — the sign is negative at several of the first six), and the MFU ceiling was
+  checked against a made-up numerator three orders of magnitude below any plausible peak.
+- `results/run.json` published a configured GPU peak alongside the measured CPU one, describing a
+  processor the run never touched.
+- "Removing them cut the numerator by 45%" was a right number answering a different question: it cut
+  it by 31%, and *counting* them made it 45% larger.
+
 ### Added
 
 - **Exercise 10 runs all six of its items** and generates `RESULTS.md` from `results/run.json`: every

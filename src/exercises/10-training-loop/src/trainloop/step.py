@@ -46,8 +46,13 @@ def build(config: Config | None = None) -> tuple[torch.Tensor, torch.Tensor, obj
     return trunk, head, optimiser
 
 
-def describe_shapes(config: Config | None = None) -> str:
-    """Every tensor in one step, with one line saying what each dimension is. Item 1."""
+def shape_table(config: Config | None = None) -> list[list[object]]:
+    """Every tensor in one step as `[name, shape, meaning]` rows. Item 1, as data.
+
+    Separated from `describe_shapes` so the generated document can carry item 1's evidence too. An
+    earlier version printed the table and returned only `{"printed": True}`, which left the one
+    item a reader is told to check against `RESULTS.md` absent from it.
+    """
     import torch
 
     config = config or Config()
@@ -62,26 +67,34 @@ def describe_shapes(config: Config | None = None) -> str:
     flat_targets = targets.reshape(-1)
     loss = cross_entropy(flat_logits, flat_targets, model)
     loss.backward()
-    gradient = head.weight.grad
 
-    rows = [
-        ("tokens", tuple(tokens.shape), "batch · position — the ids fed in"),
-        ("hidden", tuple(hidden.shape), "batch · position · width — one vector per position"),
-        ("logits", tuple(logits.shape), "batch · position · vocabulary — one score per token"),
-        ("inputs", tuple(inputs.shape), "batch · position — last dropped, nothing follows it"),
-        ("targets", tuple(targets.shape), "batch · position — first dropped, nothing predicts it"),
-        ("flat logits", tuple(flat_logits.shape), "position · vocabulary — batch folded away"),
-        ("flat targets", tuple(flat_targets.shape), "position — one correct id per position"),
-        ("loss", tuple(loss.shape), "a scalar — no dimensions at all, which is the point"),
-        (
+    return [
+        ["tokens", list(tokens.shape), "batch · position — the ids fed in"],
+        ["hidden", list(hidden.shape), "batch · position · width — one vector per position"],
+        ["logits", list(logits.shape), "batch · position · vocabulary — one score per token"],
+        ["inputs", list(inputs.shape), "batch · position — last dropped, nothing follows it"],
+        ["targets", list(targets.shape), "batch · position — first dropped, nothing predicts it"],
+        ["flat logits", list(flat_logits.shape), "position · vocabulary — batch folded away"],
+        ["flat targets", list(flat_targets.shape), "position — one correct id per position"],
+        ["loss", list(loss.shape), "a scalar — no dimensions at all, which is the point"],
+        [
             "head.weight.grad",
-            tuple(gradient.shape),
-            "vocabulary · width — one gradient per weight, same shape as the weight",
-        ),
+            list(head.weight.grad.shape),
+            "vocabulary · width — one gradient per weight, the weight's own shape",
+        ],
     ]
-    width = max(len(name) for name, _, _ in rows)
+
+
+def describe_shapes(config: Config | None = None) -> str:
+    """Every tensor in one step, with one line saying what each dimension is. Item 1."""
+    config = config or Config()
+    rows = shape_table(config)
+    trunk, head, _ = build(config)
+
+    width = max(len(str(name)) for name, _, _ in rows)
     lines = [
-        f"    {name.ljust(width)}  {str(shape):<22}  {meaning}" for name, shape, meaning in rows
+        f"    {str(name).ljust(width)}  {str(tuple(shape)):<22}  {meaning}"
+        for name, shape, meaning in rows
     ]
     lines += [
         "",
@@ -170,7 +183,7 @@ def run(config: Config | None = None, steps: int | None = None) -> tuple[Trace, 
         "head_parameters": count_parameters(head),
         "embedding_parameters": embedding_parameters,
         # The number MFU is priced from. An embedding lookup is a gather with no arithmetic, so
-        # counting those tables inflates FLOPs for free — this exercise's first figure by 45%.
+        # counting those tables inflates FLOPs for free — this exercise's first numerator by 45%.
         "non_embedding_parameters": (
             count_parameters(trunk) + count_parameters(head) - embedding_parameters
         ),
@@ -183,8 +196,9 @@ def run(config: Config | None = None, steps: int | None = None) -> tuple[Trace, 
         "vocab_size": model.vocab_size,
         "d_model": model.d_model,
         "n_layer": model.n_layer,
-        "device_peak_flops": config.device_peak_flops,
-        "device_name": config.device_name,
+        # Deliberately NOT the configured device: the harness measures the peak on the machine
+        # that actually ran, and publishing a second, contradictory device in the same artefact is
+        # how a reader ends up checking the wrong number.
         "corpus": "this repository's own AGENTS.md, tokenized with exercise 02's BPE",
     }
     return trace, facts

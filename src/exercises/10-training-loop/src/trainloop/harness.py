@@ -23,7 +23,7 @@ from lossheads.shift import shift_for_next_token
 
 from . import accumulation, floats, gradcheck, mfu, telemetry
 from .config import Config
-from .step import build, describe_shapes
+from .step import build, describe_shapes, shape_table
 from .step import run as run_steps
 
 
@@ -34,8 +34,9 @@ def _line(title: str) -> None:
 def item_1_shapes(config: Config) -> dict[str, Any]:
     """Every tensor in the step, with each dimension named."""
     _line("ITEM 1 — every tensor shape in the step, and what each dimension means")
-    print(describe_shapes(config))
-    return {"printed": True}
+    printed = describe_shapes(config)
+    print(printed)
+    return {"table": shape_table(config), "printed": printed}
 
 
 def item_2_gradient(config: Config) -> dict[str, Any]:
@@ -157,32 +158,60 @@ def item_3_accumulation(config: Config) -> dict[str, Any]:
 
 
 def item_4_grad_norm(trace: telemetry.Trace) -> dict[str, Any]:
-    """The search for a step where the gradient norm moved and the loss did not."""
-    _line("ITEM 4 — a step where the grad norm moved before the loss did")
+    """The search for a step where the gradient norm moved and the loss followed."""
+    _line("ITEM 4 — a step where the grad norm moved BEFORE the loss did")
     found = telemetry.find_leading_steps(trace)
     spread = telemetry.robustness(trace)
 
+    def _say(text: str) -> None:
+        print(textwrap.fill(text, width=92, initial_indent="    ", subsequent_indent="    "))
+        print()
+
+    _say(
+        'A "typical step" here is the median absolute change from one step to the next, computed '
+        "separately for each trace. It is a unit of SIZE, not of time: the loss and the gradient "
+        "norm are in different units, so a raw comparison would only measure which number happens "
+        "to be bigger. Median rather than mean, because a single large jump is exactly what is "
+        "being looked for and must not inflate the yardstick used to find it."
+    )
+    _say(
+        "A step qualifies on three conditions, and the third is what makes this a claim about "
+        "BEFORE: the gradient norm moved at least 3 typical steps, the loss moved at most 1 at "
+        "that same step, and the loss then made a comparably large move within the next 5 steps. "
+        "Drop the third and the measurement becomes a same-step magnitude contrast reported under "
+        "a heading that promises a lead in time — a right number answering an adjacent question."
+    )
+
     if not found:
-        print(
-            "    NONE FOUND, and that is the result rather than a failure of the search.\n"
-            "    Reporting a manufactured example would be worse than reporting nothing."
+        _say(
+            "NONE FOUND, and that is the result rather than a failure of the search. Reporting a "
+            "manufactured example would be worse than reporting nothing."
         )
     else:
         first = found[0]
         print(
-            f"    Step {first.step}: the gradient norm moved {first.grad_move:.1f} typical steps\n"
-            f"    while the loss moved {first.loss_move:.1f}. Gradient norm "
-            f"{first.grad_norm:.4f}, loss {first.loss:.4f}.\n"
-            f"\n    {len(found)} of {len(trace.steps)} steps qualify."
+            f"    step {first.step:>4}  gradient norm moved {first.grad_move:.1f} typical steps\n"
+            f"              the loss moved {first.loss_move:.1f} at that same step\n"
+            f"              the loss then moved {first.later_loss_move:.1f}, "
+            f"{first.followed_within} step(s) later\n"
+            f"              (gradient norm {first.grad_norm:.4f}, loss {first.loss:.4f})\n"
         )
-    print(
-        "\n    The threshold is arbitrary, so here is what happens when it moves:\n    "
-        + "  ".join(f"{k} -> {v}" for k, v in spread.items())
+        _say(f"{len(found)} of {len(trace.steps)} steps qualify.")
+
+    print("    the threshold is arbitrary, so:")
+    for name, count in spread.items():
+        print(f"      {name}: {count}")
+    print()
+    _say(
+        "Read that spread before believing the count. The qualifying steps thin out sharply as the "
+        "threshold rises, so this is one reading of an arbitrary cut rather than a stable "
+        "measurement — and it is reported that way."
     )
-    print(
-        "\n    Why the gradient leads: the loss is an average over a whole batch, so a change in\n"
-        "    what the model is doing has to be large enough to move that average before it is\n"
-        "    visible. The gradient norm measures how hard the optimiser is pushing right now."
+    _say(
+        "Why the gradient leads at all: the loss is an average over a whole batch, so a change in "
+        "what the model is doing has to be large enough to move that average before it becomes "
+        "visible. The gradient norm is not an average over anything — it measures how hard the "
+        "optimiser is pushing right now."
     )
     return {
         "found": [
@@ -190,6 +219,8 @@ def item_4_grad_norm(trace: telemetry.Trace) -> dict[str, Any]:
                 "step": f.step,
                 "grad_move": f.grad_move,
                 "loss_move": f.loss_move,
+                "followed_within": f.followed_within,
+                "later_loss_move": f.later_loss_move,
                 "grad_norm": f.grad_norm,
                 "loss": f.loss,
             }
@@ -197,6 +228,11 @@ def item_4_grad_norm(trace: telemetry.Trace) -> dict[str, Any]:
         ],
         "count": len(found),
         "robustness": spread,
+        "definition": (
+            "a typical step is the median absolute step-to-step change of that trace; a step "
+            "qualifies when the gradient norm moves >= 3 of its own typical steps, the loss moves "
+            "<= 1 of its own at that step, and the loss then moves >= 3 within the next 5 steps"
+        ),
     }
 
 
@@ -220,7 +256,8 @@ def item_5_mfu(trace: telemetry.Trace, facts: dict[str, Any], config: Config) ->
         f"the {facts['parameters']:,} total. The {facts['embedding_parameters']:,} in the "
         "embedding tables are read by a gather and do no arithmetic at all, so counting them is "
         "free "
-        "inflation — it raised this exercise's own first figure by 45%."
+        "inflation — it made this exercise's own first numerator 45% larger than it should "
+        "have been."
     )
     print(textwrap.fill(priced, width=92, initial_indent="    ", subsequent_indent="    "))
     print()

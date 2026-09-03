@@ -6,8 +6,9 @@ checked against arithmetic by hand, gradient accumulation broken on purpose so t
 rather than asserted, and a utilisation figure whose every input is stated because the number is
 trivially inflated.
 
-The headline: **two numbers in this exercise were wrong in the flattering direction before they were
-published**, and both were caught by asking what the denominator actually was.
+The headline: **the utilisation figure was wrong in the flattering direction twice over** — once in
+its denominator and once in its numerator — and both were caught by asking what each half of the
+ratio was actually counting.
 
 ## How to read this
 
@@ -21,6 +22,13 @@ published**, and both were caught by asking what the denominator actually was.
 
 ## What this is
 
+**First, three words this page cannot do without.** A model reads text and guesses what comes next.
+The **loss** is one number saying how wrong those guesses were — lower is better, and "training" is
+the process of nudging the model's numbers to make it smaller. The model splits into a **trunk**,
+which turns text into a vector per position, and a **head**, the final layer turning each vector
+into a score for every word it could pick. That split matters here: the trunk and the head are
+counted differently in item 5, and the head is where the gradient check does its work.
+
 Six things a training step should be able to say about itself, each of which is a measurement or a
 deliberate breakage. None of them rewards a low loss.
 
@@ -30,9 +38,13 @@ mistake anywhere in between changes training without changing a single shape.
 
 **One gradient, checked by hand.** `backward()` reports a derivative, and a derivative is a claim
 about what happens to the loss when a weight moves. That is checkable: move it, see what the loss
-did, divide. The interesting part is that the nudge size has a floor *and* a ceiling — too large and
-curvature shows, too small and the two losses stop differing in bits the float type keeps — so the
-honest answer is a window, not a value.
+did, divide.
+
+The interesting part is that the nudge size can be **too big or too small, and it fails differently
+at each end**. Too big, and you are drawing a straight line across a curve: the wider you draw it,
+the less it matches the slope at the middle. Too small, and the two losses you are subtracting stop
+differing in bits the float type actually keeps, so you are measuring rounding noise rather than the
+function. The honest answer is therefore a **window**, not a value.
 
 **Gradient accumulation, broken on purpose.** When the batch you want does not fit in memory, you
 split it, combine the pieces, and take one step. The combination has to weight each piece by how
@@ -45,8 +57,10 @@ hand-built test they almost always are.
 what the model is doing must be large enough to move that average before it becomes visible. The
 gradient norm measures how hard the optimiser is pushing right now, and it moves first.
 
-**MFU.** What fraction of the machine's arithmetic the run actually used. Tokens per second says
-nothing without knowing what the hardware could have done.
+**MFU.** What fraction of the machine's arithmetic the run actually used — the work the step needed,
+over the work the hardware could have done in the same time. Tokens per second says nothing without
+that second number under it. **40% is the target here because it is roughly what a well-tuned large
+training run achieves**; it is a rule of thumb rather than a physical limit, and it is quoted as one.
 
 **And 0.1 in three float formats.** One tenth repeats forever in binary, exactly as one third does in
 decimal, so no format holds it and each one misses by a different amount. Which you would train in
@@ -95,19 +109,29 @@ finding rather than that number: agreement improves as the nudge shrinks, then g
 when the subtraction becomes rounding noise. A check that agrees at exactly one epsilon has been
 fitted, not verified.
 
-**The accumulation gap is 15.4% on the worked arithmetic** and much smaller on a real run — 0.0759
-after 120 steps. That smallness is the point: the wrong curve does not look wrong, it looks like the
-right curve.
+**The accumulation gap is 15.4% on the worked arithmetic** and much smaller on a real run: 0.0484
+of a loss of 5.2658, so under 1%. That smallness is the point — the wrong curve does not look wrong,
+it looks like the right curve, and you only see the difference by subtracting one from the other.
 
-**Two numbers were caught being wrong in the flattering direction**, and both were denominators:
+**And the gap's sign is not stable across the run**, which the run's own data shows: the wrong curve
+reads higher at the end, and lower at some earlier steps. A single endpoint decides both the
+magnitude and the verdict word, so `RESULTS.md` reports the mean absolute gap beside the final one.
+
+**One number was caught being wrong in the flattering direction twice over** — once in its
+denominator and once in its numerator:
 
 - **MFU was 39.13%.** It divided FLOPs achieved on the **CPU** by a **GPU's** advertised peak — two
   different processors, one ratio. The peak is now measured on the same device and dtype as the run,
   with a large dense matrix multiply.
-- **And it counted the embedding tables.** An embedding lookup is a gather that does no arithmetic,
-  so those parameters are free inflation. Removing them cut the numerator by 45%. The honest figure
-  is **27.89%**, with a real 12-point gap to account for — and accounting for it is what the
-  requirement actually asks.
+- **And it counted the embedding tables.** An embedding lookup is a *gather* — it reads one stored
+  row per token and does no arithmetic at all — so those parameters are free inflation. Counting
+  them made the numerator **45% larger than it should have been**; equivalently, removing them cut
+  it by 31%. Both describe the same correction, and quoting the wrong one of the pair is how a
+  right figure ends up answering a different question.
+
+The honest figure is **27.69%**, roughly 12 points short of the 40% rule of thumb — and accounting
+for that gap, rather than closing it, is the useful part. It moves by a few tenths of a point between
+runs, because the numerator is fixed and the denominator is a wall clock on a shared machine.
 
 A third was caught before publication: the gradient check was written in fp32, where a loss near 9.2
 resolves to about 5e-7, so a small gradient produced a numeric estimate of **exactly zero** at every

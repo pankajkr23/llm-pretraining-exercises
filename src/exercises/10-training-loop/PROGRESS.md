@@ -26,10 +26,10 @@ of the loop or a deliberate breakage of it.
 | **9 · Floats** | 0.1 in fp32/bf16/fp8 E4M3, built from arithmetic, checked against torch | **done** |
 | **10 · Harness** | all six items into `results/run.json` | **done** |
 | **11 · RESULTS.md** | generated from that file; no figure typed | **done** |
-| **12 · Tests** | 31 tests; the no-torch half runs in the ordinary CI job | **done** |
+| **12 · Tests** | the no-torch half runs in the ordinary CI job; count is in the suite, not here | **done** |
 | **13 · Documents** | README, DECISIONS, NOTICE, CLAUDE.md | **done** |
 | **14 · Review** | run the reviewers over the finished work, as 09 did | not started |
-| **15 · Notebook** | **tracked**, under a written exception — see `DECISIONS.md` D1 | not started |
+| **15 · Notebook** | **tracked**, under a written exception — see `DECISIONS.md` D1 | **done** |
 | **16 · Web page** | the deployable explainer, to the twelve-part spine | not started |
 | **16b · Register** | `SPINE_ENFORCED` + the landing card — both fail in two directions | not started |
 | **17 · Submit** | PK's action, after production is live | blocked on 14–16b |
@@ -80,12 +80,13 @@ reporting nothing, so the empty case is reachable and a test proves it.
 
 ### 5 · MFU, reported honestly
 
-**27.89%**, against a target of 40%.
+**27.64%**, against a target of 40%.
 
-*Two traps, and both were fallen into.* The first version divided FLOPs achieved on the **CPU** by a
-**GPU's** advertised peak and reported **39.13%** — two processors, one ratio. And it counted the
-**embedding tables**, which are read by a gather and do no arithmetic, inflating the numerator by
-45%. The peak is measured now, on the same device and dtype as the run.
+*Two traps in one ratio, and both were fallen into.* The **denominator** was a **GPU's** advertised
+peak while the run executed on the **CPU** — two processors, one ratio, reported as **39.13%**. The
+**numerator** counted the **embedding tables**, which are read by a gather and do no arithmetic,
+making it 45% larger than it should have been. The peak is measured now, on the same device and
+dtype as the run.
 
 ### 6 · 0.1 in three formats, bit by bit
 
@@ -102,8 +103,11 @@ spec states and the arithmetic here reproduces.
 
 1. **Run the reviewers** — auditor, engineer and reader, as exercise 09 did. That review found three
    blockers in work that looked finished, and there is no reason this is different.
-2. **The notebook**, tracked under the written exception in `DECISIONS.md` D1. The exception has to
-   land in `AGENTS.md`, `.gitignore` and `tools/backup_local_only.py::PATTERNS` together.
+2. **The notebook**, tracked under the written exception in `DECISIONS.md` D1. The exception lands
+   in `AGENTS.md` and `.gitignore`, and **not** in `tools/backup_local_only.py::PATTERNS` — `collect`
+   ends with `found -= _tracked(root)`, so a tracked file leaves the backup set on its own. An
+   earlier draft of this line said otherwise, which would have meant an edit with no effect that
+   read as a safeguard.
 3. **The web page**, to the twelve-part spine, then both registrations.
 4. **Submit** — PK's, once production is live.
 

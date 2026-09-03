@@ -319,7 +319,12 @@ Write it to be read at two depths: plain what-and-why before each step, the arit
 after it. It is the artifact people learn from and teach from, not a run log.
 
 **Both the notebook and its builder are gitignored** — `notebooks/S[0-9][0-9]-*.ipynb` and
-`src/exercises/*/tools/build_notebook.py`. A generator is the notebook in another form, so tracking
+`src/exercises/*/tools/build_notebook.py`. **One notebook is exempt and it is named in
+`.gitignore`:** `notebooks/S10-training-loop.ipynb`, because exercise 10's submission requires the
+ipynb in the repository and offers no alternative — exercise 09's offered "the ipynb file *or*
+training logs", which is why 09's stays local. The exemption is narrow by construction: it names one
+path, the reason is written where the rule is, and `backup_local_only.py` needs no change because
+`collect` drops anything git already tracks. **A builder is never exempt.** A generator is the notebook in another form, so tracking
 it would keep the same course material in the repo as Python, which is what untracking the notebook
 was for. Every exercise has a builder; they live on a working checkout and are never pushed.
 

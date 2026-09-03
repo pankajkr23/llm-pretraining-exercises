@@ -9,7 +9,8 @@ numbers go in, and each has a way to be wrong in the flattering direction:
 
 - **FLOPs per token.** The standard estimate is `6 × parameters`: roughly two per parameter for the
   forward pass, four for the backward. **Which parameters** is the whole question, and getting it
-  wrong here inflated this exercise's own first figure by 45%. An embedding lookup is a *gather* —
+  wrong here made this exercise's own first numerator 45% too large. An embedding lookup is a
+  *gather* —
   it reads one row per token and does no arithmetic at all — so the token and position tables
   contribute parameters and essentially no FLOPs. Counting them is free inflation, which is why
   every published MFU uses **non-embedding** parameters. `flops_per_token` states which convention
