@@ -89,18 +89,27 @@ PATTERNS: tuple[str, ...] = (
     # different article. The derived `.faithful.txt` IS tracked; its input is not, so losing this
     # destroys the provenance of the number the whole exercise is graded on.
     "src/exercises/*/src/solution/**/*",
-    # The frozen copies of the standard files. Local-only by decision: they exist to be diffed
-    # against on the machine doing the rewriting, and shipping a second copy of AGENTS.md and
-    # DESIGN.md to the remote would put the same conventions in the repo twice — the argument that
-    # untracked the notebooks.
-    #
-    # That decision is what makes this entry mandatory rather than tidy. The whole point of the
-    # archive is to hold a version nothing else holds, so an archive that is neither tracked nor
-    # backed up is the one class of file this repo has already lost twice. `--force-rewrite` is
-    # cheap to re-run for a tag that still exists, but a snapshot of a tag that has been deleted,
-    # or of a file since rewritten, is gone for good.
-    "docs/standards-history/*",
 )
+
+#: **`docs/standards-history/*` is deliberately NOT in PATTERNS, and this note is here so nobody
+#: adds it back on the reasoning that used to be written above it.**
+#:
+#: It was listed, on the argument that an archive neither tracked nor backed up is the class
+#: of file this repo has already lost twice. That argument does not survive contact with what the
+#: archive actually is. Every entry in `PATTERNS` is there because losing it is **permanent**; a
+#: snapshot is `git show <tag>:<file>` plus a banner, so `tools/snapshot_standards.py --ref <tag>`
+#: rebuilds any of them exactly. The old comment also claimed a snapshot "of a file since rewritten"
+#: was gone for good — that is simply wrong: `snapshot()` reads from the tag, never from the working
+#: tree, so rewriting the live file changes nothing.
+#:
+#: What backing it up actually bought was **history of immutable files**. The byte-identical guard
+#: in `tests/test_standards_history.py` means a second version of a snapshot can never legitimately
+#: exist — and in the store's whole life the only change ever recorded against one was a reworded
+#: banner. Twenty-five files and 384 KB of a store whose entire product is earlier versions, for
+#: something that can have none.
+#:
+#: The one irrecoverable case is a snapshot of a **deleted tag**. Tags are not deleted here, and if
+#: that ever changes this decision should change with it.
 
 #: Directories that live **outside the repository** and are still backed up here.
 #:

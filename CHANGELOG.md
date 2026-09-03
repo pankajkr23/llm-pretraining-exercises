@@ -10,6 +10,28 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- **`docs/standards-history/` is no longer backed up, because it is rebuildable and the backup was
+  storing history that immutable files cannot have.** It was in `PATTERNS` on the argument that
+  *untracked and unbacked-up* is the class this repo has lost twice. Every other entry there earns
+  its place by being **permanently** lost; a snapshot is `git show <tag>:<file>` plus a banner, so
+  `snapshot_standards.py --ref <tag>` rebuilds any of them byte for byte. The old comment also
+  claimed a snapshot "of a file since rewritten" was unrecoverable, which is wrong — `snapshot()`
+  reads from the tag, never from the working tree.
+
+  What the backup bought was 25 files and 384 KB in a store whose entire product is *earlier
+  versions*, for files that can have none: `test_standards_history.py` asserts each snapshot is
+  byte-identical to its tag, so a second version can never legitimately exist. Across the store's
+  whole life the only change ever recorded against a snapshot was a reworded banner.
+
+- **The guard was inverted, and now asserts the reason rather than the fact.**
+  `test_the_archive_is_backed_up_because_nothing_else_holds_it` became
+  `test_the_archive_is_not_backed_up_because_it_is_rebuildable`, which checks **both** halves: the
+  archive is absent from `PATTERNS`, *and* every tag its snapshots name is still reachable. Dropping
+  the backup is only safe while the second holds, so a deleted tag turns it red instead of letting
+  the decision outlive its justification. Watched failing in both directions.
+
 ### Security
 
 - **A third guard, `tests/test_forbidden_vocabulary.py`, bans the words themselves — in CI and in a
