@@ -116,6 +116,19 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **A rule `AGENTS.md` states had never once been enforced, and the cause was one environment
+  variable.** *"Render every diagram before committing it, and test that it renders"* — the test
+  existed, was integration-marked, sat in the `mixtures` shard, and **skipped on every CI run since
+  it was written**, because `mermaid-cli` drives puppeteer and puppeteer insists by default on a
+  chromium it downloaded itself. The shard had already installed playwright's chromium two steps
+  earlier. Puppeteer honours `PUPPETEER_EXECUTABLE_PATH`, so the rule is now real at no extra
+  download: verified by hand first — the diagram that used to skip renders 10,806 bytes of SVG —
+  then in the suite, where it passes rather than skips.
+
+  Resolve that path in a **subprocess**: `sync_playwright()` called while pytest is running raises
+  `TargetClosedError` from its own teardown. The skip ledger entry that recorded this as *"a real
+  gap"* now records what is left, which is a machine with no chromium at all.
+
 - **An integration shard's check name carried its own exercise list, and required checks match by
   name.** With no explicit `name:`, GitHub builds a matrix job's check name from *every* matrix
   value, so the `rest` shard reported as `integration (rest, src/exercises/01-introductions

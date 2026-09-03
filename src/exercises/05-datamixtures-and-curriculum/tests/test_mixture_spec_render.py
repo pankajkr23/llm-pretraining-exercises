@@ -489,12 +489,45 @@ def test_the_method_doc_diagrams_actually_render(tmp_path):
     Skips when the CLI or a browser is unavailable, which keeps a fresh checkout working — and is
     the reason the structural check exists alongside it rather than instead of it.
     """
+    import os
     import re
     import shutil
     import subprocess
 
     if not shutil.which("npx"):
         pytest.skip("npx is not available; cannot render mermaid")
+
+    # **This test had never once run in CI, and the reason was one environment variable.**
+    #
+    # `mermaid-cli` drives puppeteer, which by default insists on a chromium **it** downloaded.
+    # No CI job provides one, so every run reached the launch failure below and skipped — while the
+    # `mixtures` shard this test lives in had already installed playwright's chromium two steps
+    # earlier. The rule in `AGENTS.md` ("render every diagram before committing it, and test that
+    # it renders") therefore read as enforced and was enforced nowhere.
+    #
+    # Puppeteer honours `PUPPETEER_EXECUTABLE_PATH`, so pointing it at the browser the shard
+    # already paid for costs nothing and makes the rule real. Verified by hand before being
+    # written in: the same diagram that skipped now renders 10,806 bytes of SVG.
+    # Resolved in a SUBPROCESS on purpose. `sync_playwright()` called inside a pytest test raises
+    # `TargetClosedError` from its own teardown — the driver does not survive being started and
+    # stopped while pytest is running. A subprocess asks the same question with no shared loop.
+    import sys
+
+    probe = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from playwright.sync_api import sync_playwright\n"
+            "with sync_playwright() as p: print(p.chromium.executable_path)",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    env = dict(os.environ)
+    chromium = probe.stdout.strip().splitlines()[-1] if probe.stdout.strip() else ""
+    if chromium and os.path.exists(chromium):
+        env["PUPPETEER_EXECUTABLE_PATH"] = chromium
 
     blocks = re.findall(r"```mermaid\n(.*?)```", export.render_method(CFG), re.S)
     assert blocks, "no mermaid blocks to render"
@@ -515,9 +548,11 @@ def test_the_method_doc_diagrams_actually_render(tmp_path):
             capture_output=True,
             text=True,
             timeout=180,
+            env=env,
         )
         if not (tmp_path / f"diagram-{index}.svg").exists():
             combined = f"{result.stdout}\n{result.stderr}"
             if "Failed to launch the browser" in combined or "bootstrap_check_in" in combined:
-                pytest.skip("mermaid's browser could not start in this environment")
+                # Now a genuine "no browser anywhere" case rather than "puppeteer wanted its own".
+                pytest.skip("no chromium available to render mermaid")
             pytest.fail(f"diagram {index} did not render:\n{combined[-600:]}")
