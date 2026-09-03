@@ -140,6 +140,18 @@ EXPECTED_IN_CI: tuple[Expected, ...] = (
         why="FLORES-200 lands under exercise 03's gitignored data/ and is never fetched in CI",
     ),
     Expected(
+        path="src/exercises/05-datamixtures-and-curriculum/tests/test_mixture_spec_render.py",
+        pattern=r"mermaid's browser could not start",
+        why=(
+            "mermaid-cli downloads its own puppeteer browser rather than reusing the chromium the "
+            "shard installs for playwright, and no CI job provides it — so this is a local gate. "
+            "It is NOT one of the NEVER_IN_CI reasons for that exact reason: those name a browser "
+            "the job installed and then could not launch, which means the job broke. **This entry "
+            "records a real gap**: AGENTS.md requires every diagram to be render-tested, and that "
+            "test has never once run in CI. TODO.md carries the decision about funding it"
+        ),
+    ),
+    Expected(
         path="src/exercises/06-build-training-dataset/tests/test_trainingdata_docs.py",
         pattern=r"nothing is currently denied",
         why=(
