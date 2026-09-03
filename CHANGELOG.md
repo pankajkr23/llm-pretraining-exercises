@@ -10,6 +10,44 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **In CI, a skip nobody declared is now a failure.** `tests/test_ci_shards_cover_everything.py`
+  already stops a whole *file* vanishing behind a module-level `importorskip`, and its own docstring
+  names the case it cannot see: an indented skip "shows up in the skip report". **Nothing here ever
+  read that report.** Three runtime reasons are environmental and each fires inside a job that has
+  just installed or built the thing it checks for — `chromium unavailable`,
+  `run deploy/vercel/build.sh first`, `{slug} is not published`. If the browser install or the build
+  step ever broke, every browser assertion in the repo would turn into SKIPPED with the job green.
+
+  A root `conftest.py` reads each skip report as it is made and rewrites an undeclared one as a
+  failure while CI is running. Verified end to end by planting both an undeclared skip and a
+  forbidden one: **exit 1 under `CI=1`, exit 0 locally**, with the planted file removed in a
+  `finally`.
+
+- **A hook rather than a sixth copy of the guard.** Exercises 02–05 each carry an
+  `if os.environ.get("CI"): pytest.fail(...)` immediately before their chromium skip. **06, 07, 08
+  and both repo-level browser suites do not** — the guard was written five times and copied forward
+  zero, which is what a rule enforced by copying does. One hook inverts the default everywhere.
+
+- **`tests/_skips.py` is the ledger**, 21 entries, each with the reason it is not a defect and a job
+  scope where it matters. `NEVER_IN_CI` names the three reasons that may never be declared at all,
+  because exempting one converts "the browser step is broken" into "everything passed" and is the
+  cheapest way out of a red shard.
+
+- **`tests/test_skip_ledger.py` guards the ledger against becoming cheap**, each property with a
+  twin: no pattern broad enough to exempt a whole file (`AGENTS.md`'s own rule — *"a file-wide
+  exemption is a hole the size of the file"*); every entry still matching a real **skip line**, not
+  merely the reason text in a comment; a pinned `sites` count so deleting one of several skips
+  sharing a reason is visible; no entry covering a `NEVER_IN_CI` reason; and no `xfail` anywhere,
+  because an xfail that genuinely fails reports green and **no ledger sees it** — written while the
+  count in this repo is still zero.
+
+### Changed
+
+- **`addopts` gains `-rs` and `xfail_strict = true` is set.** The skip report is the only place a
+  vanished test is visible, and an XPASS reporting green is the same "reads as coverage" shape.
+
 ### Security
 
 - **A third guard, `tests/test_forbidden_vocabulary.py`, bans the words themselves — in CI and in a

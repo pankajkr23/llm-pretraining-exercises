@@ -395,6 +395,17 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
   decision to hide something by default; make it deliberately, and never for the one element that
   carries the point.
 
+- **In CI a skip is a failure unless `tests/_skips.py` declares it, and three reasons can never be
+  declared.** A skip reports as a pass, so the skip report is the only place a vanished test shows
+  up — and nothing read it until the root `conftest.py` landed. The three are `chromium
+  unavailable`, `run deploy/vercel/build.sh first` and `{slug} is not published`: each fires inside
+  a job that has just installed or built the thing it checks for, so each means **that job's own
+  setup broke**, and exempting one turns ~200 browser assertions into a green run. Adding a ledger
+  entry is deliberately expensive — a reason with weight, a pattern too narrow to cover a file, a
+  pinned count of the skip lines it matches. **Never add an entry to clear a red gate.** And `xfail`
+  is refused outright, because an xfail that genuinely fails reports green and no ledger sees it —
+  `xfail_strict` catches XPASS and not that.
+
 - **A coverage guard must ask whether a test can RUN, not whether it is listed.**
   `tests/test_ci_shards_cover_everything.py` was written for the obvious failure — a file outside
   every shard is never run and CI is green — and was blind to the adjacent one: a file that *is*
