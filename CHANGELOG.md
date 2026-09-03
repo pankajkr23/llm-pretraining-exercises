@@ -32,6 +32,17 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   several stored filenames contain them; comparing against the quoted form reports tracked files as
   missing, which is the false alarm that trains someone to ignore the test.
 
+- **A second "configured at init only" bug, found by the new test failing in CI.** The store's git
+  identity was written **only when the tool created the store**. A store made by hand, or by an
+  older version of the tool, therefore has none — so on any machine with no global git config (a
+  bare runner, a fresh container) `git commit` fails and the run versions nothing. Exactly the shape
+  of the excludes bug above, hidden the same way. It is now written on every run when absent, and
+  only when absent, so a store owner who set a deliberate identity keeps it.
+
+  The test that caught it pre-creates its own store, which is why CI hit the path and a working
+  machine never did. Verified locally afterwards by running the whole suite with
+  `GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null`.
+
 - **`tests/test_backup_store_versions_everything.py`** asserts the config override and the per-file
   invariant, both local-only. Its twin runs everywhere: it plants a `.git/info/exclude` in a
   `tmp_path` store and requires `snapshot()` to raise — chosen deliberately, because a repo-local

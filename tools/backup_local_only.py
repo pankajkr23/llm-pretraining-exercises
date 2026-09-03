@@ -423,10 +423,6 @@ def snapshot(root: Path, dest: Path, files: list[Path], *, message: str) -> int:
     dest.mkdir(parents=True, exist_ok=True)
     if not (dest / ".git").is_dir():
         _git(dest, "init", "--quiet", "--initial-branch=main")
-        # A store-local identity, so a snapshot works on a machine with no global git config.
-        # Without it `git commit` fails, and the failure used to be swallowed.
-        _git(dest, "config", "user.email", "backup@local-only.invalid")
-        _git(dest, "config", "user.name", "backup_local_only.py")
         (dest / "README.md").write_text(
             "# local-only backup\n\n"
             "Versioned snapshots of the gitignored, non-regenerable files in "
@@ -453,6 +449,25 @@ def snapshot(root: Path, dest: Path, files: list[Path], *, message: str) -> int:
     #
     # Set on every run rather than only at init, because the stores that need it already exist.
     _git(dest, "config", "core.excludesFile", os.devnull)
+
+    # **A store-local identity, so a snapshot works on a machine with no global git config** — a
+    # bare CI runner, a fresh container, anyone who has not configured git. Without it `git commit`
+    # fails, and that failure used to be swallowed entirely.
+    #
+    # This was set **only when the store was created**, which is the same "configured at init"
+    # mistake as the excludes rule above and hid the same way: a store made by hand, or by an older
+    # version of this tool, has no identity and cannot commit — so it copies files, reports success,
+    # and versions nothing. Caught by a test that pre-created its own store and then failed on CI
+    # for exactly this reason.
+    #
+    # Written only when absent, so a store owner who set a deliberate identity keeps it. `--get`
+    # finds a global value too, and a global identity is enough to commit with.
+    for key, value in (
+        ("user.email", "backup@local-only.invalid"),
+        ("user.name", "backup_local_only.py"),
+    ):
+        if not _git(dest, "config", "--get", key, must_succeed=False).stdout.strip():
+            _git(dest, "config", key, value)
 
     # Everything the repo holds, plus every external directory. `pairs` is (store path, source
     # file); the store does not care that some of these came from outside the working tree.
