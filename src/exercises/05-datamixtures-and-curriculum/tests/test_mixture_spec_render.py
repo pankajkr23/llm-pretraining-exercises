@@ -489,6 +489,7 @@ def test_the_method_doc_diagrams_actually_render(tmp_path):
     Skips when the CLI or a browser is unavailable, which keeps a fresh checkout working — and is
     the reason the structural check exists alongside it rather than instead of it.
     """
+    import json
     import os
     import re
     import shutil
@@ -526,8 +527,25 @@ def test_the_method_doc_diagrams_actually_render(tmp_path):
     )
     env = dict(os.environ)
     chromium = probe.stdout.strip().splitlines()[-1] if probe.stdout.strip() else ""
+    config: list[str] = []
     if chromium and os.path.exists(chromium):
         env["PUPPETEER_EXECUTABLE_PATH"] = chromium
+        # **`--no-sandbox` is what CI needs, and the env var alone is not enough.** The first
+        # version set only `PUPPETEER_EXECUTABLE_PATH`; the `Install chromium` step succeeded, the
+        # browser was on disk, and the launch still failed on the runner — because chromium's
+        # sandbox cannot initialise there. Passing a puppeteer config file is the documented route,
+        # and it carries the executable path too, so the two travel together.
+        puppeteer = tmp_path / "puppeteer.json"
+        puppeteer.write_text(
+            json.dumps(
+                {
+                    "executablePath": chromium,
+                    "args": ["--no-sandbox", "--disable-setuid-sandbox"],
+                }
+            ),
+            encoding="utf-8",
+        )
+        config = ["-p", str(puppeteer)]
 
     blocks = re.findall(r"```mermaid\n(.*?)```", export.render_method(CFG), re.S)
     assert blocks, "no mermaid blocks to render"
@@ -540,6 +558,7 @@ def test_the_method_doc_diagrams_actually_render(tmp_path):
                 "npx",
                 "--yes",
                 "@mermaid-js/mermaid-cli",
+                *config,
                 "-i",
                 str(source),
                 "-o",
@@ -553,6 +572,12 @@ def test_the_method_doc_diagrams_actually_render(tmp_path):
         if not (tmp_path / f"diagram-{index}.svg").exists():
             combined = f"{result.stdout}\n{result.stderr}"
             if "Failed to launch the browser" in combined or "bootstrap_check_in" in combined:
-                # Now a genuine "no browser anywhere" case rather than "puppeteer wanted its own".
-                pytest.skip("no chromium available to render mermaid")
+                # **Carry the reason into the skip.** The first version said only "no chromium
+                # available", which cost a full CI round-trip to diagnose: the `Install chromium`
+                # step had SUCCEEDED and the browser was on disk, so the message was actively
+                # misleading. A skip that hides why it skipped is a skip nobody can act on.
+                pytest.skip(
+                    f"chromium present at {chromium or '(unresolved)'} but would not launch: "
+                    f"{combined.strip()[-300:]}"
+                )
             pytest.fail(f"diagram {index} did not render:\n{combined[-600:]}")

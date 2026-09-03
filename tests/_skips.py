@@ -141,18 +141,22 @@ EXPECTED_IN_CI: tuple[Expected, ...] = (
     ),
     Expected(
         path="src/exercises/05-datamixtures-and-curriculum/tests/test_mixture_spec_render.py",
-        pattern=r"no chromium available to render mermaid",
+        pattern=r"chromium present at",
         why=(
             "**This entry used to record a real gap and no longer does.** It read: mermaid-cli "
             "downloads its own puppeteer browser, no CI job provides one, so the render test is a "
             "local gate — while AGENTS.md required every diagram to be render-tested. That test "
-            "had never once run in CI. The cause was one environment variable: puppeteer honours "
-            "PUPPETEER_EXECUTABLE_PATH, and the `mixtures` shard this test lives in had already "
-            "installed playwright's chromium two steps earlier. Pointing it there costs nothing "
-            "and the rule is now enforced. What remains is the honest residue — a machine with no "
-            "chromium at all, which is a fresh checkout before `playwright install`"
+            "had never once run in CI. Two things were needed, not one. Puppeteer honours "
+            "PUPPETEER_EXECUTABLE_PATH and the `mixtures` shard already installs playwright's "
+            "chromium — but the browser also needs `--no-sandbox` on a runner, passed through a "
+            "puppeteer config file. The first fix set only the variable: the install step "
+            "SUCCEEDED, the browser was on disk, and the launch still failed. **With both, this "
+            "skip should not fire in any CI job** — the test is integration-marked, so it runs "
+            "only in shards that install chromium. The line is kept as the honest fallback for a "
+            "machine with no browser at all, and it now reports the resolved path and the launch "
+            "error, because the version that said only 'no chromium available' was misleading "
+            "enough to cost a full CI round-trip"
         ),
-        jobs=frozenset({"test"}),
     ),
     Expected(
         path="src/exercises/06-build-training-dataset/tests/test_trainingdata_docs.py",
