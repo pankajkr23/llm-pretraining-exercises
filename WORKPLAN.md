@@ -1,13 +1,21 @@
-# Work plan — the standing backlog
+# Work plan — the arc, not the state
 
-Written down because the queue got long and things were being asked for faster than they were being
-finished. Ordered exactly as PK asked for it. **Exercise 08 is released.** PR #83 and the v0.13.0 release PR are merged, the tag is pushed,
-the production gate was approved and the page is live. Later stages land as local commits on their own branch and are pushed when
-PK asks — one PR per exercise.
+> ## ⟶ For *where the work is right now*, read [`docs/agents/QUEUE.md`](docs/agents/QUEUE.md).
+>
+> **That file is the single source of truth for progress.** This one holds the *arc* — the stages,
+> why they are in this order, and what each has to achieve. Two documents because they rot at
+> different rates: the arc changes when a decision changes, the state changes several times a day.
+>
+> This split exists because there were **six** places recording progress and only the changelog was
+> accurate. A reader had to reconcile them by hand, which is the re-derivation the queue exists to
+> make unnecessary. Anything here that contradicts the queue is stale; fix it here.
+
+**Stage order changed on 2026-09-03.** Exercises 09 and 10 now come **before** the retro-fit of
+01–07. They are the two that teach training, which is the point of the repository; the retro-fit is
+polish on work already shipped and released. It may run alongside them once the shared `web/_shared/`
+layer is fixed, because until then every retro-fit unit edits the same files.
 
 Status keys: `done` · `in progress` · `queued` · `blocked`
-
-**Last updated:** 2026-09-02, after the exercise 08 readability rebuild and the A/B decision.
 
 ---
 
@@ -79,7 +87,12 @@ tracked document could still name its files, publish their sizes, describe them 
 | Five words banned and gated in CI and pre-commit; the per-topic file renamed | done |
 | Git history | **left as it is, by decision.** PR descriptions were rewritten and scan clean |
 
-## Stage 2 — Retro-fix readability and design, one exercise at a time · queued
+## Stage 2 — Retro-fix readability and design, one exercise at a time · queued, RUNS THIRD
+
+**Reordered on 2026-09-03: this now happens after stages 3 and 4.** Those two teach training,
+which is the point of the repository; this is polish on work already shipped and released. It may
+run *alongside* them once the shared `web/_shared/` layer is fixed — before that, every unit here
+edits the same files and parallel agents collide on all of them.
 
 Same treatment as 08, in this order, **each on its own branch with full e2e testing before moving
 on**: `07` → `06` → `05` → `04` → `03` → `02` → `01`.
@@ -104,36 +117,61 @@ A five-lens audit on 2026-09-02 inventoried what actually diverges. The full lis
 - **The theme and contrast guards exist only in exercise 08**, while six exercises link the
   six-theme token file.
 
-## Stage 3 — Exercise 09 · queued
+## Stage 3 — Exercise 09 · blocked, RUNS FIRST
 
-`src/exercises/09-loss-functions-output-heads` (currently an empty directory). Sources are the local
-reference material for that topic. Own branch, own PR. **Scaffold with
+**`src/exercises/09-loss-functions-output-heads` no longer exists.** It was an empty directory and
+is gone; git never held a file under it on any branch or tag, and the backup store never held one.
+Nothing was lost but the placeholder, and neither guard could have caught it — the backup tool
+copies *files* matching `PATTERNS` and the tripwire asks whether a stored file is missing, so an
+empty directory is invisible to both by construction. A `REQUIREMENTS.md` inside it **would** have
+been protected. The generator recreates it, so there is nothing to restore.
+
+**Blocked on two things**, both in [`docs/agents/QUEUE.md`](docs/agents/QUEUE.md): PR #96, and the
+decision about the two explainer documents, which are gitignored and therefore unreadable by any
+worktree, clone or CI job that would need them to build 09's explainer.
+
+Sources are the local reference material for that topic. Own branch, own PR. **Scaffold with
 `tools/new_exercise.py`, never by hand** — six test families apply the moment `pyproject.toml`
 lands, three of them checking for gitignored files a fresh clone will never have.
 
 Build it to `docs/DESIGN.md` from the first commit rather than retro-fitting it later.
 
-## Stage 4 — Exercise 10 · queued
+## Stage 4 — Exercise 10 · queued, RUNS SECOND
 
-`src/exercises/10-training-loop` (currently an empty directory). Sources are the local reference
-material for that topic. Own branch, own PR.
+`src/exercises/10-training-loop`, likewise gone as an empty directory and likewise recreated by the
+generator rather than by hand. Sources are the local reference material for that topic. Own branch,
+own PR.
 
-## Release — v0.13.0 · ready when PR #83 merges
+This is the flagship training run, so two rules apply here that do not elsewhere. **Exercise
+`save()` in a two-step run before any long one** — three experiments in exercise 05 trained to
+completion and then died writing their results, one of them losing fifteen trained models to its
+final statement. And **print tokens-consumed ÷ corpus-tokens per lane next to the mixture table
+before starting**, so a lane the run never reads through is visible rather than inferred.
 
-Last tag is **v0.12.0**; `origin/main` is at that tag and **59 commits** sit on
-`feat/08-attention-timeline-scaffold` (PR #83). `CHANGELOG.md`'s `[Unreleased]` is current.
+## Release — v0.13.0 · shipped
 
-The sequence, and who does what:
+Tagged, released, and deployed to production through the gated environment. The page is live and
+returns 200 to an anonymous request.
 
-1. **PK merges PR #83.** Merging is his.
-2. A release PR moves `[Unreleased]` → `[0.13.0]`, dated. Minor bump: additions and fixes, nothing
-   breaking.
-3. **PK merges the release PR.**
-4. Verify `main` is green, then `git tag v0.13.0 && git push origin v0.13.0`. Tagging is mine and
-   needs no prompting.
-5. `release.yml` cuts the GitHub Release from that changelog section and deploys the tagged commit
-   to production through the gated `production` environment. **The production gate is PK's.**
-6. Only then does O4 unblock: re-check the app link logged out, then submit.
+**One thing did not follow, and it is the only item on this page waiting on a person:** exercise 08
+is finished and released and has **not been submitted**. Everything else here is building; that one
+converts completed work into a result.
+
+**The release ritual, for the next one.** Recorded as a sequence because it has steps on both sides
+of the tag and they are easy to get backwards:
+
+1. A release PR moves `[Unreleased]` → `[X.Y.Z]`, dated. **PK merges it** — merging is always his.
+2. Verify `main` is green, then `git tag vX.Y.Z && git push origin vX.Y.Z`. Tagging needs no
+   prompting.
+3. `release.yml` cuts the GitHub Release from that changelog section and deploys the tagged commit.
+   **The production gate is PK's.**
+4. **After the tag exists**, `uv run python tools/snapshot_standards.py` — it reads the tag, so it
+   cannot run before one.
+5. Re-check the app link logged out, then submit.
+
+**A live defect in step 3, found on 2026-09-03 and not yet fixed:** when a tag has no matching
+`## [X.Y.Z]` section, `release.yml` writes `have_notes=false`, echoes one line into the log, and
+publishes the release with auto-generated notes. Nothing goes red. It should `exit 1`.
 
 ---
 

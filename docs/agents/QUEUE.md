@@ -73,9 +73,41 @@ guesses.
 
 ---
 
+## Where the work is — read this first
+
+**Updated at the end of every unit, and whenever a pull request merges.** If it disagrees with
+`git log`, git is right and this is the bug; say so rather than working around it.
+
+Numbers are deliberately absent here. A count typed into prose goes stale while the thing it counts
+moves, which is a failure this repo has already paid for more than once — so read the live ones:
+
+```bash
+gh pr list                                  # what is open
+git log origin/main --oneline -15           # what landed
+uv run pytest -m "not integration" -q       # whether it is green
+```
+
+| phase | state |
+| --- | --- |
+| **Unblock the pull-request backlog** | **done** — the batch listed in the log below is merged, `main` is linear |
+| **Arm the fleet** | **partly done** — the guard, the reviewers and this file are merged. `tools/install_agent_fleet.py` **has not been run**, so every mechanism is present and none is armed. No `UNIT.md` template yet, no event log |
+| **Live defects on deployed pages** | not started — exercise 01's dark themes, exercise 04's undeclared properties |
+| **The shared `web/_shared/` layer** | not started — and it gates running units in parallel |
+| **Exercise 09, then 10** | blocked on the scaffolding prerequisites, and on deciding what of the explainer documents becomes tracked |
+| **Retro-fix 07 → 01** | not started. Deliberately **after** 09 and 10: those two teach training, the retro-fix is polish on finished work |
+
+**Waiting on a human, and nothing else moves it:** exercise 08 is finished, released and live, and
+has **not been submitted**. It is the only item here that converts completed work into a result.
+
+---
+
 ## Queue
 
-Order is the retro-fix order from the workplan. Nothing here is IN FLIGHT until a human says so.
+Nothing here is IN FLIGHT until a human says so.
+
+**The order changed.** It was the retro-fix order from the workplan; it is now 09 and 10 first,
+because those are the two exercises that teach training and the retro-fix is polish on work already
+shipped. The workplan's stage numbering is the same decision written the other way round.
 
 ### unit-08-notebook — **the pilot. Read this one in full before approving.**
 
@@ -137,28 +169,106 @@ iterate, PR — on work small enough to watch in one sitting, and what it produc
 was actually wanted. The success criterion is **not** the diff: it is that the harness needed no
 intervention, and that a reader can say what each guard did and why the run stopped where it did.
 
-### unit-07-retrofit
+### unit-live-defects — readers hit these today
 - status: QUEUED
-- scope: `src/exercises/07-model-embeddings-internals/`, `CHANGELOG.md`
-- what: retro-fit the page to `docs/DESIGN.md`, and its notebook to the rule above. Its own
-  `PROGRESS.md` already names two defects.
+- scope: `src/exercises/01-introductions/`, then `src/exercises/04-data-cleaning-dedup/`
+- what: **01** declares its dark-theme diagram tokens with no semicolons across four proof pages, so
+  four properties are never declared in the dark blocks and a dark-theme reader gets light diagram
+  colours. **04** references seven custom properties that exist in no theme, so the fallback always
+  wins. One pull request per exercise, plus one repo-wide guard: no custom property is referenced
+  that no theme declares.
+- reviewers: reader, engineer
+
+### unit-shared-layer — **the gate on running anything in parallel**
+- status: QUEUED
+- scope: `src/exercises/*/web/_shared/`, `deploy/vercel/_shared/`
+- what: dead code (`anim.js` is vendored six times and imported by nothing; `explainer.css` is
+  linked by six pages and used by two), two theme pickers, seven names for two controls, and
+  promoting exercise 08's theme and contrast guards into `tests/` for every deployable page.
+- why first: exercises 09 and 10 will vendor this directory, so building them first means inheriting
+  the breakage and fixing it twice — and until it lands, every retro-fix unit edits the same files
+  and three agents collide on all of them.
+- reviewers: reader, engineer, auditor
+
+### unit-09 — loss functions and output heads
+- status: BLOCKED — on #96, and on deciding what of the explainer documents becomes tracked
+- what: scaffolded with `tools/new_exercise.py`, **never by hand**: six test families apply the
+  instant `pyproject.toml` lands. Two registrations are deliberately deferred by the generator and
+  must be done by a human — the landing card, and the spine ledger entry.
+- blocker, stated plainly: the two documents an explainer is *required* to be built from are
+  gitignored, so no worktree, no clone and no CI can read them. An agent asked to build 09's
+  explainer has no access to the specification it is graded against.
+
+### unit-10 — the training loop
+- status: QUEUED
+- what: same scaffold, same contract. Two extra rules for the flagship run: exercise `save()` in a
+  two-step run **before** any long one, and print tokens-consumed ÷ corpus-tokens per lane next to
+  the mixture table before starting.
+
+### unit-07-retrofit … unit-01-retrofit
+- status: QUEUED — after 09 and 10, and able to run alongside them once `unit-shared-layer` lands
+- scope: one exercise each, `src/exercises/NN-*/`, `CHANGELOG.md`
+- what: the twelve-part spine in order, the page rebuilt to `docs/DESIGN.md`, the README's
+  three-reader path, and the notebook rebuilt to the rule above. Exercise 07's own `PROGRESS.md`
+  already names two defects.
 - reviewers: reader, engineer, auditor, **continuity**
-
-### unit-06-retrofit … unit-01-retrofit
-- status: QUEUED
-- what: the same, in descending order. Two cross-cutting items get **their own units**, not folded
-  in: promoting the theme and contrast guards out of exercise 08 into `tests/`, and consolidating
-  the seven names for two controls in `web/_shared/`.
-
-### unit-09, unit-10
-- status: QUEUED
-- what: new exercises, scaffolded with `tools/new_exercise.py` — never by hand, since six test
-  families apply the instant `pyproject.toml` lands.
 
 ---
 
 ## Log
 
+**This log had one line while nine pull requests merged past it**, which is worth recording at the
+top rather than quietly backfilling. The convention was written here and then not followed, so the
+one file built to answer *"where are we?"* could not. The entries below were reconstructed from
+`git log` and the pull requests afterwards — which is exactly the re-derivation this file exists to
+make unnecessary.
+
+Two things follow. Nothing below carries a `@ sha` unless it was checked, because a fabricated
+evidence line is worse than a missing one. And the backlog batch was not run as *units* — it
+predates the harness — so it is logged as what it was.
+
 ```
-2026-09-03  fleet  queue created; no unit has run yet
+2026-09-03  fleet         queue created; no unit has run yet
+2026-09-03  backlog       #87 merged: design standard named a CSS class that does not exist
+2026-09-03  backlog       #88 merged: backup store obeyed the global gitignore
+2026-09-03  backlog       #89 merged: stop backing up the rebuildable standards archive
+2026-09-03  backlog       #90 merged: an undeclared CI skip is now a failure
+2026-09-03  backlog       #90 CI RED first: test_backup_store_versions_everything skipped
+                          undeclared. #88 added that file AFTER this ledger was written. Declared
+                          in tests/_skips.py; escalate() returns ALLOWED with the entry and
+                          ESCALATED without it, which reproduces the failure
+2026-09-03  backlog       #91 merged: commit scope guard, 10 files / 500 lines
+2026-09-03  backlog       #91 CAUGHT ITS AUTHOR one PR later: a merge commit given a custom
+                          message lost the "Merge " exemption and was refused at 30 files /
+                          1754 lines. Split into a pure merge plus a 1-file doc commit
+2026-09-03  backlog       #92 merged: fleet architecture. Two defects found while resolving it —
+                          STEER.md named twice and read by nothing, and section 9 omitted the one
+                          step that arms the system
+2026-09-03  backlog       #92 reframed on PK's objection: "simplicity over capability" was the
+                          wrong constraint. Rewritten as verifiability, and section 7 split into
+                          refused-on-measurement / sequenced / inapplicable-at-one-user
+2026-09-03  backlog       #93 merged: the fleet guard. Two bugs fixed first — it failed OPEN
+                          inside a worktree (root from __file__), and Bash bypassed it entirely
+                          (echo >, sed -i). Verified: main checkout BLOCKED, worktree ALLOWED
+2026-09-03  backlog       #95 merged: Tier-1 page invariants. 14 integration tests, reachable via
+                          the rest shard, confirmed rather than assumed
+2026-09-03  backlog       #94 merged LAST, and held back for two defects of its own: build() took
+                          the verdict as a DEFAULT so --write attested PASSED on a machine with no
+                          reference material; and the digest covered 474 files while the check
+                          reads 293. Both fixed, both regression-tested
+2026-09-03  changelog     all 8 conflicted on CHANGELOG.md's [Unreleased] anchor, mutually.
+                          Ruleset gained "squash"; each branch took main and kept both sides.
+                          Consolidated [Unreleased] to one heading per section on the way
+2026-09-03  changelog     resolver was WRONG TWICE before it was right: it handled one conflict
+                          region when #93 had two, then kept both sides of an already-shared
+                          bullet and produced 39 where 33 was correct. Aborted both times.
+                          Final check: result == union of both sides, 0 missing, 0 extra
+2026-09-03  ruleset       `update` rule removed by PK, so merges no longer need a bypass.
+                          delete_branch_on_merge on. required_status_checks still ABSENT —
+                          nothing makes CI green a condition of merging
+2026-09-03  #96 PR OPEN   two prerequisites before exercise 09: the integration shards' check
+                          names carried their own exercise list (a required check pinned to one
+                          would stop reporting the moment 09 joins the rest shard), and the
+                          scaffolder named exercises by a convention none of the eight uses
+2026-09-03  fleet         this file reconciled with reality; WORKPLAN.md and TODO.md too
 ```
