@@ -23,6 +23,14 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
+        with:
+          # Full history, because `tools/queue_status.py` compares the progress log against the
+          # pull requests actually merged and a shallow clone has none to compare against. It was
+          # first written off as a local-only gate for that reason — which this repo's own rule
+          # calls barely a gate. The cost was assumed rather than measured, and the measurement
+          # says otherwise: the `security` job already fetches full history and scans EVERY commit
+          # with gitleaks in 7 seconds, over 519 commits and a 33 MB `.git`.
+          fetch-depth: 0
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
