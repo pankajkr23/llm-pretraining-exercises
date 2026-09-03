@@ -443,4 +443,26 @@ predates the harness — so it is logged as what it was.
                           scaffolded. The generator's own test used 09/lossheads as its fixture —
                           the exact spec 09 would claim — so the collision check found itself the
                           moment 09 existed. Fixture moved to 99/scaffoldprobe
+2026-09-03  exercise-09   09 built to its requirements: seven numbers and two findings, all
+                          generated into results/ and rendered. A t+2 head sits above a t+1 head
+                          on 297 of 300 steps; an off-by-one target shift trains to 0.18 against
+                          the correct shift's 4.14 — the bug makes the loss BETTER
+2026-09-03  review        three reviewers read 09 and found three blockers, every one a claim that
+                          read as checked. The boundary mask kept every pad-to-pad pair (-1 == -1),
+                          and its guard asserted the same expression the implementation used, so it
+                          held for any input. RESULTS.md claimed every figure was generated and
+                          fifteen were typed — inside the template the byte-equality test compared
+                          against. And an importorskip turned a repo-wide guard red
+2026-09-03  exercise-10   10 built: six items, all generated. Two figures were flattering
+                          themselves — MFU divided CPU work by a GPU's peak (39.13%) and priced the
+                          embedding tables, which are gathers. The honest figure is 27.69%
+2026-09-03  review        three reviewers read 10. The central finding is a real bug in shipped
+                          code: decompose() was correct at 0.1 and wrong on 3.7% of bf16 and 30% of
+                          E4M3 inputs, returning values exactly twice too large. 0.1 was the whole
+                          test. The cross-check now sweeps 2,000 values per format, which found a
+                          second limit nobody had reasoned about — subnormals
+2026-09-03  exercise-10   10's notebook is TRACKED, under a written exception in AGENTS.md and a
+                          .gitignore negation. Its requirements ask for the ipynb with no
+                          alternative, where 09's offered "the ipynb file OR training logs".
+                          backup_local_only needs no change: collect drops tracked files already
 ```
