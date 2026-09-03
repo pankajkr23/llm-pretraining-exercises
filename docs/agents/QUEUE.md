@@ -75,8 +75,11 @@ guesses.
 
 ## Where the work is — read this first
 
-**Updated at the end of every unit, and whenever a pull request merges.** If it disagrees with
-`git log`, git is right and this is the bug; say so rather than working around it.
+**An entry is written when a pull request is OPENED, not after it merges**, and
+`tools/queue_status.py --check` enforces it from pre-commit's `post-merge` stage. Recording after
+the fact cannot work: a pull request cannot log its own merge, so the check failed on every `git
+pull` and the fix needed recording in turn. If this file disagrees with `git log`, git is right and
+this is the bug — say so rather than working around it.
 
 Numbers are deliberately absent here. A count typed into prose goes stale while the thing it counts
 moves, which is a failure this repo has already paid for more than once — so read the live ones:
@@ -87,17 +90,28 @@ git log origin/main --oneline -15           # what landed
 uv run pytest -m "not integration" -q       # whether it is green
 ```
 
-| phase | state |
-| --- | --- |
-| **Unblock the pull-request backlog** | **done** — the batch listed in the log below is merged, `main` is linear |
-| **Arm the fleet** | **partly done** — the guard, the reviewers and this file are merged. `tools/install_agent_fleet.py` **has not been run**, so every mechanism is present and none is armed. No `UNIT.md` template yet, no event log |
-| **Live defects on deployed pages** | not started — exercise 01's dark themes, exercise 04's undeclared properties |
-| **The shared `web/_shared/` layer** | not started — and it gates running units in parallel |
-| **Exercise 09, then 10** | blocked on the scaffolding prerequisites, and on deciding what of the explainer documents becomes tracked |
-| **Retro-fix 07 → 01** | not started. Deliberately **after** 09 and 10: those two teach training, the retro-fix is polish on finished work |
+**Every row names the unit that does it**, and those units are defined in full further down. There
+is no separate numbering anywhere — if a conversation says "step 2" or "phase 3", it is using a name
+this file does not define, and the answer is the unit name instead.
+
+| # | what | unit | state |
+| --- | --- | --- | --- |
+| 1 | Unblock the pull-request backlog | — | **done.** The batch in the log below is merged; `main` is linear |
+| 2 | Track progress in one place | — | **done.** This file, enforced by a checker in CI. `WORKPLAN.md` holds the arc, `TODO.md` the scratch |
+| 3 | Arm the fleet | `unit-arm-the-fleet` | **partly done.** The guard, the reviewers and this file are merged — but `tools/install_agent_fleet.py` **has never been run**, so every mechanism is present and none is armed |
+| 4 | Live defects on deployed pages | `unit-live-defects` | **NEXT.** Not started. Readers hit these today |
+| 5 | The shared `web/_shared/` layer | `unit-shared-layer` | not started, and it **gates running anything in parallel** |
+| 6 | Exercise 09 | `unit-09` | **blocked** — see the unit for what on |
+| 7 | Exercise 10 | `unit-10` | not started |
+| 8 | Retro-fix 07 → 01 | `unit-07-retrofit` … `unit-01-retrofit` | not started. Deliberately **after** 09 and 10, and able to run alongside them once row 5 lands |
+
+**Read the order as a default, not a rule.** Rows 4 and 5 come before 6 because they are cheap and
+because row 5 gates parallelism; row 8 comes last because 09 and 10 teach training, which is the
+point of the repository, and the retro-fix is polish on work already shipped.
 
 **Waiting on a human, and nothing else moves it:** exercise 08 is finished, released and live, and
-has **not been submitted**. It is the only item here that converts completed work into a result.
+has **not been submitted**. It is the only item here that converts completed work into a result, and
+it appears in no row above because it is not work — it is a decision.
 
 ---
 
@@ -168,6 +182,18 @@ what moves. `lite` finishes in under ten minutes; the full run is one variable a
 iterate, PR — on work small enough to watch in one sitting, and what it produces is the thing that
 was actually wanted. The success criterion is **not** the diff: it is that the harness needed no
 intervention, and that a reader can say what each guard did and why the run stopped where it did.
+
+### unit-arm-the-fleet — everything is installed and nothing is armed
+- status: QUEUED
+- scope: `.claude/` (local, gitignored), `docs/agents/`
+- what: run `tools/install_agent_fleet.py`, which copies the guard wiring and the reviewers into the
+  gitignored `.claude/` tree. Then write the `.claude/UNIT.md` template — scope paths plus acceptance
+  checks, every one `false` — and agree where the run log lives.
+- why it is its own unit: the guard, the four reviewers and this queue are all **merged**, so the
+  machinery reads as present. None of it runs until the installer has been executed on the checkout,
+  and nothing in CI can tell the difference, because `.claude/` is gitignored by design.
+- verify by observing, not by assuming: a write to `uv.lock` from **inside a worktree** is refused,
+  `sed -i` on a guard file is refused, a reviewer cannot write, and `touch AGENT_STOP` halts a run.
 
 ### unit-live-defects — readers hit these today
 - status: QUEUED
@@ -282,4 +308,12 @@ predates the harness — so it is logged as what it was.
                           status are lexically the same; only knowledge tells them apart, which is
                           the limit recorded in the tool rather than parsed around
 2026-09-03  fleet         this file reconciled with reality; WORKPLAN.md and TODO.md too
+2026-09-03  tracking      #97 merged: this file became the single source of truth, WORKPLAN.md and
+                          TODO.md became the arc and the scratch, and the checker began enforcing
+                          it in CI rather than declaring itself local on an unmeasured cost
+2026-09-03  tracking      #98 records itself, which is the convention the checker forced into the
+                          open. A pull request cannot log its own merge after the fact, so the
+                          check failed on `git pull` after every single merge and the fix — another
+                          pull request — needed recording in turn. An entry is now written when a
+                          pull request is OPENED, and the regress closes
 ```

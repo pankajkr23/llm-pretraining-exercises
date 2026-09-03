@@ -26,6 +26,13 @@ the author replaces. A stub left unfilled is visible in review; a fabricated ent
 Wired to pre-commit's **post-merge** stage, which is when `git pull` brings a merged pull request
 down — the moment the log goes stale, rather than whenever somebody remembers.
 
+**Write the entry when the pull request is OPENED, not after it merges.** This is a convention the
+check forces rather than one it merely prefers, and the reason is a regress that showed up on the
+very first pull after shipping it: a pull request cannot record its own merge, so `--check` failed
+on `git pull` after *every* merge, and the only fix — another pull request — needed recording in
+turn, for ever. Recording at open time closes it: by the time the merge lands, the log already says
+so. `gh pr create` prints the number; add the line, amend, push.
+
 **It runs in CI as well as locally, and the reason is a measurement rather than a preference.** The
 first version skipped in CI because the runner clones shallow, and that was written up as "a local
 gate" — which this repository's own rule says is barely a gate at all. The number that settles it:
