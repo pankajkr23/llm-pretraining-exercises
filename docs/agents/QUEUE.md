@@ -98,7 +98,7 @@ this file does not define, and the answer is the unit name instead.
 | --- | --- | --- | --- |
 | 1 | Unblock the pull-request backlog | — | **done.** The batch in the log below is merged; `main` is linear |
 | 2 | Track progress in one place | — | **done.** This file, enforced by a checker in CI. `WORKPLAN.md` holds the arc, `TODO.md` the scratch |
-| 3 | Arm the fleet | `unit-arm-the-fleet` | **partly done.** The guard, the reviewers and this file are merged — but `tools/install_agent_fleet.py` **has never been run**, so every mechanism is present and none is armed |
+| 3 | Arm the fleet | `unit-arm-the-fleet` | **done.** PK ran the installer; the guard is wired and all six behaviours were observed, not assumed — worktree write blocked, `sed -i` on a guard blocked, standard file blocked, ordinary source allowed, reading a guard allowed, `AGENT_STOP` halts and resumes. Reviewers are `Read, Grep, Glob` |
 | 4 | Live defects on deployed pages | `unit-live-defects` | **NEXT.** Not started. Readers hit these today |
 | 5 | The shared `web/_shared/` layer | `unit-shared-layer` | not started, and it **gates running anything in parallel** |
 | 6 | Exercise 09 | `unit-09` | **blocked** — see the unit for what on |
@@ -303,6 +303,18 @@ predates the harness — so it is logged as what it was.
                           about what it was looking at, each time presenting as a clean pass. It
                           also preferred a local `main`, which is stale the moment it is not
                           pulled; `origin/main` is the authority and now comes first
+2026-09-03  arm-fleet     row 3 CLOSED. PK ran install_agent_fleet.py; the guard is wired and all
+                          six behaviours were observed rather than assumed: a uv.lock write from
+                          inside a real worktree BLOCKED (#93's bug 1, live), `sed -i` on a guard
+                          file BLOCKED (#93's bug 2, live), a standard file with no unit declared
+                          BLOCKED, ordinary source ALLOWED, reading a guard file ALLOWED, and
+                          AGENT_STOP halting then resuming (0 -> 2 -> 0). All four reviewers
+                          declare `tools: Read, Grep, Glob`
+2026-09-03  arm-fleet     one of those checks was mislabelled and the guard was right: a resume
+                          test read exit=2 where the label said 0, because UNIT.md still scoped
+                          writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
+                          restores the documented default — no unit file means scope is inert,
+                          while measured data, guards and standards stay refused regardless
 2026-09-03  tracking      and then the new check flagged the line above THIS one, because that
                           line quoted the marker it searches for. A status and a quotation of a
                           status are lexically the same; only knowledge tells them apart, which is
