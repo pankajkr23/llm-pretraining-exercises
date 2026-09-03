@@ -163,3 +163,20 @@ repos:
         stages: [post-checkout, post-merge, post-rewrite]
         always_run: true
         pass_filenames: false
+
+      # `post-merge` is the moment the progress log goes stale: a `git pull` on main brings down a
+      # squash-merged pull request the log does not mention yet. Checking here means the omission
+      # surfaces while the person who merged it still has the context, rather than being
+      # reconstructed from `git log` days later — which is precisely what this repo had to do after
+      # NINE pull requests merged past a log reading "no unit has run yet".
+      #
+      # It REFUSES and never writes. `--append` exists and is deliberately manual: a generated entry
+      # says what changed, which the changelog already says better, while the entry worth reading
+      # carries what went red and what it cost — and only the author knows that.
+      - id: queue-is-current
+        name: the progress log records every merged pull request
+        entry: uv run python tools/queue_status.py --check
+        language: system
+        stages: [post-merge, post-rewrite]
+        always_run: true
+        pass_filenames: false

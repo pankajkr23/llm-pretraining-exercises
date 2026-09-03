@@ -12,6 +12,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **The progress log cannot silently fall behind what merged.** `docs/agents/QUEUE.md` is the single
+  source of truth for progress, tracked so state survives a crash, a context reset and a fresh clone
+  — and it carried one line reading *"no unit has run yet"* while **nine** pull requests merged past
+  it. `tools/queue_status.py --check` now refuses when the log does not record a squash-merged pull
+  request, wired to pre-commit's **`post-merge`** stage: the moment a `git pull` brings one down,
+  rather than whenever somebody remembers.
+
+  **It refuses and never writes, and that is the design rather than a limitation.** Generating the
+  entry would say what changed, which the changelog already says better; the entries worth reading
+  carry what went red first and which guard caught it, and only the author knows that. `--append`
+  exists and is manual, offering a stub with a `TODO` the author replaces — because a stub left
+  unfilled is visible in review and a plausible sentence nobody wrote is not. A shallow clone has no
+  history to read, so the tool says so and stops rather than passing quietly, which makes this a
+  local gate and not a CI one.
+
 - **In CI, a skip nobody declared is now a failure.** `tests/test_ci_shards_cover_everything.py`
   already stops a whole *file* vanishing behind a module-level `importorskip`, and its own docstring
   names the case it cannot see: an indented skip "shows up in the skip report". **Nothing here ever
