@@ -43,7 +43,7 @@ on day 40. You open the folder, find 30 GB of files, and there is no way to answ
 
 That is the motivation, in the instructor's own words. The deliverable is therefore not a data
 loader but a **ledger** — an append-only record written as training happens — so the run can be
-interrogated afterwards. The requirements says the system is complete only when it can prove four
+interrogated afterwards. The requirements say the system is complete only when it can prove four
 things, and each maps onto one subsystem:
 
 | the question | the subsystem |

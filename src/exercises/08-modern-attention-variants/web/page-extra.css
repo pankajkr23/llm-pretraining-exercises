@@ -1692,7 +1692,7 @@ a.guide-path:focus-visible {
   }
 }
 
-/* A requirements document: orientation ABOVE a figure. A caption argues after; this says what you are looking at
+/* A preamble: orientation ABOVE a figure. A caption argues after; this says what you are looking at
  * before you have to guess. Set at prose measure, not full bleed, because it is read not scanned. */
 .preamble {
   /* NO `ch` MEASURE HERE. `ch` resolves against the element that declares it, and this one is

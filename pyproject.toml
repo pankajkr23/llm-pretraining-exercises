@@ -27,7 +27,16 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["src", "tests"]
 markers = ["integration: slower end-to-end tests (tiny train runs, browser rendering)"]
-addopts = "-q"
+# `-rs` prints the reason for every skip. A skip reports as a pass, so the report is the only place
+# a vanished test is visible at all — and until the root `conftest.py` landed, nothing in this repo
+# ever read it. Keep it on: the ledger's failure messages are far easier to act on next to the list.
+addopts = "-q -rs"
+# An XPASS is a test that was declared broken and is not. Left non-strict it reports green, which is
+# the same "reads as coverage" shape the skip ledger exists for. Note this does NOT cover an xfail
+# that genuinely fails — that reports green too, and no ledger sees it, which is why
+# `tests/test_skip_ledger.py::test_no_test_uses_xfail_where_no_ledger_can_see_it` refuses xfail
+# outright while the count in this repo is still zero.
+xfail_strict = true
 
 [tool.ruff]
 line-length = 100
