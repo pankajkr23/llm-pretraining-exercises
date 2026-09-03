@@ -396,6 +396,10 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
+                          so the checker refused the next branch that touched this file — the
+                          open-time convention was followed for the ROWS and forgotten for the
+                          LOG line, which is the same regress in a smaller form
 2026-09-03  shared-layer  #101 opened: removed 2,578 lines of vendored code no page referenced —
                           anim.js (167 lines x 6 copies, seven exports, zero importers) plus
                           explainer.js and num.js from the four exercises linking neither. The
