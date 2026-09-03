@@ -116,6 +116,35 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercise 01's dark themes were broken on all four deployed proof pages, and had been for as
+  long as the pages existed.** Every custom-property declaration inside their
+  `@media (prefers-color-scheme: dark)` and `[data-theme=…]` blocks was missing its semicolon — **26
+  of them across 8 blocks**. A custom property's value runs to the next `;` or the closing `}`, so a
+  parser read each block as **one** declaration whose value was the remaining declarations. The
+  audit recorded this as four tokens keeping their light values; it was worse than that. The
+  swallowing property is also left holding something that is not a colour, so **every** token in the
+  block was wrong, and a reader on a dark theme got light diagram colours on a dark page — the exact
+  failure the comment two lines below the block says it exists to prevent.
+
+  Nothing caught it because nothing could: the HTML is valid, CSS is specified to discard what it
+  cannot parse rather than to fail, and `node --check` never sees a `<style>` block. A new guard
+  now flags a declaration whose *value* contains another property name, with a twin proving it does
+  not fire on `var(--fg)`.
+
+- **Exercise 04 referenced seven custom properties that no stylesheet declares**, so their hardcoded
+  fallbacks won in all six themes: `--radius`, `--rule`, `--rule-strong`, `--code-bg`, `--tip-bg`,
+  `--tip-fg` and `--shadow-soft`, invented beside a real token file publishing `--line`,
+  `--line-strong`, `--panel`, `--fg` and `--shadow`. Its tooltip was therefore a **dark chip in
+  every theme**, wrong in `soft-light` and `high-contrast`. Mapped onto the tokens `docs/DESIGN.md`
+  publishes, and read back in a browser per theme: the tooltip now tracks all six. A second guard
+  refuses any property referenced but declared nowhere — the same failure with a wider blast radius,
+  and equally invisible, because a fallback means nothing breaks.
+
+- **Eight places painted `color: #fff` on a `var(--accent)` background** where `--on-accent` exists
+  for exactly that. Fixed in the files a single exercise owns. `.back:hover` is deliberately **not**
+  fixed here: it lives in six byte-identical vendored copies of exercise 03's component stylesheet,
+  and changing one would drift it from the other five. That is the shared-layer unit's work.
+
 - **A rule `AGENTS.md` states had never once been enforced, and the cause was one environment
   variable.** *"Render every diagram before committing it, and test that it renders"* — the test
   existed, was integration-marked, sat in the `mixtures` shard, and **skipped on every CI run since
@@ -136,6 +165,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   check whose name changes stops reporting, which blocks every pull request with no error saying
   why. Exercises 09 and 10 join `rest`, so this was days away. The job is now named
   `integration (${{ matrix.name }})`, giving three stable checks that survive any shard change.
+
 - **The scaffolder invented a naming convention the eight shipped exercises do not use.** It wrote
   `Topic NN` into a new exercise's package description and `PROGRESS.md` heading, while every
   tracked artefact says `Exercise NN` — seven of eight descriptions and all four `PROGRESS.md`
@@ -151,6 +181,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   reports what it found, the verdict is a required argument so it cannot be defaulted into the file
   again, and `--write` **refuses and writes nothing** unless the gate genuinely passed. Verified by
   running it with the material hidden: `UNAVAILABLE`, exit 1, receipt untouched.
+
 - **The same receipt was invalidated by 181 files the check never opens.** Its digest covered every
   tracked non-binary file — **474** here — while the quoting half reads only `.md`, `.py` and
   `.txt`, which is **293**. Every stylesheet, lockfile, manifest and JSON fixture in the repo could

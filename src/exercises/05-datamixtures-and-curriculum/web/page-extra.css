@@ -157,14 +157,14 @@ section > input[type='range'] { width: min(100%, 460px); accent-color: var(--acc
   border-radius: 999px;
   border: 1px solid transparent;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   cursor: pointer;
 }
 .btn:hover { filter: brightness(1.08); }
 .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .btn.ghost { background: transparent; color: var(--accent); border-color: var(--line); }
 .btn.ghost:hover { border-color: var(--accent); filter: none; }
-.btn.ghost.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn.ghost.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 
 .toggle { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 6px; }
 .tier-out { margin-top: 12px; }
