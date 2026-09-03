@@ -128,11 +128,10 @@ the new one, and deletes it. Nobody deleted anything. So:
   paragraph named three classes while `PATTERNS` protected eleven, so an agent reading only the
   rulebook would have believed `rm TODO.md` was recoverable. **Read `PATTERNS` before touching
   anything gitignored.** Each entry there carries a comment saying why it cannot be regenerated, and
-  six are named nowhere else: `TODO.md` · `.claude/settings.local.json` (losing it silently changes
+  five are named nowhere else: `TODO.md` · `.claude/settings.local.json` (losing it silently changes
   what agents may run without asking, rather than failing) · `src/exercises/*/docs/*.md` (planning
   and critique notes) · `src/exercises/*/docs/*.html` (saved reference pages, snapshots of things
-  that change) · `docs/standards-history/*` (the frozen standard files — the only member that is
-  **re-creatable**, via `snapshot_standards.py --ref <tag>`, so long as the tag still exists) · and
+  that change) · and
   **`src/exercises/*/src/solution/**/*`, the one class with no recovery path at
   all** — it has never been in git on any branch, so the `git show <untracking-commit>^:<path>`
   fallback below is inapplicable by construction, and its `corpus/*.raw.html` inputs pin no revision,
@@ -958,11 +957,20 @@ building or changing a page; the rules that matter across exercises are below.
 
   **The archive is gitignored, and that is a decision with two consequences.** Tracking it would put
   a second copy of `AGENTS.md` and `DESIGN.md` on the remote — the same argument that untracked the
-  notebooks — and it is only ever read on the machine doing the rewriting. So: every guard that
+  notebooks — and it is only ever read on the machine doing the rewriting. So every guard that
   reads it **skips** on a clone and in CI, which means this rule is enforced by whoever has the
-  archive or by nobody; and it joins the protected local-only set, in `PATTERNS` and under the
-  tripwire, because *untracked and unbacked-up* is precisely the class this repo has already lost
-  twice. Unlike the notebooks it is **re-creatable** — `--ref <tag>` rebuilds any snapshot whose tag
-  still exists — so the irrecoverable case is narrow: a snapshot of a deleted tag. Two guards that
-  run everywhere hold the pair together: one fails if a snapshot is ever committed, one fails if the
-  ignore rule disappears. It must be exactly one of tracked or ignored, never neither.
+  archive or by nobody. Two guards that run everywhere hold the pair together: one fails if a
+  snapshot is ever committed, one fails if the ignore rule disappears. It must be exactly one of
+  tracked or ignored, never neither.
+
+  **It is deliberately NOT in `PATTERNS`, and the reason matters more than the fact.** It was, on
+  the argument that *untracked and unbacked-up* is the class this repo has lost twice — but every
+  entry in `PATTERNS` earns its place by being **permanently** lost, and a snapshot is
+  `git show <tag>:<file>` plus a banner, so `--ref <tag>` rebuilds any of them byte for byte. What
+  the backup actually bought was *history of immutable files*: the byte-identical guard means a
+  second version can never legitimately exist, and across the store's whole life the only change
+  ever recorded against a snapshot was a reworded banner. The one irrecoverable case is a snapshot
+  of a **deleted tag**, so `test_the_archive_is_not_backed_up_because_it_is_rebuildable` asserts
+  both halves — not in `PATTERNS`, *and* every tag a snapshot names is still reachable. If tags ever
+  start being deleted, that guard goes red and this decision gets revisited rather than quietly
+  outlived.
