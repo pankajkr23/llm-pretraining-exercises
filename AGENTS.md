@@ -141,6 +141,14 @@ the new one, and deletes it. Nobody deleted anything. So:
 - **After any branch switch, pull, merge, rebase or stash, run the tripwire** —
   `uv run pytest tests/test_local_only_files_present.py`. It fails when *some* of these files are
   present and others gone, and skips when all are absent (a clone, not a loss).
+- **The store is a git repo, so it obeys your global gitignore — and that silently un-versions
+  files.** `~/.config/git/ignore` applies inside the store like anywhere else. A global rule
+  matching `.claude/settings.local.json` meant that file was copied on every run and committed on
+  none: present on disk, `--verify` satisfied because the bytes matched, and **no history at all**,
+  which is the entire product. `snapshot()` now sets `core.excludesFile` to the null device every
+  run and asserts per file that what it copied is what git tracks. A repository-local
+  `.git/info/exclude` can still reach this, which is what the twin test plants.
+
 - **Recovery, in the order to try it:**
   ```bash
   uv run python tools/backup_local_only.py --verify              # 1. does the store have it?
