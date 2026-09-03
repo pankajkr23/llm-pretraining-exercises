@@ -1,6 +1,6 @@
 """Throughput and packing efficiency — every figure derived from artifacts, none reported alongside.
 
-The requirements is explicit that an unreconstructible packing or throughput figure earns no
+The requirements are explicit that an unreconstructible packing or throughput figure earns no
 credit. So
 the tests here check reconstructibility, and they check the
 two ways a throughput figure is usually flattering: counting padding as work, and summing the wall
