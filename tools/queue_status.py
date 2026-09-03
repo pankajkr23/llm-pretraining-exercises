@@ -26,9 +26,19 @@ the author replaces. A stub left unfilled is visible in review; a fabricated ent
 Wired to pre-commit's **post-merge** stage, which is when `git pull` brings a merged pull request
 down — the moment the log goes stale, rather than whenever somebody remembers.
 
-**What it cannot see.** A shallow clone has no history to read, so the check reports that and stops
-rather than passing. CI clones shallow for most jobs, which makes this a local gate; saying so here
-is the point, because a guard that quietly does nothing reads as coverage.
+**It runs in CI as well as locally, and the reason is a measurement rather than a preference.** The
+first version skipped in CI because the runner clones shallow, and that was written up as "a local
+gate" — which this repository's own rule says is barely a gate at all. The number that settles it:
+the `security` job already clones **full history** and scans every commit with gitleaks in **7
+seconds**, over 519 commits and a 33 MB `.git`. Full history costs nothing here, so the `test` job
+fetches it too and this check is enforced rather than declared.
+
+**It fails closed in both blind cases**, and the second was a real bug. A shallow clone now exits
+non-zero instead of quietly returning success. And the base ref was hardcoded to `main`, which does
+not exist on a CI pull-request checkout: `git log` on an unknown revision writes to stderr and
+leaves stdout empty, so the checker found no merges, concluded the log was complete, and passed.
+A checker that reports success exactly when it can see nothing is the shape this tool exists to
+stop, and it had it.
 """
 
 import argparse
@@ -59,10 +69,30 @@ def is_shallow() -> bool:
     return _git("rev-parse", "--is-shallow-repository").strip() == "true"
 
 
-def merged_pull_requests(limit: int = 200) -> list[tuple[str, str]]:
-    """`(number, subject)` for each squash-merged pull request, newest first."""
+#: Where to look for merges, in order. A local checkout has `main`; a CI pull-request checkout has
+#: only `origin/main` or a detached merge ref, and `HEAD` there already contains main's history.
+_BASE_REFS = ("main", "origin/main", "HEAD")
+
+
+def base_ref() -> str | None:
+    """The first ref that resolves, or None.
+
+    **The ref was hardcoded to `main`, and that is a silent-pass bug rather than a portability
+    one.** `git log` on an unknown revision writes to stderr and exits non-zero, leaving stdout
+    empty — so the caller found no merges, concluded the log recorded all of them, and passed. A
+    checker that reports "everything is fine" precisely when it cannot see anything is the failure
+    shape this tool was written to stop, and it had it.
+    """
+    for ref in _BASE_REFS:
+        if _git("rev-parse", "--verify", "--quiet", ref).strip():
+            return ref
+    return None
+
+
+def merged_pull_requests(ref: str, limit: int = 200) -> list[tuple[str, str]]:
+    """`(number, subject)` per squash-merged pull request reachable from `ref`, newest first."""
     out = []
-    for line in _git("log", f"-{limit}", "--first-parent", "--format=%s", "main").splitlines():
+    for line in _git("log", f"-{limit}", "--first-parent", "--format=%s", ref).splitlines():
         found = _MERGED.search(line)
         if found:
             out.append((found.group(1), _MERGED.sub("", line).strip()))
@@ -79,10 +109,10 @@ def logged_numbers(text: str) -> set[str]:
     return set(re.findall(r"#(\d+)", log))
 
 
-def missing(text: str) -> list[tuple[str, str]]:
+def missing(text: str, ref: str) -> list[tuple[str, str]]:
     """Merged pull requests the log does not mention, oldest first so stubs append in order."""
     known = logged_numbers(text)
-    return [entry for entry in reversed(merged_pull_requests()) if entry[0] not in known]
+    return [entry for entry in reversed(merged_pull_requests(ref)) if entry[0] not in known]
 
 
 def stub(number: str, subject: str) -> str:
@@ -113,16 +143,31 @@ def main() -> int:
     group.add_argument("--append", action="store_true", help="add a stub per unlogged merge")
     args = parser.parse_args()
 
+    # **Fails closed, both ways.** A shallow clone and an unresolvable ref both mean "cannot see the
+    # history", and the first version returned 0 for one and passed silently on the other. Either
+    # answer amounts to a checker reporting success exactly when it is blind, which is what it was
+    # written to prevent. CI now fetches full history, so neither branch should fire there — and if
+    # one does, that is a change to the workflow worth noticing rather than absorbing.
     if is_shallow():
         print(
-            f"{QUEUE.name}: not checked — this is a shallow clone with no history to read, so "
-            "this gate runs where the history does. That is a local check, not a CI one.",
+            f"{QUEUE.name}: NOT CHECKED — shallow clone, no history to read. The workflow is "
+            "supposed to fetch\nfull history for this job; if that changed, this check has stopped "
+            "running and is not merely quiet.",
             file=sys.stderr,
         )
-        return 0
+        return 1
+
+    ref = base_ref()
+    if ref is None:
+        print(
+            f"{QUEUE.name}: NOT CHECKED — none of {', '.join(_BASE_REFS)} resolves, so there is no "
+            "history to compare\nagainst. Refusing rather than reporting success while blind.",
+            file=sys.stderr,
+        )
+        return 1
 
     text = QUEUE.read_text(encoding="utf-8")
-    behind = missing(text)
+    behind = missing(text, ref)
     if not behind:
         print(f"{QUEUE.name} records every merged pull request")
         return 0

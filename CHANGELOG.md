@@ -23,9 +23,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   entry would say what changed, which the changelog already says better; the entries worth reading
   carry what went red first and which guard caught it, and only the author knows that. `--append`
   exists and is manual, offering a stub with a `TODO` the author replaces — because a stub left
-  unfilled is visible in review and a plausible sentence nobody wrote is not. A shallow clone has no
-  history to read, so the tool says so and stops rather than passing quietly, which makes this a
-  local gate and not a CI one.
+  unfilled is visible in review and a plausible sentence nobody wrote is not.
+
+  **It runs in CI too, and the `test` job now fetches full history so it can.** The first version
+  skipped there and was written up as a local gate on a cost nobody had measured; the `security`
+  job already clones full history and scans **every** commit with gitleaks in **7 seconds**, over
+  519 commits. It also **fails closed in both blind cases**, the second of which was a real bug: the
+  base ref was hardcoded to `main`, which does not exist on a CI pull-request checkout, so `git log`
+  wrote to stderr, left stdout empty, and the checker concluded the log was complete and passed. A
+  checker that reports success exactly when it can see nothing is the shape it exists to stop.
 
 - **In CI, a skip nobody declared is now a failure.** `tests/test_ci_shards_cover_everything.py`
   already stops a whole *file* vanishing behind a module-level `importorskip`, and its own docstring

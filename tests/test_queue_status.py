@@ -6,15 +6,14 @@ of these tests is not that the checker runs, but that it **refuses**. Every prop
 twice, once passing and once failing, because a checker that cannot fail would be the most
 convincing possible way to prove the log is current.
 
-**These run everywhere.** They drive the functions with synthetic text rather than reading the
-repository's real history, so a shallow CI clone changes nothing about them.
+**These run everywhere, CI included**, and two of them exist because of what the first version got
+wrong: it hardcoded a ref that does not resolve on a CI checkout and therefore passed while blind,
+and it wrote itself off as a local-only gate on a cost nobody had measured.
 """
 
 import subprocess
 import sys
 from pathlib import Path
-
-import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "tools"))
@@ -22,6 +21,7 @@ sys.path.insert(0, str(REPO_ROOT / "tools"))
 from queue_status import (  # noqa: E402
     QUEUE,
     append_stubs,
+    base_ref,
     logged_numbers,
     stub,
 )
@@ -83,8 +83,6 @@ def test_the_checker_refuses_a_log_that_is_behind_and_says_which() -> None:
     done = subprocess.run(
         [sys.executable, str(script), "--check"], capture_output=True, text=True, check=False
     )
-    if "shallow clone" in done.stderr:
-        pytest.skip("shallow clone: no history to check against, and the tool says so itself")
     assert done.returncode == 0, (
         f"{QUEUE.name} is behind right now — this test asserts the checker works, and it is "
         f"reporting a real omission:\n{done.stderr}"
@@ -103,4 +101,37 @@ def test_the_hook_runs_where_the_staleness_happens() -> None:
     assert "post-merge" in block, "the check does not run when a merge lands"
     assert "--check" in block and "--append" not in block, (
         "the hook must refuse rather than write: a generated entry reads as finished"
+    )
+
+
+def test_it_refuses_rather_than_passing_when_it_cannot_see_the_history() -> None:
+    """The bug this had, and the one it was written to prevent — in itself.
+
+    The base ref was hardcoded to `main`, which does not exist on a CI pull-request checkout. `git
+    log` on an unknown revision writes to stderr and leaves stdout **empty**, so the checker found
+    no merges, concluded the log recorded all of them, and exited 0. It reported success precisely
+    when it was blind.
+
+    `base_ref()` now returns None when nothing resolves and the caller refuses. This asserts the
+    resolution works here *and* that the ordering is real, since a list that only ever finds its
+    first entry would hide a broken fallback.
+    """
+    resolved = base_ref()
+    assert resolved is not None, "no base ref resolves, so the checker cannot see any history"
+    assert resolved in ("main", "origin/main", "HEAD")
+
+
+def test_the_checker_runs_in_ci_rather_than_declaring_itself_local() -> None:
+    """Full history is fetched for the test job, or this guard silently stops being one.
+
+    Read out of the workflow, because the claim in the module docstring — that this is enforced
+    rather than local — is only true while that setting is there. It was written off as a local
+    gate on an *assumed* cost; the `security` job fetches full history and scans every commit in
+    seconds, so the assumption was wrong and this asserts the correction stays.
+    """
+    workflow = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    test_job = workflow.split("\n  test:")[1].split("\n  integration:")[0]
+    assert "fetch-depth: 0" in test_job, (
+        "the test job clones shallow again, so queue_status.py cannot see any merges and this "
+        "check has quietly become local-only"
     )
