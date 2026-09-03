@@ -23,6 +23,16 @@ and §8 says why for each.
 but the smallest that a person learning it can hold in their head and debug at 2am. Where a more
 capable design was available and rejected, §7 says which and on what evidence.
 
+**What is built today, and what this document is describing ahead of itself.** Built and in use: the
+`PreToolUse` guard (§3.1) with its tracked policy, the read-only reviewers (§3.3), the unit queue
+(§3.4), the kill switch (§3.5), and worktree isolation (§9). Designed here and **deliberately not
+built yet**: machine-readable review verdicts, a `Stop` hook that gates a unit's own completion, a
+mutation-probe suite for the guards, and any form of run telemetry beyond a plain log. Those moved
+to a separate piece of work so that the exercises — which are the point of this repository — are not
+waiting on the machinery that assists them. §7 covers what was rejected outright; this paragraph
+covers what was merely postponed, and the difference matters when you are deciding whether a gap is
+a bug.
+
 ---
 
 ## 2. The lifecycle
@@ -129,10 +139,15 @@ the obvious mitigation is blunt: *"Compaction isn't sufficient."*
 So state lives on disk, in git, one entry per unit with an explicit acceptance contract. The agent
 appends **evidence, not prose** — `pytest -q → 0 failures @ a3f21bc`, never "fixed the bug".
 
-### 3.5 Kill switch and steering
+### 3.5 Kill switch
 
 - **`AGENT_STOP`** — while this file exists, every tool call is blocked. One `touch` halts the fleet.
-- **`STEER.md`** — read each turn, so a running unit can be redirected without restarting it.
+
+There is deliberately **no steering file**. An earlier draft of this document described a `STEER.md`
+read each turn, so a running unit could be redirected without restarting it. Nothing reads one, and
+a document that names a file the machinery ignores is worse than one that stays silent: the reader
+edits it, nothing happens, and the failure is invisible. Redirecting a unit today means stopping it
+and rewriting `.claude/UNIT.md` — which is a human decision anyway. See §10.
 
 ---
 
@@ -259,6 +274,9 @@ uv run pre-commit install                    # wires pre-commit, commit-msg, pos
                                              # post-merge and post-rewrite
 brew install gitleaks                        # the secret scan FAILS rather than skips without it
 uv run playwright install chromium           # browser tests skip without it, locally
+uv run python tools/install_agent_fleet.py   # copies the guard wiring and the reviewers into
+                                             # .claude/, which is gitignored — WITHOUT this step
+                                             # every mechanism in §3 is present and none is armed
 ```
 
 Then, per unit:
@@ -268,7 +286,7 @@ claude --worktree <unit-slug>                # isolated branch, enforced separat
 # write .claude/UNIT.md: scope paths + acceptance checks, all "passes": false
 ```
 
-**Halt the fleet:** `touch AGENT_STOP`. **Redirect it:** edit `STEER.md`.
+**Halt the fleet:** `touch AGENT_STOP`. Removing it resumes.
 
 ---
 
