@@ -44,6 +44,7 @@ OPTIONAL_DEPENDENCY_GATES: dict[str, str] = {
     "src/exercises/07-model-embeddings-internals/tests/test_embeddings_render.py": "playwright",
     "src/exercises/08-modern-attention-variants/tests/test_attention_render.py": "playwright",
     "src/exercises/08-modern-attention-variants/tests/test_attention_themes.py": "playwright",
+    "src/exercises/09-loss-functions-output-heads/tests/test_lossheads_render.py": "playwright",
     "src/exercises/08-modern-attention-variants/tests/test_attention_diagrams.py": "playwright",
     "src/exercises/08-modern-attention-variants/tests/test_attention_measures.py": "playwright",
     "tests/test_landing_render.py": "playwright",
