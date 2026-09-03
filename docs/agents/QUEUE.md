@@ -100,7 +100,7 @@ this file does not define, and the answer is the unit name instead.
 | 2 | Track progress in one place | — | **done.** This file, enforced by a checker in CI. `WORKPLAN.md` holds the arc, `TODO.md` the scratch |
 | 3 | Arm the fleet | `unit-arm-the-fleet` | **done.** PK ran the installer; the guard is wired and all six behaviours were observed, not assumed — worktree write blocked, `sed -i` on a guard blocked, standard file blocked, ordinary source allowed, reading a guard allowed, `AGENT_STOP` halts and resumes. Reviewers are `Read, Grep, Glob` |
 | 4 | Live defects on deployed pages | `unit-live-defects` | **done**, pending review — exercise 01's 26 unterminated declarations and exercise 04's 7 orphan properties, both now guarded |
-| 5 | The shared `web/_shared/` layer | `unit-shared-layer` | **NEXT.** Not started, and it **gates running anything in parallel**. Row 4 left it one item: `.back:hover` paints `#fff` on `var(--accent)` in six byte-identical vendored copies |
+| 5 | The shared `web/_shared/` layer | `unit-shared-layer` | **partly done**, pending review. 2,578 lines of unreferenced vendored code removed and guarded. **Still open:** `.back:hover` in six identical copies, the two theme pickers, seven names for two controls, and 24 orphan CSS classes |
 | 6 | Exercise 09 | `unit-09` | **blocked** — see the unit for what on |
 | 7 | Exercise 10 | `unit-10` | not started |
 | 8 | Retro-fix 07 → 01 | `unit-07-retrofit` … `unit-01-retrofit` | not started. Deliberately **after** 09 and 10, and able to run alongside them once row 5 lands |
@@ -396,6 +396,32 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
+                          so the checker refused the next branch that touched this file — the
+                          open-time convention was followed for the ROWS and forgotten for the
+                          LOG line, which is the same regress in a smaller form
+2026-09-03  shared-layer  #101 opened: removed 2,578 lines of vendored code no page referenced —
+                          anim.js (167 lines x 6 copies, seven exports, zero importers) plus
+                          explainer.js and num.js from the four exercises linking neither. The
+                          served site drops 92 -> 78 files. All nine pages render with no console
+                          error and no failed request
+2026-09-03  shared-layer  THE AUDIT'S OWN NUMBERS WERE WRONG and so were mine. DESIGN.md said
+                          explainer.css was "used by two"; it is used by 01, 02, 03, 05, and 03
+                          alone emits 36 of its 56 classes. My first extractor said it was used by
+                          NOBODY, because it looked for el(tag, class) while 03 calls a local
+                          $(tag, class) — deleting on that would have removed a live stylesheet.
+                          The counts are now derived by a test, not typed into the standard
+2026-09-03  shared-layer  24 orphan CSS classes deliberately NOT removed: a class emitted by a
+                          path the extractor cannot see is indistinguishable from a dead one,
+                          which is the mistake above. Needs browser verification, not a grep
+2026-09-03  scope-limit   commit-scope raised 10 files/500 lines -> 20/5,000 on PK's call. The
+                          deletion above was one decision applied ten times and could not be split
+                          without a red or unguarded intermediate tree, so the trailer had become
+                          the normal path rather than the exception
+2026-09-03  mermaid       #100 opened: the diagram-render rule had never once run in CI. mermaid
+                          -cli wanted its own puppeteer chromium while the shard had already
+                          installed playwright's. One env var; the test now passes rather than
+                          skips
 2026-09-03  tracking      and then the new check flagged the line above THIS one, because that
                           line quoted the marker it searches for. A status and a quotation of a
                           status are lexically the same; only knowledge tells them apart, which is

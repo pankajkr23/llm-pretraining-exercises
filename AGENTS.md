@@ -852,7 +852,7 @@ lives only in prose should say so, rather than reading as a guarantee.
 
 ## Git workflow
 
-- **One commit, one decision — at most 10 files and 500 changed lines, or say why.** Gated at the
+- **One commit, one decision — at most 20 files and 5,000 changed lines, or say why.** Gated at the
   `commit-msg` stage by `tools/check_commit_scope.py`. `CHANGELOG.md` and `uv.lock` are not counted:
   the conventions already require the first in the same change, and the second is generated.
 

@@ -182,7 +182,11 @@ Currently enforced in this repo, and worth knowing before you trust anything:
   Note it allows **rebase merges only**, so a multi-commit PR lands as multiple commits.
 - **In CI a skip is a failure** unless `tests/_skips.py` declares it, and three reasons can never be
   declared (§6).
-- **A commit is capped at 10 files / 500 lines** unless the message carries a `Wide-change:` trailer.
+- **A commit is capped at 20 files / 5,000 lines** unless the message carries a `Wide-change:` trailer.
+  Raised from 10/500, which had started refusing work that genuinely was one decision — removing a
+  dead module vendored six times is one decision applied six times, and every split of it left
+  either a red tree or an unguarded one. A limit that makes the escape hatch the normal path has
+  stopped asking a question and started charging a toll.
 
 ---
 
