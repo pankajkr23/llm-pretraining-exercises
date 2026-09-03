@@ -45,8 +45,129 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Changed
 
+- **`docs/standards-history/` is no longer backed up, because it is rebuildable and the backup was
+  storing history that immutable files cannot have.** It was in `PATTERNS` on the argument that
+  *untracked and unbacked-up* is the class this repo has lost twice. Every other entry there earns
+  its place by being **permanently** lost; a snapshot is `git show <tag>:<file>` plus a banner, so
+  `snapshot_standards.py --ref <tag>` rebuilds any of them byte for byte. The old comment also
+  claimed a snapshot "of a file since rewritten" was unrecoverable, which is wrong — `snapshot()`
+  reads from the tag, never from the working tree.
+
+  What the backup bought was 25 files and 384 KB in a store whose entire product is *earlier
+  versions*, for files that can have none: `test_standards_history.py` asserts each snapshot is
+  byte-identical to its tag, so a second version can never legitimately exist. Across the store's
+  whole life the only change ever recorded against a snapshot was a reworded banner.
+
+- **`standards-history` joins `REGENERABLE`, or the change would have traded a redundancy for
+  noise.** `REGENERABLE` exists so that "not backed up" splits into *decided* and *overlooked*, and
+  without the entry the tool printed **25 `NOT COVERED` lines on every run** — which is how a report
+  stops being read. The archive is regenerable in exactly the sense that list means: `--ref <tag>`
+  rebuilds any snapshot byte for byte. The collected set drops from 84 files to 59.
+
+- **The guard was inverted, and now asserts the reason rather than the fact.**
+  `test_the_archive_is_backed_up_because_nothing_else_holds_it` became
+  `test_the_archive_is_not_backed_up_because_it_is_rebuildable`, which checks **both** halves: the
+  archive is absent from `PATTERNS`, *and* every tag its snapshots name is still reachable. Dropping
+  the backup is only safe while the second holds, so a deleted tag turns it red instead of letting
+  the decision outlive its justification. Watched failing in both directions.
+
+
+- **The local reference directory was renamed**, and is still gitignored and still backed up. It was
+  moved in the local-only store as a `git mv` so every file's history survives under the new path —
+  the store is an append-only high-water mark, so without that commit the tripwire would have gone
+  red permanently, asking why files it holds had vanished from the working tree. Path references
+  were updated across 15 tracked files, including two built from parts rather than quoted, which a
+  string replacement could not have caught.
+- **`.gitignore` no longer contains the word "topic" anywhere**, including in its comments.
+- **Code comments and internal test identifiers no longer refer to numbered teaching topics** —
+  they name the exercise (`exercise 05's headline mixture`) or the source notes (`the notes' own
+  words`) instead. Four identifiers were deliberately left alone because they are serialized into
+  `results/` or `web/` and renaming them would rewrite published data: `baseline_share`,
+  `taught_in_source`, `illustrative_only` and `outsideSource`.
+- **Commit messages now carry a `Co-Authored-By` trailer and nothing else** — no links back to an
+  agent conversation, which point at something nobody outside the machine can open. Branch names and
+  PR titles say what a change does rather than naming the source material.
+
+
 - **`addopts` gains `-rs` and `xfail_strict = true` is set.** The skip report is the only place a
   vanished test is visible, and an XPASS reporting green is the same "reads as coverage" shape.
+
+### Fixed
+
+- **The design standard named a CSS class that does not exist, and now a guard says so.** A
+  word-substitution sweep rewrote `` `.preamble` `` — a class name — into two English words in
+  `docs/DESIGN.md`, and did the same to the `` `preamble()` `` builder in exercise 08's `CLAUDE.md`.
+  The class had been renamed correctly in the stylesheet and the builder, so every page kept working
+  and the whole suite stayed green; only the document a reader consults before implementing a plate
+  was wrong. Both are repaired, and `DESIGN.md` now also names `.preamble-lab` and `.preamble-row`,
+  which it never did.
+
+- **`tests/test_standards_name_real_code.py` asserts every class a standard names is real** —
+  styled in a stylesheet or an inline `<style>` block, or set through `el()`, `class=`, `className`
+  or `classList`. A family reference such as `.fig-*` must have at least one member, rather than
+  being skipped. Paths, rule bodies and shell arguments are not read as selectors, because a false
+  positive here is pressure to reword correct prose until the guard stops catching anything.
+
+  **The first version of this guard passed on the very defect it was written for.** It asked only
+  whether the name appeared inside any quoted string, and this repo's JavaScript is full of
+  narrative strings — so `.requirements` "resolved" against a sentence containing the word. It was
+  caught by breaking `DESIGN.md` on purpose and watching the guard stay green; the twin test now
+  plants that exact prose alongside the fixture so the false negative cannot come back.
+
+- **Twenty-four sentences left ungrammatical by the same sweep.** "The requirements **requires**",
+  "the requirements **says**", "the requirements **is** explicit" across `AGENTS.md`, four
+  exercises' documents, two test modules, `timeline.py`, `catalogue.py`, `chapters.js` and
+  `figures.js`; plus one sentence in exercise 07's `PROGRESS.md` truncated mid-clause. None of this
+  was visible to the vocabulary guards, which are lexical over banned words rather than over grammar.
+- **The backup store inherited the user's global gitignore, so one protected file had been copied
+  on every run and committed on none.** The store is a git repository, so `git add` there honours
+  `~/.config/git/ignore` exactly as it would anywhere else. A global rule matching
+  `.claude/settings.local.json` — an entirely reasonable line to have — meant that file sat in the
+  store as bytes with **no history at all**. `PATTERNS` listed it, the tool counted it among the
+  files it protects, and `--verify` was satisfied because the bytes matched. The store holds every
+  *version* precisely because "the likelier loss is a bad overwrite"; for this file there was
+  nothing to roll back to. Found by trying to recover an earlier version and discovering there was
+  none.
+
+  `snapshot()` now sets `core.excludesFile` to the null device on **every** run rather than only at
+  init, since the stores that need it already exist.
+
+- **The store's own assertion could not see this, and now can.** It asked whether *any* commit
+  existed — which is true of a store versioning eighty-three of eighty-four files. It now compares
+  what it copied against `git ls-files` per file and refuses to report success on a mismatch, with
+  the `check-ignore` command to diagnose it. `-z`, because git octal-quotes non-ASCII paths and
+  several stored filenames contain them; comparing against the quoted form reports tracked files as
+  missing, which is the false alarm that trains someone to ignore the test.
+
+- **A second "configured at init only" bug, found by the new test failing in CI.** The store's git
+  identity was written **only when the tool created the store**. A store made by hand, or by an
+  older version of the tool, therefore has none — so on any machine with no global git config (a
+  bare runner, a fresh container) `git commit` fails and the run versions nothing. Exactly the shape
+  of the excludes bug above, hidden the same way. It is now written on every run when absent, and
+  only when absent, so a store owner who set a deliberate identity keeps it.
+
+  The test that caught it pre-creates its own store, which is why CI hit the path and a working
+  machine never did. Verified locally afterwards by running the whole suite with
+  `GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null`.
+
+- **`tests/test_backup_store_versions_everything.py`** asserts the config override and the per-file
+  invariant, both local-only. Its twin runs everywhere: it plants a `.git/info/exclude` in a
+  `tmp_path` store and requires `snapshot()` to raise — chosen deliberately, because a repo-local
+  exclude is the one route that can still reach this failure after the fix, so the twin documents
+  the residual risk as well as proving the guard fires.
+
+- **The standards archive's retention limit was a cap when it should have been a floor**, so the
+  guard went red after every release with a message asking someone to delete part of the archive —
+  a standing instruction to delete history, inside the thing built to keep history. It also bought
+  nothing: a release's snapshots are **141 KB**, so a hundred releases would be 13.8 MB. Every
+  release is kept now; the guard fails when a file has *fewer* than two versions, never more, and
+  `--prune` only lists what is older than the newest `--keep` (default 5) without deleting anything.
+- **`backup_local_only.py` raised a raw twelve-line Python traceback when it could not write the
+  store**, naming `pathlib` rather than the cause. The store lives outside the repository by design,
+  so the usual cause is a sandbox or permissions restriction rather than a broken backup — and from
+  inside a git hook the two were indistinguishable. It still **fails** rather than skipping, for the
+  same reason the secret scan errors when gitleaks is absent, but now it says which case it is and
+  prints the exact settings block that grants access.
 
 ### Security
 
@@ -67,7 +188,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   came from.** It reads `AS QUOTED` now, which pairs with the `ITS OWN FORMULA` label beside it and
   says the same thing without describing the source. Found by the new guard rather than by review.
 
-### Security
 
 - **The confidential reference material now lives outside the repository entirely.** It was inside
   the working tree, gitignored — which protected its bytes and nothing else. A tracked document
@@ -98,39 +218,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   notice. Two overlaps remain by design and are listed in `FUNCTIONAL_OVERLAP` with a reason each —
   a required log-event sequence the auditor checks verbatim, and a pipeline diagram naming the same
   stages — because paraphrasing an identifier breaks the thing it identifies.
-
-### Changed
-
-- **The local reference directory was renamed**, and is still gitignored and still backed up. It was
-  moved in the local-only store as a `git mv` so every file's history survives under the new path —
-  the store is an append-only high-water mark, so without that commit the tripwire would have gone
-  red permanently, asking why files it holds had vanished from the working tree. Path references
-  were updated across 15 tracked files, including two built from parts rather than quoted, which a
-  string replacement could not have caught.
-- **`.gitignore` no longer contains the word "topic" anywhere**, including in its comments.
-- **Code comments and internal test identifiers no longer refer to numbered teaching topics** —
-  they name the exercise (`exercise 05's headline mixture`) or the source notes (`the notes' own
-  words`) instead. Four identifiers were deliberately left alone because they are serialized into
-  `results/` or `web/` and renaming them would rewrite published data: `baseline_share`,
-  `taught_in_source`, `illustrative_only` and `outsideSource`.
-- **Commit messages now carry a `Co-Authored-By` trailer and nothing else** — no links back to an
-  agent conversation, which point at something nobody outside the machine can open. Branch names and
-  PR titles say what a change does rather than naming the source material.
-
-### Fixed
-
-- **The standards archive's retention limit was a cap when it should have been a floor**, so the
-  guard went red after every release with a message asking someone to delete part of the archive —
-  a standing instruction to delete history, inside the thing built to keep history. It also bought
-  nothing: a release's snapshots are **141 KB**, so a hundred releases would be 13.8 MB. Every
-  release is kept now; the guard fails when a file has *fewer* than two versions, never more, and
-  `--prune` only lists what is older than the newest `--keep` (default 5) without deleting anything.
-- **`backup_local_only.py` raised a raw twelve-line Python traceback when it could not write the
-  store**, naming `pathlib` rather than the cause. The store lives outside the repository by design,
-  so the usual cause is a sandbox or permissions restriction rather than a broken backup — and from
-  inside a git hook the two were indistinguishable. It still **fails** rather than skipping, for the
-  same reason the secret scan errors when gitleaks is absent, but now it says which case it is and
-  prints the exact settings block that grants access.
 
 ## [0.13.0] — 2026-09-02
 

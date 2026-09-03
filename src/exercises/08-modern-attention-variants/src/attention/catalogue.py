@@ -255,7 +255,7 @@ class Mechanism:
     def __post_init__(self) -> None:
         """Refuse an entry that has only upside.
 
-        The requirements is explicit that a technique written down with only upside has not been
+        The requirements are explicit that a technique written down with only upside has not been
         understood yet. An empty `new_tradeoff` or `gives_up` is how that failure would enter
         the catalogue, so it is rejected at construction rather than noticed in review.
         """

@@ -45,7 +45,7 @@ A missing mechanism scores zero, and we were invited to catch errors in the sour
 
 - **A mechanism with no stated cost is rejected.** `catalogue.Mechanism.__post_init__` raises when
   `new_tradeoff`, `gives_up` or `when_to_choose` is empty. A technique written down with only upside has not been
-  understood yet, and the requirements says so.
+  understood yet, and the requirements say so.
 
 - **`MANDATED` is the instructor's own list, quoted, mapped to our keys.** The test reads his
   phrases, so a rename on our side can never silently drop one of his items. Do not reword the left
@@ -55,7 +55,7 @@ A missing mechanism scores zero, and we were invited to catch errors in the sour
   6.44 GB at one user and 51.54 GB at eight, and GQA at two KV heads is exactly a quarter of MHA.
   Tests pin all three, so editing the yardstick breaks the documents that cite it.
 
-- **The claimed arc is derived, not repeated.** The requirements says the field went "exactness → memory →
+- **The claimed arc is derived, not repeated.** The requirements say the field went "exactness → memory →
   length → memory again". `timeline.pressure_by_period` counts which bill each window addressed, and
   `Period.dominant` returns `None` on a tie instead of picking a winner. If the arc is not in the
   data, say so.
@@ -361,7 +361,7 @@ all.
 "where two static curves would only show correlation". Animating a schematic does not make it causal;
 the dial illustrates an assumed mechanism and this page has no measurement of a deployed model.
 
-**Once is orientation; three times is a template readers skip.** The three figure `requirements document()` blocks
+**Once is orientation; three times is a template readers skip.** The three figure `preamble()` blocks
 ran 217, 265 and 279 words in the same five-heading shape, and two readers said they were skipping
 the good sentences with the boilerplate. They are 52, 50 and 59 now — and both lessons that lived
 only inside a deleted block moved into a caption **first**, because `AGENTS.md` forbids leaving a

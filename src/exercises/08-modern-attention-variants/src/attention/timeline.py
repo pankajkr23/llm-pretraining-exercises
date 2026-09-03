@@ -57,7 +57,7 @@ class Period:
 
 
 def in_order(mechanisms: list[Mechanism]) -> list[Mechanism]:
-    """The catalogue by date, oldest first — the order the requirements requires.
+    """The catalogue by date, oldest first — the order the requirements require.
 
     Ties break on key so the order is stable across runs; two mechanisms genuinely sharing a date
     (sinusoidal and standard attention share a paper) must not reorder between builds.

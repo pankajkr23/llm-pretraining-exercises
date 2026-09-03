@@ -196,22 +196,51 @@ def test_the_archive_is_not_tracked():
     )
 
 
-def test_the_archive_is_backed_up_because_nothing_else_holds_it():
-    """**The one invariant a fresh clone can still check, and the one that matters.**
+def test_the_archive_is_not_backed_up_because_it_is_rebuildable():
+    """**The one invariant a fresh clone can still check, and it asserts the REASON.**
 
-    Untracked and unbacked-up is the exact class of file this repo has lost twice — most recently
-    when an ordinary `checkout && pull` deleted five notebook builders. Local-only is a legitimate
-    decision; local-only with no store is not a decision, it is an accident waiting for a branch
-    switch. So the archive's membership of `PATTERNS` is asserted from source, where a clone can
-    read it, rather than from the store, which a clone does not have.
+    This test used to require the opposite — that `PATTERNS` covers the archive — on the argument
+    that untracked and unbacked-up is the class of file this repo has lost twice. That argument does
+    not apply here, and asserting the fact without the reason is what let it stand.
+
+    Every entry in `PATTERNS` is there because losing it is **permanent**. A snapshot is
+    `git show <tag>:<file>` plus a banner, so `--ref <tag>` rebuilds any of them byte for byte.
+    Backing them up bought *history of immutable files*: the byte-identical guard above means a
+    second version can never legitimately exist, and in the store's whole life the only change ever
+    recorded against a snapshot was a reworded banner.
+
+    So the pair asserted here is **not in PATTERNS, and rebuildable** — because dropping it from
+    the backup is only safe while the second half holds. If a tag a snapshot names ever goes away,
+    this fails and the decision has to be revisited rather than silently outlived.
     """
     sys.path.insert(0, str(REPO_ROOT / "tools"))
     from backup_local_only import PATTERNS
 
     covered = [p for p in PATTERNS if p.startswith("docs/standards-history")]
-    assert covered, (
-        "docs/standards-history/ is gitignored but not in tools/backup_local_only.py::PATTERNS — "
-        "so nothing holds it and the next branch switch can take it silently"
+    assert not covered, (
+        "docs/standards-history/ is back in tools/backup_local_only.py::PATTERNS. It was removed "
+        "deliberately: snapshots are rebuildable from their tags, so backing them up only stores "
+        f"history that immutable files cannot have. Remove {covered} or update this test."
+    )
+
+    missing = sorted(
+        {
+            tag
+            for tag in (_tag_of(p) for p in _archived())
+            if subprocess.run(
+                ["git", "-C", str(REPO_ROOT), "rev-parse", "--verify", f"{tag}^{{commit}}"],
+                capture_output=True,
+                check=False,
+            ).returncode
+            != 0
+        }
+    )
+    if not _archived():
+        return  # a clone: nothing to check, and the PATTERNS half above already ran
+    assert not missing, (
+        "these snapshots name tags this checkout cannot reach, so `--ref <tag>` can no longer "
+        f"rebuild them and dropping the archive from PATTERNS is no longer safe: {missing}. "
+        "Either restore the tags, or put docs/standards-history/* back in PATTERNS."
     )
 
 
