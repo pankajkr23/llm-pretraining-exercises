@@ -10,6 +10,34 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The backup store inherited the user's global gitignore, so one protected file had been copied
+  on every run and committed on none.** The store is a git repository, so `git add` there honours
+  `~/.config/git/ignore` exactly as it would anywhere else. A global rule matching
+  `.claude/settings.local.json` — an entirely reasonable line to have — meant that file sat in the
+  store as bytes with **no history at all**. `PATTERNS` listed it, the tool counted it among the
+  files it protects, and `--verify` was satisfied because the bytes matched. The store holds every
+  *version* precisely because "the likelier loss is a bad overwrite"; for this file there was
+  nothing to roll back to. Found by trying to recover an earlier version and discovering there was
+  none.
+
+  `snapshot()` now sets `core.excludesFile` to the null device on **every** run rather than only at
+  init, since the stores that need it already exist.
+
+- **The store's own assertion could not see this, and now can.** It asked whether *any* commit
+  existed — which is true of a store versioning eighty-three of eighty-four files. It now compares
+  what it copied against `git ls-files` per file and refuses to report success on a mismatch, with
+  the `check-ignore` command to diagnose it. `-z`, because git octal-quotes non-ASCII paths and
+  several stored filenames contain them; comparing against the quoted form reports tracked files as
+  missing, which is the false alarm that trains someone to ignore the test.
+
+- **`tests/test_backup_store_versions_everything.py`** asserts the config override and the per-file
+  invariant, both local-only. Its twin runs everywhere: it plants a `.git/info/exclude` in a
+  `tmp_path` store and requires `snapshot()` to raise — chosen deliberately, because a repo-local
+  exclude is the one route that can still reach this failure after the fix, so the twin documents
+  the residual risk as well as proving the guard fires.
+
 ### Security
 
 - **A third guard, `tests/test_forbidden_vocabulary.py`, bans the words themselves — in CI and in a

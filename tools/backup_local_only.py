@@ -442,6 +442,18 @@ def snapshot(root: Path, dest: Path, files: list[Path], *, message: str) -> int:
             encoding="utf-8",
         )
 
+    # **The store must not inherit the user's global gitignore, and this is not hypothetical.**
+    # The store is a git repository, so `git add` honours `~/.config/git/ignore` and
+    # `core.excludesFile` exactly as it would anywhere else. A developer whose global ignore holds
+    # `**/.claude/settings.local.json` — a completely reasonable line to have — silently gets a
+    # store where that file is **copied but never committed**: on disk, `--verify` satisfied because
+    # the bytes match, and no history at all. That is the one property the store exists to provide,
+    # and it is the `cp -r` wearing a git directory that the assertion at the end of this function
+    # now refuses. It went unnoticed for months.
+    #
+    # Set on every run rather than only at init, because the stores that need it already exist.
+    _git(dest, "config", "core.excludesFile", os.devnull)
+
     # Everything the repo holds, plus every external directory. `pairs` is (store path, source
     # file); the store does not care that some of these came from outside the working tree.
     pairs: list[tuple[Path, Path]] = [(rel, root / rel) for rel in files]
@@ -496,6 +508,23 @@ def snapshot(root: Path, dest: Path, files: list[Path], *, message: str) -> int:
         raise SystemExit(
             f"the store at {dest} holds files but no commits — every earlier version of every "
             f"file is unreachable. Something is wrong with git in that directory."
+        )
+
+    # **Per file, not just per store.** The check above asks whether *any* commit exists, and it
+    # passed for months while one file was copied and never versioned. A file git declines to add —
+    # an ignore rule, a nested `.git`, a permission fault — leaves bytes on disk that look like a
+    # backup and carry no history, so the "bad overwrite" this store exists to survive would
+    # silently destroy the only good copy. `-z` because git octal-quotes non-ASCII paths otherwise,
+    # and several stored filenames contain them.
+    listed = _git(dest, "ls-files", "-z").stdout
+    versioned = {name for name in listed.split("\0") if name}
+    unversioned = sorted(str(f) for f in files if str(f) not in versioned)
+    if unversioned:
+        raise SystemExit(
+            f"{len(unversioned)} file(s) were copied into {dest} but git refuses to track them, so "
+            "they have no version history and a bad overwrite would be unrecoverable:\n  "
+            + "\n  ".join(unversioned)
+            + f"\n\nUsually an ignore rule. Check with:\n  git -C {dest} check-ignore -v <path>"
         )
     return changed
 
