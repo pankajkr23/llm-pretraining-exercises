@@ -470,6 +470,7 @@ predates the harness — so it is logged as what it was.
 2026-09-03  process       09 and 10 were split onto their own branches after PK pointed out the
                           convention: one branch and one pull request per exercise. #104 had three
                           concerns stacked on it
+```
 2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
                           hook. A reviewer copied into .claude/ and then edited there diverges
                           silently from its tracked source, and the installed copy is the one that
