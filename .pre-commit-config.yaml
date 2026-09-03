@@ -16,7 +16,11 @@
 # only declares `pre-commit` protects them at the one moment they were never at risk. Declaring the
 # hook types here means `pre-commit install` wires all four, and the snapshot happens on the
 # operation that does the damage rather than whenever somebody remembers.
-default_install_hook_types: [pre-commit, post-checkout, post-merge, post-rewrite]
+#
+# `commit-msg` is here because the scope guard runs at that stage, and a stage missing from this
+# list is a hook `pre-commit install` never wires — so it would exist, pass its own tests, and
+# never once run on a real commit. `tests/test_precommit_config.py` asserts the two agree.
+default_install_hook_types: [pre-commit, commit-msg, post-checkout, post-merge, post-rewrite]
 
 repos:
   # --- secrets ---------------------------------------------------------------------------------
@@ -119,6 +123,23 @@ repos:
         stages: [pre-commit]
         always_run: true
         pass_filenames: false
+
+      # Breadth has to be a decision somebody recorded, not something that happened.
+      #
+      # `commit-msg` rather than `pre-commit`, because it is the only stage that sees BOTH the
+      # staged diff and the message — and the message is where the escape hatch lives. A hard cap
+      # with no escape would fight the property it protects: a hook, the module it imports and its
+      # test do not work apart, so splitting them puts `git bisect` on a tree that fails for an
+      # unrelated reason.
+      #
+      # `pass_filenames: true` is the default here and is load-bearing: pre-commit hands a
+      # commit-msg hook the path of the message file, which is the argument this script takes.
+      - id: commit-scope
+        name: one commit, one decision
+        entry: uv run python tools/check_commit_scope.py
+        language: system
+        stages: [commit-msg]
+        always_run: true
 
       - id: local-only-tripwire
         name: check nothing local-only went missing

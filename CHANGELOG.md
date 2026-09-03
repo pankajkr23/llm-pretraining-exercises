@@ -168,6 +168,20 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   inside a git hook the two were indistinguishable. It still **fails** rather than skipping, for the
   same reason the secret scan errors when gitleaks is absent, but now it says which case it is and
   prints the exact settings block that grants access.
+- **A commit may change at most 10 files and 500 lines, or it has to say why.**
+  `tools/check_commit_scope.py` runs at pre-commit's `commit-msg` stage — the only stage that sees
+  both the staged diff and the message, which is where the escape hatch lives. `CHANGELOG.md` and
+  `uv.lock` are not counted: the conventions already require the first in the same change, and
+  charging for it would leave two files for the actual work.
+
+  **The escape hatch is deliberate, and the reason is worth stating.** A hard cap fights the
+  property it protects. Landing a `PreToolUse` hook means shipping the hook, the module it imports
+  and its test together; split across three commits the first two do not import, so `git bisect`
+  lands on a tree that fails for a reason unrelated to what is being bisected. Small batch is the
+  means; independent revertibility is the end. A wide commit is allowed when the message carries a
+  `Wide-change:` trailer with a real reason in it — and `Wide-change: needed` does not count, which
+  is its own test. Merges and reverts are not judged, because their breadth is a property of the
+  branches rather than a decision anyone is making now.
 
 ### Security
 
