@@ -48,10 +48,15 @@ EXPECTED_BRIEFS = [p / "REQUIREMENTS.md" for p in EXERCISES]
 #: The three lists above are the classes `AGENTS.md` names, and they were the only ones guarded.
 #: The confidential reference material now lives **outside the repository entirely**, so it can no
 #: longer be named by a tracked path, ignored by mistake, or committed by accident. It is still
-#: watched here, via the backup tool that knows where it is. `docs/EXPLAINER_*.md` are the two
-#: files any explainer is supposed to be built from. All gitignored, none regenerable, none
-#: guarded. A tripwire that covers the documented cases and not the biggest one is a tripwire that
-#: reads as coverage.
+#: watched here, via the backup tool that knows where it is. Gitignored, not regenerable, and until
+#: recently not guarded — a tripwire that covers the documented cases and not the biggest one is a
+#: tripwire that reads as coverage.
+#:
+#: **`docs/EXPLAINER_*.md` have LEFT this list, because they are tracked now.** They were filed as
+#: programme material and are not: measured against the reference corpus they carry no verbatim runs
+#: and no banned vocabulary. Git holds them, so a clone has them, so their absence is no longer a
+#: loss to detect — and a tripwire that fires on a file git can restore teaches the reader to ignore
+#: it.
 #:
 #: Counted rather than enumerated: the corpus grows a file per topic, so a fixed list would go
 #: stale and a stale list here fails silently in the safe-looking direction.
@@ -62,8 +67,6 @@ NOTES_CORPUS = backup.EXTERNAL_SOURCES["notes"]
 STORE = REPO_ROOT.parent / f".{REPO_ROOT.name}-local-only"
 EXPECTED_PROGRAMME = [
     REPO_ROOT / "docs" / "REQUIREMENTS.md",
-    REPO_ROOT / "docs" / "EXPLAINER_PROMPT.md",
-    REPO_ROOT / "docs" / "EXPLAINER_PATTERN.md",
 ]
 
 

@@ -47,20 +47,25 @@ def fake_repo(tmp_path: Path) -> Path:
         Its root.
     """
     root = tmp_path / "repo"
-    for relative in (
-        "notebooks/S01-introductions.ipynb",
-        "src/exercises/01-introductions/tools/build_notebook.py",
-        "src/exercises/01-introductions/REQUIREMENTS.md",
-        "docs/REQUIREMENTS.md",
-        "docs/EXPLAINER_PROMPT.md",
-        "docs/EXPLAINER_PATTERN.md",
-        "src/exercises/01-x/docs/topic-a.md",
-        "src/exercises/01-x/docs/topic-a-extra.md",
-        "src/exercises/01-x/docs/topic-a.html",
-        "TODO.md",
-    ):
+    for relative in PROTECTED_FIXTURE:
         _make(root, relative, f"contents of {relative}")
     return root
+
+
+#: One file of every protected class. **Named here so the assertions below can count it rather than
+#: restate it.** Two tests used to hardcode `>= 9`, and removing one class from this list broke both
+#: for a reason that had nothing to do with what they test — which is the "prose states a number"
+#: failure, in a test.
+PROTECTED_FIXTURE: tuple[str, ...] = (
+    "notebooks/S01-introductions.ipynb",
+    "src/exercises/01-introductions/tools/build_notebook.py",
+    "src/exercises/01-introductions/REQUIREMENTS.md",
+    "docs/REQUIREMENTS.md",
+    "src/exercises/01-x/docs/topic-a.md",
+    "src/exercises/01-x/docs/topic-a-extra.md",
+    "src/exercises/01-x/docs/topic-a.html",
+    "TODO.md",
+)
 
 
 # --- what it must collect ----------------------------------------------------------------------
@@ -74,7 +79,6 @@ def test_it_collects_every_protected_class(fake_repo: Path) -> None:
         "src/exercises/01-introductions/tools/build_notebook.py",
         "src/exercises/01-introductions/REQUIREMENTS.md",
         "docs/REQUIREMENTS.md",
-        "docs/EXPLAINER_PROMPT.md",
         "src/exercises/01-x/docs/topic-a.md",
         "src/exercises/01-x/docs/topic-a.html",
     ):
@@ -166,12 +170,14 @@ def test_collect_skips_a_credential_and_names_it_rather_than_aborting(fake_repo:
 
     assert skipped == ["src/exercises/01-x/src/solution/deploy.env"]
     assert not any("deploy.env" in str(f) for f in files), "the credential was collected anyway"
-    assert len(files) >= 9, "skipping one file cost the rest their backup"
+    assert len(files) == len(PROTECTED_FIXTURE), "skipping one file cost the rest their backup"
 
 
 def test_the_real_corpus_is_not_swallowed_by_the_forbidden_rules(fake_repo: Path) -> None:
     """End to end: the protected set survives the credential filter."""
-    assert len(backup.collect(fake_repo)[0]) >= 9, "the forbidden patterns swallowed the corpus"
+    assert len(backup.collect(fake_repo)[0]) == len(PROTECTED_FIXTURE), (
+        "the forbidden patterns swallowed the corpus"
+    )
 
 
 # --- the store ---------------------------------------------------------------------------------

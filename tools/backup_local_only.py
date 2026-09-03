@@ -18,10 +18,15 @@ mistake. It costs nothing: the whole set is about 12 MB of text.
 (`tests/test_local_only_files_present.py`) watches notebooks, builders and requirement documents —
 the three
 classes `AGENTS.md` names. The confidential reference material lives **outside the repository**
-(see `EXTERNAL_SOURCES`) and is snapshotted here too, and `docs/EXPLAINER_*.md` are the two files
-any explainer is meant to be built from. All of it is gitignored, none of it is
+(see `EXTERNAL_SOURCES`) and is snapshotted here too. All of it is gitignored, none of it is
 regenerable, and none of it was in the tripwire. A
 backup that only covered the documented cases would have missed the largest exposure.
+
+**`docs/EXPLAINER_*.md` used to be in this set and no longer is, because they are now TRACKED.**
+They were classified as programme material and are not: measured against the reference corpus they
+carry no verbatim runs and no banned vocabulary, being engineering rules rather than course text.
+Git holds them now, so a second copy here would be a second copy that drifts — and the reason they
+were untracked, that no clone could safely have them, turned out not to apply.
 
 **What it deliberately does NOT cover.** Anything regenerable (`artifacts/`, `data/`, `public/`,
 `.venv/`), and anything secret. `.env` files, keys and credentials are excluded by pattern and the
@@ -66,7 +71,6 @@ PATTERNS: tuple[str, ...] = (
     "src/exercises/*/tools/build_notebook.py",
     "src/exercises/*/REQUIREMENTS.md",
     "docs/REQUIREMENTS.md",
-    "docs/EXPLAINER_*.md",
     "TODO.md",
     # Hand-written planning and critique notes that live beside an exercise. Only the untracked ones
     # are taken: `collect` drops anything git already has, so this cannot quietly start duplicating

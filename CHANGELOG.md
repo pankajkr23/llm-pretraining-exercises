@@ -12,6 +12,24 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **The two documents an explainer is built from are now tracked, and exercise 09 is unblocked by
+  it.** `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md` were gitignored and filed as
+  programme material beside the schedule and the class list. They are not programme material — they
+  are engineering rules: DOM skeleton, class names, the state-and-render shape, the ship checklist,
+  the topology taxonomy. Keeping them invisible meant **no clone, worktree or CI job could read the
+  specification an explainer is graded against**, which is what blocked exercise 09.
+
+  **Settled by measurement, not by argument.** Against 353,730 shingles of the reference corpus:
+  `EXPLAINER_PATTERN.md` carried **0** verbatim runs and **0** banned terms; `EXPLAINER_PROMPT.md`
+  carried 2 runs and 1 term — a borrowed example and a heading — both reworded, after which it
+  measures 0 and 0 too. Both now sit inside the confidentiality gates rather than outside them,
+  which is strictly more coverage than before.
+
+  The generalisable part: **before accepting that something cannot be tracked, measure it against
+  the gates that would refuse it.** The original recommendation here was to extract only the rules
+  and leave the rest local; the measurement showed there was no "rest" worth leaving.
+
+
 - **The progress log cannot silently fall behind what merged.** `docs/agents/QUEUE.md` is the single
   source of truth for progress, tracked so state survives a crash, a context reset and a fresh clone
   — and it carried one line reading *"no unit has run yet"* while **nine** pull requests merged past

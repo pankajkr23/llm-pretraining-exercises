@@ -264,8 +264,11 @@ docs/REQUIREMENTS.md
 # long enough to need its own file. Never link to a requirements document from a tracked file: the link resolves
 # on a working checkout and 404s for everyone else.
 REQUIREMENTS.md
-docs/EXPLAINER_PROMPT.md
-docs/EXPLAINER_PATTERN.md
+# docs/EXPLAINER_*.md were here. They are TRACKED now: measured against the reference
+# material they carry no verbatim runs and no banned vocabulary, because they are
+# engineering rules — DOM skeleton, class names, the state-and-render shape — and not
+# programme material. Keeping them ignored meant no clone, worktree or CI job could read
+# the specification an explainer is graded against.
 # Self-critique of a shipped build — useful to us, not part of the published work.
 **/docs/DESIGN_CRITIQUE.md
 
