@@ -77,16 +77,65 @@ guesses.
 
 Order is the retro-fix order from the workplan. Nothing here is IN FLIGHT until a human says so.
 
-### unit-08-notebook
-- status: QUEUED
+### unit-08-notebook — **the pilot. Read this one in full before approving.**
+
+- status: QUEUED — awaiting approval
 - scope: `src/exercises/08-modern-attention-variants/`, `CHANGELOG.md`
-- what: rebuild the topic notebook to teach the attention variants by **running them**, per
-  `AGENTS.md`'s notebook rules. The current one imports the chronology package and prints what the
-  web page already renders — it contains no attention implementation at all, nothing that touches a
-  GPU, and nothing whose configuration can be varied. The runnable variant implementations belong in
-  the exercise package with tests, and the notebook imports those.
-- why first: the smallest unit that exercises the whole loop end to end and produces something
-  immediately useful.
+- reviewers: reader, engineer, auditor
+
+**The problem, measured.** The package is `numpy`-only and holds six modules — `config`, `cache`,
+`sources`, `catalogue`, `timeline`, `story` — every one of them chronology machinery. There is **no
+attention implementation anywhere in the exercise**. So the notebook's 28 cells import the catalogue
+and print what the web page already renders: no `softmax(QKᵀ/√d)V`, nothing that touches a GPU,
+nothing whose configuration can be varied. It could not have been otherwise, and the same audit
+across all eight notebooks found only two that touch torch at all and **none** that runs a GPU
+workload with varying settings.
+
+**What gets built.** A new module of small, readable implementations — in the *package*, with tests,
+because a notebook is gitignored and code in cells is invisible to CI and rots silently:
+
+| variant | why it is in the set |
+| --- | --- |
+| scaled dot-product | the base every other one is a modification of |
+| MHA · MQA · GQA | the cache bill, and the whole point of the 6.44 GB → 51.54 GB arithmetic the exercise already computes |
+| sliding window · attention sinks | the length bill, and what "streaming" actually means |
+| ALiBi · RoPE | position, and why extrapolation breaks |
+
+**The equivalence tests are the lesson.** Each is a fact you can hold, and a test that fails if the
+code stops being true:
+
+- GQA at `n_kv == n_heads` **is** MHA, to floating-point tolerance.
+- GQA at `n_kv == 1` **is** MQA.
+- A sliding window of full width **is** dense attention.
+- ALiBi at slope 0 **is** no bias at all.
+- Attention sinks with `k=0` and a full window **is** dense attention.
+
+A paragraph claiming these is worth less than five `allclose` assertions that go red when they stop
+holding — and the tests double as the map from one variant to the next.
+
+**Plus a benchmark helper** reporting wall time and peak memory across MPS, CUDA and CPU, because the
+cost these variants exist to pay down is not vivid from arithmetic alone.
+
+**The notebook then becomes scenarios**, not a results tour: *"serving eight users on one GPU"*
+(MHA → GQA → MQA, watch the cache), *"a chat that forgets"* (window vs sinks), *"the model breaks
+past its training length"* (RoPE and its scalings). Run, read the numbers, change a setting, watch
+what moves. `lite` finishes in under ten minutes; the full run is one variable away.
+
+**Three consequences worth approving deliberately, because none is free:**
+
+1. **This adds `torch` to an exercise that has none.** It has to: MPS and CUDA are the point. It goes
+   in as an optional extra with a module-level `importorskip`, which then costs **two** registrations
+   — `OPTIONAL_DEPENDENCY_GATES` *and* a CI job that installs it. `AGENTS.md` is explicit that a
+   gated file in neither runs **nowhere**, and this repo has already lost 46 tests exactly that way.
+2. **The `train` job is the one that installs torch**, so the new tests join it — CPU-only wheels,
+   191.8 MB rather than 2.7 GB.
+3. **It does not touch the published page.** The chronology, the catalogue and the web bundle are
+   out of scope. If the work seems to want them, that is a finding, not a licence.
+
+**Why this is the pilot.** It exercises the whole loop — research, plan, implement, test, review,
+iterate, PR — on work small enough to watch in one sitting, and what it produces is the thing that
+was actually wanted. The success criterion is **not** the diff: it is that the harness needed no
+intervention, and that a reader can say what each guard did and why the run stopped where it did.
 
 ### unit-07-retrofit
 - status: QUEUED
