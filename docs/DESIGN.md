@@ -413,8 +413,7 @@ re-vendored to all of them.
 | `tokens.css` | **misnamed** — exercise 03's *component* sheet, not the token file | all |
 | `explainer.css` | the scrollytelling vocabulary — `.scrolly`, `.step`, `.sticky`, `.fig-*`, `.qbox` | 03, 06 |
 | `explainer.js` | `makeExplainer` — the scrollytelling builder | 03, 06 |
-| `anim.js` | reveal-on-enter helpers | **nobody** |
-| `num.js` | number formatting | some |
+| `num.js` | number formatting | 03, 06 — **removed from 04, 05, 07, 08**, which never imported it |
 
 **Vendoring copies the styles and not the markup they assume.** Three defects have come from that:
 a 260px rail gutter reserved on pages that build no rail; `.rail-inner` centring a wrapper the page
@@ -422,10 +421,23 @@ never created; and marks whose colours resolve only when the real token file is 
 you vendor this directory, **diff what its rules select against what your page emits**, and write
 down what you chose not to build.
 
-**Dead weight is real and is on the retro-fit list.** `anim.js` is imported by nothing anywhere —
-1,002 lines across six copies. `explainer.css` is 527 lines linked by six pages and used by two.
-Fifteen classes in `page.css` are emitted nowhere. Several families in it are exercise 03's alone
-and belong in its own `page-extra.css`.
+**Dead weight was real and 2,578 lines of it are gone**, and the counts that described it were
+wrong in the direction that matters. `anim.js` — 167 lines vendored six times, exporting seven
+helpers, imported by nothing and assembled into `public/` on every deploy — is removed, along with
+`explainer.js` and `num.js` from the four exercises that link neither.
+
+**`explainer.css` was NOT "used by two".** It is used by 01, 02, 03 and 05; exercise 03 alone emits
+36 of its 56 classes, and **12** are orphaned. `page.css` has **10** orphans, not fifteen. The first
+measurement said `explainer.css` was entirely unused, because it looked for the `el(tag, className)`
+helper this document describes while exercise 03 almost exclusively calls a local `$(tag,
+className)`. Deleting on that evidence would have taken out a live stylesheet.
+
+So these counts are no longer published here. `tests/test_shared_layer.py` derives them, refuses any
+vendored file the vendoring exercise does not reference, and carries the full list of class-setting
+idioms — because a count in prose beside a fact a test can compute is the failure this repository has
+paid for most often. The remaining orphan *classes* are a separate, riskier change: a class emitted
+by a path the extractor cannot see is indistinguishable from a dead one, which is exactly the
+mistake above.
 
 ---
 
