@@ -160,6 +160,16 @@ EXPECTED_IN_CI: tuple[Expected, ...] = (
         ),
     ),
     Expected(
+        path="tests/test_backup_store_versions_everything.py",
+        pattern=r"the backup store is outside the repo",
+        why=(
+            "the store is a git repository next to the checkout, deliberately OUTSIDE the working "
+            "tree so a branch switch cannot destroy it — which also means a runner that clones "
+            "only this repository can never have one. Same category as the reference material and "
+            "standards archive below, not a job whose own setup broke"
+        ),
+    ),
+    Expected(
         path="tests/test_local_only_files_present.py",
         pattern=r"this is a fresh clone, not a loss",
         why="the tripwire's whole subject is gitignored, so a clone has none of it by design",
