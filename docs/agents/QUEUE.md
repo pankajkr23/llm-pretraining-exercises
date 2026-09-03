@@ -446,4 +446,13 @@ predates the harness — so it is logged as what it was.
                           held for any input. RESULTS.md claimed every figure was generated and
                           fifteen were typed — inside the template the byte-equality test compared
                           against. And an importorskip turned a repo-wide guard red
+2026-09-03  process       #105 opened for exercise 09 alone. #104 had carried three concerns on
+                          one branch, against "one pull request per exercise" in this file and
+                          "keep PRs scoped to one concern" in AGENTS.md. PK caught it; #104 is
+                          closed and every commit in it is reachable from #105 and #106
+2026-09-03  tripwire      tracking a file the tripwire watches turns it red on a HEALTHY checkout,
+                          which is the worst failure a tripwire has — the fix then looks like
+                          weakening it. Two files crossed that line (the explainer standards, and
+                          10's notebook), so all four watched lists now drop tracked paths, the
+                          way backup_local_only.py::collect already did
 ```
