@@ -10,6 +10,36 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **The agent fleet's enforcement layer, and it is tracked rather than hidden in `.claude/`.**
+  `tools/agent_guard.py` is a `PreToolUse` hook — the only layer no permission mode bypasses,
+  including bypass mode. It refuses writes to **measured data** (the frozen tokenizer, corpora,
+  recorded results, lockfiles), to **guard files** an agent could weaken to make its own work pass,
+  to **standard files** mid-unit, and outside the unit's declared scope.
+
+  **`.gitignore` excludes `.claude/` entirely**, so a policy living there would be invisible to
+  review, absent from a clone and untestable in CI — the "reads as coverage" shape this repo keeps
+  finding. So the policy is a tracked TOML file, the reviewers are tracked Markdown, and
+  `tools/install_agent_fleet.py` copies them into the local `.claude/` tree. A test asserts the
+  policy is tracked, so this cannot quietly regress.
+
+  Two design decisions carry more weight than the rules. A refusal returns a **machine-readable
+  instruction** — "expected; log a finding and continue" — because an agent that reads a block as a
+  failure stalls overnight, which fails differently but just as badly. And it **fails closed**:
+  malformed stdin blocks, verified by driving the hook with garbage and asserting exit 2.
+
+- **Four read-only reviewer personas** — `reader`, `engineer`, `auditor`, and `continuity` (retro-fix
+  units only) — each with `tools: Read, Grep, Glob` and no write access, asserted from their own
+  frontmatter. *LLMs Cannot Self-Correct Reasoning Yet* (ICLR 2024) found that without external
+  feedback self-review **decreased** accuracy, so the agent that did the work must not grade it.
+  Each persona carries the incidents from this repo's history that it exists to catch.
+
+- **`docs/agents/QUEUE.md`** — the unit queue and log, tracked so it survives a crash, a context
+  reset and a fresh clone. It replaces `TODO.md` for this purpose because `TODO.md` is gitignored,
+  so no worktree gets it. Entries record **evidence, not prose**: `pytest -q → 0 failures @ a3f21bc`,
+  never "fixed the bug".
+
 ### Security
 
 - **A third guard, `tests/test_forbidden_vocabulary.py`, bans the words themselves — in CI and in a
