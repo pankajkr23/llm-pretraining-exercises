@@ -98,12 +98,14 @@ this file does not define, and the answer is the unit name instead.
 | --- | --- | --- | --- |
 | 1 | Unblock the pull-request backlog | — | **done.** The batch in the log below is merged; `main` is linear |
 | 2 | Track progress in one place | — | **done.** This file, enforced by a checker in CI. `WORKPLAN.md` holds the arc, `TODO.md` the scratch |
-| 3 | Arm the fleet | `unit-arm-the-fleet` | **blocked on a human, not unfinished.** The guard, the reviewers and this file are merged, but `install_agent_fleet.py` has never been run — and an agent cannot run it: the sandbox refuses writes to `.claude/`, which is the boundary that stops an agent rewriting its own permissions. One command, from the repo root |
+| 3 | Arm the fleet | `unit-arm-the-fleet` | **done.** PK ran the installer; the guard is wired and all six behaviours were observed, not assumed — worktree write blocked, `sed -i` on a guard blocked, standard file blocked, ordinary source allowed, reading a guard allowed, `AGENT_STOP` halts and resumes. Reviewers are `Read, Grep, Glob` |
 | 4 | Live defects on deployed pages | `unit-live-defects` | **done**, pending review — exercise 01's 26 unterminated declarations and exercise 04's 7 orphan properties, both now guarded |
 | 5 | The shared `web/_shared/` layer | `unit-shared-layer` | **NEXT.** Not started, and it **gates running anything in parallel**. Row 4 left it one item: `.back:hover` paints `#fff` on `var(--accent)` in six byte-identical vendored copies |
 | 6 | Exercise 09 | `unit-09` | **blocked** — see the unit for what on |
 | 7 | Exercise 10 | `unit-10` | not started |
 | 8 | Retro-fix 07 → 01 | `unit-07-retrofit` … `unit-01-retrofit` | not started. Deliberately **after** 09 and 10, and able to run alongside them once row 5 lands |
+| 9 | Grow the agent roster | `unit-agent-roster` | not started. Read-only agents first, then three writers with **disjoint** scopes |
+| 10 | The platform plan, for a parallel workstream | `unit-platform-plan` | **drafted** — `~/.claude/plans/agent-platform.md`. Repository-agnostic by construction |
 
 **Read the order as a default, not a rule.** Rows 4 and 5 come before 6 because they are cheap and
 because row 5 gates parallelism; row 8 comes last because 09 and 10 teach training, which is the
@@ -228,6 +230,38 @@ intervention, and that a reader can say what each guard did and why the run stop
 - verify by observing, not by assuming: a write to `uv.lock` from **inside a worktree** is refused,
   `sed -i` on a guard file is refused, a reviewer cannot write, and `touch AGENT_STOP` halts a run.
 
+### unit-agent-roster — read-only agents first, writers second
+- status: QUEUED
+- scope: `docs/agents/reviewers/`, `tools/install_agent_fleet.py`, `tests/test_agent_guard.py`
+- what: add `research` and `critique` as read-only personas alongside the four reviewers, then
+  split the writing role into `coding` (implementation paths), `testing` (test paths **only**) and
+  `documentation` (docs and changelog).
+- **why coding and testing must be separate agents, and it is a measured result rather than a
+  preference:** ImpossibleBench found a frontier model exploited test cases **76%** of the time,
+  dropping to **near zero** when test access was made read-only. An agent that writes both the
+  implementation and its tests will write tests that pass, and the suite becomes decorative.
+- sequencing: read-only agents are pure upside — no writes, no conflicts, no ordering. The three
+  writers run **sequentially first**, because the handoff is where information is lost and the
+  contract has to carry enough for the next agent to work without re-deriving the unit. Concurrency
+  only after the scope guard has been *watched* refusing a cross-scope write.
+- what synchronises them: the state file and the finished diff, **not messages between agents**.
+  Message passing needs a protocol, ordering guarantees and a deadlock story; a shared artefact
+  needs none of those and is readable by a human too.
+- explicitly not in scope: an orchestrator that decides which agent runs next. The hub does that.
+
+### unit-platform-plan — the multi-agent platform, for a parallel workstream
+- status: DRAFTED — `~/.claude/plans/agent-platform.md`, awaiting PK's read
+- scope: none in this repository. The document is **deliberately repository-agnostic**: everything
+  project-specific is stripped, because its subject is the platform rather than any codebase.
+- what it carries: the topology and the topologies rejected with reasons; the five layers; the
+  enforcement / feedback / request distinction; the fully-researched OSS observability stack with
+  licences checked and six candidates excluded on licence or maintenance grounds; the scale path
+  with a written trigger per step; what is refused **on measurement** with the number to watch for
+  each; and the portable lessons ordered by what they cost.
+- why it lives outside this repository: tracking it here would put a second copy of a platform
+  specification inside a project that is not the platform, and the second copy is the one that
+  drifts.
+
 ### unit-live-defects — readers hit these today
 - status: QUEUED
 - scope: `src/exercises/01-introductions/`, then `src/exercises/04-data-cleaning-dedup/`
@@ -350,6 +384,18 @@ predates the harness — so it is logged as what it was.
                           row 5's: 8 fixed in files one exercise owns, and `.back:hover` left
                           alone because it lives in six byte-identical vendored copies that would
                           drift if one changed
+2026-09-03  arm-fleet     row 3 CLOSED. PK ran install_agent_fleet.py; the guard is wired and all
+                          six behaviours were observed rather than assumed: a uv.lock write from
+                          inside a real worktree BLOCKED (#93's bug 1, live), `sed -i` on a guard
+                          file BLOCKED (#93's bug 2, live), a standard file with no unit declared
+                          BLOCKED, ordinary source ALLOWED, reading a guard file ALLOWED, and
+                          AGENT_STOP halting then resuming (0 -> 2 -> 0). All four reviewers
+                          declare `tools: Read, Grep, Glob`
+2026-09-03  arm-fleet     one of those checks was mislabelled and the guard was right: a resume
+                          test read exit=2 where the label said 0, because UNIT.md still scoped
+                          writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
+                          restores the documented default — no unit file means scope is inert,
+                          while measured data, guards and standards stay refused regardless
 2026-09-03  tracking      and then the new check flagged the line above THIS one, because that
                           line quoted the marker it searches for. A status and a quotation of a
                           status are lexically the same; only knowledge tells them apart, which is
