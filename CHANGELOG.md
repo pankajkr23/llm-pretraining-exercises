@@ -10,6 +10,39 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The mermaid render test spent its 180-second budget downloading rather than rendering.** It
+  shells out to `npx --yes @mermaid-js/mermaid-cli`, and `--yes` *fetches* the package on first
+  use — it bundles puppeteer, so on a cold runner that download alone can exceed the timeout the
+  test allows for a render. It failed on three of four consecutive branches and passed on the
+  fourth: a flake that reds unrelated pull requests at random, which is worse than a test that
+  fails honestly. The `mixtures` shard now fetches it in a step with a budget of its own, leaving
+  the test's 180 seconds for what they were sized for. `PUPPETEER_SKIP_DOWNLOAD` stops it pulling a
+  second chromium — the test already points puppeteer at the playwright browser the shard installs
+  two steps earlier.
+
+### Added
+
+- **`tools/sync_open_prs.py`, which keeps every open pull request mergeable.** Every open branch touches
+  `docs/agents/QUEUE.md`, `CHANGELOG.md` and `.quote-check-receipt.json`, and the receipt is a
+  digest over **all** tracked prose — so merging one pull request invalidates every other one.
+  Measured rather than assumed: merging two branches produced a `QUEUE.md` content conflict *and*
+  left the receipt full of conflict markers, so its checker died with a `JSONDecodeError` instead of
+  failing cleanly.
+
+  It merges `main` into every open branch, rebuilds the two log files as
+  *main's version plus that branch's own entry*, regenerates the receipt and pushes. It never
+  rebases and never force-pushes: the branches are published, `AGENTS.md` forbids rewriting
+  published history, and the repository's settings deny it.
+
+  **`merge=union` was considered and refused** — a union driver keeps both sides of every conflict,
+  which is right for two branches adding different lines and wrong here, where fifteen branches
+  carry a byte-identical log line and the fifteenth merge would land fifteen copies of it.
+  `tests/test_sync_open_prs.py` covers both failure directions, a duplicated line and a silently
+  dropped entry, and both were watched failing against a deliberately broken copy restored from
+  outside the working tree.
+
 ### Added
 
 - `tests/test_shared_layer_orphans.py` pins how much of `_shared/page.css` no page emits — **29 of

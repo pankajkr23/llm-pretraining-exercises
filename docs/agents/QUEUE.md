@@ -396,6 +396,27 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-04  ci            #124 opened: `npx --yes @mermaid-js/mermaid-cli` FETCHES the package on
+                          first use and it bundles puppeteer, so on a cold runner the download ran
+                          past the 180s the render test allows for a RENDER. Failed on three of
+                          four consecutive branches and passed on the fourth — a flake that reds
+                          pull requests that did not touch it, which teaches people to re-run a
+                          gate rather than read it. The fetch moves to a step with its own budget
+2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
+                          hook. A reviewer copied into .claude/ and then edited there diverges
+                          silently from its tracked source, and the installed copy is the one that
+                          runs — so the drift is invisible in review by construction
+2026-09-04  tooling       #125 opened: merging one pull request here BREAKS the next, measured
+                          rather than assumed. Every open branch touches QUEUE.md, CHANGELOG.md and
+                          the quote-check receipt, and the receipt is a digest over ALL tracked
+                          prose — so merging two branches produced a QUEUE conflict AND left the
+                          receipt full of conflict markers, killing its checker with a
+                          JSONDecodeError instead of a clean failure. sync_open_prs.py merges main
+                          into every open branch, rebuilds the two logs as main's version plus that
+                          branch's own entry, regenerates the receipt and pushes — never rebasing,
+                          never force-pushing. `merge=union` was refused: it keeps both sides, and
+                          fifteen branches carry a byte-identical #103 line, so the fifteenth merge
+                          would land fifteen copies
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
