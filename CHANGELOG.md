@@ -12,30 +12,26 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
-- **A pull request that changes no page still built a preview of `main`.** The build predicate
-  compared against `VERCEL_GIT_PREVIOUS_SHA`, which Vercel documents as the last *successful
-  deployment* — the script's own comment said "the parent". So once `main` gained a page, the next
-  sync of an open pull request carried that page in its merge commit and read as deploy-worthy.
-  #136 changed only `tests/` and spent a build showing a site identical to `main`'s.
+- **Reverted the second build gate added one release earlier: it could not execute in the
+  environment it was written for.** It compared the branch's deployed files against `origin/main`,
+  and Vercel checks out a **single-branch shallow clone** — the very next build after it merged
+  printed `origin/main could not be resolved (shallow clone?)`. So the gate was inert in production
+  and, wherever the ref *did* resolve, actively wrong: a branch that reverted its page back to
+  `main`'s content skipped its build, leaving the live preview serving a change the pull request no
+  longer made. That is precisely the failure the script's own header warns about — *"a skipped one
+  is a preview that silently does not reflect the branch."*
 
-  A second gate now asks whether the preview would show anything: **a branch whose deployed files
-  are byte-identical to `main`'s builds a copy of `main`'s own site.** It compares the two trees
-  rather than their histories, so it needs no common ancestor and survives the single-branch
-  shallow clone a build runs in, where `git merge-base` has nothing to walk.
+  Twenty-four hermetic cases passed over it. They proved the predicate was internally consistent and
+  said nothing about whether its inputs exist in a real build, which is why a green suite over a
+  mechanism that cannot run reads as coverage. `deploy/vercel/should-build.sh` and
+  `tests/test_should_build.py` are restored byte-identical to their previous state, and `AGENTS.md`
+  now requires reading the target environment's own log before changing behaviour that runs there.
 
-  **The measured saving is one build per sync round, not the twenty first claimed here.** Of 19
-  open pull requests exactly **one** changes no deployed file; the other 18 change a page and
-  their previews genuinely differ from `main`'s. The first attempt at this replaced the existing
-  comparison with a diff against `main`, which would have been **worse**: those 18 differ from
-  `main` on every push, so a test-only push to any of them would have started building where it
-  previously did not. Both questions are needed and neither refines the other — *is there anything
-  new since the last deployment* (which the script already asked) and *would it show anything*.
-
-  Both gates fail open. A ref that will not resolve leaves the decision to the other one, and with
-  neither resolvable the script builds and says which ref it could not read — an unexplained build
-  is one nobody can debug. Seven cases cover the pair; the two describing new behaviour were
-  watched failing against the previous script, and the five describing preserved behaviour were
-  confirmed still green against it, which is what proves the change adds without regressing.
+  **A defect that predates both changes is now recorded and still open.**
+  `VERCEL_GIT_PREVIOUS_SHA` is the last *successful deployment*, so when it is absent the `HEAD^`
+  substitute asks "what did the newest commit change" instead. A branch whose tip commit is not
+  deployable therefore gets **no preview at all**, and it is self-reinforcing: a skipped build never
+  becomes a successful deployment, so the variable stays empty. Reproduced, not yet fixed.
 
 - **Two repo-wide guards scanned a wider scope than the property they assert, and only the local
   suite could see it.** The basename-collision guard globbed `**/test_*.py` from the repo root, so

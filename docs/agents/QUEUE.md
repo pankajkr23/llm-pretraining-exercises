@@ -552,4 +552,17 @@ predates the harness — so it is logged as what it was.
                           requests change a deployed file and would then rebuild on test-only
                           pushes. Sized honestly at ONE build per sync round, not the ~20 first
                           claimed; corrected in the changelog where the claim was made
+2026-09-04  deploy        #138 opened: REVERTS #137. Its gate compared against origin/main, and
+                          Vercel checks out a single-branch SHALLOW clone -- the first build after
+                          it merged printed "origin/main could not be resolved". Inert in
+                          production; unsound wherever the ref does resolve, because a branch that
+                          reverts its page back to main's content skipped its build and left the
+                          live preview serving a change the PR no longer made. 24 hermetic cases
+                          passed over it: they proved the predicate self-consistent and said
+                          nothing about whether its inputs exist in a real build. AGENTS.md now
+                          requires reading the target environment's own log first. Also records,
+                          unfixed, the pre-existing HEAD^ fallback: with no previous deployment a
+                          branch whose TIP commit is not deployable gets no preview at all, self-
+                          reinforcingly. Not fixed here -- verifying it needs a real build log,
+                          which is the rule being added
 ```
