@@ -37,6 +37,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **`tests/_page_invariants.py` has a second consumer.** The module exists to be shared — no
+  console or page error, no failed request, nothing overflowing its own box, no text painted its own
+  background, no image without real dimensions — and it was wired into exactly **one** page, the
+  landing page. Every other exercise hand-rolled its own `scrollWidth` comparison and exercise 01
+  had none at all. It is now asked of all five of exercise 01's pages at three widths, with a twin
+  that plants an overflowing box and confirms it is reported, so importing the module and calling
+  nothing would be visible.
+
 - **Exercise 01 has a browser test, which it had never had.** Both failures above are invisible in
   the source and obvious the moment a page is opened, which is the whole argument for
   `src/exercises/01-introductions/tests/test_page_render.py`. Run against the shipped pages it

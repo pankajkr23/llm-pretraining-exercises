@@ -24,6 +24,7 @@ import http.server
 import os
 import re
 import socketserver
+import sys
 import threading
 from pathlib import Path
 
@@ -31,6 +32,10 @@ import pytest
 
 pytest.importorskip("playwright", reason="browser tests need playwright")
 from playwright.sync_api import sync_playwright  # noqa: E402
+
+# tests/ ← src/ ← exercises/ ← 01-introductions/ ← tests/  — five levels, not four.
+sys.path.insert(0, str(Path(__file__).resolve().parents[4] / "tests"))
+from _page_invariants import attach, findings  # noqa: E402
 
 EXERCISE = Path(__file__).resolve().parents[1]
 REPO_ROOT = EXERCISE.parents[2]
@@ -275,4 +280,74 @@ def test_the_load_check_can_actually_fail(site) -> None:
             "failure — the whole point is that the script never starts"
         )
     finally:
+        ctx.close()
+
+
+# ---------------------------------------------------------------- the shared Tier-1 invariants
+
+#: Three widths, because every layout defect this repo has shipped appeared at some and not others.
+INVARIANT_WIDTHS = (1440, 900, 390)
+
+
+@pytest.mark.parametrize("name", PAGES)
+@pytest.mark.parametrize("width", INVARIANT_WIDTHS)
+def test_the_page_passes_every_tier_one_invariant(site, name: str, width: int) -> None:
+    """`tests/_page_invariants.py`, pointed at this exercise for the first time.
+
+    **That module was built to be shared and had exactly one consumer** — the landing page. Every
+    other exercise hand-rolled its own `scrollWidth` comparison, and this one had nothing at all,
+    so the checks it offers for free (no console or page error, no failed request, nothing
+    overflowing its own box, no text painted its own background, no image without real dimensions)
+    were never asked of these five pages.
+
+    They pass now. They would not have: the whole point of the first check is a page that throws
+    while building itself, which is precisely what `s3.html` did.
+    """
+    browser, base = site
+    ctx = browser.new_context(viewport={"width": width, "height": 950})
+    page = ctx.new_page()
+    try:
+        seen = attach(page)
+        page.goto(f"{base}/{SLUG}/{name}", wait_until="networkidle", timeout=25_000)
+        page.wait_for_timeout(700)
+        problems = findings(page, seen)
+        assert not problems, f"{name} at {width}px fails Tier-1 checks:\n  " + "\n  ".join(
+            problems[:6]
+        )
+    finally:
+        ctx.close()
+
+
+def test_the_tier_one_checks_are_actually_reaching_this_exercise(site) -> None:
+    """The twin: plant a defect, confirm it is reported, remove it in a `finally`.
+
+    Without this the test above is indistinguishable from one that imported the module and called
+    nothing — which is the failure mode `AGENTS.md` calls a tested feature with no caller, one level
+    up. The mutation is removed on the way out rather than at the end of the happy path, so an
+    early return or an exception cannot leave the page rewritten for whatever runs next.
+    """
+    browser, base = site
+    ctx = browser.new_context(viewport={"width": 1200, "height": 800})
+    page = ctx.new_page()
+    try:
+        seen = attach(page)
+        page.goto(f"{base}/{SLUG}/s1.html", wait_until="networkidle", timeout=25_000)
+        page.wait_for_timeout(400)
+        assert not findings(page, seen), "the page is not clean to begin with; fix that first"
+        page.evaluate(
+            """() => {
+                 const box = document.createElement('div');
+                 box.id = 'planted-overflow';
+                 box.style.cssText = 'width:120px;overflow:hidden;white-space:nowrap';
+                 box.textContent = 'x'.repeat(400);
+                 document.body.appendChild(box);
+               }"""
+        )
+        page.wait_for_timeout(100)
+        problems = findings(page, seen)
+        assert any("overflows its own box" in p for p in problems), (
+            f"a 400-character line inside a 120px box was not reported: {problems}"
+        )
+    finally:
+        page.evaluate("() => document.getElementById('planted-overflow')?.remove()")
         ctx.close()
