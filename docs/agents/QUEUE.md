@@ -396,6 +396,14 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-04  retro-fix     #113 opened: a page that builds a contents rail must mark the section in
+                          view. It was RED on purpose while its four subjects sat in other pull
+                          requests -- silencing a gate that reports a true defect is what AGENTS.md
+                          refuses -- so #109 to #112 were merged INTO it instead, which makes it
+                          green honestly and shrinks it to the guard alone once they land. The four
+                          merges each conflicted on CHANGELOG.md and resolving by taking a side lost
+                          three of the four entries; restored, and it is exactly the failure
+                          sync_open_prs.py exists to prevent
 2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
                           hook. A reviewer copied into .claude/ and then edited there diverges
                           silently from its tracked source, and the installed copy is the one that
