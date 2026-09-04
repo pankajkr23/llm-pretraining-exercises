@@ -624,4 +624,16 @@ predates the harness — so it is logged as what it was.
                           prefers-color-scheme, the single arrangement in which a frozen colour
                           matches. A cross-scheme guard was added and watched failing while the
                           original stayed green
+2026-09-04  tooling       #139 opened: snapshot() ended with `git add -A` INSIDE the backup
+                          store -- the same command this repo forbids in the working tree. Three
+                          files became tracked in #106, so collect() stopped gathering them and the
+                          store's stale claim was reddening the tripwire on every branch that
+                          predated them, blocking the sync tool on 17 open PRs. PK removed them
+                          with `rm --cached`, which leaves the files on disk; the next snapshot
+                          re-added all three, from the post-checkout hook, seconds later, silently.
+                          Now stages exactly what it copied. That exposed the commit gate reading
+                          `status --porcelain`, which counts UNTRACKED files -- impossible under
+                          -A -- so the store announced "NOT safe" over a healthy snapshot. Gated on
+                          staged changes now. Both watched failing; the 19 agent_sample_files
+                          entries are PK's staging area and deliberately untouched
 ```
