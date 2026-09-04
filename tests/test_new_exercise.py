@@ -16,6 +16,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from _exercises import exercises_in
 
 REPO = Path(__file__).resolve().parents[1]
 TOOL = REPO / "tools" / "new_exercise.py"
@@ -69,26 +70,32 @@ def generated(tmp_path_factory) -> tuple:
     for name, value in overrides:
         setattr(new_exercise, name, value)
 
+    # **A number and package no real exercise will ever claim.** This fixture used to scaffold
+    # `09 / lossheads`, which is exactly the spec exercise 09 was always going to be created with —
+    # and `test_the_generated_test_module_name_cannot_collide` then compared the generated name
+    # against the real tree and found itself. The test broke the day the exercise it modelled was
+    # scaffolded, for a reason that had nothing to do with what it checks. A fixture that mirrors a
+    # real artefact collides with it eventually; one that cannot be real never does.
     code = new_exercise.main(
         [
-            "09",
-            "loss-functions-output-heads",
+            "99",
+            "scaffold-probe",
             "--title",
-            "Loss functions and output heads",
+            "Scaffold probe",
             "--package",
-            "lossheads",
+            "scaffoldprobe",
             "--summary",
-            "What the model is actually scored on.",
+            "A fixture exercise that exists only inside this test.",
         ]
     )
     assert code == 0
     spec = new_exercise.Spec(
-        number="09",
-        slug="loss-functions-output-heads",
-        title="Loss functions and output heads",
-        package="lossheads",
-        summary="What the model is actually scored on.",
-        topic="09",
+        number="99",
+        slug="scaffold-probe",
+        title="Scaffold probe",
+        package="scaffoldprobe",
+        summary="A fixture exercise that exists only inside this test.",
+        topic="99",
     )
     return spec, exercises / spec.dirname
 
@@ -287,7 +294,11 @@ def test_the_generated_names_match_what_every_real_exercise_uses() -> None:
     direction of travel, since the exercises are the artefact and the generator only seeds one.
     """
     repo = Path(__file__).resolve().parent.parent
-    real = sorted((repo / "src" / "exercises").glob("[0-9][0-9]-*"))
+    # `exercises_in` rather than a name glob: a directory becomes an exercise when its
+    # `pyproject.toml` lands, and 09/10 exist on disk holding only their gitignored
+    # local-only files while that file waits in an unmerged branch. Globbing the name read
+    # them as exercises and died on the missing `pyproject.toml`.
+    real = exercises_in(repo / "src" / "exercises")
     assert len(real) >= 4, "not enough shipped exercises to read a convention from"
 
     prefix = re.compile(r"^Exercise (\d\d)\b")

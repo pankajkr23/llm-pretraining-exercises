@@ -110,6 +110,67 @@ def planted(tmp_path, monkeypatch):
     return root, store, [Path("keep/notes.txt"), Path("keep/other.txt")]
 
 
+def test_a_file_deliberately_removed_from_the_store_is_not_silently_re_added(planted) -> None:
+    """The store is append-only, so `snapshot()` must stage what it COPIED, never `git add -A`.
+
+    A file can legitimately leave the local-only set: on 2026-09-04 three did, by becoming tracked
+    in the repository, at which point `collect()` correctly stopped gathering them and the store's
+    claim on them was making the tripwire red on every branch that predated them. Removing them is
+    `git rm --cached`, which leaves the working copies on disk — so an `add -A` here re-adds all
+    three and undoes a deliberate act by a person, reporting nothing. It happened exactly once,
+    through the post-checkout hook, before this was fixed.
+    """
+    root, store, wanted = planted
+    snapshot(root, store, wanted, message="first")
+
+    # Remove one from the index the way a person would, leaving the file on disk.
+    subprocess.run(
+        ["git", "-C", str(store), "rm", "--cached", "--quiet", "keep/other.txt"], check=True
+    )
+    subprocess.run(
+        ["git", "-C", str(store), "commit", "--quiet", "-m", "no longer local-only"], check=True
+    )
+    assert (store / "keep" / "other.txt").is_file(), "rm --cached must leave the file on disk"
+
+    # A later run copies only what `collect()` still wants -- which no longer includes it.
+    snapshot(root, store, [Path("keep/notes.txt")], message="second")
+
+    tracked = subprocess.run(
+        ["git", "-C", str(store), "ls-files"], capture_output=True, text=True, check=True
+    ).stdout.split()
+    assert "keep/other.txt" not in tracked, (
+        "a file removed from the store on purpose was staged again by the next snapshot. The store "
+        "is append-only and never needs to stage a deletion, so it must add the paths it copied "
+        "rather than everything present in the directory."
+    )
+    assert "keep/notes.txt" in tracked, "the file still wanted must remain versioned"
+
+
+def test_snapshot_still_commits_when_only_untracked_files_sit_beside_it(planted) -> None:
+    """The coupled assumption the fix above exposed, which cost a false 'NOT safe' report.
+
+    The commit was gated on `git status --porcelain`, which counts UNTRACKED files. Under `add -A`
+    that could not happen, because everything present got staged. Once staging is by path, a file
+    left untracked on purpose makes the gate true while the index is empty, `git commit` exits
+    non-zero on that, and the store declares itself unsafe over a snapshot that is entirely fine.
+    """
+    root, store, wanted = planted
+    snapshot(root, store, wanted, message="first")
+    (store / "left-behind.txt").write_text("untracked, on purpose\n", encoding="utf-8")
+
+    (root / "keep" / "notes.txt").write_text("changed\n", encoding="utf-8")
+    snapshot(root, store, wanted, message="second")  # must not raise
+
+    log = subprocess.run(
+        ["git", "-C", str(store), "log", "--oneline"], capture_output=True, text=True, check=True
+    ).stdout
+    assert log.count("\n") >= 2, f"the second snapshot did not commit: {log!r}"
+    tracked = subprocess.run(
+        ["git", "-C", str(store), "ls-files"], capture_output=True, text=True, check=True
+    ).stdout.split()
+    assert "left-behind.txt" not in tracked, "an unrelated untracked file must not be swept in"
+
+
 def test_snapshot_refuses_to_report_success_when_git_will_not_track_a_file(planted) -> None:
     """The twin, and it runs everywhere — a guard nobody has watched fail is not a guard.
 

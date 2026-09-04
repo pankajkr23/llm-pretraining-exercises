@@ -164,7 +164,12 @@ section > input[type='range'] { width: min(100%, 460px); accent-color: var(--acc
 .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .btn.ghost { background: transparent; color: var(--accent); border-color: var(--line); }
 .btn.ghost:hover { border-color: var(--accent); filter: none; }
+/* The chosen option carries a mark as well as a fill. Colour alone fails twice: in
+ * high-contrast the accent and the surface sit much closer than this design assumes, and a
+ * printed or screenshotted page loses the distinction entirely. The check character is the
+ * state made visible without hue. */
 .btn.ghost.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.btn.ghost.on::before { content: '\2713\00a0'; font-weight: 700; }
 
 .toggle { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 6px; }
 .tier-out { margin-top: 12px; }
@@ -545,3 +550,51 @@ text.ax.warn { fill: var(--grade-x); }
    reserved for the excluded thing. */
 .fig-offscale { stroke: var(--grade-x); stroke-width: 1.5; stroke-dasharray: 3 3; }
 .fig-dot.bad { fill: var(--grade-x); }
+
+/* ============================================================
+ * A measure for running prose.
+ *
+ * Measured at 1440px before this rule: the widest body paragraph ran 1,156px at 16px type — about
+ * **145 characters a line**, roughly double what anyone can track. The eye loses its place
+ * returning to the left edge, and the longer the line the more often it lands on the wrong one.
+ *
+ * The measure goes on the element that CARRIES the type, not on a wrapper. `docs/DESIGN.md`
+ * records why: a `ch` unit resolves against the font size of the element declaring it, so the same
+ * number on a container with a different size silently means something else.
+ *
+ * `.note` and `.warn` are matched ANYWHERE under main, not as direct children of a section, and
+ * that distinction is the whole reason the first version of this rule moved nothing. On this page
+ * the long paragraphs are not section children at all: they sit inside `summary`, inside
+ * `tier-out`, inside plain wrappers. `main section > .note` selected none of them, the measurement
+ * came back unchanged at 145 characters, and the rule looked like a fix.
+ *
+ * They hold running prose rather than labels — they are where the caveats live, and a caveat
+ * nobody can read is a caveat the page is hiding.
+ *
+ * After this, the widest paragraph on the page is `p.claim`, which already carries its own
+ * narrower rule and lands at 755px. That is deliberately left alone: exercise 08, the reference
+ * implementation, sits at 835px. The defect here was 1,156px, not "wider than perfect".
+ * ============================================================ */
+
+main section > p,
+main .note,
+main .warn {
+  max-width: 68ch;
+}
+
+/* And the blind-list, whose measure was on the wrong element.
+ *
+ * `ul.blind-list` carries a `max-width`, so the list is 725px wide and looks constrained. But the
+ * type is set on the `li`, which had `max-width: none` — and a `ch` unit resolves against the font
+ * size of the element DECLARING it, so a measure on the wrapper means something else entirely.
+ * Measured at 2560px: four items still ran **82 characters**, and identically at 1920 and 1440,
+ * because the width comes from the list rather than the viewport.
+ *
+ * They are the exercise's limitations, written as sentences — "The corpus is 1.78M tokens. Three
+ * orders of magnitude below the scale a mixture decision is made at", and three more like it. The
+ * most important prose on the page to actually read.
+ *
+ * This is the rule the comment above already states, applied to the element that carries the type. */
+main .blind-list li {
+  max-width: 68ch;
+}
