@@ -224,16 +224,16 @@
           </div>
 
           <div class="panel">
-            <h3>The squish, with z marked</h3>
-            <canvas id="cross" width="600" height="220"></canvas>
+            <h3 id="cap-cross">The squish, with z marked</h3>
+            <canvas role="img" aria-labelledby="cap-cross" id="cross" width="600" height="220"></canvas>
           </div>
         </div>
 
         <div class="col-right">
           <div class="panel stage">
-            <h3>y = f(w₁·x₁ + w₂·x₂ + b) — the surface over (x₁, x₂)</h3>
+            <h3 id="cap-surface">y = f(w₁·x₁ + w₂·x₂ + b) — the surface over (x₁, x₂)</h3>
             <div style="position: relative">
-              <canvas id="surface" width="1120" height="820"></canvas>
+              <canvas role="img" aria-labelledby="cap-surface" id="surface" width="1120" height="820"></canvas>
               <span class="hint">drag · scroll</span>
             </div>
             <div class="axnote"><span>x₁ →</span><span id="loss">flat plane ghosted for reference</span><span>← x₂</span></div>
@@ -256,12 +256,12 @@
         </p>
         <div class="rings">
           <figure>
-            <canvas id="ringLin" width="640" height="640"></canvas>
-            <figcaption>Linear + sigmoid <span class="acc" id="accLin">—</span></figcaption>
+            <canvas role="img" aria-labelledby="cap-ringLin" id="ringLin" width="640" height="640"></canvas>
+            <figcaption id="cap-ringLin">Linear + sigmoid <span class="acc" id="accLin">—</span></figcaption>
           </figure>
           <figure>
-            <canvas id="ringRelu" width="640" height="640"></canvas>
-            <figcaption>One ReLU hidden layer · 12 units <span class="acc" id="accRelu">—</span></figcaption>
+            <canvas role="img" aria-labelledby="cap-ringRelu" id="ringRelu" width="640" height="640"></canvas>
+            <figcaption id="cap-ringRelu">One ReLU hidden layer · 12 units <span class="acc" id="accRelu">—</span></figcaption>
           </figure>
         </div>
         <div class="stage-controls">

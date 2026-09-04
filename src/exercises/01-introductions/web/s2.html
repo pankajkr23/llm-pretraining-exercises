@@ -131,11 +131,11 @@
       <div class="stages">
         <div class="panel">
           <h3 id="stackTitle">The 5-layer stack</h3>
-          <canvas id="stack" width="720" height="720"></canvas>
+          <canvas role="img" aria-labelledby="stackTitle" id="stack" width="720" height="720"></canvas>
         </div>
         <div class="panel">
-          <h3>One matrix · M = Wₙ ⋯ W₁</h3>
-          <canvas id="single" width="720" height="720"></canvas>
+          <h3 id="cap-single">One matrix · M = Wₙ ⋯ W₁</h3>
+          <canvas role="img" aria-labelledby="cap-single" id="single" width="720" height="720"></canvas>
         </div>
       </div>
 
@@ -158,9 +158,9 @@
           finally wraps the ring. Press <b>Train</b>.
         </p>
         <div class="rings">
-          <figure><canvas id="r1" width="600" height="600"></canvas><figcaption>1 linear layer <span class="acc" id="a1">—</span></figcaption></figure>
-          <figure><canvas id="r5" width="600" height="600"></canvas><figcaption>5 linear layers <span class="acc" id="a5">—</span></figcaption></figure>
-          <figure><canvas id="rr" width="600" height="600"></canvas><figcaption>5 layers + ReLU <span class="acc" id="ar">—</span></figcaption></figure>
+          <figure><canvas role="img" aria-labelledby="cap-r1" id="r1" width="600" height="600"></canvas><figcaption id="cap-r1">1 linear layer <span class="acc" id="a1">—</span></figcaption></figure>
+          <figure><canvas role="img" aria-labelledby="cap-r5" id="r5" width="600" height="600"></canvas><figcaption id="cap-r5">5 linear layers <span class="acc" id="a5">—</span></figcaption></figure>
+          <figure><canvas role="img" aria-labelledby="cap-rr" id="rr" width="600" height="600"></canvas><figcaption id="cap-rr">5 layers + ReLU <span class="acc" id="ar">—</span></figcaption></figure>
         </div>
         <div class="stage-controls">
           <button class="btn" id="ringTrain">Train</button>
