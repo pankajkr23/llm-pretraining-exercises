@@ -396,7 +396,7 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
-2026-09-04  retro-fix     exercise 02's contrast fix opened: 5 unselected segmented options at
+2026-09-04  retro-fix     #130 opened: exercise 02's contrast fix -- 5 unselected segmented options at
                           4.15:1 in the DEFAULT theme only. A reported sixth failure was the PROBE,
                           not the page — a badge whose ground is 10% alpha of its own text colour
                           read 1.00:1 until the stack was composited, and is 4.66:1 in fact. The
