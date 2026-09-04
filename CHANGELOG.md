@@ -28,6 +28,34 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercise 04's `chapters.js` was a binary file to git, so no diff of it could be reviewed.**
+  `NOISE_RE` is a character class matching control characters, and line 22 held **six raw control
+  bytes** — a literal NUL, `0x08`, `0x0b`, `0x0c`, `0x0e` and `0x1f` — where the author meant the
+  escape sequences `\x00`, `\x08` and the rest. One NUL is all it takes: git classifies the file
+  as binary and prints `Bin 50656 -> 51984 bytes` instead of a diff, on a repository where review
+  is the merge gate. It had been that way on `main`; the other seven `chapters.js` are clean.
+
+  Replaced with the escapes, which is the same regular expression. **Verified rather than
+  asserted**: the class was tested against every code point from `U+0000` to `U+FFFF` before and
+  after, and the two match sets are byte-identical. Confirmed that git now diffs it as text — `2 0`
+  where both sides are free of the NUL, and binary only while `HEAD` still carries it, so this
+  change is the last unreviewable diff of that file.
+
+
+- **Exercise 04's contents rail never said where the reader was.** `_shared/page.css` has styled
+  `.rail-link.on` — an accent bar and a bold label — since before this page existed, and the page
+  never set the class. The rail looked finished and simply never moved, which is the worst shape a
+  defect can take: the markup is there, the styles are there, and the only way to notice is to
+  scroll and watch nothing happen. Every existing assertion about the rail was about what it
+  *contains*.
+
+  The rule is **the last heading whose top has passed the first third of the viewport**, not the
+  nearest one. Nearest sounds more reasonable and is wrong on half the page: sections here run
+  several screens, so from the middle of one the *next* heading is often closer than the one behind
+  you, and the rail then runs a section ahead of the reader.
+
+### Fixed
+
 - **Two correct changes combined into a defect, and the merge is where it appeared.** #115 renamed
   exercise 02's segmented controls from `aria-selected` to `aria-pressed` — they are toggle buttons,
   not tabs. #130 fixed their contrast: the unselected options were `--muted` on the control's

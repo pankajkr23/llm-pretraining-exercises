@@ -514,6 +514,12 @@ predates the harness — so it is logged as what it was.
                           redraw a region in place and are not tabs
 2026-09-04  retro-fix     #115 opened: exercise 02, same false tab-pattern claim as #114, same
                           answer -- the roles come off rather than the machinery going in
+2026-09-04  retro-fix     #109 opened: exercise 04's contents rail never marked the section in
+                          view. `.rail-link.on` has been styled in the shared stylesheet since
+                          before the page existed and the page never set it, so the rail looked
+                          finished and never moved. The rule is the last heading past the first
+                          third of the viewport, NOT the nearest one -- sections run several
+                          screens, so the nearest heading is often the one ahead of the reader
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
