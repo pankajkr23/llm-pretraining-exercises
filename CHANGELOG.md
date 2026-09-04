@@ -10,6 +10,18 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The mermaid render test spent its 180-second budget downloading rather than rendering.** It
+  shells out to `npx --yes @mermaid-js/mermaid-cli`, and `--yes` *fetches* the package on first
+  use — it bundles puppeteer, so on a cold runner that download alone can exceed the timeout the
+  test allows for a render. It failed on three of four consecutive branches and passed on the
+  fourth: a flake that reds unrelated pull requests at random, which is worse than a test that
+  fails honestly. The `mixtures` shard now fetches it in a step with a budget of its own, leaving
+  the test's 180 seconds for what they were sized for. `PUPPETEER_SKIP_DOWNLOAD` stops it pulling a
+  second chromium — the test already points puppeteer at the playwright browser the shard installs
+  two steps earlier.
+
 ### Added
 
 - **`tools/sync_open_prs.py`, which keeps every open pull request mergeable.** Every open branch touches
