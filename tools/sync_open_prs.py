@@ -199,20 +199,25 @@ def sync(number: str, branch: str, dry_run: bool) -> Result:
     merged = _run("git", "merge", "--no-edit", "origin/main", check=False)
     conflicted = _run("git", "diff", "--name-only", "--diff-filter=U", check=False).stdout.split()
 
+    # **Every log file is rebuilt, not only the conflicted ones.** A clean auto-merge is not a
+    # correct one here: when the branch's entry and a shared entry sit at different offsets, git
+    # sees two independent insertions, merges both without complaint, and the shared record lands
+    # TWICE. The first duplicate this tool produced came from resolving a conflict too coarsely;
+    # the second came from there being no conflict to resolve at all. Rebuilding unconditionally
+    # is the only version that covers both.
     for path in LOG_FILES:
-        if path not in conflicted:
-            continue
         main_text = _show("origin/main", path)
         if main_text is None:
             result.notes.append(f"{path}: not on main, left for a human")
             continue
         text, notes = _reapply(main_text, own[path])
+        if text == (REPO_ROOT / path).read_text():
+            continue
         (REPO_ROOT / path).write_text(text)
         _run("git", "add", path)
         result.notes.extend(f"{path}: {n}" for n in notes)
-        result.notes.append(
-            f"{path}: resolved as main + this branch's own {len(own[path])} block(s)"
-        )
+        how = "resolved" if path in conflicted else "rebuilt: git merged it cleanly and wrongly"
+        result.notes.append(f"{path}: {how} as main + this branch's own {len(own[path])} block(s)")
 
     if RECEIPT in conflicted:
         # Never merged, always recomputed: the receipt is a digest of the tree it sits in, so a
