@@ -473,6 +473,11 @@ predates the harness — so it is logged as what it was.
                           the floor before, none after. THE PROMOTED GUARD COULD NOT SEE IT: 08's
                           ROOM_TO_SPARE asks whether a block leaves room inside its own box and a
                           squeezed paragraph fills its box exactly. Found by watching it fail
+2026-09-04  retro-fix     #126 opened: exercise 03's print fix -- 0 of 45 scrolly verdict lines survived
+                          `emulate_media("print")` because the end-state rule existed only for
+                          prefers-reduced-motion. A printed sheet carried 11 figure states and lost
+                          34. Fixed by adding `print` to the SAME media query rather than writing a
+                          twin block — two blocks drift, and drift is what produced the defect
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the

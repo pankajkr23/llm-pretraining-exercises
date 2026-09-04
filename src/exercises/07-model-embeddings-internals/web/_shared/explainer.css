@@ -209,8 +209,14 @@
   .step { min-height: 30vh; margin-bottom: 5vh; }
 }
 
-/* The complete end state: every step and its verdict, with nothing left to scroll for. */
-@media (prefers-reduced-motion: reduce) {
+/* The complete end state: every step and its verdict, with nothing left to scroll for.
+ *
+ * Paper is the same problem as reduced motion and gets the same answer, in one rule rather than a
+ * twin that can drift apart. A printed or exported page cannot scroll, so the pinned figure carries
+ * whichever single state was live when the page was printed and every other state of that widget is
+ * simply gone. The inline verdict line is the only place the rest can appear — and it was
+ * `display: none` in every print, PDF and paper copy this page has ever produced. */
+@media (prefers-reduced-motion: reduce), print {
   .step { min-height: 0; margin-bottom: 22px; }
   .step .inline { display: block; }
   .sticky { position: static; }
