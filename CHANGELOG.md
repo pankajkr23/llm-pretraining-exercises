@@ -12,14 +12,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
-- **`docs/MERGE_ORDER.md` and the tool that keeps it true.** Every open branch touches
+- **`tools/sync_open_prs.py`, which keeps every open pull request mergeable.** Every open branch touches
   `docs/agents/QUEUE.md`, `CHANGELOG.md` and `.quote-check-receipt.json`, and the receipt is a
   digest over **all** tracked prose — so merging one pull request invalidates every other one.
   Measured rather than assumed: merging two branches produced a `QUEUE.md` content conflict *and*
   left the receipt full of conflict markers, so its checker died with a `JSONDecodeError` instead of
   failing cleanly.
 
-  `tools/sync_open_prs.py` merges `main` into every open branch, rebuilds the two log files as
+  It merges `main` into every open branch, rebuilds the two log files as
   *main's version plus that branch's own entry*, regenerates the receipt and pushes. It never
   rebases and never force-pushes: the branches are published, `AGENTS.md` forbids rewriting
   published history, and the repository's settings deny it.

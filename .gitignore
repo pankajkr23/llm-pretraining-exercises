@@ -291,3 +291,6 @@ src/exercises/*/tools/build_notebook.py
 # file whose parent directory is excluded -- `git add -A` would report success and stage nothing.
 # `tests/test_submission_bundle.py` asserts both halves of that.
 !src/exercises/*/submission_artifacts/run.log
+
+# PK's merge order for the open pull requests — local reference, never published.
+docs/MERGE_ORDER.md
