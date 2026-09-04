@@ -10,6 +10,23 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Exercise 07's twenty-five table headers were below WCAG AA, in the default theme only.**
+  `--muted` on `--track` measures **4.15:1** with no `data-theme` set — the state most readers are
+  in — against 4.84 to 14.17:1 in the other five. That is exactly why it survived: a two-theme
+  check would have found nothing. It is the column heading of all 25 headers across eight tables,
+  plus two `.legend code` chips, so it is the label that says what a column means. `--ink` on
+  `--track` is **13.78:1** in the default theme and clears AA in all six.
+
+- **All eighty-one of exercise 07's SVG figure labels were unreadable on a phone.** An `<svg>` with
+  a viewBox scales its text with the drawing, so a label's effective size is its authored size
+  times the rendered scale — at 390px the six figures rendered at 0.59, putting every label between
+  **6.49px and 9.4px**. The authored `font-size` reads 11px and tells you nothing. Fixed the same
+  way as exercise 05: the figure is already a horizontal scroller, so it stops shrinking below the
+  point its own labels survive (`min-width` 460px → 690px) rather than having its type enlarged,
+  which would change the label-to-drawing proportion it was drawn at. Worst label now **9.73px**.
+
 ### Added
 
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two

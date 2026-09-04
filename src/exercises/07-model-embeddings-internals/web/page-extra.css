@@ -45,12 +45,17 @@ table.grid td {
   white-space: nowrap;
 }
 
+/* `--ink`, not `--muted`. `--muted` on `--track` measures 4.15:1 in the default light theme —
+   below WCAG AA of 4.5:1 for text this size — and this is the column heading of all 25 headers
+   across eight tables, so it is the label a reader needs to know what a column means. The other
+   five themes happened to clear it (4.84 to 14.17:1), which is why it survived: the theme most
+   readers are in was the one that failed. `--ink` on `--track` is 11.32 to 14.17:1 in all six. */
 table.grid th {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--ink);
   background: var(--track);
 }
 
@@ -296,11 +301,17 @@ figure {
   overflow-x: auto;
 }
 
+/* 690px, not 460. An `<svg>` with a viewBox scales its text with the drawing, so a label's
+   effective size is its authored size times the rendered scale. At 460px the six figures rendered
+   at 0.59, putting all 81 labels between 6.49px and 9.4px on a 390px viewport — every figure
+   legible except the words on it. The figure is already a horizontal scroller, so it stops
+   shrinking below the point its own labels survive rather than having its type enlarged, which
+   would change the label-to-drawing proportion it was drawn at. */
 .fig-svg {
   display: block;
   width: 100%;
   height: auto;
-  min-width: 460px;
+  min-width: 690px;
 }
 
 figcaption {
@@ -392,6 +403,8 @@ text.ax.warn {
 
 .legend code {
   font-family: var(--mono);
+  /* Same 4.15:1 on `--track` in the default light theme; see `table.grid th` above. */
+  color: var(--ink);
   background: var(--track);
   border-radius: 4px;
   padding: 1px 5px;
