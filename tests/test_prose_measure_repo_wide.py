@@ -65,6 +65,7 @@ COVERED = [
     "06-build-training-dataset",
     "07-model-embeddings-internals",
     "08-modern-attention-variants",
+    "09-loss-functions-output-heads",
 ]
 
 #: Deployable, measured, and not yet in the band. Each names what is fixing it.

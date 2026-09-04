@@ -31,6 +31,30 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercise 09 vendored the shared layer as it stood before four fixes landed, and nothing
+  asserts the copies stay in step.** It was built while #120, #122, #126, #131 and #107 were open,
+  so its `web/_shared/` held the pre-fix stylesheets and no `theme.js` at all. Measured on 09's own
+  rendered page, hovering its `← Back` pill: **1.54:1 on `neon`** and **2.46:1 on `tinted-dark`**
+  against the 4.5:1 floor — now **12.19:1** and **7.77:1**. Separately, **3 of its 18 anchors**
+  painted the browser's default `#0000EE`, because nothing in the cascade reached them; now none do.
+
+  Its theme picker was a **hand-written 19-line copy** of the logic #107 centralised — the ninth
+  such copy, written after the refactor that removed the other eight. It now imports
+  `bindThemePicker` like every other page. Verified in a browser rather than by reading: selecting
+  *neon* sets `data-theme` and persists it, the page builds all **12** spine sections with no
+  console or page error, and nothing scrolls sideways at 390px.
+
+  **The batch ordering caught this, not a guard**, which is the part worth fixing later: a vendored
+  copy going stale is invisible, and the only honest check is a byte comparison against the exercise
+  that owns the original.
+
+  **Two claims measurement refuted before they could be written.** The refresh does *not* fix 09's
+  reading measure — it already held the 42–80 character band at all eight widths, with the stale
+  stylesheets and with the new ones, so 09 joins `COVERED` on its own merit. And `--on-accent` was
+  already *defined* in the stale `tokens.css`; what was missing was the rule that **uses** it. A
+  first probe read the token's value rather than the painted colour and would have reported the
+  defect as already fixed.
+
 - **The document-boundary mask kept every pad-to-pad pair.** Padding carries id `-1`, and
   `-1 == -1` is `True`, so a mask written as `source == destination` reads correctly and drops
   nothing but the joins. 68 of 125 "contributing" positions on the published example were padding
