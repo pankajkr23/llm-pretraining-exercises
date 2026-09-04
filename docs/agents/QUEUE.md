@@ -541,4 +541,15 @@ predates the harness — so it is logged as what it was.
                           branch -- read as exercises and died on an absent pyproject.toml. Both
                           were GREEN IN CI and red only locally, which is where the notebook,
                           tripwire and quote gates live and CI has no twin
+2026-09-04  deploy        #137 opened: a preview was built for pull requests that change no page.
+                          VERCEL_GIT_PREVIOUS_SHA is the last successful DEPLOYMENT, not the parent
+                          -- the comment said otherwise -- so a sync that merged main in read as
+                          deploy-worthy and built a copy of main's own site. A second gate now asks
+                          whether the preview would show anything: identical deployed files to main
+                          means skip. Two TREES, not two histories, so no common ancestor is needed
+                          and it survives a shallow clone. MEASURING REFUTED MY FIRST ATTEMPT: a
+                          plain diff against main would have built MORE, since 18 of 19 open pull
+                          requests change a deployed file and would then rebuild on test-only
+                          pushes. Sized honestly at ONE build per sync round, not the ~20 first
+                          claimed; corrected in the changelog where the claim was made
 ```
