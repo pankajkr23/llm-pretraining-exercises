@@ -730,4 +730,15 @@ predates the harness — so it is logged as what it was.
                           merges each conflicted on CHANGELOG.md and resolving by taking a side lost
                           three of the four entries; restored, and it is exactly the failure
                           sync_open_prs.py exists to prevent
+2026-09-05  exercise-10   #143 opened: the MFU guard divided by something that was not a peak.
+                          It measured at size=512, where allocation dominates and the reported rate
+                          is HALF the machine's real one (1.6 vs 3.3 TFLOP/s, 6.6% spread), so a
+                          run that beat the under-measurement produced an impossible ratio. Failed
+                          twice in one evening on unrelated work -- 253% on #119, 117% on #113 --
+                          and on main. The assertion was right; the denominator was not. Now uses
+                          the defaults every other call site already used: 0.1% spread and FASTER.
+                          Ten consecutive passes, and still reports 22,139% when the peak is
+                          deliberately wrong. While investigating I called the harness directly and
+                          rewrote results/run.json with a 3-step run -- 1,583 lines of committed
+                          evidence -- caught by git status and restored from HEAD
 ```
