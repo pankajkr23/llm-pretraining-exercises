@@ -396,6 +396,12 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-04  retro-fix     exercise 04's permalink fix opened: 13 chapter anchors read "#" with no
+                          aria-label, so a screen reader announced "number sign" thirteen times for
+                          thirteen destinations. 03 and 06 already carried the answer; the wording
+                          is copied rather than reinvented, because an identical control should
+                          announce identically. The guard asserts a non-empty accessible NAME, not
+                          that a particular string is present
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the

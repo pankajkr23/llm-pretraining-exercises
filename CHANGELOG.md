@@ -10,6 +10,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Exercise 04's thirteen chapter permalinks announced as "number sign".** Each is
+  `<a class="anchor" href="#…">#</a>` with no `aria-label`, so a screen reader read the same two
+  words thirteen times for thirteen different destinations. **Exercises 03 and 06 already solve
+  this** — `a.setAttribute('aria-label', 'Link to this chapter')` — and the wording is copied
+  verbatim rather than reinvented, because the point is that the identical control announces
+  identically across the site. Measured after: 13 of 13 carry the name, in all six themes.
+
 ### Added
 
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two
