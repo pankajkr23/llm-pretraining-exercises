@@ -5,13 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Meaning from Company · Embeddings</title>
     <style>
-      
+      /* The page's own category palette, and it needs a LIGHT set as much as a dark one.
+         There was only a dark one, so on the three light themes all four resolved to nothing:
+         a chip's background was never painted and its white label sat on the white page at
+         1.00:1. Not hard to read -- absent. Light values follow s1.html's own precedent for
+         the same two hues (#ff9f0a -> #d1730a, #2997ff -> #0071e3), darkened where white text
+         has to sit on them.
+
+         `--chip-ink` is the paired ink, one per theme group, because a swatch and the label on
+         it are a single decision. White clears AA on all four light swatches (4.70:1 at worst);
+         near-black clears it on all four dark ones (6.53:1 at worst). */
+      :root {
+        --animal: #0071e3;
+        --fruit: #1c7a33;
+        --verb: #a75a00;
+        --end: #5c5c61;
+        --chip-ink: #ffffff;
+      }
       @media (prefers-color-scheme: dark) {
         :root:not([data-theme]) {
           --animal: #2997ff;
           --fruit: #30d158;
           --verb: #ff9f0a;
-          --end: #6e6e73;
+          /* Lightened from #6e6e73: near-black ink over that measured 3.88:1, and a mid grey
+             was the weakest mark on a dark page anyway. */
+          --end: #a1a1a6;
+          --chip-ink: #0b0b0c;
         }
       }
       /* The page's own diagram tokens, for the themes that are dark. Without this a
@@ -21,7 +40,8 @@
           --animal: #2997ff;
           --fruit: #30d158;
           --verb: #ff9f0a;
-          --end: #6e6e73;
+          --end: #a1a1a6;
+          --chip-ink: #0b0b0c;
       }
       * { box-sizing: border-box; }
       body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
@@ -45,10 +65,10 @@
       .panel h3 { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); margin: 0 0 14px; }
 
       .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-      .chip { font-family: var(--mono); font-size: 12px; padding: 2px 9px; border-radius: 20px; color: #fff; }
+      .chip { font-family: var(--mono); font-size: 12px; padding: 2px 9px; border-radius: 20px; color: var(--chip-ink); }
       .cat-label { font-size: 11px; color: var(--faint); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em; margin: 12px 0 4px; }
       .sample { font-family: var(--mono); font-size: 14px; margin-top: 14px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-      .sample .tok { padding: 2px 8px; border-radius: 6px; color: #fff; }
+      .sample .tok { padding: 2px 8px; border-radius: 6px; color: var(--chip-ink); }
 
       canvas#map { width: 100%; height: auto; display: block; border-radius: 12px; background: var(--bg); cursor: pointer; }
       .verdict { margin-top: 14px; font-size: 1rem; color: var(--muted); }
@@ -73,10 +93,18 @@
       a frame and then repaint, which is the flash a theme switcher is judged by.
     -->
     <script>
-      try {
-        var t = localStorage.getItem('era5-theme');
-        if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t);
-      } catch (e) {}
+      // Wrapped, because `var` at the top level of a classic script creates a GLOBAL. This
+      // bootstrap leaked one named `t`, and s3.html's page script opens with
+      // `let E, W, …, t, …` — a `let` cannot redeclare an existing `var` global, so the whole
+      // script threw `Identifier 't' has already been declared` before its first statement and
+      // the page rendered nothing at all. The other four pages leaked the same name and only
+      // escaped by not happening to reuse it.
+      (function () {
+        try {
+          var t = localStorage.getItem('era5-theme');
+          if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+      })();
     </script>
   </head>
   <body>
@@ -127,8 +155,8 @@
 
         <div class="col-right">
           <div class="panel">
-            <h3>The learned 2-D embedding</h3>
-            <canvas id="map" width="1120" height="860"></canvas>
+            <h3 id="cap-map">The learned 2-D embedding</h3>
+            <canvas role="img" aria-labelledby="cap-map" id="map" width="1120" height="860"></canvas>
             <p class="verdict" id="verdict"></p>
             <p class="caption" id="caption"></p>
           </div>
@@ -150,6 +178,14 @@
       const colVar = { animal: '--animal', fruit: '--fruit', verb: '--verb', end: '--end' };
       const css = (v) => getComputedStyle(document.body).getPropertyValue(v).trim();
       const colOf = (w) => css(colVar[catOf(w)]);
+      /* For the DOM, hand back the VARIABLE rather than its resolved value. `colOf` reads the
+         custom property once, so a colour written into a style attribute freezes at whatever
+         theme was active when the page built -- while `.chip`'s own `color: var(--chip-ink)`
+         stays live. Switching to a dark theme then paired a near-black label with the LIGHT
+         palette's swatch: 4.19:1, 3.64:1 and 3.85:1, all under AA, with the CSS pairing
+         perfectly correct the whole time. Canvas still needs `colOf`, because a 2D context
+         cannot take `var()`. */
+      const varOf = (w) => `var(${colVar[catOf(w)]})`;
 
       // corpus + empirical next-token distributions
       const rng = mulberry32(42);
@@ -238,8 +274,8 @@
         for (let j = 0; j < V; j++) if (emp[sel][j] > 0.02 || p[j] > 0.06) rows.push(j);
         rows.sort((a, b) => emp[sel][b] - emp[sel][a]);
         document.getElementById('dist').innerHTML = rows.map((j) =>
-          `<div class="drow"><span class="dlab" style="color:${colOf(vocab[j])}">${vocab[j]}</span>` +
-          `<span class="track"><span class="barE" style="width:${(emp[sel][j] * 100).toFixed(0)}%;background:${colOf(vocab[j])}"></span>` +
+          `<div class="drow"><span class="dlab" style="color:${varOf(vocab[j])}">${vocab[j]}</span>` +
+          `<span class="track"><span class="barE" style="width:${(emp[sel][j] * 100).toFixed(0)}%;background:${varOf(vocab[j])}"></span>` +
           `<span class="barM" style="left:${Math.min(99, p[j] * 100).toFixed(0)}%"></span></span></div>`
         ).join('');
       }
@@ -277,7 +313,7 @@
       });
 
       // grammar panel + sample
-      const chip = (w) => `<span class="chip" style="background:${colOf(w)}">${w}</span>`;
+      const chip = (w) => `<span class="chip" style="background:${varOf(w)}">${w}</span>`;
       document.getElementById('c-animals').innerHTML = animals.map(chip).join('');
       document.getElementById('c-fruits').innerHTML = fruits.map(chip).join('');
       document.getElementById('c-verbs').innerHTML = verbs.map(chip).join('');
@@ -285,7 +321,7 @@
       function newSample() {
         const sp = (a) => a[Math.floor(srng() * a.length)];
         const s = [sp(animals), sp(verbs), sp(animals.concat(fruits)), '.'];
-        document.getElementById('sample').innerHTML = s.map((w) => w === '.' ? '<span style="color:var(--faint)">.</span>' : `<span class="tok" style="background:${colOf(w)}">${w}</span>`).join('');
+        document.getElementById('sample').innerHTML = s.map((w) => w === '.' ? '<span style="color:var(--faint)">.</span>' : `<span class="tok" style="background:${varOf(w)}">${w}</span>`).join('');
       }
       document.getElementById('newsample').addEventListener('click', newSample);
       document.getElementById('train').addEventListener('click', train);
