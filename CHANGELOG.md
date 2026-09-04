@@ -1,4 +1,20 @@
 # Changelog
+- **Exercise 02's segmented controls were unreadable in the default theme.** The five options a
+  reader has *not* chosen were `--muted` on the control's `--track` ground: **4.15:1**, below WCAG
+  AA. All five explicit themes cleared it (4.84 to 14.17:1) — the one that failed was the state
+  with no `data-theme` attribute at all, which is where most readers are, so a light-and-dark check
+  would have found nothing.
+
+  They now take `--ink`, which the design had already accepted there: it is what the `:hover` rule
+  used to set. The selected option is still unmistakable — a raised `--panel` pill with a shadow,
+  not a colour difference — and hover now answers with a ground rather than a colour it already
+  has.
+
+  **One reported failure turned out to be the measurement, not the page**, and it is worth
+  recording: `span.badge` read 1.00:1 in all six themes because its background is
+  `rgba(0, 104, 209, 0.1)` — ten per cent of its own text colour — and the probe treated it as
+  opaque. Composited properly it is **4.66:1** and passes. The guard now blends the whole painted
+  stack, so it cannot repeat that.
 
 All notable changes to this project are documented in this file.
 
@@ -11,6 +27,34 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 ## [Unreleased]
 
 ### Fixed
+
+- **Two correct changes combined into a defect, and the merge is where it appeared.** #115 renamed
+  exercise 02's segmented controls from `aria-selected` to `aria-pressed` — they are toggle buttons,
+  not tabs. #130 fixed their contrast: the unselected options were `--muted` on the control's
+  `--track`, **4.15:1** in the default theme. Each change is right. Taking **either side of the
+  merge whole** would have been wrong in a way nothing reports: #130's rules alone style
+  `aria-selected`, which no longer exists on the page, so the chosen option would have painted
+  nothing at all.
+
+  Resolved as both, and then the combination turned out to have a defect neither change had.
+  Making the unselected labels `--ink` removes the colour difference that marked the selection, and
+  the rule that remained leaned on `box-shadow: var(--shadow)` — which is `none` on **three** of the
+  seven theme states, by design. The chosen option was left distinguished by its background alone:
+  **1.14:1** on `tinted-dark`, **1.37:1** on `high-contrast`, **1.08:1** on `neon`, where WCAG asks
+  3:1 of a non-text state indicator. The rule's own comment claimed "a raised pill and a shadow"
+  throughout.
+
+  It now carries an `outline` in `--accent` and a heavier weight, neither of which depends on
+  `--shadow`: **4.41:1 to 10.2:1** against the track across all seven states, with the weight going
+  400 → 600 as a second signal that does not rely on colour at all.
+
+  **The guard passed against the very rule it was written to catch, on its first run.**
+  `outline-color` computes to a real colour even when `outline-style` is `none`, so it measured an
+  outline that is never painted. It now requires the outline to exist before counting it, and reds
+  on all three themes. **And "two themes" was itself wrong at first**: a 140ms settle after a theme
+  switch reported `tinted-dark` as still having a shadow, where 600ms shows it does not. Any
+  measurement taken straight after a theme switch is worth taking twice.
+
 
 - **Exercise 02 claimed the tab pattern and implemented none of it.** Same defect as exercise 01,
   on the tokenizer page: `role="tablist"` and `role="tab"` with no `role="tabpanel"`, no

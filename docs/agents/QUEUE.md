@@ -655,4 +655,9 @@ predates the harness — so it is logged as what it was.
                           would not help, because the hook runs the OLD copy that lives on the
                           branch being checked out. Still watching 30 local-only files; exactly the
                           three git holds are excluded
+2026-09-04  retro-fix     #130 opened: exercise 02's contrast fix -- 5 unselected segmented options at
+                          4.15:1 in the DEFAULT theme only. A reported sixth failure was the PROBE,
+                          not the page — a badge whose ground is 10% alpha of its own text colour
+                          read 1.00:1 until the stack was composited, and is 4.66:1 in fact. The
+                          guard blends the painted stack so it cannot repeat that
 ```
