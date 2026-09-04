@@ -12,6 +12,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- `tests/test_rail_marks_position.py` — a page that builds a contents rail must also mark the
+  section in view. `.rail-link.on` has been styled in the shared stylesheet since before most of
+  these pages existed and only exercise 03 ever set it, so four rails shipped looking finished and
+  never moving. **The guard found exercise 04, which was not on the list of pages known to have
+  this.**
+
+### Added
+
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two
   places — tracked under `docs/agents/reviewers/`, and copied by the installer into the gitignored
   `.claude/agents/` that Claude Code actually reads. They are identical by construction, and
