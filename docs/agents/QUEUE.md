@@ -396,6 +396,17 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-04  retro-fix     #121 opened: exercise 01's s3.html had been DEAD ON ARRIVAL for as long
+                          as it has been deployed — `var t` in the theme bootstrap is a global and
+                          the page script opens `let ..., t, ...`, so the whole thing threw before
+                          its first statement. Every file-level check stayed green because every
+                          file was well-formed. Three of the four proof pages also had no LIGHT
+                          palette, so their tokens resolved to nothing on the default theme and a
+                          chip's white label sat on the white page at 1.00:1
+2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
+                          hook. A reviewer copied into .claude/ and then edited there diverges
+                          silently from its tracked source, and the installed copy is the one that
+                          runs — so the drift is invisible in review by construction
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
