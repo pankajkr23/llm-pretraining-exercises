@@ -396,6 +396,15 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-04  retro-fix     #119 opened: every deployable page is now checked in all six themes, not
+                          just 08 — no console error, tokens resolve, body text clears AA, with
+                          contrast computed in the browser rather than parsed from CSS. 8 pages x 6
+                          themes. Both halves watched failing: one paints the body text its own
+                          background, one disables the root token sheet in the live page
+2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
+                          hook. A reviewer copied into .claude/ and then edited there diverges
+                          silently from its tracked source, and the installed copy is the one that
+                          runs — so the drift is invisible in review by construction
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
