@@ -419,6 +419,23 @@ predates the harness — so it is logged as what it was.
                           `src/exercises/*/web` matches nothing, so the predicate would have
                           skipped EVERY deploy; `:(glob)` is what makes it mean what it looks like,
                           and I wrote the broken one first
+2026-09-04  ci            #133 opened: every push deployed a Vercel preview, whatever it
+                          touched, and about sixty in a day exhausted the quota and rate-limited
+                          the project for 24 HOURS -- so previews were unavailable for the pull
+                          requests that had actually changed a page. PK caught it. `ignoreCommand`
+                          now builds only when a deployed path changed: 6 of the last 8 commits on
+                          main would not have deployed. THE OBVIOUS PATHSPEC IS SILENTLY WRONG --
+                          `src/exercises/*/web` matches nothing, so the predicate would have
+                          skipped EVERY deploy, and `:(glob)` is what makes it mean what it looks
+                          like. I wrote the broken one first and caught it only by running the
+                          predicate over real history
+2026-09-04  tooling       #134 merged: the sync tool anchored a re-applied block on the single
+                          line that FOLLOWED it, and QUEUE.md has a dozen code fences -- so #108's
+                          entry landed forty lines above the `## Log` heading. It was still in the
+                          file, so every count of it looked right; only queue_status.py, which
+                          reads the log section and nothing else, noticed, two merges later. The
+                          anchor is a neighbour PAIR now, with reported fallbacks. Third defect
+                          from that tool in three live runs, each invisible in the diff
 2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
                           hook. A reviewer copied into .claude/ and then edited there diverges
                           silently from its tracked source, and the installed copy is the one that
