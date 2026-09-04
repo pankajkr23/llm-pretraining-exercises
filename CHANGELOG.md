@@ -29,6 +29,132 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **A skip-ledger test was pinned to a list index.** It read `EXPECTED_IN_CI[0]` while hard-coding
+  the reason belonging to whichever entry happened to be first, so adding an entry **anywhere above
+  it** failed the test — for a reason having nothing to do with the new entry or with the gate it
+  guards. It now looks its entry up by path. `AGENTS.md` already records the cost of pinning a test
+  to `:nth-child`; this is the same mistake in Python.
+
+- **A section heading is context for the entry beneath it, not a record of its own.** The sync
+  tool skipped any record `main` already had — and treated `### Fixed` as one. So when a branch
+  opened a new `### Fixed` block at the top of `[Unreleased]` while `main` had one further down,
+  the heading matched, was dropped as a duplicate, and **the entry landed directly under
+  `## [Unreleased]` with no section at all.** That is the state `main` was left in by #133's merge,
+  and it is repaired here.
+
+  A heading now opens a record and keeps it open, so the heading and the entry beneath it are
+  tested against `main` together and cannot be separated.
+
+  **The fixture had to be built three times before it reproduced.** The first two put the heading
+  *after* the entry, or gave the branch a heading `main` did not have — both pass against the
+  broken code. The real shape is a heading that `main` already has, appearing *first* in the added
+  block. A test that cannot fail is worth less than no test, because it reads as coverage.
+
+- **A pull request that does not log itself now fails, instead of failing everyone else.**
+  `tools/queue_status.py` refuses when `docs/agents/QUEUE.md` does not record a merged pull
+  request, and it runs in the `test` job — so the moment one merges unlogged, `main` fails its own
+  gate and **every branch cut from `main` inherits a failure that has nothing to do with it**. That
+  cost three rounds of merging in one afternoon: #133 sat red twice, once for #108's misplaced
+  entry and once for #134 not logging itself, and neither time did the error point at the branch
+  responsible.
+
+  The existing check looks **backwards** — does the log record what already merged? By then the
+  damage is on `main`. `tests/test_pull_request_logs_itself.py` looks **forwards**: does the pull
+  request being tested record itself? The branch that would cause the problem is the branch that
+  goes red.
+
+  It reads the number from `GITHUB_REF`, so it runs only on a pull-request build; that skip is
+  declared in `tests/_skips.py`. The parser is tested unconditionally in the same file, because a
+  ref format change would otherwise turn the whole guard into a permanent skip covering nothing —
+  which is the failure it exists to prevent, one level up.
+
+### Fixed
+
+- **A preview was deployed on every push, whatever it touched.** A test, a changelog line, a queue
+  entry — all of it spent a deployment. Roughly sixty pushes in one working day exhausted the
+  account's quota and Vercel rate-limited the project for **24 hours**, so previews stopped being
+  available for the pull requests that genuinely did change a page.
+
+  `vercel.json` now runs `deploy/vercel/should-build.sh` as its `ignoreCommand`: a build happens
+  only when the commit touches something `build.sh` actually copies into `public/`. Measured
+  against the last eight commits on `main`, **six would not have deployed** and the two that
+  changed `web/` still would.
+
+  **The obvious spelling of the pathspec is silently wrong, and it is the whole correctness of the
+  file.** `src/exercises/*/web` does not match `src/exercises/03-…/web/page.css` — a git pathspec
+  is a path prefix matched with fnmatch, and a bare `*` there does not behave like a shell glob.
+  Written that way the predicate matches nothing, `git diff --quiet` always succeeds, and **every**
+  deployment is skipped with no error anywhere. I wrote it that way first and caught it only by
+  running the predicate over real history and seeing a 2,578-line change under `web/` reported as
+  "nothing to deploy". `:(glob)` is what makes it mean what it looks like.
+
+  `tests/test_should_build.py` drives both directions in a throwaway repository — hermetic because
+  CI checks out at depth 1, so asserting against this project's own history would not run there.
+  Four of its cases go red against the wrong pathspec, and all four are ones whose failure would
+  otherwise be invisible. When the parent commit is unavailable it **builds**: a needless
+  deployment is a small waste, a silently skipped one is a preview that does not match the branch.
+
+### Fixed
+
+- **The pull-request sync tool put a log entry in the wrong section of the file, and every count of
+  it looked right.** It anchored each re-applied block on the single line that followed it on the
+  branch. `docs/agents/QUEUE.md` contains a dozen code fences, so `list.index` returned the
+  earliest one and #108's entry landed forty lines *above* the `## Log` heading. It was still in the
+  file — `grep` found it, the diff looked sane — and only `queue_status.py`, which reads the log
+  section and nothing else, noticed, two merges later.
+
+  A single line is not a position. The anchor is now the **pair** of neighbours a block had, with
+  reported fallbacks to one side or the other when `main` has moved under it, so a degraded
+  placement is visible rather than silent.
+
+  This is the third defect this tool has produced in three live runs — per-block skipping, then
+  only inspecting conflicted files, now an ambiguous anchor — and each one was invisible in the
+  diff and caught by something downstream. The entry it misplaced on `main` is moved back into the
+  log in this change.
+
+### Fixed
+
+- **The mermaid render test spent its 180-second budget downloading rather than rendering.** It
+  shells out to `npx --yes @mermaid-js/mermaid-cli`, and `--yes` *fetches* the package on first
+  use — it bundles puppeteer, so on a cold runner that download alone can exceed the timeout the
+  test allows for a render. It failed on three of four consecutive branches and passed on the
+  fourth: a flake that reds unrelated pull requests at random, which is worse than a test that
+  fails honestly. The `mixtures` shard now fetches it in a step with a budget of its own, leaving
+  the test's 180 seconds for what they were sized for. `PUPPETEER_SKIP_DOWNLOAD` stops it pulling a
+  second chromium — the test already points puppeteer at the playwright browser the shard installs
+  two steps earlier.
+
+### Added
+
+- **`tools/sync_open_prs.py`, which keeps every open pull request mergeable.** Every open branch touches
+  `docs/agents/QUEUE.md`, `CHANGELOG.md` and `.quote-check-receipt.json`, and the receipt is a
+  digest over **all** tracked prose — so merging one pull request invalidates every other one.
+  Measured rather than assumed: merging two branches produced a `QUEUE.md` content conflict *and*
+  left the receipt full of conflict markers, so its checker died with a `JSONDecodeError` instead of
+  failing cleanly.
+
+  It merges `main` into every open branch, rebuilds the two log files as
+  *main's version plus that branch's own entry*, regenerates the receipt and pushes. It never
+  rebases and never force-pushes: the branches are published, `AGENTS.md` forbids rewriting
+  published history, and the repository's settings deny it.
+
+  **`merge=union` was considered and refused** — a union driver keeps both sides of every conflict,
+  which is right for two branches adding different lines and wrong here, where fifteen branches
+  carry a byte-identical log line and the fifteenth merge would land fifteen copies of it.
+  `tests/test_sync_open_prs.py` covers both failure directions, a duplicated line and a silently
+  dropped entry, and both were watched failing against a deliberately broken copy restored from
+  outside the working tree.
+
+### Added
+
+- `tests/test_shared_layer_orphans.py` pins how much of `_shared/page.css` no page emits — **29 of
+  101 classes**, measured by serving the assembled site and reading `classList` from every element
+  of all 13 pages, after scrolling and after driving every input and button. **Two classes left the
+  list at that last step** (`.filter-none`, `.rail-shut`), which is exactly why the measurement is
+  not a grep, and why nothing was deleted on it.
+
+### Added
+
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two
   places — tracked under `docs/agents/reviewers/`, and copied by the installer into the gitignored
   `.claude/agents/` that Claude Code actually reads. They are identical by construction, and
