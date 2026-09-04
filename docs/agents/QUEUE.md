@@ -396,6 +396,15 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-04  retro-fix     the repo-wide link-colour fix opened. Reported as 7 anchors at the
+                          browser default; the real count is TWO. Five compute #0000EE on the
+                          anchor while every word sits in a child with its own colour, so that
+                          colour paints nothing — the third container-not-text artefact in this
+                          sweep, after .rail-link and .badge. The verifier had said the scope was
+                          overstated 3.5x and 7/2 is exactly that. The guard's FIRST version was
+                          blind: filtering to anchors with their own text excluded the very links
+                          whose children inherit the unstyled colour, and it passed the break.
+                          Found only by breaking a second page that had a real one
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the

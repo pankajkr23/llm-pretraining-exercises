@@ -10,6 +10,37 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Two links fell back to the browser's own default blue.** An anchor no rule styles is not merely
+  unstyled — it is `#0000EE`, the User-Agent stylesheet's colour, chosen for a white page. Against
+  these pages' dark grounds that measures **1.74:1 to 2.23:1**: a link a reader cannot see. One is
+  on exercise 02 (*"HuggingFace tokenizer.json"*), one on exercise 07 (*"Code, tests and the full
+  write-up"*). Both had simply never been given a class that set a colour. A base
+  `a { color: var(--accent) }` fixes them; every named link class already sets its own colour and
+  out-specifies an element selector, so nothing else moved — verified by measuring all 1,362 anchor
+  readings across thirteen pages and six themes before and after.
+
+  **The reported count was seven and the real count is two, and the difference is worth recording.**
+  Five of the seven — `.readmore` on 02 and four `.guide-path` links on 08 — compute `#0000EE` on
+  the anchor while every word they show sits in a child element with its own colour. The anchor's
+  colour paints nothing. That is the third time in this sweep a measurement has read a **container**
+  instead of the text it contains, after `.rail-link` (4.05:1 for text that renders at 4.59, 4.66
+  and 15.46) and `.badge` (1.00:1 for text that is 4.66:1 once its 10%-alpha ground is composited).
+
+### Added
+
+- **`tests/test_every_link_has_a_colour.py`** asserts, for every published page in all six themes,
+  that no link computes to the browser default and that every link clears WCAG AA. It measures the
+  elements that actually **paint** text — from the anchor down — rather than the anchor element,
+  which is what makes it immune to the container artefact above, and it composites the whole
+  background stack rather than taking the first opaque ancestor.
+
+  **Its first version was blind and I only found that by breaking the page it could see.** Filtering
+  to anchors with their own text excluded exactly the links whose *children* inherit the unstyled
+  colour; the fix passes, so does the break. Breaking a second page — one with a real defect —
+  showed it red. A guard proved against the wrong subject is not proved.
+
 ### Added
 
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two
