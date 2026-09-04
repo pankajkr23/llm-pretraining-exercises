@@ -12,6 +12,19 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The shared-layer orphan guard counted class names written inside comments.** It ran
+  `\.([a-z][a-z0-9-]*)` over the raw stylesheet, so `page.css` in a comment counted as the class
+  `css`, `data.json` as `json`, and the phrase *"i.e."* as `e`. A comment added here naming `.back`
+  and `.readmore` pushed the count from 101 to 104 and failed the guard — while the stylesheet had
+  gained **exactly one rule and no classes at all**.
+
+  Comments are stripped now, and the honest total is **98, not 101**. Two entries in
+  `KNOWN_ORPHANS` — `css` and `json` — were removed: they were never classes, and their own stated
+  reason was *"also an ordinary word in prose and filenames"*, so the phantom was known and
+  exempted rather than fixed. **A baseline padded with entries that describe nothing is slack the
+  guard can never spend on a real orphan** — verified by adding one and watching it report
+  99 against 98.
+
 - **A degraded placement fell back to the FIRST look-alike, and stranded entries at the top of the
   file.** When a re-applied block's neighbours have moved on `main`, the sync tool matches one side
   alone — and `list.index` returns the earliest occurrence. In an append-only log the earliest blank

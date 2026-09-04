@@ -43,6 +43,10 @@ SHARED = sorted(REPO_ROOT.glob("src/exercises/*/web/_shared/page.css"))
 #:
 #: **Being in this list does not mean a class is dead.** Where the source still mentions one, the
 #: reason is noted: it is reachable, just not by any pass that runs unattended.
+# `css` and `json` were in this list and were never classes: they came from `page.css` and
+# `data.json` written inside comments, back when the extractor read raw text. Removed with the
+# extractor fix — an entry that describes nothing is slack the guard can never spend on a real
+# orphan.
 KNOWN_ORPHANS: dict[str, str] = {
     # No source file mentions these at all. The likeliest explanation is a component that was
     # renamed or removed while its rules stayed behind — but "likeliest" is not "verified".
@@ -73,11 +77,25 @@ KNOWN_ORPHANS: dict[str, str] = {
     "gateverdict": "exercise 03 builds it",
     # Ordinary words that also happen to be class names. Kept for completeness, since the
     # measurement cannot tell a class from a word without rendering.
-    "css": "also an ordinary word in prose and filenames",
-    "json": "also an ordinary word in prose and filenames",
     "sel": "short name; also appears inside identifiers",
     "unit": "also an ordinary word in prose",
 }
+
+
+def _without_comments(css: str) -> str:
+    r"""CSS with `/* … */` removed.
+
+    **A class named in prose is not a class the stylesheet selects**, and reading the raw text
+    conflates them. It is not a hypothetical: a comment added in #131 mentioning `.back` and
+    `.readmore` — and the phrase *"i.e."*, which matches `\.([a-z]…)` as the class `e` — pushed the
+    count from 101 to 104 and failed this guard, while the stylesheet had gained exactly one rule
+    and no classes at all.
+
+    It also means the pinned total was inflated the whole time: the honest count is **98**, not 101.
+    A guard whose baseline includes phantom entries has that much slack before it can notice a real
+    orphan.
+    """
+    return re.sub(r"/\*.*?\*/", "", css, flags=re.S)
 
 
 def _declared() -> set[str]:
@@ -91,7 +109,7 @@ def _declared() -> set[str]:
     """
     found: set[str] = set()
     for path in SHARED:
-        found |= set(re.findall(r"\.([a-z][a-z0-9-]*)", path.read_text(encoding="utf-8")))
+        found |= set(re.findall(r"\.([a-z][a-z0-9-]*)", _without_comments(path.read_text("utf-8"))))
     return found
 
 
@@ -131,7 +149,9 @@ def test_the_orphan_budget_has_not_grown() -> None:
     """
     declared = _declared()
     # Measured alongside KNOWN_ORPHANS, in the same pass.
-    measured_total = 101
+    # 98, not 101: the earlier figure counted class-like strings inside comments. See
+    # `_without_comments` — the three phantoms were `.back`, `.readmore` and the `e` in "i.e.".
+    measured_total = 98
     assert len(declared) <= measured_total, (
         f"`_shared/page.css` now styles {len(declared)} classes, up from {measured_total} when the "
         f"orphan set was last measured in a browser. {len(declared) - measured_total} rule(s) were "
