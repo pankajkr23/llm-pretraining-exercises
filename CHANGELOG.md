@@ -30,6 +30,254 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   checked that the string `bindThemePicker` appeared, so deleting the *call* and leaving the
   `import` satisfied it. It asserts a call now.
 
+### Fixed
+
+- **The shared-layer orphan guard counted class names written inside comments.** It ran
+  `\.([a-z][a-z0-9-]*)` over the raw stylesheet, so `page.css` in a comment counted as the class
+  `css`, `data.json` as `json`, and the phrase *"i.e."* as `e`. A comment added here naming `.back`
+  and `.readmore` pushed the count from 101 to 104 and failed the guard — while the stylesheet had
+  gained **exactly one rule and no classes at all**.
+
+  Comments are stripped now, and the honest total is **98, not 101**. Two entries in
+  `KNOWN_ORPHANS` — `css` and `json` — were removed: they were never classes, and their own stated
+  reason was *"also an ordinary word in prose and filenames"*, so the phantom was known and
+  exempted rather than fixed. **A baseline padded with entries that describe nothing is slack the
+  guard can never spend on a real orphan** — verified by adding one and watching it report
+  99 against 98.
+
+- **A degraded placement fell back to the FIRST look-alike, and stranded entries at the top of the
+  file.** When a re-applied block's neighbours have moved on `main`, the sync tool matches one side
+  alone — and `list.index` returns the earliest occurrence. In an append-only log the earliest blank
+  line is line 2, so the entry landed **above the preamble and outside every section**: present,
+  correct-looking, and somewhere no reader would find it. It happened three times to `CHANGELOG.md`,
+  and `main`'s copy is repaired here along with the tool.
+
+  The block's own position now travels with it, so the fallback picks the **nearest** candidate
+  rather than the first.
+
+- **Three controls painted white text on a background that is bright in half the themes.** The
+  `← Back` pill on hover and the blocking-caveat chip (both in the shared component stylesheet, so
+  on all six deployable pages) and exercise 04's toggle in its *on* state all declared
+  `color: #fff` over `var(--accent)` or `var(--gotcha-safety)`. Those tokens are dark blues and reds
+  on the three light themes and bright ones on the three dark themes, so the literal was right in
+  half the cases and wrong in the other half — measured on the shipped page, the back pill's label
+  ran **1.54:1 on `neon`**, which is not hard to read but absent. Every theme already ships the
+  paired token that answers this, so all three now use `--on-accent`: the same white on the light
+  themes, near-black on the dark ones, **5.38:1 to 12.19:1 across all six**.
+
+  `tests/test_no_literal_ink_on_a_token_background.py` refuses the whole class. It is lexical
+  rather than a browser check on purpose: two of the three are `:hover` and `.on` states that no
+  static render ever enters, so a rendered page would have to know to go looking for them, while
+  the source says it unconditionally.
+
+- **Printing exercise 03 lost the argument.** Its eleven scrolly widgets each pin one figure and
+  reveal a verdict line per step, and the end-state rule that unpins them existed only for
+  `prefers-reduced-motion` — with no print twin. Measured under `emulate_media(media="print")` at
+  1440px: **0 of 45** `.inline` verdict lines had a client rect, against 45 of 45 for a
+  reduced-motion reader. A printed sheet carried **11 figure states and lost 34**, and the verdict
+  line was the only place those 34 could have appeared.
+- **Two links fell back to the browser's own default blue.** An anchor no rule styles is not merely
+  unstyled — it is `#0000EE`, the User-Agent stylesheet's colour, chosen for a white page. Against
+  these pages' dark grounds that measures **1.74:1 to 2.23:1**: a link a reader cannot see. One is
+  on exercise 02 (*"HuggingFace tokenizer.json"*), one on exercise 07 (*"Code, tests and the full
+  write-up"*). Both had simply never been given a class that set a colour. A base
+  `a { color: var(--accent) }` fixes them; every named link class already sets its own colour and
+  out-specifies an element selector, so nothing else moved — verified by measuring all 1,362 anchor
+  readings across thirteen pages and six themes before and after.
+
+  **The reported count was seven and the real count is two, and the difference is worth recording.**
+  Five of the seven — `.readmore` on 02 and four `.guide-path` links on 08 — compute `#0000EE` on
+  the anchor while every word they show sits in a child element with its own colour. The anchor's
+  colour paints nothing. That is the third time in this sweep a measurement has read a **container**
+  instead of the text it contains, after `.rail-link` (4.05:1 for text that renders at 4.59, 4.66
+  and 15.46) and `.badge` (1.00:1 for text that is 4.66:1 once its 10%-alpha ground is composited).
+
+### Added
+
+- **`tests/test_every_link_has_a_colour.py`** asserts, for every published page in all six themes,
+  that no link computes to the browser default and that every link clears WCAG AA. It measures the
+  elements that actually **paint** text — from the anchor down — rather than the anchor element,
+  which is what makes it immune to the container artefact above, and it composites the whole
+  background stack rather than taking the first opaque ancestor.
+
+  **Its first version was blind and I only found that by breaking the page it could see.** Filtering
+  to anchors with their own text excluded exactly the links whose *children* inherit the unstyled
+  colour; the fix passes, so does the break. Breaking a second page — one with a real defect —
+  showed it red. A guard proved against the wrong subject is not proved.
+
+  The fix is one character of media query — `@media (prefers-reduced-motion: reduce), print` — and
+  deliberately **not** a separate `@media print` block repeating the three declarations. Two blocks
+  can drift apart, and drift is exactly what produced this: the rule existed for one reader and
+  nobody noticed the other had none. After: **45 of 45** in print, in all six themes, with nothing
+  truncated; screen behaviour byte-for-byte unchanged.
+
+### Fixed
+
+- **The shared step strip squeezed its own prose to 29 characters a line on a tablet.** Below
+  1081px `explainer.css` puts a **fixed** 296px figure column beside the prose, so every pixel the
+  window loses comes out of the reading column — and the collapse to one column fired at
+  `max-width: 760px`, while an iPad portrait is 768 and a common Android tablet is 800. In that gap
+  a step's paragraph ran **29 characters** at 768px. It also ran **41 at exactly 1180px and nowhere
+  else**, because 1180 is where `page.css` begins reserving the 260px rail gutter, so the content
+  box is *narrower* at 1180 than at 1179.
+
+  Three changes, all in the shared component: the strip collapses at 900px rather than 760; the
+  prose column carries a **floor** (`minmax(min(48ch, 100%), 62ch)`) instead of a zero minimum, so
+  the figure column's own minimum can no longer win every squeeze; and `.step p` caps at 46ch
+  rather than 44, which sat on the fail line once the step's own 20px of border and padding came
+  off it. Measured across eight widths on both pages that build the strip: **90 of 360 and 28 of
+  112 paragraphs were under the floor before, none after.**
+
+  Raising the breakpoint had a knock-on the first measurement caught: with the grid collapsed,
+  `.stagereg-note` had the full page and ran **117 characters** at 900px. It now carries a measure
+  of its own.
+
+### Added
+
+- **`tests/test_prose_measure_repo_wide.py`** promotes exercise 08's line-measure guard — 42 to 80
+  characters, `docs/DESIGN.md`'s band — out of that exercise and onto the deployable set, sweeping
+  eight widths per page. The measurement is copied from 08 down to the probe span, because a
+  character width read from a `ch` unit or an assumed average glyph is a *different* measurement and
+  two pages measured differently cannot be compared.
+
+  **It carries a second, narrower guard for the step strip, and that one exists because the first
+  one provably could not see the defect above.** Restored to the shipped stylesheet, every
+  general assertion stayed green: `ROOM_TO_SPARE` asks whether a block leaves room unused *inside
+  its own box*, and a squeezed `.step` paragraph fills its box exactly — the box is what is too
+  small. Widening that host walk would catch it and would fail every legitimate two-column layout,
+  including the one on the page the measurement came from.
+
+  Exercises 04 and 05 are recorded as **not yet covered** rather than ledgered as exceptions, each
+  naming the pull request that fixes it (#117 and #118). A both-directions exception ledger is this
+  repo's usual idiom and the wrong one here: it would go red the moment either of those merges, in
+  a pull request that has nothing to do with this file.
+
+### Added
+
+- **A skip-ledger test was pinned to a list index.** It read `EXPECTED_IN_CI[0]` while hard-coding
+  the reason belonging to whichever entry happened to be first, so adding an entry **anywhere above
+  it** failed the test — for a reason having nothing to do with the new entry or with the gate it
+  guards. It now looks its entry up by path. `AGENTS.md` already records the cost of pinning a test
+  to `:nth-child`; this is the same mistake in Python.
+
+- **A section heading is context for the entry beneath it, not a record of its own.** The sync
+  tool skipped any record `main` already had — and treated `### Fixed` as one. So when a branch
+  opened a new `### Fixed` block at the top of `[Unreleased]` while `main` had one further down,
+  the heading matched, was dropped as a duplicate, and **the entry landed directly under
+  `## [Unreleased]` with no section at all.** That is the state `main` was left in by #133's merge,
+  and it is repaired here.
+
+  A heading now opens a record and keeps it open, so the heading and the entry beneath it are
+  tested against `main` together and cannot be separated.
+
+  **The fixture had to be built three times before it reproduced.** The first two put the heading
+  *after* the entry, or gave the branch a heading `main` did not have — both pass against the
+  broken code. The real shape is a heading that `main` already has, appearing *first* in the added
+  block. A test that cannot fail is worth less than no test, because it reads as coverage.
+
+- **A pull request that does not log itself now fails, instead of failing everyone else.**
+  `tools/queue_status.py` refuses when `docs/agents/QUEUE.md` does not record a merged pull
+  request, and it runs in the `test` job — so the moment one merges unlogged, `main` fails its own
+  gate and **every branch cut from `main` inherits a failure that has nothing to do with it**. That
+  cost three rounds of merging in one afternoon: #133 sat red twice, once for #108's misplaced
+  entry and once for #134 not logging itself, and neither time did the error point at the branch
+  responsible.
+
+  The existing check looks **backwards** — does the log record what already merged? By then the
+  damage is on `main`. `tests/test_pull_request_logs_itself.py` looks **forwards**: does the pull
+  request being tested record itself? The branch that would cause the problem is the branch that
+  goes red.
+
+  It reads the number from `GITHUB_REF`, so it runs only on a pull-request build; that skip is
+  declared in `tests/_skips.py`. The parser is tested unconditionally in the same file, because a
+  ref format change would otherwise turn the whole guard into a permanent skip covering nothing —
+  which is the failure it exists to prevent, one level up.
+
+### Fixed
+
+- **A preview was deployed on every push, whatever it touched.** A test, a changelog line, a queue
+  entry — all of it spent a deployment. Roughly sixty pushes in one working day exhausted the
+  account's quota and Vercel rate-limited the project for **24 hours**, so previews stopped being
+  available for the pull requests that genuinely did change a page.
+
+  `vercel.json` now runs `deploy/vercel/should-build.sh` as its `ignoreCommand`: a build happens
+  only when the commit touches something `build.sh` actually copies into `public/`. Measured
+  against the last eight commits on `main`, **six would not have deployed** and the two that
+  changed `web/` still would.
+
+  **The obvious spelling of the pathspec is silently wrong, and it is the whole correctness of the
+  file.** `src/exercises/*/web` does not match `src/exercises/03-…/web/page.css` — a git pathspec
+  is a path prefix matched with fnmatch, and a bare `*` there does not behave like a shell glob.
+  Written that way the predicate matches nothing, `git diff --quiet` always succeeds, and **every**
+  deployment is skipped with no error anywhere. I wrote it that way first and caught it only by
+  running the predicate over real history and seeing a 2,578-line change under `web/` reported as
+  "nothing to deploy". `:(glob)` is what makes it mean what it looks like.
+
+  `tests/test_should_build.py` drives both directions in a throwaway repository — hermetic because
+  CI checks out at depth 1, so asserting against this project's own history would not run there.
+  Four of its cases go red against the wrong pathspec, and all four are ones whose failure would
+  otherwise be invisible. When the parent commit is unavailable it **builds**: a needless
+  deployment is a small waste, a silently skipped one is a preview that does not match the branch.
+
+### Fixed
+
+- **The pull-request sync tool put a log entry in the wrong section of the file, and every count of
+  it looked right.** It anchored each re-applied block on the single line that followed it on the
+  branch. `docs/agents/QUEUE.md` contains a dozen code fences, so `list.index` returned the
+  earliest one and #108's entry landed forty lines *above* the `## Log` heading. It was still in the
+  file — `grep` found it, the diff looked sane — and only `queue_status.py`, which reads the log
+  section and nothing else, noticed, two merges later.
+
+  A single line is not a position. The anchor is now the **pair** of neighbours a block had, with
+  reported fallbacks to one side or the other when `main` has moved under it, so a degraded
+  placement is visible rather than silent.
+
+  This is the third defect this tool has produced in three live runs — per-block skipping, then
+  only inspecting conflicted files, now an ambiguous anchor — and each one was invisible in the
+  diff and caught by something downstream. The entry it misplaced on `main` is moved back into the
+  log in this change.
+
+### Fixed
+
+- **The mermaid render test spent its 180-second budget downloading rather than rendering.** It
+  shells out to `npx --yes @mermaid-js/mermaid-cli`, and `--yes` *fetches* the package on first
+  use — it bundles puppeteer, so on a cold runner that download alone can exceed the timeout the
+  test allows for a render. It failed on three of four consecutive branches and passed on the
+  fourth: a flake that reds unrelated pull requests at random, which is worse than a test that
+  fails honestly. The `mixtures` shard now fetches it in a step with a budget of its own, leaving
+  the test's 180 seconds for what they were sized for. `PUPPETEER_SKIP_DOWNLOAD` stops it pulling a
+  second chromium — the test already points puppeteer at the playwright browser the shard installs
+  two steps earlier.
+
+### Added
+
+- **`tools/sync_open_prs.py`, which keeps every open pull request mergeable.** Every open branch touches
+  `docs/agents/QUEUE.md`, `CHANGELOG.md` and `.quote-check-receipt.json`, and the receipt is a
+  digest over **all** tracked prose — so merging one pull request invalidates every other one.
+  Measured rather than assumed: merging two branches produced a `QUEUE.md` content conflict *and*
+  left the receipt full of conflict markers, so its checker died with a `JSONDecodeError` instead of
+  failing cleanly.
+
+  It merges `main` into every open branch, rebuilds the two log files as
+  *main's version plus that branch's own entry*, regenerates the receipt and pushes. It never
+  rebases and never force-pushes: the branches are published, `AGENTS.md` forbids rewriting
+  published history, and the repository's settings deny it.
+
+  **`merge=union` was considered and refused** — a union driver keeps both sides of every conflict,
+  which is right for two branches adding different lines and wrong here, where fifteen branches
+  carry a byte-identical log line and the fifteenth merge would land fifteen copies of it.
+  `tests/test_sync_open_prs.py` covers both failure directions, a duplicated line and a silently
+  dropped entry, and both were watched failing against a deliberately broken copy restored from
+  outside the working tree.
+
+### Added
+
+- `tests/test_shared_layer_orphans.py` pins how much of `_shared/page.css` no page emits — **29 of
+  101 classes**, measured by serving the assembled site and reading `classList` from every element
+  of all 13 pages, after scrolling and after driving every input and button. **Two classes left the
+  list at that last step** (`.filter-none`, `.rail-shut`), which is exactly why the measurement is
+  not a grep, and why nothing was deleted on it.
+
 ### Added
 
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two

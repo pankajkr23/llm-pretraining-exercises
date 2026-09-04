@@ -48,6 +48,8 @@ OPTIONAL_DEPENDENCY_GATES: dict[str, str] = {
     "src/exercises/08-modern-attention-variants/tests/test_attention_measures.py": "playwright",
     "tests/test_landing_render.py": "playwright",
     "tests/test_rail_centring.py": "playwright",
+    "tests/test_every_link_has_a_colour.py": "playwright",
+    "tests/test_prose_measure_repo_wide.py": "playwright",
     "src/exercises/05-datamixtures-and-curriculum/tests/test_mixture_proxy_run.py": "torch",
     "src/exercises/06-build-training-dataset/tests/test_trainingdata_crash.py": "torch",
     "src/exercises/06-build-training-dataset/tests/test_trainingdata_model.py": "torch",
