@@ -160,11 +160,10 @@ the new one, and deletes it. Nobody deleted anything. So:
   rebuilds a notebook.
 
 - **The protected set is wider than the three classes named above, and the extra ones were
-  unguarded for months.** Alongside them,
-  `docs/EXPLAINER_PROMPT.md` / `docs/EXPLAINER_PATTERN.md` are the two documents any explainer is
-  required to be built from. All gitignored, none regenerable, none watched by the tripwire until
-  now. **85 files, 12 MB.** A guard that covers the documented cases and misses the largest one
-  reads as coverage without being any.
+  unguarded for months.** All gitignored, none regenerable, none watched by the tripwire until
+  then. A guard that covers the documented cases and misses the largest one reads as coverage
+  without being any. **Read `PATTERNS` for the live set; a count written here would go stale the
+  first time the set changed — as it did.**
 
 - **The authoritative list is `tools/backup_local_only.py::PATTERNS`, not this document.** Prose that
   enumerates the set is a second copy of it, and the second copy is the one that drifts — this
@@ -320,7 +319,12 @@ Write it to be read at two depths: plain what-and-why before each step, the arit
 after it. It is the artifact people learn from and teach from, not a run log.
 
 **Both the notebook and its builder are gitignored** — `notebooks/S[0-9][0-9]-*.ipynb` and
-`src/exercises/*/tools/build_notebook.py`. A generator is the notebook in another form, so tracking
+`src/exercises/*/tools/build_notebook.py`. **One notebook is exempt and it is named in
+`.gitignore`:** `notebooks/S10-training-loop.ipynb`, because exercise 10's submission requires the
+ipynb in the repository and offers no alternative — exercise 09's offered "the ipynb file *or*
+training logs", which is why 09's stays local. The exemption is narrow by construction: it names one
+path, the reason is written where the rule is, and `backup_local_only.py` needs no change because
+`collect` drops anything git already tracks. **A builder is never exempt.** A generator is the notebook in another form, so tracking
 it would keep the same course material in the repo as Python, which is what untracking the notebook
 was for. Every exercise has a builder; they live on a working checkout and are never pushed.
 
@@ -360,7 +364,7 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
 
 - **Requirement documents → never tracked, at any level.** `REQUIREMENTS.md` is gitignored by name everywhere, as is
   programme-level material — the schedule, the class list, the internal authoring specs
-  (`docs/REQUIREMENTS.md`, `docs/EXPLAINER_*.md`). A requirements document is the course's text and
+  (`docs/REQUIREMENTS.md`). A requirements document is the course's text and
   is input for whoever builds the exercise; it is not the deliverable. **Never link to one from a
   tracked file** — the link resolves on a working checkout and 404s for everyone else. What we
   *decided*, and why, is published instead: `README.md`, and a tracked `DECISIONS.md` when the
@@ -922,6 +926,28 @@ uv run pre-commit run --all-files                        # over everything, not 
 
 ## CI/CD
 
+- **Before changing code that runs where you cannot watch it, read that environment's own log —
+  and confirm the inputs your change depends on exist there.** `should-build.sh` was rewritten
+  around a comparison with `origin/main`, shipped green, merged, and the very next build printed
+  `origin/main could not be resolved (shallow clone?)`. **Vercel checks out a single-branch shallow
+  clone**, so `origin/main` is absent and `git merge-base` has nothing to walk: the mechanism could
+  never execute. It was inert in production and *unsound* wherever the ref did resolve — it skipped
+  the build after a branch reverted its page, leaving the live preview serving content the branch
+  no longer had. Hermetic tests prove a predicate is internally consistent and say **nothing** about
+  whether its inputs exist in production, so a green suite over a mechanism that cannot run reads as
+  coverage. One `get_deployment_build_logs` call, available the whole time, would have settled it
+  before the pull request was opened. **Name the runtime inputs a change depends on — env vars,
+  refs, files — and find one real execution that shows each is present.** Where it genuinely cannot
+  be observed, say so in the pull request and make the unobservable path degrade to the previous
+  behaviour rather than to a new one.
+
+- **`VERCEL_GIT_PREVIOUS_SHA` is the last *successful deployment*, not the previous commit**, and it
+  is only exposed while an Ignored Build Step is configured. Treat "no previous deployment" as a
+  real state rather than an edge case: the `HEAD^` substitute in `should-build.sh` turns gate 1 into
+  "what did the newest commit change", so a branch whose tip commit is not deployable can get **no
+  preview at all** — and it is self-reinforcing, because a skipped build never becomes a successful
+  deployment, so the variable stays empty. Still live; not yet fixed.
+
 - CI (`.github/workflows/ci.yml`) is **four concurrent jobs, not one chain**. `test`: `uv sync --all-packages` → `ruff check` → `ruff format --check` → `pytest -m "not integration" -n auto --dist loadfile` → `node --check` over `find src/exercises -path '*/web/*' -name '*.js'`. `integration`: a **three-shard matrix** (`tokenization` · `mixtures` · `rest`), each shard syncing, caching and installing chromium, running `deploy/vercel/build.sh` once, then `pytest -m integration`. `security`: gitleaks over the full history. `push` is filtered to `main` — branches are covered by the `pull_request` event, because an unfiltered `push` ran every PR commit twice. `train`: `uv sync --all-packages --extra train` with **CPU-only wheels** (a Linux-scoped
   `pytorch-cpu` index in the root `pyproject.toml` — 191.8 MB instead of 2.7 GB, and 19 fewer
   packages in the lock), running only the files whose module-level `importorskip` would otherwise
@@ -938,7 +964,7 @@ and a **numbered retro-fit checklist** for bringing an older exercise up to stan
 the reference implementation and every number in that document was measured on it. Read it before
 building or changing a page; the rules that matter across exercises are below.
 
-- **Interactive explainers follow two local files.** `docs/EXPLAINER_PROMPT.md` decides *what* one must be (the claim, the interaction that proves it, the topology and family, when **not** to build one). `docs/EXPLAINER_PATTERN.md` records *how* — DOM skeleton, class names, the state-and-render shape, copy voice. Both are gitignored, so they are on a working checkout but not on the remote; read both before building an explainer and don't re-invent the skeleton. Shipped references: `02-tokenization/web/how-it-works.html` and §1 of `03-data-collection-framework/web/chapters.js`.
+- **Interactive explainers follow two files, and both are TRACKED.** `docs/EXPLAINER_PROMPT.md` decides *what* one must be (the claim, the interaction that proves it, the topology and family, when **not** to build one). `docs/EXPLAINER_PATTERN.md` records *how* — DOM skeleton, class names, the state-and-render shape, copy voice. They were gitignored and filed as programme material until it was **measured**: against 353,730 shingles of the reference corpus, `EXPLAINER_PATTERN.md` carried 0 verbatim runs and 0 banned terms, and `EXPLAINER_PROMPT.md` carried 2 runs and 1 term — a borrowed example and a heading — which were reworded, after which it measures 0 and 0. They are engineering rules, not the course's text, and keeping them invisible meant no clone, worktree or CI job could read the specification an explainer is graded against. **Before accepting that something cannot be tracked, measure it against the gates that would refuse it.** Read both before building an explainer and don't re-invent the skeleton. Shipped references: `02-tokenization/web/how-it-works.html` and §1 of `03-data-collection-framework/web/chapters.js`.
 
 - **One Apple-style design language** on every page: cool-gray/black surfaces, a single bright-blue accent (`#0068d1` light / `#2997ff` dark), system sans (no serif), soft-shadow rounded panels, and a `← Back` pill to the site root. **Six themes**, not two: the system light/dark pair plus `soft-light`, `tinted-dark`, `high-contrast` and `neon`, each defining the whole token set. A page styled for two of them is unreadable in the other four. Reuse the token names in `docs/DESIGN.md` — don't invent a per-exercise palette.
 - **Write for a general audience.** The public pages are standalone, blog-style demos of an idea — a first-time visitor should be able to enjoy them without any course context. Favor plain, explanatory copy; the numbered topic eyebrow (`NN · Topic`) makes a nice light section label.
