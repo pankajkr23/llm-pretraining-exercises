@@ -9,6 +9,29 @@ Record user-facing changes under `[Unreleased]` as they land; on release, rename
 section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
+- **A preview was deployed on every push, whatever it touched.** A test, a changelog line, a queue
+  entry — all of it spent a deployment. Roughly sixty pushes in one working day exhausted the
+  account's quota and Vercel rate-limited the project for **24 hours**, so previews stopped being
+  available for the pull requests that genuinely did change a page.
+
+  `vercel.json` now runs `deploy/vercel/should-build.sh` as its `ignoreCommand`: a build happens
+  only when the commit touches something `build.sh` actually copies into `public/`. Measured
+  against the last eight commits on `main`, **six would not have deployed** and the two that
+  changed `web/` still would.
+
+  **The obvious spelling of the pathspec is silently wrong, and it is the whole correctness of the
+  file.** `src/exercises/*/web` does not match `src/exercises/03-…/web/page.css` — a git pathspec
+  is a path prefix matched with fnmatch, and a bare `*` there does not behave like a shell glob.
+  Written that way the predicate matches nothing, `git diff --quiet` always succeeds, and **every**
+  deployment is skipped with no error anywhere. I wrote it that way first and caught it only by
+  running the predicate over real history and seeing a 2,578-line change under `web/` reported as
+  "nothing to deploy". `:(glob)` is what makes it mean what it looks like.
+
+  `tests/test_should_build.py` drives both directions in a throwaway repository — hermetic because
+  CI checks out at depth 1, so asserting against this project's own history would not run there.
+  Four of its cases go red against the wrong pathspec, and all four are ones whose failure would
+  otherwise be invisible. When the parent commit is unavailable it **builds**: a needless
+  deployment is a small waste, a silently skipped one is a preview that does not match the branch.
 
 ### Fixed
 
