@@ -459,6 +459,12 @@ predates the harness — so it is logged as what it was.
                           never force-pushing. `merge=union` was refused: it keeps both sides, and
                           fifteen branches carry a byte-identical #103 line, so the fifteenth merge
                           would land fifteen copies
+2026-09-04  retro-fix     #120 opened: `color: #fff` on a background that is bright in half the
+                          themes, in three controls — the back pill on hover and the blocking
+                          caveat (shared, so all six pages) and 04's toggle in its ON state.
+                          1.54:1 on neon; --on-accent already existed and clears AA on all six. The
+                          guard is lexical because two of the three are :hover and .on states that
+                          no static render enters. It found the third site itself
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
