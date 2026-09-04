@@ -550,6 +550,11 @@ predates the harness — so it is logged as what it was.
                           view. Same defect and same rule as #109
 2026-09-04  retro-fix     #112 opened: exercise 07's contents rail never marked the section in
                           view. Same defect and same rule as #109
+2026-09-04  retro-fix     #129 opened: exercise 07's two fixes -- 25 table headers plus 2 legend chips at
+                          4.15:1 in the DEFAULT theme and nowhere else — the five explicit themes
+                          all cleared AA, so a two-theme check would have found nothing — and all
+                          81 svg labels between 6.49 and 9.4px at 390px. Both watched failing:
+                          25 of 25, 2 of 2
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
