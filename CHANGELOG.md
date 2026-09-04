@@ -12,7 +12,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
-- **Exercise 06's contents rail never said where the reader was.** `_shared/page.css` has styled
+- **Exercise 07's contents rail never said where the reader was.** `_shared/page.css` has styled
   `.rail-link.on` — an accent bar and a bold label — since before this page existed, and the page
   never set the class. The rail looked finished and simply never moved, which is the worst shape a
   defect can take: the markup is there, the styles are there, and the only way to notice is to
