@@ -43,6 +43,20 @@
    its content, so `flex: 1` alone would have moved nothing. */
       .sizectl { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
       .sizectl input[type="range"] { -webkit-appearance: none; appearance: none; flex: 1 1 160px; min-width: 0; max-width: 260px; height: 3px; background: var(--line); border-radius: 3px; outline: none; }
+      /* `outline: none` on the track with no replacement meant a keyboard reader got NOTHING:
+         pixel-diffing the focused against the unfocused state changed 0 of 8,694 pixels, in all
+         six themes, while `:focus-visible` was true the whole time. These sliders are the entire
+         interaction on three of the four proof pages and the first stop after the back link, so
+         the reader tabbed in, saw no change, and arrow keys then moved a number silently.
+         `docs/DESIGN.md`: "`:focus-visible` always has a visible ring." The thumb is lit as well
+         as the track, because a 3px rail is a thin thing to ring and the thumb is what moves. */
+      input[type="range"]:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 4px;
+        border-radius: 3px;
+      }
+      input[type="range"]:focus-visible::-webkit-slider-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
+      input[type="range"]:focus-visible::-moz-range-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
       .sizectl input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--panel); border: 2px solid var(--accent); cursor: pointer; }
       .sizectl input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--panel); border: 2px solid var(--accent); cursor: pointer; }
       .sizectl .nval { color: var(--accent); font-weight: 700; font-size: 15px; min-width: 96px; flex: 0 0 auto; }

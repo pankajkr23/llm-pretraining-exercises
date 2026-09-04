@@ -357,3 +357,157 @@ def test_the_tier_one_checks_are_actually_reaching_this_exercise(site) -> None:
     finally:
         page.evaluate("() => document.getElementById('planted-overflow')?.remove()")
         ctx.close()
+
+
+# ------------------------------------------------------------------ the page sweep's two findings
+
+#: Phone widths. 320 is the narrowest in common use; 390 is an iPhone.
+PHONE_WIDTHS = (320, 360, 390)
+
+
+@pytest.mark.parametrize("name", PAGES)
+@pytest.mark.parametrize("width", PHONE_WIDTHS)
+def test_the_page_does_not_scroll_sideways_on_a_phone(site, name: str, width: int) -> None:
+    """The whole page, not an element inside it — a sideways-scrolling document is a defect.
+
+    `s4.html` scrolled 123px at 320, 83px at 360 and 53px at 390, in every theme, because its size
+    control was a 260px slider beside a 96px readout in a flex row that could not reflow. The
+    element that overflows is reported too, because "the page is 123px too wide" sends nobody
+    anywhere.
+    """
+    ctx, page, _ = _open(site, name)
+    try:
+        m = page.evaluate(
+            """() => {
+                 const vw = document.documentElement.clientWidth;
+                 const over = [];
+                 for (const el of document.querySelectorAll('*')) {
+                   const r = el.getBoundingClientRect();
+                   if (r.width > 0 && r.right > vw + 1) {
+                     over.push(`<${el.tagName.toLowerCase()} class="${el.className}"> `
+                               + `right=${Math.round(r.right)} w=${Math.round(r.width)}`);
+                   }
+                 }
+                 return { vw, scroll: document.scrollingElement.scrollWidth,
+                          over: over.slice(0, 5) };
+               }"""
+        )
+        assert m["scroll"] <= m["vw"] + 1, (
+            f"{name} at {width}px scrolls sideways by {m['scroll'] - m['vw']}px "
+            f"(scrollWidth {m['scroll']} vs clientWidth {m['vw']}). Widest offenders:\n  "
+            + "\n  ".join(m["over"])
+        )
+    finally:
+        ctx.close()
+
+
+@pytest.mark.parametrize("name", PAGES)
+def test_every_canvas_has_an_accessible_name(site, name: str) -> None:
+    """A canvas is a black box to assistive technology unless it is given one.
+
+    All twelve across the four proof pages had no `role`, no label and no fallback content, so the
+    entire visual argument of this exercise was absent to a screen reader. They are labelled by
+    `aria-labelledby` pointing at the heading or caption the page already shows, which is why this
+    asserts the reference **resolves and is non-empty** rather than that an attribute exists — a
+    dangling `aria-labelledby` is worse than none, because it silently produces no name at all.
+    """
+    ctx, page, _ = _open(site, name)
+    try:
+        rows = page.evaluate(
+            """() => [...document.querySelectorAll('canvas')].map((c) => {
+                 const id = c.getAttribute('aria-labelledby');
+                 const target = id ? document.getElementById(id) : null;
+                 return {
+                   canvas: c.id || '(unnamed)',
+                   role: c.getAttribute('role'),
+                   label: c.getAttribute('aria-label'),
+                   labelledby: id,
+                   resolved: target ? target.textContent.trim() : null,
+                   fallback: c.textContent.trim(),
+                 };
+               })"""
+        )
+        bad = [
+            f"#{r['canvas']} (role={r['role']}, aria-labelledby={r['labelledby']}, "
+            f"resolves to {r['resolved']!r})"
+            for r in rows
+            if not ((r["role"] == "img" and r["resolved"]) or r["label"] or r["fallback"])
+        ]
+        assert not bad, f"{name}: canvases with no accessible name:\n  " + "\n  ".join(bad)
+    finally:
+        ctx.close()
+
+
+def test_at_least_twelve_canvases_are_being_checked() -> None:
+    """The assertion above passes trivially over a page with no canvas."""
+    total = sum((EXERCISE / "web" / n).read_text(encoding="utf-8").count("<canvas") for n in PAGES)
+    assert total >= 12, (
+        f"only {total} canvas element(s) found across {PAGES}; the exercise had twelve. If one was "
+        "removed on purpose, change this number deliberately."
+    )
+
+
+@pytest.mark.parametrize("name", PAGES)
+@pytest.mark.parametrize("theme,attr,scheme", THEMES, ids=[t[0] for t in THEMES])
+def test_every_focusable_control_paints_something_when_focused(
+    site, name: str, theme: str, attr, scheme: str
+) -> None:
+    """`docs/DESIGN.md`: "`:focus-visible` always has a visible ring."
+
+    **Asserted as pixels, not as a property name.** The seven range sliders carried
+    `outline: none` with no replacement, so a keyboard reader saw nothing at all — and a guard
+    that greps for `outline` would pass the moment someone wrote `outline: 0`, or an
+    `outline-width` with no style, which is exactly what was there (`outline-width: 3px`,
+    `outline-style: none` — inert). `AGENTS.md`: a guard must test the property, not one phrasing
+    of it. So this screenshots each control focused and unfocused and demands the pixels differ.
+
+    These sliders are the entire interaction on three of the four proof pages and the first stop
+    in the tab order after the back link.
+    """
+    ctx, page, _ = _open(site, name, attr, scheme)
+    try:
+        handles = page.query_selector_all(
+            "input[type=range], button, select, a[href], [tabindex='0']"
+        )
+        blind = []
+        for el in handles:
+            if not el.is_visible():
+                continue
+            # Scrolled into view first, because `page.screenshot(clip=…)` clips against the
+            # VIEWPORT and refuses a region outside it. Scrolling is safe here in a way it is not
+            # in general (`AGENTS.md`: a guard must not trigger the behaviour it tests for) —
+            # whether a focus ring paints does not depend on where the page is scrolled to, and
+            # the comparison is between two shots taken at the same scroll position.
+            el.scroll_into_view_if_needed()
+            page.wait_for_timeout(30)
+            box = el.bounding_box()
+            if not box or box["width"] < 2 or box["height"] < 2:
+                continue
+            if box["y"] < 0 or box["y"] + box["height"] > 950:
+                continue
+            clip = {
+                "x": max(box["x"] - 8, 0),
+                "y": max(box["y"] - 8, 0),
+                "width": box["width"] + 16,
+                "height": box["height"] + 16,
+            }
+            before = page.screenshot(clip=clip)
+            el.focus()
+            page.wait_for_timeout(60)
+            if not el.evaluate("e => e.matches(':focus-visible')"):
+                el.evaluate("e => e.blur()")
+                continue
+            after = page.screenshot(clip=clip)
+            el.evaluate("e => e.blur()")
+            if before == after:
+                blind.append(
+                    f"<{el.evaluate('e => e.tagName.toLowerCase()')} "
+                    f"id={el.evaluate('e => e.id') or '-'}> "
+                    f"{round(box['width'])}x{round(box['height'])}"
+                )
+        assert not blind, (
+            f"{name} under {theme}: these controls are :focus-visible and paint NOTHING — the "
+            f"focused and unfocused screenshots are byte-identical:\n  " + "\n  ".join(blind[:8])
+        )
+    finally:
+        ctx.close()
