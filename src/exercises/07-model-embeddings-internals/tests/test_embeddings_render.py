@@ -306,3 +306,119 @@ def test_the_first_chapter_is_not_flush_against_the_action_buttons(page):
         }"""
     )
     assert gap >= 30, f"the first chapter sits {gap}px below the action buttons"
+
+
+# ---- the page sweep's two findings -------------------------------------------------------------
+
+#: The six themes. The default — no `data-theme` at all — is the one that failed here, which is
+#: why a two-theme check would have missed it entirely.
+SWEEP_THEMES = ("", "soft-light", "tinted-dark", "high-contrast", "neon")
+
+#: Below this an SVG label is not readable. Effective size is the authored size times the scale the
+#: viewBox renders at, so a label can read 11px in the source and 6.49px on a phone.
+LEGIBLE_SVG_TEXT = 9.5
+
+_CONTRAST_JS = """(sel) => {
+  const rgb = (s) => {
+    const m = (s || '').match(/-?[\\d.]+/g);
+    return m && m.length >= 3 ? [+m[0], +m[1], +m[2]] : null;
+  };
+  const lum = (c) => {
+    const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+    return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+  };
+  const ratio = (a, b) => {
+    const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+    return (x + 0.05) / (y + 0.05);
+  };
+  const out = [];
+  for (const el of document.querySelectorAll(sel)) {
+    const box = el.getBoundingClientRect();
+    if (box.width < 1 || box.height < 1) continue;
+    const s = getComputedStyle(el);
+    if (s.visibility === 'hidden' || +s.opacity === 0) continue;
+    let node = el, bg = s.backgroundColor;
+    while (/rgba\\(0, 0, 0, 0\\)/.test(bg) && node.parentElement) {
+      node = node.parentElement;
+      bg = getComputedStyle(node).backgroundColor;
+    }
+    const ink = rgb(s.color), ground = rgb(bg);
+    if (!ink || !ground) continue;
+    const px = parseFloat(s.fontSize), wt = parseInt(s.fontWeight) || 400;
+    out.push({
+      r: ratio(ink, ground),
+      need: (px >= 24 || (px >= 18.66 && wt >= 700)) ? 3.0 : 4.5,
+      txt: el.textContent.trim().slice(0, 22),
+    });
+  }
+  return out;
+}"""
+
+
+@pytest.mark.parametrize("theme", SWEEP_THEMES)
+@pytest.mark.parametrize("sel", ("table.grid thead th", ".legend code"))
+def test_text_on_a_token_surface_clears_aa(page, theme: str, sel: str) -> None:
+    """Measured against the ELEMENT'S OWN painted ground, walking up through transparent ancestors.
+
+    `--muted` on `--track` is 4.15:1 in the default light theme — the theme most readers are in,
+    and the only one of the six that failed. Every other theme cleared it between 4.84 and 14.17:1,
+    which is exactly why this survived: checking two themes would have found nothing.
+    """
+    try:
+        page.evaluate(
+            "(t) => t ? document.documentElement.setAttribute('data-theme', t)"
+            "         : document.documentElement.removeAttribute('data-theme')",
+            theme,
+        )
+        page.wait_for_timeout(180)
+        rows = page.evaluate(_CONTRAST_JS, sel)
+        assert rows, f"`{sel}` matched nothing; the selector has rotted"
+        bad = sorted((round(r["r"], 2), r["need"], r["txt"]) for r in rows if r["r"] < r["need"])
+        assert not bad, (
+            f"under {theme or 'the default theme'}, {len(bad)} of {len(rows)} `{sel}` elements are "
+            f"below WCAG AA:\n  "
+            + "\n  ".join(f"{r}:1 (needs {n}:1)  {t!r}" for r, n, t in bad[:6])
+        )
+    finally:
+        page.evaluate("() => document.documentElement.removeAttribute('data-theme')")
+
+
+@pytest.mark.parametrize("width", (390, 768, 1440))
+def test_no_svg_label_renders_too_small_to_read(page, width: int) -> None:
+    """Legibility of a label inside a viewBox is a property of the render, not of the source.
+
+    All 81 labels across the six figures sat between 6.49px and 9.4px at a 390px viewport. The
+    authored `font-size` says 11px and tells you nothing, which is why this multiplies by the
+    rendered scale.
+    """
+    try:
+        page.set_viewport_size({"width": width, "height": 950})
+        page.wait_for_timeout(400)
+        rows = page.evaluate(
+            """() => {
+                 const out = [];
+                 for (const svg of document.querySelectorAll('svg')) {
+                   const vb = svg.viewBox && svg.viewBox.baseVal;
+                   if (!vb || !vb.width) continue;
+                   const scale = svg.getBoundingClientRect().width / vb.width;
+                   for (const t of svg.querySelectorAll('text')) {
+                     if (!t.textContent.trim()) continue;
+                     out.push({
+                       eff: parseFloat(getComputedStyle(t).fontSize) * scale,
+                       txt: t.textContent.trim().slice(0, 24),
+                     });
+                   }
+                 }
+                 return out;
+               }"""
+        )
+        assert len(rows) >= 20, f"only {len(rows)} svg labels at {width}px; the selector rotted?"
+        tiny = sorted((round(r["eff"], 2), r["txt"]) for r in rows if r["eff"] < LEGIBLE_SVG_TEXT)
+        assert not tiny, (
+            f"at {width}px, {len(tiny)} of {len(rows)} svg labels render under "
+            f"{LEGIBLE_SVG_TEXT}px:\n  " + "\n  ".join(f"{e}px  {t!r}" for e, t in tiny[:6])
+        )
+    finally:
+        # A viewport left behind would silently change every test that runs after this one.
+        page.set_viewport_size({"width": 1280, "height": 900})
+        page.wait_for_timeout(150)

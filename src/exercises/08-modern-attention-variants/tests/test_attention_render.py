@@ -1138,3 +1138,42 @@ def test_the_prediction_is_stated_before_it_is_answered_and_the_answer_exists(pa
 
     #: And the verdict must not be the first place the reader meets the claim being tested.
     assert "tidy arc" in expected, "the arc under test is not stated before the evidence"
+
+
+@pytest.mark.parametrize("width", (320, 390, 460, 900, 1440))
+def test_the_invoice_cut_line_is_not_clipped(page, width: int) -> None:
+    """Visible is not legible, and this element has now been truncated twice.
+
+    `AGENTS.md` records it reading *"…the cache alone needs a second ma"* at every narrow width
+    while `test_the_invoice_cut_line_is_visible` passed throughout. It regressed: the label is
+    `white-space: nowrap` inside a 26px `overflow: hidden` row, so at 320px **87px of it was cut**
+    with no ellipsis, and the dashed rule the `::after` draws was pushed out of the box entirely —
+    the plate lost both its sentence and its cut line on every phone.
+
+    Asserted as geometry rather than as a string: `scrollWidth` beyond `clientWidth` is the whole
+    class, and it does not care what the sentence currently says.
+    """
+    try:
+        page.set_viewport_size({"width": width, "height": 950})
+        page.wait_for_timeout(350)
+        m = page.evaluate(
+            """() => {
+                 const el = document.querySelector('#problem .inv-cut');
+                 if (!el) return null;
+                 const lab = el.querySelector('.lab');
+                 return {
+                   over: el.scrollWidth - el.clientWidth,
+                   labOver: lab ? lab.scrollWidth - lab.clientWidth : 0,
+                   text: lab ? lab.textContent.trim().slice(0, 40) : '',
+                 };
+               }"""
+        )
+        assert m is not None, "the invoice cut line is not on the page at all"
+        assert m["over"] <= 1 and m["labOver"] <= 1, (
+            f"at {width}px the cut line is clipped: the row overflows by {m['over']}px and its "
+            f"label by {m['labOver']}px. It reads {m['text']!r} and is cut with no ellipsis."
+        )
+    finally:
+        # A viewport left behind would silently change every test that runs after this one.
+        page.set_viewport_size({"width": 1280, "height": 900})
+        page.wait_for_timeout(150)

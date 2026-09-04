@@ -502,6 +502,17 @@ tr.cardrow .gatecard { margin-top: 4px; }
 }
 
 /* Collapsing is a sidebar affordance; there is nothing to reclaim from a block in the flow. */
+/* Every link gets a colour, because an anchor nothing styles falls back to the BROWSER's
+   default `#0000EE` — which is 1.74:1 to 2.23:1 against these pages' dark grounds, i.e. a link a
+   reader cannot see. Seven anchors across three pages were in that state; they had simply never
+   been given a class that set a colour, so nothing in the cascade reached them.
+
+   An element selector on purpose: every named link class here (`.back`, `.rail-link`, `.jump`,
+   `.readmore`) already sets its own colour and out-specifies this, so this changes only the links
+   that had nothing at all. Verified by measuring every anchor on all thirteen pages in all six
+   themes before and after. */
+a { color: var(--accent); }
+
 .rail-toggle { display: none; }
 
 .rail-link {

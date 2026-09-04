@@ -68,6 +68,12 @@ PATTERNS: tuple[str, ...] = (
     "docs/REQUIREMENTS.md",
     "docs/EXPLAINER_*.md",
     "TODO.md",
+    # PK's own merge order for the open pull requests. Deliberately NOT tracked: it names
+    # unmerged branches and the sequence they go in, which is working state rather than
+    # anything a reader of this repository needs. Nothing regenerates it — the reasoning in
+    # it is a person's, not a derivation — so the store is the only copy once the working
+    # tree is gone.
+    "docs/MERGE_ORDER.md",
     # Hand-written planning and critique notes that live beside an exercise. Only the untracked ones
     # are taken: `collect` drops anything git already has, so this cannot quietly start duplicating
     # tracked documents into the store.
@@ -528,8 +534,25 @@ def snapshot(root: Path, dest: Path, files: list[Path], *, message: str) -> int:
                 "cannot restore, and this hook runs on checkout/merge for exactly that reason.\n"
             ) from exc
 
-    _git(dest, "add", "-A")
-    if _git(dest, "status", "--porcelain").stdout.strip():
+    # **Stage by path, never `git add -A` — the same rule `AGENTS.md` enforces in the working tree,
+    # and for the same reason.** `-A` stages whatever happens to be sitting in the store rather than
+    # what this run copied, and the store is APPEND-ONLY, so it never needs to stage a deletion.
+    #
+    # On 2026-09-04 three files were deliberately removed from the store: they had become tracked in
+    # the repository, so `collect()` correctly stopped gathering them and the store's claim on them
+    # was stale — it was making the tripwire red on every branch that predated them. `git rm
+    # --cached` leaves the working copies on disk, so the next `-A` here would have re-added all
+    # three and silently undone the removal. A deliberate act by a person, reversed by a tool, with
+    # nothing reported.
+    staged = sorted({str(rel) for rel, _ in pairs})
+    for start in range(0, len(staged), 400):  # keep the argument list well inside any limit
+        _git(dest, "add", "--", *staged[start : start + 400], must_succeed=False)
+    # Commit when something is STAGED, not when the directory is merely untidy. `--porcelain`
+    # counts untracked files too, which under the old `add -A` could never happen because
+    # everything got staged. Now that staging is by path, a file deliberately left untracked --
+    # such as the three above -- made this call `git commit` with an empty index, and git exits
+    # non-zero on that. The store then reported "NOT safe" over a snapshot that was entirely fine.
+    if _git(dest, "diff", "--cached", "--quiet", must_succeed=False).returncode != 0:
         _git(dest, "commit", "--quiet", "-m", message)
 
     # Assert the commit landed, rather than assuming it. A store with files and no history is a

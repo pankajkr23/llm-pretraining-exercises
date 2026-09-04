@@ -375,3 +375,182 @@ def test_the_default_sample_makes_the_tokenizers_disagree():
             f"every tab tokenizes the default text into {counts[0]} tokens — the sample cannot "
             "show that these are different tokenizers"
         )
+
+
+# ---- the page sweep's finding ------------------------------------------------------------------
+
+#: The assembled site. This one measurement must NOT use `_page`, which serves the exercise's own
+#: `web/` — the six-theme token file lives at the site root, so under `_page` every `var(--track)`
+#: and `var(--ink)` resolves to nothing and a contrast reading there would be meaningless.
+# tests/ ← 02-tokenization/ ← exercises/ ← src/ ← repo root: five levels, not four.
+PUBLIC = Path(__file__).resolve().parents[4] / "public"
+
+#: All six. The one that failed was the default — no `data-theme` attribute at all — so a
+#: light-and-dark check would have reported nothing wrong.
+SWEEP_THEMES = ("", "soft-light", "tinted-dark", "high-contrast", "neon")
+
+_SEG_CONTRAST_JS = """() => {
+  const rgb = (s) => {
+    const m = (s || '').match(/-?[\\d.]+/g);
+    return m && m.length >= 3 ? [+m[0], +m[1], +m[2]] : null;
+  };
+  const alpha = (s) => (/rgba/.test(s || '') ? parseFloat(s.split(',')[3]) : 1);
+  const lum = (c) => {
+    const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+    return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+  };
+  const ratio = (a, b) => {
+    const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+    return (x + 0.05) / (y + 0.05);
+  };
+  const out = [];
+  for (const el of document.querySelectorAll('.seg button')) {
+    const box = el.getBoundingClientRect();
+    if (box.width < 1) continue;
+    const s = getComputedStyle(el);
+    // Composite the painted stack rather than taking the first opaque ancestor: a translucent
+    // ground has to be blended over what is behind it, or a 10%-alpha chip reads as 1.00:1
+    // against its own text colour. That false positive cost a measurement pass here.
+    const stack = [];
+    let node = el;
+    while (node) {
+      const c = getComputedStyle(node).backgroundColor;
+      const v = rgb(c), a = alpha(c);
+      if (v && a > 0) stack.push([v, a]);
+      if (v && a >= 1) break;
+      node = node.parentElement;
+    }
+    stack.push([[255, 255, 255], 1]);
+    let ground = stack[stack.length - 1][0];
+    for (let i = stack.length - 2; i >= 0; i--) {
+      const [c, a] = stack[i];
+      ground = [0, 1, 2].map((k) => c[k] * a + ground[k] * (1 - a));
+    }
+    out.push({
+      r: ratio(rgb(s.color), ground),
+      selected: el.getAttribute('aria-pressed') === 'true',
+      txt: el.textContent.trim().slice(0, 26),
+    });
+  }
+  return out;
+}"""
+
+
+_SEG_SELECTED_JS = """() => {
+  const rgb = (s) => { const m = (s || '').match(/-?[\\d.]+/g);
+    return m && m.length >= 3 ? [+m[0], +m[1], +m[2]] : null; };
+  const lum = (c) => { const f = (v) => { v /= 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+    return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+    return +((x + 0.05) / (y + 0.05)).toFixed(2); };
+  const out = [];
+  for (const g of document.querySelectorAll('.seg')) {
+    const on = g.querySelector('button[aria-pressed="true"]');
+    const off = g.querySelector('button:not([aria-pressed="true"])');
+    if (!on || !off) continue;
+    const cOn = getComputedStyle(on), cOff = getComputedStyle(off);
+    const track = rgb(getComputedStyle(g).backgroundColor) || [255, 255, 255];
+    out.push({
+      label: g.getAttribute('aria-label'),
+      shadow: cOn.boxShadow !== 'none',
+      // `outline-color` computes to a real colour even when `outline-style` is `none`, so
+      // reading it alone reports an outline that is never painted -- which made the first
+      // version of this guard pass against the very rule it was written to catch.
+      outline: (cOn.outlineStyle !== 'none' && parseFloat(cOn.outlineWidth) > 0)
+        ? ratio(rgb(cOn.outlineColor) || track, track) : 0,
+      weightDiffers: cOn.fontWeight !== cOff.fontWeight,
+      pill: ratio(rgb(cOn.backgroundColor) || track, track),
+    });
+  }
+  return out;
+}"""
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("theme", SWEEP_THEMES)
+def test_the_chosen_option_is_visibly_chosen(theme: str) -> None:
+    """The selected option needs a signal that does not depend on `--shadow`.
+
+    **Two correct changes combined into a defect.** Making the unselected labels `--ink` -- the fix
+    the test above exists for -- removed the colour difference that had marked the selection. The
+    rule that remained leaned on `box-shadow: var(--shadow)`, and `--shadow` is `none` on
+    **three** themes by design -- `tinted-dark`, `high-contrast` and `neon`. On those the chosen
+    option was left distinguished by its background alone: **1.14:1**, **1.37:1** and **1.08:1**
+    against the track, where WCAG asks 3:1 of a non-text state indicator. The rule's own comment
+    claimed "a raised pill and a shadow" the whole time.
+
+    **Two was the first answer and it was wrong.** A 140ms settle after switching theme reported
+    `tinted-dark` as still carrying a shadow; at 600ms it does not. Any measurement taken straight
+    after a theme switch is worth taking twice.
+
+    Asserted as *at least one indicator clearing 3:1*, rather than by naming `outline`, so a future
+    design is free to mark the selection some other way and this still means what it says.
+    """
+    if not (PUBLIC / "02-tokenization" / "index.html").is_file():
+        pytest.skip("run deploy/vercel/build.sh first")
+    with _serve(PUBLIC) as base, sync_playwright() as pw:
+        try:
+            browser = pw.chromium.launch()
+        except PlaywrightError as exc:  # pragma: no cover - environment, not logic
+            if os.environ.get("CI"):
+                pytest.fail(f"chromium did not launch on CI: {exc}")
+            pytest.skip(f"no chromium available: {exc}")
+        page = browser.new_page(viewport={"width": 1440, "height": 950})
+        page.goto(base + "02-tokenization/index.html", wait_until="networkidle")
+        if theme:
+            page.evaluate("(t) => document.documentElement.setAttribute('data-theme', t)", theme)
+        page.wait_for_timeout(600)
+        rows = page.evaluate(_SEG_SELECTED_JS)
+        browser.close()
+
+    assert len(rows) >= 2, f"only {len(rows)} segmented group(s) found; the selector has rotted"
+    weak = [
+        r
+        for r in rows
+        if not (r["outline"] >= 3.0 or r["pill"] >= 3.0 or r["shadow"] or r["weightDiffers"])
+    ]
+    assert not weak, (
+        f"under {theme or 'the default theme'} the chosen option is not visibly chosen in "
+        f"{len(weak)} group(s): "
+        + "; ".join(
+            f"{r['label']!r} outline {r['outline']}:1, pill {r['pill']}:1, "
+            f"shadow={r['shadow']}, weight differs={r['weightDiffers']}"
+            for r in weak
+        )
+        + ".\nA theme where `--shadow` is `none` needs a mark that does not depend on it."
+    )
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("theme", SWEEP_THEMES)
+def test_every_segmented_option_is_readable(theme: str) -> None:
+    """The options a reader has NOT chosen have to be readable to be chosen.
+
+    `--muted` on the control's `--track` ground measured **4.15:1** with no `data-theme` set — the
+    state most readers are in — while all five explicit themes cleared AA between 4.84 and 14.17:1.
+    A light-and-dark check would have found nothing, which is why this runs all six.
+    """
+    if not (PUBLIC / "02-tokenization" / "index.html").is_file():
+        pytest.skip("run deploy/vercel/build.sh first")
+    with _serve(PUBLIC) as base, sync_playwright() as pw:
+        try:
+            browser = pw.chromium.launch()
+        except PlaywrightError as exc:  # pragma: no cover - environment, not logic
+            if os.environ.get("CI"):
+                pytest.fail(f"chromium did not launch on CI: {exc}")
+            pytest.skip(f"no chromium available: {exc}")
+        page = browser.new_page(viewport={"width": 1440, "height": 950})
+        page.goto(base + "02-tokenization/index.html", wait_until="networkidle")
+        if theme:
+            page.evaluate("(t) => document.documentElement.setAttribute('data-theme', t)", theme)
+        page.wait_for_timeout(400)
+        rows = page.evaluate(_SEG_CONTRAST_JS)
+        browser.close()
+
+    assert len(rows) >= 5, f"only {len(rows)} segmented options found; the selector has rotted"
+    bad = sorted((round(r["r"], 2), r["txt"]) for r in rows if r["r"] < 4.5)
+    assert not bad, (
+        f"under {theme or 'the default theme'}, {len(bad)} of {len(rows)} segmented options are "
+        f"below WCAG AA:\n  " + "\n  ".join(f"{r}:1  {t!r}" for r, t in bad[:6])
+    )

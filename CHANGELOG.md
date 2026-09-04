@@ -10,6 +10,851 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Exercise 08's invoice cut line was truncated again, on every phone.** Its label is
+  `white-space: nowrap` inside a 26px `overflow: hidden` row, so at 320px **87px of the sentence
+  was cut** with no ellipsis and 17px at 390px — and the dashed rule its `::after` draws was pushed
+  out of the box entirely, so the plate lost both its sentence and its cut line. `AGENTS.md`
+  records this exact element reading *"…the cache alone needs a second ma"* once before, while
+  `test_the_invoice_cut_line_is_visible` passed throughout, which is why the new guard asserts
+  **geometry** rather than a string. Below 460px the row now grows instead of clipping: **0px
+  overflow at 320, 390, 460, 900 and 1440**.
+
+- **Exercise 07's twenty-five table headers were below WCAG AA, in the default theme only.**
+  `--muted` on `--track` measures **4.15:1** with no `data-theme` set — the state most readers are
+  in — against 4.84 to 14.17:1 in the other five. That is exactly why it survived: a two-theme
+  check would have found nothing. It is the column heading of all 25 headers across eight tables,
+  plus two `.legend code` chips, so it is the label that says what a column means. `--ink` on
+  `--track` is **13.78:1** in the default theme and clears AA in all six.
+
+- **All eighty-one of exercise 07's SVG figure labels were unreadable on a phone.** An `<svg>` with
+  a viewBox scales its text with the drawing, so a label's effective size is its authored size
+  times the rendered scale — at 390px the six figures rendered at 0.59, putting every label between
+  **6.49px and 9.4px**. The authored `font-size` reads 11px and tells you nothing. Fixed the same
+  way as exercise 05: the figure is already a horizontal scroller, so it stops shrinking below the
+  point its own labels survive (`min-width` 460px → 690px) rather than having its type enlarged,
+  which would change the label-to-drawing proportion it was drawn at. Worst label now **9.73px**.
+
+- **Exercise 07's contents rail never said where the reader was.** `_shared/page.css` has styled
+  `.rail-link.on` — an accent bar and a bold label — since before this page existed, and the page
+  never set the class. The rail looked finished and simply never moved, which is the worst shape a
+  defect can take: the markup is there, the styles are there, and the only way to notice is to
+  scroll and watch nothing happen. Every existing assertion about the rail was about what it
+  *contains*.
+
+  The rule is **the last heading whose top has passed the first third of the viewport**, not the
+  nearest one. Nearest sounds more reasonable and is wrong on half the page: sections here run
+  several screens, so from the middle of one the *next* heading is often closer than the one behind
+  you, and the rail then runs a section ahead of the reader.
+
+### Fixed
+
+- **Exercise 06's contents rail never said where the reader was.** `_shared/page.css` has styled
+  `.rail-link.on` — an accent bar and a bold label — since before this page existed, and the page
+  never set the class. The rail looked finished and simply never moved, which is the worst shape a
+  defect can take: the markup is there, the styles are there, and the only way to notice is to
+  scroll and watch nothing happen. Every existing assertion about the rail was about what it
+  *contains*.
+
+  The rule is **the last heading whose top has passed the first third of the viewport**, not the
+  nearest one. Nearest sounds more reasonable and is wrong on half the page: sections here run
+  several screens, so from the middle of one the *next* heading is often closer than the one behind
+  you, and the rail then runs a section ahead of the reader.
+
+### Fixed
+
+- **Exercise 05's fourteen chapter permalinks announced as "number sign"** — the same defect as
+  exercise 04, on this page's two anchor builders. Exercises 03 and 06 already carry the answer and
+  the wording is copied verbatim, because an identical control should announce identically. 14 of
+  14 now carry a name.
+
+- **All seventeen SVG figure labels were unreadable on a phone.** An `<svg>` with a viewBox scales
+  its text with the drawing, so a label's effective size is its authored size times the rendered
+  scale. At a 390px viewport the figures rendered at 0.639 scale, putting every label between
+  **6.39px and 9.4px** — the figure legible and the words on it not. Reading the authored
+  `font-size` would have reported 10px and been useless.
+
+  The figure is already a horizontal scroller by design, so the fix is to stop shrinking it below
+  the point its own labels survive — `min-width` 460px → 690px — rather than enlarging the type,
+  which would change the label-to-drawing proportion the figure was drawn at. Worst label now
+  **9.58px** at 390, unchanged at 768 and above.
+
+- **Every reproduce command longer than 72 characters was cut off, at every width.**
+  `pre.code` was `overflow-x: auto` inside a 72ch box, so the commands had to be scrolled sideways
+  to be read or checked — including at 2560px, where **676px sat empty beside the box**. They now
+  wrap. Measured at 2560, 1440, 768 and 390: **0 of 2 blocks cut**, against 2 of 2 before.
+
+- **The measure was on the list, not on the list items, so four sentences still ran 82 characters.**
+  `ul.blind-list` carries a `max-width`, so the list is 725px wide and looks constrained — but the
+  type is set on the `li`, which had `max-width: none`. **A `ch` unit resolves against the font size
+  of the element that declares it**, so a measure on the wrapper means something else entirely. That
+  is the rule the sibling comment in this same file already states; it just was not applied here.
+
+  Measured at 2560px: four items ran **82 characters**, and identically at 1920 and 1440, because
+  the width came from the list rather than the viewport. They are the exercise's limitations,
+  written as sentences — *"The corpus is 1.78M tokens. Three orders of magnitude below the scale a
+  mixture decision is made at"*, and three more — which is the prose on that page most worth
+  actually reading.
+
+  **`NOT_YET_COVERED` is now empty and all ten deployable exercises are in `COVERED`.** Earned:
+  removing the rule puts 05 back to 28 blocks wider than 80 characters across the eight widths.
+
+  The partition guard was called `test_the_uncovered_pages_are_still_the_two_expected` while that
+  list held two, then one, and now none. It never asserted two — it asserts that every deployable
+  page is in exactly one list, plus a floor under `COVERED` — so the name was a count that had
+  already gone stale once. Renamed to `test_every_deployable_page_is_in_exactly_one_list`.
+
+
+- **Exercise 05's body prose ran about 145 characters a line** — the same 1,156px at 16px measured
+  at 1440px. Matched anywhere under `main`, the rule brings the page to **755px, about 91
+  characters**, with no sideways overflow at six widths.
+
+  **The first attempt moved nothing, and that is the part worth recording.** The rule selected
+  `main section > .note`, and none of this page's long paragraphs are section children at all —
+  they sit inside `summary`, inside `tier-out`, inside plain wrappers. The selector matched
+  nothing, the measurement came back unchanged at 145 characters, and the rule looked exactly like
+  a fix. Only re-measuring *after* the change caught it; `AGENTS.md` already records two CSS fixes
+  that changed nothing and passed every test, and this is the third.
+
+  The widest remaining paragraph is `p.claim` at 755px, which already carries its own narrower
+  rule; exercise 08, the reference implementation, sits at 835px. The defect was 1,156px, not
+  "wider than ideal", and chasing the last few characters would be redesigning rather than
+  retro-fixing.
+
+### Fixed
+
+- **Exercise 05's toggle said which option was chosen in colour alone.** The control that flips how
+  a corpus is filed marked its active option by painting the accent and **nothing else**. A screen
+  reader read two identical buttons — no `aria-pressed`, no group, no label — on a control whose
+  entire purpose is that the answer changes. And under `high-contrast` the accent and the surface
+  sit far closer than this design assumes, so the one signal carrying the state largely disappears;
+  a printed or screenshotted page loses it outright. The state is now announced (`aria-pressed` on a
+  labelled `role="group"`) and marked by something other than colour.
+
+### Fixed
+
+- **Exercise 05's contents rail never said where the reader was.** `_shared/page.css` has styled
+  `.rail-link.on` — an accent bar and a bold label — since before this page existed, and the page
+  never set the class. The rail looked finished and simply never moved, which is the worst shape a
+  defect can take: the markup is there, the styles are there, and the only way to notice is to
+  scroll and watch nothing happen. Every existing assertion about the rail was about what it
+  *contains*.
+
+  The rule is **the last heading whose top has passed the first third of the viewport**, not the
+  nearest one. Nearest sounds more reasonable and is wrong on half the page: sections here run
+  several screens, so from the middle of one the *next* heading is often closer than the one behind
+  you, and the rail then runs a section ahead of the reader.
+
+### Fixed
+
+- **Exercise 04's thirteen chapter permalinks announced as "number sign".** Each is
+  `<a class="anchor" href="#…">#</a>` with no `aria-label`, so a screen reader read the same two
+  words thirteen times for thirteen different destinations. **Exercises 03 and 06 already solve
+  this** — `a.setAttribute('aria-label', 'Link to this chapter')` — and the wording is copied
+  verbatim rather than reinvented, because the point is that the identical control announces
+  identically across the site. Measured after: 13 of 13 carry the name, in all six themes.
+
+- **Exercise 02's segmented controls were unreadable in the default theme.** The five options a
+  reader has *not* chosen were `--muted` on the control's `--track` ground: **4.15:1**, below WCAG
+  AA. All five explicit themes cleared it (4.84 to 14.17:1) — the one that failed was the state
+  with no `data-theme` attribute at all, which is where most readers are, so a light-and-dark check
+  would have found nothing.
+
+  They now take `--ink`, which the design had already accepted there: it is what the `:hover` rule
+  used to set. The selected option is still unmistakable — a raised `--panel` pill with a shadow,
+  not a colour difference — and hover now answers with a ground rather than a colour it already
+  has.
+
+  **One reported failure turned out to be the measurement, not the page**, and it is worth
+  recording: `span.badge` read 1.00:1 in all six themes because its background is
+  `rgba(0, 104, 209, 0.1)` — ten per cent of its own text colour — and the probe treated it as
+  opaque. Composited properly it is **4.66:1** and passes. The guard now blends the whole painted
+  stack, so it cannot repeat that.
+
+- **The measure was applied to sections and not to panels, and eight paragraphs of running prose
+  stayed at 121 characters.** `main section > p { max-width: 68ch }` was scoped deliberately, on the
+  reasoning that a component lays out its own `<p>`. That holds for a caption or a label. It does
+  not hold for these: measured at 2560px afterwards, eight paragraphs inside `.panel` still ran
+  **121 characters** — among them *"1 · The claim and one number. Plain words. A first-time reader
+  stops here and is not misled."* and the glossary entries. Running prose by any reading.
+
+  A `max-width` on the paragraph does not fight the panel — the panel keeps its width, padding and
+  grid, and only the text stops short of the right edge. Scoped to this exercise's own stylesheet
+  rather than the shared `.panel`, because six other pages use that component and none of them was
+  measured here.
+
+  **Exercise 04 therefore leaves `NOT_YET_COVERED` and joins `COVERED`** in the repo-wide
+  reading-measure ledger, which is what that entry had been waiting for. Earned rather than
+  asserted: removing the panel rule puts 04 back to **48 blocks wider than 80 characters across the
+  eight widths**, and restoring it returns the whole suite to green.
+
+  The ledger entry it replaces read *"#117 — measured 125 characters at 2560px"*. Left alone it
+  would have pointed at a merged pull request for ever, which is the shape a stale ledger takes: a
+  number nobody re-measured, naming a fix that had already landed.
+
+
+- **Exercise 04's body prose ran about 145 characters a line.** Measured at 1440px, the widest body
+  paragraph was **1,156px at 16px type** — roughly double what anyone can track, so the eye loses
+  its place returning to the left edge and the longer the line the more often it lands on the wrong
+  one. A measure on the paragraphs brings it to **692px, about 83 characters**, with no sideways
+  overflow at any of six widths from 1920 down to 320.
+
+  Two details `AGENTS.md` records this repo as having already paid for: the measure goes on the
+  element that **carries the type**, because a `ch` unit resolves against the font size of the
+  element declaring it; and it applies only to paragraphs directly inside a section, because a `<p>`
+  inside a panel, figure or table cell is laid out by that component and constraining it here would
+  compete with the component's own rules rather than replace them.
+
+### Fixed
+
+- **Exercise 04's `chapters.js` was a binary file to git, so no diff of it could be reviewed.**
+  `NOISE_RE` is a character class matching control characters, and line 22 held **six raw control
+  bytes** — a literal NUL, `0x08`, `0x0b`, `0x0c`, `0x0e` and `0x1f` — where the author meant the
+  escape sequences `\x00`, `\x08` and the rest. One NUL is all it takes: git classifies the file
+  as binary and prints `Bin 50656 -> 51984 bytes` instead of a diff, on a repository where review
+  is the merge gate. It had been that way on `main`; the other seven `chapters.js` are clean.
+
+  Replaced with the escapes, which is the same regular expression. **Verified rather than
+  asserted**: the class was tested against every code point from `U+0000` to `U+FFFF` before and
+  after, and the two match sets are byte-identical. Confirmed that git now diffs it as text — `2 0`
+  where both sides are free of the NUL, and binary only while `HEAD` still carries it, so this
+  change is the last unreviewable diff of that file.
+
+
+- **Exercise 04's contents rail never said where the reader was.** `_shared/page.css` has styled
+  `.rail-link.on` — an accent bar and a bold label — since before this page existed, and the page
+  never set the class. The rail looked finished and simply never moved, which is the worst shape a
+  defect can take: the markup is there, the styles are there, and the only way to notice is to
+  scroll and watch nothing happen. Every existing assertion about the rail was about what it
+  *contains*.
+
+  The rule is **the last heading whose top has passed the first third of the viewport**, not the
+  nearest one. Nearest sounds more reasonable and is wrong on half the page: sections here run
+  several screens, so from the middle of one the *next* heading is often closer than the one behind
+  you, and the rail then runs a section ahead of the reader.
+
+### Fixed
+
+- **Two correct changes combined into a defect, and the merge is where it appeared.** #115 renamed
+  exercise 02's segmented controls from `aria-selected` to `aria-pressed` — they are toggle buttons,
+  not tabs. #130 fixed their contrast: the unselected options were `--muted` on the control's
+  `--track`, **4.15:1** in the default theme. Each change is right. Taking **either side of the
+  merge whole** would have been wrong in a way nothing reports: #130's rules alone style
+  `aria-selected`, which no longer exists on the page, so the chosen option would have painted
+  nothing at all.
+
+  Resolved as both, and then the combination turned out to have a defect neither change had.
+  Making the unselected labels `--ink` removes the colour difference that marked the selection, and
+  the rule that remained leaned on `box-shadow: var(--shadow)` — which is `none` on **three** of the
+  seven theme states, by design. The chosen option was left distinguished by its background alone:
+  **1.14:1** on `tinted-dark`, **1.37:1** on `high-contrast`, **1.08:1** on `neon`, where WCAG asks
+  3:1 of a non-text state indicator. The rule's own comment claimed "a raised pill and a shadow"
+  throughout.
+
+  It now carries an `outline` in `--accent` and a heavier weight, neither of which depends on
+  `--shadow`: **4.41:1 to 10.2:1** against the track across all seven states, with the weight going
+  400 → 600 as a second signal that does not rely on colour at all.
+
+  **The guard passed against the very rule it was written to catch, on its first run.**
+  `outline-color` computes to a real colour even when `outline-style` is `none`, so it measured an
+  outline that is never painted. It now requires the outline to exist before counting it, and reds
+  on all three themes. **And "two themes" was itself wrong at first**: a 140ms settle after a theme
+  switch reported `tinted-dark` as still having a shadow, where 600ms shows it does not. Any
+  measurement taken straight after a theme switch is worth taking twice.
+
+
+- **Exercise 02 claimed the tab pattern and implemented none of it.** Same defect as exercise 01,
+  on the tokenizer page: `role="tablist"` and `role="tab"` with no `role="tabpanel"`, no
+  `aria-controls` and no arrow-key handling. The roles are removed rather than the machinery built,
+  because these controls redraw a region in place and are not tabs.
+
+### Fixed
+
+- **Exercise 01 claimed the tab pattern and implemented none of it.** Two proof pages declared
+  `role="tablist"` with `role="tab"` children and had **no `role="tabpanel"`, no `aria-controls` and
+  no arrow-key handling**. Those roles are a promise: a screen reader told "tab" announces a tab,
+  expects arrow keys to move between them and expects a panel to be controlled. **A wrong
+  announcement is worse than none**, because the reader acts on it — presses an arrow key, nothing
+  moves, and they cannot tell whether the page is broken or they are. The fix is to stop claiming
+  it rather than to build the machinery: these redraw a region in place, so there is no panel for
+  `aria-controls` to point at and nothing for arrow keys to move between.
+
+### Fixed
+
+- **A branch that predates a file becoming tracked is not a loss, and two guards said it was —
+  refusing seventeen open pull requests on a checkout where nothing was missing.**
+  `docs/EXPLAINER_*.md` and exercise 10's notebook became tracked in #106. Check out any older
+  branch and git removes them, correctly: they are not in that commit. They are also gitignored
+  there, so `_tracked_paths()` cannot see them, and the local-only class reads as *partly present* —
+  which is exactly the shape of a real loss.
+
+  The tripwire now asks whether **git can give the file back**, not whether the current commit
+  tracks it, by consulting `origin/main` as well. Where that ref cannot be resolved — a shallow CI
+  checkout, a differently-named remote — it contributes nothing and the guard behaves as before.
+  Still watching **30** genuinely local-only files; exactly the three git holds are excluded.
+
+  `tools/sync_open_prs.py` was the second half. It read a non-zero exit from `git checkout` as *the
+  checkout failed*, but a `post-checkout` hook cannot abort a checkout — git has already rewritten
+  the working tree by the time it runs — so a red tripwire there set the status and the tool
+  refused. It judges by where **HEAD** ended up now, and still reports that the hook complained,
+  because the one thing worse than refusing is swallowing a real loss.
+
+
+- **The backup store swept in whatever was sitting in its directory, and undid a deliberate
+  removal within minutes.** `snapshot()` ended with `git add -A` inside the store — the same
+  `git add -A` this repository already forbids in the working tree, for the same reason.
+
+  It matters because a file can legitimately *leave* the local-only set. Three did: they became
+  tracked in the repository, so `collect()` correctly stopped gathering them, and the store's stale
+  claim was failing the tripwire on **every branch that predated them** — which blocked the sync
+  tool on all seventeen remaining pull requests. Removing them is `git rm --cached`, which leaves
+  the working copies on disk. The very next snapshot re-added all three and reported nothing. It
+  ran from the post-checkout hook, so it happened seconds after the removal and without anyone
+  asking for it.
+
+  `snapshot()` now stages exactly the paths it copied. The store is append-only by construction, so
+  it never needs to stage a deletion.
+
+  **Fixing that exposed a coupled assumption and cost a false alarm first.** The commit was gated on
+  `git status --porcelain`, which counts **untracked** files — impossible under `add -A`, because
+  everything present got staged. With staging by path, a file left untracked on purpose made the
+  gate true while the index was empty, `git commit` exited non-zero on that, and the store announced
+  *"The snapshot is NOT safe"* over a snapshot that was entirely fine. It is gated on staged changes
+  now. Both are covered by tests watched failing against the previous tool, while the two existing
+  store guards stayed green.
+
+
+- **A reader who picked a theme their operating system did not have got chip labels below AA, and
+  six green theme tests said otherwise.** `s3.html` builds each chip as
+  `style="background:${colOf(w)}"`, and `colOf` reads the custom property **once**, at build time,
+  writing the resolved hex into the attribute. The label's own `color: var(--chip-ink)` stays live.
+  So a theme switch moved one half of the pair and froze the other: near-black ink on the *light*
+  palette's swatches — **4.19:1**, **3.64:1** and **3.85:1** on `tinted-dark` and `neon`, against a
+  4.5:1 floor. They are **6.53:1** now, which is the figure the stylesheet's own comment claims for
+  the dark pairing.
+
+  **The CSS was correct the whole time** — every theme declares its swatch and its ink together, in
+  one block. Only the JavaScript disagreed, so no amount of reading the stylesheet could find it.
+  Four DOM sites emit the custom property itself now (`var(--animal)`); the canvas call keeps the
+  resolved value, because a 2D context cannot take `var()`.
+
+  **The existing guard could not see it, and the reason is worth keeping.** Its theme table pairs
+  every dark theme with a dark `prefers-color-scheme` and every light one with a light one — the
+  single arrangement in which a frozen colour cannot be caught, because the value the page froze at
+  load already belongs to the theme being switched to. But a picker exists so a reader can choose a
+  theme their OS does not have. `test_the_chips_are_legible_when_the_theme_disagrees_with_the_os`
+  now drives the four explicit themes against the **opposite** scheme. Watched failing against the
+  unfixed page while the original six-theme test stayed green, which is the hole measured exactly.
+
+
+- **Exercise 01's seven range sliders were focusable and painted nothing.** Across three proof
+  pages they carried `outline: none` with no replacement: pixel-diffing the focused against the
+  unfocused state changed **0 of 8,694 pixels**, in all six themes, 42 measurements, every one
+  zero — while `:focus-visible` was true throughout. `docs/DESIGN.md`: *"`:focus-visible` always
+  has a visible ring."* These are the entire interaction on three of the four proof pages and the
+  first stop in the tab order after the back link, so a keyboard reader arrived, saw nothing, and
+  arrow keys then moved a number silently. Every other control on the same pages paints a ring at
+  5.98–18.60:1.
+
+  The guard asserts **pixels, not a property name**. A grep for `outline` would pass the moment
+  someone wrote `outline: 0` — or `outline-width: 3px` with no style, which is literally what was
+  there and is inert. It earned that immediately: the first attempt at the fix put the rules
+  *inside* the `input[type="range"] { … }` block, which is invalid CSS and silently discarded, and
+  the guard went red naming all five s1 sliders while the page looked unchanged.
+
+- **Exercise 01's fourth proof scrolled sideways on every phone.** Its size control was a 260px
+  slider beside a 96px readout in a flex row that could not reflow — 419px of control inside a
+  272px content box, so the page scrolled sideways by **123px at 320, 83px at 360 and 53px at
+  390**, in every theme. It now wraps and the track may shrink; `min-width: 0` is the operative
+  part, because a flex item's default `min-width: auto` refuses to go below its content and
+  `flex: 1` alone would have moved nothing. Re-measured: **0px at all three widths**.
+
+- **All twelve canvases on exercise 01's four proof pages had no accessible name**, no role and no
+  fallback, so the entire visual argument of the exercise was absent to a screen reader. Each now
+  carries `role="img"` and `aria-labelledby` pointing at the heading or caption **the page already
+  shows** beside it — no invented prose, nothing to keep in sync, and the caption's live accuracy
+  readout comes along with it.
+
+### Fixed
+
+- **Exercise 01's `s3.html` was dead on arrival, and had been for as long as it has been
+  deployed.** The theme bootstrap declared `var t` at the top level of a classic script — which
+  creates a *global* — and the page script opens `let E, W, …, t, …`, which cannot redeclare it.
+  The whole 150-line script therefore threw `Identifier 't' has already been declared` **before its
+  first statement**: no category chips, no sample sentence, an empty canvas. Every file-level check
+  passed the entire time, because every file was perfectly well-formed. The bootstrap is now
+  wrapped on all five pages, four of which leaked the same global and escaped only by not happening
+  to reuse the name.
+
+- **Three of the four proof pages had no light palette at all.** `--animal`, `--fruit`, `--verb`,
+  `--end`, `--warm` and `--cool` were declared only inside `prefers-color-scheme: dark` blocks and
+  the two dark `data-theme` selectors, so on the three light themes — **the default** — they
+  resolved to nothing. A chip's background was never painted, leaving its white label on the white
+  page at **1.00:1**; canvas fills silently kept whatever was set last, so two series stopped being
+  distinguishable while the diagram still looked drawn. Each page now declares a light set,
+  following `s1.html`'s own precedent for the same hues.
+
+- **The category chips are legible in all six themes**, measured as painted rather than read from
+  the stylesheet — the swatch is set from JavaScript, so it appears in no rule. A paired
+  `--chip-ink` carries the label colour, one per theme group: white clears AA on all four light
+  swatches (**4.70:1** at worst) and near-black on all four dark ones (**6.53:1** at worst), against
+  1.00:1 to 3.02:1 before.
+
+### Added
+
+- **`tests/_page_invariants.py` has a second consumer.** The module exists to be shared — no
+  console or page error, no failed request, nothing overflowing its own box, no text painted its own
+  background, no image without real dimensions — and it was wired into exactly **one** page, the
+  landing page. Every other exercise hand-rolled its own `scrollWidth` comparison and exercise 01
+  had none at all. It is now asked of all five of exercise 01's pages at three widths, with a twin
+  that plants an overflowing box and confirms it is reported, so importing the module and calling
+  nothing would be visible.
+
+- **Exercise 01 has a browser test, which it had never had.** Both failures above are invisible in
+  the source and obvious the moment a page is opened, which is the whole argument for
+  `src/exercises/01-introductions/tests/test_page_render.py`. Run against the shipped pages it
+  reports **17 failures**; run against the fixed ones, none.
+
+### Added
+
+- **Both exercises ship a deployable page** carrying the twelve-part spine, with every figure read
+  from the same `results/*.json` the write-ups render — a page is the version of a stale hand-typed
+  figure that the most people see. Both join `SPINE_ENFORCED` and the landing page.
+- Each page draws its **mechanism**, not only its results: exercise 09 draws the target shift as two
+  rows of real token strings offset by one, with the broken version underneath where every pair is a
+  token predicting itself; exercise 10 draws the accumulation bug as bars whose widths *are* their
+  token counts, so the short micro-batch visibly gets a vote it did not earn.
+- A browser test per page, which found seven defects a green suite could not see: token labels
+  rendered past the edge of their own boxes, a label drawn across the arrows, a curve label drawn
+  through its own curve, a sum drawn through a bar, a peak label clipped by its viewBox, an axis
+  anchored at zero that flattened the shape it existed to show, and a caption describing an offset
+  the figure did not draw.
+
+- **Exercise 10 runs all six of its items** and generates `RESULTS.md` from `results/run.json`: every
+  tensor shape in a step; one gradient verified against a central difference swept over seven nudge
+  sizes (**8.8 matching decimal digits** at its best, and worse at *both* ends); gradient
+  accumulation broken on purpose, both as arithmetic (**15.4%** out) and as two full training
+  curves; the gradient norm logged pre-clip; MFU; and 0.1 decomposed into fp32, bf16 and fp8 E4M3.
+- Its model is exercise 09's, imported rather than restated, so the two cannot disagree about what a
+  loss is.
+
+- **Its notebook is tracked**, under a written exception in `AGENTS.md` and a `.gitignore` negation.
+  Exercise 10's submission asks for the ipynb with no alternative, where 09's offered "the ipynb file
+  *or* training logs".
+
+- **Exercise 09 is built to its requirements**: seven measured numbers and two findings, all
+  generated into `results/*.json`, rendered into `RESULTS.md` by `tools/render_results.py`, and
+  drawn on a deployable page whose data file comes from the same runs. No figure in any of the three
+  is typed by hand, and a test flips the data to prove the *verdict words* are read from the run too.
+- The package: a trunk that owns no output head, exercise 02's frozen tokenizer so targets print as
+  **strings**, the `t+1`/`t+k` shifts with the off-by-one kept deliberately, padding and
+  document-boundary masks that return the contributing-token count as their evidence, masked
+  cross-entropy with perplexity, two kinds of chunking, tied/untied/tying-unavailable heads, and
+  peak-memory measurement in isolated child processes.
+- Two findings, each predicted before it was measured: a head predicting `t+2` sits above the
+  next-token head on **297 of 300 steps**, and an off-by-one target shift trains to **0.18** while
+  the correct one is still at **4.14** — the bug makes the loss *better*.
+- `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md` are tracked. They were filed as course
+  material and were invisible to every clone and CI job, so an agent asked to build an explainer
+  could not read the specification it is graded against. Measured against both leak gates before
+  the decision: zero verbatim runs, zero banned terms.
+
+### Fixed
+
+- **Exercise 10 vendored the shared layer before the same four fixes, exactly as exercise 09 had.**
+  Both were built while #120, #122, #126, #131 and #107 were open, so both froze the pre-fix
+  stylesheets and neither carried `theme.js`. Measured on 10's own rendered page, hovering its
+  `← Back` pill: **1.54:1 on `neon`** and **2.46:1 on `tinted-dark`** against the 4.5:1 floor — now
+  **12.19:1** and **7.77:1**, the same figures 09 moved by.
+
+  Its theme picker was a hand-written 19-line copy of the logic #107 centralised — the **tenth**
+  such copy. It imports `bindThemePicker` now. Verified in a browser: selecting *neon* sets
+  `data-theme` and persists it, all **12** spine sections build with no console or page error, and
+  nothing scrolls sideways at 390px. Its prose holds the 42–80 character band at all eight widths,
+  so it joins `COVERED` in the reading-measure ledger.
+
+  **Twice is a pattern, and the honest conclusion is that a guard is missing.** Ten copies of
+  `web/_shared/` exist and nothing compares them, so a copy that stops matching is invisible until
+  someone looks. Both times it was caught by the merge order rather than by CI. A byte comparison
+  against the exercise that owns the original would catch it in one assertion; it is not written
+  yet, and the next exercise will have the same problem for the same reason.
+
+
+- **`trainloop.floats.decompose` was wrong for most inputs, and right at the only value tested.** An
+  overflow flag computed from the *value's* fraction-field width rather than the fixed 23 made it
+  return numbers **exactly twice too large** on 3.7% of bf16 and 30% of fp8 E4M3 inputs, and raise
+  on others. `0.1` is one of the values where it cannot fire, and `0.1` was the whole test. The
+  cross-check now sweeps 2,000 values per format — which found a second limit nobody had reasoned
+  about, **subnormals**, now refused rather than answered wrongly.
+
+- **MFU was 39.13% and meaningless**: it divided FLOPs achieved on the CPU by a GPU's advertised
+  peak. The peak is measured now, on the same device and dtype as the run. It also priced the
+  embedding tables — a gather does no arithmetic — making the numerator 45% larger than it should
+  have been. The honest figure is **27.69%**.
+- Item 4's heading claimed the gradient norm moved *before* the loss while the measurement was a
+  same-step magnitude contrast. It now requires the loss to follow within a stated horizon, and
+  **one** step in 200 qualifies rather than nine.
+- The accumulation finding was quoted from one endpoint of a curve whose sign flips 28 times in 120
+  steps; the signed mean, the absolute mean and the flip count are now all reported.
+- Two guards that could not fail on the bugs they named: the accumulation direction was asserted at
+  six steps (a coin flip), and the MFU ceiling was checked against a made-up numerator orders of
+  magnitude below any plausible peak.
+- The local-only tripwire watched exercise 10's now-tracked notebook, so a fresh clone read as
+  exactly the partial loss it exists to detect and CI went red on a healthy checkout.
+
+- **Exercise 09 vendored the shared layer as it stood before four fixes landed, and nothing
+  asserts the copies stay in step.** It was built while #120, #122, #126, #131 and #107 were open,
+  so its `web/_shared/` held the pre-fix stylesheets and no `theme.js` at all. Measured on 09's own
+  rendered page, hovering its `← Back` pill: **1.54:1 on `neon`** and **2.46:1 on `tinted-dark`**
+  against the 4.5:1 floor — now **12.19:1** and **7.77:1**. Separately, **3 of its 18 anchors**
+  painted the browser's default `#0000EE`, because nothing in the cascade reached them; now none do.
+
+  Its theme picker was a **hand-written 19-line copy** of the logic #107 centralised — the ninth
+  such copy, written after the refactor that removed the other eight. It now imports
+  `bindThemePicker` like every other page. Verified in a browser rather than by reading: selecting
+  *neon* sets `data-theme` and persists it, the page builds all **12** spine sections with no
+  console or page error, and nothing scrolls sideways at 390px.
+
+  **The batch ordering caught this, not a guard**, which is the part worth fixing later: a vendored
+  copy going stale is invisible, and the only honest check is a byte comparison against the exercise
+  that owns the original.
+
+  **Two claims measurement refuted before they could be written.** The refresh does *not* fix 09's
+  reading measure — it already held the 42–80 character band at all eight widths, with the stale
+  stylesheets and with the new ones, so 09 joins `COVERED` on its own merit. And `--on-accent` was
+  already *defined* in the stale `tokens.css`; what was missing was the rule that **uses** it. A
+  first probe read the token's value rather than the painted colour and would have reported the
+  defect as already fixed.
+
+- **The document-boundary mask kept every pad-to-pad pair.** Padding carries id `-1`, and
+  `-1 == -1` is `True`, so a mask written as `source == destination` reads correctly and drops
+  nothing but the joins. 68 of 125 "contributing" positions on the published example were padding
+  predicting padding — in the exercise whose item 3 exists to forbid exactly that. **The guard
+  agreed with the bug**: it asserted the dropped count equalled a count of transitions, which is the
+  same expression the implementation used.
+- **`RESULTS.md` claimed every figure was generated and fifteen were typed** — the sensitivity sweep
+  and the memory repetitions, the two blocks it leans on hardest. One printed `4.15` where the
+  generated table read `4.1447`. The byte-equality test could not see them: they lived inside the
+  template it compared against. They are a run now.
+- Chunked cross-entropy divided by the row count rather than the contributing count, so it disagreed
+  with the unchunked loss on any masked input. Every test written on unmasked input passed either
+  way.
+- The memory measurement was first written with `tracemalloc`, which is blind to torch: it reported
+  **429 bytes** for an **81,928,192-byte** logits tensor.
+- The generator's own test used `09`/`lossheads` as its fixture — the exact spec exercise 09 would
+  claim — so its collision check found itself the moment the exercise existed.
+- A builder guard asserted `'clone'` with single quotes, which is one phrasing of the property
+  rather than the property; `ruff format` normalising a builder to double quotes turned it red.
+
+### Fixed
+
+- **Reverted the second build gate added one release earlier: it could not execute in the
+  environment it was written for.** It compared the branch's deployed files against `origin/main`,
+  and Vercel checks out a **single-branch shallow clone** — the very next build after it merged
+  printed `origin/main could not be resolved (shallow clone?)`. So the gate was inert in production
+  and, wherever the ref *did* resolve, actively wrong: a branch that reverted its page back to
+  `main`'s content skipped its build, leaving the live preview serving a change the pull request no
+  longer made. That is precisely the failure the script's own header warns about — *"a skipped one
+  is a preview that silently does not reflect the branch."*
+
+  Twenty-four hermetic cases passed over it. They proved the predicate was internally consistent and
+  said nothing about whether its inputs exist in a real build, which is why a green suite over a
+  mechanism that cannot run reads as coverage. `deploy/vercel/should-build.sh` and
+  `tests/test_should_build.py` are restored byte-identical to their previous state, and `AGENTS.md`
+  now requires reading the target environment's own log before changing behaviour that runs there.
+
+  **A defect that predates both changes is now recorded and still open.**
+  `VERCEL_GIT_PREVIOUS_SHA` is the last *successful deployment*, so when it is absent the `HEAD^`
+  substitute asks "what did the newest commit change" instead. A branch whose tip commit is not
+  deployable therefore gets **no preview at all**, and it is self-reinforcing: a skipped build never
+  becomes a successful deployment, so the variable stays empty. Reproduced, not yet fixed.
+
+- **Two repo-wide guards scanned a wider scope than the property they assert, and only the local
+  suite could see it.** The basename-collision guard globbed `**/test_*.py` from the repo root, so
+  nine leftover `.claude/worktrees/` checkouts — scratch copies of the whole repo — each counted as
+  a second definition of every test file in it: **122 invented clashes**, none of which pytest could
+  ever hit, because `testpaths` is `["src", "tests"]` and it collects **zero** files from those
+  directories. It now scans the roots pytest actually collects from, read out of `pyproject.toml`
+  rather than restated, so the guard and the runner cannot disagree.
+
+  The generator's naming guard globbed `[0-9][0-9]-*` by name instead of calling
+  `tests/_exercises.py::exercises_in`, whose entire reason for existing is that a directory becomes
+  an exercise when its `pyproject.toml` lands. Exercises 09 and 10 exist on disk holding only their
+  gitignored local-only files while that file waits in an unmerged branch, so the guard read them as
+  exercises and died on a `pyproject.toml` that is not there yet.
+
+  **Both stayed green in CI**, where a clone has neither worktrees nor those local-only files. The
+  only suite they broke was the local one — which is the suite carrying the notebook-builder,
+  local-only-tripwire and quote-check gates that CI *cannot run at all*. A guard that cries wolf
+  gets tuned out, and these two were doing it to the one run that has no CI twin.
+
+- Consolidating the theme picker broke exercise 03's page outright — it rendered **zero sections**.
+  Its render test serves the exercise's own `web/` directory rather than the assembled site, so a
+  site-root import 404s there, and **a failed module import aborts the whole module**, taking the
+  page's `buildPage` call with it. `theme.js` is vendored alongside the CSS now and imported
+  relatively, and two guards cover it: one that the vendored copies match their source, one that a
+  page's import path resolves where its own test serves from.
+
+### Changed
+
+- **One theme picker, not eight.** `deploy/vercel/_shared/theme.js` gains `bindThemePicker`, which
+  wires a `<select>` a page has already rendered — and six pages drop the eighteen lines each had
+  hand-written. The markup stays in the page, deliberately: a server-rendered control is styled and
+  readable before any module loads.
+- `tests/test_theme_picker.py` guards it, and all four of its assertions were watched failing
+  against a deliberate break first. **One of them was blind and the break is how I found out** — it
+  checked that the string `bindThemePicker` appeared, so deleting the *call* and leaving the
+  `import` satisfied it. It asserts a call now.
+
+### Fixed
+
+- **The shared-layer orphan guard counted class names written inside comments.** It ran
+  `\.([a-z][a-z0-9-]*)` over the raw stylesheet, so `page.css` in a comment counted as the class
+  `css`, `data.json` as `json`, and the phrase *"i.e."* as `e`. A comment added here naming `.back`
+  and `.readmore` pushed the count from 101 to 104 and failed the guard — while the stylesheet had
+  gained **exactly one rule and no classes at all**.
+
+  Comments are stripped now, and the honest total is **98, not 101**. Two entries in
+  `KNOWN_ORPHANS` — `css` and `json` — were removed: they were never classes, and their own stated
+  reason was *"also an ordinary word in prose and filenames"*, so the phantom was known and
+  exempted rather than fixed. **A baseline padded with entries that describe nothing is slack the
+  guard can never spend on a real orphan** — verified by adding one and watching it report
+  99 against 98.
+
+- **A degraded placement fell back to the FIRST look-alike, and stranded entries at the top of the
+  file.** When a re-applied block's neighbours have moved on `main`, the sync tool matches one side
+  alone — and `list.index` returns the earliest occurrence. In an append-only log the earliest blank
+  line is line 2, so the entry landed **above the preamble and outside every section**: present,
+  correct-looking, and somewhere no reader would find it. It happened three times to `CHANGELOG.md`,
+  and `main`'s copy is repaired here along with the tool.
+
+  The block's own position now travels with it, so the fallback picks the **nearest** candidate
+  rather than the first.
+
+- **Three controls painted white text on a background that is bright in half the themes.** The
+  `← Back` pill on hover and the blocking-caveat chip (both in the shared component stylesheet, so
+  on all six deployable pages) and exercise 04's toggle in its *on* state all declared
+  `color: #fff` over `var(--accent)` or `var(--gotcha-safety)`. Those tokens are dark blues and reds
+  on the three light themes and bright ones on the three dark themes, so the literal was right in
+  half the cases and wrong in the other half — measured on the shipped page, the back pill's label
+  ran **1.54:1 on `neon`**, which is not hard to read but absent. Every theme already ships the
+  paired token that answers this, so all three now use `--on-accent`: the same white on the light
+  themes, near-black on the dark ones, **5.38:1 to 12.19:1 across all six**.
+
+  `tests/test_no_literal_ink_on_a_token_background.py` refuses the whole class. It is lexical
+  rather than a browser check on purpose: two of the three are `:hover` and `.on` states that no
+  static render ever enters, so a rendered page would have to know to go looking for them, while
+  the source says it unconditionally.
+
+- **Printing exercise 03 lost the argument.** Its eleven scrolly widgets each pin one figure and
+  reveal a verdict line per step, and the end-state rule that unpins them existed only for
+  `prefers-reduced-motion` — with no print twin. Measured under `emulate_media(media="print")` at
+  1440px: **0 of 45** `.inline` verdict lines had a client rect, against 45 of 45 for a
+  reduced-motion reader. A printed sheet carried **11 figure states and lost 34**, and the verdict
+  line was the only place those 34 could have appeared.
+- **Two links fell back to the browser's own default blue.** An anchor no rule styles is not merely
+  unstyled — it is `#0000EE`, the User-Agent stylesheet's colour, chosen for a white page. Against
+  these pages' dark grounds that measures **1.74:1 to 2.23:1**: a link a reader cannot see. One is
+  on exercise 02 (*"HuggingFace tokenizer.json"*), one on exercise 07 (*"Code, tests and the full
+  write-up"*). Both had simply never been given a class that set a colour. A base
+  `a { color: var(--accent) }` fixes them; every named link class already sets its own colour and
+  out-specifies an element selector, so nothing else moved — verified by measuring all 1,362 anchor
+  readings across thirteen pages and six themes before and after.
+
+  **The reported count was seven and the real count is two, and the difference is worth recording.**
+  Five of the seven — `.readmore` on 02 and four `.guide-path` links on 08 — compute `#0000EE` on
+  the anchor while every word they show sits in a child element with its own colour. The anchor's
+  colour paints nothing. That is the third time in this sweep a measurement has read a **container**
+  instead of the text it contains, after `.rail-link` (4.05:1 for text that renders at 4.59, 4.66
+  and 15.46) and `.badge` (1.00:1 for text that is 4.66:1 once its 10%-alpha ground is composited).
+
+### Added
+
+- **`tests/test_every_link_has_a_colour.py`** asserts, for every published page in all six themes,
+  that no link computes to the browser default and that every link clears WCAG AA. It measures the
+  elements that actually **paint** text — from the anchor down — rather than the anchor element,
+  which is what makes it immune to the container artefact above, and it composites the whole
+  background stack rather than taking the first opaque ancestor.
+
+  **Its first version was blind and I only found that by breaking the page it could see.** Filtering
+  to anchors with their own text excluded exactly the links whose *children* inherit the unstyled
+  colour; the fix passes, so does the break. Breaking a second page — one with a real defect —
+  showed it red. A guard proved against the wrong subject is not proved.
+
+  The fix is one character of media query — `@media (prefers-reduced-motion: reduce), print` — and
+  deliberately **not** a separate `@media print` block repeating the three declarations. Two blocks
+  can drift apart, and drift is exactly what produced this: the rule existed for one reader and
+  nobody noticed the other had none. After: **45 of 45** in print, in all six themes, with nothing
+  truncated; screen behaviour byte-for-byte unchanged.
+
+### Fixed
+
+- **The shared step strip squeezed its own prose to 29 characters a line on a tablet.** Below
+  1081px `explainer.css` puts a **fixed** 296px figure column beside the prose, so every pixel the
+  window loses comes out of the reading column — and the collapse to one column fired at
+  `max-width: 760px`, while an iPad portrait is 768 and a common Android tablet is 800. In that gap
+  a step's paragraph ran **29 characters** at 768px. It also ran **41 at exactly 1180px and nowhere
+  else**, because 1180 is where `page.css` begins reserving the 260px rail gutter, so the content
+  box is *narrower* at 1180 than at 1179.
+
+  Three changes, all in the shared component: the strip collapses at 900px rather than 760; the
+  prose column carries a **floor** (`minmax(min(48ch, 100%), 62ch)`) instead of a zero minimum, so
+  the figure column's own minimum can no longer win every squeeze; and `.step p` caps at 46ch
+  rather than 44, which sat on the fail line once the step's own 20px of border and padding came
+  off it. Measured across eight widths on both pages that build the strip: **90 of 360 and 28 of
+  112 paragraphs were under the floor before, none after.**
+
+  Raising the breakpoint had a knock-on the first measurement caught: with the grid collapsed,
+  `.stagereg-note` had the full page and ran **117 characters** at 900px. It now carries a measure
+  of its own.
+
+### Added
+
+- **`tests/test_prose_measure_repo_wide.py`** promotes exercise 08's line-measure guard — 42 to 80
+  characters, `docs/DESIGN.md`'s band — out of that exercise and onto the deployable set, sweeping
+  eight widths per page. The measurement is copied from 08 down to the probe span, because a
+  character width read from a `ch` unit or an assumed average glyph is a *different* measurement and
+  two pages measured differently cannot be compared.
+
+  **It carries a second, narrower guard for the step strip, and that one exists because the first
+  one provably could not see the defect above.** Restored to the shipped stylesheet, every
+  general assertion stayed green: `ROOM_TO_SPARE` asks whether a block leaves room unused *inside
+  its own box*, and a squeezed `.step` paragraph fills its box exactly — the box is what is too
+  small. Widening that host walk would catch it and would fail every legitimate two-column layout,
+  including the one on the page the measurement came from.
+
+  Exercises 04 and 05 are recorded as **not yet covered** rather than ledgered as exceptions, each
+  naming the pull request that fixes it (#117 and #118). A both-directions exception ledger is this
+  repo's usual idiom and the wrong one here: it would go red the moment either of those merges, in
+  a pull request that has nothing to do with this file.
+
+### Added
+
+- **A skip-ledger test was pinned to a list index.** It read `EXPECTED_IN_CI[0]` while hard-coding
+  the reason belonging to whichever entry happened to be first, so adding an entry **anywhere above
+  it** failed the test — for a reason having nothing to do with the new entry or with the gate it
+  guards. It now looks its entry up by path. `AGENTS.md` already records the cost of pinning a test
+  to `:nth-child`; this is the same mistake in Python.
+
+- **A section heading is context for the entry beneath it, not a record of its own.** The sync
+  tool skipped any record `main` already had — and treated `### Fixed` as one. So when a branch
+  opened a new `### Fixed` block at the top of `[Unreleased]` while `main` had one further down,
+  the heading matched, was dropped as a duplicate, and **the entry landed directly under
+  `## [Unreleased]` with no section at all.** That is the state `main` was left in by #133's merge,
+  and it is repaired here.
+
+  A heading now opens a record and keeps it open, so the heading and the entry beneath it are
+  tested against `main` together and cannot be separated.
+
+  **The fixture had to be built three times before it reproduced.** The first two put the heading
+  *after* the entry, or gave the branch a heading `main` did not have — both pass against the
+  broken code. The real shape is a heading that `main` already has, appearing *first* in the added
+  block. A test that cannot fail is worth less than no test, because it reads as coverage.
+
+- **A pull request that does not log itself now fails, instead of failing everyone else.**
+  `tools/queue_status.py` refuses when `docs/agents/QUEUE.md` does not record a merged pull
+  request, and it runs in the `test` job — so the moment one merges unlogged, `main` fails its own
+  gate and **every branch cut from `main` inherits a failure that has nothing to do with it**. That
+  cost three rounds of merging in one afternoon: #133 sat red twice, once for #108's misplaced
+  entry and once for #134 not logging itself, and neither time did the error point at the branch
+  responsible.
+
+  The existing check looks **backwards** — does the log record what already merged? By then the
+  damage is on `main`. `tests/test_pull_request_logs_itself.py` looks **forwards**: does the pull
+  request being tested record itself? The branch that would cause the problem is the branch that
+  goes red.
+
+  It reads the number from `GITHUB_REF`, so it runs only on a pull-request build; that skip is
+  declared in `tests/_skips.py`. The parser is tested unconditionally in the same file, because a
+  ref format change would otherwise turn the whole guard into a permanent skip covering nothing —
+  which is the failure it exists to prevent, one level up.
+
+### Fixed
+
+- **A preview was deployed on every push, whatever it touched.** A test, a changelog line, a queue
+  entry — all of it spent a deployment. Roughly sixty pushes in one working day exhausted the
+  account's quota and Vercel rate-limited the project for **24 hours**, so previews stopped being
+  available for the pull requests that genuinely did change a page.
+
+  `vercel.json` now runs `deploy/vercel/should-build.sh` as its `ignoreCommand`: a build happens
+  only when the commit touches something `build.sh` actually copies into `public/`. Measured
+  against the last eight commits on `main`, **six would not have deployed** and the two that
+  changed `web/` still would.
+
+  **The obvious spelling of the pathspec is silently wrong, and it is the whole correctness of the
+  file.** `src/exercises/*/web` does not match `src/exercises/03-…/web/page.css` — a git pathspec
+  is a path prefix matched with fnmatch, and a bare `*` there does not behave like a shell glob.
+  Written that way the predicate matches nothing, `git diff --quiet` always succeeds, and **every**
+  deployment is skipped with no error anywhere. I wrote it that way first and caught it only by
+  running the predicate over real history and seeing a 2,578-line change under `web/` reported as
+  "nothing to deploy". `:(glob)` is what makes it mean what it looks like.
+
+  `tests/test_should_build.py` drives both directions in a throwaway repository — hermetic because
+  CI checks out at depth 1, so asserting against this project's own history would not run there.
+  Four of its cases go red against the wrong pathspec, and all four are ones whose failure would
+  otherwise be invisible. When the parent commit is unavailable it **builds**: a needless
+  deployment is a small waste, a silently skipped one is a preview that does not match the branch.
+
+### Fixed
+
+- **The pull-request sync tool put a log entry in the wrong section of the file, and every count of
+  it looked right.** It anchored each re-applied block on the single line that followed it on the
+  branch. `docs/agents/QUEUE.md` contains a dozen code fences, so `list.index` returned the
+  earliest one and #108's entry landed forty lines *above* the `## Log` heading. It was still in the
+  file — `grep` found it, the diff looked sane — and only `queue_status.py`, which reads the log
+  section and nothing else, noticed, two merges later.
+
+  A single line is not a position. The anchor is now the **pair** of neighbours a block had, with
+  reported fallbacks to one side or the other when `main` has moved under it, so a degraded
+  placement is visible rather than silent.
+
+  This is the third defect this tool has produced in three live runs — per-block skipping, then
+  only inspecting conflicted files, now an ambiguous anchor — and each one was invisible in the
+  diff and caught by something downstream. The entry it misplaced on `main` is moved back into the
+  log in this change.
+
+### Fixed
+
+- **The mermaid render test spent its 180-second budget downloading rather than rendering.** It
+  shells out to `npx --yes @mermaid-js/mermaid-cli`, and `--yes` *fetches* the package on first
+  use — it bundles puppeteer, so on a cold runner that download alone can exceed the timeout the
+  test allows for a render. It failed on three of four consecutive branches and passed on the
+  fourth: a flake that reds unrelated pull requests at random, which is worse than a test that
+  fails honestly. The `mixtures` shard now fetches it in a step with a budget of its own, leaving
+  the test's 180 seconds for what they were sized for. `PUPPETEER_SKIP_DOWNLOAD` stops it pulling a
+  second chromium — the test already points puppeteer at the playwright browser the shard installs
+  two steps earlier.
+
+### Added
+
+- **`tools/sync_open_prs.py`, which keeps every open pull request mergeable.** Every open branch touches
+  `docs/agents/QUEUE.md`, `CHANGELOG.md` and `.quote-check-receipt.json`, and the receipt is a
+  digest over **all** tracked prose — so merging one pull request invalidates every other one.
+  Measured rather than assumed: merging two branches produced a `QUEUE.md` content conflict *and*
+  left the receipt full of conflict markers, so its checker died with a `JSONDecodeError` instead of
+  failing cleanly.
+
+  It merges `main` into every open branch, rebuilds the two log files as
+  *main's version plus that branch's own entry*, regenerates the receipt and pushes. It never
+  rebases and never force-pushes: the branches are published, `AGENTS.md` forbids rewriting
+  published history, and the repository's settings deny it.
+
+  **`merge=union` was considered and refused** — a union driver keeps both sides of every conflict,
+  which is right for two branches adding different lines and wrong here, where fifteen branches
+  carry a byte-identical log line and the fifteenth merge would land fifteen copies of it.
+  `tests/test_sync_open_prs.py` covers both failure directions, a duplicated line and a silently
+  dropped entry, and both were watched failing against a deliberately broken copy restored from
+  outside the working tree.
+
+### Added
+
+- `tests/test_shared_layer_orphans.py` pins how much of `_shared/page.css` no page emits — **29 of
+  101 classes**, measured by serving the assembled site and reading `classList` from every element
+  of all 13 pages, after scrolling and after driving every input and button. **Two classes left the
+  list at that last step** (`.filter-none`, `.rail-shut`), which is exactly why the measurement is
+  not a grep, and why nothing was deleted on it.
+
 ### Added
 
 - **Every deployable page is now checked in all six themes, not one of them.**
