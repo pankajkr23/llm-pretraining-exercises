@@ -68,6 +68,12 @@ PATTERNS: tuple[str, ...] = (
     "docs/REQUIREMENTS.md",
     "docs/EXPLAINER_*.md",
     "TODO.md",
+    # PK's own merge order for the open pull requests. Deliberately NOT tracked: it names
+    # unmerged branches and the sequence they go in, which is working state rather than
+    # anything a reader of this repository needs. Nothing regenerates it — the reasoning in
+    # it is a person's, not a derivation — so the store is the only copy once the working
+    # tree is gone.
+    "docs/MERGE_ORDER.md",
     # Hand-written planning and critique notes that live beside an exercise. Only the untracked ones
     # are taken: `collect` drops anything git already has, so this cannot quietly start duplicating
     # tracked documents into the store.
