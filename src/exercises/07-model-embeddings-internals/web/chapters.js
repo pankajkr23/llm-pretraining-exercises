@@ -1031,6 +1031,7 @@ function buildRail(root) {
   head.append(el('div', 'rail-title', 'On this page'));
   inner.append(head);
   const list = el('div', 'rail-list');
+  const marks = [];
   for (const sec of root.querySelectorAll('section')) {
     if (!sec.dataset.title) continue;
     const link = el('a', 'rail-link');
@@ -1042,9 +1043,40 @@ function buildRail(root) {
      * number inside the body squeezes every title into the 16px number column. */
     link.append(el('span', 'rail-n', sec.dataset.n), body);
     list.append(link);
+    marks.push({ sec, link });
   }
   inner.append(list);
   rail.append(inner);
+
+  /* MARK THE SECTION THE READER IS IN. `_shared/page.css` has styled `.rail-link.on` — an accent
+   * bar and a bold label — since before this page existed, and this page never set the class.
+   * Exercise 03 was the only one that ever did; 08 added it later, and this is that logic.
+   *
+   * "The last heading whose top has gone past the first third of the viewport", not "the nearest
+   * heading". Nearest sounds more reasonable and is wrong on half the page: sections here run
+   * several screens, so from the middle of one the NEXT heading is often closer than the one
+   * behind you, and the rail then runs a section ahead of the reader. A proportion of the viewport
+   * rather than a pixel count, so it means the same thing on a laptop and a tall monitor. */
+  const mark = () => {
+    const arrived = window.innerHeight / 3;
+    let best = 0;
+    marks.forEach(({ sec }, k) => {
+      if (sec.getBoundingClientRect().top - arrived <= 0) best = k;
+    });
+    marks.forEach(({ link }, k) => link.classList.toggle('on', k === best));
+  };
+  let queued = false;
+  const onMove = () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      mark();
+    });
+  };
+  window.addEventListener('scroll', onMove, { passive: true });
+  window.addEventListener('resize', onMove, { passive: true });
+  mark();
 }
 
 function buildFooter() {
