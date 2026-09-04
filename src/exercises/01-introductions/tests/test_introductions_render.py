@@ -1,5 +1,11 @@
 """The four proof pages, opened in a browser — which nothing here had ever done.
 
+**Named `test_introductions_render.py`, not `test_page_render.py`.** pytest imports test modules by
+basename, so two files sharing one anywhere in the repo abort collection with an "import file
+mismatch" — exercise 04 already owns `test_page_render.py`. `tests/test_parallel_safety.py` catches
+it, and it caught this: the collision is invisible when you run one file on its own, which is
+exactly how it was written.
+
 **This exercise had no browser test at all, and it shipped a page that was dead on arrival.**
 `s3.html` threw `Identifier 't' has already been declared` before its first statement: the theme
 bootstrap declared `var t` at the top level of a classic script, which is a *global*, and the page

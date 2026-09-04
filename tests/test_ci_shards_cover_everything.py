@@ -36,7 +36,7 @@ CI = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 #: updated. Either way somebody has to look at it, which is the point — the last time these were
 #: invisible, seventeen percent of an exercise's suite ran nowhere for a week.
 OPTIONAL_DEPENDENCY_GATES: dict[str, str] = {
-    "src/exercises/01-introductions/tests/test_page_render.py": "playwright",
+    "src/exercises/01-introductions/tests/test_introductions_render.py": "playwright",
     "src/exercises/02-tokenization/tests/test_widget_render.py": "playwright",
     "src/exercises/03-data-collection-framework/tests/test_render.py": "playwright",
     "src/exercises/04-data-cleaning-dedup/tests/test_page_render.py": "playwright",
