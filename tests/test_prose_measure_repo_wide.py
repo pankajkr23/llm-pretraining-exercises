@@ -66,6 +66,7 @@ COVERED = [
     "07-model-embeddings-internals",
     "08-modern-attention-variants",
     "09-loss-functions-output-heads",
+    "10-training-loop",
 ]
 
 #: Deployable, measured, and not yet in the band. Each names what is fixing it.

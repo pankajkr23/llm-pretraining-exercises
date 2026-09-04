@@ -12,6 +12,31 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Both exercises ship a deployable page** carrying the twelve-part spine, with every figure read
+  from the same `results/*.json` the write-ups render — a page is the version of a stale hand-typed
+  figure that the most people see. Both join `SPINE_ENFORCED` and the landing page.
+- Each page draws its **mechanism**, not only its results: exercise 09 draws the target shift as two
+  rows of real token strings offset by one, with the broken version underneath where every pair is a
+  token predicting itself; exercise 10 draws the accumulation bug as bars whose widths *are* their
+  token counts, so the short micro-batch visibly gets a vote it did not earn.
+- A browser test per page, which found seven defects a green suite could not see: token labels
+  rendered past the edge of their own boxes, a label drawn across the arrows, a curve label drawn
+  through its own curve, a sum drawn through a bar, a peak label clipped by its viewBox, an axis
+  anchored at zero that flattened the shape it existed to show, and a caption describing an offset
+  the figure did not draw.
+
+- **Exercise 10 runs all six of its items** and generates `RESULTS.md` from `results/run.json`: every
+  tensor shape in a step; one gradient verified against a central difference swept over seven nudge
+  sizes (**8.8 matching decimal digits** at its best, and worse at *both* ends); gradient
+  accumulation broken on purpose, both as arithmetic (**15.4%** out) and as two full training
+  curves; the gradient norm logged pre-clip; MFU; and 0.1 decomposed into fp32, bf16 and fp8 E4M3.
+- Its model is exercise 09's, imported rather than restated, so the two cannot disagree about what a
+  loss is.
+
+- **Its notebook is tracked**, under a written exception in `AGENTS.md` and a `.gitignore` negation.
+  Exercise 10's submission asks for the ipynb with no alternative, where 09's offered "the ipynb file
+  *or* training logs".
+
 - **Exercise 09 is built to its requirements**: seven measured numbers and two findings, all
   generated into `results/*.json`, rendered into `RESULTS.md` by `tools/render_results.py`, and
   drawn on a deployable page whose data file comes from the same runs. No figure in any of the three
@@ -30,6 +55,47 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   the decision: zero verbatim runs, zero banned terms.
 
 ### Fixed
+
+- **Exercise 10 vendored the shared layer before the same four fixes, exactly as exercise 09 had.**
+  Both were built while #120, #122, #126, #131 and #107 were open, so both froze the pre-fix
+  stylesheets and neither carried `theme.js`. Measured on 10's own rendered page, hovering its
+  `← Back` pill: **1.54:1 on `neon`** and **2.46:1 on `tinted-dark`** against the 4.5:1 floor — now
+  **12.19:1** and **7.77:1**, the same figures 09 moved by.
+
+  Its theme picker was a hand-written 19-line copy of the logic #107 centralised — the **tenth**
+  such copy. It imports `bindThemePicker` now. Verified in a browser: selecting *neon* sets
+  `data-theme` and persists it, all **12** spine sections build with no console or page error, and
+  nothing scrolls sideways at 390px. Its prose holds the 42–80 character band at all eight widths,
+  so it joins `COVERED` in the reading-measure ledger.
+
+  **Twice is a pattern, and the honest conclusion is that a guard is missing.** Ten copies of
+  `web/_shared/` exist and nothing compares them, so a copy that stops matching is invisible until
+  someone looks. Both times it was caught by the merge order rather than by CI. A byte comparison
+  against the exercise that owns the original would catch it in one assertion; it is not written
+  yet, and the next exercise will have the same problem for the same reason.
+
+
+- **`trainloop.floats.decompose` was wrong for most inputs, and right at the only value tested.** An
+  overflow flag computed from the *value's* fraction-field width rather than the fixed 23 made it
+  return numbers **exactly twice too large** on 3.7% of bf16 and 30% of fp8 E4M3 inputs, and raise
+  on others. `0.1` is one of the values where it cannot fire, and `0.1` was the whole test. The
+  cross-check now sweeps 2,000 values per format — which found a second limit nobody had reasoned
+  about, **subnormals**, now refused rather than answered wrongly.
+
+- **MFU was 39.13% and meaningless**: it divided FLOPs achieved on the CPU by a GPU's advertised
+  peak. The peak is measured now, on the same device and dtype as the run. It also priced the
+  embedding tables — a gather does no arithmetic — making the numerator 45% larger than it should
+  have been. The honest figure is **27.69%**.
+- Item 4's heading claimed the gradient norm moved *before* the loss while the measurement was a
+  same-step magnitude contrast. It now requires the loss to follow within a stated horizon, and
+  **one** step in 200 qualifies rather than nine.
+- The accumulation finding was quoted from one endpoint of a curve whose sign flips 28 times in 120
+  steps; the signed mean, the absolute mean and the flip count are now all reported.
+- Two guards that could not fail on the bugs they named: the accumulation direction was asserted at
+  six steps (a coin flip), and the MFU ceiling was checked against a made-up numerator orders of
+  magnitude below any plausible peak.
+- The local-only tripwire watched exercise 10's now-tracked notebook, so a fresh clone read as
+  exactly the partial loss it exists to detect and CI went red on a healthy checkout.
 
 - **Exercise 09 vendored the shared layer as it stood before four fixes landed, and nothing
   asserts the copies stay in step.** It was built while #120, #122, #126, #131 and #107 were open,

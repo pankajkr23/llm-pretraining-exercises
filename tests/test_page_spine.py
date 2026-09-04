@@ -57,6 +57,7 @@ SPINE_ENFORCED: frozenset[str] = frozenset(
         "07-model-embeddings-internals",
         "08-modern-attention-variants",
         "09-loss-functions-output-heads",
+        "10-training-loop",
     }
 )
 

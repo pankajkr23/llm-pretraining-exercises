@@ -1,0 +1,233 @@
+/* Component styles for the data-collection framework.
+ *
+ * The colour tokens moved to /_shared/tokens.css, which every page on this site links, so a
+ * palette decision is made once and all six themes reach every exercise. What stays here is what
+ * is genuinely specific to this exercise: the base type scale, and the components that carry its
+ * semantics — provenance marks, grade badges, gotcha badges.
+ *
+ * The provenance rules below are the most important lines in this file. Every number on the site
+ * carries a visible mark of how well it is known: solid underline for measured, dotted for
+ * estimated, faded italic for unknown. It is a running admission of what we do and don't know,
+ * and it costs zero words of prose.
+ *
+ * Semantic colour is earned, never decorative, and never carries meaning alone — a grade always
+ * shows its letter beside the colour, so the site survives a colour-blind reader and a mono print.
+ */
+
+/* ---------------------------------------------------------------- base */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 56px 24px 96px;
+}
+
+h1 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(2.2rem, 5.2vw, 3.4rem);
+  line-height: 1.06;
+  letter-spacing: -0.025em;
+  margin: 0 0 18px;
+}
+
+h2 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.5rem;
+  letter-spacing: -0.015em;
+  margin: 0 0 12px;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 12px;
+}
+
+.lede {
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: 1.06rem;
+  margin: 0;
+}
+
+.lede b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--accent);
+  text-decoration: none;
+  margin: 0 0 28px;
+  padding: 7px 15px 7px 12px;
+  border-radius: 980px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  transition: background 0.18s, color 0.18s;
+}
+
+.back:hover {
+  background: var(--accent);
+  /* Never a literal here. `--accent` is a bright blue on the dark themes and white text over it
+     measures 3.02:1 on the system dark theme and 1.54:1 on `neon` — the pill effectively vanishes
+     under the cursor. `--on-accent` is the paired token and clears AA on all six. */
+  color: var(--on-accent);
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+footer {
+  margin-top: 48px;
+  color: var(--faint);
+  font-size: 0.86rem;
+  font-family: var(--mono);
+}
+
+/* ---------------------------------------------------------------- grades */
+
+.grade {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid currentColor;
+}
+
+.grade[data-grade="A"] { color: var(--grade-a); }
+.grade[data-grade="B"] { color: var(--grade-b); }
+.grade[data-grade="C"] { color: var(--grade-c); }
+.grade[data-grade="X"] { color: var(--grade-x); }
+
+/* ---------------------------------------------------------------- gotchas */
+
+.gotcha {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+}
+
+.gotcha[data-type="LICENCE"] { color: var(--gotcha-licence); }
+.gotcha[data-type="DEDUP"] { color: var(--gotcha-dedup); }
+.gotcha[data-type="COMPOSITION"] { color: var(--gotcha-composition); }
+.gotcha[data-type="PROVENANCE"] { color: var(--gotcha-provenance); }
+.gotcha[data-type="SAFETY"] { color: var(--gotcha-safety); }
+.gotcha[data-type="ATTRIBUTION"] { color: var(--gotcha-attribution); }
+.gotcha[data-type="AVAILABILITY"] { color: var(--gotcha-availability); }
+.gotcha[data-type="SOURCING"] { color: var(--gotcha-sourcing); }
+.gotcha[data-type="HETEROGENEITY"] { color: var(--gotcha-heterogeneity); }
+
+/* A blocking caveat is not a shade of advisory — it bars the door. */
+.gotcha[data-severity="blocking"] {
+  background: var(--gotcha-safety);
+  border-color: var(--gotcha-safety);
+  /* Same failure, on the one caveat that bars the door: the dark themes lift `--gotcha-safety` to
+     a light red, so white on it ran 2.79:1 to 3.41:1. */
+  color: var(--on-accent);
+}
+
+/* ---------------------------------------------------------------- provenance */
+
+/* Provenance marking, second attempt.
+ *
+ * The first version underlined every figure: solid for measured, dotted for estimated, faded for
+ * unknown. It looked principled and failed in practice, because 80% of the bundle is unknown and
+ * only 2% is measured — so a mark fired on every number on the page. A signal that is always on is
+ * not a signal, and a page of dotted underlines reads as broken links, not as epistemic honesty.
+ *
+ * So: mark only what is exceptional. `estimated` is the working default and gets nothing.
+ * `measured` is rare enough to earn a mark. `unknown` is an admission worth making visible. Where
+ * provenance actually matters — a headline figure, a stat tile — it is said in words underneath,
+ * which is both clearer and impossible to mistake for a hyperlink.
+ */
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rare, and the strongest claim on the site — worth a mark. */
+.num[data-provenance="measured"] {
+  border-bottom: 1.5px solid var(--grade-a);
+  cursor: help;
+}
+
+/* The working default. No mark: labelling the ordinary case tells the reader nothing. */
+.num[data-provenance="estimated"] {
+  cursor: help;
+}
+
+/* Not a value at all — usually renders as an em dash, and should look like an absence. */
+.num[data-provenance="unknown"] {
+  color: var(--faint);
+  font-style: italic;
+  cursor: help;
+}
+
+/* Provenance in words, for the places where it changes how a figure should be read. */
+.prov {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.prov[data-provenance="measured"] { color: var(--grade-a); }
+.prov[data-provenance="unknown"] { color: var(--grade-b); }
+
+.provenance-key {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+/* ---------------------------------------------------------------- motion */
+
+/* Every animation holds its end state, so honouring this preference costs nothing but the motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
