@@ -12,6 +12,30 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The backup store swept in whatever was sitting in its directory, and undid a deliberate
+  removal within minutes.** `snapshot()` ended with `git add -A` inside the store — the same
+  `git add -A` this repository already forbids in the working tree, for the same reason.
+
+  It matters because a file can legitimately *leave* the local-only set. Three did: they became
+  tracked in the repository, so `collect()` correctly stopped gathering them, and the store's stale
+  claim was failing the tripwire on **every branch that predated them** — which blocked the sync
+  tool on all seventeen remaining pull requests. Removing them is `git rm --cached`, which leaves
+  the working copies on disk. The very next snapshot re-added all three and reported nothing. It
+  ran from the post-checkout hook, so it happened seconds after the removal and without anyone
+  asking for it.
+
+  `snapshot()` now stages exactly the paths it copied. The store is append-only by construction, so
+  it never needs to stage a deletion.
+
+  **Fixing that exposed a coupled assumption and cost a false alarm first.** The commit was gated on
+  `git status --porcelain`, which counts **untracked** files — impossible under `add -A`, because
+  everything present got staged. With staging by path, a file left untracked on purpose made the
+  gate true while the index was empty, `git commit` exited non-zero on that, and the store announced
+  *"The snapshot is NOT safe"* over a snapshot that was entirely fine. It is gated on staged changes
+  now. Both are covered by tests watched failing against the previous tool, while the two existing
+  store guards stayed green.
+
+
 - **A reader who picked a theme their operating system did not have got chip labels below AA, and
   six green theme tests said otherwise.** `s3.html` builds each chip as
   `style="background:${colOf(w)}"`, and `colOf` reads the custom property **once**, at build time,
