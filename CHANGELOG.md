@@ -10,6 +10,24 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Exercise 05's body prose ran about 145 characters a line** — the same 1,156px at 16px measured
+  at 1440px. Matched anywhere under `main`, the rule brings the page to **755px, about 91
+  characters**, with no sideways overflow at six widths.
+
+  **The first attempt moved nothing, and that is the part worth recording.** The rule selected
+  `main section > .note`, and none of this page's long paragraphs are section children at all —
+  they sit inside `summary`, inside `tier-out`, inside plain wrappers. The selector matched
+  nothing, the measurement came back unchanged at 145 characters, and the rule looked exactly like
+  a fix. Only re-measuring *after* the change caught it; `AGENTS.md` already records two CSS fixes
+  that changed nothing and passed every test, and this is the third.
+
+  The widest remaining paragraph is `p.claim` at 755px, which already carries its own narrower
+  rule; exercise 08, the reference implementation, sits at 835px. The defect was 1,156px, not
+  "wider than ideal", and chasing the last few characters would be redesigning rather than
+  retro-fixing.
+
 ### Added
 
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two
