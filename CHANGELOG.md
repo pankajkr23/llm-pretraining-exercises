@@ -1,4 +1,32 @@
 # Changelog
+
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+Record user-facing changes under `[Unreleased]` as they land; on release, rename that
+section to the new version with a date and open a fresh `[Unreleased]`.
+
+## [Unreleased]
+
+### Added
+
+- **A section heading is context for the entry beneath it, not a record of its own.** The sync
+  tool skipped any record `main` already had — and treated `### Fixed` as one. So when a branch
+  opened a new `### Fixed` block at the top of `[Unreleased]` while `main` had one further down,
+  the heading matched, was dropped as a duplicate, and **the entry landed directly under
+  `## [Unreleased]` with no section at all.** That is the state `main` was left in by #133's merge,
+  and it is repaired here.
+
+  A heading now opens a record and keeps it open, so the heading and the entry beneath it are
+  tested against `main` together and cannot be separated.
+
+  **The fixture had to be built three times before it reproduced.** The first two put the heading
+  *after* the entry, or gave the branch a heading `main` did not have — both pass against the
+  broken code. The real shape is a heading that `main` already has, appearing *first* in the added
+  block. A test that cannot fail is worth less than no test, because it reads as coverage.
+
 - **A pull request that does not log itself now fails, instead of failing everyone else.**
   `tools/queue_status.py` refuses when `docs/agents/QUEUE.md` does not record a merged pull
   request, and it runs in the `test` job — so the moment one merges unlogged, `main` fails its own
@@ -17,15 +45,8 @@
   ref format change would otherwise turn the whole guard into a permanent skip covering nothing —
   which is the failure it exists to prevent, one level up.
 
-All notable changes to this project are documented in this file.
+### Fixed
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-Record user-facing changes under `[Unreleased]` as they land; on release, rename that
-section to the new version with a date and open a fresh `[Unreleased]`.
-
-## [Unreleased]
 - **A preview was deployed on every push, whatever it touched.** A test, a changelog line, a queue
   entry — all of it spent a deployment. Roughly sixty pushes in one working day exhausted the
   account's quota and Vercel rate-limited the project for **24 hours**, so previews stopped being

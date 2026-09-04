@@ -120,9 +120,20 @@ def _own_additions(base: str, branch: str, path: str) -> list[tuple[str, list[st
     return blocks
 
 
-#: A line that begins a new record in either log: a dated queue entry, or a changelog bullet.
-#: Everything until the next such line belongs to it.
-_RECORD_START = re.compile(r"^(?:\d{4}-\d{2}-\d{2}\s|- \*\*)")
+#: A line that begins a new record in either log: a dated queue entry, a changelog bullet, or a
+#: MARKDOWN HEADING. The heading is not decoration here — without it a `### Fixed` line attaches to
+#: the record above it, and when that record is skipped as one main already has, the heading is
+#: dropped with it. That is how `main` ended up with a bullet sitting directly under
+#: `## [Unreleased]` with no section heading at all.
+_RECORD_START = re.compile(r"^(?:\d{4}-\d{2}-\d{2}\s|- \*\*|#{2,4}\s)")
+
+
+#: A markdown section heading. It is not a record of its own — it is CONTEXT for the record that
+#: follows it, and that distinction is the fix. Treated as independent, `### Fixed` matches the
+#: `### Fixed` main already has, gets skipped as a duplicate, and the entry beneath it lands with
+#: no section heading at all. That is exactly how `main` ended up with a bullet sitting directly
+#: under `## [Unreleased]`.
+_HEADING = re.compile(r"^#{2,4}\s")
 
 
 def _records(added: list[str]) -> list[list[str]]:
@@ -136,11 +147,21 @@ def _records(added: list[str]) -> list[list[str]]:
     """
     out: list[list[str]] = []
     for line in added:
-        if _RECORD_START.match(line) or not out:
+        # A heading opens a record and keeps it open: the entry beneath it belongs to the same
+        # record, so the pair is tested against main together and cannot be split apart.
+        opens_here = _RECORD_START.match(line) and not _only_a_heading(out[-1] if out else None)
+        if opens_here or not out:
             out.append([line])
         else:
             out[-1].append(line)
     return out
+
+
+def _only_a_heading(record: list[str] | None) -> bool:
+    """Is this record so far nothing but a heading and blank lines?"""
+    if not record:
+        return False
+    return all(_HEADING.match(line) or not line.strip() for line in record)
 
 
 def _locate(lines: list[str], preceding: str, following: str) -> tuple[int | None, str]:
