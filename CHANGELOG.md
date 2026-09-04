@@ -1,4 +1,17 @@
 # Changelog
+
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+Record user-facing changes under `[Unreleased]` as they land; on release, rename that
+section to the new version with a date and open a fresh `[Unreleased]`.
+
+## [Unreleased]
+
+### Fixed
+
 - **Exercise 05's fourteen chapter permalinks announced as "number sign"** — the same defect as
   exercise 04, on this page's two anchor builders. Exercises 03 and 06 already carry the answer and
   the wording is copied verbatim, because an identical control should announce identically. 14 of
@@ -19,18 +32,6 @@
   `pre.code` was `overflow-x: auto` inside a 72ch box, so the commands had to be scrolled sideways
   to be read or checked — including at 2560px, where **676px sat empty beside the box**. They now
   wrap. Measured at 2560, 1440, 768 and 390: **0 of 2 blocks cut**, against 2 of 2 before.
-
-All notable changes to this project are documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-Record user-facing changes under `[Unreleased]` as they land; on release, rename that
-section to the new version with a date and open a fresh `[Unreleased]`.
-
-## [Unreleased]
-
-### Fixed
 
 - **The measure was on the list, not on the list items, so four sentences still ran 82 characters.**
   `ul.blind-list` carries a `max-width`, so the list is 725px wide and looks constrained — but the
