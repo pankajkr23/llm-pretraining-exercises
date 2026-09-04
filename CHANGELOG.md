@@ -28,6 +28,28 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The measure was applied to sections and not to panels, and eight paragraphs of running prose
+  stayed at 121 characters.** `main section > p { max-width: 68ch }` was scoped deliberately, on the
+  reasoning that a component lays out its own `<p>`. That holds for a caption or a label. It does
+  not hold for these: measured at 2560px afterwards, eight paragraphs inside `.panel` still ran
+  **121 characters** — among them *"1 · The claim and one number. Plain words. A first-time reader
+  stops here and is not misled."* and the glossary entries. Running prose by any reading.
+
+  A `max-width` on the paragraph does not fight the panel — the panel keeps its width, padding and
+  grid, and only the text stops short of the right edge. Scoped to this exercise's own stylesheet
+  rather than the shared `.panel`, because six other pages use that component and none of them was
+  measured here.
+
+  **Exercise 04 therefore leaves `NOT_YET_COVERED` and joins `COVERED`** in the repo-wide
+  reading-measure ledger, which is what that entry had been waiting for. Earned rather than
+  asserted: removing the panel rule puts 04 back to **48 blocks wider than 80 characters across the
+  eight widths**, and restoring it returns the whole suite to green.
+
+  The ledger entry it replaces read *"#117 — measured 125 characters at 2560px"*. Left alone it
+  would have pointed at a merged pull request for ever, which is the shape a stale ledger takes: a
+  number nobody re-measured, naming a fix that had already landed.
+
+
 - **Exercise 04's body prose ran about 145 characters a line.** Measured at 1440px, the widest body
   paragraph was **1,156px at 16px type** — roughly double what anyone can track, so the eye loses
   its place returning to the left edge and the longer the line the more often it lands on the wrong
