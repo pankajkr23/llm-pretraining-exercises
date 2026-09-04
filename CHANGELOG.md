@@ -27,6 +27,47 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The shared step strip squeezed its own prose to 29 characters a line on a tablet.** Below
+  1081px `explainer.css` puts a **fixed** 296px figure column beside the prose, so every pixel the
+  window loses comes out of the reading column — and the collapse to one column fired at
+  `max-width: 760px`, while an iPad portrait is 768 and a common Android tablet is 800. In that gap
+  a step's paragraph ran **29 characters** at 768px. It also ran **41 at exactly 1180px and nowhere
+  else**, because 1180 is where `page.css` begins reserving the 260px rail gutter, so the content
+  box is *narrower* at 1180 than at 1179.
+
+  Three changes, all in the shared component: the strip collapses at 900px rather than 760; the
+  prose column carries a **floor** (`minmax(min(48ch, 100%), 62ch)`) instead of a zero minimum, so
+  the figure column's own minimum can no longer win every squeeze; and `.step p` caps at 46ch
+  rather than 44, which sat on the fail line once the step's own 20px of border and padding came
+  off it. Measured across eight widths on both pages that build the strip: **90 of 360 and 28 of
+  112 paragraphs were under the floor before, none after.**
+
+  Raising the breakpoint had a knock-on the first measurement caught: with the grid collapsed,
+  `.stagereg-note` had the full page and ran **117 characters** at 900px. It now carries a measure
+  of its own.
+
+### Added
+
+- **`tests/test_prose_measure_repo_wide.py`** promotes exercise 08's line-measure guard — 42 to 80
+  characters, `docs/DESIGN.md`'s band — out of that exercise and onto the deployable set, sweeping
+  eight widths per page. The measurement is copied from 08 down to the probe span, because a
+  character width read from a `ch` unit or an assumed average glyph is a *different* measurement and
+  two pages measured differently cannot be compared.
+
+  **It carries a second, narrower guard for the step strip, and that one exists because the first
+  one provably could not see the defect above.** Restored to the shipped stylesheet, every
+  general assertion stayed green: `ROOM_TO_SPARE` asks whether a block leaves room unused *inside
+  its own box*, and a squeezed `.step` paragraph fills its box exactly — the box is what is too
+  small. Widening that host walk would catch it and would fail every legitimate two-column layout,
+  including the one on the page the measurement came from.
+
+  Exercises 04 and 05 are recorded as **not yet covered** rather than ledgered as exceptions, each
+  naming the pull request that fixes it (#117 and #118). A both-directions exception ledger is this
+  repo's usual idiom and the wrong one here: it would go red the moment either of those merges, in
+  a pull request that has nothing to do with this file.
+
 ### Added
 
 - **A skip-ledger test was pinned to a list index.** It read `EXPECTED_IN_CI[0]` while hard-coding
