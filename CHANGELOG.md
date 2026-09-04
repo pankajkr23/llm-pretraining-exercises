@@ -28,6 +28,20 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercise 04's `chapters.js` was a binary file to git, so no diff of it could be reviewed.**
+  `NOISE_RE` is a character class matching control characters, and line 22 held **six raw control
+  bytes** — a literal NUL, `0x08`, `0x0b`, `0x0c`, `0x0e` and `0x1f` — where the author meant the
+  escape sequences `\x00`, `\x08` and the rest. One NUL is all it takes: git classifies the file
+  as binary and prints `Bin 50656 -> 51984 bytes` instead of a diff, on a repository where review
+  is the merge gate. It had been that way on `main`; the other seven `chapters.js` are clean.
+
+  Replaced with the escapes, which is the same regular expression. **Verified rather than
+  asserted**: the class was tested against every code point from `U+0000` to `U+FFFF` before and
+  after, and the two match sets are byte-identical. Confirmed that git now diffs it as text — `2 0`
+  where both sides are free of the NUL, and binary only while `HEAD` still carries it, so this
+  change is the last unreviewable diff of that file.
+
+
 - **Exercise 04's contents rail never said where the reader was.** `_shared/page.css` has styled
   `.rail-link.on` — an accent bar and a bold label — since before this page existed, and the page
   never set the class. The rail looked finished and simply never moved, which is the worst shape a
