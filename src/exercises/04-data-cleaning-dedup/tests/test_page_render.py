@@ -16,6 +16,7 @@ and on a machine where `uv run playwright install chromium` has been run, and no
 
 import http.server
 import os
+import re
 import socketserver
 import subprocess
 import threading
@@ -335,6 +336,60 @@ def test_glossary_terms_carry_a_definition():
             "  .map((e) => e.dataset.term)"
         )
         assert not empty, f"terms with no definition: {sorted(set(empty))}"
+
+
+def _accessible_name(locator) -> str:
+    """The name the browser itself computes for one control — what a screen reader reads out.
+
+    Taken from chromium's own ARIA tree rather than from the markup, so the assertion below is
+    about the property (does this control announce anything a listener can act on?) and not about
+    the technique that provides it: `aria-label`, `aria-labelledby` and a visually-hidden span all
+    produce a name here, and all three would pass.
+
+    The parse is asserted rather than defaulted. A snapshot format this does not recognise must
+    turn the guard red, because a silent `""` would make every control look nameless and a silent
+    fallback to the element's text would make the glyph look like a name.
+    """
+    snapshot = (locator.aria_snapshot() or "").strip()
+    first = snapshot.splitlines()[0] if snapshot else ""
+    match = re.match(r'^\s*-\s*[a-z]+(?:\s+"(.*)")?\s*:?\s*$', first)
+    assert match, f"could not read an accessible name out of {first!r}"
+    return match.group(1) or ""
+
+
+def test_every_chapter_permalink_announces_a_word_rather_than_a_glyph():
+    """A permalink whose whole content is `#` is announced "number sign" — here, thirteen times.
+
+    The visible glyph is fine: sighted readers get the hash plus the heading it sits in. A screen
+    reader gets neither, so thirteen different destinations arrive as thirteen identical
+    punctuation marks with nothing to tell them apart. Exercises 03 and 06 label the same control
+    already; this asserts 04 does too, without pinning *how* or with which sentence.
+
+    Selected by shape (`h2 a[href^="#"]`) rather than by class, so renaming `.anchor` does not
+    quietly empty the loop — and counted against the chapters, so a page that rendered no
+    permalinks at all cannot pass this vacuously.
+    """
+    with _page() as (page, _):
+        chapters = page.locator("main section").count()
+        assert chapters >= 12, f"only {chapters} chapters rendered; the page did not build"
+
+        permalinks = page.locator('main section h2 a[href^="#"]')
+        assert permalinks.count() == chapters, (
+            f"{permalinks.count()} heading permalinks for {chapters} chapters — "
+            "the guard would not cover every one"
+        )
+
+        mute = []
+        for i in range(permalinks.count()):
+            link = permalinks.nth(i)
+            name = _accessible_name(link).strip()
+            # A name of "#", "¶" or "" is a name only in the sense that it is a string. The
+            # property is that a listener hears a word, so require at least one letter.
+            if not any(ch.isalpha() for ch in name):
+                mute.append((link.get_attribute("href"), name))
+        assert not mute, (
+            f"{len(mute)} of {permalinks.count()} chapter permalinks announce no word: {mute[:4]}"
+        )
 
 
 def test_the_page_states_what_it_does_not_cover():
