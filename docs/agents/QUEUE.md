@@ -402,6 +402,15 @@ predates the harness — so it is logged as what it was.
                           four consecutive branches and passed on the fourth — a flake that reds
                           pull requests that did not touch it, which teaches people to re-run a
                           gate rather than read it. The fetch moves to a step with its own budget
+2026-09-04  ci            the preview-deploy predicate opened: every push deployed a preview,
+                          whatever it touched, and about sixty pushes in a day rate-limited the
+                          Vercel project for 24 HOURS -- so previews were unavailable for the pull
+                          requests that had actually changed a page. PK caught it. `ignoreCommand`
+                          now builds only when a deployed path changed: 6 of the last 8 commits on
+                          main would not have deployed. THE OBVIOUS PATHSPEC IS SILENTLY WRONG --
+                          `src/exercises/*/web` matches nothing, so the predicate would have
+                          skipped EVERY deploy; `:(glob)` is what makes it mean what it looks like,
+                          and I wrote the broken one first
 2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
                           hook. A reviewer copied into .claude/ and then edited there diverges
                           silently from its tracked source, and the installed copy is the one that
