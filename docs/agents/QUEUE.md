@@ -396,6 +396,18 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-04  retro-fix     #122 opened: the shared step strip squeezed its prose to 29 characters
+                          at 768px — an iPad portrait — because the two-column layout collapsed at
+                          max-width 760 while keeping a FIXED 296px figure column. Also 41 at
+                          exactly 1180px and nowhere else, that being where page.css starts
+                          reserving the rail gutter. 90 of 360 and 28 of 112 step paragraphs under
+                          the floor before, none after. THE PROMOTED GUARD COULD NOT SEE IT: 08's
+                          ROOM_TO_SPARE asks whether a block leaves room inside its own box and a
+                          squeezed paragraph fills its box exactly. Found by watching it fail
+2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
+                          hook. A reviewer copied into .claude/ and then edited there diverges
+                          silently from its tracked source, and the installed copy is the one that
+                          runs — so the drift is invisible in review by construction
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
