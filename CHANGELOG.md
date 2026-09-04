@@ -9,9 +9,6 @@ Record user-facing changes under `[Unreleased]` as they land; on release, rename
 section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
-
-### Fixed
-
 - **A preview was deployed on every push, whatever it touched.** A test, a changelog line, a queue
   entry — all of it spent a deployment. Roughly sixty pushes in one working day exhausted the
   account's quota and Vercel rate-limited the project for **24 hours**, so previews stopped being
@@ -68,6 +65,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   `tests/test_sync_open_prs.py` covers both failure directions, a duplicated line and a silently
   dropped entry, and both were watched failing against a deliberately broken copy restored from
   outside the working tree.
+
+### Added
+
+- `tests/test_shared_layer_orphans.py` pins how much of `_shared/page.css` no page emits — **29 of
+  101 classes**, measured by serving the assembled site and reading `classList` from every element
+  of all 13 pages, after scrolling and after driving every input and button. **Two classes left the
+  list at that last step** (`.filter-none`, `.rail-shut`), which is exactly why the measurement is
+  not a grep, and why nothing was deleted on it.
 
 ### Added
 
