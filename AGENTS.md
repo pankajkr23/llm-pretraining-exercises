@@ -922,6 +922,28 @@ uv run pre-commit run --all-files                        # over everything, not 
 
 ## CI/CD
 
+- **Before changing code that runs where you cannot watch it, read that environment's own log —
+  and confirm the inputs your change depends on exist there.** `should-build.sh` was rewritten
+  around a comparison with `origin/main`, shipped green, merged, and the very next build printed
+  `origin/main could not be resolved (shallow clone?)`. **Vercel checks out a single-branch shallow
+  clone**, so `origin/main` is absent and `git merge-base` has nothing to walk: the mechanism could
+  never execute. It was inert in production and *unsound* wherever the ref did resolve — it skipped
+  the build after a branch reverted its page, leaving the live preview serving content the branch
+  no longer had. Hermetic tests prove a predicate is internally consistent and say **nothing** about
+  whether its inputs exist in production, so a green suite over a mechanism that cannot run reads as
+  coverage. One `get_deployment_build_logs` call, available the whole time, would have settled it
+  before the pull request was opened. **Name the runtime inputs a change depends on — env vars,
+  refs, files — and find one real execution that shows each is present.** Where it genuinely cannot
+  be observed, say so in the pull request and make the unobservable path degrade to the previous
+  behaviour rather than to a new one.
+
+- **`VERCEL_GIT_PREVIOUS_SHA` is the last *successful deployment*, not the previous commit**, and it
+  is only exposed while an Ignored Build Step is configured. Treat "no previous deployment" as a
+  real state rather than an edge case: the `HEAD^` substitute in `should-build.sh` turns gate 1 into
+  "what did the newest commit change", so a branch whose tip commit is not deployable can get **no
+  preview at all** — and it is self-reinforcing, because a skipped build never becomes a successful
+  deployment, so the variable stays empty. Still live; not yet fixed.
+
 - CI (`.github/workflows/ci.yml`) is **four concurrent jobs, not one chain**. `test`: `uv sync --all-packages` → `ruff check` → `ruff format --check` → `pytest -m "not integration" -n auto --dist loadfile` → `node --check` over `find src/exercises -path '*/web/*' -name '*.js'`. `integration`: a **three-shard matrix** (`tokenization` · `mixtures` · `rest`), each shard syncing, caching and installing chromium, running `deploy/vercel/build.sh` once, then `pytest -m integration`. `security`: gitleaks over the full history. `push` is filtered to `main` — branches are covered by the `pull_request` event, because an unfiltered `push` ran every PR commit twice. `train`: `uv sync --all-packages --extra train` with **CPU-only wheels** (a Linux-scoped
   `pytorch-cpu` index in the root `pyproject.toml` — 191.8 MB instead of 2.7 GB, and 19 fewer
   packages in the lock), running only the files whose module-level `importorskip` would otherwise
