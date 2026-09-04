@@ -546,6 +546,8 @@ predates the harness — so it is logged as what it was.
                           characters cut off at EVERY width, including 2560 where 676px sat empty
                           beside the box. All three guards watched failing: 14 of 14, 17 of 17,
                           2 of 2
+2026-09-04  retro-fix     #111 opened: exercise 06's contents rail never marked the section in
+                          view. Same defect and same rule as #109
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
