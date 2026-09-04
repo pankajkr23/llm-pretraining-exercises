@@ -20,6 +20,10 @@ carried in a summary that is lossy by construction.
 
 **Append evidence, not prose.**
 
+2026-09-04  process       #104 closed and split: it carried three concerns on one branch, against
+                          "one pull request per exercise" here and "keep PRs scoped to one
+                          concern" in AGENTS.md. #105 is exercise 09, #106 is exercise 10 stacked
+                          on it. PK caught it
 ```
 2026-09-03  unit-07-retrofit  pytest -m "not integration" -> 1449 passed, 1 skipped @ b0456e9
 2026-09-03  unit-07-retrofit  BLOCKED: rail-inner missing; logged as finding F3, continuing
@@ -396,16 +400,84 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-04  shared-layer  #108 opened: _shared/page.css styles 101 classes and 29 appear on no
+                          rendered page. NOTHING deleted — #101 nearly removed a live stylesheet on
+                          exactly this evidence. Measured from a rendered DOM after driving every
+                          input, which is what moved .filter-none and .rail-shut off the list
 2026-09-04  ci            #124 opened: `npx --yes @mermaid-js/mermaid-cli` FETCHES the package on
                           first use and it bundles puppeteer, so on a cold runner the download ran
                           past the 180s the render test allows for a RENDER. Failed on three of
                           four consecutive branches and passed on the fourth — a flake that reds
                           pull requests that did not touch it, which teaches people to re-run a
                           gate rather than read it. The fetch moves to a step with its own budget
+2026-09-04  ci            the preview-deploy predicate opened: every push deployed a preview,
+                          whatever it touched, and about sixty pushes in a day rate-limited the
+                          Vercel project for 24 HOURS -- so previews were unavailable for the pull
+                          requests that had actually changed a page. PK caught it. `ignoreCommand`
+                          now builds only when a deployed path changed: 6 of the last 8 commits on
+                          main would not have deployed. THE OBVIOUS PATHSPEC IS SILENTLY WRONG --
+                          `src/exercises/*/web` matches nothing, so the predicate would have
+                          skipped EVERY deploy; `:(glob)` is what makes it mean what it looks like,
+                          and I wrote the broken one first
+2026-09-04  ci            #133 opened: every push deployed a Vercel preview, whatever it
+                          touched, and about sixty in a day exhausted the quota and rate-limited
+                          the project for 24 HOURS -- so previews were unavailable for the pull
+                          requests that had actually changed a page. PK caught it. `ignoreCommand`
+                          now builds only when a deployed path changed: 6 of the last 8 commits on
+                          main would not have deployed. THE OBVIOUS PATHSPEC IS SILENTLY WRONG --
+                          `src/exercises/*/web` matches nothing, so the predicate would have
+                          skipped EVERY deploy, and `:(glob)` is what makes it mean what it looks
+                          like. I wrote the broken one first and caught it only by running the
+                          predicate over real history
+2026-09-04  tooling       #134 merged: the sync tool anchored a re-applied block on the single
+                          line that FOLLOWED it, and QUEUE.md has a dozen code fences -- so #108's
+                          entry landed forty lines above the `## Log` heading. It was still in the
+                          file, so every count of it looked right; only queue_status.py, which
+                          reads the log section and nothing else, noticed, two merges later. The
+                          anchor is a neighbour PAIR now, with reported fallbacks. Third defect
+                          from that tool in three live runs, each invisible in the diff
+2026-09-04  tooling       #135 opened: a pull request that merges without logging itself makes
+                          main fail its OWN queue gate, and every branch cut from main then
+                          inherits a failure that points nowhere near the cause.
+                          Three merge rounds lost to it in one afternoon. The existing check looks
+                          BACKWARDS -- does the log record what already merged -- so by the time it
+                          fires the damage is on main. This one looks forwards, at the pull request
+                          under test, so the branch that would cause the problem is the one that
+                          goes red
 2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
                           hook. A reviewer copied into .claude/ and then edited there diverges
                           silently from its tracked source, and the installed copy is the one that
                           runs — so the drift is invisible in review by construction
+2026-09-04  tooling       #125 opened: merging one pull request here BREAKS the next, measured
+                          rather than assumed. Every open branch touches QUEUE.md, CHANGELOG.md and
+                          the quote-check receipt, and the receipt is a digest over ALL tracked
+                          prose — so merging two branches produced a QUEUE conflict AND left the
+                          receipt full of conflict markers, killing its checker with a
+                          JSONDecodeError instead of a clean failure. sync_open_prs.py merges main
+                          into every open branch, rebuilds the two logs as main's version plus that
+                          branch's own entry, regenerates the receipt and pushes — never rebasing,
+                          never force-pushing. `merge=union` was refused: it keeps both sides, and
+                          fifteen branches carry a byte-identical #103 line, so the fifteenth merge
+                          would land fifteen copies
+2026-09-04  retro-fix     #120 opened: `color: #fff` on a background that is bright in half the
+                          themes, in three controls — the back pill on hover and the blocking
+                          caveat (shared, so all six pages) and 04's toggle in its ON state.
+                          1.54:1 on neon; --on-accent already existed and clears AA on all six. The
+                          guard is lexical because two of the three are :hover and .on states that
+                          no static render enters. It found the third site itself
+2026-09-04  retro-fix     #122 opened: the shared step strip squeezed its prose to 29 characters
+                          at 768px — an iPad portrait — because the two-column layout collapsed at
+                          max-width 760 while keeping a FIXED 296px figure column. Also 41 at
+                          exactly 1180px and nowhere else, that being where page.css starts
+                          reserving the rail gutter. 90 of 360 and 28 of 112 step paragraphs under
+                          the floor before, none after. THE PROMOTED GUARD COULD NOT SEE IT: 08's
+                          ROOM_TO_SPARE asks whether a block leaves room inside its own box and a
+                          squeezed paragraph fills its box exactly. Found by watching it fail
+2026-09-04  retro-fix     #126 opened: exercise 03's print fix -- 0 of 45 scrolly verdict lines survived
+                          `emulate_media("print")` because the end-state rule existed only for
+                          prefers-reduced-motion. A printed sheet carried 11 figure states and lost
+                          34. Fixed by adding `print` to the SAME media query rather than writing a
+                          twin block — two blocks drift, and drift is what produced the defect
 2026-09-04  retro-fix     #131 opened: the repo-wide link-colour fix. Reported as 7 anchors at the
                           browser default; the real count is TWO. Five compute #0000EE on the
                           anchor while every word sits in a child with its own colour, so that

@@ -284,7 +284,12 @@ def test_an_empty_parameter_set_is_reported_as_its_own_defect() -> None:
 
 def test_an_undeclared_skip_fails_and_a_declared_one_does_not() -> None:
     """The gate itself, both directions, without touching the real suite."""
-    declared = EXPECTED_IN_CI[0]
+    # Looked up by path, not by index. This read `EXPECTED_IN_CI[0]` while hard-coding the reason
+    # belonging to whichever entry happened to be first — so adding an entry ANYWHERE ABOVE it
+    # failed this test for a reason that had nothing to do with the new entry or with the gate.
+    declared = next(
+        e for e in EXPECTED_IN_CI if e.path.endswith("02-tokenization/tests/test_js_encoder.py")
+    )
     assert SKIPS.escalate(declared.path, "no JS encoder for bpe", ci=True, job="test") is None
     undeclared = SKIPS.escalate(declared.path, "some new reason nobody declared", ci=True, job="")
     assert undeclared is not None
