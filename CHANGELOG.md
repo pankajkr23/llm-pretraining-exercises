@@ -1,4 +1,10 @@
 # Changelog
+- **Exercise 04's thirteen chapter permalinks announced as "number sign".** Each is
+  `<a class="anchor" href="#…">#</a>` with no `aria-label`, so a screen reader read the same two
+  words thirteen times for thirteen different destinations. **Exercises 03 and 06 already solve
+  this** — `a.setAttribute('aria-label', 'Link to this chapter')` — and the wording is copied
+  verbatim rather than reinvented, because the point is that the identical control announces
+  identically across the site. Measured after: 13 of 13 carry the name, in all six themes.
 
 All notable changes to this project are documented in this file.
 
@@ -12,12 +18,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
-- **Exercise 04's thirteen chapter permalinks announced as "number sign".** Each is
-  `<a class="anchor" href="#…">#</a>` with no `aria-label`, so a screen reader read the same two
-  words thirteen times for thirteen different destinations. **Exercises 03 and 06 already solve
-  this** — `a.setAttribute('aria-label', 'Link to this chapter')` — and the wording is copied
-  verbatim rather than reinvented, because the point is that the identical control announces
-  identically across the site. Measured after: 13 of 13 carry the name, in all six themes.
+- **The mermaid render test spent its 180-second budget downloading rather than rendering.** It
+  shells out to `npx --yes @mermaid-js/mermaid-cli`, and `--yes` *fetches* the package on first
+  use — it bundles puppeteer, so on a cold runner that download alone can exceed the timeout the
+  test allows for a render. It failed on three of four consecutive branches and passed on the
+  fourth: a flake that reds unrelated pull requests at random, which is worse than a test that
+  fails honestly. The `mixtures` shard now fetches it in a step with a budget of its own, leaving
+  the test's 180 seconds for what they were sized for. `PUPPETEER_SKIP_DOWNLOAD` stops it pulling a
+  second chromium — the test already points puppeteer at the playwright browser the shard installs
+  two steps earlier.
 
 ### Added
 
