@@ -34,6 +34,7 @@ line that main already has is therefore not added twice.
 
 import argparse
 import difflib
+import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -113,16 +114,47 @@ def _own_additions(base: str, branch: str, path: str) -> list[tuple[str, list[st
     return blocks
 
 
+#: A line that begins a new record in either log: a dated queue entry, or a changelog bullet.
+#: Everything until the next such line belongs to it.
+_RECORD_START = re.compile(r"^(?:\d{4}-\d{2}-\d{2}\s|- \*\*)")
+
+
+def _records(added: list[str]) -> list[list[str]]:
+    """Split a block of added lines into the individual entries it contains.
+
+    **Skipping has to be per entry, and this is the bug that proved it.** The first live run of this
+    tool re-applied a block that held two entries — the branch's own, and a shared `#103` line that
+    had reached `main` by another route. The whole-block test asked "is all of this already there?",
+    the answer was no because half of it was new, and the half that was already there landed twice.
+    A duplicated log entry is precisely what `merge=union` was refused for.
+    """
+    out: list[list[str]] = []
+    for line in added:
+        if _RECORD_START.match(line) or not out:
+            out.append([line])
+        else:
+            out[-1].append(line)
+    return out
+
+
 def _reapply(main_text: str, blocks: list[tuple[str, list[str]]]) -> tuple[str, list[str]]:
     """Put this branch's own blocks back into main's version. Returns the text and any notes."""
     lines = main_text.splitlines(keepends=True)
     notes: list[str] = []
-    for anchor, added in blocks:
-        # Already there — the same change reached main by another route. Adding it again is the
-        # duplicate this tool exists to avoid.
-        joined = "".join(added)
-        if joined and joined in "".join(lines):
-            notes.append(f"skipped a block main already has ({len(added)} line(s))")
+    for anchor, block in blocks:
+        # Drop the entries main already has, keep the rest, and preserve their order.
+        keep: list[str] = []
+        dropped = 0
+        for record in _records(block):
+            joined = "".join(record)
+            if joined.strip() and joined in "".join(lines):
+                dropped += 1
+                continue
+            keep.extend(record)
+        if dropped:
+            notes.append(f"skipped {dropped} entr(y/ies) main already has")
+        added = keep
+        if not added:
             continue
         if not anchor:
             lines.extend(added)

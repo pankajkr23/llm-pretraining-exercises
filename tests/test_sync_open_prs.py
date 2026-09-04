@@ -84,3 +84,51 @@ def test_nothing_added_changes_nothing() -> None:
     out, notes = _reapply(main, _blocks(BASE, BASE))
     assert out == main, f"an untouched file was modified:\n{out}"
     assert not notes
+
+
+def test_a_block_holding_one_new_entry_and_one_main_already_has_lands_once() -> None:
+    """**The bug the first live run produced, and the reason skipping is per ENTRY.**
+
+    A branch's additions are not one thing. This branch added its own entry *and* a shared line
+    that reached `main` by another route, as a single contiguous insert. The whole-block test asked
+    "is all of this already there?", the answer was no because half was new, and the half that was
+    already there landed twice — a duplicated log entry, which is exactly what `merge=union` was
+    refused for.
+
+    Five tests passed over this file at the time. None of them mixed a new record with a shared one
+    in the same block, so none of them could see it.
+    """
+    shared = "2026-09-03  fleet         #103 merged: a thing everyone carries\n"
+    mine = "2026-09-04  tooling       #125 opened: only this branch has this\n"
+    base = "alpha\nbravo\n"
+    branch = "alpha\n" + mine + shared + "bravo\n"
+    main = "alpha\n" + shared + "bravo\ncharlie\n"
+    out, notes = _reapply(main, _blocks(base, branch))
+    assert out.count("#103 merged") == 1, f"the shared entry was duplicated:\n{out}"
+    assert out.count("#125 opened") == 1, f"the branch's own entry was dropped or doubled:\n{out}"
+    assert any("already has" in n for n in notes), f"the partial skip was not reported: {notes}"
+
+
+def test_a_multi_line_entry_main_already_has_is_matched_whole() -> None:
+    """Entries are several lines; matching only the first would drop a genuinely new one.
+
+    Queue entries wrap to four or five indented continuation lines, and two different entries can
+    open on the same date and label. The comparison has to be the whole record.
+    """
+    base = "alpha\nbravo\n"
+    shared = (
+        "2026-09-03  fleet         #103 merged: a thing\n"
+        "                          and its second line\n"
+    )
+    mine = (
+        "2026-09-04  retro-fix     #999 opened: another thing\n"
+        "                          and its second line\n"
+    )
+    branch = "alpha\n" + mine + shared + "bravo\n"
+    main = "alpha\n" + shared + "bravo\n"
+    out, _ = _reapply(main, _blocks(base, branch))
+    assert out.count("#103 merged") == 1, f"the shared entry was duplicated:\n{out}"
+    assert out.count("#999 opened") == 1, f"the new entry is missing or doubled:\n{out}"
+    assert out.count("and its second line") == 2, (
+        f"each entry should keep its own continuation line, once:\n{out}"
+    )
