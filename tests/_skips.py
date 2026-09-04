@@ -77,6 +77,17 @@ class Expected:
 #: reference material, corpora that are never fetched — or a dependency scoped to another job.
 EXPECTED_IN_CI: tuple[Expected, ...] = (
     Expected(
+        path="tests/test_pull_request_logs_itself.py",
+        pattern=r"not a pull-request build",
+        why=(
+            "the check reads the pull request number GitHub puts in GITHUB_REF, which only a "
+            "pull_request event sets — on a push to main there is no pull request to look for, "
+            "and the backwards-looking test_queue_status.py already covers main. Narrow on "
+            "purpose: the parser itself is tested unconditionally in the same file, so a ref "
+            "format change cannot turn this into a guard that silently covers nothing"
+        ),
+    ),
+    Expected(
         path="src/exercises/02-tokenization/tests/test_js_encoder.py",
         pattern=r"no JS encoder for ",
         why=(
