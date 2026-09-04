@@ -396,7 +396,7 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
-2026-09-04  retro-fix     exercise 05's three fixes opened: 14 permalinks with no accessible name;
+2026-09-04  retro-fix     #128 opened: exercise 05's three fixes -- 14 permalinks with no accessible name;
                           all 17 svg labels between 6.39 and 9.4px at 390 because a viewBox scales
                           its text with the drawing, so legibility is a property of the RENDER and
                           the authored 10px said nothing; and every reproduce command over 72
