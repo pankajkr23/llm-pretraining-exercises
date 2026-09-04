@@ -235,3 +235,24 @@ main section,
 }
 
 .waterfall { margin: 0.8rem 0; }
+
+/* ============================================================
+ * A measure for running prose.
+ *
+ * Measured at 1440px before this rule: the widest body paragraph ran 1,156px at 16px type, which
+ * is roughly **145 characters a line** — about double what anyone can track. The eye loses its
+ * place returning to the left edge, and the longer the line the more often it lands on the wrong
+ * one.
+ *
+ * The measure goes on the element that CARRIES the type, not on a wrapper. `docs/DESIGN.md`
+ * records why: a `ch` unit resolves against the font size of the element declaring it, so a
+ * measure set on a container with a different size silently means something else.
+ *
+ * Only paragraphs directly inside a section. A `<p>` inside a panel, a figure or a table cell is
+ * laid out by that component and constraining it here would fight the component's own rules —
+ * which is how a `max-width` written above the rule it was meant to beat ends up moving nothing.
+ * ============================================================ */
+
+main section > p {
+  max-width: 68ch;
+}
