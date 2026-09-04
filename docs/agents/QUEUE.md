@@ -539,6 +539,13 @@ predates the harness — so it is logged as what it was.
                           nothing and the measurement came back unchanged while the rule looked
                           exactly like a fix. Caught only by re-measuring AFTER the change. Matched
                           anywhere under main it lands at about 91
+2026-09-04  retro-fix     #128 opened: exercise 05's three fixes -- 14 permalinks with no accessible name;
+                          all 17 svg labels between 6.39 and 9.4px at 390 because a viewBox scales
+                          its text with the drawing, so legibility is a property of the RENDER and
+                          the authored 10px said nothing; and every reproduce command over 72
+                          characters cut off at EVERY width, including 2560 where 676px sat empty
+                          beside the box. All three guards watched failing: 14 of 14, 17 of 17,
+                          2 of 2
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the

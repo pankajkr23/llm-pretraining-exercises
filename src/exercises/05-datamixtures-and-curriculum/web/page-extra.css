@@ -465,11 +465,18 @@ section.prose p + p { margin-top: 14px; }
   .defs dd { margin: 0 0 12px; }
 }
 
+/* Wraps rather than scrolls. `overflow-x: auto` on a 72ch box meant every reproduce command
+   longer than 72 characters was cut mid-word at EVERY width — including 2560, where 676px sat
+   empty beside it — and had to be scrolled sideways to be read or checked. A command a reader
+   cannot read is the one thing on a reproduce section that has to work. `overflow-x` stays for
+   anything unbreakable. */
 pre.code {
   max-width: 72ch;
   margin: 16px 0;
   padding: 14px 16px;
   overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -491,10 +498,17 @@ figure.fig { margin: 20px 0; }
  * 312px sideways scroll from an element that did not. */
 figure.fig { overflow-x: auto; }
 
+/* 690px, not 460. An `<svg>` with a viewBox scales its text with the drawing, so the effective
+   size of a label is its authored size times (rendered width / viewBox width). At 460px against a
+   720-unit viewBox that is a scale of 0.639, and all 17 labels on this page rendered between
+   6.39px and 9.4px at a 390px viewport — the whole figure legible except the words on it. The
+   figure is already a horizontal scroller by design (`figure.fig { overflow-x: auto }`), so the
+   honest fix is to stop shrinking it below the point its own labels survive; raising the font-size
+   instead would change the label-to-drawing proportion the figure was drawn at. */
 .fig-svg {
   display: block;
   width: 100%;
-  min-width: 460px;
+  min-width: 690px;
   height: auto;
   background: var(--panel);
   border: 1px solid var(--line);
