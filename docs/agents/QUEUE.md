@@ -471,6 +471,12 @@ predates the harness — so it is logged as what it was.
                           convention: one branch and one pull request per exercise. #104 had three
                           concerns stacked on it
 ```
+2026-09-04  exercise-10   #106 opened: one optimiser step, made to tell the truth about itself.
+                          Stacked on feat/09-loss-harness rather than main, so #105 has to merge
+                          first. Float decomposition, gradient accumulation that refuses an even
+                          micro-batch count, MFU against a MEASURED device peak rather than a
+                          datasheet one, and telemetry that requires the loss to follow a leading
+                          indicator rather than merely precede it
 2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
                           hook. A reviewer copied into .claude/ and then edited there diverges
                           silently from its tracked source, and the installed copy is the one that
