@@ -12,6 +12,12 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **A skip-ledger test was pinned to a list index.** It read `EXPECTED_IN_CI[0]` while hard-coding
+  the reason belonging to whichever entry happened to be first, so adding an entry **anywhere above
+  it** failed the test — for a reason having nothing to do with the new entry or with the gate it
+  guards. It now looks its entry up by path. `AGENTS.md` already records the cost of pinning a test
+  to `:nth-child`; this is the same mistake in Python.
+
 - **A section heading is context for the entry beneath it, not a record of its own.** The sync
   tool skipped any record `main` already had — and treated `### Fixed` as one. So when a branch
   opened a new `### Fixed` block at the top of `[Unreleased]` while `main` had one further down,
