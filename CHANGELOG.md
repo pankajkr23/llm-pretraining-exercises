@@ -10,6 +10,13 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Exercise 02 claimed the tab pattern and implemented none of it.** Same defect as exercise 01,
+  on the tokenizer page: `role="tablist"` and `role="tab"` with no `role="tabpanel"`, no
+  `aria-controls` and no arrow-key handling. The roles are removed rather than the machinery built,
+  because these controls redraw a region in place and are not tabs.
+
 ### Added
 
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two
