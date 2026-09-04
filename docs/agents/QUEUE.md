@@ -396,6 +396,45 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-04  retro-fix     #122 opened: the shared step strip squeezed its prose to 29 characters
+                          a line at 768px -- an iPad portrait -- because the two-column layout
+                          collapsed at max-width 760 while keeping a FIXED 296px figure column.
+                          Also 41 characters at exactly 1180px and nowhere else, that being the
+                          width at which page.css starts reserving the rail gutter, so the content
+                          box is narrower at 1180 than at 1179. 90 of 360 and 28 of 112 step
+                          paragraphs under the floor before, none after. THE GENERAL GUARD COULD
+                          NOT SEE IT: 08's ROOM_TO_SPARE asks whether a block leaves room inside
+                          its own box, and a squeezed paragraph fills its box exactly. Found by
+                          watching the promoted guard fail to fail, which is why a second, narrower
+                          one measuring fill against the page ships beside it
+2026-09-04  retro-fix     #121 opened: exercise 01's s3.html had been dead on arrival for as long
+                          as it has been deployed -- `var t` in the theme bootstrap is a GLOBAL and
+                          the page script opens `let ..., t, ...`, so the whole thing threw before
+                          its first statement. No chips, no sample sentence, an empty canvas, and
+                          every file-level check green because every file was well-formed. Three of
+                          the four proof pages also had no LIGHT palette at all, so their diagram
+                          tokens resolved to nothing on the default theme: a chip's background was
+                          never painted and its white label sat on the white page at 1.00:1. The
+                          exercise had no browser test; the one added reports 17 failures against
+                          the shipped pages
+2026-09-04  retro-fix     #120 opened: `color: #fff` on a background that is bright in half the
+                          themes, in three controls -- the back pill on hover and the blocking
+                          caveat (shared, so all six pages) and 04's toggle in its ON state.
+                          1.54:1 on neon. `--on-accent` already existed and clears AA on all six.
+                          The guard is lexical because two of the three are :hover and .on states
+                          no static render enters. It found the third site itself
+2026-09-04  retro-fix     #119 opened: every deployable page is now checked in all six themes, not
+                          just 08 -- no console error, tokens resolve, body text clears AA, with
+                          contrast computed in the browser rather than parsed from CSS. 8 pages x 6
+                          themes. Both halves watched failing: one paints the body text its own
+                          background, one disables the root token sheet in the live page
+2026-09-04  tracking      #103 merged (2026-09-03): `--drift` added to the fleet installer and
+                          wired to post-merge, so a reviewer definition hand-edited inside the
+                          gitignored `.claude/agents/` can no longer differ from its tracked source
+                          in silence. Logged a day late, which is the same omission #102 made and
+                          this line records rather than backfills quietly: the checker caught it
+                          on the next branch that touched tracked prose, and it blocked four open
+                          pull requests until it was written
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
