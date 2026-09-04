@@ -396,7 +396,7 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
-2026-09-04  retro-fix     exercise 07's two fixes opened: 25 table headers plus 2 legend chips at
+2026-09-04  retro-fix     #129 opened: exercise 07's two fixes -- 25 table headers plus 2 legend chips at
                           4.15:1 in the DEFAULT theme and nowhere else — the five explicit themes
                           all cleared AA, so a two-theme check would have found nothing — and all
                           81 svg labels between 6.49 and 9.4px at 390px. Both watched failing:
