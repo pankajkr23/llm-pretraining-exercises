@@ -12,6 +12,36 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercise 01's seven range sliders were focusable and painted nothing.** Across three proof
+  pages they carried `outline: none` with no replacement: pixel-diffing the focused against the
+  unfocused state changed **0 of 8,694 pixels**, in all six themes, 42 measurements, every one
+  zero — while `:focus-visible` was true throughout. `docs/DESIGN.md`: *"`:focus-visible` always
+  has a visible ring."* These are the entire interaction on three of the four proof pages and the
+  first stop in the tab order after the back link, so a keyboard reader arrived, saw nothing, and
+  arrow keys then moved a number silently. Every other control on the same pages paints a ring at
+  5.98–18.60:1.
+
+  The guard asserts **pixels, not a property name**. A grep for `outline` would pass the moment
+  someone wrote `outline: 0` — or `outline-width: 3px` with no style, which is literally what was
+  there and is inert. It earned that immediately: the first attempt at the fix put the rules
+  *inside* the `input[type="range"] { … }` block, which is invalid CSS and silently discarded, and
+  the guard went red naming all five s1 sliders while the page looked unchanged.
+
+- **Exercise 01's fourth proof scrolled sideways on every phone.** Its size control was a 260px
+  slider beside a 96px readout in a flex row that could not reflow — 419px of control inside a
+  272px content box, so the page scrolled sideways by **123px at 320, 83px at 360 and 53px at
+  390**, in every theme. It now wraps and the track may shrink; `min-width: 0` is the operative
+  part, because a flex item's default `min-width: auto` refuses to go below its content and
+  `flex: 1` alone would have moved nothing. Re-measured: **0px at all three widths**.
+
+- **All twelve canvases on exercise 01's four proof pages had no accessible name**, no role and no
+  fallback, so the entire visual argument of the exercise was absent to a screen reader. Each now
+  carries `role="img"` and `aria-labelledby` pointing at the heading or caption **the page already
+  shows** beside it — no invented prose, nothing to keep in sync, and the caption's live accuracy
+  readout comes along with it.
+
+### Fixed
+
 - **Exercise 01's `s3.html` was dead on arrival, and had been for as long as it has been
   deployed.** The theme bootstrap declared `var t` at the top level of a classic script — which
   creates a *global* — and the page script opens `let E, W, …, t, …`, which cannot redeclare it.
