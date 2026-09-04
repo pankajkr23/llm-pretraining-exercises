@@ -396,7 +396,7 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
-2026-09-04  retro-fix     the repo-wide link-colour fix opened. Reported as 7 anchors at the
+2026-09-04  retro-fix     #131 opened: the repo-wide link-colour fix. Reported as 7 anchors at the
                           browser default; the real count is TWO. Five compute #0000EE on the
                           anchor while every word sits in a child with its own colour, so that
                           colour paints nothing — the third container-not-text artefact in this
