@@ -1,0 +1,46 @@
+NOTICE — 09-loss-functions-output-heads
+
+WHAT THIS IS
+
+A coursework exercise. It is a study, not a product, not a proposal to any
+organisation, and not infrastructure anybody operates.
+
+NO AFFILIATION
+
+This work is not affiliated with, endorsed by, sponsored by, or produced on
+behalf of any company, university, research institute or funding programme.
+Every organisation and paper named here is named because their public work is
+the evidence being examined. Naming them is citation, not association.
+
+WHAT IS MEASURED AND WHAT IS NOT
+
+MEASURED HERE, on one laptop, and reproducible by running the two commands in
+the README:
+
+  - every tensor shape in the loss path, and the ratio between the logits and
+    the hidden states that produce them
+  - the number of positions that contribute to a loss before and after padding
+    and document-boundary masking
+  - the loss of a freshly initialised model, and its perplexity against the
+    vocabulary size
+  - parameter counts for a tied and an untied output head at this width
+  - peak resident set size for two ways of computing the same cross-entropy,
+    repeated five times so the spread is visible
+  - the loss curves of four short training runs: a two-head model, a correctly
+    shifted single-head model, a deliberately mis-shifted one, and the same
+    three repeated at 60, 150 and 300 steps
+
+NOT MEASURED HERE:
+
+  - anything on a GPU. Every figure is CPU, fp32, at laptop shapes.
+  - anything about model quality. The training runs exist to show two specific
+    effects and are far too short, on far too little text, to say whether any
+    choice here trains a better model.
+  - generalisation of any kind. The corpus is 35,941 tokens read 8.55 times
+    over, so every loss quoted is a memorisation number.
+
+ARITHMETIC, NOT MEASUREMENT: the parameter estimate uses the standard
+12 x d_model^2 per block, which omits the embedding table and is approximate by
+construction. Where a figure describes a configuration larger than the one run
+here, it is arithmetic and is labelled as such on the page it appears on.
+
