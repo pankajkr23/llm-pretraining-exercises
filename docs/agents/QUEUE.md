@@ -436,6 +436,14 @@ predates the harness — so it is logged as what it was.
                           reads the log section and nothing else, noticed, two merges later. The
                           anchor is a neighbour PAIR now, with reported fallbacks. Third defect
                           from that tool in three live runs, each invisible in the diff
+2026-09-04  tooling       #135 opened: a pull request that merges without logging itself makes
+                          main fail its OWN queue gate, and every branch cut from main then
+                          inherits a failure that points nowhere near the cause.
+                          Three merge rounds lost to it in one afternoon. The existing check looks
+                          BACKWARDS -- does the log record what already merged -- so by the time it
+                          fires the damage is on main. This one looks forwards, at the pull request
+                          under test, so the branch that would cause the problem is the one that
+                          goes red
 2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
                           hook. A reviewer copied into .claude/ and then edited there diverges
                           silently from its tracked source, and the installed copy is the one that

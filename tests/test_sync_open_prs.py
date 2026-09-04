@@ -164,3 +164,40 @@ def test_a_block_lands_beside_the_neighbours_it_had_not_the_first_look_alike() -
     log_section = out.partition("## Log\n")[2]
     assert "#108 opened" in log_section, f"the entry landed outside the log section:\n{out}"
     assert out.count("#108 opened") == 1, f"it landed more than once:\n{out}"
+
+
+def test_a_heading_is_its_own_record_and_survives_a_skipped_neighbour() -> None:
+    """**How `main` ended up with a bullet directly under `## [Unreleased]` and no heading.**
+
+    Records were split on dated lines and `- **` bullets only, so a `### Fixed` heading attached to
+    the record *above* it. When that record was one main already had and was skipped, the heading
+    went with it — and the changelog lost its section structure silently, on `main`, through a
+    merge nobody looked at twice.
+    """
+    # The shape that actually happened. The branch opens a NEW `### Fixed` block at the top of
+    # `[Unreleased]`, and main already has a `### Fixed` further down. The added block therefore
+    # begins with the heading — and treated as a record of its own, that heading matches main's,
+    # is skipped as a duplicate, and the entry beneath it lands directly under `## [Unreleased]`
+    # with no section at all. That is the state `main` was left in.
+    base = "## [Unreleased]\n\n### Added\n\n- **base entry**\n\n### Fixed\n\n- **old fix**\n"
+    branch = (
+        "## [Unreleased]\n\n### Fixed\n\n- **mine**\n\n"
+        "### Added\n\n- **base entry**\n\n### Fixed\n\n- **old fix**\n"
+    )
+    out, _ = _reapply(base, _blocks(base, branch))
+    assert "- **mine**" in out, f"the branch's own entry was dropped:\n{out}"
+    assert out.count("- **old fix**") == 1, f"the shared entry was duplicated:\n{out}"
+    assert "## [Unreleased]\n\n### Fixed\n\n- **mine**" in out, (
+        f"the entry landed with no section heading above it:\n{out}"
+    )
+
+
+def test_a_new_section_heading_is_carried_with_its_own_entry() -> None:
+    """A branch adding the first entry of a new section must bring the heading too."""
+    base = "# Changelog\n\n## [Unreleased]\n\n### Fixed\n\n- **theirs**\n"
+    branch = (
+        "# Changelog\n\n## [Unreleased]\n\n### Added\n\n- **mine**\n\n### Fixed\n\n- **theirs**\n"
+    )
+    out, _ = _reapply(base, _blocks(base, branch))
+    assert "### Added" in out, f"the new section heading was dropped:\n{out}"
+    assert out.count("- **theirs**") == 1, f"the shared entry was duplicated:\n{out}"

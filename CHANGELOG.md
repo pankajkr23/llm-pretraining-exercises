@@ -9,6 +9,50 @@ Record user-facing changes under `[Unreleased]` as they land; on release, rename
 section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
+
+### Added
+
+- **A skip-ledger test was pinned to a list index.** It read `EXPECTED_IN_CI[0]` while hard-coding
+  the reason belonging to whichever entry happened to be first, so adding an entry **anywhere above
+  it** failed the test — for a reason having nothing to do with the new entry or with the gate it
+  guards. It now looks its entry up by path. `AGENTS.md` already records the cost of pinning a test
+  to `:nth-child`; this is the same mistake in Python.
+
+- **A section heading is context for the entry beneath it, not a record of its own.** The sync
+  tool skipped any record `main` already had — and treated `### Fixed` as one. So when a branch
+  opened a new `### Fixed` block at the top of `[Unreleased]` while `main` had one further down,
+  the heading matched, was dropped as a duplicate, and **the entry landed directly under
+  `## [Unreleased]` with no section at all.** That is the state `main` was left in by #133's merge,
+  and it is repaired here.
+
+  A heading now opens a record and keeps it open, so the heading and the entry beneath it are
+  tested against `main` together and cannot be separated.
+
+  **The fixture had to be built three times before it reproduced.** The first two put the heading
+  *after* the entry, or gave the branch a heading `main` did not have — both pass against the
+  broken code. The real shape is a heading that `main` already has, appearing *first* in the added
+  block. A test that cannot fail is worth less than no test, because it reads as coverage.
+
+- **A pull request that does not log itself now fails, instead of failing everyone else.**
+  `tools/queue_status.py` refuses when `docs/agents/QUEUE.md` does not record a merged pull
+  request, and it runs in the `test` job — so the moment one merges unlogged, `main` fails its own
+  gate and **every branch cut from `main` inherits a failure that has nothing to do with it**. That
+  cost three rounds of merging in one afternoon: #133 sat red twice, once for #108's misplaced
+  entry and once for #134 not logging itself, and neither time did the error point at the branch
+  responsible.
+
+  The existing check looks **backwards** — does the log record what already merged? By then the
+  damage is on `main`. `tests/test_pull_request_logs_itself.py` looks **forwards**: does the pull
+  request being tested record itself? The branch that would cause the problem is the branch that
+  goes red.
+
+  It reads the number from `GITHUB_REF`, so it runs only on a pull-request build; that skip is
+  declared in `tests/_skips.py`. The parser is tested unconditionally in the same file, because a
+  ref format change would otherwise turn the whole guard into a permanent skip covering nothing —
+  which is the failure it exists to prevent, one level up.
+
+### Fixed
+
 - **A preview was deployed on every push, whatever it touched.** A test, a changelog line, a queue
   entry — all of it spent a deployment. Roughly sixty pushes in one working day exhausted the
   account's quota and Vercel rate-limited the project for **24 hours**, so previews stopped being
