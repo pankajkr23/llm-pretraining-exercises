@@ -12,27 +12,30 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
-- **A preview was built for every pull request that merged `main` in, showing nothing `main` did
-  not already show.** The build predicate compared against `VERCEL_GIT_PREVIOUS_SHA`, which Vercel
-  documents as the last *successful deployment* — so once `main` gained a page, the next sync of
-  any open pull request carried that page in its merge commit and read as deploy-worthy. #136
-  changed only `tests/` and still spent a build. At roughly twenty open pull requests that is
-  twenty wasted deployments per round, and exhausting the quota rate-limits the account for 24
-  hours — which is how previews became unavailable for the pull requests that genuinely did change
-  a page.
+- **A pull request that changes no page still built a preview of `main`.** The build predicate
+  compared against `VERCEL_GIT_PREVIOUS_SHA`, which Vercel documents as the last *successful
+  deployment* — the script's own comment said "the parent". So once `main` gained a page, the next
+  sync of an open pull request carried that page in its merge commit and read as deploy-worthy.
+  #136 changed only `tests/` and spent a build showing a site identical to `main`'s.
 
-  It now asks **what the branch adds on top of `main`**, resolved in three tiers, each falling
-  through to the next: the merge base with `main`; failing that a plain two-commit diff against
-  `main`, which needs only the two trees and so survives a clone with no shared history; failing
-  that `VERCEL_GIT_PREVIOUS_SHA`, exactly as before. **The last tier is the safety property — no
-  tier can be worse than the previous behaviour**, which is what makes this shippable without
-  being able to watch a real deployment first.
+  A second gate now asks whether the preview would show anything: **a branch whose deployed files
+  are byte-identical to `main`'s builds a copy of `main`'s own site.** It compares the two trees
+  rather than their histories, so it needs no common ancestor and survives the single-branch
+  shallow clone a build runs in, where `git merge-base` has nothing to walk.
 
-  The fallback is not a formality. Asking *"what does this branch add on top of `main`"* while
-  standing **on** `main` answers "nothing", so a naive merge-base predicate would skip every
-  build, production included; HEAD being an ancestor of the base falls through instead. Six new
-  cases cover the tiers, and the two that describe the new behaviour were watched failing against
-  the old script before being kept.
+  **The measured saving is one build per sync round, not the twenty first claimed here.** Of 19
+  open pull requests exactly **one** changes no deployed file; the other 18 change a page and
+  their previews genuinely differ from `main`'s. The first attempt at this replaced the existing
+  comparison with a diff against `main`, which would have been **worse**: those 18 differ from
+  `main` on every push, so a test-only push to any of them would have started building where it
+  previously did not. Both questions are needed and neither refines the other — *is there anything
+  new since the last deployment* (which the script already asked) and *would it show anything*.
+
+  Both gates fail open. A ref that will not resolve leaves the decision to the other one, and with
+  neither resolvable the script builds and says which ref it could not read — an unexplained build
+  is one nobody can debug. Seven cases cover the pair; the two describing new behaviour were
+  watched failing against the previous script, and the five describing preserved behaviour were
+  confirmed still green against it, which is what proves the change adds without regressing.
 
 - **Two repo-wide guards scanned a wider scope than the property they assert, and only the local
   suite could see it.** The basename-collision guard globbed `**/test_*.py` from the repo root, so
