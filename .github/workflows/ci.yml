@@ -158,6 +158,27 @@ jobs:
         timeout-minutes: 6
         run: uv run playwright install chromium
 
+      # **A 180-second budget for a RENDER was being spent on a DOWNLOAD.** The mermaid render
+      # test shells out to `npx --yes @mermaid-js/mermaid-cli`, and `--yes` fetches the package on
+      # first use -- it bundles puppeteer, so that is a large download on a cold runner, inside the
+      # test's own timeout. It failed on three of four consecutive branches and passed on the
+      # fourth: a flake that reds unrelated pull requests at random, which is worse than a test
+      # that fails honestly.
+      #
+      # Fetching it here puts the download in a step with a budget of its own, and leaves the
+      # test's 180s for what it was sized for. `PUPPETEER_SKIP_DOWNLOAD` stops it fetching a
+      # SECOND chromium: the test already points puppeteer at the playwright browser installed
+      # two steps above, via `PUPPETEER_EXECUTABLE_PATH`.
+      #
+      # Only the `mixtures` shard, because that is where the test lives -- paying this on all
+      # three would triple the cost to make two shards no faster.
+      - name: Pre-fetch mermaid-cli (mixtures renders diagrams)
+        if: matrix.name == 'mixtures'
+        timeout-minutes: 8
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "1"
+        run: npx --yes @mermaid-js/mermaid-cli --version
+
       # Assembled ONCE per shard, before the parallel run. Two `site` fixtures fall back to running
       # `deploy/vercel/build.sh` when `public/` is missing, and that script begins with
       # `rm -rf public/` -- two workers would delete each other's site mid-test.
