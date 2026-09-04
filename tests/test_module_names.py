@@ -15,19 +15,40 @@ already solves it by convention with a `test_mixture_*` prefix; this makes the c
 instead of remembered.
 """
 
+import tomllib
 from collections import defaultdict
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
+def _collected_roots() -> list[Path]:
+    """The directories pytest actually collects from, read out of `pyproject.toml`.
+
+    Derived rather than restated. This guard's entire subject is what pytest imports, so a
+    hardcoded copy of `testpaths` would be a second copy of the convention, and the second copy
+    is the one that drifts.
+    """
+    config = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    return [REPO_ROOT / p for p in config["tool"]["pytest"]["ini_options"]["testpaths"]]
+
+
 def _test_modules() -> dict[str, list[str]]:
-    """Map each test module basename to the directories that define it."""
+    """Map each test module basename to the directories that define it.
+
+    Scanned from `testpaths` and not from the repo root. A collision only exists where pytest
+    imports, and globbing the whole root read a scratch copy of the repo as a second definition
+    of every test file in it: nine leftover `.claude/worktrees/` checkouts turned this guard red
+    with 122 invented clashes, none of which pytest could ever have hit. It stayed green in CI,
+    where a clone has no worktrees, so the only suite it broke was the local one -- the suite
+    that carries the gates CI cannot run at all.
+    """
     seen: dict[str, list[str]] = defaultdict(list)
-    for path in REPO_ROOT.glob("**/test_*.py"):
-        if "__pycache__" in path.parts or ".venv" in path.parts or "public" in path.parts:
-            continue
-        seen[path.name].append(str(path.parent.relative_to(REPO_ROOT)))
+    for root in _collected_roots():
+        for path in root.glob("**/test_*.py"):
+            if "__pycache__" in path.parts or ".venv" in path.parts or "public" in path.parts:
+                continue
+            seen[path.name].append(str(path.parent.relative_to(REPO_ROOT)))
     return dict(seen)
 
 

@@ -16,6 +16,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from _exercises import exercises_in
 
 REPO = Path(__file__).resolve().parents[1]
 TOOL = REPO / "tools" / "new_exercise.py"
@@ -287,7 +288,11 @@ def test_the_generated_names_match_what_every_real_exercise_uses() -> None:
     direction of travel, since the exercises are the artefact and the generator only seeds one.
     """
     repo = Path(__file__).resolve().parent.parent
-    real = sorted((repo / "src" / "exercises").glob("[0-9][0-9]-*"))
+    # `exercises_in` rather than a name glob: a directory becomes an exercise when its
+    # `pyproject.toml` lands, and 09/10 exist on disk holding only their gitignored
+    # local-only files while that file waits in an unmerged branch. Globbing the name read
+    # them as exercises and died on the missing `pyproject.toml`.
+    real = exercises_in(repo / "src" / "exercises")
     assert len(real) >= 4, "not enough shipped exercises to read a convention from"
 
     prefix = re.compile(r"^Exercise (\d\d)\b")
