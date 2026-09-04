@@ -12,7 +12,7 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
-- **Exercise 04's contents rail never said where the reader was.** `_shared/page.css` has styled
+- **Exercise 05's contents rail never said where the reader was.** `_shared/page.css` has styled
   `.rail-link.on` — an accent bar and a bold label — since before this page existed, and the page
   never set the class. The rail looked finished and simply never moved, which is the worst shape a
   defect can take: the markup is there, the styles are there, and the only way to notice is to
@@ -23,14 +23,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   nearest one. Nearest sounds more reasonable and is wrong on half the page: sections here run
   several screens, so from the middle of one the *next* heading is often closer than the one behind
   you, and the rail then runs a section ahead of the reader.
-
-### Added
-
-- `tests/test_rail_marks_position.py` — a page that builds a contents rail must also mark the
-  section in view. `.rail-link.on` has been styled in the shared stylesheet since before most of
-  these pages existed and only exercise 03 ever set it, so four rails shipped looking finished and
-  never moving. **The guard found exercise 04, which was not on the list of pages known to have
-  this.**
 
 ### Added
 
