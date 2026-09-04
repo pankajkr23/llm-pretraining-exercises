@@ -12,6 +12,20 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercise 05's contents rail never said where the reader was.** `_shared/page.css` has styled
+  `.rail-link.on` — an accent bar and a bold label — since before this page existed, and the page
+  never set the class. The rail looked finished and simply never moved, which is the worst shape a
+  defect can take: the markup is there, the styles are there, and the only way to notice is to
+  scroll and watch nothing happen. Every existing assertion about the rail was about what it
+  *contains*.
+
+  The rule is **the last heading whose top has passed the first third of the viewport**, not the
+  nearest one. Nearest sounds more reasonable and is wrong on half the page: sections here run
+  several screens, so from the middle of one the *next* heading is often closer than the one behind
+  you, and the rail then runs a section ahead of the reader.
+
+### Fixed
+
 - **Exercise 04's thirteen chapter permalinks announced as "number sign".** Each is
   `<a class="anchor" href="#…">#</a>` with no `aria-label`, so a screen reader read the same two
   words thirteen times for thirteen different destinations. **Exercises 03 and 06 already solve

@@ -525,6 +525,8 @@ predates the harness — so it is logged as what it was.
                           measure brings it to 692px, about 83. The `ch` unit goes on the element
                           that CARRIES the type, because it resolves against that element's own
                           font size
+2026-09-04  retro-fix     #110 opened: exercise 05's contents rail never marked the section in
+                          view. Same defect and same rule as #109
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
