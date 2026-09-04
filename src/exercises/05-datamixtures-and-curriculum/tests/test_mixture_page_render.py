@@ -1002,3 +1002,103 @@ def test_the_figure_states_the_count_it_actually_draws(page):
     assert f"{on_axis} of the {len(funded)} funded lanes" in text, (
         f"the figure's annotation does not say '{on_axis} of the {len(funded)} funded lanes'"
     )
+
+
+# ---- the page sweep's three findings ----------------------------------------------------------
+
+#: Under this, an SVG label is not readable. Effective size is the authored font-size times the
+#: scale the viewBox is rendered at, so a label can be legible in the source and 6px on a phone.
+LEGIBLE_SVG_TEXT = 9.5
+
+#: The widths that matter here: a phone, a tablet, a laptop, and a display with room to spare.
+SWEEP_WIDTHS = (390, 768, 1440, 2560)
+
+
+def test_every_chapter_permalink_announces_a_word(page):
+    """`#` as an accessible name is announced "number sign" — fourteen times, for fourteen places.
+
+    Asserts a non-empty accessible NAME rather than a particular attribute or string: if someone
+    later switches to visually-hidden text or a `title`, the reader is served either way and this
+    should pass. `AGENTS.md`: a guard that names one implementation of a property fails every other.
+    """
+    rows = page.evaluate(
+        """() => [...document.querySelectorAll('a.anchor')].map((a) => ({
+             href: a.getAttribute('href'),
+             name: (a.getAttribute('aria-label') || a.getAttribute('title')
+                    || a.textContent).trim(),
+           }))"""
+    )
+    assert len(rows) >= 10, f"only {len(rows)} permalinks found; the selector has probably rotted"
+    mute = [(r["href"], r["name"]) for r in rows if r["name"] in ("", "#")]
+    assert not mute, f"{len(mute)} of {len(rows)} chapter permalinks announce no word: {mute[:4]}"
+
+
+#: The page fixture owns a module-scoped `sync_playwright()`, and a second one inside a test raises
+#: "Please use the Async API instead." So these resize the page that is already open rather than
+#: launching a browser of their own, and put the width back in a `finally` — a viewport left behind
+#: would silently change every test that runs after this one.
+def _at_width(page, width: int, js: str):
+    """Evaluate `js` with the open page resized, then restore the fixture's width."""
+    try:
+        page.set_viewport_size({"width": width, "height": 950})
+        page.wait_for_timeout(500)
+        return page.evaluate(js)
+    finally:
+        page.set_viewport_size({"width": 1280, "height": 900})
+        page.wait_for_timeout(200)
+
+
+_SVG_TEXT_JS = """() => {
+  const out = [];
+  for (const svg of document.querySelectorAll('svg')) {
+    const vb = svg.viewBox && svg.viewBox.baseVal;
+    if (!vb || !vb.width) continue;
+    const scale = svg.getBoundingClientRect().width / vb.width;
+    for (const t of svg.querySelectorAll('text')) {
+      if (!t.textContent.trim()) continue;
+      out.push({
+        eff: parseFloat(getComputedStyle(t).fontSize) * scale,
+        txt: t.textContent.trim().slice(0, 24),
+      });
+    }
+  }
+  return out;
+}"""
+
+_CODE_JS = """() => [...document.querySelectorAll('pre.code')].map((el) => ({
+     over: el.scrollWidth - el.clientWidth,
+     head: el.textContent.trim().split('\\n')[0].slice(0, 44),
+   }))"""
+
+
+@pytest.mark.parametrize("width", SWEEP_WIDTHS)
+def test_no_svg_label_renders_too_small_to_read(page, width: int) -> None:
+    """A viewBox scales the text with the drawing, so legibility is a property of the RENDER.
+
+    Every label on this page's figures sat between 6.39px and 9.4px at a 390px viewport — the
+    figure legible and the words on it not. Reading the authored `font-size` would have reported
+    10px and been useless, which is why this multiplies by the rendered scale.
+    """
+    rows = _at_width(page, width, _SVG_TEXT_JS)
+    assert len(rows) >= 10, f"only {len(rows)} svg labels measured at {width}px; selector rotted?"
+    tiny = sorted((round(r["eff"], 2), r["txt"]) for r in rows if r["eff"] < LEGIBLE_SVG_TEXT)
+    assert not tiny, (
+        f"at {width}px, {len(tiny)} of {len(rows)} svg labels render under "
+        f"{LEGIBLE_SVG_TEXT}px:\n  " + "\n  ".join(f"{e}px  {t!r}" for e, t in tiny[:6])
+    )
+
+
+@pytest.mark.parametrize("width", SWEEP_WIDTHS)
+def test_no_reproduce_command_is_cut_off(page, width: int) -> None:
+    """A command a reader cannot read is the one thing a reproduce section has to get right.
+
+    These were `overflow-x: auto` inside a 72ch box, so every command longer than 72 characters was
+    cut at **every** width — including 2560, where 676px sat empty beside the box.
+    """
+    rows = _at_width(page, width, _CODE_JS)
+    assert rows, "no `pre.code` blocks found; the selector has rotted"
+    cut = [(r["over"], r["head"]) for r in rows if r["over"] > 1]
+    assert not cut, (
+        f"at {width}px, {len(cut)} of {len(rows)} command blocks are cut off sideways:\n  "
+        + "\n  ".join(f"+{o}px  {h!r}" for o, h in cut)
+    )

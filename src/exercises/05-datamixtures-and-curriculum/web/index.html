@@ -74,6 +74,7 @@
        * page used to paint, then fetch, then either render or show an error, and it carried a
        * "Loading…" state and a catch block for the gap. There is no gap now. */
       import { buildPage } from './chapters.js';
+      import { bindThemePicker } from './_shared/theme.js';
       import { BUNDLE } from './data.js';
 
       buildPage(BUNDLE);
@@ -81,25 +82,7 @@
       /* The picker. The head script already applied the stored choice; this only keeps the control
        * in step with it and writes changes back. "system" removes the attribute rather than setting
        * a value, because that is what lets prefers-color-scheme take over again. */
-      const picker = document.getElementById('theme');
-      const stored = (() => {
-        try {
-          return localStorage.getItem('era5-theme');
-        } catch {
-          return null;
-        }
-      })();
-      picker.value = stored || 'system';
-      picker.addEventListener('change', () => {
-        const v = picker.value;
-        if (v === 'system') document.documentElement.removeAttribute('data-theme');
-        else document.documentElement.setAttribute('data-theme', v);
-        try {
-          localStorage.setItem('era5-theme', v);
-        } catch {
-          /* nothing to do */
-        }
-      });
+      bindThemePicker();
     </script>
   </body>
 </html>
