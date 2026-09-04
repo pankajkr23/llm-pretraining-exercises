@@ -396,7 +396,7 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
-2026-09-04  retro-fix     exercise 08's cut-line fix opened, and TWO of its three findings were
+2026-09-04  retro-fix     #132 opened: exercise 08's cut-line fix, and TWO of its three findings were
                           deliberately NOT fixed. The cut line was clipped 87px at 320px with no
                           ellipsis, losing both its sentence and its dashed rule — the same element
                           AGENTS.md already records being truncated once, so the guard asserts
