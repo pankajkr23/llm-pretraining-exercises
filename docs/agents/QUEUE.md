@@ -396,6 +396,12 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-04  retro-fix     #109 opened: exercise 04's contents rail never marked the section in
+                          view. `.rail-link.on` has been styled in the shared stylesheet since
+                          before the page existed and the page never set it, so the rail looked
+                          finished and never moved. The rule is the last heading past the first
+                          third of the viewport, NOT the nearest one -- sections run several
+                          screens, so the nearest heading is often the one ahead of the reader
 2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
                           hook. A reviewer copied into .claude/ and then edited there diverges
                           silently from its tracked source, and the installed copy is the one that
