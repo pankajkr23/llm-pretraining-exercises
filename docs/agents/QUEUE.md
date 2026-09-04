@@ -396,6 +396,12 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-04  retro-fix     #118 opened: exercise 05, the same 1,156px at 145 characters. THE FIRST
+                          ATTEMPT MOVED NOTHING: the rule selected `main section > .note` and none
+                          of this page's long paragraphs are section children, so it matched
+                          nothing and the measurement came back unchanged while the rule looked
+                          exactly like a fix. Caught only by re-measuring AFTER the change. Matched
+                          anywhere under main it lands at about 91
 2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
                           hook. A reviewer copied into .claude/ and then edited there diverges
                           silently from its tracked source, and the installed copy is the one that
