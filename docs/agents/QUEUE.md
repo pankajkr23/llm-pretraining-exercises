@@ -396,6 +396,8 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-04  retro-fix     #115 opened: exercise 02, same false tab-pattern claim as #114, same
+                          answer -- the roles come off rather than the machinery going in
 2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
                           hook. A reviewer copied into .claude/ and then edited there diverges
                           silently from its tracked source, and the installed copy is the one that
