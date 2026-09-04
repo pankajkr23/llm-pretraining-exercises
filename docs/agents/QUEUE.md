@@ -730,4 +730,14 @@ predates the harness — so it is logged as what it was.
                           merges each conflicted on CHANGELOG.md and resolving by taking a side lost
                           three of the four entries; restored, and it is exactly the failure
                           sync_open_prs.py exists to prevent
+2026-09-05  process       #141 opened: the queue is EMPTY -- 27 pull requests merged. AGENTS.md
+                          gains three sections, all earned here, and the thread through every one
+                          is that no defect they describe failed a test first. Merging a queue (a
+                          clean merge of an append-only log is routinely wrong; five stranded
+                          changelog entries; read the whole hook output). Verifying a fix (break
+                          what the guard CHECKS, not what it is about; a probe artefact reads
+                          exactly like a defect; measure twice after a theme switch). Agents near
+                          the tree (an empty $TMPDIR puts scratch in the repo root; one run left
+                          two git tags authored by the fixture identity, which is how the stale
+                          standards archive was found)
 ```
