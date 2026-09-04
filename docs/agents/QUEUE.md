@@ -402,6 +402,10 @@ predates the harness — so it is logged as what it was.
                           is copied rather than reinvented, because an identical control should
                           announce identically. The guard asserts a non-empty accessible NAME, not
                           that a particular string is present
+2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
+                          hook. A reviewer copied into .claude/ and then edited there diverges
+                          silently from its tracked source, and the installed copy is the one that
+                          runs — so the drift is invisible in review by construction
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
