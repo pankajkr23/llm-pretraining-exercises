@@ -10,6 +10,20 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Exercise 04's body prose ran about 145 characters a line.** Measured at 1440px, the widest body
+  paragraph was **1,156px at 16px type** — roughly double what anyone can track, so the eye loses
+  its place returning to the left edge and the longer the line the more often it lands on the wrong
+  one. A measure on the paragraphs brings it to **692px, about 83 characters**, with no sideways
+  overflow at any of six widths from 1920 down to 320.
+
+  Two details `AGENTS.md` records this repo as having already paid for: the measure goes on the
+  element that **carries the type**, because a `ch` unit resolves against the font size of the
+  element declaring it; and it applies only to paragraphs directly inside a section, because a `<p>`
+  inside a panel, figure or table cell is laid out by that component and constraining it here would
+  compete with the component's own rules rather than replace them.
+
 ### Added
 
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two
