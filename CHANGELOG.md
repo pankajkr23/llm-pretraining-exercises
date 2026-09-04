@@ -10,6 +10,17 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Exercise 01 claimed the tab pattern and implemented none of it.** Two proof pages declared
+  `role="tablist"` with `role="tab"` children and had **no `role="tabpanel"`, no `aria-controls` and
+  no arrow-key handling**. Those roles are a promise: a screen reader told "tab" announces a tab,
+  expects arrow keys to move between them and expects a panel to be controlled. **A wrong
+  announcement is worse than none**, because the reader acts on it — presses an arrow key, nothing
+  moves, and they cannot tell whether the page is broken or they are. The fix is to stop claiming
+  it rather than to build the machinery: these redraw a region in place, so there is no panel for
+  `aria-controls` to point at and nothing for arrow keys to move between.
+
 ### Added
 
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two
