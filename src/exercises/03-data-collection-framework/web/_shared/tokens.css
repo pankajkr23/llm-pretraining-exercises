@@ -91,7 +91,10 @@ h2 {
 
 .back:hover {
   background: var(--accent);
-  color: #fff;
+  /* Never a literal here. `--accent` is a bright blue on the dark themes and white text over it
+     measures 3.02:1 on the system dark theme and 1.54:1 on `neon` — the pill effectively vanishes
+     under the cursor. `--on-accent` is the paired token and clears AA on all six. */
+  color: var(--on-accent);
 }
 
 .panel {
@@ -154,7 +157,9 @@ footer {
 .gotcha[data-severity="blocking"] {
   background: var(--gotcha-safety);
   border-color: var(--gotcha-safety);
-  color: #fff;
+  /* Same failure, on the one caveat that bars the door: the dark themes lift `--gotcha-safety` to
+     a light red, so white on it ran 2.79:1 to 3.41:1. */
+  color: var(--on-accent);
 }
 
 /* ---------------------------------------------------------------- provenance */
