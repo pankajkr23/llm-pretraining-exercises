@@ -73,6 +73,12 @@
 
       /* The long-form explanation lives on its own page; this is the door to it. Styled as a
          panel rather than a link so it reads as a destination, not a footnote. */
+      /* Every link gets a colour. This page does not use the shared layer, and two of its
+         anchors had no colour rule anywhere in the cascade, so they fell back to the browser's
+         default `#0000EE` — 1.74:1 to 1.98:1 against the dark themes' grounds. Every named link
+         class on this page sets its own colour and out-specifies an element selector, so this
+         reaches only the links that had nothing. */
+      a { color: var(--accent); }
       .readmore { display: block; margin-top: 28px; padding: 16px 20px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); text-decoration: none; transition: border-color 0.18s, transform 0.18s; }
       .readmore:hover { border-color: var(--accent); transform: translateY(-1px); }
       .rm-k { display: block; font-size: 15px; font-weight: 600; color: var(--accent); }

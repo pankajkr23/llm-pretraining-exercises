@@ -1,16 +1,4 @@
 # Changelog
-- **Printing exercise 03 lost the argument.** Its eleven scrolly widgets each pin one figure and
-  reveal a verdict line per step, and the end-state rule that unpins them existed only for
-  `prefers-reduced-motion` — with no print twin. Measured under `emulate_media(media="print")` at
-  1440px: **0 of 45** `.inline` verdict lines had a client rect, against 45 of 45 for a
-  reduced-motion reader. A printed sheet carried **11 figure states and lost 34**, and the verdict
-  line was the only place those 34 could have appeared.
-
-  The fix is one character of media query — `@media (prefers-reduced-motion: reduce), print` — and
-  deliberately **not** a separate `@media print` block repeating the three declarations. Two blocks
-  can drift apart, and drift is exactly what produced this: the rule existed for one reader and
-  nobody noticed the other had none. After: **45 of 45** in print, in all six themes, with nothing
-  truncated; screen behaviour byte-for-byte unchanged.
 
 All notable changes to this project are documented in this file.
 
@@ -20,7 +8,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Record user-facing changes under `[Unreleased]` as they land; on release, rename that
 section to the new version with a date and open a fresh `[Unreleased]`.
 
+## [Unreleased]
+
 ### Fixed
+
+- **The shared-layer orphan guard counted class names written inside comments.** It ran
+  `\.([a-z][a-z0-9-]*)` over the raw stylesheet, so `page.css` in a comment counted as the class
+  `css`, `data.json` as `json`, and the phrase *"i.e."* as `e`. A comment added here naming `.back`
+  and `.readmore` pushed the count from 101 to 104 and failed the guard — while the stylesheet had
+  gained **exactly one rule and no classes at all**.
+
+  Comments are stripped now, and the honest total is **98, not 101**. Two entries in
+  `KNOWN_ORPHANS` — `css` and `json` — were removed: they were never classes, and their own stated
+  reason was *"also an ordinary word in prose and filenames"*, so the phantom was known and
+  exempted rather than fixed. **A baseline padded with entries that describe nothing is slack the
+  guard can never spend on a real orphan** — verified by adding one and watching it report
+  99 against 98.
+
+- **A degraded placement fell back to the FIRST look-alike, and stranded entries at the top of the
+  file.** When a re-applied block's neighbours have moved on `main`, the sync tool matches one side
+  alone — and `list.index` returns the earliest occurrence. In an append-only log the earliest blank
+  line is line 2, so the entry landed **above the preamble and outside every section**: present,
+  correct-looking, and somewhere no reader would find it. It happened three times to `CHANGELOG.md`,
+  and `main`'s copy is repaired here along with the tool.
+
+  The block's own position now travels with it, so the fallback picks the **nearest** candidate
+  rather than the first.
 
 - **Three controls painted white text on a background that is bright in half the themes.** The
   `← Back` pill on hover and the blocking-caveat chip (both in the shared component stylesheet, so
@@ -37,7 +50,46 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   static render ever enters, so a rendered page would have to know to go looking for them, while
   the source says it unconditionally.
 
-## [Unreleased]
+- **Printing exercise 03 lost the argument.** Its eleven scrolly widgets each pin one figure and
+  reveal a verdict line per step, and the end-state rule that unpins them existed only for
+  `prefers-reduced-motion` — with no print twin. Measured under `emulate_media(media="print")` at
+  1440px: **0 of 45** `.inline` verdict lines had a client rect, against 45 of 45 for a
+  reduced-motion reader. A printed sheet carried **11 figure states and lost 34**, and the verdict
+  line was the only place those 34 could have appeared.
+- **Two links fell back to the browser's own default blue.** An anchor no rule styles is not merely
+  unstyled — it is `#0000EE`, the User-Agent stylesheet's colour, chosen for a white page. Against
+  these pages' dark grounds that measures **1.74:1 to 2.23:1**: a link a reader cannot see. One is
+  on exercise 02 (*"HuggingFace tokenizer.json"*), one on exercise 07 (*"Code, tests and the full
+  write-up"*). Both had simply never been given a class that set a colour. A base
+  `a { color: var(--accent) }` fixes them; every named link class already sets its own colour and
+  out-specifies an element selector, so nothing else moved — verified by measuring all 1,362 anchor
+  readings across thirteen pages and six themes before and after.
+
+  **The reported count was seven and the real count is two, and the difference is worth recording.**
+  Five of the seven — `.readmore` on 02 and four `.guide-path` links on 08 — compute `#0000EE` on
+  the anchor while every word they show sits in a child element with its own colour. The anchor's
+  colour paints nothing. That is the third time in this sweep a measurement has read a **container**
+  instead of the text it contains, after `.rail-link` (4.05:1 for text that renders at 4.59, 4.66
+  and 15.46) and `.badge` (1.00:1 for text that is 4.66:1 once its 10%-alpha ground is composited).
+
+### Added
+
+- **`tests/test_every_link_has_a_colour.py`** asserts, for every published page in all six themes,
+  that no link computes to the browser default and that every link clears WCAG AA. It measures the
+  elements that actually **paint** text — from the anchor down — rather than the anchor element,
+  which is what makes it immune to the container artefact above, and it composites the whole
+  background stack rather than taking the first opaque ancestor.
+
+  **Its first version was blind and I only found that by breaking the page it could see.** Filtering
+  to anchors with their own text excluded exactly the links whose *children* inherit the unstyled
+  colour; the fix passes, so does the break. Breaking a second page — one with a real defect —
+  showed it red. A guard proved against the wrong subject is not proved.
+
+  The fix is one character of media query — `@media (prefers-reduced-motion: reduce), print` — and
+  deliberately **not** a separate `@media print` block repeating the three declarations. Two blocks
+  can drift apart, and drift is exactly what produced this: the rule existed for one reader and
+  nobody noticed the other had none. After: **45 of 45** in print, in all six themes, with nothing
+  truncated; screen behaviour byte-for-byte unchanged.
 
 ### Fixed
 

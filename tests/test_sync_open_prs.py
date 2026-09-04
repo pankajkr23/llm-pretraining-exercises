@@ -33,7 +33,9 @@ def _blocks(base: str, branch: str):
             # The same neighbour PAIR the tool records. A single line is not a position.
             preceding = after[j1 - 1] if j1 > 0 else ""
             following = after[j2] if j2 < len(after) else ""
-            out.append(((preceding, following), after[j1:j2]))
+            # The block's own position travels with it, so a fallback can pick the NEAREST
+            # look-alike rather than the first — which in an append-only log is at the very top.
+            out.append(((preceding, following, j1), after[j1:j2]))
     return out
 
 
@@ -201,3 +203,31 @@ def test_a_new_section_heading_is_carried_with_its_own_entry() -> None:
     out, _ = _reapply(base, _blocks(base, branch))
     assert "### Added" in out, f"the new section heading was dropped:\n{out}"
     assert out.count("- **theirs**") == 1, f"the shared entry was duplicated:\n{out}"
+
+
+def test_a_fallback_picks_the_nearest_look_alike_not_the_first() -> None:
+    """**Three times, a block landed above the file's own preamble and outside every section.**
+
+    When a block's neighbours have moved on `main`, placement falls back to matching one side
+    alone — and `list.index` returns the EARLIEST occurrence. In an append-only log the earliest
+    blank line or fence is at the very top, so the entry landed before `## [Unreleased]`, before
+    the preamble, sometimes on line 2. It was present, it read correctly, and no reader would ever
+    have found it.
+
+    The block's own position now travels with it, so the fallback picks the nearest candidate.
+    """
+    # To force the fallback, BOTH neighbours must be gone on main: the following line is renamed
+    # there, and the preceding one is a blank line — of which an append-only log has dozens, the
+    # earliest at line 2. First-match then strands the entry above the preamble.
+    base = "# Changelog\n\npreamble\n\n## [Unreleased]\n\n### Fixed\n\n- **old**\n"
+    branch = base.replace("- **old**\n", "- **mine**\n\n- **old**\n")
+    main = base.replace("- **old**\n", "- **old, reworded on main**\n")
+
+    out, notes = _reapply(main, _blocks(base, branch))
+    body = out.partition("## [Unreleased]")[2]
+    assert "- **mine**" in body, (
+        f"the entry landed above `## [Unreleased]`, outside every section:\n{out}"
+    )
+    assert any("neighbours have changed" in n for n in notes), (
+        f"the degraded placement was not reported: {notes}"
+    )

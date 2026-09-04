@@ -116,7 +116,7 @@ def _own_additions(base: str, branch: str, path: str) -> list[tuple[str, list[st
         # checker that reads only `## Log` was the thing that noticed.
         preceding = after[j1 - 1] if j1 > 0 else ""
         following = after[j2] if j2 < len(after) else ""
-        blocks.append(((preceding, following), added))
+        blocks.append(((preceding, following, j1), added))
     return blocks
 
 
@@ -164,7 +164,9 @@ def _only_a_heading(record: list[str] | None) -> bool:
     return all(_HEADING.match(line) or not line.strip() for line in record)
 
 
-def _locate(lines: list[str], preceding: str, following: str) -> tuple[int | None, str]:
+def _locate(
+    lines: list[str], preceding: str, following: str, hint: int = 0
+) -> tuple[int | None, str]:
     """Where a block belongs: the index whose neighbours are the ones it had on the branch.
 
     The pair is tried first because either line alone can occur many times — a code fence, a blank
@@ -174,14 +176,19 @@ def _locate(lines: list[str], preceding: str, following: str) -> tuple[int | Non
     for i in range(len(lines)):
         if lines[i] == following and (i == 0 or lines[i - 1] == preceding):
             return i, "pair"
+    # **Fall back to the NEAREST look-alike, not the first.** `list.index` returns the earliest
+    # occurrence, and in an append-only log the earliest "```" or blank line is at the very top —
+    # so a block whose neighbours had moved landed above the file's own preamble, outside every
+    # section. That happened three times, on `CHANGELOG.md`, and each time the entry was present
+    # and correct-looking while sitting somewhere no reader would find it.
     if following:
-        for i, line in enumerate(lines):
-            if line == following:
-                return i, "the following line only"
+        hits = [i for i, line in enumerate(lines) if line == following]
+        if hits:
+            return min(hits, key=lambda i: abs(i - hint)), "the following line only"
     if preceding:
-        for i, line in enumerate(lines):
-            if line == preceding:
-                return i + 1, "the preceding line only"
+        hits = [i for i, line in enumerate(lines) if line == preceding]
+        if hits:
+            return min(hits, key=lambda i: abs(i - hint)) + 1, "the preceding line only"
     return None, "nothing"
 
 
@@ -206,8 +213,8 @@ def _reapply(
         added = keep
         if not added:
             continue
-        preceding, following = anchor
-        at, how = _locate(lines, preceding, following)
+        preceding, following, where = anchor
+        at, how = _locate(lines, preceding, following, hint=where)
         if how != "pair" and at is not None:
             # Worth saying. A degraded placement is still a placement, but main has moved under
             # this block and somebody should look at where it landed.
