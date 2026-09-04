@@ -12,6 +12,27 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The measure was on the list, not on the list items, so four sentences still ran 82 characters.**
+  `ul.blind-list` carries a `max-width`, so the list is 725px wide and looks constrained — but the
+  type is set on the `li`, which had `max-width: none`. **A `ch` unit resolves against the font size
+  of the element that declares it**, so a measure on the wrapper means something else entirely. That
+  is the rule the sibling comment in this same file already states; it just was not applied here.
+
+  Measured at 2560px: four items ran **82 characters**, and identically at 1920 and 1440, because
+  the width came from the list rather than the viewport. They are the exercise's limitations,
+  written as sentences — *"The corpus is 1.78M tokens. Three orders of magnitude below the scale a
+  mixture decision is made at"*, and three more — which is the prose on that page most worth
+  actually reading.
+
+  **`NOT_YET_COVERED` is now empty and all ten deployable exercises are in `COVERED`.** Earned:
+  removing the rule puts 05 back to 28 blocks wider than 80 characters across the eight widths.
+
+  The partition guard was called `test_the_uncovered_pages_are_still_the_two_expected` while that
+  list held two, then one, and now none. It never asserted two — it asserts that every deployable
+  page is in exactly one list, plus a floor under `COVERED` — so the name was a count that had
+  already gone stale once. Renamed to `test_every_deployable_page_is_in_exactly_one_list`.
+
+
 - **Exercise 05's body prose ran about 145 characters a line** — the same 1,156px at 16px measured
   at 1440px. Matched anywhere under `main`, the rule brings the page to **755px, about 91
   characters**, with no sideways overflow at six widths.

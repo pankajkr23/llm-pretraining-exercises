@@ -567,3 +567,20 @@ main .note,
 main .warn {
   max-width: 68ch;
 }
+
+/* And the blind-list, whose measure was on the wrong element.
+ *
+ * `ul.blind-list` carries a `max-width`, so the list is 725px wide and looks constrained. But the
+ * type is set on the `li`, which had `max-width: none` — and a `ch` unit resolves against the font
+ * size of the element DECLARING it, so a measure on the wrapper means something else entirely.
+ * Measured at 2560px: four items still ran **82 characters**, and identically at 1920 and 1440,
+ * because the width comes from the list rather than the viewport.
+ *
+ * They are the exercise's limitations, written as sentences — "The corpus is 1.78M tokens. Three
+ * orders of magnitude below the scale a mixture decision is made at", and three more like it. The
+ * most important prose on the page to actually read.
+ *
+ * This is the rule the comment above already states, applied to the element that carries the type. */
+main .blind-list li {
+  max-width: 68ch;
+}
