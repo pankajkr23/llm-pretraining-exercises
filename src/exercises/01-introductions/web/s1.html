@@ -71,7 +71,7 @@
         color: var(--muted); padding: 8px 16px; border-radius: 9px;
         transition: color 0.15s, background 0.15s;
       }
-      .seg button[aria-selected="true"] { background: var(--bg); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+      .seg button[aria-pressed="true"] { background: var(--bg); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
       .seg button:hover { color: var(--ink); }
 
       .grid {
@@ -197,11 +197,11 @@
         is the single thing that bends it into a curve. Switch it and watch the <em>same</em> neuron change shape.
       </p>
 
-      <div class="seg" id="acts" role="tablist" aria-label="activation">
-        <button role="tab" data-act="none" aria-selected="true">none</button>
-        <button role="tab" data-act="relu" aria-selected="false">ReLU</button>
-        <button role="tab" data-act="tanh" aria-selected="false">tanh</button>
-        <button role="tab" data-act="gelu" aria-selected="false">GELU</button>
+      <div class="seg" id="acts" role="group" aria-label="Activation">
+        <button data-act="none" aria-pressed="true">none</button>
+        <button data-act="relu" aria-pressed="false">ReLU</button>
+        <button data-act="tanh" aria-pressed="false">tanh</button>
+        <button data-act="gelu" aria-pressed="false">GELU</button>
       </div>
 
       <div class="grid">
@@ -496,7 +496,7 @@
       document.querySelectorAll('#acts button').forEach((btn) => {
         btn.addEventListener('click', () => {
           S.act = btn.dataset.act;
-          document.querySelectorAll('#acts button').forEach((b) => b.setAttribute('aria-selected', b === btn));
+          document.querySelectorAll('#acts button').forEach((b) => b.setAttribute('aria-pressed', b === btn));
           render();
         });
       });

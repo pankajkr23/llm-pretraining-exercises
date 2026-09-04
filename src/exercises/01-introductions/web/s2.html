@@ -39,7 +39,7 @@
       .controls { display: flex; flex-wrap: wrap; gap: 22px; align-items: center; margin: 30px 0 8px; }
       .seg { display: inline-flex; gap: 2px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
       .seg button { appearance: none; border: 0; background: transparent; cursor: pointer; font-family: var(--mono); font-size: 13px; color: var(--muted); padding: 8px 16px; border-radius: 9px; transition: color 0.15s, background 0.15s; }
-      .seg button[aria-selected="true"] { background: var(--bg); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+      .seg button[aria-pressed="true"] { background: var(--bg); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
       .seg button:hover { color: var(--ink); }
       .depth { display: flex; align-items: center; gap: 12px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
       .depth input[type="range"] { -webkit-appearance: none; appearance: none; width: 160px; height: 3px; background: var(--line); border-radius: 3px; outline: none; }
@@ -132,9 +132,9 @@
       </p>
 
       <div class="controls">
-        <div class="seg" id="acts" role="tablist">
-          <button role="tab" data-act="linear" aria-selected="true">linear</button>
-          <button role="tab" data-act="relu" aria-selected="false">ReLU</button>
+        <div class="seg" id="acts" role="group" aria-label="Activation">
+          <button data-act="linear" aria-pressed="true">linear</button>
+          <button data-act="relu" aria-pressed="false">ReLU</button>
         </div>
         <div class="depth">
           depth <input type="range" id="depth" min="1" max="6" step="1" value="5" /> <b id="depthv">5</b> layers
@@ -359,7 +359,7 @@
       }
 
       document.querySelectorAll('#acts button').forEach((btn) => btn.addEventListener('click', () => {
-        document.querySelectorAll('#acts button').forEach((b) => b.setAttribute('aria-selected', b === btn));
+        document.querySelectorAll('#acts button').forEach((b) => b.setAttribute('aria-pressed', b === btn));
         transition(btn.dataset.act);
       }));
       document.getElementById('depth').addEventListener('input', (e) => { S.depth = parseInt(e.target.value, 10); render(); });

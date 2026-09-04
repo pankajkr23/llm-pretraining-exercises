@@ -507,6 +507,11 @@ predates the harness — so it is logged as what it was.
                           blind: filtering to anchors with their own text excluded the very links
                           whose children inherit the unstyled colour, and it passed the break.
                           Found only by breaking a second page that had a real one
+2026-09-04  retro-fix     #114 opened: exercise 01 declared role="tablist" with role="tab" children
+                          and had no role="tabpanel", no aria-controls and no arrow-key handling.
+                          A wrong announcement is worse than none, because the reader acts on it.
+                          The fix REMOVES the claim rather than building the machinery: these
+                          redraw a region in place and are not tabs
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
