@@ -1,4 +1,16 @@
 # Changelog
+- **Printing exercise 03 lost the argument.** Its eleven scrolly widgets each pin one figure and
+  reveal a verdict line per step, and the end-state rule that unpins them existed only for
+  `prefers-reduced-motion` — with no print twin. Measured under `emulate_media(media="print")` at
+  1440px: **0 of 45** `.inline` verdict lines had a client rect, against 45 of 45 for a
+  reduced-motion reader. A printed sheet carried **11 figure states and lost 34**, and the verdict
+  line was the only place those 34 could have appeared.
+
+  The fix is one character of media query — `@media (prefers-reduced-motion: reduce), print` — and
+  deliberately **not** a separate `@media print` block repeating the three declarations. Two blocks
+  can drift apart, and drift is exactly what produced this: the rule existed for one reader and
+  nobody noticed the other had none. After: **45 of 45** in print, in all six themes, with nothing
+  truncated; screen behaviour byte-for-byte unchanged.
 
 All notable changes to this project are documented in this file.
 
@@ -12,18 +24,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
-- **Printing exercise 03 lost the argument.** Its eleven scrolly widgets each pin one figure and
-  reveal a verdict line per step, and the end-state rule that unpins them existed only for
-  `prefers-reduced-motion` — with no print twin. Measured under `emulate_media(media="print")` at
-  1440px: **0 of 45** `.inline` verdict lines had a client rect, against 45 of 45 for a
-  reduced-motion reader. A printed sheet carried **11 figure states and lost 34**, and the verdict
-  line was the only place those 34 could have appeared.
-
-  The fix is one character of media query — `@media (prefers-reduced-motion: reduce), print` — and
-  deliberately **not** a separate `@media print` block repeating the three declarations. Two blocks
-  can drift apart, and drift is exactly what produced this: the rule existed for one reader and
-  nobody noticed the other had none. After: **45 of 45** in print, in all six themes, with nothing
-  truncated; screen behaviour byte-for-byte unchanged.
+- **The mermaid render test spent its 180-second budget downloading rather than rendering.** It
+  shells out to `npx --yes @mermaid-js/mermaid-cli`, and `--yes` *fetches* the package on first
+  use — it bundles puppeteer, so on a cold runner that download alone can exceed the timeout the
+  test allows for a render. It failed on three of four consecutive branches and passed on the
+  fourth: a flake that reds unrelated pull requests at random, which is worse than a test that
+  fails honestly. The `mixtures` shard now fetches it in a step with a budget of its own, leaving
+  the test's 180 seconds for what they were sized for. `PUPPETEER_SKIP_DOWNLOAD` stops it pulling a
+  second chromium — the test already points puppeteer at the playwright browser the shard installs
+  two steps earlier.
 
 ### Added
 
