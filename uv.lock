@@ -16,6 +16,7 @@ members = [
     "exercise-06-build-training-dataset",
     "exercise-07-model-embeddings-internals",
     "exercise-08-modern-attention-variants",
+    "exercise-09-loss-functions-output-heads",
     "llm-pretraining-exercises",
 ]
 
@@ -466,6 +467,21 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "numpy", specifier = ">=2" }]
+
+[[package]]
+name = "exercise-09-loss-functions-output-heads"
+version = "0.1.0"
+source = { editable = "src/exercises/09-loss-functions-output-heads" }
+dependencies = [
+    { name = "numpy" },
+    { name = "tokenizers" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "numpy", specifier = ">=2" },
+    { name = "tokenizers", specifier = ">=0.20" },
+]
 
 [[package]]
 name = "fastjsonschema"

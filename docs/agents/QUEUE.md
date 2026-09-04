@@ -324,6 +324,26 @@ Two things follow. Nothing below carries a `@ sha` unless it was checked, becaus
 evidence line is worse than a missing one. And the backlog batch was not run as *units* — it
 predates the harness — so it is logged as what it was.
 
+2026-09-03  exercise-09   09 built to its requirements: seven numbers and two findings, all
+                          generated into results/ and rendered into both RESULTS.md and the page's
+                          data file. A t+2 head sits above a t+1 head on 297 of 300 steps; an
+                          off-by-one target shift trains to 0.18 against the correct shift's 4.14 —
+                          the bug makes the loss BETTER
+2026-09-03  review        three reviewers read 09 and found three blockers, every one a claim that
+                          read as checked. The boundary mask kept every pad-to-pad pair (-1 == -1),
+                          and its guard asserted the same expression the implementation used, so it
+                          held for any input. RESULTS.md claimed every figure was generated and
+                          fifteen were typed — inside the template the byte-equality test compared
+                          against. And an importorskip turned a repo-wide guard red
+2026-09-03  process       #105 opened for exercise 09 alone. #104 had carried three concerns on
+                          one branch, against "one pull request per exercise" in this file and
+                          "keep PRs scoped to one concern" in AGENTS.md. PK caught it; #104 is
+                          closed and every commit in it is reachable from #105 and #106
+2026-09-03  tripwire      tracking a file the tripwire watches turns it red on a HEALTHY checkout,
+                          which is the worst failure a tripwire has — the fix then looks like
+                          weakening it. Two files crossed that line (the explainer standards, and
+                          10's notebook), so all four watched lists now drop tracked paths, the
+                          way backup_local_only.py::collect already did
 ```
 2026-09-03  fleet         queue created; no unit has run yet
 2026-09-03  backlog       #87 merged: design standard named a CSS class that does not exist

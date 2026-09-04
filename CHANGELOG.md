@@ -10,6 +10,71 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Exercise 09 is built to its requirements**: seven measured numbers and two findings, all
+  generated into `results/*.json`, rendered into `RESULTS.md` by `tools/render_results.py`, and
+  drawn on a deployable page whose data file comes from the same runs. No figure in any of the three
+  is typed by hand, and a test flips the data to prove the *verdict words* are read from the run too.
+- The package: a trunk that owns no output head, exercise 02's frozen tokenizer so targets print as
+  **strings**, the `t+1`/`t+k` shifts with the off-by-one kept deliberately, padding and
+  document-boundary masks that return the contributing-token count as their evidence, masked
+  cross-entropy with perplexity, two kinds of chunking, tied/untied/tying-unavailable heads, and
+  peak-memory measurement in isolated child processes.
+- Two findings, each predicted before it was measured: a head predicting `t+2` sits above the
+  next-token head on **297 of 300 steps**, and an off-by-one target shift trains to **0.18** while
+  the correct one is still at **4.14** — the bug makes the loss *better*.
+- `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md` are tracked. They were filed as course
+  material and were invisible to every clone and CI job, so an agent asked to build an explainer
+  could not read the specification it is graded against. Measured against both leak gates before
+  the decision: zero verbatim runs, zero banned terms.
+
+### Fixed
+
+- **Exercise 09 vendored the shared layer as it stood before four fixes landed, and nothing
+  asserts the copies stay in step.** It was built while #120, #122, #126, #131 and #107 were open,
+  so its `web/_shared/` held the pre-fix stylesheets and no `theme.js` at all. Measured on 09's own
+  rendered page, hovering its `← Back` pill: **1.54:1 on `neon`** and **2.46:1 on `tinted-dark`**
+  against the 4.5:1 floor — now **12.19:1** and **7.77:1**. Separately, **3 of its 18 anchors**
+  painted the browser's default `#0000EE`, because nothing in the cascade reached them; now none do.
+
+  Its theme picker was a **hand-written 19-line copy** of the logic #107 centralised — the ninth
+  such copy, written after the refactor that removed the other eight. It now imports
+  `bindThemePicker` like every other page. Verified in a browser rather than by reading: selecting
+  *neon* sets `data-theme` and persists it, the page builds all **12** spine sections with no
+  console or page error, and nothing scrolls sideways at 390px.
+
+  **The batch ordering caught this, not a guard**, which is the part worth fixing later: a vendored
+  copy going stale is invisible, and the only honest check is a byte comparison against the exercise
+  that owns the original.
+
+  **Two claims measurement refuted before they could be written.** The refresh does *not* fix 09's
+  reading measure — it already held the 42–80 character band at all eight widths, with the stale
+  stylesheets and with the new ones, so 09 joins `COVERED` on its own merit. And `--on-accent` was
+  already *defined* in the stale `tokens.css`; what was missing was the rule that **uses** it. A
+  first probe read the token's value rather than the painted colour and would have reported the
+  defect as already fixed.
+
+- **The document-boundary mask kept every pad-to-pad pair.** Padding carries id `-1`, and
+  `-1 == -1` is `True`, so a mask written as `source == destination` reads correctly and drops
+  nothing but the joins. 68 of 125 "contributing" positions on the published example were padding
+  predicting padding — in the exercise whose item 3 exists to forbid exactly that. **The guard
+  agreed with the bug**: it asserted the dropped count equalled a count of transitions, which is the
+  same expression the implementation used.
+- **`RESULTS.md` claimed every figure was generated and fifteen were typed** — the sensitivity sweep
+  and the memory repetitions, the two blocks it leans on hardest. One printed `4.15` where the
+  generated table read `4.1447`. The byte-equality test could not see them: they lived inside the
+  template it compared against. They are a run now.
+- Chunked cross-entropy divided by the row count rather than the contributing count, so it disagreed
+  with the unchunked loss on any masked input. Every test written on unmasked input passed either
+  way.
+- The memory measurement was first written with `tracemalloc`, which is blind to torch: it reported
+  **429 bytes** for an **81,928,192-byte** logits tensor.
+- The generator's own test used `09`/`lossheads` as its fixture — the exact spec exercise 09 would
+  claim — so its collision check found itself the moment the exercise existed.
+- A builder guard asserted `'clone'` with single quotes, which is one phrasing of the property
+  rather than the property; `ruff format` normalising a builder to double quotes turned it red.
+
 ### Fixed
 
 - **Reverted the second build gate added one release earlier: it could not execute in the
