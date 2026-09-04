@@ -164,7 +164,12 @@ section > input[type='range'] { width: min(100%, 460px); accent-color: var(--acc
 .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .btn.ghost { background: transparent; color: var(--accent); border-color: var(--line); }
 .btn.ghost:hover { border-color: var(--accent); filter: none; }
+/* The chosen option carries a mark as well as a fill. Colour alone fails twice: in
+ * high-contrast the accent and the surface sit much closer than this design assumes, and a
+ * printed or screenshotted page loses the distinction entirely. The check character is the
+ * state made visible without hue. */
 .btn.ghost.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.btn.ghost.on::before { content: '\2713\00a0'; font-weight: 700; }
 
 .toggle { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 6px; }
 .tier-out { margin-top: 12px; }

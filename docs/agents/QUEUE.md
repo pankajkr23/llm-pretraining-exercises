@@ -527,6 +527,12 @@ predates the harness — so it is logged as what it was.
                           font size
 2026-09-04  retro-fix     #110 opened: exercise 05's contents rail never marked the section in
                           view. Same defect and same rule as #109
+2026-09-04  retro-fix     #116 opened: exercise 05's toggle marked its active option by painting the
+                          accent and NOTHING else. A screen reader read two identical buttons on a
+                          control whose whole purpose is that the answer changes, and under
+                          high-contrast the two fills are nearly the same, so a print or screenshot
+                          loses the state outright. Now announced with aria-pressed in a labelled
+                          group, and marked by something other than colour
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
