@@ -396,6 +396,12 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-04  retro-fix     #116 opened: exercise 05's toggle marked its active option by painting the
+                          accent and NOTHING else. A screen reader read two identical buttons on a
+                          control whose whole purpose is that the answer changes, and under
+                          high-contrast the two fills are nearly the same, so a print or screenshot
+                          loses the state outright. Now announced with aria-pressed in a labelled
+                          group, and marked by something other than colour
 2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
                           hook. A reviewer copied into .claude/ and then edited there diverges
                           silently from its tracked source, and the installed copy is the one that
