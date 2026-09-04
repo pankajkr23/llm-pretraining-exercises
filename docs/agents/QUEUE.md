@@ -396,7 +396,7 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
-2026-09-04  retro-fix     exercise 04's permalink fix opened: 13 chapter anchors read "#" with no
+2026-09-04  retro-fix     #127 opened: exercise 04's permalink fix -- 13 chapter anchors read "#" with no
                           aria-label, so a screen reader announced "number sign" thirteen times for
                           thirteen destinations. 03 and 06 already carried the answer; the wording
                           is copied rather than reinvented, because an identical control should
