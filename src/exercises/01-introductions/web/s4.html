@@ -5,7 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Memorise, or Generalise · Data</title>
     <style>
-      
+      /* A LIGHT set, which never existed: both of these were declared only inside the dark
+         blocks, so on the three light themes -- the default -- they resolved to nothing. Text
+         coloured with them fell back to the inherited ink and the canvas kept whatever fill was
+         last set, so the two series stopped being told apart while everything still looked
+         drawn. Values follow s1.html's own precedent for the same two hues. */
+      :root {
+        --warm: #a75a00;
+        --cool: #0071e3;
+      }
       @media (prefers-color-scheme: dark) {
         :root:not([data-theme]) {
           --cool: #2997ff;
@@ -28,11 +36,30 @@
       .lede b { color: var(--ink); font-weight: 600; }
 
       .controls { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; margin: 30px 0 6px; }
-      .sizectl { display: flex; align-items: center; gap: 14px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
-      .sizectl input[type="range"] { -webkit-appearance: none; appearance: none; width: 260px; height: 3px; background: var(--line); border-radius: 3px; outline: none; }
+      /* Wraps, and the slider is allowed to shrink. It was a 260px track beside a 96px value in a
+   row that could not reflow, so the control was 419px wide inside a 272px content box: the
+   whole page scrolled sideways by 123px at 320, 83px at 360 and 53px at 390. `min-width: 0`
+   is the part that matters — a flex item's default `min-width: auto` refuses to shrink below
+   its content, so `flex: 1` alone would have moved nothing. */
+      .sizectl { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+      .sizectl input[type="range"] { -webkit-appearance: none; appearance: none; flex: 1 1 160px; min-width: 0; max-width: 260px; height: 3px; background: var(--line); border-radius: 3px; outline: none; }
+      /* `outline: none` on the track with no replacement meant a keyboard reader got NOTHING:
+         pixel-diffing the focused against the unfocused state changed 0 of 8,694 pixels, in all
+         six themes, while `:focus-visible` was true the whole time. These sliders are the entire
+         interaction on three of the four proof pages and the first stop after the back link, so
+         the reader tabbed in, saw no change, and arrow keys then moved a number silently.
+         `docs/DESIGN.md`: "`:focus-visible` always has a visible ring." The thumb is lit as well
+         as the track, because a 3px rail is a thin thing to ring and the thumb is what moves. */
+      input[type="range"]:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 4px;
+        border-radius: 3px;
+      }
+      input[type="range"]:focus-visible::-webkit-slider-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
+      input[type="range"]:focus-visible::-moz-range-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
       .sizectl input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--panel); border: 2px solid var(--accent); cursor: pointer; }
       .sizectl input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--panel); border: 2px solid var(--accent); cursor: pointer; }
-      .sizectl .nval { color: var(--accent); font-weight: 700; font-size: 15px; min-width: 96px; }
+      .sizectl .nval { color: var(--accent); font-weight: 700; font-size: 15px; min-width: 96px; flex: 0 0 auto; }
       .btn { appearance: none; border: 1px solid var(--line); background: transparent; color: var(--ink); font-family: var(--mono); font-size: 13px; padding: 8px 16px; border-radius: 9px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
       .btn:hover { border-color: var(--accent); color: var(--accent); }
       .btn:disabled { opacity: 0.5; cursor: progress; }
@@ -62,10 +89,18 @@
       a frame and then repaint, which is the flash a theme switcher is judged by.
     -->
     <script>
-      try {
-        var t = localStorage.getItem('era5-theme');
-        if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t);
-      } catch (e) {}
+      // Wrapped, because `var` at the top level of a classic script creates a GLOBAL. This
+      // bootstrap leaked one named `t`, and s3.html's page script opens with
+      // `let E, W, …, t, …` — a `let` cannot redeclare an existing `var` global, so the whole
+      // script threw `Identifier 't' has already been declared` before its first statement and
+      // the page rendered nothing at all. The other four pages leaked the same name and only
+      // escaped by not happening to reuse it.
+      (function () {
+        try {
+          var t = localStorage.getItem('era5-theme');
+          if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+      })();
     </script>
   </head>
   <body>
@@ -98,16 +133,16 @@
             </div>
           </div>
           <div class="panel">
-            <h3>The gap vs dataset size</h3>
-            <canvas id="curve" width="640" height="440"></canvas>
+            <h3 id="cap-curve">The gap vs dataset size</h3>
+            <canvas role="img" aria-labelledby="cap-curve" id="curve" width="640" height="440"></canvas>
           </div>
         </div>
 
         <div class="col-right">
           <div class="panel" id="board">
-            <h3>Decision boundary</h3>
+            <h3 id="cap-boundary">Decision boundary</h3>
             <span class="badge" id="badge">training…</span>
-            <canvas id="boundary" width="1000" height="1000"></canvas>
+            <canvas role="img" aria-labelledby="cap-boundary" id="boundary" width="1000" height="1000"></canvas>
             <p class="caption" id="caption"></p>
           </div>
         </div>

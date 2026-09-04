@@ -32,15 +32,79 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 EXERCISES = exercises_in(REPO_ROOT / "src" / "exercises")
 
+
+def _tracked_paths() -> frozenset[Path]:
+    """Everything git tracks, as absolute paths."""
+    import subprocess
+
+    done = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "ls-files", "-z"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if done.returncode != 0:  # pragma: no cover - not a git checkout at all
+        return frozenset()
+    return frozenset(REPO_ROOT / name for name in done.stdout.split("\0") if name)
+
+
+def _tracked_on_the_default_branch() -> frozenset[Path]:
+    """Paths git tracks on `origin/main`, which are recoverable whatever branch you are standing on.
+
+    **A branch that predates a file becoming tracked is not a loss, and this guard said it was.**
+    `docs/EXPLAINER_*.md` and exercise 10's notebook became tracked in #106. Checking out any older
+    branch removes them -- correctly, they are not in that commit -- and they are gitignored there,
+    so `_tracked_paths()` does not see them and the class reads as "present but incomplete", the
+    exact shape of a real loss. That failed the post-checkout hook and made `sync_open_prs.py`
+    refuse **seventeen** open pull requests, on a checkout where nothing whatsoever was lost.
+
+    So the question is not "does the current commit track this" but "can git give it back". If
+    `origin/main` cannot be resolved -- a shallow CI checkout, a clone with a differently-named
+    remote -- this contributes nothing and the guard behaves exactly as it did before.
+    """
+    import subprocess
+
+    done = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "ls-tree", "-r", "--name-only", "-z", "origin/main"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if done.returncode != 0:  # pragma: no cover - no origin/main here
+        return frozenset()
+    return frozenset(REPO_ROOT / name for name in done.stdout.split("\0") if name)
+
+
+TRACKED = _tracked_paths() | _tracked_on_the_default_branch()
+
+
+def local_only(paths: list[Path]) -> list[Path]:
+    """Drop anything git already tracks. **A tracked file is not in the local-only class.**
+
+    Two files have crossed that line and each one turned this guard red on a *healthy* checkout —
+    which is the worst failure a tripwire can have, because the fix is then to weaken it.
+
+    `docs/EXPLAINER_PROMPT.md` and `docs/EXPLAINER_PATTERN.md` became tracked when it turned out
+    that no clone, worktree or CI job could read the specification an explainer is graded against.
+    Exercise 10's notebook became tracked because its submission requires the ipynb and offers no
+    alternative. In both cases a fresh clone then held *some* of a watched class and not the rest,
+    which is exactly the shape this file exists to detect.
+
+    `tools/backup_local_only.py::collect` solves the same problem the same way, with
+    `found -= _tracked(root)`.
+    """
+    return [p for p in paths if p not in TRACKED]
+
+
 #: One notebook and one builder per exercise, by convention.
-EXPECTED_NOTEBOOKS = [
-    REPO_ROOT / "notebooks" / f"S{p.name[:2]}-{p.name[3:]}.ipynb" for p in EXERCISES
-]
-EXPECTED_BUILDERS = [p / "tools" / "build_notebook.py" for p in EXERCISES]
+EXPECTED_NOTEBOOKS = local_only(
+    [REPO_ROOT / "notebooks" / f"S{p.name[:2]}-{p.name[3:]}.ipynb" for p in EXERCISES]
+)
+EXPECTED_BUILDERS = local_only([p / "tools" / "build_notebook.py" for p in EXERCISES])
 
 #: The requirements text for each exercise. Gitignored by name everywhere, so a clone has none and a
 #: healthy working checkout has one per exercise.
-EXPECTED_BRIEFS = [p / "REQUIREMENTS.md" for p in EXERCISES]
+EXPECTED_BRIEFS = local_only([p / "REQUIREMENTS.md" for p in EXERCISES])
 
 #: Programme-level material — the course corpus. **This was the largest exposure and nothing
 #: watched it.**
@@ -60,11 +124,13 @@ NOTES_CORPUS = backup.EXTERNAL_SOURCES["notes"]
 #: Where `tools/backup_local_only.py` writes. Read here as a **high-water mark**: a file the store
 #: holds and this checkout does not is a loss, and no hand-written floor can notice that.
 STORE = REPO_ROOT.parent / f".{REPO_ROOT.name}-local-only"
-EXPECTED_PROGRAMME = [
-    REPO_ROOT / "docs" / "REQUIREMENTS.md",
-    REPO_ROOT / "docs" / "EXPLAINER_PROMPT.md",
-    REPO_ROOT / "docs" / "EXPLAINER_PATTERN.md",
-]
+EXPECTED_PROGRAMME = local_only(
+    [
+        REPO_ROOT / "docs" / "REQUIREMENTS.md",
+        REPO_ROOT / "docs" / "EXPLAINER_PROMPT.md",
+        REPO_ROOT / "docs" / "EXPLAINER_PATTERN.md",
+    ]
+)
 
 
 #: Every class this file watches, flattened. Used to answer "is this a working checkout?" **once**,
