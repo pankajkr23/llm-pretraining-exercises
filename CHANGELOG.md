@@ -1,17 +1,4 @@
 # Changelog
-
-All notable changes to this project are documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-Record user-facing changes under `[Unreleased]` as they land; on release, rename that
-section to the new version with a date and open a fresh `[Unreleased]`.
-
-## [Unreleased]
-
-### Fixed
-
 - **Exercise 05's fourteen chapter permalinks announced as "number sign"** — the same defect as
   exercise 04, on this page's two anchor builders. Exercises 03 and 06 already carry the answer and
   the wording is copied verbatim, because an identical control should announce identically. 14 of
@@ -32,6 +19,28 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   `pre.code` was `overflow-x: auto` inside a 72ch box, so the commands had to be scrolled sideways
   to be read or checked — including at 2560px, where **676px sat empty beside the box**. They now
   wrap. Measured at 2560, 1440, 768 and 390: **0 of 2 blocks cut**, against 2 of 2 before.
+
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+Record user-facing changes under `[Unreleased]` as they land; on release, rename that
+section to the new version with a date and open a fresh `[Unreleased]`.
+
+## [Unreleased]
+
+### Fixed
+
+- **The mermaid render test spent its 180-second budget downloading rather than rendering.** It
+  shells out to `npx --yes @mermaid-js/mermaid-cli`, and `--yes` *fetches* the package on first
+  use — it bundles puppeteer, so on a cold runner that download alone can exceed the timeout the
+  test allows for a render. It failed on three of four consecutive branches and passed on the
+  fourth: a flake that reds unrelated pull requests at random, which is worse than a test that
+  fails honestly. The `mixtures` shard now fetches it in a step with a budget of its own, leaving
+  the test's 180 seconds for what they were sized for. `PUPPETEER_SKIP_DOWNLOAD` stops it pulling a
+  second chromium — the test already points puppeteer at the playwright browser the shard installs
+  two steps earlier.
 
 ### Added
 
