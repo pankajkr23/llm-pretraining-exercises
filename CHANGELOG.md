@@ -10,6 +10,38 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Exercise 01's `s3.html` was dead on arrival, and had been for as long as it has been
+  deployed.** The theme bootstrap declared `var t` at the top level of a classic script — which
+  creates a *global* — and the page script opens `let E, W, …, t, …`, which cannot redeclare it.
+  The whole 150-line script therefore threw `Identifier 't' has already been declared` **before its
+  first statement**: no category chips, no sample sentence, an empty canvas. Every file-level check
+  passed the entire time, because every file was perfectly well-formed. The bootstrap is now
+  wrapped on all five pages, four of which leaked the same global and escaped only by not happening
+  to reuse the name.
+
+- **Three of the four proof pages had no light palette at all.** `--animal`, `--fruit`, `--verb`,
+  `--end`, `--warm` and `--cool` were declared only inside `prefers-color-scheme: dark` blocks and
+  the two dark `data-theme` selectors, so on the three light themes — **the default** — they
+  resolved to nothing. A chip's background was never painted, leaving its white label on the white
+  page at **1.00:1**; canvas fills silently kept whatever was set last, so two series stopped being
+  distinguishable while the diagram still looked drawn. Each page now declares a light set,
+  following `s1.html`'s own precedent for the same hues.
+
+- **The category chips are legible in all six themes**, measured as painted rather than read from
+  the stylesheet — the swatch is set from JavaScript, so it appears in no rule. A paired
+  `--chip-ink` carries the label colour, one per theme group: white clears AA on all four light
+  swatches (**4.70:1** at worst) and near-black on all four dark ones (**6.53:1** at worst), against
+  1.00:1 to 3.02:1 before.
+
+### Added
+
+- **Exercise 01 has a browser test, which it had never had.** Both failures above are invisible in
+  the source and obvious the moment a page is opened, which is the whole argument for
+  `src/exercises/01-introductions/tests/test_page_render.py`. Run against the shipped pages it
+  reports **17 failures**; run against the fixed ones, none.
+
 ### Added
 
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two
