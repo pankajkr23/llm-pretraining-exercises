@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Record user-facing changes under `[Unreleased]` as they land; on release, rename that
 section to the new version with a date and open a fresh `[Unreleased]`.
 
+### Fixed
+
+- **Three controls painted white text on a background that is bright in half the themes.** The
+  `← Back` pill on hover and the blocking-caveat chip (both in the shared component stylesheet, so
+  on all six deployable pages) and exercise 04's toggle in its *on* state all declared
+  `color: #fff` over `var(--accent)` or `var(--gotcha-safety)`. Those tokens are dark blues and reds
+  on the three light themes and bright ones on the three dark themes, so the literal was right in
+  half the cases and wrong in the other half — measured on the shipped page, the back pill's label
+  ran **1.54:1 on `neon`**, which is not hard to read but absent. Every theme already ships the
+  paired token that answers this, so all three now use `--on-accent`: the same white on the light
+  themes, near-black on the dark ones, **5.38:1 to 12.19:1 across all six**.
+
+  `tests/test_no_literal_ink_on_a_token_background.py` refuses the whole class. It is lexical
+  rather than a browser check on purpose: two of the three are `:hover` and `.on` states that no
+  static render ever enters, so a rendered page would have to know to go looking for them, while
+  the source says it unconditionally.
+
 ## [Unreleased]
 
 ### Added
