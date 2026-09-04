@@ -298,6 +298,11 @@ const chapter = ({ id, n, title, claim, big, bigSub, body, arithmetic, pill }) =
   const h = $('h2');
   h.append($('span', 'n', n), document.createTextNode(title));
   const anchor = $('a', 'anchor', '#');
+  // Without this the accessible name is the character '#', which a screen reader says as
+  // "number sign" -- once per chapter, for fourteen different destinations. Exercises 03
+  // and 06 already carry this exact wording; an identical control should announce
+  // identically, so it is copied rather than reinvented.
+  anchor.setAttribute('aria-label', 'Link to this chapter');
   anchor.href = `#${id}`;
   h.append(anchor);
   sec.append(h);
@@ -1317,6 +1322,11 @@ function section(id, role, title, nodes) {
   const h = $('h2');
   h.append(document.createTextNode(title));
   const anchor = $('a', 'anchor', '#');
+  // Without this the accessible name is the character '#', which a screen reader says as
+  // "number sign" -- once per chapter, for fourteen different destinations. Exercises 03
+  // and 06 already carry this exact wording; an identical control should announce
+  // identically, so it is copied rather than reinvented.
+  anchor.setAttribute('aria-label', 'Link to this chapter');
   anchor.href = `#${id}`;
   h.append(anchor);
   sec.append(h);

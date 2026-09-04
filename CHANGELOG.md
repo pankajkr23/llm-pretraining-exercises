@@ -10,6 +10,29 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Exercise 05's fourteen chapter permalinks announced as "number sign"** — the same defect as
+  exercise 04, on this page's two anchor builders. Exercises 03 and 06 already carry the answer and
+  the wording is copied verbatim, because an identical control should announce identically. 14 of
+  14 now carry a name.
+
+- **All seventeen SVG figure labels were unreadable on a phone.** An `<svg>` with a viewBox scales
+  its text with the drawing, so a label's effective size is its authored size times the rendered
+  scale. At a 390px viewport the figures rendered at 0.639 scale, putting every label between
+  **6.39px and 9.4px** — the figure legible and the words on it not. Reading the authored
+  `font-size` would have reported 10px and been useless.
+
+  The figure is already a horizontal scroller by design, so the fix is to stop shrinking it below
+  the point its own labels survive — `min-width` 460px → 690px — rather than enlarging the type,
+  which would change the label-to-drawing proportion the figure was drawn at. Worst label now
+  **9.58px** at 390, unchanged at 768 and above.
+
+- **Every reproduce command longer than 72 characters was cut off, at every width.**
+  `pre.code` was `overflow-x: auto` inside a 72ch box, so the commands had to be scrolled sideways
+  to be read or checked — including at 2560px, where **676px sat empty beside the box**. They now
+  wrap. Measured at 2560, 1440, 768 and 390: **0 of 2 blocks cut**, against 2 of 2 before.
+
 ### Added
 
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two
