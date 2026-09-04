@@ -1,4 +1,17 @@
 # Changelog
+
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+Record user-facing changes under `[Unreleased]` as they land; on release, rename that
+section to the new version with a date and open a fresh `[Unreleased]`.
+
+## [Unreleased]
+
+### Fixed
+
 - **Exercise 07's twenty-five table headers were below WCAG AA, in the default theme only.**
   `--muted` on `--track` measures **4.15:1** with no `data-theme` set — the state most readers are
   in — against 4.84 to 14.17:1 in the other five. That is exactly why it survived: a two-theme
@@ -13,18 +26,6 @@
   way as exercise 05: the figure is already a horizontal scroller, so it stops shrinking below the
   point its own labels survive (`min-width` 460px → 690px) rather than having its type enlarged,
   which would change the label-to-drawing proportion it was drawn at. Worst label now **9.73px**.
-
-All notable changes to this project are documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-Record user-facing changes under `[Unreleased]` as they land; on release, rename that
-section to the new version with a date and open a fresh `[Unreleased]`.
-
-## [Unreleased]
-
-### Fixed
 
 - **Exercise 07's contents rail never said where the reader was.** `_shared/page.css` has styled
   `.rail-link.on` — an accent bar and a bold label — since before this page existed, and the page
