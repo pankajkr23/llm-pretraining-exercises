@@ -20,6 +20,10 @@ carried in a summary that is lossy by construction.
 
 **Append evidence, not prose.**
 
+2026-09-04  process       #104 closed and split: it carried three concerns on one branch, against
+                          "one pull request per exercise" here and "keep PRs scoped to one
+                          concern" in AGENTS.md. #105 is exercise 09, #106 is exercise 10 stacked
+                          on it. PK caught it
 ```
 2026-09-03  unit-07-retrofit  pytest -m "not integration" -> 1449 passed, 1 skipped @ b0456e9
 2026-09-03  unit-07-retrofit  BLOCKED: rail-inner missing; logged as finding F3, continuing
@@ -320,6 +324,26 @@ Two things follow. Nothing below carries a `@ sha` unless it was checked, becaus
 evidence line is worse than a missing one. And the backlog batch was not run as *units* — it
 predates the harness — so it is logged as what it was.
 
+2026-09-03  exercise-09   09 built to its requirements: seven numbers and two findings, all
+                          generated into results/ and rendered into both RESULTS.md and the page's
+                          data file. A t+2 head sits above a t+1 head on 297 of 300 steps; an
+                          off-by-one target shift trains to 0.18 against the correct shift's 4.14 —
+                          the bug makes the loss BETTER
+2026-09-03  review        three reviewers read 09 and found three blockers, every one a claim that
+                          read as checked. The boundary mask kept every pad-to-pad pair (-1 == -1),
+                          and its guard asserted the same expression the implementation used, so it
+                          held for any input. RESULTS.md claimed every figure was generated and
+                          fifteen were typed — inside the template the byte-equality test compared
+                          against. And an importorskip turned a repo-wide guard red
+2026-09-03  process       #105 opened for exercise 09 alone. #104 had carried three concerns on
+                          one branch, against "one pull request per exercise" in this file and
+                          "keep PRs scoped to one concern" in AGENTS.md. PK caught it; #104 is
+                          closed and every commit in it is reachable from #105 and #106
+2026-09-03  tripwire      tracking a file the tripwire watches turns it red on a HEALTHY checkout,
+                          which is the worst failure a tripwire has — the fix then looks like
+                          weakening it. Two files crossed that line (the explainer standards, and
+                          10's notebook), so all four watched lists now drop tracked paths, the
+                          way backup_local_only.py::collect already did
 ```
 2026-09-03  fleet         queue created; no unit has run yet
 2026-09-03  backlog       #87 merged: design standard named a CSS class that does not exist
@@ -396,6 +420,93 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-04  shared-layer  #108 opened: _shared/page.css styles 101 classes and 29 appear on no
+                          rendered page. NOTHING deleted — #101 nearly removed a live stylesheet on
+                          exactly this evidence. Measured from a rendered DOM after driving every
+                          input, which is what moved .filter-none and .rail-shut off the list
+2026-09-04  ci            #124 opened: `npx --yes @mermaid-js/mermaid-cli` FETCHES the package on
+                          first use and it bundles puppeteer, so on a cold runner the download ran
+                          past the 180s the render test allows for a RENDER. Failed on three of
+                          four consecutive branches and passed on the fourth — a flake that reds
+                          pull requests that did not touch it, which teaches people to re-run a
+                          gate rather than read it. The fetch moves to a step with its own budget
+2026-09-04  ci            the preview-deploy predicate opened: every push deployed a preview,
+                          whatever it touched, and about sixty pushes in a day rate-limited the
+                          Vercel project for 24 HOURS -- so previews were unavailable for the pull
+                          requests that had actually changed a page. PK caught it. `ignoreCommand`
+                          now builds only when a deployed path changed: 6 of the last 8 commits on
+                          main would not have deployed. THE OBVIOUS PATHSPEC IS SILENTLY WRONG --
+                          `src/exercises/*/web` matches nothing, so the predicate would have
+                          skipped EVERY deploy; `:(glob)` is what makes it mean what it looks like,
+                          and I wrote the broken one first
+2026-09-04  ci            #133 opened: every push deployed a Vercel preview, whatever it
+                          touched, and about sixty in a day exhausted the quota and rate-limited
+                          the project for 24 HOURS -- so previews were unavailable for the pull
+                          requests that had actually changed a page. PK caught it. `ignoreCommand`
+                          now builds only when a deployed path changed: 6 of the last 8 commits on
+                          main would not have deployed. THE OBVIOUS PATHSPEC IS SILENTLY WRONG --
+                          `src/exercises/*/web` matches nothing, so the predicate would have
+                          skipped EVERY deploy, and `:(glob)` is what makes it mean what it looks
+                          like. I wrote the broken one first and caught it only by running the
+                          predicate over real history
+2026-09-04  tooling       #134 merged: the sync tool anchored a re-applied block on the single
+                          line that FOLLOWED it, and QUEUE.md has a dozen code fences -- so #108's
+                          entry landed forty lines above the `## Log` heading. It was still in the
+                          file, so every count of it looked right; only queue_status.py, which
+                          reads the log section and nothing else, noticed, two merges later. The
+                          anchor is a neighbour PAIR now, with reported fallbacks. Third defect
+                          from that tool in three live runs, each invisible in the diff
+2026-09-04  tooling       #135 opened: a pull request that merges without logging itself makes
+                          main fail its OWN queue gate, and every branch cut from main then
+                          inherits a failure that points nowhere near the cause.
+                          Three merge rounds lost to it in one afternoon. The existing check looks
+                          BACKWARDS -- does the log record what already merged -- so by the time it
+                          fires the damage is on main. This one looks forwards, at the pull request
+                          under test, so the branch that would cause the problem is the one that
+                          goes red
+2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
+                          hook. A reviewer copied into .claude/ and then edited there diverges
+                          silently from its tracked source, and the installed copy is the one that
+                          runs — so the drift is invisible in review by construction
+2026-09-04  tooling       #125 opened: merging one pull request here BREAKS the next, measured
+                          rather than assumed. Every open branch touches QUEUE.md, CHANGELOG.md and
+                          the quote-check receipt, and the receipt is a digest over ALL tracked
+                          prose — so merging two branches produced a QUEUE conflict AND left the
+                          receipt full of conflict markers, killing its checker with a
+                          JSONDecodeError instead of a clean failure. sync_open_prs.py merges main
+                          into every open branch, rebuilds the two logs as main's version plus that
+                          branch's own entry, regenerates the receipt and pushes — never rebasing,
+                          never force-pushing. `merge=union` was refused: it keeps both sides, and
+                          fifteen branches carry a byte-identical #103 line, so the fifteenth merge
+                          would land fifteen copies
+2026-09-04  retro-fix     #120 opened: `color: #fff` on a background that is bright in half the
+                          themes, in three controls — the back pill on hover and the blocking
+                          caveat (shared, so all six pages) and 04's toggle in its ON state.
+                          1.54:1 on neon; --on-accent already existed and clears AA on all six. The
+                          guard is lexical because two of the three are :hover and .on states that
+                          no static render enters. It found the third site itself
+2026-09-04  retro-fix     #122 opened: the shared step strip squeezed its prose to 29 characters
+                          at 768px — an iPad portrait — because the two-column layout collapsed at
+                          max-width 760 while keeping a FIXED 296px figure column. Also 41 at
+                          exactly 1180px and nowhere else, that being where page.css starts
+                          reserving the rail gutter. 90 of 360 and 28 of 112 step paragraphs under
+                          the floor before, none after. THE PROMOTED GUARD COULD NOT SEE IT: 08's
+                          ROOM_TO_SPARE asks whether a block leaves room inside its own box and a
+                          squeezed paragraph fills its box exactly. Found by watching it fail
+2026-09-04  retro-fix     #126 opened: exercise 03's print fix -- 0 of 45 scrolly verdict lines survived
+                          `emulate_media("print")` because the end-state rule existed only for
+                          prefers-reduced-motion. A printed sheet carried 11 figure states and lost
+                          34. Fixed by adding `print` to the SAME media query rather than writing a
+                          twin block — two blocks drift, and drift is what produced the defect
+2026-09-04  retro-fix     #131 opened: the repo-wide link-colour fix. Reported as 7 anchors at the
+                          browser default; the real count is TWO. Five compute #0000EE on the
+                          anchor while every word sits in a child with its own colour, so that
+                          colour paints nothing — the third container-not-text artefact in this
+                          sweep, after .rail-link and .badge. The verifier had said the scope was
+                          overstated 3.5x and 7/2 is exactly that. The guard's FIRST version was
+                          blind: filtering to anchors with their own text excluded the very links
+                          whose children inherit the unstyled colour, and it passed the break.
+                          Found only by breaking a second page that had a real one
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
@@ -435,26 +546,45 @@ predates the harness — so it is logged as what it was.
                           check failed on `git pull` after every single merge and the fix — another
                           pull request — needed recording in turn. An entry is now written when a
                           pull request is OPENED, and the regress closes
-2026-09-03  exercise-09   09 built to its requirements: seven numbers and two findings, all
-                          generated into results/ and rendered into both RESULTS.md and the page's
-                          data file. A t+2 head sits above a t+1 head on 297 of 300 steps; an
-                          off-by-one target shift trains to 0.18 against the correct shift's 4.14 —
-                          the bug makes the loss BETTER
-2026-09-03  review        three reviewers read 09 and found three blockers, every one a claim that
-                          read as checked. The boundary mask kept every pad-to-pad pair (-1 == -1),
-                          and its guard asserted the same expression the implementation used, so it
-                          held for any input. RESULTS.md claimed every figure was generated and
-                          fifteen were typed — inside the template the byte-equality test compared
-                          against. And an importorskip turned a repo-wide guard red
-2026-09-03  process       #105 opened for exercise 09 alone. #104 had carried three concerns on
-                          one branch, against "one pull request per exercise" in this file and
-                          "keep PRs scoped to one concern" in AGENTS.md. PK caught it; #104 is
-                          closed and every commit in it is reachable from #105 and #106
-2026-09-03  tripwire      tracking a file the tripwire watches turns it red on a HEALTHY checkout,
-                          which is the worst failure a tripwire has — the fix then looks like
-                          weakening it. Two files crossed that line (the explainer standards, and
-                          10's notebook), so all four watched lists now drop tracked paths, the
-                          way backup_local_only.py::collect already did
+2026-09-04  shared-layer  #107 opened: one theme picker, not eight — 106 lines of duplicated
+                          logic removed. One of its four guards was BLIND and the deliberate break
+                          is how I found out: it checked the string `bindThemePicker` appeared, so
+                          deleting the CALL and leaving the import satisfied it
+2026-09-04  guards        #136 opened: two guards scanned wider than they assert. The basename
+                          check globbed the repo ROOT, so nine .claude/worktrees/ scratch copies
+                          each counted as a second definition of every test file -- 122 invented
+                          clashes pytest could never hit, since testpaths is ["src","tests"] and it
+                          collects zero files there. Now reads those roots from pyproject rather
+                          than restating them. The generator's naming check globbed [0-9][0-9]-* by
+                          name instead of exercises_in, so 09/10 -- on disk holding only their
+                          gitignored local-only files while the tracked half waits in an unmerged
+                          branch -- read as exercises and died on an absent pyproject.toml. Both
+                          were GREEN IN CI and red only locally, which is where the notebook,
+                          tripwire and quote gates live and CI has no twin
+2026-09-04  deploy        #137 opened: a preview was built for pull requests that change no page.
+                          VERCEL_GIT_PREVIOUS_SHA is the last successful DEPLOYMENT, not the parent
+                          -- the comment said otherwise -- so a sync that merged main in read as
+                          deploy-worthy and built a copy of main's own site. A second gate now asks
+                          whether the preview would show anything: identical deployed files to main
+                          means skip. Two TREES, not two histories, so no common ancestor is needed
+                          and it survives a shallow clone. MEASURING REFUTED MY FIRST ATTEMPT: a
+                          plain diff against main would have built MORE, since 18 of 19 open pull
+                          requests change a deployed file and would then rebuild on test-only
+                          pushes. Sized honestly at ONE build per sync round, not the ~20 first
+                          claimed; corrected in the changelog where the claim was made
+2026-09-04  deploy        #138 opened: REVERTS #137. Its gate compared against origin/main, and
+                          Vercel checks out a single-branch SHALLOW clone -- the first build after
+                          it merged printed "origin/main could not be resolved". Inert in
+                          production; unsound wherever the ref does resolve, because a branch that
+                          reverts its page back to main's content skipped its build and left the
+                          live preview serving a change the PR no longer made. 24 hermetic cases
+                          passed over it: they proved the predicate self-consistent and said
+                          nothing about whether its inputs exist in a real build. AGENTS.md now
+                          requires reading the target environment's own log first. Also records,
+                          unfixed, the pre-existing HEAD^ fallback: with no previous deployment a
+                          branch whose TIP commit is not deployable gets no preview at all, self-
+                          reinforcingly. Not fixed here -- verifying it needs a real build log,
+                          which is the rule being added
 2026-09-03  exercise-10   10 built: six items, all generated. Two figures were flattering
                           themselves — MFU divided CPU work by a GPU's peak (39.13%) and priced the
                           embedding tables, which are gathers. The honest figure is 27.69%
@@ -470,15 +600,10 @@ predates the harness — so it is logged as what it was.
 2026-09-03  process       09 and 10 were split onto their own branches after PK pointed out the
                           convention: one branch and one pull request per exercise. #104 had three
                           concerns stacked on it
-```
 2026-09-04  exercise-10   #106 opened: one optimiser step, made to tell the truth about itself.
                           Stacked on feat/09-loss-harness rather than main, so #105 has to merge
                           first. Float decomposition, gradient accumulation that refuses an even
                           micro-batch count, MFU against a MEASURED device peak rather than a
                           datasheet one, and telemetry that requires the loss to follow a leading
                           indicator rather than merely precede it
-2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
-                          hook. A reviewer copied into .claude/ and then edited there diverges
-                          silently from its tracked source, and the installed copy is the one that
-                          runs — so the drift is invisible in review by construction
 ```

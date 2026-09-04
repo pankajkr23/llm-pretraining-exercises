@@ -26,8 +26,20 @@
 /* The prose column is capped at a reading measure and the figure column takes whatever is left, so
    a wider window grows the chart rather than the line length. */
 @media (min-width: 1081px) {
-  .scrolly { grid-template-columns: minmax(0, 62ch) minmax(360px, 1fr); gap: 44px; }
-  .scrolly.wide { grid-template-columns: minmax(0, 60ch) minmax(430px, 1fr); gap: 48px; }
+  /* The prose column carries a FLOOR, not just a cap. With `minmax(0, …)` its minimum was zero,
+     so the figure column's own minimum won every squeeze -- and the tightest squeeze is at
+     exactly 1180px, where `page.css` starts reserving a 260px rail gutter and the content box is
+     therefore NARROWER than it is at 1179. That one width ran 41 characters a line while every
+     other width in the range ran 48. The floor is 48ch to leave room for `.step`'s own 20px of
+     border and padding, which come off the paragraph rather than the track. */
+  .scrolly {
+    grid-template-columns: minmax(min(48ch, 100%), 62ch) minmax(min(340px, 100%), 1fr);
+    gap: 44px;
+  }
+  .scrolly.wide {
+    grid-template-columns: minmax(min(48ch, 100%), 60ch) minmax(min(400px, 100%), 1fr);
+    gap: 48px;
+  }
 }
 
 /* The reader's own input spans both columns — it governs the whole widget, not one side. */
@@ -86,7 +98,9 @@
   color: var(--faint);
   margin-bottom: 7px;
 }
-.step p { margin: 0; max-width: 44ch; }
+/* 46ch, because 44 sat ON the 42-character fail line once the column's own padding was
+   taken off it -- the design targets 46 and above, and the gap is there to leave room. */
+.step p { margin: 0; max-width: 46ch; }
 .step .shard {
   font-family: var(--mono);
   font-size: 11.5px;
@@ -184,14 +198,25 @@
 
 /* ------------------------------------------------------------------ narrow, reduced-motion */
 
-@media (max-width: 760px) {
+/* 900, not 760. Below 1081px the figure column is a FIXED 296px, so every pixel the window
+   loses comes out of the prose column -- and the collapse fired at 760px while an iPad portrait
+   is 768 and a common Android tablet is 800. Measured in that gap, a step's paragraph ran 29
+   characters a line at 768px and 41 at 1180px, against the repo's 42-character floor. The two
+   columns are worth having only where the left one can still hold a reading measure. */
+@media (max-width: 900px) {
   .scrolly, .scrolly.wide { grid-template-columns: 1fr; gap: 0; }
   .sticky { position: sticky; top: 0; order: -1; background: var(--bg); padding: 10px 0 6px; z-index: 3; }
   .step { min-height: 30vh; margin-bottom: 5vh; }
 }
 
-/* The complete end state: every step and its verdict, with nothing left to scroll for. */
-@media (prefers-reduced-motion: reduce) {
+/* The complete end state: every step and its verdict, with nothing left to scroll for.
+ *
+ * Paper is the same problem as reduced motion and gets the same answer, in one rule rather than a
+ * twin that can drift apart. A printed or exported page cannot scroll, so the pinned figure carries
+ * whichever single state was live when the page was printed and every other state of that widget is
+ * simply gone. The inline verdict line is the only place the rest can appear — and it was
+ * `display: none` in every print, PDF and paper copy this page has ever produced. */
+@media (prefers-reduced-motion: reduce), print {
   .step { min-height: 0; margin-bottom: 22px; }
   .step .inline { display: block; }
   .sticky { position: static; }
@@ -432,7 +457,15 @@ details.arithmetic > summary:focus-visible { outline: 2px solid var(--accent); o
 .modkey-d[data-modality='research_papers'] { background: color-mix(in srgb, var(--grade-b) 55%, var(--panel)); }
 .modkey-d[data-modality='cot_reasoning'] { background: color-mix(in srgb, var(--grade-a) 55%, var(--panel)); }
 .modkey-d[data-modality='agentic_traces'] { background: var(--ink); }
-.stagereg-note { font-size: 11.5px; line-height: 1.55; color: var(--muted); margin: 0 0 14px; }
+/* A reading measure even when the grid has collapsed and this note has the full page to
+   itself -- at 11.5px an uncapped line ran 117 characters. */
+.stagereg-note {
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--muted);
+  margin: 0 0 14px;
+  max-width: 76ch;
+}
 
 /* Coverage status. Only the absent state is coloured as a problem: a domain a crawl carries is a
    measurement gap, not a sourcing one, and colouring the two alike would overstate the second. */
