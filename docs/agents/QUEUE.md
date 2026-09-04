@@ -533,6 +533,12 @@ predates the harness — so it is logged as what it was.
                           high-contrast the two fills are nearly the same, so a print or screenshot
                           loses the state outright. Now announced with aria-pressed in a labelled
                           group, and marked by something other than colour
+2026-09-04  retro-fix     #118 opened: exercise 05, the same 1,156px at 145 characters. THE FIRST
+                          ATTEMPT MOVED NOTHING: the rule selected `main section > .note` and none
+                          of this page's long paragraphs are section children, so it matched
+                          nothing and the measurement came back unchanged while the rule looked
+                          exactly like a fix. Caught only by re-measuring AFTER the change. Matched
+                          anywhere under main it lands at about 91
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the

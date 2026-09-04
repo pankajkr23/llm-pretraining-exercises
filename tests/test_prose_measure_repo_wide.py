@@ -63,6 +63,7 @@ COVERED = [
     "02-tokenization",
     "03-data-collection-framework",
     "04-data-cleaning-dedup",
+    "05-datamixtures-and-curriculum",
     "06-build-training-dataset",
     "07-model-embeddings-internals",
     "08-modern-attention-variants",
@@ -71,9 +72,7 @@ COVERED = [
 ]
 
 #: Deployable, measured, and not yet in the band. Each names what is fixing it.
-NOT_YET_COVERED = {
-    "05-datamixtures-and-curriculum": "#118 — measured 149 characters at 2560px",
-}
+NOT_YET_COVERED = {}
 
 MEASURE_JS = """() => {
   const probe = document.createElement('span');
@@ -189,13 +188,18 @@ def test_prose_holds_a_reading_measure_at_every_width(site, slug: str) -> None:
     )
 
 
-def test_the_uncovered_pages_are_still_the_two_expected() -> None:
+def test_every_deployable_page_is_in_exactly_one_list() -> None:
     """`COVERED` must not be able to shrink quietly, and `NOT_YET_COVERED` must not rot.
 
     The list above is hand-maintained, which is the weakness of the trade it documents. This is the
     half that makes it safe: every deployable page is in exactly one of the two lists, so a new
     exercise lands in neither and turns this red — which is the whole point, since a page nobody
     listed is a page nobody measures.
+
+    **`NOT_YET_COVERED` is now empty**, and this test was called
+    `..._are_still_the_two_expected` while it was. It never asserted two — it asserts the partition,
+    plus a floor under `COVERED` — so the name was a count that had already gone stale once and
+    would have gone stale again on the next promotion. Renamed to what it checks.
     """
     deployable = _deployable()
     accounted = set(COVERED) | set(NOT_YET_COVERED)
