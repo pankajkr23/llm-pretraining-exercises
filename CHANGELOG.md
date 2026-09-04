@@ -12,6 +12,25 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Two repo-wide guards scanned a wider scope than the property they assert, and only the local
+  suite could see it.** The basename-collision guard globbed `**/test_*.py` from the repo root, so
+  nine leftover `.claude/worktrees/` checkouts — scratch copies of the whole repo — each counted as
+  a second definition of every test file in it: **122 invented clashes**, none of which pytest could
+  ever hit, because `testpaths` is `["src", "tests"]` and it collects **zero** files from those
+  directories. It now scans the roots pytest actually collects from, read out of `pyproject.toml`
+  rather than restated, so the guard and the runner cannot disagree.
+
+  The generator's naming guard globbed `[0-9][0-9]-*` by name instead of calling
+  `tests/_exercises.py::exercises_in`, whose entire reason for existing is that a directory becomes
+  an exercise when its `pyproject.toml` lands. Exercises 09 and 10 exist on disk holding only their
+  gitignored local-only files while that file waits in an unmerged branch, so the guard read them as
+  exercises and died on a `pyproject.toml` that is not there yet.
+
+  **Both stayed green in CI**, where a clone has neither worktrees nor those local-only files. The
+  only suite they broke was the local one — which is the suite carrying the notebook-builder,
+  local-only-tripwire and quote-check gates that CI *cannot run at all*. A guard that cries wolf
+  gets tuned out, and these two were doing it to the one run that has no CI twin.
+
 - Consolidating the theme picker broke exercise 03's page outright — it rendered **zero sections**.
   Its render test serves the exercise's own `web/` directory rather than the assembled site, so a
   site-root import 404s there, and **a failed module import aborts the whole module**, taking the

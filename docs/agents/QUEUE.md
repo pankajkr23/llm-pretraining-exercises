@@ -530,4 +530,15 @@ predates the harness — so it is logged as what it was.
                           logic removed. One of its four guards was BLIND and the deliberate break
                           is how I found out: it checked the string `bindThemePicker` appeared, so
                           deleting the CALL and leaving the import satisfied it
+2026-09-04  guards        #136 opened: two guards scanned wider than they assert. The basename
+                          check globbed the repo ROOT, so nine .claude/worktrees/ scratch copies
+                          each counted as a second definition of every test file -- 122 invented
+                          clashes pytest could never hit, since testpaths is ["src","tests"] and it
+                          collects zero files there. Now reads those roots from pyproject rather
+                          than restating them. The generator's naming check globbed [0-9][0-9]-* by
+                          name instead of exercises_in, so 09/10 -- on disk holding only their
+                          gitignored local-only files while the tracked half waits in an unmerged
+                          branch -- read as exercises and died on an absent pyproject.toml. Both
+                          were GREEN IN CI and red only locally, which is where the notebook,
+                          tripwire and quote gates live and CI has no twin
 ```
