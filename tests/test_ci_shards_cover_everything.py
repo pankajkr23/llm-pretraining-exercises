@@ -45,16 +45,23 @@ OPTIONAL_DEPENDENCY_GATES: dict[str, str] = {
     "src/exercises/07-model-embeddings-internals/tests/test_embeddings_render.py": "playwright",
     "src/exercises/08-modern-attention-variants/tests/test_attention_render.py": "playwright",
     "src/exercises/08-modern-attention-variants/tests/test_attention_themes.py": "playwright",
+    "src/exercises/09-loss-functions-output-heads/tests/test_lossheads_render.py": "playwright",
+    "src/exercises/10-training-loop/tests/test_trainloop_render.py": "playwright",
     "src/exercises/08-modern-attention-variants/tests/test_attention_diagrams.py": "playwright",
     "src/exercises/08-modern-attention-variants/tests/test_attention_measures.py": "playwright",
     "tests/test_landing_render.py": "playwright",
     "tests/test_rail_centring.py": "playwright",
+    "tests/test_every_link_has_a_colour.py": "playwright",
+    "tests/test_prose_measure_repo_wide.py": "playwright",
     "src/exercises/05-datamixtures-and-curriculum/tests/test_mixture_proxy_run.py": "torch",
     "src/exercises/06-build-training-dataset/tests/test_trainingdata_crash.py": "torch",
     "src/exercises/06-build-training-dataset/tests/test_trainingdata_model.py": "torch",
     "src/exercises/06-build-training-dataset/tests/test_trainingdata_train.py": "torch",
     "src/exercises/06-build-training-dataset/tests/test_trainingdata_opus_score.py": "torch",
     "src/exercises/07-model-embeddings-internals/tests/test_embeddings_heads.py": "torch",
+    "src/exercises/09-loss-functions-output-heads/tests/test_lossheads_equivalences.py": "torch",
+    "src/exercises/09-loss-functions-output-heads/tests/test_lossheads_harness.py": "torch",
+    "src/exercises/10-training-loop/tests/test_trainloop_step.py": "torch",
 }
 
 #: Which `uv sync --extra <name>` provides which import.
