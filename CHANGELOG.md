@@ -1,12 +1,4 @@
 # Changelog
-- **Exercise 08's invoice cut line was truncated again, on every phone.** Its label is
-  `white-space: nowrap` inside a 26px `overflow: hidden` row, so at 320px **87px of the sentence
-  was cut** with no ellipsis and 17px at 390px — and the dashed rule its `::after` draws was pushed
-  out of the box entirely, so the plate lost both its sentence and its cut line. `AGENTS.md`
-  records this exact element reading *"…the cache alone needs a second ma"* once before, while
-  `test_the_invoice_cut_line_is_visible` passed throughout, which is why the new guard asserts
-  **geometry** rather than a string. Below 460px the row now grows instead of clipping: **0px
-  overflow at 320, 390, 460, 900 and 1440**.
 
 All notable changes to this project are documented in this file.
 
@@ -19,6 +11,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 ## [Unreleased]
 
 ### Fixed
+
+- **Exercise 08's invoice cut line was truncated again, on every phone.** Its label is
+  `white-space: nowrap` inside a 26px `overflow: hidden` row, so at 320px **87px of the sentence
+  was cut** with no ellipsis and 17px at 390px — and the dashed rule its `::after` draws was pushed
+  out of the box entirely, so the plate lost both its sentence and its cut line. `AGENTS.md`
+  records this exact element reading *"…the cache alone needs a second ma"* once before, while
+  `test_the_invoice_cut_line_is_visible` passed throughout, which is why the new guard asserts
+  **geometry** rather than a string. Below 460px the row now grows instead of clipping: **0px
+  overflow at 320, 390, 460, 900 and 1440**.
 
 - **Exercise 07's twenty-five table headers were below WCAG AA, in the default theme only.**
   `--muted` on `--track` measures **4.15:1** with no `data-theme` set — the state most readers are
