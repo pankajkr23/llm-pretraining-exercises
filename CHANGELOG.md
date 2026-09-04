@@ -12,6 +12,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The six-theme sweep measured `body.color`, so a page whose prose was unreadable still passed.**
+  It reads one pair per page — the `<body>` element's own colour against its own background — which
+  catches a whole-page inversion and nothing narrower. **Verified by breaking it**: painting
+  `#main p` near-black on `neon` for exercise 06 left every one of the 60 page/theme cases green,
+  while the paragraph a reader actually reads measured **1.41:1**.
+
+  It now measures the prose as well — paragraphs and list items, composited over the real painted
+  stack rather than the first opaque ancestor — and the same break is caught, naming the page, the
+  theme, the ratio and the sentence.
+
+  **Strengthening it cost nothing**: all 60 page/theme pairs already clear AA on painted prose,
+  measured before the assertion was written. Had any failed, this would have been a page fix rather
+  than a guard change, and worth knowing which before choosing.
+
+
 - **Exercise 08's invoice cut line was truncated again, on every phone.** Its label is
   `white-space: nowrap` inside a 26px `overflow: hidden` row, so at 320px **87px of the sentence
   was cut** with no ellipsis and 17px at 390px — and the dashed rule its `::after` draws was pushed
@@ -856,6 +871,22 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   not a grep, and why nothing was deleted on it.
 
 ### Added
+
+- **Every deployable page is now checked in all six themes, not one of them.**
+  `tests/test_every_page_in_every_theme.py` promotes the property underneath exercise 08's theme
+  suite to the whole repo: for each published page and each of the six themes, the page renders with
+  no console or page error, the six-theme tokens actually resolve, and the body text clears WCAG AA
+  against the ground it is painted on. Eight pages times six themes, and the page set is globbed
+  from the filesystem rather than listed, so a new exercise joins the matrix by existing.
+
+  **Contrast is measured in the browser, never by reading the stylesheet.** The question a reader
+  cares about is what their machine painted after the cascade, `prefers-color-scheme` and any
+  `data-theme` attribute have resolved; parsing CSS would only test our reading of the file.
+
+  **Both halves were watched failing.** One twin paints the body text its own background and
+  asserts the checker reports it; the other disables the root `/_shared/tokens.css` in the live page
+  and asserts the token check goes red — that second failure is a one-character `href` edit in real
+  life, raises no console error, and simply stops every `var(--bg)` mark from painting.
 
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two
   places — tracked under `docs/agents/reviewers/`, and copied by the installer into the gitignored

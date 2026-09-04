@@ -717,4 +717,9 @@ predates the harness — so it is logged as what it was.
                           is copied rather than reinvented, because an identical control should
                           announce identically. The guard asserts a non-empty accessible NAME, not
                           that a particular string is present
+2026-09-04  retro-fix     #119 opened: every deployable page is now checked in all six themes, not
+                          just 08 — no console error, tokens resolve, body text clears AA, with
+                          contrast computed in the browser rather than parsed from CSS. 8 pages x 6
+                          themes. Both halves watched failing: one paints the body text its own
+                          background, one disables the root token sheet in the live page
 ```
