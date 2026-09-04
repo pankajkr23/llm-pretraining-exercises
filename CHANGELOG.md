@@ -12,6 +12,29 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **A reader who picked a theme their operating system did not have got chip labels below AA, and
+  six green theme tests said otherwise.** `s3.html` builds each chip as
+  `style="background:${colOf(w)}"`, and `colOf` reads the custom property **once**, at build time,
+  writing the resolved hex into the attribute. The label's own `color: var(--chip-ink)` stays live.
+  So a theme switch moved one half of the pair and froze the other: near-black ink on the *light*
+  palette's swatches — **4.19:1**, **3.64:1** and **3.85:1** on `tinted-dark` and `neon`, against a
+  4.5:1 floor. They are **6.53:1** now, which is the figure the stylesheet's own comment claims for
+  the dark pairing.
+
+  **The CSS was correct the whole time** — every theme declares its swatch and its ink together, in
+  one block. Only the JavaScript disagreed, so no amount of reading the stylesheet could find it.
+  Four DOM sites emit the custom property itself now (`var(--animal)`); the canvas call keeps the
+  resolved value, because a 2D context cannot take `var()`.
+
+  **The existing guard could not see it, and the reason is worth keeping.** Its theme table pairs
+  every dark theme with a dark `prefers-color-scheme` and every light one with a light one — the
+  single arrangement in which a frozen colour cannot be caught, because the value the page froze at
+  load already belongs to the theme being switched to. But a picker exists so a reader can choose a
+  theme their OS does not have. `test_the_chips_are_legible_when_the_theme_disagrees_with_the_os`
+  now drives the four explicit themes against the **opposite** scheme. Watched failing against the
+  unfixed page while the original six-theme test stayed green, which is the hole measured exactly.
+
+
 - **Exercise 01's seven range sliders were focusable and painted nothing.** Across three proof
   pages they carried `outline: none` with no replacement: pixel-diffing the focused against the
   unfocused state changed **0 of 8,694 pixels**, in all six themes, 42 measurements, every one

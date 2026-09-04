@@ -61,6 +61,20 @@ THEMES = [
     ("neon", "neon", "dark"),
 ]
 
+#: The same explicit themes paired with the **opposite** `prefers-color-scheme`.
+#:
+#: `THEMES` above pairs every dark theme with a dark OS and every light one with a light OS, which
+#: is the one combination that cannot expose a stale colour: whatever the page froze at load already
+#: matches the theme being switched to. But a picker exists precisely so a reader can choose a theme
+#: their OS does not have, and that reader saw near-black chip labels on the LIGHT palette's
+#: swatches — 4.19:1, 3.64:1 and 3.85:1 — while this file reported six themes green.
+CROSS_SCHEME_THEMES = [
+    ("soft-light-on-a-dark-os", "soft-light", "dark"),
+    ("tinted-dark-on-a-light-os", "tinted-dark", "light"),
+    ("high-contrast-on-a-dark-os", "high-contrast", "dark"),
+    ("neon-on-a-light-os", "neon", "light"),
+]
+
 AA = 4.5
 
 pytestmark = pytest.mark.integration
@@ -217,6 +231,54 @@ def test_the_category_chips_are_legible_in_this_theme(site, theme: str, attr, sc
             f"under {theme} these chip labels are below WCAG AA of {AA}:1: {bad}.\n\n"
             "A ratio at or near 1.00:1 means the swatch was never painted — the category palette "
             "is missing for this theme, so the label is sitting on the page itself."
+        )
+    finally:
+        ctx.close()
+
+
+@pytest.mark.parametrize(
+    "theme,attr,scheme", CROSS_SCHEME_THEMES, ids=[t[0] for t in CROSS_SCHEME_THEMES]
+)
+def test_the_chips_are_legible_when_the_theme_disagrees_with_the_os(
+    site, theme: str, attr: str, scheme: str
+) -> None:
+    """The reader who picks a theme their operating system does not have.
+
+    `s3.html` builds each chip with `style="background:..."`, and the value written there came from
+    reading the custom property **once**, at build time. The label's own `color: var(--chip-ink)`
+    stays live. So a theme switch moved one half of the pair and froze the other, and the CSS was
+    correct the entire time — the swatch and its ink are declared together, in the same block, for
+    every theme.
+
+    Pairing each theme with a matching `prefers-color-scheme`, as the table above does, is the one
+    arrangement that hides this: the frozen value already belongs to the theme being switched to.
+    """
+    ctx, page, _ = _open(site, "s3.html", attr, scheme)
+    try:
+        rows = page.evaluate(
+            _RATIO_JS
+            + """
+            () => [...document.querySelectorAll('.chip')].map((el) => {
+              const s = getComputedStyle(el);
+              let node = el, bg = s.backgroundColor;
+              while (/rgba\\(0, 0, 0, 0\\)/.test(bg) && node.parentElement) {
+                node = node.parentElement;
+                bg = getComputedStyle(node).backgroundColor;
+              }
+              const ink = rgb(s.color), ground = rgb(bg);
+              return { word: el.textContent.trim(), r: ink && ground ? ratio(ink, ground) : null };
+            })"""
+        )
+        assert len(rows) >= 8, (
+            f"only {len(rows)} chip(s) rendered, so this assertion is passing over almost nothing."
+        )
+        bad = [f"{r['word']} {r['r']:.2f}:1" for r in rows if r["r"] is None or r["r"] < AA]
+        assert not bad, (
+            f"with {attr} selected on a {scheme} operating system, these chip labels are below "
+            f"WCAG AA of {AA}:1: {bad}.\n\n"
+            "The swatch is written into a style attribute from a value read once at build time, so "
+            "it does not follow a theme change; the label's ink does. Emit the custom property "
+            "itself -- `var(--animal)` -- rather than its resolved value."
         )
     finally:
         ctx.close()
