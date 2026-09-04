@@ -403,6 +403,10 @@ predates the harness — so it is logged as what it was.
                           characters cut off at EVERY width, including 2560 where 676px sat empty
                           beside the box. All three guards watched failing: 14 of 14, 17 of 17,
                           2 of 2
+2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
+                          hook. A reviewer copied into .claude/ and then edited there diverges
+                          silently from its tracked source, and the installed copy is the one that
+                          runs — so the drift is invisible in review by construction
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
