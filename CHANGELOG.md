@@ -12,6 +12,28 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **A preview was built for every pull request that merged `main` in, showing nothing `main` did
+  not already show.** The build predicate compared against `VERCEL_GIT_PREVIOUS_SHA`, which Vercel
+  documents as the last *successful deployment* — so once `main` gained a page, the next sync of
+  any open pull request carried that page in its merge commit and read as deploy-worthy. #136
+  changed only `tests/` and still spent a build. At roughly twenty open pull requests that is
+  twenty wasted deployments per round, and exhausting the quota rate-limits the account for 24
+  hours — which is how previews became unavailable for the pull requests that genuinely did change
+  a page.
+
+  It now asks **what the branch adds on top of `main`**, resolved in three tiers, each falling
+  through to the next: the merge base with `main`; failing that a plain two-commit diff against
+  `main`, which needs only the two trees and so survives a clone with no shared history; failing
+  that `VERCEL_GIT_PREVIOUS_SHA`, exactly as before. **The last tier is the safety property — no
+  tier can be worse than the previous behaviour**, which is what makes this shippable without
+  being able to watch a real deployment first.
+
+  The fallback is not a formality. Asking *"what does this branch add on top of `main`"* while
+  standing **on** `main` answers "nothing", so a naive merge-base predicate would skip every
+  build, production included; HEAD being an ancestor of the base falls through instead. Six new
+  cases cover the tiers, and the two that describe the new behaviour were watched failing against
+  the old script before being kept.
+
 - **Two repo-wide guards scanned a wider scope than the property they assert, and only the local
   suite could see it.** The basename-collision guard globbed `**/test_*.py` from the repo root, so
   nine leftover `.claude/worktrees/` checkouts — scratch copies of the whole repo — each counted as
