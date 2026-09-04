@@ -401,6 +401,10 @@ predates the harness — so it is logged as what it was.
                           not the page — a badge whose ground is 10% alpha of its own text colour
                           read 1.00:1 until the stack was composited, and is 4.66:1 in fact. The
                           guard blends the painted stack so it cannot repeat that
+2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
+                          hook. A reviewer copied into .claude/ and then edited there diverges
+                          silently from its tracked source, and the installed copy is the one that
+                          runs — so the drift is invisible in review by construction
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
