@@ -531,3 +531,34 @@ text.ax.warn { fill: var(--grade-x); }
    reserved for the excluded thing. */
 .fig-offscale { stroke: var(--grade-x); stroke-width: 1.5; stroke-dasharray: 3 3; }
 .fig-dot.bad { fill: var(--grade-x); }
+
+/* ============================================================
+ * A measure for running prose.
+ *
+ * Measured at 1440px before this rule: the widest body paragraph ran 1,156px at 16px type — about
+ * **145 characters a line**, roughly double what anyone can track. The eye loses its place
+ * returning to the left edge, and the longer the line the more often it lands on the wrong one.
+ *
+ * The measure goes on the element that CARRIES the type, not on a wrapper. `docs/DESIGN.md`
+ * records why: a `ch` unit resolves against the font size of the element declaring it, so the same
+ * number on a container with a different size silently means something else.
+ *
+ * `.note` and `.warn` are matched ANYWHERE under main, not as direct children of a section, and
+ * that distinction is the whole reason the first version of this rule moved nothing. On this page
+ * the long paragraphs are not section children at all: they sit inside `summary`, inside
+ * `tier-out`, inside plain wrappers. `main section > .note` selected none of them, the measurement
+ * came back unchanged at 145 characters, and the rule looked like a fix.
+ *
+ * They hold running prose rather than labels — they are where the caveats live, and a caveat
+ * nobody can read is a caveat the page is hiding.
+ *
+ * After this, the widest paragraph on the page is `p.claim`, which already carries its own
+ * narrower rule and lands at 755px. That is deliberately left alone: exercise 08, the reference
+ * implementation, sits at 835px. The defect here was 1,156px, not "wider than perfect".
+ * ============================================================ */
+
+main section > p,
+main .note,
+main .warn {
+  max-width: 68ch;
+}
