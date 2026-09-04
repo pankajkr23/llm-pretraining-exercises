@@ -24,10 +24,6 @@ carried in a summary that is lossy by construction.
                           "one pull request per exercise" here and "keep PRs scoped to one
                           concern" in AGENTS.md. #105 is exercise 09, #106 is exercise 10 stacked
                           on it. PK caught it
-2026-09-04  shared-layer  #108 opened: _shared/page.css styles 101 classes and 29 appear on no
-                          rendered page. NOTHING deleted — #101 nearly removed a live stylesheet on
-                          exactly this evidence. Measured from a rendered DOM after driving every
-                          input, which is what moved .filter-none and .rail-shut off the list
 ```
 2026-09-03  unit-07-retrofit  pytest -m "not integration" -> 1449 passed, 1 skipped @ b0456e9
 2026-09-03  unit-07-retrofit  BLOCKED: rail-inner missing; logged as finding F3, continuing
@@ -404,6 +400,10 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-04  shared-layer  #108 opened: _shared/page.css styles 101 classes and 29 appear on no
+                          rendered page. NOTHING deleted — #101 nearly removed a live stylesheet on
+                          exactly this evidence. Measured from a rendered DOM after driving every
+                          input, which is what moved .filter-none and .rail-shut off the list
 2026-09-04  ci            #124 opened: `npx --yes @mermaid-js/mermaid-cli` FETCHES the package on
                           first use and it bundles puppeteer, so on a cold runner the download ran
                           past the 180s the render test allows for a RENDER. Failed on three of

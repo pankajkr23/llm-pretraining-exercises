@@ -30,7 +30,10 @@ def _blocks(base: str, branch: str):
         None, before, after, autojunk=False
     ).get_opcodes():
         if tag in ("insert", "replace"):
-            out.append((after[j2] if j2 < len(after) else "", after[j1:j2]))
+            # The same neighbour PAIR the tool records. A single line is not a position.
+            preceding = after[j1 - 1] if j1 > 0 else ""
+            following = after[j2] if j2 < len(after) else ""
+            out.append(((preceding, following), after[j1:j2]))
     return out
 
 
@@ -67,7 +70,9 @@ def test_a_block_whose_anchor_main_deleted_is_kept_not_lost() -> None:
     main = "alpha\ncharlie\n"  # `bravo`, the anchor, is gone
     out, notes = _reapply(main, _blocks(BASE, branch))
     assert "MINE" in out, "the entry was lost when its anchor disappeared"
-    assert any("anchor" in n for n in notes), f"the fallback was not reported: {notes}"
+    assert any("neighbours have changed" in n for n in notes), (
+        f"the degraded placement was not reported: {notes}"
+    )
 
 
 def test_a_multi_line_block_stays_contiguous_and_in_order() -> None:
@@ -132,3 +137,30 @@ def test_a_multi_line_entry_main_already_has_is_matched_whole() -> None:
     assert out.count("and its second line") == 2, (
         f"each entry should keep its own continuation line, once:\n{out}"
     )
+
+
+def test_a_block_lands_beside_the_neighbours_it_had_not_the_first_look_alike() -> None:
+    """**The bug that dropped a log entry into the wrong section of the file.**
+
+    `QUEUE.md` has a dozen "```" lines. Anchoring a block on the single line that followed it made
+    `list.index` return the earliest one, and the entry landed forty lines above the `## Log`
+    heading — still in the file, so every count of it looked right. The checker that reads only
+    `## Log` was the one thing that noticed, two merges later.
+    """
+    fence = "```\n"
+    # The block is inserted BEFORE a line that occurs three times — the real shape, since
+    # `QUEUE.md` is full of code fences and the one after a new entry is never the first.
+    base = "intro\n" + fence + "rows\n" + fence + "## Log\n" + fence
+    branch = (
+        "intro\n"
+        + fence
+        + "rows\n"
+        + fence
+        + "## Log\n"
+        + "2026-09-04  x             #108 opened: mine\n"
+        + fence
+    )
+    out, _ = _reapply(base, _blocks(base, branch))
+    log_section = out.partition("## Log\n")[2]
+    assert "#108 opened" in log_section, f"the entry landed outside the log section:\n{out}"
+    assert out.count("#108 opened") == 1, f"it landed more than once:\n{out}"

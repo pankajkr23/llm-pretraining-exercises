@@ -109,8 +109,14 @@ def _own_additions(base: str, branch: str, path: str) -> list[tuple[str, list[st
         if tag not in ("insert", "replace"):
             continue
         added = after[j1:j2]
-        anchor = after[j2] if j2 < len(after) else ""
-        blocks.append((anchor, added))
+        # Both neighbours, not just the one after. A single line is not a position: the first
+        # block this tool placed was anchored on "```", which occurs a dozen times in QUEUE.md, so
+        # `list.index` found the earliest one and dropped a log entry into the prose section forty
+        # lines above the log. It was still in the file, so every count of it looked right; the
+        # checker that reads only `## Log` was the thing that noticed.
+        preceding = after[j1 - 1] if j1 > 0 else ""
+        following = after[j2] if j2 < len(after) else ""
+        blocks.append(((preceding, following), added))
     return blocks
 
 
@@ -137,7 +143,30 @@ def _records(added: list[str]) -> list[list[str]]:
     return out
 
 
-def _reapply(main_text: str, blocks: list[tuple[str, list[str]]]) -> tuple[str, list[str]]:
+def _locate(lines: list[str], preceding: str, following: str) -> tuple[int | None, str]:
+    """Where a block belongs: the index whose neighbours are the ones it had on the branch.
+
+    The pair is tried first because either line alone can occur many times — a code fence, a blank
+    line, a heading. Only if the pair is absent does it fall back to the following line alone, and
+    then to the preceding one, and each fallback is reported by the caller rather than assumed.
+    """
+    for i in range(len(lines)):
+        if lines[i] == following and (i == 0 or lines[i - 1] == preceding):
+            return i, "pair"
+    if following:
+        for i, line in enumerate(lines):
+            if line == following:
+                return i, "the following line only"
+    if preceding:
+        for i, line in enumerate(lines):
+            if line == preceding:
+                return i + 1, "the preceding line only"
+    return None, "nothing"
+
+
+def _reapply(
+    main_text: str, blocks: list[tuple[tuple[str, str], list[str]]]
+) -> tuple[str, list[str]]:
     """Put this branch's own blocks back into main's version. Returns the text and any notes."""
     lines = main_text.splitlines(keepends=True)
     notes: list[str] = []
@@ -156,15 +185,16 @@ def _reapply(main_text: str, blocks: list[tuple[str, list[str]]]) -> tuple[str, 
         added = keep
         if not added:
             continue
-        if not anchor:
-            lines.extend(added)
-            continue
-        try:
-            at = lines.index(anchor)
-        except ValueError:
+        preceding, following = anchor
+        at, how = _locate(lines, preceding, following)
+        if how != "pair" and at is not None:
+            # Worth saying. A degraded placement is still a placement, but main has moved under
+            # this block and somebody should look at where it landed.
             notes.append(
-                f"could not find the anchor line for a {len(added)}-line block; appended instead"
+                f"placed a {len(added)}-line block by {how}; its neighbours have changed on main"
             )
+        if at is None:
+            notes.append(f"could not place a {len(added)}-line block; appended to the end instead")
             lines.extend(added)
             continue
         lines[at:at] = added
