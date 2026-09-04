@@ -730,4 +730,13 @@ predates the harness — so it is logged as what it was.
                           merges each conflicted on CHANGELOG.md and resolving by taking a side lost
                           three of the four entries; restored, and it is exactly the failure
                           sync_open_prs.py exists to prevent
+2026-09-05  tooling       #142 opened: the sync tool put changelog entries at line 2, above the
+                          preamble and outside every section -- five times in one queue, caught
+                          every time by a person and never by a test. The fallback matches one
+                          neighbour, that neighbour is usually a blank line, and a changelog's
+                          preamble has several nearer to the block's small hint than the real
+                          destination. A block may no longer be placed above the first `## `
+                          heading, and a corrected placement is reported. Floor is the SECTION not
+                          the subsection: clamping to `### ` broke an existing test, which is how
+                          the boundary was chosen
 ```
