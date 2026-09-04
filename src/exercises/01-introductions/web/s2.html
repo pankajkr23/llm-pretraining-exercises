@@ -5,7 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Five Maps, One Matrix · Depth</title>
     <style>
-      
+      /* A LIGHT set, which never existed: both of these were declared only inside the dark
+         blocks, so on the three light themes -- the default -- they resolved to nothing. Text
+         coloured with them fell back to the inherited ink and the canvas kept whatever fill was
+         last set, so the two series stopped being told apart while everything still looked
+         drawn. Values follow s1.html's own precedent for the same two hues. */
+      :root {
+        --warm: #a75a00;
+        --cool: #0071e3;
+      }
       @media (prefers-color-scheme: dark) {
         :root:not([data-theme]) {
           --warm: #ff9f0a;
@@ -35,6 +43,20 @@
       .seg button:hover { color: var(--ink); }
       .depth { display: flex; align-items: center; gap: 12px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
       .depth input[type="range"] { -webkit-appearance: none; appearance: none; width: 160px; height: 3px; background: var(--line); border-radius: 3px; outline: none; }
+      /* `outline: none` on the track with no replacement meant a keyboard reader got NOTHING:
+         pixel-diffing the focused against the unfocused state changed 0 of 8,694 pixels, in all
+         six themes, while `:focus-visible` was true the whole time. These sliders are the entire
+         interaction on three of the four proof pages and the first stop after the back link, so
+         the reader tabbed in, saw no change, and arrow keys then moved a number silently.
+         `docs/DESIGN.md`: "`:focus-visible` always has a visible ring." The thumb is lit as well
+         as the track, because a 3px rail is a thin thing to ring and the thumb is what moves. */
+      input[type="range"]:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 4px;
+        border-radius: 3px;
+      }
+      input[type="range"]:focus-visible::-webkit-slider-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
+      input[type="range"]:focus-visible::-moz-range-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
       .depth input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--panel); border: 2px solid var(--accent); cursor: pointer; }
       .depth input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--panel); border: 2px solid var(--accent); cursor: pointer; }
       .depth b { color: var(--accent); }
@@ -83,10 +105,18 @@
       a frame and then repaint, which is the flash a theme switcher is judged by.
     -->
     <script>
-      try {
-        var t = localStorage.getItem('era5-theme');
-        if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t);
-      } catch (e) {}
+      // Wrapped, because `var` at the top level of a classic script creates a GLOBAL. This
+      // bootstrap leaked one named `t`, and s3.html's page script opens with
+      // `let E, W, …, t, …` — a `let` cannot redeclare an existing `var` global, so the whole
+      // script threw `Identifier 't' has already been declared` before its first statement and
+      // the page rendered nothing at all. The other four pages leaked the same name and only
+      // escaped by not happening to reuse it.
+      (function () {
+        try {
+          var t = localStorage.getItem('era5-theme');
+          if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+      })();
     </script>
   </head>
   <body>
@@ -115,11 +145,11 @@
       <div class="stages">
         <div class="panel">
           <h3 id="stackTitle">The 5-layer stack</h3>
-          <canvas id="stack" width="720" height="720"></canvas>
+          <canvas role="img" aria-labelledby="stackTitle" id="stack" width="720" height="720"></canvas>
         </div>
         <div class="panel">
-          <h3>One matrix · M = Wₙ ⋯ W₁</h3>
-          <canvas id="single" width="720" height="720"></canvas>
+          <h3 id="cap-single">One matrix · M = Wₙ ⋯ W₁</h3>
+          <canvas role="img" aria-labelledby="cap-single" id="single" width="720" height="720"></canvas>
         </div>
       </div>
 
@@ -142,9 +172,9 @@
           finally wraps the ring. Press <b>Train</b>.
         </p>
         <div class="rings">
-          <figure><canvas id="r1" width="600" height="600"></canvas><figcaption>1 linear layer <span class="acc" id="a1">—</span></figcaption></figure>
-          <figure><canvas id="r5" width="600" height="600"></canvas><figcaption>5 linear layers <span class="acc" id="a5">—</span></figcaption></figure>
-          <figure><canvas id="rr" width="600" height="600"></canvas><figcaption>5 layers + ReLU <span class="acc" id="ar">—</span></figcaption></figure>
+          <figure><canvas role="img" aria-labelledby="cap-r1" id="r1" width="600" height="600"></canvas><figcaption id="cap-r1">1 linear layer <span class="acc" id="a1">—</span></figcaption></figure>
+          <figure><canvas role="img" aria-labelledby="cap-r5" id="r5" width="600" height="600"></canvas><figcaption id="cap-r5">5 linear layers <span class="acc" id="a5">—</span></figcaption></figure>
+          <figure><canvas role="img" aria-labelledby="cap-rr" id="rr" width="600" height="600"></canvas><figcaption id="cap-rr">5 layers + ReLU <span class="acc" id="ar">—</span></figcaption></figure>
         </div>
         <div class="stage-controls">
           <button class="btn" id="ringTrain">Train</button>

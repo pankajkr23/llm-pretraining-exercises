@@ -1,0 +1,43 @@
+NOTICE — 10-training-loop
+
+WHAT THIS IS
+
+A coursework exercise. It is a study, not a product, not a proposal to any
+organisation, and not infrastructure anybody operates.
+
+NO AFFILIATION
+
+This work is not affiliated with, endorsed by, sponsored by, or produced on
+behalf of any company, university, research institute or funding programme.
+Every organisation and paper named here is named because their public work is
+the evidence being examined. Naming them is citation, not association.
+
+WHAT IS MEASURED AND WHAT IS NOT
+
+MEASURED HERE, on one laptop CPU, and reproducible by running the command in
+the README:
+
+  - every tensor shape in one optimiser step
+  - one weight's gradient, compared against a central difference at seven
+    different nudge sizes, in float64
+  - two reductions of the same micro-batch losses: as arithmetic, and as two
+    complete training curves with everything else held identical
+  - the gradient norm and the loss at every step of a 200-step run, and the
+    steps at which the first moved and the second did not, at five thresholds
+  - this machine's sustained throughput on a 2048^3 dense fp32 matrix
+    multiply, used as the denominator for utilisation
+  - the bit patterns of 0.1 in fp32, bf16 and fp8 E4M3, built from arithmetic
+    and cross-checked against the framework's own casts
+
+NOT MEASURED HERE:
+
+  - anything on a GPU or any accelerator. Every figure is CPU, fp32.
+  - anything about model quality. The runs exist to exercise the loop.
+  - MFU as it would be on training hardware. The figure describes this
+    machine, at this model size, in fp32, and does not transfer.
+
+ARITHMETIC, NOT MEASUREMENT: FLOPs per token uses the standard 6N convention
+over non-embedding parameters, which excludes attention's quadratic term. The
+float format properties (range, precision, largest finite value) are derived
+from the field widths rather than measured.
+

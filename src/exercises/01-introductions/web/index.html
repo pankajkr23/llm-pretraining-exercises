@@ -47,10 +47,18 @@
       a frame and then repaint, which is the flash a theme switcher is judged by.
     -->
     <script>
-      try {
-        var t = localStorage.getItem('era5-theme');
-        if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t);
-      } catch (e) {}
+      // Wrapped, because `var` at the top level of a classic script creates a GLOBAL. This
+      // bootstrap leaked one named `t`, and s3.html's page script opens with
+      // `let E, W, …, t, …` — a `let` cannot redeclare an existing `var` global, so the whole
+      // script threw `Identifier 't' has already been declared` before its first statement and
+      // the page rendered nothing at all. The other four pages leaked the same name and only
+      // escaped by not happening to reuse it.
+      (function () {
+        try {
+          var t = localStorage.getItem('era5-theme');
+          if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+      })();
     </script>
   </head>
   <body>
