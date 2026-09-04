@@ -418,6 +418,25 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **A repo-wide guard that a page building a contents rail also marks the section in view.**
+  `.rail-link.on` has been styled in the shared stylesheet since before most of these pages existed,
+  and for a long time **only exercise 03 ever set it** — so four rails looked finished and never
+  moved. The four fixes landed separately; this is the thing that stops it happening again.
+
+  Three tests, and the second two are why it is a guard rather than a checkbox.
+  `test_every_page_that_builds_a_rail_also_marks_position` finds the pages by what they *do*
+  (`.rail-link` in the source) rather than from a list that would go stale.
+  `test_the_marking_reacts_to_the_reader_rather_than_being_set_once` refuses a class set at build
+  time, which would satisfy the first test while marking the wrong section for ever. And
+  `test_at_least_one_page_is_covered_so_this_guard_cannot_pass_vacuously` fails if the lexical
+  search ever stops matching anything.
+
+  It deliberately does not name an implementation: a scroll listener and an `IntersectionObserver`
+  both pass, because a guard that names one technique fails every other one. Watched failing twice —
+  once with the toggle removed, once with the reader signal removed — and it names the offending
+  page in both.
+
+
 - **`tests/_page_invariants.py` has a second consumer.** The module exists to be shared — no
   console or page error, no failed request, nothing overflowing its own box, no text painted its own
   background, no image without real dimensions — and it was wired into exactly **one** page, the

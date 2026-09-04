@@ -722,4 +722,12 @@ predates the harness — so it is logged as what it was.
                           contrast computed in the browser rather than parsed from CSS. 8 pages x 6
                           themes. Both halves watched failing: one paints the body text its own
                           background, one disables the root token sheet in the live page
+2026-09-04  retro-fix     #113 opened: a page that builds a contents rail must mark the section in
+                          view. It was RED on purpose while its four subjects sat in other pull
+                          requests -- silencing a gate that reports a true defect is what AGENTS.md
+                          refuses -- so #109 to #112 were merged INTO it instead, which makes it
+                          green honestly and shrinks it to the guard alone once they land. The four
+                          merges each conflicted on CHANGELOG.md and resolving by taking a side lost
+                          three of the four entries; restored, and it is exactly the failure
+                          sync_open_prs.py exists to prevent
 ```
