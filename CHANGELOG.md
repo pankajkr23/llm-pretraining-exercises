@@ -23,6 +23,25 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **A branch that predates a file becoming tracked is not a loss, and two guards said it was —
+  refusing seventeen open pull requests on a checkout where nothing was missing.**
+  `docs/EXPLAINER_*.md` and exercise 10's notebook became tracked in #106. Check out any older
+  branch and git removes them, correctly: they are not in that commit. They are also gitignored
+  there, so `_tracked_paths()` cannot see them, and the local-only class reads as *partly present* —
+  which is exactly the shape of a real loss.
+
+  The tripwire now asks whether **git can give the file back**, not whether the current commit
+  tracks it, by consulting `origin/main` as well. Where that ref cannot be resolved — a shallow CI
+  checkout, a differently-named remote — it contributes nothing and the guard behaves as before.
+  Still watching **30** genuinely local-only files; exactly the three git holds are excluded.
+
+  `tools/sync_open_prs.py` was the second half. It read a non-zero exit from `git checkout` as *the
+  checkout failed*, but a `post-checkout` hook cannot abort a checkout — git has already rewritten
+  the working tree by the time it runs — so a red tripwire there set the status and the tool
+  refused. It judges by where **HEAD** ended up now, and still reports that the hook complained,
+  because the one thing worse than refusing is swallowing a real loss.
+
+
 - **The backup store swept in whatever was sitting in its directory, and undid a deliberate
   removal within minutes.** `snapshot()` ended with `git add -A` inside the store — the same
   `git add -A` this repository already forbids in the working tree, for the same reason.

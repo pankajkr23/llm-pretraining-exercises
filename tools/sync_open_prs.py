@@ -245,11 +245,24 @@ def sync(number: str, branch: str, dry_run: bool) -> Result:
         result.state = "would sync"
         return result
 
+    # **Judge the checkout by where HEAD ended up, not by the exit code.** A `post-checkout` hook
+    # cannot abort a checkout -- git has already rewritten the working tree by the time it runs --
+    # but its failure still sets the exit status, and this refused on that basis. The local-only
+    # tripwire runs there, and it goes red on any branch that predates a file becoming tracked:
+    # correct-looking, since the class is then partly present, and wrong, since `origin/main` can
+    # give the file back. That refused seventeen open pull requests on a healthy checkout.
+    #
+    # The hook's complaint is still surfaced, because the one thing worse than refusing here is
+    # swallowing a real loss. The merge that follows restores anything main holds, and the
+    # pre-commit hook re-runs the same tripwire before the merge is allowed to land.
     checkout = _run("git", "checkout", "-q", branch, check=False)
-    if checkout.returncode != 0:
+    landed = _run("git", "rev-parse", "--abbrev-ref", "HEAD", check=False).stdout.strip()
+    if landed != branch:
         result.state = "REFUSED"
-        result.notes.append(checkout.stderr.strip()[:160])
+        result.notes.append(checkout.stderr.strip()[:160] or f"HEAD is {landed!r}, not {branch!r}")
         return result
+    if checkout.returncode != 0:
+        result.notes.append("a post-checkout hook failed; the checkout itself succeeded")
 
     base = _run("git", "merge-base", branch, "origin/main").stdout.strip()
     own = {path: _own_additions(base, branch, path) for path in LOG_FILES}
