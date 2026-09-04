@@ -375,3 +375,96 @@ def test_the_default_sample_makes_the_tokenizers_disagree():
             f"every tab tokenizes the default text into {counts[0]} tokens — the sample cannot "
             "show that these are different tokenizers"
         )
+
+
+# ---- the page sweep's finding ------------------------------------------------------------------
+
+#: The assembled site. This one measurement must NOT use `_page`, which serves the exercise's own
+#: `web/` — the six-theme token file lives at the site root, so under `_page` every `var(--track)`
+#: and `var(--ink)` resolves to nothing and a contrast reading there would be meaningless.
+# tests/ ← 02-tokenization/ ← exercises/ ← src/ ← repo root: five levels, not four.
+PUBLIC = Path(__file__).resolve().parents[4] / "public"
+
+#: All six. The one that failed was the default — no `data-theme` attribute at all — so a
+#: light-and-dark check would have reported nothing wrong.
+SWEEP_THEMES = ("", "soft-light", "tinted-dark", "high-contrast", "neon")
+
+_SEG_CONTRAST_JS = """() => {
+  const rgb = (s) => {
+    const m = (s || '').match(/-?[\\d.]+/g);
+    return m && m.length >= 3 ? [+m[0], +m[1], +m[2]] : null;
+  };
+  const alpha = (s) => (/rgba/.test(s || '') ? parseFloat(s.split(',')[3]) : 1);
+  const lum = (c) => {
+    const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+    return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+  };
+  const ratio = (a, b) => {
+    const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+    return (x + 0.05) / (y + 0.05);
+  };
+  const out = [];
+  for (const el of document.querySelectorAll('.seg button')) {
+    const box = el.getBoundingClientRect();
+    if (box.width < 1) continue;
+    const s = getComputedStyle(el);
+    // Composite the painted stack rather than taking the first opaque ancestor: a translucent
+    // ground has to be blended over what is behind it, or a 10%-alpha chip reads as 1.00:1
+    // against its own text colour. That false positive cost a measurement pass here.
+    const stack = [];
+    let node = el;
+    while (node) {
+      const c = getComputedStyle(node).backgroundColor;
+      const v = rgb(c), a = alpha(c);
+      if (v && a > 0) stack.push([v, a]);
+      if (v && a >= 1) break;
+      node = node.parentElement;
+    }
+    stack.push([[255, 255, 255], 1]);
+    let ground = stack[stack.length - 1][0];
+    for (let i = stack.length - 2; i >= 0; i--) {
+      const [c, a] = stack[i];
+      ground = [0, 1, 2].map((k) => c[k] * a + ground[k] * (1 - a));
+    }
+    out.push({
+      r: ratio(rgb(s.color), ground),
+      selected: el.getAttribute('aria-selected') === 'true',
+      txt: el.textContent.trim().slice(0, 26),
+    });
+  }
+  return out;
+}"""
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("theme", SWEEP_THEMES)
+def test_every_segmented_option_is_readable(theme: str) -> None:
+    """The options a reader has NOT chosen have to be readable to be chosen.
+
+    `--muted` on the control's `--track` ground measured **4.15:1** with no `data-theme` set — the
+    state most readers are in — while all five explicit themes cleared AA between 4.84 and 14.17:1.
+    A light-and-dark check would have found nothing, which is why this runs all six.
+    """
+    if not (PUBLIC / "02-tokenization" / "index.html").is_file():
+        pytest.skip("run deploy/vercel/build.sh first")
+    with _serve(PUBLIC) as base, sync_playwright() as pw:
+        try:
+            browser = pw.chromium.launch()
+        except PlaywrightError as exc:  # pragma: no cover - environment, not logic
+            if os.environ.get("CI"):
+                pytest.fail(f"chromium did not launch on CI: {exc}")
+            pytest.skip(f"no chromium available: {exc}")
+        page = browser.new_page(viewport={"width": 1440, "height": 950})
+        page.goto(base + "02-tokenization/index.html", wait_until="networkidle")
+        if theme:
+            page.evaluate("(t) => document.documentElement.setAttribute('data-theme', t)", theme)
+        page.wait_for_timeout(400)
+        rows = page.evaluate(_SEG_CONTRAST_JS)
+        browser.close()
+
+    assert len(rows) >= 5, f"only {len(rows)} segmented options found; the selector has rotted"
+    bad = sorted((round(r["r"], 2), r["txt"]) for r in rows if r["r"] < 4.5)
+    assert not bad, (
+        f"under {theme or 'the default theme'}, {len(bad)} of {len(rows)} segmented options are "
+        f"below WCAG AA:\n  " + "\n  ".join(f"{r}:1  {t!r}" for r, t in bad[:6])
+    )

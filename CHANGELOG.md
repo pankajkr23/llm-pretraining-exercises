@@ -10,6 +10,25 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Exercise 02's segmented controls were unreadable in the default theme.** The five options a
+  reader has *not* chosen were `--muted` on the control's `--track` ground: **4.15:1**, below WCAG
+  AA. All five explicit themes cleared it (4.84 to 14.17:1) — the one that failed was the state
+  with no `data-theme` attribute at all, which is where most readers are, so a light-and-dark check
+  would have found nothing.
+
+  They now take `--ink`, which the design had already accepted there: it is what the `:hover` rule
+  used to set. The selected option is still unmistakable — a raised `--panel` pill with a shadow,
+  not a colour difference — and hover now answers with a ground rather than a colour it already
+  has.
+
+  **One reported failure turned out to be the measurement, not the page**, and it is worth
+  recording: `span.badge` read 1.00:1 in all six themes because its background is
+  `rgba(0, 104, 209, 0.1)` — ten per cent of its own text colour — and the probe treated it as
+  opaque. Composited properly it is **4.66:1** and passes. The guard now blends the whole painted
+  stack, so it cannot repeat that.
+
 ### Added
 
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two
