@@ -48,7 +48,34 @@ def _tracked_paths() -> frozenset[Path]:
     return frozenset(REPO_ROOT / name for name in done.stdout.split("\0") if name)
 
 
-TRACKED = _tracked_paths()
+def _tracked_on_the_default_branch() -> frozenset[Path]:
+    """Paths git tracks on `origin/main`, which are recoverable whatever branch you are standing on.
+
+    **A branch that predates a file becoming tracked is not a loss, and this guard said it was.**
+    `docs/EXPLAINER_*.md` and exercise 10's notebook became tracked in #106. Checking out any older
+    branch removes them -- correctly, they are not in that commit -- and they are gitignored there,
+    so `_tracked_paths()` does not see them and the class reads as "present but incomplete", the
+    exact shape of a real loss. That failed the post-checkout hook and made `sync_open_prs.py`
+    refuse **seventeen** open pull requests, on a checkout where nothing whatsoever was lost.
+
+    So the question is not "does the current commit track this" but "can git give it back". If
+    `origin/main` cannot be resolved -- a shallow CI checkout, a clone with a differently-named
+    remote -- this contributes nothing and the guard behaves exactly as it did before.
+    """
+    import subprocess
+
+    done = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "ls-tree", "-r", "--name-only", "-z", "origin/main"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if done.returncode != 0:  # pragma: no cover - no origin/main here
+        return frozenset()
+    return frozenset(REPO_ROOT / name for name in done.stdout.split("\0") if name)
+
+
+TRACKED = _tracked_paths() | _tracked_on_the_default_branch()
 
 
 def local_only(paths: list[Path]) -> list[Path]:

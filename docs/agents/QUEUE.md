@@ -636,4 +636,16 @@ predates the harness — so it is logged as what it was.
                           -A -- so the store announced "NOT safe" over a healthy snapshot. Gated on
                           staged changes now. Both watched failing; the 19 agent_sample_files
                           entries are PK's staging area and deliberately untouched
+2026-09-04  tooling       #140 opened: two guards refused SEVENTEEN open PRs on a checkout
+                          where nothing was missing. docs/EXPLAINER_*.md and S10's notebook became
+                          tracked in #106, so an older branch legitimately lacks them -- and they
+                          are gitignored there, so _tracked_paths() cannot see them and the class
+                          reads as partly present, the shape of a real loss. The tripwire now asks
+                          whether GIT CAN GIVE IT BACK (origin/main too), not whether this commit
+                          tracks it. sync_open_prs.py was the other half: it read a non-zero exit
+                          from `git checkout` as a failed checkout, but a post-checkout hook cannot
+                          abort one -- it judges by where HEAD landed now. Fixing only the tripwire
+                          would not help, because the hook runs the OLD copy that lives on the
+                          branch being checked out. Still watching 30 local-only files; exactly the
+                          three git holds are excluded
 ```
