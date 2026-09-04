@@ -474,6 +474,22 @@ figcaption strong {
   color: var(--accent);
   white-space: nowrap;
 }
+/* Below the width the label fits at, the row grows instead of clipping it. `nowrap` inside a
+   26px `overflow: hidden` box meant the label was cut with no ellipsis — 87px of it gone at 320px
+   and 17px at 390px — and the dashed rule the `::after` draws was pushed out of the box entirely,
+   so the figure lost both its sentence and its cut line on every phone. `AGENTS.md` records this
+   exact element being truncated once before; it is the sentence the plate exists to deliver. */
+@media (max-width: 460px) {
+  .inv-cut {
+    height: auto;
+    min-height: 26px;
+    overflow: visible;
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+  .inv-cut .lab { white-space: normal; }
+  .inv-cut::after { flex-basis: 100%; }
+}
 /* The consequence, on its own line and free to wrap. It used to ride on the rule above under
  * `nowrap` inside `overflow: hidden`, so it was cut off mid-word on every screen narrower than the
  * sentence — an ellipsis-free truncation of the one sentence the figure exists to deliver. */

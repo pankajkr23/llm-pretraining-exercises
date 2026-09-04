@@ -396,6 +396,16 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-04  retro-fix     exercise 08's cut-line fix opened, and TWO of its three findings were
+                          deliberately NOT fixed. The cut line was clipped 87px at 320px with no
+                          ellipsis, losing both its sentence and its dashed rule — the same element
+                          AGENTS.md already records being truncated once, so the guard asserts
+                          geometry rather than a string. Left alone: 178 svg labels below 9.5px
+                          (DESIGN.md requires mono labels 9.5-11px FIXED, and holding that needs a
+                          1240px plate scrolling 3.2x on a phone) and 29 of 30 timeline markers
+                          under the 24px target size (they already touch, so enlarging hit areas
+                          changes the timeline's density). Both are design decisions on the
+                          reference implementation, not retro-fixes
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
