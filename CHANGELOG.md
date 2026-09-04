@@ -10,6 +10,99 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A reader who picked a theme their operating system did not have got chip labels below AA, and
+  six green theme tests said otherwise.** `s3.html` builds each chip as
+  `style="background:${colOf(w)}"`, and `colOf` reads the custom property **once**, at build time,
+  writing the resolved hex into the attribute. The label's own `color: var(--chip-ink)` stays live.
+  So a theme switch moved one half of the pair and froze the other: near-black ink on the *light*
+  palette's swatches — **4.19:1**, **3.64:1** and **3.85:1** on `tinted-dark` and `neon`, against a
+  4.5:1 floor. They are **6.53:1** now, which is the figure the stylesheet's own comment claims for
+  the dark pairing.
+
+  **The CSS was correct the whole time** — every theme declares its swatch and its ink together, in
+  one block. Only the JavaScript disagreed, so no amount of reading the stylesheet could find it.
+  Four DOM sites emit the custom property itself now (`var(--animal)`); the canvas call keeps the
+  resolved value, because a 2D context cannot take `var()`.
+
+  **The existing guard could not see it, and the reason is worth keeping.** Its theme table pairs
+  every dark theme with a dark `prefers-color-scheme` and every light one with a light one — the
+  single arrangement in which a frozen colour cannot be caught, because the value the page froze at
+  load already belongs to the theme being switched to. But a picker exists so a reader can choose a
+  theme their OS does not have. `test_the_chips_are_legible_when_the_theme_disagrees_with_the_os`
+  now drives the four explicit themes against the **opposite** scheme. Watched failing against the
+  unfixed page while the original six-theme test stayed green, which is the hole measured exactly.
+
+
+- **Exercise 01's seven range sliders were focusable and painted nothing.** Across three proof
+  pages they carried `outline: none` with no replacement: pixel-diffing the focused against the
+  unfocused state changed **0 of 8,694 pixels**, in all six themes, 42 measurements, every one
+  zero — while `:focus-visible` was true throughout. `docs/DESIGN.md`: *"`:focus-visible` always
+  has a visible ring."* These are the entire interaction on three of the four proof pages and the
+  first stop in the tab order after the back link, so a keyboard reader arrived, saw nothing, and
+  arrow keys then moved a number silently. Every other control on the same pages paints a ring at
+  5.98–18.60:1.
+
+  The guard asserts **pixels, not a property name**. A grep for `outline` would pass the moment
+  someone wrote `outline: 0` — or `outline-width: 3px` with no style, which is literally what was
+  there and is inert. It earned that immediately: the first attempt at the fix put the rules
+  *inside* the `input[type="range"] { … }` block, which is invalid CSS and silently discarded, and
+  the guard went red naming all five s1 sliders while the page looked unchanged.
+
+- **Exercise 01's fourth proof scrolled sideways on every phone.** Its size control was a 260px
+  slider beside a 96px readout in a flex row that could not reflow — 419px of control inside a
+  272px content box, so the page scrolled sideways by **123px at 320, 83px at 360 and 53px at
+  390**, in every theme. It now wraps and the track may shrink; `min-width: 0` is the operative
+  part, because a flex item's default `min-width: auto` refuses to go below its content and
+  `flex: 1` alone would have moved nothing. Re-measured: **0px at all three widths**.
+
+- **All twelve canvases on exercise 01's four proof pages had no accessible name**, no role and no
+  fallback, so the entire visual argument of the exercise was absent to a screen reader. Each now
+  carries `role="img"` and `aria-labelledby` pointing at the heading or caption **the page already
+  shows** beside it — no invented prose, nothing to keep in sync, and the caption's live accuracy
+  readout comes along with it.
+
+### Fixed
+
+- **Exercise 01's `s3.html` was dead on arrival, and had been for as long as it has been
+  deployed.** The theme bootstrap declared `var t` at the top level of a classic script — which
+  creates a *global* — and the page script opens `let E, W, …, t, …`, which cannot redeclare it.
+  The whole 150-line script therefore threw `Identifier 't' has already been declared` **before its
+  first statement**: no category chips, no sample sentence, an empty canvas. Every file-level check
+  passed the entire time, because every file was perfectly well-formed. The bootstrap is now
+  wrapped on all five pages, four of which leaked the same global and escaped only by not happening
+  to reuse the name.
+
+- **Three of the four proof pages had no light palette at all.** `--animal`, `--fruit`, `--verb`,
+  `--end`, `--warm` and `--cool` were declared only inside `prefers-color-scheme: dark` blocks and
+  the two dark `data-theme` selectors, so on the three light themes — **the default** — they
+  resolved to nothing. A chip's background was never painted, leaving its white label on the white
+  page at **1.00:1**; canvas fills silently kept whatever was set last, so two series stopped being
+  distinguishable while the diagram still looked drawn. Each page now declares a light set,
+  following `s1.html`'s own precedent for the same hues.
+
+- **The category chips are legible in all six themes**, measured as painted rather than read from
+  the stylesheet — the swatch is set from JavaScript, so it appears in no rule. A paired
+  `--chip-ink` carries the label colour, one per theme group: white clears AA on all four light
+  swatches (**4.70:1** at worst) and near-black on all four dark ones (**6.53:1** at worst), against
+  1.00:1 to 3.02:1 before.
+
+### Added
+
+- **`tests/_page_invariants.py` has a second consumer.** The module exists to be shared — no
+  console or page error, no failed request, nothing overflowing its own box, no text painted its own
+  background, no image without real dimensions — and it was wired into exactly **one** page, the
+  landing page. Every other exercise hand-rolled its own `scrollWidth` comparison and exercise 01
+  had none at all. It is now asked of all five of exercise 01's pages at three widths, with a twin
+  that plants an overflowing box and confirms it is reported, so importing the module and calling
+  nothing would be visible.
+
+- **Exercise 01 has a browser test, which it had never had.** Both failures above are invisible in
+  the source and obvious the moment a page is opened, which is the whole argument for
+  `src/exercises/01-introductions/tests/test_page_render.py`. Run against the shipped pages it
+  reports **17 failures**; run against the fixed ones, none.
+
 ### Added
 
 - **Both exercises ship a deployable page** carrying the twelve-part spine, with every figure read

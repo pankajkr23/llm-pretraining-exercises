@@ -606,4 +606,22 @@ predates the harness — so it is logged as what it was.
                           micro-batch count, MFU against a MEASURED device peak rather than a
                           datasheet one, and telemetry that requires the loss to follow a leading
                           indicator rather than merely precede it
+2026-09-04  retro-fix     #121 opened: exercise 01's s3.html had been DEAD ON ARRIVAL for as long
+                          as it has been deployed — `var t` in the theme bootstrap is a global and
+                          the page script opens `let ..., t, ...`, so the whole thing threw before
+                          its first statement. Every file-level check stayed green because every
+                          file was well-formed. Three of the four proof pages also had no LIGHT
+                          palette, so their tokens resolved to nothing on the default theme and a
+                          chip's white label sat on the white page at 1.00:1
+2026-09-04  retro-fix     #121 synced, and a defect was found IN ITS OWN SUBJECT. Each chip's
+                          swatch is written into a style attribute from a value colOf() read once
+                          at build time, while the label's ink stays a live var(--chip-ink). A
+                          reader who picks a theme their OS does not have therefore got near-black
+                          ink on the LIGHT swatches: 4.19 / 3.64 / 3.85:1 against 4.5. Now 6.53:1,
+                          the figure the stylesheet's own comment already claimed. The CSS was
+                          correct throughout -- only the JS froze half the pair. The six-theme
+                          guard could not see it because it pairs every dark theme with a dark
+                          prefers-color-scheme, the single arrangement in which a frozen colour
+                          matches. A cross-scheme guard was added and watched failing while the
+                          original stayed green
 ```
