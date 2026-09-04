@@ -12,6 +12,29 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The MFU guard divided by something that was not a peak, and reddened whichever pull request
+  happened to be open.** It called `measured_peak_flops("cpu", size=512, repeats=2)`. At 512 the
+  multiply is small enough that allocation and launch dominate, so it reports roughly **half** the
+  machine's real rate — **1.6 TFLOP/s against 3.3 at 2048** — with a **6.6%** spread across
+  repeated estimates. Whenever the run's own achieved rate landed above that under-measurement,
+  `mfu` came out impossible and the test failed.
+
+  It failed twice in one evening on unrelated work — **253.14%** on #119 and **117.40%** on #113 —
+  and the same assertion has failed on `main`, so it read as a defect in whoever's branch was in
+  hand. Both cleared on a re-run, which is the shape of a flake and the reason it survived.
+
+  **The assertion was right and the measurement was not.** Refusing an MFU above 100% is the whole
+  point of this test: it exists because an earlier version divided CPU FLOPs by a GPU's peak and
+  reported a triumphant, meaningless 39.13%.
+
+  The test now uses the function's defaults — `size=2048` — which is what `harness.py`, the notebook
+  and the published figure already use. **It was the only call site overriding them.** Measured
+  across three independent estimates the default spreads **0.1%**, and it is also *faster* than 512
+  (0.08s against 0.14s), because the small case is dominated by allocation rather than arithmetic:
+  more correct and cheaper. Ten consecutive runs pass, and the guard still reports **22,139%** when
+  the peak is deliberately made a thousand times too small.
+
+
 - **The six-theme sweep measured `body.color`, so a page whose prose was unreadable still passed.**
   It reads one pair per page — the `<body>` element's own colour against its own background — which
   catches a whole-page inversion and nothing narrower. **Verified by breaking it**: painting
