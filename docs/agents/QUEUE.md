@@ -396,6 +396,16 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
+2026-09-04  ci            #124 opened: `npx --yes @mermaid-js/mermaid-cli` FETCHES the package on
+                          first use and it bundles puppeteer, so on a cold runner the download ran
+                          past the 180s the render test allows for a RENDER. Failed on three of
+                          four consecutive branches and passed on the fourth — a flake that reds
+                          pull requests that did not touch it, which teaches people to re-run a
+                          gate rather than read it. The fetch moves to a step with its own budget
+2026-09-03  fleet         #103 merged: install_agent_fleet.py --drift, wired into the post-merge
+                          hook. A reviewer copied into .claude/ and then edited there diverges
+                          silently from its tracked source, and the installed copy is the one that
+                          runs — so the drift is invisible in review by construction
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
