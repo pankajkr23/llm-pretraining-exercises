@@ -12,6 +12,13 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercise 02 claimed the tab pattern and implemented none of it.** Same defect as exercise 01,
+  on the tokenizer page: `role="tablist"` and `role="tab"` with no `role="tabpanel"`, no
+  `aria-controls` and no arrow-key handling. The roles are removed rather than the machinery built,
+  because these controls redraw a region in place and are not tabs.
+
+### Fixed
+
 - **Exercise 01 claimed the tab pattern and implemented none of it.** Two proof pages declared
   `role="tablist"` with `role="tab"` children and had **no `role="tabpanel"`, no `aria-controls` and
   no arrow-key handling**. Those roles are a promise: a screen reader told "tab" announces a tab,

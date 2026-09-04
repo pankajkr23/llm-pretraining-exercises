@@ -512,6 +512,8 @@ predates the harness — so it is logged as what it was.
                           A wrong announcement is worse than none, because the reader acts on it.
                           The fix REMOVES the claim rather than building the machinery: these
                           redraw a region in place and are not tabs
+2026-09-04  retro-fix     #115 opened: exercise 02, same false tab-pattern claim as #114, same
+                          answer -- the roles come off rather than the machinery going in
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
