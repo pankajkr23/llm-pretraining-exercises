@@ -94,8 +94,15 @@ def test_every_builder_emits_a_clean_notebook(builder: Path, tmp_path: Path) -> 
 def test_every_notebook_installs_the_exercise_rather_than_copying_it(builder: Path) -> None:
     """A notebook that re-implements the pipeline teaches something the pipeline does not do."""
     source = builder.read_text(encoding="utf-8")
-    # The clone is spawned as an argument list -- `['git', 'clone', ...]` -- so the literal
+    # The clone is spawned as an argument list -- `["git", "clone", ...]` -- so the literal
     # "git clone" never appears. Asserting that string passed against nothing and failed against
     # every builder in the repo, which is how it was caught.
-    assert "'clone'" in source, f"{builder.parents[1].name}: no Colab clone step"
+    #
+    # **And the fix for that was itself one phrasing of the property rather than the property.** It
+    # asserted `'clone'` with single quotes, which is what every builder happened to use until
+    # `ruff format` normalised one of them to double quotes -- at which point a builder with a
+    # perfectly good clone step failed. Match either quote.
+    assert "'clone'" in source or '"clone"' in source, (
+        f"{builder.parents[1].name}: no Colab clone step"
+    )
     assert "IN_COLAB" in source, f"{builder.parents[1].name}: does not detect Colab"
