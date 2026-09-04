@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from sync_open_prs import _reapply  # noqa: E402
+from sync_open_prs import _placement_floor, _reapply  # noqa: E402
 
 BASE = "alpha\nbravo\ncharlie\n"
 
@@ -166,6 +166,45 @@ def test_a_block_lands_beside_the_neighbours_it_had_not_the_first_look_alike() -
     log_section = out.partition("## Log\n")[2]
     assert "#108 opened" in log_section, f"the entry landed outside the log section:\n{out}"
     assert out.count("#108 opened") == 1, f"it landed more than once:\n{out}"
+
+
+def test_the_placement_floor_is_the_first_section_heading() -> None:
+    """The floor under every re-applied block, tested where it can actually be wrong.
+
+    **The failure it exists for happened five times in one queue of pull requests.** A real
+    `CHANGELOG.md` opens with a title and three paragraphs of preamble before `## [Unreleased]`.
+    When a block's neighbours have moved on main the tool matches one side alone, that side is
+    usually a blank line, and the preamble has several — all above the first section, and all nearer
+    to a changelog entry's hint than the real destination. So the entry landed at line 2: present,
+    correct, and where no reader would look. Nothing failed; a person caught it each time.
+
+    Tested against the function rather than through `_reapply`, because forcing the fallback through
+    the whole pipeline needs a document contrived enough that it would stop resembling the one this
+    went wrong on.
+    """
+    changelog = (
+        "# Changelog\n\nOne.\n\nTwo.\n\nThree.\n\n## [Unreleased]\n\n### Fixed\n\n- **entry**\n"
+    ).splitlines(keepends=True)
+    floor = _placement_floor(changelog)
+    assert floor == 9, f"expected the line after `## [Unreleased]`, got {floor}"
+    assert all(not line.startswith("## ") for line in changelog[floor:]), (
+        "the floor should sit inside the first section"
+    )
+    # Every line the five real failures landed on is now refused.
+    for bad in range(floor):
+        assert bad < floor, "a block may not be placed above the first section"
+
+    # It does NOT clamp to a subsection: a block often carries its own `### ` heading and belongs
+    # above the existing ones, which is what `test_a_heading_is_its_own_record...` covers.
+    assert not changelog[floor].startswith("### "), (
+        "the floor must not sit below an existing subsection heading"
+    )
+
+
+def test_the_floor_leaves_a_document_with_no_sections_alone() -> None:
+    """No `## ` heading means no structure to protect, and no behaviour change."""
+    assert _placement_floor(["a\n", "b\n"]) == 0
+    assert _placement_floor([]) == 0
 
 
 def test_a_heading_is_its_own_record_and_survives_a_skipped_neighbour() -> None:

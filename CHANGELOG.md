@@ -12,6 +12,29 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The sync tool put changelog entries above the title, five times in one queue.** When a
+  re-applied block's neighbours have moved on `main`, the tool matches one side alone. That side is
+  usually a blank line — and a real `CHANGELOG.md` opens with a title and three paragraphs of
+  preamble, so it has several, all above the first section and all *nearer* to a changelog entry's
+  small hint than the real destination. The entry landed at line 2: present, correct, and where no
+  reader would look.
+
+  Nearest-to-the-hint had already replaced first-match for this exact reason and was not enough,
+  because the hint itself is small. A block may now not be placed above the document's first `## `
+  heading; when a location resolves there it is moved and **the move is reported**, naming the line
+  it resolved to and the line it used instead.
+
+  **The floor is the first section, deliberately not the first subsection.** A block often carries
+  its own `### ` heading and belongs above the existing ones — clamping to `### ` broke exactly that
+  case, which `test_a_heading_is_its_own_record_and_survives_a_skipped_neighbour` already covered.
+  The floor answers *is this inside the document's body*, which is the question the five real
+  failures got wrong; it does not choose between subsections.
+
+  Tested against the function rather than through the whole pipeline: forcing the fallback end to
+  end needs a document contrived enough to stop resembling the one this went wrong on. Watched
+  failing twice — with the floor disabled entirely, and with it off by two.
+
+
 - **The six-theme sweep measured `body.color`, so a page whose prose was unreadable still passed.**
   It reads one pair per page — the `<body>` element's own colour against its own background — which
   catches a whole-page inversion and nothing narrower. **Verified by breaking it**: painting
