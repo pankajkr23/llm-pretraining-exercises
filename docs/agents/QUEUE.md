@@ -396,7 +396,7 @@ predates the harness — so it is logged as what it was.
                           writes elsewhere. Re-run clean. The test UNIT.md was then removed, which
                           restores the documented default — no unit file means scope is inert,
                           while measured data, guards and standards stay refused regardless
-2026-09-04  retro-fix     exercise 03's print fix opened: 0 of 45 scrolly verdict lines survived
+2026-09-04  retro-fix     #126 opened: exercise 03's print fix -- 0 of 45 scrolly verdict lines survived
                           `emulate_media("print")` because the end-state rule existed only for
                           prefers-reduced-motion. A printed sheet carried 11 figure states and lost
                           34. Fixed by adding `print` to the SAME media query rather than writing a
