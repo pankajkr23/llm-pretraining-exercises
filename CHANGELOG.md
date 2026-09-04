@@ -31,6 +31,26 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   local-only-tripwire and quote-check gates that CI *cannot run at all*. A guard that cries wolf
   gets tuned out, and these two were doing it to the one run that has no CI twin.
 
+- Consolidating the theme picker broke exercise 03's page outright — it rendered **zero sections**.
+  Its render test serves the exercise's own `web/` directory rather than the assembled site, so a
+  site-root import 404s there, and **a failed module import aborts the whole module**, taking the
+  page's `buildPage` call with it. `theme.js` is vendored alongside the CSS now and imported
+  relatively, and two guards cover it: one that the vendored copies match their source, one that a
+  page's import path resolves where its own test serves from.
+
+### Changed
+
+- **One theme picker, not eight.** `deploy/vercel/_shared/theme.js` gains `bindThemePicker`, which
+  wires a `<select>` a page has already rendered — and six pages drop the eighteen lines each had
+  hand-written. The markup stays in the page, deliberately: a server-rendered control is styled and
+  readable before any module loads.
+- `tests/test_theme_picker.py` guards it, and all four of its assertions were watched failing
+  against a deliberate break first. **One of them was blind and the break is how I found out** — it
+  checked that the string `bindThemePicker` appeared, so deleting the *call* and leaving the
+  `import` satisfied it. It asserts a call now.
+
+### Fixed
+
 - **The shared-layer orphan guard counted class names written inside comments.** It ran
   `\.([a-z][a-z0-9-]*)` over the raw stylesheet, so `page.css` in a comment counted as the class
   `css`, `data.json` as `json`, and the phrase *"i.e."* as `e`. A comment added here naming `.back`
