@@ -10,6 +10,16 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Exercise 05's toggle said which option was chosen in colour alone.** The control that flips how
+  a corpus is filed marked its active option by painting the accent and **nothing else**. A screen
+  reader read two identical buttons — no `aria-pressed`, no group, no label — on a control whose
+  entire purpose is that the answer changes. And under `high-contrast` the accent and the surface
+  sit far closer than this design assumes, so the one signal carrying the state largely disappears;
+  a printed or screenshotted page loses it outright. The state is now announced (`aria-pressed` on a
+  labelled `role="group"`) and marked by something other than colour.
+
 ### Added
 
 - **A drift check on the fleet files, wired to `post-merge`.** The reviewer definitions live in two
