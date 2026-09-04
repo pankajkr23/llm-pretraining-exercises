@@ -12,6 +12,21 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The six-theme sweep measured `body.color`, so a page whose prose was unreadable still passed.**
+  It reads one pair per page — the `<body>` element's own colour against its own background — which
+  catches a whole-page inversion and nothing narrower. **Verified by breaking it**: painting
+  `#main p` near-black on `neon` for exercise 06 left every one of the 60 page/theme cases green,
+  while the paragraph a reader actually reads measured **1.41:1**.
+
+  It now measures the prose as well — paragraphs and list items, composited over the real painted
+  stack rather than the first opaque ancestor — and the same break is caught, naming the page, the
+  theme, the ratio and the sentence.
+
+  **Strengthening it cost nothing**: all 60 page/theme pairs already clear AA on painted prose,
+  measured before the assertion was written. Had any failed, this would have been a page fix rather
+  than a guard change, and worth knowing which before choosing.
+
+
 - **Exercise 08's invoice cut line was truncated again, on every phone.** Its label is
   `white-space: nowrap` inside a 26px `overflow: hidden` row, so at 320px **87px of the sentence
   was cut** with no ellipsis and 17px at 390px — and the dashed rule its `::after` draws was pushed

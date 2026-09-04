@@ -116,7 +116,7 @@ def _measure(site, slug: str, attr: str | None, scheme: str) -> dict:
         page.wait_for_timeout(700)
         result = page.evaluate(
             LUMINANCE_JS
-            + """
+            + r"""
             () => {
               const root = getComputedStyle(document.documentElement);
               const body = getComputedStyle(document.body);
@@ -124,11 +124,48 @@ def _measure(site, slug: str, attr: str | None, scheme: str) -> dict:
                 .filter((n) => !root.getPropertyValue(n).trim());
               const ink = rgb(body.color);
               const bg = rgb(body.backgroundColor);
+              // **And the text a reader actually reads.** `body.color` is one pair per page:
+              // it catches a whole-page inversion and nothing narrower. A rule that paints the
+              // prose itself unreadable moves no `body` property at all -- verified by making
+              // `#main p` near-black on `neon` and watching all 60 of these cases stay green.
+              // So paragraphs and list items are measured too, composited over the real painted
+              // stack rather than the first opaque ancestor.
+              const parse = (c) => (c.match(/[\d.]+/g) || []).map(Number);
+              const alpha = (c) => { const v = parse(c); return v.length > 3 ? v[3] : 1; };
+              const ground = (el) => {
+                let n = el, stack = [];
+                while (n) {
+                  const c = getComputedStyle(n).backgroundColor, v = parse(c);
+                  if (v.length && alpha(c) > 0) stack.push([v, alpha(c)]);
+                  if (v.length && alpha(c) >= 1) break;
+                  n = n.parentElement;
+                }
+                stack.push([[255, 255, 255], 1]);
+                let g = stack[stack.length - 1][0];
+                for (let i = stack.length - 2; i >= 0; i--) {
+                  const [c, a] = stack[i];
+                  g = [0, 1, 2].map((k) => c[k] * a + g[k] * (1 - a));
+                }
+                return g;
+              };
+              let proseWorst = null, proseWho = '';
+              for (const el of document.querySelectorAll('#main p, #main li, main p, main li')) {
+                const t = (el.innerText || '').trim();
+                if (t.length < 60) continue;
+                const col = parse(getComputedStyle(el).color);
+                if (!col.length) continue;
+                const r = ratio(col, ground(el));
+                if (proseWorst === null || r < proseWorst) {
+                  proseWorst = r; proseWho = t.slice(0, 40);
+                }
+              }
               return {
                 unresolved,
                 contrast: ink && bg ? ratio(ink, bg) : null,
                 ink: body.color,
                 bg: body.backgroundColor,
+                proseWorst,
+                proseWho,
               };
             }"""
         )
@@ -162,6 +199,15 @@ def test_the_page_is_readable_under_this_theme(site, slug: str, name: str, attr,
         f"{slug} under {name}: body text is {m['contrast']:.2f}:1 against its own background "
         f"({m['ink']} on {m['bg']}), below WCAG AA of {AA}:1."
     )
+
+    # The narrower half. `body.color` above is one pair per page; this is the prose itself.
+    if m["proseWorst"] is not None:
+        assert m["proseWorst"] >= AA, (
+            f"{slug} under {name}: a paragraph measures {m['proseWorst']:.2f}:1 against what is "
+            f"actually painted behind it, below WCAG AA of {AA}:1 — {m['proseWho']!r}.\n\n"
+            "The page-level colours can be fine while one rule paints a block unreadable, which is "
+            "why this is measured separately from `body`."
+        )
 
 
 def test_the_contrast_check_can_actually_fail(site) -> None:
