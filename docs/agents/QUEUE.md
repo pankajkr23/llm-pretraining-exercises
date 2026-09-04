@@ -671,4 +671,10 @@ predates the harness — so it is logged as what it was.
                           not the page — a badge whose ground is 10% alpha of its own text colour
                           read 1.00:1 until the stack was composited, and is 4.66:1 in fact. The
                           guard blends the painted stack so it cannot repeat that
+2026-09-04  retro-fix     #127 opened: exercise 04's permalink fix -- 13 chapter anchors read "#" with no
+                          aria-label, so a screen reader announced "number sign" thirteen times for
+                          thirteen destinations. 03 and 06 already carried the answer; the wording
+                          is copied rather than reinvented, because an identical control should
+                          announce identically. The guard asserts a non-empty accessible NAME, not
+                          that a particular string is present
 ```

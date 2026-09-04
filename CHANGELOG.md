@@ -1,4 +1,24 @@
 # Changelog
+
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+Record user-facing changes under `[Unreleased]` as they land; on release, rename that
+section to the new version with a date and open a fresh `[Unreleased]`.
+
+## [Unreleased]
+
+### Fixed
+
+- **Exercise 04's thirteen chapter permalinks announced as "number sign".** Each is
+  `<a class="anchor" href="#…">#</a>` with no `aria-label`, so a screen reader read the same two
+  words thirteen times for thirteen different destinations. **Exercises 03 and 06 already solve
+  this** — `a.setAttribute('aria-label', 'Link to this chapter')` — and the wording is copied
+  verbatim rather than reinvented, because the point is that the identical control announces
+  identically across the site. Measured after: 13 of 13 carry the name, in all six themes.
+
 - **Exercise 02's segmented controls were unreadable in the default theme.** The five options a
   reader has *not* chosen were `--muted` on the control's `--track` ground: **4.15:1**, below WCAG
   AA. All five explicit themes cleared it (4.84 to 14.17:1) — the one that failed was the state
@@ -15,18 +35,6 @@
   `rgba(0, 104, 209, 0.1)` — ten per cent of its own text colour — and the probe treated it as
   opaque. Composited properly it is **4.66:1** and passes. The guard now blends the whole painted
   stack, so it cannot repeat that.
-
-All notable changes to this project are documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-Record user-facing changes under `[Unreleased]` as they land; on release, rename that
-section to the new version with a date and open a fresh `[Unreleased]`.
-
-## [Unreleased]
-
-### Fixed
 
 - **The measure was applied to sections and not to panels, and eight paragraphs of running prose
   stayed at 121 characters.** `main section > p { max-width: 68ch }` was scoped deliberately, on the
