@@ -418,6 +418,28 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **`AGENTS.md` gains three sections, all earned by merging twenty-seven pull requests in one
+  run.** Every defect they describe was found by driving the page or the tool, and **none of them
+  failed a test first**.
+
+  *Merging a queue of pull requests* — a clean merge of an append-only log is routinely a wrong one,
+  and "nothing was lost" is the wrong question: an entry can land above the preamble, outside every
+  section, present and unfindable. That happened **five times**. Also: a stale ledger entry naming a
+  fix that has already landed; reading the whole hook output rather than its tail, after two commits
+  failed silently; and why every one of ten consecutive merges here was a squash.
+
+  *Verifying a fix, as opposed to running its tests* — break the thing the guard checks rather than
+  the thing it is about; a probe artefact reads exactly like a defect and costs more; a measurement
+  taken 140ms after a theme switch reported the previous theme's shadow, which turned "two themes
+  affected" into three.
+
+  *Agents running near the working tree* — a subagent's `$TMPDIR` may be empty, so
+  `mkdir "$TMPDIR/x"` becomes `mkdir x` in the repository root. One run left a scratch directory, a
+  nested `.git`, two staged files and **two git tags** authored by the test-fixture identity. The
+  tags are the worst of it: `snapshot_standards.py` measures against the newest tag, so a stray one
+  makes the standards archive look permanently behind.
+
+
 - **A repo-wide guard that a page building a contents rail also marks the section in view.**
   `.rail-link.on` has been styled in the shared stylesheet since before most of these pages existed,
   and for a long time **only exercise 03 ever set it** — so four rails looked finished and never
