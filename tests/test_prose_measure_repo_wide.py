@@ -62,6 +62,7 @@ COVERED = [
     "01-introductions",
     "02-tokenization",
     "03-data-collection-framework",
+    "04-data-cleaning-dedup",
     "06-build-training-dataset",
     "07-model-embeddings-internals",
     "08-modern-attention-variants",
@@ -71,7 +72,6 @@ COVERED = [
 
 #: Deployable, measured, and not yet in the band. Each names what is fixing it.
 NOT_YET_COVERED = {
-    "04-data-cleaning-dedup": "#117 — measured 125 characters at 2560px",
     "05-datamixtures-and-curriculum": "#118 — measured 149 characters at 2560px",
 }
 

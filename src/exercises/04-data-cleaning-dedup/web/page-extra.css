@@ -239,3 +239,41 @@ main section,
 }
 
 .waterfall { margin: 0.8rem 0; }
+
+/* ============================================================
+ * A measure for running prose.
+ *
+ * Measured at 1440px before this rule: the widest body paragraph ran 1,156px at 16px type, which
+ * is roughly **145 characters a line** — about double what anyone can track. The eye loses its
+ * place returning to the left edge, and the longer the line the more often it lands on the wrong
+ * one.
+ *
+ * The measure goes on the element that CARRIES the type, not on a wrapper. `docs/DESIGN.md`
+ * records why: a `ch` unit resolves against the font size of the element declaring it, so a
+ * measure set on a container with a different size silently means something else.
+ *
+ * Only paragraphs directly inside a section. A `<p>` inside a panel, a figure or a table cell is
+ * laid out by that component and constraining it here would fight the component's own rules —
+ * which is how a `max-width` written above the rule it was meant to beat ends up moving nothing.
+ * ============================================================ */
+
+main section > p {
+  max-width: 68ch;
+}
+
+/* And the panels, which the rule above deliberately skipped.
+ *
+ * The reasoning for skipping them was that a component lays out its own `<p>` and a measure here
+ * would fight it. That holds for a caption or a label; it does not hold for these. Measured at
+ * 2560px afterwards, eight paragraphs inside `.panel` still ran **121 characters** — among them
+ * "1 · The claim and one number. Plain words. A first-time reader stops here and is not misled."
+ * and the glossary entries. That is running prose by any reading, and the eye loses its place in
+ * it exactly as it does in a section paragraph.
+ *
+ * A `max-width` on the paragraph does not fight the panel: the panel keeps its own width, its
+ * padding and its grid, and only the text stops before the right edge. Scoped to this exercise's
+ * own stylesheet rather than the shared `.panel` component, because six other pages use that
+ * component and none of them was measured here. */
+main .panel p {
+  max-width: 68ch;
+}

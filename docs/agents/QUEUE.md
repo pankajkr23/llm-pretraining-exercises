@@ -520,6 +520,11 @@ predates the harness — so it is logged as what it was.
                           finished and never moved. The rule is the last heading past the first
                           third of the viewport, NOT the nearest one -- sections run several
                           screens, so the nearest heading is often the one ahead of the reader
+2026-09-04  retro-fix     #117 opened: exercise 04's widest body paragraph was 1,156px at 16px --
+                          about 145 characters a line, roughly double what anyone can track. A
+                          measure brings it to 692px, about 83. The `ch` unit goes on the element
+                          that CARRIES the type, because it resolves against that element's own
+                          font size
 2026-09-03  tracking      #102 merged: row 3 closed, rows 9 and 10 added. It did NOT log itself,
                           so the checker refused the next branch that touched this file — the
                           open-time convention was followed for the ROWS and forgotten for the
