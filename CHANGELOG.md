@@ -12,6 +12,24 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The pull-request sync tool put a log entry in the wrong section of the file, and every count of
+  it looked right.** It anchored each re-applied block on the single line that followed it on the
+  branch. `docs/agents/QUEUE.md` contains a dozen code fences, so `list.index` returned the
+  earliest one and #108's entry landed forty lines *above* the `## Log` heading. It was still in the
+  file — `grep` found it, the diff looked sane — and only `queue_status.py`, which reads the log
+  section and nothing else, noticed, two merges later.
+
+  A single line is not a position. The anchor is now the **pair** of neighbours a block had, with
+  reported fallbacks to one side or the other when `main` has moved under it, so a degraded
+  placement is visible rather than silent.
+
+  This is the third defect this tool has produced in three live runs — per-block skipping, then
+  only inspecting conflicted files, now an ambiguous anchor — and each one was invisible in the
+  diff and caught by something downstream. The entry it misplaced on `main` is moved back into the
+  log in this change.
+
+### Fixed
+
 - **The mermaid render test spent its 180-second budget downloading rather than rendering.** It
   shells out to `npx --yes @mermaid-js/mermaid-cli`, and `--yes` *fetches* the package on first
   use — it bundles puppeteer, so on a cold runner that download alone can exceed the timeout the
