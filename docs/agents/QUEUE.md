@@ -730,4 +730,14 @@ predates the harness — so it is logged as what it was.
                           merges each conflicted on CHANGELOG.md and resolving by taking a side lost
                           three of the four entries; restored, and it is exactly the failure
                           sync_open_prs.py exists to prevent
+2026-09-05  refactor      #145 opened: web/_shared/tokens.css was NOT the token file and is now
+                          components.css. Every page linked two stylesheets under one name -- the
+                          six-theme tokens at /_shared/tokens.css and exercise 03's component
+                          styles at ./_shared/tokens.css -- told apart by one character, which is
+                          what made the rename mechanical. 8 files renamed, 11 pages relinked
+                          (three of them sub-pages a per-exercise sweep would miss), 16 absolute
+                          links untouched. Verified in a browser: 10/10 pages load both sheets with
+                          every token resolved. The first probe said 0/10 and was wrong -- the
+                          build appends a cache-busting query -- which is the third artefact of
+                          that shape in this queue
 ```
