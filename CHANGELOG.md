@@ -12,6 +12,25 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercise 02 redistributes CC BY-SA Wikipedia text and never said so where anyone could see it.**
+  Fourteen tracked files under `corpus/` are Wikipedia article text — the "India" article in five
+  languages, 1.6M characters of it — and `web/tokenizer.json`, which the deployed page **offers as a
+  download**, is a derivative work whose merge table contains substrings of that text. CC BY-SA
+  requires attribution and share-alike.
+
+  **The licence appeared in exactly one place in the whole exercise:** a parenthetical inside
+  `CLAUDE.md`, a file addressed to coding agents. An obligation recorded only in the instructions to
+  the machine is not one a reader of the work can discover, and it is not attribution. Every other
+  exercise that ships third-party content already had a `NOTICE`; 02 had the strongest case for one
+  and none at all.
+
+  It now has one, naming each article, its source URL, its fetch date and its character count, plus
+  the derived artefacts that inherit the licence. `tests/test_tokenization_notice.py` fails in both
+  directions: a sixth language added to `corpus/v2/` and not to `NOTICE` is an attribution gap, and
+  **every character count is read back from the `meta.json` that produced it** rather than typed,
+  because a number in prose that drifts from its source is what `AGENTS.md` calls the most expensive
+  failure in this repository.
+
 - **The one notebook this repository ships ran on exactly one computer, and imported a library that
   was installed nowhere.** `notebooks/S10-training-loop.ipynb` is tracked under a named `.gitignore`
   exemption, because exercise 10's submission requires the `.ipynb` and offers no alternative — so
