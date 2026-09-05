@@ -418,6 +418,34 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **A guard that the eight vendored copies of `web/_shared/` still match, which nothing checked.**
+  It went wrong **twice in one queue of pull requests**, and both times the merge order caught it
+  rather than anything failing. Exercises 09 and 10 were built while five shared-layer fixes were
+  open, so they froze the pre-fix stylesheets and carried no `theme.js` at all: measured on their
+  own pages, the `← Back` pill ran **1.54:1 on `neon`** and **2.46:1 on `tinted-dark`** against a
+  4.5:1 floor, and each had hand-written the theme logic a refactor had just centralised — the
+  ninth and tenth copies, written *after* the refactor removed the other eight.
+
+  Two properties, because the failure has two shapes: copies that differ, and a file that is
+  **absent** — which cannot drift and cannot be fixed by a shared-layer change, so the page ends up
+  hand-writing whatever the missing file provides.
+
+  **The absence check is a majority rather than an identical set**, and the threshold does real
+  work: four files are vendored by all eight exercises, while `explainer.js` and `num.js` are
+  vendored by the two pages that build an explainer. Demanding identical sets would red-flag that
+  deliberate opt-in, and a guard that fails correct work gets weakened. "Present in all but one"
+  was rejected too — it goes vacuous exactly when it matters, since one new exercise without
+  `theme.js` would stop the file being universal and stop the rule applying.
+
+  Both watched failing: one copy of `page.css` changed, and `theme.js` removed from one exercise.
+
+  A third assertion was written and then removed: it pinned the fact that `web/_shared/tokens.css`
+  is *not* the token file. That name is being fixed instead, in its own change — pinning a trap is
+  worse than removing it, and a guard asserting a name stays misleading would have been rewritten by
+  the very next pull request. It also failed its own first break by reading only the first of eight
+  copies, which is the more useful thing it taught.
+
+
 - **A repo-wide guard that a page building a contents rail also marks the section in view.**
   `.rail-link.on` has been styled in the shared stylesheet since before most of these pages existed,
   and for a long time **only exercise 03 ever set it** — so four rails looked finished and never
