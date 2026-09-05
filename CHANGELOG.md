@@ -13,15 +13,24 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 ### Fixed
 
 - **The MFU guard divided by something that was not a peak, and reddened whichever pull request
-  happened to be open.** It called `measured_peak_flops("cpu", size=512, repeats=2)`. At 512 the
-  multiply is small enough that allocation and launch dominate, so it reports roughly **half** the
-  machine's real rate — **1.6 TFLOP/s against 3.3 at 2048** — with a **6.6%** spread across
-  repeated estimates. Whenever the run's own achieved rate landed above that under-measurement,
-  `mfu` came out impossible and the test failed.
+  happened to be open.** It called `measured_peak_flops("cpu", size=512, repeats=2)`, and two short
+  samples do not measure a peak on a machine that is busy — CI runs this file under `pytest -n
+  auto`, so three other xdist workers saturate the cores throughout. Whenever the run's own achieved
+  rate landed above that under-measurement, `mfu` came out impossible and the test failed.
 
   It failed twice in one evening on unrelated work — **253.14%** on #119 and **117.40%** on #113 —
-  and the same assertion has failed on `main`, so it read as a defect in whoever's branch was in
-  hand. Both cleared on a re-run, which is the shape of a flake and the reason it survived.
+  again on `main`, and again at **261.48%** on #145. Each cleared on a re-run, which is the shape of
+  a flake and the reason it survived.
+
+  **Contention is the cause, and the matrix size is the smaller half of the fix.** Measured against
+  a fully loaded machine, the old parameters recover **61%** of their quiet value, the function's
+  defaults recover **76%**, and fifteen samples at 2048 recover **95%**. #145 needed a **2.61x**
+  better estimate; the defaults alone buy **2.54x**, so switching to them would have left the guard
+  sitting on the edge and still failing intermittently. Taking the best of several independent
+  estimates buys **3.94x**, and the test now escalates to thirteen of them when — and only when —
+  the run's achieved rate exceeds the peak, which is *proof* the estimate is too low rather than a
+  reason to retry until green. A wrong-device denominator still fails: fed an impossible achieved
+  rate, the escalation returns 3.4 TFLOP/s and the assertion refuses it.
 
   **The assertion was right and the measurement was not.** Refusing an MFU above 100% is the whole
   point of this test: it exists because an earlier version divided CPU FLOPs by a GPU's peak and

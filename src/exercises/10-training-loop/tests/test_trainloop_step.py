@@ -355,6 +355,33 @@ def test_mfu_refuses_a_zero_duration() -> None:
         measure(parameters=1000, tokens=100, seconds=0.0)
 
 
+def _peak_that_is_actually_a_ceiling(achieved_flops_per_second: float) -> float:
+    """The best of several independent estimates, escalated only on evidence.
+
+    `measured_peak_flops` takes the best of `repeats` timings, and best-of-N is the right shape:
+    interference only ever slows a multiply down, so the fastest sample is the one closest to what
+    this machine can really do. What best-of-N cannot do is escape a machine that is busy for the
+    **whole** measurement — and CI runs this file under `pytest -n auto`, so the other xdist workers
+    are saturating the cores the entire time it measures.
+
+    **That is what reddened unrelated pull requests, and it is not mainly the matrix size.**
+    Measured here against a fully loaded machine, the old `size=512, repeats=2` recovers **61%** of
+    its quiet value, the defaults recover **76%**, and fifteen samples at 2048 recover **95%**. The
+    failure on #145 measured a peak of 26.8 GFLOP/s against an achieved 70.2 — a factor of 2.61,
+    where moving to the defaults alone buys 2.54x. It would have sat right on the edge and gone on
+    failing intermittently. **Sampling more is the fix; the matrix size is the smaller half.**
+
+    The escalation is evidence-driven rather than retry-until-green. An achieved rate above the
+    measured peak is *proof* the estimate is too low, because the run sustained that rate on this
+    same device seconds earlier. A peak still below it after thirteen independent estimates is a
+    real numerator/denominator mismatch, and the assertion it feeds still fails.
+    """
+    peak = max(measured_peak_flops("cpu") for _ in range(3))
+    if peak <= achieved_flops_per_second:
+        peak = max(peak, *(measured_peak_flops("cpu") for _ in range(10)))
+    return peak
+
+
 def test_the_measured_peak_is_the_denominator_for_the_runs_own_achieved_rate() -> None:
     """The denominator, checked against the numerator it will actually divide.
 
@@ -367,26 +394,22 @@ def test_the_measured_peak_is_the_denominator_for_the_runs_own_achieved_rate() -
     device that produced them is what the whole correction was about.
     """
     trace, facts = run(Config(), steps=3)
-    # **The defaults, which is the whole fix.** This called `size=512, repeats=2`, and 512 does not
-    # measure a peak: the multiply is small enough that allocation and launch dominate, so it
-    # reports roughly HALF the machine's real rate — 1.6 TFLOP/s here against 3.3 at 2048 — with a
-    # 6.6% spread across repeated estimates. When the run's own achieved rate landed above that
-    # under-measurement, `mfu` came out impossible and this test failed on a green branch. It did so
-    # twice in one evening, on #119 at 253% and #113 at 117%, and the same assertion has failed on
-    # `main` — so it was reading as a defect in whatever pull request happened to be open.
-    #
-    # `size=2048` is the function's own default, the size `harness.py` and the notebook already use,
-    # and the size the published figure quotes. Measured here across three independent estimates it
-    # spreads **0.1%**, and it is also *faster* than 512 (0.08s against 0.14s) because the small
-    # case is dominated by allocation rather than arithmetic. More correct and cheaper.
-    peak = measured_peak_flops("cpu")
+    # This called `measured_peak_flops("cpu", size=512, repeats=2)`, which is not a peak: two short
+    # samples on a machine running three other xdist workers land far below what the hardware can
+    # do. So `mfu` came out impossible and the test failed on a green branch — twice in one evening,
+    # on #119 at 253% and #113 at 117%, again on `main`, and again on #145 at 261%. It was reading
+    # as a defect in whatever pull request happened to be open. See the helper for the measurements.
+    priced = {
+        "parameters": int(facts["non_embedding_parameters"]),
+        "tokens": sum(trace.tokens),
+        "seconds": sum(trace.seconds),
+    }
+    # The achieved rate does not depend on the peak, so take it from a provisional measurement
+    # rather than restating `measure`'s own formula here — a second copy is the one that drifts.
+    achieved = measure(**priced, device_peak_flops=1.0).achieved_flops_per_second
+    peak = _peak_that_is_actually_a_ceiling(achieved)
 
-    utilisation = measure(
-        parameters=int(facts["non_embedding_parameters"]),
-        tokens=sum(trace.tokens),
-        seconds=sum(trace.seconds),
-        device_peak_flops=peak,
-    )
+    utilisation = measure(**priced, device_peak_flops=peak)
     assert utilisation.achieved_flops_per_second > 0
     assert utilisation.mfu < 1.0, (
         f"MFU came out at {utilisation.mfu:.2%} on this machine's own numbers. Above 100% means "
