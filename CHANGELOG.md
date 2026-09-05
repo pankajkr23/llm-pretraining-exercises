@@ -10,25 +10,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
-## [0.14.0] — 2026-09-05
-
-### Changed
-
-- **The root `pyproject.toml`'s version is pinned at `0.0.0`, because the git tag is the version.**
-  It read `0.4.0` while the newest release was `v0.13.0` — **nine minors stale**, wrong for eleven
-  releases, because nothing bumped it and nothing checked it.
-
-  **Bumping it to match would have been the worse fix.** A number that is correct once and then rots
-  looks maintained, which is precisely how this one misled: nothing distinguishes a pinned field
-  from a stale one by reading it. Nothing installs the root package from an index, so the field buys
-  nothing `git describe` does not.
-
-  `tests/test_root_version_is_pinned.py` holds it there and asserts the explanation sits next to it,
-  so the next person to "fix" it by bumping meets a red test and the reasoning rather than a silent
-  second source of truth. Watched failing both ways before commit: bumped to `0.14.0`, red; comment
-  removed, red. The workspace members are deliberately **not** covered — their versions are real,
-  installed by `uv sync --all-packages`, with one declaring a workspace dependency on another.
-
 ### Fixed
 
 - **Exercise 02 redistributes CC BY-SA Wikipedia text and never said so where anyone could see it.**
@@ -49,6 +30,27 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   **every character count is read back from the `meta.json` that produced it** rather than typed,
   because a number in prose that drifts from its source is what `AGENTS.md` calls the most expensive
   failure in this repository.
+
+## [0.14.0] — 2026-09-05
+
+### Changed
+
+- **The root `pyproject.toml`'s version is pinned at `0.0.0`, because the git tag is the version.**
+  It read `0.4.0` while the newest release was `v0.13.0` — **nine minors stale**, wrong for eleven
+  releases, because nothing bumped it and nothing checked it.
+
+  **Bumping it to match would have been the worse fix.** A number that is correct once and then rots
+  looks maintained, which is precisely how this one misled: nothing distinguishes a pinned field
+  from a stale one by reading it. Nothing installs the root package from an index, so the field buys
+  nothing `git describe` does not.
+
+  `tests/test_root_version_is_pinned.py` holds it there and asserts the explanation sits next to it,
+  so the next person to "fix" it by bumping meets a red test and the reasoning rather than a silent
+  second source of truth. Watched failing both ways before commit: bumped to `0.14.0`, red; comment
+  removed, red. The workspace members are deliberately **not** covered — their versions are real,
+  installed by `uv sync --all-packages`, with one declaring a workspace dependency on another.
+
+### Fixed
 
 - **The one notebook this repository ships ran on exactly one computer, and imported a library that
   was installed nowhere.** `notebooks/S10-training-loop.ipynb` is tracked under a named `.gitignore`
