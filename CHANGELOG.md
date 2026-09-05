@@ -766,6 +766,30 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Changed
 
+- **`web/_shared/tokens.css` was not the token file, and is now called `components.css`.** Every
+  deployable page links **two** stylesheets whose names were identical: the six-theme token file at
+  `/_shared/tokens.css`, and a vendored copy of exercise 03's *component* styles at
+  `./_shared/tokens.css`. `AGENTS.md` has carried a warning about this for months — *"NOT the token
+  file, in any exercise, and the name has already cost time"* — because a scratch harness that
+  linked only the vendored one rendered every glyph mark invisible: `var(--bg)` was undefined, and a
+  `stroke: var(--bg)` does not paint and does not error.
+
+  The two are told apart by one character, `./` against `/`, which is what made the rename safe to
+  do mechanically: eight files renamed, **eleven** pages relinked — three of them sub-pages
+  (`03/reasoning`, `03/report`, `08/field-guide`) that a per-exercise sweep would have missed — and
+  the sixteen absolute links to the real token file left untouched.
+
+  **Verified in a browser rather than by grepping.** All ten deployable pages load both stylesheets,
+  every one of the six theme tokens resolves, and no page reports a failed request or a page error;
+  01 and 02 correctly load only the token file, since they vendor nothing. Every per-exercise
+  browser suite and the repo-wide integration set pass.
+
+  The first probe reported **0/10** and was wrong: the build appends a cache-busting query, so
+  `endsWith("/_shared/tokens.css")` matched nothing while the tokens were resolving perfectly. The
+  same class of artefact that has produced three false findings in this queue, caught here by the
+  contradiction between *"no stylesheet"* and *"no missing tokens"*.
+
+
 - **One pull request per STORY, not per task, and the commit ceiling raised from 20 files to 30.**
   A story is something a reader or a maintainer would recognise as having been done — *"the shared
   layer no longer drifts"* — and the tasks inside it land together.

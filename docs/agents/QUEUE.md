@@ -103,6 +103,11 @@ this file does not define, and the answer is the unit name instead.
 | 1 | Unblock the pull-request backlog | — | **done.** The batch in the log below is merged; `main` is linear |
 | 2 | Track progress in one place | — | **done.** This file, enforced by a checker in CI. `WORKPLAN.md` holds the arc, `TODO.md` the scratch |
 | 3 | Arm the fleet | `unit-arm-the-fleet` | **done.** PK ran the installer; the guard is wired and all six behaviours were observed, not assumed — worktree write blocked, `sed -i` on a guard blocked, standard file blocked, ordinary source allowed, reading a guard allowed, `AGENT_STOP` halts and resumes. Reviewers are `Read, Grep, Glob` |
+| 4 | Live defects on deployed pages | `unit-live-defects` | **done**, pending review — exercise 01's 26 unterminated declarations and exercise 04's 7 orphan properties, both now guarded |
+| 5 | The shared `web/_shared/` layer | `unit-shared-layer` | **partly done**, pending review. 2,578 lines of unreferenced vendored code removed and guarded. **Still open:** `.back:hover` in six identical copies, the two theme pickers, seven names for two controls, and 24 orphan CSS classes |
+| 6 | Exercise 09 | `unit-09` | **blocked** — see the unit for what on |
+| 7 | Exercise 10 | `unit-10` | not started |
+| 8 | Retro-fix 07 → 01 | `unit-07-retrofit` … `unit-01-retrofit` | not started. Deliberately **after** 09 and 10, and able to run alongside them once row 5 lands |
 | 4 | Live defects on deployed pages | `unit-live-defects` | **done** — exercise 01's 26 unterminated declarations and exercise 04's 7 orphan properties, both now guarded |
 | 5 | The shared `web/_shared/` layer | `unit-shared-layer` | **done** — 2,578 lines of unreferenced vendored code removed and guarded; the theme pickers and control names settled |
 | 6 | Exercise 09 | `unit-09` | **done.** Both blockers cleared; 54 tests, the notebook, the page and its registration all shipped |
@@ -223,6 +228,7 @@ was actually wanted. The success criterion is **not** the diff: it is that the h
 intervention, and that a reader can say what each guard did and why the run stopped where it did.
 
 ### unit-arm-the-fleet — everything is installed and nothing is armed
+- status: QUEUED
 - status: DONE — installed, armed, and all six behaviours observed rather than assumed. Its one remaining gap is that the `PreToolUse` matcher omits `Bash`, tracked separately
 - scope: `.claude/` (local, gitignored), `docs/agents/`
 - what: run `tools/install_agent_fleet.py`, which copies the guard wiring and the reviewers into the
@@ -267,6 +273,7 @@ intervention, and that a reader can say what each guard did and why the run stop
   drifts.
 
 ### unit-live-defects — readers hit these today
+- status: QUEUED
 - status: DONE — exercise 01's 26 unterminated declarations and exercise 04's 7 orphan properties, both fixed and both guarded
 - scope: `src/exercises/01-introductions/`, then `src/exercises/04-data-cleaning-dedup/`
 - what: **01** declares its dark-theme diagram tokens with no semicolons across four proof pages, so
@@ -277,6 +284,7 @@ intervention, and that a reader can say what each guard did and why the run stop
 - reviewers: reader, engineer
 
 ### unit-shared-layer — **the gate on running anything in parallel**
+- status: QUEUED
 - status: DONE — 2,578 lines of unreferenced vendored code removed, the two theme pickers reconciled and the control names settled
 - scope: `src/exercises/*/web/_shared/`, `deploy/vercel/_shared/`
 - what: dead code (`anim.js` is vendored six times and imported by nothing; `explainer.css` is
@@ -288,6 +296,7 @@ intervention, and that a reader can say what each guard did and why the run stop
 - reviewers: reader, engineer, auditor
 
 ### unit-09 — loss functions and output heads
+- status: BLOCKED — on #96, and on deciding what of the explainer documents becomes tracked
 - status: DONE — both blockers cleared (#96 merged; the explainer documents are tracked as of #105). Shipped: 54 tests, the notebook, the page, and its registration
 - what: scaffolded with `tools/new_exercise.py`, **never by hand**: six test families apply the
   instant `pyproject.toml` lands. Two registrations are deliberately deferred by the generator and
@@ -297,12 +306,14 @@ intervention, and that a reader can say what each guard did and why the run stop
   explainer has no access to the specification it is graded against.
 
 ### unit-10 — the training loop
+- status: QUEUED
 - status: DONE, bar its reviewer pass — stage 14 in the exercise's own PROGRESS.md is the one piece of engineering still owed on 09 or 10
 - what: same scaffold, same contract. Two extra rules for the flagship run: exercise `save()` in a
   two-step run **before** any long one, and print tokens-consumed ÷ corpus-tokens per lane next to
   the mixture table before starting.
 
 ### unit-07-retrofit … unit-01-retrofit
+- status: QUEUED — after 09 and 10, and able to run alongside them once `unit-shared-layer` lands
 - status: DONE — 07 through 01, one pull request each, #109-#132
 - scope: one exercise each, `src/exercises/NN-*/`, `CHANGELOG.md`
 - what: the twelve-part spine in order, the page rebuilt to `docs/DESIGN.md`, the README's
@@ -740,4 +751,14 @@ predates the harness — so it is logged as what it was.
                           which went stale twice; and AGENTS.md gains the rules all three taught.
                           One concern at the right granularity, ~5 real files, inside the 20-file
                           ceiling that says what scale was intended
+2026-09-05  refactor      #145 opened: web/_shared/tokens.css was NOT the token file and is now
+                          components.css. Every page linked two stylesheets under one name -- the
+                          six-theme tokens at /_shared/tokens.css and exercise 03's component
+                          styles at ./_shared/tokens.css -- told apart by one character, which is
+                          what made the rename mechanical. 8 files renamed, 11 pages relinked
+                          (three of them sub-pages a per-exercise sweep would miss), 16 absolute
+                          links untouched. Verified in a browser: 10/10 pages load both sheets with
+                          every token resolved. The first probe said 0/10 and was wrong -- the
+                          build appends a cache-busting query -- which is the third artefact of
+                          that shape in this queue
 ```
