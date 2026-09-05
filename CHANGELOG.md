@@ -10,6 +10,56 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Exercises 01 through 04 have the progress ledger they never had, and `PROGRESS.md` is now
+  required.** Six of ten exercises carried one; the four oldest — the ones whose history is hardest
+  to reconstruct and most likely to be needed — did not, because they finished before the convention
+  existed.
+
+  **They were reconstructed from the commit history, the tracked data and the test suites, and every
+  row cites what it was read from.** Exercise 03's was the easy case: its commits literally say
+  *"Phase 1 complete"*, *"Phase 2"*, *"Phase 7"*, so the history carries its own stage table. The
+  others were assembled from commit clusters and dated.
+
+  **Each one ends with a section saying what the record does not settle**, and that section is the
+  point. A retrospective ledger is an invitation to fill gaps with plausible narrative, and a
+  plausible stage that never happened is worse than an admitted blank because it becomes the
+  repository's own account of itself. So the unaccounted month between 02's stages, the seven phases
+  that landed in a single day in 03, and the fact that no tracked file records a submission for 01,
+  03 or 04 are all written down as unknowns rather than smoothed over.
+
+  **A twelve-agent pass checked the reconstruction before any of it was written**, six gathering and
+  six re-running every cited command adversarially. It was worth it: they found a commit that
+  recorded a *rename* as a deletion, diffstat arithmetic that happened to reach the right total by
+  cancelling errors, a tag list wrong by ten entries, and a notebook stage citing a file that **has
+  never appeared in any commit on any ref**. The ledgers as published carry dates, commit subjects
+  and counts read back from the tree — the classes that survived checking — and no diffstat
+  arithmetic at all.
+
+### Changed
+
+- **`tests/test_exercise_skeleton.py` now requires `PROGRESS.md`, and still does not require
+  `DECISIONS.md` or `NOTICE`.** The guard excluded all three on the stated ground that requiring
+  them "would be inventing a rule the repo does not follow". That was true and is no longer, for one
+  of them: every exercise now has a `PROGRESS.md`, so the rule describes rather than invents.
+
+  The other two stay out **on evidence**. Five of the six exercises without a `DECISIONS.md` would
+  gain a *second copy* of reasoning they already publish — 05's `PROGRESS.md` already carries a
+  decisions table in that exact shape, 02's README argues seven of its decisions inline, 07's is
+  spread across four documents — and the second copy is the one that drifts. And **01 ships no
+  third-party content at all**, so a required `NOTICE` there would attribute nothing. The real rule
+  is *ship third-party content and you owe attribution*, enforced where the content is.
+
+### Fixed
+
+- **Exercise 01's README and `CLAUDE.md` described a weaker test suite than the one that ships.**
+  Both said the exercise had no browser suite and that its pages were "verified by being opened and
+  used, not by CI"; `CLAUDE.md` added that "a browser can't be driven here". `5232586` (2026-09-04)
+  added `tests/test_introductions_render.py` — **109 integration tests** that drive the real pages
+  in Chromium — and touched neither document. A README that understates what is guarded misleads
+  exactly as much as one that overstates it.
+
 ### Fixed
 
 - **Exercise 02 redistributes CC BY-SA Wikipedia text and never said so where anyone could see it.**

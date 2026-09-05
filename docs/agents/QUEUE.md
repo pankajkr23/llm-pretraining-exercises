@@ -798,4 +798,18 @@ predates the harness — so it is logged as what it was.
                           test_tokenization_notice.py fails in both directions -- a language in
                           corpus/v2 and not in NOTICE is a gap, and every character count is read
                           back from its meta.json rather than typed
+2026-09-05  exercises     #151 opened: exercises 01-04 get the progress ledger they never had, and
+                          PROGRESS.md joins test_exercise_skeleton.py's REQUIRED -- the rule now
+                          describes the repository rather than inventing a convention for it.
+                          DECISIONS.md and NOTICE stay out on evidence: five of six exercises
+                          lacking a decision record would gain a SECOND copy of reasoning they
+                          already publish, and 01 ships no third-party content so a required NOTICE
+                          would attribute nothing. Each ledger ends with what the record does NOT
+                          settle, because a plausible stage that never happened is worse than an
+                          admitted blank. A twelve-agent pass verified the reconstruction first and
+                          caught a rename recorded as a deletion, diffstat arithmetic that reached
+                          the right total by cancelling two errors, a tag list wrong by ten, and a
+                          notebook stage citing a file never committed on any ref. Two of MY OWN
+                          published claims were refuted by it and corrected in a follow-up commit:
+                          a commit subject is not evidence of what a commit did
 ```
