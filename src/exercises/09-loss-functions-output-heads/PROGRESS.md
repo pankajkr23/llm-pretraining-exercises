@@ -27,13 +27,13 @@ code that runs top to bottom rather than typed into prose.
 | **10 · Harness** | one run producing all seven numbers into `results/harness.json` | **done** |
 | **11 · Training** | 300 steps, both findings, into `results/training.json` | **done** |
 | **11b · Sensitivity** | the same at 60/150/300 steps + five memory repeats | **done** |
-| **12 · Tests** | 44 tests; every claim twinned, the off-by-one watched falling | **done** |
+| **12 · Tests** | 54 tests; every claim twinned, the off-by-one watched falling | **done** |
 | **13 · Review** | auditor, engineer and reader run over the finished work | **done** |
 | **14 · Fixes** | three blockers and eleven lesser findings from that review | **done** |
-| **15 · Notebook** | the Colab notebook, importing the package, never re-implementing | not started |
-| **16 · Web page** | the deployable explainer, to the twelve-part spine | not started |
-| **16b · Register** | `SPINE_ENFORCED` + the landing card — both fail in two directions | not started |
-| **17 · Submit** | PK's action, after production is live | blocked on 15–16b |
+| **15 · Notebook** | the Colab notebook, importing the package, never re-implementing | **done** |
+| **16 · Web page** | the deployable explainer, to the twelve-part spine | **done** |
+| **16b · Register** | `SPINE_ENFORCED` + the landing card — both fail in two directions | **done** |
+| **17 · Submit** | PK's action, once production serves the page | blocked on the deploy |
 
 ## What the review found, and what it cost
 
@@ -62,25 +62,6 @@ different measured number, the memory child re-implementing the function it was 
 over.** Every loss here is a memorisation number. Both findings survive it — each compares two
 models trained identically on the same repeated text — but the absolute values do not transfer, and
 `RESULTS.md` now says so.
-
---- | --- | --- |
-| **1 · Scaffold** | generator skeleton, CI shard, root README row | **done** |
-| **2 · Requirement** | `REQUIREMENTS.md` written from the requirements; conflicts named | **done** |
-| **3 · The trunk** | a real 4-block transformer, untrained, laptop-sized | **done** |
-| **4 · The tokenizer** | exercise 02's frozen BPE loaded, so targets print as *strings* | **done** |
-| **5 · Shift** | `t+1` and `t+k` slices, the string table, the deliberate off-by-one | **done** |
-| **6 · Masks** | padding, packed-document boundaries, contributing-token counts | **done** |
-| **7 · Losses** | masked cross-entropy, perplexity, chunked, z-loss, smoothing | **done** |
-| **8 · Heads** | tied vs untied parameter counts; the `t+2` head for Part 2 | in progress |
-| **9 · Memory** | peak bytes, materialised against chunked, measured not estimated | not started |
-| **10 · Harness** | one run producing all seven numbers into `results/` | not started |
-| **11 · Training** | the short run Part 2 needs, and only Part 2 needs | not started |
-| **12 · Tests** | every claim twinned — no-op setting *and* away from it | partial |
-| **13 · Notebook** | the Colab notebook, importing the package, never re-implementing | not started |
-| **14 · README** | the write-up, rendering `results/` rather than quoting it | drafted, stale |
-| **15 · Web page** | the deployable explainer, to the twelve-part spine | not started |
-| **15b · Register** | `SPINE_ENFORCED` + the landing card — both fail in two directions | not started |
-| **16 · Submit** | PK's action, after production is live | blocked on 1–15 |
 
 ---
 

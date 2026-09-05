@@ -103,11 +103,11 @@ this file does not define, and the answer is the unit name instead.
 | 1 | Unblock the pull-request backlog | — | **done.** The batch in the log below is merged; `main` is linear |
 | 2 | Track progress in one place | — | **done.** This file, enforced by a checker in CI. `WORKPLAN.md` holds the arc, `TODO.md` the scratch |
 | 3 | Arm the fleet | `unit-arm-the-fleet` | **done.** PK ran the installer; the guard is wired and all six behaviours were observed, not assumed — worktree write blocked, `sed -i` on a guard blocked, standard file blocked, ordinary source allowed, reading a guard allowed, `AGENT_STOP` halts and resumes. Reviewers are `Read, Grep, Glob` |
-| 4 | Live defects on deployed pages | `unit-live-defects` | **done**, pending review — exercise 01's 26 unterminated declarations and exercise 04's 7 orphan properties, both now guarded |
-| 5 | The shared `web/_shared/` layer | `unit-shared-layer` | **partly done**, pending review. 2,578 lines of unreferenced vendored code removed and guarded. **Still open:** `.back:hover` in six identical copies, the two theme pickers, seven names for two controls, and 24 orphan CSS classes |
-| 6 | Exercise 09 | `unit-09` | **blocked** — see the unit for what on |
-| 7 | Exercise 10 | `unit-10` | not started |
-| 8 | Retro-fix 07 → 01 | `unit-07-retrofit` … `unit-01-retrofit` | not started. Deliberately **after** 09 and 10, and able to run alongside them once row 5 lands |
+| 4 | Live defects on deployed pages | `unit-live-defects` | **done** — exercise 01's 26 unterminated declarations and exercise 04's 7 orphan properties, both now guarded |
+| 5 | The shared `web/_shared/` layer | `unit-shared-layer` | **done** — 2,578 lines of unreferenced vendored code removed and guarded; the theme pickers and control names settled |
+| 6 | Exercise 09 | `unit-09` | **done.** Both blockers cleared; 54 tests, the notebook, the page and its registration all shipped |
+| 7 | Exercise 10 | `unit-10` | **done, bar the reviewer pass** — stage 14, the one piece of engineering still owed on either exercise |
+| 8 | Retro-fix 07 → 01 | `unit-07-retrofit` … `unit-01-retrofit` | **done.** One pull request each, #109-#132; it ran alongside 09 and 10 once row 5 landed |
 | 9 | Grow the agent roster | `unit-agent-roster` | not started. Read-only agents first, then three writers with **disjoint** scopes |
 | 10 | The platform plan, for a parallel workstream | `unit-platform-plan` | **drafted** — `~/.claude/plans/agent-platform.md`. Repository-agnostic by construction |
 
@@ -223,7 +223,7 @@ was actually wanted. The success criterion is **not** the diff: it is that the h
 intervention, and that a reader can say what each guard did and why the run stopped where it did.
 
 ### unit-arm-the-fleet — everything is installed and nothing is armed
-- status: QUEUED
+- status: DONE — installed, armed, and all six behaviours observed rather than assumed. Its one remaining gap is that the `PreToolUse` matcher omits `Bash`, tracked separately
 - scope: `.claude/` (local, gitignored), `docs/agents/`
 - what: run `tools/install_agent_fleet.py`, which copies the guard wiring and the reviewers into the
   gitignored `.claude/` tree. Then write the `.claude/UNIT.md` template — scope paths plus acceptance
@@ -267,7 +267,7 @@ intervention, and that a reader can say what each guard did and why the run stop
   drifts.
 
 ### unit-live-defects — readers hit these today
-- status: QUEUED
+- status: DONE — exercise 01's 26 unterminated declarations and exercise 04's 7 orphan properties, both fixed and both guarded
 - scope: `src/exercises/01-introductions/`, then `src/exercises/04-data-cleaning-dedup/`
 - what: **01** declares its dark-theme diagram tokens with no semicolons across four proof pages, so
   four properties are never declared in the dark blocks and a dark-theme reader gets light diagram
@@ -277,7 +277,7 @@ intervention, and that a reader can say what each guard did and why the run stop
 - reviewers: reader, engineer
 
 ### unit-shared-layer — **the gate on running anything in parallel**
-- status: QUEUED
+- status: DONE — 2,578 lines of unreferenced vendored code removed, the two theme pickers reconciled and the control names settled
 - scope: `src/exercises/*/web/_shared/`, `deploy/vercel/_shared/`
 - what: dead code (`anim.js` is vendored six times and imported by nothing; `explainer.css` is
   linked by six pages and used by two), two theme pickers, seven names for two controls, and
@@ -288,7 +288,7 @@ intervention, and that a reader can say what each guard did and why the run stop
 - reviewers: reader, engineer, auditor
 
 ### unit-09 — loss functions and output heads
-- status: BLOCKED — on #96, and on deciding what of the explainer documents becomes tracked
+- status: DONE — both blockers cleared (#96 merged; the explainer documents are tracked as of #105). Shipped: 54 tests, the notebook, the page, and its registration
 - what: scaffolded with `tools/new_exercise.py`, **never by hand**: six test families apply the
   instant `pyproject.toml` lands. Two registrations are deliberately deferred by the generator and
   must be done by a human — the landing card, and the spine ledger entry.
@@ -297,13 +297,13 @@ intervention, and that a reader can say what each guard did and why the run stop
   explainer has no access to the specification it is graded against.
 
 ### unit-10 — the training loop
-- status: QUEUED
+- status: DONE, bar its reviewer pass — stage 14 in the exercise's own PROGRESS.md is the one piece of engineering still owed on 09 or 10
 - what: same scaffold, same contract. Two extra rules for the flagship run: exercise `save()` in a
   two-step run **before** any long one, and print tokens-consumed ÷ corpus-tokens per lane next to
   the mixture table before starting.
 
 ### unit-07-retrofit … unit-01-retrofit
-- status: QUEUED — after 09 and 10, and able to run alongside them once `unit-shared-layer` lands
+- status: DONE — 07 through 01, one pull request each, #109-#132
 - scope: one exercise each, `src/exercises/NN-*/`, `CHANGELOG.md`
 - what: the twelve-part spine in order, the page rebuilt to `docs/DESIGN.md`, the README's
   three-reader path, and the notebook rebuilt to the rule above. Exercise 07's own `PROGRESS.md`
@@ -750,4 +750,17 @@ predates the harness — so it is logged as what it was.
                           every token resolved. The first probe said 0/10 and was wrong -- the
                           build appends a cache-busting query -- which is the third artefact of
                           that shape in this queue
+2026-09-05  docs          #147 opened: a blank line had cut the root README's exercise table in
+                          two since 023bbd5, so exercises 09 and 10 fell OUTSIDE it and GitHub
+                          rendered them as a paragraph of literal pipe characters -- on the front
+                          door a grader lands on, for the exercise being submitted. The guard
+                          could not see it because it reads a ROW (a line starting `| 09 `) rather
+                          than the table; the new one walks from the header, stops where the table
+                          stops, and was watched reporting rows 01-08 against ten exercises. Seven
+                          documents that called finished work unfinished were corrected with it,
+                          including a SECOND orphaned status table in 09's PROGRESS.md and a test
+                          count of 44 where the suite collects 54. WORKPLAN.md is now a record
+                          rather than a tracker -- every stage complete, pointing at this file --
+                          and stays tracked, because untracking is what has destroyed files here
+                          three times
 ```
