@@ -919,7 +919,7 @@ Twenty-seven landed in one run. Every defect below was found by driving the page
 
 ## Git workflow
 
-- **One commit, one decision — at most 20 files and 5,000 changed lines, or say why.** Gated at the
+- **One commit, one decision — at most 30 files and 5,000 changed lines, or say why.** Gated at the
   `commit-msg` stage by `tools/check_commit_scope.py`. `CHANGELOG.md` and `uv.lock` are not counted:
   the conventions already require the first in the same change, and the second is generated.
 
@@ -938,7 +938,19 @@ Twenty-seven landed in one run. Every defect below was found by driving the page
   breadth is a property of the branches rather than a decision anyone is making now.
 
 - **Every change lands on `main` via a pull request.** Branch → push → open a PR → merge. **Never push, merge, or force-push directly to `main`** — it's the protected branch that production is promoted from, and the base every PR previews against.
-- Keep PRs scoped to one concern; unrelated edits get their own branch/PR.
+- **One pull request per STORY, not per task.** A story is a thing a reader or a maintainer would
+  recognise as having been done — *"the shared layer no longer drifts"*, *"the rename is finished"*
+  — and the tasks inside it land together. Thirty files is a normal size for one. Unrelated stories
+  still get their own branch.
+
+  **The failure this replaces was over-splitting, not under-splitting.** Four pull requests were
+  opened for four guards; three carried a *single* real file each and paid three files of
+  bookkeeping apiece — a changelog entry, a queue entry, a receipt — so the record of each change
+  outweighed the change, and the reviewer paid four review cycles for one idea. They were one story:
+  guards that were wrong about their own subject.
+
+  The test is whether the pieces are worth reverting separately. A mechanical rename and a logic fix
+  are; four fixes to four guards are not.
 - **Changelog:** record every user-facing change under `CHANGELOG.md`'s `[Unreleased]` section **in the same PR** (Keep a Changelog + SemVer).
 - **Commit messages carry a `Co-Authored-By` trailer for the agent that wrote them, and nothing
   else.** No links back to an agent conversation, no run ids, no tool banners — those point at

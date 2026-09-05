@@ -724,6 +724,24 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Changed
 
+- **One pull request per STORY, not per task, and the commit ceiling raised from 20 files to 30.**
+  A story is something a reader or a maintainer would recognise as having been done — *"the shared
+  layer no longer drifts"* — and the tasks inside it land together.
+
+  **The failure this replaces was over-splitting.** Four pull requests were opened for four guards;
+  three carried a *single* real file each and paid three files of bookkeeping apiece — a changelog
+  entry, a queue entry, a receipt — so the record of each change outweighed the change, and the
+  reviewer paid four review cycles for one idea. The 20-file ceiling was being read as a target
+  rather than a bound.
+
+  The test is whether the pieces are worth reverting separately: a mechanical rename and a logic fix
+  are, four fixes to four guards are not.
+
+  `docs/AGENT_FLEET.md` stated the limit as well, and had said 20 for as long as it was 20. It now
+  points at `tools/check_commit_scope.py::MAX_FILES` instead of restating it — a number repeated in
+  prose is a second copy, and the second copy is the one that goes stale.
+
+
 - **One theme picker, not eight.** `deploy/vercel/_shared/theme.js` gains `bindThemePicker`, which
   wires a `<select>` a page has already rendered — and six pages drop the eighteen lines each had
   hand-written. The markup stays in the page, deliberately: a server-rendered control is styled and
