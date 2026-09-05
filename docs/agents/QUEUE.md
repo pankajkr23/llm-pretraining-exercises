@@ -775,4 +775,16 @@ predates the harness — so it is logged as what it was.
                           which a clone has, unlike the builders. Watched failing against the
                           notebook as it stood before the fix. Rebuilt AND executed end to end,
                           26 cells, before being written to its tracked path
+2026-09-05  release       #149 opened: v0.14.0 -- [Unreleased] to [0.14.0], 136 entries across 31
+                          blocks since v0.13.0. Verified with release.yml's OWN awk extractor
+                          rather than by reading the heading, because a heading that does not match
+                          the tag makes it publish with --generate-notes and silently replace all
+                          of it with commit subjects: have_notes=TRUE, 1,587 lines. Also pins the
+                          root pyproject version at 0.0.0 -- it read 0.4.0 while the newest release
+                          was v0.13.0, nine minors stale and wrong for eleven releases. Bumping it
+                          would have been the worse fix: a number correct once and then rotting
+                          reads as maintained. test_root_version_is_pinned.py holds it and was
+                          watched failing both ways. PREREQUISITE, PK's: delete the stray v1.0.0
+                          and v2.0.0 tags, or snapshot_standards keeps reporting 0/8 at v2.0.0
+                          even after the real tag lands
 ```
