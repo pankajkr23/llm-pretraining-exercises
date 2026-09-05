@@ -100,6 +100,18 @@ uv run pytest                           # and the repo-wide guards, which the li
 The harness prints as much as it computes — items 1, 3 and 6 are about what a reader can *see* — and
 takes about thirty seconds on an M-series laptop.
 
+### Or run it as a notebook
+
+[`notebooks/S10-training-loop.ipynb`](../../../notebooks/S10-training-loop.ipynb) walks the same six
+items in order, importing this package rather than re-implementing it, so it cannot disagree with
+what ships. It is **the one topic notebook this repository tracks** — a named exemption in
+`.gitignore`, because this exercise's submission requires the `.ipynb` itself.
+
+It runs two ways and needs no setup for either. On Colab the first cell clones the repository and
+installs the exercise; locally it finds the repository root by walking up from wherever it was
+started, so `jupyter lab` from any directory inside a clone works. Whole run: about a minute on a
+free Colab CPU. Nothing here needs a GPU.
+
 ## The evidence
 
 **Every measured figure is in [RESULTS.md](RESULTS.md)**, generated from `results/run.json`.
