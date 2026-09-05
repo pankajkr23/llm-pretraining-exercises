@@ -1,6 +1,14 @@
 [project]
 name = "llm-pretraining-exercises"
-version = "0.4.0"
+# **Pinned. The git tag is the version; this field is not.** It read `0.4.0` while the newest
+# release was `v0.13.0` — nine minors stale, because nothing ever bumped it and nothing ever
+# checked. Bumping it to match would have been worse than leaving it: a field that is correct once
+# and then rots looks maintained, and a reader would trust it. Nothing installs this root package
+# from an index, so the number buys nothing that `git describe` does not.
+#
+# `tests/test_root_version_is_pinned.py` holds it here, so the next person to "fix" it by bumping
+# gets a red test and this comment instead of a silent second source of truth.
+version = "0.0.0"
 description = "LLM Pretraining exercises/examples and toy projects"
 readme = "README.md"
 requires-python = ">=3.12"
