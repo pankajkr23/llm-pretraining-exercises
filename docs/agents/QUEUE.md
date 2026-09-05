@@ -730,4 +730,12 @@ predates the harness — so it is logged as what it was.
                           merges each conflicted on CHANGELOG.md and resolving by taking a side lost
                           three of the four entries; restored, and it is exactly the failure
                           sync_open_prs.py exists to prevent
+2026-09-05  tooling       #144 opened: nothing checked that the eight vendored copies of
+                          web/_shared still match. It went wrong twice in one queue, caught both
+                          times by the merge order. Two properties -- copies that differ, and a
+                          file that is ABSENT -- with the absence check a MAJORITY rather than an
+                          identical set, because explainer.js and num.js are legitimately vendored
+                          by only two pages. A third assertion pinning the misnamed tokens.css was
+                          written and removed: pinning a trap is worse than removing it, and it
+                          passed its own first break by reading one of eight copies
 ```
