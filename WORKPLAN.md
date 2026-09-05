@@ -15,6 +15,16 @@
 polish on work already shipped and released. It may run alongside them once the shared `web/_shared/`
 layer is fixed, because until then every retro-fit unit edits the same files.
 
+**Every stage on this page is now complete, and that is what closes the arc rather than ending it.**
+Stages 3 and 4 shipped exercises 09 and 10; stage 2's retro-fit merged across #109–#132. What is
+left on either exercise is not a stage — it is a promotion to production, which is PK's gate, and
+exercise 10's reviewer pass. Both live in the queue, which is where in-flight work belongs.
+
+So this document is a **record** from here on. It is kept tracked rather than untracked or deleted:
+untracking is the mechanism that has destroyed files in this repository three times, and a stage
+list that is entirely complete cannot drift the way a live one does. Add a stage here only if the
+arc genuinely changes; report progress in the queue.
+
 Status keys: `done` · `in progress` · `queued` · `blocked`
 
 ---
@@ -87,12 +97,18 @@ tracked document could still name its files, publish their sizes, describe them 
 | Five words banned and gated in CI and pre-commit; the per-topic file renamed | done |
 | Git history | **left as it is, by decision.** PR descriptions were rewritten and scan clean |
 
-## Stage 2 — Retro-fix readability and design, one exercise at a time · queued, RUNS THIRD
+## Stage 2 — Retro-fix readability and design, one exercise at a time · complete
 
-**Reordered on 2026-09-03: this now happens after stages 3 and 4.** Those two teach training,
-which is the point of the repository; this is polish on work already shipped and released. It may
-run *alongside* them once the shared `web/_shared/` layer is fixed — before that, every unit here
-edits the same files and parallel agents collide on all of them.
+**Reordered on 2026-09-03 to run after stages 3 and 4**, because those two teach training, which is
+the point of the repository, and this was polish on work already shipped and released.
+
+It ran alongside them in the end, which the reordering note had predicted was possible only once the
+shared `web/_shared/` layer was fixed — before that, every unit here edited the same files and
+parallel agents collided on all of them. Exercises 07 through 01 each took their own pull request,
+#109–#132.
+
+The remaining readability items are no longer stage-shaped: they are individual defects on
+individual pages, and they are tracked as such rather than as a stage that never finishes.
 
 Same treatment as 08, in this order, **each on its own branch with full e2e testing before moving
 on**: `07` → `06` → `05` → `04` → `03` → `02` → `01`.
@@ -117,30 +133,37 @@ A five-lens audit on 2026-09-02 inventoried what actually diverges. The full lis
 - **The theme and contrast guards exist only in exercise 08**, while six exercises link the
   six-theme token file.
 
-## Stage 3 — Exercise 09 · blocked, RUNS FIRST
+## Stage 3 — Exercise 09 · complete
 
-**`src/exercises/09-loss-functions-output-heads` no longer exists.** It was an empty directory and
-is gone; git never held a file under it on any branch or tag, and the backup store never held one.
-Nothing was lost but the placeholder, and neither guard could have caught it — the backup tool
-copies *files* matching `PATTERNS` and the tripwire asks whether a stored file is missing, so an
-empty directory is invisible to both by construction. A `REQUIREMENTS.md` inside it **would** have
-been protected. The generator recreates it, so there is nothing to restore.
+Seven numbers from Part 1 and two losses from Part 2, each printed by code that runs top to bottom.
+Package, harness, training run, sensitivity sweep, 54 tests, a reviewer pass, the notebook and the
+deployable page all shipped; `PROGRESS.md` in the exercise carries the stage-by-stage detail.
 
-**Blocked on two things**, both in [`docs/agents/QUEUE.md`](docs/agents/QUEUE.md): PR #96, and the
-decision about the two explainer documents, which are gitignored and therefore unreadable by any
-worktree, clone or CI job that would need them to build 09's explainer.
+**It began from an empty directory that had gone missing, and the lesson outlived the incident.**
+`src/exercises/09-loss-functions-output-heads` was an empty placeholder; git had never held a file
+under it on any branch or tag, and the backup store never held one. Nothing was lost but the
+placeholder — and **neither guard could have caught it**, because the backup tool copies *files*
+matching `PATTERNS` and the tripwire asks whether a stored file is missing, so an empty directory is
+invisible to both by construction. A `REQUIREMENTS.md` inside it **would** have been protected.
 
-Sources are the local reference material for that topic. Own branch, own PR. **Scaffold with
-`tools/new_exercise.py`, never by hand** — six test families apply the moment `pyproject.toml`
-lands, three of them checking for gitignored files a fresh clone will never have.
+Both of its blockers cleared: PR #96 merged, and the two explainer documents are tracked as of #105,
+so a worktree, clone or CI job can now read the specification an explainer is graded against.
 
-Build it to `docs/DESIGN.md` from the first commit rather than retro-fitting it later.
+**Scaffolded with `tools/new_exercise.py`, never by hand** — six test families apply the moment
+`pyproject.toml` lands, three of them checking for gitignored files a fresh clone will never have.
+Built to `docs/DESIGN.md` from the first commit rather than retro-fitted later.
 
-## Stage 4 — Exercise 10 · queued, RUNS SECOND
+## Stage 4 — Exercise 10 · complete, bar its reviewer pass
 
-`src/exercises/10-training-loop`, likewise gone as an empty directory and likewise recreated by the
-generator rather than by hand. Sources are the local reference material for that topic. Own branch,
-own PR.
+`src/exercises/10-training-loop`, likewise begun from an empty directory and likewise recreated by
+the generator rather than by hand. One optimiser step made to tell the truth about itself: all six
+items run and write `results/run.json`, and the notebook and page are built and registered.
+
+**Its stage 14 — running the reviewers over the finished work, as 09 did — is genuinely not
+started**, and is the one piece of engineering still owed on either exercise. It is in the queue.
+
+The model is exercise 09's, imported rather than reimplemented, so the two exercises cannot disagree
+about what a loss is.
 
 This is the flagship training run, so two rules apply here that do not elsewhere. **Exercise
 `save()` in a two-step run before any long one** — three experiments in exercise 05 trained to

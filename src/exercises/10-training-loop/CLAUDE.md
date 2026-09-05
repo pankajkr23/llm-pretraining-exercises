@@ -4,7 +4,10 @@ Component notes. Repo-wide conventions: root `AGENTS.md`. The reasoning is `DECI
 running log is `PROGRESS.md`, the measured evidence is `RESULTS.md` (generated), and the
 requirements are `REQUIREMENTS.md` (local only, gitignored).
 
-**Status: all six items run and write `results/run.json`.** Remaining: the notebook and the page.
+**Status: built.** All six items run and write `results/run.json`; the notebook and the deployable
+page are done and registered. Two things remain, and only one is engineering: the reviewer pass
+(stage 14, still not started), and the production promotion that puts the page in front of a
+reader — which is PK's gate.
 
 ## The rules this exercise added, each learned by getting it wrong
 
