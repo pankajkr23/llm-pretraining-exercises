@@ -798,4 +798,17 @@ predates the harness — so it is logged as what it was.
                           test_tokenization_notice.py fails in both directions -- a language in
                           corpus/v2 and not in NOTICE is a gap, and every character count is read
                           back from its meta.json rather than typed
+2026-09-05  fleet         #152 opened: the agent guard could not see a shell command, read mv as
+                          a copy, and guarded the backup TOOL rather than the files it protects.
+                          Bash was absent from the PreToolUse matcher so decide()'s whole Bash
+                          branch was unreachable -- proven live: a merged PR changed uv.lock via
+                          `uv sync` and nothing fired. mv sat beside cp, but cp leaves its source
+                          and mv destroys it, so `mv uv.lock /tmp/backup` read as a copy and was
+                          allowed. notebooks/ and the builders were in no section at all. And the
+                          section list was hardcoded, so the new [irreplaceable] section would have
+                          enforced nothing while reading as protection. Five reverts, five reds.
+                          PK created the UNIT.md scope this needed; writing that permission slip
+                          unprompted would have been the incident [guards] exists for. NOT DONE:
+                          .claude/settings.local.json still carries the old matcher, so the hole is
+                          closed in the repo and open on this machine until the installer re-runs
 ```
