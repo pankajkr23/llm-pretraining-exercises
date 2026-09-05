@@ -12,6 +12,34 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The one notebook this repository ships ran on exactly one computer, and imported a library that
+  was installed nowhere.** `notebooks/S10-training-loop.ipynb` is tracked under a named `.gitignore`
+  exemption, because exercise 10's submission requires the `.ipynb` and offers no alternative — so
+  it is the one notebook a stranger opens. It contained
+  `root = pathlib.Path("/Users/<the author>/git/tsai/era5/llm-pretraining-exercises")`, because its
+  builder interpolated `EXERCISE.parents[2]` — the **build** machine's own path — into the cell at
+  build time. It now finds the repository root at run time by walking up for `src/exercises`,
+  verified from four different working directories.
+
+  It also opened `import matplotlib.pyplot as plt` to plot the two accumulation curves, and
+  matplotlib was declared in no `pyproject.toml`, absent from `uv.lock`, and absent from the synced
+  environment. **Colab pre-installs it, which is exactly why this was invisible here and certain
+  for anyone else** — a local reader hit `ModuleNotFoundError` a third of the way through. It is now
+  in the root `dev` group, beside `ipykernel` and `nbclient`, whose stated reason is executing the
+  topic notebooks.
+
+  **Neither could have been caught.** `tests/test_notebook_builders.py` builds through
+  `NOTEBOOK_OUT` into a temporary directory, so the baked-in path was correct there too, and it
+  skips entirely on a fresh clone, so CI never reads a notebook.
+  `tests/test_tracked_notebooks_are_portable.py` reads the **tracked** notebooks, which a clone
+  does have, and asserts no absolute path into anyone's machine survives into a shipped artefact.
+  Run against the notebook as it stood before this change, it reports the offending line; against
+  the rebuilt one, nothing.
+
+  The notebook was rebuilt and **executed end to end — 26 cells, exit 0** — before being written to
+  its tracked path, with outputs stripped and every `execution_count` null. Exercise 10's README now
+  links it and says how to run it both ways; it had never mentioned it.
+
 - **A blank line had cut the root README's exercise table in two, so exercises 09 and 10 were not
   in it.** A blank line terminates a GitHub-Flavoured Markdown table, and one sat between row 08 and
   rows 09 and 10 from `023bbd5` onwards. GitHub therefore ended the table after 08 and rendered the

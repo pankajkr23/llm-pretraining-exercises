@@ -15,6 +15,11 @@ dev = [
     # without these, and a guard that always skips protects nothing — so they are in the default
     # group CI syncs, and they are small: no CUDA wheel hides in here.
     "ipykernel>=6",
+    # Exercise 10's notebook plots the two accumulation curves, and it is the ONE topic notebook
+    # that ships in the repository. It imported matplotlib while matplotlib was declared in no
+    # pyproject, absent from the lock and absent from the synced environment: Colab pre-installs
+    # it, so the failure was invisible here and certain for anyone else running it locally.
+    "matplotlib>=3.8",
     "nbclient>=0.10",
     "playwright>=1.62.0",
     "pre-commit>=4.6.2",
