@@ -750,4 +750,16 @@ predates the harness — so it is logged as what it was.
                           every token resolved. The first probe said 0/10 and was wrong -- the
                           build appends a cache-busting query -- which is the third artefact of
                           that shape in this queue
+2026-09-05  exercise-10   #148 opened: the ONE topic notebook this repo tracks ran on exactly one
+                          computer. Its builder interpolated EXERCISE.parents[2] -- the BUILD
+                          machine's absolute path -- into the setup cell, so every other machine
+                          got a path that does not exist. It also imported matplotlib, which was
+                          in no pyproject, absent from uv.lock and absent from the venv; Colab
+                          pre-installs it, which is why this was invisible here and certain for
+                          anyone else. Root is now found at run time (verified from four cwds),
+                          matplotlib joins the dev group beside ipykernel/nbclient, and
+                          test_tracked_notebooks_are_portable.py reads the TRACKED notebooks --
+                          which a clone has, unlike the builders. Watched failing against the
+                          notebook as it stood before the fix. Rebuilt AND executed end to end,
+                          26 cells, before being written to its tracked path
 ```
