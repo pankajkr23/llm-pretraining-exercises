@@ -862,9 +862,64 @@ The one distinction to carry away from it, because confusing these is how a rule
 **A rule that must hold every time belongs in a hook or a test, never in prose** — and a rule that
 lives only in prose should say so, rather than reading as a guarantee.
 
+## Merging a queue of pull requests
+
+Twenty-seven landed in one run. Every defect below was found by driving the page or the tool, and
+**none of them failed a test first** — the suites were green throughout.
+
+- **A clean merge of an append-only log is routinely a wrong one, and "nothing was lost" is the
+  wrong question.** Compare entry lead-ins against `origin/main` *and* check placement: a changelog
+  entry that lands at line 2, above the preamble and outside every section, is present, correct and
+  unfindable. That happened **five times** in one queue. `tools/sync_open_prs.py` announces it —
+  *"placed by the following line only"* — and nothing fails. Also grep for conflict markers before
+  staging: `git add` accepts them silently and only the pre-commit hook says so.
+- **A stale ledger entry names a fix that already landed.** `NOT_YET_COVERED` read *"#117 — measured
+  125 characters"* while #117 was the pull request in hand. Promoting an exercise is part of merging
+  the fix, not a follow-up, and the promotion is only real if removing the fix turns it red again.
+- **Read the whole hook output.** Two commits failed silently because the interesting line was above
+  the tail — once conflict markers, once `ruff-format` rewriting a docstring and pre-commit rolling
+  the change back. A commit that does not appear in `git log` did not happen, whatever the last line
+  said.
+- **A count in a name goes stale like any other.** `test_the_uncovered_pages_are_still_the_two_expected`
+  never asserted two; it asserted a partition. The list held two, then one, then none.
+- **Squash, and know why.** A branch stacked on a squash-merged base carries commits that already
+  landed under different hashes. `Rebase and merge` cannot replay its merge commits, and a merge
+  commit republishes the base's work under a second identity. Of ten consecutive merges here, ten
+  were squashes.
+
+## Verifying a fix, as opposed to running its tests
+
+- **Break the thing the guard actually checks, not the thing the guard is about.** Renaming
+  `rail-link` made a page invisible to the rail guard's *detector*, so it passed — a useless break.
+  Removing the `classList.toggle('on')` is the break that means something. Read the predicate first.
+- **A probe artefact reads exactly like a defect, and costs more.** `outline-color` computes to a
+  real colour when `outline-style` is `none`; SVG elements report `scrollWidth` unlike HTML ones;
+  `section[data-role]` is empty on a spine-exempt page, so a `scrollIntoView` on it is a no-op that
+  looks like a broken feature. Before reporting, confirm the probe moved what you think it moved.
+- **A measurement taken straight after a theme switch is worth taking twice.** At 140ms
+  `tinted-dark` still reported the previous theme's shadow; at 600ms it does not. That turned "two
+  themes affected" into three.
+- **Ask what would change the number.** `body.color` is one pair per page: it catches a whole-page
+  inversion and cannot see a rule that paints one paragraph unreadable. Sixty green cases said the
+  pages were readable while a paragraph measured 1.41:1.
+
+## Agents running near the working tree
+
+- **A subagent's `$TMPDIR` may be empty**, and `mkdir "$TMPDIR/x"` is then `mkdir x` in the
+  repository root. Agents left a scratch directory, a nested git directory, two staged files and **two git
+  tags** — `v1.0.0` and `v2.0.0`, on no branch, authored by the fixture identity, one of them
+  touching the scratch directory. The tags are worse than the files: `snapshot_standards.py`
+  measures against the newest tag, so a stray one makes the standards archive look permanently
+  behind.
+- **So after any run with agents: `git status --short --untracked-files=all`, a search for a nested git directory below the root, and `git tag --sort=-v:refname | head`.** Stage by path, never
+  `git add -A`.
+- **Hold a deliberate break in memory, not in a file.** `$TMPDIR` resolves differently inside and
+  outside the sandbox, and a backup written inside the tree is a file `git add -A` commits. For a
+  tracked file `git show HEAD:<path>` needs no backup at all.
+
 ## Git workflow
 
-- **One commit, one decision — at most 20 files and 5,000 changed lines, or say why.** Gated at the
+- **One commit, one decision — at most 30 files and 5,000 changed lines, or say why.** Gated at the
   `commit-msg` stage by `tools/check_commit_scope.py`. `CHANGELOG.md` and `uv.lock` are not counted:
   the conventions already require the first in the same change, and the second is generated.
 
@@ -883,7 +938,19 @@ lives only in prose should say so, rather than reading as a guarantee.
   breadth is a property of the branches rather than a decision anyone is making now.
 
 - **Every change lands on `main` via a pull request.** Branch → push → open a PR → merge. **Never push, merge, or force-push directly to `main`** — it's the protected branch that production is promoted from, and the base every PR previews against.
-- Keep PRs scoped to one concern; unrelated edits get their own branch/PR.
+- **One pull request per STORY, not per task.** A story is a thing a reader or a maintainer would
+  recognise as having been done — *"the shared layer no longer drifts"*, *"the rename is finished"*
+  — and the tasks inside it land together. Thirty files is a normal size for one. Unrelated stories
+  still get their own branch.
+
+  **The failure this replaces was over-splitting, not under-splitting.** Four pull requests were
+  opened for four guards; three carried a *single* real file each and paid three files of
+  bookkeeping apiece — a changelog entry, a queue entry, a receipt — so the record of each change
+  outweighed the change, and the reviewer paid four review cycles for one idea. They were one story:
+  guards that were wrong about their own subject.
+
+  The test is whether the pieces are worth reverting separately. A mechanical rename and a logic fix
+  are; four fixes to four guards are not.
 - **Changelog:** record every user-facing change under `CHANGELOG.md`'s `[Unreleased]` section **in the same PR** (Keep a Changelog + SemVer).
 - **Commit messages carry a `Co-Authored-By` trailer for the agent that wrote them, and nothing
   else.** No links back to an agent conversation, no run ids, no tool banners — those point at
