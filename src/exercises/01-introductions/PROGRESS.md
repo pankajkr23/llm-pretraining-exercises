@@ -23,8 +23,8 @@ something the reader watches happen, not a figure quoted at them.
 | --- | --- | --- |
 | **1 · Scaffold** | the uv workspace, the repo conventions, CI, and the first webapp | **done** — `5454b98`, 2026-07-03 |
 | **2 · The four proofs** | redesigned as four interactive, dependency-free proofs | **done** — `94dd4e2`, 2026-07-04 |
-| **3 · Hosting** | migrated off Netlify to Vercel; production gated behind a workflow | **done** — `29585d4`, `a454113`, 2026-07-09 |
-| **4 · Landing page** | the site root, and the card that reaches this exercise | **done** — `7f7b821`, 2026-07-10 |
+| **3 · Hosting and registration** | migrated off Netlify to Vercel, production gated behind a workflow, **and** the site root created carrying this exercise's card. `netlify.toml` was *renamed* into `deploy/netlify/`, not deleted | **done** — `29585d4`, `a454113`, 2026-07-09 |
+| **4 · Landing page rework** | the site root rewritten and the project copy refined — the page already existed | **done** — `7f7b821`, 2026-07-10 |
 | **5 · Design system** | every page onto one Apple-style system, then shared tokens site-wide | **done** — `2a5605e` 2026-07-10, `6969f92` 2026-08-05 |
 | **6 · Documents** | README as the guide rather than the map; two stale claims fixed | **done** — `4b9625c`, `7e1a6b0`, 2026-08-24 |
 | **7 · Notebook** | a Colab notebook and a builder for it | **done** — `7f3e352`, 2026-08-24. Both **local only**; see below |

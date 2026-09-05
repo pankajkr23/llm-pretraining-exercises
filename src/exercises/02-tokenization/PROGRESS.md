@@ -34,7 +34,7 @@ beat it.** A harness that cannot re-derive the number it is measured against is 
 | **12 · Notebook** | a Colab notebook and a builder | **done** — `7f3e352`, 2026-08-24. Both **local only** |
 | **13 · Confidentiality** | quoted passages paraphrased; source vocabulary removed | **done** — `0fd6556`, `09c9619`, `535ab95`, 2026-09-02 |
 | **14 · Retro-fix** | link colours, the tab contract, unreadable segmented options | **done** — `dbf9783` (#131), `608dfdf` (#115), `1d80e9c` (#130), 2026-09-04 |
-| **15 · Attribution** | a `NOTICE` for the CC BY-SA corpus this exercise redistributes | **done** — 2026-09-05, and it should have existed from stage 1 |
+| **15 · Attribution** | a `NOTICE` for the CC BY-SA corpus this exercise redistributes | **in review** — #150, and it should have existed from stage 1 |
 | **16 · Submit** | PK's action | **submitted** — see *Submission* below |
 
 **41 commits touch this exercise**, from `48c09ea` (2026-07-09) to 2026-09-05. **119 tests**
@@ -46,9 +46,11 @@ collect under `src/exercises/02-tokenization`. The page returns **HTTP 200** ano
 published number runs offline from bytes that cannot move underneath it. Wikipedia drifts: refetch
 one article and it silently stops being comparable with the rest.
 
-The cost is that this exercise **redistributes CC BY-SA text**, and for most of its life said so
-only in a parenthetical inside `CLAUDE.md` — a file addressed to coding agents. `NOTICE` now carries
-the attribution, and `tests/test_tokenization_notice.py` keeps it honest in both directions.
+The cost is that this exercise **redistributes CC BY-SA text**, and has said so only in a
+parenthetical inside `CLAUDE.md` — a file addressed to coding agents — for its entire life so far.
+A `NOTICE` carrying the attribution, and a guard keeping it honest in both directions, are **open in
+#150 and not yet merged**. Until that lands, this row is the accurate statement of where the
+exercise stands rather than where it is about to stand.
 
 ## What this exercise cannot establish
 
