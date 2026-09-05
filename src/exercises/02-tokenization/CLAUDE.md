@@ -74,9 +74,14 @@ Component notes. Repo-wide conventions: root `AGENTS.md`.
   Follows `docs/DESIGN.md`: Apple-style palette, `← Back` pill, light + dark. Edit its non-ASCII
   glyphs (`—`, `▁`, `Ġ`, subscripts) with Edit/Write, never byte-mode `perl`/`sed`.
 - **`src/solution/` is gitignored and must never be tracked** — it holds the course's reference
-  solution. Its corpus snapshots were copied into `corpus/` (Wikipedia content, CC BY-SA) and its
-  fetcher was ported into `corpus.build_faithful_markdown` with attribution; nothing else from it
-  belongs in a tracked file.
+  solution. Its corpus snapshots were copied into `corpus/` and its fetcher was ported into
+  `corpus.build_faithful_markdown` with attribution; nothing else from it belongs in a tracked file.
+- **The corpus is CC BY-SA, and `NOTICE` is where that is recorded** — not here. This bullet used to
+  carry the licence in a parenthetical, and that was the *only* place in the exercise it appeared:
+  an obligation recorded solely in the instructions to coding agents is not one a reader of the work
+  can discover, and the tokenizer served from the page is a derivative of that text.
+  `tests/test_tokenization_notice.py` asserts every redistributed article is attributed and that
+  every character count in `NOTICE` is read back from its `meta.json` rather than typed.
 - **Tests are offline** apart from the corpus already on disk. `tests/test_faithfulness.py` is the
   pattern to follow: every invariant runs against the real committed corpus *and* against a
   deliberately broken fixture, so each guard is known to be able to fail. `test_js_encoder.py`

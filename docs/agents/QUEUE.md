@@ -787,6 +787,17 @@ predates the harness — so it is logged as what it was.
                           watched failing both ways. PREREQUISITE, PK's: delete the stray v1.0.0
                           and v2.0.0 tags, or snapshot_standards keeps reporting 0/8 at v2.0.0
                           even after the real tag lands
+2026-09-05  exercise-02   #150 opened: exercise 02 redistributes CC BY-SA Wikipedia text -- 14
+                          tracked corpus files, 1.6M characters, plus a tokenizer derived from it
+                          that the deployed page offers as a DOWNLOAD -- and had no NOTICE. The
+                          licence appeared in exactly one place in the exercise: a parenthetical in
+                          CLAUDE.md, a file addressed to coding agents. That is not attribution and
+                          not discoverable by a reader. NOTICE now names each article, its source
+                          URL, fetch date and character count, plus the derived artefacts that
+                          inherit the licence; CLAUDE.md points at it instead of carrying it.
+                          test_tokenization_notice.py fails in both directions -- a language in
+                          corpus/v2 and not in NOTICE is a gap, and every character count is read
+                          back from its meta.json rather than typed
 2026-09-05  exercises     #151 opened: exercises 01-04 get the progress ledger they never had, and
                           PROGRESS.md joins test_exercise_skeleton.py's REQUIRED -- the rule now
                           describes the repository rather than inventing a convention for it.

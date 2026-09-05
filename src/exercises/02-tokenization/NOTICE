@@ -1,0 +1,61 @@
+# NOTICE — third-party text used by 02-tokenization
+
+This exercise **redistributes** Wikipedia article text. Fourteen files under `corpus/` are tracked in
+this repository, and the tokenizer served from the deployed page is derived from them and offered as
+a download. Wikipedia article text is licensed **CC BY-SA**, which requires attribution and
+share-alike. This file is that attribution.
+
+Until it was written, the licence appeared in exactly one place in the whole exercise: a
+parenthetical inside `CLAUDE.md`, a file addressed to coding agents. An obligation recorded only in
+the instructions to the machine is not an obligation anyone reading the work can discover.
+
+--------------------------------------------------------------------------------------------------
+
+## Wikipedia — "India", in five languages
+
+Licence: **CC BY-SA 4.0** (Wikipedia article text)
+Attribution: Wikipedia contributors, per the article histories at the URLs below
+Share-alike: the derived corpus files and the tokenizer built from them are offered under the same
+licence.
+
+Fetched 2026-07-13 through the Wikimedia REST API, one article per language, and converted to a
+faithful Markdown rendering. `corpus/v2/*.meta.json` records the source URL, the fetch timestamp and
+the character count for each — those files are the provenance record, and this table is read from
+them rather than typed:
+
+| lang | article | characters | source |
+| --- | --- | ---: | --- |
+| en | India | 598,265 | `en.wikipedia.org/api/rest_v1/page/html/India` |
+| hi | भारत | 266,728 | `hi.wikipedia.org/api/rest_v1/page/html/भारत` |
+| mai | भारत | 17,919 | `mai.wikipedia.org/api/rest_v1/page/html/भारत` |
+| ta | இந்தியா | 651,188 | `ta.wikipedia.org/api/rest_v1/page/html/இந்தியா` |
+| te | భారతదేశం | 113,835 | `te.wikipedia.org/api/rest_v1/page/html/భారతదేశం` |
+
+`corpus/v1/{en,hi,ta,te}.txt` are an earlier, superseded snapshot of the same four articles, kept
+because the v1 tokenizer's published numbers were measured on them and a result whose input has been
+deleted cannot be checked.
+
+## What is derived from that text, and therefore carries the same licence
+
+- `web/tokenizer.json` — the trained 10,000-token BPE vocabulary. Its merge table and token strings
+  are learned directly from the article text, so the vocabulary contains substrings of it. **The
+  deployed page offers this file as a download.**
+- `web/data.json` — the page's worked examples, tokenized from the same source.
+- Any figure on the page or in `README.md` computed over the corpus.
+
+**The corpus is a measured input, not prose.** Its bytes are hashed, and the tokenizer's hash is
+pinned by shard manifests elsewhere in this repository, so `corpus/` and `web/tokenizer.json` are
+excluded from the formatting hooks that rewrite whitespace. A cosmetic newline here would void a
+hash that other exercises depend on.
+
+## No affiliation
+
+This is independent coursework. Nothing here is endorsed by or affiliated with the Wikimedia
+Foundation, and no claim is made about the accuracy of the article text — it is used as a **corpus**,
+because it is permissively licensed, multilingual and comparable across languages, not as a source
+of facts about India.
+
+## Personal information
+
+The articles are public encyclopedia text about a country. No dataset here was collected from
+individuals, and nothing in `corpus/` was scraped from a site that publishes personal information.
