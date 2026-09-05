@@ -1,6 +1,6 @@
 /* Components this page adds on top of the shared design system.
  *
- * Everything here uses the tokens from `_shared/tokens.css` — no per-exercise palette. If a colour
+ * Everything here uses the tokens from the site-root `/_shared/tokens.css` — no per-exercise palette. If a colour
  * is needed that the tokens do not have, the token file is the place to add it, so a colour
  * decision stays made in one file.
  */

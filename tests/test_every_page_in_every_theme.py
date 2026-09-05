@@ -189,7 +189,7 @@ def test_the_page_is_readable_under_this_theme(site, slug: str, name: str, attr,
 
     assert not m["unresolved"], (
         f"{slug} under {name} paints these tokens as nothing: {m['unresolved']}.\n\n"
-        "The usual cause is linking only the vendored `_shared/tokens.css` — exercise 03's "
+        "The usual cause is linking only the vendored `_shared/components.css` — exercise 03's "
         "COMPONENT stylesheet, not the token file — and not the root `/_shared/tokens.css`. A mark "
         "drawn with an undefined custom property does not error; it simply does not paint."
     )
