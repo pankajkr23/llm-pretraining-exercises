@@ -367,7 +367,19 @@ def test_the_measured_peak_is_the_denominator_for_the_runs_own_achieved_rate() -
     device that produced them is what the whole correction was about.
     """
     trace, facts = run(Config(), steps=3)
-    peak = measured_peak_flops("cpu", size=512, repeats=2)
+    # **The defaults, which is the whole fix.** This called `size=512, repeats=2`, and 512 does not
+    # measure a peak: the multiply is small enough that allocation and launch dominate, so it
+    # reports roughly HALF the machine's real rate — 1.6 TFLOP/s here against 3.3 at 2048 — with a
+    # 6.6% spread across repeated estimates. When the run's own achieved rate landed above that
+    # under-measurement, `mfu` came out impossible and this test failed on a green branch. It did so
+    # twice in one evening, on #119 at 253% and #113 at 117%, and the same assertion has failed on
+    # `main` — so it was reading as a defect in whatever pull request happened to be open.
+    #
+    # `size=2048` is the function's own default, the size `harness.py` and the notebook already use,
+    # and the size the published figure quotes. Measured here across three independent estimates it
+    # spreads **0.1%**, and it is also *faster* than 512 (0.08s against 0.14s) because the small
+    # case is dominated by allocation rather than arithmetic. More correct and cheaper.
+    peak = measured_peak_flops("cpu")
 
     utilisation = measure(
         parameters=int(facts["non_embedding_parameters"]),

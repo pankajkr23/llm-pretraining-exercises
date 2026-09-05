@@ -12,6 +12,50 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The MFU guard divided by something that was not a peak, and reddened whichever pull request
+  happened to be open.** It called `measured_peak_flops("cpu", size=512, repeats=2)`. At 512 the
+  multiply is small enough that allocation and launch dominate, so it reports roughly **half** the
+  machine's real rate — **1.6 TFLOP/s against 3.3 at 2048** — with a **6.6%** spread across
+  repeated estimates. Whenever the run's own achieved rate landed above that under-measurement,
+  `mfu` came out impossible and the test failed.
+
+  It failed twice in one evening on unrelated work — **253.14%** on #119 and **117.40%** on #113 —
+  and the same assertion has failed on `main`, so it read as a defect in whoever's branch was in
+  hand. Both cleared on a re-run, which is the shape of a flake and the reason it survived.
+
+  **The assertion was right and the measurement was not.** Refusing an MFU above 100% is the whole
+  point of this test: it exists because an earlier version divided CPU FLOPs by a GPU's peak and
+  reported a triumphant, meaningless 39.13%.
+
+  The test now uses the function's defaults — `size=2048` — which is what `harness.py`, the notebook
+  and the published figure already use. **It was the only call site overriding them.** Measured
+  across three independent estimates the default spreads **0.1%**, and it is also *faster* than 512
+  (0.08s against 0.14s), because the small case is dominated by allocation rather than arithmetic:
+  more correct and cheaper. Ten consecutive runs pass, and the guard still reports **22,139%** when
+  the peak is deliberately made a thousand times too small.
+
+- **The sync tool put changelog entries above the title, five times in one queue.** When a
+  re-applied block's neighbours have moved on `main`, the tool matches one side alone. That side is
+  usually a blank line — and a real `CHANGELOG.md` opens with a title and three paragraphs of
+  preamble, so it has several, all above the first section and all *nearer* to a changelog entry's
+  small hint than the real destination. The entry landed at line 2: present, correct, and where no
+  reader would look.
+
+  Nearest-to-the-hint had already replaced first-match for this exact reason and was not enough,
+  because the hint itself is small. A block may now not be placed above the document's first `## `
+  heading; when a location resolves there it is moved and **the move is reported**, naming the line
+  it resolved to and the line it used instead.
+
+  **The floor is the first section, deliberately not the first subsection.** A block often carries
+  its own `### ` heading and belongs above the existing ones — clamping to `### ` broke exactly that
+  case, which `test_a_heading_is_its_own_record_and_survives_a_skipped_neighbour` already covered.
+  The floor answers *is this inside the document's body*, which is the question the five real
+  failures got wrong; it does not choose between subsections.
+
+  Tested against the function rather than through the whole pipeline: forcing the fallback end to
+  end needs a document contrived enough to stop resembling the one this went wrong on. Watched
+  failing twice — with the floor disabled entirely, and with it off by two.
+
 - **The six-theme sweep measured `body.color`, so a page whose prose was unreadable still passed.**
   It reads one pair per page — the `<body>` element's own colour against its own background — which
   catches a whole-page inversion and nothing narrower. **Verified by breaking it**: painting
@@ -417,6 +461,54 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   1.00:1 to 3.02:1 before.
 
 ### Added
+
+- **A guard that the eight vendored copies of `web/_shared/` still match, which nothing checked.**
+  It went wrong **twice in one queue of pull requests**, and both times the merge order caught it
+  rather than anything failing. Exercises 09 and 10 were built while five shared-layer fixes were
+  open, so they froze the pre-fix stylesheets and carried no `theme.js` at all: measured on their
+  own pages, the `← Back` pill ran **1.54:1 on `neon`** and **2.46:1 on `tinted-dark`** against a
+  4.5:1 floor, and each had hand-written the theme logic a refactor had just centralised — the
+  ninth and tenth copies, written *after* the refactor removed the other eight.
+
+  Two properties, because the failure has two shapes: copies that differ, and a file that is
+  **absent** — which cannot drift and cannot be fixed by a shared-layer change, so the page ends up
+  hand-writing whatever the missing file provides.
+
+  **The absence check is a majority rather than an identical set**, and the threshold does real
+  work: four files are vendored by all eight exercises, while `explainer.js` and `num.js` are
+  vendored by the two pages that build an explainer. Demanding identical sets would red-flag that
+  deliberate opt-in, and a guard that fails correct work gets weakened. "Present in all but one"
+  was rejected too — it goes vacuous exactly when it matters, since one new exercise without
+  `theme.js` would stop the file being universal and stop the rule applying.
+
+  Both watched failing: one copy of `page.css` changed, and `theme.js` removed from one exercise.
+
+  A third assertion was written and then removed: it pinned the fact that `web/_shared/tokens.css`
+  is *not* the token file. That name is being fixed instead, in its own change — pinning a trap is
+  worse than removing it, and a guard asserting a name stays misleading would have been rewritten by
+  the very next pull request. It also failed its own first break by reading only the first of eight
+  copies, which is the more useful thing it taught.
+
+- **`AGENTS.md` gains three sections, all earned by merging twenty-seven pull requests in one
+  run.** Every defect they describe was found by driving the page or the tool, and **none of them
+  failed a test first**.
+
+  *Merging a queue of pull requests* — a clean merge of an append-only log is routinely a wrong one,
+  and "nothing was lost" is the wrong question: an entry can land above the preamble, outside every
+  section, present and unfindable. That happened **five times**. Also: a stale ledger entry naming a
+  fix that has already landed; reading the whole hook output rather than its tail, after two commits
+  failed silently; and why every one of ten consecutive merges here was a squash.
+
+  *Verifying a fix, as opposed to running its tests* — break the thing the guard checks rather than
+  the thing it is about; a probe artefact reads exactly like a defect and costs more; a measurement
+  taken 140ms after a theme switch reported the previous theme's shadow, which turned "two themes
+  affected" into three.
+
+  *Agents running near the working tree* — a subagent's `$TMPDIR` may be empty, so
+  `mkdir "$TMPDIR/x"` becomes `mkdir x` in the repository root. One run left a scratch directory, a
+  nested `.git`, two staged files and **two git tags** authored by the test-fixture identity. The
+  tags are the worst of it: `snapshot_standards.py` measures against the newest tag, so a stray one
+  makes the standards archive look permanently behind.
 
 - **A repo-wide guard that a page building a contents rail also marks the section in view.**
   `.rail-link.on` has been styled in the shared stylesheet since before most of these pages existed,

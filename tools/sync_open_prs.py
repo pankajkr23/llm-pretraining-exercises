@@ -164,6 +164,31 @@ def _only_a_heading(record: list[str] | None) -> bool:
     return all(_HEADING.match(line) or not line.strip() for line in record)
 
 
+def _placement_floor(lines: list[str]) -> int:
+    """The earliest index a re-applied block may occupy.
+
+    **Nearest-to-the-hint was not enough, and this is the fix for the failure it left.** A block's
+    hint is where it sat on the branch, and for a changelog entry that is a small number — around
+    line 12, just under `[Unreleased]`. So the *nearest* blank line on main is often line 1 or 2,
+    and the block lands above the preamble, outside every section: present, correct-looking, and
+    somewhere no reader will find it. It happened **five times** across one queue of pull requests,
+    every one caught by a person checking placement rather than by anything failing.
+
+    The floor is structural rather than per-file: a document's first `## ` heading is the point
+    after which content belongs to a section at all. It is deliberately not the first `### `
+    subsection — a block often carries its own subsection heading and belongs above the existing
+    ones, and clamping to `### ` broke exactly that case in
+    `test_a_heading_is_its_own_record_and_survives_a_skipped_neighbour`. The floor answers "is this
+    inside the document's body", which is the question the five real failures got wrong; it does not
+    try to choose between one subsection and another.
+
+    Returns 0 when the file has no `## ` heading at all, which leaves behaviour unchanged for
+    anything not shaped like these two logs.
+    """
+    first_section = next((i for i, line in enumerate(lines) if line.startswith("## ")), None)
+    return 0 if first_section is None else first_section + 1
+
+
 def _locate(
     lines: list[str], preceding: str, following: str, hint: int = 0
 ) -> tuple[int | None, str]:
@@ -215,6 +240,14 @@ def _reapply(
             continue
         preceding, following, where = anchor
         at, how = _locate(lines, preceding, following, hint=where)
+        floor = _placement_floor(lines)
+        if at is not None and at < floor:
+            # Above the first section is not a placement, it is a loss that looks like one.
+            notes.append(
+                f"a {len(added)}-line block resolved to line {at + 1}, above the first section; "
+                f"placed at line {floor + 1} instead"
+            )
+            at, how = floor, "the section floor"
         if how != "pair" and at is not None:
             # Worth saying. A degraded placement is still a placement, but main has moved under
             # this block and somebody should look at where it landed.
