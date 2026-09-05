@@ -58,6 +58,34 @@ patterns = [
 ]
 why = "a guard the agent could weaken to make its own work pass; name it in UNIT.md to edit it"
 
+[irreplaceable]
+# **The files git cannot restore — and until 2026-09-05 this policy protected the TOOLS that guard
+# them and not one byte of the files themselves.**
+#
+# `tools/backup_local_only.py` and `tests/test_local_only_files_present.py` are in [guards] below,
+# so an agent could not weaken the backup tool or the tripwire. It could still overwrite what they
+# exist to protect. `AGENTS.md` calls these the only files in the repository with no second copy:
+# they are gitignored, so `git checkout` cannot bring them back, and a bad overwrite is
+# indistinguishable from an intended one until someone opens the file.
+#
+# It has happened twice. A routine `git checkout main && git pull` destroyed all five notebook
+# builders; an ordinary branch switch destroyed four requirement documents. Neither was anybody
+# deciding to delete anything.
+#
+# The backup store is the recovery path, and it is a high-water mark rather than a mirror — it
+# never removes, so it cannot undo an overwrite that was itself backed up. Refusing the write is
+# the only point at which the content still exists.
+patterns = [
+  "notebooks/**",
+  "src/exercises/*/tools/build_notebook.py",
+  "TODO.md",
+  "HANDOFF.md",
+  "src/exercises/*/REQUIREMENTS.md",
+  "docs/REQUIREMENTS.md",
+  "src/exercises/*/src/solution/**",
+]
+why = "gitignored and unrecoverable: git cannot restore it and the append-only store cannot undo an overwrite"
+
 [standards]
 # Changing the rules mid-unit is how a unit passes by lowering the bar. Allowed only when the unit
 # is explicitly about the standard, which `UNIT.md` has to say.

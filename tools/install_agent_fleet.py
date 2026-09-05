@@ -43,13 +43,24 @@ AGENTS_OUT = CLAUDE / "agents"
 
 #: The hook wiring, merged into `.claude/settings.local.json` rather than written over it.
 #:
-#: `PreToolUse` with a `Write|Edit` matcher: the guard is about writes, and matching everything
-#: would run a subprocess on every Read in the run for nothing.
+#: `PreToolUse` with a write-tool matcher: the guard is about writes, and matching everything would
+#: run a subprocess on every Read in the run for nothing.
+#:
+#: **`Bash` was missing from this string, and that made `agent_guard.decide()`'s entire Bash branch
+#: unreachable.** The branch was written, correct and tested — `re.search` simply never matched the
+#: tool name, so `sed -i`, `echo >` and `rm` were never offered to the guard at all. It was not
+#: theoretical: on 2026-09-05 a pull request modified `uv.lock`, which `guard_rules.toml` lists as
+#: protected, and nothing fired, because the change was made with `uv sync`. An ordinary, correct
+#: action walked through a gate that declares that path protected.
+#:
+#: This is the tracked source. Applying it to a machine's `.claude/settings.local.json` is a
+#: separate act and a human's, because that file decides what an agent may run without asking, and
+#: `install_hooks()` refuses to overwrite an existing hooks key by design.
 HOOK_WIRING: dict = {
     "hooks": {
         "PreToolUse": [
             {
-                "matcher": "Write|Edit|NotebookEdit|MultiEdit",
+                "matcher": "Bash|Write|Edit|NotebookEdit|MultiEdit",
                 "hooks": [
                     {
                         "type": "command",
