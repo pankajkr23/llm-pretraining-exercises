@@ -12,6 +12,39 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **A blank line had cut the root README's exercise table in two, so exercises 09 and 10 were not
+  in it.** A blank line terminates a GitHub-Flavoured Markdown table, and one sat between row 08 and
+  rows 09 and 10 from `023bbd5` onwards. GitHub therefore ended the table after 08 and rendered the
+  two newest exercises as a paragraph of literal `|` characters — on the front door `AGENTS.md` says
+  a grader lands on and nowhere else, for the exercise being submitted.
+
+  **The guard could not see it, because it read a row rather than the table.**
+  `test_doc_counts_match.py::_exercise_row` searches the file for a line *starting* `| 09 `, which
+  it finds whether or not the table around it survives. `test_every_exercise_has_a_row_inside_the_table_github_renders`
+  now walks from the header and stops where the table stops, comparing what GitHub would render
+  against the exercises on disk; its twin plants the blank line and watches the reader lose the row.
+  Watched failing before it was committed: with the line restored it reports rows `01`–`08` against
+  ten exercises.
+
+- **Every tracked document that described exercises 09 and 10 described them as unfinished.** Both
+  are built, registered and merged; what remains is a production promotion, which is a gate rather
+  than a stage. Corrected in seven places: the two root README rows, which also gained the
+  `[the page]` link that every other row carries; both exercises' `PROGRESS.md` status tables;
+  both `CLAUDE.md` status lines; `WORKPLAN.md`'s stages 2, 3 and 4; and six rows plus six unit
+  blocks in `docs/agents/QUEUE.md`.
+
+  Three of those were worse than stale. Exercise 09's `PROGRESS.md` carried a **second, orphaned
+  status table** — eighteen rows frozen at an older state, opening with a headerless
+  `--- | --- | --- |` delimiter and numbering its stages differently, fifty lines below the live one
+  it contradicted. Its test count read 44 where the suite collects **54**. And `WORKPLAN.md` still
+  said both exercise directories "no longer exist", which had been true of two empty placeholders
+  and was written up as a lesson about what the backup tool cannot see.
+
+  `WORKPLAN.md` is now explicitly a **record** rather than a tracker: every stage on it is complete,
+  and it says so, pointing at the queue for live state. It stays tracked — untracking is the
+  mechanism that has destroyed files here three times, and a stage list that is entirely complete
+  cannot drift the way a live one does.
+
 - **The MFU guard divided by something that was not a peak, and reddened whichever pull request
   happened to be open.** It called `measured_peak_flops("cpu", size=512, repeats=2)`, and two short
   samples do not measure a peak on a machine that is busy — CI runs this file under `pytest -n

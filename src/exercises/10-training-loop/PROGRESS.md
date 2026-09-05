@@ -30,9 +30,9 @@ of the loop or a deliberate breakage of it.
 | **13 · Documents** | README, DECISIONS, NOTICE, CLAUDE.md | **done** |
 | **14 · Review** | run the reviewers over the finished work, as 09 did | not started |
 | **15 · Notebook** | **tracked**, under a written exception — see `DECISIONS.md` D1 | **done** |
-| **16 · Web page** | the deployable explainer, to the twelve-part spine | not started |
-| **16b · Register** | `SPINE_ENFORCED` + the landing card — both fail in two directions | not started |
-| **17 · Submit** | PK's action, after production is live | blocked on 14–16b |
+| **16 · Web page** | the deployable explainer, to the twelve-part spine | **done** |
+| **16b · Register** | `SPINE_ENFORCED` + the landing card — both fail in two directions | **done** |
+| **17 · Submit** | PK's action, once production serves the page | blocked on the deploy |
 
 ---
 

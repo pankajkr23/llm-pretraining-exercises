@@ -4,8 +4,9 @@ Component notes. Repo-wide conventions: root `AGENTS.md`. The reasoning is `DECI
 running log is `PROGRESS.md`, the measured evidence is `RESULTS.md` (generated), and the
 requirements are `REQUIREMENTS.md` (local only, gitignored).
 
-**Status: the harness, the training run and the sensitivity sweep all run and write `results/`.**
-Remaining: the notebook and the deployable page.
+**Status: built.** The harness, the training run and the sensitivity sweep all run and write
+`results/`; the notebook and the deployable page are done and registered. Remaining is not
+engineering: the page reaches readers only once production is promoted, which is PK's gate.
 
 ## The rules this exercise added, each learned by getting it wrong
 
