@@ -750,4 +750,17 @@ predates the harness — so it is logged as what it was.
                           every token resolved. The first probe said 0/10 and was wrong -- the
                           build appends a cache-busting query -- which is the third artefact of
                           that shape in this queue
+2026-09-05  docs          #147 opened: a blank line had cut the root README's exercise table in
+                          two since 023bbd5, so exercises 09 and 10 fell OUTSIDE it and GitHub
+                          rendered them as a paragraph of literal pipe characters -- on the front
+                          door a grader lands on, for the exercise being submitted. The guard
+                          could not see it because it reads a ROW (a line starting `| 09 `) rather
+                          than the table; the new one walks from the header, stops where the table
+                          stops, and was watched reporting rows 01-08 against ten exercises. Seven
+                          documents that called finished work unfinished were corrected with it,
+                          including a SECOND orphaned status table in 09's PROGRESS.md and a test
+                          count of 44 where the suite collects 54. WORKPLAN.md is now a record
+                          rather than a tracker -- every stage complete, pointing at this file --
+                          and stays tracked, because untracking is what has destroyed files here
+                          three times
 ```
