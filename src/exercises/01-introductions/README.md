@@ -111,18 +111,27 @@ Any static server works — the pages have no origin requirements beyond being s
 ## Tests
 
 ```bash
-uv run pytest src/exercises/01-introductions      # the bundle-integrity suite
+uv run pytest src/exercises/01-introductions                     # 113 tests
+uv run pytest src/exercises/01-introductions -m "not integration" # 4, no browser needed
 ```
 
-`tests/test_web_bundle.py` asserts that the landing page links all four proofs, that every
-referenced local asset resolves, and that each proof carries its own inline `<script>`, a
-`<canvas>`, and a back-link to the index.
+Two suites, and they answer different questions.
 
-**Be clear about what that does and does not buy you.** It is a *bundle-integrity* suite: it proves
-the site is wired together and self-contained. It does **not** open a browser, so it cannot see a
-JavaScript error, a canvas that renders blank, or a training loop that silently diverges. Exercises
-02–05 add Playwright suites that do exactly that; this one does not have one, and the honest
-statement is that **these four pages are verified by being opened and used, not by CI.**
+`tests/test_web_bundle.py` (**4 tests**) is bundle integrity: the landing page links all four
+proofs, every referenced local asset resolves, and each proof carries its own inline `<script>`, a
+`<canvas>` and a back-link to the index. It proves the site is wired together and self-contained,
+and it needs no browser.
+
+`tests/test_introductions_render.py` (**109 tests**, integration-marked) opens the real pages in
+Chromium and asserts what a reader sees. It exists because **this section used to say the opposite**
+— that these pages had no browser suite and were "verified by being opened and used, not by CI".
+That stopped being true at `5232586` (2026-09-04), which added the suite after a page threw before
+its first statement, and never updated this paragraph. A README that describes a weaker test suite
+than the one that ships is the same defect as one that describes a stronger one: both mislead about
+what is actually guarded.
+
+Without Chromium the render suite **skips** rather than fails, so a fresh checkout still works.
+One-time setup: `uv run playwright install chromium`.
 
 ## What these demos cannot show
 

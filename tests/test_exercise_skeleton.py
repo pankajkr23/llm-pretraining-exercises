@@ -6,9 +6,26 @@ was still skipped when exercise 06 was created: code was written before `CLAUDE.
 gets
 skipped under momentum, so this makes it checkable.
 
-Only the genuinely universal files are required. `DECISIONS.md`, `PROGRESS.md` and `NOTICE` are
-"when the work needs them" and several exercises legitimately have none, so requiring them here
-would be inventing a rule the repo does not follow.
+**`PROGRESS.md` joined `REQUIRED` on 2026-09-05, and only because it had become true.** It used to
+be excluded on the stated ground that requiring it "would be inventing a rule the repo does not
+follow" — four exercises had none. That was the right test and the right answer at the time. Once
+01 through 04 were given the ledgers they never had, every exercise had one, and the rule stopped
+being an invention and started being a description.
+
+**`DECISIONS.md` and `NOTICE` stay out, on evidence rather than on inertia.**
+
+For `DECISIONS.md`: six exercises publish their reasoning somewhere already, and five of the six
+would gain a *second copy* of it — 05's `PROGRESS.md` carries a "decisions and what would overturn
+them" table in exactly that shape, 02's 597-line README argues seven of its own decisions inline,
+and 07's is spread across four documents that each state part of it. A second copy is the one that
+drifts, which `AGENTS.md` names as the failure that has cost this repository the most edits.
+Requiring the file would buy uniformity and pay for it in duplication.
+
+For `NOTICE`: it attributes third-party content, and **01 ships none** — its networks are
+hand-written, its grammar invented, and it links no remote host. A required `NOTICE` there would
+have to say "nothing to attribute", which is an attribution file that attributes nothing. The real
+rule is *ship third-party content and you owe attribution*, and that is enforced where the content
+is: `02-tokenization/tests/test_tokenization_notice.py` is the pattern.
 """
 
 import subprocess
@@ -20,8 +37,9 @@ from _exercises import exercises_in
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EXERCISES = exercises_in(REPO_ROOT / "src" / "exercises")
 
-#: Present in every exercise, without exception.
-REQUIRED = ("README.md", "CLAUDE.md", "pyproject.toml")
+#: Present in every exercise, without exception. See the module docstring for why `PROGRESS.md` is
+#: here and `DECISIONS.md` and `NOTICE` are not — the difference is evidence, not taste.
+REQUIRED = ("README.md", "CLAUDE.md", "pyproject.toml", "PROGRESS.md")
 
 #: Directories a FRESH CLONE has.
 #:
