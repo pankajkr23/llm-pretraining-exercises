@@ -6,7 +6,7 @@
  * from the site-root `/_shared/tokens.css`, so a palette decision is still made in one file.
  *
  * Two things about that file are worth knowing before editing this one. The colour tokens are NOT
- * in the per-exercise `./_shared/tokens.css` — that copy holds component styles, and the palette
+ * in the per-exercise `./_shared/components.css` — that copy holds component styles, and the palette
  * lives at the site root, which is why index.html links both. And the semantic names are
  * `--grade-a` … `--grade-x`, not `--good`/`--warn`/`--bad`: this file used the invented names
  * first, and because an undefined custom property fails silently, every verdict badge rendered

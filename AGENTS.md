@@ -994,7 +994,7 @@ building or changing a page; the rules that matter across exercises are below.
   animated and one was invisible outright, with a clean console and a green suite. Defer by one
   frame and check `isConnected`, or register the observer from the code that does the appending.
 
-- **`web/_shared/tokens.css` is NOT the token file, in any exercise, and the name has already cost
+- **`web/_shared/components.css` is NOT the token file, in any exercise, and the name has already cost
   time.** Every deployable exercise (03–08) vendors a byte-identical copy of exercise 03's
   *component* stylesheet under that name — its own first line says so. The real six-theme token file
   is `deploy/vercel/_shared/tokens.css`, served at `/_shared/tokens.css`, and each `index.html`

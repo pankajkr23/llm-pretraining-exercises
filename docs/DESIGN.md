@@ -47,9 +47,9 @@ and every `index.html` links it. It defines **six complete themes**: `:root` (li
 
 > **Two traps, both of which have cost real time.**
 >
-> **`web/_shared/tokens.css` is NOT the token file.** Every exercise vendors a byte-identical copy
+> **`web/_shared/components.css` is NOT the token file.** Every exercise vendors a byte-identical copy
 > of exercise 03's *component* stylesheet under that name — its own first line says so. A page must
-> link **both** `/_shared/tokens.css` (absolute, the real tokens) and `./_shared/tokens.css`. A
+> link **both** `/_shared/tokens.css` (absolute, the real tokens) and `./_shared/components.css`. A
 > scratch harness that links only the vendored one renders every glyph invisible, because
 > `stroke: var(--bg)` against an undefined `--bg` simply does not paint.
 >
@@ -569,7 +569,7 @@ specific string and failed correct work. Ask the underlying question instead.
 
 Exercises 01–07 predate most of this. In order, cheapest and highest-value first:
 
-1. **Link both stylesheets** — `/_shared/tokens.css` and `./_shared/tokens.css`. Check for any
+1. **Link both stylesheets** — `/_shared/tokens.css` and `./_shared/components.css`. Check for any
    hardcoded colour and replace it with a token.
 2. **Build `.rail-inner`** if the page has a rail, and add the scroll-spy — the CSS for `.rail-link.on`
    is already vendored and unused in 05, 06 and 07.
