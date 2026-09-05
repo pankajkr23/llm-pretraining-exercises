@@ -730,4 +730,14 @@ predates the harness — so it is logged as what it was.
                           merges each conflicted on CHANGELOG.md and resolving by taking a side lost
                           three of the four entries; restored, and it is exactly the failure
                           sync_open_prs.py exists to prevent
+2026-09-05  tooling       #146 opened: four guards that were wrong about their own subject,
+                          consolidated from #141-#144 after PK asked why one-file pull requests
+                          were being opened separately. They were right to: three of the four
+                          carried ONE real file each and paid three files of bookkeeping apiece.
+                          The sync tool stranded the entries it placed (five times); the MFU guard
+                          measured at size=512, which is not a peak, and reddened whichever branch
+                          was open; nothing compared the eight vendored copies of web/_shared,
+                          which went stale twice; and AGENTS.md gains the rules all three taught.
+                          One concern at the right granularity, ~5 real files, inside the 20-file
+                          ceiling that says what scale was intended
 ```

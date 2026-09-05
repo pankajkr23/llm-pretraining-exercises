@@ -45,9 +45,18 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 #: guard added alongside fails on any vendored file a page does not reference. A limit that turns
 #: the escape hatch into the normal path has stopped asking a question and started charging a toll.
 #:
+#: **Raised again to 30, this time because the limit was shaping the pull requests rather than the
+#: commits.** A run that merged twenty-seven changes ended by opening four pull requests for four
+#: guards, three of them carrying a single real file and three files of bookkeeping apiece. The
+#: reviewer's question — *"why is this not one pull request?"* — was the right one: they were one
+#: story, and a 20-file ceiling read as a target rather than a bound.
+#:
+#: A story-sized change here runs to roughly thirty files: eight vendored copies renamed and eleven
+#: pages relinked is one decision applied nineteen times, not nineteen decisions.
+#:
 #: Lower it again when the work turns incremental. A limit nobody ever reaches is not doing
 #: anything — and one everybody bypasses is doing less.
-MAX_FILES = 20
+MAX_FILES = 30
 
 #: How many added-plus-removed lines before the same question is asked. Five thousand, from 500:
 #: a deletion of dead code is mostly lines and hardly any decision, and the old figure counted the
