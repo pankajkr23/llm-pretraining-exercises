@@ -836,7 +836,7 @@ predates the harness — so it is logged as what it was.
                           a twin proves naming one does not unlock it. The section needed no code
                           change to take effect -- _pattern_sections derives the enforced list,
                           which is #152's own fix paying for itself
-2026-09-07  exercise-07   #NNN opened: S07's notebook taught the analysis and never showed the
+2026-09-07  exercise-07   #154 opened: S07's notebook taught the analysis and never showed the
                           mechanism. It printed the sparse coordinates but never E = K.W_p, never
                           the tie that IS v2, and never the evidence the recommendation rests on --
                           PK could not answer a question from it, which was the notebook's fault.
