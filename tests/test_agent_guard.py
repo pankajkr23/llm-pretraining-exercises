@@ -5,8 +5,20 @@ mistake is invisible: a guard that silently allows looks exactly like a guard th
 block. Every property below is written twice — the blocking case and the allowing case — because a
 guard nobody has watched fail is not a guard, and one that blocks everything gets uninstalled.
 
-**These run everywhere.** They read the tracked policy and synthetic payloads, never the
-environment, so they are as true on a fresh clone as here.
+**These run everywhere.** They read the tracked policy and synthetic payloads, so they are as true
+on a fresh clone as here.
+
+**That claim used to be false, and the way it failed is worth keeping.** Four tests drove `decide()`
+against the *real* repository root, which means they read whatever `.claude/UNIT.md` the current
+unit had written. `UNIT.md` is gitignored, so it exists only on the machine running a unit — and
+naming a guard file in it legitimately unlocks that file. The moment a unit declared a scope, four
+tests inverted: `test_ordinary_source_is_allowed_with_no_unit_declared` failed although its own name
+states the precondition, and `test_the_guard_refuses_edits_to_itself` failed because the guard was
+correctly permitting the edit the unit existed to make.
+
+They were green in CI, which has no `UNIT.md`, and red on the working checkout doing the work. That
+is this repository's recurring defect — a gate whose result depends on a file only one machine has —
+pointing the other way for once. Anything asserting a *default* now runs against an empty root.
 """
 
 import json
@@ -76,23 +88,43 @@ def test_a_guard_file_is_refused(rules) -> None:
     assert "guards" in refusal
 
 
-def test_the_guard_refuses_edits_to_itself(rules) -> None:
-    """A guard an agent can rewrite is a guard an agent can remove."""
+def test_the_guard_refuses_edits_to_itself(rules, tmp_path) -> None:
+    """A guard an agent can rewrite is a guard an agent can remove.
+
+    Against an empty root, because the real one carries a `UNIT.md` whenever a unit is editing the
+    guard — which is legitimate and is exactly what naming a file there means. This test is about
+    the default, and the default is what an undeclared agent meets.
+    """
     for path in ("tools/agent_guard.py", "tools/agent_fleet/guard_rules.toml"):
-        assert decide(_write(path), REPO_ROOT, rules) is not None, path
+        payload = {
+            "tool_name": "Write",
+            "cwd": str(tmp_path),
+            "tool_input": {"file_path": str(tmp_path / path)},
+        }
+        assert decide(payload, tmp_path, rules) is not None, path
 
 
-def test_ordinary_source_is_allowed_with_no_unit_declared(rules) -> None:
+def test_ordinary_source_is_allowed_with_no_unit_declared(rules, tmp_path) -> None:
     """**The most important negative case.** A guard that fires constantly gets uninstalled.
 
     With no `.claude/UNIT.md` the scope rule is inert by design, so routine work is untouched.
+
+    **Driven against an empty root, because the name of this test is a precondition.** It used to
+    run against the real repository, which has a `UNIT.md` whenever a unit is in flight — so the
+    one case it exists to prove was decided by a gitignored file that only the machine running the
+    unit has. It passed in CI and failed on a working checkout, which is the wrong way round.
     """
     for path in (
         "src/exercises/07-model-embeddings-internals/src/embeddings/codec.py",
         "README.md",
         "docs/agents/QUEUE.md",
     ):
-        assert decide(_write(path), REPO_ROOT, rules) is None, path
+        payload = {
+            "tool_name": "Write",
+            "cwd": str(tmp_path),
+            "tool_input": {"file_path": str(tmp_path / path)},
+        }
+        assert decide(payload, tmp_path, rules) is None, path
 
 
 def test_a_read_only_tool_is_never_blocked(rules) -> None:
@@ -203,8 +235,14 @@ def test_the_hook_fails_closed_on_malformed_input() -> None:
     assert "could not evaluate" in done.stderr
 
 
-def test_the_hook_exits_two_to_block_and_zero_to_allow() -> None:
-    """Exit 2 is the only code that blocks through the hook alone; 1 is a non-blocking error."""
+def test_the_hook_exits_two_to_block_and_zero_to_allow(tmp_path) -> None:
+    """Exit 2 is the only code that blocks through the hook alone; 1 is a non-blocking error.
+
+    **The allowing case runs against an isolated root**, because the real one carries whatever
+    `.claude/UNIT.md` the current unit declared, and a path outside that scope is correctly refused.
+    Pinning this to the real repository made the result depend on a gitignored file that only one
+    machine has: green in CI, red on a working checkout, for a reason unrelated to what it tests.
+    """
     script = REPO_ROOT / "tools" / "agent_guard.py"
     blocked = subprocess.run(
         [sys.executable, str(script)],
@@ -215,9 +253,15 @@ def test_the_hook_exits_two_to_block_and_zero_to_allow() -> None:
     )
     assert blocked.returncode == 2, blocked.stderr
 
+    (tmp_path / ".git").mkdir()
+    payload = {
+        "tool_name": "Write",
+        "cwd": str(tmp_path),
+        "tool_input": {"file_path": str(tmp_path / "README.md")},
+    }
     allowed = subprocess.run(
         [sys.executable, str(script)],
-        input=json.dumps(_write("README.md")),
+        input=json.dumps(payload),
         capture_output=True,
         text=True,
         check=False,
@@ -227,8 +271,11 @@ def test_the_hook_exits_two_to_block_and_zero_to_allow() -> None:
 
 def test_every_section_states_why_it_exists() -> None:
     """A rule with no reason is the first one somebody deletes when it gets in the way."""
+    from agent_guard import _pattern_sections  # noqa: PLC0415
+
     rules = load_rules()
-    for section in ("measured_data", "guards", "standards"):
+    # Derived, so a section added to the policy cannot skip this check by not being listed here.
+    for section in _pattern_sections(rules):
         why = rules[section].get("why", "")
         assert len(why.split()) >= 8, f"{section} has no reason with weight in it: {why!r}"
         assert rules[section]["patterns"], f"{section} has no patterns"
@@ -283,7 +330,17 @@ def test_the_installer_preserves_unrelated_settings_keys(tmp_path, monkeypatch) 
     installer.install_hooks()
     written = json.loads(settings.read_text(encoding="utf-8"))
     assert written["permissions"]["allow"] == ["Bash(ls)"], "unrelated keys must survive"
-    assert written["hooks"]["PreToolUse"][0]["matcher"].startswith("Write|Edit")
+
+    # **The property, not one spelling of it.** This asserted `.startswith("Write|Edit")`, which is
+    # a guard on the literal string rather than on what the matcher admits — so adding `Bash|` to
+    # the front, the fix for a hole that made the guard's whole Bash branch unreachable, turned it
+    # red for no reason. `AGENTS.md`: a guard that names one implementation of a property will fail
+    # every other implementation, and the pressure is then to reword good work to satisfy the test.
+    import re  # noqa: PLC0415
+
+    matcher = written["hooks"]["PreToolUse"][0]["matcher"]
+    for tool in ("Bash", *sorted(WRITING_TOOLS)):
+        assert re.search(matcher, tool), f"the installed matcher does not admit {tool!r}"
 
 
 def test_every_reviewer_declares_read_only_tools() -> None:
@@ -334,12 +391,18 @@ def test_a_write_inside_a_worktree_is_still_guarded(rules, tmp_path) -> None:
     assert "uv.lock" in reason
 
 
-def test_a_bash_command_that_writes_a_protected_path_is_refused(rules) -> None:
+def test_a_bash_command_that_writes_a_protected_path_is_refused(rules, tmp_path) -> None:
     """`WRITING_TOOLS` excluded `Bash`, so `echo >` and `sed -i` sailed straight through.
 
     This is not a hypothetical gap: the incident the `[guards]` section exists for — `return []`
     injected into two invariants — is trivially reproducible with `sed -i`, so the guard did not
     prevent the thing it cites as its reason for existing.
+
+    **Driven against an empty root rather than the real one**, because this test is about the
+    *pattern* rules and the real root carries whatever `.claude/UNIT.md` the current unit wrote.
+    Naming a guard file in a unit legitimately unlocks it, so with a unit declared this test failed
+    on a working checkout and passed in CI — a result that depends on a gitignored file only one
+    machine has, which is the shape this repository keeps being bitten by.
     """
     for command in (
         "echo '{}' > uv.lock",
@@ -349,11 +412,11 @@ def test_a_bash_command_that_writes_a_protected_path_is_refused(rules) -> None:
         "rm tests/test_forbidden_vocabulary.py",
         "cp /tmp/x src/exercises/02-tokenization/web/tokenizer.json",
     ):
-        payload = {"tool_name": "Bash", "cwd": str(REPO_ROOT), "tool_input": {"command": command}}
-        assert decide(payload, REPO_ROOT, rules) is not None, command
+        payload = {"tool_name": "Bash", "cwd": str(tmp_path), "tool_input": {"command": command}}
+        assert decide(payload, tmp_path, rules) is not None, command
 
 
-def test_bash_that_only_reads_a_protected_path_is_allowed(rules) -> None:
+def test_bash_that_only_reads_a_protected_path_is_allowed(rules, tmp_path) -> None:
     """The twin. A guard that blocked every mention of a protected path would block reading them.
 
     `grep`, `cat`, `wc` and `git log` over a guard file are exactly what an agent should do before
@@ -366,8 +429,8 @@ def test_bash_that_only_reads_a_protected_path_is_allowed(rules) -> None:
         "git log --oneline -- tests/test_forbidden_vocabulary.py",
         "python -m pytest tests/test_forbidden_vocabulary.py -q",
     ):
-        payload = {"tool_name": "Bash", "cwd": str(REPO_ROOT), "tool_input": {"command": command}}
-        assert decide(payload, REPO_ROOT, rules) is None, command
+        payload = {"tool_name": "Bash", "cwd": str(tmp_path), "tool_input": {"command": command}}
+        assert decide(payload, tmp_path, rules) is None, command
 
 
 def test_drift_is_detected_only_where_a_copy_exists_and_differs(tmp_path, monkeypatch) -> None:
@@ -409,3 +472,126 @@ def test_drift_is_detected_only_where_a_copy_exists_and_differs(tmp_path, monkey
     found = fleet.drifted_reviewers()
     assert len(found) == 1, found
     assert "reader.md" in found[0]
+
+
+# --- The three defects found on 2026-09-05, each with the twin that fails when the fix reverts ---
+
+
+def _bash(command: str) -> dict:
+    """A `PreToolUse` payload for a shell command."""
+    return {"tool_name": "Bash", "tool_input": {"command": command}, "cwd": str(REPO_ROOT)}
+
+
+def test_mv_is_refused_where_cp_is_allowed(rules) -> None:
+    """**`mv` destroys its source and was classified with `cp`, which does not.**
+
+    `WRITES_LAST_ARGUMENT` flagged only the final argument, so `mv uv.lock /tmp/backup` read as a
+    copy of a protected file and was allowed. The destination is outside the repository, so
+    `bash_write_targets` then discarded it as "not this guard's business" — a protected file could
+    be moved out from under the policy with nothing recorded anywhere.
+
+    A logic defect, not a wiring one: it survives every fix to the hook matcher.
+    """
+    assert decide(_bash("mv uv.lock /tmp/backup"), REPO_ROOT, rules) is not None, (
+        "mv moved a protected file out of the repository and the guard allowed it"
+    )
+    assert decide(_bash("cp uv.lock /tmp/backup"), REPO_ROOT, rules) is None, (
+        "copying a protected file is legitimate and must stay allowed — that distinction is the "
+        "entire reason the two command sets exist"
+    )
+
+
+def test_creating_a_branch_is_not_a_write_to_a_file_named_after_it(rules) -> None:
+    """**Arming `Bash` would have blocked `git checkout -b` on the first scoped unit.**
+
+    Every non-flag token after `checkout` counted as a written path, so `git checkout -b feature/x`
+    registered a write to `feature/x`. Harmless while no `UNIT.md` existed — no pattern matches a
+    branch name — and a total block on branch creation the moment one did, since anything outside
+    the declared scope is refused. That is why this and the matcher fix had to land together.
+    """
+    for command in ("git checkout -b feature/x", "git switch -c feature/x", "git checkout main"):
+        assert decide(_bash(command), REPO_ROOT, rules) is None, (
+            f"{command!r} is branch work, not a write to the working tree"
+        )
+
+
+def test_checking_out_over_an_irreplaceable_file_is_still_refused(rules) -> None:
+    """The other half: the fix above must not blind the guard to a real working-tree overwrite."""
+    assert decide(_bash("git checkout -- notebooks/S10-training-loop.ipynb"), REPO_ROOT, rules), (
+        "`git checkout -- <path>` overwrites the working tree and is the exact command AGENTS.md "
+        "names as prohibited on these paths"
+    )
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "echo x > notebooks/S10-training-loop.ipynb",
+        "rm src/exercises/10-training-loop/tools/build_notebook.py",
+        "mv TODO.md /tmp/todo",
+    ],
+)
+def test_the_files_git_cannot_restore_are_refused(rules, tmp_path, command: str) -> None:
+    """**The policy protected the backup tool and not one byte of what it exists to protect.**
+
+    `tools/backup_local_only.py` and the tripwire were in `[guards]`; `notebooks/**` and
+    `src/exercises/*/tools/build_notebook.py` were in no section at all. These are the files
+    `AGENTS.md` calls the only ones in the repository with no second copy — gitignored, so
+    `git checkout` cannot bring them back — and the backup store is a high-water mark that never
+    removes, so it cannot undo an overwrite that was itself backed up.
+
+    Refusing the write is the only moment at which the content still exists.
+
+    **Run against an empty root, and asserting the REASON.** The first version of this test drove
+    the real repository and only checked that *something* refused. It passed with the entire
+    `[irreplaceable]` section deleted — because these paths were also outside the current unit's
+    declared scope, so the scope rule refused them and the test could not tell the two apart. Green
+    for the wrong reason is the failure this whole file is written against.
+    """
+    payload = {"tool_name": "Bash", "cwd": str(tmp_path), "tool_input": {"command": command}}
+    refusal = decide(payload, tmp_path, rules)
+    assert refusal is not None, f"{command!r} was allowed"
+    assert "irreplaceable" in refusal, (
+        f"{command!r} was refused, but not by the irreplaceable rule: {refusal!r}"
+    )
+
+
+def test_every_section_carrying_patterns_is_actually_enforced() -> None:
+    """**The section list was hardcoded, so a new section protected nothing.**
+
+    `_refuse` iterated a literal `("measured_data", "guards", "standards")`. Adding
+    `[irreplaceable]` to the rules file would have read — in review, and in the file itself — as
+    protection while enforcing nothing. This asserts the property rather than the tuple: every
+    section that carries patterns is one the refusal path actually consults.
+    """
+    from agent_guard import _pattern_sections  # noqa: PLC0415
+
+    rules = load_rules()
+    declared = {
+        name for name, body in rules.items() if isinstance(body, dict) and "patterns" in body
+    }
+    consulted = set(_pattern_sections(rules))
+    assert consulted == declared, (
+        f"sections carrying patterns but never consulted: {declared - consulted}"
+    )
+    assert "irreplaceable" in declared, "the irreplaceable section vanished from the policy"
+
+
+def test_the_hook_matcher_offers_bash_to_the_guard() -> None:
+    """**The Bash branch was written, correct, tested — and unreachable.**
+
+    `re.search` never matched `Bash` against `"Write|Edit|NotebookEdit|MultiEdit"`, so no shell
+    command was ever offered to `decide()`. Not theoretical: a pull request modified `uv.lock`,
+    which the policy lists as protected, and nothing fired, because the change was made with
+    `uv sync`.
+
+    Asserts the property — that the matcher admits Bash — rather than the literal string, so the
+    order can change freely.
+    """
+    import re  # noqa: PLC0415
+
+    from install_agent_fleet import HOOK_WIRING  # noqa: PLC0415
+
+    matcher = HOOK_WIRING["hooks"]["PreToolUse"][0]["matcher"]
+    for tool in ("Bash", *sorted(WRITING_TOOLS)):
+        assert re.search(matcher, tool), f"the PreToolUse matcher does not admit {tool!r}"

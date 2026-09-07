@@ -65,11 +65,21 @@ SEGMENT_SEPARATORS = (";", "&&", "||", "|", "\n")
 REDIRECTS = frozenset({">", ">>", "1>", "2>", "&>", ">|"})
 
 #: Commands where **every** path argument is written or destroyed.
-WRITES_EVERY_ARGUMENT = frozenset({"rm", "shred", "truncate", "touch", "tee", "unlink"})
+#:
+#: **`mv` belongs here and spent months in the set below**, on the reading that it is "like `cp`".
+#: It is not. `cp` leaves its source where it was; `mv` destroys it. Because `_written_paths` only
+#: flagged `values[-1]` for that set, `mv uv.lock /tmp/backup` read as a copy and was **allowed** —
+#: and since the destination is outside the repository, `bash_write_targets` then discarded it as
+#: "not this guard's business", so a protected file could be moved out from under the policy with
+#: nothing recorded. A source is written to as surely as a destination is: after the command it is
+#: gone. This is a *logic* defect, not a wiring one — it survives every fix to the matcher.
+WRITES_EVERY_ARGUMENT = frozenset(
+    {"rm", "shred", "truncate", "touch", "tee", "unlink", "mv", "rename"}
+)
 
 #: Commands where only the **last** path argument is the destination. Listing them separately is
 #: what keeps `cp uv.lock /tmp/backup` — a perfectly good thing to do — from being refused.
-WRITES_LAST_ARGUMENT = frozenset({"cp", "mv", "ln", "install", "rsync"})
+WRITES_LAST_ARGUMENT = frozenset({"cp", "ln", "install", "rsync"})
 
 #: Prefixes that wrap a real command without being one.
 COMMAND_WRAPPERS = frozenset({"sudo", "env", "command", "nohup", "time", "xargs", "exec"})
@@ -122,7 +132,38 @@ def _command_word(tokens: list[str]) -> tuple[str, list[str]]:
     return "", []
 
 
-def _written_paths(tokens: list[str]) -> list[str]:
+def _git_checkout_targets(arguments: list[str], values: list[str], root: Path) -> list[str]:
+    """Working-tree paths a `git checkout` / `restore` / `switch` would overwrite.
+
+    **Every non-flag token used to count**, so `git checkout -b feature/x` registered a write to a
+    file named `feature/x`. That was harmless while no `UNIT.md` existed — no protected pattern
+    matches a branch name — and a total block on branch creation the moment one did, because any
+    path outside the declared scope is refused. The first unit to declare a scope would have been
+    unable to make a branch.
+
+    Git's own separator settles the ambiguous case: after `--`, every token is a path. Before it,
+    `git checkout main` names a branch and `git checkout notebooks/S10.ipynb` names a file, and the
+    only way to tell them apart without asking git is to look — so a pre-`--` argument counts when
+    something by that name exists on disk.
+
+    The residual gap is stated rather than hidden: a branch whose name collides with a real path is
+    read as the path, which errs toward refusing, and a path deleted before the checkout is not
+    seen. `git clean` keeps every argument, because it deletes rather than restores.
+
+    Args:
+        arguments: Every token after the command word, flags included.
+        values: The non-flag subset, subcommand first.
+        root: The repository root this call is happening in.
+
+    Returns:
+        The paths this invocation would overwrite.
+    """
+    if "--" in arguments:
+        return arguments[arguments.index("--") + 1 :]
+    return [value for value in values[1:] if (root / value).exists()]
+
+
+def _written_paths(tokens: list[str], root: Path) -> list[str]:
     """Every argument in one segment that this segment writes to."""
     targets: list[str] = []
 
@@ -139,8 +180,10 @@ def _written_paths(tokens: list[str]) -> list[str]:
         targets.extend(values)
     elif command_word in WRITES_LAST_ARGUMENT and values:
         targets.append(values[-1])
-    elif command_word == "git" and values[:1] and values[0] in {"restore", "checkout", "clean"}:
-        targets.extend(values[1:])  # these overwrite or delete working-tree files
+    elif command_word == "git" and values[:1] and values[0] == "clean":
+        targets.extend(values[1:])  # deletes; every argument is a path
+    elif command_word == "git" and values[:1] and values[0] in {"restore", "checkout", "switch"}:
+        targets.extend(_git_checkout_targets(arguments, values, root))
 
     return targets
 
@@ -152,7 +195,7 @@ def bash_write_targets(command: str, root: Path) -> list[str]:
     """
     relative: list[str] = []
     for tokens in _segments(command):
-        for target in _written_paths(tokens):
+        for target in _written_paths(tokens, root):
             if not target or target.startswith("-"):
                 continue
             try:
@@ -285,15 +328,40 @@ def decide(payload: dict, root: Path, rules: dict) -> str | None:
     return None
 
 
+#: Sections with no escape hatch: naming the file in `UNIT.md` does not unlock them.
+#:
+#: `measured_data`, because there is no unit for which rewriting a frozen tokenizer or a recorded
+#: result is the work. `irreplaceable`, because a unit that legitimately regenerates a notebook does
+#: it by running its builder, which writes through a path this guard never sees — so the only thing
+#: an escape hatch here would buy is the ability to overwrite the one copy that exists.
+NO_ESCAPE_HATCH = frozenset({"measured_data", "irreplaceable"})
+
+
+def _pattern_sections(rules: dict) -> list[str]:
+    """Every policy section that carries patterns, in file order.
+
+    **Derived rather than listed, because the list was hardcoded and a new section was inert.**
+    `_refuse` iterated a literal `("measured_data", "guards", "standards")`, so adding
+    `[irreplaceable]` to the rules file protected exactly nothing while reading, in review and in
+    the file itself, as though it did. A policy nobody enforces is worse than a policy nobody wrote,
+    because the second is visibly missing.
+
+    Args:
+        rules: The parsed policy.
+
+    Returns:
+        The section names that have a `patterns` key.
+    """
+    return [name for name, body in rules.items() if isinstance(body, dict) and "patterns" in body]
+
+
 def _refuse(rel: str, root: Path, rules: dict) -> str | None:
     """The refusal for writing one repo-relative path, or None to allow it."""
-    for section in ("measured_data", "guards", "standards"):
+    for section in _pattern_sections(rules):
         pattern = _matches(rel, rules[section]["patterns"])
         if pattern is None:
             continue
-        # `measured_data` has no escape hatch on purpose: there is no unit for which rewriting a
-        # frozen tokenizer or a recorded result is the work.
-        if section != "measured_data" and named_in_unit(root, rules, rel):
+        if section not in NO_ESCAPE_HATCH and named_in_unit(root, rules, rel):
             continue
         return f"BLOCKED {rel}\n  matched {section} pattern {pattern!r}\n  {rules[section]['why']}"
 

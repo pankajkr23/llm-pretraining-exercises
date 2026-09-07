@@ -51,7 +51,54 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   third-party content at all**, so a required `NOTICE` there would attribute nothing. The real rule
   is *ship third-party content and you owe attribution*, enforced where the content is.
 
+### Security
+
+- **The agent guard could not see any shell command, read `mv` as a copy, and protected the backup
+  tool rather than the files it exists to protect.** Four defects, each of which made a rule that
+  reads as enforcement into a rule that is not.
+
+  **`Bash` was missing from the `PreToolUse` matcher**, so `re.search` never matched it and
+  `decide()`'s entire Bash branch — written, correct and tested — was unreachable. Every `sed -i`,
+  `echo >` and `rm` went straight past. Not theoretical: on 2026-09-05 a merged pull request modified
+  `uv.lock`, which the policy lists as protected, and nothing fired, because the change was made with
+  `uv sync`.
+
+  **`mv` sat in `WRITES_LAST_ARGUMENT` beside `cp`**, on the reading that it is "like `cp`". It is
+  not: `cp` leaves its source and `mv` destroys it. Only the last argument was flagged, so
+  `mv uv.lock /tmp/backup` read as a copy, was allowed, and — the destination being outside the
+  repository — was then discarded as "not this guard's business". A protected file could be moved out
+  from under the policy with nothing recorded. This is a **logic** defect; it survives every fix to
+  the wiring.
+
+  **`guard_rules.toml` protected `backup_local_only.py` and the tripwire, and not one byte of what
+  they exist to protect.** `notebooks/**` and `src/exercises/*/tools/build_notebook.py` — which
+  `AGENTS.md` calls the only files in the repository with no second copy — appeared in no section.
+  They are gitignored, so `git checkout` cannot restore them, and the backup store is a high-water
+  mark that never removes, so it cannot undo an overwrite that was itself backed up. A new
+  `[irreplaceable]` section covers them, with no escape hatch.
+
+  **And the section list was hardcoded, so that new section would have been inert.** `_refuse`
+  iterated a literal `("measured_data", "guards", "standards")`; adding `[irreplaceable]` would have
+  read as protection, in review and in the policy file, while enforcing nothing. Sections are now
+  derived from the policy itself.
+
+  Arming `Bash` also required fixing `git checkout -b`, which registered a write to a file named
+  after the branch — harmless until a unit declared a scope, and then a complete block on branch
+  creation. The two had to land together.
+
 ### Fixed
+
+- **Four guard tests were decided by a gitignored file that only one machine has.** They drove
+  `decide()` against the real repository root, so they read whatever `.claude/UNIT.md` a unit had
+  written — and naming a guard file there legitimately unlocks it. The moment a unit declared a
+  scope, `test_ordinary_source_is_allowed_with_no_unit_declared` failed although its own name states
+  the precondition. They were green in CI and red on the checkout doing the work; the file's
+  docstring claimed they "never [read] the environment". Anything asserting a default now runs
+  against an empty root.
+
+  **One of the new tests was itself green for the wrong reason**, caught by breaking the thing it
+  guards: `notebooks/**` was refused by the *scope* rule rather than by `[irreplaceable]`, so the
+  test passed with the whole section deleted. It now runs unscoped and asserts the reason.
 
 - **Exercise 01's README and `CLAUDE.md` described a weaker test suite than the one that ships.**
   Both said the exercise had no browser suite and that its pages were "verified by being opened and
