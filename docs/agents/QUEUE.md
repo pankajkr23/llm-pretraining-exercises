@@ -825,4 +825,15 @@ predates the harness — so it is logged as what it was.
                           unprompted would have been the incident [guards] exists for. NOT DONE:
                           .claude/settings.local.json still carries the old matcher, so the hole is
                           closed in the repo and open on this machine until the installer re-runs
+2026-09-07  fleet         #153 opened: #152 froze the two working notes it was meant to protect.
+                          TODO.md and HANDOFF.md went into [irreplaceable], which is deliberately
+                          NO_ESCAPE_HATCH -- right for a notebook, whose legitimate rewrite goes
+                          through a builder the guard never sees, and wrong for a note whose whole
+                          function is being rewritten. It surfaced within the hour, refusing a
+                          rewrite of HANDOFF.md PK had asked for. New [working_notes] section that
+                          DOES honour the hatch: refused by default, allowed when a unit names it,
+                          same bar as editing a guard. notebooks/ and the builders stay no-hatch and
+                          a twin proves naming one does not unlock it. The section needed no code
+                          change to take effect -- _pattern_sections derives the enforced list,
+                          which is #152's own fix paying for itself
 ```

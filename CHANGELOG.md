@@ -10,6 +10,31 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The guard froze the two working notes it was meant to protect, and I had made them
+  unfreezable.** `#152` put `TODO.md` and `HANDOFF.md` in `[irreplaceable]`, a section that is
+  deliberately `NO_ESCAPE_HATCH` — naming a file in `UNIT.md` cannot unlock it.
+
+  That reasoning is right for a notebook: a unit that legitimately regenerates one does it by running
+  its builder, which writes through a path the guard never inspects, so a hatch would buy nothing.
+  **It is wrong for a working note.** Rewriting them *is* their function, and the mistake surfaced
+  immediately: the guard refused a rewrite of `HANDOFF.md` that had been explicitly asked for, with
+  no way to name past it. A to-do list no agent can update is not a to-do list.
+
+  They still need protecting, and more than most files here — neither is in git, and `HANDOFF.md` is
+  not in `backup_local_only.py::PATTERNS` either, so it exists in exactly one place on disk and an
+  accidental clobber takes the only copy. So they move to a new `[working_notes]` section that
+  **does** honour the hatch: refused by default, allowed when a unit names the file, which makes the
+  overwrite deliberate rather than accidental — the same bar as editing a guard.
+
+  **`notebooks/**` and the builders stay in `[irreplaceable]` with no hatch**, and a twin asserts
+  that naming one does not unlock it, so this change cannot quietly weaken the protection on the
+  files this repository has actually lost. Watched failing both ways: emptying the new section, and
+  moving the notes back under the no-hatch rule. The section needed no code change to take effect —
+  `_pattern_sections` derives the enforced list from the policy, which is the fix #152 made after the
+  hardcoded list would have left a new section inert.
+
 ### Added
 
 - **Exercises 01 through 04 have the progress ledger they never had, and `PROGRESS.md` is now
