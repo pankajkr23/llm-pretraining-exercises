@@ -836,4 +836,29 @@ predates the harness — so it is logged as what it was.
                           a twin proves naming one does not unlock it. The section needed no code
                           change to take effect -- _pattern_sections derives the enforced list,
                           which is #152's own fix paying for itself
+2026-09-07  exercise-07   #NNN opened: exercise 07's trained arms came from code held outside
+                          the repo and now gone, so its central claim was recorded rather than
+                          executable. experiment.py + summary.py + tools/run_experiment.py make it
+                          runnable: 10 arms, 5 paired seeds, 25 min on a laptop CPU. NOT a
+                          reproduction, and that is a property of the record: setup pins the
+                          architecture and none of the optimisation -- 13 free parameters against
+                          one recorded scalar -- so an experiment aimed at those losses could not
+                          be told from one that missed. RunConfig records every knob it turns.
+                          RESULT: 9 of 10 arms agree in SIGN with the recorded table. Both n-gram
+                          arms supported 5/5 -- wrap+ngram -0.259 vs v1 (record -0.164), tied+ngram
+                          -0.232 (record -0.141). Both recorded negatives stay negative; the MLP
+                          buys 0.022 against the n-gram's 0.291, which is the finding. The one
+                          disagreement is `wrapped positions`, -0.017 here vs +0.248 recorded, and
+                          it is below the stated resolution so the summary says inconclusive rather
+                          than claiming a reversal. NOTHING PUBLISHED: the runner writes to
+                          artifacts/, never results/; no measurement, page or document number moved.
+                          09 supplies the body via a new optional embedding= on build_trunk rather
+                          than 07 reaching for private trunk.tokens -- 10 already couples to that
+                          name and one such coupling is enough. Default path proven bit-identical:
+                          SHA-256 over every named parameter matches main. Three traps that give a
+                          plausible wrong answer rather than a failure: the dense control at torch's
+                          N(0,1) default starts at loss 176 and cripples the baseline; the tie must
+                          be ONE object or it silently is not one; the corpus must be the
+                          multilingual v2 or the effect is invisible. Fourier is also 23x denser
+                          per token and 8x slower to train, which no document here records
 ```

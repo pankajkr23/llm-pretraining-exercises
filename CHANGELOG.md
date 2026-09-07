@@ -12,6 +12,10 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercise 07's `README.md` had a mangled heading on its front door.** A link label had been
+  merged into a heading, so the line rendered as ``## Run it`](#run-it) · **the page:** …`` to
+  anyone arriving at the exercise. Restored to the jump line it was meant to be.
+
 - **The guard froze the two working notes it was meant to protect, and I had made them
   unfreezable.** `#152` put `TODO.md` and `HANDOFF.md` in `[irreplaceable]`, a section that is
   deliberately `NO_ESCAPE_HATCH` — naming a file in `UNIT.md` cannot unlock it.
@@ -36,6 +40,61 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   hardcoded list would have left a new section inert.
 
 ### Added
+
+- **Exercise 07's trained comparison can be run from this repository, and the published conclusion
+  survives it.** Every trained number in that exercise came from code held outside the repository
+  and now gone, so its central claim — a tied Kronecker head beating the published design with no
+  vocabulary-sized parameter — was *recorded* rather than *executable*. `experiment.py`,
+  `summary.py` and `tools/run_experiment.py` close that: ten arms, five paired seeds, about
+  twenty-five minutes on a laptop CPU.
+
+  **It is a specified re-run, not a reproduction, and that distinction is a property of the record
+  rather than a shortcoming of the port.** `measurements.json::setup` pins the architecture and pins
+  none of the optimisation — no optimiser, learning rate, schedule, warmup, weight decay, head
+  count, `d_ff`, initialisation, packing, or seed-to-data mapping — and it does not say whether its
+  losses are train or held-out, final-step or averaged. Thirteen free parameters against one
+  recorded scalar: an experiment aimed at those losses could not be told from one that missed. So
+  `RunConfig` records every knob it turns, and absolute losses are not comparable across the two
+  runs. **The sign and the ordering of the arms are, and that is the interesting question.**
+
+  Nine of the ten arms agree in sign with the recorded table. Both n-gram arms are `supported` on
+  5/5 seeds — `wrap + n-gram` at **−0.259 nats** against v1 where the record has −0.164, and
+  `tied + n-gram` at **−0.232** where the record has −0.141. Both recorded negative results stay
+  negative: Fourier positions trains worse, and the residual MLP buys **0.022 nats** over the plain
+  tie against the n-gram term's 0.291 — which is the finding, that expressivity is necessary and not
+  sufficient. **The one arm that disagrees is `wrapped positions`**, −0.017 here against +0.248
+  recorded; it falls below this setup's stated resolution and the summary reports it as
+  `inconclusive` rather than claiming a reversal.
+
+  **Nothing is published from a run.** It writes to `artifacts/`, which is gitignored, and never to
+  `results/`; what gets published is a decision taken after reading a run. No measurement, no page
+  and no document number changed here.
+
+  Exercise 09 supplies the transformer body through a new optional `embedding=` parameter on
+  `build_trunk`, rather than exercise 07 reaching for its private `trunk.tokens` — exercise 10
+  already couples to that attribute's *name*, and one such coupling is enough. **The default path is
+  bit-identical:** a SHA-256 over every named parameter of a default trunk matches between `main`
+  and this branch, so none of exercise 09's published numbers can have moved.
+
+  Three things this had to get right, each of which produces a plausible wrong answer instead of a
+  failure. The dense control must be initialised near 0.02 — at torch's `N(0, 1)` default a tied
+  head starts at loss **176** against `ln V` of 9.2, so the control is crippled and every arm beats
+  it for the wrong reason. The tie must be **one object**, `trunk.tokens = head.embed`; two
+  separately-built embeddings agree exactly at step zero and diverge on the first gradient step. And
+  the corpus must be exercise 02's multilingual `corpus/v2` rather than exercise 09's English one,
+  because a 32-byte window costs Indic scripts far more than English.
+
+  One thing the run itself surfaced that no document here records: **the Fourier arm is not only
+  worse, it is far more expensive.** Its code is not block-one-hot, so it carries **144.3** non-zero
+  coordinates per token against one-hot's **6.2** — 23× denser — and its training runs took about 8×
+  as long as every other arm's. That is a second, independent reason not to use it, measurable from
+  `codec.atoms` with no training at all.
+
+- **Exercise 07 gets the module-naming guard `AGENTS.md` asks for once an exercise grows past a
+  handful of modules**, which it just did, six to eight. It checks both directions — a module absent
+  from the documents, and a document naming a module that no longer exists. The reverse half needed
+  a path-aware pattern: a first version split on whitespace and reported `k2/scale_cost.py`, one of
+  the missing experiment scripts the documents legitimately quote, as a deleted module of ours.
 
 - **Exercises 01 through 04 have the progress ledger they never had, and `PROGRESS.md` is now
   required.** Six of ten exercises carried one; the four oldest — the ones whose history is hardest

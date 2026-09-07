@@ -21,6 +21,8 @@ The full argument, every table, and the limits are in `README.md`. Do not restat
 | `collisions.py` | `truncation_groups`, `colliding_tokens`, `collisions_by_code`, `cosine` | no |
 | `budget.py` | `budget`, `crossover` — the parameter arithmetic | no |
 | `heads.py` | `KroneckerEmbedding`, `LockBreaker`, `ByteHead`, `TiedHead` | **yes** |
+| `experiment.py` | `RunConfig`, `ARMS`, `train_arm`, `run`, `save` — the trained comparison | **yes** |
+| `summary.py` | `paired`, `unpaired_spread` — the seed arithmetic | no |
 | `__init__.py` | the package docstring — what v1 is and why its output side is the problem | no |
 
 ## The published page, and the one rule it lives by
@@ -30,6 +32,7 @@ The full argument, every table, and the limits are in `README.md`. Do not restat
 | `results/measurements.json` | **every number the README and the page render** | **yes** — required |
 | `tools/build_web_data.py` | generates `web/data.js` from it | **yes** — unlike the notebook builder |
 | `tools/measure_lock_samples.py` | measures the rectangle identity on the real head | **yes** |
+| `tools/run_experiment.py` | runs the arm comparison into `artifacts/`, never `results/` | **yes** |
 | `web/index.html` · `chapters.js` · `page-extra.css` | the page | yes |
 | `web/_shared/` | vendored, byte-identical to 05 and 06 | yes |
 | `tests/test_embeddings_render.py` | 17 test functions, 20 collected, over the assembled site | yes |
@@ -87,6 +90,51 @@ v0.11.0; it now says so in the method section and again beside the scale-cost ta
 already recorded in that block's `source` string (`"k2/scale_cost.py, d_model 768"`), and promoting
 it to a real key is what lets the page render the width instead of hard-coding it. **Never quote a
 count at one width as evidence at the other.**
+
+## The trained arms are re-runnable now, and that is NOT the same as reproducible
+
+`experiment.py` and `summary.py` make the comparison something this repository can execute. They do
+**not** reproduce `results/measurements.json`, and describing them that way would be the more
+damaging error, because it is the one a reader would believe.
+
+**The recorded run cannot be aimed at.** `setup` pins nine things — layers, `d_model`, steps, batch,
+seeds, vocabulary, corpus, `uniform_loss`, `unpaired_spread` — and pins **none** of what decides
+where a loss lands: the optimiser, the learning rate, the schedule, warmup, weight decay, dropout,
+the head count, `d_ff`, the initialisation, the packing, the seed-to-data mapping, or whether the
+figure is a train or held-out loss, final-step or averaged. Thirteen free parameters against one
+recorded scalar, and the code that would settle them is gone. An experiment aimed at those numbers
+could not be distinguished from one that missed.
+
+So `RunConfig` carries every knob it turns and the bundle records all of them. **Compare the sign
+and the ordering of the arms with the inherited table; never the absolute losses.**
+
+Three things that cost time when they were got wrong:
+
+- **The dense control's initialisation is load-bearing.** `torch.nn.Embedding` defaults to `N(0, 1)`,
+  so its rows have norm `sqrt(d_model)`, and a head tied to that starts at loss **176** against
+  `ln V` of 9.2. The control would be far worse than uniform guessing and every arm measured against
+  it would look good for the wrong reason — with nothing failing. `RunConfig.dense_init_std` is 0.02
+  and `test_the_dense_control_is_not_crippled_by_its_own_initialisation` guards it, with a twin that
+  breaks it on purpose.
+- **The tie is `trunk.tokens = head.embed`, one object rather than two equal ones.** A second
+  `KroneckerEmbedding` for the input gives byte-identical numbers at step zero and drifts apart on
+  the first gradient step: the arm reports a tie while not being one, and neither the shapes, the
+  parameter count nor the loss curve looks wrong. The test asserts **identity**, not equality.
+- **The corpus is exercise 02's `corpus/v2`, not exercise 09's.** 09 trains on this repository's own
+  `AGENTS.md`, which is English. Every claim here is about embeddings computed from bytes, and a
+  32-byte window costs Indic scripts far more than English — a monolingual corpus would train
+  perfectly and make the effect this exercise exists to measure invisible.
+
+A fourth thing the run itself surfaced, which no document here records: **the Fourier arm is not
+only worse, it is far more expensive.** Its code is not block-one-hot, so `codec.atoms` returns
+**144.3** non-zeros per token against onehot's **6.2** — 23x denser — and the sparse matmul that
+follows made its training runs about **8x slower** than every other arm's (136s against ~17s). The
+exercise already reports Fourier as a negative result on loss; the cost is a second, independent
+reason not to use it, and it is measurable from `codec.atoms` without training anything.
+
+**The body comes from exercise 09** via `build_trunk(config, seed, embedding=...)`, a parameter added
+there rather than reaching for `trunk.tokens` from here. That attribute lives in a private class and
+exercise 10 already couples to its *name*; one such coupling is enough.
 
 ## Rules specific to this exercise
 

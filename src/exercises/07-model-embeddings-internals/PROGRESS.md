@@ -130,6 +130,35 @@ page without a summary panel.
 
 ---
 
+## The trained arms can be run here now — and that is not reproduction
+
+The measurements in `results/measurements.json` came from code held outside this repository, which
+is gone. `experiment.py`, `summary.py` and `tools/run_experiment.py` mean the comparison can be
+*executed* here: ten arms, five paired seeds, exercise 09's trunk with the token table replaced,
+exercise 02's multilingual `corpus/v2`, about seven minutes on a laptop CPU.
+
+**What it cannot do is reproduce the recorded numbers, and the reason is a property of the record
+rather than of the port.** `setup` pins the architecture and pins none of the optimisation — no
+optimiser, learning rate, schedule, warmup, weight decay, dropout, head count, `d_ff`,
+initialisation, packing, or seed-to-data mapping, and it does not say whether its losses are train
+or held-out, final-step or averaged. Thirteen free parameters against one recorded scalar. An
+experiment aimed at those losses could not be told from one that missed, so aiming at them would
+have been a target nobody could score.
+
+The runner therefore writes to `artifacts/`, never `results/`, and the bundle records every knob it
+turned. **Compare the sign and the ordering of the arms with the table above; never the absolute
+losses.** What gets published is a decision taken after reading a run.
+
+Three things this port had to get right, each of which would have produced a plausible wrong answer:
+
+- The dense control's embedding must be initialised near 0.02. At torch's `N(0, 1)` default a tied
+  head starts at loss **176** against `ln V` of 9.2, so the control is crippled and every arm beats
+  it for the wrong reason, with nothing failing.
+- The tie must be **one object**, `trunk.tokens = head.embed`. Two separately-constructed embeddings
+  agree exactly at step zero and diverge on the first gradient step.
+- The corpus must be the multilingual one. A 32-byte window costs Indic scripts far more than
+  English, so exercise 09's English corpus would have trained fine and hidden the effect.
+
 ## Corrections — claims of ours that were wrong
 
 Kept because a quietly amended number is worse than the original error.

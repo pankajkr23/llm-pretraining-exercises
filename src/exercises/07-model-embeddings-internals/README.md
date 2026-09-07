@@ -82,7 +82,7 @@ artifacts/        # gitignored run outputs
 
 The page is built to the repo's design standard in [`docs/DESIGN.md`](../../../docs/DESIGN.md).
 
-## Run it`](#run-it) · **the page:** <https://llm-pretraining-demos.vercel.app/07-model-embeddings-internals/>
+**Jump to:** [`Run it`](#run-it) · **the page:** <https://llm-pretraining-demos.vercel.app/07-model-embeddings-internals/>
 
 ## How to read this
 
@@ -216,8 +216,10 @@ recovery:  h ──> codec.targets_from_h ──> decode.recover ──> the ori
 | `collisions.py` | how many real tokens each scheme makes indistinguishable | no |
 | `budget.py` | the parameter arithmetic, including where this **stops** paying | no |
 | `heads.py` | the tied head, the `d×d` transform, the lock-breakers | **yes** |
+| `experiment.py` | the ten arms, the paired-seed runner, and every hyperparameter it turns | **yes** |
+| `summary.py` | the paired arithmetic: gap, deviation, seeds agreeing, sign test | no |
 
-Only `heads.py` needs torch. That split is deliberate: the invertibility result — the load-bearing
+Only `heads.py` and `experiment.py` need torch. That split is deliberate: the invertibility result — the load-bearing
 one — is pure numpy, so CI verifies it rather than skipping it.
 
 ---
@@ -230,7 +232,19 @@ uv run pytest src/exercises/07-model-embeddings-internals/tests -q
 
 uv sync --all-packages --extra train                      # adds torch, enables heads.py
 uv run pytest src/exercises/07-model-embeddings-internals/tests -q
+
+# the trained arm comparison, about twelve minutes on a laptop CPU
+uv run python src/exercises/07-model-embeddings-internals/tools/run_experiment.py
+uv run python .../run_experiment.py --steps 50 --seeds 2   # a probe, about a minute
 ```
+
+**That command is a *specified re-run*, not a reproduction of the tables below, and the difference
+matters.** The numbers in *The evidence* came from code that is not in this repository, and what
+survives of that run pins the architecture while pinning none of the optimisation — no learning
+rate, optimiser, schedule, head count, initialisation, or mapping from seed to data order. An
+experiment aimed at those losses could not be told from one that missed. `RunConfig` records every
+knob it turns for exactly that reason, and the runner writes to `artifacts/`, never to `results/`:
+what gets published is a decision taken after seeing a run, not a side effect of running one.
 
 ---
 
