@@ -836,7 +836,7 @@ predates the harness — so it is logged as what it was.
                           a twin proves naming one does not unlock it. The section needed no code
                           change to take effect -- _pattern_sections derives the enforced list,
                           which is #152's own fix paying for itself
-2026-09-07  exercise-07   #NNN opened: exercise 07's trained arms came from code held outside
+2026-09-07  exercise-07   #156 opened: exercise 07's trained arms came from code held outside
                           the repo and now gone, so its central claim was recorded rather than
                           executable. experiment.py + summary.py + tools/run_experiment.py make it
                           runnable: 10 arms, 5 paired seeds, 25 min on a laptop CPU. NOT a
