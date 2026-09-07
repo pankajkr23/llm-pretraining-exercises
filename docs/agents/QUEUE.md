@@ -836,7 +836,7 @@ predates the harness — so it is logged as what it was.
                           a twin proves naming one does not unlock it. The section needed no code
                           change to take effect -- _pattern_sections derives the enforced list,
                           which is #152's own fix paying for itself
-2026-09-07  exercise-07   #NNN opened: the page reads every number from M so a figure cannot
+2026-09-07  exercise-07   #155 opened: the page reads every number from M so a figure cannot
                           drift from the run that produced it -- except one, typed into the
                           glossary's definition of nats: "beats the published design by 0.141". A
                           measurement that moved would have updated every table and left that
