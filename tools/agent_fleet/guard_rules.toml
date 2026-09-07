@@ -78,13 +78,32 @@ why = "a guard the agent could weaken to make its own work pass; name it in UNIT
 patterns = [
   "notebooks/**",
   "src/exercises/*/tools/build_notebook.py",
-  "TODO.md",
-  "HANDOFF.md",
   "src/exercises/*/REQUIREMENTS.md",
   "docs/REQUIREMENTS.md",
   "src/exercises/*/src/solution/**",
 ]
 why = "gitignored and unrecoverable: git cannot restore it and the append-only store cannot undo an overwrite"
+
+[working_notes]
+# **Unrecoverable like the section above, but meant to be rewritten — so this one CAN be opened.**
+#
+# `TODO.md` and `HANDOFF.md` were in `[irreplaceable]`, which is a `NO_ESCAPE_HATCH` section. The
+# reasoning there is right for a notebook: a unit that regenerates one does it by running its
+# builder, which writes through a path this guard never inspects, so naming it would buy nothing.
+#
+# It is wrong for a working note. Rewriting these IS their function — a to-do list nobody can update
+# is not a to-do list — and freezing them meant the guard refused a rewrite that had been explicitly
+# asked for, with no way to name past it.
+#
+# They still need protecting, and more than most files here: neither is in git, and `HANDOFF.md` is
+# not in `backup_local_only.py::PATTERNS` either, so it exists in exactly one place on disk. An
+# accidental clobber takes the only copy. Hence: refused by default, allowed when a unit names the
+# file — the same bar as editing a guard.
+patterns = [
+  "TODO.md",
+  "HANDOFF.md",
+]
+why = "a working note with no second copy: name it in UNIT.md to rewrite it, so the clobber is deliberate"
 
 [standards]
 # Changing the rules mid-unit is how a unit passes by lowering the bar. Allowed only when the unit

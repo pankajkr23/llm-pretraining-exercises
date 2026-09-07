@@ -528,7 +528,7 @@ def test_checking_out_over_an_irreplaceable_file_is_still_refused(rules) -> None
     [
         "echo x > notebooks/S10-training-loop.ipynb",
         "rm src/exercises/10-training-loop/tools/build_notebook.py",
-        "mv TODO.md /tmp/todo",
+        "mv notebooks/S10-training-loop.ipynb /tmp/nb",
     ],
 )
 def test_the_files_git_cannot_restore_are_refused(rules, tmp_path, command: str) -> None:
@@ -595,3 +595,77 @@ def test_the_hook_matcher_offers_bash_to_the_guard() -> None:
     matcher = HOOK_WIRING["hooks"]["PreToolUse"][0]["matcher"]
     for tool in ("Bash", *sorted(WRITING_TOOLS)):
         assert re.search(matcher, tool), f"the PreToolUse matcher does not admit {tool!r}"
+
+
+def _root_with_unit(tmp_path, body: str = "") -> Path:
+    """A repo root carrying a UNIT.md, resolved so `relative_to` works on macOS.
+
+    `tempfile` hands back `/var/...`, which resolves to `/private/var/...`; without `.resolve()`
+    every path falls outside the root and `decide()` returns None for the wrong reason — a test
+    that passes because the guard never saw the file.
+    """
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    root = tmp_path.resolve()
+    (root / ".claude").mkdir(parents=True, exist_ok=True)
+    (root / ".claude" / "UNIT.md").write_text(body, encoding="utf-8")
+    return root
+
+
+@pytest.mark.parametrize("note", ["TODO.md", "HANDOFF.md"])
+def test_a_working_note_is_refused_by_default_and_allowed_when_named(tmp_path, rules, note) -> None:
+    """**Protected, but openable — the distinction `[irreplaceable]` got wrong.**
+
+    These two were in `[irreplaceable]`, which is a `NO_ESCAPE_HATCH` section. That is right for a
+    notebook, whose legitimate rewrite happens through a builder this guard never inspects. It is
+    wrong for a working note: rewriting them *is* their function, and freezing them meant the guard
+    refused a rewrite that had been explicitly asked for, with no way to name past it.
+
+    They still need protecting — neither is in git, and `HANDOFF.md` is not in the backup set
+    either, so it exists in exactly one place on disk. So: refused by default, allowed when a unit
+    names it, which makes the clobber deliberate rather than accidental.
+    """
+    bare = _root_with_unit(tmp_path / "bare")
+    (tmp_path / "bare" / ".claude" / "UNIT.md").unlink()
+    payload = {
+        "tool_name": "Write",
+        "cwd": str(bare),
+        "tool_input": {"file_path": str(bare / note)},
+    }
+    refusal = decide(payload, bare, rules)
+    assert refusal is not None, f"{note} must be refused when no unit declares it"
+    assert "working_notes" in refusal, refusal
+
+    named = _root_with_unit(tmp_path / "named", f"- scope: {note}\n{note}\n")
+    allowed = {
+        "tool_name": "Write",
+        "cwd": str(named),
+        "tool_input": {"file_path": str(named / note)},
+    }
+    assert decide(allowed, named, rules) is None, (
+        f"naming {note} in UNIT.md must permit rewriting it"
+    )
+
+
+def test_naming_a_notebook_still_does_not_unlock_it(tmp_path, rules) -> None:
+    """The twin, and the reason the two sections are separate.
+
+    If naming a file in `UNIT.md` unlocked `[irreplaceable]` too, this change would have quietly
+    removed the protection from the files this repository has actually lost — twice.
+    """
+    root = _root_with_unit(
+        tmp_path,
+        "- scope: notebooks/\nnotebooks/S10-training-loop.ipynb\n"
+        "src/exercises/10-training-loop/tools/build_notebook.py\n",
+    )
+    for rel in (
+        "notebooks/S10-training-loop.ipynb",
+        "src/exercises/10-training-loop/tools/build_notebook.py",
+    ):
+        payload = {
+            "tool_name": "Write",
+            "cwd": str(root),
+            "tool_input": {"file_path": str(root / rel)},
+        }
+        refusal = decide(payload, root, rules)
+        assert refusal is not None, f"{rel} was unlocked by being named, which must never happen"
+        assert "irreplaceable" in refusal, refusal
