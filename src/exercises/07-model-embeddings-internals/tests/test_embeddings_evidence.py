@@ -190,3 +190,41 @@ def test_the_wrap_on_top_of_5_figure_is_the_difference_it_claims_to_be() -> None
 def test_every_evidence_block_names_what_produced_it(block) -> None:
     """A measurement must name what produced it — one of exercise 03's five invariants."""
     assert MEASUREMENTS[block].get("source"), f"{block} does not say what produced it"
+
+
+# ---------------------------------------------------- what may cross into a tracked file
+
+
+def test_no_free_text_from_another_exercises_manifest_reaches_results() -> None:
+    """A leak the repo-wide vocabulary gate caught, kept caught by a narrower guard.
+
+    The published bundle's corpus block is copied from exercise 06's fetch manifest, which is
+    gitignored — and one lane's `dataset` value there is phrased in the course's own vocabulary.
+    Gitignored is 06's business; copying it into `results/` made it this exercise's, and the commit
+    was refused.
+
+    The general property is the one asserted: free text from another exercise's manifest does not
+    cross into a tracked file unread. What identifies the material — licence, language, tier, token
+    and `[UNK]` counts, and a `sha256` over the text — all still crosses.
+    """
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "_publish_under_test", EXERCISE / "tools" / "publish_rerun.py"
+    )
+    publish = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(publish)
+    assert publish.DROP_FROM_LANE, "nothing is dropped, so the boundary is not being enforced"
+
+    rerun = EXERCISE / "results" / "rerun.json"
+    if not rerun.is_file():  # pragma: no cover - the bundle is published deliberately
+        pytest.skip("results/rerun.json has not been published yet")
+    published = json.loads(rerun.read_text(encoding="utf-8"))
+    for lane in published["corpus"]["lanes"]:
+        for dropped in publish.DROP_FROM_LANE:
+            assert dropped not in lane, (
+                f"{dropped!r} crossed into results/ for lane {lane['lane']!r}"
+            )
+        # The half that matters more: what identifies the material must still be there.
+        assert lane["digest"].startswith("sha256:")
+        assert "licence" in lane and "tokens" in lane and "unk_share" in lane

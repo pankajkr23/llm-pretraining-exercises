@@ -37,6 +37,9 @@ The full argument, every table, and the limits are in `README.md`. Do not restat
 | `tools/measure_lock_samples.py` | measures the rectangle identity on the real head | **yes** |
 | `tools/run_experiment.py` | runs the arm comparison into `artifacts/`, never `results/`; `--repeat` measures determinism, `--device` forces one | **yes** |
 | `tools/measure_unk_confound.py` | the same specification twice on one corpus, one language swapped — what the unreadable language was worth | **yes** |
+| `tools/measure_lane_sensitivity.py` | the grid on one lane at a time — does the advantage track the script? | **yes** |
+| `tools/measure_parallel_text.py` | parallel against ordinary Indic text, matched on size, epochs and script | **yes** |
+| `tools/publish_rerun.py` | promotes one run from `artifacts/` to `results/`, and rebuilds `results/MANIFEST.md` | **yes** |
 | `web/index.html` · `chapters.js` · `page-extra.css` | the page | yes |
 | `web/_shared/` | vendored, byte-identical to 05 and 06 | yes |
 | `tests/test_embeddings_render.py` | 17 test functions, 20 collected, over the assembled site | yes |

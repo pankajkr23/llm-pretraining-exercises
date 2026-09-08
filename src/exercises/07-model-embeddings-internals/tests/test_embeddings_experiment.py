@@ -862,3 +862,38 @@ def test_the_trace_can_re_derive_the_mean_it_is_the_material_for(tmp_path, vocab
         "any statistic computed over them"
     )
     assert [float(row["grad_norm"]) for row in rows] == result["grad_norms"]
+
+
+def test_a_token_budget_holds_the_epoch_fraction_fixed_across_two_corpora() -> None:
+    """The control every corpus comparison here kept needing and could not make.
+
+    Two corpora of very different size read at very different epoch fractions — 0.97 of a small one
+    against 0.035 of a large one — and that is a difference in what the model sees as surely as
+    composition is. Without this field, "the model read nearly all of a small corpus" was free to
+    explain any difference attributed to the text itself.
+
+    The `[UNK]` share is recomputed over what is KEPT, because a share measured over text the run
+    never reads is not a fact about the run.
+    """
+    whole = dataclasses.replace(TINY, corpus="tokenization")
+    facts = corpus_facts(whole)
+    budget = facts["corpus_tokens"] // 4
+    trimmed = corpus_facts(dataclasses.replace(whole, corpus_token_budget=budget))
+
+    assert trimmed["corpus_tokens"] <= budget + len(trimmed["lanes"])
+    assert trimmed["epochs"] > facts["epochs"] * 3, (
+        "the epoch fraction did not move with the budget"
+    )
+    assert {row["lane"] for row in trimmed["lanes"]} == {row["lane"] for row in facts["lanes"]}, (
+        "trimming dropped a lane, which changes the composition as well as the size"
+    )
+    for row in trimmed["lanes"]:
+        assert row["tokens"] > 0
+    assert trimmed["corpus_tokens"] == sum(row["tokens"] for row in trimmed["lanes"])
+    assert (
+        dataclasses.replace(whole, corpus_token_budget=budget).fingerprint() != whole.fingerprint()
+    ), "the budget did not move the fingerprint, so two runs could claim the same settings"
+
+    # A budget larger than the corpus is a no-op rather than an error: it means "all of it".
+    generous = corpus_facts(dataclasses.replace(whole, corpus_token_budget=10**9))
+    assert generous["corpus_tokens"] == facts["corpus_tokens"]

@@ -135,6 +135,41 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   at a time. It is a `RunConfig` field rather than a caller-side filter, because it changes the
   numbers and therefore belongs in the fingerprint.
 
+- **What the corpus is worth, measured under control rather than argued.** Exercise 07's published
+  win exists on exercise 02's corpus and on nothing else tried. Four candidate causes were tested:
+  the `[UNK]` share (removing it makes the recommendation win by *more*), the step count (300 and
+  500 both lose on exercise 06's corpus), the script mix (the method does *worst* on the Indic
+  lane), and corpus size and epoch fraction — `RunConfig.corpus_token_budget` holds the last of
+  these fixed, and the result is unchanged.
+
+  The tightest comparison the repository can make: exercise 02's three Indic files, one article in
+  three scripts, against exercise 06's `indic` lane, unrelated Indic documents — **both trimmed to
+  78,800 tokens, both reading 0.9746 epochs**, same vocabulary, same steps, same seeds. **Six of
+  nine arms change sign between them.** The recommendation goes from **−0.735** against v1 to
+  **+0.000**. So the effect is a property of the text and not of how much of it was read.
+
+  **The mechanism is not established, and the tool says so rather than implying one.** The obvious
+  candidate is byte-n-gram sharing across translations, and the measurement of it *inverts* with
+  the n-gram length: at 8 and 16 bytes the ordinary corpus shares more, at 32 and 64 the parallel
+  one does. `measure_parallel_text.py` reports every length and refuses a verdict when the ordering
+  flips, because a single length would have been an arbitrary choice the whole conclusion rested on.
+
+- **`results/` now carries the re-run and an index of what produced it.** `publish_rerun.py` is a
+  deliberate step, never called by a run: it trims the per-step curves — 50,000 floats no document
+  renders — and keeps everything needed to recompute every gap, taking the bundle from 1,400 KB to
+  55 KB. `results/MANIFEST.md` is generated from the tracked bundles in `results/` and nothing else,
+  so it rebuilds in a fresh clone; a manifest generated from the gitignored run directories would
+  be a tracked document only its author could regenerate. Its dashes are the point: the inherited
+  `measurements.json` cannot say which settings, which commit, which machine or which text made it.
+
+  **The repo-wide vocabulary gate caught a real leak in the first attempt at this**, which is what
+  it is for: the corpus block is copied from exercise 06's fetch manifest, and one lane's free-text
+  `dataset` value there is phrased in the course's own vocabulary. Gitignored, that is exercise
+  06's business; copied into `results/` it becomes this exercise's, and the commit was refused.
+  Free text from another exercise's manifest no longer crosses into a tracked file, and a guard
+  asserts both halves — that it does not cross, and that everything identifying the material
+  (licence, language, tier, token and `[UNK]` counts, and a `sha256` over the text) still does.
+
 ### Fixed
 
 - **A run's per-step trace was rounded to six decimal places, so it could not re-derive the mean it

@@ -52,6 +52,7 @@ published is a decision for a person, taken after seeing the run, not a side eff
 Requires torch: `uv sync --all-packages --extra train`.
 """
 
+import dataclasses
 import hashlib
 import json
 import os
@@ -171,6 +172,17 @@ class RunConfig:
 
     `verify.py` fails any audit of a run that declared one. You can run it; you cannot get a clean
     audit of it, and no artefact of it can be quoted without the declaration attached.
+    """
+
+    corpus_token_budget: int | None = None
+    """Truncate the corpus to this many tokens, split across lanes in proportion.
+
+    The one control the corpus comparisons kept needing and could not make. Two corpora of very
+    different size read at very different epoch fractions — 0.97 of a small one against 0.035 of a
+    large one — and that is a difference in what the model sees as surely as composition is. This
+    holds the fraction fixed so composition can be compared on its own.
+
+    `None` means the whole corpus, which is what every published run uses.
     """
 
     lanes: tuple[str, ...] = ()
@@ -464,7 +476,7 @@ def corpus_facts(config: RunConfig) -> dict[str, object]:
     """
     from datacleaning.tokens import MAX_UNK_SHARE
 
-    lanes = _lanes(config.corpus, config.languages, _corpus_root(config.corpus), config.lanes)
+    lanes = _budgeted(config)
     allocation = _allocate(config, lanes)
     total_tokens = sum(facts.tokens for facts, _ in lanes)
     total_unk = sum(facts.unk for facts, _ in lanes)
@@ -701,7 +713,7 @@ def corpus_draw(
     import torch
 
     refuse_unusable_corpus(config)
-    lanes = _lanes(config.corpus, config.languages, _corpus_root(config.corpus), config.lanes)
+    lanes = _budgeted(config)
     allocation = _allocate(config, lanes)
 
     drawn = []
@@ -731,6 +743,47 @@ def corpus_draw(
     # DATA as well as their arithmetic, and the device comparison would be measuring both.
     order = torch.randperm(tokens.shape[0], generator=torch.Generator().manual_seed(seed))
     return tokens[order], lane_of_row[order]
+
+
+def _budgeted(config: RunConfig) -> tuple[tuple[LaneFacts, np.ndarray], ...]:
+    """The corpus, truncated to `corpus_token_budget` in proportion across lanes.
+
+    Truncated off the front of each lane rather than sampled, so the result is a function of the
+    configuration alone and two runs at the same settings read the same text. The `[UNK]` counts
+    are recomputed over what is kept, because a share measured over text the run does not read is
+    not a fact about the run.
+    """
+    lanes = _lanes(config.corpus, config.languages, _corpus_root(config.corpus), config.lanes)
+    if config.corpus_token_budget is None:
+        return lanes
+    total = sum(facts.tokens for facts, _ in lanes)
+    if not total or config.corpus_token_budget >= total:
+        return lanes
+    unk_id = _unk_id()
+    out = []
+    for facts, ids in lanes:
+        keep = round(config.corpus_token_budget * facts.tokens / total)
+        kept = ids[:keep]
+        out.append(
+            (
+                dataclasses.replace(
+                    facts,
+                    tokens=int(kept.size),
+                    unk=int(np.count_nonzero(kept == unk_id)),
+                ),
+                kept,
+            )
+        )
+    return tuple(out)
+
+
+@lru_cache(maxsize=1)
+def _unk_id() -> int:
+    """The `[UNK]` id under the frozen vocabulary."""
+    from datacleaning.config import OUR_TOKENIZER
+    from datacleaning.tokens import load_tokenizer
+
+    return load_tokenizer(str(OUR_TOKENIZER)).token_to_id("[UNK]")
 
 
 def lane_names(config: RunConfig) -> list[str]:
