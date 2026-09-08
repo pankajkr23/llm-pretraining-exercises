@@ -542,7 +542,7 @@ export const M = Object.freeze({
     "note": "z-normalisation gives kappa unit variance over all D coordinates, so ||kappa|| = sqrt(D) ~ 90 and the induced rows are ~49x a normal embedding's. One learned scalar fixes it."
   },
   "pairing": {
-    "source": "k2/summary.py",
+    "source": "k2/summary.py; per-seed losses recovered 2026-09-08 from the recorded tool calls of the agent run that produced them, and verified: every loss, vs_control and vs_v1 in `arms`, plus unpaired_spread and paired_sd, recomputes from these arrays",
     "unpaired_spread": 0.469,
     "control_per_seed": [
       5.708,
@@ -559,6 +559,116 @@ export const M = Object.freeze({
       4.899
     ],
     "paired_sd": 0.024,
-    "note": "Across seeds the control moves 0.469 nats - larger than every effect measured. Within a seed both arms see the same data order, so the difference cancels it: paired sd 0.024."
+    "note": "Across seeds the control moves 0.469 nats - larger than every effect measured. Within a seed both arms see the same data order, so the difference cancels it: paired sd 0.024.",
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "per_seed": {
+      "dense tied embedding": {
+        "variant": "dense",
+        "loss": [
+          5.708,
+          5.626,
+          5.907,
+          5.954,
+          5.485
+        ]
+      },
+      "v1 — Kronecker in, untied head": {
+        "variant": "v1",
+        "loss": [
+          5.262,
+          5.157,
+          5.472,
+          5.47,
+          5.022
+        ]
+      },
+      "tied to induced E": {
+        "variant": "v2-tied",
+        "loss": [
+          5.592,
+          5.534,
+          5.82,
+          5.822,
+          5.364
+        ]
+      },
+      "tied + d x d transform": {
+        "variant": "v2-tied-M",
+        "loss": [
+          5.521,
+          5.467,
+          5.742,
+          5.744,
+          5.29
+        ]
+      },
+      "tied + n-gram (one-hot positions)": {
+        "variant": "v2-tied-M-NG",
+        "loss": [
+          5.108,
+          5.049,
+          5.309,
+          5.315,
+          4.899
+        ]
+      },
+      "tied + residual MLP": {
+        "variant": "v2-wrap-M-MLP",
+        "loss": [
+          5.503,
+          5.431,
+          5.708,
+          5.699,
+          5.268
+        ]
+      },
+      "byte head + end-of-token": {
+        "variant": "v2-byte",
+        "loss": [
+          6.925,
+          6.881,
+          7.1,
+          7.303,
+          6.597
+        ]
+      },
+      "wrapped positions": {
+        "variant": "v2-wrap-M",
+        "loss": [
+          5.507,
+          5.431,
+          5.72,
+          5.703,
+          5.26
+        ]
+      },
+      "Fourier positions": {
+        "variant": "v2-fourier-M",
+        "loss": [
+          5.787,
+          5.731,
+          6.019,
+          6.028,
+          5.54
+        ]
+      },
+      "wrap + n-gram": {
+        "variant": "v2-wrap-M-NG",
+        "loss": [
+          5.09,
+          5.028,
+          5.278,
+          5.293,
+          4.872
+        ]
+      }
+    },
+    "per_seed_note": "The raw loss of every arm at every seed, so each gap in `arms` can be recomputed rather than trusted. `variant` is the name the run used internally, and it is here because the published names hide which arm each was built on: 'tied + residual MLP' is v2-wrap-M-MLP, an MLP added to WRAPPED positions, so the -0.002 it buys is against v2-wrap-M and not against the transform arm. Comparing it to the wrong baseline gives -0.031 and reads as a contradiction."
   }
 });

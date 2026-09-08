@@ -49,6 +49,17 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **A stale claim on exercise 07's front door.** Its README said the published numbers *"came from
+  code that is not in this repository"*. After the recovery that misleads: the driver came back and
+  its settings — a different transformer, no gradient clipping, a 200,000-token corpus window, a
+  vocabulary of 10,002 — are recorded in `PROGRESS.md`. The sentence now says the earlier run is
+  specified though its driver is untracked, and that the two runs compare by sign and ordering
+  rather than by absolute loss.
+
+- **Exercise 07's `README.md` had a mangled heading on its front door.** A link label had been
+  merged into a heading, so the line rendered as ``## Run it`](#run-it) · **the page:** …`` to
+  anyone arriving at the exercise. Restored to the jump line it was meant to be.
+
 - **Exercise 07's page typed one number by hand, and it was the only one that could go stale.**
   Every table on that page reads `M`, the frozen payload generated from `results/measurements.json`,
   precisely so a published figure cannot drift from the run that produced it. One number escaped:
@@ -118,6 +129,144 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   hardcoded list would have left a new section inert.
 
 ### Added
+
+- **The S07 notebook's section 5 now trains arms in front of the reader instead of explaining why it
+  cannot.** It said *"the code that trained them is not in this repository… there is no
+  `backward()`, no optimiser and no training loop"* — true when it was written and false the moment
+  `experiment.py` landed. It now prints the published table and then trains three arms live: the
+  control, the published bar and the submission. Lite is two seeds × 60 steps, because a paired
+  comparison needs at least two seeds and with one the gap columns come out correctly empty and
+  uselessly so. Even at 60 steps the ordering appears — the n-gram arm is 0.416 nats ahead of v1 —
+  and the cell says to read the gap, never the height.
+
+  Section 6 grew with the data: it recomputes **every** published figure from the ten per-seed
+  arrays rather than the two it had, and prints `10 arms x 3 figures … ALL AGREE` beside the
+  recorded values. A new cell prints the run's provenance block, so the notebook shows what makes a
+  number checkable rather than only asserting it.
+
+  Notebook and builder are gitignored, so this entry is the only tracked record. Executed end to
+  end with `nbclient`: **21.3s** lite, outputs stripped, no absolute paths.
+
+- **Exercise 07 publishes the raw per-seed loss of every arm, so no figure in its results table has
+  to be taken on trust.** `pairing` shipped two of the ten arrays; the other eight gaps rested on
+  nobody being able to check them. All ten are now in `pairing.per_seed`, recovered from the
+  recorded tool calls of the agent run that produced them — `summary.py` was edited incrementally
+  rather than written whole, so its text exists in no single call, but each edit pastes a per-arm
+  array of five losses.
+
+  **Every published figure recomputes from them exactly** — ten losses, every `vs_control` and
+  `vs_v1` gap, `unpaired_spread` 0.469 and `paired_sd` 0.024 — and
+  `tests/test_embeddings_summary.py` now recomputes each one rather than restating it. Perturbing a
+  single seed of a single arm turns exactly that arm's test red.
+
+  **Publishing them also corrected a misreading.** The table's names hide which arm each was built
+  on: *"tied + residual MLP"* is `v2-wrap-M-MLP`, an MLP added to **wrapped** positions. Against the
+  transform arm it looks like 0.031 nats, which reads as the record contradicting its own
+  `lock.breakers` value of −0.002; against the arm it was actually added to it buys **−0.0024**. The
+  record was right. Each entry now carries its internal `variant` name so the baseline is legible,
+  and a test pins the comparison — the finding it protects is the exercise's most interesting one,
+  that expressivity is necessary and not sufficient.
+
+  No number changed. The page renders the same figures; `web/data.js` was regenerated from the
+  measurements as the exercise's `CLAUDE.md` requires.
+
+- **Every run now records where it came from, and refuses to be written without it.** This is a
+  standing rule in `AGENTS.md` rather than a feature of one exercise: a number nobody can regenerate
+  is not evidence. A bundle carries `config_fingerprint`, `code_digest`, `git_sha`, an
+  `environment` block (python · torch · numpy · platform · machine · thread counts · device) and
+  full-length `sha256:` digests of the corpus **and** the tokenizer. `save()` raises when any of
+  them is absent, because a provenance block nothing enforces is one that gets dropped in the first
+  hurried run. The `environment()` shape and the `blake2b(repr(sorted(asdict(...))))` fingerprint
+  are copied from exercises 06 and 05 rather than invented.
+
+  Guarded four ways: the fingerprint must move when any of five knobs moves; the code digest must
+  move when `codec.py` changes, so it cannot vouch for modules it never read; `save()` must refuse
+  three separately-crippled bundles; and every field must be non-empty.
+
+- **The experiment code behind exercise 07's published numbers was recovered, and it was never
+  source material.** `PROGRESS.md` called `k2/` "the source material scratchpad". It was a coding
+  agent's scratch directory under `/tmp`, produced in this repository, and `/tmp` had been cleared.
+  An agent's own recorded tool calls carry the contents of every file a `Write` produced, so eight
+  of them came back — including the driver and the paired-seed runner.
+
+  **That settles a run that had been unspecified for weeks.** The earlier run used exercise 06's
+  `TinyGPT` (RoPE, SwiGLU, RMSNorm, `d_ff = 2·d`), no gradient clipping, the **first 200,000**
+  corpus tokens sampled with replacement, a vocabulary of **10,002**, and reported the mean of the
+  last 25 steps. Those first two differences are most of why its absolute losses sit where they do —
+  and the third finally explains `setup.vocab_size = 10,002`, an unexplained discrepancy across
+  three documents: the earlier run appended `<eos>` and `<pad>` to the frozen 10,000.
+
+  Nine further names in `measurements.json` were written by nothing on this machine, so the
+  three-arm paired comparison is now fully specified and the ten-arm table is not. The recovered
+  source is kept at `docs/k2-recovered.md` — gitignored, and covered by
+  `backup_local_only.py::PATTERNS` so the external store versions it — because it quotes the
+  course's own wording. The facts it establishes are in tracked prose, where they survive a clone.
+
+- **Exercise 07's trained comparison can be run from this repository.** Every trained number in
+  that exercise came from code held outside the repository and now gone, so its central claim — a
+  tied Kronecker head beating the published design with no vocabulary-sized parameter — was
+  *recorded* rather than *executable*. `experiment.py`, `summary.py` and `tools/run_experiment.py`
+  close that: ten arms, five paired seeds, about twenty-five minutes on a laptop CPU.
+
+  **The machinery is what lands here. The validation does not, and saying so is the point.** The
+  run reported below trained on a corpus later found to be **28.6% `[UNK]`** — exercise 02's frozen
+  tokenizer contains no Tamil, and exercise 07 was feeding it Tamil. The repository's own gate
+  (exercise 04's `MAX_UNK_SHARE`, reused by 05 and 06) refuses anything above 5%, and exercise 07
+  is the only exercise that never measured it. Worse, `[UNK]`'s spelling is a fixed string, so its
+  hashed byte n-grams are identical every time — and the arm that wins is the n-gram arm. **So the
+  numbers below are reported as measured and must not be read as confirming the design** until the
+  corpus is fixed and the comparison re-run. That is the next change, not a later one.
+
+  Unaffected: the invertibility result, the collision counts and the parameter arithmetic are
+  properties of the frozen vocabulary, not of the corpus.
+
+  **It is a specified re-run, not a reproduction, and that distinction is a property of the record
+  rather than a shortcoming of the port.** `measurements.json::setup` pins the architecture and pins
+  none of the optimisation — no optimiser, learning rate, schedule, warmup, weight decay, head
+  count, `d_ff`, initialisation, packing, or seed-to-data mapping — and it does not say whether its
+  losses are train or held-out, final-step or averaged. Thirteen free parameters against one
+  recorded scalar: an experiment aimed at those losses could not be told from one that missed. So
+  `RunConfig` records every knob it turns, and absolute losses are not comparable across the two
+  runs. **The sign and the ordering of the arms are, and that is the interesting question.**
+
+  Nine of the ten arms agree in sign with the recorded table. Both n-gram arms are `supported` on
+  5/5 seeds — `wrap + n-gram` at **−0.259 nats** against v1 where the record has −0.164, and
+  `tied + n-gram` at **−0.232** where the record has −0.141. Both recorded negative results stay
+  negative: Fourier positions trains worse, and the residual MLP buys **0.022 nats** over the plain
+  tie against the n-gram term's 0.291 — which is the finding, that expressivity is necessary and not
+  sufficient. **The one arm that disagrees is `wrapped positions`**, −0.017 here against +0.248
+  recorded; it falls below this setup's stated resolution and the summary reports it as
+  `inconclusive` rather than claiming a reversal.
+
+  **Nothing is published from a run.** It writes to `artifacts/`, which is gitignored, and never to
+  `results/`; what gets published is a decision taken after reading a run. No measurement, no page
+  and no document number changed here.
+
+  Exercise 09 supplies the transformer body through a new optional `embedding=` parameter on
+  `build_trunk`, rather than exercise 07 reaching for its private `trunk.tokens` — exercise 10
+  already couples to that attribute's *name*, and one such coupling is enough. **The default path is
+  bit-identical:** a SHA-256 over every named parameter of a default trunk matches between `main`
+  and this branch, so none of exercise 09's published numbers can have moved.
+
+  Three things this had to get right, each of which produces a plausible wrong answer instead of a
+  failure. The dense control must be initialised near 0.02 — at torch's `N(0, 1)` default a tied
+  head starts at loss **176** against `ln V` of 9.2, so the control is crippled and every arm beats
+  it for the wrong reason. The tie must be **one object**, `trunk.tokens = head.embed`; two
+  separately-built embeddings agree exactly at step zero and diverge on the first gradient step. And
+  the corpus must be exercise 02's multilingual `corpus/v2` rather than exercise 09's English one,
+  because a 32-byte window costs Indic scripts far more than English.
+
+  One thing the run itself surfaced that no document here records: **the Fourier arm is not only
+  worse, it is far more expensive.** Its code is not block-one-hot, so it carries **144.3** non-zero
+  coordinates per token against one-hot's **6.2** — 23× denser — and its training runs took about 8×
+  as long as every other arm's. That is a second, independent reason not to use it, measurable from
+  `codec.atoms` with no training at all.
+
+- **Exercise 07 gets the module-naming guard `AGENTS.md` asks for once an exercise grows past a
+  handful of modules**, which it just did, six to eight. It checks both directions — a module absent
+  from the documents, and a document naming a module that no longer exists. The reverse half needed
+  a path-aware pattern: a first version split on whitespace and reported `k2/scale_cost.py`, one of
+  the missing experiment scripts the documents legitimately quote, as a deleted module of ours.
 
 - **Exercises 01 through 04 have the progress ledger they never had, and `PROGRESS.md` is now
   required.** Six of ten exercises carried one; the four oldest — the ones whose history is hardest

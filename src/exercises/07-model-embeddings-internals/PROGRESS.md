@@ -115,7 +115,7 @@ styles reserve 260px of left gutter on `.wrap` whether or not a page builds a ra
 rendered an empty margin), and the shared `section` rule has no top spacing, which only shows on a
 page without a summary panel.
 
-**The measurements**, all from `k2/` in the source material scratchpad:
+**The measurements**, all from `k2/` — see *Where `k2/` actually was* below:
 
 - Invertibility: matched filter 86.7% → block-OMP + coordinate descent **100.00%** at `d_model=384`,
   for Gaussian, semi-orthogonal and block-tight `W`. Certificate agrees with ground truth on 100.0%.
@@ -129,6 +129,89 @@ page without a summary panel.
   softmax is **0.750 GB and ~72 ms, flat in V**.
 
 ---
+
+## Where `k2/` actually was, and what it turns out to have been
+
+**This document said `k2/` was "the source material scratchpad". That was wrong, and the error is
+part of why the run behind these numbers read as unrecoverable.** `k2/` was a **coding agent's scratch
+directory** under `/private/tmp/claude-501/.../<run-id>/scratchpad/k2`. `/tmp` was cleared, so
+the directory is gone from disk — but an agent's own recorded tool calls
+carry the full contents of every file a `Write` produced, and eight of them came back that way.
+
+**What the recovery settles.** The `setup` block records nine things and none of the optimisation.
+The recovered driver records the rest, so the run that produced the arms table is now *specified*:
+
+| | recovered run | the re-run in `experiment.py` |
+| --- | --- | --- |
+| transformer | exercise **06**'s `TinyGPT` — RoPE, SwiGLU, RMSNorm | exercise **09**'s trunk — learned positions, GELU, LayerNorm |
+| `d_ff` | `2 × d_model` = 512 | `4 × d_model` = 1024 |
+| layers · heads · width | 2 · 4 · 256 | same |
+| steps × batch × sequence | 500 × 8 × 64 | same |
+| optimiser | `AdamW`, lr 3e-4, torch-default decay | `AdamW`, lr 3e-4, decay 0.01 |
+| gradient clipping | **none** | 1.0 |
+| vocabulary | **10,002** — 10,000 plus `<eos>` and `<pad>` | 10,000 |
+| corpus window | the **first 200,000** tokens | all **507,878** |
+| batching | random offsets **with replacement** | disjoint shuffled sequences |
+| reported loss | mean of the last **25** steps | mean of the last **50** |
+
+**Two of those explain most of the difference in absolute loss** — a different transformer, and a
+corpus window less than half the size sampled with replacement. **And one closes a standing
+puzzle:** `setup.vocab_size` is 10,002 because the earlier run appended `<eos>` and `<pad>` to the
+frozen 10,000. That discrepancy sat unexplained in three documents.
+
+**The raw per-seed losses for all ten arms were recovered, and are now published.** `summary.py`
+was never written whole — it was edited incrementally, so no recorded call holds its full text — but
+each edit pastes a per-arm array of five losses. Training was done by `one_arm.py`; `summary.py` only
+did statistics over transcribed numbers. **Every published figure recomputes from those arrays
+exactly**: all ten losses, all `vs_control` and `vs_v1` gaps, `unpaired_spread` 0.469 and
+`paired_sd` 0.024. They now ship in `pairing.per_seed`, so no figure in the arms table has to be
+taken on trust, and `tests/test_embeddings_summary.py` recomputes every one of them.
+
+**And publishing them corrected a misreading of my own.** The arms table's names hide which arm each
+was built on: *"tied + residual MLP"* is `v2-wrap-M-MLP`, an MLP added to **wrapped** positions.
+Measured against the transform arm it appears to buy 0.031 nats, which reads as the record
+contradicting its own `lock.breakers` figure of −0.002. Measured against the arm it was actually
+added to, it buys **−0.0024** — the record was right and the comparison was wrong. Each entry now
+carries its internal `variant` name so the baseline is legible, and a test pins that comparison.
+
+**What is still not recovered.** Nine names appear in `measurements.json`'s `source` strings —
+`summary.py`, `lock.py`, `lock_break.py`, `ng_sweep.py`, `coherence.py`, `trained_w.py`,
+`dp128.py`, `scale_cost.py`, `one_arm.py` — and nothing on this machine wrote them. So the
+three-arm paired comparison is fully specified and the ten-arm table is not.
+
+The recovered source is kept at `docs/k2-recovered.md`, which is gitignored and covered by
+`tools/backup_local_only.py::PATTERNS`, so it is versioned in the external store rather than
+published: it quotes the course's own wording and uses words the vocabulary gate forbids. **The
+facts are here, in tracked prose, because those are what has to survive a clone.**
+
+## The trained arms can be run here now — and that is not reproduction
+
+The measurements in `results/measurements.json` came from code held outside this repository, which
+is gone. `experiment.py`, `summary.py` and `tools/run_experiment.py` mean the comparison can be
+*executed* here: ten arms, five paired seeds, exercise 09's trunk with the token table replaced,
+exercise 02's multilingual `corpus/v2`, about seven minutes on a laptop CPU.
+
+**What it cannot do is reproduce the recorded numbers, and the reason is a property of the record
+rather than of the port.** `setup` pins the architecture and pins none of the optimisation — no
+optimiser, learning rate, schedule, warmup, weight decay, dropout, head count, `d_ff`,
+initialisation, packing, or seed-to-data mapping, and it does not say whether its losses are train
+or held-out, final-step or averaged. Thirteen free parameters against one recorded scalar. An
+experiment aimed at those losses could not be told from one that missed, so aiming at them would
+have been a target nobody could score.
+
+The runner therefore writes to `artifacts/`, never `results/`, and the bundle records every knob it
+turned. **Compare the sign and the ordering of the arms with the table above; never the absolute
+losses.** What gets published is a decision taken after reading a run.
+
+Three things this port had to get right, each of which would have produced a plausible wrong answer:
+
+- The dense control's embedding must be initialised near 0.02. At torch's `N(0, 1)` default a tied
+  head starts at loss **176** against `ln V` of 9.2, so the control is crippled and every arm beats
+  it for the wrong reason, with nothing failing.
+- The tie must be **one object**, `trunk.tokens = head.embed`. Two separately-constructed embeddings
+  agree exactly at step zero and diverge on the first gradient step.
+- The corpus must be the multilingual one. A 32-byte window costs Indic scripts far more than
+  English, so exercise 09's English corpus would have trained fine and hidden the effect.
 
 ## Corrections — claims of ours that were wrong
 

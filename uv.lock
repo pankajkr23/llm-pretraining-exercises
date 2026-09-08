@@ -515,6 +515,7 @@ version = "0.1.0"
 source = { editable = "src/exercises/07-model-embeddings-internals" }
 dependencies = [
     { name = "exercise-04-data-cleaning-dedup" },
+    { name = "exercise-09-loss-functions-output-heads" },
     { name = "numpy" },
 ]
 
@@ -527,6 +528,7 @@ train = [
 [package.metadata]
 requires-dist = [
     { name = "exercise-04-data-cleaning-dedup", editable = "src/exercises/04-data-cleaning-dedup" },
+    { name = "exercise-09-loss-functions-output-heads", editable = "src/exercises/09-loss-functions-output-heads" },
     { name = "numpy", specifier = ">=2" },
     { name = "torch", marker = "sys_platform == 'linux' and extra == 'train'", specifier = ">=2.6", index = "https://download.pytorch.org/whl/cpu" },
     { name = "torch", marker = "sys_platform != 'linux' and extra == 'train'", specifier = ">=2.6" },

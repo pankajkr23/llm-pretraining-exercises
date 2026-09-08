@@ -21,20 +21,41 @@ if TYPE_CHECKING:  # pragma: no cover - import-time only, never executed
 from .config import Config
 
 
-def build_trunk(config: Config, seed: int = 9) -> torch.nn.Module:
+def build_trunk(
+    config: Config, seed: int = 9, embedding: torch.nn.Module | None = None
+) -> torch.nn.Module:
     """A randomly initialised trunk producing `[batch, seq_len, d_model]` hidden states.
 
     Args:
         config: The shapes to build at.
         seed: Fixed so every number this exercise reports is reproducible.
+        embedding: Replaces the learned token table. Any module mapping `[batch, seq_len]` ids to
+            `[batch, seq_len, d_model]` will do — exercise 07 passes a Kronecker embedding, which
+            computes each row from the token's bytes instead of storing one.
 
     Returns:
         A module mapping `[batch, seq_len]` token ids to `[batch, seq_len, d_model]` hidden states.
+
+    Note:
+        **The default table is built even when it is about to be replaced, and that is deliberate
+        twice over.** It keeps the default path bit-identical to before this parameter existed; and
+        it keeps the random stream aligned, so a trunk built with a custom embedding has the *same
+        block weights* as one built without at the same seed. A paired comparison between two
+        embeddings needs exactly that — otherwise the arms differ by their bodies as well, and the
+        difference stops being attributable.
+
+        The parameter exists so callers do not reach for `trunk.tokens` themselves. That attribute
+        is inside a private class, and exercise 10 already couples to its *name* — `step.py` counts
+        embedding parameters with `startswith(("tokens.", "positions."))`, so a rename there
+        inflates its MFU numerator with every test still green. One such coupling is enough.
     """
     import torch
 
     torch.manual_seed(seed)
-    return _Trunk(config)
+    trunk = _Trunk(config)
+    if embedding is not None:
+        trunk.tokens = embedding
+    return trunk
 
 
 def count_parameters(module: torch.nn.Module) -> int:

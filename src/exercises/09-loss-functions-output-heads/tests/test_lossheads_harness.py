@@ -9,6 +9,8 @@ Every claim is written twice where a twin is possible — once at the setting wh
 where it must not — because a guard nobody has watched fail is not a guard.
 """
 
+import dataclasses
+
 import pytest
 
 torch = pytest.importorskip("torch", reason="torch is the `train` extra: uv sync --extra train")
@@ -29,7 +31,10 @@ from lossheads.masks import (  # noqa: E402
     pack_documents,
     pad_sequences,
 )
-from lossheads.model import build_trunk, count_parameters  # noqa: E402
+from lossheads.model import (  # noqa: E402
+    build_trunk,
+    count_parameters,
+)
 from lossheads.shift import shift_for_horizon, shift_for_next_token, shift_wrong_way  # noqa: E402
 from lossheads.training import TrainingLog, save, train  # noqa: E402
 
@@ -268,3 +273,53 @@ def test_the_summary_says_so_when_the_expected_finding_does_not_hold() -> None:
     assert s["further_head_is_harder"] is False
     assert s["broken_shift_is_lower"] is False
     assert s["steps_where_further_head_was_higher"] == 0
+
+
+def test_a_custom_embedding_replaces_the_learned_table() -> None:
+    """`build_trunk(..., embedding=...)` must actually be used, not merely accepted.
+
+    Exercise 07 passes a Kronecker embedding here, whose rows are computed from a token's bytes
+    rather than stored. A parameter that is accepted and ignored would leave 07 measuring this
+    exercise's ordinary table while believing otherwise — and every shape would still line up.
+    """
+    config = dataclasses.replace(Config(), vocab_size=64, d_model=16, n_layer=1, seq_len=8)
+
+    class _Constant(torch.nn.Module):
+        """Returns a fixed row for every id, so its use is unmistakable in the output."""
+
+        def forward(self, tokens: torch.Tensor) -> torch.Tensor:
+            return torch.full((*tokens.shape, config.d_model), 0.5)
+
+    trunk = build_trunk(config, seed=3, embedding=_Constant())
+    assert isinstance(trunk.tokens, _Constant)
+
+    default = build_trunk(config, seed=3)
+    tokens = torch.zeros(2, config.seq_len, dtype=torch.long)
+    assert not torch.allclose(trunk(tokens), default(tokens)), (
+        "the custom embedding changed nothing, so it is being ignored"
+    )
+
+
+def test_the_default_path_is_unchanged_by_the_new_parameter() -> None:
+    """The twin, and the one that protects this exercise's own published numbers.
+
+    Passing no embedding must build exactly what it built before the parameter existed. The trunk
+    also constructs its default table even when that table is about to be replaced, so the random
+    stream stays aligned: a trunk with a custom embedding must share its BLOCK weights with the
+    default one at the same seed, or a paired comparison between two embeddings is confounded by
+    two differently-initialised bodies.
+    """
+    config = dataclasses.replace(Config(), vocab_size=64, d_model=16, n_layer=1, seq_len=8)
+
+    a = build_trunk(config, seed=5)
+    b = build_trunk(config, seed=5)
+    for (name, left), (_, right) in zip(a.named_parameters(), b.named_parameters(), strict=True):
+        assert torch.equal(left, right), f"{name} is not reproducible at a fixed seed"
+
+    swapped = build_trunk(config, seed=5, embedding=torch.nn.Embedding(64, 16))
+    for name, param in a.named_parameters():
+        if name.startswith("tokens."):
+            continue
+        assert torch.equal(param, dict(swapped.named_parameters())[name]), (
+            f"{name} differs, so replacing the embedding shifted the random stream"
+        )

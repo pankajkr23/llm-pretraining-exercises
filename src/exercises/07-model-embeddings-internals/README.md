@@ -82,7 +82,7 @@ artifacts/        # gitignored run outputs
 
 The page is built to the repo's design standard in [`docs/DESIGN.md`](../../../docs/DESIGN.md).
 
-## Run it`](#run-it) · **the page:** <https://llm-pretraining-demos.vercel.app/07-model-embeddings-internals/>
+**Jump to:** [`Run it`](#run-it) · **the page:** <https://llm-pretraining-demos.vercel.app/07-model-embeddings-internals/>
 
 ## How to read this
 
@@ -216,8 +216,10 @@ recovery:  h ──> codec.targets_from_h ──> decode.recover ──> the ori
 | `collisions.py` | how many real tokens each scheme makes indistinguishable | no |
 | `budget.py` | the parameter arithmetic, including where this **stops** paying | no |
 | `heads.py` | the tied head, the `d×d` transform, the lock-breakers | **yes** |
+| `experiment.py` | the ten arms, the paired-seed runner, and every hyperparameter it turns | **yes** |
+| `summary.py` | the paired arithmetic: gap, deviation, seeds agreeing, sign test | no |
 
-Only `heads.py` needs torch. That split is deliberate: the invertibility result — the load-bearing
+Only `heads.py` and `experiment.py` need torch. That split is deliberate: the invertibility result — the load-bearing
 one — is pure numpy, so CI verifies it rather than skipping it.
 
 ---
@@ -230,7 +232,21 @@ uv run pytest src/exercises/07-model-embeddings-internals/tests -q
 
 uv sync --all-packages --extra train                      # adds torch, enables heads.py
 uv run pytest src/exercises/07-model-embeddings-internals/tests -q
+
+# the trained arm comparison, about twelve minutes on a laptop CPU
+uv run python src/exercises/07-model-embeddings-internals/tools/run_experiment.py
+uv run python .../run_experiment.py --steps 50 --seeds 2   # a probe, about a minute
 ```
+
+**That command is a *specified re-run*, not a reproduction of the tables below, and the difference
+matters.** The numbers in *The evidence* were produced by a driver that lived in an agent's scratch
+directory rather than in this repository. **That code was recovered and its settings are recorded in
+`PROGRESS.md`** — a different transformer, no gradient clipping, a 200,000-token corpus window, and
+a vocabulary of 10,002 — so the earlier run is specified even though its driver is not tracked. What
+it is not is *this* run: two different models trained on differently-sized text are not comparable
+by their absolute losses, only by the sign and ordering of their arms. `RunConfig` records every
+knob it turns for exactly that reason, and the runner writes to `artifacts/`, never to `results/`:
+what gets published is a decision taken after seeing a run, not a side effect of running one.
 
 ---
 
