@@ -16,10 +16,20 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   make that impossible to do again.** The corpus it trained on was exercise 02's four Wikipedia
   articles, and the frozen 10k vocabulary has no Tamil: `ta.faithful.txt` tokenizes to **63.2%**
   `[UNK]`, dragging the whole corpus to **40.07%** — against a 5% ceiling exercise 04 publishes
-  counts under and exercises 05 and 06 already import. **The confound lands on the winning arm.**
-  `[UNK]` has one fixed byte spelling, so its byte n-grams are identical every time and are free
-  for a byte-n-gram head to predict, and the byte-n-gram arm is the one this comparison exists to
-  judge. Exercise 07 was the only exercise in the repository that never measured this.
+  counts under and exercises 05 and 06 already import. Exercise 07 was the only exercise in the
+  repository that never measured this.
+
+  **What that share was actually worth was then measured rather than argued, and it is the opposite
+  of what was expected.** The reasoning for fixing it was that `[UNK]` has one fixed byte spelling,
+  so a byte-n-gram head predicts it for free — a confound aimed at the winning arm.
+  `tools/measure_unk_confound.py` runs the same specification twice on that corpus with the
+  unreadable language swapped out, and removing it makes the recommendation win by **more**
+  (−0.196 → −0.551 against v1), with **every** arm's gap growing by roughly 2–2.5× in whichever
+  direction it already pointed. So the `[UNK]` share was not a selective advantage; it was a
+  **dilution** — a token that is 40% of the corpus and trivially predictable compresses every
+  difference toward zero. The corpus was still the right thing to fix, because a comparison run
+  through that dilution understates every effect it reports, but the reason is not the one that
+  motivated the fix.
 
   The default corpus is now **exercise 06's fetched six-lane corpus** — 11,781,888 tokens, a
   licence recorded per lane and verified from each dataset's own card at fetch time, against
