@@ -239,10 +239,12 @@ uv run python .../run_experiment.py --steps 50 --seeds 2   # a probe, about a mi
 ```
 
 **That command is a *specified re-run*, not a reproduction of the tables below, and the difference
-matters.** The numbers in *The evidence* came from code that is not in this repository, and what
-survives of that run pins the architecture while pinning none of the optimisation — no learning
-rate, optimiser, schedule, head count, initialisation, or mapping from seed to data order. An
-experiment aimed at those losses could not be told from one that missed. `RunConfig` records every
+matters.** The numbers in *The evidence* were produced by a driver that lived in an agent's scratch
+directory rather than in this repository. **That code was recovered and its settings are recorded in
+`PROGRESS.md`** — a different transformer, no gradient clipping, a 200,000-token corpus window, and
+a vocabulary of 10,002 — so the earlier run is specified even though its driver is not tracked. What
+it is not is *this* run: two different models trained on differently-sized text are not comparable
+by their absolute losses, only by the sign and ordering of their arms. `RunConfig` records every
 knob it turns for exactly that reason, and the runner writes to `artifacts/`, never to `results/`:
 what gets published is a decision taken after seeing a run, not a side effect of running one.
 

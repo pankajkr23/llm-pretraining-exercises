@@ -49,6 +49,13 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **A stale claim on exercise 07's front door.** Its README said the published numbers *"came from
+  code that is not in this repository"*. After the recovery that misleads: the driver came back and
+  its settings — a different transformer, no gradient clipping, a 200,000-token corpus window, a
+  vocabulary of 10,002 — are recorded in `PROGRESS.md`. The sentence now says the earlier run is
+  specified though its driver is untracked, and that the two runs compare by sign and ordering
+  rather than by absolute loss.
+
 - **Exercise 07's `README.md` had a mangled heading on its front door.** A link label had been
   merged into a heading, so the line rendered as ``## Run it`](#run-it) · **the page:** …`` to
   anyone arriving at the exercise. Restored to the jump line it was meant to be.
@@ -95,6 +102,23 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   hardcoded list would have left a new section inert.
 
 ### Added
+
+- **The S07 notebook's section 5 now trains arms in front of the reader instead of explaining why it
+  cannot.** It said *"the code that trained them is not in this repository… there is no
+  `backward()`, no optimiser and no training loop"* — true when it was written and false the moment
+  `experiment.py` landed. It now prints the published table and then trains three arms live: the
+  control, the published bar and the submission. Lite is two seeds × 60 steps, because a paired
+  comparison needs at least two seeds and with one the gap columns come out correctly empty and
+  uselessly so. Even at 60 steps the ordering appears — the n-gram arm is 0.416 nats ahead of v1 —
+  and the cell says to read the gap, never the height.
+
+  Section 6 grew with the data: it recomputes **every** published figure from the ten per-seed
+  arrays rather than the two it had, and prints `10 arms x 3 figures … ALL AGREE` beside the
+  recorded values. A new cell prints the run's provenance block, so the notebook shows what makes a
+  number checkable rather than only asserting it.
+
+  Notebook and builder are gitignored, so this entry is the only tracked record. Executed end to
+  end with `nbclient`: **21.3s** lite, outputs stripped, no absolute paths.
 
 - **Exercise 07 publishes the raw per-seed loss of every arm, so no figure in its results table has
   to be taken on trust.** `pairing` shipped two of the ten arrays; the other eight gaps rested on
