@@ -21,7 +21,10 @@ The full argument, every table, and the limits are in `README.md`. Do not restat
 | `collisions.py` | `truncation_groups`, `colliding_tokens`, `collisions_by_code`, `cosine` | no |
 | `budget.py` | `budget`, `crossover` — the parameter arithmetic | no |
 | `heads.py` | `KroneckerEmbedding`, `LockBreaker`, `ByteHead`, `TiedHead` | **yes** |
-| `experiment.py` | `RunConfig`, `ARMS`, `train_arm`, `run`, `save` — the trained comparison | **yes** |
+| `experiment.py` | `RunConfig`, `ARMS`, `train_arm`, `run`, `save`, the corpus and its three gates | **yes** |
+| `runlog.py` | `RunDirectory`, `run_id`, `weight_digest` — the numbered run directory, written as the run goes | **yes** |
+| `../verify.py` | the independent auditor: re-derives a run directory's numbers, importing **nothing** from this package | no |
+| `../evidence.py` | `CLAIMS`, `assess`, `render` — which published claim each artefact supports | no |
 | `summary.py` | `paired`, `unpaired_spread` — the seed arithmetic | no |
 | `__init__.py` | the package docstring — what v1 is and why its output side is the problem | no |
 
@@ -32,7 +35,11 @@ The full argument, every table, and the limits are in `README.md`. Do not restat
 | `results/measurements.json` | **every number the README and the page render** | **yes** — required |
 | `tools/build_web_data.py` | generates `web/data.js` from it | **yes** — unlike the notebook builder |
 | `tools/measure_lock_samples.py` | measures the rectangle identity on the real head | **yes** |
-| `tools/run_experiment.py` | runs the arm comparison into `artifacts/`, never `results/` | **yes** |
+| `tools/run_experiment.py` | runs the arm comparison into `artifacts/`, never `results/`; `--repeat` measures determinism, `--device` forces one | **yes** |
+| `tools/measure_unk_confound.py` | the same specification twice on one corpus, one language swapped — what the unreadable language was worth | **yes** |
+| `tools/measure_lane_sensitivity.py` | the grid on one lane at a time — does the advantage track the script? | **yes** |
+| `tools/measure_parallel_text.py` | parallel against ordinary Indic text, matched on size, epochs and script | **yes** |
+| `tools/publish_rerun.py` | promotes one run from `artifacts/` to `results/`, and rebuilds `results/MANIFEST.md` | **yes** |
 | `web/index.html` · `chapters.js` · `page-extra.css` | the page | yes |
 | `web/_shared/` | vendored, byte-identical to 05 and 06 | yes |
 | `tests/test_embeddings_render.py` | 17 test functions, 20 collected, over the assembled site | yes |
@@ -125,10 +132,45 @@ Three things that cost time when they were got wrong:
   `KroneckerEmbedding` for the input gives byte-identical numbers at step zero and drifts apart on
   the first gradient step: the arm reports a tie while not being one, and neither the shapes, the
   parameter count nor the loss curve looks wrong. The test asserts **identity**, not equality.
-- **The corpus is exercise 02's `corpus/v2`, not exercise 09's.** 09 trains on this repository's own
-  `AGENTS.md`, which is English. Every claim here is about embeddings computed from bytes, and a
-  32-byte window costs Indic scripts far more than English — a monolingual corpus would train
-  perfectly and make the effect this exercise exists to measure invisible.
+- **The corpus is multilingual on purpose, and three gates now decide whether a run may read it.**
+  Exercise 09 trains on this repository's own `AGENTS.md`, which is English. Every claim here is
+  about embeddings computed from bytes, and a 32-byte window costs non-Latin scripts far more than
+  English — a monolingual corpus would train perfectly and make the effect this exercise exists to
+  measure invisible.
+
+  The default is **exercise 06's fetched six-lane corpus** (`data/corpus`, 11,781,888 tokens, a
+  licence recorded per lane and verified from the dataset's own card at fetch time). Exercise 02's
+  tracked corpus is the **offline fallback**, selected explicitly with
+  `RunConfig(corpus="tokenization")` and never substituted silently — a run that quietly read
+  different text than it was asked to is indistinguishable from one that read the right text.
+
+  **The three gates are conditions on measured quantities, never rules about a named corpus**, and
+  each was written after watching it refuse something real:
+
+  | gate | measured | refuses |
+  | --- | --- | --- |
+  | `[UNK]` share ≤ exercise 04's `MAX_UNK_SHARE` | per lane and overall | exercise 02's four-language corpus at **40.07%** — `ta.faithful.txt` is 63.2% `[UNK]` because the frozen vocabulary has no Tamil |
+  | epochs ≤ `MAX_EPOCHS` (1.00) | `total_tokens / corpus_tokens` | the fallback at 500 steps (**1.35**); it passes below 370 |
+  | every lane funded | sequences allocated per lane | any run too small to give the smallest lane one sequence |
+
+  **Why the `[UNK]` gate is not hygiene.** `[UNK]` has one fixed byte spelling, so its byte n-grams
+  are identical every time — free for a byte-n-gram head to predict. The arm this comparison exists
+  to judge *is* the byte-n-gram arm, so the confound lands exactly on the winner. Exercise 07 was
+  the only exercise in this repository that never measured this.
+
+- **Batches are drawn PROPORTIONALLY per lane, and that is load-bearing.** `corpus_batches` used to
+  concatenate every lane and take the first `steps × batch × seq_len` ids. That is harmless against
+  exercise 02's 189,785 tokens and fatal against exercise 06's 11.8M: 256,000 positions off the
+  front is the agentic lane and a sliver of code, so indic, reasoning, stem and web would never be
+  seen at all — in the exercise whose whole claim is what a byte window costs non-Latin scripts —
+  and every loss curve would look entirely normal. Proportional allocation gives every lane the
+  *same* epoch ratio (0.0217 each on the mixture) and preserves exercise 05's mixture weights for
+  free, since exercise 06's corpus is already sized to them.
+
+- **`code_digest` covers three packages, not one.** The trunk is exercise 09's `lossheads.model` and
+  the corpus is parsed by exercise 06's `trainingdata.corpus`, so an edit to either moves the
+  numbers. A digest over `embeddings/` alone vouched for code it never read; a test plants a module
+  in each of the three and asserts the digest moves.
 
 A fourth thing the run itself surfaced, which no document here records: **the Fourier arm is not
 only worse, it is far more expensive.** Its code is not block-one-hot, so `codec.atoms` returns

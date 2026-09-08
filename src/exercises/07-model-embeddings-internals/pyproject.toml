@@ -14,6 +14,13 @@ dependencies = [
     # already holds three transformer implementations; writing a fourth to avoid one import would
     # be the second copy that drifts. Exercise 10 depends on 09 the same way.
     "exercise-09-loss-functions-output-heads",
+    # The corpus. Exercise 06's fetcher is the only one in this repo that records a LICENCE per
+    # lane, verified from each dataset's own card at download time, and its corpus is ~23x larger
+    # than exercise 02's, which is what lets a 500-step run read 0.02 epochs instead of repeating
+    # itself. What is imported is deliberately narrow: `read_documents` and `lanes_from_fetch`, so
+    # the JSONL is parsed by the module that learned why it must be JSONL. 06 depends on 04 and 05,
+    # so this adds no cycle.
+    "exercise-06-build-training-dataset",
     "numpy>=2",
 ]
 
@@ -31,6 +38,7 @@ train = [
 
 [tool.uv.sources]
 exercise-04-data-cleaning-dedup = { workspace = true }
+exercise-06-build-training-dataset = { workspace = true }
 exercise-09-loss-functions-output-heads = { workspace = true }
 
 [build-system]

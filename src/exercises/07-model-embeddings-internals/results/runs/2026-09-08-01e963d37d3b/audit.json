@@ -1,0 +1,359 @@
+{
+ "run_id": "2026-09-08-01e963d37d3b",
+ "findings": [
+  {
+   "check": "provenance.config_fingerprint",
+   "status": "ok",
+   "detail": "01e963d37d3b",
+   "constant_by_construction": false
+  },
+  {
+   "check": "provenance.code_digest",
+   "status": "ok",
+   "detail": "sha256:fece6f7de8d00442c...",
+   "constant_by_construction": false
+  },
+  {
+   "check": "provenance.git_sha",
+   "status": "ok",
+   "detail": "8398f0412e8fb834b8b3eb14...",
+   "constant_by_construction": false
+  },
+  {
+   "check": "provenance.tokenizer_digest",
+   "status": "ok",
+   "detail": "sha256:b2c4905dc61645931...",
+   "constant_by_construction": false
+  },
+  {
+   "check": "the device recorded is the one that ran",
+   "status": "ok",
+   "detail": "cpu",
+   "constant_by_construction": false
+  },
+  {
+   "check": "input seed 0",
+   "status": "ok",
+   "detail": "(4000, 64) tokens, digest matches (batching_version 2)",
+   "constant_by_construction": false
+  },
+  {
+   "check": "input seed 1",
+   "status": "ok",
+   "detail": "(4000, 64) tokens, digest matches (batching_version 2)",
+   "constant_by_construction": false
+  },
+  {
+   "check": "input seed 2",
+   "status": "ok",
+   "detail": "(4000, 64) tokens, digest matches (batching_version 2)",
+   "constant_by_construction": false
+  },
+  {
+   "check": "input seed 3",
+   "status": "ok",
+   "detail": "(4000, 64) tokens, digest matches (batching_version 2)",
+   "constant_by_construction": false
+  },
+  {
+   "check": "input seed 4",
+   "status": "ok",
+   "detail": "(4000, 64) tokens, digest matches (batching_version 2)",
+   "constant_by_construction": false
+  },
+  {
+   "check": "lane tokens sum to the corpus",
+   "status": "ok",
+   "detail": "11,781,888 summed against 11,781,888 recorded",
+   "constant_by_construction": false
+  },
+  {
+   "check": "[UNK] share is under the repository's gate",
+   "status": "ok",
+   "detail": "0.209% recomputed against a 5% ceiling",
+   "constant_by_construction": false
+  },
+  {
+   "check": "the gate used is exercise 04's, not one invented here",
+   "status": "ok",
+   "detail": "run recorded 0.05, exercise 04 publishes 0.05",
+   "constant_by_construction": false
+  },
+  {
+   "check": "the run reads under one epoch",
+   "status": "ok",
+   "detail": "256,000 of 11,781,888 tokens = 0.0217 epochs",
+   "constant_by_construction": false
+  },
+  {
+   "check": "every lane is funded",
+   "status": "ok",
+   "detail": "agentic 83, code 1114, indic 747, reasoning 316, stem 474, web 1266",
+   "constant_by_construction": false
+  },
+  {
+   "check": "lanes are read at the same rate",
+   "status": "ok",
+   "detail": "0.0217 to 0.0217 across 6 lanes",
+   "constant_by_construction": true
+  },
+  {
+   "check": "loss of dense tied embedding",
+   "status": "ok",
+   "detail": "6.607209 recomputed from 5 traces against 6.607209 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "loss of v1 - Kronecker in, untied head",
+   "status": "ok",
+   "detail": "4.821730 recomputed from 5 traces against 4.821730 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "loss of tied to induced E",
+   "status": "ok",
+   "detail": "5.459329 recomputed from 5 traces against 5.459329 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "loss of tied + d x d transform",
+   "status": "ok",
+   "detail": "5.421196 recomputed from 5 traces against 5.421196 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "loss of tied + n-gram (one-hot positions)",
+   "status": "ok",
+   "detail": "4.979807 recomputed from 5 traces against 4.979807 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "loss of wrap + residual MLP",
+   "status": "ok",
+   "detail": "5.408858 recomputed from 5 traces against 5.408858 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "loss of wrapped positions",
+   "status": "ok",
+   "detail": "5.415304 recomputed from 5 traces against 5.415304 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "loss of Fourier positions",
+   "status": "ok",
+   "detail": "5.660375 recomputed from 5 traces against 5.660375 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "loss of wrap + n-gram",
+   "status": "ok",
+   "detail": "4.969927 recomputed from 5 traces against 4.969927 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "loss of byte head + end-of-token",
+   "status": "ok",
+   "detail": "5.272029 recomputed from 5 traces against 5.272029 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "dense tied embedding vs_v1",
+   "status": "ok",
+   "detail": "+1.785479 recomputed against +1.785479 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "v1 - Kronecker in, untied head vs_control",
+   "status": "ok",
+   "detail": "-1.785479 recomputed against -1.785479 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "tied to induced E vs_control",
+   "status": "ok",
+   "detail": "-1.147879 recomputed against -1.147879 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "tied to induced E vs_v1",
+   "status": "ok",
+   "detail": "+0.637600 recomputed against +0.637600 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "tied + d x d transform vs_control",
+   "status": "ok",
+   "detail": "-1.186013 recomputed against -1.186013 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "tied + d x d transform vs_v1",
+   "status": "ok",
+   "detail": "+0.599467 recomputed against +0.599467 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "tied + n-gram (one-hot positions) vs_control",
+   "status": "ok",
+   "detail": "-1.627402 recomputed against -1.627402 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "tied + n-gram (one-hot positions) vs_v1",
+   "status": "ok",
+   "detail": "+0.158077 recomputed against +0.158077 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "wrap + residual MLP vs_control",
+   "status": "ok",
+   "detail": "-1.198350 recomputed against -1.198350 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "wrap + residual MLP vs_v1",
+   "status": "ok",
+   "detail": "+0.587129 recomputed against +0.587129 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "wrapped positions vs_control",
+   "status": "ok",
+   "detail": "-1.191905 recomputed against -1.191905 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "wrapped positions vs_v1",
+   "status": "ok",
+   "detail": "+0.593574 recomputed against +0.593574 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "Fourier positions vs_control",
+   "status": "ok",
+   "detail": "-0.946834 recomputed against -0.946834 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "Fourier positions vs_v1",
+   "status": "ok",
+   "detail": "+0.838645 recomputed against +0.838645 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "wrap + n-gram vs_control",
+   "status": "ok",
+   "detail": "-1.637282 recomputed against -1.637282 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "wrap + n-gram vs_v1",
+   "status": "ok",
+   "detail": "+0.148198 recomputed against +0.148198 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "byte head + end-of-token vs_control",
+   "status": "ok",
+   "detail": "-1.335180 recomputed against -1.335180 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "byte head + end-of-token vs_v1",
+   "status": "ok",
+   "detail": "+0.450299 recomputed against +0.450299 published",
+   "constant_by_construction": false
+  },
+  {
+   "check": "checkpoint dense tied embedding seed 0",
+   "status": "ok",
+   "detail": "16,636,415 bytes, digest matches",
+   "constant_by_construction": false
+  },
+  {
+   "check": "checkpoint dense tied embedding seed 1",
+   "status": "ok",
+   "detail": "16,636,415 bytes, digest matches",
+   "constant_by_construction": false
+  },
+  {
+   "check": "checkpoint dense tied embedding seed 2",
+   "status": "ok",
+   "detail": "16,636,415 bytes, digest matches",
+   "constant_by_construction": false
+  },
+  {
+   "check": "checkpoint dense tied embedding seed 3",
+   "status": "ok",
+   "detail": "16,636,415 bytes, digest matches",
+   "constant_by_construction": false
+  },
+  {
+   "check": "checkpoint dense tied embedding seed 4",
+   "status": "ok",
+   "detail": "16,636,415 bytes, digest matches",
+   "constant_by_construction": false
+  },
+  {
+   "check": "checkpoint tied + n-gram (one-hot positions) seed 0",
+   "status": "ok",
+   "detail": "28,943,743 bytes, digest matches",
+   "constant_by_construction": false
+  },
+  {
+   "check": "checkpoint tied + n-gram (one-hot positions) seed 1",
+   "status": "ok",
+   "detail": "28,943,743 bytes, digest matches",
+   "constant_by_construction": false
+  },
+  {
+   "check": "checkpoint tied + n-gram (one-hot positions) seed 2",
+   "status": "ok",
+   "detail": "28,943,743 bytes, digest matches",
+   "constant_by_construction": false
+  },
+  {
+   "check": "checkpoint tied + n-gram (one-hot positions) seed 3",
+   "status": "ok",
+   "detail": "28,943,743 bytes, digest matches",
+   "constant_by_construction": false
+  },
+  {
+   "check": "checkpoint tied + n-gram (one-hot positions) seed 4",
+   "status": "ok",
+   "detail": "28,943,743 bytes, digest matches",
+   "constant_by_construction": false
+  },
+  {
+   "check": "checkpoint v1 - Kronecker in, untied head seed 0",
+   "status": "ok",
+   "detail": "26,995,349 bytes, digest matches",
+   "constant_by_construction": false
+  },
+  {
+   "check": "checkpoint v1 - Kronecker in, untied head seed 1",
+   "status": "ok",
+   "detail": "26,995,349 bytes, digest matches",
+   "constant_by_construction": false
+  },
+  {
+   "check": "checkpoint v1 - Kronecker in, untied head seed 2",
+   "status": "ok",
+   "detail": "26,995,349 bytes, digest matches",
+   "constant_by_construction": false
+  },
+  {
+   "check": "checkpoint v1 - Kronecker in, untied head seed 3",
+   "status": "ok",
+   "detail": "26,995,349 bytes, digest matches",
+   "constant_by_construction": false
+  },
+  {
+   "check": "checkpoint v1 - Kronecker in, untied head seed 4",
+   "status": "ok",
+   "detail": "26,995,349 bytes, digest matches",
+   "constant_by_construction": false
+  }
+ ]
+}

@@ -64,7 +64,17 @@ target-version = "py312"
 # in Python clothing — its long lines are markdown prose and cell source, and one of them is a
 # Colab badge URL that cannot be wrapped at all. It is held to the notebook standard instead:
 # every cell is executed before commit, and `test_mixture_notebook.py` checks the structural rules.
-extend-exclude = ["notebooks/", "**/tools/build_notebook.py"]
+# And `prior-run/` is RECOVERED CODE, not ours. It is the driver of the earlier run that
+# `results/measurements.json` reports, pulled back out of an agent's recorded tool calls after the
+# scratch directory holding it was cleared. Its value is that it is *what ran* — reformatting it,
+# renaming a variable or fixing an import would destroy exactly the property that makes it evidence.
+# Two docstring lines were changed to clear the vocabulary gate and both are recorded in that
+# directory's README beside the digests of the files as recovered; nothing else was touched.
+extend-exclude = [
+    "notebooks/",
+    "**/tools/build_notebook.py",
+    "src/exercises/07-model-embeddings-internals/prior-run/",
+]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "N", "UP", "B", "SIM", "C4", "D"]

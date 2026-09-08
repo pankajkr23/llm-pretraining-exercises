@@ -1,0 +1,524 @@
+{
+ "what": "The same specification run twice on exercise 02's corpus, differing only in whether the Tamil file -- 63.2% [UNK] under the frozen vocabulary -- is among the languages read. The confounded run declares the [UNK] gate it ignores, so no artefact of it can be quoted without that declaration attached.",
+ "languages": {
+  "confounded": [
+   "en",
+   "hi",
+   "ta",
+   "te"
+  ],
+  "clean": [
+   "en",
+   "hi",
+   "mai",
+   "te"
+  ]
+ },
+ "config_fingerprints": {
+  "confounded": "03dbd28129f1",
+  "clean": "de99fd2d2f2f"
+ },
+ "corpus": {
+  "confounded": {
+   "unfunded_lanes": [],
+   "lanes_usable": true,
+   "minimum_sequences": 22,
+   "failing_gates": [
+    "unk"
+   ],
+   "acknowledged_defects": [
+    "unk"
+   ],
+   "undeclared_defects": [],
+   "source": "src/exercises/02-tokenization/corpus/v2 (en, hi, ta, te)",
+   "corpus": "tokenization",
+   "lanes": [
+    {
+     "lane": "en",
+     "language": "en",
+     "licence": "",
+     "licence_recorded": false,
+     "provenance_tier": "C",
+     "tokens": 110985,
+     "unk": 0,
+     "unk_share": 0.0,
+     "unk_usable": true,
+     "digest": "sha256:1d3163d4a5acf4d2c403b21534f8f16af05c08ba556204cb8fab09cd8b39bd5f",
+     "sequences": 525,
+     "tokens_read": 33600,
+     "epochs": 0.30274361400189215
+    },
+    {
+     "lane": "hi",
+     "language": "hi",
+     "licence": "",
+     "licence_recorded": false,
+     "provenance_tier": "C",
+     "tokens": 50868,
+     "unk": 0,
+     "unk_share": 0.0,
+     "unk_usable": true,
+     "digest": "sha256:2cfd27987d3bcb01ef2ffe9fdb7a1fe036b6056088b22ef0308f5fa013dbf44f",
+     "sequences": 240,
+     "tokens_read": 15360,
+     "epochs": 0.3019580089643784
+    },
+    {
+     "lane": "ta",
+     "language": "ta",
+     "licence": "",
+     "licence_recorded": false,
+     "provenance_tier": "C",
+     "tokens": 321909,
+     "unk": 203495,
+     "unk_share": 0.632150700974499,
+     "unk_usable": false,
+     "digest": "sha256:d1686d9db3d046869b1748679f130267a1ed9fc9566684cc96e1a9c7b19b9212",
+     "sequences": 1521,
+     "tokens_read": 97344,
+     "epochs": 0.3023960187506407
+    },
+    {
+     "lane": "te",
+     "language": "te",
+     "licence": "",
+     "licence_recorded": false,
+     "provenance_tier": "C",
+     "tokens": 24119,
+     "unk": 0,
+     "unk_share": 0.0,
+     "unk_usable": true,
+     "digest": "sha256:2bedd0cf1767f5d660838ff216d6c64ba1753d7350be1025c4e2acc565fb57c3",
+     "sequences": 114,
+     "tokens_read": 7296,
+     "epochs": 0.3025001036527219
+    }
+   ],
+   "corpus_tokens": 507881,
+   "corpus_unk": 203495,
+   "unk_share": 0.40067456746757607,
+   "max_unk_share": 0.05,
+   "unk_usable": false,
+   "corpus_digest": "sha256:ce64a4fdefcc750916f76b12ea2d25963f9b619f2685fd1f316f21a799d9896b",
+   "tokens_consumed": 153600,
+   "epochs": 0.3024330502617739,
+   "max_epochs": 1.0,
+   "epochs_usable": true
+  },
+  "clean": {
+   "unfunded_lanes": [],
+   "lanes_usable": true,
+   "minimum_sequences": 50,
+   "failing_gates": [],
+   "acknowledged_defects": [],
+   "undeclared_defects": [],
+   "source": "src/exercises/02-tokenization/corpus/v2 (en, hi, mai, te)",
+   "corpus": "tokenization",
+   "lanes": [
+    {
+     "lane": "en",
+     "language": "en",
+     "licence": "",
+     "licence_recorded": false,
+     "provenance_tier": "C",
+     "tokens": 110985,
+     "unk": 0,
+     "unk_share": 0.0,
+     "unk_usable": true,
+     "digest": "sha256:1d3163d4a5acf4d2c403b21534f8f16af05c08ba556204cb8fab09cd8b39bd5f",
+     "sequences": 1404,
+     "tokens_read": 89856,
+     "epochs": 0.8096229220164887
+    },
+    {
+     "lane": "hi",
+     "language": "hi",
+     "licence": "",
+     "licence_recorded": false,
+     "provenance_tier": "C",
+     "tokens": 50868,
+     "unk": 0,
+     "unk_share": 0.0,
+     "unk_usable": true,
+     "digest": "sha256:2cfd27987d3bcb01ef2ffe9fdb7a1fe036b6056088b22ef0308f5fa013dbf44f",
+     "sequences": 643,
+     "tokens_read": 41152,
+     "epochs": 0.8089958323503971
+    },
+    {
+     "lane": "mai",
+     "language": "mai",
+     "licence": "",
+     "licence_recorded": false,
+     "provenance_tier": "C",
+     "tokens": 3813,
+     "unk": 0,
+     "unk_share": 0.0,
+     "unk_usable": true,
+     "digest": "sha256:946d3c4286bfad746985f97d7506f5170c02ca175ea7111243e749d1037feeae",
+     "sequences": 48,
+     "tokens_read": 3072,
+     "epochs": 0.8056648308418568
+    },
+    {
+     "lane": "te",
+     "language": "te",
+     "licence": "",
+     "licence_recorded": false,
+     "provenance_tier": "C",
+     "tokens": 24119,
+     "unk": 0,
+     "unk_share": 0.0,
+     "unk_usable": true,
+     "digest": "sha256:2bedd0cf1767f5d660838ff216d6c64ba1753d7350be1025c4e2acc565fb57c3",
+     "sequences": 305,
+     "tokens_read": 19520,
+     "epochs": 0.8093204527550893
+    }
+   ],
+   "corpus_tokens": 189785,
+   "corpus_unk": 0,
+   "unk_share": 0.0,
+   "max_unk_share": 0.05,
+   "unk_usable": true,
+   "corpus_digest": "sha256:4500f9d1bbe821932159d8ad1a81b524890263fedb1b03435d7e7d664a53b654",
+   "tokens_consumed": 153600,
+   "epochs": 0.8093368812076823,
+   "max_epochs": 1.0,
+   "epochs_usable": true
+  }
+ },
+ "control": "dense tied embedding",
+ "reference": "v1 - Kronecker in, untied head",
+ "rows": [
+  {
+   "arm": "dense tied embedding",
+   "v_free": false,
+   "confounded": {
+    "gap": 0.585239681005478,
+    "sd": 0.029033369961867183,
+    "t": 45.07350375024742,
+    "seeds_agreeing": "5/5"
+   },
+   "clean": {
+    "gap": 1.1209426727294924,
+    "sd": 0.019188418912017446,
+    "t": 130.6258752529973,
+    "seeds_agreeing": "5/5"
+   },
+   "moved_by": 0.5357029917240145,
+   "sign_flipped": false
+  },
+  {
+   "arm": "tied to induced E",
+   "v_free": true,
+   "confounded": {
+    "gap": -0.026812101125717015,
+    "sd": 0.01680611505425009,
+    "t": -3.567372979607219,
+    "seeds_agreeing": "5/5"
+   },
+   "clean": {
+    "gap": -0.1845305252075196,
+    "sd": 0.008407536975478101,
+    "t": -49.077726270039776,
+    "seeds_agreeing": "5/5"
+   },
+   "moved_by": -0.1577184240818026,
+   "sign_flipped": false
+  },
+  {
+   "arm": "tied + d x d transform",
+   "v_free": true,
+   "confounded": {
+    "gap": -0.04440957236289975,
+    "sd": 0.015469408923781494,
+    "t": -6.41930297042437,
+    "seeds_agreeing": "5/5"
+   },
+   "clean": {
+    "gap": -0.23180023765563967,
+    "sd": 0.013225388804436636,
+    "t": -39.191368682086605,
+    "seeds_agreeing": "5/5"
+   },
+   "moved_by": -0.18739066529273993,
+   "sign_flipped": false
+  },
+  {
+   "arm": "tied + n-gram (one-hot positions)",
+   "v_free": true,
+   "confounded": {
+    "gap": -0.1955369243621825,
+    "sd": 0.01593228082768852,
+    "t": -27.44326814935445,
+    "seeds_agreeing": "5/5"
+   },
+   "clean": {
+    "gap": -0.5511882209777834,
+    "sd": 0.017018593208270094,
+    "t": -72.42045893103405,
+    "seeds_agreeing": "5/5"
+   },
+   "moved_by": -0.3556512966156009,
+   "sign_flipped": false
+  },
+  {
+   "arm": "wrap + residual MLP",
+   "v_free": true,
+   "confounded": {
+    "gap": -0.06075973653793332,
+    "sd": 0.013057753634407933,
+    "t": -10.404768308370443,
+    "seeds_agreeing": "5/5"
+   },
+   "clean": {
+    "gap": -0.2811199207305906,
+    "sd": 0.010336547353761388,
+    "t": -60.81365770110938,
+    "seeds_agreeing": "5/5"
+   },
+   "moved_by": -0.2203601841926573,
+   "sign_flipped": false
+  },
+  {
+   "arm": "wrapped positions",
+   "v_free": true,
+   "confounded": {
+    "gap": -0.06437222695350649,
+    "sd": 0.013853805412874225,
+    "t": -10.389973804404805,
+    "seeds_agreeing": "5/5"
+   },
+   "clean": {
+    "gap": -0.28123008537292477,
+    "sd": 0.006573359035343145,
+    "t": -95.66639899490926,
+    "seeds_agreeing": "5/5"
+   },
+   "moved_by": -0.2168578584194183,
+   "sign_flipped": false
+  },
+  {
+   "arm": "Fourier positions",
+   "v_free": true,
+   "confounded": {
+    "gap": 0.0840340876579285,
+    "sd": 0.020041970084994556,
+    "t": 9.375621839241722,
+    "seeds_agreeing": "5/5"
+   },
+   "clean": {
+    "gap": -0.04868741035461408,
+    "sd": 0.013101231227478093,
+    "t": -8.309780761140015,
+    "seeds_agreeing": "5/5"
+   },
+   "moved_by": -0.13272149801254257,
+   "sign_flipped": true
+  },
+  {
+   "arm": "wrap + n-gram",
+   "v_free": true,
+   "confounded": {
+    "gap": -0.2153001263141631,
+    "sd": 0.014291216856454923,
+    "t": -33.68682477065024,
+    "seeds_agreeing": "5/5"
+   },
+   "clean": {
+    "gap": -0.5947125854492187,
+    "sd": 0.01254801074510879,
+    "t": -105.97837339735047,
+    "seeds_agreeing": "5/5"
+   },
+   "moved_by": -0.3794124591350556,
+   "sign_flipped": false
+  },
+  {
+   "arm": "byte head + end-of-token",
+   "v_free": true,
+   "confounded": {
+    "gap": 1.1378137307167056,
+    "sd": 0.09112850740362843,
+    "t": 27.919132224411825,
+    "seeds_agreeing": "5/5"
+   },
+   "clean": {
+    "gap": 2.7884947338104253,
+    "sd": 0.1315070357902029,
+    "t": 47.4139177591045,
+    "seeds_agreeing": "5/5"
+   },
+   "moved_by": 1.6506810030937198,
+   "sign_flipped": false
+  }
+ ],
+ "per_seed": {
+  "confounded": {
+   "dense tied embedding": [
+    3.9091178393363952,
+    3.696629376411438,
+    3.9929701900482177,
+    3.8442100167274473,
+    3.9395820355415343
+   ],
+   "v1 - Kronecker in, untied head": [
+    3.2965569162368773,
+    3.125300257205963,
+    3.4145222198963165,
+    3.2966582989692688,
+    3.3232733607292175
+   ],
+   "tied to induced E": [
+    3.2819080579280855,
+    3.0831565940380097,
+    3.3706387305259704,
+    3.291158137321472,
+    3.29538902759552
+   ],
+   "tied + d x d transform": [
+    3.2599854362010956,
+    3.0674307441711424,
+    3.3518837225437164,
+    3.2711698746681215,
+    3.2837934136390685
+   ],
+   "tied + n-gram (one-hot positions)": [
+    3.1043840980529787,
+    2.9343729889392853,
+    3.1964674901962282,
+    3.1219942784309387,
+    3.1214075756072996
+   ],
+   "wrap + residual MLP": [
+    3.24025453209877,
+    3.053792893886566,
+    3.3381505572795866,
+    3.252464590072632,
+    3.2678497970104217
+   ],
+   "wrapped positions": [
+    3.2324270391464234,
+    3.04937975525856,
+    3.334377461671829,
+    3.2427515268325804,
+    3.2755141353607176
+   ],
+   "Fourier positions": [
+    3.4022602438926697,
+    3.1830296862125396,
+    3.4839037358760834,
+    3.385618326663971,
+    3.421669498682022
+   ],
+   "wrap + n-gram": [
+    3.076929258108139,
+    2.912129019498825,
+    3.180380952358246,
+    3.102303297519684,
+    3.1080678939819335
+   ],
+   "byte head + end-of-token": [
+    4.447599021196365,
+    4.134133687019348,
+    4.630592608451844,
+    4.384011068344116,
+    4.549043321609497
+   ]
+  },
+  "clean": {
+   "dense tied embedding": [
+    8.248922958374024,
+    8.280613918304443,
+    8.247199449539185,
+    8.263751363754272,
+    8.261233777999879
+   ],
+   "v1 - Kronecker in, untied head": [
+    7.13893383026123,
+    7.134883575439453,
+    7.150898122787476,
+    7.131372709274292,
+    7.14091986656189
+   ],
+   "tied to induced E": [
+    6.949599227905273,
+    6.9415607929229735,
+    6.979003200531006,
+    6.950657501220703,
+    6.953534755706787
+   ],
+   "tied + d x d transform": [
+    6.90097674369812,
+    6.887789306640625,
+    6.939708833694458,
+    6.90114688873291,
+    6.90838514328003
+   ],
+   "tied + n-gram (one-hot positions)": [
+    6.580509395599365,
+    6.569399137496948,
+    6.622386789321899,
+    6.593520698547363,
+    6.575250978469849
+   ],
+   "wrap + residual MLP": [
+    6.866285285949707,
+    6.841032810211182,
+    6.882361850738525,
+    6.846612243652344,
+    6.855116310119629
+   ],
+   "wrapped positions": [
+    6.8633904457092285,
+    6.844329404830932,
+    6.876590566635132,
+    6.848847589492798,
+    6.857699670791626
+   ],
+   "Fourier positions": [
+    7.077099676132202,
+    7.076249027252198,
+    7.099233264923096,
+    7.089973602294922,
+    7.1110154819488525
+   ],
+   "wrap + n-gram": [
+    6.542504501342774,
+    6.531449003219604,
+    6.573450841903687,
+    6.543956604003906,
+    6.532084226608276
+   ],
+   "byte head + end-of-token": [
+    9.868166246414184,
+    10.093654518127442,
+    9.76187749862671,
+    9.914728937149048,
+    10.001054573059083
+   ]
+  }
+ },
+ "provenance": {
+  "config_fingerprint": "de99fd2d2f2f",
+  "code_digest": "sha256:99c76b0b066f3f1989276e065cef7cfba18b01c4a1e52a55aef59f011e9e622a",
+  "git_sha": "49d599b3e2455f3215071875eea4215ce375d28c",
+  "tokenizer_digest": "sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae",
+  "environment": {
+   "python": "3.12.13",
+   "torch": "2.13.0",
+   "numpy": "2.5.2",
+   "platform": "macOS-26.6.2-arm64-arm-64bit",
+   "machine": "arm64",
+   "torch_threads": 12,
+   "omp_num_threads": "unset",
+   "device": "mps",
+   "cuda_available": false,
+   "mps_built": true,
+   "mps_available": true,
+   "mps_unavailable_but_built": false
+  }
+ },
+ "seconds": 547.2277939319611
+}

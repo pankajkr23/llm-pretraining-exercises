@@ -12,6 +12,214 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Changed
 
+- **Exercise 07's trained comparison stops reading a corpus that is 40% `[UNK]`, and three gates
+  make that impossible to do again.** The corpus it trained on was exercise 02's four Wikipedia
+  articles, and the frozen 10k vocabulary has no Tamil: `ta.faithful.txt` tokenizes to **63.2%**
+  `[UNK]`, dragging the whole corpus to **40.07%** — against a 5% ceiling exercise 04 publishes
+  counts under and exercises 05 and 06 already import. Exercise 07 was the only exercise in the
+  repository that never measured this.
+
+  **What that share was actually worth was then measured rather than argued, and it is the opposite
+  of what was expected.** The reasoning for fixing it was that `[UNK]` has one fixed byte spelling,
+  so a byte-n-gram head predicts it for free — a confound aimed at the winning arm.
+  `tools/measure_unk_confound.py` runs the same specification twice on that corpus with the
+  unreadable language swapped out, and removing it makes the recommendation win by **more**
+  (−0.196 → −0.551 against v1), with **every** arm's gap growing by roughly 2–2.5× in whichever
+  direction it already pointed. So the `[UNK]` share was not a selective advantage; it was a
+  **dilution** — a token that is 40% of the corpus and trivially predictable compresses every
+  difference toward zero. The corpus was still the right thing to fix, because a comparison run
+  through that dilution understates every effect it reports, but the reason is not the one that
+  motivated the fix.
+
+  The default corpus is now **exercise 06's fetched six-lane corpus** — 11,781,888 tokens, a
+  licence recorded per lane and verified from each dataset's own card at fetch time, against
+  exercise 02's records which carry a URL and a timestamp and **no licence field at all**. Its
+  worst lane measures 0.531% `[UNK]` and the whole corpus 0.209%. Exercise 02's corpus stays as the
+  offline fallback so a clone with no network can still run the tests, chosen explicitly and
+  **never substituted silently**: a run that quietly read different text than it was asked to is
+  indistinguishable from one that read the right text.
+
+  **Three gates, each a condition on a measured quantity rather than a rule about a named corpus**,
+  and each watched refusing something real before it was committed. `[UNK]` share at or below
+  exercise 04's `MAX_UNK_SHARE`, per lane and overall. Epochs at or below 1.00 — the fallback reads
+  **1.35** epochs at 500 steps and passes below 370, which is precisely why "corpus X is fine" could
+  never have been the rule. And every lane funded with at least one sequence, because an experiment
+  that cannot see a lane is not evidence about that lane.
+
+  **Batches are now drawn proportionally per lane, and finding that was the reason the corpus swap
+  is not a path change.** The batcher concatenated every lane and took the first
+  `steps × batch × seq_len` ids — harmless against 189,785 tokens and fatal against 11.8M, where
+  256,000 positions off the front is the agentic lane and a sliver of code. Indic, reasoning, stem
+  and web would never have been seen at all, in the exercise whose entire claim is what a byte
+  window costs non-Latin scripts, and every loss curve would have looked normal. Every lane now
+  reads at the same ratio — 0.0217 epochs each — which also preserves exercise 05's mixture weights
+  for free, since exercise 06's corpus is already sized to them.
+
+- **Every exercise 07 run now writes a numbered directory holding what went in, what was built,
+  what happened and what came out.** The published comparison had a bundle and nothing else — the
+  conclusion of each stage and none of the material — so a reader could not see what text went in,
+  what was built, how the loss got where it got, or what came out. Each run writes
+  `artifacts/runs/<date>-<config_fingerprint>/`: the exact id stream each seed consumed as a `.npy`
+  alongside its `data_digest`, the lane table, a weight digest for every model at step zero, a
+  per-step CSV of loss **and** pre-clip gradient norm, and trained weights plus a sidecar for the
+  control, the published bar and the recommendation. It is written **as the run goes**, because a
+  writer that ran at the end would lose everything if the run died at step 400 — this repository
+  has already lost fifteen trained models to a driver that fell over on its final statement.
+
+- **A run records the device it actually used, the order each seed actually saw, and the loss of
+  each lane.** `experiment.py` recorded `"device": "cpu"` as a literal, so a run on Apple's GPU
+  would have claimed to be a CPU run; it now records the resolved device and, separately,
+  `mps_built` and `mps_available`, whose disagreement is the signature of the sandbox trap that
+  already cost exercise 05 a throughput measurement. `data_digest` pins the order each seed
+  consumed — which neither the corpus digest nor the config fingerprint could, and the order is
+  what a seed changes — with `batching_version` beside it so a stored digest stays re-derivable.
+  And the gradient norm recorded is the **pre-clip** one, since the post-clip value is
+  `min(true, clip)` and is pinned exactly when it is worth seeing.
+
+- **Loss is now reported per lane, which is the measurement this exercise's own claim asks for.**
+  The argument is that a fixed byte window costs non-Latin scripts more than English, and nothing
+  here has ever reported loss by script. It is deliberately not a per-lane *token count*: that is
+  the allocation the configuration already fixes, unable to move whatever the run does, and
+  recording such a quantity as a measurement is worse than omitting it.
+
+- **Exercise 07 gains two auditors a sceptic can run, and neither can agree with the producer by
+  construction.** `verify.py` re-derives every number in a run directory from the material the run
+  left behind — the arms table recomputed from the per-step traces, each digest recomputed from the
+  bytes it names — importing **nothing** from `embeddings`, because a verifier that called
+  `summary.paired` to check a gap would be checking the producer's arithmetic with the producer's
+  arithmetic and would agree with itself however wrong either was. A test asserts that import
+  closure, and six more move exactly one number in an otherwise correct directory and assert the
+  verifier says so.
+
+  It holds two rules exercise 06's does not, both found by auditing it. A check whose inputs are
+  absent reports **`unverifiable`**, which is a third outcome and not a pass — 06's verifier grades
+  two rows against files its bundle never ships. And a number that no input to the run can move is
+  flagged **on its own row**, because a caveat in a module docstring three files away is not where
+  a reader meets the number.
+
+- **`evidence.py` grades each published claim against the artefact behind it — and its tests were
+  written first.** Exercise 06's equivalent has no test file and no test anywhere imports it, while
+  its docstring promises rows derived from an artifact rather than from memory; that module was the
+  obvious one to copy, so the gap is what this one exists not to inherit. Ten claims, four of them
+  negative results, because a register listing only the wins would report a cleaner exercise than
+  the one that was run.
+
+  Writing the tests first paid immediately: the first implementation graded the invertibility claim
+  `unmet` by reading a field the recovery block does not have, and reading a single column would
+  have let one lucky construction of `W` carry a claim that is about all three.
+
+- **The `attribution` block is now checked.** It is this exercise's central decomposition — how much
+  of the win is the n-gram term and how much is wrapped positions — and no test had ever read it.
+  Every one of its numbers now recomputes from the per-seed losses published in the same file, gap,
+  standard deviation and t alike, along with the `wrap_on_top_of_5` scalar beside it. All of them
+  hold.
+
+- **A run may now be made on a corpus that fails a gate, by declaring the gate it fails.** Measuring
+  how much of a result was an artefact of a bad corpus requires running on the bad corpus, so a gate
+  with no way through would not have protected the claim — it would have made the confound
+  unmeasurable and left "the corpus was the cause" an assertion. `acknowledged_corpus_defects` names
+  the gate, and it is a declaration rather than a flag: it lives in `RunConfig`, so it moves
+  `config_fingerprint` and travels into the bundle, the run manifest and every checkpoint sidecar,
+  and `verify.py` fails any audit of a run that declared one. You can run it; you cannot get a
+  clean audit of it, and no artefact of it can be quoted without the declaration attached.
+
+- **The determinism check reports a magnitude against the effect size, not a boolean.** A yes/no on
+  floating point is the wrong instrument for a GPU. Measured: the full grid run twice is
+  **bit-identical on CPU** (0.000e+00) and differs on **50 of 50 arm-seeds on MPS** by at most
+  **9.537e-07** — one float32 ULP near a loss of 5, from a non-deterministic reduction order, and
+  about 150,000x smaller than the smallest effect the grid claims. A boolean reports those two as
+  the same failure.
+
+- **The corpus can be restricted to named lanes**, so a question the whole-corpus run cannot answer
+  — whether the method's advantage tracks the script the text is written in — can be asked one lane
+  at a time. It is a `RunConfig` field rather than a caller-side filter, because it changes the
+  numbers and therefore belongs in the fingerprint.
+
+- **What the corpus is worth, measured under control rather than argued.** Exercise 07's published
+  win exists on exercise 02's corpus and on nothing else tried. Four candidate causes were tested:
+  the `[UNK]` share (removing it makes the recommendation win by *more*), the step count (300 and
+  500 both lose on exercise 06's corpus), the script mix (the method does *worst* on the Indic
+  lane), and corpus size and epoch fraction — `RunConfig.corpus_token_budget` holds the last of
+  these fixed, and the result is unchanged.
+
+  The tightest comparison the repository can make: exercise 02's three Indic files, one article in
+  three scripts, against exercise 06's `indic` lane, unrelated Indic documents — **both trimmed to
+  78,800 tokens, both reading 0.9746 epochs**, same vocabulary, same steps, same seeds. **Six of
+  nine arms change sign between them.** The recommendation goes from **−0.735** against v1 to
+  **+0.000**. So the effect is a property of the text and not of how much of it was read.
+
+  **The mechanism is not established, and the tool says so rather than implying one.** The obvious
+  candidate is byte-n-gram sharing across translations, and the measurement of it *inverts* with
+  the n-gram length: at 8 and 16 bytes the ordinary corpus shares more, at 32 and 64 the parallel
+  one does. `measure_parallel_text.py` reports every length and refuses a verdict when the ordering
+  flips, because a single length would have been an arbitrary choice the whole conclusion rested on.
+
+- **`results/` now carries the re-run and an index of what produced it.** `publish_rerun.py` is a
+  deliberate step, never called by a run: it trims the per-step curves — 50,000 floats no document
+  renders — and keeps everything needed to recompute every gap, taking the bundle from 1,400 KB to
+  55 KB. `results/MANIFEST.md` is generated from the tracked bundles in `results/` and nothing else,
+  so it rebuilds in a fresh clone; a manifest generated from the gitignored run directories would
+  be a tracked document only its author could regenerate. Its dashes are the point: the inherited
+  `measurements.json` cannot say which settings, which commit, which machine or which text made it.
+
+  **The repo-wide vocabulary gate caught a real leak in the first attempt at this**, which is what
+  it is for: the corpus block is copied from exercise 06's fetch manifest, and one lane's free-text
+  `dataset` value there is phrased in the course's own vocabulary. Gitignored, that is exercise
+  06's business; copied into `results/` it becomes this exercise's, and the commit was refused.
+  Free text from another exercise's manifest no longer crosses into a tracked file, and a guard
+  asserts both halves — that it does not cross, and that everything identifying the material
+  (licence, language, tier, token and `[UNK]` counts, and a `sha256` over the text) still does.
+
+- **The reproducibility record is now in git, not only on the machine that produced it.** A run
+  directory is gitignored, so a clone could read a published number and not the manifest describing
+  the run behind it — and a reproducibility record nobody can open is not one. `results/` now
+  carries, per published run, `runs/<run-id>/manifest.json` (what the run was) and
+  `runs/<run-id>/audit.json` (what an independent re-derivation found), plus the three measurement
+  bundles that are the evidence for claims the documents make: `unk_confound.json`,
+  `lane_sensitivity.json` and `parallel_text.json`. Three guards hold it: the manifest must
+  regenerate byte-for-byte, every published bundle's run record must be tracked and describe the
+  same run, and a published run's own audit must report nothing failed or unverifiable. All three
+  were watched going red.
+
+- **The code that produced the *previous* run is tracked, in `prior-run/`.** Thirteen of the fifteen
+  blocks in `results/measurements.json` name a `k2/…` file as their source, and every one of those
+  pointed at a file nobody could open: the run was driven from a scratch directory under `/tmp`
+  that was later cleared. Seven files were recovered from an agent's own recorded tool calls and are
+  tracked as **evidence, not a build step** — the import paths point at a directory that no longer
+  exists.
+
+  The directory is excluded from `ruff` deliberately: reformatting recovered code would destroy the
+  property that makes it evidence, that it is what ran. Exactly two docstring lines were changed, to
+  clear the vocabulary gate, and both are recorded in `prior-run/README.md` beside a `sha256` of
+  each file as recovered. One recovered file is **not** tracked — `RESULTS.md` quotes the course's
+  own wording verbatim. **Nine more were never recovered**, `summary.py` among them, which produced
+  the ten-arm headline table; that document says so rather than leaving a reader to discover it.
+
+### Fixed
+
+- **A run's per-step trace was rounded to six decimal places, so it could not re-derive the mean it
+  is the material for.** Found by running the new verifier against the first real run: it reported
+  all ten arms as failing while printing `6.607202 recomputed against 6.607202 published`. Six
+  decimals are enough to *display* a loss and not enough to *reproduce a mean of five of them*, so
+  the file that exists to let a reader re-derive the conclusion could not. Traces are now written
+  with `repr`, which round-trips a float exactly, and a test asserts the trace reads back as the
+  losses it was written from. The tolerance was left at `1e-9` rather than loosened — a looser one
+  would have hidden this.
+
+- **An arm in exercise 07's registry was named for a model it was not.** `"tied + residual MLP"`
+  was built on one-hot positions, while the row of that name in `results/measurements.json` came
+  from a driver that called it `v2-wrap-M-MLP` and built it on **wrapped** positions. The published
+  −0.002 nats is therefore a gap against `wrapped positions`, and quoting it beside a one-hot arm
+  compares it to a baseline it was never measured against — with every number plausible and nothing
+  failing. It is now built on wrap and named `"wrap + residual MLP"`, and a guard reads each built
+  head's own configuration rather than the registry's arguments, so it is a check and not a mirror.
+
+- **Exercise 07's `code_digest` vouched for code it never read.** It covered `embeddings/` alone,
+  while the transformer body comes from exercise 09's `lossheads.model` and the corpus is parsed by
+  exercise 06's `trainingdata.corpus` — an edit to either moves every number in a bundle. It now
+  covers all three packages, and a test plants a module in each and asserts the digest moves; the
+  old digest was verified not to move for two of the three.
+
 - **Exercise 07's notebook is rebuilt around the pipeline it teaches: input → process → output.**
   It taught the *analysis* well — the budget arithmetic, the recovery certificate, the truncation
   collisions — and never once showed how a Kronecker embedding is actually made. It showed the

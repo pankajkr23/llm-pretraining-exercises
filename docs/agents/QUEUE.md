@@ -918,4 +918,29 @@ predates the harness — so it is logged as what it was.
                           provenance, the recovered per-seed arrays and the notebook are all sound
                           and PR A depends on them. Invertibility, collisions and the parameter
                           arithmetic are properties of the vocabulary and are unaffected
+2026-09-08  exercise-07   #157 opened: the comparison can be checked now, and its conclusion did
+                          not survive. Corpus swapped to exercise 06's six licence-manifested lanes
+                          (11,781,888 tokens, 0.209% [UNK]); three gates that refuse rather than
+                          warn, each watched refusing something real; proportional per-lane
+                          sampling, without which 256,000 positions off the front of an 11.8M-token
+                          corpus would have read ONE lane of six with every loss curve normal;
+                          numbered run directories; and two auditors that import nothing from the
+                          package they audit, evidence.py's tests written first because 06's
+                          equivalent has none. THE RESULT: the recommendation beats v1 on exercise
+                          02's corpus (-0.196 with the unreadable language, -0.551 without) and
+                          loses on everything else tried -- +0.158 on the six-lane mixture at 500
+                          steps, +0.201 on indic alone, +0.150 on code alone, and a 3/5-seed
+                          -0.005 on web that is noise. CORRECTION to the entry above: "the confound
+                          lands on the winning arm" was reasoning, not a measurement, and
+                          measure_unk_confound.py refutes it -- removing the unreadable language
+                          makes the recommendation win by MORE, and every arm's gap grows 2-2.5x in
+                          whichever direction it pointed, so [UNK] was a dilution rather than a
+                          selective advantage. Three candidate causes tested and refuted ([UNK],
+                          step count, script mix); one named and untested -- exercise 02's five
+                          files are the same Wikipedia article in five languages, so that corpus is
+                          parallel text. Nothing published: results/ untouched, the live page still
+                          renders the old numbers. Guards found four defects on their own,
+                          including a trace rounded to six decimals that could not re-derive the
+                          mean it is the material for. CPU is bit-identical; MPS differs by one
+                          float32 ULP (9.537e-07), so the publishable grid is the CPU one
 ```

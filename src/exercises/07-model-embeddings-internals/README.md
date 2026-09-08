@@ -216,10 +216,13 @@ recovery:  h ──> codec.targets_from_h ──> decode.recover ──> the ori
 | `collisions.py` | how many real tokens each scheme makes indistinguishable | no |
 | `budget.py` | the parameter arithmetic, including where this **stops** paying | no |
 | `heads.py` | the tied head, the `d×d` transform, the lock-breakers | **yes** |
-| `experiment.py` | the ten arms, the paired-seed runner, and every hyperparameter it turns | **yes** |
+| `experiment.py` | the ten arms, the paired-seed runner, every hyperparameter it turns, and the three gates that decide whether a corpus may be trained on | **yes** |
+| `runlog.py` | the numbered run directory — what went in, what was built, what happened, what came out | **yes** |
+| `../verify.py` | the auditor — re-derives a run's numbers from the run's own files, importing nothing from this package | no |
+| `../evidence.py` | which published claim each artefact supports, and which are not supported at all | no |
 | `summary.py` | the paired arithmetic: gap, deviation, seeds agreeing, sign test | no |
 
-Only `heads.py` and `experiment.py` need torch. That split is deliberate: the invertibility result — the load-bearing
+Only `heads.py`, `experiment.py` and `runlog.py` need torch. That split is deliberate: the invertibility result — the load-bearing
 one — is pure numpy, so CI verifies it rather than skipping it.
 
 ---

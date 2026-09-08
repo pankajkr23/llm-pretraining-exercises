@@ -1,0 +1,511 @@
+{
+ "what": "Whether this method's advantage is a property of parallel text. Exercise 02's corpus is one Wikipedia article in five languages; exercise 06's indic lane is unrelated Indic documents. Both non-Latin, same vocabulary, same steps, both under one epoch.",
+ "limits": [
+  "The two corpora differ in SOURCE and DOMAIN as well as in parallelism -- an encyclopedia article against a web crawl -- so a difference between them is not parallelism alone. It is the closest matched pair this repository holds without fetching new text.",
+  "The overlap measurement counts shared byte n-grams, which is a proxy for shared content and not a measurement of translation. Two unrelated documents about the same subject would score high on it too.",
+  "Both sides are cut into the same number of pieces of the same total size, because the share of shared n-grams falls as a corpus grows for reasons unrelated to translation. The first version of this measurement expressed each corpus as one piece and reported 0.00% for the ordinary one -- true by construction, and indistinguishable from a decisive result.",
+  "The word 'parallel' is loose. These are not translations -- nobody rendered the English article into Telugu sentence by sentence. They are four articles about one subject, written independently in four languages, which is a COMPARABLE corpus rather than a parallel one."
+ ],
+ "overlap": {
+  "parallel (02 hi+mai+te)": {
+   "8": {
+    "documents": 3,
+    "ngram": 8,
+    "occurrences": 754380,
+    "shared_occurrences": 477997,
+    "shared_share": 0.6336289403218537,
+    "distinct_ngrams": 105609,
+    "bytes": 754401
+   },
+   "16": {
+    "documents": 3,
+    "ngram": 16,
+    "occurrences": 754356,
+    "shared_occurrences": 271301,
+    "shared_share": 0.35964584360699725,
+    "distinct_ngrams": 309763,
+    "bytes": 754401
+   },
+   "32": {
+    "documents": 3,
+    "ngram": 32,
+    "occurrences": 754308,
+    "shared_occurrences": 118232,
+    "shared_share": 0.15674233867332707,
+    "distinct_ngrams": 522358,
+    "bytes": 754401
+   },
+   "64": {
+    "documents": 3,
+    "ngram": 64,
+    "occurrences": 754212,
+    "shared_occurrences": 35105,
+    "shared_share": 0.04654526843911261,
+    "distinct_ngrams": 667581,
+    "bytes": 754401
+   }
+  },
+  "ordinary (06 indic)": {
+   "8": {
+    "documents": 3,
+    "ngram": 8,
+    "occurrences": 754380,
+    "shared_occurrences": 714052,
+    "shared_share": 0.9465415307934993,
+    "distinct_ngrams": 45664,
+    "bytes": 754401
+   },
+   "16": {
+    "documents": 3,
+    "ngram": 16,
+    "occurrences": 754356,
+    "shared_occurrences": 446813,
+    "shared_share": 0.592310527125124,
+    "distinct_ngrams": 289485,
+    "bytes": 754401
+   },
+   "32": {
+    "documents": 3,
+    "ngram": 32,
+    "occurrences": 754308,
+    "shared_occurrences": 75164,
+    "shared_share": 0.09964629832906452,
+    "distinct_ngrams": 632383,
+    "bytes": 754401
+   },
+   "64": {
+    "documents": 3,
+    "ngram": 64,
+    "occurrences": 754212,
+    "shared_occurrences": 12188,
+    "shared_share": 0.016159912597519,
+    "distinct_ngrams": 724986,
+    "bytes": 754401
+   }
+  }
+ },
+ "overlap_ordering_inverts": true,
+ "corpus": {
+  "parallel": {
+   "unfunded_lanes": [],
+   "lanes_usable": true,
+   "minimum_sequences": 21,
+   "failing_gates": [],
+   "acknowledged_defects": [],
+   "undeclared_defects": [],
+   "source": "src/exercises/02-tokenization/corpus/v2 (hi, mai, te)",
+   "corpus": "tokenization",
+   "lanes": [
+    {
+     "lane": "hi",
+     "language": "hi",
+     "licence": "",
+     "licence_recorded": false,
+     "provenance_tier": "C",
+     "tokens": 50868,
+     "unk": 0,
+     "unk_share": 0.0,
+     "unk_usable": true,
+     "digest": "sha256:2cfd27987d3bcb01ef2ffe9fdb7a1fe036b6056088b22ef0308f5fa013dbf44f",
+     "sequences": 775,
+     "tokens_read": 49600,
+     "epochs": 0.9750727372808052
+    },
+    {
+     "lane": "mai",
+     "language": "mai",
+     "licence": "",
+     "licence_recorded": false,
+     "provenance_tier": "C",
+     "tokens": 3813,
+     "unk": 0,
+     "unk_share": 0.0,
+     "unk_usable": true,
+     "digest": "sha256:946d3c4286bfad746985f97d7506f5170c02ca175ea7111243e749d1037feeae",
+     "sequences": 58,
+     "tokens_read": 3712,
+     "epochs": 0.973511670600577
+    },
+    {
+     "lane": "te",
+     "language": "te",
+     "licence": "",
+     "licence_recorded": false,
+     "provenance_tier": "C",
+     "tokens": 24119,
+     "unk": 0,
+     "unk_share": 0.0,
+     "unk_usable": true,
+     "digest": "sha256:2bedd0cf1767f5d660838ff216d6c64ba1753d7350be1025c4e2acc565fb57c3",
+     "sequences": 367,
+     "tokens_read": 23488,
+     "epochs": 0.9738380529872714
+    }
+   ],
+   "corpus_tokens": 78800,
+   "corpus_unk": 0,
+   "unk_share": 0.0,
+   "max_unk_share": 0.05,
+   "unk_usable": true,
+   "corpus_digest": "sha256:15b21673d99dd9a93813894d8fb88b4a0c6491932c3d47997ca2298684715d12",
+   "tokens_consumed": 76800,
+   "epochs": 0.9746192893401016,
+   "max_epochs": 1.0,
+   "epochs_usable": true
+  },
+  "ordinary": {
+   "unfunded_lanes": [],
+   "lanes_usable": true,
+   "minimum_sequences": 1,
+   "failing_gates": [],
+   "acknowledged_defects": [],
+   "undeclared_defects": [],
+   "source": "data/corpus (exercise 06's fetched lanes)",
+   "corpus": "mixture",
+   "lanes": [
+    {
+     "lane": "indic",
+     "language": "hi",
+     "licence": "cc-by-4.0",
+     "licence_recorded": true,
+     "provenance_tier": "A",
+     "tokens": 78800,
+     "unk": 17,
+     "unk_share": 0.00021573604060913705,
+     "unk_usable": true,
+     "digest": "sha256:ba83e1b422d0fc3f34c65782d11506bfe376270e8bc6b580332f059d5a803ccd",
+     "sequences": 1200,
+     "tokens_read": 76800,
+     "epochs": 0.9746192893401016
+    }
+   ],
+   "corpus_tokens": 78800,
+   "corpus_unk": 17,
+   "unk_share": 0.00021573604060913705,
+   "max_unk_share": 0.05,
+   "unk_usable": true,
+   "corpus_digest": "sha256:33d35e67b1765010de2715d64b766bd3d04eecbc3272650a84b70fc2343159a9",
+   "tokens_consumed": 76800,
+   "epochs": 0.9746192893401016,
+   "max_epochs": 1.0,
+   "epochs_usable": true
+  }
+ },
+ "config_fingerprints": {
+  "parallel": "ea457019897e",
+  "ordinary": "eb0cb3d508d4"
+ },
+ "reference": "v1 - Kronecker in, untied head",
+ "rows": [
+  {
+   "arm": "dense tied embedding",
+   "v_free": false,
+   "gaps": {
+    "parallel (02 hi+mai+te)": {
+     "gap": 0.6148280544281002,
+     "sd": 0.01875917654360653,
+     "seeds_agreeing": "5/5"
+    },
+    "ordinary (06 indic)": {
+     "gap": 0.31108289527893085,
+     "sd": 0.010943766263238237,
+     "seeds_agreeing": "5/5"
+    }
+   }
+  },
+  {
+   "arm": "tied to induced E",
+   "v_free": true,
+   "gaps": {
+    "parallel (02 hi+mai+te)": {
+     "gap": -0.4275725746154784,
+     "sd": 0.021201335583695573,
+     "seeds_agreeing": "5/5"
+    },
+    "ordinary (06 indic)": {
+     "gap": 0.2969139308929446,
+     "sd": 0.010078813595009766,
+     "seeds_agreeing": "5/5"
+    }
+   }
+  },
+  {
+   "arm": "tied + d x d transform",
+   "v_free": true,
+   "gaps": {
+    "parallel (02 hi+mai+te)": {
+     "gap": -0.5057126274108887,
+     "sd": 0.02285664263200407,
+     "seeds_agreeing": "5/5"
+    },
+    "ordinary (06 indic)": {
+     "gap": 0.26821471405029307,
+     "sd": 0.009381688069615673,
+     "seeds_agreeing": "5/5"
+    }
+   }
+  },
+  {
+   "arm": "tied + n-gram (one-hot positions)",
+   "v_free": true,
+   "gaps": {
+    "parallel (02 hi+mai+te)": {
+     "gap": -0.7353723850250246,
+     "sd": 0.026282165085420032,
+     "seeds_agreeing": "5/5"
+    },
+    "ordinary (06 indic)": {
+     "gap": 0.00029543876647970536,
+     "sd": 0.0140959357612214,
+     "seeds_agreeing": "3/5"
+    }
+   }
+  },
+  {
+   "arm": "wrap + residual MLP",
+   "v_free": true,
+   "gaps": {
+    "parallel (02 hi+mai+te)": {
+     "gap": -0.5462587985992432,
+     "sd": 0.02621426939231936,
+     "seeds_agreeing": "5/5"
+    },
+    "ordinary (06 indic)": {
+     "gap": 0.2508857650756836,
+     "sd": 0.009401493514585498,
+     "seeds_agreeing": "5/5"
+    }
+   }
+  },
+  {
+   "arm": "wrapped positions",
+   "v_free": true,
+   "gaps": {
+    "parallel (02 hi+mai+te)": {
+     "gap": -0.5369919528961182,
+     "sd": 0.026656758638257803,
+     "seeds_agreeing": "5/5"
+    },
+    "ordinary (06 indic)": {
+     "gap": 0.26123071098327666,
+     "sd": 0.009802769892370708,
+     "seeds_agreeing": "5/5"
+    }
+   }
+  },
+  {
+   "arm": "Fourier positions",
+   "v_free": true,
+   "gaps": {
+    "parallel (02 hi+mai+te)": {
+     "gap": -0.333195333480835,
+     "sd": 0.021364669867882657,
+     "seeds_agreeing": "5/5"
+    },
+    "ordinary (06 indic)": {
+     "gap": 0.39753767585754396,
+     "sd": 0.014592497212962014,
+     "seeds_agreeing": "5/5"
+    }
+   }
+  },
+  {
+   "arm": "wrap + n-gram",
+   "v_free": true,
+   "gaps": {
+    "parallel (02 hi+mai+te)": {
+     "gap": -0.7576954631805419,
+     "sd": 0.027951458068996522,
+     "seeds_agreeing": "5/5"
+    },
+    "ordinary (06 indic)": {
+     "gap": -0.010878768920898275,
+     "sd": 0.005788904866123198,
+     "seeds_agreeing": "5/5"
+    }
+   }
+  },
+  {
+   "arm": "byte head + end-of-token",
+   "v_free": true,
+   "gaps": {
+    "parallel (02 hi+mai+te)": {
+     "gap": 5.618030572891235,
+     "sd": 0.12408450320960886,
+     "seeds_agreeing": "5/5"
+    },
+    "ordinary (06 indic)": {
+     "gap": 0.37823712539672877,
+     "sd": 0.0178325829434906,
+     "seeds_agreeing": "5/5"
+    }
+   }
+  }
+ ],
+ "per_seed": {
+  "parallel (02 hi+mai+te)": {
+   "dense tied embedding": [
+    8.024363622665405,
+    7.983049898147583,
+    8.000416116714478,
+    8.053038702011108,
+    8.008163166046142
+   ],
+   "v1 - Kronecker in, untied head": [
+    7.392709455490112,
+    7.378415222167969,
+    7.408691415786743,
+    7.416723957061768,
+    7.398351182937622
+   ],
+   "tied to induced E": [
+    6.968395462036133,
+    6.969231081008911,
+    6.951929712295533,
+    7.0097864055633545,
+    6.957685699462891
+   ],
+   "tied + d x d transform": [
+    6.903718633651733,
+    6.885702896118164,
+    6.868689641952515,
+    6.928376350402832,
+    6.879840574264526
+   ],
+   "tied + n-gram (one-hot positions)": [
+    6.683379631042481,
+    6.652828617095947,
+    6.632680063247681,
+    6.696522769927978,
+    6.6526182270050045
+   ],
+   "wrap + residual MLP": [
+    6.854853572845459,
+    6.848795585632324,
+    6.820300045013428,
+    6.894503707885742,
+    6.8451443290710445
+   ],
+   "wrapped positions": [
+    6.87656307220459,
+    6.852318449020386,
+    6.831958322525025,
+    6.902140445709229,
+    6.846951179504394
+   ],
+   "Fourier positions": [
+    7.079414854049682,
+    7.051265106201172,
+    7.044800806045532,
+    7.100731210708618,
+    7.052702589035034
+   ],
+   "wrap + n-gram": [
+    6.661430959701538,
+    6.6291506958007815,
+    6.6094495391845705,
+    6.679808464050293,
+    6.626574258804322
+   ],
+   "byte head + end-of-token": [
+    12.975336818695068,
+    12.82053186416626,
+    13.060502281188965,
+    13.202541885375977,
+    13.02613124847412
+   ]
+  },
+  "ordinary (06 indic)": {
+   "dense tied embedding": [
+    6.289945201873779,
+    6.253031072616577,
+    6.272931489944458,
+    6.2588543128967284,
+    6.2936295127868656
+   ],
+   "v1 - Kronecker in, untied head": [
+    5.964807405471801,
+    5.938657341003418,
+    5.976100006103516,
+    5.9549223327636716,
+    5.978490028381348
+   ],
+   "tied to induced E": [
+    6.253991804122925,
+    6.247373113632202,
+    6.261413335800171,
+    6.250889291763306,
+    6.283879222869873
+   ],
+   "tied + d x d transform": [
+    6.243369140625,
+    6.206725616455078,
+    6.232181453704834,
+    6.217178859710693,
+    6.254595613479614
+   ],
+   "tied + n-gram (one-hot positions)": [
+    5.943006820678711,
+    5.954641933441162,
+    5.9736552429199214,
+    5.957440280914307,
+    5.985710029602051
+   ],
+   "wrap + residual MLP": [
+    6.207740964889527,
+    6.2023116397857665,
+    6.218169031143188,
+    6.203250741958618,
+    6.235933561325073
+   ],
+   "wrapped positions": [
+    6.227875270843506,
+    6.212134580612183,
+    6.22574556350708,
+    6.208059530258179,
+    6.245315723419189
+   ],
+   "Fourier positions": [
+    6.370545234680176,
+    6.34722333908081,
+    6.36861102104187,
+    6.361741781234741,
+    6.352544116973877
+   ],
+   "wrap + n-gram": [
+    5.957931232452393,
+    5.932755250930786,
+    5.955759258270263,
+    5.945628795623779,
+    5.966508731842041
+   ],
+   "byte head + end-of-token": [
+    6.357078123092651,
+    6.305744333267212,
+    6.353641586303711,
+    6.310295572280884,
+    6.37740312576294
+   ]
+  }
+ },
+ "provenance": {
+  "config_fingerprint": "64d953fbf8b6",
+  "code_digest": "sha256:23eb9359fb6a42dcbf7af7f4d860065a8e4f902832f6ae759c979ac67add5155",
+  "git_sha": "b201f1ec535008a1c8794b43e553e82a16e27914",
+  "tokenizer_digest": "sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae",
+  "environment": {
+   "python": "3.12.13",
+   "torch": "2.13.0",
+   "numpy": "2.5.2",
+   "platform": "macOS-26.6.2-arm64-arm-64bit",
+   "machine": "arm64",
+   "torch_threads": 12,
+   "omp_num_threads": "unset",
+   "device": "mps",
+   "cuda_available": false,
+   "mps_built": true,
+   "mps_available": true,
+   "mps_unavailable_but_built": false
+  }
+ }
+}
