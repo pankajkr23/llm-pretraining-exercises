@@ -23,6 +23,8 @@ The full argument, every table, and the limits are in `README.md`. Do not restat
 | `heads.py` | `KroneckerEmbedding`, `LockBreaker`, `ByteHead`, `TiedHead` | **yes** |
 | `experiment.py` | `RunConfig`, `ARMS`, `train_arm`, `run`, `save`, the corpus and its three gates | **yes** |
 | `runlog.py` | `RunDirectory`, `run_id`, `weight_digest` — the numbered run directory, written as the run goes | **yes** |
+| `../verify.py` | the independent auditor: re-derives a run directory's numbers, importing **nothing** from this package | no |
+| `../evidence.py` | `CLAIMS`, `assess`, `render` — which published claim each artefact supports | no |
 | `summary.py` | `paired`, `unpaired_spread` — the seed arithmetic | no |
 | `__init__.py` | the package docstring — what v1 is and why its output side is the problem | no |
 

@@ -72,6 +72,38 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   the allocation the configuration already fixes, unable to move whatever the run does, and
   recording such a quantity as a measurement is worse than omitting it.
 
+- **Exercise 07 gains two auditors a sceptic can run, and neither can agree with the producer by
+  construction.** `verify.py` re-derives every number in a run directory from the material the run
+  left behind — the arms table recomputed from the per-step traces, each digest recomputed from the
+  bytes it names — importing **nothing** from `embeddings`, because a verifier that called
+  `summary.paired` to check a gap would be checking the producer's arithmetic with the producer's
+  arithmetic and would agree with itself however wrong either was. A test asserts that import
+  closure, and six more move exactly one number in an otherwise correct directory and assert the
+  verifier says so.
+
+  It holds two rules exercise 06's does not, both found by auditing it. A check whose inputs are
+  absent reports **`unverifiable`**, which is a third outcome and not a pass — 06's verifier grades
+  two rows against files its bundle never ships. And a number that no input to the run can move is
+  flagged **on its own row**, because a caveat in a module docstring three files away is not where
+  a reader meets the number.
+
+- **`evidence.py` grades each published claim against the artefact behind it — and its tests were
+  written first.** Exercise 06's equivalent has no test file and no test anywhere imports it, while
+  its docstring promises rows derived from an artifact rather than from memory; that module was the
+  obvious one to copy, so the gap is what this one exists not to inherit. Ten claims, four of them
+  negative results, because a register listing only the wins would report a cleaner exercise than
+  the one that was run.
+
+  Writing the tests first paid immediately: the first implementation graded the invertibility claim
+  `unmet` by reading a field the recovery block does not have, and reading a single column would
+  have let one lucky construction of `W` carry a claim that is about all three.
+
+- **The `attribution` block is now checked.** It is this exercise's central decomposition — how much
+  of the win is the n-gram term and how much is wrapped positions — and no test had ever read it.
+  Every one of its numbers now recomputes from the per-seed losses published in the same file, gap,
+  standard deviation and t alike, along with the `wrap_on_top_of_5` scalar beside it. All of them
+  hold.
+
 ### Fixed
 
 - **An arm in exercise 07's registry was named for a model it was not.** `"tied + residual MLP"`
