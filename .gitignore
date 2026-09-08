@@ -272,6 +272,13 @@ REQUIREMENTS.md
 # Self-critique of a shipped build — useful to us, not part of the published work.
 **/docs/DESIGN_CRITIQUE.md
 
+# Experiment code recovered from a lost agent scratch directory, reproduced verbatim so the run it
+# produced stays re-runnable. It quotes the course's own wording and uses words the vocabulary gate
+# forbids, so it must never reach a branch -- and `backup_local_only.py::PATTERNS` already covers
+# `src/exercises/*/docs/*.md`, so the external store versions it instead. The FACTS it establishes,
+# the hyperparameters, live in tracked prose where they survive a clone.
+**/docs/*-recovered.md
+
 # Topic notebooks are local-only. They are source material rather than this repo's
 # deliverable, and executing one bakes real corpus text into a tracked file. `notebooks/hello.ipynb`
 # is deliberately NOT matched: it is the tracked sample that keeps the notebook harness under test

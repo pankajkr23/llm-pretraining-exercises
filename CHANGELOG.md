@@ -41,6 +41,38 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Every run now records where it came from, and refuses to be written without it.** This is a
+  standing rule in `AGENTS.md` rather than a feature of one exercise: a number nobody can regenerate
+  is not evidence. A bundle carries `config_fingerprint`, `code_digest`, `git_sha`, an
+  `environment` block (python · torch · numpy · platform · machine · thread counts · device) and
+  full-length `sha256:` digests of the corpus **and** the tokenizer. `save()` raises when any of
+  them is absent, because a provenance block nothing enforces is one that gets dropped in the first
+  hurried run. The `environment()` shape and the `blake2b(repr(sorted(asdict(...))))` fingerprint
+  are copied from exercises 06 and 05 rather than invented.
+
+  Guarded four ways: the fingerprint must move when any of five knobs moves; the code digest must
+  move when `codec.py` changes, so it cannot vouch for modules it never read; `save()` must refuse
+  three separately-crippled bundles; and every field must be non-empty.
+
+- **The experiment code behind exercise 07's published numbers was recovered, and it was never
+  source material.** `PROGRESS.md` called `k2/` "the source material scratchpad". It was a coding
+  agent's scratch directory under `/tmp`, produced in this repository, and `/tmp` had been cleared.
+  An agent's own recorded tool calls carry the contents of every file a `Write` produced, so eight
+  of them came back — including the driver and the paired-seed runner.
+
+  **That settles a run that had been unspecified for weeks.** The earlier run used exercise 06's
+  `TinyGPT` (RoPE, SwiGLU, RMSNorm, `d_ff = 2·d`), no gradient clipping, the **first 200,000**
+  corpus tokens sampled with replacement, a vocabulary of **10,002**, and reported the mean of the
+  last 25 steps. Those first two differences are most of why its absolute losses sit where they do —
+  and the third finally explains `setup.vocab_size = 10,002`, an unexplained discrepancy across
+  three documents: the earlier run appended `<eos>` and `<pad>` to the frozen 10,000.
+
+  Nine further names in `measurements.json` were written by nothing on this machine, so the
+  three-arm paired comparison is now fully specified and the ten-arm table is not. The recovered
+  source is kept at `docs/k2-recovered.md` — gitignored, and covered by
+  `backup_local_only.py::PATTERNS` so the external store versions it — because it quotes the
+  course's own wording. The facts it establishes are in tracked prose, where they survive a clone.
+
 - **Exercise 07's trained comparison can be run from this repository, and the published conclusion
   survives it.** Every trained number in that exercise came from code held outside the repository
   and now gone, so its central claim — a tied Kronecker head beating the published design with no

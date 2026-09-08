@@ -97,6 +97,11 @@ count at one width as evidence at the other.**
 **not** reproduce `results/measurements.json`, and describing them that way would be the more
 damaging error, because it is the one a reader would believe.
 
+**Both runs are ours.** The earlier one was produced by a coding agent in this repository too, from
+a driver in a scratch directory that `/tmp` later cleared — not by a third party and not from source
+material, whatever `PROGRESS.md` used to say. Write "the earlier run", never anything implying
+somebody else made it: the framing is what kept the code from being looked for.
+
 **The recorded run cannot be aimed at.** `setup` pins nine things — layers, `d_model`, steps, batch,
 seeds, vocabulary, corpus, `uniform_loss`, `unpaired_spread` — and pins **none** of what decides
 where a loss lands: the optimiser, the learning rate, the schedule, warmup, weight decay, dropout,

@@ -230,3 +230,71 @@ def test_there_is_no_field_that_cannot_move(vocabulary) -> None:
     assert not hasattr(RunConfig(), "dropout"), (
         "exercise 09's trunk has no dropout, so a dropout field here can be set and do nothing"
     )
+
+
+def test_the_bundle_says_which_code_machine_and_vocabulary_produced_it(vocabulary) -> None:
+    """The gap that made the earlier run unreproducible, closed and guarded.
+
+    Recording the settings and not the code, the machine or the vocabulary is exactly what the run
+    behind `results/measurements.json` did, and it is half of why its losses can never be aimed at.
+    """
+    bundle = run(TINY, arms=ARMS[:1], vocabulary=vocabulary)
+    prov = bundle["provenance"]
+    for field in ("config_fingerprint", "code_digest", "git_sha", "tokenizer_digest"):
+        assert prov[field], f"{field} is empty"
+    for field in ("python", "torch", "numpy", "platform", "machine", "torch_threads"):
+        assert prov["environment"][field], f"environment.{field} is empty"
+    assert bundle["corpus"]["corpus_digest"].startswith("sha256:")
+
+
+def test_save_refuses_a_bundle_that_cannot_say_where_it_came_from(tmp_path, vocabulary) -> None:
+    """The twin. A provenance block nothing enforces is a provenance block that gets dropped."""
+    bundle = run(TINY, arms=ARMS[:1], vocabulary=vocabulary)
+    save(bundle, tmp_path / "good.json")
+
+    for missing in ("code_digest", "environment", "tokenizer_digest"):
+        crippled = {
+            **bundle,
+            "provenance": {k: v for k, v in bundle["provenance"].items() if k != missing},
+        }
+        with pytest.raises(ValueError, match="where it came from"):
+            save(crippled, tmp_path / f"bad-{missing}.json")
+
+
+def test_the_fingerprint_moves_when_any_knob_moves() -> None:
+    """A fingerprint that does not change with the settings is decoration.
+
+    It is derived from the fields alone and never from a clock, so two bundles claiming the same
+    configuration can be CHECKED rather than trusted — and a changed knob cannot hide.
+    """
+    base = RunConfig()
+    assert base.fingerprint() == RunConfig().fingerprint(), "not stable across constructions"
+    for change in (
+        {"learning_rate": 1e-4},
+        {"grad_clip": None},
+        {"dense_init_std": 0.01},
+        {"seeds": (0, 1)},
+        {"languages": ("en",)},
+    ):
+        assert dataclasses.replace(base, **change).fingerprint() != base.fingerprint(), (
+            f"changing {change} left the fingerprint unchanged"
+        )
+
+
+def test_the_code_digest_moves_when_the_package_changes(tmp_path) -> None:
+    """The digest must cover the modules the numbers are a property of, not just this one.
+
+    Every loss here is as much a property of `codec.py` and `heads.py` as of the settings, so a
+    digest over `experiment.py` alone would vouch for code it never read.
+    """
+    from embeddings import experiment
+
+    before = experiment.code_digest()
+    target = experiment.EXERCISE / "src" / "embeddings" / "codec.py"
+    original = target.read_bytes()
+    try:
+        target.write_bytes(original + b"\n# provenance probe\n")
+        assert experiment.code_digest() != before, "editing codec.py did not move the code digest"
+    finally:
+        target.write_bytes(original)
+    assert experiment.code_digest() == before, "the probe was not restored"

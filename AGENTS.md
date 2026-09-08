@@ -490,6 +490,46 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
 - **A tested feature with no caller is dead code wearing a test.** `masks.loss_mask(context_spans=...)` in exercise 06 is implemented, documented, covered by two passing tests and taught in the topic notebook — and `grep -rn context_spans` finds **zero** callers in the pipeline: `feed.py` builds every microbatch with the default mask. The tests are green, so the capability reads as a behaviour of the run, and the documents describing prompt/tool-observation masking describe something that never happens. The test proves the function works; only a caller proves the system uses it. When you add a keyword-only option to a library function, either wire it through the one path that would exercise it in a real run, or state in the module docstring that it is offered and unused — and put the same sentence wherever the feature is described to a reader.
 - **A coverage guard built on `--collect-only` is blind to a file that collects nothing.** `tests/test_ci_shards_cover_everything.py` catches an integration file in no CI shard, and an integration file in two. It cannot catch the third case: **in a shard, and contributing zero tests.** A module-level `pytest.importorskip("torch")` raises during *collection*, so `pytest --collect-only -q` prints no `path: count` line for that file at all — I verified this with a throwaway module importorskipping an absent package: output was `no tests collected`, exit 0. The file is therefore absent from `everything` and from `owners` alike, `missing` is empty, and `covered == sum(everything.values())` holds trivially. The consequence is live: all 20 of exercise 06's integration tests (`crash` 11, `model` 3, `train` 6) sit behind `importorskip("torch")`, CI never installs the `train` extra, and CI's integration step maps exit 5 to success — so the `rest` shard runs **zero** of them, reports green, and the coverage guard agrees. A guard must count what the job was *supposed* to run, from a list it does not derive from the same run it is auditing.
 
+## Every run in this repository must be reproducible, and that is not a preference
+
+**A number nobody can regenerate is not evidence, it is folklore.** Exercise 07 published a trained
+comparison whose driver lived in an agent's scratch directory under `/tmp`; the directory was
+cleared, the
+`setup` block recorded the architecture and none of the optimisation, and the result was a headline
+figure that could not be aimed at, checked, or defended. It was recovered — an agent's own recorded tool
+calls carry the contents of every file a `Write` produced — but recovery was luck, and the next
+one will not be.
+
+**So: any script that produces a number a document renders must write a bundle carrying all five of
+these, and must refuse to write one that does not.**
+
+| field | answers | how |
+| --- | --- | --- |
+| `config_fingerprint` | *which settings* | `blake2b(repr(sorted(asdict(config).items())), digest_size=6)` — the pattern in exercises 05, 06 and 07 |
+| `code_digest` | *which code* | `sha256` over the package's own sources, in name order |
+| `git_sha` | *which commit* | `git rev-parse HEAD`; `"unknown"` off a checkout, reported rather than required |
+| `environment` | *which machine* | python · torch · numpy · platform · machine · thread counts · device. Copy `trainingdata.train.environment` |
+| input digests | *which data* | full-length `sha256:<64 hex>` over the corpus **and** the tokenizer — every count in a byte-level exercise is a property of one frozen vocabulary |
+
+**Four rules around them, each learned by getting it wrong:**
+
+- **Refuse, do not warn.** `experiment.save` raises when the provenance block is incomplete. A
+  provenance block nothing enforces is one that gets dropped in the first hurried run.
+- **A fingerprint must move when any knob moves**, and there is a test that changes five of them
+  one at a time. A digest that cannot change is decoration.
+- **The code digest covers every module the numbers depend on**, not just the driver. A digest over
+  the driver alone vouches for code it never read.
+- **Name every digest `*_digest` or `*_hash`.** `*_key`, `*_token`, `*_secret` or `api` beside a
+  high-entropy value trips gitleaks' `generic-api-key` rule, and the fix is never an allowlist.
+
+**Never write a script that produces a published number into a scratch directory.** `/tmp` is
+cleared, and `$TMPDIR` inside an agent may be empty, in which case it is the repository root. A
+producer of evidence is tracked code with a tracked entry point, or it is a number with no parent.
+
+**And say where a result came from in the words that are true.** Calling that scratchpad "the source
+material scratchpad" put the code outside the boundary of things anyone would look for, and it stayed
+lost for weeks longer than it had to.
+
 ## Reporting a measurement
 
 Three rules, each learned by getting it wrong in `02-tokenization` (see that exercise's `CLAUDE.md`):

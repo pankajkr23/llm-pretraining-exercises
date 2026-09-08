@@ -33,6 +33,7 @@ Requires torch: `uv sync --all-packages --extra train`.
 
 import hashlib
 import json
+import os
 import time
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
@@ -103,6 +104,17 @@ class RunConfig:
         """Token positions one arm-seed consumes in full."""
         return self.tokens_per_step * self.steps
 
+    def fingerprint(self) -> str:
+        """A short, stable digest of every field.
+
+        The pattern is exercises 05 and 06's, deliberately — `mixture.config.Config.fingerprint`
+        and `trainingdata.config.Config.fingerprint` compute it the same way. Derived from the
+        fields alone and never from a clock, so the same settings always fingerprint the same way
+        and two bundles claiming the same configuration can be checked rather than trusted.
+        """
+        payload = repr(sorted(asdict(self).items())).encode("utf-8")
+        return hashlib.blake2b(payload, digest_size=6).hexdigest()
+
     def kronecker(self, positions: str) -> KroneckerConfig:
         """The codec configuration for one arm's position scheme."""
         return KroneckerConfig(
@@ -159,6 +171,9 @@ def corpus_facts(config: RunConfig) -> dict[str, object]:
         "source": f"src/exercises/02-tokenization/corpus/v2 ({', '.join(config.languages)})",
         "source_bytes": len(text.encode()),
         "source_sha256_prefix": hashlib.sha256(text.encode()).hexdigest()[:16],
+        # Full length as well as the prefix. A prefix is readable in a table; only the whole digest
+        # lets a later reader re-derive and compare exactly, which is the point of recording it.
+        "corpus_digest": "sha256:" + hashlib.sha256(text.encode()).hexdigest(),
         "corpus_tokens": len(ids),
         "tokens_consumed": config.total_tokens,
         "epochs": config.total_tokens / len(ids),
@@ -216,6 +231,103 @@ def corpus_batches(config: RunConfig, seed: int, vocab_size: int | None = None) 
     tokens = torch.tensor(ids[:needed]).reshape(sequences, config.seq_len)
     order = torch.randperm(sequences, generator=torch.Generator().manual_seed(seed))
     return tokens[order]
+
+
+# =================================================================== where a run came from
+
+
+def environment() -> dict[str, object]:
+    """Everything outside the configuration that moves the numbers.
+
+    Copied in shape from exercise 06's `trainingdata.train.environment`, which states the reason
+    better than a paraphrase would: device, thread count and library versions all move
+    floating-point results, and recording them is what turns "these numbers differ" from a mystery
+    into a fact about where they were produced.
+
+    **This is the field this exercise most conspicuously lacked.** The run whose losses
+    `results/measurements.json` reports recorded none of it, which is half of why those numbers
+    could not be aimed at.
+    """
+    import platform
+
+    import numpy
+    import torch
+
+    return {
+        "python": platform.python_version(),
+        "torch": torch.__version__,
+        "numpy": numpy.__version__,
+        "platform": platform.platform(),
+        "machine": platform.machine(),
+        "torch_threads": torch.get_num_threads(),
+        "omp_num_threads": os.environ.get("OMP_NUM_THREADS", "unset"),
+        "device": "cpu",
+    }
+
+
+def _digest_bytes(payload: bytes) -> str:
+    """`sha256:<64 hex>`, the full-length convention exercise 06 uses for content hashes.
+
+    Named `*_digest`, never `*_key`: gitleaks' `generic-api-key` rule fires on an identifier
+    containing *key*, *token*, *secret* or *api* beside a high-entropy value, so a content hash
+    under the wrong name reads as a leaked credential.
+    """
+    return "sha256:" + hashlib.sha256(payload).hexdigest()
+
+
+def code_digest() -> str:
+    """A digest of the package's own source, in name order.
+
+    Without it a bundle says which configuration produced it and not which *code* — and every
+    number here is a property of `codec.py`, `heads.py` and this module as much as of the settings.
+    The quote-check receipt makes the same argument for its own checker: an old checker must not be
+    able to vouch for new prose.
+    """
+    digest = hashlib.sha256()
+    for path in sorted((EXERCISE / "src" / "embeddings").glob("*.py")):
+        digest.update(path.name.encode("utf-8"))
+        digest.update(path.read_bytes())
+    return "sha256:" + digest.hexdigest()
+
+
+def git_sha() -> str:
+    """The commit this ran from, or `"unknown"` off a checkout.
+
+    Reported rather than required: a run from a dirty tree is still a run, and refusing to record
+    one would only mean it goes unrecorded.
+    """
+    import subprocess
+
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(EXERCISE), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown"
+    return out.stdout.strip() or "unknown"
+
+
+def provenance(config: RunConfig) -> dict[str, object]:
+    """Everything needed to say what produced a bundle, ten years from now.
+
+    Five things, and each answers a question that has actually gone unanswered in this repository:
+    *which settings* (`config_fingerprint`), *which code* (`code_digest`, `git_sha`), *which
+    machine* (`environment`), *which vocabulary* (`tokenizer_digest`) and *which text*
+    (`corpus_digest`, on the corpus facts). The tokenizer earns its own entry because every count in
+    this exercise is a property of one frozen vocabulary and nothing else records which.
+    """
+    from datacleaning.config import OUR_TOKENIZER
+
+    return {
+        "config_fingerprint": config.fingerprint(),
+        "code_digest": code_digest(),
+        "git_sha": git_sha(),
+        "tokenizer_digest": _digest_bytes(Path(str(OUR_TOKENIZER)).read_bytes()),
+        "environment": environment(),
+    }
 
 
 # =========================================================================== the arms
@@ -493,6 +605,7 @@ def run(
             "with these. The sign and the ordering of the arms are."
         ),
         "config": {**asdict(config), "uniform_loss": math.log(len(vocabulary))},
+        "provenance": provenance(config),
         "corpus": corpus_facts(config),
         "arms": comparisons,
         "runs": runs,
@@ -507,10 +620,32 @@ def save(bundle: dict[str, object], path: Path | None = None) -> Path:
     takes after seeing a run, not a side effect of running one. The repository enforces the same
     thing from the other side — `results/*.json` is in the agent guard's no-escape-hatch section.
 
+    **It refuses a bundle with no provenance**, which is the rule this exercise exists to stop
+    breaking again. Recording the settings and not the code, the machine or the vocabulary is what
+    made the earlier run unreproducible.
+
     **Encoding is checked before a long run, not after it.** Three experiments in exercise 05
     trained to completion and then died on this line, because the bundle carried an object `json`
     could not encode; one run lost fifteen trained models to its final statement.
     """
+    missing = [
+        field
+        for field in (
+            "config_fingerprint",
+            "code_digest",
+            "git_sha",
+            "tokenizer_digest",
+            "environment",
+        )
+        if field not in (bundle.get("provenance") or {})
+    ]
+    if missing:
+        raise ValueError(
+            "refusing to write a bundle that cannot say where it came from; missing "
+            f"{', '.join(missing)}. A result without provenance is the failure this exercise is "
+            "still paying for: the run behind results/measurements.json recorded none of it, and "
+            "its losses can therefore never be aimed at."
+        )
     path = path or (EXERCISE / "artifacts" / "rerun.json")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(bundle, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

@@ -115,7 +115,7 @@ styles reserve 260px of left gutter on `.wrap` whether or not a page builds a ra
 rendered an empty margin), and the shared `section` rule has no top spacing, which only shows on a
 page without a summary panel.
 
-**The measurements**, all from `k2/` in the source material scratchpad:
+**The measurements**, all from `k2/` — see *Where `k2/` actually was* below:
 
 - Invertibility: matched filter 86.7% → block-OMP + coordinate descent **100.00%** at `d_model=384`,
   for Gaussian, semi-orthogonal and block-tight `W`. Certificate agrees with ground truth on 100.0%.
@@ -129,6 +129,45 @@ page without a summary panel.
   softmax is **0.750 GB and ~72 ms, flat in V**.
 
 ---
+
+## Where `k2/` actually was, and what it turns out to have been
+
+**This document said `k2/` was "the source material scratchpad". That was wrong, and the error is
+part of why the run behind these numbers read as unrecoverable.** `k2/` was a **coding agent's scratch
+directory** under `/private/tmp/claude-501/.../<run-id>/scratchpad/k2`. `/tmp` was cleared, so
+the directory is gone from disk — but an agent's own recorded tool calls
+carry the full contents of every file a `Write` produced, and eight of them came back that way.
+
+**What the recovery settles.** The `setup` block records nine things and none of the optimisation.
+The recovered driver records the rest, so the run that produced the arms table is now *specified*:
+
+| | recovered run | the re-run in `experiment.py` |
+| --- | --- | --- |
+| transformer | exercise **06**'s `TinyGPT` — RoPE, SwiGLU, RMSNorm | exercise **09**'s trunk — learned positions, GELU, LayerNorm |
+| `d_ff` | `2 × d_model` = 512 | `4 × d_model` = 1024 |
+| layers · heads · width | 2 · 4 · 256 | same |
+| steps × batch × sequence | 500 × 8 × 64 | same |
+| optimiser | `AdamW`, lr 3e-4, torch-default decay | `AdamW`, lr 3e-4, decay 0.01 |
+| gradient clipping | **none** | 1.0 |
+| vocabulary | **10,002** — 10,000 plus `<eos>` and `<pad>` | 10,000 |
+| corpus window | the **first 200,000** tokens | all **507,878** |
+| batching | random offsets **with replacement** | disjoint shuffled sequences |
+| reported loss | mean of the last **25** steps | mean of the last **50** |
+
+**Two of those explain most of the difference in absolute loss** — a different transformer, and a
+corpus window less than half the size sampled with replacement. **And one closes a standing
+puzzle:** `setup.vocab_size` is 10,002 because the earlier run appended `<eos>` and `<pad>` to the
+frozen 10,000. That discrepancy sat unexplained in three documents.
+
+**What is still not recovered.** Nine names appear in `measurements.json`'s `source` strings —
+`summary.py`, `lock.py`, `lock_break.py`, `ng_sweep.py`, `coherence.py`, `trained_w.py`,
+`dp128.py`, `scale_cost.py`, `one_arm.py` — and nothing on this machine wrote them. So the
+three-arm paired comparison is fully specified and the ten-arm table is not.
+
+The recovered source is kept at `docs/k2-recovered.md`, which is gitignored and covered by
+`tools/backup_local_only.py::PATTERNS`, so it is versioned in the external store rather than
+published: it quotes the course's own wording and uses words the vocabulary gate forbids. **The
+facts are here, in tracked prose, because those are what has to survive a clone.**
 
 ## The trained arms can be run here now — and that is not reproduction
 
