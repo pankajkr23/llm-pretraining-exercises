@@ -142,18 +142,23 @@ function chapterThesis(M) {
 
 /* ============================================================== 2 · glossary */
 
-const GLOSSARY = [
+/* The one number on this page that was ever typed by hand lived in here, in the `nats` entry:
+   "beats the published design by 0.141". Every table on the page reads `M`, so a measurement that
+   moved would have updated the tables and left this sentence quietly contradicting them — the exact
+   failure the generated-data rule exists to prevent, hiding inside the prose that explains the
+   unit. It is derived now, and `GLOSSARY` takes `M` so it cannot regress to a literal. */
+const glossaryEntries = (M) => [
   ['embedding', 'The row of numbers a model uses to stand for one word. 10,000 words at 256 numbers each is 2,560,000 numbers stored before the model has learned anything.'],
   ['byte', 'How a computer stores one piece of a character. An English letter costs one byte; a Devanagari character such as क costs three. That is why a 32-byte window hurts Indic scripts most.'],
   ['the code', 'A fixed pattern built from a word’s spelling — one mark per byte position on a 256 × 32 grid. Nothing about it is learned. Figure 1 draws it.'],
   ['the head', 'The second copy of the list, used to choose the next word. Deleting it is what this work is about.'],
   ['tying', 'Using one list for both jobs instead of two. Standard practice everywhere else — and what the Kronecker paper calls “architecturally inapplicable” here.'],
-  ['nats', 'The unit of the score; lower is better. On this page 0.1 nats is a large gap, and our best arm beats the published design by 0.141.'],
+  ['nats', `The unit of the score; lower is better. On this page 0.1 nats is a large gap, and our best arm beats the published design by ${Math.abs(M.attribution.rows[0].gap)}.`],
   ['seed', 'One training run with one particular set of random starting numbers. We run five and compare them in pairs, because one run cannot tell a real effect from luck.'],
   ['hidden state', 'What the model is thinking at one moment, as a row of numbers. The head turns it into a score for every word.'],
 ];
 
-function chapterGlossary() {
+function chapterGlossary(M) {
   const s = section(
     'glossary',
     'glossary',
@@ -166,7 +171,7 @@ function chapterGlossary() {
     { short: 'Vocabulary', sub: 'eight words, defined once' }
   );
   const dl = el('dl', 'gloss');
-  for (const [term, def] of GLOSSARY) dl.append(el('dt', null, term), el('dd', null, def));
+  for (const [term, def] of glossaryEntries(M)) dl.append(el('dt', null, term), el('dd', null, def));
   s.append(dl);
 }
 
@@ -1091,7 +1096,7 @@ function buildFooter() {
 
 export function buildPage(M) {
   chapterThesis(M);
-  chapterGlossary();
+  chapterGlossary(M);
   chapterProblem(M);
   chapterGrid(M);
   chapterSolution(M);

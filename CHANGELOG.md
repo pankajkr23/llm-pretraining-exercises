@@ -49,6 +49,33 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercise 07's page typed one number by hand, and it was the only one that could go stale.**
+  Every table on that page reads `M`, the frozen payload generated from `results/measurements.json`,
+  precisely so a published figure cannot drift from the run that produced it. One number escaped:
+  the glossary's definition of *nats* ended `"beats the published design by 0.141"`, typed into a
+  string literal. A measurement that moved would have updated every table and left that sentence
+  quietly contradicting them — the exact failure the generated-data rule exists to prevent, hiding
+  inside the prose that explains the unit. It is derived from `M.attribution` now, and `GLOSSARY`
+  became `glossaryEntries(M)` so it cannot regress to a literal without someone noticing.
+
+  **The rendered page is unchanged**, and that was checked rather than assumed: the page was driven
+  in a browser on this branch and on `main`, and the full body text is byte-identical at 19,856
+  characters both ways.
+
+- **Nothing checked that `web/data.js` still matched the measurements it is generated from.**
+  `tools/build_web_data.py` writes it and the exercise's `CLAUDE.md` tells you to run that after
+  changing a measurement, but a search of `tests/`, `.github/workflows/` and `deploy/` for either
+  filename returned **no hits at all**. Editing the JSON and forgetting the command left the
+  published page serving the previous run's numbers with the whole suite green.
+
+  `tests/test_embeddings_page_data.py` closes it: parse both, assert equal, plus a check that the
+  generated file still carries its own "do not edit by hand" banner and a deliberately-broken twin
+  that perturbs one number and asserts the comparison notices. Watched failing — a one-digit change
+  to `v1_total` in `data.js` turns it red with the regeneration command in the message, and the file
+  was restored in a `finally` and confirmed byte-identical. It is pure Python and needs neither
+  torch nor a browser, so unlike the render suite it runs in the plain `test` job on every push,
+  which is where a guard against forgetting a command belongs.
+
 - **Two errors in the rebuilt notebook, found by reading its own output rather than by a test.**
   The scale-bug cell compared the induced embedding against `torch.nn.Embedding`'s default `N(0,1)`
   initialisation, whose row norm is `√d_model ≈ 19.6` — which happens to match the induced norm, so

@@ -836,6 +836,23 @@ predates the harness — so it is logged as what it was.
                           a twin proves naming one does not unlock it. The section needed no code
                           change to take effect -- _pattern_sections derives the enforced list,
                           which is #152's own fix paying for itself
+2026-09-07  exercise-07   #155 opened: the page reads every number from M so a figure cannot
+                          drift from the run that produced it -- except one, typed into the
+                          glossary's definition of nats: "beats the published design by 0.141". A
+                          measurement that moved would have updated every table and left that
+                          sentence contradicting them, inside the prose that explains the unit.
+                          Derived from M.attribution now; GLOSSARY became glossaryEntries(M) so it
+                          cannot regress. Rendered page proven unchanged: driven in a browser on
+                          this branch and on main, body text byte-identical at 19,856 chars.
+                          SEPARATELY: nothing checked that web/data.js still matched the
+                          measurements it is generated from -- grep of tests/, workflows and deploy/
+                          for either filename returned ZERO hits, so editing the JSON and forgetting
+                          build_web_data.py served the previous run's numbers with a green suite.
+                          New test_embeddings_page_data.py parses both and asserts equal, plus a
+                          banner check and a broken twin. Watched red on a one-digit change,
+                          restored in a finally, byte-identical after. Pure Python, so it runs in
+                          the plain test job rather than behind playwright like the render suite
+
 2026-09-07  exercise-07   #154 opened: S07's notebook taught the analysis and never showed the
                           mechanism. It printed the sparse coordinates but never E = K.W_p, never
                           the tie that IS v2, and never the evidence the recommendation rests on --
