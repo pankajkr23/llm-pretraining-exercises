@@ -243,6 +243,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   — a regex version undercounted the browser file by 14 and would have accepted the stale number
   it exists to catch.
 
+- **The rewritten `reproduce` section threw and took the last six sections of the page with it.**
+  Its helper referenced `M` at module scope, where `M` is a *parameter* of `buildPage` and does not
+  exist. CI reported seven timeouts waiting for `section#reproduce`; the cause was one
+  `ReferenceError` thrown hundreds of lines earlier, and nothing in the failure named it. A browser
+  test now listens for `pageerror` and reports it in one line — it reloads rather than reading the
+  module-scoped page as-is, because an error during the fixture's own first navigation would
+  otherwise go unseen and the guard would pass on exactly the page it exists to catch.
+
 - **The page-source guard was unreliable on the page it guards.** Its first version hand-rolled a
   JavaScript string parser, desynchronised on the first apostrophe inside a double-quoted string,
   and silently stopped seeing everything after it — including a literal planted directly to test

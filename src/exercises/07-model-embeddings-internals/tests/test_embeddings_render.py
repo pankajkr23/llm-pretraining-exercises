@@ -422,3 +422,33 @@ def test_no_svg_label_renders_too_small_to_read(page, width: int) -> None:
         # A viewport left behind would silently change every test that runs after this one.
         page.set_viewport_size({"width": 1280, "height": 900})
         page.wait_for_timeout(150)
+
+
+def test_the_page_builds_with_no_runtime_error(page):
+    """A section that throws while building leaves NOTHING after it, and every later assertion then
+    times out on a locator rather than saying what happened.
+
+    That is how one helper of mine took out the last six sections: it referenced `M` at module
+    scope, where `M` is a parameter of `buildPage` and does not exist. CI reported seven timeouts
+    waiting for `section#reproduce`; the cause was a single `ReferenceError` thrown hundreds of
+    lines earlier. Listening for the error names it directly, in one line, instead.
+
+    The page is reloaded rather than inspected as-is, because the module-scoped fixture navigated
+    before this listener could be attached — an error raised during that first load would not be
+    seen, and the guard would pass on exactly the page it exists to catch.
+    """
+    errors = []
+    listener = errors.append
+
+    def record(exc):
+        listener(str(exc))
+
+    page.on("pageerror", record)
+    try:
+        page.reload()
+        page.wait_for_selector("section[data-role]")
+        assert not errors, f"the page threw while building: {errors}"
+    finally:
+        # Removed in a `finally` so a failure here cannot leave a listener on the module-scoped
+        # page for every later test in this file to inherit.
+        page.remove_listener("pageerror", record)

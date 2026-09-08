@@ -103,7 +103,7 @@ const signed = (n, d = 3) => (n > 0 ? '+' : '−') + Math.abs(n).toFixed(d);
    Against the transform arm the same subtraction reads −0.031 and looks like a contradiction; it
    is the same number compared to a model the arm was never measured against. Derived here rather
    than typed, because it was typed twice and both copies were the kind that quietly go stale. */
-const mlpAgainstItsBaseline = () => {
+const mlpAgainstItsBaseline = (M) => {
   const loss = (name) => M.arms.rows.find((r) => r.arm === name).loss;
   return loss('tied + residual MLP') - loss('wrapped positions');
 };
@@ -654,7 +654,7 @@ function chapterMethod(M) {
 
 /* ============================================================== 8 · expected */
 
-function chapterExpected() {
+function chapterExpected(M) {
   const s = section(
     'expected',
     'expected',
@@ -671,7 +671,7 @@ function chapterExpected() {
     ['Reuse would be worse than a separate table, and we would have to accept that.', 'Half right. It is worse — until one extra ingredient, and then it wins.', 'part'],
     [
       'A small neural network on top would recover the loss, since it can express what is missing.',
-      `Wrong. It can express it, and buys ${signed(mlpAgainstItsBaseline())} nats — nothing at all.`,
+      `Wrong. It can express it, and buys ${signed(mlpAgainstItsBaseline(M))} nats — nothing at all.`,
       'bad',
     ],
     ['Waves instead of slots would be the elegant fix for long words.', 'Wrong. It removed every collision and trained WORSE than doing nothing.', 'bad'],
@@ -879,7 +879,7 @@ function chapterNegatives(M) {
           cells: [
             '<b>A small neural network</b> on the reused table',
             `Breaks the same constraint the letter-pair term does, and buys <b>${signed(
-              mlpAgainstItsBaseline()
+              mlpAgainstItsBaseline(M)
             )} nats</b>. Being able to express something is not the same as having something to say.`,
           ],
         },
@@ -1166,7 +1166,7 @@ export function buildPage(M) {
   chapterSolution(M);
   chapterLock(M);
   chapterMethod(M);
-  chapterExpected();
+  chapterExpected(M);
   chapterResults(M);
   chapterNegatives(M);
   chapterConclusion(M);
