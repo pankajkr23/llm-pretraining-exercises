@@ -78,3 +78,53 @@ def test_fourier_positions_are_refused_rather_than_silently_wrong(sample, projec
     cfg = KroneckerConfig(d_p=32, d_model=384, positions="fourier")
     with pytest.raises(ValueError, match="not block-one-hot"):
         decode.recover(np.zeros((2, 384)), np.array([3, 3]), projection, cfg)
+
+
+WRAP = KroneckerConfig(d_p=32, d_model=384, positions="wrap")
+
+
+def test_wrapped_positions_recover_exactly_up_to_d_p_bytes(sample, projection):
+    """The claim four documents make, and which no tracked code demonstrated until now.
+
+    `README.md`, `CLAUDE.md`, `PROGRESS.md` and the published page all say round-trip recovery under
+    wrap is 100% to 32 bytes. `recover` accepted `wrap` — it rejects only `fourier` — and **every
+    test drove it with `onehot`**, so the claim was never exercised. It was also false of the
+    shipped decoder: `matched_filter` and `block_omp` take an argmax over `W`'s raw rows, and under
+    wrap an atom enters as `sign * W[row]` with half the slots carrying `-1`, which inverts the
+    argmax. Measured before the fix: **47.00%** on 200 vocabulary tokens at `d_model=768`.
+    """
+    short = [t for t in sample if 1 <= len(t) <= WRAP.d_p]
+    assert len(short) > 100, "the fixture no longer has enough short tokens to make this a test"
+    _, _, ok = _recover(short, projection, WRAP)
+    assert ok.mean() == 1.0, f"wrap recovery regressed to {ok.mean():.2%} at or below d_p"
+
+
+def test_the_wrap_dictionary_is_signed_and_an_unsigned_one_fails(sample, projection):
+    """The twin. A guard nobody has watched fail is not a guard.
+
+    Decoding wrap against `W`'s raw rows — which is what the code did — must score far below the
+    sign-aware dictionary. If the two ever agree, either the signs have stopped being applied or
+    `_dictionary_for` has stopped being called, and the test above would pass for the wrong reason.
+    """
+    from embeddings import decode as decode_module
+
+    short = [t for t in sample if 1 <= len(t) <= WRAP.d_p]
+    signed = decode_module._dictionary_for(projection, WRAP)
+    assert not np.allclose(signed, projection), "the wrap dictionary is not signed at all"
+
+    enc = codec.encode(short, projection, WRAP)
+    t = codec.targets_from_h(enc, projection, WRAP)
+    truth = _truth(short, WRAP.d_p)
+    live = truth >= 0
+    unaware, _ = decode.coordinate_descent(
+        t,
+        enc.lengths,
+        projection,
+        WRAP.d_p,
+        decode.block_omp(t, enc.lengths, projection, WRAP.d_p),
+    )
+    rate = float((((unaware == truth) & live).sum(1) == live.sum(1)).mean())
+    assert rate < 0.9, (
+        f"an unsigned dictionary recovered {rate:.2%} of wrapped tokens, so this test is not "
+        "measuring what it claims and the sign-awareness above proves nothing"
+    )

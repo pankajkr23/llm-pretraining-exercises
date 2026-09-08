@@ -98,6 +98,16 @@ function table(head, rows, cls) {
 const int = (n) => n.toLocaleString('en-US');
 const signed = (n, d = 3) => (n > 0 ? '+' : '−') + Math.abs(n).toFixed(d);
 
+/* The MLP arm's gap is against WRAPPED POSITIONS, which is what it was built on — the published
+   row is named "tied + residual MLP" and the run that produced it called it `v2-wrap-M-MLP`.
+   Against the transform arm the same subtraction reads −0.031 and looks like a contradiction; it
+   is the same number compared to a model the arm was never measured against. Derived here rather
+   than typed, because it was typed twice and both copies were the kind that quietly go stale. */
+const mlpAgainstItsBaseline = () => {
+  const loss = (name) => M.arms.rows.find((r) => r.arm === name).loss;
+  return loss('tied + residual MLP') - loss('wrapped positions');
+};
+
 /* ============================================================== 1 · thesis */
 
 function chapterThesis(M) {
@@ -124,7 +134,11 @@ function chapterThesis(M) {
     ['100%', 'of a word’s bytes read back out of its numbers — and the decoder can prove it', 'good'],
     [signed(best.gap), `nats better than the published design, on ${best.seeds} runs`, 'good'],
     [`${(big.dense_params / big.v2_params).toFixed(0)}×`, 'smaller at a million-word vocabulary', 'good'],
-    ['+1.225', 'nats WORSE for the fully head-free version — that one did not work', 'bad'],
+    [
+      signed(M.arms.rows.find((r) => r.arm.startsWith('byte head')).vs_control),
+      'nats WORSE for the fully head-free version — that one did not work',
+      'bad',
+    ],
   ]) {
     const t = el('div', `tile ${mark}`);
     t.append(el('div', 'tile-v', v), el('div', 'tile-k', k));
@@ -655,7 +669,11 @@ function chapterExpected() {
   const wrap = el('div', 'expects');
   for (const [pre, post, mark] of [
     ['Reuse would be worse than a separate table, and we would have to accept that.', 'Half right. It is worse — until one extra ingredient, and then it wins.', 'part'],
-    ['A small neural network on top would recover the loss, since it can express what is missing.', 'Wrong. It can express it, and buys −0.002 nats — nothing at all.', 'bad'],
+    [
+      'A small neural network on top would recover the loss, since it can express what is missing.',
+      `Wrong. It can express it, and buys ${signed(mlpAgainstItsBaseline())} nats — nothing at all.`,
+      'bad',
+    ],
     ['Waves instead of slots would be the elegant fix for long words.', 'Wrong. It removed every collision and trained WORSE than doing nothing.', 'bad'],
   ]) {
     const r = el('div', `expect ${mark}`);
@@ -860,7 +878,9 @@ function chapterNegatives(M) {
           __mark: 'bad',
           cells: [
             '<b>A small neural network</b> on the reused table',
-            'Breaks the same constraint the letter-pair term does, and buys <b>−0.002 nats</b>. Being able to express something is not the same as having something to say.',
+            `Breaks the same constraint the letter-pair term does, and buys <b>${signed(
+              mlpAgainstItsBaseline()
+            )} nats</b>. Being able to express something is not the same as having something to say.`,
           ],
         },
         {
@@ -874,7 +894,12 @@ function chapterNegatives(M) {
           __mark: 'bad',
           cells: [
             '<b>Shuffling the alphabet</b> per wrap, to fix folding',
-            'Made recovery <b>worse</b> (14.6% against 19.1%). The reasoning behind it was wrong: folding records which marks were made, not which position made them, and no relabelling repairs that.',
+            `Made recovery <b>worse</b>, not better. The reasoning behind it was wrong: folding
+             records which marks were made, not which position made them, and no relabelling
+             repairs that — a sign at least blocks the slots whose two levels disagree, and a
+             permutation blocks nothing. The measured recovery curve for the scheme that shipped is
+             in <code>results/wrap_recovery.json</code>; the figure for the variant that was removed
+             is not reproducible and is no longer quoted.`,
           ],
         },
       ]
@@ -1002,26 +1027,65 @@ function chapterReproduce() {
     'reproduce',
     'reproduce',
     'Check it yourself',
-    'Reproduce every number on this page',
-    ['Ordered by what it costs you. None of it needs a GPU.'],
-    { short: 'Reproduce it', sub: 'ordered by what it costs' }
+    'What a sceptic can verify without trusting us',
+    [
+      `Every figure above is generated from a measurements file that ships with the code, and the
+       run behind it left its inputs, its per-step trace and its trained weights on disk. None of
+       that is a promise: it is a list of files, and the list is below.`,
+    ],
+    { short: 'Check it yourself', sub: 'what a sceptic can verify' }
   );
-  const pre = el('pre', 'repro');
-  pre.textContent = `# about 30 seconds — the codec, the decoder, the arithmetic
-uv run pytest src/exercises/07-model-embeddings-internals/tests -m "not integration"
 
-# about a minute — rebuild this page's data, then the page
-uv run python src/exercises/07-model-embeddings-internals/tools/build_web_data.py
-bash deploy/vercel/build.sh
+  const grid = el('div', 'verify-grid');
+  for (const [what, how] of [
+    [
+      'Every number on this page',
+      `is read from <code>results/measurements.json</code>. Nothing here is typed by hand, and a
+       test fails if the page renders a figure that is not in that file.`,
+    ],
+    [
+      'The run that produced them',
+      `left a numbered directory: the exact token stream each seed consumed, a fingerprint of every
+       model before its first gradient step, a per-step record of loss and gradient norm, and the
+       trained weights. Its manifest and its audit are in the repository.`,
+    ],
+    [
+      'An auditor that cannot agree with us',
+      `re-derives every published figure from that run's own files, with its own arithmetic, and
+       imports nothing from the code it audits. Six tests move exactly one number in an otherwise
+       correct run and check that it notices.`,
+    ],
+    [
+      'The claim behind each figure',
+      `is graded separately: met, unmet, or <em>unverifiable</em> — that last one for a claim whose
+       artefact is missing, which is deliberately not a pass.`,
+    ],
+    [
+      'The same run, twice',
+      `is bit-identical on a processor. On a graphics card it differs by one part in a million,
+       which is a hundred thousand times smaller than the smallest effect reported here — so the
+       published run is the processor one.`,
+    ],
+    [
+      'What it cannot establish',
+      `is written down too, in the section above and in each measurement's own file. The largest
+       one: these results hold on the text they were measured on and not on other text.`,
+    ],
+  ]) {
+    const row = el('div', 'verify-row');
+    row.append(el('div', 'verify-k', what));
+    const v = el('div', 'verify-v');
+    v.innerHTML = how;
+    row.append(v);
+    grid.append(row);
+  }
+  s.append(grid);
 
-# a few minutes — the browser tests that check what you are looking at
-uv run pytest src/exercises/07-model-embeddings-internals/tests -m integration`;
-  s.append(pre);
   const p = el('p', 'say small');
   p.innerHTML =
-    'Every figure above is generated from <code>results/measurements.json</code>, which is tracked ' +
-    'in the repository. No number on this page is typed by hand, and a test fails if the page ' +
-    'renders one that is not in that file.';
+    'The commands that run all of this live in the repository’s own README, beside the code they ' +
+    'operate on, where they can be kept correct. A page is the wrong place to keep a command: it ' +
+    'is read far more often than it is executed, and it cannot be tested.';
   s.append(p);
 }
 

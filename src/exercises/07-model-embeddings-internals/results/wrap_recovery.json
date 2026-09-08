@@ -1,0 +1,62 @@
+{
+ "what": "Round-trip byte recovery under WRAPPED positions, by token byte-length band, for the shipped signed scheme. Pure arithmetic over the frozen vocabulary: no training and no corpus, so no change of text can overturn it.",
+ "why": "README.md, CLAUDE.md, PROGRESS.md and the published page all state 19.1% for 33-64 bytes and 14.6% for the permutation variant, and no evidence file carries either.",
+ "limits": [
+  "W is a random Gaussian projection with unit-norm rows at one seed, so a different seed moves these percentages. The ORDERING of the two variants is the claim.",
+  "The per-wrap byte-permutation variant is NOT measured. It was tried and removed, and two attempts to reimplement it from the published description produced harness artefacts rather than results. Its 14.6% figure is unreproduced.",
+  "Bands are cut at d_p and 2*d_p, which is where the folding mechanism changes. Any other cut would give different percentages for the same underlying behaviour."
+ ],
+ "config": {
+  "d_p": 32,
+  "d_model": 768,
+  "positions": "wrap",
+  "seed": 0
+ },
+ "vocabulary": {
+  "tokens": 10000,
+  "beyond_last_band": 0,
+  "longest_bytes": 121,
+  "digest": "sha256:ad536a37448b7482a9f699ae52d3e5dae9581292d9b71095aa7c544340a3f6ec"
+ },
+ "rows": [
+  {
+   "band": "1-32",
+   "low": 1,
+   "high": 32,
+   "tokens": 9467,
+   "signs": 1.0
+  },
+  {
+   "band": "33-64",
+   "low": 33,
+   "high": 64,
+   "tokens": 465,
+   "signs": 0.15053763440860216
+  },
+  {
+   "band": "65-128",
+   "low": 65,
+   "high": 128,
+   "tokens": 68,
+   "signs": 0.0
+  }
+ ],
+ "provenance": {
+  "code_digest": "sha256:dbc77a8ca9720f8bfec357c8719a50fb23f0478722f2a7a046d0b99c23202950",
+  "git_sha": "cb5f514a22728e97711149d2b1a43550fb8bed2b",
+  "environment": {
+   "python": "3.12.13",
+   "torch": "2.13.0",
+   "numpy": "2.5.2",
+   "platform": "macOS-26.6.2-arm64-arm-64bit",
+   "machine": "arm64",
+   "torch_threads": 12,
+   "omp_num_threads": "unset",
+   "device": "cpu",
+   "cuda_available": false,
+   "mps_built": true,
+   "mps_available": false,
+   "mps_unavailable_but_built": true
+  }
+ }
+}
