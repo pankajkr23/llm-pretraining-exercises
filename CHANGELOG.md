@@ -12,6 +12,55 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Changed
 
+- **Exercise 07's trained comparison stops reading a corpus that is 40% `[UNK]`, and three gates
+  make that impossible to do again.** The corpus it trained on was exercise 02's four Wikipedia
+  articles, and the frozen 10k vocabulary has no Tamil: `ta.faithful.txt` tokenizes to **63.2%**
+  `[UNK]`, dragging the whole corpus to **40.07%** — against a 5% ceiling exercise 04 publishes
+  counts under and exercises 05 and 06 already import. **The confound lands on the winning arm.**
+  `[UNK]` has one fixed byte spelling, so its byte n-grams are identical every time and are free
+  for a byte-n-gram head to predict, and the byte-n-gram arm is the one this comparison exists to
+  judge. Exercise 07 was the only exercise in the repository that never measured this.
+
+  The default corpus is now **exercise 06's fetched six-lane corpus** — 11,781,888 tokens, a
+  licence recorded per lane and verified from each dataset's own card at fetch time, against
+  exercise 02's records which carry a URL and a timestamp and **no licence field at all**. Its
+  worst lane measures 0.531% `[UNK]` and the whole corpus 0.209%. Exercise 02's corpus stays as the
+  offline fallback so a clone with no network can still run the tests, chosen explicitly and
+  **never substituted silently**: a run that quietly read different text than it was asked to is
+  indistinguishable from one that read the right text.
+
+  **Three gates, each a condition on a measured quantity rather than a rule about a named corpus**,
+  and each watched refusing something real before it was committed. `[UNK]` share at or below
+  exercise 04's `MAX_UNK_SHARE`, per lane and overall. Epochs at or below 1.00 — the fallback reads
+  **1.35** epochs at 500 steps and passes below 370, which is precisely why "corpus X is fine" could
+  never have been the rule. And every lane funded with at least one sequence, because an experiment
+  that cannot see a lane is not evidence about that lane.
+
+  **Batches are now drawn proportionally per lane, and finding that was the reason the corpus swap
+  is not a path change.** The batcher concatenated every lane and took the first
+  `steps × batch × seq_len` ids — harmless against 189,785 tokens and fatal against 11.8M, where
+  256,000 positions off the front is the agentic lane and a sliver of code. Indic, reasoning, stem
+  and web would never have been seen at all, in the exercise whose entire claim is what a byte
+  window costs non-Latin scripts, and every loss curve would have looked normal. Every lane now
+  reads at the same ratio — 0.0217 epochs each — which also preserves exercise 05's mixture weights
+  for free, since exercise 06's corpus is already sized to them.
+
+### Fixed
+
+- **An arm in exercise 07's registry was named for a model it was not.** `"tied + residual MLP"`
+  was built on one-hot positions, while the row of that name in `results/measurements.json` came
+  from a driver that called it `v2-wrap-M-MLP` and built it on **wrapped** positions. The published
+  −0.002 nats is therefore a gap against `wrapped positions`, and quoting it beside a one-hot arm
+  compares it to a baseline it was never measured against — with every number plausible and nothing
+  failing. It is now built on wrap and named `"wrap + residual MLP"`, and a guard reads each built
+  head's own configuration rather than the registry's arguments, so it is a check and not a mirror.
+
+- **Exercise 07's `code_digest` vouched for code it never read.** It covered `embeddings/` alone,
+  while the transformer body comes from exercise 09's `lossheads.model` and the corpus is parsed by
+  exercise 06's `trainingdata.corpus` — an edit to either moves every number in a bundle. It now
+  covers all three packages, and a test plants a module in each and asserts the digest moves; the
+  old digest was verified not to move for two of the three.
+
 - **Exercise 07's notebook is rebuilt around the pipeline it teaches: input → process → output.**
   It taught the *analysis* well — the budget arithmetic, the recovery certificate, the truncation
   collisions — and never once showed how a Kronecker embedding is actually made. It showed the

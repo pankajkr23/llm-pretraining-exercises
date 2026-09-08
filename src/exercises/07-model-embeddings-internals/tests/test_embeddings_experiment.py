@@ -22,16 +22,31 @@ import numpy as np  # noqa: E402
 from embeddings.experiment import (  # noqa: E402
     ARMS,
     CONTROL,
+    MAX_EPOCHS,
     RunConfig,
+    code_digest,
     corpus_batches,
     corpus_facts,
+    refuse_unusable_corpus,
     report,
     run,
     save,
     train_arm,
 )
 
-TINY = dataclasses.replace(RunConfig(), steps=3, seeds=(0, 1), batch_size=4, seq_len=16)
+# The tracked fallback, NOT the default. `RunConfig()` reads exercise 06's fetched corpus, which is
+# gitignored — present on a working checkout and absent in CI and in any clone — so a fixture built
+# on it would pass here and skip there, and a skip reports as a pass. Everything below therefore
+# runs on exercise 02's tracked corpus, and the mixture path is covered by a fixture corpus this
+# file builds itself.
+# `batch_size=16` rather than 4, and that is not arbitrary: 3 x 4 draws twelve sequences, and the
+# smallest of the four language lanes is 2.0% of the corpus, so proportional allocation funds it
+# with ZERO — the exact failure `test_every_lane_is_actually_read...` exists to catch, found by that
+# guard on its first run. Forty-eight sequences fund every lane. The training cost is unchanged in
+# steps and trivial in tokens (768 positions).
+TINY = dataclasses.replace(
+    RunConfig(), steps=3, seeds=(0, 1), batch_size=16, seq_len=16, corpus="tokenization"
+)
 
 
 # Anything that TRAINS uses the full frozen vocabulary, because the corpus draws ids from all of
@@ -150,19 +165,274 @@ def test_the_data_order_depends_on_the_seed_and_nothing_else() -> None:
     assert not torch.equal(corpus_batches(TINY, 0), corpus_batches(TINY, 1))
 
 
-def test_the_corpus_is_the_multilingual_one_and_reports_its_own_digest() -> None:
+def test_every_arms_name_agrees_with_what_it_actually_builds() -> None:
+    """An arm whose name does not describe its model compares against the wrong baseline.
+
+    This was live: `"tied + residual MLP"` was built on one-hot positions, while the row of that
+    name in `results/measurements.json` came from a driver that called it `v2-wrap-M-MLP` and built
+    it on WRAPPED positions. So the published `-0.002 nats` is a gap against `wrapped positions`,
+    and quoting it beside a one-hot arm compares it to a baseline it was never measured against —
+    with every number plausible and nothing failing.
+
+    The guard reads the BUILT head rather than the builder's arguments, so it is a check and not a
+    mirror of the registry.
+    """
+    vocab = [bytes([b]) for b in range(48, 122)]
+    tiny = dataclasses.replace(TINY, d_model=32, d_p=4, n_buckets=64)
+    for arm in ARMS:
+        _, head = arm.build(vocab, tiny, 0)
+        embed = getattr(head, "embed", None)
+        if embed is None:  # the byte head owns no tied embedding
+            continue
+        name = arm.name.lower()
+        positions = embed.cfg.positions
+        expected = "wrap" if "wrap" in name else "fourier" if "fourier" in name else "onehot"
+        assert positions == expected, (
+            f"{arm.name!r} is built on {positions!r} positions, which its name does not say"
+        )
+        breaker = getattr(getattr(head, "breaker", None), "mode", None)
+        if "n-gram" in name:
+            assert breaker == "ngram", f"{arm.name!r} names an n-gram term and builds {breaker!r}"
+        elif "mlp" in name:
+            assert breaker == "mlp", f"{arm.name!r} names an MLP and builds {breaker!r}"
+        else:
+            assert breaker is None, f"{arm.name!r} names no lock-breaker and builds {breaker!r}"
+
+
+def test_the_code_digest_covers_every_package_the_numbers_depend_on(tmp_path) -> None:
+    """A digest over the driver alone vouches for code it never read.
+
+    The trunk is exercise 09's and the corpus is parsed by exercise 06's, so an edit to either
+    moves the numbers in a bundle from here. Both were outside this digest until the corpus swap.
+    """
+    from embeddings import experiment
+
+    before = code_digest()
+    assert before.startswith("sha256:")
+
+    for root, package in experiment._DIGESTED_PACKAGES:
+        assert root.is_dir(), f"{package} is not where the digest looks for it: {root}"
+        assert any(root.glob("*.py")), f"{package} contributes no source to the digest"
+
+    # Break it on purpose: a new module in ANY of the three packages must move the digest.
+    for root, package in experiment._DIGESTED_PACKAGES:
+        planted = root / "_digest_probe_delete_me.py"
+        assert not planted.exists()
+        planted.write_text('"""Planted by a test."""\n', encoding="utf-8")
+        try:
+            assert code_digest() != before, (
+                f"a new module in {package} did not move the code digest"
+            )
+        finally:
+            # In a `finally`, never on the happy path: an early return or an exception must not be
+            # able to leave a stray module in the source tree for `git add -A` to commit.
+            planted.unlink()
+    assert code_digest() == before
+
+
+def test_the_corpus_is_multilingual_and_every_lane_carries_its_own_provenance() -> None:
     """Exercise 09's corpus is this repository's English `AGENTS.md`.
 
-    Every claim here is about embeddings computed from BYTES, and a 32-byte window costs Indic
+    Every claim here is about embeddings computed from BYTES, and a 32-byte window costs non-Latin
     scripts far more than English, so a monolingual corpus would train fine and make the effect
-    invisible. The digest is here because the corpus is a file someone could edit.
+    invisible. The per-lane digest is here because a corpus is a set of files someone could edit,
+    and one digest over the whole thing cannot say which part moved.
     """
     facts = corpus_facts(TINY)
     assert "corpus/v2" in facts["source"]
-    for language in ("en", "hi", "ta", "te"):
-        assert language in facts["source"]
-    assert len(facts["source_sha256_prefix"]) == 16
-    assert facts["corpus_tokens"] > 0
+    lanes = {row["lane"] for row in facts["lanes"]}
+    assert lanes == set(TINY.languages)
+    assert lanes - {"en"}, "a monolingual corpus makes the effect this exercise measures invisible"
+    for row in facts["lanes"]:
+        assert row["digest"].startswith("sha256:")
+        assert len(row["digest"]) == len("sha256:") + 64
+        assert row["tokens"] > 0
+    assert facts["corpus_digest"].startswith("sha256:")
+    assert facts["corpus_tokens"] == sum(row["tokens"] for row in facts["lanes"])
+
+
+def test_a_corpus_the_vocabulary_cannot_read_is_refused_rather_than_warned_about() -> None:
+    """The confound that makes the winning arm's win unattributable, gated at the source.
+
+    Exercise 02's corpus includes Tamil and the frozen vocabulary does not: `ta.faithful.txt`
+    tokenizes to 63.2% `[UNK]`, which drags the four-language corpus to 40.07%. `[UNK]` has ONE
+    fixed byte spelling, so it is free for a byte-n-gram head to predict — and the arm this
+    comparison exists to judge is the byte-n-gram arm. Exercise 07 was the only exercise in this
+    repository that never measured this.
+    """
+    with_tamil = dataclasses.replace(TINY, languages=("en", "hi", "ta", "te"))
+    facts = corpus_facts(with_tamil)
+    assert not facts["unk_usable"]
+    assert facts["unk_share"] > 0.4, "the corpus changed; re-derive the number in the docstring"
+    with pytest.raises(ValueError, match=r"\[UNK\]"):
+        refuse_unusable_corpus(with_tamil)
+
+    # The twin, and it is the half that matters: the gate must PASS on the corpus we do use, or it
+    # is a guard that refuses everything and proves nothing.
+    assert corpus_facts(TINY)["unk_usable"]
+    refuse_unusable_corpus(TINY)
+
+
+def test_the_unk_gate_is_exercise_04s_number_and_not_one_invented_here() -> None:
+    """A second threshold is a second thing to keep in step, and this repo has been bitten.
+
+    Exercise 04 publishes counts under `MAX_UNK_SHARE` and exercises 05 and 06 already import it.
+    A local `0.05` here would read identically and drift silently.
+    """
+    from datacleaning.tokens import MAX_UNK_SHARE
+
+    assert corpus_facts(TINY)["max_unk_share"] == MAX_UNK_SHARE
+
+
+def test_a_corpus_read_more_than_once_is_refused() -> None:
+    """The other silent failure, and the reason the gate is on the quantity not the corpus.
+
+    A corpus seen three times over trains perfectly and reports a normal loss curve; the loss is
+    just no longer a generalisation number. Exercise 02's corpus passes this at 300 steps and fails
+    at 500, so no rule of the form "corpus X is fine" could be correct.
+    """
+    too_many = dataclasses.replace(TINY, steps=100_000)
+    facts = corpus_facts(too_many)
+    assert not facts["epochs_usable"]
+    assert facts["epochs"] > MAX_EPOCHS
+    with pytest.raises(ValueError, match="epochs"):
+        refuse_unusable_corpus(too_many)
+
+    assert corpus_facts(TINY)["epochs_usable"], "the twin: the gate must pass on the run we do"
+
+
+def test_a_run_that_funds_no_sequences_for_a_lane_is_refused() -> None:
+    """The third gate, and the one this file's own guard discovered.
+
+    `AGENTS.md`: an experiment that cannot see a lane is not evidence about that lane — and a
+    missing input does not make a claim safer, it makes it untestable, which reads as passing. At
+    twelve sequences the smallest of these four lanes is allocated zero, so a run at that size
+    reports four lanes and trains on three.
+    """
+    starved = dataclasses.replace(TINY, steps=3, batch_size=4)
+    facts = corpus_facts(starved)
+    assert facts["unfunded_lanes"], "twelve sequences now fund every lane; re-derive this fixture"
+    assert not facts["lanes_usable"]
+    with pytest.raises(ValueError, match="not evidence about"):
+        refuse_unusable_corpus(starved)
+
+    assert corpus_facts(TINY)["lanes_usable"], "the twin: the run we actually do must pass"
+
+
+def test_every_lane_is_actually_read_and_at_the_same_epoch_ratio() -> None:
+    """The defect the corpus swap would have introduced, asserted rather than remembered.
+
+    The batcher used to concatenate every lane and take the first `steps * batch * seq_len` ids.
+    That is harmless on a corpus half again as big as the run and fatal on one 46 times bigger:
+    256,000 positions off the front of exercise 06's corpus is its first lane and a sliver of the
+    second, so four lanes — every non-Latin script among them — would never be seen, while every
+    loss curve looked entirely normal.
+
+    Proportional allocation gives every lane the SAME epoch ratio as the corpus, which is the
+    property worth asserting: it holds however the lanes are sized, and a truncating batcher fails
+    it immediately.
+    """
+    facts = corpus_facts(TINY)
+    assert all(row["sequences"] > 0 for row in facts["lanes"]), (
+        "a lane the run never reads is a lane the run is not evidence about"
+    )
+    ratios = [row["epochs"] for row in facts["lanes"]]
+    assert max(ratios) - min(ratios) < 0.02, (
+        f"lanes are read at different rates {ratios}; the mixture is not what it says it is"
+    )
+    assert abs(sum(row["tokens_read"] for row in facts["lanes"]) - TINY.total_tokens) < 1e-9
+
+
+def test_the_batches_are_a_shuffle_of_one_selection_rather_than_a_different_draw() -> None:
+    """What the seed changes, and what it must not.
+
+    The seed is the whole mechanism by which a paired comparison cancels: two arms at one seed must
+    see identical batches. It must therefore reorder a fixed selection rather than re-draw one — if
+    it drew different tokens, two seeds would differ by their DATA as well as their order, and the
+    pairing would be measuring both.
+    """
+    a = corpus_batches(TINY, 0)
+    b = corpus_batches(TINY, 1)
+    assert not torch.equal(a, b)
+    assert torch.equal(a.flatten().sort().values, b.flatten().sort().values), (
+        "two seeds drew different tokens, so the pairing is not controlled"
+    )
+
+
+def test_the_mixture_corpus_is_never_silently_substituted(tmp_path, monkeypatch) -> None:
+    """An absent corpus must raise, naming the tracked script that rebuilds it.
+
+    Falling back would be the worst outcome available: the run would read different text than it
+    was asked to and say nothing, which is indistinguishable from having read the right text.
+    """
+    from embeddings import experiment
+
+    monkeypatch.setattr(experiment, "CORPUS_MIXTURE", tmp_path / "absent")
+    with pytest.raises(FileNotFoundError, match="fetch_corpus.py"):
+        corpus_facts(dataclasses.replace(TINY, corpus="mixture"))
+
+
+def test_the_fetched_mixture_is_read_lane_by_lane_with_its_licences(tmp_path, monkeypatch) -> None:
+    """The mixture path, on a fixture corpus rather than on the real one.
+
+    The real one is gitignored, so a test that needed it would skip in CI — and a skip reports as a
+    pass, which is how this repository has already lost tests. A fixture exercises the same code:
+    exercise 06's `lanes_from_fetch` and `read_documents` really do parse this.
+    """
+    from embeddings import experiment
+
+    corpus = tmp_path / "corpus"
+    corpus.mkdir()
+    lanes = {"alpha": ("cc-by-4.0", "en"), "beta": ("apache-2.0", "hi")}
+    for lane, (licence, language) in lanes.items():
+        (corpus / f"{lane}.jsonl").write_text(
+            "\n".join(json.dumps(f"{lane} document {n} " + "word " * 40) for n in range(20)),
+            encoding="utf-8",
+        )
+        _ = licence, language
+    (corpus / "manifest.json").write_text(
+        json.dumps(
+            {
+                "lanes": [
+                    {
+                        "lane": lane,
+                        "sources": [
+                            {
+                                "licence": licence,
+                                "language": language,
+                                "dataset": f"{lane}-fixture",
+                                "provenance_tier": "A",
+                            }
+                        ],
+                    }
+                    for lane, (licence, language) in lanes.items()
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(experiment, "CORPUS_MIXTURE", corpus)
+    experiment._lanes.cache_clear()
+
+    facts = corpus_facts(dataclasses.replace(TINY, corpus="mixture"))
+    assert {row["lane"] for row in facts["lanes"]} == set(lanes)
+    for row in facts["lanes"]:
+        assert row["licence"] == lanes[row["lane"]][0]
+        assert row["licence_recorded"] is True
+        assert row["sequences"] > 0
+    assert facts["unk_usable"] and facts["epochs_usable"]
+
+
+def test_the_tracked_fallback_reports_that_no_licence_was_recorded(tmp_path) -> None:
+    """An unverifiable licence is not a permissive one, and the record must say which it is.
+
+    Exercise 02's corpus carries `source_url` and `generated_at` per language and no licence field.
+    Inferring one from the URL would break this repository's own rule inside the module that
+    enforces it, so the row reports the empty string and `licence_recorded: False`.
+    """
+    facts = corpus_facts(TINY)
+    assert all(row["licence"] == "" for row in facts["lanes"])
+    assert all(row["licence_recorded"] is False for row in facts["lanes"])
 
 
 def test_a_full_bundle_saves_reloads_and_reports(tmp_path, vocabulary) -> None:

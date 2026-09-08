@@ -20,10 +20,31 @@ output head, which is exactly the split this comparison needs, and its `make_tie
 `make_untied_head` are the two baseline arms. Writing a fourth transformer in this repository to
 avoid one import would be the second copy that drifts.
 
-**The corpus is exercise 02's `corpus/v2`, not exercise 09's.** 09 trains on this repository's own
-`AGENTS.md`, which is English. Every claim here is about embeddings computed from BYTES, and the
-cost of a 32-byte window falls almost entirely on Indic scripts — a monolingual English corpus would
-make the effect this exercise exists to measure invisible while training perfectly well.
+**The corpus is multilingual on purpose, and it is gated on two measured quantities.** Exercise 09
+trains on this repository's own `AGENTS.md`, which is English. Every claim here is about embeddings
+computed from BYTES, and the cost of a 32-byte window falls almost entirely on non-Latin scripts —
+a monolingual English corpus would train perfectly well and make the effect this exercise exists to
+measure invisible.
+
+The default is **exercise 06's six-lane fetched corpus** (11.8M tokens, a licence recorded per lane
+and verified from each dataset's own card at fetch time). Exercise 02's tracked corpus is the
+**offline fallback**, so `clone && test` needs no network.
+
+**Two gates, and both are conditions on the numbers rather than rules about a named corpus**, which
+is what makes them survive a change of corpus. `[UNK]` share must be at or below exercise 04's
+`MAX_UNK_SHARE`, per lane and overall: exercise 02's four-language corpus measures **40.07%**
+because the frozen vocabulary has no Tamil, so the most common token in a run over it is a
+placeholder whose byte spelling is a fixed string — and the arm that wins is the byte-n-gram arm,
+which is exactly where that confound lands. And epochs must be at or below `MAX_EPOCHS`: dropping
+Tamil fixes the first gate and trips the second, because what is left cannot feed 500 steps without
+repeating.
+
+**Sampling is proportional per lane, and that is not a detail.** The batcher used to concatenate and
+truncate, which is harmless on a corpus half again as big as the run and fatal on one 46 times
+bigger: 256,000 positions taken off the front of exercise 06's corpus is the agentic lane and a
+sliver of code, so the four remaining lanes — including every non-Latin script — would never be seen
+at all, with every loss curve looking entirely normal. Proportional sampling also preserves exercise
+05's mixture weights for free, because 06's corpus is already sized to them.
 
 **Nothing here writes `results/`.** `save` writes to `artifacts/`, which is gitignored. What gets
 published is a decision for a person, taken after seeing the run, not a side effect of running it.
@@ -37,8 +58,11 @@ import os
 import time
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+import numpy as np
 
 if TYPE_CHECKING:  # pragma: no cover - import-time only, never executed
     import torch
@@ -49,8 +73,32 @@ from embeddings.summary import paired, unpaired_spread
 EXERCISE = Path(__file__).resolve().parents[2]
 """`07-model-embeddings-internals/`."""
 
-CORPUS = EXERCISE.parent / "02-tokenization" / "corpus" / "v2"
-"""Exercise 02's tracked multilingual corpus. Read-only — its bytes are a measured input."""
+CORPUS_MIXTURE = EXERCISE.parents[2] / "data" / "corpus"
+"""Exercise 06's fetched six-lane corpus — the default, and the only corpus in this repository whose
+provenance record carries a LICENCE.
+
+Gitignored, so a clone does not have it. `src/exercises/06-build-training-dataset/tools/
+fetch_corpus.py` is tracked and rebuilds it, verifying each dataset's licence against the dataset's
+own card at download time and refusing anything that declares none.
+"""
+
+CORPUS_FALLBACK = EXERCISE.parent / "02-tokenization" / "corpus" / "v2"
+"""Exercise 02's tracked corpus — the offline fallback, so `clone && test` works with no network.
+
+Read-only: its bytes are a measured input to exercise 02's own numbers as well as to this run. It
+records `source_url` and `generated_at` per language and **no licence field at all**, which is one
+of the two reasons it is not the default. The other is size: it cannot feed a 500-step run without
+repeating itself.
+"""
+
+MAX_EPOCHS = 1.0
+"""Above this a loss stops being a generalisation number and becomes a memorisation one.
+
+The companion to exercise 04's `MAX_UNK_SHARE`, and like it a **publication gate rather than a
+tuning knob**. It is written as a condition on the quantity rather than as a rule about a named
+corpus for a reason that is measurable: exercise 02's corpus passes at 363 steps and fails at 500,
+so "which corpus" is not a question a guard can usefully ask.
+"""
 
 
 @dataclass(frozen=True)
@@ -92,7 +140,24 @@ class RunConfig:
     znorm: bool = True
 
     # --- data ------------------------------------------------------------------------------------
-    languages: tuple[str, ...] = ("en", "hi", "ta", "te")
+    corpus: str = "mixture"
+    """Which corpus: `"mixture"` for exercise 06's six-lane fetched corpus, `"tokenization"` for
+    exercise 02's tracked one.
+
+    A field rather than a module constant because it changes the numbers, and anything that changes
+    the numbers has to be inside `fingerprint()` — otherwise two bundles claiming the same
+    configuration could have read different text.
+    """
+
+    languages: tuple[str, ...] = ("en", "hi", "mai", "te")
+    """Which of exercise 02's language files the `tokenization` fallback reads. Unused by
+    `"mixture"`, whose unit is the lane and whose selection is the fetch manifest.
+
+    **Tamil is absent and its absence is a measurement, not a preference.** The frozen vocabulary
+    was built on en/hi/te/mai; Tamil is not in it, so `ta.faithful.txt` tokenizes to **63.2%**
+    `[UNK]` and drags the four-language corpus to 40.07%, five times over the gate. Exercise 05
+    excluded it on the same evidence. The four kept here measure 0.000%.
+    """
 
     @property
     def tokens_per_step(self) -> int:
@@ -153,83 +218,402 @@ def load_vocabulary() -> list[bytes]:
     return [tokenizer.id_to_token(i).encode() for i in range(tokenizer.get_vocab_size())]
 
 
-def corpus_facts(config: RunConfig) -> dict[str, object]:
-    """How much text there is, how much the run reads, and therefore how many epochs.
+@dataclass(frozen=True)
+class LaneFacts:
+    """One named part of the corpus, and everything needed to judge whether it may be trained on.
 
-    `AGENTS.md` requires this printed beside any run. A corpus read many times over makes every loss
-    a memorisation number rather than a generalisation one — which does not invalidate a comparison
-    between two models trained identically on the same repeated text, but a reader who is not told
-    will assume otherwise. The digest is here because the corpus is a file someone could edit, and
-    without it that edit changes every figure with nothing going red.
+    The shape is exercise 04's `TokenCount` — a count that carries the evidence for its own
+    usability rather than a bare number somewhere else has to vouch for.
+
+    Attributes:
+        name: The lane, or the language for the fallback corpus.
+        language: BCP-47-ish tag as the source recorded it, or `"und"`.
+        licence: As the fetch manifest recorded it. **Empty means none was recorded**, which is not
+            the same as permissive and is reported as the empty string rather than guessed.
+        dataset: What it was fetched from.
+        provenance_tier: Exercise 03's tier, as the fetch recorded it.
+        tokens: Tokens the lane holds under the frozen vocabulary.
+        unk: How many of them came back `[UNK]`.
+        digest: `sha256:` over the lane's raw text bytes.
+    """
+
+    name: str
+    language: str
+    licence: str
+    dataset: str
+    provenance_tier: str
+    tokens: int
+    unk: int
+    digest: str
+
+    @property
+    def unk_share(self) -> float:
+        """Share of this lane's tokens that are `[UNK]`."""
+        return self.unk / self.tokens if self.tokens else 0.0
+
+    @property
+    def usable(self) -> bool:
+        """Whether a run may read this lane, by exercise 04's gate rather than one invented here."""
+        from datacleaning.tokens import MAX_UNK_SHARE
+
+        return self.unk_share <= MAX_UNK_SHARE
+
+
+def _corpus_root(corpus: str) -> Path:
+    """Where the named corpus lives on disk.
+
+    Split out so the directory is an *argument* to the cache below rather than a global it closes
+    over. A cache keyed on less than what decides its value is the same defect as a fingerprint that
+    cannot move: here it would mean a test pointing at a fixture corpus silently receiving the real
+    one, which is indistinguishable from the test passing.
+
+    Raises:
+        ValueError: On any other name, rather than falling back to something.
+    """
+    if corpus == "mixture":
+        return CORPUS_MIXTURE
+    if corpus == "tokenization":
+        return CORPUS_FALLBACK
+    raise ValueError(
+        f"unknown corpus {corpus!r}; expected 'mixture' (exercise 06's fetched six-lane corpus) "
+        "or 'tokenization' (exercise 02's tracked fallback)"
+    )
+
+
+@lru_cache(maxsize=8)
+def _lanes(
+    corpus: str, languages: tuple[str, ...], root: Path
+) -> tuple[tuple[LaneFacts, np.ndarray], ...]:
+    """Tokenize each lane once, and cache it.
+
+    Cached because `corpus_batches` is called once per arm per seed — fifty times across a full
+    grid — and each call would otherwise re-read and re-tokenize the whole corpus. That is 2.5
+    seconds for exercise 06's 11.8M tokens, so it is two minutes of waste rather than a correctness
+    problem; the digests want computing once regardless.
+
+    Keyed on everything that decides the text — including the directory — and on nothing else, so a
+    change of `steps` or `seeds` does not evict it.
+
+    Args:
+        corpus: `RunConfig.corpus`.
+        languages: `RunConfig.languages`, used only by the fallback.
+        root: `_corpus_root(corpus)`, passed in so it is part of the key.
+
+    Returns:
+        One `(facts, ids)` pair per lane, in a fixed order so every digest below is stable.
+
+    Raises:
+        FileNotFoundError: When the selected corpus is not on disk, naming the tracked script that
+            rebuilds it. **It never silently falls back**: a run that quietly read different text
+            than it was asked to is the failure this whole module is being rebuilt to remove.
+        ValueError: When `corpus` is not one of the two known names.
     """
     from datacleaning.config import OUR_TOKENIZER
     from datacleaning.tokens import load_tokenizer
 
-    text = _corpus_text(config)
-    ids = load_tokenizer(str(OUR_TOKENIZER)).encode(text).ids
+    tokenizer = load_tokenizer(str(OUR_TOKENIZER))
+    unk_id = tokenizer.token_to_id("[UNK]")
+
+    def measured(name, language, licence, dataset, tier, texts):
+        encoded = tokenizer.encode_batch(texts) if texts else []
+        ids = (
+            np.concatenate([np.asarray(e.ids, dtype=np.int32) for e in encoded])
+            if encoded
+            else np.zeros(0, dtype=np.int32)
+        )
+        digest = hashlib.sha256()
+        for text in texts:
+            digest.update(text.encode("utf-8"))
+        facts = LaneFacts(
+            name=name,
+            language=language,
+            licence=licence,
+            dataset=dataset,
+            provenance_tier=tier,
+            tokens=int(ids.size),
+            unk=int(np.count_nonzero(ids == unk_id)),
+            digest="sha256:" + digest.hexdigest(),
+        )
+        return facts, ids
+
+    if corpus == "mixture":
+        from trainingdata.corpus import lanes_from_fetch, read_documents
+
+        if not (root / "manifest.json").is_file():
+            raise FileNotFoundError(
+                f"no fetch manifest at {root / 'manifest.json'}. This corpus is "
+                "gitignored, so a clone does not have it; rebuild it with "
+                "`uv run python src/exercises/06-build-training-dataset/tools/fetch_corpus.py`, "
+                "or set RunConfig(corpus='tokenization') to use the tracked fallback. It is not "
+                "selected for you, because a run that quietly read different text than it was "
+                "asked to would be indistinguishable from one that read the right text."
+            )
+        out = []
+        for lane in lanes_from_fetch(root):
+            texts = [part for document in read_documents(lane.path) for part in document]
+            out.append(
+                measured(
+                    lane.lane,
+                    lane.language,
+                    lane.licence,
+                    lane.dataset,
+                    lane.provenance_tier,
+                    texts,
+                )
+            )
+        return tuple(out)
+
+    if corpus == "tokenization":
+        out = []
+        for language in languages:
+            path = root / f"{language}.faithful.txt"
+            if not path.is_file():
+                raise FileNotFoundError(
+                    f"exercise 02's corpus is not at {path}. It is tracked, so a clone has it; "
+                    "check the relative path rather than regenerating the file, whose bytes are a "
+                    "measured input to this run and to exercise 02's own numbers."
+                )
+            meta_path = path.with_name(f"{language}.meta.json")
+            meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.is_file() else {}
+            out.append(
+                measured(
+                    language,
+                    language,
+                    # Exercise 02's records carry `source_url` and `generated_at` and no licence
+                    # field. Reporting the empty string is the honest answer; inferring one from
+                    # the URL would be this repository's own rule about unverifiable licences,
+                    # broken in the file that states it.
+                    "",
+                    meta.get("source_url", "unknown"),
+                    "C",
+                    [path.read_text(encoding="utf-8")],
+                )
+            )
+        return tuple(out)
+
+    raise ValueError(f"unknown corpus {corpus!r}")  # pragma: no cover - _corpus_root raises first
+
+
+def corpus_facts(config: RunConfig) -> dict[str, object]:
+    """What text there is, what the run reads of it, and whether either gate refuses it.
+
+    `AGENTS.md` requires the epoch ratio printed beside any run, **per lane**: a corpus read many
+    times over makes every loss a memorisation number rather than a generalisation one, and a lane
+    the run never reads at all is a lane the run is not evidence about. This measures all three and
+    refuses none of them — the gate is
+    `refuse_unusable_corpus`, called by everything that trains. The split is deliberate: a report
+    explaining why a corpus was rejected has to be able to measure a corpus that would be rejected.
+
+    Returns:
+        A JSON-encodable block: one row per lane with its licence, tokens, `[UNK]` share, digest,
+        the sequences the run will draw from it and the epochs that works out to; plus the totals
+        and a `usable` verdict for each gate.
+    """
+    from datacleaning.tokens import MAX_UNK_SHARE
+
+    lanes = _lanes(config.corpus, config.languages, _corpus_root(config.corpus))
+    allocation = _allocate(config, lanes)
+    total_tokens = sum(facts.tokens for facts, _ in lanes)
+    total_unk = sum(facts.unk for facts, _ in lanes)
+
+    rows = []
+    for (facts, _), sequences in zip(lanes, allocation, strict=True):
+        read = sequences * config.seq_len
+        rows.append(
+            {
+                "lane": facts.name,
+                "language": facts.language,
+                "licence": facts.licence,
+                "licence_recorded": bool(facts.licence),
+                "dataset": facts.dataset,
+                "provenance_tier": facts.provenance_tier,
+                "tokens": facts.tokens,
+                "unk": facts.unk,
+                "unk_share": facts.unk_share,
+                "unk_usable": facts.usable,
+                "digest": facts.digest,
+                "sequences": sequences,
+                "tokens_read": read,
+                "epochs": read / facts.tokens if facts.tokens else float("inf"),
+            }
+        )
+
+    # A digest over the ordered lane digests rather than over one giant concatenation. It is the
+    # same guarantee -- any edit to any lane changes it -- and it stays cheap and stays meaningful
+    # when a lane is added or reordered, which a flat hash of joined text does not.
+    roll_up = hashlib.sha256()
+    for facts, _ in lanes:
+        roll_up.update(facts.name.encode("utf-8"))
+        roll_up.update(facts.digest.encode("utf-8"))
+
+    epochs = config.total_tokens / total_tokens if total_tokens else float("inf")
+    unfunded = [row["lane"] for row in rows if row["tokens"] and not row["sequences"]]
     return {
-        "source": f"src/exercises/02-tokenization/corpus/v2 ({', '.join(config.languages)})",
-        "source_bytes": len(text.encode()),
-        "source_sha256_prefix": hashlib.sha256(text.encode()).hexdigest()[:16],
-        # Full length as well as the prefix. A prefix is readable in a table; only the whole digest
-        # lets a later reader re-derive and compare exactly, which is the point of recording it.
-        "corpus_digest": "sha256:" + hashlib.sha256(text.encode()).hexdigest(),
-        "corpus_tokens": len(ids),
+        "unfunded_lanes": unfunded,
+        "lanes_usable": not unfunded,
+        "minimum_sequences": _minimum_sequences(lanes),
+        "source": _corpus_source(config),
+        "corpus": config.corpus,
+        "lanes": rows,
+        "corpus_tokens": total_tokens,
+        "corpus_unk": total_unk,
+        "unk_share": total_unk / total_tokens if total_tokens else 0.0,
+        "max_unk_share": MAX_UNK_SHARE,
+        "unk_usable": all(facts.usable for facts, _ in lanes)
+        and (total_unk / total_tokens if total_tokens else 0.0) <= MAX_UNK_SHARE,
+        "corpus_digest": "sha256:" + roll_up.hexdigest(),
         "tokens_consumed": config.total_tokens,
-        "epochs": config.total_tokens / len(ids),
+        "epochs": epochs,
+        "max_epochs": MAX_EPOCHS,
+        "epochs_usable": epochs <= MAX_EPOCHS,
     }
 
 
-def _corpus_text(config: RunConfig) -> str:
-    """The concatenated corpus, in a fixed language order so the digest is stable."""
-    parts = []
-    for language in config.languages:
-        path = CORPUS / f"{language}.faithful.txt"
-        if not path.is_file():
-            raise FileNotFoundError(
-                f"exercise 02's corpus is not at {path}. It is tracked, so a clone has it; check "
-                "the relative path rather than regenerating the file, whose bytes are a measured "
-                "input to this run and to exercise 02's own numbers."
-            )
-        parts.append(path.read_text(encoding="utf-8"))
-    return "\n".join(parts)
+def _minimum_sequences(lanes: tuple[tuple[LaneFacts, np.ndarray], ...]) -> int:
+    """The fewest sequences an allocation needs before every lane is funded at all.
+
+    `total / smallest` is the share-based bound: below it the smallest lane's exact allocation is
+    under one sequence, and largest-remainder can only rescue it if it happens to hold the largest
+    fractional part. Reported as the honest ceiling rather than the exact threshold, because the
+    exact one depends on every other lane's rounding and would be a worse thing to put in an error
+    message.
+    """
+    sizes = [facts.tokens for facts, _ in lanes if facts.tokens]
+    if not sizes:
+        return 0
+    return -(-sum(sizes) // min(sizes))
+
+
+def _corpus_source(config: RunConfig) -> str:
+    """Where the text came from, in words, for the one-line summary in a bundle."""
+    if config.corpus == "mixture":
+        return "data/corpus (exercise 06's fetched lanes)"
+    return f"src/exercises/02-tokenization/corpus/v2 ({', '.join(config.languages)})"
+
+
+def refuse_unusable_corpus(config: RunConfig) -> dict[str, object]:
+    """Raise unless both gates pass, and return the facts when they do.
+
+    **Refuse, not warn.** A provenance block nothing enforces is one that gets dropped in the first
+    hurried run, and the two failures this catches are both silent: a corpus that is mostly `[UNK]`
+    trains perfectly and reports a normal loss curve, and a corpus read three times over reports a
+    normal loss curve too. Neither shows up anywhere except in the arithmetic below.
+
+    Returns:
+        `corpus_facts(config)`, so a caller that has already paid for the measurement need not
+        repeat it.
+
+    Raises:
+        ValueError: Naming which gate failed, with the measurement and the remedy. The `[UNK]`
+            message names the lanes; the epoch message names the step count that would fit.
+    """
+    facts = corpus_facts(config)
+    if not facts["unk_usable"]:
+        worst = sorted(facts["lanes"], key=lambda row: -row["unk_share"])
+        offending = ", ".join(
+            f"{row['lane']} {row['unk_share']:.1%}" for row in worst if not row["unk_usable"]
+        )
+        raise ValueError(
+            f"{facts['unk_share']:.2%} of this corpus is [UNK], above the "
+            f"{facts['max_unk_share']:.0%} gate exercise 04 publishes counts under "
+            f"({offending or 'no single lane over the gate'}). "
+            "A token the vocabulary cannot read has one fixed byte spelling, so it is free for a "
+            "byte-n-gram head to predict -- which is the arm this comparison exists to judge. Drop "
+            "the lanes above the gate, or use a corpus the frozen vocabulary can read."
+        )
+    if not facts["lanes_usable"]:
+        raise ValueError(
+            f"this run funds no sequences at all for {', '.join(facts['unfunded_lanes'])}, so it "
+            f"is not evidence about {'them' if len(facts['unfunded_lanes']) > 1 else 'it'}. "
+            f"{config.steps * config.batch_size:,} sequences are drawn and the smallest lane needs "
+            f"about {facts['minimum_sequences']:,} before it is funded once — raise steps or "
+            "batch_size, or drop the lane deliberately and say so."
+        )
+    if not facts["epochs_usable"]:
+        fits = int(facts["corpus_tokens"] // (config.batch_size * config.seq_len))
+        raise ValueError(
+            f"this run reads {facts['epochs']:.2f} epochs of {facts['corpus_tokens']:,} tokens, "
+            f"above the {facts['max_epochs']:.2f} gate. A corpus seen more than once measures "
+            f"memorisation. Use a larger corpus, or run at most {fits:,} steps at this batch size."
+        )
+    return facts
+
+
+def _allocate(config: RunConfig, lanes: tuple[tuple[LaneFacts, np.ndarray], ...]) -> list[int]:
+    """How many sequences to draw from each lane, in proportion to the tokens it holds.
+
+    **Proportional rather than off the front, and the difference decides whether four of six lanes
+    are read at all.** A run consumes 256,000 token positions; exercise 06's corpus holds
+    11,781,888. Concatenating and truncating would take the first lane and a sliver of the second,
+    leaving every non-Latin script unread while every loss curve looked normal.
+
+    Proportional allocation also gives every lane the *same* epoch ratio as the corpus overall, and
+    preserves exercise 05's mixture weights for free, since exercise 06's corpus is already sized to
+    them.
+
+    Largest-remainder, so the sequences sum exactly and a small lane is not rounded to nothing.
+    """
+    sequences = config.steps * config.batch_size
+    total = sum(facts.tokens for facts, _ in lanes)
+    if not total:
+        return [0 for _ in lanes]
+    exact = [sequences * facts.tokens / total for facts, _ in lanes]
+    taken = [int(value) for value in exact]
+    remainder = sequences - sum(taken)
+    for index in sorted(range(len(lanes)), key=lambda i: exact[i] - taken[i], reverse=True)[
+        :remainder
+    ]:
+        taken[index] += 1
+    return taken
 
 
 def corpus_batches(config: RunConfig, seed: int, vocab_size: int | None = None) -> "torch.Tensor":
-    """`[steps * batch_size, seq_len]` token ids, shuffled by `seed`.
+    """`[steps * batch_size, seq_len]` token ids, drawn per lane and shuffled by `seed`.
 
     The SHUFFLE is what the seed changes about the data, and it changes it identically for every arm
-    in a paired comparison — that is the whole mechanism by which the seed cancels.
+    in a paired comparison — that is the whole mechanism by which the seed cancels. What the seed
+    does **not** change is which text is drawn: the per-lane slices are taken off the front of each
+    lane deterministically, so two seeds see the same tokens in a different order rather than
+    different tokens.
 
     Args:
-        config: Supplies the step count, batch size, sequence length and languages.
+        config: Supplies the step count, batch size, sequence length, corpus and languages.
         seed: Fixes the shuffle.
         vocab_size: Checked against the ids the tokenizer produced. Optional only so a caller who
             has already checked need not repeat it.
 
     Raises:
-        ValueError: When the corpus contains an id the model cannot embed, naming the cause.
-            **Shrinking the vocabulary for a fast test does not shrink the tokenizer** — exercise 09
-            records the same trap — and without this the symptom is a bare `IndexError` from inside
-            `torch.nn.functional.embedding`, which says nothing about why.
+        ValueError: When either corpus gate refuses, or when the corpus contains an id the model
+            cannot embed. **Shrinking the vocabulary for a fast test does not shrink the
+            tokenizer** — exercise 09 records the same trap — and without this the symptom is a bare
+            `IndexError` from inside `torch.nn.functional.embedding`, which says nothing about why.
     """
     import torch
-    from datacleaning.config import OUR_TOKENIZER
-    from datacleaning.tokens import load_tokenizer
 
-    ids = load_tokenizer(str(OUR_TOKENIZER)).encode(_corpus_text(config)).ids
-    if vocab_size is not None and max(ids) >= vocab_size:
+    refuse_unusable_corpus(config)
+    lanes = _lanes(config.corpus, config.languages, _corpus_root(config.corpus))
+    allocation = _allocate(config, lanes)
+
+    drawn = []
+    for (facts, ids), sequences in zip(lanes, allocation, strict=True):
+        if not sequences:
+            continue
+        needed = sequences * config.seq_len
+        if ids.size < needed:  # pragma: no cover - the epoch gate above forbids it
+            raise ValueError(
+                f"lane {facts.name} holds {ids.size:,} tokens and the allocation asks for "
+                f"{needed:,}; the epoch gate should have refused this run first"
+            )
+        drawn.append(ids[:needed].reshape(sequences, config.seq_len))
+
+    tokens = torch.from_numpy(np.concatenate(drawn).astype(np.int64))
+    if vocab_size is not None and int(tokens.max()) >= vocab_size:
         raise ValueError(
-            f"the corpus contains token id {max(ids)} and the model is {vocab_size} wide. "
+            f"the corpus contains token id {int(tokens.max())} and the model is {vocab_size} wide. "
             "Slicing the vocabulary for a fast test does not slice the tokenizer; keep the full "
             "vocabulary and shrink d_model, steps or batch_size instead."
         )
-    sequences = config.steps * config.batch_size
-    needed = sequences * config.seq_len
-    while len(ids) < needed:
-        ids = ids + ids
-    tokens = torch.tensor(ids[:needed]).reshape(sequences, config.seq_len)
-    order = torch.randperm(sequences, generator=torch.Generator().manual_seed(seed))
+    order = torch.randperm(tokens.shape[0], generator=torch.Generator().manual_seed(seed))
     return tokens[order]
 
 
@@ -276,18 +660,35 @@ def _digest_bytes(payload: bytes) -> str:
 
 
 def code_digest() -> str:
-    """A digest of the package's own source, in name order.
+    """A digest of every module these numbers depend on, in name order.
 
     Without it a bundle says which configuration produced it and not which *code* — and every
     number here is a property of `codec.py`, `heads.py` and this module as much as of the settings.
     The quote-check receipt makes the same argument for its own checker: an old checker must not be
     able to vouch for new prose.
+
+    **It covers three packages, not one, because the numbers do.** The rule is that a code digest
+    covers every module the numbers depend on, and a digest over the driver alone vouches for code
+    it never read. The transformer body is exercise 09's `lossheads.model`, so a change there moves
+    every loss in the table; the corpus is parsed by exercise 06's `trainingdata.corpus`, so a
+    change there moves which text was read. Both were outside this digest until the corpus swap
+    made the second one obvious.
     """
     digest = hashlib.sha256()
-    for path in sorted((EXERCISE / "src" / "embeddings").glob("*.py")):
-        digest.update(path.name.encode("utf-8"))
-        digest.update(path.read_bytes())
+    for root, package in _DIGESTED_PACKAGES:
+        for path in sorted(root.glob("*.py")):
+            digest.update(f"{package}/{path.name}".encode())
+            digest.update(path.read_bytes())
     return "sha256:" + digest.hexdigest()
+
+
+_DIGESTED_PACKAGES = (
+    (EXERCISE / "src" / "embeddings", "embeddings"),
+    (EXERCISE.parent / "09-loss-functions-output-heads" / "src" / "lossheads", "lossheads"),
+    (EXERCISE.parent / "06-build-training-dataset" / "src" / "trainingdata", "trainingdata"),
+)
+"""Every package whose source can move a number in a bundle from here, with the name it is digested
+under. The name is included so that moving a file between packages changes the digest."""
 
 
 def git_sha() -> str:
@@ -436,10 +837,18 @@ ARMS: tuple[Arm, ...] = (
         "the submission: beats v1 with no vocabulary-sized parameter",
     ),
     Arm(
-        "tied + residual MLP",
-        _tied("onehot", "mlp", True),
+        # NAMED FOR WHAT IT BUILDS. The inherited table calls this row "tied + residual MLP" and
+        # the driver that produced it called it `v2-wrap-M-MLP` -- it was built on WRAPPED
+        # positions, not one-hot. This registry had it on one-hot, so the arm and the row of the
+        # same name were two different models, and the published "-0.002 nats" is a gap against
+        # `wrapped positions` rather than against `tied + d x d transform`. Quoting it beside a
+        # one-hot arm would compare it to the wrong baseline while every number looked plausible.
+        "wrap + residual MLP",
+        _tied("wrap", "mlp", True),
         True,
-        "a NEGATIVE result kept on purpose: breaks the lock as thoroughly and buys nothing",
+        "a NEGATIVE result kept on purpose: breaks the lock as thoroughly and buys nothing. The "
+        "inherited table calls this row 'tied + residual MLP'; the model is the same, the old name "
+        "did not say which position scheme it used and this registry had guessed wrong.",
     ),
     Arm(
         "wrapped positions", _tied("wrap", None, True), True, "folds long tokens instead of cutting"
