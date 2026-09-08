@@ -302,6 +302,45 @@ def test_a_quantity_pinned_by_construction_says_so_in_its_own_row(tmp_path) -> N
     assert any("same rate" in f.check for f in marked)
 
 
+def test_a_run_that_declared_a_corpus_defect_never_audits_clean(tmp_path) -> None:
+    """The other half of the declared-defect mechanism, and the half that gives it teeth.
+
+    Measuring how much of a result was an artefact of a bad corpus requires running on the bad
+    corpus, so a gate with no way through would leave the confound unmeasurable and "the corpus was
+    the cause" an assertion. The way through is to name the defect in the configuration — which
+    moves the fingerprint, so the declaration is inseparable from the numbers — and the price is
+    that no audit of such a run is ever clean.
+    """
+    verify = _verify()
+    run = _build_run(tmp_path)
+    assert not verify.audit(run).failed
+
+    _edit_json(
+        run / "01-input" / "corpus.meta.json",
+        lambda c: c.update({"acknowledged_defects": ["unk"]}) or c,
+    )
+    failed = verify.audit(run).failed
+    assert failed, "a run that knowingly ignored the [UNK] gate audited clean"
+    assert any("declares no corpus defect" in f.check for f in failed)
+
+
+def test_a_gate_that_failed_without_being_declared_is_reported_separately(tmp_path) -> None:
+    """Declared and undeclared are different failures, and conflating them would hide the worse one.
+
+    A declared defect is a decision somebody made and recorded. An undeclared one is a run that got
+    past a gate it should not have — which would mean the gate itself is broken, and that is worth
+    saying in its own row rather than folding into the first.
+    """
+    verify = _verify()
+    run = _build_run(tmp_path)
+    _edit_json(
+        run / "01-input" / "corpus.meta.json",
+        lambda c: c.update({"undeclared_defects": ["epochs"]}) or c,
+    )
+    failed = verify.audit(run).failed
+    assert any("undeclared" in f.check for f in failed), [f.check for f in failed]
+
+
 def _edit_json(path: Path, change):
     payload = json.loads(path.read_text(encoding="utf-8"))
     path.write_text(json.dumps(change(payload)), encoding="utf-8")

@@ -159,6 +159,29 @@ class RunConfig:
     is a bare hash that cannot be re-derived, and the two would silently disagree.
     """
 
+    acknowledged_corpus_defects: tuple[str, ...] = ()
+    """Gates this run knowingly ignores, each named: `"unk"`, `"epochs"`, `"unfunded-lanes"`.
+
+    **Not an escape hatch — a declaration that travels with the numbers.** Measuring how much of a
+    result was an artefact of a bad corpus requires running on the bad corpus, so a gate with no way
+    through would not protect the claim, it would make the confound unmeasurable and leave "the
+    corpus was the cause" an assertion. So the way through is to name the defect in the
+    configuration, which puts it in `config_fingerprint`, in the bundle, in the run directory's
+    manifest and in every checkpoint sidecar.
+
+    `verify.py` fails any audit of a run that declared one. You can run it; you cannot get a clean
+    audit of it, and no artefact of it can be quoted without the declaration attached.
+    """
+
+    lanes: tuple[str, ...] = ()
+    """Which lanes of the `mixture` corpus to read. Empty means every lane the manifest lists.
+
+    A field rather than a filter applied by a caller, because restricting the corpus changes the
+    numbers and anything that changes the numbers belongs in `fingerprint()`. It exists to ask a
+    question the whole-corpus run cannot: whether this method's advantage is a property of the
+    SCRIPT MIX or of something else about the text, which is answered by running one lane at a time.
+    """
+
     corpus: str = "mixture"
     """Which corpus: `"mixture"` for exercise 06's six-lane fetched corpus, `"tokenization"` for
     exercise 02's tracked one.
@@ -301,7 +324,7 @@ def _corpus_root(corpus: str) -> Path:
 
 @lru_cache(maxsize=8)
 def _lanes(
-    corpus: str, languages: tuple[str, ...], root: Path
+    corpus: str, languages: tuple[str, ...], root: Path, keep: tuple[str, ...] = ()
 ) -> tuple[tuple[LaneFacts, np.ndarray], ...]:
     """Tokenize each lane once, and cache it.
 
@@ -317,6 +340,7 @@ def _lanes(
         corpus: `RunConfig.corpus`.
         languages: `RunConfig.languages`, used only by the fallback.
         root: `_corpus_root(corpus)`, passed in so it is part of the key.
+        keep: `RunConfig.lanes` — the lanes to read, or empty for all of them.
 
     Returns:
         One `(facts, ids)` pair per lane, in a fixed order so every digest below is stable.
@@ -367,8 +391,18 @@ def _lanes(
                 "selected for you, because a run that quietly read different text than it was "
                 "asked to would be indistinguishable from one that read the right text."
             )
+        available = {lane.lane for lane in lanes_from_fetch(root)}
+        missing = set(keep) - available
+        if missing:
+            raise ValueError(
+                f"RunConfig.lanes names {sorted(missing)}, which this corpus does not have. "
+                f"It holds {sorted(available)}. Silently reading a different set of lanes than "
+                "was asked for is the failure the corpus gates exist to prevent."
+            )
         out = []
         for lane in lanes_from_fetch(root):
+            if keep and lane.lane not in keep:
+                continue
             texts = [part for document in read_documents(lane.path) for part in document]
             out.append(
                 measured(
@@ -430,7 +464,7 @@ def corpus_facts(config: RunConfig) -> dict[str, object]:
     """
     from datacleaning.tokens import MAX_UNK_SHARE
 
-    lanes = _lanes(config.corpus, config.languages, _corpus_root(config.corpus))
+    lanes = _lanes(config.corpus, config.languages, _corpus_root(config.corpus), config.lanes)
     allocation = _allocate(config, lanes)
     total_tokens = sum(facts.tokens for facts, _ in lanes)
     total_unk = sum(facts.unk for facts, _ in lanes)
@@ -467,10 +501,24 @@ def corpus_facts(config: RunConfig) -> dict[str, object]:
 
     epochs = config.total_tokens / total_tokens if total_tokens else float("inf")
     unfunded = [row["lane"] for row in rows if row["tokens"] and not row["sequences"]]
+    overall_unk = total_unk / total_tokens if total_tokens else 0.0
+    failing = []
+    if not (all(facts.usable for facts, _ in lanes) and overall_unk <= MAX_UNK_SHARE):
+        failing.append("unk")
+    if epochs > MAX_EPOCHS:
+        failing.append("epochs")
+    if unfunded:
+        failing.append("unfunded-lanes")
     return {
         "unfunded_lanes": unfunded,
         "lanes_usable": not unfunded,
         "minimum_sequences": _minimum_sequences(lanes),
+        # Which gates this corpus fails, and which of those the run has declared. A run with a
+        # non-empty `acknowledged_defects` is measuring the defect rather than measuring past it,
+        # and every artefact it writes carries this list.
+        "failing_gates": failing,
+        "acknowledged_defects": list(config.acknowledged_corpus_defects),
+        "undeclared_defects": [g for g in failing if g not in config.acknowledged_corpus_defects],
         "source": _corpus_source(config),
         "corpus": config.corpus,
         "lanes": rows,
@@ -523,11 +571,21 @@ def refuse_unusable_corpus(config: RunConfig) -> dict[str, object]:
         repeat it.
 
     Raises:
-        ValueError: Naming which gate failed, with the measurement and the remedy. The `[UNK]`
-            message names the lanes; the epoch message names the step count that would fit.
+        ValueError: Naming which gate failed, with the measurement and the remedy — unless the run
+            has declared that gate in `RunConfig.acknowledged_corpus_defects`, in which case the
+            declaration is recorded in the facts and travels with every number the run produces.
+            The `[UNK]` message names the lanes; the epoch message names the step count that fits.
     """
     facts = corpus_facts(config)
-    if not facts["unk_usable"]:
+    declared = set(config.acknowledged_corpus_defects)
+    unknown = declared - {"unk", "epochs", "unfunded-lanes"}
+    if unknown:
+        raise ValueError(
+            f"acknowledged_corpus_defects names {sorted(unknown)}, which is not a gate. The gates "
+            "are 'unk', 'epochs' and 'unfunded-lanes'. A declaration that matches no gate would "
+            "read as a caveat and enforce nothing."
+        )
+    if not facts["unk_usable"] and "unk" not in declared:
         worst = sorted(facts["lanes"], key=lambda row: -row["unk_share"])
         offending = ", ".join(
             f"{row['lane']} {row['unk_share']:.1%}" for row in worst if not row["unk_usable"]
@@ -540,7 +598,7 @@ def refuse_unusable_corpus(config: RunConfig) -> dict[str, object]:
             "byte-n-gram head to predict -- which is the arm this comparison exists to judge. Drop "
             "the lanes above the gate, or use a corpus the frozen vocabulary can read."
         )
-    if not facts["lanes_usable"]:
+    if not facts["lanes_usable"] and "unfunded-lanes" not in declared:
         raise ValueError(
             f"this run funds no sequences at all for {', '.join(facts['unfunded_lanes'])}, so it "
             f"is not evidence about {'them' if len(facts['unfunded_lanes']) > 1 else 'it'}. "
@@ -643,7 +701,7 @@ def corpus_draw(
     import torch
 
     refuse_unusable_corpus(config)
-    lanes = _lanes(config.corpus, config.languages, _corpus_root(config.corpus))
+    lanes = _lanes(config.corpus, config.languages, _corpus_root(config.corpus), config.lanes)
     allocation = _allocate(config, lanes)
 
     drawn = []
@@ -679,7 +737,9 @@ def lane_names(config: RunConfig) -> list[str]:
     """The lane names, in the index order `corpus_draw`'s labels use."""
     return [
         facts.name
-        for facts, _ in _lanes(config.corpus, config.languages, _corpus_root(config.corpus))
+        for facts, _ in _lanes(
+            config.corpus, config.languages, _corpus_root(config.corpus), config.lanes
+        )
     ]
 
 

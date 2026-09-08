@@ -168,6 +168,30 @@ def check_corpus(run: Path) -> list[Finding]:
         return [Finding("corpus", "unverifiable", "01-input/corpus.meta.json is absent")]
 
     findings = []
+
+    # A run that declared a defect is measuring the defect. Its numbers are legitimate as evidence
+    # ABOUT the defect and never as evidence past it, so the audit fails rather than warns -- you
+    # can run it, and you cannot get a clean audit of it.
+    declared = corpus.get("acknowledged_defects") or []
+    if declared:
+        findings.append(
+            Finding(
+                "the run declares no corpus defect",
+                "failed",
+                f"this run knowingly ignored the {', '.join(declared)} gate(s), so its numbers are "
+                "evidence about that defect and must not be quoted as evidence past it",
+            )
+        )
+    undeclared = corpus.get("undeclared_defects")
+    if undeclared:
+        findings.append(
+            Finding(
+                "no gate failed undeclared",
+                "failed",
+                f"the corpus fails {', '.join(undeclared)} and the run did not declare it",
+            )
+        )
+
     total = sum(lane["tokens"] for lane in corpus["lanes"])
     findings.append(
         Finding(

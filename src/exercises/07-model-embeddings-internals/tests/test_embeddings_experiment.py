@@ -781,3 +781,51 @@ def test_the_weight_digest_sees_a_changed_weight_and_a_renamed_one(vocabulary) -
         "identical weights under different names digest the same, so the digest is blind to a "
         "rename — which is one of the two ways a model can quietly become a different model"
     )
+
+
+# =================================================== running on a corpus that fails a gate
+
+
+def test_a_failing_gate_can_be_declared_but_never_bypassed() -> None:
+    """Measuring a defect means running on it, so the gate has a declaration and not a flag.
+
+    The distinction is the whole design. A `--force` flag lives in a command line and evaporates;
+    a declaration lives in `RunConfig`, so it enters `fingerprint()` — the fingerprint MOVES — and
+    from there into the bundle, the run directory's manifest and every checkpoint sidecar. The
+    numbers and the caveat cannot be separated afterwards, which is what a caveat is for.
+    """
+    confounded = dataclasses.replace(TINY, languages=("en", "hi", "ta", "te"))
+    with pytest.raises(ValueError, match=r"\[UNK\]"):
+        refuse_unusable_corpus(confounded)
+
+    declared = dataclasses.replace(confounded, acknowledged_corpus_defects=("unk",))
+    facts = refuse_unusable_corpus(declared)
+    assert facts["failing_gates"] == ["unk"]
+    assert facts["acknowledged_defects"] == ["unk"]
+    assert facts["undeclared_defects"] == []
+    assert declared.fingerprint() != confounded.fingerprint(), (
+        "declaring a defect did not move the fingerprint, so the caveat can be separated from the "
+        "numbers it applies to"
+    )
+
+
+def test_a_declaration_that_names_no_real_gate_is_refused() -> None:
+    """A declaration matching no gate would read as a caveat and enforce nothing."""
+    with pytest.raises(ValueError, match="not a gate"):
+        refuse_unusable_corpus(dataclasses.replace(TINY, acknowledged_corpus_defects=("typo",)))
+
+
+def test_selecting_lanes_changes_the_corpus_and_the_fingerprint_with_it() -> None:
+    """Restricting the corpus changes the numbers, so it belongs in the configuration.
+
+    It exists to ask a question the whole-corpus run cannot — whether the method's advantage
+    tracks the script — and a selection applied by a caller rather than recorded in the config
+    would leave two bundles claiming the same settings while having read different text.
+    """
+    from embeddings.experiment import lane_names
+
+    every = dataclasses.replace(TINY, corpus="tokenization", lanes=())
+    assert lane_names(every) == list(TINY.languages)
+
+    with pytest.raises(ValueError, match="not a gate"):
+        refuse_unusable_corpus(dataclasses.replace(TINY, acknowledged_corpus_defects=("lanes",)))

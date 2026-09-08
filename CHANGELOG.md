@@ -104,6 +104,27 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   standard deviation and t alike, along with the `wrap_on_top_of_5` scalar beside it. All of them
   hold.
 
+- **A run may now be made on a corpus that fails a gate, by declaring the gate it fails.** Measuring
+  how much of a result was an artefact of a bad corpus requires running on the bad corpus, so a gate
+  with no way through would not have protected the claim — it would have made the confound
+  unmeasurable and left "the corpus was the cause" an assertion. `acknowledged_corpus_defects` names
+  the gate, and it is a declaration rather than a flag: it lives in `RunConfig`, so it moves
+  `config_fingerprint` and travels into the bundle, the run manifest and every checkpoint sidecar,
+  and `verify.py` fails any audit of a run that declared one. You can run it; you cannot get a
+  clean audit of it, and no artefact of it can be quoted without the declaration attached.
+
+- **The determinism check reports a magnitude against the effect size, not a boolean.** A yes/no on
+  floating point is the wrong instrument for a GPU. Measured: the full grid run twice is
+  **bit-identical on CPU** (0.000e+00) and differs on **50 of 50 arm-seeds on MPS** by at most
+  **9.537e-07** — one float32 ULP near a loss of 5, from a non-deterministic reduction order, and
+  about 150,000x smaller than the smallest effect the grid claims. A boolean reports those two as
+  the same failure.
+
+- **The corpus can be restricted to named lanes**, so a question the whole-corpus run cannot answer
+  — whether the method's advantage tracks the script the text is written in — can be asked one lane
+  at a time. It is a `RunConfig` field rather than a caller-side filter, because it changes the
+  numbers and therefore belongs in the fingerprint.
+
 ### Fixed
 
 - **An arm in exercise 07's registry was named for a model it was not.** `"tied + residual MLP"`

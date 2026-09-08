@@ -29,6 +29,7 @@ import dataclasses
 import datetime
 import sys
 import time
+from pathlib import Path
 
 from embeddings.experiment import (
     ARMS,
@@ -61,6 +62,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--no-log", action="store_true", help="skip the run directory (bundle only)"
     )
+    parser.add_argument(
+        "--repeat",
+        type=int,
+        default=1,
+        help="run the whole grid this many times and compare the losses bit-for-bit",
+    )
+    parser.add_argument("--out", default=None, help="where to write the bundle")
     args = parser.parse_args(argv)
 
     config = dataclasses.replace(
@@ -102,11 +110,64 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     bundle = run(config, arms=arms, progress=progress, log=log)
-    path = save(bundle)
+    path = save(bundle, Path(args.out) if args.out else None)
     print(f"\n{report(bundle)}\n")
     print(f"{time.time() - started:.0f}s total -> {path}")
     if log is not None:
         print(f"run directory -> {log.path}")
+
+    # Determinism, measured rather than asserted. Two runs of the same grid must produce the same
+    # losses to the last bit, and the only way to know is to do it -- a seed that is set and a
+    # result that is reproducible are different claims, and this exercise has already published a
+    # number nobody could regenerate. The repeats write no run directory: they are identical by
+    # hypothesis, and 350 MB each to store a hypothesis is not a trade worth making.
+    for attempt in range(2, args.repeat + 1):
+        done[0] = 0
+        print(f"\nrepeat {attempt} of {args.repeat}, for bit-identity")
+        again = run(config, arms=arms, progress=progress)
+        # The MAGNITUDE, not a boolean. A yes/no on floating point is the wrong instrument for a
+        # GPU: measured here, CPU is bit-identical at 0.0 while MPS differs by 9.537e-07, which is
+        # one float32 ULP near a loss of 5 and comes from a non-deterministic reduction order. A
+        # boolean reports those two as the same failure, and they are not remotely the same thing.
+        # So the question asked is the one that decides anything: is the difference small against
+        # the effects this grid is measuring?
+        deltas = [
+            max((abs(x - y) for x, y in zip(a["losses"], b["losses"], strict=True)), default=0.0)
+            for a, b in zip(bundle["runs"], again["runs"], strict=True)
+        ]
+        differing = sum(1 for d in deltas if d)
+        worst = max(deltas, default=0.0)
+        gaps = [
+            abs(row[key]["gap"])
+            for row in bundle["arms"]
+            for key in ("vs_control", "vs_v1")
+            if row.get(key)
+        ]
+        smallest = min(gaps) if gaps else 0.0
+        total = sum(len(r["losses"]) for r in bundle["runs"])
+        if not differing:
+            print(
+                f"repeat {attempt}: BIT-IDENTICAL across {len(deltas)} arm-seeds, "
+                f"{total:,} losses compared"
+            )
+            continue
+        print(
+            f"repeat {attempt}: {differing} of {len(deltas)} arm-seeds differ, worst |delta| "
+            f"{worst:.3e} over {total:,} losses"
+        )
+        if smallest:
+            print(
+                f"  the smallest effect this grid claims is {smallest:.3f} nats, so the "
+                f"non-determinism is {smallest / worst:,.0f}x smaller than it"
+            )
+            if worst / smallest > 0.01:
+                print("  NOT SMALL ENOUGH: a repeat could move a published gap by over 1%")
+                return 1
+        print(
+            f"  device {bundle['provenance']['environment']['device']} is reproducible to within "
+            f"{worst:.3e} and not bit-for-bit. Use --device cpu for a bit-identical run."
+        )
+
     print("\nThis is a specified re-run, not a reproduction. Nothing is published from here.")
     return 0
 
