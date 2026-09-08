@@ -862,6 +862,23 @@ predates the harness — so it is logged as what it was.
                           multilingual v2 or the effect is invisible. Fourier is also 23x denser
                           per token and 8x slower to train, which no document here records
 
+2026-09-07  exercise-07   #155 opened: the page reads every number from M so a figure cannot
+                          drift from the run that produced it -- except one, typed into the
+                          glossary's definition of nats: "beats the published design by 0.141". A
+                          measurement that moved would have updated every table and left that
+                          sentence contradicting them, inside the prose that explains the unit.
+                          Derived from M.attribution now; GLOSSARY became glossaryEntries(M) so it
+                          cannot regress. Rendered page proven unchanged: driven in a browser on
+                          this branch and on main, body text byte-identical at 19,856 chars.
+                          SEPARATELY: nothing checked that web/data.js still matched the
+                          measurements it is generated from -- grep of tests/, workflows and deploy/
+                          for either filename returned ZERO hits, so editing the JSON and forgetting
+                          build_web_data.py served the previous run's numbers with a green suite.
+                          New test_embeddings_page_data.py parses both and asserts equal, plus a
+                          banner check and a broken twin. Watched red on a one-digit change,
+                          restored in a finally, byte-identical after. Pure Python, so it runs in
+                          the plain test job rather than behind playwright like the render suite
+
 2026-09-07  exercise-07   #154 opened: S07's notebook taught the analysis and never showed the
                           mechanism. It printed the sparse coordinates but never E = K.W_p, never
                           the tie that IS v2, and never the evidence the recommendation rests on --
@@ -888,4 +905,17 @@ predates the harness — so it is logged as what it was.
                           is under-recorded rather than unsupported. lite 8s, full 45s, both
                           executed end to end with nbclient. Nothing tracked changed: no
                           measurement, no page, no package code, so nothing to redeploy
+2026-09-08  exercise-07   #156 amended before merge: its changelog headline read "and the
+                          published conclusion survives it". That validation rested on a run whose
+                          corpus was later found to be 28.6% [UNK] -- exercise 02's tokenizer has no
+                          Tamil and 07 was feeding it Tamil. The repo's own gate (04's
+                          MAX_UNK_SHARE, reused by 05 and 06) refuses above 5%, and 07 is the only
+                          exercise that never measured it. The confound lands on the winning arm:
+                          [UNK]'s spelling is fixed, so its hashed byte n-grams are identical every
+                          time, and the n-gram arm is the one that wins. Claim withdrawn before
+                          merge rather than corrected after -- a quietly amended number is worse
+                          than the original error. The machinery claim stands: experiment.py,
+                          provenance, the recovered per-seed arrays and the notebook are all sound
+                          and PR A depends on them. Invertibility, collisions and the parameter
+                          arithmetic are properties of the vocabulary and are unaffected
 ```
