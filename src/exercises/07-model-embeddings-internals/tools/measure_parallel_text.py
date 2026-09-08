@@ -79,9 +79,9 @@ LIMITS = (
     "of shared n-grams falls as a corpus grows for reasons unrelated to translation. The first "
     "version of this measurement expressed each corpus as one piece and reported 0.00% for the "
     "ordinary one -- true by construction, and indistinguishable from a decisive result.",
-    "Both runs read under one epoch, but not the same fraction of their corpus: the parallel one "
-    "is 78,800 tokens and the other 2.2M, so the parallel run reads nearly all of its corpus and "
-    "the other reads a small sample.",
+    "The word 'parallel' is loose. These are not translations -- nobody rendered the English "
+    "article into Telugu sentence by sentence. They are four articles about one subject, written "
+    "independently in four languages, which is a COMPARABLE corpus rather than a parallel one.",
 )
 
 

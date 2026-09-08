@@ -1,0 +1,585 @@
+{
+ "what": "The full arm grid run on one lane of exercise 06's corpus at a time, to ask whether this method's advantage over v1 tracks the script the text is written in.",
+ "limits": [
+  "Lane and DOMAIN are confounded: the indic lane is encyclopedic text and the code lane is source code, so a difference between them is not necessarily a difference about script.",
+  "This says nothing about whether the advantage is a property of comparable text -- exercise 02's corpus being one article in five languages. That is measured separately by tools/measure_parallel_text.py, and its answer is not derivable from these lanes.",
+  "Each lane is read at a different epoch ratio, because the lanes are different sizes. All are far under 1.0, so nothing is seen twice, but the ratios are not equal."
+ ],
+ "lanes": [
+  "indic",
+  "web",
+  "code"
+ ],
+ "control": "dense tied embedding",
+ "reference": "v1 - Kronecker in, untied head",
+ "corpus": {
+  "indic": {
+   "unfunded_lanes": [],
+   "lanes_usable": true,
+   "minimum_sequences": 1,
+   "failing_gates": [],
+   "acknowledged_defects": [],
+   "undeclared_defects": [],
+   "source": "data/corpus (exercise 06's fetched lanes)",
+   "corpus": "mixture",
+   "lanes": [
+    {
+     "lane": "indic",
+     "language": "hi",
+     "licence": "cc-by-4.0",
+     "licence_recorded": true,
+     "provenance_tier": "A",
+     "tokens": 2199515,
+     "unk": 1736,
+     "unk_share": 0.0007892649061270326,
+     "unk_usable": true,
+     "digest": "sha256:ba83e1b422d0fc3f34c65782d11506bfe376270e8bc6b580332f059d5a803ccd",
+     "sequences": 2400,
+     "tokens_read": 153600,
+     "epochs": 0.06983357694764528
+    }
+   ],
+   "corpus_tokens": 2199515,
+   "corpus_unk": 1736,
+   "unk_share": 0.0007892649061270326,
+   "max_unk_share": 0.05,
+   "unk_usable": true,
+   "corpus_digest": "sha256:33d35e67b1765010de2715d64b766bd3d04eecbc3272650a84b70fc2343159a9",
+   "tokens_consumed": 153600,
+   "epochs": 0.06983357694764528,
+   "max_epochs": 1.0,
+   "epochs_usable": true
+  },
+  "web": {
+   "unfunded_lanes": [],
+   "lanes_usable": true,
+   "minimum_sequences": 1,
+   "failing_gates": [],
+   "acknowledged_defects": [],
+   "undeclared_defects": [],
+   "source": "data/corpus (exercise 06's fetched lanes)",
+   "corpus": "mixture",
+   "lanes": [
+    {
+     "lane": "web",
+     "language": "en",
+     "licence": "odc-by",
+     "licence_recorded": true,
+     "provenance_tier": "A",
+     "tokens": 3728964,
+     "unk": 2123,
+     "unk_share": 0.0005693270302421799,
+     "unk_usable": true,
+     "digest": "sha256:0b35c6587f908147122482f5f6327521a1e9f95944b7934113bf158891f559ca",
+     "sequences": 2400,
+     "tokens_read": 153600,
+     "epochs": 0.04119106540047048
+    }
+   ],
+   "corpus_tokens": 3728964,
+   "corpus_unk": 2123,
+   "unk_share": 0.0005693270302421799,
+   "max_unk_share": 0.05,
+   "unk_usable": true,
+   "corpus_digest": "sha256:b25732e5297d1dd9c96069693170d57b684e3c5991af57f89bc38732c3736171",
+   "tokens_consumed": 153600,
+   "epochs": 0.04119106540047048,
+   "max_epochs": 1.0,
+   "epochs_usable": true
+  },
+  "code": {
+   "unfunded_lanes": [],
+   "lanes_usable": true,
+   "minimum_sequences": 1,
+   "failing_gates": [],
+   "acknowledged_defects": [],
+   "undeclared_defects": [],
+   "source": "data/corpus (exercise 06's fetched lanes)",
+   "corpus": "mixture",
+   "lanes": [
+    {
+     "lane": "code",
+     "language": "python",
+     "licence": "apache-2.0",
+     "licence_recorded": true,
+     "provenance_tier": "B",
+     "tokens": 3281640,
+     "unk": 17432,
+     "unk_share": 0.005311978157262832,
+     "unk_usable": true,
+     "digest": "sha256:a727f1047ef737d11ec38d2faf14e335cdddabde379587862dd7cda5b0b4e856",
+     "sequences": 2400,
+     "tokens_read": 153600,
+     "epochs": 0.046805865360002925
+    }
+   ],
+   "corpus_tokens": 3281640,
+   "corpus_unk": 17432,
+   "unk_share": 0.005311978157262832,
+   "max_unk_share": 0.05,
+   "unk_usable": true,
+   "corpus_digest": "sha256:c3e0170247d3e5fe33e36dcefee1f3fa422a0bee9f95c1e2762d4cd69876e480",
+   "tokens_consumed": 153600,
+   "epochs": 0.046805865360002925,
+   "max_epochs": 1.0,
+   "epochs_usable": true
+  }
+ },
+ "per_seed": {
+  "indic": {
+   "dense tied embedding": [
+    6.30769082069397,
+    6.281486940383911,
+    6.289752244949341,
+    6.277142667770386,
+    6.269916009902954
+   ],
+   "v1 - Kronecker in, untied head": [
+    5.4861758518218995,
+    5.45241623878479,
+    5.488509206771851,
+    5.456701641082764,
+    5.4666910648345945
+   ],
+   "tied to induced E": [
+    5.987255821228027,
+    5.981139783859253,
+    5.993022241592407,
+    5.994703674316407,
+    5.995354700088501
+   ],
+   "tied + d x d transform": [
+    5.93935305595398,
+    5.937694425582886,
+    5.9498518943786625,
+    5.944330415725708,
+    5.949005146026611
+   ],
+   "tied + n-gram (one-hot positions)": [
+    5.668318777084351,
+    5.673223190307617,
+    5.6785610389709475,
+    5.657637023925782,
+    5.678410139083862
+   ],
+   "wrap + residual MLP": [
+    5.938666200637817,
+    5.923194694519043,
+    5.92965329170227,
+    5.9244326400756835,
+    5.92754506111145
+   ],
+   "wrapped positions": [
+    5.949130945205688,
+    5.935317068099976,
+    5.938149814605713,
+    5.93730260848999,
+    5.940042953491211
+   ],
+   "Fourier positions": [
+    6.136348352432251,
+    6.123436088562012,
+    6.108277521133423,
+    6.114539499282837,
+    6.099182920455933
+   ],
+   "wrap + n-gram": [
+    5.668625717163086,
+    5.666806726455689,
+    5.663575563430786,
+    5.653498268127441,
+    5.665031433105469
+   ],
+   "byte head + end-of-token": [
+    5.991508979797363,
+    5.944243850708008,
+    5.971894941329956,
+    5.947139673233032,
+    5.944183139801026
+   ]
+  },
+  "web": {
+   "dense tied embedding": [
+    6.622968902587891,
+    6.6084850406646725,
+    6.619321584701538,
+    6.606630411148071,
+    6.648679590225219
+   ],
+   "v1 - Kronecker in, untied head": [
+    5.832092809677124,
+    5.805346469879151,
+    5.810670824050903,
+    5.818219842910767,
+    5.860448398590088
+   ],
+   "tied to induced E": [
+    6.3620029640197755,
+    6.3703014087677,
+    6.363829946517944,
+    6.350621128082276,
+    6.380394430160522
+   ],
+   "tied + d x d transform": [
+    6.3317374324798585,
+    6.332192602157593,
+    6.321455383300782,
+    6.3156038188934325,
+    6.34880202293396
+   ],
+   "tied + n-gram (one-hot positions)": [
+    5.829084959030151,
+    5.81198034286499,
+    5.812574863433838,
+    5.793866415023803,
+    5.8545417213439945
+   ],
+   "wrap + residual MLP": [
+    6.3372549629211425,
+    6.321814908981323,
+    6.323334827423095,
+    6.307177314758301,
+    6.341424875259399
+   ],
+   "wrapped positions": [
+    6.346671915054321,
+    6.331861658096313,
+    6.3304171466827395,
+    6.316132383346558,
+    6.3515207481384275
+   ],
+   "Fourier positions": [
+    6.589906396865845,
+    6.577062625885009,
+    6.58355450630188,
+    6.573230800628662,
+    6.598564739227295
+   ],
+   "wrap + n-gram": [
+    5.8403591060638425,
+    5.818388338088989,
+    5.821275072097778,
+    5.803001661300659,
+    5.850934648513794
+   ],
+   "byte head + end-of-token": [
+    6.301304321289063,
+    6.2674554920196535,
+    6.2744225406646725,
+    6.287021188735962,
+    6.302478008270263
+   ]
+  },
+  "code": {
+   "dense tied embedding": [
+    4.685990920066834,
+    4.7375257396698,
+    4.578338580131531,
+    4.541481332778931,
+    4.6199384212493895
+   ],
+   "v1 - Kronecker in, untied head": [
+    3.146530604362488,
+    3.0970292043685914,
+    3.1249359703063964,
+    3.1456813287734984,
+    3.0873970365524293
+   ],
+   "tied to induced E": [
+    3.775153775215149,
+    3.7201909971237184,
+    3.760923638343811,
+    3.75169020652771,
+    3.7410001087188722
+   ],
+   "tied + d x d transform": [
+    3.708878984451294,
+    3.654787220954895,
+    3.698046727180481,
+    3.6869040298461915,
+    3.6728064393997193
+   ],
+   "tied + n-gram (one-hot positions)": [
+    3.293773679733276,
+    3.2441518688201905,
+    3.286436371803284,
+    3.2782595109939576,
+    3.2495774316787718
+   ],
+   "wrap + residual MLP": [
+    3.716883029937744,
+    3.668980040550232,
+    3.6935462284088136,
+    3.690400252342224,
+    3.6562276029586793
+   ],
+   "wrapped positions": [
+    3.7175440645217894,
+    3.664600343704224,
+    3.6992094469070436,
+    3.689503674507141,
+    3.6609960985183716
+   ],
+   "Fourier positions": [
+    3.982101249694824,
+    3.9395685625076293,
+    3.9635468339920044,
+    3.969446244239807,
+    3.9357250356674194
+   ],
+   "wrap + n-gram": [
+    3.294566512107849,
+    3.251938848495483,
+    3.2833714580535887,
+    3.275831351280212,
+    3.2308405208587647
+   ],
+   "byte head + end-of-token": [
+    3.4830221557617187,
+    3.428535304069519,
+    3.4711708498001097,
+    3.483119778633118,
+    3.438370385169983
+   ]
+  }
+ },
+ "rows": [
+  {
+   "arm": "dense tied embedding",
+   "v_free": false,
+   "gaps": {
+    "indic": {
+     "gap": 0.8150989360809329,
+     "sd": 0.01222590701951783,
+     "t": 149.07823415923568,
+     "seeds_agreeing": "5/5"
+    },
+    "web": {
+     "gap": 0.7958614368438719,
+     "sd": 0.009422224006413479,
+     "t": 188.8726347667199,
+     "seeds_agreeing": "5/5"
+    },
+    "code": {
+     "gap": 1.5123401699066163,
+     "sd": 0.09303613764941245,
+     "t": 36.348192331005826,
+     "seeds_agreeing": "5/5"
+    }
+   }
+  },
+  {
+   "arm": "tied to induced E",
+   "v_free": true,
+   "gaps": {
+    "indic": {
+     "gap": 0.5201964435577393,
+     "sd": 0.016377215215121158,
+     "t": 71.0251770016892,
+     "seeds_agreeing": "5/5"
+    },
+    "web": {
+     "gap": 0.540074306488037,
+     "sd": 0.018422750703755205,
+     "t": 65.55171275059085,
+     "seeds_agreeing": "5/5"
+    },
+    "code": {
+     "gap": 0.6294769163131715,
+     "sd": 0.017434303720973637,
+     "t": 80.73469394994522,
+     "seeds_agreeing": "5/5"
+    }
+   }
+  },
+  {
+   "arm": "tied + d x d transform",
+   "v_free": true,
+   "gaps": {
+    "indic": {
+     "gap": 0.4739481868743898,
+     "sd": 0.015619282182323892,
+     "t": 67.85077260869559,
+     "seeds_agreeing": "5/5"
+    },
+    "web": {
+     "gap": 0.5046025829315186,
+     "sd": 0.014779298265255177,
+     "t": 76.34501021671947,
+     "seeds_agreeing": "5/5"
+    },
+    "code": {
+     "gap": 0.5639698514938355,
+     "sd": 0.016597134000527904,
+     "t": 75.98148723511943,
+     "seeds_agreeing": "5/5"
+    }
+   }
+  },
+  {
+   "arm": "tied + n-gram (one-hot positions)",
+   "v_free": true,
+   "gaps": {
+    "indic": {
+     "gap": 0.2011312332153322,
+     "sd": 0.01567309471543604,
+     "t": 28.695233330333007,
+     "seeds_agreeing": "5/5"
+    },
+    "web": {
+     "gap": -0.004946008682251169,
+     "sd": 0.011856897557846288,
+     "t": -0.9327576270994334,
+     "seeds_agreeing": "3/5"
+    },
+    "code": {
+     "gap": 0.15012494373321533,
+     "sd": 0.01224686320403984,
+     "t": 27.4102497686973,
+     "seeds_agreeing": "5/5"
+    }
+   }
+  },
+  {
+   "arm": "wrap + residual MLP",
+   "v_free": true,
+   "gaps": {
+    "indic": {
+     "gap": 0.4585995769500732,
+     "sd": 0.012029206473295083,
+     "t": 85.24750413001364,
+     "seeds_agreeing": "5/5"
+    },
+    "web": {
+     "gap": 0.5008457088470456,
+     "sd": 0.015317392439878605,
+     "t": 73.11460195440011,
+     "seeds_agreeing": "5/5"
+    },
+    "code": {
+     "gap": 0.5648926019668579,
+     "sd": 0.011357092225180299,
+     "t": 111.22021666638116,
+     "seeds_agreeing": "5/5"
+    }
+   }
+  },
+  {
+   "arm": "wrapped positions",
+   "v_free": true,
+   "gaps": {
+    "indic": {
+     "gap": 0.46988987731933596,
+     "sd": 0.013730640809306341,
+     "t": 76.5227000121455,
+     "seeds_agreeing": "5/5"
+    },
+    "web": {
+     "gap": 0.5099651012420653,
+     "sd": 0.014942113249702477,
+     "t": 76.31561971681121,
+     "seeds_agreeing": "5/5"
+    },
+    "code": {
+     "gap": 0.5660558967590332,
+     "sd": 0.012704646255644929,
+     "t": 99.62807611864108,
+     "seeds_agreeing": "5/5"
+    }
+   }
+  },
+  {
+   "arm": "Fourier positions",
+   "v_free": true,
+   "gaps": {
+    "indic": {
+     "gap": 0.6462580757141115,
+     "sd": 0.02033332124617257,
+     "t": 71.06940232781561,
+     "seeds_agreeing": "5/5"
+    },
+    "web": {
+     "gap": 0.7591081447601317,
+     "sd": 0.014211316283459266,
+     "t": 119.44125231615956,
+     "seeds_agreeing": "5/5"
+    },
+    "code": {
+     "gap": 0.8377627563476562,
+     "sd": 0.009163848338796198,
+     "t": 204.4222473957962,
+     "seeds_agreeing": "5/5"
+    }
+   }
+  },
+  {
+   "arm": "wrap + n-gram",
+   "v_free": true,
+   "gaps": {
+    "indic": {
+     "gap": 0.1934087409973145,
+     "sd": 0.015269024459448971,
+     "t": 28.32368848849515,
+     "seeds_agreeing": "5/5"
+    },
+    "web": {
+     "gap": 0.001436096191406122,
+     "sd": 0.01287113718434672,
+     "t": 0.2494891212967539,
+     "seeds_agreeing": "3/5"
+    },
+    "code": {
+     "gap": 0.14699490928649891,
+     "sd": 0.011078993308440433,
+     "t": 29.667912991753198,
+     "seeds_agreeing": "5/5"
+    }
+   }
+  },
+  {
+   "arm": "byte head + end-of-token",
+   "v_free": true,
+   "gaps": {
+    "indic": {
+     "gap": 0.4896953163146973,
+     "sd": 0.010468636327851786,
+     "t": 104.59738797399056,
+     "seeds_agreeing": "5/5"
+    },
+    "web": {
+     "gap": 0.46118064117431634,
+     "sd": 0.01114455412729824,
+     "t": 92.53230338275631,
+     "seeds_agreeing": "5/5"
+    },
+    "code": {
+     "gap": 0.340528865814209,
+     "sd": 0.007888388617658318,
+     "t": 96.52740618748979,
+     "seeds_agreeing": "5/5"
+    }
+   }
+  }
+ ],
+ "provenance": {
+  "config_fingerprint": "552874a44e3c",
+  "code_digest": "sha256:fece6f7de8d00442cd09fdb23a0d0825206693b5ca1fed780309038a7b9c1380",
+  "git_sha": "8398f0412e8fb834b8b3eb14c35c288252da9d6a",
+  "tokenizer_digest": "sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae",
+  "environment": {
+   "python": "3.12.13",
+   "torch": "2.13.0",
+   "numpy": "2.5.2",
+   "platform": "macOS-26.6.2-arm64-arm-64bit",
+   "machine": "arm64",
+   "torch_threads": 12,
+   "omp_num_threads": "unset",
+   "device": "mps",
+   "cuda_available": false,
+   "mps_built": true,
+   "mps_available": true,
+   "mps_unavailable_but_built": false
+  }
+ },
+ "seconds": 806.0794658660889
+}

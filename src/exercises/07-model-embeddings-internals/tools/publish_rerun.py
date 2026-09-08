@@ -17,7 +17,18 @@ and leave the curves where the run put them.
 in a fresh clone. A manifest generated from the gitignored run directories would be a tracked
 document nobody but its author could regenerate, which is the failure this exercise already had.
 
+**The run's own manifest and its audit are copied into `results/runs/<run-id>/`, and that is the
+point of the exercise.** A run directory is gitignored, so a clone could see a published number and
+not the manifest describing the run that produced it — and a reproducibility record nobody can open
+is not one. The two files are a few kilobytes each: `manifest.json` says what the run was, and
+`audit.json` says what an independent re-derivation of it found.
+
+**Measurement bundles are published the same way.** `unk_confound.json`, `lane_sensitivity.json`
+and `parallel_text.json` are the evidence behind claims the documents make, so they have to survive
+a clone by the same rule that put the arm comparison here.
+
     uv run python .../tools/publish_rerun.py --bundle artifacts/rerun-cpu.json
+    uv run python .../tools/publish_rerun.py --measurement artifacts/unk_confound.json
     uv run python .../tools/publish_rerun.py --manifest-only     # rebuild the index alone
 """
 
@@ -93,14 +104,94 @@ def trim(bundle: dict) -> dict:
     }
 
 
+def copy_run_record(bundle: dict, results: Path) -> list[Path]:
+    """Copy a run's own manifest and audit out of the gitignored run directory into `results/`.
+
+    Args:
+        bundle: The published bundle, whose `run_directory` names where to read from.
+        results: The exercise's `results/`.
+
+    Returns:
+        The files written. Empty when the run directory is not on this machine — which is the normal
+        case in a clone, and is reported rather than treated as an error.
+    """
+    where = bundle.get("run_directory")
+    if not where:
+        return []
+    run = Path(where)
+    if not run.is_dir():
+        return []
+    out = results / "runs" / run.name
+    out.mkdir(parents=True, exist_ok=True)
+    written = []
+    for name, source in (
+        ("manifest.json", run / "00-manifest.json"),
+        ("audit.json", run / "05-verify" / "audit.json"),
+    ):
+        if not source.is_file():
+            continue
+        payload = json.loads(source.read_text(encoding="utf-8"))
+        corpus = payload.get("corpus")
+        if isinstance(corpus, dict) and corpus.get("lanes"):
+            payload = {
+                **payload,
+                "corpus": {**corpus, "lanes": [_publishable(row) for row in corpus["lanes"]]},
+            }
+        target = out / name
+        target.write_text(json.dumps(payload, indent=1, default=str), encoding="utf-8")
+        written.append(target)
+    return written
+
+
+def publish_measurement(source: Path, results: Path) -> Path:
+    """Copy one measurement bundle into `results/`, minus free text from another exercise.
+
+    These carry their own provenance block and are a few kilobytes, so nothing is trimmed out of
+    them but the fields that must not cross into a tracked file.
+    """
+    payload = json.loads(source.read_text(encoding="utf-8"))
+    for key in ("corpus",):
+        block = payload.get(key)
+        if isinstance(block, dict):
+            payload[key] = {
+                name: (
+                    {**side, "lanes": [_publishable(row) for row in side["lanes"]]}
+                    if isinstance(side, dict) and side.get("lanes")
+                    else side
+                )
+                for name, side in block.items()
+            }
+    target = results / source.name
+    target.write_text(json.dumps(payload, indent=1, default=str), encoding="utf-8")
+    return target
+
+
 def render_manifest(results: Path) -> str:
     """`results/MANIFEST.md`, from the tracked bundles in `results/` and nothing else."""
     rows = []
     for path in sorted(results.glob("*.json")):
         payload = json.loads(path.read_text(encoding="utf-8"))
         provenance = payload.get("provenance") or {}
-        corpus = payload.get("corpus") or {}
         config = payload.get("config") or {}
+        # A bundle's `corpus` is either ONE corpus or a dict of the corpora being compared. Both
+        # shapes are legitimate and a renderer that assumed the first printed a row of dashes for
+        # every comparison -- which reads as "this bundle records nothing" rather than as "this
+        # bundle compares two corpora", and is exactly the kind of true-but-misleading cell this
+        # table exists to avoid.
+        corpus = payload.get("corpus") or {}
+        if corpus.get("lanes") is not None:
+            described = corpus.get("source", "—")
+            tokens, unk, epochs = (
+                corpus.get("corpus_tokens"),
+                corpus.get("unk_share"),
+                corpus.get("epochs"),
+            )
+        elif corpus:
+            sides = [name for name, side in corpus.items() if isinstance(side, dict)]
+            described = f"**{len(sides)} corpora compared** — {', '.join(sides)}"
+            tokens = unk = epochs = None
+        else:
+            described, tokens, unk, epochs = "—", None, None, None
         rows.append(
             {
                 "file": path.name,
@@ -108,13 +199,14 @@ def render_manifest(results: Path) -> str:
                 "fingerprint": provenance.get("config_fingerprint", "—"),
                 "git_sha": (provenance.get("git_sha") or "—")[:12],
                 "device": (provenance.get("environment") or {}).get("device", "—"),
-                "corpus": corpus.get("source", "—"),
-                "tokens": corpus.get("corpus_tokens"),
-                "unk": corpus.get("unk_share"),
-                "epochs": corpus.get("epochs"),
+                "corpus": described,
+                "tokens": tokens,
+                "unk": unk,
+                "epochs": epochs,
                 "steps": config.get("steps"),
                 "seeds": len(config.get("seeds") or []) or None,
                 "run_directory": payload.get("run_directory"),
+                "limits": payload.get("limits") or [],
             }
         )
 
@@ -157,6 +249,21 @@ def render_manifest(results: Path) -> str:
         epochs = f"{row['epochs']:.4f}" if row["epochs"] is not None else "—"
         lines.append(f"| `{row['file']}` | {row['corpus']} | {tokens} | {unk} | {epochs} |")
 
+    limited = [row for row in rows if row["limits"]]
+    if limited:
+        lines += [
+            "",
+            "## What these bundles say they do NOT establish",
+            "",
+            "Carried from each bundle's own `limits` field rather than written here, so a reader",
+            "of this index meets the caveat at the same time as the number.",
+            "",
+        ]
+        for row in limited:
+            lines.append(f"**`{row['file']}`**")
+            lines += [f"- {limit}" for limit in row["limits"]]
+            lines.append("")
+
     lines += [
         "",
         "## Where the material is",
@@ -169,7 +276,10 @@ def render_manifest(results: Path) -> str:
     ]
     for row in rows:
         if row["run_directory"]:
-            lines.append(f"- `{row['file']}` → `{Path(row['run_directory']).name}`")
+            name = Path(row["run_directory"]).name
+            copied = sorted((results / "runs" / name).glob("*.json"))
+            here = ", ".join(f"`runs/{name}/{c.name}`" for c in copied) or "—"
+            lines.append(f"- `{row['file']}` → `{name}`, whose record is tracked here: {here}")
     lines += [
         "",
         "## Checking it yourself",
@@ -192,12 +302,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--bundle", default=None, help="a bundle under artifacts/")
     parser.add_argument("--name", default="rerun.json", help="what to call it in results/")
     parser.add_argument("--manifest-only", action="store_true")
+    parser.add_argument(
+        "--measurement", default=None, help="a measurement bundle under artifacts/, copied as-is"
+    )
     args = parser.parse_args(argv)
 
     results = EXERCISE / "results"
-    if not args.manifest_only:
+    if args.measurement:
+        source = Path(args.measurement)
+        if not source.is_absolute():
+            source = EXERCISE / source
+        print(f"-> {publish_measurement(source, results)}")
+    if not args.manifest_only and not args.measurement:
         if not args.bundle:
-            parser.error("--bundle is required unless --manifest-only")
+            parser.error("--bundle is required unless --manifest-only or --measurement")
         source = Path(args.bundle)
         if not source.is_absolute():
             source = EXERCISE / source
@@ -209,6 +327,14 @@ def main(argv: list[str] | None = None) -> int:
             f"{source.stat().st_size / 1024:,.0f} KB -> {out.stat().st_size / 1024:,.0f} KB"
             f"  ({len(bundle['runs'])} arm-seeds, per-step curves dropped)  -> {out}"
         )
+        copied = copy_run_record(bundle, results)
+        for path in copied:
+            print(f"   run record -> {path}")
+        if not copied:
+            print(
+                "   run record NOT copied: the run directory named by this bundle is not on this "
+                "machine. Re-run publish where the run happened, or the manifest stays untracked."
+            )
 
     manifest = results / "MANIFEST.md"
     manifest.write_text(render_manifest(results), encoding="utf-8")

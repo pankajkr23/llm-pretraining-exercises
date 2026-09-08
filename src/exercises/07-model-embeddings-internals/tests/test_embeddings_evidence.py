@@ -228,3 +228,81 @@ def test_no_free_text_from_another_exercises_manifest_reaches_results() -> None:
         # The half that matters more: what identifies the material must still be there.
         assert lane["digest"].startswith("sha256:")
         assert "licence" in lane and "tokens" in lane and "unk_share" in lane
+
+
+# ---------------------------------------------------- the reproducibility record itself
+
+
+def _publish():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "_publish_under_test", EXERCISE / "tools" / "publish_rerun.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_the_manifest_is_generated_and_regenerates_byte_for_byte() -> None:
+    """A generated document that has drifted from its generator is worse than a written one.
+
+    The repository's byte-identity discipline for generated documents, applied here: rendering the
+    manifest from the tracked bundles must reproduce the tracked file exactly. If it does not,
+    either a bundle changed without the index being rebuilt, or somebody edited the index by hand —
+    and the file says "do not edit" at the top.
+    """
+    manifest = EXERCISE / "results" / "MANIFEST.md"
+    assert manifest.is_file(), "results/MANIFEST.md is missing"
+    rendered = _publish().render_manifest(EXERCISE / "results")
+    assert rendered == manifest.read_text(encoding="utf-8"), (
+        "results/MANIFEST.md is stale. Rebuild it:\n"
+        "  uv run python src/exercises/07-model-embeddings-internals/tools/"
+        "publish_rerun.py --manifest-only"
+    )
+
+
+def test_every_published_run_has_its_manifest_and_audit_tracked() -> None:
+    """A published number whose run manifest a clone cannot open is not a reproducible one.
+
+    The run directory under `artifacts/` is gitignored, so without this the manifest describing the
+    run that produced a published figure exists only on the machine that ran it. `manifest.json`
+    says what the run was; `audit.json` says what an independent re-derivation of it found.
+    """
+    results = EXERCISE / "results"
+    published = [
+        json.loads(p.read_text(encoding="utf-8"))
+        for p in results.glob("*.json")
+        if p.name != "measurements.json"
+    ]
+    named = [b for b in published if b.get("run_directory")]
+    assert named, "no published bundle names a run directory"
+    for bundle in named:
+        run = Path(bundle["run_directory"]).name
+        for name in ("manifest.json", "audit.json"):
+            path = results / "runs" / run / name
+            assert path.is_file(), (
+                f"{run} is named by a published bundle and its {name} is not tracked. Re-run "
+                "publish_rerun.py on the machine that holds the run directory."
+            )
+        record = json.loads((results / "runs" / run / "manifest.json").read_text(encoding="utf-8"))
+        assert record["run_id"] == run
+        assert (
+            record["provenance"]["config_fingerprint"]
+            == (bundle["provenance"]["config_fingerprint"])
+        ), "the tracked manifest describes a different run from the bundle that names it"
+
+
+def test_the_audit_of_a_published_run_found_nothing_wrong() -> None:
+    """Publishing a run whose own auditor disagreed with it would be the whole point, missed.
+
+    `verify.py` re-derives every number in a run directory with its own arithmetic. A tracked audit
+    reporting failures beside a published bundle means the numbers were published anyway.
+    """
+    for audit_path in (EXERCISE / "results" / "runs").glob("*/audit.json"):
+        audit = json.loads(audit_path.read_text(encoding="utf-8"))
+        failed = [f for f in audit["findings"] if f["status"] == "failed"]
+        unverifiable = [f for f in audit["findings"] if f["status"] == "unverifiable"]
+        assert not failed, f"{audit_path.parent.name}: {[f['check'] for f in failed]}"
+        assert not unverifiable, f"{audit_path.parent.name}: {[f['check'] for f in unverifiable]}"
+        assert len(audit["findings"]) > 20, "the audit checked suspiciously little"

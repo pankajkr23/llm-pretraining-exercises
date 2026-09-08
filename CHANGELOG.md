@@ -170,6 +170,31 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   asserts both halves — that it does not cross, and that everything identifying the material
   (licence, language, tier, token and `[UNK]` counts, and a `sha256` over the text) still does.
 
+- **The reproducibility record is now in git, not only on the machine that produced it.** A run
+  directory is gitignored, so a clone could read a published number and not the manifest describing
+  the run behind it — and a reproducibility record nobody can open is not one. `results/` now
+  carries, per published run, `runs/<run-id>/manifest.json` (what the run was) and
+  `runs/<run-id>/audit.json` (what an independent re-derivation found), plus the three measurement
+  bundles that are the evidence for claims the documents make: `unk_confound.json`,
+  `lane_sensitivity.json` and `parallel_text.json`. Three guards hold it: the manifest must
+  regenerate byte-for-byte, every published bundle's run record must be tracked and describe the
+  same run, and a published run's own audit must report nothing failed or unverifiable. All three
+  were watched going red.
+
+- **The code that produced the *previous* run is tracked, in `prior-run/`.** Thirteen of the fifteen
+  blocks in `results/measurements.json` name a `k2/…` file as their source, and every one of those
+  pointed at a file nobody could open: the run was driven from a scratch directory under `/tmp`
+  that was later cleared. Seven files were recovered from an agent's own recorded tool calls and are
+  tracked as **evidence, not a build step** — the import paths point at a directory that no longer
+  exists.
+
+  The directory is excluded from `ruff` deliberately: reformatting recovered code would destroy the
+  property that makes it evidence, that it is what ran. Exactly two docstring lines were changed, to
+  clear the vocabulary gate, and both are recorded in `prior-run/README.md` beside a `sha256` of
+  each file as recovered. One recovered file is **not** tracked — `RESULTS.md` quotes the course's
+  own wording verbatim. **Nine more were never recovered**, `summary.py` among them, which produced
+  the ten-arm headline table; that document says so rather than leaving a reader to discover it.
+
 ### Fixed
 
 - **A run's per-step trace was rounded to six decimal places, so it could not re-derive the mean it

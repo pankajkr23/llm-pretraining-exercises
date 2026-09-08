@@ -55,9 +55,9 @@ advantage is about script, the first should differ from the other two.
 LIMITS = (
     "Lane and DOMAIN are confounded: the indic lane is encyclopedic text and the code lane is "
     "source code, so a difference between them is not necessarily a difference about script.",
-    "This says nothing about the parallel-text hypothesis. Exercise 02's corpus is one article in "
-    "five languages; testing whether that redundancy is what favoured the method needs a corpus "
-    "run with and without its own translations, which no corpus here provides.",
+    "This says nothing about whether the advantage is a property of comparable text -- exercise "
+    "02's corpus being one article in five languages. That is measured separately by "
+    "tools/measure_parallel_text.py, and its answer is not derivable from these lanes.",
     "Each lane is read at a different epoch ratio, because the lanes are different sizes. All are "
     "far under 1.0, so nothing is seen twice, but the ratios are not equal.",
 )
