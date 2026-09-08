@@ -26,11 +26,15 @@ from embeddings.experiment import (  # noqa: E402
     RunConfig,
     code_digest,
     corpus_batches,
+    corpus_draw,
     corpus_facts,
+    data_digest,
+    describe_device,
     refuse_unusable_corpus,
     report,
     run,
     save,
+    select_device,
     train_arm,
 )
 
@@ -568,3 +572,212 @@ def test_the_code_digest_moves_when_the_package_changes(tmp_path) -> None:
     finally:
         target.write_bytes(original)
     assert experiment.code_digest() == before, "the probe was not restored"
+
+
+# =============================================================== the device, and the trap it hides
+
+
+def test_the_recorded_device_is_the_one_that_ran_and_not_a_hard_coded_string() -> None:
+    """`experiment.py` recorded `"device": "cpu"` as a literal until this field existed.
+
+    So a run on Apple's GPU would have claimed to be a CPU run, in a bundle whose whole purpose is
+    to say what produced a number. The value now comes from the device object the run was handed.
+    """
+    from embeddings.experiment import environment
+
+    for name in ("cpu", *(("mps",) if torch.backends.mps.is_available() else ())):
+        assert environment(torch.device(name))["device"] == name
+
+
+def test_the_bundle_says_whether_the_mps_sandbox_trap_may_have_fired() -> None:
+    """A sandbox that blocks the OS-version query makes `mps.is_available()` return False.
+
+    Detection then picks CPU and says nothing, and the symptom is a run that is merely slower —
+    which reads as a slow machine. Exercise 05 lost a throughput measurement to exactly this. The
+    two properties are recorded separately because their disagreement is the whole signal:
+    `mps_built` is a property of the torch wheel, `mps_available` of the process.
+    """
+    described = describe_device(select_device("cpu"))
+    assert set(described) >= {"mps_built", "mps_available", "mps_unavailable_but_built"}
+    if described["mps_built"] and not described["mps_available"]:
+        import platform
+
+        if platform.system() == "Darwin" and platform.machine() == "arm64":
+            assert described["mps_unavailable_but_built"], (
+                "MPS is built and unavailable on Apple silicon and the flag did not fire, so a "
+                "CPU run here would be indistinguishable from a machine without a GPU"
+            )
+
+
+# =============================================================== what the run records about itself
+
+
+def test_the_data_digest_pins_the_order_each_seed_saw() -> None:
+    """The field whose absence left the data order an implicit consequence of re-running the code.
+
+    A bundle already says which corpus and which settings; neither pins the ORDER, and the order is
+    what a seed changes. Two seeds must therefore digest differently even though they consume the
+    same multiset of tokens — which is exactly what makes this stronger than the corpus digest.
+    """
+    first, second = data_digest(TINY, 0), data_digest(TINY, 1)
+    assert first.startswith("sha256:") and len(first) == len("sha256:") + 64
+    assert first == data_digest(TINY, 0), "the digest is not stable at one seed"
+    assert first != second, "two seeds digest the same, so the digest does not pin the order"
+
+    tokens_a, _ = corpus_draw(TINY, 0)
+    tokens_b, _ = corpus_draw(TINY, 1)
+    assert torch.equal(tokens_a.flatten().sort().values, tokens_b.flatten().sort().values), (
+        "the seeds drew different TOKENS, so this test is not measuring what it claims"
+    )
+
+
+def test_the_recorded_gradient_norm_is_the_one_clipping_cannot_pin(vocabulary) -> None:
+    """A post-clip norm is `min(true, grad_clip)` — pinned exactly when it is most worth seeing.
+
+    `AGENTS.md`: a quantity pinned to a constant by construction is not a measurement, and
+    recording it as one is worse than omitting it. `clip_grad_norm_` returns the PRE-clip norm, so
+    the guard is that recorded norms are allowed to exceed the clip threshold, and do.
+    """
+    clipped = dataclasses.replace(TINY, grad_clip=1.0, steps=6, seeds=(0,))
+    result = train_arm(_arm(CONTROL), vocabulary, clipped, seed=0)
+    assert len(result["grad_norms"]) == clipped.steps
+    assert max(result["grad_norms"]) > clipped.grad_clip, (
+        "no recorded norm exceeds the clip threshold, so this is the post-clip value and cannot "
+        f"move above {clipped.grad_clip}"
+    )
+
+
+def test_the_per_lane_loss_is_reported_and_can_actually_move(vocabulary) -> None:
+    """The measurement this exercise's own claim asks for, and has never made.
+
+    A fixed byte window is supposed to cost non-Latin scripts more than English. Nothing here
+    reported loss by script at all. The twin half matters more than the first: a per-lane TOKEN
+    count would be the allocation the config already fixes — unable to move whatever the run does —
+    so the guard is that these values differ from each other rather than that they exist.
+    """
+    result = train_arm(_arm(CONTROL), vocabulary, TINY, seed=0)
+    assert set(result["lane_loss"]) <= set(TINY.languages)
+    assert result["lane_loss"], "no lane was scored"
+    values = list(result["lane_loss"].values())
+    assert len(set(values)) > 1, (
+        "every lane scored identically, which no real per-lane loss does — check this is not the "
+        "batch mean repeated once per lane"
+    )
+    assert sum(result["lane_rows"].values()) == TINY.batch_size * min(50, TINY.steps)
+
+
+# =========================================================== the run directory: every stage on disk
+
+
+def test_the_run_directory_holds_every_stage_from_input_to_output(tmp_path, vocabulary) -> None:
+    """The failure this exists to prevent, asserted rather than described.
+
+    Exercise 07's published comparison had a bundle and nothing else: the conclusion of each stage
+    and none of the material. A reader could not see what text went in, what was built, how the
+    loss got where it got, or what came out.
+    """
+    from embeddings.runlog import STAGES, RunDirectory
+
+    config = dataclasses.replace(TINY, steps=4, seeds=(0,), device="cpu")
+    log = RunDirectory(tmp_path, config, "2026-09-08")
+    assert log.path.name == f"2026-09-08-{config.fingerprint()}"
+    picks = [_arm(CONTROL), _arm("wrap + residual MLP")]
+    bundle = run(config, arms=picks, vocabulary=vocabulary, log=log)
+
+    for stage in STAGES:
+        assert (log.path / stage).is_dir(), f"{stage} was never created"
+    assert (log.path / "00-manifest.json").is_file()
+    assert (log.path / "01-input" / "corpus.meta.json").is_file()
+    assert (log.path / "01-input" / "tokens.seed0.npy").is_file()
+    assert (log.path / "04-output" / "arms.json").is_file()
+
+    # The input on disk must BE the input the run consumed, not a summary of it.
+    saved = np.load(log.path / "01-input" / "tokens.seed0.npy")
+    assert torch.equal(torch.from_numpy(saved.astype(np.int64)), corpus_draw(config, 0)[0])
+    digests = json.loads((log.path / "01-input" / "digests.json").read_text())
+    assert digests["0"]["data_digest"] == bundle["data_digests"]["0"]
+    assert digests["0"]["batching_version"] == config.batching_version
+
+    # The trace has one row per step, which is the thing a bundle cannot show.
+    trace = (log.path / "03-train" / "dense-tied-embedding.seed0.trace.csv").read_text()
+    assert trace.splitlines()[0] == "step,loss,grad_norm"
+    assert len(trace.splitlines()) == config.steps + 1
+
+    # Weights for the arms worth keeping, and a sidecar that says which run made them.
+    assert (log.path / "04-output" / "dense-tied-embedding.seed0.ckpt.pt").is_file()
+    sidecar = json.loads(
+        (log.path / "04-output" / "dense-tied-embedding.seed0.ckpt.json").read_text()
+    )
+    assert sidecar["provenance"]["code_digest"] == bundle["provenance"]["code_digest"]
+    assert sidecar["data_digest"] == bundle["data_digests"]["0"]
+    assert sidecar["weight_digest"].startswith("sha256:")
+
+
+def test_only_the_arms_worth_keeping_get_weights(tmp_path, vocabulary) -> None:
+    """The twin, and it reports rather than skipping silently.
+
+    Ten arms at five seeds is 1.2 GB of regenerable output to say what three arms already say, so
+    `checkpoint` returns `None` for the rest — a caller can therefore state which were skipped
+    instead of a reader wondering why files are missing.
+    """
+    from embeddings.runlog import KEEP_WEIGHTS, RunDirectory
+
+    config = dataclasses.replace(TINY, steps=2, seeds=(0,), device="cpu")
+    log = RunDirectory(tmp_path, config, "2026-09-08")
+    kept = _arm(CONTROL)
+    skipped = _arm("wrap + residual MLP")
+    assert kept.name in KEEP_WEIGHTS and skipped.name not in KEEP_WEIGHTS
+
+    written = []
+    for arm in (kept, skipped):
+        train_arm(
+            arm,
+            vocabulary,
+            config,
+            0,
+            on_trained=lambda r, tr, hd: written.append(log.checkpoint(r, tr, hd, {})),
+        )
+    assert written[0] is not None and written[0].is_file()
+    assert written[1] is None, "an arm outside KEEP_WEIGHTS wrote 23 MB of weights anyway"
+
+
+def test_the_weight_digest_sees_a_changed_weight_and_a_renamed_one(vocabulary) -> None:
+    """Two ways a model can differ, and a digest over values alone sees only the first.
+
+    Names are hashed alongside the bytes, so two models with identical weights under different
+    names are distinguishable. Without that the digest vouches for less than it appears to.
+    """
+    from embeddings.runlog import weight_digest
+
+    config = dataclasses.replace(TINY, d_model=32, d_p=4, n_buckets=64)
+    torch.manual_seed(0)
+    trunk, head = _arm(CONTROL).build(vocabulary[:300], config, 0)
+    before = weight_digest(head)
+
+    parameter = next(iter(head.parameters()))
+    original = parameter.detach().clone()
+    try:
+        with torch.no_grad():
+            parameter.add_(1.0)
+        assert weight_digest(head) != before, "a changed weight did not move the digest"
+    finally:
+        # Restored in a `finally`: an early return or an exception must not leave a mutated model
+        # behind for a later test in the same process to inherit.
+        with torch.no_grad():
+            parameter.copy_(original)
+    assert weight_digest(head) == before
+
+    class _Renamed(torch.nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.differently_named = torch.nn.Parameter(original.clone())
+
+    class _Original(torch.nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.weight = torch.nn.Parameter(original.clone())
+
+    assert weight_digest(_Renamed()) != weight_digest(_Original()), (
+        "identical weights under different names digest the same, so the digest is blind to a "
+        "rename — which is one of the two ways a model can quietly become a different model"
+    )

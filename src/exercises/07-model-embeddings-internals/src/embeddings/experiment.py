@@ -67,6 +67,8 @@ import numpy as np
 if TYPE_CHECKING:  # pragma: no cover - import-time only, never executed
     import torch
 
+    from embeddings.runlog import RunDirectory
+
 from embeddings.config import KroneckerConfig
 from embeddings.summary import paired, unpaired_spread
 
@@ -140,6 +142,23 @@ class RunConfig:
     znorm: bool = True
 
     # --- data ------------------------------------------------------------------------------------
+    device: str | None = None
+    """Where to train. `None` auto-detects and prefers the GPU; `"cpu"` or `"mps"` forces one.
+
+    **What was asked for, not what happened** — the resolved device is in `environment()`, because
+    detection can fail silently and a configuration that recorded its own guess would launder that
+    failure into a fact. `experiment.py` hard-coded `"device": "cpu"` before this field existed, so
+    a GPU run would have claimed to be a CPU run.
+    """
+
+    batching_version: int = 2
+    """Bumped whenever the mapping from `(config, seed)` to batches changes.
+
+    Version 1 concatenated every lane and took the first `steps x batch x seq_len` ids; version 2
+    draws proportionally per lane. Without this number a stored `data_digest` from either version
+    is a bare hash that cannot be re-derived, and the two would silently disagree.
+    """
+
     corpus: str = "mixture"
     """Which corpus: `"mixture"` for exercise 06's six-lane fetched corpus, `"tokenization"` for
     exercise 02's tracked one.
@@ -568,7 +587,40 @@ def _allocate(config: RunConfig, lanes: tuple[tuple[LaneFacts, np.ndarray], ...]
 
 
 def corpus_batches(config: RunConfig, seed: int, vocab_size: int | None = None) -> "torch.Tensor":
-    """`[steps * batch_size, seq_len]` token ids, drawn per lane and shuffled by `seed`.
+    """The token ids alone. See `corpus_draw`, which also says which lane each row came from."""
+    return corpus_draw(config, seed, vocab_size)[0]
+
+
+def data_digest(config: RunConfig, seed: int) -> str:
+    """`sha256:` over the exact token stream one seed consumes, in the order it consumes it.
+
+    **This is the field whose absence made the data order an implicit consequence of re-running the
+    code rather than a recorded fact.** A bundle already says which corpus (`corpus_digest`) and
+    which settings (`config_fingerprint`); neither pins the *order*, and the order is what a seed
+    changes. Change `corpus_batches` and every stored bundle silently describes a different run,
+    with nothing going red — which is why `RunConfig.batching_version` sits beside this.
+
+    It is the cheap half of exercise 06's chain-hashed `PlanKey`. The expensive half buys
+    tamper-evidence across processes and restarts, and this exercise is single-process and
+    seed-deterministic, so it would only confirm what re-running confirms.
+    """
+    tokens, _ = corpus_draw(config, seed)
+    return _digest_bytes(tokens.numpy().tobytes())
+
+
+def corpus_draw(
+    config: RunConfig, seed: int, vocab_size: int | None = None
+) -> tuple["torch.Tensor", "torch.Tensor"]:
+    """`[steps * batch_size, seq_len]` token ids **and the lane each row came from**.
+
+    The lane labels are what make a per-lane loss possible, and a per-lane loss is the measurement
+    this exercise's own claim asks for: a 32-byte window is supposed to cost non-Latin scripts more
+    than English, and until now nothing here reported loss by script at all.
+
+    They are deliberately *not* published as a per-lane token count. That number is the allocation
+    the config already fixes — pinned by construction, unable to move whatever the run does, and
+    `AGENTS.md` is explicit that recording such a quantity as a measurement is worse than omitting
+    it. The loss can move; the count cannot.
 
     The SHUFFLE is what the seed changes about the data, and it changes it identically for every arm
     in a paired comparison — that is the whole mechanism by which the seed cancels. What the seed
@@ -583,7 +635,7 @@ def corpus_batches(config: RunConfig, seed: int, vocab_size: int | None = None) 
             has already checked need not repeat it.
 
     Raises:
-        ValueError: When either corpus gate refuses, or when the corpus contains an id the model
+        ValueError: When any corpus gate refuses, or when the corpus contains an id the model
             cannot embed. **Shrinking the vocabulary for a fast test does not shrink the
             tokenizer** — exercise 09 records the same trap — and without this the symptom is a bare
             `IndexError` from inside `torch.nn.functional.embedding`, which says nothing about why.
@@ -595,7 +647,8 @@ def corpus_batches(config: RunConfig, seed: int, vocab_size: int | None = None) 
     allocation = _allocate(config, lanes)
 
     drawn = []
-    for (facts, ids), sequences in zip(lanes, allocation, strict=True):
+    labels = []
+    for index, ((facts, ids), sequences) in enumerate(zip(lanes, allocation, strict=True)):
         if not sequences:
             continue
         needed = sequences * config.seq_len
@@ -605,22 +658,81 @@ def corpus_batches(config: RunConfig, seed: int, vocab_size: int | None = None) 
                 f"{needed:,}; the epoch gate should have refused this run first"
             )
         drawn.append(ids[:needed].reshape(sequences, config.seq_len))
+        labels.append(np.full(sequences, index, dtype=np.int64))
 
     tokens = torch.from_numpy(np.concatenate(drawn).astype(np.int64))
+    lane_of_row = torch.from_numpy(np.concatenate(labels))
     if vocab_size is not None and int(tokens.max()) >= vocab_size:
         raise ValueError(
             f"the corpus contains token id {int(tokens.max())} and the model is {vocab_size} wide. "
             "Slicing the vocabulary for a fast test does not slice the tokenizer; keep the full "
             "vocabulary and shrink d_model, steps or batch_size instead."
         )
+    # The shuffle is generated on the CPU whatever device trains, so the data order is a property
+    # of the seed alone. Otherwise a CPU run and an MPS run at the same seed would differ by their
+    # DATA as well as their arithmetic, and the device comparison would be measuring both.
     order = torch.randperm(tokens.shape[0], generator=torch.Generator().manual_seed(seed))
-    return tokens[order]
+    return tokens[order], lane_of_row[order]
+
+
+def lane_names(config: RunConfig) -> list[str]:
+    """The lane names, in the index order `corpus_draw`'s labels use."""
+    return [
+        facts.name
+        for facts, _ in _lanes(config.corpus, config.languages, _corpus_root(config.corpus))
+    ]
 
 
 # =================================================================== where a run came from
 
 
-def environment() -> dict[str, object]:
+def select_device(requested: str | None = None) -> "torch.device":
+    """The device to train on: what was asked for, or the fastest available.
+
+    The order is exercise 05's — CUDA, then Apple's MPS, then CPU — because a second, subtly
+    different one in this repository would be a thing to keep in step for no gain.
+    """
+    import torch
+
+    if requested:
+        return torch.device(requested)
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if torch.backends.mps.is_available():
+        return torch.device("mps")
+    return torch.device("cpu")
+
+
+def describe_device(device: "torch.device") -> dict[str, object]:
+    """What actually ran, and whether the one trap this has already sprung may have sprung again.
+
+    **A sandbox that blocks the OS-version query makes `torch.backends.mps.is_available()` return
+    `False`**, and detection then picks CPU and says nothing — exercise 05 documented this after
+    losing a throughput measurement to it. The symptom is a run that is simply slower, which looks
+    like a slow machine rather than a wrong device.
+
+    So the fields are recorded separately: `mps_built` is a property of the torch wheel, and
+    `mps_available` is a property of the process. On Apple silicon the first without the second is
+    the signature of the trap, and `mps_unavailable_but_built` says so in the bundle rather than
+    leaving it to be noticed.
+    """
+    import platform
+
+    import torch
+
+    built = bool(torch.backends.mps.is_built())
+    available = bool(torch.backends.mps.is_available())
+    apple_silicon = platform.system() == "Darwin" and platform.machine() == "arm64"
+    return {
+        "device": device.type,
+        "cuda_available": bool(torch.cuda.is_available()),
+        "mps_built": built,
+        "mps_available": available,
+        "mps_unavailable_but_built": apple_silicon and built and not available,
+    }
+
+
+def environment(device: "torch.device | None" = None) -> dict[str, object]:
     """Everything outside the configuration that moves the numbers.
 
     Copied in shape from exercise 06's `trainingdata.train.environment`, which states the reason
@@ -631,6 +743,11 @@ def environment() -> dict[str, object]:
     **This is the field this exercise most conspicuously lacked.** The run whose losses
     `results/measurements.json` reports recorded none of it, which is half of why those numbers
     could not be aimed at.
+
+    Args:
+        device: The device the run actually used. Omitted only by callers with no run in hand, who
+            get what detection would choose right now — which is a guess, and is why every caller
+            that has trained something passes the real one.
     """
     import platform
 
@@ -645,7 +762,7 @@ def environment() -> dict[str, object]:
         "machine": platform.machine(),
         "torch_threads": torch.get_num_threads(),
         "omp_num_threads": os.environ.get("OMP_NUM_THREADS", "unset"),
-        "device": "cpu",
+        **describe_device(device if device is not None else select_device()),
     }
 
 
@@ -711,7 +828,7 @@ def git_sha() -> str:
     return out.stdout.strip() or "unknown"
 
 
-def provenance(config: RunConfig) -> dict[str, object]:
+def provenance(config: RunConfig, device: "torch.device | None" = None) -> dict[str, object]:
     """Everything needed to say what produced a bundle, ten years from now.
 
     Five things, and each answers a question that has actually gone unanswered in this repository:
@@ -727,7 +844,7 @@ def provenance(config: RunConfig) -> dict[str, object]:
         "code_digest": code_digest(),
         "git_sha": git_sha(),
         "tokenizer_digest": _digest_bytes(Path(str(OUR_TOKENIZER)).read_bytes()),
-        "environment": environment(),
+        "environment": environment(device),
     }
 
 
@@ -887,17 +1004,47 @@ def _parameters(trunk, head) -> int:
     return sum(seen.values())
 
 
-def train_arm(arm: Arm, vocabulary: list[bytes], config: RunConfig, seed: int) -> dict[str, object]:
-    """Train one arm at one seed and return its losses and its cost.
+def train_arm(
+    arm: Arm,
+    vocabulary: list[bytes],
+    config: RunConfig,
+    seed: int,
+    device: "torch.device | None" = None,
+    on_built: "Callable[[Arm, int, object, object], None] | None" = None,
+    on_trained: "Callable[[dict, object, object], None] | None" = None,
+) -> dict[str, object]:
+    """Train one arm at one seed and return its losses, its gradients and its cost.
 
     The trunk's blocks, the data order and the step count are functions of `seed` and `config` only,
     so two arms at the same seed differ by their embedding and head and by nothing else.
+
+    Args:
+        arm: What to build.
+        vocabulary: The frozen vocabulary, as bytes in id order.
+        config: Every knob.
+        seed: Fixes the block initialisation and the data order together.
+        device: Where to train. Defaults to `select_device(config.device)`.
+        on_built: Called with `(arm, seed, trunk, head)` before the first gradient step. The hook
+            exists so a run directory can record what was built without this function importing a
+            writer — the training loop should not know where its evidence is filed.
+        on_trained: Called with `(result, trunk, head)` after the last step, for the same reason.
+            **After, not at the end of the whole grid**: a writer that ran at the end would lose
+            everything if the run died at step 400, and this repository has already lost fifteen
+            trained models to a driver that fell over on its final statement.
+
+    Returns:
+        A JSON-encodable row: the losses, the pre-clip gradient norms, the per-lane loss over the
+        reported window, the parameter count, the wall time, and the digest of the data this seed
+        actually consumed.
     """
     import torch
 
+    device = device if device is not None else select_device(config.device)
     torch.manual_seed(seed)
     trunk, head = arm.build(vocabulary, config, seed)
-    batches = corpus_batches(config, seed, len(vocabulary))
+    trunk, head = trunk.to(device), head.to(device)
+    batches, lane_of_row = corpus_draw(config, seed, len(vocabulary))
+    lanes = lane_names(config)
     parameters = list({id(p): p for p in [*trunk.parameters(), *head.parameters()]}.values())
     optimiser = torch.optim.AdamW(
         parameters,
@@ -906,26 +1053,51 @@ def train_arm(arm: Arm, vocabulary: list[bytes], config: RunConfig, seed: int) -
         betas=(config.beta1, config.beta2),
     )
 
+    if on_built is not None:
+        on_built(arm, seed, trunk, head)
+
+    window = min(50, config.steps)
     started = time.time()
     losses: list[float] = []
+    grad_norms: list[float] = []
+    lane_totals = [0.0] * len(lanes)
+    lane_rows = [0] * len(lanes)
     for step in range(config.steps):
         if config.warmup_steps:
             scale = min(1.0, (step + 1) / config.warmup_steps)
             for group in optimiser.param_groups:
                 group["lr"] = config.learning_rate * scale
-        batch = batches[step * config.batch_size : (step + 1) * config.batch_size]
+        rows = slice(step * config.batch_size, (step + 1) * config.batch_size)
+        batch = batches[rows].to(device)
         logits = head(trunk(batch))
-        loss = torch.nn.functional.cross_entropy(
-            logits[:, :-1].reshape(-1, len(vocabulary)), batch[:, 1:].reshape(-1)
+        flat = torch.nn.functional.cross_entropy(
+            logits[:, :-1].reshape(-1, len(vocabulary)),
+            batch[:, 1:].reshape(-1),
+            reduction="none",
         )
+        loss = flat.mean()
         optimiser.zero_grad()
         loss.backward()
-        if config.grad_clip is not None:
+        # Pre-clip, deliberately: the post-clip norm is `min(true, grad_clip)` and is therefore
+        # pinned to the clip threshold exactly when it is most worth seeing. `clip_grad_norm_`
+        # RETURNS the pre-clip norm, so this is the real one whether or not clipping is on.
+        norm = (
             torch.nn.utils.clip_grad_norm_(parameters, config.grad_clip)
+            if config.grad_clip is not None
+            else torch.nn.utils.clip_grad_norm_(parameters, float("inf"))
+        )
         optimiser.step()
         losses.append(float(loss.detach()))
+        grad_norms.append(float(norm))
+        if step >= config.steps - window:
+            per_row = flat.detach().reshape(batch.shape[0], -1).mean(dim=1).cpu()
+            for lane_index, row_loss in zip(
+                lane_of_row[rows].tolist(), per_row.tolist(), strict=True
+            ):
+                lane_totals[lane_index] += row_loss
+                lane_rows[lane_index] += 1
 
-    return {
+    result = {
         "arm": arm.name,
         "seed": seed,
         "v_free": arm.v_free,
@@ -934,15 +1106,34 @@ def train_arm(arm: Arm, vocabulary: list[bytes], config: RunConfig, seed: int) -
         "first_loss": losses[0],
         "final_loss": losses[-1],
         # The reported figure, and it is a mean for two reasons. A single step's loss swings with
-        # whichever batch happened to be last -- the corpus is four languages concatenated, and a
-        # Tamil batch is simply harder than an English one -- so `final_loss` is noise. And because
-        # the run reads under one epoch, every batch is text the model has not seen before, which
-        # makes this a held-out number rather than a training one. The record never says which of
-        # those two its own losses are; this one says.
-        "mean_last_50": sum(losses[-50:]) / len(losses[-50:]),
+        # whichever batch happened to be last -- the corpus mixes six lanes of very different
+        # difficulty, and a Devanagari batch is simply harder than an English one -- so
+        # `final_loss` is noise. And because the run reads well under one epoch, every batch is
+        # text the model has not seen before, which makes this a held-out number rather than a
+        # training one. The record never says which of those two its own losses are; this one says.
+        "mean_last_50": sum(losses[-window:]) / window,
+        "loss_window": window,
+        # Loss BY LANE over the same window. The exercise's own claim is that a fixed byte window
+        # costs non-Latin scripts more than English, and nothing here has ever reported loss by
+        # script. Unlike a per-lane token count -- which is the allocation, pinned by construction
+        # and unable to move whatever the run does -- this can move, and a reader can say what
+        # would move it.
+        "lane_loss": {
+            lanes[i]: lane_totals[i] / lane_rows[i] for i in range(len(lanes)) if lane_rows[i]
+        },
+        "lane_rows": {lanes[i]: lane_rows[i] for i in range(len(lanes)) if lane_rows[i]},
+        "grad_norm_first": grad_norms[0],
+        "grad_norm_mean_last_50": sum(grad_norms[-window:]) / window,
+        "grad_norms": grad_norms,
+        "device": device.type,
+        "data_digest": _digest_bytes(batches.numpy().tobytes()),
+        "batching_version": config.batching_version,
         "seconds": time.time() - started,
         "losses": losses,
     }
+    if on_trained is not None:
+        on_trained(result, trunk, head)
+    return result
 
 
 def run(
@@ -950,6 +1141,7 @@ def run(
     arms: Sequence[Arm] | None = None,
     vocabulary: list[bytes] | None = None,
     progress: Callable[[str], None] | None = None,
+    log: "RunDirectory | None" = None,
 ) -> dict[str, object]:
     """Train every arm at every seed and summarise the comparison.
 
@@ -959,6 +1151,10 @@ def run(
         vocabulary: Defaults to exercise 02's frozen vocabulary.
         progress: Called with a one-line status after each arm-seed, so a twelve-minute run says
             what it is doing.
+        log: A `runlog.RunDirectory`. When given, every input, initial model, per-step trace and
+            kept checkpoint is written to it **as the run goes**. Optional because the bundle is
+            the deliverable and the directory is the audit trail; a test wants the first and not
+            750 MB of the second.
 
     Returns:
         A JSON-encodable bundle: the configuration, the corpus facts, every arm's losses, and the
@@ -969,11 +1165,33 @@ def run(
     config = config or RunConfig()
     arms = tuple(arms or ARMS)
     vocabulary = vocabulary if vocabulary is not None else load_vocabulary()
+    device = select_device(config.device)
+    prov = provenance(config, device)
+    facts = corpus_facts(config)
+    digests = {str(seed): data_digest(config, seed) for seed in config.seeds}
+
+    if log is not None:
+        log.manifest(prov, facts, {"arms": [arm.name for arm in arms], "data_digests": digests})
+        log.corpus_meta(facts)
+        for seed in config.seeds:
+            log.input(seed, corpus_draw(config, seed)[0], digests[str(seed)])
 
     runs: list[dict[str, object]] = []
     for arm in arms:
         for seed in config.seeds:
-            result = train_arm(arm, vocabulary, config, seed)
+            result = train_arm(
+                arm,
+                vocabulary,
+                config,
+                seed,
+                device=device,
+                on_built=(lambda a, s, tr, hd: log.initial(a, s, tr, hd)) if log else None,
+                on_trained=(
+                    (lambda r, tr, hd: (log.trace(r), log.checkpoint(r, tr, hd, prov)))
+                    if log
+                    else None
+                ),
+            )
             runs.append(result)
             if progress is not None:
                 progress(
@@ -1006,6 +1224,9 @@ def run(
             )
         comparisons.append(row)
 
+    if log is not None:
+        log.arms(comparisons)
+
     return {
         "what": (
             "A specified re-run of exercise 07's arm comparison. NOT a reproduction of "
@@ -1014,8 +1235,13 @@ def run(
             "with these. The sign and the ordering of the arms are."
         ),
         "config": {**asdict(config), "uniform_loss": math.log(len(vocabulary))},
-        "provenance": provenance(config),
-        "corpus": corpus_facts(config),
+        "provenance": prov,
+        "corpus": facts,
+        # One digest per seed, not one for the run: the seed is what changes the order, so a single
+        # digest could not distinguish two runs that saw the same tokens in different orders --
+        # which is precisely the difference a paired comparison rests on.
+        "data_digests": digests,
+        "run_directory": str(log.path) if log is not None else None,
         "arms": comparisons,
         "runs": runs,
     }
@@ -1080,16 +1306,45 @@ def report(bundle: dict[str, object]) -> str:
             f" {gap(row, 'vs_v1'):>9} {row['parameters']:>11,}"
             f"  {'yes' if row['v_free'] else 'no'}"
         )
+    # The lane table, printed beside the comparison rather than filed away. `AGENTS.md` requires
+    # the per-lane epoch ratio next to the mixture, and the reason is exactly this exercise's
+    # history: a lane read thirty times and a lane not read through once both produce a normal
+    # loss curve, and the only place the difference is visible is arithmetic nobody printed.
+    lines += [
+        "",
+        f"{'lane':<12} {'tokens':>12} {'[UNK]':>8} {'read':>10} {'epochs':>8}  licence",
+        "-" * 88,
+    ]
+    for lane in corpus["lanes"]:
+        lines.append(
+            f"{lane['lane']:<12} {lane['tokens']:>12,} {lane['unk_share']:>8.3%}"
+            f" {lane['tokens_read']:>10,} {lane['epochs']:>8.4f}"
+            f"  {lane['licence'] or '(none recorded)'}"
+        )
+    lines.append(
+        f"{'TOTAL':<12} {corpus['corpus_tokens']:>12,} {corpus['unk_share']:>8.3%}"
+        f" {corpus['tokens_consumed']:>10,} {corpus['epochs']:>8.4f}"
+        f"  gate {corpus['max_unk_share']:.0%} / {corpus['max_epochs']:.2f} epochs"
+    )
+
+    environment = bundle["provenance"]["environment"]
     lines += [
         "",
         f"uniform guessing (ln V) = {config['uniform_loss']:.3f}",
-        f"corpus {corpus['corpus_tokens']:,} tokens, run reads {corpus['epochs']:.2f} epochs"
+        f"corpus: {corpus['source']}"
         + (
-            " - above 1.0, so every loss here is a memorisation number"
+            " - above 1.0 epochs, so every loss here is a memorisation number"
             if corpus["epochs"] > 1
-            else " - under 1.0, so no text is seen twice and part of the corpus is never read"
+            else " - under 1.0 epochs, so no text is seen twice"
         ),
         f"{config['optimiser']} lr={config['learning_rate']} wd={config['weight_decay']}"
         f" clip={config['grad_clip']} steps={config['steps']} seeds={len(config['seeds'])}",
+        f"device {environment['device']}"
+        + (
+            "  <- MPS is BUILT and UNAVAILABLE: a sandbox is probably hiding the GPU"
+            if environment["mps_unavailable_but_built"]
+            else ""
+        )
+        + f", torch {environment['torch']}, {environment['machine']}",
     ]
     return "\n".join(lines)

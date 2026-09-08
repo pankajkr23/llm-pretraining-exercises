@@ -22,6 +22,7 @@ The full argument, every table, and the limits are in `README.md`. Do not restat
 | `budget.py` | `budget`, `crossover` — the parameter arithmetic | no |
 | `heads.py` | `KroneckerEmbedding`, `LockBreaker`, `ByteHead`, `TiedHead` | **yes** |
 | `experiment.py` | `RunConfig`, `ARMS`, `train_arm`, `run`, `save`, the corpus and its three gates | **yes** |
+| `runlog.py` | `RunDirectory`, `run_id`, `weight_digest` — the numbered run directory, written as the run goes | **yes** |
 | `summary.py` | `paired`, `unpaired_spread` — the seed arithmetic | no |
 | `__init__.py` | the package docstring — what v1 is and why its output side is the problem | no |
 

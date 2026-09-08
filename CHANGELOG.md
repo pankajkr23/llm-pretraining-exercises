@@ -45,6 +45,33 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   reads at the same ratio — 0.0217 epochs each — which also preserves exercise 05's mixture weights
   for free, since exercise 06's corpus is already sized to them.
 
+- **Every exercise 07 run now writes a numbered directory holding what went in, what was built,
+  what happened and what came out.** The published comparison had a bundle and nothing else — the
+  conclusion of each stage and none of the material — so a reader could not see what text went in,
+  what was built, how the loss got where it got, or what came out. Each run writes
+  `artifacts/runs/<date>-<config_fingerprint>/`: the exact id stream each seed consumed as a `.npy`
+  alongside its `data_digest`, the lane table, a weight digest for every model at step zero, a
+  per-step CSV of loss **and** pre-clip gradient norm, and trained weights plus a sidecar for the
+  control, the published bar and the recommendation. It is written **as the run goes**, because a
+  writer that ran at the end would lose everything if the run died at step 400 — this repository
+  has already lost fifteen trained models to a driver that fell over on its final statement.
+
+- **A run records the device it actually used, the order each seed actually saw, and the loss of
+  each lane.** `experiment.py` recorded `"device": "cpu"` as a literal, so a run on Apple's GPU
+  would have claimed to be a CPU run; it now records the resolved device and, separately,
+  `mps_built` and `mps_available`, whose disagreement is the signature of the sandbox trap that
+  already cost exercise 05 a throughput measurement. `data_digest` pins the order each seed
+  consumed — which neither the corpus digest nor the config fingerprint could, and the order is
+  what a seed changes — with `batching_version` beside it so a stored digest stays re-derivable.
+  And the gradient norm recorded is the **pre-clip** one, since the post-clip value is
+  `min(true, clip)` and is pinned exactly when it is worth seeing.
+
+- **Loss is now reported per lane, which is the measurement this exercise's own claim asks for.**
+  The argument is that a fixed byte window costs non-Latin scripts more than English, and nothing
+  here has ever reported loss by script. It is deliberately not a per-lane *token count*: that is
+  the allocation the configuration already fixes, unable to move whatever the run does, and
+  recording such a quantity as a measurement is worse than omitting it.
+
 ### Fixed
 
 - **An arm in exercise 07's registry was named for a model it was not.** `"tied + residual MLP"`
