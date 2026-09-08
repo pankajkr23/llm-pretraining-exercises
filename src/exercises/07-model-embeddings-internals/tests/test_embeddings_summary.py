@@ -127,3 +127,70 @@ def test_an_identical_pair_reports_infinite_t_rather_than_dividing_by_zero() -> 
     result = paired([5.0, 5.0], [4.0, 4.0])
     assert result.sd == 0.0
     assert math.isinf(result.t)
+
+
+# --------------------------------------------------------------- the published raw data
+
+PER_SEED = PAIRING["per_seed"]
+
+
+def test_every_arm_publishes_its_raw_per_seed_losses() -> None:
+    """One array per arm, one loss per seed, in the order the arms table lists them.
+
+    Before this data was published, `arms` could only be believed. `pairing` shipped two of the ten
+    arrays, so eight of the gaps rested on nobody being able to check them.
+    """
+    published = [row["arm"] for row in RECORD["arms"]["rows"]]
+    assert list(PER_SEED) == published, "per_seed and arms disagree about the arms or their order"
+    for arm, entry in PER_SEED.items():
+        assert len(entry["loss"]) == len(PAIRING["seeds"]), f"{arm} has the wrong number of seeds"
+        assert entry["variant"], f"{arm} does not say which internal arm it was"
+
+
+@pytest.mark.parametrize("row", RECORD["arms"]["rows"], ids=lambda r: r["arm"])
+def test_every_published_gap_recomputes_from_the_published_raw_data(row) -> None:
+    """The point of publishing the arrays: no figure in that table has to be taken on trust.
+
+    Each arm's loss is the mean of its five seeds, and each gap is the mean of the five paired
+    differences against the reference arm — not the difference of the two means, which would be the
+    same number here and the wrong statistic in general.
+    """
+    losses = PER_SEED[row["arm"]]["loss"]
+    assert sum(losses) / len(losses) == pytest.approx(row["loss"], abs=6e-3)
+
+    for key, reference in (
+        ("vs_control", "dense tied embedding"),
+        ("vs_v1", "v1 — Kronecker in, untied head"),
+    ):
+        if row[key] is None:
+            assert row["arm"] == reference, f"{row['arm']} has no {key} but is not the reference"
+            continue
+        against = PER_SEED[reference]["loss"]
+        assert paired(against, losses).gap == pytest.approx(row[key], abs=6e-3)
+
+
+def test_the_mlp_gain_is_measured_against_the_arm_it_was_added_to() -> None:
+    """The reason `variant` is published, and a mistake this data prevents.
+
+    `lock.breakers` records the residual MLP as buying **-0.002 nats — nothing**, which is the
+    exercise's most interesting finding: expressivity is necessary and not sufficient. The published
+    name "tied + residual MLP" hides that it was added to *wrapped* positions, so comparing it with
+    the transform arm gives -0.031 and reads as the record contradicting itself. It does not.
+    """
+    mlp = PER_SEED["tied + residual MLP"]
+    assert mlp["variant"] == "v2-wrap-M-MLP"
+    against_its_own_baseline = paired(PER_SEED["wrapped positions"]["loss"], mlp["loss"]).gap
+    buys = next(b["buys"] for b in RECORD["lock"]["breakers"] if "MLP" in b["term"])
+    assert against_its_own_baseline == pytest.approx(buys, abs=1e-3)
+
+
+def test_the_ngram_term_buys_far_more_than_the_mlp() -> None:
+    """The twin, and the finding itself stated as an assertion.
+
+    Both terms break the additivity lock. Only one helps. If this ever stopped holding, the
+    exercise's central claim about expressivity would need re-reading.
+    """
+    ngram = paired(PER_SEED["wrapped positions"]["loss"], PER_SEED["wrap + n-gram"]["loss"]).gap
+    mlp = paired(PER_SEED["wrapped positions"]["loss"], PER_SEED["tied + residual MLP"]["loss"]).gap
+    assert ngram < mlp
+    assert abs(ngram) > 50 * abs(mlp), "the gap between the two lock-breakers has collapsed"

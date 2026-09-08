@@ -159,6 +159,21 @@ corpus window less than half the size sampled with replacement. **And one closes
 puzzle:** `setup.vocab_size` is 10,002 because the earlier run appended `<eos>` and `<pad>` to the
 frozen 10,000. That discrepancy sat unexplained in three documents.
 
+**The raw per-seed losses for all ten arms were recovered, and are now published.** `summary.py`
+was never written whole — it was edited incrementally, so no recorded call holds its full text — but
+each edit pastes a per-arm array of five losses. Training was done by `one_arm.py`; `summary.py` only
+did statistics over transcribed numbers. **Every published figure recomputes from those arrays
+exactly**: all ten losses, all `vs_control` and `vs_v1` gaps, `unpaired_spread` 0.469 and
+`paired_sd` 0.024. They now ship in `pairing.per_seed`, so no figure in the arms table has to be
+taken on trust, and `tests/test_embeddings_summary.py` recomputes every one of them.
+
+**And publishing them corrected a misreading of my own.** The arms table's names hide which arm each
+was built on: *"tied + residual MLP"* is `v2-wrap-M-MLP`, an MLP added to **wrapped** positions.
+Measured against the transform arm it appears to buy 0.031 nats, which reads as the record
+contradicting its own `lock.breakers` figure of −0.002. Measured against the arm it was actually
+added to, it buys **−0.0024** — the record was right and the comparison was wrong. Each entry now
+carries its internal `variant` name so the baseline is legible, and a test pins that comparison.
+
 **What is still not recovered.** Nine names appear in `measurements.json`'s `source` strings —
 `summary.py`, `lock.py`, `lock_break.py`, `ng_sweep.py`, `coherence.py`, `trained_w.py`,
 `dp128.py`, `scale_cost.py`, `one_arm.py` — and nothing on this machine wrote them. So the

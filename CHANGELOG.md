@@ -41,6 +41,29 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 07 publishes the raw per-seed loss of every arm, so no figure in its results table has
+  to be taken on trust.** `pairing` shipped two of the ten arrays; the other eight gaps rested on
+  nobody being able to check them. All ten are now in `pairing.per_seed`, recovered from the
+  recorded tool calls of the agent run that produced them — `summary.py` was edited incrementally
+  rather than written whole, so its text exists in no single call, but each edit pastes a per-arm
+  array of five losses.
+
+  **Every published figure recomputes from them exactly** — ten losses, every `vs_control` and
+  `vs_v1` gap, `unpaired_spread` 0.469 and `paired_sd` 0.024 — and
+  `tests/test_embeddings_summary.py` now recomputes each one rather than restating it. Perturbing a
+  single seed of a single arm turns exactly that arm's test red.
+
+  **Publishing them also corrected a misreading.** The table's names hide which arm each was built
+  on: *"tied + residual MLP"* is `v2-wrap-M-MLP`, an MLP added to **wrapped** positions. Against the
+  transform arm it looks like 0.031 nats, which reads as the record contradicting its own
+  `lock.breakers` value of −0.002; against the arm it was actually added to it buys **−0.0024**. The
+  record was right. Each entry now carries its internal `variant` name so the baseline is legible,
+  and a test pins the comparison — the finding it protects is the exercise's most interesting one,
+  that expressivity is necessary and not sufficient.
+
+  No number changed. The page renders the same figures; `web/data.js` was regenerated from the
+  measurements as the exercise's `CLAUDE.md` requires.
+
 - **Every run now records where it came from, and refuses to be written without it.** This is a
   standing rule in `AGENTS.md` rather than a feature of one exercise: a number nobody can regenerate
   is not evidence. A bundle carries `config_fingerprint`, `code_digest`, `git_sha`, an
