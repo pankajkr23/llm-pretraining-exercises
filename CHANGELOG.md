@@ -10,6 +10,43 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- **Exercise 07's notebook is rebuilt around the pipeline it teaches: input → process → output.**
+  It taught the *analysis* well — the budget arithmetic, the recovery certificate, the truncation
+  collisions — and never once showed how a Kronecker embedding is actually made. It showed the
+  sparse coordinates but never the induced embedding `E = K·W_p`, never the tie that is the whole of
+  v2, and never the evidence the recommendation rests on. A reader could not have answered a
+  question about the mechanism from it.
+
+  It now walks one real token from text to loss, printing the shape at every stage, so the thing a
+  reader watches is an embedding being **built** rather than a table being looked up: text → ids →
+  bytes → the sparse code `κ` (3 of 8,192 coordinates, unit norm) → `W_p`, the only learned object →
+  `E = K·W_p`, computed and never stored → the tie. Every knob — `d_p`, `d_model`, `positions`,
+  `n_buckets`, `znorm`, the seed — is a named constant in one cell, with a table saying what each
+  one should move and what it must not.
+
+  **It also re-runs the claims this exercise made and then withdrew**, so they fail in front of the
+  reader instead of being asserted in prose. Six of the eight have a live cell; two are editorial.
+  That matters because the four documents recording those corrections disagree about how many there
+  are — the README and the NOTICE say three, the progress log lists five, the agent notes say six —
+  and a count that is produced by re-running cannot drift the way a typed one does.
+
+  **The headline statistic is now re-derived rather than quoted.** `measurements.json` ships the ten
+  raw per-seed losses, so the notebook recomputes the unpaired spread (0.469), the paired sd
+  (0.024), the sign test (5/5, p = 0.031) and both arm means from first principles, and prints them
+  beside the recorded values. Four independent quantities, all reconstructed — the part of the claim
+  a reader does not have to take on trust.
+
+  **What it does not do is pretend to reproduce the trained arms.** The code that produced them is
+  not in this repository, and the recorded setup pins the architecture while pinning none of what
+  decides where a loss lands — no learning rate, optimiser, schedule, head count, or seed-to-data
+  mapping. The notebook says so where a reader meets that section, rather than omitting it quietly.
+
+  Lite profile runs in **8 seconds** and the full profile in **45**, both verified by executing the
+  notebook end to end with `nbclient`. Nothing tracked changed: no measurement, no page, no package
+  code. The notebook and its builder are gitignored, so this entry is the only record of it.
+
 ### Fixed
 
 - **Exercise 07's page typed one number by hand, and it was the only one that could go stale.**
@@ -38,6 +75,24 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   was restored in a `finally` and confirmed byte-identical. It is pure Python and needs neither
   torch nor a browser, so unlike the render suite it runs in the plain `test` job on every push,
   which is where a guard against forgetting a command belongs.
+
+- **Two errors in the rebuilt notebook, found by reading its own output rather than by a test.**
+  The scale-bug cell compared the induced embedding against `torch.nn.Embedding`'s default `N(0,1)`
+  initialisation, whose row norm is `√d_model ≈ 19.6` — which happens to match the induced norm, so
+  the cell reported a ratio of **1.0×** where the measured figure is **49.5×** and hid the entire
+  effect it exists to show. A real embedding initialises near 0.02, and the record's `0.3197` is
+  exactly `√256 × 0.02`. Fixed, and the cell now invites the reader to set the baseline back to 1.0
+  and watch the effect vanish, because that is the mistake worth being able to recognise.
+
+  The recovery cell drew its sample from the first 300 tokens, which are all short, so `exact_repr`
+  and `exact_full` came out identical and the cell demonstrated nothing while appearing to agree
+  with itself. It now samples across the vocabulary.
+
+- **A claim of mine about the README was wrong, and the notebook now says so.** I recorded that
+  `94.67%` had no measurement behind it. It is absent from `measurements.json`, but it is
+  **re-derivable**: it is the fraction of the frozen vocabulary that fits inside `d_p = 32`, exactly
+  9,467 of 10,000, which the notebook computes. It is under-recorded, not unsupported. The
+  `cond(WᵀW) 2.4 → 29.5` figure beside it remains genuinely unbacked.
 
 - **The guard froze the two working notes it was meant to protect, and I had made them
   unfreezable.** `#152` put `TODO.md` and `HANDOFF.md` in `[irreplaceable]`, a section that is
