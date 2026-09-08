@@ -836,4 +836,30 @@ predates the harness — so it is logged as what it was.
                           a twin proves naming one does not unlock it. The section needed no code
                           change to take effect -- _pattern_sections derives the enforced list,
                           which is #152's own fix paying for itself
+2026-09-07  exercise-07   #154 opened: S07's notebook taught the analysis and never showed the
+                          mechanism. It printed the sparse coordinates but never E = K.W_p, never
+                          the tie that IS v2, and never the evidence the recommendation rests on --
+                          PK could not answer a question from it, which was the notebook's fault.
+                          Rebuilt around input -> process -> output: one real token from text to
+                          loss, shape printed at every stage, so a reader watches an embedding be
+                          BUILT rather than looked up. Every knob is a named constant with a table
+                          saying what it should move and what it must not. Six of the eight
+                          withdrawn claims now re-run as live cells -- worth doing because the four
+                          documents recording them say three, three, five and six, and a count that
+                          is produced cannot drift like one that is typed. The headline statistic is
+                          re-derived from the ten raw per-seed losses the record ships: unpaired
+                          spread, paired sd, sign test and both arm means all reconstructed and
+                          printed beside the recorded values. Section 5 does NOT pretend to
+                          reproduce the trained arms -- that code is not in this repo and the setup
+                          pins none of what decides a loss -- and says so where a reader meets it.
+                          TWO REAL ERRORS FOUND BY READING THE OUTPUT, NOT BY A TEST: the scale cell
+                          compared against nn.Embedding's N(0,1) default, whose row norm happens to
+                          equal the induced norm, so it reported 1.0x where the effect is 49.5x and
+                          hid the entire point; and the recovery cell sampled the first 300 tokens,
+                          all short, so its two metrics agreed and demonstrated nothing. Also
+                          corrected a claim of mine: 94.67% is absent from measurements.json but IS
+                          re-derivable as the vocabulary's fit rate at d_p=32 (9,467/10,000), so it
+                          is under-recorded rather than unsupported. lite 8s, full 45s, both
+                          executed end to end with nbclient. Nothing tracked changed: no
+                          measurement, no page, no package code, so nothing to redeploy
 ```
