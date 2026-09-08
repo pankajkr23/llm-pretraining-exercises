@@ -127,6 +127,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **A run's per-step trace was rounded to six decimal places, so it could not re-derive the mean it
+  is the material for.** Found by running the new verifier against the first real run: it reported
+  all ten arms as failing while printing `6.607202 recomputed against 6.607202 published`. Six
+  decimals are enough to *display* a loss and not enough to *reproduce a mean of five of them*, so
+  the file that exists to let a reader re-derive the conclusion could not. Traces are now written
+  with `repr`, which round-trips a float exactly, and a test asserts the trace reads back as the
+  losses it was written from. The tolerance was left at `1e-9` rather than loosened — a looser one
+  would have hidden this.
+
 - **An arm in exercise 07's registry was named for a model it was not.** `"tied + residual MLP"`
   was built on one-hot positions, while the row of that name in `results/measurements.json` came
   from a driver that called it `v2-wrap-M-MLP` and built it on **wrapped** positions. The published

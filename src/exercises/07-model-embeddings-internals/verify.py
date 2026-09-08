@@ -50,9 +50,15 @@ logger = logging.getLogger("verify")
 TOLERANCE = 1e-9
 """How close a re-derived float must be to the published one.
 
-Not a fudge factor: both sides are sums of the same `float` values in the same order, so the only
-difference is the JSON round-trip, which is exact for `repr`-formatted doubles. A tolerance this
-tight fails on a genuinely different computation and passes on an identical one.
+Not a fudge factor: both sides are sums of the same `float` values in the same order, and both the
+JSON bundle and the trace CSV round-trip through `repr`, which is exact for doubles. A tolerance
+this tight fails on a genuinely different computation and passes on an identical one.
+
+**It has already earned that tightness.** The first version of `runlog.trace` wrote losses at six
+decimal places, and this check failed all ten arms while printing `6.607202 recomputed against
+6.607202 published` — enough precision to display a loss and not enough to reproduce a mean of
+five. A looser tolerance would have hidden a trace file that could not re-derive the conclusion it
+exists to support.
 """
 
 

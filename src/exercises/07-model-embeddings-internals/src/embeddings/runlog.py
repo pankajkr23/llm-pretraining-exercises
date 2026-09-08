@@ -179,6 +179,14 @@ class RunDirectory:
         CSV rather than JSON because this is the one artefact a person opens in a spreadsheet, and
         it is the only place the *shape* of a run is visible — a bundle records where the loss
         ended and never how it got there.
+
+        **Written with `repr`, at full precision, and that is not fussiness.** The first version
+        wrote `f"{loss:.6f}"`, and `verify.py` — which re-derives the arms table from these files —
+        reported all ten arms as failing while printing `6.607202 recomputed against 6.607202
+        published`. Six decimal places is enough to *display* a loss and not enough to *reproduce a
+        mean of five of them*, so the material could not re-derive the conclusion it is the
+        material for. `repr` of a Python float round-trips exactly, which is the property this file
+        needs and prettiness is not.
         """
         path = self.path / "03-train" / f"{_slug(result['arm'])}.seed{result['seed']}.trace.csv"
         with path.open("w", newline="", encoding="utf-8") as handle:
@@ -187,7 +195,7 @@ class RunDirectory:
             for step, (loss, norm) in enumerate(
                 zip(result["losses"], result["grad_norms"], strict=True)
             ):
-                writer.writerow([step, f"{loss:.6f}", f"{norm:.6f}"])
+                writer.writerow([step, repr(loss), repr(norm)])
         return path
 
     def checkpoint(self, result: dict, trunk, head, provenance: dict) -> Path | None:

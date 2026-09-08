@@ -829,3 +829,36 @@ def test_selecting_lanes_changes_the_corpus_and_the_fingerprint_with_it() -> Non
 
     with pytest.raises(ValueError, match="not a gate"):
         refuse_unusable_corpus(dataclasses.replace(TINY, acknowledged_corpus_defects=("lanes",)))
+
+
+def test_the_trace_can_re_derive_the_mean_it_is_the_material_for(tmp_path, vocabulary) -> None:
+    """A trace written to six decimal places cannot reproduce a mean of five of them.
+
+    This is the defect the verifier found on the first real run: all ten arms reported as failing
+    while printing `6.607202 recomputed against 6.607202 published`. Enough precision to DISPLAY a
+    loss is not enough to REPRODUCE a statistic over several, and the trace exists to be the
+    material the conclusion is re-derived from. The guard is exact equality, because `repr` of a
+    float round-trips exactly and anything less is the bug coming back at a smaller size.
+    """
+    import csv
+
+    from embeddings.runlog import RunDirectory
+
+    config = dataclasses.replace(TINY, steps=8, seeds=(0,), device="cpu")
+    log = RunDirectory(tmp_path, config, "2026-09-08")
+    written = []
+    train_arm(
+        _arm(CONTROL),
+        vocabulary,
+        config,
+        0,
+        on_trained=lambda r, tr, hd: written.append((r, log.trace(r))),
+    )
+    result, path = written[0]
+    with path.open(encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    assert [float(row["loss"]) for row in rows] == result["losses"], (
+        "the trace does not read back as the losses it was written from, so it cannot re-derive "
+        "any statistic computed over them"
+    )
+    assert [float(row["grad_norm"]) for row in rows] == result["grad_norms"]
