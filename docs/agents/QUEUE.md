@@ -943,4 +943,26 @@ predates the harness — so it is logged as what it was.
                           including a trace rounded to six decimals that could not re-derive the
                           mean it is the material for. CPU is bit-identical; MPS differs by one
                           float32 ULP (9.537e-07), so the publishable grid is the CPU one
+2026-09-09  exercise-07   #157 merged; #158 opened: the documents say what the evidence says.
+                          The results narrative was written when the recommendation won, and on a
+                          second corpus it loses -- README headline, arm table and NOTICE all
+                          corrected to state the finding AND its limit, with both runs published
+                          side by side. DECISIONS.md records eleven decisions including the one
+                          where our own reason for the corpus fix was refuted by measuring it. PK's
+                          two instructions done: no shell commands on the page (the reproduce
+                          section argues instead), every command in the README's Run it, and a
+                          guard for both. A DECODER DEFECT found while sourcing a claim:
+                          decode.recover accepted wrap and could not decode it -- its matched
+                          filter argmaxes over unsigned atoms while half the wrap slots carry -1 --
+                          scoring 47% on tokens four documents call perfectly recovered, with no
+                          test ever driving it that way. Sign-aware it is 100.00%. Two figures the
+                          page stated (14.6% / 19.1%) were in no evidence file; the shipped scheme
+                          is now measured whole-vocabulary (100.00 / 15.05 / 0.00 by band) and the
+                          removed permutation variant is reported UNREPRODUCED after two rebuild
+                          attempts produced harness artefacts rather than results. Three guards
+                          were wrong about their own subject and are fixed: a hand-rolled JS string
+                          parser that desynchronised on an apostrophe and stopped seeing the file,
+                          a regex test-counter that would have accepted the stale number it exists
+                          to catch, and a hardcoded tool list that called a documented script a
+                          deleted module. 1,914 passed, 2 skipped
 ```
