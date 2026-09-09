@@ -29,8 +29,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   eleven are covered by assertion rather than exemption — an audit whose `run_id` is resolved to a
   sibling manifest that must itself be complete, and a hand-curated catalogue where every entry's
   date must carry the source's own wording — and the remaining nine are ledgered with what each
-  needs. The ledger fails in both directions: an entry that starts passing is a file being skipped
-  that would pass, which is coverage lost the moment it was earned.
+  needs. The ledger fails in both directions: an entry that starts passing is a file no longer
+  checked, which is coverage lost the moment it was earned.
+
+  **Nothing in it skips, and that took a red CI run to get right.** The first version used eleven
+  `pytest.skip` calls and the root `conftest.py` refused the run with `UNDECLARED SKIP IN CI`. The
+  easy fix was a `tests/_skips.py` entry; the correct one was to stop skipping, because a skipped
+  case and a passing case are the same line in every report anyone reads. A ledgered file is simply
+  not parametrised now, so the number of cases the file reports is the number of files it checks.
 
 ### Fixed
 

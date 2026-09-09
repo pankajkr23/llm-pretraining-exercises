@@ -1334,4 +1334,14 @@ predates the harness — so it is logged as what it was.
                           rewritten to assert what REPLACED them (no command in the rendered text
                           at all), because deleting it was the easy move and a test that only skips
                           is not a test
+2026-09-09  guards        #171 went red in CI and the gate was right. My provenance guard used
+                          eleven pytest.skip calls -- two for the by-other-means pair, nine for the
+                          ledger -- and the root conftest failed the run with UNDECLARED SKIP IN
+                          CI. The easy fix was a tests/_skips.py entry and AGENTS.md forbids
+                          exactly that ("never add an entry to clear a red gate"). The right fix is
+                          better than the rule: a ledgered file is not parametrised at all now, so
+                          the case count IS the count of files checked, and there is nothing that
+                          reports as a pass without having run. Zero skips in the file. Local
+                          verification had missed it because a skip is green locally -- the gate
+                          only fires under CI, which is the whole reason it exists
 
