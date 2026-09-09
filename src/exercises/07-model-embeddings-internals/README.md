@@ -86,6 +86,10 @@ The page is built to the repo's design standard in [`docs/DESIGN.md`](../../../d
 
 **Jump to:** [`Run it`](#run-it) · **the page:** <https://llm-pretraining-demos.vercel.app/07-model-embeddings-internals/>
 
+**Where the open questions live.** This document reports what was built and measured.
+[`RESEARCH.md`](RESEARCH.md) reports what comes next — three unsolved problems researched in plain
+language, each marked with where its evidence came from and what would refute it.
+
 ## How to read this
 
 - **Meeting this for the first time** — read *What a Kronecker embedding is* below, then
