@@ -57,12 +57,21 @@ function section(id, role, eyebrow, title, paras, rail) {
   return s;
 }
 
-/** A figure whose caption says what to conclude — never a bare label. */
-function figure(node, num, caption) {
+let figureCount = 0;
+
+/** A figure whose caption says what to conclude — never a bare label.
+ *
+ * **The number is counted, not passed.** It used to be an argument, and adding the ship figure at
+ * the top of the page gave the page two Figure 1s — the new one and the mechanism plate, both
+ * captioned "Figure 1", in the same document. A figure's number is a count of the figures before
+ * it, which makes it exactly the kind of number this page derives everywhere else.
+ */
+function figure(node, caption) {
+  figureCount += 1;
   const f = el('figure');
   f.append(node);
   const c = el('figcaption');
-  c.innerHTML = `<b>Figure ${num}.</b> ${caption}`;
+  c.innerHTML = `<b>Figure ${figureCount}.</b> ${caption}`;
   f.append(c);
   return f;
 }
@@ -341,7 +350,6 @@ function shipExplainer(M) {
   show(null);
   return figure(
     wrap,
-    1,
     `<b>Neither curve is labelled, and that is the argument.</b> Everything a training dashboard
      shows you about these two runs is on this figure already; if that is enough to tell them apart,
      this page has nothing to say. <b>What would refute it:</b> a broken run whose curve sat
@@ -628,7 +636,6 @@ function chapterMechanism(M) {
   s.append(
     figure(
       shiftFigure(M),
-      1,
       `Above the rule: each box is a token the model reads, and the arrow points at what it must
        predict. Below it: <b>the same reading, with the shift reversed</b> — and every arrow would
        now point at the box it started from. <b>Every pair in the bottom half is a token predicting
@@ -842,7 +849,6 @@ function chapterResults(M) {
   s.append(
     figure(
       curveFigure(M),
-      2,
       `The lower curve is the broken model. <b>Nothing about its shape says it is wrong</b> — it
        falls faster, settles lower, and would pass any review that consisted of looking at a loss
        curve. A run where the two curves crossed back, or converged, would mean copying was not
