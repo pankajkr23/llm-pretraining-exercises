@@ -1337,4 +1337,19 @@ predates the harness — so it is logged as what it was.
                           needs both halves -- overflow-y: auto alone makes overflow-x compute to
                           auto, so reading the computed value alone reports nothing at all. Fixed;
                           a report that points at the wrong element is worse than a bare number
+2026-09-10  fix           02's sideways scroll was its HEADLINE FIGURE, and it took three rounds to
+                          find because I twice believed a probe over the page. Round one: my guard
+                          named THEAD/TR/TH, which were inside a table scrolling correctly in its
+                          own overflow-x box -- innocent. Round two: I fixed the token chips
+                          (white-space: pre beside an unreachable word-break: break-all, a real
+                          defect and not this one) and CI stayed red. Round three: hid one subtree
+                          at a time until the overflow vanished, which walked straight to
+                          DIV.score. It is eight characters -- "6,502.56" -- at a fixed 3.6rem,
+                          about 222px of tabular digits in a panel whose content box is viewport
+                          minus 80. clamp(2rem, 12vw, 3.6rem) now: the cap is reached at 480px so
+                          nothing above a phone changes, and the page has ZERO overflow down to
+                          220px where it was 28px at 260. THE LESSON IS THE HUNT, not the rule: two
+                          probes reported plausibly and both were wrong, and the one that worked
+                          asked the page a question it could not answer wrongly -- does hiding this
+                          make the overflow go away?
 

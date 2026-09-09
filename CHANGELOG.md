@@ -33,6 +33,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   the line to break. **Found by the new guard on CI and not locally**, because Linux's default fonts
   are wider than macOS's — the page had no headroom left at 320px either way.
 
+- **And the thing actually pushing exercise 02 sideways was its headline figure.** `.score` is
+  eight characters — `6,502.56` — set at a fixed `3.6rem`, which is about **222px of tabular digits
+  inside a panel whose content box is `viewport − 80px`**. It stopped fitting around 300px on macOS
+  and at 320 on CI. Found by hiding subtrees one at a time until the overflow disappeared, after two
+  rounds of looking at the wrong elements. It is `clamp(2rem, 12vw, 3.6rem)` now, which reaches the
+  old size at 480px — so every screen above a phone is unchanged and the number keeps the size that
+  makes it a headline — and shrinks to fit below that rather than taking the page with it. The page
+  now has **zero overflow down to 220px**, where it was 28px at 260.
+
 ### Added
 
 - **A repo-wide sideways-scroll guard, and the width it exists for is the one nobody was testing.**

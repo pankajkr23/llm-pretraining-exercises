@@ -53,7 +53,18 @@
       .panel + .panel { margin-top: 18px; }
       .panel h3 { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin: 0 0 16px; }
 
-      .score { font-weight: 600; font-size: 3.6rem; line-height: 1; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; }
+      /* Fluid, because a fixed 3.6rem does not fit a phone. The headline figure is eight
+         characters wide — "6,502.56" — and at 57.6px with tabular digits that is about 222px of
+         text inside a panel whose content box is `viewport - 80px`. It therefore stopped fitting
+         somewhere around 300px, and it was the ONLY thing on the page still pushing it sideways.
+         `12vw` reaches the 3.6rem cap at 480px, so every screen above a phone is unchanged and the
+         number keeps the size that makes it a headline; below that it shrinks to fit rather than
+         taking the page with it. The floor is 2rem so it stays a headline on the narrowest phone.
+
+         Found on CI and not locally: Linux's default fonts are wider than macOS's, so the same
+         layout crossed the edge at 320px there and 280px here. Sized with room for that difference
+         rather than to the pixel — at 320 the text is ~180px in a 240px box. */
+      .score { font-weight: 600; font-size: clamp(2rem, 12vw, 3.6rem); line-height: 1; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; }
       .score-sub { font-family: var(--mono); font-size: 12.5px; color: var(--muted); margin-top: 12px; overflow-wrap: anywhere; }
       .score-sub .n { color: var(--ink); }
       .score-sub div + div { margin-top: 5px; }
