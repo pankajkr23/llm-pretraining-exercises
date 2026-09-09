@@ -72,12 +72,19 @@ it, so a fresh clone can price an output head without installing the wheels.
 ```bash
 uv sync --all-packages --extra train
 
-uv run python -m lossheads.harness    # the seven numbers -> results/harness.json
-uv run python -m lossheads.training   # the two findings  -> results/training.json
+uv run python -m lossheads.harness                 # the seven numbers -> results/harness.json
+uv run python -m lossheads.training                # the two findings  -> results/training.json
+uv run python -m lossheads.training --sensitivity  # the noise floors  -> results/sensitivity.json
 uv run python src/exercises/09-loss-functions-output-heads/tools/render_results.py
 
 uv run pytest src/exercises/09-loss-functions-output-heads
 ```
+
+**These four are the only things that write into `results/`, and that is deliberate.** Every other
+entry point — the notebook, the library, a `train()` call from a script — writes to `artifacts/`.
+Publishing a run is a decision someone takes after seeing it, not a side effect of producing it, and
+before this the topic notebook silently republished the tracked training log every time anyone read
+it.
 
 The harness prints as much as it computes — items 1 to 4 are about what a reader can *see*, so
 running it and reading the output is the point rather than a diagnostic. The 300-step training run

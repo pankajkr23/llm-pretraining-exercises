@@ -80,6 +80,17 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   republished the run. It writes to `artifacts/` now; `python -m lossheads.training` is the one
   caller that publishes.
 
+- **Exercise 09's topic notebook is a laboratory rather than a tour.** It was twenty-four cells,
+  ten of them code, with no chart, no assertion and no function of its own — it narrated the page.
+  It now carries a knob cell at the top so a reader varies the run instead of reading about it,
+  eight plots, and **eleven assertions that are the lesson**: the five equivalences the library
+  claims, each written twice — once at the no-op setting where it must agree and once away from it,
+  because a function ignoring its argument would pass the first half. One of them is the shipped
+  defect made runnable: the chunked loss agrees with the plain one only under masking, which is
+  where the wrong denominator would show. And it hands the reader the bug rather than describing
+  it — run the two shifts, see the broken one reach the *lower* loss, then print the token strings.
+  It also sweeps the seed, which the published page called the one thing it never varied.
+
 - **The sensitivity sweep has a tracked entry point.** It was a `python -c` one-liner pasted from a
   document, which is the shape `AGENTS.md` names as its most expensive failure — a producer of a
   published number living outside the tracked code. It is `--sensitivity` now. The sweep also
