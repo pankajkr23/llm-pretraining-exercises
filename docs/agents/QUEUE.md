@@ -1301,7 +1301,7 @@ predates the harness — so it is logged as what it was.
                           entirely because the filesystem answers the question. docs/DESIGN.md now
                           carries the rule and names the misreading that produces it
 ```
-2026-09-10  tooling       PR opened: the queue sync stops claiming work shipped in a release it did
+2026-09-10  tooling       #176 opened: the queue sync stops claiming work shipped in a release it did
                           not. HANDOFF item 5 named two defects; RE-CHECKED BOTH RATHER THAN
                           TRUSTING THE NOTE and one was already fixed -- _reapply replays an edit as
                           an edit. The other was live and reproduced against the real function
