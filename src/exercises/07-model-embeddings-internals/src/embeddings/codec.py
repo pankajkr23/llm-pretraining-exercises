@@ -149,6 +149,16 @@ class Encoded:
     sum_v2: np.ndarray
 
 
+def _position_count(bs: bytes, cfg: KroneckerConfig) -> int:
+    """How many byte positions the code carries — the `L` in the `1/sqrt(L)` scale.
+
+    `min(len(bs), d_p)` under `onehot`, which truncates; `len(bs)` under `wrap` and `fourier`, which
+    do not. This is the count `Encoded.lengths` documents itself as holding, and it is *not* the
+    number of non-zero atoms: merging can reduce that, and the scale was never applied per atom.
+    """
+    return min(len(bs), cfg.d_p) if cfg.positions == "onehot" else len(bs)
+
+
 def encode(byte_strings: list[bytes], w: np.ndarray, cfg: KroneckerConfig) -> Encoded:
     """`h = znorm(kappa) @ W` for a whole vocabulary, computed sparsely.
 
@@ -167,7 +177,17 @@ def encode(byte_strings: list[bytes], w: np.ndarray, cfg: KroneckerConfig) -> En
     lengths = np.zeros(n, dtype=np.int64)
     for i, bs in enumerate(byte_strings):
         idx, val = atoms(bs, cfg, table)
-        lengths[i] = max(idx.size, 1)
+        # THE NUMBER OF POSITIONS, NOT THE NUMBER OF ATOMS -- and the difference is a real defect
+        # that shipped. `atoms` merges duplicate `(slot, byte)` pairs, which only happens under
+        # `wrap`, where two folded positions can land on the same slot carrying the same byte. The
+        # scale applied was `1/sqrt(L)` with L the position count, so `targets_from_h` must undo it
+        # with the same L; recording the merged count instead scaled the recovered target by
+        # `sqrt(nnz/L)`. Measured on the frozen vocabulary: **142 of 10,000 tokens** affected, worst
+        # case a 65-byte token merging to 48 atoms and a **14.07%** error on every coordinate.
+        #
+        # `onehot` cannot merge -- each position owns a distinct slot -- so this was invisible in
+        # every published recovery number, all of which were measured under `onehot`.
+        lengths[i] = max(_position_count(bs, cfg), 1)
         if idx.size:
             raw[i] = val @ w[idx]
             sum_v[i] = val.sum()

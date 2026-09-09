@@ -10,6 +10,29 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`codec.encode` recorded the merged atom count where the `1/sqrt(L)` scale needed the position
+  count.** `atoms` merges duplicate `(slot, byte)` pairs, which happens only under `wrap`, where two
+  folded positions can land on the same slot carrying the same byte. The scale was applied per
+  *position*, so `targets_from_h` had to undo it per position; using the merged count instead
+  returned a target multiplied by `sqrt(nnz / L)` on every coordinate.
+
+  Measured on the frozen vocabulary: **142 of 10,000 tokens** affected, worst case a 65-byte token
+  merging to 48 atoms — a **14.07%** error. After the fix the recovered target matches a
+  hand-built one to `1.000000000`.
+
+  **No published number moves, and saying why matters more than the fix.** Every published recovery
+  figure was measured under `onehot`, where each position owns a distinct slot and no merge is
+  possible — a positive control confirms zero merges there. In the one `wrap` band where merging is
+  common, 105 of 465 tokens were mis-scaled and the band's recovery is **15.05% before and after**:
+  those tokens were failing to recover anyway. It was a latent defect that would have bitten the
+  moment wrapped invertibility mattered, which is exactly what problem 3 is about.
+
+  Two guards, both watched failing against the old behaviour: one asserting `lengths` is the
+  position count, one comparing the whole round trip against a target built by hand — the second
+  would have caught this without anyone knowing the word "merge".
+
 ### Changed
 
 - **Exercise 07's trained comparison stops reading a corpus that is 40% `[UNK]`, and three gates
