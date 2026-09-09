@@ -12,6 +12,26 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The rail was moved inward on three pages and it pushed the reading column off centre.** The
+  fix for exercise 09's squeezed text was mostly the type scale, but it also added
+  `left: max(0px, calc((100vw - 1500px) / 2))` to exercises 07, 09 and 10 — so above 1440px the rail
+  travelled with the centred wrap and sat against the text. Measured at 2560 that is **24px of air
+  on the left of the column and 554px on its right**: the rail no longer at the page edge, dead
+  space on both sides of it, and the column off the centre it is supposed to hold. `max(0px, …)`
+  clamps below 1440, so every width a laptop opens looked correct. The override is gone; all eight
+  railed pages now measure equal air either side at every width, which is what exercises 03, 04, 05,
+  06 and 08 held throughout.
+
+- **`AGENTS.md` records this exact mistake being made once before, and the guard that catches it
+  lived in one exercise both times.** Exercise 08's centring assertion is parametrised over widths
+  and hard-coded to exercise 08. It is now the horizontal half of `tests/test_rail_centring.py`,
+  which discovers every page that builds a rail from the filesystem and holds it to the **property**
+  — equal air either side — rather than to a distance: 08's wrap is 2200px and everyone else's is
+  1500px, so the right gap is 204px on one page and 554px on another at the same viewport, and a
+  guard naming either number fails the other while both are right. That is the shape of the guard
+  that shipped the first time this was got wrong. `docs/DESIGN.md` now states the rule and names
+  the misreading that produces it.
+
 - **Exercises 07 and 10 join the published type scale, and a guard now watches which pages are on
   it.** Both carried the identical `.say { max-width: 68ch }` at an inherited 16px that
   `docs/DESIGN.md` names as the canonical bug. Body prose goes from **16px in a 685px column to

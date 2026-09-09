@@ -1272,4 +1272,32 @@ predates the harness — so it is logged as what it was.
                           Its first version was red for the WRONG reason: "9.1x" is a substring of
                           "39.1x", the logits-to-hidden ratio, so it failed on correct prose until
                           a lookbehind was added
+2026-09-09  design        #169 also puts the rail back where 08 has it, on 07, 09 and 10. PK: "you
+                          have moved the rail from its original position which does not look
+                          correct. The rail position in exercise 8 is good and I think we should
+                          keep it standard across all the exercises." He is right and it was mine:
+                          #167/#168 added left: max(0px, calc((100vw - 1500px)/2)) to three pages,
+                          so above 1440 the rail travelled with the centred wrap and sat 24px from
+                          the text -- 24px of air on the column's left against 554px on its right
+                          at 2560. MEASURED BEFORE CHANGING ANYTHING, because AGENTS.md records an
+                          agent reading this same complaint as "the rail is too far left" and
+                          making it worse: 03, 04, 05, 06 and 08 all hold equal air either side at
+                          every width, 07, 09 and 10 were off by 530px at 2560 and 210 at 1920.
+                          Below 1440 max(0px, ...) clamps, which is why a full screenshot pass and
+                          a review round missed it. Override removed; all eight now measure 0px of
+                          asymmetry. THE GUARD LIVED IN ONE EXERCISE BOTH TIMES -- 08's centring
+                          assertion sweeps widths and is hard-coded to 08 -- so it is now the
+                          horizontal half of tests/test_rail_centring.py, which already discovers
+                          railed pages from the filesystem for the vertical half. It asserts the
+                          PROPERTY and never a distance: 08's wrap is 2200px and everyone else's
+                          1500px, so the correct gap is 204px on one page and 554px on another at
+                          the same viewport, and a guard naming either number fails the other while
+                          both are right -- which is exactly the guard that shipped the first time.
+                          Watched red on all three pages with the override re-applied, held in
+                          memory, restored in a finally and the restore verified. I FIRST WROTE IT
+                          AS A SEPARATE FILE with its own exemption ledger and got 04 wrong in it,
+                          claiming its rail is not pinned; the ledger's own both-directions twin
+                          caught that, and merging into the existing file removed the ledger
+                          entirely because the filesystem answers the question. docs/DESIGN.md now
+                          carries the rule and names the misreading that produces it
 ```

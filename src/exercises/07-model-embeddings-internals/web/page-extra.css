@@ -695,22 +695,25 @@ text.ax.good {
   }
 }
 
-/* --- the rail travels with the centred column ----------------------------------------------------
+/* --- the rail stays at the page edge, and the reading column centres beside it ------------------
  *
- * `_shared/page.css` pins the rail with `position: fixed; left: 0` — to the VIEWPORT — while
- * `.wrap` centres inside `max-width: 1500px`. Below 1440px those agree; above it the gap between
- * the rail and the text it indexes grows to 554px at 2560, with the 260px gutter still reserved
- * inside the wrap, so the page pays for the rail twice and the rail sits in neither space.
+ * **There was an override here that moved the rail inward and it was wrong.** It read
+ * `left: max(0px, calc((100vw - 1500px) / 2))`, so above 1440px the rail travelled with the centred
+ * wrap and sat 24px from the text — which put 24px of air on the left of the reading column and
+ * 554px on its right at 2560. The column was no longer centred in the space the rail leaves, and a
+ * reader described the result as the page having walked away from its own contents.
  *
- * This moves the rail to the wrap's left edge and moves the reading column not at all — `.wrap`
- * keeps its air either side, which is the symmetry an earlier attempt at this complaint destroyed
- * by moving the rail inward instead.
+ * `AGENTS.md` records the identical mistake being made once before, on exercise 08, for the
+ * identical reason: a complaint about a wide-screen layout was read as "the rail is too far left"
+ * when what the reader was reporting was the column being off centre. That time a guard was written
+ * demanding the broken version. This time the override shipped on three pages — 07, 09 and 10 — and
+ * `max(0px, …)` clamps below 1440, so every width a laptop opens looked correct.
+ *
+ * The rule is now the shared one and there is no override: `_shared/page.css` pins the rail at the
+ * left edge and reserves 260px of gutter on `.wrap`, which centres the column in what is left.
+ * `tests/test_rail_geometry_repo_wide.py` asserts the symmetry on every deployable page, so the
+ * next attempt to place a rail by eye reds instead of shipping.
  */
-@media (min-width: 1180px) {
-  .rail {
-    left: max(0px, calc((100vw - 1500px) / 2));
-  }
-}
 
 /* --- a long identifier must not push the page sideways -------------------------------------------
  *

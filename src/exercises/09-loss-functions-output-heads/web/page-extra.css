@@ -646,35 +646,25 @@ table.grid.prose td:first-child {
   width: 24%;
 }
 
-/* --- the rail travels with the centred column ----------------------------------------------------
+/* --- the rail stays at the page edge, and the reading column centres beside it ------------------
  *
- * `_shared/page.css` pins the rail with `position: fixed; left: 0` — to the VIEWPORT — while `.wrap`
- * centres itself inside `max-width: 1500px`. Below 1440px those agree, because the wrap fills the
- * window and its left edge IS zero. Above it they diverge, and the gap between the rail and the
- * text it indexes grows without limit:
+ * **There was an override here that moved the rail inward and it was wrong.** It read
+ * `left: max(0px, calc((100vw - 1500px) / 2))`, so above 1440px the rail travelled with the centred
+ * wrap and sat 24px from the text — which put 24px of air on the left of the reading column and
+ * 554px on its right at 2560. The column was no longer centred in the space the rail leaves, and a
+ * reader described the result as the page having walked away from its own contents.
  *
- *     1180px → 24px    1440px → 24px    1920px → 234px    2560px → 554px
+ * `AGENTS.md` records the identical mistake being made once before, on exercise 08, for the
+ * identical reason: a complaint about a wide-screen layout was read as "the rail is too far left"
+ * when what the reader was reporting was the column being off centre. That time a guard was written
+ * demanding the broken version. This time the override shipped on three pages — 07, 09 and 10 — and
+ * `max(0px, …)` clamps below 1440, so every width a laptop opens looked correct.
  *
- * At 2560 the page then pays for the rail twice: 530px of centring air on the left, plus the 260px
- * gutter reserved inside the wrap, with the rail sitting in neither. It reads as a detached column
- * of links beside a page that has walked away from it.
- *
- * **This moves the rail to the wrap's left edge, and moves the reading column not at all.**
- * `AGENTS.md` records an earlier attempt at this complaint that moved the rail INWARD, against the
- * text, and destroyed the symmetry every railed page holds — then wrote a guard demanding the broken
- * version. The distinction is measurable and is the whole point: `.wrap` keeps its 530px of air
- * either side at 2560, and the gap between rail and text returns to the 24px the design already
- * uses below 1440.
- *
- * It belongs in `_shared/page.css`, which every railed exercise vendors byte-identically — but that
- * file is checked for byte identity across eight copies, so changing it is its own change touching
- * seven other pages. Overridden here until then.
+ * The rule is now the shared one and there is no override: `_shared/page.css` pins the rail at the
+ * left edge and reserves 260px of gutter on `.wrap`, which centres the column in what is left.
+ * `tests/test_rail_geometry_repo_wide.py` asserts the symmetry on every deployable page, so the
+ * next attempt to place a rail by eye reds instead of shipping.
  */
-@media (min-width: 1180px) {
-  .rail {
-    left: max(0px, calc((100vw - 1500px) / 2));
-  }
-}
 
 /* --- the opening paragraph is part of the page, not a caption under the title ---------------------
  *
