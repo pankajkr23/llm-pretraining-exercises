@@ -397,6 +397,16 @@ ON_THE_FLUID_SCALE = {
         "retro-fitted alongside 09; identical 68ch-at-16px declaration"
     ),
     "10-training-loop": "retro-fitted alongside 09; identical 68ch-at-16px declaration",
+    "06-build-training-dataset": "16px in a 726px column; now 22px in 978px, same words per line",
+    "05-datamixtures-and-curriculum": (
+        "16px in a 726px column; now 22px in 978px, same words per line"
+    ),
+    "04-data-cleaning-dedup": "16px in a 685px column; now 22px in 924px, same words per line",
+    "03-data-collection-framework": (
+        "16.6px in a 692px column; now 22px in 897px. Its explainer strip is deliberately held at "
+        "16px — a component with its own 10.5-12px scale, whose step paragraphs carry a 46ch cap "
+        "measured against it, inside a panel too narrow for the body size"
+    ),
 }
 
 #: The scale itself, from `docs/DESIGN.md`: `clamp(19px, 1.2vw + 1.7px, 22px)`. Checked at the ends

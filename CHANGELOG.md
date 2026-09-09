@@ -10,6 +10,36 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- **The last four pages join the published type scale, and all eight now run it.** Exercises 03, 04,
+  05 and 06 rendered body prose at 16–16.6px in columns of 464–726px, using a fraction of the room a
+  wide display has. They are on `docs/DESIGN.md`'s `clamp(19px, 1.2vw + 1.7px, 22px)` now — **22px
+  in 897–978px at 2560, the same words per line**, because the lever is size and not measure:
+  widening a 16px column instead pushes the line past a hundred characters and makes it worse.
+  Standfirsts go on the ramp with them, at 25px over 22px body: raising the body alone had left each
+  page's opening sentence as the smallest text on it, which is the "reads like a caption" defect a
+  reader reported on exercise 09.
+
+- **Exercise 03's explainer strip is deliberately held back, and that needed measuring rather than
+  assuming.** `_shared/explainer.css` is a self-contained component with its own scale — labels at
+  10.5px, shard text 11.5px, captions 12px — and its step paragraphs carry `max-width: 46ch` with no
+  size of their own. At 16px that is 464px inside a 605px panel; at 22px the cap computes to 620px
+  against a panel still 605px wide, so the text would fill it edge to edge at full body size beside
+  labels half its height. `.steps` is pinned to 16px. That is a component boundary, not an exception.
+
+### Fixed
+
+- **My first selector list broke the cascade in exactly the way `AGENTS.md` warns about twice.** It
+  read `#main p, #main li { font-size: inherit }` — specificity (1,0,1), which outranks every
+  component rule of the form `.eyebrow { font-size: 11px }`. Measured against the same pages before
+  the change, that pushed **fourteen component classes** to full body size across the four: exercise
+  06's `.eyebrow` from 12px, exercise 03's `.stagereg-note` from 11.5px inside a box that shrank to
+  400px, exercise 05's `.note`, `.summary-step`, `.warn` and inline `code`. It is narrowed to
+  `.claim` — unclassed paragraphs already inherit — and inline `code` is scoped to the `0.92em` the
+  reference pages use. **Found by diffing every class's computed size against the same page before
+  the change**, not by looking at it; the screenshots showed nothing wrong.
+
 ### Fixed
 
 - **The rail was moved inward on three pages and it pushed the reading column off centre.** The
