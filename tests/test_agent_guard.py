@@ -37,6 +37,7 @@ from agent_guard import (  # noqa: E402
     WRITING_TOOLS,
     bash_write_targets,  # noqa: F401  — imported so a rename breaks here, not silently
     decide,
+    destructive_git,
     load_rules,
     resolve_root,
 )
@@ -267,6 +268,103 @@ def test_the_hook_exits_two_to_block_and_zero_to_allow(tmp_path) -> None:
         check=False,
     )
     assert allowed.returncode == 0, allowed.stderr
+
+
+# --------------------------------------------------------------------------------------------
+# Destructive git. These commands name no path, so the path matcher sees nothing to check and the
+# call passes a guard that is working exactly as designed. The flag is the whole distinction.
+# --------------------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("command", "refused"),
+    [
+        # `-x` and `-X` delete ignored files: every notebook, builder and requirements document.
+        ("git clean -fdx", True),
+        ("git clean -x", True),
+        ("git clean -X .", True),
+        # ...and plain `-fd` does NOT, because those files are ignored rather than untracked.
+        ("git clean -fd", False),
+        # bundling is how a destructive command travels beside an innocent one
+        ("git checkout main && git clean -xfd", True),
+        ("git pull; git stash --all", True),
+        # `--all` stashes the same set `clean -x` deletes; `-u` does not
+        ("git stash -a", True),
+        ("git stash -u", False),
+        ("git reset --hard HEAD", True),
+        ("git reset --soft HEAD~1", False),
+        ("git push --force origin feature", True),
+        ("git push --force-with-lease origin feature", True),
+        ("git push origin feature", False),
+        ("git tag -d v1.0.0", True),
+        ("git tag v1.0.0", False),
+        ("git branch -D feature", True),
+        ("git branch -d feature", False),
+        # git's own pre-subcommand options must not hide the subcommand
+        ("git -C ../store clean -x", True),
+        # ...and the store's own documented removal step is not destructive
+        ("git -C ../store rm notebooks/x.ipynb && git -C ../store commit -m why", False),
+        # not a git invocation at all
+        ("echo git clean -x", False),
+        ("git status --short", False),
+    ],
+)
+def test_a_destructive_git_command_is_refused_by_its_flag(rules, command, refused) -> None:
+    """Every case here is a command this repository's own rulebook names, safe and unsafe.
+
+    The pairs matter more than the refusals. `clean -fdx` and `clean -fd`, `stash -a` and
+    `stash -u`, `branch -D` and `branch -d`, `reset --hard` and `reset --soft` — in each the
+    command is identical and only the flag decides. A guard written against the command name would
+    block the safe half too and be uninstalled within a day.
+    """
+    assert (destructive_git(command, rules) is not None) is refused
+
+
+def test_the_destructive_check_sees_a_command_the_path_matcher_cannot(rules) -> None:
+    """The reason this check exists at all, asserted rather than described.
+
+    `git clean -fdx` with no path argument writes nothing a path matcher can name, so
+    `bash_write_targets` returns an empty list and every pattern in the policy is irrelevant. This
+    asserts both halves: the old route is blind, and the new one is not.
+    """
+    command = "git clean -fdx"
+    assert bash_write_targets(command, REPO_ROOT) == [], (
+        "if this ever returns a target the premise has changed and the test below is checking "
+        "something else"
+    )
+    assert destructive_git(command, rules) is not None
+
+
+def test_a_clustered_short_flag_is_read_letter_by_letter(rules) -> None:
+    """`-fdx` is the form people type, and a check comparing arguments to `-x` never fires on it."""
+    from agent_guard import _short_flag_letters  # noqa: PLC0415
+
+    assert _short_flag_letters("-fdx") == {"f", "d", "x"}
+    assert _short_flag_letters("--force") == set()
+    assert _short_flag_letters("-") == set()
+    assert _short_flag_letters("path") == set()
+
+
+def test_every_destructive_rule_states_why_and_names_a_flag(rules) -> None:
+    """Both directions: a rule with no flag matches nothing, and one with no reason gets deleted."""
+    entries = rules["destructive_git"]["rules"]
+    assert entries, "the section exists and refuses nothing"
+    for entry in entries:
+        assert entry["flags"], f"{entry['subcommand']} lists no flag, so it can never fire"
+        assert len(entry["why"].split()) >= 8, f"{entry['subcommand']} has no reason with weight"
+
+
+def test_the_hook_blocks_a_destructive_git_command_end_to_end() -> None:
+    """Through the real process, because `decide` returning a string is not the same as exit 2."""
+    done = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "tools" / "agent_guard.py")],
+        input=json.dumps({"tool_name": "Bash", "tool_input": {"command": "git clean -fdx"}}),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert done.returncode == 2, done.stdout + done.stderr
+    assert "destructive_git" in done.stderr
 
 
 def test_every_section_states_why_it_exists() -> None:

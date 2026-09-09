@@ -207,6 +207,78 @@ def bash_write_targets(command: str, root: Path) -> list[str]:
     return relative
 
 
+#: git's own options before the subcommand. `-C` and `-c` take a value; the rest do not.
+_GIT_PREFIX_WITH_VALUE = frozenset({"-C", "-c", "--git-dir", "--work-tree", "--namespace"})
+
+
+def _short_flag_letters(argument: str) -> set[str]:
+    """Letters in a clustered short flag: `-fdx` is `{f, d, x}`. A long flag contributes nothing.
+
+    Clustering is the whole reason this exists. `git clean -fdx` is the form anyone actually types,
+    and a check comparing arguments against `"-x"` never fires on it.
+    """
+    if not argument.startswith("-") or argument.startswith("--") or argument == "-":
+        return set()
+    return set(argument[1:])
+
+
+def _flag_present(flag: str, arguments: list[str]) -> bool:
+    """Is this flag given, in any of the spellings a shell accepts?"""
+    if flag.startswith("--"):
+        return any(a == flag or a.startswith(flag + "=") for a in arguments)
+    return any(flag.lstrip("-") in _short_flag_letters(a) for a in arguments)
+
+
+def _git_subcommand(arguments: list[str]) -> tuple[str, list[str]]:
+    """`(subcommand, the rest)`, looking past git's own pre-subcommand options.
+
+    `git -C ../store rm x` is a real invocation in this repository's own documented recovery steps,
+    so a reader that took `arguments[0]` would see `-C` and conclude the command is not one it
+    knows — which is the quiet direction to be wrong in.
+    """
+    index = 0
+    while index < len(arguments):
+        token = arguments[index]
+        if token in _GIT_PREFIX_WITH_VALUE:
+            index += 2
+            continue
+        if token.startswith("-"):
+            index += 1
+            continue
+        return token, arguments[index + 1 :]
+    return "", []
+
+
+def destructive_git(command: str, rules: dict) -> str | None:
+    """The refusal for a destructive git invocation in ANY segment of this command, or None.
+
+    **Separate from `bash_write_targets` because these commands name no path.** Every other check
+    here asks "what does this write?" and matches the answer against patterns. `git clean -fdx`
+    writes nothing and destroys everything ignored; there is no target for a path matcher to see,
+    so the call passes a guard that is working exactly as designed.
+
+    Per segment, so a destructive command bundled behind an innocent one is still caught. That is
+    not hypothetical: the incident that cost this repository its notebook builders was an ordinary
+    `git checkout main && git pull`.
+    """
+    for tokens in _segments(command):
+        word, arguments = _command_word(tokens)
+        if word != "git":
+            continue
+        subcommand, rest = _git_subcommand(arguments)
+        for rule in rules.get("destructive_git", {}).get("rules", []):
+            if rule["subcommand"] != subcommand:
+                continue
+            hit = next((flag for flag in rule["flags"] if _flag_present(flag, rest)), None)
+            if hit is not None:
+                return (
+                    f"BLOCKED git {subcommand} {hit}\n"
+                    f"  matched destructive_git rule {subcommand!r}\n"
+                    f"  {rule['why']}"
+                )
+    return None
+
+
 def resolve_root(payload: dict, fallback: Path) -> Path:
     """The repo root **this call** is happening in, from the payload's `cwd`.
 
@@ -309,7 +381,13 @@ def decide(payload: dict, root: Path, rules: dict) -> str | None:
     tool_input = payload.get("tool_input", {})
 
     if tool == "Bash":
-        targets = bash_write_targets(tool_input.get("command", "") or "", root)
+        command = tool_input.get("command", "") or ""
+        # Checked BEFORE the path matcher, because the dangerous forms name no path at all and
+        # would otherwise produce an empty target list and a clean pass.
+        refusal = destructive_git(command, rules)
+        if refusal is not None:
+            return refusal
+        targets = bash_write_targets(command, root)
     elif tool in WRITING_TOOLS:
         target = tool_input.get("file_path")
         if not target:
