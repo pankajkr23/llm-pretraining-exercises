@@ -1301,7 +1301,7 @@ predates the harness — so it is logged as what it was.
                           entirely because the filesystem answers the question. docs/DESIGN.md now
                           carries the rule and names the misreading that produces it
 ```
-2026-09-09  design        PR opened: 03, 04, 05 and 06 join the type scale, so all eight deployable
+2026-09-09  design        #172 opened: 03, 04, 05 and 06 join the type scale, so all eight deployable
                           spine pages now run it. They were 16-16.6px in 464-726px columns; they
                           are 22px in 897-978px at 2560 with the same words per line. MEASURED
                           FIRST, per AGENTS.md, and the measurement is what made this correct: my
