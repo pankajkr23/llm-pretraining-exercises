@@ -312,3 +312,102 @@ def report(value: float = 0.1) -> str:
 
 if __name__ == "__main__":
     print(report())
+
+
+def _flag_that_shipped(mantissa: int, drop: int, kept: int) -> bool | None:
+    """The overflow flag `_round_to_nearest_even` used to return, replayed exactly.
+
+    It read `kept >= (1 << (mantissa.bit_length() - drop))`, using the bit length of *this value's*
+    fraction field where the fixed 23 was meant — and it read the **rounded** `kept`, after the
+    round-half-to-even increment, which is what makes the comparison meaningful at all.
+
+    Two failure modes follow, and they are different:
+
+    - `mantissa.bit_length() < drop` makes the shift count negative and Python **raises**;
+    - otherwise the threshold is too small, so the flag fires on values that did not carry, and
+      `decompose` then applied a second exponent increment on top of its own normalisation —
+      returning a number **exactly twice** the right one.
+
+    Returns:
+        `True` when the flag fired, `False` when it did not, and `None` where it raised. Three
+        outcomes rather than a boolean, because "it crashed" and "it silently doubled" are not the
+        same defect and a rate that merged them would answer neither question.
+    """
+    shift = mantissa.bit_length() - drop
+    if shift < 0:
+        return None
+    return kept >= (1 << shift)
+
+
+def _decompose_that_shipped(value: float, fmt: Format) -> float | None:
+    """`decompose`'s stored value as the buggy version produced it, or `None` where it raised.
+
+    Only the rounding path differs; everything before it — the finiteness, overflow and subnormal
+    refusals — is the same code, so this reconstructs the defect and not a second implementation.
+    """
+    sign, fp32_exponent, fp32_mantissa = _fp32_fields(value)
+    if fmt is FP32 or fmt.mantissa_bits >= 23:
+        return decompose(value, fmt).stored
+
+    drop = 23 - fmt.mantissa_bits
+    mantissa_field = _round_to_nearest_even(fp32_mantissa, drop)
+    flag = _flag_that_shipped(fp32_mantissa, drop, mantissa_field)
+    if flag is None:
+        return None
+    exponent_field = fp32_exponent - 127 + fmt.bias
+    if mantissa_field >= (1 << fmt.mantissa_bits):  # the correct normalisation
+        mantissa_field = 0
+        exponent_field += 1
+    if flag:  # ...and the second one, applied on top of it
+        exponent_field += 1
+    significand = 1 + mantissa_field / (1 << fmt.mantissa_bits)
+    return (-1) ** sign * significand * 2.0 ** (exponent_field - fmt.bias)
+
+
+def regression_rate(fmt: Format, draws: int = 200_000, seed: int = 10) -> dict[str, object]:
+    """How often the shipped bug changed the answer in `fmt`, over uniform draws in [1, 2).
+
+    **This exists because the figure was published and measured by nothing.** The page's lead tile
+    read *"30% of fp8 inputs came back exactly twice too large"*, and the only place that number
+    appeared was a Python docstring — not in `results/run.json`, not in any document a reader of the
+    page can reach, and recomputed by no test.
+
+    **The range is `[1, 2)` and stating it is half the measurement.** Every normal float is a
+    significand in `[1, 2)` times a power of two, and the bug lives entirely in the significand's
+    fraction field, so the exponent cannot affect it — which makes `[1, 2)` the whole space rather
+    than a convenient slice of it. A sweep over a format's full normal range would report a
+    different number for no reason but how many exponents that format happens to have.
+
+    Args:
+        fmt: The format to sweep. `drop` is `23 - fmt.mantissa_bits`, so a narrower format is bitten
+            more often — which is the shape of the finding, not an accident of sampling.
+        draws: Uniform samples.
+        seed: Fixed, so the rate is a fact about the code rather than about a run.
+
+    Returns:
+        `draws`, `doubled`, `raised` and the two as rates. `doubled` is the silent case — a value
+        exactly twice the right one, returned while every test passed.
+    """
+    import random
+
+    if fmt.mantissa_bits >= 23:
+        return {"draws": draws, "doubled": 0, "raised": 0, "doubled_rate": 0.0, "raised_rate": 0.0}
+
+    rng = random.Random(seed)
+    doubled = raised = 0
+    for _ in range(draws):
+        value = rng.uniform(1.0, 2.0)
+        correct = decompose(value, fmt).stored
+        shipped = _decompose_that_shipped(value, fmt)
+        if shipped is None:
+            raised += 1
+        elif shipped != correct:
+            doubled += 1
+    return {
+        "draws": draws,
+        "doubled": doubled,
+        "raised": raised,
+        "doubled_rate": doubled / draws,
+        "raised_rate": raised / draws,
+        "range": "[1, 2) -- the significand's whole space; the exponent cannot reach this bug",
+    }

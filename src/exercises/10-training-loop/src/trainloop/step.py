@@ -133,7 +133,12 @@ def run(config: Config | None = None, steps: int | None = None) -> tuple[Trace, 
         `(trace, facts)` — the per-step traces, and the constants a document needs beside them.
     """
     import torch
-    from lossheads.training import _corpus  # the same corpus builder exercise 09 uses
+
+    # `corpus_facts` beside `_corpus`, and the second import is the point. This module imported
+    # only the private builder, so it got exercise 09's text and none of exercise 09's accounting
+    # -- no digest, no token count, no epoch ratio -- and recorded the corpus as a sentence
+    # instead. One import choice cost this exercise its entire provenance on the data side.
+    from lossheads.training import _corpus, corpus_facts
 
     config = config or Config()
     steps = steps or config.steps
@@ -199,6 +204,11 @@ def run(config: Config | None = None, steps: int | None = None) -> tuple[Trace, 
         # Deliberately NOT the configured device: the harness measures the peak on the machine
         # that actually ran, and publishing a second, contradictory device in the same artefact is
         # how a reader ends up checking the wrong number.
-        "corpus": "this repository's own AGENTS.md, tokenized with exercise 02's BPE",
+        #
+        # The corpus block is exercise 09's own, computed rather than described. It used to be the
+        # sentence "this repository's own AGENTS.md, tokenized with exercise 02's BPE" -- true, and
+        # carrying no digest, no token count and no epoch ratio, so nothing here could be checked
+        # and nothing said how many times this run read the same text.
+        "corpus": corpus_facts(model, steps * model.batch_size),
     }
     return trace, facts

@@ -88,15 +88,19 @@ def test_every_figure_the_readme_quotes_matches_the_run_it_came_from() -> None:
         + "\n".join(f"  {value} — {what}" for value, what in missing.items())
     )
 
-    # MFU is checked to a TOLERANCE, and the reason is worth stating: its numerator is fixed and
-    # its denominator is a wall clock on a shared machine, so it moves by a few tenths of a point
-    # between identical runs. Asserting it exactly would make this guard fail for a reason that has
-    # nothing to do with the document being wrong — and a guard that cries wolf gets deleted.
+    # **Exact against the record, not within a tolerance of it.** The tolerance used to be a full
+    # POINT, on the reasoning that MFU's denominator is a wall clock and moves between runs. That
+    # reasoning is about two *runs*; this guard compares a document against the single tracked file
+    # it renders, which does not move at all. A point of slack meant three documents could quote
+    # 27.69%, 27.64% and 27.64% against a recorded 27.74% and all three pass — which is what they
+    # did. Wall-clock drift is a reason to re-run and re-render, never a reason to let a document
+    # disagree with the file it claims to be reading.
+    measured = f"{five['mfu'] * 100:.2f}"
     quoted = re.findall(r"\*\*(\d+\.\d\d)%\*\*", readme)
     assert quoted, "the README no longer quotes an MFU figure at all"
-    assert any(abs(float(q) - five["mfu"] * 100) < 1.0 for q in quoted), (
-        f"the README's MFU figures {quoted} are all more than a point away from the run's "
-        f"{five['mfu']:.2%}, which is far outside the run-to-run spread"
+    assert measured in quoted, (
+        f"the README quotes {quoted} and results/run.json records {measured}%. Re-render rather "
+        "than editing the document: the figure moves when the run does, and the run is the source."
     )
 
 
@@ -151,3 +155,89 @@ def test_the_readme_sends_the_reader_to_the_measured_evidence() -> None:
     """Two documents, two jobs. The README argues; `RESULTS.md` is the evidence it points to."""
     readme = (EXERCISE / "README.md").read_text()
     assert "RESULTS.md" in readme
+
+
+@requires_results
+def test_every_document_that_quotes_mfu_quotes_the_same_one() -> None:
+    """One measured figure, four documents, and they must not disagree.
+
+    **They did.** `README.md` said 27.69%, `PROGRESS.md` and `CLAUDE.md` said 27.64%, and
+    `results/run.json` recorded 27.74% — three wrong numbers around one right one, none of them
+    more than a tenth of a point out, all of them inside the tolerance the guard above used to
+    allow. No single document was obviously wrong; the *set* was, and nothing was looking at the
+    set.
+
+    `RESULTS.md` is generated and checked byte-for-byte elsewhere, so it is the reference here
+    rather than a fourth thing to check.
+    """
+    import re as _re
+
+    run = _run()
+    measured = f"{run['item_5_mfu']['mfu'] * 100:.2f}"
+    pattern = _re.compile(r"\b(\d\d\.\d\d)%")
+    disagreeing = {}
+    allowed = {measured, "40.00"} | set(HISTORICAL)
+    for name in ("README.md", "PROGRESS.md", "CLAUDE.md"):
+        text = (EXERCISE / name).read_text(encoding="utf-8")
+        # Only figures introduced as MFU. A percentage elsewhere in these documents is a different
+        # quantity, and a guard that swept up all of them would be unusable.
+        for line in text.splitlines():
+            if "MFU" not in line and "honest figure" not in line and "against a target" not in line:
+                continue
+            wrong = [q for q in pattern.findall(line) if q not in allowed]
+            if wrong:
+                disagreeing.setdefault(name, []).extend(wrong)
+    assert not disagreeing, (
+        f"documents quote MFU figures that are not the recorded {measured}%: {disagreeing}. "
+        "One run, one number — re-render and re-read rather than editing one document."
+    )
+
+
+#: MFU figures these documents quote **on purpose**, because the exercise's argument is about them,
+#: with the reason each is allowed. Kept as a ledger rather than as a looser pattern: the honest
+#: question is "is this figure presented as the current one?", and a regex cannot answer it, so the
+#: exemptions are named and each one has to earn its place.
+HISTORICAL: dict[str, str] = {
+    "39.13": (
+        "the figure this exercise published by dividing FLOPs achieved on the CPU by a GPU's peak. "
+        "The README tells that story deliberately, so the number has to appear in it."
+    ),
+}
+
+
+@requires_results
+def test_every_historical_mfu_figure_is_still_actually_told() -> None:
+    """The twin: an exemption that stops being needed is removed, not left lying.
+
+    `HISTORICAL` exists so a document can narrate a wrong number without the guard above calling it
+    a wrong number. That is only safe while the narration is still there — an entry covering prose
+    somebody has since deleted is a hole in the guard with nothing behind it, and the next figure
+    that happens to match walks straight through.
+    """
+    readme = (EXERCISE / "README.md").read_text(encoding="utf-8")
+    orphaned = {value: why for value, why in HISTORICAL.items() if value not in readme}
+    assert not orphaned, (
+        f"HISTORICAL exempts MFU figures the README no longer mentions: {list(orphaned)}. Remove "
+        "the entry — an exemption for prose that is gone protects nothing and hides the next one."
+    )
+
+
+@requires_results
+def test_the_page_data_is_regenerated_and_matches_the_tracked_copy() -> None:
+    """`web/data.js` is what the page draws, and it must still be what the run produced.
+
+    **The page claimed this test existed, twice, and it did not.** Both the results section and the
+    reproduce section told a reader *"a test regenerates the page's data and fails if the tracked
+    copy differs"* — a claim about the repository's own rigour, made by the artefact with the widest
+    audience, checkable by anyone, and false. `RESULTS.md` had exactly this guard; `data.js`, the
+    file the page actually reads, had none.
+
+    The failure it closes is not hypothetical either: `data.js` is generated, so a hand-edit to it
+    survives every other check in this exercise, and every figure on the page comes from it.
+    """
+    tracked = (EXERCISE / "web" / "data.js").read_text(encoding="utf-8")
+    expected = _load_renderer().render_page_data(_run())
+    assert tracked == expected, (
+        "web/data.js differs from what the run regenerates. Re-render rather than editing it:\n"
+        "  uv run python src/exercises/10-training-loop/tools/render_results.py"
+    )

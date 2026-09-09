@@ -97,6 +97,20 @@ function table(head, rows, cls) {
 }
 
 const int = (n) => Math.round(n).toLocaleString('en-US');
+/* Counts are SPELLED from the data, never typed. A heading or a rail label that states a number
+ * is stating a count of its own contents, so typing it is how this page came to be headed "Two
+ * commands" over three of them. Ported from exercise 08, which introduced it for the same reason. */
+const SPELLED = [
+  'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+  'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen',
+  'nineteen', 'twenty',
+];
+const spell = (n) => SPELLED[n] || String(n);
+const Spell = (n) => {
+  const w = spell(n);
+  return w[0].toUpperCase() + w.slice(1);
+};
+
 const signed = (n, d = 4) => (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(d);
 const pct = (n, d = 1) => `${(n * 100).toFixed(d)}%`;
 
@@ -125,8 +139,9 @@ function chapterThesis(M) {
   const tiles = el('div', 'tiles');
   for (const [v, k, mark] of [
     [
-      '30%',
-      'of fp8 inputs came back <b>exactly twice too large</b> from a function whose test passed',
+      pct(M.item_6_floats.regression['fp8 E4M3'].doubled_rate),
+      `of fp8 inputs came back <b>exactly twice too large</b> from a function whose test passed —
+       and another ${pct(M.item_6_floats.regression['fp8 E4M3'].raised_rate)} crashed`,
       'bad',
     ],
     [

@@ -80,7 +80,7 @@ reporting nothing, so the empty case is reachable and a test proves it.
 
 ### 5 · MFU, reported honestly
 
-**27.64%**, against a target of 40%.
+**27.34%**, against a target of 40%.
 
 *Two traps in one ratio, and both were fallen into.* The **denominator** was a **GPU's** advertised
 peak while the run executed on the **CPU** — two processors, one ratio, reported as **39.13%**. The
