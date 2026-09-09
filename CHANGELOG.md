@@ -36,6 +36,27 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 - **The test suite for that tool carried its own copy of the diff it was testing.** A hand-maintained
   `difflib` call with the same shape, which agreed with the tool right up until the tool changed.
   Both now call one `changed_blocks`.
+- **Exercise 07's auditor graded a subset of the evidence and said so nowhere.** `evidence.py` read
+  `results/measurements.json` and nothing else, so both published byte-recovery tables —
+  `wrap_recovery.json` and `position_schemes.json` — were graded by **nothing**, and a reader
+  running the auditor saw no row for either. `assess` now takes every tracked bundle, read from the
+  filesystem rather than from a list beside the files, and two claims are graded from them:
+  `positions-past-d-p` and `wrap-is-order-lossy`. A bundle that is absent grades **unverifiable**,
+  the third outcome, never met.
+
+- **The README's `coherence` table was four rows of hand-typed decimals matching the evidence by
+  nothing but somebody's care.** The block guard written for the recovery tables could not see it,
+  because it matched percentages and these are bare decimals — the same failure in a different
+  notation. It now licenses any decimal figure, with or without a percent sign, at one to four
+  places, and the coherence table is inside a block. Renamed from `recovery-numbers` to
+  `evidence-numbers`, since it covers more than recovery.
+
+- **Grading branches referenced claims by list index**, and adding two claims in the middle silently
+  re-pointed the last branch at a different one: it still ran, still printed a status, and graded
+  the wrong sentence — one claim's verdict appeared under another's id and a third had no row at
+  all. Nothing failed. I introduced that bug in this change and found it by reading the output, so
+  the guard that would have caught it ships alongside: every declared claim is graded **exactly
+  once**, checked in both directions.
 
 ### Added
 

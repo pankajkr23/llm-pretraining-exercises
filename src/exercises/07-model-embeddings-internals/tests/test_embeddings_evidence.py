@@ -22,6 +22,14 @@ import pytest
 EXERCISE = Path(__file__).resolve().parents[1]
 MEASUREMENTS = json.loads((EXERCISE / "results" / "measurements.json").read_text(encoding="utf-8"))
 
+#: Every other tracked bundle, keyed by file name -- read from the filesystem, exactly as
+#: `evidence.main` does, so a bundle published later is graded without editing this list.
+RESULTS = {
+    path.name: json.loads(path.read_text(encoding="utf-8"))
+    for path in sorted((EXERCISE / "results").glob("*.json"))
+    if path.name != "measurements.json"
+}
+
 
 def _evidence():
     """`evidence.py` by path, for the same reason `verify.py` is loaded that way: it audits."""
@@ -306,3 +314,55 @@ def test_the_audit_of_a_published_run_found_nothing_wrong() -> None:
         assert not failed, f"{audit_path.parent.name}: {[f['check'] for f in failed]}"
         assert not unverifiable, f"{audit_path.parent.name}: {[f['check'] for f in unverifiable]}"
         assert len(audit["findings"]) > 20, "the audit checked suspiciously little"
+
+
+def test_every_claim_is_graded_exactly_once() -> None:
+    """The guard for the bug this change introduced and I caught by reading the output.
+
+    Grading branches used to reference `CLAIMS[n]`. Inserting two claims in the middle silently
+    re-pointed the last branch at a different claim: it still ran, still printed a status, and
+    graded the wrong sentence — `lanes-read-evenly`'s verdict appeared under `positions-past-d-p`,
+    and `lanes-read-evenly` had no row at all. Nothing failed.
+
+    Both directions, because each catches a different half: a claim with no row is ungraded, and a
+    claim with two rows means some other claim lost its branch.
+    """
+    evidence = _evidence()
+    from collections import Counter  # noqa: PLC0415
+
+    rows = evidence.assess(MEASUREMENTS, run=None, results=RESULTS)
+    graded = Counter(row["id"] for row in rows)
+    declared = {claim.id for claim in evidence.CLAIMS}
+
+    assert set(graded) == declared, (
+        f"ungraded: {sorted(declared - set(graded))}; graded but not declared: "
+        f"{sorted(set(graded) - declared)}"
+    )
+    assert not [claim_id for claim_id, n in graded.items() if n != 1], (
+        f"graded more than once, so another claim lost its branch: "
+        f"{[c for c, n in graded.items() if n != 1]}"
+    )
+
+
+def test_a_claim_backed_by_a_second_evidence_file_is_graded_from_it() -> None:
+    """`assess` read one file, so two published measurements were graded by nothing.
+
+    A reader running `evidence.py` saw no row for either byte-recovery table. An auditor that
+    grades a subset of the evidence, and says so nowhere, reads as an auditor.
+    """
+    evidence = _evidence()
+    rows = {row["id"]: row for row in evidence.assess(MEASUREMENTS, run=None, results=RESULTS)}
+    for claim_id in ("positions-past-d-p", "wrap-is-order-lossy"):
+        assert rows[claim_id]["status"] == "met", rows[claim_id]["derivation"]
+        assert any(char.isdigit() for char in rows[claim_id]["derivation"]), (
+            "a derivation with no number in it is a status word wearing a sentence"
+        )
+
+
+def test_a_missing_evidence_file_is_unverifiable_and_never_met() -> None:
+    """The third outcome. A check whose input is absent has not held; it has not been made."""
+    evidence = _evidence()
+    rows = {row["id"]: row for row in evidence.assess(MEASUREMENTS, run=None, results={})}
+    for claim_id in ("positions-past-d-p", "wrap-is-order-lossy"):
+        assert rows[claim_id]["status"] == "unverifiable", rows[claim_id]
+        assert "not present" in rows[claim_id]["derivation"]
