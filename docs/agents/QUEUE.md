@@ -943,4 +943,22 @@ predates the harness — so it is logged as what it was.
                           including a trace rounded to six decimals that could not re-derive the
                           mean it is the material for. CPU is bit-identical; MPS differs by one
                           float32 ULP (9.537e-07), so the publishable grid is the CPU one
+2026-09-09  exercise-07   #159 opened, and it is a THIRD pull request against a two-PR plan, so
+                          the reason is recorded rather than assumed: it is a correctness fix in
+                          shipped code, found after #158 was finalised and green, by an agent
+                          auditing the codec for the unbounded-length research rather than by the
+                          documentation work. It reverts independently. codec.atoms merges
+                          duplicate (slot, byte) pairs -- only possible under wrap, where two
+                          folded positions share a slot and a byte -- and encode recorded the
+                          merged non-zero count where the 1/sqrt(L) scale needed the position
+                          count, returning a target multiplied by sqrt(nnz/L). 142 of 10,000
+                          tokens, worst case 14.07%. NO published number moves: every published
+                          recovery figure was measured under onehot, which cannot merge (positive
+                          control: zero), and in the one wrap band where merging is common 105 of
+                          465 tokens were mis-scaled while the band reads 15.05% before and after,
+                          because those tokens were failing anyway. Latent, and it would have
+                          bitten the moment wrapped invertibility mattered -- which is what the
+                          research is about. Two guards, both watched going red; the second
+                          compares the whole round trip against a hand-built target and would have
+                          caught it without knowing the word "merge". 1,908 passed, 2 skipped
 ```
