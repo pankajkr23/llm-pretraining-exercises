@@ -16,7 +16,7 @@ The full argument, every table, and the limits are in `README.md`. Do not restat
 | module | owns | torch |
 | --- | --- | --- |
 | `config.py` | `KroneckerConfig` — every dimension in one dataclass | no |
-| `codec.py` | what the code **is**: `atoms`, `code`, `encode`, `targets_from_h`, three position schemes | no |
+| `codec.py` | what the code **is**: `atoms`, `code`, `encode`, `targets_from_h`, four position schemes | no |
 | `decode.py` | `matched_filter`, `block_omp`, `coordinate_descent`, `recover`, `fold_is_order_lossy` | no |
 | `collisions.py` | `truncation_groups`, `colliding_tokens`, `collisions_by_code`, `cosine` | no |
 | `budget.py` | `budget`, `crossover` — the parameter arithmetic | no |
@@ -39,6 +39,7 @@ The full argument, every table, and the limits are in `README.md`. Do not restat
 | `tools/measure_unk_confound.py` | the same specification twice on one corpus, one language swapped — what the unreadable language was worth | **yes** |
 | `tools/measure_lane_sensitivity.py` | the grid on one lane at a time — does the advantage track the script? | **yes** |
 | `tools/measure_parallel_text.py` | parallel against ordinary Indic text, matched on size, epochs and script | **yes** |
+| `tools/measure_position_schemes.py` | every position scheme on the SAME recovery question — the complete token, and the bytes each scheme represents | **yes** |
 | `tools/publish_rerun.py` | promotes one run from `artifacts/` to `results/`, and rebuilds `results/MANIFEST.md` | **yes** |
 | `web/index.html` · `chapters.js` · `page-extra.css` | the page | yes |
 | `web/_shared/` | vendored, byte-identical to 05 and 06 | yes |
@@ -212,6 +213,28 @@ side effect.
 
 - **Never use `hash()` on bytes here.** Python randomises it per process, so the n-gram block would
   bucket differently on every run and nothing would reproduce. `zlib.crc32`, always. There is a test.
+
+- **`spc`'s frame is fixed by `cfg.reach`, and deriving it from the batch is the bug that shipped
+  in its first draft.** The directions are optimised *jointly* for exactly the number of positions
+  asked for, so row `p` of a 64-row frame is not row `p` of a 128-row one. The first version built
+  the frame at the length of the token in `atoms` and at the batch's longest token in `_table_for`,
+  which gave the same token two different codes depending on what it was encoded alongside. Nothing
+  fails visibly — the code is well formed either way — and the only symptom is a decoder correlating
+  against directions the encoder never used, which reads as a recovery failure rather than a defect.
+  Both the encoder and `decode._dictionary_for` now **slice** a frame built at `cfg.reach`, and a
+  token longer than `reach` is refused rather than truncated. Two tests, both watched failing.
+
+- **`spc` buys reach with density, and the factor is about `d_p`.** A position writes a whole
+  `d_p`-vector into the shared space instead of one coordinate, so
+  `tools/measure_position_schemes.py` measures **207.2** non-zeros per token against `onehot`'s
+  **9.6** on the 1-32 band — 21.6x, the same order as `fourier`'s 23x, whose training runs were
+  about 8x slower. Quote the recovery table without the density column and half the trade is
+  missing.
+
+- **`spc` is measured on the CODE and has never been trained.** It makes no claim against `wrap`'s
+  −0.212 nats. `heads.py` builds its sparse code matrix through `codec.atoms`, so an `spc` arm needs
+  no new head code at all — but it would be slow for the reason above, and until someone runs it the
+  honest statement is that the loss question is open.
 
 - **Lock tests must be relative, not absolute.** The rectangle residual scales with the logit scale:
   the MLP reads 5.7e-03 at init 0.05 and 4.67 at init 0.5, and those are the same fact. Divide by

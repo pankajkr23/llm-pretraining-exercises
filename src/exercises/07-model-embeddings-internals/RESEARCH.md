@@ -283,21 +283,42 @@ says the design can lose **at most 15%** of its ability to tell letter order apa
 long words get **[reasoning]**. That bound is why the idea was worth measuring at all: the downside
 is capped in advance.
 
-## What we measured **[reported]**
+## What we measured **[measured]**
 
-Across the whole 10,000-word vocabulary, at the same code width as today:
+**This section was `[reported]` and is now `[measured]`, and three of its four numbers moved.** The
+scheme has since been built and run on the frozen vocabulary by a tracked producer,
+`tools/measure_position_schemes.py`, writing `results/position_schemes.json`. The research pass's
+figures are kept below rather than quietly replaced, because a document whose whole design is
+provenance marks should show what a mark was worth when it changed.
 
-| scheme | reach | words fully recovered |
-| --- | --- | ---: |
-| today's, cut off at 32 | 32 bytes | 94.67% |
-| today's alternative, folding | unlimited but **lossy** | 95.58% |
-| **the new one** | **unlimited** | **99.74%** |
-| widen to 128 positions | 128 bytes | 99.91% |
+Across the whole 10,000-word vocabulary, at the same code width as today — every byte of the word
+back, in order:
 
-**It beats both shipped schemes at the same width**, and gets within 0.2 points of the expensive
-route at a quarter of the cost. And of its 26 failures, **none are the code's fault** — in every one,
-the true answer scores better than the answer found, so the information is present and the *search*
-ran out. More search effort closes the gap: 66% → 78% on the hardest words with more attempts.
+| scheme | reach | words fully recovered | first reported |
+| --- | --- | ---: | ---: |
+| today's, cut off at 32 | 32 bytes | **94.67%** | 94.67% ✓ |
+| today's alternative, folding | unlimited but **lossy** | **94.67%** | 95.58% |
+| **the new one** | **unlimited** | **99.86%** | 99.74% |
+
+**The conclusion survives and one comparison gets sharper.** Folding does not in fact beat cutting
+on this question — both recover 9,467 of 10,000, because both fail every word longer than 32 bytes
+and for the same reason: neither has anywhere to put the 33rd byte. The new scheme's margin over
+*both* is therefore **5.19 points, not 4.16** — and the refutation clause further down, which was
+written against the 95.58% baseline, has been rewritten against the real one. A refutation threshold
+set from a number that turned out to be wrong is worse than none: it would have let the scheme
+survive a result that should have killed it.
+
+**The `widen to 128 positions` row is dropped rather than corrected.** Nothing here re-measured it,
+and the nearest published figure — `measurements.json::d_p_128`, 99.9% — is over a sample
+deliberately enriched with long words, which is a different denominator and not comparable with the
+column above. What it was there to show is still true and is arithmetic rather than a measurement:
+widening to 128 positions makes the code four times wider (`D = 256 · d_p`, so 8,192 → 32,768),
+which is the cost the new scheme avoids paying.
+
+**Of its 14 failures, none are the code's fault** — in every one, the true answer scores strictly
+better than the answer found, so the information survived the encoding and the *search* ran out.
+That was reported as 26 failures; the count moved with the recovery rate. The claim it supports did
+not: `searchable` is **1.000** in both length bands where the scheme misses anything at all.
 
 ## Why the wave idea (problem 4) failed, which nobody had explained **[verified]**
 
@@ -332,7 +353,8 @@ Stated as tests rather than hopes, and this is the part to attack:
   genuinely lost;
 - a drop of more than one point across the 32-byte boundary, which would mean the cliff is still
   there;
-- whole-vocabulary recovery at or below 95.58%, which would mean it buys nothing over folding;
+- whole-vocabulary recovery at or below **94.67%**, which would mean it buys nothing over either
+  shipped scheme. (This read 95.58% while folding was believed to beat cutting; it does not.)
 - **a different random choice of directions giving a materially different answer** — that would mean
   the result is a property of one lucky draw rather than of the construction.
 
@@ -347,7 +369,7 @@ trains *better* than the truncating one while being strictly lossier.
 **Problem 3, as a fourth position scheme in the comparison.**
 
 - It is the only one of the three that **improves a result we already have** rather than adding a new
-  one: 94.67% → 99.74%, at the same cost.
+  one: 94.67% → **99.86%**, at the same cost.
 - Its central claim **needs no training**, so it cannot be overturned by a change of corpus — which
   is exactly what happened to this exercise's other headline. Recovery is a property of the code and
   the vocabulary, and that is the kind of claim that survives.
