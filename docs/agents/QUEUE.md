@@ -1054,4 +1054,24 @@ predates the harness — so it is logged as what it was.
                           are checked against the evidence files for the first time -- red on its
                           first real run, because 94.67%, published as the vocabulary-wide
                           recovery rate at d_p=32, is in no evidence file
+2026-09-09  exercise-07   #164 opened: the evidence is graded and guarded, including the parts
+                          that were not. THE AUDITOR GRADED A SUBSET AND SAID SO NOWHERE:
+                          evidence.py read results/measurements.json and nothing else, so both
+                          published byte-recovery tables were graded by NOTHING and a reader
+                          running it saw no row for either -- worse than an ungraded claim, because
+                          the bundle reads as complete. assess takes every tracked bundle now, read
+                          from the filesystem rather than a list beside the files, and two claims
+                          are graded from them; an absent bundle grades UNVERIFIABLE, never met.
+                          THE COHERENCE TABLE was four rows of hand-typed decimals matching the
+                          evidence by nothing but somebody's care -- the block guard could not see
+                          it because it matched percentages and these are bare decimals, the same
+                          failure in a different notation. It licenses any decimal now and is
+                          renamed evidence-numbers. AND I INTRODUCED A BUG IN THIS CHANGE, so its
+                          guard ships in it: grading branches referenced claims by list index,
+                          inserting two claims re-pointed the last branch at a different claim, and
+                          it still ran, still printed a status, and graded the wrong sentence --
+                          one claim's verdict under another's id and a third with no row at all.
+                          Nothing failed; found by reading the output. References are by id now and
+                          a guard asserts every claim is graded exactly once, both directions. Six
+                          guards, each watched going red
 ```
