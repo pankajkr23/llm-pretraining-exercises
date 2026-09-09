@@ -542,6 +542,21 @@ When one of these overturns a published claim, correct it where the claim was ma
 
 - **Prose that states a number is generated too, or it goes stale while the table beside it stays right.** This is the failure that has cost this repo the most edits. A generated table under a hand-written sentence looks maintained, and only the sentence is wrong — so a reader believes the sentence. Exercise 05 shipped documents reading "across three lanes", "H3 came back qualified", "Thirteen invariants" and "one verdict did not survive its own noise", every one of them contradicting a correct table directly above or below it, and no test failed. If a sentence contains a count, a verdict or a size, derive it from the same source the table uses. Where prose genuinely must stay hand-written — a row in the root README's exercise table — the number in it went untested long enough for exercise 06's row to read *"Stage 1 of 8"* while the exercise was at stage 7. `tests/test_doc_counts_match.py` now derives that count from the exercise's own stage table. **The prose around the number is still untested**, so a row can carry a correct stage and a wrong description; verify that by hand on every PR that advances an exercise.
 
+- **A working note is prose that states a state, and it goes stale exactly the same way.** The rule
+  above is usually applied to a published table; the files that decay fastest are the private ones
+  nobody guards. In one afternoon this repository produced three of them: a checklist carrying open
+  items whose work had shipped weeks earlier, a README claiming *54 tests* against 205, and a guard
+  holding a hardcoded list of four scripts that called a correctly-documented file a deleted module.
+  Each read as current, none was, and each was trusted rather than checked. **Do not fix these by
+  re-reading the list** — that is what produced the stale version. Derive it, or annotate it so a
+  tool can: `tools/check_todo.py` reconciles a checklist against the repository, given predicates
+  (`exists <path>`, `present "x" in <path>`, `absent "x" in <path>`) written beside the items. **An
+  item with no predicate is reported as UNVERIFIABLE, never as fine**, which is the same three-way
+  split the run auditors use, for the same reason: a check that could not run has not held. It is
+  **feedback, not enforcement** — the file it was built for is gitignored, so only the tool and its
+  tests reach CI — and the standing instruction is to run it before quoting anything from a working
+  note, not to trust what the note says.
+
 - **An experiment that cannot see a lane is not evidence about that lane.** Exercise 05's proxy dropped the three lanes it had no text for, and one hypothesis read `qualified` for two weeks because the lane its refutation clause tested was absent. Funding the lane flipped it to `refuted` with the effect size essentially unchanged. **A missing input does not make a hypothesis safer, it makes it untestable — and untestable reads as passing.** Before trusting a result, list what the measurement was blind to.
 
 - **Size a proxy corpus against the RUN, not against the mixture's ratios.** Getting the

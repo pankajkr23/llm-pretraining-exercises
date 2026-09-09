@@ -1007,4 +1007,24 @@ predates the harness — so it is logged as what it was.
                           version turned out to pass for every possible document. Two agent numbers
                           corrected while writing: 58.3x vs 111.6x is which block you count, and
                           both are true of different things. 1,923 passed, 2 skipped
+2026-09-09  repo          #161 opened: a checklist is reconciled against the repository rather
+                          than re-read. Three stale artefacts in one afternoon and they are one
+                          failure -- a hand-maintained list duplicating something the repository
+                          already knows. tools/check_todo.py compares an annotated item with what
+                          the tree holds (exists / present / absent), reports BOTH directions, and
+                          reports an item with no predicate as UNVERIFIABLE rather than as fine.
+                          Its first real run found four entries done and still open, two of them
+                          exercises described as empty directories that have been built and merged.
+                          The parser had to be built for the file that exists: markers inside
+                          backticks, [~] and [!], and seven items on one line of which only the
+                          first follows a dash -- the first-marker-only version did not report the
+                          other six as unverifiable, it did not see them at all. Anchoring on the
+                          bullet is what excludes the status legend with no exemption list. One
+                          defect found by using it: an escaped needle made the regex ask whether a
+                          string nothing contains was absent -- true of every file -- so an
+                          unfinished item read as DONE; fixed with a single-quoted alternative and
+                          no escape character at all. FEEDBACK, NOT ENFORCEMENT, and the module
+                          says so: TODO.md is gitignored, so only the tool and its 23 tests reach
+                          CI. The rule is added to AGENTS.md beside the derived-prose rule it
+                          extends
 ```
