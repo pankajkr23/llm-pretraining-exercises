@@ -303,8 +303,10 @@ back, in order:
 **The conclusion survives and one comparison gets sharper.** Folding does not in fact beat cutting
 on this question — both recover 9,467 of 10,000, because both fail every word longer than 32 bytes
 and for the same reason: neither has anywhere to put the 33rd byte. The new scheme's margin over
-*both* is therefore **5.19 points, not 4.16**, and the refutation clause below that reads "at or
-below 95.58%" is written against a baseline that does not exist.
+*both* is therefore **5.19 points, not 4.16** — and the refutation clause further down, which was
+written against the 95.58% baseline, has been rewritten against the real one. A refutation threshold
+set from a number that turned out to be wrong is worse than none: it would have let the scheme
+survive a result that should have killed it.
 
 **The `widen to 128 positions` row is dropped rather than corrected.** Nothing here re-measured it,
 and the nearest published figure — `measurements.json::d_p_128`, 99.9% — is over a sample
