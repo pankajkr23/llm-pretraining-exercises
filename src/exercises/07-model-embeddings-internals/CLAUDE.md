@@ -183,6 +183,20 @@ reason not to use it, and it is measurable from `codec.atoms` without training a
 there rather than reaching for `trunk.tokens` from here. That attribute lives in a private class and
 exercise 10 already couples to its *name*; one such coupling is enough.
 
+## The open problems are researched in `RESEARCH.md`, and its marks are load-bearing
+
+Three of this exercise's five open problems have been researched and written up there. **Every claim
+carries a mark** — measured here, re-derived by hand, reported and unverified, or an argument — and
+a guard keeps each category in use. The reason is specific: one research pass corrected itself twice
+and named two papers that **do not exist**, so a reader must be able to tell a measurement from a
+lead without asking. Do not repeat anything marked `[reported]` as fact.
+
+The headline: problem 1 (arithmetic in the embedding) is dead as stated on this vocabulary and has a
+narrower survivor; problem 2 (images and audio) needs a compression step this repository does not
+have; **problem 3 (no length limit) is the one worth building** — it beats both shipped position
+schemes at the same code width, needs no training to prove, and explains problem 4's failure as a
+side effect.
+
 ## Rules specific to this exercise
 
 - **`codec.py` is the single definition of what the code is.** `heads.py` builds its sparse code

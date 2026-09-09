@@ -10,6 +10,31 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **`RESEARCH.md` — three of exercise 07's five open problems, researched and written in plain
+  language.** What each problem is, what the literature already knows, what we expected, what we
+  measured, the verdict, and what would refute it. Written to be stopped at any depth without
+  leaving a reader with a wrong idea: four minutes gets you the findings, and the sections after
+  that are for building one, attacking one, or funding one.
+
+  **Every claim carries a mark saying where it came from** — measured here, re-derived by hand,
+  reported and unverified, or an argument — and five guards keep the marks honest, each watched
+  going red. The reason is specific rather than tidy: one research pass corrected itself twice and
+  named two papers that **do not exist**, so a reader has to be able to tell a measurement from a
+  lead without asking.
+
+  The findings. **Problem 1** (arithmetic inside the embedding) is dead as stated on this
+  vocabulary — 0.5% of four-digit integers are single tokens, and the normalisation step saturates a
+  value coordinate at 90.5152 while inverting the sign of the word's own letters above 4,730 — but a
+  right-aligned place-value block survives, with a scramble control that would settle it.
+  **Problem 2** (images and audio) cannot take raw bytes: a colour patch is 768 bytes and would need
+  about 9,216 dimensions to reverse, so it needs a compression step this repository does not have.
+  **Problem 3** (no length limit) is the one worth building — it beats both shipped position schemes
+  at the same code width, needs no training to prove, and explains problem 4's failure as a side
+  effect: its neighbouring positions point 96% in the same direction, so it cannot tell adjacent
+  letters apart.
+
 ### Fixed
 
 - **`codec.encode` recorded the merged atom count where the `1/sqrt(L)` scale needed the position
