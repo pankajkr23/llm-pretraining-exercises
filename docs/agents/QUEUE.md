@@ -1192,6 +1192,29 @@ predates the harness — so it is logged as what it was.
                           lowercase advance. Widening the wrap to 08's 2200px was measured and
                           REJECTED: it grows the void beside the prose from 819 to 989px, because
                           09's tables are two and three columns and its figures are drawn at 700px
+2026-09-09  design        #168 opened: 07 and 10 join the type scale, and the measure guard gets
+                          the half it was missing. Both carried the identical `.say { max-width:
+                          68ch }` at an inherited 16px -- the declaration docs/DESIGN.md names as
+                          the canonical example of getting this wrong. Body prose 16px/685px ->
+                          22px/951px at 2560, same words per line, with the rail travelling with
+                          the centred column and the standfirst on the ramp, as 09 was fixed in
+                          #167. THE GUARD COULD NOT HAVE CAUGHT ANY OF IT: it computes characters
+                          as width / ch-width, and `ch` IS the advance of `0` at the element's own
+                          size, so an element capped at Nch on ITSELF reports exactly N at every
+                          font size and viewport -- 09 read 68 at 16px/685px and 70 at 22px/951px,
+                          inside the 42-80 band both times. Checked the alternative: measured in
+                          REAL characters every page in the repository exceeds 80 somewhere,
+                          including 08, so the band is internally consistent and `ch` is the unit
+                          the caps are written in. It simply cannot see physical size. The new half
+                          measures that instead and its ledger fails in BOTH directions -- a page
+                          regressing off the scale, and a page adopting it without being recorded
+                          -- both watched failing. It also replaces two skips with an assertion
+                          rather than declaring them, because a skip reports as a pass. AND A LONG
+                          IDENTIFIER PUSHED THE PAGE SIDEWAYS: inline code holds paths and mono
+                          does not hyphenate, so at the scale's 19px floor one <code> made 07's
+                          document scroll by 19px at 320px. Caught by the existing guard at the
+                          width nobody develops at. 03, 04, 05 and 06 are still on the old scale
+                          and each needs measuring first rather than a bulk edit
 2026-09-09  exercise-09   #169 opened: the page keeps the rules it states. Six things it claimed
                           about itself that were not true, found by four reviewers reading the
                           DEPLOYED page after #165 merged, every one green in CI throughout. IT

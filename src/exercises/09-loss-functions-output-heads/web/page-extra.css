@@ -727,3 +727,17 @@ table.grid.prose td:first-child {
 .tile.watch .tile-v {
   color: var(--accent);
 }
+
+/* --- a long identifier must not push the page sideways -------------------------------------------
+ *
+ * Inline `code` holds paths and identifiers, and mono does not hyphenate. At the old fixed 16px the
+ * longest of them happened to fit a 320px phone; at the scale's 19px floor it does not, and one
+ * `<code>` was enough to make the whole document scroll horizontally by 19px — the failure
+ * `AGENTS.md` names as the one the page body must never have.
+ *
+ * `anywhere` rather than `break-word`: a path has no break opportunities at all, so the weaker
+ * value leaves it intact and overflowing. Found by the guard, at 320px, after the type change.
+ */
+code {
+  overflow-wrap: anywhere;
+}
