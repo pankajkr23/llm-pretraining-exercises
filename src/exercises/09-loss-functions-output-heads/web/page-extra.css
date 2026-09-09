@@ -5,14 +5,44 @@
  * makes that visible immediately.
  */
 
+/* The fluid scale, copied verbatim from `docs/DESIGN.md`, which publishes it as the repository's
+ * standard and names THIS page's previous declaration as the canonical example of getting it wrong:
+ *
+ *     `.say { font-size: 16px; max-width: 68ch }` pins the paragraph at 685px whatever `#main` does.
+ *
+ * That is what this file had — the size inherited rather than typed, with identical effect. At
+ * 2560px the page rendered 16px prose at ~84 characters a line in a 685px column inside a 1216px
+ * box, using 27% of the display, and a reader called it squeezed. The lever is SIZE, not measure:
+ * widening the column at 16px would have pushed the line past 100 characters and made it worse.
+ *
+ * Exercise 08 has run this scale since it was written. 04, 07, 09 and 10 never adopted it.
+ */
+#main {
+  font-size: clamp(19px, 1.2vw + 1.7px, 22px);
+}
+
 .say {
-  max-width: 68ch;
+  /* On the element that CARRIES the type, never on an ancestor. `ch` resolves against the
+   * element's own computed size, so a cap on a parent at a different size is the trap
+   * `docs/DESIGN.md` calls this repository's most expensive recurring bug. */
+  font-size: inherit;
+  max-width: 70ch;
   margin: 0 0 16px;
   line-height: 1.62;
   color: var(--ink);
 }
 
-.say code,
+/* Inline code inside a paragraph. This selector had lost its own declaration block and was fused
+ * onto `.tablewrap`'s, so any `<code>` in a `.say` would have been given a shadowed panel with a
+ * 14px radius. Latent rather than visible — every `<code>` on the page today sits in a `dd`, `li`
+ * or `td` — which is why nothing caught it. */
+.say code {
+  font-family: var(--mono);
+  font-size: 0.92em;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--track);
+}
 
 /* Wide tables scroll inside their own box; the page body must never scroll sideways. */
 .tablewrap {
@@ -27,7 +57,7 @@
 table.grid {
   border-collapse: collapse;
   width: 100%;
-  font-size: 0.95rem;
+  font-size: 0.82em;
 }
 
 table.grid th,
@@ -101,7 +131,7 @@ table.grid tr.bad td {
 
 .src {
   margin: 18px 0 0;
-  font-size: 0.9rem;
+  font-size: 0.78em;
   color: var(--muted);
 }
 
@@ -163,7 +193,7 @@ main > section:first-child {
 
 .tile-k {
   margin-top: 6px;
-  font-size: 0.86rem;
+  font-size: 0.74em;
   line-height: 1.45;
   color: var(--muted);
 }
@@ -172,7 +202,10 @@ main > section:first-child {
 
 .gloss {
   margin: 20px 0 8px;
-  max-width: 74ch;
+  /* The cap that used to sit here was `74ch` on the `dl` — an element whose own font-size is the
+   * inherited body size, while every `dd` inside it renders smaller. That is the `ch` trap in its
+   * exact documented form, and at the fluid size it would have put the definitions at roughly 96
+   * characters a line. The measure belongs on `dd`, which carries the type. */
   display: grid;
   grid-template-columns: max-content 1fr;
   gap: 10px 22px;
@@ -188,7 +221,8 @@ main > section:first-child {
 
 .gloss dd {
   margin: 0;
-  font-size: 0.95rem;
+  max-width: 68ch;
+  font-size: 0.82em;
   line-height: 1.55;
   color: var(--ink);
 }
@@ -219,7 +253,11 @@ figcaption {
   margin-top: 14px;
   padding-top: 12px;
   border-top: 1px solid var(--line);
-  font-size: 0.9rem;
+  /* 0.63em and 78ch are `docs/DESIGN.md`'s published values, measured on exercise 08. Matched
+   rather than converted, so a caption beside 22px prose is the same relative size here as
+   there. */
+  font-size: 0.63em;
+  max-width: 78ch;
   line-height: 1.55;
   color: var(--muted);
   max-width: 78ch;
@@ -278,13 +316,9 @@ text.ax.warn {
 
 section h3 {
   margin: 34px 0 12px;
-  font-size: 1.06rem;
+  font-size: 0.92em;
   font-weight: 600;
 }
-
-.limitlist,
-
-.limitlist li,
 
 /* --- SVG diagram internals, all token-driven so every theme works --------------------------- */
 
@@ -439,7 +473,11 @@ text.ax.good {
   border-radius: 0 10px 10px 0;
   background: var(--panel);
   color: var(--ink);
-  font-size: 1.02rem;
+  /* `em`, and the cap on the same element, for the reason the glossary above records. Frozen at
+   * `1.02rem` this box would have held 673px of type in the middle of ~970px prose — narrower than
+   * the paragraphs around it, which is the opposite of what a takeaway is for. It is a `div`, so
+   * the repo-wide measure guard cannot see it either way. */
+  font-size: 0.88em;
   line-height: 1.6;
   max-width: 66ch;
 }
@@ -458,7 +496,7 @@ pre.code {
   background: var(--panel);
   color: var(--ink);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.86rem;
+  font-size: 0.74em;
   line-height: 1.55;
 }
 
@@ -606,4 +644,58 @@ table.grid.prose td {
 }
 table.grid.prose td:first-child {
   width: 24%;
+}
+
+/* --- the rail travels with the centred column ----------------------------------------------------
+ *
+ * `_shared/page.css` pins the rail with `position: fixed; left: 0` — to the VIEWPORT — while `.wrap`
+ * centres itself inside `max-width: 1500px`. Below 1440px those agree, because the wrap fills the
+ * window and its left edge IS zero. Above it they diverge, and the gap between the rail and the
+ * text it indexes grows without limit:
+ *
+ *     1180px → 24px    1440px → 24px    1920px → 234px    2560px → 554px
+ *
+ * At 2560 the page then pays for the rail twice: 530px of centring air on the left, plus the 260px
+ * gutter reserved inside the wrap, with the rail sitting in neither. It reads as a detached column
+ * of links beside a page that has walked away from it.
+ *
+ * **This moves the rail to the wrap's left edge, and moves the reading column not at all.**
+ * `AGENTS.md` records an earlier attempt at this complaint that moved the rail INWARD, against the
+ * text, and destroyed the symmetry every railed page holds — then wrote a guard demanding the broken
+ * version. The distinction is measurable and is the whole point: `.wrap` keeps its 530px of air
+ * either side at 2560, and the gap between rail and text returns to the 24px the design already
+ * uses below 1440.
+ *
+ * It belongs in `_shared/page.css`, which every railed exercise vendors byte-identically — but that
+ * file is checked for byte identity across eight copies, so changing it is its own change touching
+ * seven other pages. Overridden here until then.
+ */
+@media (min-width: 1180px) {
+  .rail {
+    left: max(0px, calc((100vw - 1500px) / 2));
+  }
+}
+
+/* --- the opening paragraph is part of the page, not a caption under the title ---------------------
+ *
+ * `_shared/components.css` sets `.lede { font-size: 1.06rem; color: var(--muted) }` — pinned to the
+ * 16px root and greyed. It sat outside `#main`, so the fluid scale never reached it, and the result
+ * was the page's most important sentence rendered smaller, narrower and lower-contrast than every
+ * paragraph beneath it. A first-time reader described it as reading like a caption under the title
+ * and skipping straight past it to the button.
+ *
+ * It carries the thesis — that four things go wrong, silently, and two of them make the loss look
+ * better — so it is set at the body scale and in the body colour. `--muted` stays on nothing that
+ * carries the argument.
+ */
+.lede {
+  /* Slightly ABOVE the body ramp, because a standfirst that merely matches the paragraphs under it
+   * is not a standfirst. Measured at 2560: 25px against the body's 22px, 945px wide against the
+   * prose column's 951 — flush with it rather than out-denting it, which is what the 62ch is for.
+   * `_shared/page.css` widens this to 72ch, and at 25px that would be 1131px: wider than the
+   * reading column, so the introduction would become the widest text on the page. */
+  max-width: 62ch;
+  font-size: clamp(20px, 1.3vw + 2px, 25px);
+  color: var(--ink);
+  line-height: 1.55;
 }
