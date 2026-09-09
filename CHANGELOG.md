@@ -70,6 +70,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Changed
 
+- **The bucket sweep ran three seeds under a framing that says five, and now says so.** Exercise 07
+  states "trained comparisons, 5 seeds, paired" once and every table inherits it — but
+  `bucket_sweep` ran **three**, recorded only inside a free-text `source` string that no document
+  renders and no reader sees. The count is promoted to a real key, the way `scale_cost.d_model`
+  already was, so the page reads it instead of a reader assuming it; both the page and the README
+  now state it beside the table, with what three seeds can and cannot support. A guard asserts the
+  key exists, that it still disagrees with `setup.seeds` — so the hedge cannot outlive its reason —
+  and that both documents say it. Watched failing three ways.
+
 - **Exercise 07's documents now say what the evidence says.** The results narrative was written when
   the recommendation beat the published design; on a second corpus it does not, and the README's
   headline, its arm table and `NOTICE` all said otherwise. Each now states the finding and its
