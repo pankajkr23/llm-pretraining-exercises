@@ -12,6 +12,27 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercises 07 and 10 join the published type scale, and a guard now watches which pages are on
+  it.** Both carried the identical `.say { max-width: 68ch }` at an inherited 16px that
+  `docs/DESIGN.md` names as the canonical bug. Body prose goes from **16px in a 685px column to
+  22px in a 951px one** at 2560, carrying the same words per line — with the rail travelling with
+  the centred column and the standfirst on the ramp, exactly as exercise 09 was fixed.
+
+- **The measure guard could not have caught any of it, and now the missing half exists.**
+  `test_a_paragraph_holds_a_reading_measure` computes characters as `width ÷ ch-width`, and `ch`
+  *is* the advance of `0` at the element's own size — so an element capped at `Nch` on itself
+  reports exactly `N` at every font size and viewport. Exercise 09 read 68 at 16px in a 685px
+  column and 70 at 22px in a 951px one, inside the 42–80 band both times. The band is not wrong;
+  `ch` is the unit the caps are written in. It simply cannot see the physical size, which is the
+  thing that changed. `test_the_pages_on_the_fluid_scale_are_still_on_it` measures that instead,
+  with a ledger that **fails in both directions** — a page that regresses off the scale, and a page
+  that adopts it without being recorded.
+
+- **A long identifier pushed the whole page sideways at 320px.** Inline `code` holds paths, and mono
+  does not hyphenate: at the old fixed 16px the longest of them happened to fit a phone, and at the
+  scale's 19px floor one `<code>` made exercise 07's document scroll horizontally by 19px. Found by
+  the existing guard, at the width nobody develops at.
+
 - **Exercise 09's page used a quarter of a wide display, and the fix was already written down.**
   `docs/DESIGN.md` publishes the repository's fluid type scale — and names *this page's* declaration,
   `.say { font-size: 16px; max-width: 68ch }`, as the canonical example of getting it wrong. Exercise

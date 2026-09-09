@@ -5,8 +5,27 @@
  * makes that visible immediately.
  */
 
+/* The fluid scale, from `docs/DESIGN.md`, which publishes it as this repository's standard and
+ * names the declaration below it — `.say { font-size: 16px; max-width: 68ch }` — as the canonical
+ * example of getting it wrong. Exercise 08 has run the scale since it was written; this page had
+ * the size inherited rather than typed, with identical effect: 16px prose in a 685px
+ * column, using the same words per line in two thirds of the room.
+ *
+ * The lever is SIZE, not measure. Widening the column at 16px pushes the line past a hundred
+ * characters and makes it worse — which is what the obvious reading of "the text looks squeezed"
+ * would have done. Exercise 09 was retro-fitted first; `tests/test_prose_measure_repo_wide.py`
+ * records which pages are on the scale and fails in both directions.
+ */
+#main {
+  font-size: clamp(19px, 1.2vw + 1.7px, 22px);
+}
+
 .say {
-  max-width: 68ch;
+  /* On the element that CARRIES the type, never on an ancestor: `ch` resolves against the
+   * element's own computed size, so a cap on a parent at a different size is the trap
+   * `docs/DESIGN.md` calls this repository's most expensive recurring bug. */
+  font-size: inherit;
+  max-width: 70ch;
   margin: 0 0 16px;
   line-height: 1.62;
   color: var(--ink);
@@ -34,7 +53,7 @@
 table.grid {
   border-collapse: collapse;
   width: 100%;
-  font-size: 0.95rem;
+  font-size: 0.82em;
 }
 
 table.grid th,
@@ -177,7 +196,7 @@ table.grid tr.bad td {
 
 .src {
   margin: 18px 0 0;
-  font-size: 0.9rem;
+  font-size: 0.78em;
   color: var(--muted);
 }
 
@@ -244,7 +263,7 @@ main > section:first-child {
 
 .tile-k {
   margin-top: 6px;
-  font-size: 0.86rem;
+  font-size: 0.74em;
   line-height: 1.45;
   color: var(--muted);
 }
@@ -253,7 +272,9 @@ main > section:first-child {
 
 .gloss {
   margin: 20px 0 8px;
-  max-width: 74ch;
+  /* The cap that sat here was `74ch` on the `dl`, whose own size is the inherited body
+   * size while every `dd` inside it renders smaller — the `ch` trap in its documented
+   * form. It belongs on the element that carries the type. */
   display: grid;
   grid-template-columns: max-content 1fr;
   gap: 10px 22px;
@@ -269,7 +290,8 @@ main > section:first-child {
 
 .gloss dd {
   margin: 0;
-  font-size: 0.95rem;
+  max-width: 68ch;
+  font-size: 0.82em;
   line-height: 1.55;
   color: var(--ink);
 }
@@ -307,7 +329,7 @@ figcaption {
   margin-top: 14px;
   padding-top: 12px;
   border-top: 1px solid var(--line);
-  font-size: 0.9rem;
+  font-size: 0.63em;
   line-height: 1.55;
   color: var(--muted);
   max-width: 78ch;
@@ -512,7 +534,7 @@ blockquote.preamble cite {
 
 section h3 {
   margin: 34px 0 12px;
-  font-size: 1.06rem;
+  font-size: 0.92em;
   font-weight: 600;
 }
 
@@ -769,7 +791,7 @@ text.ax.good {
   border-radius: 0 10px 10px 0;
   background: var(--panel);
   color: var(--ink);
-  font-size: 1.02rem;
+  font-size: 0.88em;
   line-height: 1.6;
   max-width: 66ch;
 }
@@ -783,7 +805,7 @@ pre.code {
   background: var(--panel);
   color: var(--ink);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.86rem;
+  font-size: 0.74em;
   line-height: 1.55;
 }
 
@@ -800,4 +822,54 @@ pre.code {
 .grid tr.good td {
   border-left: 3px solid var(--grade-a);
   background: color-mix(in srgb, var(--grade-a) 6%, transparent);
+}
+
+/* --- the rail travels with the centred column ----------------------------------------------------
+ *
+ * `_shared/page.css` pins the rail with `position: fixed; left: 0` — to the VIEWPORT — while
+ * `.wrap` centres inside `max-width: 1500px`. Below 1440px those agree; above it the gap between
+ * the rail and the text it indexes grows to 554px at 2560, with the 260px gutter still reserved
+ * inside the wrap, so the page pays for the rail twice and the rail sits in neither space.
+ *
+ * This moves the rail to the wrap's left edge and moves the reading column not at all — `.wrap`
+ * keeps its air either side, which is the symmetry an earlier attempt at this complaint destroyed
+ * by moving the rail inward instead.
+ */
+@media (min-width: 1180px) {
+  .rail {
+    left: max(0px, calc((100vw - 1500px) / 2));
+  }
+}
+
+/* --- a long identifier must not push the page sideways -------------------------------------------
+ *
+ * Inline `code` holds paths and identifiers, and mono does not hyphenate. At the old fixed 16px the
+ * longest of them happened to fit a 320px phone; at the scale's 19px floor it does not, and one
+ * `<code>` was enough to make the whole document scroll horizontally by 19px — the failure
+ * `AGENTS.md` names as the one the page body must never have.
+ *
+ * `anywhere` rather than `break-word`: a path has no break opportunities at all, so the weaker
+ * value leaves it intact and overflowing. Found by the guard, at 320px, after the type change.
+ */
+code {
+  overflow-wrap: anywhere;
+}
+
+/* --- the opening paragraph is part of the page, not a caption under the title ---------------------
+ *
+ * `_shared/components.css` sets `.lede { font-size: 1.06rem; color: var(--muted) }`, pinned to the
+ * 16px root and greyed — and `.lede` is a SIBLING of `#main`, so the fluid ramp above never reaches
+ * it. Left alone, the type change makes this worse rather than better: the page's opening sentence
+ * ends up smaller than its own figure captions, which is the "hierarchy reads as a rendering fault"
+ * that `docs/DESIGN.md` warns about. Found on exercise 09 by a first-time reader, who described
+ * skipping past it to the button.
+ *
+ * Slightly above the body ramp, because a standfirst that merely matches the paragraphs under it is
+ * not a standfirst; `62ch` keeps it flush with the reading column rather than out-denting it.
+ */
+.lede {
+  max-width: 62ch;
+  font-size: clamp(20px, 1.3vw + 2px, 25px);
+  color: var(--ink);
+  line-height: 1.55;
 }
