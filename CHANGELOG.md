@@ -32,6 +32,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   transform arm the same subtraction reads −0.031 and looks like a contradiction; it is the same
   number compared to a model that arm was never measured against.
 
+- **The README's `cond(WᵀW)` clause is deleted rather than corrected.** It claimed the projection's
+  conditioning "degraded from 2.4 to 29.5" while recovery held at 100.00%. No evidence file in this
+  exercise carries a `cond` field at all, and the only surviving record of that measurement says
+  2.4 → **248** at recovery **99.5%** over 3,000 steps — so two of the three numbers disagreed with
+  the only thing that could have supported them. Re-measuring would have answered a question the
+  section does not ask: the conditioning was never the point, and recovery surviving training is.
+  The bullet now says so, and says what was removed.
+
 - **Exercise 07's trained comparison stops reading a corpus that is 40% `[UNK]`, and three gates
   make that impossible to do again.** The corpus it trained on was exercise 02's four Wikipedia
   articles, and the frozen 10k vocabulary has no Tamil: `ta.faithful.txt` tokenizes to **63.2%**

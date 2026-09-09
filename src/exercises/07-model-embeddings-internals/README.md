@@ -383,8 +383,15 @@ Three things make this stronger than a hit rate:
 - **The decode certifies itself.** The residual is zero exactly when the recovered bytes reproduce
   the vector, so the decoder knows whether it is right **without being told**. Certificate and
   ground truth agreed on **100.0%** of tokens.
-- **It survives training.** With `W` taken from a run trained to loss **2.45** on real text,
-  recovery is still **100.00%** — while `cond(WᵀW)` degraded from 2.4 to 29.5.
+- **It survives training.** With `W` taken from a run trained to loss **2.45**, recovery is still
+  **100.00%** — which is the claim that matters, and it is in `results/measurements.json`.
+
+  > This bullet used to end *"while `cond(WᵀW)` degraded from 2.4 to 29.5"*, and that clause is
+  > **deleted rather than corrected**. No evidence file contains a `cond` field at all, and the only
+  > surviving record of the measurement says 2.4 → **248** with recovery **99.5%** over 3,000 steps
+  > — so two of its three numbers disagreed with the only thing that could have supported them.
+  > Re-measuring it would have answered a question this section does not ask; the conditioning of
+  > the projection was never the point, and recovery surviving training is.
 
 ### 2 · Why tying works, and the scale bug that hides it
 
