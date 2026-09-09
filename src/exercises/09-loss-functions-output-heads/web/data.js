@@ -129,21 +129,31 @@ export const M = {
     "gap_grows_monotonically": true,
     "memory": {
       "losses_agreed_every_time": true,
-      "max": 9.402075226977951,
-      "min": 8.958230958230958,
+      "max": 9.441941074523397,
+      "min": 8.878317680685994,
       "ratios": [
-        9.234944868532654,
-        8.958230958230958,
-        9.402075226977951,
-        9.176916596461668,
-        9.26509635974304
+        8.878317680685994,
+        8.95224372169617,
+        9.246068848278792,
+        9.441941074523397,
+        9.29070758738278
       ],
       "repeats": 5,
       "rows": 4096,
-      "spread": 0.443844268746993
+      "softmax_only_max": 1.809247115464431,
+      "softmax_only_min": 1.7901752653665761,
+      "softmax_only_ratios": [
+        1.7935329538893012,
+        1.79428995791732,
+        1.7901752653665761,
+        1.798019801980198,
+        1.809247115464431
+      ],
+      "softmax_only_spread": 0.019071850097854837,
+      "spread": 0.5636233938374033
     },
     "provenance": {
-      "code_digest": "sha256:9a693ceba89fbfac52ad5f45e5267c1806dc38c4d831e8a122dbd786dbfb365e",
+      "code_digest": "sha256:dd26c08a4db1b9540d4610bd497257f169d9358107488bfbe8f6e29a6c2add01",
       "config_fingerprint": "cd2603d4144f",
       "corpus_digest": "sha256:19f24ce7db26e4f3dde1b3663b6edb19019d887f0188bdaca16ffad7087b0261",
       "environment": {
@@ -155,7 +165,7 @@ export const M = {
         "torch": "2.13.0",
         "torch_threads": 12
       },
-      "git_sha": "214d949291ce8b344eab77f6dedda707e8bda8a2",
+      "git_sha": "991a6a0689c790dbcbd1d613b6a0bc3714555fab",
       "tokenizer_digest": "sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae"
     }
   },
