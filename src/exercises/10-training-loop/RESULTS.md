@@ -85,9 +85,9 @@ held identical — micro-batch widths [128, 128, 64] tokens:
 
 | reduction | final loss |
 | --- | --- |
-| correct | 5.2658 |
-| wrong | 5.3143 |
-| gap | +0.0484 |
+| correct | 5.2873 |
+| wrong | 5.3633 |
+| gap | +0.0759 |
 
 The wrong reduction reads **higher** at the end. **But that is one endpoint of a curve
 whose sign is not constant**, and the run length is an arbitrary choice — so the endpoint alone is
@@ -95,9 +95,9 @@ not the finding:
 
 | across all 120 steps | value |
 | --- | --- |
-| mean **signed** gap | +0.0137 |
-| mean **absolute** gap | 0.0185 |
-| steps where the wrong reduction read *lower* | 28 |
+| mean **signed** gap | +0.0177 |
+| mean **absolute** gap | 0.0200 |
+| steps where the wrong reduction read *lower* | 18 |
 
 The signed mean is the one that carries a direction; the absolute mean is non-negative for every
 possible run and would read identically if the finding reversed. Both curves and the per-step gap
@@ -126,16 +126,16 @@ inflate the yardstick used to find it.
 Drop the third and this becomes a same-step magnitude contrast published under a heading that
 promises a lead in time. An earlier version of this section did exactly that.
 
-**Step 131** is such a step. The gradient norm moved 4.3 typical steps; the loss moved 0.3 at that same step; the loss then moved 4.0, 4 step(s) later. Gradient norm 0.6089, loss 5.5338.
+**Step 151** is such a step. The gradient norm moved 4.0 typical steps; the loss moved 0.8 at that same step; the loss then moved 4.5, 1 step(s) later. Gradient norm 0.7179, loss 5.0120.
 
 **1 of 200 steps qualify.** The threshold is arbitrary, so:
 
 | threshold | qualifying steps |
 | --- | --- |
-| 2.0 | 11 |
-| 2.5 | 5 |
+| 2.0 | 7 |
+| 2.5 | 4 |
 | 3.0 | 1 |
-| 4.0 | 1 |
+| 4.0 | 0 |
 | 5.0 | 0 |
 
 **Read that spread before believing the count.** Qualifying steps thin out sharply as the threshold
@@ -158,14 +158,14 @@ which hides precisely the spikes the trace exists to show.
 | FLOPs per token | 34,318,848 |
 | convention | 6 x 5,719,808 NON-EMBEDDING parameters — 2 forward, 4 backward; embedding lookups are gathers and do no arithmetic; attention's quadratic term excluded |
 | tokens measured | 203,200 |
-| wall clock | 7.535 s |
-| achieved | 925.51 GFLOP/s |
-| device peak | 3.336 TFLOP/s |
-| device | this machine's CPU, 3.336 TFLOP/s sustained on a 2048^3 fp32 matrix multiply — MEASURED here, same device and dtype as the run, not a vendor figure |
-| **MFU** | **27.74%** |
-| tokens/second | 26,968 |
+| wall clock | 7.663 s |
+| achieved | 909.99 GFLOP/s |
+| device peak | 3.328 TFLOP/s |
+| device | this machine's CPU, 3.328 TFLOP/s sustained on a 2048^3 fp32 matrix multiply — MEASURED here, same device and dtype as the run, not a vendor figure |
+| **MFU** | **27.34%** |
+| tokens/second | 26,516 |
 
-**Target 40%, achieved 27.74%, short by 12.26% of peak.**
+**Target 40%, achieved 27.34%, short by 12.66% of peak.**
 
 **Two errors were caught in this number before it was published, and both flattered it.** The first
 version divided FLOPs achieved on the **CPU** by a **GPU's** advertised peak and reported 39.13% —
@@ -222,3 +222,22 @@ replacement for bf16.
 
 **These patterns are built from arithmetic here, not read out of the machine** — and then checked
 against torch's own casts, because a decomposition that agrees only with itself proves nothing.
+
+#### And the bug this module shipped, measured rather than remembered
+
+`_round_to_nearest_even` used to return an overflow flag computed from *this value's* fraction bit
+length where the fixed 23 was meant. `decompose` then applied a second exponent increment on top of
+its own normalisation, returning a number **exactly twice** the right one — or raising, where the
+shift count went negative.
+
+| format | returned twice the right value | raised | over |
+| --- | ---: | ---: | ---: |
+| bf16 | **3.12%** | 0.41% | 200,000 draws |
+| fp8 E4M3 | **25.04%** | 6.16% | 200,000 draws |
+
+It shipped because `0.1` is the only value the tests drove, and `0.1` is one of the values where the
+flag cannot fire. **The two columns are different defects and an earlier version of this document
+merged them into one figure of 30%** — a crash is loud and a value twice too large is not, so a rate
+that adds them answers neither question. Drawn uniformly from `[1, 2)`: every normal float is a
+significand in that interval times a power of two, and the bug lives entirely in the significand, so
+the range is the whole space rather than a slice of it.

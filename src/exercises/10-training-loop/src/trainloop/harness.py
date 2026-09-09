@@ -26,6 +26,15 @@ from .config import Config
 from .step import build, describe_shapes, shape_table
 from .step import run as run_steps
 
+RUN_DEVICE = "cpu"
+"""The one device this exercise runs and measures its peak on.
+
+A single constant rather than two arguments that happen to match. `mfu.measured_peak_flops` takes a
+device, torch picks one for the run, and MFU is the ratio between what those two produced -- so a
+run and a peak on different machines is not a wrong number, it is two right numbers about different
+things. That is precisely what the 39.13% this exercise once published was.
+"""
+
 
 def _line(title: str) -> None:
     print(f"\n{'=' * 78}\n{title}\n{'=' * 78}\n")
@@ -239,7 +248,13 @@ def item_4_grad_norm(trace: telemetry.Trace) -> dict[str, Any]:
 def item_5_mfu(trace: telemetry.Trace, facts: dict[str, Any], config: Config) -> dict[str, Any]:
     """Utilisation, with every input named, and the distance to 40% accounted for."""
     _line("ITEM 5 — compute your own MFU, honestly")
-    peak = mfu.measured_peak_flops("cpu")
+    # ONE name, used for the run and for the peak. MFU is a ratio between two measurements and it
+    # only means anything when both come from the same machine -- this exercise published 39.13%
+    # once by dividing CPU FLOPs by a GPU peak. The two used to be independent strings that
+    # happened to agree; now they cannot disagree, and the name is recorded so a reader can see
+    # which machine both halves describe.
+    device = RUN_DEVICE
+    peak = mfu.measured_peak_flops(device)
     utilisation = mfu.measure(
         parameters=int(facts["non_embedding_parameters"]),
         tokens=sum(trace.tokens),
@@ -273,16 +288,41 @@ def item_5_mfu(trace: telemetry.Trace, facts: dict[str, Any], config: Config) ->
         "achieved_flops_per_second": utilisation.achieved_flops_per_second,
         "device_peak_flops": utilisation.device_peak_flops,
         "device_name": utilisation.device_name,
+        # The bare device string, beside the prose one. A guard can compare this against the
+        # provenance block's; it cannot compare a sentence.
+        "device": device,
         "mfu": utilisation.mfu,
         "tokens_per_second": utilisation.tokens_per_second,
     }
 
 
 def item_6_floats() -> dict[str, Any]:
-    """0.1 in three formats, built from arithmetic rather than read out of the machine."""
+    """0.1 in three formats, built from arithmetic rather than read out of the machine.
+
+    **It also measures the bug this module shipped**, because the page's lead tile quoted a rate for
+    it that lived in a Python docstring and nowhere else — not here, not in any document a reader of
+    the page can reach, and recomputed by nothing. `floats.regression_rate` replays the shipped code
+    against the current one over uniform draws in `[1, 2)`, the significand's whole space.
+    """
     _line("ITEM 6 — 0.1 in fp32, bf16 and fp8 E4M3, bit by bit")
     print(floats.report(0.1))
-    return {
+
+    regression = {
+        fmt.name: floats.regression_rate(fmt) for fmt in floats.FORMATS if fmt.mantissa_bits < 23
+    }
+    print("\n  The bug this module shipped, measured rather than remembered:\n")
+    for name, row in regression.items():
+        print(
+            f"    {name:<10} {row['doubled_rate']:6.2%} returned exactly twice the right value, "
+            f"{row['raised_rate']:5.2%} raised   (over {row['draws']:,} draws)"
+        )
+    print(
+        "\n  The two are different defects and the published figure merged them. A crash is loud;\n"
+        "  a value twice too large is not, and every test passed because 0.1 is one of the values\n"
+        "  where the flag cannot fire."
+    )
+
+    per_format = {
         fmt.name: {
             "bits": (taken := floats.decompose(0.1, fmt)).bits,
             "hex": taken.hex,
@@ -300,6 +340,7 @@ def item_6_floats() -> dict[str, Any]:
         }
         for fmt in floats.FORMATS
     }
+    return {"regression": regression, **per_format}
 
 
 def run(config: Config | None = None, steps: int | None = None) -> dict[str, Any]:
@@ -319,7 +360,7 @@ def run(config: Config | None = None, steps: int | None = None) -> dict[str, Any
         "item_5_mfu": item_5_mfu(trace, facts, config),
         "item_6_floats": item_6_floats(),
     }
-    path = telemetry.save(trace, results)
+    path = telemetry.save(trace, results, device=RUN_DEVICE)
     print(f"\n\nWrote {path.name}")
     return results
 

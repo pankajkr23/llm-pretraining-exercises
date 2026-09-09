@@ -307,3 +307,23 @@ def test_no_prose_table_hides_a_cell_behind_its_own_scrollbar(page):
         f"a prose table is wider than its container, so part of every row is behind a scrollbar: "
         f"{offenders}. Prose cells must wrap — check the `prose` class is on the table."
     )
+
+
+def test_no_two_figures_carry_the_same_number(page):
+    """Figure numbers must be distinct and consecutive from one.
+
+    They were positional arguments, so adding a figure at the top of the page produced **two Figure
+    1s** — the new one and the mechanism plate, in the same document, each captioned "Figure 1".
+    Nothing failed: a caption is prose to every other guard here, and a duplicate number reads as a
+    typo rather than as a broken cross-reference until someone tries to cite one.
+    """
+    numbers = page.evaluate("""() => [...document.querySelectorAll('figcaption b')]
+        .map((b) => b.textContent.trim())
+        .filter((t) => t.startsWith('Figure '))
+        .map((t) => parseInt(t.slice(7), 10))""")
+    assert numbers, "no numbered figures found; the caption format has changed"
+    assert numbers == sorted(numbers), f"figure numbers are out of order: {numbers}"
+    assert numbers == list(range(1, len(numbers) + 1)), (
+        f"figure numbers are {numbers}, which is not 1..{len(numbers)}. Derive them from the count "
+        "of figures already built rather than passing each one in."
+    )

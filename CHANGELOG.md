@@ -12,6 +12,52 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Three of exercise 10's documents quoted three different MFU figures, and none was the measured
+  one.** `README.md` said 27.69%, `PROGRESS.md` and `CLAUDE.md` said 27.64%, against a recorded
+  27.74% — three wrong numbers around one right one, every one of them inside the tolerance the
+  guard allowed. That guard permitted **a full point** of drift on the ground that MFU's denominator
+  is a wall clock; true of two *runs*, and irrelevant to a document compared against the single
+  tracked file it renders. It is exact now, and a second guard asserts the documents agree with each
+  other, with a ledger for the historical 39.13% the README narrates on purpose.
+
+- **Exercise 10's lead tile published a rate that lived in a Python docstring and nowhere else.**
+  *"30% of fp8 inputs came back exactly twice too large"* — not in `results/run.json`, not in any
+  document a reader of the page could reach, recomputed by nothing. `floats.regression_rate` now
+  replays the shipped code against the current one over 200,000 draws in `[1, 2)`, the significand's
+  whole space. It also splits the figure the old one merged: **25.04%** came back doubled and a
+  further **6.16%** raised. A crash and a silently doubled value are different defects.
+
+- **Exercise 10's graded notebook said "Both mistakes were denominators", then described one of
+  them making "the numerator 45% larger".** One was a denominator and one was a numerator, and the
+  corrections pull in opposite directions — which is the whole reason they are worth separating.
+  It also carried a leftover `print(decompose.__module__)`, and it now ships the float bug as a cell
+  a reader runs: replay the shipped code against the current one, then try it at `0.1` alone and
+  watch both agree. That agreement is why the defect shipped.
+
+- **The reviewer agents' own definitions were unprotected.** `.claude/agents/*.md` is gitignored by
+  a directory pattern, was in no backup pattern, and is not derivable from anything — each file
+  records what a reviewer is for and the rules it carries, several of them learned by getting a
+  review wrong. They were unbacked-up for as long as they have existed. Added to
+  `backup_local_only.py::PATTERNS`, alongside a new `ux` reviewer.
+
+- **Exercise 10's page claimed a `data.js` regeneration test, twice, and it did not exist.** Both
+  the results and reproduce sections told a reader that a test regenerates the page's data and fails
+  if the tracked copy differs — a claim about the repository's own rigour, made by the artefact with
+  the widest audience, and false. The test exists now.
+
+- **A branch whose newest commit was documentation got no preview deployment at all, and the
+  failure was self-reinforcing.** `should-build.sh` falls back to comparing against `HEAD^` when
+  `VERCEL_GIT_PREVIOUS_SHA` is empty — but an empty variable means *"this branch has never
+  deployed"*, and `HEAD^` answers a different question: *what did the newest commit change?* So a
+  branch that rebuilt an entire page and then landed a changelog entry on top of it skipped, and
+  kept skipping: a skipped build never becomes a successful deployment, so the variable stays empty
+  and the next push asks the same wrong question. **A branch can push all day and never deploy
+  once**, which is what happened to exercise 09 — a reviewer opened the preview link and got
+  *"Deployment was cancelled"*. `AGENTS.md` had recorded this as live and unfixed before it
+  happened again. An empty variable now means build, which is the reasoning the adjacent
+  shallow-clone branch already used. A twin asserts a *set* variable can still skip, so the fix
+  does not quietly turn the predicate into "always build" and lose the quota it exists to protect.
+
 - **Every loss exercise 09 publishes was measured against a file the repository edits on most pull
   requests, and nothing could notice.** The corpus was read from the live `AGENTS.md` at run time
   and the run recorded a **16-character prefix** of its digest, which no test recomputed. It had

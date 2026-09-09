@@ -1128,4 +1128,35 @@ predates the harness — so it is logged as what it was.
                           FOUND BY LOOKING with the suite green: the page threw and five of twelve
                           sections never rendered, and the corrections table was 3,594px wide in a
                           994px container. Both guarded, every guard watched failing
+2026-09-09  exercise-10   #166 opened: the numbers say where they came from, and three of them
+                          were wrong. THREE DOCUMENTS QUOTED THREE DIFFERENT MFU FIGURES -- README
+                          27.69%, PROGRESS and CLAUDE 27.64%, against a recorded 27.74%. No single
+                          document was obviously wrong; the SET was, and nothing was looking at the
+                          set. The guard allowed a full POINT of drift on the ground that MFU's
+                          denominator is a wall clock -- true of two runs, irrelevant to a document
+                          compared against the one tracked file it renders. Exact now, plus a
+                          cross-document guard and a ledger for the historical 39.13% the README
+                          narrates on purpose, with a twin that fails if the narration is deleted
+                          and the exemption left behind. A RATE THAT LIVED IN A DOCSTRING: the lead
+                          tile published "30% of fp8 inputs came back exactly twice too large" from
+                          a figure in no result file and recomputed by nothing. It is measured now
+                          -- the shipped code replayed against the current one over 200,000 draws
+                          in [1,2), the significand's whole space -- and it splits the figure the
+                          old one merged: 25.04% doubled, 6.16% raised. THE LEDGER: run.json
+                          carried no provenance at all, and the corpus was a sentence because this
+                          module imported exercise 09's PRIVATE _corpus rather than its public
+                          corpus_facts -- one import choice cost the exercise its whole provenance
+                          on the data side. MFU's two halves are bound to one RUN_DEVICE now. THE
+                          PAGE claimed a data.js regeneration test twice and it did not exist; the
+                          test exists now, which was cheaper than deleting the claim. TWO DEFECTS
+                          FOUND BY DRIVING IT with the suite green: hoisting a list above its
+                          section took a const ul belonging to a DIFFERENT function, so the page
+                          threw and reproduce never rendered; and facts.corpus became a block, so a
+                          cell printed [object Object]. RIDING ALONG because they were made after
+                          #165 merged: exercise 09's two Figure 1s, and should-build.sh falling
+                          back to HEAD^ when VERCEL_GIT_PREVIOUS_SHA is empty -- which meant
+                          exercise 09 pushed twice and deployed neither time, self-reinforcingly,
+                          and the reviewer opened a cancelled deployment. Verified against Vercel's
+                          own record either side of the fix. Also: the reviewer agents' own
+                          definitions were in no backup pattern and never have been
 ```
