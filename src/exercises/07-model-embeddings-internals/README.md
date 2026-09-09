@@ -462,6 +462,8 @@ each other and stop being distinguishable — which would quietly break the inve
 since block-sparse recovery is stated over exactly that property. Coherence between the `D` atoms
 (rows of `W`, one per (position, byte)) after 500 steps on real text:
 
+<!-- evidence-numbers: results/measurements.json -->
+
 | `W` | max | mean | rms |
 | --- | ---: | ---: | ---: |
 | random, untrained | 0.274 | 0.041 | 0.051 |
@@ -472,6 +474,8 @@ since block-sparse recovery is stated over exactly that property. Coherence betw
 **Tying costs essentially nothing here.** Mean coherence under our tie is 0.051 against the *untied*
 baseline's 0.050 — a difference of one part in fifty, where training itself moved it from 0.041 to
 0.050. That is why recovery from a trained `W` still reads 99.85%.
+
+<!-- /evidence-numbers -->
 
 The reason is which object is tied. Nothing ever uses `W` directly as an output matrix: the head is
 the *induced* `E = K·W_proj`, so every gradient reaches `W` through the fixed sparse `K`, and no
@@ -543,7 +547,7 @@ onto the same 256 atoms — so the code records *which atoms were added, not whi
 them*. A multiset, not a sequence. `decode.fold_is_order_lossy` exhibits two different 40-byte
 strings with identical codes (**1.3e-15**).
 
-<!-- recovery-numbers: results/wrap_recovery.json -->
+<!-- evidence-numbers: results/wrap_recovery.json -->
 
 > **Correction, now measured.** I wrote in `WrapKronecker`'s docstring that superposition "loses
 > nothing recoverable". It is false. `tools/measure_wrap_recovery.py` measures the whole vocabulary:
@@ -567,9 +571,9 @@ strings with identical codes (**1.3e-15**).
 > signs in, and two tests hold it — one asserting 100% at or below `d_p`, one asserting an unsigned
 > dictionary does much worse, so the first cannot pass for the wrong reason.
 
-<!-- /recovery-numbers -->
+<!-- /evidence-numbers -->
 
-<!-- recovery-numbers: results/measurements.json -->
+<!-- evidence-numbers: results/measurements.json -->
 
 **One answer is to stop folding and size `d_p` to the vocabulary**, which is affordable precisely
 because `D` does not depend on `V`. The repo's tokenizer tops out at 121 bytes:
@@ -584,7 +588,7 @@ than a vocabulary-wide average would. It should: **9,467 of this vocabulary's 10
 bytes or shorter**, so an average over the whole vocabulary is mostly a report of how many tokens
 are short. The long-token column is the honest one.)*
 
-<!-- /recovery-numbers -->
+<!-- /evidence-numbers -->
 
 **The last column is what the fourth scheme is for.** Raising `d_p` buys the reach by making the
 code four times wider, which is the cost this whole exercise exists to keep down.
@@ -606,7 +610,7 @@ Every scheme the decoder can read, on the same question, over the whole vocabula
 is the complete token: every byte back, in order** — which is what the heading says, because the
 first version of this table let each scheme answer a different one:
 
-<!-- recovery-numbers: results/position_schemes.json -->
+<!-- evidence-numbers: results/position_schemes.json -->
 
 | byte length | tokens | one-hot, whole token | wrap, whole token | **spc, whole token** |
 | --- | ---: | ---: | ---: | ---: |
@@ -614,7 +618,7 @@ first version of this table let each scheme answer a different one:
 | 33–64 | 465 | 0.00% | 0.00% | **99.35%** |
 | 65–128 | 68 | 0.00% | 0.00% | **83.82%** |
 
-<!-- /recovery-numbers -->
+<!-- /evidence-numbers -->
 
 One-hot and wrap read zero above 32 bytes not because their decoders are weak but because neither
 has anywhere to put the 33rd byte — one discards it, the other folds it onto a slot it must then

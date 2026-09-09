@@ -110,6 +110,19 @@ CLAIMS: tuple[Claim, ...] = (
         "results/measurements.json::v1_arithmetic",
     ),
     Claim(
+        "positions-past-d-p",
+        "A position scheme can reach past `d_p` and still be decoded byte by byte, at unchanged "
+        "code width — where one-hot truncates and wrap folds, both by construction.",
+        "results/position_schemes.json",
+    ),
+    Claim(
+        "wrap-is-order-lossy",
+        "Wrapping recovers every byte at or below `d_p` and loses order beyond it, so its "
+        "length-freedom is not the same thing as invertibility.",
+        "results/wrap_recovery.json",
+        negative=True,
+    ),
+    Claim(
         "lanes-read-evenly",
         "Every lane of the corpus is read, and read at the same rate, so no claim here rests on "
         "text the run never saw.",
@@ -117,6 +130,22 @@ CLAIMS: tuple[Claim, ...] = (
     ),
 )
 """Every claim this exercise publishes, in the order a reader meets them."""
+
+
+#: Claims by id, so a grading branch names the claim it grades.
+#:
+#: **Every reference used to be positional**, and inserting two claims in the middle silently
+#: re-pointed the last branch at a different claim — the grading still ran, still printed a status,
+#: and graded the wrong sentence. An index into a list somebody will insert into is a bug waiting
+#: for its second author.
+BY_ID: dict[str, Claim] = {}
+
+
+def _claim(claim_id: str) -> Claim:
+    """The claim with this id, or a KeyError naming it. Never an index."""
+    if not BY_ID:
+        BY_ID.update({claim.id: claim for claim in CLAIMS})
+    return BY_ID[claim_id]
 
 
 def _row(claim: Claim, status: str, derivation: str, *, constant: bool = False) -> dict:
@@ -145,7 +174,9 @@ def _gap(measurements: dict, name: str, key: str) -> float | None:
     return None
 
 
-def assess(measurements: dict, run: Path | None = None) -> list[dict]:
+def assess(
+    measurements: dict, run: Path | None = None, results: dict[str, dict] | None = None
+) -> list[dict]:
     """Grade every claim against the evidence actually present.
 
     Args:
@@ -153,15 +184,22 @@ def assess(measurements: dict, run: Path | None = None) -> list[dict]:
         run: A run directory, when one is being graded alongside. `None` grades the published
             evidence alone — which is the common case and must not silently report the run's rows
             as met.
+        results: The other tracked bundles in `results/`, keyed by file name. **This module used to
+            read one file**, so two published measurements — the byte-recovery tables — were graded
+            by nothing at all and a reader running `evidence.py` saw no row for either. An auditor
+            that grades a subset of the evidence and says so nowhere reads as an auditor.
 
     Returns:
         One row per claim: id, statement, artefact, status, and the derivation behind the status.
     """
     rows = []
+    results = results or {}
 
     recovery = measurements.get("recovery")
     if not recovery:
-        rows.append(_row(CLAIMS[0], "unverifiable", "no `recovery` block in the measurements"))
+        rows.append(
+            _row(_claim("invertible"), "unverifiable", "no `recovery` block in the measurements")
+        )
     else:
         # The block reports one column per construction of `W` (gaussian / semiortho / blocktight)
         # at each width, so the claim is about the WIDTH at which every construction reaches 100%,
@@ -177,7 +215,7 @@ def assess(measurements: dict, run: Path | None = None) -> list[dict]:
         width = min((row["d_model"] for row in perfect), default=None)
         rows.append(
             _row(
-                CLAIMS[0],
+                _claim("invertible"),
                 "met" if width is not None else "unmet",
                 f"every construction of W reaches 100% exact recovery from d_model {width} "
                 f"({len(exact)} widths measured, {len(perfect)} of them perfect on all "
@@ -191,14 +229,16 @@ def assess(measurements: dict, run: Path | None = None) -> list[dict]:
     ours = "tied + n-gram (one-hot positions)"
     vs_v1 = _gap(measurements, ours, "vs_v1")
     if vs_v1 is None:
-        rows.append(_row(CLAIMS[1], "unverifiable", "no `arms` row for the recommendation"))
+        rows.append(
+            _row(_claim("tied-beats-v1"), "unverifiable", "no `arms` row for the recommendation")
+        )
     else:
         v_free = next(
             (r.get("v_free") for r in measurements["arms"]["rows"] if r["arm"] == ours), None
         )
         rows.append(
             _row(
-                CLAIMS[1],
+                _claim("tied-beats-v1"),
                 "met" if vs_v1 < 0 and v_free else "unmet",
                 f"{ours} is {vs_v1:+.3f} nats against v1, v_free={v_free}",
             )
@@ -206,14 +246,18 @@ def assess(measurements: dict, run: Path | None = None) -> list[dict]:
 
     attribution = measurements.get("attribution")
     if not attribution:
-        rows.append(_row(CLAIMS[2], "unverifiable", "no `attribution` block in the measurements"))
+        rows.append(
+            _row(
+                _claim("attribution"), "unverifiable", "no `attribution` block in the measurements"
+            )
+        )
     else:
         parts = {r["what"]: r["gap"] for r in attribution["rows"]}
         together = next((g for w, g in parts.items() if "together" in w), None)
         singles = [g for w, g in parts.items() if "together" not in w]
         rows.append(
             _row(
-                CLAIMS[2],
+                _claim("attribution"),
                 "met" if together is not None and singles and together < min(singles) else "unmet",
                 f"together {together:+.3f} against best single {min(singles):+.3f}"
                 if together is not None and singles
@@ -223,13 +267,15 @@ def assess(measurements: dict, run: Path | None = None) -> list[dict]:
 
     pairing = measurements.get("pairing")
     if not pairing:
-        rows.append(_row(CLAIMS[3], "unverifiable", "no `pairing` block in the measurements"))
+        rows.append(
+            _row(_claim("noise-floor"), "unverifiable", "no `pairing` block in the measurements")
+        )
     else:
         spread, sd = pairing.get("unpaired_spread"), pairing.get("paired_sd")
         effect = abs(vs_v1) if vs_v1 is not None else None
         rows.append(
             _row(
-                CLAIMS[3],
+                _claim("noise-floor"),
                 "met" if spread and sd and effect and sd < effect < spread else "unmet",
                 f"unpaired spread {spread}, paired sd {sd}, effect {effect}: the effect is larger "
                 f"than the paired noise and smaller than the unpaired spread it cancels",
@@ -237,9 +283,9 @@ def assess(measurements: dict, run: Path | None = None) -> list[dict]:
         )
 
     for claim, arm, worse_than in (
-        (CLAIMS[4], "tied to induced E", "v1"),
-        (CLAIMS[6], "Fourier positions", "control"),
-        (CLAIMS[7], "byte head + end-of-token", "control"),
+        (_claim("plain-tie-loses"), "tied to induced E", "v1"),
+        (_claim("fourier-loses"), "Fourier positions", "control"),
+        (_claim("byte-head-uncompetitive"), "byte head + end-of-token", "control"),
     ):
         key = "vs_v1" if worse_than == "v1" else "vs_control"
         gap = _gap(measurements, arm, key)
@@ -259,11 +305,15 @@ def assess(measurements: dict, run: Path | None = None) -> list[dict]:
         _arm_loss(measurements, "wrapped positions"),
     )
     if mlp is None or wrap is None:
-        rows.append(_row(CLAIMS[5], "unverifiable", "the MLP arm or its baseline is absent"))
+        rows.append(
+            _row(
+                _claim("mlp-buys-nothing"), "unverifiable", "the MLP arm or its baseline is absent"
+            )
+        )
     else:
         rows.append(
             _row(
-                CLAIMS[5],
+                _claim("mlp-buys-nothing"),
                 "met" if abs(mlp - wrap) < 0.01 else "unmet",
                 f"the MLP arm is {mlp - wrap:+.3f} against wrapped positions, which is the "
                 "baseline it was built on -- against the transform arm it would read differently, "
@@ -273,11 +323,11 @@ def assess(measurements: dict, run: Path | None = None) -> list[dict]:
 
     arithmetic = measurements.get("v1_arithmetic")
     if not arithmetic:
-        rows.append(_row(CLAIMS[8], "unverifiable", "no `v1_arithmetic` block"))
+        rows.append(_row(_claim("budget"), "unverifiable", "no `v1_arithmetic` block"))
     else:
         rows.append(
             _row(
-                CLAIMS[8],
+                _claim("budget"),
                 "met",
                 f"{arithmetic.get('source', 'the block')} at d_model "
                 f"{arithmetic.get('d_model', 'unrecorded')}: constant by construction -- the ratio "
@@ -287,11 +337,66 @@ def assess(measurements: dict, run: Path | None = None) -> list[dict]:
             )
         )
 
+    schemes = results.get("position_schemes.json")
+    if not schemes:
+        rows.append(
+            _row(
+                _claim("positions-past-d-p"),
+                "unverifiable",
+                "results/position_schemes.json is not present, so nothing grades this",
+            )
+        )
+    else:
+        past = [row for row in schemes["rows"] if row["low"] > schemes["frame"]["d_p"]]
+        blind = all(row[scheme]["full"] == 0.0 for row in past for scheme in ("onehot", "wrap"))
+        best = min((row["spc"]["full"] for row in past), default=0.0)
+        searchable = [row["spc"]["searchable"] for row in past if row["spc"]["full"] < 1.0]
+        rows.append(
+            _row(
+                _claim("positions-past-d-p"),
+                "met" if blind and best > 0.0 else "unmet",
+                f"past d_p={schemes['frame']['d_p']}: one-hot and wrap recover "
+                f"{'0.00% in every band' if blind else 'something, which breaks the premise'}, "
+                f"spc at worst {best:.2%}; of its failures "
+                f"{'all' if searchable and min(searchable) == 1.0 else 'not all'} fit worse than "
+                f"the truth, so the shortfall is search rather than code. Code width unchanged at "
+                f"256 x d_p either way, which is arithmetic",
+            )
+        )
+
+    wrap = results.get("wrap_recovery.json")
+    if not wrap:
+        rows.append(
+            _row(
+                _claim("wrap-is-order-lossy"),
+                "unverifiable",
+                "results/wrap_recovery.json is not present, so nothing grades this",
+            )
+        )
+    else:
+        rows_by_band = {row["band"]: row["signs"] for row in wrap["rows"]}
+        inside = wrap["rows"][0]
+        beyond = [row["signs"] for row in wrap["rows"][1:]]
+        rows.append(
+            _row(
+                _claim("wrap-is-order-lossy"),
+                "met" if inside["signs"] == 1.0 and all(v < 1.0 for v in beyond) else "unmet",
+                f"{inside['band']} bytes recover {inside['signs']:.2%}; beyond that "
+                + ", ".join(
+                    f"{band} {value:.2%}"
+                    for band, value in rows_by_band.items()
+                    if band != inside["band"]
+                )
+                + " -- the fall-off is the claim, and it is a property of folding rather than of "
+                "the decoder",
+            )
+        )
+
     corpus_path = (run / "01-input" / "corpus.meta.json") if run else None
     if corpus_path is None or not corpus_path.is_file():
         rows.append(
             _row(
-                CLAIMS[9],
+                _claim("lanes-read-evenly"),
                 "unverifiable",
                 "no run directory was given, so there is no corpus.meta.json to read -- the "
                 "published measurements predate the lane-aware corpus and cannot answer this",
@@ -303,7 +408,7 @@ def assess(measurements: dict, run: Path | None = None) -> list[dict]:
         unfunded = [lane["lane"] for lane in corpus["lanes"] if not lane["sequences"]]
         rows.append(
             _row(
-                CLAIMS[9],
+                _claim("lanes-read-evenly"),
                 "met" if not unfunded and max(ratios) - min(ratios) < 1e-3 else "unmet",
                 f"{len(ratios)} lanes at {statistics.fmean(ratios):.4f} epochs each"
                 + (f", unfunded: {unfunded}" if unfunded else "")
@@ -351,10 +456,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run", default=None, help="a run directory to grade alongside")
     args = parser.parse_args(argv)
 
-    measurements = json.loads(
-        (EXERCISE / "results" / "measurements.json").read_text(encoding="utf-8")
-    )
-    rows = assess(measurements, Path(args.run) if args.run else None)
+    tracked = EXERCISE / "results"
+    measurements = json.loads((tracked / "measurements.json").read_text(encoding="utf-8"))
+    # Every other tracked bundle, by name. Read from the filesystem rather than from a list here:
+    # a list of evidence files beside the evidence files is a second copy, and the second copy is
+    # the one that goes stale when somebody publishes a new measurement.
+    results = {
+        path.name: json.loads(path.read_text(encoding="utf-8"))
+        for path in sorted(tracked.glob("*.json"))
+        if path.name != "measurements.json"
+    }
+    rows = assess(measurements, Path(args.run) if args.run else None, results)
     out = EXERCISE / "artifacts" / "evidence.md"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(render(rows), encoding="utf-8")

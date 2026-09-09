@@ -225,9 +225,10 @@ the only measured win among the schemes. Whether a code that separates positions
 better or worse thing to hand a model is a training question, and the honest answer today is that
 nobody here has asked it.
 
-**And it is not graded by `evidence.py`.** That module's `CLAIMS` are the sentences backed by
-`results/measurements.json`, and `assess` reads that one file. Both band-recovery measurements —
-`wrap_recovery.json` and `position_schemes.json` — sit outside it, so a reader running `evidence.py`
-sees nothing about either. That is a gap rather than a decision: closing it means teaching `assess`
-to read more than one evidence file, which is a change to the auditor and belongs with the auditor
-rather than smuggled in beside a new position scheme.
+**It IS graded by `evidence.py` now, and the gap this paragraph used to record is closed.** That
+module read `results/measurements.json` and nothing else, so both band-recovery measurements —
+`wrap_recovery.json` and `position_schemes.json` — were graded by nothing at all and a reader
+running the auditor saw no row for either. `assess` now takes every tracked bundle, read from the
+filesystem rather than from a list beside the files, and two claims are graded from them:
+`positions-past-d-p` and `wrap-is-order-lossy`. A bundle that is absent grades **unverifiable**,
+which is the third outcome and not a pass.

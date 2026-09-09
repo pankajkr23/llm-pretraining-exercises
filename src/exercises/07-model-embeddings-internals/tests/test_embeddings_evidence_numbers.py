@@ -1,4 +1,4 @@
-"""Every recovery percentage the README states must be in an evidence file.
+"""Every evidence figure the README states must be in an evidence file.
 
 **Why this file exists.** `AGENTS.md`'s rule is that prose stating a number is generated too, or it
 goes stale beside the table that is right — and this exercise's byte-recovery figures were exactly
@@ -10,9 +10,9 @@ The guard is deliberately about the *property* rather than a phrasing: a delimit
 README may state any percentage it likes, provided every one of them appears in the evidence files
 the block itself names. Rewriting the prose is free; inventing a number is not.
 
-    <!-- recovery-numbers: results/wrap_recovery.json results/position_schemes.json -->
+    <!-- evidence-numbers: results/wrap_recovery.json results/position_schemes.json -->
     ...prose and tables...
-    <!-- /recovery-numbers -->
+    <!-- /evidence-numbers -->
 
 **Both directions, as this repository's ledgers do.** The block must exist and must contain
 percentages, because a guard over an empty block passes for every input — and this one would then
@@ -35,19 +35,25 @@ EXERCISE = Path(__file__).resolve().parents[1]
 README = EXERCISE / "README.md"
 
 BLOCK = re.compile(
-    r"<!--\s*recovery-numbers:\s*(?P<files>[^>]*?)\s*-->(?P<body>.*?)<!--\s*/recovery-numbers\s*-->",
+    r"<!--\s*evidence-numbers:\s*(?P<files>[^>]*?)\s*-->(?P<body>.*?)<!--\s*/evidence-numbers\s*-->",
     re.S,
 )
-PERCENT = re.compile(
-    r"\b\d+\.\d{1,2}%(?P<escape><!--\s*unmeasured:\s*(?P<reason>(?:(?!-->).)*?)\s*-->)?",
+FIGURE = re.compile(
+    r"\b\d+\.\d{1,4}%?(?P<escape><!--\s*unmeasured:\s*(?P<reason>(?:(?!-->).)*?)\s*-->)?",
     re.S,
 )
-"""A percentage written to one or two decimals, and the escape that exempts one.
+"""A decimal figure, with or without a percent sign, and the escape that exempts one.
+
+**Any decimal, not only a percentage.** It began as a percent-only pattern for the byte-recovery
+tables and could not see the coherence table three sections above — four rows of bare decimals like
+`0.051`, hand-typed, matching `measurements.json::coherence` by nothing but somebody's care. Same
+failure, different notation.
 
 **Decimals only, and that is a stated limit rather than an oversight.** Round integers in this
-prose are approximations and yardsticks — "about 47%", "a third" — while every figure that came out
-of a measurement here is quoted to one or two places. Widening the pattern to bare integers would
-mean exempting every one of them, and an exemption list that long is one nobody reads.
+prose are approximations and yardsticks — "about 47%", "a third", "128 bytes" — while every figure
+that came out of a measurement here is quoted to at least one place. Widening the pattern to bare
+integers would mean exempting every one of them, and an exemption list that long is one nobody
+reads.
 
 **The escape exists because a corrected number is deliberately not measured.** This exercise's
 recovery section quotes the figures it *replaced* — the `19.1%` that four documents carried, the
@@ -71,15 +77,17 @@ def _licensed(files: list[str]) -> set[str]:
     the alternative is teaching the guard which key means which, which is a second copy of the
     schema.
 
-    One and two decimal places both, because `100.0%` and `100.00%` are the same measurement and a
-    guard that accepted only one would be asking the prose to match the test's formatting rather
-    than the evidence.
+    One to four decimal places, with and without a percent sign, because `100.0%`, `100.00%` and
+    `0.051` are all the same kind of claim written the way its own table writes it. A guard that
+    accepted one spelling would be asking the prose to match the test's formatting rather than the
+    evidence, which is how a guard ends up rewording correct work.
     """
     out: set[str] = set()
 
     def offer(value: float) -> None:
-        out.add(f"{value:.2f}%")
-        out.add(f"{value:.1f}%")
+        for places in range(1, 5):
+            out.add(f"{value:.{places}f}")
+            out.add(f"{value:.{places}f}%")
 
     def walk(node: object) -> None:
         if isinstance(node, dict):
@@ -110,11 +118,11 @@ def _blocks() -> list[tuple[list[str], str]]:
 def test_the_readme_delimits_its_recovery_numbers_at_all() -> None:
     """A guard with nothing to read passes for every input, which is worse than no guard."""
     blocks = _blocks()
-    assert blocks, "no <!-- recovery-numbers: ... --> block in the README"
+    assert blocks, "no <!-- evidence-numbers: ... --> block in the README"
     for files, body in blocks:
-        assert files, "a recovery-numbers block must name the evidence files that license it"
-        assert PERCENT.search(body), (
-            "a recovery-numbers block with no percentage in it is checking nothing — either the "
+        assert files, "a evidence-numbers block must name the evidence files that license it"
+        assert FIGURE.search(body), (
+            "a evidence-numbers block with no percentage in it is checking nothing — either the "
             "prose moved out of the block, or the markers are around the wrong lines"
         )
 
@@ -124,14 +132,14 @@ def test_every_recovery_percentage_in_the_readme_is_in_an_evidence_file() -> Non
     offenders = []
     for files, body in _blocks():
         licensed = _licensed(files)
-        for found in PERCENT.finditer(body):
+        for found in FIGURE.finditer(body):
             if found.group("escape"):
                 continue
             if found.group() not in licensed:
                 line = body[: found.start()].count("\n")
                 offenders.append(f"{found.group()} (block line {line}) — not in {', '.join(files)}")
     assert not offenders, (
-        f"{len(offenders)} recovery percentage(s) in the README are in no evidence file. Re-run\n"
+        f"{len(offenders)} evidence figure(s) in the README are in no evidence file. Re-run\n"
         "the measurement and quote what it says, or move the sentence out of the block:\n  "
         + "\n  ".join(offenders)
     )
@@ -140,7 +148,7 @@ def test_every_recovery_percentage_in_the_readme_is_in_an_evidence_file() -> Non
 def test_every_exemption_carries_a_real_reason() -> None:
     """An escape with no reason is a hole the size of the next number someone wants to type."""
     for _, body in _blocks():
-        for found in PERCENT.finditer(body):
+        for found in FIGURE.finditer(body):
             if found.group("escape"):
                 assert len(found.group("reason")) > 20, (
                     f"{found.group()!r} is exempted without saying why it is not measured"
@@ -155,8 +163,8 @@ def test_the_guard_fails_on_a_number_that_is_not_measured(monkeypatch, tmp_path)
     files, body = _blocks()[0]
     planted = tmp_path / "README.md"
     planted.write_text(
-        f"<!-- recovery-numbers: {' '.join(files)} -->\n{body}\nand also **73.41%** of them\n"
-        "<!-- /recovery-numbers -->\n",
+        f"<!-- evidence-numbers: {' '.join(files)} -->\n{body}\nand also **73.41%** of them\n"
+        "<!-- /evidence-numbers -->\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(module, "README", planted)
