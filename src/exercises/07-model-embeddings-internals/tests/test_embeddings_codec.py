@@ -73,3 +73,58 @@ def test_the_codec_check_can_actually_fail(sample, projection):
         [projection[np.frombuffer(bs[:32], dtype=np.uint8).astype(np.int64)].sum(0) for bs in small]
     )
     assert not np.allclose(enc.h, broken, atol=1e-7)
+
+
+WRAP = KroneckerConfig(d_p=32, d_model=384, positions="wrap", n_buckets=0)
+
+
+def _wrap_table(vocabulary):
+    return codec.wrap_signs(max(len(t) for t in vocabulary) // WRAP.d_p + 2, WRAP.d_p)
+
+
+def test_the_recorded_length_is_positions_not_atoms(vocabulary):
+    """`atoms` merges duplicate `(slot, byte)` pairs; the `1/sqrt(L)` scale was never per atom.
+
+    Under `wrap`, two folded positions can land on the same slot carrying the same byte, and the
+    merged non-zero count is then smaller than the position count. `encode` recorded the merged
+    count and `targets_from_h` undid the scale with it, so the recovered target came back multiplied
+    by `sqrt(nnz / L)`.
+
+    Measured on the frozen vocabulary before the fix: **142 of 10,000 tokens** affected, worst case
+    a 65-byte token merging to 48 atoms — a **14.07%** error on every coordinate. It was invisible
+    in every published recovery figure because all of them were measured under `onehot`, where each
+    position owns a distinct slot and no merge is possible.
+    """
+    table = _wrap_table(vocabulary)
+    merging = [t for t in vocabulary if codec.atoms(t, WRAP, table)[0].size != len(t)]
+    assert merging, "no vocabulary token merges under wrap; this test is not exercising the case"
+
+    enc = codec.encode(merging[:40], np.eye(256 * WRAP.d_p, WRAP.d_model), WRAP)
+    assert list(enc.lengths) == [len(t) for t in merging[:40]], (
+        "encode recorded the merged atom count as the length; targets_from_h then undoes the "
+        "1/sqrt(L) scale with the wrong L"
+    )
+
+
+def test_the_recovered_target_is_exact_for_a_token_that_merges(vocabulary, projection):
+    """The end-to-end consequence: `t = sum_p sign * W[atom_p]`, to float precision.
+
+    The twin of the test above, and the one that would have caught this without anyone knowing the
+    word "merge" — it compares the whole round trip against a target built by hand.
+    """
+    table = _wrap_table(vocabulary)
+    worst = max(vocabulary, key=lambda t: len(t) - codec.atoms(t, WRAP, table)[0].size)
+    assert codec.atoms(worst, WRAP, table)[0].size < len(worst), "the fixture token does not merge"
+
+    got = codec.targets_from_h(codec.encode([worst], projection, WRAP), projection, WRAP)[0]
+    expected = np.zeros(projection.shape[1])
+    for position, byte in enumerate(worst):
+        slot = position % WRAP.d_p
+        expected += table[position // WRAP.d_p, slot] * projection[slot * 256 + byte]
+
+    live = np.abs(expected) > 1e-9
+    assert live.any()
+    ratio = got[live] / expected[live]
+    assert np.allclose(ratio, 1.0, atol=1e-9), (
+        f"the recovered target is scaled by {ratio.min():.6f}..{ratio.max():.6f} rather than 1.0"
+    )

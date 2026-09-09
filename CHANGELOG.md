@@ -240,191 +240,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   own wording verbatim. **Nine more were never recovered**, `summary.py` among them, which produced
   the ten-arm headline table; that document says so rather than leaving a reader to discover it.
 
-### Fixed
-
-- **`decode.recover` accepted wrapped positions and could not decode them.** Its matched filter
-  takes an `argmax` over the projection's raw rows, and under `wrap` an atom enters as
-  `sign × row` with half the slots carrying `-1`, which inverts the argmax. It scored **47%** on
-  tokens four documents claim are recovered perfectly, and no test had ever driven it that way —
-  `recover` rejects only `fourier`, and every test used `onehot`. The decoder now folds the signs
-  in and scores **100.00%**; two tests hold it, the second asserting an unsigned dictionary does
-  much worse so the first cannot pass for the wrong reason.
-
-- **Two recovery figures the page and three documents stated were in no evidence file.** The only
-  `14.6` in `results/measurements.json` is a *t*-statistic in an unrelated block — a coincidence
-  that made them look sourced. `tools/measure_wrap_recovery.py` now measures the shipped scheme
-  across the whole vocabulary — **100.00%** to 32 bytes, **15.05%** for 33–64, **0.00%** beyond —
-  and that bundle is tracked. The README had said 19.1% for the middle band.
-
-  **The figure for the removed permutation variant is reported as unreproduced rather than
-  re-measured.** Two attempts to rebuild it from its description produced harness artefacts — an
-  indexing error scoring it 0.00% where a relabelling is a pure rename, then a normalisation
-  mismatch scoring it 1.25%. Both looked like devastating results and were statements about the
-  harness. The ordering it established (permutations are worse) is kept; the number is not.
-
-- **The README's own numbers.** The input-side saving was **91%** and is **83.7%**
-  (`1 - 6,291,456 / 38,597,376`). The test counts said *54 tests* and a *20-test browser suite*
-  against 205 and 33, and are now checked against the test files by a guard that counts with `ast`
-  — a regex version undercounted the browser file by 14 and would have accepted the stale number
-  it exists to catch.
-
-- **The rewritten `reproduce` section threw and took the last six sections of the page with it.**
-  Its helper referenced `M` at module scope, where `M` is a *parameter* of `buildPage` and does not
-  exist. CI reported seven timeouts waiting for `section#reproduce`; the cause was one
-  `ReferenceError` thrown hundreds of lines earlier, and nothing in the failure named it. A browser
-  test now listens for `pageerror` and reports it in one line — it reloads rather than reading the
-  module-scoped page as-is, because an error during the fixture's own first navigation would
-  otherwise go unseen and the guard would pass on exactly the page it exists to catch.
-
-- **The page-source guard was unreliable on the page it guards.** Its first version hand-rolled a
-  JavaScript string parser, desynchronised on the first apostrophe inside a double-quoted string,
-  and silently stopped seeing everything after it — including a literal planted directly to test
-  it. It now scans lines, which cannot desynchronise, and the pattern is narrow enough that
-  ordinary code numbers do not match.
-
-- **The module guard's list of tool scripts was a hardcoded second copy** and went stale the moment
-  the exercise grew `verify.py`, `evidence.py` and four measurement tools: it reported a correctly
-  documented script as a deleted module. It reads the filesystem now.
-
-- **A run's per-step trace was rounded to six decimal places, so it could not re-derive the mean it
-  is the material for.** Found by running the new verifier against the first real run: it reported
-  all ten arms as failing while printing `6.607202 recomputed against 6.607202 published`. Six
-  decimals are enough to *display* a loss and not enough to *reproduce a mean of five of them*, so
-  the file that exists to let a reader re-derive the conclusion could not. Traces are now written
-  with `repr`, which round-trips a float exactly, and a test asserts the trace reads back as the
-  losses it was written from. The tolerance was left at `1e-9` rather than loosened — a looser one
-  would have hidden this.
-
-- **An arm in exercise 07's registry was named for a model it was not.** `"tied + residual MLP"`
-  was built on one-hot positions, while the row of that name in `results/measurements.json` came
-  from a driver that called it `v2-wrap-M-MLP` and built it on **wrapped** positions. The published
-  −0.002 nats is therefore a gap against `wrapped positions`, and quoting it beside a one-hot arm
-  compares it to a baseline it was never measured against — with every number plausible and nothing
-  failing. It is now built on wrap and named `"wrap + residual MLP"`, and a guard reads each built
-  head's own configuration rather than the registry's arguments, so it is a check and not a mirror.
-
-- **Exercise 07's `code_digest` vouched for code it never read.** It covered `embeddings/` alone,
-  while the transformer body comes from exercise 09's `lossheads.model` and the corpus is parsed by
-  exercise 06's `trainingdata.corpus` — an edit to either moves every number in a bundle. It now
-  covers all three packages, and a test plants a module in each and asserts the digest moves; the
-  old digest was verified not to move for two of the three.
-
-- **Exercise 07's notebook is rebuilt around the pipeline it teaches: input → process → output.**
-  It taught the *analysis* well — the budget arithmetic, the recovery certificate, the truncation
-  collisions — and never once showed how a Kronecker embedding is actually made. It showed the
-  sparse coordinates but never the induced embedding `E = K·W_p`, never the tie that is the whole of
-  v2, and never the evidence the recommendation rests on. A reader could not have answered a
-  question about the mechanism from it.
-
-  It now walks one real token from text to loss, printing the shape at every stage, so the thing a
-  reader watches is an embedding being **built** rather than a table being looked up: text → ids →
-  bytes → the sparse code `κ` (3 of 8,192 coordinates, unit norm) → `W_p`, the only learned object →
-  `E = K·W_p`, computed and never stored → the tie. Every knob — `d_p`, `d_model`, `positions`,
-  `n_buckets`, `znorm`, the seed — is a named constant in one cell, with a table saying what each
-  one should move and what it must not.
-
-  **It also re-runs the claims this exercise made and then withdrew**, so they fail in front of the
-  reader instead of being asserted in prose. Six of the eight have a live cell; two are editorial.
-  That matters because the four documents recording those corrections disagree about how many there
-  are — the README and the NOTICE say three, the progress log lists five, the agent notes say six —
-  and a count that is produced by re-running cannot drift the way a typed one does.
-
-  **The headline statistic is now re-derived rather than quoted.** `measurements.json` ships the ten
-  raw per-seed losses, so the notebook recomputes the unpaired spread (0.469), the paired sd
-  (0.024), the sign test (5/5, p = 0.031) and both arm means from first principles, and prints them
-  beside the recorded values. Four independent quantities, all reconstructed — the part of the claim
-  a reader does not have to take on trust.
-
-  **What it does not do is pretend to reproduce the trained arms.** The code that produced them is
-  not in this repository, and the recorded setup pins the architecture while pinning none of what
-  decides where a loss lands — no learning rate, optimiser, schedule, head count, or seed-to-data
-  mapping. The notebook says so where a reader meets that section, rather than omitting it quietly.
-
-  Lite profile runs in **8 seconds** and the full profile in **45**, both verified by executing the
-  notebook end to end with `nbclient`. Nothing tracked changed: no measurement, no page, no package
-  code. The notebook and its builder are gitignored, so this entry is the only record of it.
-
-### Fixed
-
-- **A stale claim on exercise 07's front door.** Its README said the published numbers *"came from
-  code that is not in this repository"*. After the recovery that misleads: the driver came back and
-  its settings — a different transformer, no gradient clipping, a 200,000-token corpus window, a
-  vocabulary of 10,002 — are recorded in `PROGRESS.md`. The sentence now says the earlier run is
-  specified though its driver is untracked, and that the two runs compare by sign and ordering
-  rather than by absolute loss.
-
-- **Exercise 07's `README.md` had a mangled heading on its front door.** A link label had been
-  merged into a heading, so the line rendered as ``## Run it`](#run-it) · **the page:** …`` to
-  anyone arriving at the exercise. Restored to the jump line it was meant to be.
-
-- **Exercise 07's page typed one number by hand, and it was the only one that could go stale.**
-  Every table on that page reads `M`, the frozen payload generated from `results/measurements.json`,
-  precisely so a published figure cannot drift from the run that produced it. One number escaped:
-  the glossary's definition of *nats* ended `"beats the published design by 0.141"`, typed into a
-  string literal. A measurement that moved would have updated every table and left that sentence
-  quietly contradicting them — the exact failure the generated-data rule exists to prevent, hiding
-  inside the prose that explains the unit. It is derived from `M.attribution` now, and `GLOSSARY`
-  became `glossaryEntries(M)` so it cannot regress to a literal without someone noticing.
-
-  **The rendered page is unchanged**, and that was checked rather than assumed: the page was driven
-  in a browser on this branch and on `main`, and the full body text is byte-identical at 19,856
-  characters both ways.
-
-- **Nothing checked that `web/data.js` still matched the measurements it is generated from.**
-  `tools/build_web_data.py` writes it and the exercise's `CLAUDE.md` tells you to run that after
-  changing a measurement, but a search of `tests/`, `.github/workflows/` and `deploy/` for either
-  filename returned **no hits at all**. Editing the JSON and forgetting the command left the
-  published page serving the previous run's numbers with the whole suite green.
-
-  `tests/test_embeddings_page_data.py` closes it: parse both, assert equal, plus a check that the
-  generated file still carries its own "do not edit by hand" banner and a deliberately-broken twin
-  that perturbs one number and asserts the comparison notices. Watched failing — a one-digit change
-  to `v1_total` in `data.js` turns it red with the regeneration command in the message, and the file
-  was restored in a `finally` and confirmed byte-identical. It is pure Python and needs neither
-  torch nor a browser, so unlike the render suite it runs in the plain `test` job on every push,
-  which is where a guard against forgetting a command belongs.
-
-- **Two errors in the rebuilt notebook, found by reading its own output rather than by a test.**
-  The scale-bug cell compared the induced embedding against `torch.nn.Embedding`'s default `N(0,1)`
-  initialisation, whose row norm is `√d_model ≈ 19.6` — which happens to match the induced norm, so
-  the cell reported a ratio of **1.0×** where the measured figure is **49.5×** and hid the entire
-  effect it exists to show. A real embedding initialises near 0.02, and the record's `0.3197` is
-  exactly `√256 × 0.02`. Fixed, and the cell now invites the reader to set the baseline back to 1.0
-  and watch the effect vanish, because that is the mistake worth being able to recognise.
-
-  The recovery cell drew its sample from the first 300 tokens, which are all short, so `exact_repr`
-  and `exact_full` came out identical and the cell demonstrated nothing while appearing to agree
-  with itself. It now samples across the vocabulary.
-
-- **A claim of mine about the README was wrong, and the notebook now says so.** I recorded that
-  `94.67%` had no measurement behind it. It is absent from `measurements.json`, but it is
-  **re-derivable**: it is the fraction of the frozen vocabulary that fits inside `d_p = 32`, exactly
-  9,467 of 10,000, which the notebook computes. It is under-recorded, not unsupported. The
-  `cond(WᵀW) 2.4 → 29.5` figure beside it remains genuinely unbacked.
-
-- **The guard froze the two working notes it was meant to protect, and I had made them
-  unfreezable.** `#152` put `TODO.md` and `HANDOFF.md` in `[irreplaceable]`, a section that is
-  deliberately `NO_ESCAPE_HATCH` — naming a file in `UNIT.md` cannot unlock it.
-
-  That reasoning is right for a notebook: a unit that legitimately regenerates one does it by running
-  its builder, which writes through a path the guard never inspects, so a hatch would buy nothing.
-  **It is wrong for a working note.** Rewriting them *is* their function, and the mistake surfaced
-  immediately: the guard refused a rewrite of `HANDOFF.md` that had been explicitly asked for, with
-  no way to name past it. A to-do list no agent can update is not a to-do list.
-
-  They still need protecting, and more than most files here — neither is in git, and `HANDOFF.md` is
-  not in `backup_local_only.py::PATTERNS` either, so it exists in exactly one place on disk and an
-  accidental clobber takes the only copy. So they move to a new `[working_notes]` section that
-  **does** honour the hatch: refused by default, allowed when a unit names the file, which makes the
-  overwrite deliberate rather than accidental — the same bar as editing a guard.
-
-  **`notebooks/**` and the builders stay in `[irreplaceable]` with no hatch**, and a twin asserts
-  that naming one does not unlock it, so this change cannot quietly weaken the protection on the
-  files this repository has actually lost. Watched failing both ways: emptying the new section, and
-  moving the notes back under the no-hatch rule. The section needed no code change to take effect —
-  `_pattern_sections` derives the enforced list from the policy, which is the fix #152 made after the
-  hardcoded list would have left a new section inert.
-
 ### Added
 
 - **The S07 notebook's section 5 now trains arms in front of the reader instead of explaining why it
@@ -641,6 +456,208 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **`codec.encode` recorded the merged atom count where the `1/sqrt(L)` scale needed the position
+  count.** `atoms` merges duplicate `(slot, byte)` pairs, which happens only under `wrap`, where two
+  folded positions can land on the same slot carrying the same byte. The scale was applied per
+  *position*, so `targets_from_h` had to undo it per position; using the merged count instead
+  returned a target multiplied by `sqrt(nnz / L)` on every coordinate.
+
+  Measured on the frozen vocabulary: **142 of 10,000 tokens** affected, worst case a 65-byte token
+  merging to 48 atoms — a **14.07%** error. After the fix the recovered target matches a
+  hand-built one to `1.000000000`.
+
+  **No published number moves, and saying why matters more than the fix.** Every published recovery
+  figure was measured under `onehot`, where each position owns a distinct slot and no merge is
+  possible — a positive control confirms zero merges there. In the one `wrap` band where merging is
+  common, 105 of 465 tokens were mis-scaled and the band's recovery is **15.05% before and after**:
+  those tokens were failing to recover anyway. It was a latent defect that would have bitten the
+  moment wrapped invertibility mattered, which is exactly what problem 3 is about.
+
+  Two guards, both watched failing against the old behaviour: one asserting `lengths` is the
+  position count, one comparing the whole round trip against a target built by hand — the second
+  would have caught this without anyone knowing the word "merge".
+
+- **`decode.recover` accepted wrapped positions and could not decode them.** Its matched filter
+  takes an `argmax` over the projection's raw rows, and under `wrap` an atom enters as
+  `sign × row` with half the slots carrying `-1`, which inverts the argmax. It scored **47%** on
+  tokens four documents claim are recovered perfectly, and no test had ever driven it that way —
+  `recover` rejects only `fourier`, and every test used `onehot`. The decoder now folds the signs
+  in and scores **100.00%**; two tests hold it, the second asserting an unsigned dictionary does
+  much worse so the first cannot pass for the wrong reason.
+
+- **Two recovery figures the page and three documents stated were in no evidence file.** The only
+  `14.6` in `results/measurements.json` is a *t*-statistic in an unrelated block — a coincidence
+  that made them look sourced. `tools/measure_wrap_recovery.py` now measures the shipped scheme
+  across the whole vocabulary — **100.00%** to 32 bytes, **15.05%** for 33–64, **0.00%** beyond —
+  and that bundle is tracked. The README had said 19.1% for the middle band.
+
+  **The figure for the removed permutation variant is reported as unreproduced rather than
+  re-measured.** Two attempts to rebuild it from its description produced harness artefacts — an
+  indexing error scoring it 0.00% where a relabelling is a pure rename, then a normalisation
+  mismatch scoring it 1.25%. Both looked like devastating results and were statements about the
+  harness. The ordering it established (permutations are worse) is kept; the number is not.
+
+- **The README's own numbers.** The input-side saving was **91%** and is **83.7%**
+  (`1 - 6,291,456 / 38,597,376`). The test counts said *54 tests* and a *20-test browser suite*
+  against 205 and 33, and are now checked against the test files by a guard that counts with `ast`
+  — a regex version undercounted the browser file by 14 and would have accepted the stale number
+  it exists to catch.
+
+- **The rewritten `reproduce` section threw and took the last six sections of the page with it.**
+  Its helper referenced `M` at module scope, where `M` is a *parameter* of `buildPage` and does not
+  exist. CI reported seven timeouts waiting for `section#reproduce`; the cause was one
+  `ReferenceError` thrown hundreds of lines earlier, and nothing in the failure named it. A browser
+  test now listens for `pageerror` and reports it in one line — it reloads rather than reading the
+  module-scoped page as-is, because an error during the fixture's own first navigation would
+  otherwise go unseen and the guard would pass on exactly the page it exists to catch.
+
+- **The page-source guard was unreliable on the page it guards.** Its first version hand-rolled a
+  JavaScript string parser, desynchronised on the first apostrophe inside a double-quoted string,
+  and silently stopped seeing everything after it — including a literal planted directly to test
+  it. It now scans lines, which cannot desynchronise, and the pattern is narrow enough that
+  ordinary code numbers do not match.
+
+- **The module guard's list of tool scripts was a hardcoded second copy** and went stale the moment
+  the exercise grew `verify.py`, `evidence.py` and four measurement tools: it reported a correctly
+  documented script as a deleted module. It reads the filesystem now.
+
+- **A run's per-step trace was rounded to six decimal places, so it could not re-derive the mean it
+  is the material for.** Found by running the new verifier against the first real run: it reported
+  all ten arms as failing while printing `6.607202 recomputed against 6.607202 published`. Six
+  decimals are enough to *display* a loss and not enough to *reproduce a mean of five of them*, so
+  the file that exists to let a reader re-derive the conclusion could not. Traces are now written
+  with `repr`, which round-trips a float exactly, and a test asserts the trace reads back as the
+  losses it was written from. The tolerance was left at `1e-9` rather than loosened — a looser one
+  would have hidden this.
+
+- **An arm in exercise 07's registry was named for a model it was not.** `"tied + residual MLP"`
+  was built on one-hot positions, while the row of that name in `results/measurements.json` came
+  from a driver that called it `v2-wrap-M-MLP` and built it on **wrapped** positions. The published
+  −0.002 nats is therefore a gap against `wrapped positions`, and quoting it beside a one-hot arm
+  compares it to a baseline it was never measured against — with every number plausible and nothing
+  failing. It is now built on wrap and named `"wrap + residual MLP"`, and a guard reads each built
+  head's own configuration rather than the registry's arguments, so it is a check and not a mirror.
+
+- **Exercise 07's `code_digest` vouched for code it never read.** It covered `embeddings/` alone,
+  while the transformer body comes from exercise 09's `lossheads.model` and the corpus is parsed by
+  exercise 06's `trainingdata.corpus` — an edit to either moves every number in a bundle. It now
+  covers all three packages, and a test plants a module in each and asserts the digest moves; the
+  old digest was verified not to move for two of the three.
+
+- **Exercise 07's notebook is rebuilt around the pipeline it teaches: input → process → output.**
+  It taught the *analysis* well — the budget arithmetic, the recovery certificate, the truncation
+  collisions — and never once showed how a Kronecker embedding is actually made. It showed the
+  sparse coordinates but never the induced embedding `E = K·W_p`, never the tie that is the whole of
+  v2, and never the evidence the recommendation rests on. A reader could not have answered a
+  question about the mechanism from it.
+
+  It now walks one real token from text to loss, printing the shape at every stage, so the thing a
+  reader watches is an embedding being **built** rather than a table being looked up: text → ids →
+  bytes → the sparse code `κ` (3 of 8,192 coordinates, unit norm) → `W_p`, the only learned object →
+  `E = K·W_p`, computed and never stored → the tie. Every knob — `d_p`, `d_model`, `positions`,
+  `n_buckets`, `znorm`, the seed — is a named constant in one cell, with a table saying what each
+  one should move and what it must not.
+
+  **It also re-runs the claims this exercise made and then withdrew**, so they fail in front of the
+  reader instead of being asserted in prose. Six of the eight have a live cell; two are editorial.
+  That matters because the four documents recording those corrections disagree about how many there
+  are — the README and the NOTICE say three, the progress log lists five, the agent notes say six —
+  and a count that is produced by re-running cannot drift the way a typed one does.
+
+  **The headline statistic is now re-derived rather than quoted.** `measurements.json` ships the ten
+  raw per-seed losses, so the notebook recomputes the unpaired spread (0.469), the paired sd
+  (0.024), the sign test (5/5, p = 0.031) and both arm means from first principles, and prints them
+  beside the recorded values. Four independent quantities, all reconstructed — the part of the claim
+  a reader does not have to take on trust.
+
+  **What it does not do is pretend to reproduce the trained arms.** The code that produced them is
+  not in this repository, and the recorded setup pins the architecture while pinning none of what
+  decides where a loss lands — no learning rate, optimiser, schedule, head count, or seed-to-data
+  mapping. The notebook says so where a reader meets that section, rather than omitting it quietly.
+
+  Lite profile runs in **8 seconds** and the full profile in **45**, both verified by executing the
+  notebook end to end with `nbclient`. Nothing tracked changed: no measurement, no page, no package
+  code. The notebook and its builder are gitignored, so this entry is the only record of it.
+
+- **A stale claim on exercise 07's front door.** Its README said the published numbers *"came from
+  code that is not in this repository"*. After the recovery that misleads: the driver came back and
+  its settings — a different transformer, no gradient clipping, a 200,000-token corpus window, a
+  vocabulary of 10,002 — are recorded in `PROGRESS.md`. The sentence now says the earlier run is
+  specified though its driver is untracked, and that the two runs compare by sign and ordering
+  rather than by absolute loss.
+
+- **Exercise 07's `README.md` had a mangled heading on its front door.** A link label had been
+  merged into a heading, so the line rendered as ``## Run it`](#run-it) · **the page:** …`` to
+  anyone arriving at the exercise. Restored to the jump line it was meant to be.
+
+- **Exercise 07's page typed one number by hand, and it was the only one that could go stale.**
+  Every table on that page reads `M`, the frozen payload generated from `results/measurements.json`,
+  precisely so a published figure cannot drift from the run that produced it. One number escaped:
+  the glossary's definition of *nats* ended `"beats the published design by 0.141"`, typed into a
+  string literal. A measurement that moved would have updated every table and left that sentence
+  quietly contradicting them — the exact failure the generated-data rule exists to prevent, hiding
+  inside the prose that explains the unit. It is derived from `M.attribution` now, and `GLOSSARY`
+  became `glossaryEntries(M)` so it cannot regress to a literal without someone noticing.
+
+  **The rendered page is unchanged**, and that was checked rather than assumed: the page was driven
+  in a browser on this branch and on `main`, and the full body text is byte-identical at 19,856
+  characters both ways.
+
+- **Nothing checked that `web/data.js` still matched the measurements it is generated from.**
+  `tools/build_web_data.py` writes it and the exercise's `CLAUDE.md` tells you to run that after
+  changing a measurement, but a search of `tests/`, `.github/workflows/` and `deploy/` for either
+  filename returned **no hits at all**. Editing the JSON and forgetting the command left the
+  published page serving the previous run's numbers with the whole suite green.
+
+  `tests/test_embeddings_page_data.py` closes it: parse both, assert equal, plus a check that the
+  generated file still carries its own "do not edit by hand" banner and a deliberately-broken twin
+  that perturbs one number and asserts the comparison notices. Watched failing — a one-digit change
+  to `v1_total` in `data.js` turns it red with the regeneration command in the message, and the file
+  was restored in a `finally` and confirmed byte-identical. It is pure Python and needs neither
+  torch nor a browser, so unlike the render suite it runs in the plain `test` job on every push,
+  which is where a guard against forgetting a command belongs.
+
+- **Two errors in the rebuilt notebook, found by reading its own output rather than by a test.**
+  The scale-bug cell compared the induced embedding against `torch.nn.Embedding`'s default `N(0,1)`
+  initialisation, whose row norm is `√d_model ≈ 19.6` — which happens to match the induced norm, so
+  the cell reported a ratio of **1.0×** where the measured figure is **49.5×** and hid the entire
+  effect it exists to show. A real embedding initialises near 0.02, and the record's `0.3197` is
+  exactly `√256 × 0.02`. Fixed, and the cell now invites the reader to set the baseline back to 1.0
+  and watch the effect vanish, because that is the mistake worth being able to recognise.
+
+  The recovery cell drew its sample from the first 300 tokens, which are all short, so `exact_repr`
+  and `exact_full` came out identical and the cell demonstrated nothing while appearing to agree
+  with itself. It now samples across the vocabulary.
+
+- **A claim of mine about the README was wrong, and the notebook now says so.** I recorded that
+  `94.67%` had no measurement behind it. It is absent from `measurements.json`, but it is
+  **re-derivable**: it is the fraction of the frozen vocabulary that fits inside `d_p = 32`, exactly
+  9,467 of 10,000, which the notebook computes. It is under-recorded, not unsupported. The
+  `cond(WᵀW) 2.4 → 29.5` figure beside it remains genuinely unbacked.
+
+- **The guard froze the two working notes it was meant to protect, and I had made them
+  unfreezable.** `#152` put `TODO.md` and `HANDOFF.md` in `[irreplaceable]`, a section that is
+  deliberately `NO_ESCAPE_HATCH` — naming a file in `UNIT.md` cannot unlock it.
+
+  That reasoning is right for a notebook: a unit that legitimately regenerates one does it by running
+  its builder, which writes through a path the guard never inspects, so a hatch would buy nothing.
+  **It is wrong for a working note.** Rewriting them *is* their function, and the mistake surfaced
+  immediately: the guard refused a rewrite of `HANDOFF.md` that had been explicitly asked for, with
+  no way to name past it. A to-do list no agent can update is not a to-do list.
+
+  They still need protecting, and more than most files here — neither is in git, and `HANDOFF.md` is
+  not in `backup_local_only.py::PATTERNS` either, so it exists in exactly one place on disk and an
+  accidental clobber takes the only copy. So they move to a new `[working_notes]` section that
+  **does** honour the hatch: refused by default, allowed when a unit names the file, which makes the
+  overwrite deliberate rather than accidental — the same bar as editing a guard.
+
+  **`notebooks/**` and the builders stay in `[irreplaceable]` with no hatch**, and a twin asserts
+  that naming one does not unlock it, so this change cannot quietly weaken the protection on the
+  files this repository has actually lost. Watched failing both ways: emptying the new section, and
+  moving the notes back under the no-hatch rule. The section needed no code change to take effect —
+  `_pattern_sections` derives the enforced list from the policy, which is the fix #152 made after the
+  hardcoded list would have left a new section inert.
+
 - **Four guard tests were decided by a gitignored file that only one machine has.** They drove
   `decide()` against the real repository root, so they read whatever `.claude/UNIT.md` a unit had
   written — and naming a guard file there legitimately unlocks it. The moment a unit declared a
@@ -659,8 +676,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   added `tests/test_introductions_render.py` — **109 integration tests** that drive the real pages
   in Chromium — and touched neither document. A README that understates what is guarded misleads
   exactly as much as one that overstates it.
-
-### Fixed
 
 - **Exercise 02 redistributes CC BY-SA Wikipedia text and never said so where anyone could see it.**
   Fourteen tracked files under `corpus/` are Wikipedia article text — the "India" article in five
