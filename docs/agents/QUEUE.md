@@ -1054,4 +1054,30 @@ predates the harness — so it is logged as what it was.
                           are checked against the evidence files for the first time -- red on its
                           first real run, because 94.67%, published as the vocabulary-wide
                           recovery rate at d_p=32, is in no evidence file
+2026-09-09  repo          #163 opened: two tools that let through exactly what they exist to
+                          prevent. Both answered their question correctly, about a case they
+                          never saw. THE PreToolUse GUARD COULD NOT SEE A DESTRUCTIVE GIT
+                          COMMAND: every rule in the policy matches a path and
+                          bash_write_targets finds paths, so `git clean -fdx` -- which deletes
+                          every gitignored file here, meaning every notebook, every builder and
+                          every requirements document -- produced an EMPTY target list and a clean
+                          pass. The [irreplaceable] section was working; it was never consulted. A
+                          tracked [destructive_git] section refuses six shapes BY THEIR FLAG, per
+                          shell segment so bundling cannot hide one: clean -x/-X, stash -a,
+                          reset --hard, push --force, tag -d, branch -D. The pairs are the point --
+                          clean -fd, stash -u and branch -d stay allowed, because the flag is the
+                          whole distinction and a guard on the command name would block the safe
+                          half and be uninstalled by lunchtime. Clustered short flags read letter
+                          by letter, since -fdx is what anyone types. Two limits written into the
+                          policy: a tag checkout cannot be told from a branch checkout without
+                          asking git, and a shell can build the flag at runtime. SYNC_OPEN_PRS
+                          REPLAYED AN EDIT AS AN ADDITION: difflib reports an in-place edit as a
+                          replace, the tool collected only the "in" half and only ever inserted, so
+                          a reworded line landed beside main's original and both shipped -- nothing
+                          failed, because the entry was present and every count of it was right.
+                          Edits replay as edits now; where main has since changed those lines the
+                          replacement is added and the run REPORTS a possible duplicate rather than
+                          deleting a fuzzy match and losing someone's work. Its tests carried their
+                          own copy of the diff they tested; both call one changed_blocks now. Six
+                          guards, each watched going red against the real defect
 ```
