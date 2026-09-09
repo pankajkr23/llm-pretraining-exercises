@@ -228,3 +228,29 @@ def test_without_a_stop_symbol_a_prefix_always_outscores_its_extensions(vocabula
         f"the stop symbol must make the ordering expressible, but only {flipped}/{len(pairs)} "
         f"prefix pairs could be flipped"
     )
+
+
+def test_spc_needs_no_new_head_code(vocabulary):
+    """The claim four documents make about `spc`, driven rather than asserted.
+
+    `codec.py`, `CLAUDE.md`, `DECISIONS.md` and `PROGRESS.md` all say an `spc` training arm would
+    need no change to `heads.py`, because the sparse code matrix is built through `codec.atoms`.
+    That is a statement about a code path, and a statement about a code path nobody drives is the
+    kind this exercise has already been wrong about — the residual MLP arm was documented on one
+    position scheme and built on another.
+
+    So: build the head, take a gradient, and check the numbers are finite. It says nothing about
+    whether the arm would train WELL — its code is roughly `d_p` times denser, which is a cost and
+    not a defect — only that the path exists and the documents are not describing something absent.
+    """
+    cfg = KroneckerConfig(d_p=32, d_model=64, positions="spc", reach=128, n_buckets=0)
+    embedding = KroneckerEmbedding(vocabulary[:512], cfg)
+
+    induced = embedding.induced()
+    assert induced.shape == (512, 64)
+    assert bool(torch.isfinite(induced).all()), "the induced embedding must be finite"
+
+    induced.pow(2).mean().backward()
+    grads = [p.grad for p in embedding.parameters() if p.grad is not None]
+    assert grads, "no parameter received a gradient, so nothing would train"
+    assert all(bool(torch.isfinite(g).all()) for g in grads)
