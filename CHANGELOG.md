@@ -12,6 +12,29 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **`RESEARCH.md` — three of exercise 07's five open problems, researched and written in plain
+  language.** What each problem is, what the literature already knows, what we expected, what we
+  measured, the verdict, and what would refute it. Written to be stopped at any depth without
+  leaving a reader with a wrong idea: four minutes gets you the findings, and the sections after
+  that are for building one, attacking one, or funding one.
+
+  **Every claim carries a mark saying where it came from** — measured here, re-derived by hand,
+  reported and unverified, or an argument — and five guards keep the marks honest, each watched
+  going red. The reason is specific rather than tidy: one research pass corrected itself twice and
+  named two papers that **do not exist**, so a reader has to be able to tell a measurement from a
+  lead without asking.
+
+  The findings. **Problem 1** (arithmetic inside the embedding) is dead as stated on this
+  vocabulary — 0.5% of four-digit integers are single tokens, and the normalisation step saturates a
+  value coordinate at 90.5152 while inverting the sign of the word's own letters above 4,730 — but a
+  right-aligned place-value block survives, with a scramble control that would settle it.
+  **Problem 2** (images and audio) cannot take raw bytes: a colour patch is 768 bytes and would need
+  about 9,216 dimensions to reverse, so it needs a compression step this repository does not have.
+  **Problem 3** (no length limit) is the one worth building — it beats both shipped position schemes
+  at the same code width, needs no training to prove, and explains problem 4's failure as a side
+  effect: its neighbouring positions point 96% in the same direction, so it cannot tell adjacent
+  letters apart.
+
 - **Exercise 07 gains a fourth position scheme, `spc`, and it is the first one that is both
   length-free and decodable.** `onehot` discards every byte past `d_p` and `wrap` folds them onto
   slots they must then share, so neither can return a token longer than 32 bytes — a limit of the
@@ -476,6 +499,17 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   hardcoded list would have left a new section inert.
 
 ### Added
+
+- **`tools/check_todo.py` reconciles a checklist against the repository, so a working note cannot
+  quietly go stale.** Items carrying a `<!-- check: exists … -->`, `present "x" in <path>` or
+  `absent "x" in <path>` predicate are compared with what the repository actually holds, and both
+  directions are reported: an item ticked but not done, and — the one that had accumulated — an item
+  still open whose work shipped weeks ago. **An item with no predicate is reported as UNVERIFIABLE,
+  never as fine**, the same three-way split the run auditors use, because a check that could not run
+  has not held. Its first run against the real file found four entries in that state, including two
+  exercises described as empty directories that have been built and merged. It is feedback rather
+  than enforcement and the module says so: the file it was written for is gitignored, so only the
+  tool and its 23 tests reach CI.
 
 - **The S07 notebook's section 5 now trains arms in front of the reader instead of explaining why it
   cannot.** It said *"the code that trained them is not in this repository… there is no

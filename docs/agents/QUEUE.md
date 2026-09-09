@@ -983,6 +983,50 @@ predates the harness — so it is logged as what it was.
                           research is about. Two guards, both watched going red; the second
                           compares the whole round trip against a hand-built target and would have
                           caught it without knowing the word "merge". 1,908 passed, 2 skipped
+2026-09-09  exercise-07   #160 opened, stacked on #158: RESEARCH.md, the three researched
+                          problems written so several kinds of reader can use them. PK asked that
+                          every experiment carry its literature, hypothesis, approach, rationale,
+                          expected result, outcome and configuration in plain language -- the third
+                          time he has asked for something to be explained plainly, which is a
+                          signal about the writing rather than the reading. EVERY CLAIM CARRIES A
+                          MARK: measured here, re-derived by hand, reported and unverified, or an
+                          argument. The reason is that one research pass corrected itself twice and
+                          named two papers that DO NOT EXIST, so a reader must be able to tell a
+                          measurement from a lead without asking. Findings: problem 1 (arithmetic
+                          in the embedding) dead as stated -- 0.5% of four-digit integers are
+                          single tokens, and z-norm saturates a value coordinate at 90.5152 while
+                          inverting the word's own letters above v=4,730 -- with a right-aligned
+                          place-value survivor and a scramble control that would settle it; problem
+                          2 (images and audio) needs a compression step this repo lacks, since a
+                          768-byte patch would need ~9,216 dimensions to reverse; problem 3 (no
+                          length limit) is the one to build -- 99.74% whole-vocabulary recovery
+                          against today's 94.67% at the SAME code width, provable without training,
+                          and it explains problem 4's failure as a side effect (its neighbouring
+                          positions point 96% the same way, re-derived by hand). Six guards, each
+                          watched going red; one of them counted what it checked after the first
+                          version turned out to pass for every possible document. Two agent numbers
+                          corrected while writing: 58.3x vs 111.6x is which block you count, and
+                          both are true of different things. 1,923 passed, 2 skipped
+2026-09-09  repo          #161 opened: a checklist is reconciled against the repository rather
+                          than re-read. Three stale artefacts in one afternoon and they are one
+                          failure -- a hand-maintained list duplicating something the repository
+                          already knows. tools/check_todo.py compares an annotated item with what
+                          the tree holds (exists / present / absent), reports BOTH directions, and
+                          reports an item with no predicate as UNVERIFIABLE rather than as fine.
+                          Its first real run found four entries done and still open, two of them
+                          exercises described as empty directories that have been built and merged.
+                          The parser had to be built for the file that exists: markers inside
+                          backticks, [~] and [!], and seven items on one line of which only the
+                          first follows a dash -- the first-marker-only version did not report the
+                          other six as unverifiable, it did not see them at all. Anchoring on the
+                          bullet is what excludes the status legend with no exemption list. One
+                          defect found by using it: an escaped needle made the regex ask whether a
+                          string nothing contains was absent -- true of every file -- so an
+                          unfinished item read as DONE; fixed with a single-quoted alternative and
+                          no escape character at all. FEEDBACK, NOT ENFORCEMENT, and the module
+                          says so: TODO.md is gitignored, so only the tool and its 23 tests reach
+                          CI. The rule is added to AGENTS.md beside the derived-prose rule it
+                          extends
 2026-09-09  exercise-07   #162 opened: a position scheme that reaches past d_p without widening
                           the code. onehot discards every byte past d_p and wrap folds them onto
                           slots they then share, so neither can return a token longer than 32
