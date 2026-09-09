@@ -1192,4 +1192,31 @@ predates the harness — so it is logged as what it was.
                           lowercase advance. Widening the wrap to 08's 2200px was measured and
                           REJECTED: it grows the void beside the prose from 819 to 989px, because
                           09's tables are two and three columns and its figures are drawn at 700px
+2026-09-09  exercise-09   #169 opened: the page keeps the rules it states. Six things it claimed
+                          about itself that were not true, found by four reviewers reading the
+                          DEPLOYED page after #165 merged, every one green in CI throughout. IT
+                          STATED ITS OWN PRECISION RULE AND BROKE IT FOUR TIMES: the results
+                          section says the memory ratio is quoted "and no finer" than its noise
+                          floor allows, and the tile said 9.1x, the glossary 9.1x, the ledger
+                          9.09x and the conclusion 9.09x -- one of them fourteen lines above the
+                          rule. Each was a toFixed() chosen at its own call site, so the rule was a
+                          sentence and the practice was five decisions. Precision is derived from
+                          the measured spread now, so the page CANNOT quote finer than it earned.
+                          THE TITLE PROMISES THREE LINES and the page showed two; the third is the
+                          cross_entropy call, where two of the four failures live, so the headline
+                          count was the one number a reader could not check. THE MEMORY FIGURE
+                          carried no shape and no baseline on a page about what numbers count --
+                          memory.py's own docstring says a report omitting the baseline "would
+                          attribute all of it to the loss", and this page was that report. A FOOTER
+                          still said "three commands away" one screen below the heading already
+                          corrected for it. THREE TILES WERE GREEN under a paragraph saying all
+                          four are the same failure, so a ninety-second reader takes the colour and
+                          leaves believing two are good news. AND A PROMISE I COULD NOT KEEP: the
+                          glossary said every term the tiles use is defined in it, false twice. I
+                          tried to guard it and could not -- the tiles emphasise words for stress
+                          as often as for terminology, so the check flagged "broken" and
+                          "estimated". Watched it fire on correct prose and removed the claim
+                          instead, replacing it with one a test does keep: every entry carries a
+                          figure from the run. That guard immediately found four entries carrying
+                          none, two of which predate today
 ```
