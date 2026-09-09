@@ -12,6 +12,19 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **A branch whose newest commit was documentation got no preview deployment at all, and the
+  failure was self-reinforcing.** `should-build.sh` falls back to comparing against `HEAD^` when
+  `VERCEL_GIT_PREVIOUS_SHA` is empty — but an empty variable means *"this branch has never
+  deployed"*, and `HEAD^` answers a different question: *what did the newest commit change?* So a
+  branch that rebuilt an entire page and then landed a changelog entry on top of it skipped, and
+  kept skipping: a skipped build never becomes a successful deployment, so the variable stays empty
+  and the next push asks the same wrong question. **A branch can push all day and never deploy
+  once**, which is what happened to exercise 09 — a reviewer opened the preview link and got
+  *"Deployment was cancelled"*. `AGENTS.md` had recorded this as live and unfixed before it
+  happened again. An empty variable now means build, which is the reasoning the adjacent
+  shallow-clone branch already used. A twin asserts a *set* variable can still skip, so the fix
+  does not quietly turn the predicate into "always build" and lose the quota it exists to protect.
+
 - **Every loss exercise 09 publishes was measured against a file the repository edits on most pull
   requests, and nothing could notice.** The corpus was read from the live `AGENTS.md` at run time
   and the run recorded a **16-character prefix** of its digest, which no test recomputed. It had
