@@ -94,18 +94,35 @@ def open_pull_requests() -> list[tuple[str, str]]:
     return out
 
 
-def _own_additions(base: str, branch: str, path: str) -> list[tuple[str, list[str]]]:
-    """The blocks this branch ADDED to `path`, each with the line it was inserted before.
+def _own_additions(base: str, branch: str, path: str) -> list[tuple[tuple, list[str], list[str]]]:
+    """The changes this branch made to `path`: `(anchor, added, removed)` per block.
 
-    Returned as `(anchor, lines)` pairs, where `anchor` is the first following line that already
-    existed. That is what lets the block be re-applied to a `main` whose surrounding text has
-    moved — an offset would not survive, a neighbouring line does.
+    `anchor` is the surrounding pair of lines that already existed, which is what lets a block be
+    re-applied to a `main` whose text has moved — an offset would not survive, neighbours do.
+
+    **`removed` is the half this returned nothing for, and its absence duplicated every edit.**
+    `difflib` reports an in-place edit as a `replace`: lines out, lines in. Only the "in" half was
+    collected, and `_reapply` only ever inserts — so a branch that CHANGED a line got its new
+    version added to main's copy while main's original stayed put, and both shipped. An addition
+    and an edit are not the same operation and cannot share one code path that only knows how to
+    add.
     """
-    before = (_show(base, path) or "").splitlines(keepends=True)
-    after = (_show(branch, path) or "").splitlines(keepends=True)
-    blocks: list[tuple[str, list[str]]] = []
+    return changed_blocks(_show(base, path) or "", _show(branch, path) or "")
+
+
+def changed_blocks(base_text: str, branch_text: str) -> list[tuple[tuple, list[str], list[str]]]:
+    """The same thing over two strings rather than two git refs.
+
+    **Split out so the tests drive this function instead of a copy of it.** They used to carry
+    their own `difflib` call — the same shape, maintained by hand — and a second copy is the one
+    that drifts: when this started returning what a replacement REMOVED, the copy did not, and
+    every test failed on the tuple width rather than on the behaviour they were written for.
+    """
+    before = base_text.splitlines(keepends=True)
+    after = branch_text.splitlines(keepends=True)
+    blocks: list[tuple[tuple, list[str], list[str]]] = []
     matcher = difflib.SequenceMatcher(None, before, after, autojunk=False)
-    for tag, _i1, _i2, j1, j2 in matcher.get_opcodes():
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
         if tag not in ("insert", "replace"):
             continue
         added = after[j1:j2]
@@ -116,7 +133,8 @@ def _own_additions(base: str, branch: str, path: str) -> list[tuple[str, list[st
         # checker that reads only `## Log` was the thing that noticed.
         preceding = after[j1 - 1] if j1 > 0 else ""
         following = after[j2] if j2 < len(after) else ""
-        blocks.append(((preceding, following, j1), added))
+        removed = before[i1:i2] if tag == "replace" else []
+        blocks.append(((preceding, following, j1), added, removed))
     return blocks
 
 
@@ -217,13 +235,28 @@ def _locate(
     return None, "nothing"
 
 
+def _run_index(lines: list[str], run: list[str]) -> int | None:
+    """Where `run` appears in `lines` as a contiguous block, or None.
+
+    Verbatim and contiguous on purpose. This decides whether a branch's edit can be re-applied by
+    replacing what it replaced, and a fuzzy match here would delete a line main has since changed
+    for its own reasons — losing somebody else's work to fix a duplicate.
+    """
+    if not run:
+        return None
+    for start in range(len(lines) - len(run) + 1):
+        if lines[start : start + len(run)] == run:
+            return start
+    return None
+
+
 def _reapply(
-    main_text: str, blocks: list[tuple[tuple[str, str], list[str]]]
+    main_text: str, blocks: list[tuple[tuple, list[str], list[str]]]
 ) -> tuple[str, list[str]]:
     """Put this branch's own blocks back into main's version. Returns the text and any notes."""
     lines = main_text.splitlines(keepends=True)
     notes: list[str] = []
-    for anchor, block in blocks:
+    for anchor, block, removed in blocks:
         # Drop the entries main already has, keep the rest, and preserve their order.
         keep: list[str] = []
         dropped = 0
@@ -238,6 +271,25 @@ def _reapply(
         added = keep
         if not added:
             continue
+
+        # **An EDIT is replayed as an edit.** When this block replaced lines that main still has
+        # verbatim, delete them and put the new version in their place. Inserting without deleting
+        # is what shipped both versions of every reworded line.
+        if removed:
+            at = _run_index(lines, removed)
+            if at is not None:
+                lines[at : at + len(removed)] = added
+                continue
+            # Main no longer has what this branch replaced, so there is nothing to take out. Adding
+            # the replacement anyway is the least-bad option -- it is this branch's work -- but it
+            # is exactly the case that produces a duplicate, so it is REPORTED rather than done
+            # quietly. Somebody has to look.
+            notes.append(
+                f"a {len(added)}-line block replaced {len(removed)} line(s) main has since "
+                "changed; the replacement was added without removing anything — check for a "
+                "duplicate"
+            )
+
         preceding, following, where = anchor
         at, how = _locate(lines, preceding, following, hint=where)
         floor = _placement_floor(lines)
