@@ -983,4 +983,31 @@ predates the harness — so it is logged as what it was.
                           research is about. Two guards, both watched going red; the second
                           compares the whole round trip against a hand-built target and would have
                           caught it without knowing the word "merge". 1,908 passed, 2 skipped
+2026-09-09  exercise-07   #162 opened: a position scheme that reaches past d_p without widening
+                          the code. onehot discards every byte past d_p and wrap folds them onto
+                          slots they then share, so neither can return a token longer than 32
+                          bytes -- a limit of the CODE, not of any decoder -- and the exercise's
+                          only answer was to raise d_p to 128, which quadruples D. spc gives each
+                          position a DIRECTION in one shared d_p-dimensional space instead of its
+                          own 256-slot block: unlimited reach at D unchanged, nothing folded,
+                          position still identifiable at decode time. Whole vocabulary, whole
+                          token: 99.35% at 33-64 bytes and 83.82% at 65-128 where onehot and wrap
+                          both read 0.00%, and wherever it misses the truth fits strictly better
+                          than the answer returned, so the information survived and only the
+                          search was too weak. THE FIRST COMPARISON WAS UNFAIR and this is the
+                          reason the tool exists: onehot reads 100% at 49-64 bytes if you ask it
+                          about the bytes it KEEPS, spc was being asked about the whole token, and
+                          the table said onehot was doing well at a length where it cannot
+                          represent the token at all. Cost stated before measuring (Welch bound
+                          0.1537 against a repelled 0.2465) and then measured: 189.4 non-zeros per
+                          token against onehot's 8.2, which is 23x -- the same factor fourier pays
+                          for training runs 8x slower. NEVER TRAINED, and five documents say so
+                          rather than leaving a reader to assume. A DEFECT SHIPPED IN THE FIRST
+                          DRAFT: the frame was sized to the token and to the batch's longest
+                          token, so the same token encoded alone and beside a long one used
+                          different directions, with nothing failing; reach is a config field now
+                          and a token past it is refused. And the README's byte-recovery numbers
+                          are checked against the evidence files for the first time -- red on its
+                          first real run, because 94.67%, published as the vocabulary-wide
+                          recovery rate at d_p=32, is in no evidence file
 ```
