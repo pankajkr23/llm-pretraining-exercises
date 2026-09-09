@@ -176,3 +176,86 @@ def test_the_orphan_guard_can_actually_fail() -> None:
     assert invented not in declared
     # The assertion the real test makes, applied to a name that cannot be declared anywhere.
     assert {invented: ["x"]}, "the orphan check must treat an undeclared reference as a failure"
+
+
+#: What may legitimately follow a selector line that ends in a comma. Three shapes, and the third
+#: is the one the first version missed: the last selector in a list often carries its whole rule on
+#: one line (`.catsearch-hits { max-width: 72ch; }`), which ends in `}` rather than in `{`.
+_CONTINUES_A_LIST = re.compile(r"^[.#:\[a-zA-Z@&*][^{};]*(,|\{|\{[^{}]*\}\s*)$")
+
+
+def _selector_lines(text: str) -> list[tuple[int, str]]:
+    """Every line that is a bare selector ending in a comma, with its 1-based number."""
+    return [
+        (n, line.strip())
+        for n, line in enumerate(text.split("\n"), 1)
+        if re.match(r"^\s*[.#][a-zA-Z][\w -]*(\s+[\w.>#:-]+)?\s*,\s*$", line)
+    ]
+
+
+def test_no_selector_lost_its_declaration_block() -> None:
+    """A selector in a comma list must be followed by another selector or by an opening brace.
+
+    **This is the shape a deletion leaves behind, and I made it today.** Stripping dead rules from
+    exercise 09's stylesheet removed the `{ … }` of two rules and left their selectors, which then
+    fused onto the *next* rule in the file:
+
+        .limitlist,
+        .limitlist li,
+        .ahead { fill: var(--muted); }
+
+    So `fill: var(--muted)` silently applied to two more selectors than anyone wrote it for. It was
+    latent — neither class is emitted by that page — which is exactly why it survived: nothing
+    rendered wrong, nothing failed, and the rule reads correctly at a glance because the last line
+    of it is correct.
+
+    `test_no_declaration_swallows_the_ones_after_it` above cannot see this. It inspects
+    *declaration values* for a swallowed run; this is a defect in the *selector list*, one level up,
+    and the declarations either side of it are all well formed.
+
+    Deliberately narrow, for the same reason that one is: a selector line ending in a comma is
+    unambiguous, and anything cleverer would need a real CSS parser.
+    """
+    offenders: list[str] = []
+    for sheet in _styled_sources():
+        if sheet.suffix != ".css":
+            continue
+        lines = sheet.read_text(encoding="utf-8").split("\n")
+        for number, selector in _selector_lines(sheet.read_text(encoding="utf-8")):
+            # **The next line, literally — blanks and comments are not skipped, and that is the
+            # whole detector.** A fused selector IS followed by a selector, which is why skipping
+            # over the gap finds nothing: the giveaway is the gap itself. Nobody puts a blank line
+            # or a comment block *inside* a selector list; a deletion that removes a rule's body
+            # leaves exactly that.
+            nxt = lines[number].strip() if number < len(lines) else ""
+            if not _CONTINUES_A_LIST.match(nxt):
+                offenders.append(f"{sheet}:{number}  {selector}  → separated from: {nxt[:60]!r}")
+    assert not offenders, (
+        "a selector list is missing its own declaration block, so it has fused onto the next rule "
+        "and those declarations now apply to more elements than anyone wrote them for:\n  "
+        + "\n  ".join(offenders)
+    )
+
+
+def test_the_fused_selector_guard_catches_a_planted_one(tmp_path: Path) -> None:
+    """Break it on purpose. A guard nobody has watched fail is not a guard.
+
+    The planted shape is the real one: a rule whose body was deleted, leaving its selector attached
+    to whatever came next.
+    """
+    planted = tmp_path / "page-extra.css"
+    planted.write_text(
+        ".gone,\n\n/* a comment, because that is what hid it the first time */\n\n"
+        ".ahead {\n  fill: var(--muted);\n}\n",
+        encoding="utf-8",
+    )
+    lines = planted.read_text(encoding="utf-8").split("\n")
+    found = []
+    for number, selector in _selector_lines(planted.read_text(encoding="utf-8")):
+        nxt = lines[number].strip() if number < len(lines) else ""
+        if not _CONTINUES_A_LIST.match(nxt):
+            found.append(selector)
+    assert found == [".gone,"], (
+        f"the detector missed a planted fused selector; it found {found}. It cannot be trusted on "
+        "the real stylesheets either."
+    )

@@ -1159,4 +1159,37 @@ predates the harness — so it is logged as what it was.
                           and the reviewer opened a cancelled deployment. Verified against Vercel's
                           own record either side of the fix. Also: the reviewer agents' own
                           definitions were in no backup pattern and never have been
+2026-09-09  exercise-09   #167 opened: the page uses the display, and the fix was already
+                          written down. PK said the text looked squeezed with half the page empty.
+                          Four reviewers ran against the deployed page and the answer was that
+                          docs/DESIGN.md PUBLISHES the fluid type scale and names THIS page's own
+                          declaration -- `.say { font-size: 16px; max-width: 68ch }` -- as the
+                          canonical example of getting it wrong. 08 has run the scale since it was
+                          written; 04, 07, 09 and 10 never adopted it. 09 is on it now: reading
+                          column 685 -> 951px carrying the SAME words per line, air beside it 531
+                          -> 265px, pixel-identical to the reference. THE LEVER IS SIZE, NOT
+                          MEASURE -- widening the column at 16px would have pushed the line past a
+                          hundred characters, which is what the obvious reading of the complaint
+                          would have done. NO TEST COULD HAVE CAUGHT IT and none still can:
+                          test_prose_measure_repo_wide computes chars as width / ch-width, so an
+                          element capped at Nch on ITSELF returns exactly N at every size and
+                          viewport. It read 09 as inside its 42-80 band before and after. Tracked
+                          as its own follow-up. THE RAIL was fixed at left:0 against a centred
+                          1500px wrap, so the gap to the text grew to 554px at 2560 while the 260px
+                          gutter stayed reserved -- the page paid for the rail twice and the rail
+                          sat in neither space. It travels with the wrap now, 24px at every width,
+                          and the reading column does not move at all; AGENTS.md records an earlier
+                          attempt that moved the rail INWARD and destroyed the symmetry, and the
+                          measurements either side are what tell the two apart. TWO MORE FOUND BY
+                          LOOKING: .lede sits outside #main and is sized in rem, so the scale never
+                          reached it and the page's thesis rendered smaller than its own captions;
+                          and two selectors had lost their block and fused onto the next rule, my
+                          own doing earlier today. The new guard keys on the BLANK LINE between
+                          selector and rule, because a fused selector IS followed by a selector.
+                          THE REVIEWERS CORRECTED MY OWN WORKING TWICE: 08 is 22px/951px with prose
+                          centred 483/483, not 24px/762px flush left -- my script had picked its
+                          standfirst; and 09's line was 70ch all along, not 84 -- my probe measured
+                          lowercase advance. Widening the wrap to 08's 2200px was measured and
+                          REJECTED: it grows the void beside the prose from 819 to 989px, because
+                          09's tables are two and three columns and its figures are drawn at 700px
 ```

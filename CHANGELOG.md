@@ -12,6 +12,37 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercise 09's page used a quarter of a wide display, and the fix was already written down.**
+  `docs/DESIGN.md` publishes the repository's fluid type scale — and names *this page's* declaration,
+  `.say { font-size: 16px; max-width: 68ch }`, as the canonical example of getting it wrong. Exercise
+  08 has run the scale since it was written; 04, 07, 09 and 10 never adopted it. 09 is on it now:
+  the reading column goes from **685px to 951px** carrying the same words per line, air beside it
+  falls from **531px to 265px**, and the result is pixel-identical to the design reference. The
+  lever is size, not measure — widening the column at 16px would have pushed the line past 100
+  characters and made it worse.
+
+- **No test could have caught it.** `tests/test_prose_measure_repo_wide.py` computes characters as
+  `width ÷ ch-width`, and for an element capped at `Nch` *on itself* that arithmetic returns exactly
+  `N` at every font size and every viewport. It reported 09 as comfortably inside its 42–80 band
+  throughout, and reports the same after the change. It is measuring the cap, not the page.
+
+- **The contents rail was pinned to the viewport while the page centred itself.** `position: fixed;
+  left: 0` against a `max-width: 1500px` wrap: below 1440px they agree, and above it the gap between
+  the rail and the text it indexes grows to **554px at 2560** — with the 260px gutter still reserved
+  inside the wrap, so the page paid for the rail twice and the rail sat in neither space. The rail
+  now travels with the wrap's left edge; the gap is 24px at every width and **the reading column
+  does not move at all**, which is the distinction an earlier attempt at this complaint got wrong.
+
+- **The opening paragraph was the smallest prose on the page.** `.lede` is a sibling of `#main` and
+  sized in `rem` by a vendored stylesheet, so the fluid scale never reached it: 17px grey type under
+  a 54px headline, carrying the page's thesis, smaller than its own captions. A first-time reader
+  described skipping straight past it to the button.
+
+- **Two selectors had lost their declaration block and fused onto the next rule**, so
+  `fill: var(--muted)` silently applied to two more selectors than anyone wrote it for. Latent —
+  neither class is emitted — which is why it survived. `tests/test_css_declarations_terminate.py`
+  now catches the shape, keyed on the **blank line** between the selector and the rule rather than
+  on what follows it: a fused selector *is* followed by a selector, so the gap is the only giveaway.
 - **Three of exercise 10's documents quoted three different MFU figures, and none was the measured
   one.** `README.md` said 27.69%, `PROGRESS.md` and `CLAUDE.md` said 27.64%, against a recorded
   27.74% — three wrong numbers around one right one, every one of them inside the tolerance the
