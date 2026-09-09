@@ -12,6 +12,29 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Four of exercise 07's six figures announced as "image" and nothing else.** An
+  `<svg role="img">` with no accessible name tells a screen-reader user a figure is there and gives
+  them no way to know what it showed — worse than omitting it, because the page has spent their
+  attention and returned nothing. The three-bar loss chart, the rectangle in byte space, the
+  per-seed pairing and the reusable bar chart have names now, and each says what to conclude rather
+  than naming the axes, the way `docs/DESIGN.md` asks a caption to. Every other exercise was already
+  clean.
+
+### Added
+
+- **A repo-wide guard that asks the browser what a screen reader would be told.** The accessible
+  name is *computed* — `aria-labelledby`, then `aria-label`, then `<title>` — so counting any single
+  mechanism in the source would report a page using a different one as broken.
+  `tests/test_every_figure_has_a_name.py` sweeps every deployed page and asserts the result, with a
+  vacuity half that fails if the selector ever stops matching how figures are built. Watched red on
+  all four with the names removed, held in memory and restored in a `finally`.
+
+  Two things are deliberately not asserted: **length**, because a good name for a two-mark diagram
+  is short and a character rule would push authors to pad it; and **decorative graphics**, because
+  demanding a name for every rule and gradient is how a reader ends up hearing the furniture.
+
+### Fixed
+
 - **The rail was moved inward on three pages and it pushed the reading column off centre.** The
   fix for exercise 09's squeezed text was mostly the type scale, but it also added
   `left: max(0px, calc((100vw - 1500px) / 2))` to exercises 07, 09 and 10 — so above 1440px the rail

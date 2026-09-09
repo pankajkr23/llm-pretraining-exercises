@@ -1301,3 +1301,23 @@ predates the harness — so it is logged as what it was.
                           entirely because the filesystem answers the question. docs/DESIGN.md now
                           carries the rule and names the misreading that produces it
 ```
+2026-09-10  a11y          PR opened: every figure announces what it is. HANDOFF item 8, verified by
+                          counting before acting rather than trusted: 07 has six svg[role=img] and
+                          had two <title> and zero aria-label, so four figures announced as bare
+                          images. 01, 03, 05, 09 and 10 were already clean by three different
+                          mechanisms, which is why the guard asks the BROWSER for the computed
+                          accessible name instead of counting any one of them in source. NAMES
+                          ARGUE RATHER THAN LABEL, per DESIGN.md, and three of the four are derived
+                          from the run so they cannot go stale. TWO OF MY OWN MISTAKES, both found
+                          by listening to the output rather than reading the code: the reusable bar
+                          chart labels its rows by `r.arm` and my guessed fallback printed
+                          "undefined:" before every value; and I had put the `label` argument in
+                          the name, which is an AXIS LEGEND carrying arrow glyphs and runs of
+                          alignment spaces -- read aloud it became "left arrow better worse right
+                          arrow nats against the published design". Watched the guard red on
+                          exactly four with the titles removed, held in memory, restored in a
+                          finally. ALSO CHECKED HANDOFF ITEM 7 and it does NOT reproduce: the 04
+                          and 05 sliders sit inside their parents at 390, 360 and 320 and neither
+                          page overflows. The note says "confirmed present today"; it is stale, and
+                          the class is now covered by #173's sideways sweep at 390 and 320 anyway
+
