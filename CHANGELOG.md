@@ -35,7 +35,39 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   effect: its neighbouring positions point 96% in the same direction, so it cannot tell adjacent
   letters apart.
 
+### Fixed
+
+- **`codec.encode` recorded the merged atom count where the `1/sqrt(L)` scale needed the position
+  count.** `atoms` merges duplicate `(slot, byte)` pairs, which happens only under `wrap`, where two
+  folded positions can land on the same slot carrying the same byte. The scale was applied per
+  *position*, so `targets_from_h` had to undo it per position; using the merged count instead
+  returned a target multiplied by `sqrt(nnz / L)` on every coordinate.
+
+  Measured on the frozen vocabulary: **142 of 10,000 tokens** affected, worst case a 65-byte token
+  merging to 48 atoms — a **14.07%** error. After the fix the recovered target matches a
+  hand-built one to `1.000000000`.
+
+  **No published number moves, and saying why matters more than the fix.** Every published recovery
+  figure was measured under `onehot`, where each position owns a distinct slot and no merge is
+  possible — a positive control confirms zero merges there. In the one `wrap` band where merging is
+  common, 105 of 465 tokens were mis-scaled and the band's recovery is **15.05% before and after**:
+  those tokens were failing to recover anyway. It was a latent defect that would have bitten the
+  moment wrapped invertibility mattered, which is exactly what problem 3 is about.
+
+  Two guards, both watched failing against the old behaviour: one asserting `lengths` is the
+  position count, one comparing the whole round trip against a target built by hand — the second
+  would have caught this without anyone knowing the word "merge".
+
 ### Changed
+
+- **The bucket sweep ran three seeds under a framing that says five, and now says so.** Exercise 07
+  states "trained comparisons, 5 seeds, paired" once and every table inherits it — but
+  `bucket_sweep` ran **three**, recorded only inside a free-text `source` string that no document
+  renders and no reader sees. The count is promoted to a real key, the way `scale_cost.d_model`
+  already was, so the page reads it instead of a reader assuming it; both the page and the README
+  now state it beside the table, with what three seeds can and cannot support. A guard asserts the
+  key exists, that it still disagrees with `setup.seeds` — so the hedge cannot outlive its reason —
+  and that both documents say it. Watched failing three ways.
 
 - **Exercise 07's documents now say what the evidence says.** The results narrative was written when
   the recommendation beat the published design; on a second corpus it does not, and the README's
@@ -56,6 +88,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   gap is computed against **wrapped positions**, which is the baseline it was built on. Against the
   transform arm the same subtraction reads −0.031 and looks like a contradiction; it is the same
   number compared to a model that arm was never measured against.
+
+- **The README's `cond(WᵀW)` clause is deleted rather than corrected.** It claimed the projection's
+  conditioning "degraded from 2.4 to 29.5" while recovery held at 100.00%. No evidence file in this
+  exercise carries a `cond` field at all, and the only surviving record of that measurement says
+  2.4 → **248** at recovery **99.5%** over 3,000 steps — so two of the three numbers disagreed with
+  the only thing that could have supported them. Re-measuring would have answered a question the
+  section does not ask: the conditioning was never the point, and recovery surviving training is.
+  The bullet now says so, and says what was removed.
 
 - **Exercise 07's trained comparison stops reading a corpus that is 40% `[UNK]`, and three gates
   make that impossible to do again.** The corpus it trained on was exercise 02's four Wikipedia

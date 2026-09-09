@@ -387,8 +387,15 @@ Three things make this stronger than a hit rate:
 - **The decode certifies itself.** The residual is zero exactly when the recovered bytes reproduce
   the vector, so the decoder knows whether it is right **without being told**. Certificate and
   ground truth agreed on **100.0%** of tokens.
-- **It survives training.** With `W` taken from a run trained to loss **2.45** on real text,
-  recovery is still **100.00%** — while `cond(WᵀW)` degraded from 2.4 to 29.5.
+- **It survives training.** With `W` taken from a run trained to loss **2.45**, recovery is still
+  **100.00%** — which is the claim that matters, and it is in `results/measurements.json`.
+
+  > This bullet used to end *"while `cond(WᵀW)` degraded from 2.4 to 29.5"*, and that clause is
+  > **deleted rather than corrected**. No evidence file contains a `cond` field at all, and the only
+  > surviving record of the measurement says 2.4 → **248** with recovery **99.5%** over 3,000 steps
+  > — so two of its three numbers disagreed with the only thing that could have supported them.
+  > Re-measuring it would have answered a question this section does not ask; the conditioning of
+  > the projection was never the point, and recovery surviving training is.
 
 ### 2 · Why tying works, and the scale bug that hides it
 
@@ -485,7 +492,13 @@ already vanishing. The n-gram block injects information the additive code never 
 
 At 8,192 buckets against 10,002 tokens the n-gram signature is nearly a per-token fingerprint, which
 is exactly what a lookup table would give — and a lookup table is what this architecture exists to
-avoid. Sweeping the bucket count separates the two:
+avoid. Sweeping the bucket count separates the two.
+
+**This sweep is three seeds, not the five every other comparison here uses**, and the difference is
+worth stating rather than leaving a reader to carry the framing over from the section above. Three
+seeds is enough to see a monotone trend across five bucket counts and not enough to separate two
+adjacent rows: read the *shape* of this table, and take the size of any single gap from the
+five-seed arm comparison instead.
 
 | buckets `m` | V/m | vs wrap-only | **vs v1** |
 | ---: | ---: | ---: | ---: |
