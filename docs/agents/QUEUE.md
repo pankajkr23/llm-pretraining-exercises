@@ -1301,7 +1301,7 @@ predates the harness — so it is logged as what it was.
                           entirely because the filesystem answers the question. docs/DESIGN.md now
                           carries the rule and names the misreading that produces it
 ```
-2026-09-10  a11y          PR opened: every canvas colour follows the theme. HANDOFF item 9, counted
+2026-09-10  a11y          #175 opened: every canvas colour follows the theme. HANDOFF item 9, counted
                           before acting: exactly 12 literals against 16 theme-aware colour writes in
                           s1, s2 and s4. MEASURED BEFORE AND AFTER through the site's real theme
                           mechanism -- s1 and s2 each rendered TWO distinct canvases across six
