@@ -1301,7 +1301,7 @@ predates the harness — so it is logged as what it was.
                           entirely because the filesystem answers the question. docs/DESIGN.md now
                           carries the rule and names the misreading that produces it
 ```
-2026-09-10  exercise-10   PR opened: stage 14, the reviewer pass, and it found a great deal. FOUR
+2026-09-10  exercise-10   #179 opened: stage 14, the reviewer pass, and it found a great deal. FOUR
                           reviewers -- auditor, engineer, first-time reader, UX -- and the two
                           highest-consequence findings were reached INDEPENDENTLY by two of them
                           each. THE README'S RATIO WAS WRONG IN THE FLATTERING DIRECTION: "0.0759 of
