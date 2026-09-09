@@ -345,7 +345,22 @@ uv run pytest src/exercises/05-datamixtures-and-curriculum -m integration   # mu
 ```
 
 The proxy needs torch, which is an optional extra kept out of the default sync so CI never pulls a
-CUDA wheel to run arithmetic: `uv sync --all-packages --extra proxy`.
+CUDA wheel to run arithmetic:
+
+```bash
+uv sync --all-packages --extra proxy
+
+uv run python -m mixture.repetition   # what a re-read token is actually worth
+uv run python -m mixture.seam         # does a warmup band calm a stage seam?
+uv run python -m mixture.scale        # does the ranking survive a change of scale?
+```
+
+**The three follow-on experiments used to be listed on the deployed page and nowhere else.** They
+moved here when the page's command blocks came out — a page is read far more often than it is
+executed, so a command a reader is invited to copy has to sit beside the code it operates on, where
+a rename breaks something visible instead of leaving a page confidently wrong. The page's copy had
+already drifted the other way too: it omitted `mixture.bench` and the integration suite, which this
+block has carried all along.
 
 ## The page
 
