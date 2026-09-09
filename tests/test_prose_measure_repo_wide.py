@@ -381,3 +381,100 @@ def test_the_step_detector_tells_a_use_from_a_mention() -> None:
         "the detector misses a multi-line import, which is how the shared helpers are usually "
         "brought in once a page imports more than one name."
     )
+
+
+#: Pages whose body prose is on `docs/DESIGN.md`'s fluid scale. **This list fails in BOTH
+#: directions**, unlike `COVERED` above, and the asymmetry is deliberate rather than an
+#: inconsistency: enrolling a page here is a claim about that page's own stylesheet, so a page that
+#: adopts the scale and forgets to enrol is a gap this guard should close, and a page that regresses
+#: off it is a defect. Neither direction can fire on somebody else's correct work.
+ON_THE_FLUID_SCALE = {
+    "08-modern-attention-variants": (
+        "the reference implementation; every number in DESIGN.md was measured on it"
+    ),
+    "09-loss-functions-output-heads": "retro-fitted after a reader called the page squeezed",
+    "07-model-embeddings-internals": (
+        "retro-fitted alongside 09; identical 68ch-at-16px declaration"
+    ),
+    "10-training-loop": "retro-fitted alongside 09; identical 68ch-at-16px declaration",
+}
+
+#: The scale itself, from `docs/DESIGN.md`: `clamp(19px, 1.2vw + 1.7px, 22px)`. Checked at the ends
+#: rather than at every stop — the floor is what a 1180px reader gets and the ceiling is what makes
+#: a wide display worth having, and a page that hits both is on the ramp between them.
+FLUID_FLOOR_PX, FLUID_CEILING_PX = 18.5, 21.0
+
+BODY_PROSE_JS = """() => {
+  /* Body prose, which is not the standfirst. A page's standfirst is often larger AND fixed, so a
+     probe that takes the first long paragraph in `#main` measures the wrong element and reports a
+     fixed page as fluid -- which it did to me twice while this guard was being written. */
+  const skip = /standfirst|lede|colophon|small|caption|note/i;
+  const el = [...document.querySelectorAll('#main p, #main .say')]
+    .find((n) => n.innerText.trim().length > 200 && !skip.test(String(n.className)));
+  if (!el) return null;
+  return {
+    size: parseFloat(getComputedStyle(el).fontSize),
+    width: Math.round(el.getBoundingClientRect().width),
+  };
+}"""
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("slug", COVERED)
+def test_the_pages_on_the_fluid_scale_are_still_on_it(site, slug: str) -> None:
+    """Body prose grows with the display, or it does not — and `ch` cannot tell the difference.
+
+    **This is the half `test_a_paragraph_holds_a_reading_measure` is structurally blind to.** That
+    check computes characters as `width ÷ ch-width`, and `ch` *is* the advance of `0` at the
+    element's own size. So an element capped at `Nch` on itself reports exactly `N` at every font
+    size and every viewport: exercise 09 read 68 at 16px in a 685px column and 70 at 22px in a
+    951px one, comfortably inside the 42–80 band both times. A reader called the first one squeezed.
+    The band is not wrong — `ch` is the unit the caps are written in — it simply cannot see the one
+    thing that changed.
+
+    So this measures the physical size instead. A page on `docs/DESIGN.md`'s scale reaches its floor
+    at 1180 and its ceiling at 2560; a page pinned to the 16px root reports the same number at both,
+    which is the signature of the defect and is what six pages still do.
+    """
+    on_scale = slug in ON_THE_FLUID_SCALE
+    browser, base = site
+    measured = {}
+    for width in (1180, 2560):
+        ctx = browser.new_context(viewport={"width": width, "height": 950})
+        page = ctx.new_page()
+        try:
+            page.goto(f"{base}/{slug}/index.html", wait_until="networkidle", timeout=25_000)
+            page.wait_for_timeout(400)
+            measured[width] = page.evaluate(BODY_PROSE_JS)
+        finally:
+            ctx.close()
+
+    if measured[1180] is None or measured[2560] is None:
+        # **Not a skip.** `AGENTS.md`: in CI a skip reports as a pass and only the skip report shows
+        # it, so a vanished test hides there. A page with no body paragraph long enough to measure
+        # has nothing for this guard to say — 01 and 02 are proof pages, mostly figures and controls
+        # — and that is a fact about the page, not a check that could not run. It becomes a failure
+        # only where the page *claims* a scale it has no prose to carry.
+        assert not on_scale, (
+            f"{slug} is enrolled in ON_THE_FLUID_SCALE but has no body paragraph over 200 "
+            "characters to measure. Either the enrolment is wrong or the page changed shape."
+        )
+        return
+
+    narrow, wide = measured[1180]["size"], measured[2560]["size"]
+    grew = wide > narrow + 0.5
+
+    if on_scale:
+        assert narrow >= FLUID_FLOOR_PX and wide >= FLUID_CEILING_PX and grew, (
+            f"{slug} is listed as being on the fluid scale and is not: {narrow}px at 1180 and "
+            f"{wide}px at 2560, against a floor of {FLUID_FLOOR_PX} and a ceiling of "
+            f"{FLUID_CEILING_PX}. Either the page regressed or `ON_THE_FLUID_SCALE` is stale. "
+            f"Reason it was enrolled: {ON_THE_FLUID_SCALE[slug]}"
+        )
+    else:
+        assert not grew, (
+            f"{slug} now grows its body prose with the viewport ({narrow}px → {wide}px), which is "
+            "the fluid scale, and it is not enrolled in ON_THE_FLUID_SCALE. Add it with the reason "
+            "— the list is the record of which pages have been retro-fitted, and a page that "
+            "adopts the scale silently makes that record wrong."
+        )

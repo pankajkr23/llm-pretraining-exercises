@@ -256,6 +256,20 @@ Every component below is live in exercise 08. Copy the markup shape and the clas
 `.rail-inner`, or the contents hang at the top of a full-height column while every sibling page sits
 centred.
 
+**The rail stays at the page edge. Never move it inward, and never give it a `left` of your own.**
+It is chrome, and the reserved gutter is what centres the reading column in the space it leaves —
+equal air either side, at every width. That symmetry is the layout, and it is the property the
+guard asserts rather than any distance: 08's wrap is 2200px and everyone else's is 1500px, so the
+correct gap is 204px on one page and 554px on another at the same viewport.
+
+**Two agents have now broken this, both by misreading the same complaint.** A reader saying the
+page looks lopsided is reporting the *column* being off centre; read as "the rail is too far left"
+it produces a `left` override that pushes the rail against the text, leaves dead space on both
+sides of the rail, and moves the column off centre — the thing being complained about. The second
+time it shipped on three pages at once, because `max(0px, …)` clamps below 1440 and every width a
+laptop opens looked right. If a page looks wrong at width, **measure the two gaps before changing
+anything**; `tests/test_rail_centring.py` measures both axes on every page that builds a rail.
+
 - **Mark the section in view.** The vendored sheet already styles `.rail-link.on` — accent bar, soft
   accent wash, bold label. The rule is **"the last heading whose top has passed the first third of
   the viewport"**, not "the nearest heading": sections run several screens, so from the middle of one
@@ -535,6 +549,7 @@ A rule with no guard decays. The repo-wide guards live in `tests/`; per-exercise
 | every relative link resolves from its own directory | `tests/test_readme_links.py` |
 | exercise skeleton present; no `REQUIREMENTS.md` ever tracked | `tests/test_exercise_skeleton.py` |
 | the rail is built and fills the gutter it reserves | `tests/test_rail_centring.py` |
+| the reading column is centred in the space the rail leaves, at every width | `tests/test_rail_centring.py` |
 | every test file is in a CI shard **and collects there** | `tests/test_ci_shards_cover_everything.py` |
 | 42–80 characters a line, ten widths | `test_attention_measures.py` (the pattern to copy) |
 | no count typed into page prose, or into a heading or rail label | `test_attention_docs.py` |

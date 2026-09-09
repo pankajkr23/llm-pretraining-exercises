@@ -186,12 +186,20 @@ is an artefact of where a run happened to stop.
 ### And the memory ratio has a noise floor
 
 Peak resident set size is the operating system's number and it moves between runs. The same
-measurement repeated 5 times gave **9.23x**, **8.96x**, **9.40x**, **9.18x**, **9.27x** — a spread of
-**0.44** on a ratio of about 9. The losses agreed on every
+measurement repeated 5 times gave **8.88x**, **8.95x**, **9.25x**, **9.44x**, **9.29x** — a spread of
+**0.56** on a ratio of about 9. The losses agreed on every
 repetition: **yes**.
 
 **So the honest claim is "about 9x", and any comparison finer than that is reading
 noise.**
+
+The softmax-only path is measured on the same repeats and has its own floor:
+**1.79x**, **1.79x**, **1.79x**, **1.80x**, **1.81x** — a spread of **0.019**, roughly
+30 times tighter, because it compares two byte counts taken on one path
+rather than two separate processes. That is why it is quoted to
+**1** decimal and the memory ratio to
+**0**: a digit is offered only where the spread is smaller than that
+digit is worth. Both spreads are measured; neither precision is chosen.
 
 ---
 

@@ -124,6 +124,38 @@ const signed = (n, d = 4) => (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(d);
 const pct = (n, d = 1) => `${(n * 100).toFixed(d)}%`;
 const mib = (bytes) => (bytes / (1024 * 1024)).toFixed(1);
 
+/* How many decimals a measurement's own noise floor will support.
+ *
+ * **This page stated its precision rule and then broke it four times.** The results section says the
+ * memory ratio is "quoted as about 9x and no finer" — and the opening tile said 9.1x, the glossary
+ * said 9.1x, the ledger said 9.09x and the conclusion said 9.09x, one of them fourteen lines above
+ * the rule. Every one of those was a `toFixed()` chosen at the call site, so the rule was a sentence
+ * and the practice was five independent decisions.
+ *
+ * **Deriving it was not enough, because the first derivation kept the rule broken.** The thresholds
+ * were picked to look reasonable — a tenth for any spread under 0.5 — and the measured spread is
+ * 0.44, so the page went on printing 9.1x one paragraph below a sentence promising that "the digit
+ * after the point is not offered". A hand-chosen threshold is a hand-chosen precision wearing a
+ * function.
+ *
+ * The rule with no threshold in it: **quote a digit only when the spread is smaller than that
+ * digit's place value.** A tenth is worth 0.1; a spread of 0.44 swamps it four times over, so the
+ * tenth is not a measurement and is not offered. The units digit is worth 1, which the spread is
+ * inside, so the ratio is 9x. Nothing here is chosen — `-log10` reads the answer off the spread.
+ */
+const decimalsFor = (spread) =>
+  spread > 0 ? Math.min(4, Math.max(0, Math.floor(-Math.log10(spread)))) : 4;
+
+/** A ratio quoted to the precision its own repeated measurement earns, never finer.
+ *
+ * **`spread` must be the spread of THIS value, not of a sibling.** The page used to quote the
+ * softmax-only ratio against the memory ratio's spread: an absolute 0.44 measured on a value of 9,
+ * applied to a value of 1.8, where it would mean a quarter of the quantity. `compare_paths` returns
+ * both ratios and the sweep repeats it five times, so the second spread was already being measured
+ * and thrown away — it is recorded now, and each ratio is quoted against its own.
+ */
+const ratio = (value, spread) => `${value.toFixed(decimalsFor(spread))}×`;
+
 /* ============================================================== 1 · thesis */
 
 function chapterThesis(M) {
@@ -162,7 +194,7 @@ function chapterThesis(M) {
       t.final_broken_shift.toFixed(2),
       `the loss a <b>broken</b> model reaches, against ${t.final_correct_shift.toFixed(2)} for the
        correct one. It is counting copies, not predictions`,
-      'bad',
+      'watch',
     ],
     [
       int(b.boundary_crossings),
@@ -172,17 +204,17 @@ function chapterThesis(M) {
       'bad',
     ],
     [
-      `${M.memory.ratio.toFixed(1)}×`,
+      ratio(M.memory.ratio, M.sensitivity.memory.spread),
       `less memory for an identical loss — but only because the projection happens inside the loop.
        Chunking the softmax alone, which is what the name usually means, is worth
-       ${M.memory.softmax_only_ratio.toFixed(2)}×`,
-      'good',
+       ${ratio(M.memory.softmax_only_ratio, M.sensitivity.memory.softmax_only_spread)}`,
+      'watch',
     ],
     [
       pct(M.heads.head_share),
       `of this model is the output head — of head plus an <i>estimated</i> body. Against the trunk
        actually built it is ${pct(M.shapes.trunk_params ? M.heads.untied_params / (M.heads.untied_params + M.shapes.trunk_params) : 0)}`,
-      'good',
+      'watch',
     ],
   ]) {
     const tile = el('div', `tile ${mark}`);
@@ -197,7 +229,8 @@ function chapterThesis(M) {
 
   const note = el('p', 'say');
   note.innerHTML = `<b>Read those ${spell(4)} tiles as one sentence: check what the number is
-    counting.</b> Two of them are failures and one of the failures is ours, published on this page
+    counting.</b> They are marked alike because they <i>are</i> alike — the red one is the only one
+    this page published wrong, and none of the others is good news. Two of them are failures and one of the failures is ours, published on this page
     for weeks. That is the thread every section below is on — a loss counting copies, a count of
     dropped positions that counted the wrong positions, a memory ratio that belongs to a different
     technique than the one it is usually quoted for, and a percentage measured against a body
@@ -392,8 +425,9 @@ function chapterGlossary(M) {
     [
       'tying',
       `Reusing the input word list as the output head, instead of buying a second copy. It costs
-       <b>zero</b> extra parameters, and forces a token's input vector and its scoring direction to
-       be the same thing.`,
+       <b>${M.heads.tied_params}</b> extra parameters against
+       <b>${int(M.heads.untied_params)}</b> for an untied head, and forces a token's input vector
+       and its scoring direction to be the same thing.`,
     ],
     [
       'padding',
@@ -405,7 +439,9 @@ function chapterGlossary(M) {
       'masking',
       `Excluding positions from the loss. The mask is not the interesting part; the
        <b>contributing count</b> is, because a loss that moved tells you nothing until you know
-       whether the set of positions under it moved too.`,
+       whether the set of positions under it moved too. In the padded example below it takes
+       ${int(M.padding.positions_before)} positions down to
+       <b>${int(M.padding.positions_after)}</b>.`,
     ],
     [
       'perplexity',
@@ -431,13 +467,29 @@ function chapterGlossary(M) {
       `Computing the loss a few hundred rows at a time instead of all at once. Which few hundred is
        the whole question: chunk the softmax over logits that already exist and you save the
        intermediates; project <i>inside</i> the loop and the full score tensor never exists, which
-       is worth <b>${M.memory.ratio.toFixed(1)}×</b> here.`,
+       is worth <b>${ratio(M.memory.ratio, M.sensitivity.memory.spread)}</b> here.`,
+    ],
+    [
+      'packing',
+      `Putting several documents end to end in one sequence so no row is mostly padding. It creates
+       the one thing the loss must then be told to ignore: the <b>join</b> — at position
+       ${int(M.boundary.join_position)} in the example below, and the source of the single crossing
+       position section 7 costs at ${M.boundary.crossing_loss.toFixed(2)}.`,
+    ],
+    [
+      'the projection',
+      `The matmul from the model's ${c.d_model}-number thought to one score per token — the step that
+       creates the ${int(M.shapes.shapes[2][1][0] * M.shapes.shapes[2][1][1])}-row scores tensor.
+       Where it happens decides the memory: outside a loop the whole tensor exists at once, inside
+       one it never does, and that is the difference between the two figures in section 7.`,
     ],
     [
       '▁ (the underscore)',
       `Not a character in the text. The tokenizer writes a leading space this way, so
-       <code>▁of</code> is " of" and <code>of</code> is the "of" inside another word. It appears on
-       every figure below and is the single most confusing thing about reading tokens as strings.`,
+       <code>▁of</code> is " of" and <code>of</code> is the "of" inside another word. It opens
+       <b>${M.shift.correct_pairs.filter((pair) => pair[0].startsWith('▁')).length}</b> of the
+       ${int(M.shift.correct_pairs.length)} tokens in the sequence the figures below draw, and is the
+       single most confusing thing about reading tokens as strings.`,
     ],
   ];
 
@@ -448,9 +500,12 @@ function chapterGlossary(M) {
     `${Spell(entries.length)} words you need, each carrying a number from this run`,
     [
       `Read this once and nothing below is jargon. Every entry carries a real figure from the runs
-       on this page rather than a textbook gloss — and every term the tiles above used is in here,
-       which was not true before: <b>head</b>, <b>logits</b>, <b>output head</b> and
-       <b>tokenizer</b> were all used before they were defined.`,
+       on this page rather than a textbook gloss. <b>Every entry below carries a number</b>, which is
+       a promise a test can keep; the page used to promise instead that every word in the tiles above
+       was defined here, and that was false twice — first for <b>head</b>, <b>logits</b>,
+       <b>output head</b> and <b>tokenizer</b>, and then, after those were added, for <b>packed</b>
+       and <b>projection</b>. Both are entries now. The claim is gone because nothing could check
+       it, and an unfalsifiable promise on a page about checking things is worse than no promise.`,
     ],
     { short: 'The words', sub: `${spell(entries.length)} terms, with our own figures` }
   );
@@ -645,11 +700,24 @@ function chapterMechanism(M) {
     )
   );
 
+  /* **All three, because the page is titled after them.** It showed two — the slice — and never
+   * wrote the third or named it, so the headline count was the one number on the page a reader
+   * could not check against anything. The third is the line that turns the pair into a scalar, and
+   * it is where the padding, the boundary mask and the denominator all live. */
   const code = el('pre', 'code');
   code.textContent =
-    'inputs  = tokens[:, :-1]   # drop the last: nothing follows it\n' +
-    'targets = tokens[:,  1:]   # drop the first: nothing predicts it';
+    'inputs  = tokens[:, :-1]        # drop the last: nothing follows it\n' +
+    'targets = tokens[:,  1:]        # drop the first: nothing predicts it\n' +
+    'loss    = cross_entropy(logits, targets, ignore_index=-100)';
   s.append(code);
+
+  const which = el('p', 'say');
+  which.innerHTML = `<b>Those are the three lines, and one failure lives in each of the first two
+    while two live in the third.</b> The slice can go the wrong way. It can also be the right way
+    and still hand the loss padding to score. And the third line decides <i>which positions count</i>
+    — so a mask that keeps the wrong ones, and a mean over the wrong denominator, are both
+    <code>cross_entropy</code>'s arguments rather than anything you would see in a shape.`;
+  s.append(which);
 }
 
 /* ============================================================== 5 · method */
@@ -901,9 +969,17 @@ function chapterResults(M) {
     {
       cells: [
         '7 · memory',
+        /* **The shape and the baseline belong beside the figure, on a page about what numbers
+         * count.** It read "342.0 MiB against 37.6 MiB" and said nothing about what was scored or
+         * what was subtracted — while `memory.py`'s own docstring argues that an interpreter with
+         * torch loaded is a few hundred megabytes before any work happens, "and a report that did
+         * not say so would attribute all of it to the loss". This page was that report. */
         `<b>${mib(M.memory.materialised_bytes)} MiB</b> against
-         ${mib(M.memory.chunked_bytes)} MiB — ${M.memory.ratio.toFixed(2)}×,
-         losses ${M.memory.losses_agree ? 'identical' : 'DIFFERENT'}`,
+         ${mib(M.memory.chunked_bytes)} MiB — ${ratio(M.memory.ratio, M.sensitivity.memory.spread)},
+         losses ${M.memory.losses_agree ? 'identical' : 'DIFFERENT'}.
+         <span class="dim">${int(M.memory.rows)} rows × ${int(M.memory.vocab_size)} vocabulary,
+         chunked ${int(M.memory.chunk_size)} at a time; peak RSS of a fresh child process, less a
+         ${mib(M.memory.baseline_bytes)} MiB baseline that loads torch and allocates nothing</span>`,
       ],
     },
   ];
@@ -927,8 +1003,25 @@ function chapterResults(M) {
     (${sens.gap_grows_monotonically ? 'yes' : 'NO'}), and every run found both effects in the same
     direction. The memory ratio has a floor too: ${sens.memory.repeats} repetitions spread it from
     ${sens.memory.min.toFixed(2)}× to ${sens.memory.max.toFixed(2)}×, a spread of
-    ${sens.memory.spread.toFixed(2)}, so it is quoted as about ${Math.round(sens.memory.min)}× and no
-    finer.`;
+    ${sens.memory.spread.toFixed(2)} — which is
+    ${(sens.memory.spread / 0.1).toFixed(1)} times the tenths digit it would have to fit inside, so
+    the tenth is not a measurement and this page does not print one. It is
+    ${ratio(M.memory.ratio, sens.memory.spread)}, everywhere, and no finer. <b>That was a sentence
+    here and not a rule</b>: the tile, the glossary, the ledger and the corrections each chose their
+    own precision and two of them quoted hundredths. <b>Deriving it was not enough either, and the
+    way it failed is this section's own subject.</b> The first derivation offered a tenth whenever
+    the spread was under 0.5 — a threshold chosen because it looked reasonable — and the spread
+    recorded at the time was 0.44, so the page went on offering a tenth one paragraph under the
+    promise not to. Re-running these ${sens.memory.repeats} repetitions moved the spread to
+    ${sens.memory.spread.toFixed(2)}, which would have crossed that threshold and hidden the bug:
+    the same code, the same page, a different digit, decided by which run happened to be committed.
+    A digit is offered now only when the spread is smaller than that digit is worth, which has no
+    threshold in it and gives the same answer on both runs. It is why the same rule quotes the
+    softmax-only path to
+    ${decimalsFor(sens.memory.softmax_only_spread)} ${decimalsFor(sens.memory.softmax_only_spread) === 1 ? 'decimal' : 'decimals'}:
+    its own ${sens.memory.repeats} repetitions spread only
+    ${sens.memory.softmax_only_spread.toFixed(3)}, and it had been quoted against this ratio's
+    spread rather than its own.`;
   s.append(noise);
 
   const varied = el('p', 'say small');
@@ -1025,8 +1118,8 @@ function negativeRows(M) {
         'Chunking a softmax is not chunking a projection',
         `<b class="shape">one technique's number quoted for another</b> Chunking logits that
          already exist saves only the intermediates —
-         <b>${M.memory.softmax_only_ratio.toFixed(2)}×</b>. Projecting inside the loop, so the full
-         tensor never exists, is worth ${M.memory.ratio.toFixed(2)}×. Quoting the first as the
+         <b>${ratio(M.memory.softmax_only_ratio, M.sensitivity.memory.softmax_only_spread)}</b>. Projecting inside the loop, so the full
+         tensor never exists, is worth ${ratio(M.memory.ratio, M.sensitivity.memory.spread)}. Quoting the first as the
          second understates the method
          ${(M.memory.ratio / M.memory.softmax_only_ratio).toFixed(1)}-fold. <b>This row itself
          carried a typed figure for weeks</b> — 1.9×, measured by nothing — under a heading about
@@ -1086,10 +1179,10 @@ function chapterConclusion(M) {
     },
     {
       cells: [
-        `<b>${M.memory.ratio.toFixed(2)}×</b> memory`,
+        `<b>${ratio(M.memory.ratio, M.sensitivity.memory.spread)}</b> memory`,
         'what chunking the loss saves',
         `what moving the <i>projection</i> inside the loop saves. The softmax alone:
-         ${M.memory.softmax_only_ratio.toFixed(2)}×`,
+         ${ratio(M.memory.softmax_only_ratio, M.sensitivity.memory.softmax_only_spread)}`,
       ],
     },
     {
@@ -1338,8 +1431,11 @@ function buildFooter() {
   if (!f) return;
   const p = el('p', 'say small');
   p.innerHTML =
+    // No count. The heading above the reproduce section was fixed after it read "Three commands"
+    // over four of them; this line kept the same wrong number for as long, one screen further down,
+    // because nothing connects a footer to the section it summarises.
     'Written for whoever arrives first: the argument is in plain words, and every number behind it ' +
-    'is three commands away. ' +
+    'is regenerated by the commands in the repository, beside the code they run. ' +
     '<a href="https://github.com/pankajkr23/llm-pretraining-exercises/tree/main/src/exercises/09-loss-functions-output-heads">Code, tests and the full write-up</a>.';
   f.append(p);
 }

@@ -38,6 +38,101 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The rail was moved inward on three pages and it pushed the reading column off centre.** The
+  fix for exercise 09's squeezed text was mostly the type scale, but it also added
+  `left: max(0px, calc((100vw - 1500px) / 2))` to exercises 07, 09 and 10 — so above 1440px the rail
+  travelled with the centred wrap and sat against the text. Measured at 2560 that is **24px of air
+  on the left of the column and 554px on its right**: the rail no longer at the page edge, dead
+  space on both sides of it, and the column off the centre it is supposed to hold. `max(0px, …)`
+  clamps below 1440, so every width a laptop opens looked correct. The override is gone; all eight
+  railed pages now measure equal air either side at every width, which is what exercises 03, 04, 05,
+  06 and 08 held throughout.
+
+- **`AGENTS.md` records this exact mistake being made once before, and the guard that catches it
+  lived in one exercise both times.** Exercise 08's centring assertion is parametrised over widths
+  and hard-coded to exercise 08. It is now the horizontal half of `tests/test_rail_centring.py`,
+  which discovers every page that builds a rail from the filesystem and holds it to the **property**
+  — equal air either side — rather than to a distance: 08's wrap is 2200px and everyone else's is
+  1500px, so the right gap is 204px on one page and 554px on another at the same viewport, and a
+  guard naming either number fails the other while both are right. That is the shape of the guard
+  that shipped the first time this was got wrong. `docs/DESIGN.md` now states the rule and names
+  the misreading that produces it.
+
+- **Exercises 07 and 10 join the published type scale, and a guard now watches which pages are on
+  it.** Both carried the identical `.say { max-width: 68ch }` at an inherited 16px that
+  `docs/DESIGN.md` names as the canonical bug. Body prose goes from **16px in a 685px column to
+  22px in a 951px one** at 2560, carrying the same words per line — with the rail travelling with
+  the centred column and the standfirst on the ramp, exactly as exercise 09 was fixed.
+
+- **The measure guard could not have caught any of it, and now the missing half exists.**
+  `test_a_paragraph_holds_a_reading_measure` computes characters as `width ÷ ch-width`, and `ch`
+  *is* the advance of `0` at the element's own size — so an element capped at `Nch` on itself
+  reports exactly `N` at every font size and viewport. Exercise 09 read 68 at 16px in a 685px
+  column and 70 at 22px in a 951px one, inside the 42–80 band both times. The band is not wrong;
+  `ch` is the unit the caps are written in. It simply cannot see the physical size, which is the
+  thing that changed. `test_the_pages_on_the_fluid_scale_are_still_on_it` measures that instead,
+  with a ledger that **fails in both directions** — a page that regresses off the scale, and a page
+  that adopts it without being recorded.
+
+- **A long identifier pushed the whole page sideways at 320px.** Inline `code` holds paths, and mono
+  does not hyphenate: at the old fixed 16px the longest of them happened to fit a phone, and at the
+  scale's 19px floor one `<code>` made exercise 07's document scroll horizontally by 19px. Found by
+  the existing guard, at the width nobody develops at.
+
+- **Exercise 09's page stated its own precision rule and broke it four times — and the first repair
+  broke it a fifth.** The results section says the memory ratio is quoted *"and no finer"* than its
+  noise floor allows, and the opening tile said 9.1×, the glossary 9.1×, the ledger 9.09× and the
+  corrections 9.09×, one of them fourteen lines above the rule. Each was a `toFixed()` chosen at its
+  own call site. Replacing them with one derived function was not enough, because **the function's
+  thresholds were hand-chosen too** — a tenth for any spread under 0.5, against a recorded spread of
+  0.44 — so the page went on offering the digit one paragraph beneath the promise not to, with every
+  test green. The rule has no threshold in it now: **a digit is offered only when the spread is
+  smaller than that digit is worth**, which is `-log10` of the spread and nothing else. The memory
+  ratio earns none and is 9× everywhere.
+
+- **Re-running the sensitivity sweep proved the caveat the README had only asserted, and separated
+  two things that had been quoted as one.** The sweep was re-run on a later commit: every figure in
+  `by_steps` reproduced **bit for bit**, so the training half is exactly deterministic — while the
+  five memory repetitions moved the spread from 0.44 to **0.56**, which is why that half is repeated
+  at all. It also crosses the discarded threshold, so the same code would have printed a different
+  digit depending on which run happened to be committed. And `compare_paths` had been measuring the
+  softmax-only ratio on every repeat while the sweep kept only the first: its own spread is
+  **0.019**, thirty times tighter, because it compares two byte counts on one path rather than two
+  processes. It had been quoted against a spread measured on a quantity five times its size. Both
+  spreads are recorded and each ratio is quoted against its own — 9× and 1.8×.
+
+- **Nothing read the rendered page, which is why the broken repair shipped.** Every precision guard
+  in exercise 09 checked the README or `results/`; the defect was in the page. A browser guard now
+  asserts, for each ratio drawn from a repeated measurement, that the figure at its earned precision
+  is present **and that no finer rendering of the same value appears anywhere** — the half that
+  fails on a page quoting 9× in one place and 9.09× in another. Watched red against the tree exactly
+  as it shipped, and against the wrong-spread pairing.
+
+- **The page is titled "The three lines that decide what a model learns" and showed two.** The third
+  — the `cross_entropy` call — was never written or named, so the headline count was the one number
+  on the page a reader could not check against anything. All three are shown, with which failure
+  lives in which.
+
+- **The memory figure carried no shape and no baseline**, on a page about what numbers count. It
+  read *"342.0 MiB against 37.6 MiB"* and said nothing about the rows, the vocabulary, or the
+  interpreter baseline subtracted from both — while `memory.py`'s own docstring argues that a report
+  omitting the baseline *"would attribute all of it to the loss"*. This page was that report.
+
+- **A footer still said "three commands away"** one screen below the heading that had been corrected
+  for saying "Three commands" over four of them. Nothing connects a footer to the section it
+  summarises, so it kept the wrong number for as long.
+
+- **Three tiles were coloured green under a paragraph saying all four are the same failure.** A
+  ninety-second reader takes the colour, not the sentence, and leaves believing two of them are good
+  news — the opposite of the section's point. They are marked alike now, with the one figure this
+  page actually published wrong still marked as a defect so a failure leads the section.
+
+- **The glossary promised something no test could check**, and it was false twice — first for
+  `head`, `logits`, `output head` and `tokenizer`, then, after those were added, for `packed` and
+  `projection`. Both are entries now, and the promise is replaced by one a test does keep: every
+  entry carries a figure from the run. That guard immediately found four entries carrying none,
+  two of which predate today.
+
 - **Vercel could cancel an in-flight page build when a documentation push landed behind it.** Builds
   here take **7 seconds** and the two pushes on one branch were **49 seconds** apart — inside that
   window `autoJobCancelation` kills the build carrying the page, and the documentation push then

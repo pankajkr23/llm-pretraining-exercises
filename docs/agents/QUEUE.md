@@ -1192,6 +1192,114 @@ predates the harness — so it is logged as what it was.
                           lowercase advance. Widening the wrap to 08's 2200px was measured and
                           REJECTED: it grows the void beside the prose from 819 to 989px, because
                           09's tables are two and three columns and its figures are drawn at 700px
+2026-09-09  design        #168 opened: 07 and 10 join the type scale, and the measure guard gets
+                          the half it was missing. Both carried the identical `.say { max-width:
+                          68ch }` at an inherited 16px -- the declaration docs/DESIGN.md names as
+                          the canonical example of getting this wrong. Body prose 16px/685px ->
+                          22px/951px at 2560, same words per line, with the rail travelling with
+                          the centred column and the standfirst on the ramp, as 09 was fixed in
+                          #167. THE GUARD COULD NOT HAVE CAUGHT ANY OF IT: it computes characters
+                          as width / ch-width, and `ch` IS the advance of `0` at the element's own
+                          size, so an element capped at Nch on ITSELF reports exactly N at every
+                          font size and viewport -- 09 read 68 at 16px/685px and 70 at 22px/951px,
+                          inside the 42-80 band both times. Checked the alternative: measured in
+                          REAL characters every page in the repository exceeds 80 somewhere,
+                          including 08, so the band is internally consistent and `ch` is the unit
+                          the caps are written in. It simply cannot see physical size. The new half
+                          measures that instead and its ledger fails in BOTH directions -- a page
+                          regressing off the scale, and a page adopting it without being recorded
+                          -- both watched failing. It also replaces two skips with an assertion
+                          rather than declaring them, because a skip reports as a pass. AND A LONG
+                          IDENTIFIER PUSHED THE PAGE SIDEWAYS: inline code holds paths and mono
+                          does not hyphenate, so at the scale's 19px floor one <code> made 07's
+                          document scroll by 19px at 320px. Caught by the existing guard at the
+                          width nobody develops at. 03, 04, 05 and 06 are still on the old scale
+                          and each needs measuring first rather than a bulk edit
+2026-09-09  exercise-09   #169 opened: the page keeps the rules it states. Six things it claimed
+                          about itself that were not true, found by four reviewers reading the
+                          DEPLOYED page after #165 merged, every one green in CI throughout. IT
+                          STATED ITS OWN PRECISION RULE AND BROKE IT FOUR TIMES: the results
+                          section says the memory ratio is quoted "and no finer" than its noise
+                          floor allows, and the tile said 9.1x, the glossary 9.1x, the ledger
+                          9.09x and the conclusion 9.09x -- one of them fourteen lines above the
+                          rule. Each was a toFixed() chosen at its own call site, so the rule was a
+                          sentence and the practice was five decisions. Precision is derived from
+                          the measured spread now, so the page CANNOT quote finer than it earned.
+                          THE TITLE PROMISES THREE LINES and the page showed two; the third is the
+                          cross_entropy call, where two of the four failures live, so the headline
+                          count was the one number a reader could not check. THE MEMORY FIGURE
+                          carried no shape and no baseline on a page about what numbers count --
+                          memory.py's own docstring says a report omitting the baseline "would
+                          attribute all of it to the loss", and this page was that report. A FOOTER
+                          still said "three commands away" one screen below the heading already
+                          corrected for it. THREE TILES WERE GREEN under a paragraph saying all
+                          four are the same failure, so a ninety-second reader takes the colour and
+                          leaves believing two are good news. AND A PROMISE I COULD NOT KEEP: the
+                          glossary said every term the tiles use is defined in it, false twice. I
+                          tried to guard it and could not -- the tiles emphasise words for stress
+                          as often as for terminology, so the check flagged "broken" and
+                          "estimated". Watched it fire on correct prose and removed the claim
+                          instead, replacing it with one a test does keep: every entry carries a
+                          figure from the run. That guard immediately found four entries carrying
+                          none, two of which predate today
+2026-09-09  exercise-09   #169 resolved against main, and resolving it found the fix itself broken.
+                          THE PRECISION RULE I DERIVED WAS STILL A CHOSEN ONE: decimalsFor read
+                          `spread >= 0.5 ? 0 : spread >= 0.05 ? 1 : 2`, the recorded spread was
+                          0.44, so the page kept printing 9.1x one paragraph under the sentence
+                          promising the tenth is not offered. I had written the entry above saying
+                          "the digit is not offered anywhere" and it was false when I wrote it.
+                          Found by rendering the page and reading the tiles after the merge, not by
+                          a test -- every precision guard in this exercise reads the README or
+                          results/, and the defect was on the page. The rule is -log10(spread) now:
+                          a digit is offered only when the spread is smaller than that digit is
+                          worth. No threshold, so nothing to tune and nothing to be lucky about.
+                          RE-RAN THE SWEEP, which settled two things. by_steps reproduced BIT FOR
+                          BIT on a different commit, so the training half is exactly deterministic
+                          and the README's "re-running moves the spread" is now evidence rather
+                          than a hedge. The memory spread moved 0.44 -> 0.56, ACROSS the discarded
+                          threshold -- the same code would have printed a different digit
+                          depending on which run happened to be committed, which is this section's
+                          own lesson applied to precision. AND THE SECOND RATIO WAS BEING THROWN
+                          AWAY: compare_paths returns the softmax-only ratio on every repeat and
+                          the sweep kept only the first, so the page quoted a 1.8 value against a
+                          spread of 0.56 measured on a 9. Its own spread is 0.019, thirty times
+                          tighter, and it earns the tenth the memory ratio does not. Both recorded,
+                          each quoted against its own. NEW GUARD READS THE PAGE: for each repeated
+                          ratio, the figure at its earned precision must be present and no finer
+                          rendering may appear anywhere. Watched red against the tree exactly as
+                          #169 shipped it -- old threshold, old spread -- and against the
+                          wrong-spread pairing, mutations held in memory and restored in a finally.
+                          Its first version was red for the WRONG reason: "9.1x" is a substring of
+                          "39.1x", the logits-to-hidden ratio, so it failed on correct prose until
+                          a lookbehind was added
+2026-09-09  design        #169 also puts the rail back where 08 has it, on 07, 09 and 10. PK: "you
+                          have moved the rail from its original position which does not look
+                          correct. The rail position in exercise 8 is good and I think we should
+                          keep it standard across all the exercises." He is right and it was mine:
+                          #167/#168 added left: max(0px, calc((100vw - 1500px)/2)) to three pages,
+                          so above 1440 the rail travelled with the centred wrap and sat 24px from
+                          the text -- 24px of air on the column's left against 554px on its right
+                          at 2560. MEASURED BEFORE CHANGING ANYTHING, because AGENTS.md records an
+                          agent reading this same complaint as "the rail is too far left" and
+                          making it worse: 03, 04, 05, 06 and 08 all hold equal air either side at
+                          every width, 07, 09 and 10 were off by 530px at 2560 and 210 at 1920.
+                          Below 1440 max(0px, ...) clamps, which is why a full screenshot pass and
+                          a review round missed it. Override removed; all eight now measure 0px of
+                          asymmetry. THE GUARD LIVED IN ONE EXERCISE BOTH TIMES -- 08's centring
+                          assertion sweeps widths and is hard-coded to 08 -- so it is now the
+                          horizontal half of tests/test_rail_centring.py, which already discovers
+                          railed pages from the filesystem for the vertical half. It asserts the
+                          PROPERTY and never a distance: 08's wrap is 2200px and everyone else's
+                          1500px, so the correct gap is 204px on one page and 554px on another at
+                          the same viewport, and a guard naming either number fails the other while
+                          both are right -- which is exactly the guard that shipped the first time.
+                          Watched red on all three pages with the override re-applied, held in
+                          memory, restored in a finally and the restore verified. I FIRST WROTE IT
+                          AS A SEPARATE FILE with its own exemption ledger and got 04 wrong in it,
+                          claiming its rail is not pinned; the ledger's own both-directions twin
+                          caught that, and merging into the existing file removed the ledger
+                          entirely because the filesystem answers the question. docs/DESIGN.md now
+                          carries the rule and names the misreading that produces it
 2026-09-09  ci            #170 opened: a pull request says where its preview actually is, and it
                           costs nothing. Since the build gate landed on 4 September every pull
                           request here ends with `docs: record #NNN in the queue` -- an entry that

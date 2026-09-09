@@ -327,3 +327,122 @@ def test_no_two_figures_carry_the_same_number(page):
         f"figure numbers are {numbers}, which is not 1..{len(numbers)}. Derive them from the count "
         "of figures already built rather than passing each one in."
     )
+
+
+def test_every_glossary_entry_carries_a_number_from_the_run(page):
+    """The glossary says every entry carries a real figure. That is checkable, so it is checked.
+
+    **This replaces a claim that was not.** The page used to promise that every term the opening
+    tiles used was defined here, and it was false twice — first for `head`, `logits`, `output head`
+    and `tokenizer`, then, after those were added, for `packed` and `projection`. The obvious guard
+    for it does not work: the tiles emphasise words for stress as often as for terminology, so a
+    check keyed on emphasis flags `broken` and `estimated` and cannot tell a term from a raised
+    voice. I tried it, watched it fire on correct prose, and removed the promise instead.
+
+    What is left is a promise the page can keep. A definition carrying a figure from this run is the
+    difference between a glossary and a dictionary — it is what makes `perplexity` mean *12,078
+    here* rather than a paraphrase — and it is the property that decays first when an entry is
+    added in a hurry.
+    """
+    import re as _re
+
+    entries = page.evaluate("""() => {
+      const out = [];
+      const dl = document.querySelector('.gloss');
+      if (!dl) return out;
+      const kids = [...dl.children];
+      for (let i = 0; i < kids.length; i += 1) {
+        if (kids[i].tagName !== 'DT') continue;
+        const dd = kids[i + 1];
+        if (dd && dd.tagName === 'DD') {
+          out.push({term: kids[i].textContent.trim(), body: dd.textContent.trim()});
+        }
+      }
+      return out;
+    }""")
+    assert entries, "no glossary entries found; the selector has gone stale"
+
+    numberless = [e["term"] for e in entries if not _re.search(r"\d", e["body"])]
+    assert not numberless, (
+        f"these glossary entries carry no figure from the run: {numberless}. The section promises "
+        "that every entry does, and a definition without one is a dictionary entry — it tells a "
+        "reader what a word means in general rather than what it is on this page."
+    )
+
+
+def _decimals_for(spread: float) -> int:
+    """Decimals a spread will support — the rule the page and the renderer both implement.
+
+    Written a third time here on purpose. A guard that imports the implementation it is checking
+    asserts only that the implementation equals itself; this one states the rule independently, so
+    it goes red when either copy drifts from it.
+
+    Args:
+        spread: The measured spread of the quantity being quoted.
+
+    Returns:
+        Decimal places, 0 to 4.
+    """
+    import math
+
+    if spread <= 0:
+        return 4
+    return min(4, max(0, math.floor(-math.log10(spread))))
+
+
+def test_no_ratio_on_the_page_is_quoted_finer_than_its_own_spread_supports(page):
+    """The page's stated precision rule, asserted against the page rather than against the code.
+
+    **This is the guard the previous fix did not have, and the fix shipped broken without it.** The
+    page says the memory ratio is quoted "and no finer" than its noise floor allows. That sentence
+    was broken by five hand-chosen `toFixed` calls; the repair replaced them with a function — and
+    the function's thresholds were hand-chosen too, so the page kept offering a tenth against a
+    spread of 0.44, one paragraph below the promise. Every test was green, because every test
+    checked the README or the results file and none of them read the rendered page.
+
+    So this reads the page. For each ratio drawn from a repeated measurement it asserts two things:
+    the figure at the precision its own spread earns is **present**, and no **finer** rendering of
+    the same value appears anywhere on the page. The second half is the one that fails on the bug —
+    a page that quotes 9x in one place and 9.09x in another satisfies presence and breaks the rule.
+
+    It also pins the pairing. The softmax-only ratio was quoted against the *memory* ratio's spread:
+    an absolute 0.44 measured on a value of 9, applied to a value of 1.8. Both spreads are measured
+    now, they differ by roughly thirty times, and passing the wrong one reds this test.
+    """
+    import json
+    import re as _re
+
+    results = REPO / "src/exercises/09-loss-functions-output-heads/results"
+    harness = json.loads((results / "harness.json").read_text())["item_7_memory"]
+    memory = json.loads((results / "sensitivity.json").read_text())["memory"]
+
+    text = page.evaluate("() => document.body.innerText")
+
+    def _appears(figure: str) -> bool:
+        """Is this exact figure on the page, rather than the tail of a longer one?
+
+        **A substring match reported a defect that was not there.** The first version of this asked
+        whether `"9.1×"` was in the page text, and the page carries `39.1×` — the logits-to-hidden
+        ratio, a different quantity in a different section — so the guard failed against correct
+        prose. The lookbehind is the whole fix: a figure preceded by a digit or a point is part of
+        a larger number and is not this one.
+        """
+        return _re.search(rf"(?<![\d.]){_re.escape(figure)}", text) is not None
+
+    pairs = (
+        ("the memory ratio", harness["ratio"], memory["spread"]),
+        ("the softmax-only ratio", harness["softmax_only_ratio"], memory["softmax_only_spread"]),
+    )
+    for name, value, spread in pairs:
+        earned = _decimals_for(spread)
+        assert _appears(f"{value:.{earned}f}×"), (
+            f"{name} is measured to a spread of {spread:.4f}, which earns {earned} decimals — so "
+            f"the page should quote it as {value:.{earned}f}×, and that figure is not on the page."
+        )
+        for finer in range(earned + 1, 5):
+            assert not _appears(f"{value:.{finer}f}×"), (
+                f"{name} appears on the page as {value:.{finer}f}×, which is {finer - earned} "
+                f"digit(s) finer than its measured spread of {spread:.4f} supports. The page's own "
+                f"results section promises it is quoted 'and no finer'. Every digit past "
+                f"{earned} is noise being published as a measurement."
+            )
