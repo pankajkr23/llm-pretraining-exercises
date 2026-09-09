@@ -93,6 +93,17 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Changed
 
+- **`RESEARCH.md`'s problem-3 table is promoted from `[reported]` to `[measured]`, and three of its
+  four numbers moved.** The scheme it describes has since been built and run by a tracked producer,
+  so the figures a research pass predicted can be compared with what the code does. The old numbers
+  are kept beside the new ones rather than quietly replaced — a document whose whole design is
+  provenance marks should show what a mark was worth when it changed. **Folding does not beat
+  cutting**, as reported: both recover 9,467 of 10,000 words, because both fail every word longer
+  than 32 bytes for the same reason, so the new scheme's margin is **5.19 points over both** rather
+  than 4.16 over one. The refutation clause written against the 95.58% baseline is rewritten against
+  the real one. The `widen to 128 positions` row is **dropped rather than corrected**: nothing
+  re-measured it, and the nearest published figure is over a different denominator.
+
 - **The bucket sweep ran three seeds under a framing that says five, and now says so.** Exercise 07
   states "trained comparisons, 5 seeds, paired" once and every table inherits it — but
   `bucket_sweep` ran **three**, recorded only inside a free-text `source` string that no document
