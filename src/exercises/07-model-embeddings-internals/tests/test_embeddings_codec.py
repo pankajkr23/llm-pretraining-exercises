@@ -128,3 +128,81 @@ def test_the_recovered_target_is_exact_for_a_token_that_merges(vocabulary, proje
     assert np.allclose(ratio, 1.0, atol=1e-9), (
         f"the recovered target is scaled by {ratio.min():.6f}..{ratio.max():.6f} rather than 1.0"
     )
+
+
+# --- spc: one shared space of position directions -------------------------------------------
+
+SPC = KroneckerConfig(d_p=32, d_model=384, positions="spc", reach=128, n_buckets=0)
+
+
+def test_the_spc_frame_is_fixed_by_reach_and_not_by_the_batch():
+    """A token must encode to the same thing alone as it does beside a long one.
+
+    **This is the defect that shipped in the first draft.** The frame was built at
+    `position_frame(d_p, len(token))` in `atoms` and `position_frame(d_p, max_len)` in
+    `_table_for`, so the directions a token used depended on the longest token it happened to be
+    encoded with — the frame is optimised jointly for exactly the number of positions asked for, so
+    row `p` of a 64-row frame is not row `p` of a 128-row one. Nothing would have failed: the code
+    is well formed either way, and the only symptom is a decoder correlating against directions the
+    encoder never used, which reads as a recovery failure.
+    """
+    alone = codec.atoms(b"hello", SPC)
+    crowded = codec.atoms(b"hello", SPC, codec._table_for([b"hello", b"x" * 120], SPC))
+    assert np.array_equal(alone[0], crowded[0])
+    assert np.allclose(alone[1], crowded[1])
+
+    short = codec.position_frame(SPC.d_p, 64)
+    full = codec.position_frame(SPC.d_p, SPC.reach)
+    assert not np.allclose(short, full[:64]), (
+        "if a frame built for 64 positions WERE the first 64 rows of one built for 128, the bug "
+        "above would have been harmless — this asserts the premise, so the test above keeps\n"
+        "meaning something"
+    )
+
+
+def test_a_token_past_the_reach_is_refused_rather_than_truncated():
+    """Silently dropping the tail is what `onehot` does, and not doing it is the whole claim."""
+    narrow = KroneckerConfig(d_p=32, d_model=384, positions="spc", reach=8, n_buckets=0)
+    assert codec.atoms(b"x" * 8, narrow)[0].size > 0
+    with pytest.raises(ValueError, match="does not fit"):
+        codec.atoms(b"x" * 9, narrow)
+
+
+def test_the_frame_is_deterministic_from_the_seed_alone():
+    """It is never stored, so a frame that varied per process would decode nothing it encoded."""
+    a = codec.position_frame(16, 40, seed=codec.SPC_SEED)
+    b = codec.position_frame(16, 40, seed=codec.SPC_SEED + 1)
+    assert np.array_equal(a, codec.position_frame(16, 40))
+    assert not np.allclose(a, b), "a different seed must give a different frame"
+
+
+def test_repulsion_beats_a_random_frame_and_respects_the_welch_bound():
+    """Both directions: it must actually help, and it must not claim the impossible.
+
+    A frame that scored *below* the Welch bound would mean `frame_coherence` is measuring the wrong
+    thing — the bound is a theorem, not a target — so the second assertion is a check on the
+    instrument rather than on the frame.
+    """
+    reach, d_p = 128, 32
+    random_frame = np.random.default_rng(1).standard_normal((reach, d_p))
+    random_frame /= np.linalg.norm(random_frame, axis=1, keepdims=True)
+    repelled = codec.frame_coherence(codec.position_frame(d_p, reach))
+
+    assert repelled < codec.frame_coherence(random_frame)
+    assert repelled >= codec.welch_bound(reach, d_p)
+
+
+def test_the_welch_bound_is_zero_only_while_the_directions_can_be_perpendicular():
+    """At or below `d_p` an orthonormal frame exists, so the bound is silent; above it, it bites."""
+    assert codec.welch_bound(32, 32) == 0.0
+    assert codec.welch_bound(31, 32) == 0.0
+    assert codec.welch_bound(33, 32) > 0.0
+    assert codec.welch_bound(256, 32) > codec.welch_bound(33, 32)
+
+
+def test_spc_keeps_the_code_width_while_removing_the_length_limit():
+    """The trade the scheme exists to make, asserted as arithmetic rather than described."""
+    assert SPC.code_width == ONEHOT.code_width == 256 * 32
+    long = bytes(range(100))
+    assert codec.atoms(long, ONEHOT)[0].size == 32, "onehot discards everything past d_p"
+    assert codec.atoms(long, SPC)[0].size > 32, "spc writes every position into the shared space"

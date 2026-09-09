@@ -246,7 +246,7 @@ recovery:  h ──> codec.targets_from_h ──> decode.recover ──> the ori
 | module | what it owns | needs torch |
 | --- | --- | --- |
 | `config.py` | every dimension, in one dataclass | no |
-| `codec.py` | what the code **is** — three position schemes, the analytic z-norm inverse | no |
+| `codec.py` | what the code **is** — four position schemes, the analytic z-norm inverse | no |
 | `decode.py` | block-OMP + coordinate descent, and the residual **certificate** | no |
 | `collisions.py` | how many real tokens each scheme makes indistinguishable | no |
 | `budget.py` | the parameter arithmetic, including where this **stops** paying | no |
@@ -316,6 +316,9 @@ uv run python .../tools/measure_parallel_text.py
 
 # what wrapping recovers, by byte-length band -- pure arithmetic, no training, no corpus
 uv run python .../tools/measure_wrap_recovery.py
+
+# every decodable position scheme on the SAME question, which the first comparison did not ask
+uv run python .../tools/measure_position_schemes.py
 ```
 
 Each prints **what it does not establish** and writes those limits into its own bundle, so the
@@ -530,17 +533,22 @@ onto the same 256 atoms — so the code records *which atoms were added, not whi
 them*. A multiset, not a sequence. `decode.fold_is_order_lossy` exhibits two different 40-byte
 strings with identical codes (**1.3e-15**).
 
+<!-- recovery-numbers: results/wrap_recovery.json -->
+
 > **Correction, now measured.** I wrote in `WrapKronecker`'s docstring that superposition "loses
 > nothing recoverable". It is false. `tools/measure_wrap_recovery.py` measures the whole vocabulary:
 > **100.00%** to 32 bytes (9,467 tokens), **15.05%** for 33–64 (465), **0.00%** beyond (68). Those
 > figures are in `results/wrap_recovery.json`; before this they were in no evidence file at all, and
-> the README quoted 19.1% for the middle band.
+> the README quoted 19.1%<!-- unmeasured: the figure this correction replaces; quoting it is the
+> point of the correction, and demanding evidence for it would force the sentence to be deleted -->
+> for the middle band.
 >
 > I also "fixed" the aliasing with per-wrap byte permutations, which made it worse — permutations
 > make every swap available, where signs at least block the slots whose two levels disagree. **The
-> figure once quoted for that variant (14.6%) is unreproduced and is no longer stated.** It was
-> tried and removed, and two attempts to rebuild it from the description produced harness artefacts
-> rather than results.
+> figure once quoted for that variant (14.6%<!-- unmeasured: stated here as unreproduced; two
+> attempts to rebuild the variant produced harness artefacts rather than results -->) is
+> unreproduced and is no longer stated.** It was tried and removed, and two attempts to rebuild it
+> from the description produced harness artefacts rather than results.
 >
 > **A defect surfaced while measuring this.** `decode.recover` accepted `wrap` and no test had ever
 > driven it that way: its matched filter takes an `argmax` over the projection's raw rows, and under
@@ -549,16 +557,87 @@ strings with identical codes (**1.3e-15**).
 > signs in, and two tests hold it — one asserting 100% at or below `d_p`, one asserting an unsigned
 > dictionary does much worse, so the first cannot pass for the wrong reason.
 
-**The practical answer is to stop folding and size `d_p` to the vocabulary**, which is affordable
-precisely because `D` does not depend on `V`. The repo's tokenizer tops out at 121 bytes:
+<!-- /recovery-numbers -->
 
-| d_p | d_model | whole-token exact recovery | long tokens only |
-| ---: | ---: | ---: | ---: |
-| 32 | 768 | 36.0% | **0.0%** |
-| **128** | **768** | **99.9%** | **99.8%** |
+<!-- recovery-numbers: results/measurements.json -->
 
-*(Measured on a set deliberately enriched with long tokens; vocabulary-wide the `d_p=32` figure is
-94.67%. The long-token column is the honest one.)*
+**One answer is to stop folding and size `d_p` to the vocabulary**, which is affordable precisely
+because `D` does not depend on `V`. The repo's tokenizer tops out at 121 bytes:
+
+| d_p | d_model | whole-token exact recovery | long tokens only | code width `D` |
+| ---: | ---: | ---: | ---: | ---: |
+| 32 | 768 | 36.0% | **0.0%** | 8,192 |
+| **128** | **768** | **99.9%** | **99.8%** | **32,768** |
+
+*(Measured on a set deliberately enriched with long tokens, so the `d_p=32` row reads far worse
+than a vocabulary-wide average would. It should: **9,467 of this vocabulary's 10,000 tokens are 32
+bytes or shorter**, so an average over the whole vocabulary is mostly a report of how many tokens
+are short. The long-token column is the honest one.)*
+
+<!-- /recovery-numbers -->
+
+**The last column is what the fourth scheme is for.** Raising `d_p` buys the reach by making the
+code four times wider, which is the cost this whole exercise exists to keep down.
+
+**The other answer is to stop giving each position a block of its own.** `spc` — a shared position
+code — gives byte position `p` a *direction* in one `d_p`-dimensional space instead of its own
+256-slot block. A space of any dimension holds unlimited directions, so the reach is unlimited while
+`D` stays `256 · d_p`; and because nothing is folded, a position is still identifiable at decode
+time, which is exactly what `wrap` gives up.
+
+**What it costs is bounded before anything is measured.** Once the reach exceeds `d_p` the
+directions cannot all be perpendicular. How sharply the code separates two positions is `1 − μ`,
+where `μ` is the largest similarity between any pair, and Welch's bound gives the smallest `μ` any
+set of that size can reach. At `d_p = 32` and a reach of 128 the bound is **0.1537**; a random set
+of directions measures **0.6457**, and pushing them apart reaches **0.2465**. That is the whole risk
+in one number, and it is why this was worth trying rather than arguing about.
+
+Every scheme the decoder can read, on the same question, over the whole vocabulary:
+
+<!-- recovery-numbers: results/position_schemes.json -->
+
+| byte length | tokens | one-hot | wrap | **spc** |
+| --- | ---: | ---: | ---: | ---: |
+| 1–32 | 9,467 | 100.00% | 100.00% | **100.00%** |
+| 33–64 | 465 | 0.00% | 0.00% | **99.35%** |
+| 65–128 | 68 | 0.00% | 0.00% | **83.82%** |
+
+<!-- /recovery-numbers -->
+
+**Read the column heading carefully, because the first version of this table did not.** These are
+*complete-token* recoveries: every byte back, in order. One-hot and wrap read zero above 32 bytes
+not because their decoders are weak but because neither has anywhere to put the 33rd byte — one
+discards it, the other folds it onto a slot it must then share. Ask one-hot instead about *the bytes
+it keeps* and it reads 100% at every length, and quoting that beside spc's whole-token figure is
+exactly how I first published a table saying one-hot was doing well at a length where it cannot
+represent the token at all. `tools/measure_position_schemes.py` prints both columns for that reason.
+
+**Where spc falls short it is the search, not the code**, and the decoder says so without being
+told. In both bands where it misses, every failure certifies as wrong — the residual is non-zero,
+computed without the answer — and in **every one of them** the true byte string fits the target
+strictly better than what was returned. The information survived the encoding; a better decoder
+would find it. That is the same distinction this exercise drew for `d_model = 128` under one-hot
+positions, and it is the reason a hit rate here is not a statement about what the code can hold.
+
+**And it is not free.** A position writes a whole `d_p`-vector rather than a single coordinate, so
+the code is far denser — and density is what the sparse matmul in front of the model pays for:
+
+| | reach | code width `D` | non-zeros per token |
+| --- | --- | ---: | ---: |
+| one-hot, `d_p = 32` | 32 bytes | 8,192 | 8.2 |
+| one-hot, `d_p = 128` | 128 bytes | **32,768** | 8.2 |
+| **spc, `d_p = 32`, reach 128** | **128 bytes** | **8,192** | **189.4** |
+
+*(Non-zeros measured on the 1–32 band, which is 9,467 of the 10,000 tokens.)* That is **23×**, and
+this exercise has already priced a factor that size: Fourier positions are 23× denser than one-hot
+and their training runs took about **8×** as long. So the choice is a real trade — spc buys the
+reach with arithmetic per token where `d_p = 128` buys it with four times the parameters.
+
+**What this does not establish.** `spc` has never been trained. Every figure above is a property of
+the *code* — whether a token's bytes come back — and says nothing about which scheme a model learns
+best from. `wrap`'s **−0.212** nats is still the only measured win among the position schemes, and
+whether a code that separates positions less sharply is a better or worse thing to hand a model is a
+question nobody here has asked yet.
 
 ### 6 · Where this stops paying, and what it costs to run
 

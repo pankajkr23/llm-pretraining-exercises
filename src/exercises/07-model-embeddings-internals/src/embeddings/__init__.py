@@ -11,7 +11,7 @@ entirely eaten by the head it forces you to untie.
 
 Modules
     config      one dataclass; every dimension in one place
-    codec       the forward code, three position schemes, and the analytic z-norm inverse (numpy)
+    codec       the forward code, four position schemes, and the analytic z-norm inverse (numpy)
     decode      block-OMP + coordinate descent, with a residual CERTIFICATE (numpy)
     collisions  how many vocabulary tokens each position scheme makes indistinguishable (numpy)
     budget      the parameter arithmetic, including where this architecture stops paying (pure)

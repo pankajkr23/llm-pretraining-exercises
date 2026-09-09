@@ -10,7 +10,42 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Exercise 07 gains a fourth position scheme, `spc`, and it is the first one that is both
+  length-free and decodable.** `onehot` discards every byte past `d_p` and `wrap` folds them onto
+  slots they must then share, so neither can return a token longer than 32 bytes — a limit of the
+  *code*, not of any decoder. The README's existing answer was to raise `d_p` to 128, which recovers
+  almost everything and makes `D = 256 · d_p` **four times wider**, growing the projection this
+  exercise exists to keep small. `spc` gives each byte position a **direction in one shared
+  `d_p`-dimensional space** rather than its own 256-slot block: unlimited reach at `D` unchanged,
+  nothing folded, position still identifiable at decode time. Measured over the whole vocabulary it
+  returns the complete token for **99.35%** of 33–64 byte tokens and **83.82%** of 65–128 byte ones,
+  where one-hot and wrap both return **0.00%**. **It has never been trained** and every document
+  that describes it says so: `wrap`'s −0.212 nats is still the only measured win among the schemes.
+
+- **`tools/measure_position_schemes.py` asks every scheme the SAME question, which the first
+  comparison did not.** `onehot` scores 100% on 49–64 byte tokens if you ask it about the bytes it
+  *keeps* — the first 32 — and `spc` was being checked on the whole token: two schemes, two
+  questions, one table, and the table said one-hot was doing well at a length where it cannot
+  represent the token at all. The tool now reports whole-token and represented-byte recovery side by
+  side and names the question each answers, plus the decoder's own certificate, whether a failure
+  was a **search** failure rather than a code failure, and the density each scheme costs. `spc` buys
+  its reach at **189.4** non-zeros per token against one-hot's **8.2** — 23×, the same factor Fourier
+  positions pay for training runs about 8× slower.
+
+- **The README's byte-recovery numbers are checked against the evidence files for the first time.**
+  `tests/test_embeddings_recovery_tables.py`: a delimited block may state any percentage it likes
+  provided every one appears in the files the block itself names, and a figure that is deliberately
+  unmeasured — a corrected number the prose quotes on purpose — carries its reason inline. It went
+  red on its first real run: **94.67%**, published as the vocabulary-wide recovery rate at
+  `d_p = 32`, is in no evidence file. It is replaced by the counts behind it.
+
 ### Fixed
+
+- **`decode.py`'s module docstring carried the same unsupported `cond(WᵀW)` clause the README did**,
+  and it is deleted on the same grounds: no evidence file in this exercise holds a `cond` field, and
+  the only surviving record says 2.4 → 248 at recovery 99.5% rather than 2.4 → 29.5 at 100%.
 
 - **`codec.encode` recorded the merged atom count where the `1/sqrt(L)` scale needed the position
   count.** `atoms` merges duplicate `(slot, byte)` pairs, which happens only under `wrap`, where two
