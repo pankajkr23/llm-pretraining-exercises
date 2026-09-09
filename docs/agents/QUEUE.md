@@ -1301,7 +1301,7 @@ predates the harness — so it is logged as what it was.
                           entirely because the filesystem answers the question. docs/DESIGN.md now
                           carries the rule and names the misreading that produces it
 ```
-2026-09-09  fix           PR opened: the shared explainer fits at the rail breakpoint, and the
+2026-09-09  fix           #173 opened: the shared explainer fits at the rail breakpoint, and the
                           finding recorded an hour ago is fixed rather than carried. Reproduced on
                           main first, so the attribution is measured: exercises 03 and 06 overflow
                           12px at 1180 and 0px at every other width in a fifteen-width sweep. THE
