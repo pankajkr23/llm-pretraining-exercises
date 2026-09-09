@@ -592,11 +592,13 @@ set of that size can reach. At `d_p = 32` and a reach of 128 the bound is **0.15
 of directions measures **0.6457**, and pushing them apart reaches **0.2465**. That is the whole risk
 in one number, and it is why this was worth trying rather than arguing about.
 
-Every scheme the decoder can read, on the same question, over the whole vocabulary:
+Every scheme the decoder can read, on the same question, over the whole vocabulary. **The question
+is the complete token: every byte back, in order** — which is what the heading says, because the
+first version of this table let each scheme answer a different one:
 
 <!-- recovery-numbers: results/position_schemes.json -->
 
-| byte length | tokens | one-hot | wrap | **spc** |
+| byte length | tokens | one-hot, whole token | wrap, whole token | **spc, whole token** |
 | --- | ---: | ---: | ---: | ---: |
 | 1–32 | 9,467 | 100.00% | 100.00% | **100.00%** |
 | 33–64 | 465 | 0.00% | 0.00% | **99.35%** |
@@ -604,13 +606,13 @@ Every scheme the decoder can read, on the same question, over the whole vocabula
 
 <!-- /recovery-numbers -->
 
-**Read the column heading carefully, because the first version of this table did not.** These are
-*complete-token* recoveries: every byte back, in order. One-hot and wrap read zero above 32 bytes
-not because their decoders are weak but because neither has anywhere to put the 33rd byte — one
-discards it, the other folds it onto a slot it must then share. Ask one-hot instead about *the bytes
-it keeps* and it reads 100% at every length, and quoting that beside spc's whole-token figure is
-exactly how I first published a table saying one-hot was doing well at a length where it cannot
-represent the token at all. `tools/measure_position_schemes.py` prints both columns for that reason.
+One-hot and wrap read zero above 32 bytes not because their decoders are weak but because neither
+has anywhere to put the 33rd byte — one discards it, the other folds it onto a slot it must then
+share. **Ask one-hot instead about the bytes it keeps and it reads 100.00% at every length**, and
+quoting that beside spc's whole-token figure is exactly how I first published a table saying one-hot
+was doing well at a length where it cannot represent the token at all. Both columns are in
+`results/position_schemes.json` and `tools/measure_position_schemes.py` prints them side by side,
+because reading either one alone makes a scheme look better or worse than it is.
 
 **Where spc falls short it is the search, not the code**, and the decoder says so without being
 told. In both bands where it misses, every failure certifies as wrong — the residual is non-zero,
