@@ -338,6 +338,17 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **`tools/check_todo.py` reconciles a checklist against the repository, so a working note cannot
+  quietly go stale.** Items carrying a `<!-- check: exists … -->`, `present "x" in <path>` or
+  `absent "x" in <path>` predicate are compared with what the repository actually holds, and both
+  directions are reported: an item ticked but not done, and — the one that had accumulated — an item
+  still open whose work shipped weeks ago. **An item with no predicate is reported as UNVERIFIABLE,
+  never as fine**, the same three-way split the run auditors use, because a check that could not run
+  has not held. Its first run against the real file found four entries in that state, including two
+  exercises described as empty directories that have been built and merged. It is feedback rather
+  than enforcement and the module says so: the file it was written for is gitignored, so only the
+  tool and its 23 tests reach CI.
+
 - **The S07 notebook's section 5 now trains arms in front of the reader instead of explaining why it
   cannot.** It said *"the code that trained them is not in this repository… there is no
   `backward()`, no optimiser and no training loop"* — true when it was written and false the moment
