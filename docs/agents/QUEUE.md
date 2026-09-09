@@ -1301,7 +1301,7 @@ predates the harness — so it is logged as what it was.
                           entirely because the filesystem answers the question. docs/DESIGN.md now
                           carries the rule and names the misreading that produces it
 ```
-2026-09-10  web           PR opened: the shared explainer is measured. HANDOFF item 11 asked for the
+2026-09-10  web           #177 opened: the shared explainer is measured. HANDOFF item 11 asked for the
                           measurement before any deletion and explicitly refused to carry forward
                           the old "used by one" figure. Measured: of 143 selectors, 03 matches 108,
                           06 matches 30, 05 matches 4, 04 matches 2, 08/09/10 match ONE each, and
