@@ -1301,7 +1301,7 @@ predates the harness — so it is logged as what it was.
                           entirely because the filesystem answers the question. docs/DESIGN.md now
                           carries the rule and names the misreading that produces it
 ```
-2026-09-10  a11y          PR opened: every figure announces what it is. HANDOFF item 8, verified by
+2026-09-10  a11y          #174 opened: every figure announces what it is. HANDOFF item 8, verified by
                           counting before acting rather than trusted: 07 has six svg[role=img] and
                           had two <title> and zero aria-label, so four figures announced as bare
                           images. 01, 03, 05, 09 and 10 were already clean by three different
