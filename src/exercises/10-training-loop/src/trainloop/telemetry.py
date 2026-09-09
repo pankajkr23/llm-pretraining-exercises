@@ -187,15 +187,38 @@ def robustness(trace: Trace) -> dict[str, int]:
     }
 
 
-def save(trace: Trace, extra: dict[str, object], path: Path | None = None) -> Path:
-    """Write the trace and whatever else the run produced.
+def save(
+    trace: Trace,
+    extra: dict[str, object],
+    path: Path | None = None,
+    device: str | None = None,
+) -> Path:
+    """Write the trace and whatever else the run produced, with provenance, or refuse.
 
     Separate from the run for the reason exercise 05 paid for: three experiments trained to
     completion and died in their final statement, one losing fifteen trained models.
+
+    **It refuses a bundle with no provenance**, and this file carried none: every published number
+    in this exercise — six of them, plus a 200-step trace — said nothing about which code, which
+    machine or which text produced it. A block nothing enforces is one that gets dropped in the
+    first hurried run.
+
+    Args:
+        trace: The per-step record.
+        extra: Everything else the run produced.
+        path: Defaults to the tracked `results/run.json`.
+        device: The device the run actually used. **Recorded, not inferred**: this exercise's
+            figures are throughput, so the device is an input — and MFU is a ratio whose two halves
+            must come from the same machine. Dividing CPU FLOPs by a GPU peak published 39.13% here
+            once.
     """
+    from . import provenance as prov
+
     path = path or (RESULTS / "run.json")
     path.parent.mkdir(exist_ok=True)
     payload: dict[str, object] = {"trace": trace.as_dict()}
     payload.update(extra)
+    payload["provenance"] = prov.provenance(device=device)
+    prov.require(payload)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
     return path

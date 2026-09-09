@@ -121,8 +121,8 @@ finding rather than that number: agreement improves as the nudge shrinks, then g
 when the subtraction becomes rounding noise. A check that agrees at exactly one epsilon has been
 fitted, not verified.
 
-**The accumulation gap is 15.4% on the worked arithmetic** and much smaller on a real run: 0.0484
-of a loss of 5.2658, so under 1%. That smallness is the point — the wrong curve does not look wrong,
+**The accumulation gap is 15.4% on the worked arithmetic** and much smaller on a real run: 0.0759
+of a loss of 5.2873, so under 1%. That smallness is the point — the wrong curve does not look wrong,
 it looks like the right curve, and you only see the difference by subtracting one from the other.
 
 **And the gap's sign is not stable across the run**, which the run's own data shows: the wrong curve
@@ -141,7 +141,7 @@ denominator and once in its numerator:
   it by 31%. Both describe the same correction, and quoting the wrong one of the pair is how a
   right figure ends up answering a different question.
 
-The honest figure is **27.69%**, roughly 12 points short of the 40% rule of thumb — and accounting
+The honest figure is **27.34%**, roughly 13 points short of the 40% rule of thumb — and accounting
 for that gap, rather than closing it, is the useful part. It moves by a few tenths of a point between
 runs, because the numerator is fixed and the denominator is a wall clock on a shared machine.
 

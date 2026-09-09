@@ -30,7 +30,17 @@ def render(run: dict) -> str:
     facts = run["facts"]
     one = run["item_1_shapes"]
     two, three = run["item_2_gradient"], run["item_3_accumulation"]
-    four, five, six = run["item_4_grad_norm"], run["item_5_mfu"], run["item_6_floats"]
+    four, five = run["item_4_grad_norm"], run["item_5_mfu"]
+    # `item_6_floats` carries the per-format decompositions AND a `regression` block measuring the
+    # bug this module shipped. The tables below want the formats only, so the two are separated
+    # here rather than by every loop having to know which keys are not formats.
+    regression = run["item_6_floats"]["regression"]
+    regression_rows = "\n".join(
+        f"| {name} | **{row['doubled_rate']:.2%}** | {row['raised_rate']:.2%} "
+        f"| {row['draws']:,} draws |"
+        for name, row in regression.items()
+    )
+    six = {k: v for k, v in run["item_6_floats"].items() if k != "regression"}
     curves = three["curves"]
     trace = run["trace"]
 
@@ -282,6 +292,24 @@ replacement for bf16.
 
 **These patterns are built from arithmetic here, not read out of the machine** — and then checked
 against torch's own casts, because a decomposition that agrees only with itself proves nothing.
+
+#### And the bug this module shipped, measured rather than remembered
+
+`_round_to_nearest_even` used to return an overflow flag computed from *this value's* fraction bit
+length where the fixed 23 was meant. `decompose` then applied a second exponent increment on top of
+its own normalisation, returning a number **exactly twice** the right one — or raising, where the
+shift count went negative.
+
+| format | returned twice the right value | raised | over |
+| --- | ---: | ---: | ---: |
+{regression_rows}
+
+It shipped because `0.1` is the only value the tests drove, and `0.1` is one of the values where the
+flag cannot fire. **The two columns are different defects and an earlier version of this document
+merged them into one figure of 30%** — a crash is loud and a value twice too large is not, so a rate
+that adds them answers neither question. Drawn uniformly from `[1, 2)`: every normal float is a
+significand in that interval times a power of two, and the bug lives entirely in the significand, so
+the range is the whole space rather than a slice of it.
 """
 
 

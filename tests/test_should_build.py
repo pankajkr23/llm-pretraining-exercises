@@ -162,3 +162,61 @@ def test_the_script_is_executable_and_wired_into_vercel_json() -> None:
     assert "should-build.sh" in config["ignoreCommand"], (
         f"vercel.json's ignoreCommand does not run this script: {config['ignoreCommand']!r}"
     )
+
+
+def test_it_builds_when_the_branch_has_never_deployed(repo: Path) -> None:
+    """An empty `VERCEL_GIT_PREVIOUS_SHA` means "never deployed", and the answer to that is BUILD.
+
+    **This is the case that cost a reviewer a cancelled deployment**, and it is worse than a single
+    missed preview because it is self-reinforcing. The fallback used to be `HEAD^`, which answers a
+    different question — *what did the newest commit change?* — so a branch whose tip happens to be
+    a changelog entry or a queue entry gets no preview at all, however much of the site the commits
+    beneath it rewrote. And a skipped build never becomes a successful deployment, so the variable
+    stays empty and the next push asks the same wrong question. A branch can push all day and never
+    deploy once.
+
+    Driven through the environment rather than through `argv`, because the empty-string case only
+    arises from the variable: Vercel sets it, and sets it to nothing until something has succeeded.
+    """
+    import os
+
+    _commit(repo, "CHANGELOG.md", "an entry that changes no page\n")
+    environment = {**os.environ, "VERCEL_GIT_PREVIOUS_SHA": ""}
+    done = subprocess.run(
+        ["bash", str(SCRIPT)], cwd=repo, capture_output=True, text=True, env=environment
+    )
+    assert done.returncode == BUILD, (
+        "with no previous successful deployment the script fell back to comparing against the "
+        "parent commit and skipped. It must build: 'this branch has never deployed' and 'the last "
+        "commit touched no page' are different questions, and only the second has a parent to "
+        "compare against."
+    )
+    # The property is that the message distinguishes THIS case from the shallow-clone one, so a
+    # reader of a build log can tell which branch fired. Pinning the exact sentence would make the
+    # guard fail on a reworded message that behaves identically.
+    assert "shallow" not in done.stdout and "deployment" in done.stdout, (
+        f"the message does not identify which branch decided to build: {done.stdout!r}"
+    )
+
+
+def test_a_previous_deployment_still_narrows_the_comparison(repo: Path) -> None:
+    """The twin: the fix must not turn the predicate into "always build".
+
+    The whole reason this script exists is that sixty previews in a day exhausted the account's
+    quota. If an empty variable means build, a *set* one must still be able to skip — otherwise the
+    fix quietly deletes the feature while looking like it repaired it.
+    """
+    import os
+
+    base = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True, check=True
+    ).stdout.strip()
+    _commit(repo, "CHANGELOG.md", "an entry that changes no page\n")
+    environment = {**os.environ, "VERCEL_GIT_PREVIOUS_SHA": base}
+    done = subprocess.run(
+        ["bash", str(SCRIPT)], cwd=repo, capture_output=True, text=True, env=environment
+    )
+    assert done.returncode == SKIP, (
+        "with a real previous deployment and a commit touching no deployed path, the script built. "
+        "The quota this file exists to protect is gone if every push deploys."
+    )

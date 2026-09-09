@@ -14,7 +14,7 @@ reader — which is PK's gate.
 - **Ask what each half of a ratio is counting.** MFU was wrong twice over, in both halves. Its
   denominator divided FLOPs achieved on the **CPU** by a **GPU's** advertised peak — 39.13%, and
   meaningless. Its numerator counted the **embedding tables**, which are read by a gather and do no
-  arithmetic, making it 45% larger than it should have been. The honest figure is 27.64%.
+  arithmetic, making it 45% larger than it should have been. The honest figure is 27.34%.
 
 - **A numerical instrument has a floor, and hitting it looks like a broken implementation.** The
   gradient check in fp32 reported a central difference of **exactly 0.0** at every nudge size, for a
