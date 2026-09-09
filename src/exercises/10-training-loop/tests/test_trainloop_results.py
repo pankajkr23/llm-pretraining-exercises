@@ -241,3 +241,50 @@ def test_the_page_data_is_regenerated_and_matches_the_tracked_copy() -> None:
         "web/data.js differs from what the run regenerates. Re-render rather than editing it:\n"
         "  uv run python src/exercises/10-training-loop/tools/render_results.py"
     )
+
+
+def test_no_heading_or_rail_label_types_a_count() -> None:
+    """A count in a heading or a rail label must be derived, never typed.
+
+    Ported from exercise 08 with its reason intact, and this page shipped the defect three times: a
+    `reproduce` section headed **"Two commands"** over three of them, a glossary headed **"Nine
+    words"** over a list nobody re-counted, and a rail entry agreeing with each.
+
+    **Scoped rather than widened.** Inside a heading or a rail label a spelled number is always a
+    count of that section's own contents, so the small numbers can be forbidden there with no false
+    positives. Elsewhere on the page "two documents" and "six checks" are fixed quantities and
+    correct. `one` is excluded and only `one` — it is a determiner far more often than a count.
+
+    **A backtick is not derivation; `${` is.** A template literal with no interpolation is an
+    ordinary literal in fancier quotes, and exempting every backtick — which the first version of
+    this guard did, in exercise 09 — lets the defect through wearing the costume of the fix.
+    """
+    import re as _re
+
+    numbers = (
+        r"\b(two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen"
+        r"|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty)\b"
+    )
+    source = (EXERCISE / "web" / "chapters.js").read_text(encoding="utf-8")
+
+    labels: list[str] = []
+    labels += _re.findall(r"\b(?:short|sub):\s*'([^']*)'", source)
+    labels += _re.findall(r"\b(?:short|sub):\s*`([^`]*)`", source)
+    labels += _re.findall(
+        r"\bsection\(\s*'[\w-]+',\s*'[a-z]+',\s*(?:null|'[^']*'|`[^`]*`),\s*'([^']*)'",
+        source,
+        _re.S,
+    )
+    labels += _re.findall(
+        r"\bsection\(\s*'[\w-]+',\s*'[a-z]+',\s*(?:null|'[^']*'|`[^`]*`),\s*`([^`]*)`",
+        source,
+        _re.S,
+    )
+    assert labels, "no headings or rail labels matched; the patterns have gone stale"
+    labels = [label for label in labels if "${" not in label]
+
+    offenders = [label for label in labels if _re.search(numbers, label, _re.I)]
+    assert not offenders, (
+        "a heading or rail label types a count instead of deriving it: "
+        f"{offenders}. Use spell()/Spell() over the list itself, or drop the count."
+    )

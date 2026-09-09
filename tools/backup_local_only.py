@@ -81,6 +81,12 @@ PATTERNS: tuple[str, ...] = (
     # What agents in this repo are permitted to run without asking. Never in git, ignored by a
     # directory pattern, and losing it silently changes the permission surface rather than failing.
     ".claude/settings.local.json",
+    # The reviewer agents' own definitions -- what each one is FOR, and the rules it carries that
+    # were learned by getting a review wrong. Hand-written, never in git (the whole `.claude/`
+    # directory is ignored), and not derivable from anything: `ux.md` records why a previous
+    # reviewer's confident layout fix made the page worse, which is the kind of thing that is only
+    # ever written down once. They were unprotected for as long as they have existed.
+    ".claude/agents/*.md",
     # Saved reference pages. Not derived output and not reliably re-downloadable — a saved page is
     # a snapshot of something that can change or disappear, which is exactly why someone saved it.
     "src/exercises/*/docs/*.html",

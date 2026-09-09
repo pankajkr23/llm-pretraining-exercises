@@ -123,7 +123,7 @@ function chapterThesis(M) {
   const s = section(
     'thesis',
     'thesis',
-    'The claim',
+    'Six checks, none of them the loss',
     'Every number here had to be argued with first',
     [
       `Six checks on a real training loop, and <b>not one of them rewards a low loss</b>. Each is a
@@ -133,7 +133,7 @@ function chapterThesis(M) {
        ratio, one in its numerator — and the third was a bug in code whose test passed because it
        drove exactly one value.`,
     ],
-    { short: 'The claim', sub: 'three numbers argued with' }
+    { short: 'The claim', sub: 'what a low loss cannot tell you' }
   );
 
   const tiles = el('div', 'tiles');
@@ -182,18 +182,9 @@ function chapterThesis(M) {
 
 function chapterGlossary(M) {
   const facts = M.facts;
-  const s = section(
-    'glossary',
-    'glossary',
-    'Vocabulary',
-    'Nine words, each with a number from this run',
-    [
-      `Read this once and nothing below is jargon. Every entry carries a real figure from the run on
-       this page rather than a textbook gloss.`,
-    ],
-    { short: 'Vocabulary', sub: 'nine words, defined once' }
-  );
-
+  /* Built BEFORE the section, so the heading can count them. A heading that states a number is
+   * stating a count of its own contents, and typing it is how this page came to be headed "Nine
+   * words" over a list nobody re-counted after editing it. */
   const entries = [
     [
       'the loss',
@@ -247,6 +238,18 @@ function chapterGlossary(M) {
        one is always less of the other.`,
     ],
   ];
+  const s = section(
+    'glossary',
+    'glossary',
+    'Before anything else',
+    `${Spell(entries.length)} words you need, each carrying a number from this run`,
+    [
+      `Read this once and nothing below is jargon. Every entry carries a real figure from the run on
+       this page rather than a textbook gloss.`,
+    ],
+    { short: 'The words', sub: `${spell(entries.length)} terms, with our own figures` }
+  );
+
   const dl = el('dl', 'gloss');
   for (const [term, def] of entries) {
     dl.append(el('dt', null, term));
@@ -273,7 +276,7 @@ function chapterProblem() {
        gradient checked against arithmetic. Two reductions run side by side. A norm logged beside
        the loss. A utilisation figure with every input stated. Bit patterns built by hand.`,
     ],
-    { short: 'The problem', sub: 'the loss cannot audit itself' }
+    { short: 'The blind spot', sub: 'the loss cannot audit itself' }
   );
 
   s.append(
@@ -361,7 +364,7 @@ function chapterMechanism(M) {
   const s = section(
     'mechanism',
     'mechanism',
-    'How it works',
+    'The step, taken apart',
     'Averaging the averages, and why it hid for years',
     [
       `When the batch you want will not fit in memory, you split it into micro-batches, combine
@@ -371,7 +374,7 @@ function chapterMechanism(M) {
        tokens exactly the same vote as one with ${Math.max(...three.token_counts)}. On the three
        below that is <b>${pct(three.relative_gap)}</b> wrong.`,
     ],
-    { short: 'How it works', sub: 'the bug, drawn' }
+    { short: 'The step', sub: 'clip, accumulate, and the bug drawn' }
   );
 
   s.append(
@@ -401,14 +404,14 @@ function chapterMethod(M) {
   const s = section(
     'method',
     'method',
-    'How it was measured',
+    'The apparatus',
     'One small model, on a laptop, in fp32',
     [
       `Everything here comes from code that runs top to bottom in about half a minute. The model is
        exercise 09's — imported rather than restated, so the two exercises cannot disagree about
        what a loss is.`,
     ],
-    { short: 'How it was measured', sub: 'one small model' }
+    { short: 'The apparatus', sub: 'one small model, one machine' }
   );
 
   s.append(
@@ -427,7 +430,15 @@ function chapterMethod(M) {
           ],
           __mark: 'warn',
         },
-        { cells: ['corpus', f.corpus] },
+        {
+          cells: [
+            'corpus',
+            // `facts.corpus` is a BLOCK now, not a sentence -- it gained a digest, a token count
+            // and an epoch ratio when this exercise stopped importing exercise 09's private corpus
+            // builder and started using its public accounting. This cell printed the object.
+            `${int(f.corpus.corpus_tokens)} tokens, read ${f.corpus.epochs.toFixed(2)} times over`,
+          ],
+        },
       ]
     )
   );
@@ -448,14 +459,14 @@ function chapterExpected(M) {
   const s = section(
     'expected',
     'expected',
-    'Stated before running',
+    'Written down first',
     'What we thought would happen',
     [
       `Writing the prediction down first is the only way a reader can tell a finding from a story
        told backwards — and it costs nothing when the prediction is wrong, which is when it is worth
        the most.`,
     ],
-    { short: 'Stated first', sub: 'the predictions' }
+    { short: 'The predictions', sub: 'made before the run, not after' }
   );
 
   s.append(
@@ -568,13 +579,13 @@ function chapterResults(M) {
   const s = section(
     'results',
     'results',
-    'What happened',
-    'Six numbers, and the two that had to be corrected',
+    'The ledger',
+    `${Spell(Object.keys(M).filter((k) => k.startsWith('item_')).length)} numbers, and what each of them counts`,
     [
       `Every figure below is read from <code>results/run.json</code>. Nothing on this page is typed,
        and a test regenerates the page's data and fails if the tracked copy differs.`,
     ],
-    { short: 'What happened', sub: 'six numbers' }
+    { short: 'The ledger', sub: 'every number, and what it counts' }
   );
 
   s.append(
@@ -656,73 +667,119 @@ function chapterResults(M) {
 
 function chapterNegatives(M) {
   const five = M.item_5_mfu;
+  const rows = auditRows(M);
   const s = section(
     'negatives',
     'negatives',
-    'What did not work',
-    'Three numbers that were wrong, and how each survived',
+    'The audit trail',
+    `${Spell(rows.length)} numbers as first published, and what each became`,
     [
-      `None of these was caught by a failing test. Each was caught by asking what a number was
-       actually counting — which is the only technique this page has to offer.`,
+      `<b>Not one of these was caught by a failing test</b>, and not one was a miscalculation. Each
+       was arithmetic anyone could check, answering a question nobody had asked out loud — and each
+       was found by asking that question, which is the only technique this page has to offer.`,
+      `They are laid out as an audit trail rather than as a list of regrets: the figure as it was
+       published, and the figure it became. <b>The gap between the two columns is the whole
+       argument</b>, because a reader who only ever sees the right-hand one has no way to judge how
+       far a confident, wrong number can travel.`,
     ],
-    { short: 'What did not work', sub: 'three wrong numbers' }
+    { short: 'The audit trail', sub: 'as first published, then corrected' }
   );
 
   s.append(
     table(
-      ['what was wrong', 'how it survived'],
-      [
-        {
-          cells: [
-            'A float decomposition was correct at <b>0.1</b> and wrong nearly everywhere else',
-            `An overflow flag computed from the <i>value's</i> field width rather than a fixed one
-             made it return numbers <b>exactly twice too large</b> — on 3.7% of bf16 inputs and 30%
-             of fp8 E4M3 inputs, and raise an error on others. <b>0.1 was the whole test</b>, and
-             0.1 is one of the values where the bug cannot fire. The check now sweeps 2,000 values
-             per format, which immediately found a second limit nobody had reasoned about.`,
-          ],
-          __mark: 'bad',
-        },
-        {
-          cells: [
-            'Utilisation divided one processor’s work by another’s capability',
-            `It reported <b>39.13%</b>, which looked excellent. The numerator was measured on the
-             CPU and the denominator was a GPU's advertised peak. It is measured now, on the same
-             device and dtype as the run, which reports a <i>worse</i> number — the honest direction
-             to be wrong in. The current figure is ${pct(five.mfu, 2)}.`,
-          ],
-          __mark: 'bad',
-        },
-        {
-          cells: [
-            'The same figure also counted parameters that do no arithmetic',
-            `An embedding lookup is a gather. Counting those tables made the numerator <b>45%
-             larger than it should have been</b> — equivalently, removing them cut it by 31%. Both
-             describe the same correction, and quoting the wrong one of the pair is how a right
-             number ends up answering a different question.`,
-          ],
-          __mark: 'bad',
-        },
-        {
-          cells: [
-            'A heading claimed a lead in time; the measurement was a size comparison',
-            `"The gradient moved <i>before</i> the loss" was measured as "the gradient moved a lot
-             and the loss moved a little, at the same step". Requiring the loss to actually follow
-             cut the count from nine steps to one.`,
-          ],
-        },
-        {
-          cells: [
-            'Two guards could not fail on the bugs they named',
-            `One asserted the accumulation gap's direction at six steps, where the sign is negative
-             several times — a coin flip that landed right. The other checked a utilisation ceiling
-             against a made-up numerator orders of magnitude below any plausible peak, so it could
-             not have failed on the 39.13% defect it was written for.`,
-          ],
-        },
-      ]
+      ['as first published', 'the question asked of it', 'what it became'],
+      rows,
+      'grid prose'
     )
   );
+  auditTail(M, s);
+}
+
+/** The corrections, as data, so the section that introduces them can count them. */
+function auditRows(M) {
+  const five = M.item_5_mfu;
+  const fp8 = M.item_6_floats.regression['fp8 E4M3'];
+  const bf16 = M.item_6_floats.regression.bf16;
+  return [
+        {
+          cells: [
+            '<b>0.1 decomposes correctly</b> — the only value the test drove',
+            'What does it do on every other value?',
+            `An overflow flag computed from the <i>value's</i> field width rather than a fixed one
+             returned numbers <b>exactly twice too large</b> on
+             <b>${pct(fp8.doubled_rate)}</b> of fp8 inputs and ${pct(bf16.doubled_rate)} of bf16,
+             and <i>raised</i> on a further ${pct(fp8.raised_rate)} and ${pct(bf16.raised_rate)}.
+             0.1 is one of the values where the flag cannot fire. <b>Those rates were themselves
+             folklore until this run</b>: the page quoted a single 30% that merged the two, from a
+             figure that lived in a Python docstring and was recomputed by nothing.`,
+          ],
+          __mark: 'bad',
+        },
+        {
+          cells: [
+            '<b>39.13%</b> utilisation, which looked excellent',
+            'Which machine is the denominator?',
+            `A different one. The numerator was measured on the CPU and the denominator was a GPU's
+             advertised peak — two right numbers about different processors. The peak is measured
+             now, on the same device and dtype as the run, which reports a <i>worse</i> figure:
+             <b>${pct(five.mfu, 2)}</b>. Both halves are bound to one device constant, so they can
+             no longer disagree, and the device is recorded beside the result.`,
+          ],
+          __mark: 'bad',
+        },
+        {
+          cells: [
+            'The same figure, counting every parameter in the model',
+            'Which of them actually do arithmetic?',
+            `Not the embedding tables — a lookup is a gather. Counting them made the numerator
+             <b>45% larger than it should have been</b>; equivalently, removing them cut it by 31%.
+             Both describe one correction, and quoting the wrong member of that pair is itself a
+             right number answering a different question.`,
+          ],
+          __mark: 'bad',
+        },
+        {
+          cells: [
+            '<b>Nine steps</b> where the gradient led the loss',
+            'Led it, or merely moved more than it?',
+            `The second. "The gradient moved <i>before</i> the loss" was measured as "the gradient
+             moved a lot and the loss moved a little, <i>at the same step</i>" — a size comparison
+             wearing a claim about time. Requiring the loss to actually follow cut the count to
+             one.`,
+          ],
+        },
+        {
+          cells: [
+            'Two guards, green, over the bugs they were written for',
+            'Could either of them have failed?',
+            `Neither. One asserted the accumulation gap's <i>direction</i> at six steps, where the
+             sign is negative several times — a coin flip that landed right. The other checked a
+             utilisation ceiling against a made-up numerator orders of magnitude below any plausible
+             peak, so it could not have failed on the 39.13% defect it existed to catch.`,
+          ],
+        },
+        {
+          cells: [
+            'Every number here, with nothing saying where it came from',
+            'Which code, which machine, which text?',
+            `<code>run.json</code> carried <b>no provenance at all</b> — six published figures and a
+             ${int(M.facts.steps)}-step trace, saying nothing. The corpus was a sentence rather than
+             a digest, because this exercise imported exercise 09's <i>private</i> corpus builder
+             and not its public accounting. Six fields now, and the writer refuses without them.`,
+          ],
+          __mark: 'bad',
+        },
+      ];
+}
+
+/** The paragraph that follows the audit table, kept beside it rather than inside the row data. */
+function auditTail(M, s) {
+  const note = el('p', 'say');
+  note.innerHTML = `<b>Read the middle column on its own.</b> Every question in it is the same
+    question in different clothes — <i>what is this number actually counting?</i> — and not one of
+    them needs any knowledge of this exercise to ask. That is the transferable part; the specific
+    arithmetic is not.`;
+  s.append(note);
 }
 
 /* ============================================================== 9 · conclusion */
@@ -731,7 +788,7 @@ function chapterConclusion(M) {
   const s = section(
     'conclusion',
     'conclusion',
-    'What to take away',
+    'The verdict',
     'Ask what each half of a ratio is counting',
     [
       `Every correction on this page came from the same question, asked about a different number.
@@ -740,7 +797,7 @@ function chapterConclusion(M) {
       `A wrong number gets caught by a reader. A right number answering an adjacent question does
        not, and it is more convincing precisely <i>because</i> the arithmetic checks out.`,
     ],
-    { short: 'What to take away', sub: 'ask what it counts' }
+    { short: 'The verdict', sub: 'ask what the number counts' }
   );
 
   const box = el('div', 'takeaway');
@@ -755,20 +812,9 @@ function chapterConclusion(M) {
 
 function chapterLimits(M) {
   const five = M.item_5_mfu;
-  const s = section(
-    'limits',
-    'limits',
-    'What this cannot establish',
-    'Five things this page does not show',
-    [
-      `In the open text rather than behind a disclosure, because a limitation a reader has to expand
-       is a limitation the page is hiding.`,
-    ],
-    { short: 'What it cannot show', sub: 'five limits' }
-  );
-
-  const ul = el('ul', 'limits');
-  for (const item of [
+  /* Built before the section, so the heading counts the list rather than claiming a
+   * number for it. It read "Five things this page does not show" as a literal. */
+  const items = [
     `<b>Nothing about whether the model is any good.</b> Every item measures the loop, not what it
      produced. The losses are incidental.`,
     `<b>${pct(five.mfu, 2)} on a laptop CPU in fp32 is not utilisation on training hardware</b>, and
@@ -779,7 +825,22 @@ function chapterLimits(M) {
      It is evidence about autograd <i>there</i>, not a proof about the whole graph.`,
     `<b>The leading-step count is one reading of an arbitrary threshold.</b> The count at four other
      thresholds is published beside it for exactly that reason, and at the strictest one it is zero.`,
-  ]) {
+  ];
+
+  const s = section(
+    'limits',
+    'limits',
+    'In the open',
+    `${Spell(items.length)} things this page does not show`,
+    [
+      `In the open text rather than behind a disclosure, because a limitation a reader has to expand
+       is a limitation the page is hiding.`,
+    ],
+    { short: 'The limits', sub: 'what one laptop run cannot settle' }
+  );
+
+  const ul = el('ul', 'limits');
+  for (const item of items) {
     const li = el('li');
     li.innerHTML = item;
     ul.append(li);
@@ -793,13 +854,13 @@ function chapterNext() {
   const s = section(
     'next',
     'next',
-    'Where this goes',
+    'The next number to distrust',
     'What a real run needs that this does not have',
     [
       `Everything here fits on one machine and finishes in half a minute. Three things change when
        neither is true.`,
     ],
-    { short: 'Where this goes', sub: 'what a real run adds' }
+    { short: 'What this opens', sub: 'what a real run adds' }
   );
 
   const ul = el('ul', 'limits');
@@ -825,32 +886,68 @@ function chapterNext() {
 
 /* ============================================================== 12 · reproduce */
 
-function chapterReproduce() {
+/* This was a shell transcript headed "Two commands" over three of them, promising a regeneration
+ * test that did not exist. The test exists now -- it was cheaper to make the claim true than to
+ * delete it -- and the commands have moved to the README, beside the code they run. What a stranger
+ * needs in order to check a figure is not the command that produced it; anybody can type a command.
+ * It is knowing which code, which text and which machine answered. */
+function chapterReproduce(M) {
+  const prov = M.provenance;
+  const corpus = M.facts.corpus;
+  const env = prov.environment;
+  const rows = [
+    ['which settings', `<code>${prov.config_fingerprint}</code>`, 'every field of the configuration, hashed'],
+    [
+      'which code',
+      `<code>${prov.code_digest.slice(0, 19)}…</code>`,
+      'this exercise <b>and</b> exercise 09, whose losses these timings are of',
+    ],
+    ['which commit', `<code>${prov.git_sha.slice(0, 12)}</code>`, 'the tree it ran from'],
+    [
+      'which text',
+      `<code>${prov.corpus_digest.slice(0, 19)}…</code>`,
+      `${int(corpus.corpus_tokens)} tokens, read ${corpus.epochs.toFixed(2)} times over`,
+    ],
+    ['which vocabulary', `<code>${prov.tokenizer_digest.slice(0, 19)}…</code>`, "exercise 02's frozen BPE"],
+    [
+      'which machine',
+      `${env.platform.split('-').slice(0, 2).join(' ')} · ${env.device}`,
+      `python ${env.python} · torch ${env.torch} · ${env.torch_threads} threads`,
+    ],
+  ];
+
   const s = section(
     'reproduce',
     'reproduce',
-    'Run it yourself',
-    'Two commands',
+    'Every figure and its parent',
+    `${Spell(rows.length)} things that had to be recorded for any of this to be checkable`,
     [
-      `Every figure on this page is generated from the file the first command writes. A test
-       regenerates the page's data and fails if the tracked copy differs.`,
+      `A number nobody can regenerate is not evidence, it is folklore. Every figure on this page is
+       read from one tracked file, and that file carries the block below. Writing it without them
+       <b>raises</b>; it does not warn.`,
+      `<b>The machine is not context here, it is an input.</b> Every headline on this page is a
+       throughput number, and utilisation is a ratio whose two halves must come from the same
+       processor — which is the mistake the <a href="#negatives">audit trail</a> opens with.
+       Recording the device is what turns "these numbers differ" from a mystery into a fact about
+       where they were produced.`,
     ],
-    { short: 'Run it yourself', sub: 'two commands' }
+    { short: 'The index', sub: 'what produced every number here' }
   );
 
-  const pre = el('pre', 'code');
-  pre.textContent =
-    'uv sync --all-packages --extra train\n' +
-    '\n' +
-    'uv run python -m trainloop.harness      # all six items -> results/run.json\n' +
-    'uv run python src/exercises/10-training-loop/tools/render_results.py';
-  s.append(pre);
+  s.append(
+    table(
+      ['question', 'answer', 'what it covers'],
+      rows.map((r) => ({ cells: [r[0], r[1], r[2]] })),
+      'grid'
+    )
+  );
 
   const p = el('p', 'say small');
-  p.innerHTML =
-    'About thirty seconds on a laptop. The notebook runs the same code cell by cell, with the ' +
-    'plots. ' +
-    '<a href="https://github.com/pankajkr23/llm-pretraining-exercises/tree/main/src/exercises/10-training-loop">Code, tests and the full write-up</a>.';
+  p.innerHTML = `Digests are shown truncated to fit; the file carries them at full length, which is
+    the point — a prefix cannot be checked. The commands that regenerate all of this are in the
+    repository's own README, beside the code they run.
+    <a href="https://github.com/pankajkr23/llm-pretraining-exercises/tree/main/src/exercises/10-training-loop">Code,
+    tests and the full write-up</a>.`;
   s.append(p);
 }
 
@@ -929,7 +1026,7 @@ export function buildPage(M) {
   chapterConclusion(M);
   chapterLimits(M);
   chapterNext();
-  chapterReproduce();
+  chapterReproduce(M);
   buildRail(main());
   buildFooter();
 }

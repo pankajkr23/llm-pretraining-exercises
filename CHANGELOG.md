@@ -27,6 +27,19 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   whole space. It also splits the figure the old one merged: **25.04%** came back doubled and a
   further **6.16%** raised. A crash and a silently doubled value are different defects.
 
+- **Exercise 10's graded notebook said "Both mistakes were denominators", then described one of
+  them making "the numerator 45% larger".** One was a denominator and one was a numerator, and the
+  corrections pull in opposite directions — which is the whole reason they are worth separating.
+  It also carried a leftover `print(decompose.__module__)`, and it now ships the float bug as a cell
+  a reader runs: replay the shipped code against the current one, then try it at `0.1` alone and
+  watch both agree. That agreement is why the defect shipped.
+
+- **The reviewer agents' own definitions were unprotected.** `.claude/agents/*.md` is gitignored by
+  a directory pattern, was in no backup pattern, and is not derivable from anything — each file
+  records what a reviewer is for and the rules it carries, several of them learned by getting a
+  review wrong. They were unbacked-up for as long as they have existed. Added to
+  `backup_local_only.py::PATTERNS`, alongside a new `ux` reviewer.
+
 - **Exercise 10's page claimed a `data.js` regeneration test, twice, and it did not exist.** Both
   the results and reproduce sections told a reader that a test regenerates the page's data and fails
   if the tracked copy differs — a claim about the repository's own rigour, made by the artefact with
