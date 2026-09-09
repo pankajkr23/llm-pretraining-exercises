@@ -637,3 +637,38 @@ text.ax.good {
 .series.c {
   stroke: var(--muted);
 }
+
+/* The reproduce section is a table of what a reader can check, not a block of commands. Two
+   columns at width, one below 720px — the label is a heading there rather than a left column, so
+   the pairing survives without a horizontal scroll. */
+.verify-grid {
+  display: grid;
+  gap: 0;
+  margin: 20px 0 8px;
+  border-top: 1px solid var(--line);
+}
+.verify-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.9fr) minmax(min(320px, 100%), 2fr);
+  gap: 12px 28px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.verify-k {
+  font-weight: 600;
+  color: var(--fg);
+  line-height: 1.45;
+}
+.verify-v {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.verify-v code {
+  font-size: 0.92em;
+}
+@media (max-width: 720px) {
+  .verify-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}

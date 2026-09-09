@@ -223,9 +223,12 @@ they were made; the short version, so nobody reintroduces them:
 - **"Superposition loses nothing recoverable."** No. Folding records a multiset per slot, not a
   sequence, so blind byte recovery past `d_p` is impossible for *any* relabelling scheme.
   `decode.fold_is_order_lossy` proves it by construction.
-- **"Per-wrap byte permutations fix the aliasing."** They make it worse (14.6% vs 19.1%).
-  Permutations make every position swap available; signs at least block the slots whose wrap levels
-  disagree in sign — 15 of 32.
+- **"Per-wrap byte permutations fix the aliasing."** They make it worse. Permutations make every
+  position swap available; signs at least block the slots whose wrap levels disagree in sign — 15
+  of 32. **The 14.6% once quoted for the permutation variant is unreproduced** and no longer
+  appears: it was removed from the code, and two attempts to rebuild it from the description
+  produced harness artefacts. The shipped scheme's curve is measured in
+  `results/wrap_recovery.json` — 100.00% to 32 bytes, 15.05% for 33–64, 0.00% beyond.
 - **"The lock is why v1 loses 0.25 nats."** Overclaimed. The lock constrains a *tied, byte-factored*
   head — ours, and v1's §8.5 Hypothesis A. **v1 as shipped uses an untied head and is unconstrained
   by it.** It also requires the four tokens to be of **equal byte length** (the `1/sqrt(L)` scaling),

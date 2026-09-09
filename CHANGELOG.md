@@ -35,6 +35,43 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Changed
 
+- **The bucket sweep ran three seeds under a framing that says five, and now says so.** Exercise 07
+  states "trained comparisons, 5 seeds, paired" once and every table inherits it — but
+  `bucket_sweep` ran **three**, recorded only inside a free-text `source` string that no document
+  renders and no reader sees. The count is promoted to a real key, the way `scale_cost.d_model`
+  already was, so the page reads it instead of a reader assuming it; both the page and the README
+  now state it beside the table, with what three seeds can and cannot support. A guard asserts the
+  key exists, that it still disagrees with `setup.seeds` — so the hedge cannot outlive its reason —
+  and that both documents say it. Watched failing three ways.
+
+- **Exercise 07's documents now say what the evidence says.** The results narrative was written when
+  the recommendation beat the published design; on a second corpus it does not, and the README's
+  headline, its arm table and `NOTICE` all said otherwise. Each now states the finding and its
+  limit: the parameter saving is arithmetic and holds unconditionally, and whether the method also
+  *wins on loss* is a property of the text it was measured on. `DECISIONS.md` records eleven
+  decisions the code cannot explain about itself, including the one where our own stated reason for
+  the corpus fix was refuted by measuring it.
+
+- **The published page carries no shell commands, and the README carries all of them.** The page
+  ended with a block of four `uv run` / `bash` lines a reader was invited to copy. A page is read
+  far more often than it is executed and cannot be tested, so the `reproduce` section now argues —
+  what was run, what a sceptic can check, and what the work does not establish — and every command
+  lives in the README's *Run it*, ordered by what it costs, each saying what it produces and where
+  the output lands.
+
+- **Three numbers typed into the page are now derived from the measurements**, and the MLP arm's
+  gap is computed against **wrapped positions**, which is the baseline it was built on. Against the
+  transform arm the same subtraction reads −0.031 and looks like a contradiction; it is the same
+  number compared to a model that arm was never measured against.
+
+- **The README's `cond(WᵀW)` clause is deleted rather than corrected.** It claimed the projection's
+  conditioning "degraded from 2.4 to 29.5" while recovery held at 100.00%. No evidence file in this
+  exercise carries a `cond` field at all, and the only surviving record of that measurement says
+  2.4 → **248** at recovery **99.5%** over 3,000 steps — so two of the three numbers disagreed with
+  the only thing that could have supported them. Re-measuring would have answered a question the
+  section does not ask: the conditioning was never the point, and recovery surviving training is.
+  The bullet now says so, and says what was removed.
+
 - **Exercise 07's trained comparison stops reading a corpus that is 40% `[UNK]`, and three gates
   make that impossible to do again.** The corpus it trained on was exercise 02's four Wikipedia
   articles, and the frozen 10k vocabulary has no Tamil: `ta.faithful.txt` tokenizes to **63.2%**
@@ -219,6 +256,50 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   the ten-arm headline table; that document says so rather than leaving a reader to discover it.
 
 ### Fixed
+
+- **`decode.recover` accepted wrapped positions and could not decode them.** Its matched filter
+  takes an `argmax` over the projection's raw rows, and under `wrap` an atom enters as
+  `sign × row` with half the slots carrying `-1`, which inverts the argmax. It scored **47%** on
+  tokens four documents claim are recovered perfectly, and no test had ever driven it that way —
+  `recover` rejects only `fourier`, and every test used `onehot`. The decoder now folds the signs
+  in and scores **100.00%**; two tests hold it, the second asserting an unsigned dictionary does
+  much worse so the first cannot pass for the wrong reason.
+
+- **Two recovery figures the page and three documents stated were in no evidence file.** The only
+  `14.6` in `results/measurements.json` is a *t*-statistic in an unrelated block — a coincidence
+  that made them look sourced. `tools/measure_wrap_recovery.py` now measures the shipped scheme
+  across the whole vocabulary — **100.00%** to 32 bytes, **15.05%** for 33–64, **0.00%** beyond —
+  and that bundle is tracked. The README had said 19.1% for the middle band.
+
+  **The figure for the removed permutation variant is reported as unreproduced rather than
+  re-measured.** Two attempts to rebuild it from its description produced harness artefacts — an
+  indexing error scoring it 0.00% where a relabelling is a pure rename, then a normalisation
+  mismatch scoring it 1.25%. Both looked like devastating results and were statements about the
+  harness. The ordering it established (permutations are worse) is kept; the number is not.
+
+- **The README's own numbers.** The input-side saving was **91%** and is **83.7%**
+  (`1 - 6,291,456 / 38,597,376`). The test counts said *54 tests* and a *20-test browser suite*
+  against 205 and 33, and are now checked against the test files by a guard that counts with `ast`
+  — a regex version undercounted the browser file by 14 and would have accepted the stale number
+  it exists to catch.
+
+- **The rewritten `reproduce` section threw and took the last six sections of the page with it.**
+  Its helper referenced `M` at module scope, where `M` is a *parameter* of `buildPage` and does not
+  exist. CI reported seven timeouts waiting for `section#reproduce`; the cause was one
+  `ReferenceError` thrown hundreds of lines earlier, and nothing in the failure named it. A browser
+  test now listens for `pageerror` and reports it in one line — it reloads rather than reading the
+  module-scoped page as-is, because an error during the fixture's own first navigation would
+  otherwise go unseen and the guard would pass on exactly the page it exists to catch.
+
+- **The page-source guard was unreliable on the page it guards.** Its first version hand-rolled a
+  JavaScript string parser, desynchronised on the first apostrophe inside a double-quoted string,
+  and silently stopped seeing everything after it — including a literal planted directly to test
+  it. It now scans lines, which cannot desynchronise, and the pattern is narrow enough that
+  ordinary code numbers do not match.
+
+- **The module guard's list of tool scripts was a hardcoded second copy** and went stale the moment
+  the exercise grew `verify.py`, `evidence.py` and four measurement tools: it reported a correctly
+  documented script as a deleted module. It reads the filesystem now.
 
 - **A run's per-step trace was rounded to six decimal places, so it could not re-derive the mean it
   is the material for.** Found by running the new verifier against the first real run: it reported
