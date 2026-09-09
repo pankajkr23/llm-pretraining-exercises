@@ -38,10 +38,12 @@ from .config import Config
 from .heads import make_multi_token_head
 from .losses import cross_entropy
 from .model import build_trunk
+from .provenance import CORPUS_PATH, digest_bytes, provenance, require
 from .shift import shift_for_horizon, shift_wrong_way
 from .tokenizer import load_tokenizer
 
 RESULTS = Path(__file__).resolve().parents[2] / "results"
+ARTIFACTS = Path(__file__).resolve().parents[2] / "artifacts"
 
 
 @dataclass
@@ -62,6 +64,8 @@ class TrainingLog:
     correct_shift: list[float] = field(default_factory=list)
     broken_shift: list[float] = field(default_factory=list)
     config: dict[str, object] = field(default_factory=dict)
+    corpus: dict[str, object] = field(default_factory=dict)
+    provenance: dict[str, object] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, object]:
         """Plain data, JSON-encodable — no tensors, no devices, no dataclasses."""
@@ -71,6 +75,11 @@ class TrainingLog:
             "correct_shift": self.correct_shift,
             "broken_shift": self.broken_shift,
             "config": self.config,
+            # Top level, beside `provenance`, and not nested inside `config` where it used to sit.
+            # All three published files carry the same shape now, so one guard covers all three
+            # rather than knowing two layouts and missing the next one.
+            "corpus": self.corpus,
+            "provenance": self.provenance,
             "summary": self.summary(),
         }
 
@@ -114,21 +123,24 @@ def corpus_facts(config: Config, sequences: int) -> dict[str, object]:
     comparisons between two models trained identically on the same repeated text — but a reader
     who is not told will assume otherwise.
 
-    A digest of the source is recorded too. The corpus is a file in this repository that someone
-    will edit, and without a digest that edit silently changes every published figure with nothing
-    going red.
+    **The digest is recorded at full length, and the input is frozen.** Both halves were wrong.
+    The field used to be a 16-character prefix named `source_sha256_prefix`, which is not a content
+    hash; and the text was read from the repository's live `AGENTS.md`, which is edited on most
+    pull requests. So every published loss was a function of a moving file — and it had already
+    moved, by 11,326 bytes, with nothing going red. `corpus/README.md` records what was frozen and
+    why.
     """
-    import hashlib
-
     tokenizer = load_tokenizer()
-    source = Path(__file__).resolve().parents[5] / "AGENTS.md"
-    text = source.read_text()
-    ids = tokenizer.encode(text).ids
+    raw = CORPUS_PATH.read_bytes()
+    ids = tokenizer.encode(raw.decode("utf-8")).ids
     needed = sequences * config.seq_len
     return {
-        "source": "this repository's own AGENTS.md, tokenized with exercise 02's BPE",
-        "source_bytes": len(text.encode()),
-        "source_sha256_prefix": hashlib.sha256(text.encode()).hexdigest()[:16],
+        "source": (
+            f"{CORPUS_PATH.parent.name}/{CORPUS_PATH.name} — this repository's own AGENTS.md "
+            "frozen at the revision the published run read, tokenized with exercise 02's BPE"
+        ),
+        "source_bytes": len(raw),
+        "source_digest": digest_bytes(raw),
         "corpus_tokens": len(ids),
         "tokens_consumed": needed,
         "epochs": needed / len(ids),
@@ -139,8 +151,9 @@ def _corpus(config: Config, sequences: int, seed: int) -> torch.Tensor:
     """Real text, tokenized and cut into fixed-length sequences.
 
     Real rather than random ids, because a model cannot learn anything from noise and both findings
-    here depend on it learning *something*. The text is this repository's own `AGENTS.md`, which is
-    tracked, long enough, and carries no licence question.
+    here depend on it learning *something*. The text is this repository's own `AGENTS.md`, **frozen
+    at the revision the published run read** — tracked, long enough, no licence question, and, since
+    the freeze, not a moving target. See `corpus/README.md`.
 
     **It is read many times over, and `corpus_facts` says how many.** A corpus this small against a
     run this long means the model sees the same text repeatedly; that is a property of the setup,
@@ -149,8 +162,7 @@ def _corpus(config: Config, sequences: int, seed: int) -> torch.Tensor:
     import torch
 
     tokenizer = load_tokenizer()
-    source = Path(__file__).resolve().parents[5] / "AGENTS.md"
-    ids = tokenizer.encode(source.read_text()).ids
+    ids = tokenizer.encode(CORPUS_PATH.read_text(encoding="utf-8")).ids
 
     largest = max(ids)
     if largest >= config.vocab_size:
@@ -202,10 +214,11 @@ def train(
             "d_model": config.d_model,
             "n_layer": config.n_layer,
             "horizons": list(config.horizons),
-            "corpus": corpus_facts(
-                config.model if hasattr(config, "model") else config, steps * config.batch_size
-            ),
-        }
+        },
+        corpus=corpus_facts(
+            config.model if hasattr(config, "model") else config, steps * config.batch_size
+        ),
+        provenance=provenance(config),
     )
 
     batches = _corpus(config, steps * config.batch_size, seed)
@@ -263,14 +276,25 @@ def train(
 
 
 def save(log: TrainingLog, path: Path | None = None) -> Path:
-    """Write the log to `results/training.json`, and return where it went.
+    """Write the log, and return where it went. Defaults to `artifacts/`, never to `results/`.
 
     Kept separate from `train` so a two-step run can exercise **this** before a long one is
     attempted. The failure this guards against is not hypothetical: it has already cost this
     repository fifteen trained models in a single run.
+
+    **The default is `artifacts/` and that is the whole publishing policy in one line**, borrowed
+    from exercise 07. `results/` is tracked and is what the page and the documents render; what
+    lands there is a decision a person takes after seeing a run, not a side effect of running one.
+    The default used to be `results/`, which meant **reading the topic notebook overwrote committed
+    evidence** — the notebook calls `training.run`, `run` called `save`, and the tracked file was
+    rewritten by anyone who opened it. `__main__` passes the tracked path explicitly, so publishing
+    stays possible and stops being accidental.
+
+    **It refuses a log with no provenance.** A result nobody can regenerate is not evidence.
     """
-    path = path or (RESULTS / "training.json")
-    path.parent.mkdir(exist_ok=True)
+    require(log.as_dict())
+    path = path or (ARTIFACTS / "training.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(log.as_dict(), indent=2, sort_keys=True) + "\n")
     return path
 
@@ -316,17 +340,22 @@ def report(log: TrainingLog) -> str:
     return "\n".join(lines)
 
 
-def run(config: Config | None = None, steps: int = 300) -> TrainingLog:
-    """Train, save, and print the findings."""
+def run(config: Config | None = None, steps: int = 300, publish: bool = False) -> TrainingLog:
+    """Train, save, and print the findings.
+
+    Args:
+        config: Defaults to `Config()`.
+        steps: Optimiser steps. Every claim about "over training" is bounded by this number.
+        publish: Write to the tracked `results/training.json` rather than to `artifacts/`. Off by
+            default, so opening the topic notebook cannot overwrite committed evidence — which it
+            silently did for as long as this function existed. `__main__` turns it on, because
+            running the module from a terminal is the deliberate act.
+    """
     log = train(config, steps=steps)
-    path = save(log)
+    path = save(log, RESULTS / "training.json" if publish else None)
     print(report(log))
-    print(f"\n  Wrote {path.name}")
+    print(f"\n  Wrote {path.parent.name}/{path.name}")
     return log
-
-
-if __name__ == "__main__":
-    run()
 
 
 def sensitivity(
@@ -372,6 +401,10 @@ def sensitivity(
         by_steps.append(
             {
                 "steps": steps,
+                # Every row is a different-sized read of the same corpus, so every row has its own
+                # epoch count. Publishing one epoch figure for the 300-step run and none for the
+                # others said the sweep varied one thing when it varies two.
+                "epochs": corpus_facts(config, steps * config.batch_size)["epochs"],
                 "gap": summary["gap"],
                 "steps_where_further_head_was_higher": summary[
                     "steps_where_further_head_was_higher"
@@ -409,12 +442,53 @@ def sensitivity(
             "spread": max(ratios) - min(ratios),
             "losses_agreed_every_time": agreed,
         },
+        "corpus": corpus_facts(config, max(step_counts) * config.batch_size),
+        "provenance": provenance(config),
     }
 
 
 def save_sensitivity(data: dict[str, object], path: Path | None = None) -> Path:
-    """Write the sensitivity sweep. Separate from the sweep, for the reason `save` is."""
+    """Write the sensitivity sweep. Separate from the sweep, for the reason `save` is.
+
+    **It refuses a sweep with no provenance**, which this file carried none of. The whole noise
+    floor — the only evidence either finding is not an artefact — said nothing about what produced
+    it.
+    """
+    require(data)
     path = path or (RESULTS / "sensitivity.json")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")
     return path
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Both producers of published evidence, behind one tracked entry point.
+
+    **The sweep had none.** It was invoked by a `python -c` one-liner pasted from this exercise's
+    `CLAUDE.md`, which is the shape `AGENTS.md` names as its own most expensive failure: a producer
+    of a published number that lives outside the tracked code. A one-liner in a document is a
+    command someone has to retype correctly, and `results/sensitivity.json` is the file carrying the
+    only evidence that either finding survives a different arbitrary choice.
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--sensitivity",
+        action="store_true",
+        help="re-run both findings at other step counts and repeat the memory ratio, "
+        "writing results/sensitivity.json instead of results/training.json",
+    )
+    parser.add_argument("--steps", type=int, default=300, help="optimiser steps for the main run")
+    args = parser.parse_args(argv)
+
+    if args.sensitivity:
+        path = save_sensitivity(sensitivity())
+        print(f"\n  Wrote {path.parent.name}/{path.name}")
+    else:
+        run(steps=args.steps, publish=True)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

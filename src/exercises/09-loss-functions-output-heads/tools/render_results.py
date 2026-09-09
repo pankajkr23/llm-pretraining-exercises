@@ -59,7 +59,7 @@ def render(harness: dict, training: dict, sensitivity: dict) -> str:
     harder = "above" if summary["further_head_is_harder"] else "below"
     lower = "lower" if summary["broken_shift_is_lower"] else "higher"
 
-    corpus = run["corpus"]
+    corpus = training["corpus"]
     memory = sensitivity["memory"]
     memory_mid = (memory["min"] + memory["max"]) / 2
     sensitivity_rows = "\n".join(
@@ -102,7 +102,8 @@ def render(harness: dict, training: dict, sensitivity: dict) -> str:
                 4,
                 "a packed boundary masked",
                 f"**{four['loss_masked']:.6f}** masked against "
-                f"**{four['loss_unmasked']:.6f}** unmasked, {four['positions_dropped']} dropped",
+                f"**{four['loss_unmasked']:.6f}** unmasked, "
+                f"{four['boundary_crossings']} crossing dropped",
             ),
             (
                 5,
@@ -128,7 +129,12 @@ def render(harness: dict, training: dict, sensitivity: dict) -> str:
             f"| {seven['materialised_loss']:.6f} |",
             f"| chunked ({seven['chunk_size']} rows) "
             f"| {seven['chunked_bytes'] / MEBIBYTE:.2f} MiB | {seven['chunked_loss']:.6f} |",
+            f"| softmax chunked only "
+            f"| {seven['softmax_only_bytes'] / MEBIBYTE:.2f} MiB "
+            f"| {seven['softmax_only_loss']:.6f} |",
             f"| **ratio** | **{seven['ratio']:.2f}x** | losses **{agree}** |",
+            f"| ratio, softmax only | {seven['softmax_only_ratio']:.2f}x "
+            f"| the same name, the wrong loop |",
         )
     )
 
@@ -179,12 +185,26 @@ gets worse — the count is what makes that visible.
 ### 4 · The packed boundary
 
 Two documents in one sequence, joining at position {four["join_position"]}.
-**{four["positions_dropped"]}** positions cross a boundary and are dropped, moving the loss from
-{four["loss_unmasked"]:.6f} to {four["loss_masked"]:.6f}.
+**{four["boundary_crossings"]}** of the {four["positions_contributing"]} positions that survive
+padding crosses the boundary. Dropping it moves the loss from {four["loss_unmasked"]:.6f} to
+{four["loss_masked"]:.6f}.
 
-**The difference is small and that is the finding**, not a disappointment: a handful of positions
-barely moves an average, so nothing looks wrong. The gradient still asserts a continuation between
-two texts with nothing to do with one another.
+**Read those two numbers together, because the small one is what makes the large one visible.** The
+mean barely moves — {abs(four["loss_unmasked"] - four["loss_masked"]):.6f} — and the position behind
+that move scored **{four["crossing_loss"]:.2f}**, against a mean of {four["loss_unmasked"]:.2f} over
+all {four["positions_contributing"]} of them. Recovered from the two averages rather than measured
+separately: {four["positions_contributing"]} x unmasked minus {four["positions_kept"]} x masked is
+the summed loss of exactly what the mask removed.
+
+So the effect on the average is negligible and the gradient is not. That position asserts a
+continuation between two texts with nothing to do with one another, at a loss high enough to pull
+hard — and a real run packs every sequence this way, so it happens continuously rather than once.
+
+**This number was wrong here until it was checked.** The published figure was
+**{four["mask_dropped_including_padding"]}**, which is what the boundary mask drops across the whole
+padded tensor — mostly pad-to-pad pairs item 3 had already removed. The harness computed the right
+count on the line above and returned the other one. It made the finding read backwards: dozens of
+positions moving the loss a little is a shrug, and one position moving it that far is the point.
 
 ### 5 · Perplexity
 
@@ -225,6 +245,14 @@ is the honest price of Part 2.
 {seven["logits_bytes"] / MEBIBYTE:.2f} MiB in fp32. Baseline (an interpreter with torch loaded, and
 subtracted from both) was {seven["baseline_bytes"] / MEBIBYTE:.2f} MiB.
 
+**Chunking a softmax is not chunking a projection, and the gap is now measured.** Chunk the
+softmax over logits that already exist and the logits still exist, so the saving is only the
+intermediates: **{seven["softmax_only_ratio"]:.2f}x**. Move the projection inside the loop and the
+full tensor never exists at all: **{seven["ratio"]:.2f}x**. Quoting the first as the second
+understates the technique **{seven["ratio"] / seven["softmax_only_ratio"]:.1f}-fold**. Both this
+document and the page asserted that difference for weeks with a figure — 1.9x — that nothing had
+measured, under headings about quoting the wrong number.
+
 **The ratio is only meaningful because the losses are {agree}.** Chunking is not an approximation;
 a difference here would mean the two paths computed different things, not that one was cheaper.
 
@@ -238,7 +266,7 @@ The ratio has a noise floor, measured below rather than assumed.
 {run["seq_len"]} tokens.
 
 **Corpus: {corpus["source"]}** — {corpus["corpus_tokens"]:,} tokens
-(`sha256:{corpus["source_sha256_prefix"]}`), against {corpus["tokens_consumed"]:,} token positions
+(`{corpus["source_digest"]}`), against {corpus["tokens_consumed"]:,} token positions
 consumed. That is **{corpus["epochs"]:.2f} epochs**.
 
 **So every loss below is a memorisation number, and saying so is not a caveat but the correct
@@ -344,6 +372,12 @@ def render_page_data(harness: dict, training: dict, sensitivity: dict) -> str:
             "brokenShift": training["broken_shift"],
             "summary": summary,
             "run": run,
+            # Beside `run`, not inside it. It used to live in `training["config"]` and the page
+            # reached it as `M.training.run.corpus`; moving it to the top of the result file for
+            # consistency across the three of them silently broke three sites on the page, which
+            # threw and stopped building half way down. Nothing failed -- which is why the browser
+            # fixture now fails on any page error.
+            "corpus": training["corpus"],
         },
         "sensitivity": sensitivity,
     }

@@ -53,6 +53,10 @@ class MemoryReport:
         baseline_bytes: What an interpreter with torch loaded costs before any of this.
         materialised_loss: The scalar from the one-pass path.
         chunked_loss: The scalar from the chunked path. Must equal the above.
+        softmax_only_bytes: Peak for chunking the softmax over an already-materialised logits
+            tensor — the variant this exercise's documents distinguished from the real one using a
+            figure nothing had measured.
+        softmax_only_loss: Its scalar, which must also match.
         rows: Rows scored.
         vocab_size: Columns in the logits.
         chunk_size: Rows per block.
@@ -62,9 +66,11 @@ class MemoryReport:
 
     materialised_bytes: int
     chunked_bytes: int
+    softmax_only_bytes: int
     baseline_bytes: int
     materialised_loss: float
     chunked_loss: float
+    softmax_only_loss: float
     rows: int
     vocab_size: int
     chunk_size: int
@@ -74,6 +80,22 @@ class MemoryReport:
     def ratio(self) -> float:
         """How many times more memory the one-pass path peaked at."""
         return self.materialised_bytes / self.chunked_bytes if self.chunked_bytes else float("inf")
+
+    @property
+    def softmax_only_ratio(self) -> float:
+        """The same ratio for the path that chunks only the softmax — the one usually quoted.
+
+        It is reported beside `ratio` rather than instead of it, because the gap between the two is
+        the finding. Chunking a softmax over logits that already exist cannot avoid holding those
+        logits; only moving the projection inside the loop can. Both documents and the page stated
+        that difference **with a number nothing measured**, which is the shape this exercise exists
+        to complain about.
+        """
+        return (
+            self.materialised_bytes / self.softmax_only_bytes
+            if self.softmax_only_bytes
+            else float("inf")
+        )
 
     @property
     def logits_bytes(self) -> int:
@@ -96,7 +118,11 @@ class MemoryReport:
             f"loss {self.materialised_loss:.6f}\n"
             f"  chunked({self.chunk_size:>5}): {self.chunked_bytes / MEBIBYTE:9.2f} MiB  "
             f"loss {self.chunked_loss:.6f}\n"
-            f"  ratio         : {self.ratio:9.2f}x  losses {verdict}"
+            f"  softmax only  : {self.softmax_only_bytes / MEBIBYTE:9.2f} MiB  "
+            f"loss {self.softmax_only_loss:.6f}   <- chunks the softmax, still builds the logits\n"
+            f"  ratio         : {self.ratio:9.2f}x  losses {verdict}\n"
+            f"  ratio, softmax only : {self.softmax_only_ratio:.2f}x  "
+            f"— the same technique's name, applied to the wrong loop"
         )
 
     def as_dict(self) -> dict[str, float | int | bool]:
@@ -106,6 +132,9 @@ class MemoryReport:
             "baseline_bytes": self.baseline_bytes,
             "materialised_bytes": self.materialised_bytes,
             "chunked_bytes": self.chunked_bytes,
+            "softmax_only_bytes": self.softmax_only_bytes,
+            "softmax_only_ratio": self.softmax_only_ratio,
+            "softmax_only_loss": self.softmax_only_loss,
             "materialised_loss": self.materialised_loss,
             "chunked_loss": self.chunked_loss,
             "rows": self.rows,
@@ -132,6 +161,13 @@ if mode != "baseline":
     targets = torch.randint(0, vocab, (rows,), generator=generator)
     if mode == "materialised":
         loss = float(functional.cross_entropy(hidden @ weight.T, targets))
+    elif mode == "softmax_only":
+        # Chunk the SOFTMAX over logits that already exist. The projection happens first and in
+        # full, so the [rows, vocab] tensor is built and held -- this path can only ever save the
+        # softmax's intermediates. It is the technique's name applied to the wrong loop, and it is
+        # measured here because this page's headline ratio was being quoted for it.
+        from lossheads.losses import chunked_cross_entropy
+        loss = float(chunked_cross_entropy(hidden @ weight.T, targets, chunk))
     else:
         # The SHIPPED function, imported rather than reimplemented. An earlier version inlined its
         # own loop here, so the thing being measured was a copy of the thing being claimed about —
@@ -145,11 +181,15 @@ print(json.dumps({"peak": peak, "loss": loss}))
 """What each child runs. It builds its own tensors, so nothing crosses the process boundary — a
 pickled logits tensor would be counted as memory the loss needed, which it is not.
 
-**Both paths start from hidden states and a weight matrix, not from logits**, because that is where
-the two genuinely differ. Materialised projects everything at once and holds `[rows, vocab]`;
-chunked projects one block at a time and never holds more than `[chunk, vocab]`. Handing both an
-already-built logits tensor would have measured only the softmax intermediates, and reported a small
-ratio as though it were the technique's."""
+**The two paths that matter start from hidden states and a weight matrix, not from logits**,
+because that is where they genuinely differ. Materialised projects everything at once and holds
+`[rows, vocab]`; chunked projects one block at a time and never holds more than `[chunk, vocab]`.
+
+**`softmax_only` is the third path and it exists to be worse.** It receives an already-built logits
+tensor and chunks only the softmax over it, which is what "chunked cross-entropy" is often taken to
+mean. Both documents and the page asserted that this saves far less -- with a figure -- and nothing
+measured it. Now something does, so the distinction the whole memory finding rests on is evidence
+rather than an assertion."""
 
 
 def _run_child(
@@ -204,10 +244,13 @@ def compare_paths(
     baseline, _ = _run_child("baseline", *shape)
     materialised, materialised_loss = _run_child("materialised", *shape)
     chunked, chunked_loss = _run_child("chunked", *shape)
+    softmax_only, softmax_only_loss = _run_child("softmax_only", *shape)
 
     return MemoryReport(
         materialised_bytes=max(0, materialised - baseline),
         chunked_bytes=max(0, chunked - baseline),
+        softmax_only_bytes=max(0, softmax_only - baseline),
+        softmax_only_loss=float(softmax_only_loss),
         baseline_bytes=baseline,
         materialised_loss=float(materialised_loss),
         chunked_loss=float(chunked_loss),

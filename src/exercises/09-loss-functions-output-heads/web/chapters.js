@@ -95,6 +95,21 @@ function table(head, rows, cls) {
   return wrap;
 }
 
+/* Counts are SPELLED from the data, never typed. A heading or a rail label that states a number
+ * is stating a count of its own contents, so typing it is how a page comes to read "Three commands"
+ * over four of them and "Nine words, each with a number" over four words — both of which this page
+ * shipped. Ported from exercise 08, which introduced the helper for the same reason. */
+const SPELLED = [
+  'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+  'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen',
+  'nineteen', 'twenty',
+];
+const spell = (n) => SPELLED[n] || String(n);
+const Spell = (n) => {
+  const w = spell(n);
+  return w[0].toUpperCase() + w.slice(1);
+};
+
 const int = (n) => Math.round(n).toLocaleString('en-US');
 const signed = (n, d = 4) => (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(d);
 const pct = (n, d = 1) => `${(n * 100).toFixed(d)}%`;
@@ -104,43 +119,60 @@ const mib = (bytes) => (bytes / (1024 * 1024)).toFixed(1);
 
 function chapterThesis(M) {
   const t = M.training.summary;
+  const b = M.boundary;
   const s = section(
     'thesis',
     'thesis',
-    'The claim',
-    'A broken target shift makes the loss better',
+    'Two runs, one question',
+    'Which of these would you ship?',
     [
-      `Slide the text against itself the wrong way and the model is handed its own input as the
-       answer. It learns to copy, which is easy — and over ${int(t.total_steps)} steps it reaches a
-       loss of <b>${t.final_broken_shift.toFixed(2)}</b> while the correctly shifted model is still
-       at <b>${t.final_correct_shift.toFixed(2)}</b>.`,
-      `Nothing raises. No shape changes. The curve looks like a triumph. <b>That is the whole
-       problem with checking a training run by watching the number go down</b>, and it is why the
-       only reliable check is to print the tokens as text and read them.`,
+      `Below are the loss curves of two models. Same architecture, same data, same seed, same
+       ${int(t.total_steps)} steps. One of them is broken — its target shift is off by one, so it is
+       being handed its own input as the answer and is learning to copy. <b>Pick the one you would
+       ship, before scrolling.</b>`,
+      `Almost everyone picks by the number going down, because that is how a training run is
+       normally judged. It is also the only judgement this particular bug is invisible to.`,
     ],
-    { short: 'The claim', sub: 'the bug makes the loss better' }
+    { short: 'The curve', sub: 'pick a run before you scroll' }
   );
+
+  s.append(shipExplainer(M));
+
+  const lesson = el('p', 'say');
+  lesson.innerHTML = `<b>The point survives whether or not you played.</b> A lower loss is not
+    evidence of a better model; it is evidence that the model found an easier question. Copying is
+    easier than predicting, so the broken run reaches
+    <b>${t.final_broken_shift.toFixed(2)}</b> while the correct one is still at
+    <b>${t.final_correct_shift.toFixed(2)}</b> — and the only reliable check is to print the inputs
+    and targets as text and read them, which is what the next section does.`;
+  s.append(lesson);
 
   const tiles = el('div', 'tiles');
   for (const [v, k, mark] of [
     [
       t.final_broken_shift.toFixed(2),
-      `the loss a <b>broken</b> model reaches, against ${t.final_correct_shift.toFixed(2)} for the correct one`,
+      `the loss a <b>broken</b> model reaches, against ${t.final_correct_shift.toFixed(2)} for the
+       correct one. It is counting copies, not predictions`,
       'bad',
     ],
     [
-      `${t.steps_where_further_head_was_higher} of ${t.total_steps}`,
-      'steps where a head predicting two tokens ahead scored worse — as predicted before running',
-      'good',
+      int(b.boundary_crossings),
+      `document boundary crossed in the packed example. <b>This page published
+       ${int(b.mask_dropped_including_padding)}</b> until it was checked — that figure counts every
+       pair the mask touches, most of them padding`,
+      'bad',
     ],
     [
       `${M.memory.ratio.toFixed(1)}×`,
-      'less memory for the identical loss, by never building the whole logits tensor',
+      `less memory for an identical loss — but only because the projection happens inside the loop.
+       Chunking the softmax alone, which is what the name usually means, is worth
+       ${M.memory.softmax_only_ratio.toFixed(2)}×`,
       'good',
     ],
     [
       pct(M.heads.head_share),
-      'of this model is the output head alone — the one matrix sized by the tokenizer',
+      `of this model is the output head — of head plus an <i>estimated</i> body. Against the trunk
+       actually built it is ${pct(M.shapes.trunk_params ? M.heads.untied_params / (M.heads.untied_params + M.shapes.trunk_params) : 0)}`,
       'good',
     ],
   ]) {
@@ -154,29 +186,177 @@ function chapterThesis(M) {
   }
   s.append(tiles);
 
-  const note = el('p', 'say small');
-  note.innerHTML = `The first tile is a failure, and it is first on purpose. It is not a result this
-    exercise is proud of — it is a result it went looking for, because a bug that improves your
-    metric is the only kind you will not notice.`;
+  const note = el('p', 'say');
+  note.innerHTML = `<b>Read those ${spell(4)} tiles as one sentence: check what the number is
+    counting.</b> Two of them are failures and one of the failures is ours, published on this page
+    for weeks. That is the thread every section below is on — a loss counting copies, a count of
+    dropped positions that counted the wrong positions, a memory ratio that belongs to a different
+    technique than the one it is usually quoted for, and a percentage measured against a body
+    nobody built. None of them is a bug in the arithmetic. All of them are a bug in the question.`;
   s.append(note);
+}
+
+/* -------------------------------------------------------- the one interaction on this page
+ *
+ * Family: Diff (EXPLAINER_PROMPT §10) — "these look equivalent and are not", inverted: they look
+ * clearly UNequal and the obvious winner is the broken one. It is spent on the thesis rather than
+ * on a widget because the page's whole claim is that the reader's default judgement is wrong, and
+ * the cheapest way to establish that is to let them make it.
+ *
+ * The shape is docs/EXPLAINER_PATTERN.md §4 — pure `stateFor`, render-only `show`, a `guard` for
+ * the state it cannot answer in. It does NOT vendor `_shared/explainer.js`: that skeleton is a
+ * scrollytelling topology (states down the left, one pinned figure), and this is a single binary
+ * choice. Borrowing it would mean building eleven states to hold one question.
+ */
+function shipExplainer(M) {
+  /* 1. CONSTANTS — the two curves, from the run. Nothing here is typed. */
+  const A = M.training.correctShift;
+  const B = M.training.brokenShift;
+  const steps = M.training.steps;
+  const pairs = { correct: M.shift.correct_pairs, broken: M.shift.broken_pairs };
+
+  /* 2. PURE HELPERS. */
+  const lo = Math.min(...A, ...B);
+  const hi = Math.max(...A, ...B);
+  const W = 720;
+  const H = 260;
+  const PAD = { l: 46, r: 118, t: 18, b: 30 };
+  const px = (i) => PAD.l + (i / (steps.length - 1)) * (W - PAD.l - PAD.r);
+  const py = (v) => PAD.t + (1 - (v - lo) / (hi - lo || 1)) * (H - PAD.t - PAD.b);
+  const path = (series) => series.map((v, i) => `${i ? 'L' : 'M'}${px(i)},${py(v)}`).join(' ');
+
+  /* 3. STATE — the minimum that cannot be derived. */
+  let chosen = null; // null | 'correct' | 'broken'
+
+  const wrap = el('div', 'ship');
+
+  const chart = svg('svg', {
+    viewBox: `0 0 ${W} ${H}`,
+    class: 'ship-chart',
+    role: 'img',
+    'aria-label': 'two training loss curves, unlabelled until a choice is made',
+  });
+  for (const [v, label] of [
+    [hi, hi.toFixed(1)],
+    [lo, lo.toFixed(1)],
+  ]) {
+    chart.append(svg('line', { x1: PAD.l, x2: W - PAD.r, y1: py(v), y2: py(v), class: 'ship-grid' }));
+    chart.append(svgText(PAD.l - 8, py(v) + 4, 'ax', label));
+  }
+  chart.append(svgText(PAD.l - 8, py((lo + hi) / 2) + 4, 'ax mid', 'loss'));
+  const lineA = svg('path', { d: path(A), class: 'ship-line a' });
+  const lineB = svg('path', { d: path(B), class: 'ship-line b' });
+  chart.append(lineA, lineB);
+  const tagA = svgText(px(steps.length - 1) + 6, py(A[A.length - 1]) + 4, 'ship-tag a', 'A');
+  const tagB = svgText(px(steps.length - 1) + 6, py(B[B.length - 1]) - 6, 'ship-tag b', 'B');
+  tagA.setAttribute('text-anchor', 'start');
+  tagB.setAttribute('text-anchor', 'start');
+  chart.append(tagA, tagB);
+  chart.append(svgText(PAD.l, H - 8, 'ax', '0'));
+  chart.append(svgText(W - PAD.r - 34, H - 8, 'ax end', `${int(steps.length)} steps`));
+
+  const controls = el('div', 'ship-controls');
+  const ask = el('div', 'ship-ask', 'Which run would you ship?');
+  const buttons = el('div', 'ship-btns');
+  const btnA = el('button', 'ship-btn', 'Ship A');
+  const btnB = el('button', 'ship-btn', 'Ship B');
+  btnA.type = 'button';
+  btnB.type = 'button';
+  buttons.append(btnA, btnB);
+  controls.append(ask, buttons);
+
+  const verdict = el('div', 'ship-verdict');
+  const readout = el('div', 'ship-read');
+
+  /* guard() — the precondition. Before a choice there is no verdict to render, and rendering one
+   * anyway is how a widget comes to answer a question nobody asked. */
+  const guard = () => (chosen === null ? { note: 'Nothing is labelled yet. Pick one.' } : null);
+
+  /* stateFor(pick) — PURE. Choice → everything the renderer needs. No DOM. */
+  const stateFor = (pick) => {
+    const shipped = pick === 'broken' ? 'B' : 'A';
+    return {
+      shipped,
+      right: pick === 'correct',
+      finalA: A[A.length - 1],
+      finalB: B[B.length - 1],
+      rows: pairs[pick].slice(0, 5),
+      other: pick === 'correct' ? 'broken' : 'correct',
+    };
+  };
+
+  /* show(pick) — RENDER ONLY. */
+  const show = (pick) => {
+    chosen = pick;
+    btnA.classList.toggle('on', pick === 'correct');
+    btnB.classList.toggle('on', pick === 'broken');
+    const refused = guard();
+    if (refused) {
+      verdict.textContent = refused.note;
+      verdict.className = 'ship-verdict';
+      readout.replaceChildren();
+      return;
+    }
+    const st = stateFor(pick);
+    wrap.classList.add('revealed');
+    tagA.textContent = 'A · correct shift';
+    tagB.textContent = 'B · off by one';
+    verdict.className = `ship-verdict ${st.right ? 'good' : 'bad'}`;
+    verdict.innerHTML = st.right
+      ? `<b>A is the correct model</b> — and it is the one with the <i>higher</i> loss, at
+         ${st.finalA.toFixed(2)} against ${st.finalB.toFixed(2)}. If you picked it, you picked
+         against the number.`
+      : `<b>B is the broken model.</b> Its loss is lower — ${st.finalB.toFixed(2)} against
+         ${st.finalA.toFixed(2)} — because it is not predicting anything. Here is what it was
+         actually asked:`;
+
+    const rows = st.rows.map((pair) => ({ cells: [`<code>${pair[0]}</code>`, `<code>${pair[1]}</code>`] }));
+    readout.replaceChildren(
+      table(
+        [`given this token`, `predict this one — <b>${pick === 'correct' ? 'A' : 'B'}</b>`],
+        rows,
+        'grid tight'
+      )
+    );
+    const foot = el('p', 'say small');
+    foot.innerHTML =
+      pick === 'correct'
+        ? `That is a prediction: every target is the token that actually came next. Switch to B to
+           see what the broken run was asked instead.`
+        : `Every target is the token already in the input. The model is being graded on copying,
+           which is why the curve looks like a triumph. Switch to A for the real task.`;
+    readout.append(foot);
+  };
+
+  /* Three ways in — pointer, keyboard focus, and the print path. A reader who never clicks still
+   * gets the labelled chart, because `playAll` forces the end state. */
+  btnA.addEventListener('click', () => show('correct'));
+  btnB.addEventListener('click', () => show('broken'));
+  btnA.addEventListener('focus', () => {
+    if (chosen === null) ask.classList.add('nudge');
+  });
+  wrap.playAll = () => show('broken');
+
+  wrap.append(chart, controls, verdict, readout);
+  show(null);
+  return figure(
+    wrap,
+    1,
+    `<b>Neither curve is labelled, and that is the argument.</b> Everything a training dashboard
+     shows you about these two runs is on this figure already; if that is enough to tell them apart,
+     this page has nothing to say. <b>What would refute it:</b> a broken run whose curve sat
+     <i>above</i> the correct one. Then watching the number would be a sufficient check, which is
+     exactly what most people believe it is.`
+  );
 }
 
 /* ============================================================== 2 · glossary */
 
 function chapterGlossary(M) {
-  const s = section(
-    'glossary',
-    'glossary',
-    'Vocabulary',
-    'Eight words, each with a number from this run',
-    [
-      `Read this once and nothing below is jargon. Every entry carries a real figure from the runs
-       on this page rather than a textbook gloss.`,
-    ],
-    { short: 'Vocabulary', sub: 'eight words, defined once' }
-  );
-
   const c = M.config;
+  /* The entries are built BEFORE the section, so the heading can count them. A heading that states
+   * a number is stating a count of its own contents; typing it is how this page came to say "Eight
+   * words" over a list that had grown. */
   const entries = [
     [
       'token',
@@ -225,7 +405,48 @@ function chapterGlossary(M) {
        choosing from. This model starts at <b>${int(M.perplexity.perplexity)}</b> against a
        vocabulary of ${int(c.vocab_size)}.`,
     ],
+    [
+      'nats',
+      `The unit every loss on this page is in — the natural-log version of bits. Nothing here is
+       ever converted, so a gap of <b>${Math.abs(M.training.summary.gap).toFixed(2)}</b> between two
+       heads means ${Math.abs(M.training.summary.gap).toFixed(2)} nats and never anything else.`,
+    ],
+    [
+      'the trunk',
+      `Everything before the output head: the ${c.n_layer} transformer blocks that turn tokens into
+       a ${c.d_model}-number thought per position. <b>${int(M.shapes.trunk_params)}</b> parameters
+       here, and it produces no scores at all — that is the head's job, which is why the two are
+       priced separately.`,
+    ],
+    [
+      'chunking',
+      `Computing the loss a few hundred rows at a time instead of all at once. Which few hundred is
+       the whole question: chunk the softmax over logits that already exist and you save the
+       intermediates; project <i>inside</i> the loop and the full score tensor never exists, which
+       is worth <b>${M.memory.ratio.toFixed(1)}×</b> here.`,
+    ],
+    [
+      '▁ (the underscore)',
+      `Not a character in the text. The tokenizer writes a leading space this way, so
+       <code>▁of</code> is " of" and <code>of</code> is the "of" inside another word. It appears on
+       every figure below and is the single most confusing thing about reading tokens as strings.`,
+    ],
   ];
+
+  const s = section(
+    'glossary',
+    'glossary',
+    'Before anything else',
+    `${Spell(entries.length)} words you need, each carrying a number from this run`,
+    [
+      `Read this once and nothing below is jargon. Every entry carries a real figure from the runs
+       on this page rather than a textbook gloss — and every term the tiles above used is in here,
+       which was not true before: <b>head</b>, <b>logits</b>, <b>output head</b> and
+       <b>tokenizer</b> were all used before they were defined.`,
+    ],
+    { short: 'The words', sub: `${spell(entries.length)} terms, with our own figures` }
+  );
+
   const dl = el('dl', 'gloss');
   for (const [term, def] of entries) {
     dl.append(el('dt', null, term));
@@ -239,23 +460,30 @@ function chapterGlossary(M) {
 /* ============================================================== 3 · the problem */
 
 function chapterProblem(M) {
+  const rows = problemRows(M);
   const s = section(
     'problem',
     'problem',
-    'The problem',
-    'Four ways to be wrong, none of which raises',
+    'Three lines, four ways to be wrong',
+    'The slice that manufactures every answer',
     [
       `Nobody labelled this text. The right answer is simply the next token, so the whole training
-       signal is created by a slice. Three lines of code do it — and every one of the four failures
-       below lives inside them.`,
+       signal is created by a slice. Three lines of code do it — and every one of the
+       ${spell(rows.length)} failures below lives inside them.`,
       `<b>None raises an exception. Two of them make the loss look better.</b> That is what makes
        them expensive: they do not announce themselves, and the metric you would use to catch them
        is the metric they improve.`,
     ],
-    { short: 'The problem', sub: 'four silent failures' }
+    { short: 'The slice', sub: `${spell(rows.length)} silent failures` }
   );
 
-  const rows = [
+  s.append(table(['what goes wrong', 'why it is silent', 'what you would see'], rows, 'grid prose'));
+  problemTail(M, s);
+}
+
+/** The four failures, as data, so the section that introduces them can count them. */
+function problemRows(M) {
+  return [
     {
       cells: [
         '<b>The shift goes the wrong way</b>',
@@ -287,12 +515,14 @@ function chapterProblem(M) {
       ],
     },
   ];
-  s.append(table(['what goes wrong', 'why it is silent', 'what you would see'], rows));
+}
 
+/** The paragraph that follows the table, kept beside it rather than inside the row data. */
+function problemTail(M, s) {
   const note = el('p', 'say');
   note.innerHTML = `The third and fourth are the ones this exercise got wrong <i>while building the
     page you are reading</i> — the boundary mask kept every pair of padding positions, and a chunked
-    loss divided by the wrong count. Both are in <a href="#negatives">what did not work</a>.`;
+    loss divided by the wrong count. Both are in <a href="#negatives">the corrections</a>.`;
   s.append(note);
 }
 
@@ -382,8 +612,8 @@ function chapterMechanism(M) {
   const s = section(
     'mechanism',
     'mechanism',
-    'How it works',
-    'The whole training signal is one slice',
+    'The central object, drawn',
+    'Where a target actually comes from',
     [
       `A sequence of <i>T</i> tokens gives <i>T−1</i> supervised pairs at no cost: drop the last
        position, because nothing follows it; drop the first token, because nothing predicts it.
@@ -392,7 +622,7 @@ function chapterMechanism(M) {
        figure is what the broken version asks for — and read as ids rather than as text, it is
        indistinguishable from the correct one.`,
     ],
-    { short: 'How it works', sub: 'the shift, drawn' }
+    { short: 'The shift', sub: 'inputs, targets, and the off-by-one' }
   );
 
   s.append(
@@ -423,8 +653,8 @@ function chapterMethod(M) {
   const s = section(
     'method',
     'method',
-    'How it was measured',
-    'Two models, identical but for the slice',
+    'The apparatus',
+    'Identical but for one slice',
     [
       `Everything below comes from code that runs top to bottom on a laptop CPU. The model is
        ${c.n_layer} pre-norm blocks at ${c.d_model} wide, scoring a vocabulary of
@@ -434,7 +664,7 @@ function chapterMethod(M) {
        batches, same optimiser, same order — so the only thing that differs between the two curves
        is which direction the text was shifted.`,
     ],
-    { short: 'How it was measured', sub: 'identical but for the slice' }
+    { short: 'The apparatus', sub: 'shapes, seed, and what runs' }
   );
 
   s.append(
@@ -448,7 +678,7 @@ function chapterMethod(M) {
         {
           cells: [
             'corpus',
-            `${int(run.corpus.corpus_tokens)} tokens, read <b>${run.corpus.epochs.toFixed(2)}
+            `${int(M.training.corpus.corpus_tokens)} tokens, read <b>${M.training.corpus.epochs.toFixed(2)}
              times over</b>`,
           ],
           __mark: 'warn',
@@ -459,7 +689,7 @@ function chapterMethod(M) {
 
   const caveat = el('p', 'say');
   caveat.innerHTML = `<b>That last row is a limit, not a detail.</b> A corpus read
-    ${run.corpus.epochs.toFixed(1)} times means every loss on this page is a memorisation number.
+    ${M.training.corpus.epochs.toFixed(1)} times means every loss on this page is a memorisation number.
     Both findings survive it — each compares two models trained <i>identically</i> on that same
     repeated text, so the repetition cancels — but no absolute value here transfers to a run on
     fresh data.`;
@@ -472,14 +702,14 @@ function chapterExpected(M) {
   const s = section(
     'expected',
     'expected',
-    'Stated before running',
-    'What we thought would happen',
+    'Written down first',
+    'What we expected, including where we were wrong',
     [
       `Writing the prediction down first is the only way a reader can tell a finding from a story
        told backwards — and it costs nothing when the prediction is wrong, which is when it is worth
        the most.`,
     ],
-    { short: 'Stated first', sub: 'the predictions' }
+    { short: 'The predictions', sub: 'made before the run, not after' }
   );
 
   s.append(
@@ -520,10 +750,22 @@ function chapterExpected(M) {
   const note = el('p', 'say');
   note.innerHTML = `<b>The third one is the interesting failure.</b> Random weights are not uniform
     <i>output</i> — the model has arbitrary preferences before it has learned anything, and being
-    confidently arbitrary is worse than being uniform. So a fresh model sits slightly
-    <i>above</i> ln(V), at a ratio of ${M.perplexity.ratio_to_vocab.toFixed(3)} to the vocabulary.
-    What would signal a real bug is starting far <b>below</b> it.`;
+    confidently arbitrary is worse than being uniform. So a fresh model sits
+    <b>${pct(M.perplexity.loss / M.perplexity.expected_loss - 1, 1)}</b> above ln(V), at
+    ${M.perplexity.loss.toFixed(4)} against ${M.perplexity.expected_loss.toFixed(4)} nats. What
+    would signal a real bug is starting far <b>below</b> it.`;
   s.append(note);
+
+  const ratio = el('p', 'say small');
+  ratio.innerHTML = `<b>Two ratios live here and they are not the same number, which is the
+    section's own instance of this page's thread.</b> In nats the model is
+    ${pct(M.perplexity.loss / M.perplexity.expected_loss - 1, 1)} above the uniform floor; read as
+    perplexity — a count of menu items rather than a log — the same gap is
+    <b>${M.perplexity.ratio_to_vocab.toFixed(3)}×</b> the vocabulary, because exponentiating turns
+    a small additive gap into a large multiplicative one. This paragraph published the second figure
+    under a sentence about the first, which made a ${pct(M.perplexity.loss / M.perplexity.expected_loss - 1, 1)}
+    gap read as a ${pct(M.perplexity.ratio_to_vocab - 1, 1)} one.`;
+  s.append(ratio);
 }
 
 /* ============================================================== 7 · results */
@@ -587,14 +829,14 @@ function chapterResults(M) {
   const s = section(
     'results',
     'results',
-    'What happened',
-    'The bug wins, on the only metric you were watching',
+    'The ledger',
+    'The bug wins, on the only number anyone watches',
     [
       `Two models, identical in every respect but the direction of one slice. The mis-shifted one
        ends <b>${Math.abs(t.broken_shift_advantage).toFixed(2)} nats lower</b> — and it has learned
        nothing except to repeat its own input.`,
     ],
-    { short: 'What happened', sub: 'the bug wins' }
+    { short: 'The ledger', sub: 'every number, and what it counts' }
   );
 
   s.append(
@@ -633,8 +875,9 @@ function chapterResults(M) {
     {
       cells: [
         '4 · a packed boundary',
-        `<b>${M.boundary.loss_masked.toFixed(6)}</b> masked against
-         ${M.boundary.loss_unmasked.toFixed(6)} unmasked`,
+        `<b>${int(M.boundary.boundary_crossings)}</b> crossing of
+         ${int(M.boundary.positions_contributing)}, scoring
+         ${M.boundary.crossing_loss.toFixed(2)} against a ${M.boundary.loss_unmasked.toFixed(2)} mean`,
       ],
     },
     {
@@ -672,38 +915,70 @@ function chapterResults(M) {
 
   const noise = el('p', 'say');
   const sens = M.sensitivity;
-  noise.innerHTML = `<b>Both findings were checked against a different arbitrary choice.</b> The step
-    count is the only arbitrary thing in the run, so the whole thing was repeated at
-    ${sens.by_steps.map((r) => int(r.steps)).join(', ')} steps — separate runs, not truncations. The
-    gap grows monotonically (${sens.gap_grows_monotonically ? 'yes' : 'NO'}), and every run found
-    both effects in the same direction. The memory ratio has a floor too:
-    ${sens.memory.repeats} repetitions spread it from ${sens.memory.min.toFixed(2)}× to
-    ${sens.memory.max.toFixed(2)}×, so it is quoted as about ${Math.round(sens.memory.min)}× and no
+  noise.innerHTML = `<b>Both findings were checked against a different arbitrary choice.</b> The
+    whole run was repeated at ${sens.by_steps.map((r) => int(r.steps)).join(', ')} steps — separate
+    runs, not truncations. The gap grows monotonically
+    (${sens.gap_grows_monotonically ? 'yes' : 'NO'}), and every run found both effects in the same
+    direction. The memory ratio has a floor too: ${sens.memory.repeats} repetitions spread it from
+    ${sens.memory.min.toFixed(2)}× to ${sens.memory.max.toFixed(2)}×, a spread of
+    ${sens.memory.spread.toFixed(2)}, so it is quoted as about ${Math.round(sens.memory.min)}× and no
     finer.`;
   s.append(noise);
+
+  const varied = el('p', 'say small');
+  varied.innerHTML = `<b>That sweep varies two things, not one, and there is a third it never
+    touches.</b> Each step count reads a different amount of the corpus, so the three runs see it
+    ${sens.by_steps.map((r) => r.epochs.toFixed(2)).join(', ')} times over — a sweep over steps is
+    also a sweep over repetition, which was computed nowhere until it was asked for. And every run
+    on this page uses <b>seed ${int(M.training.run.seed)}</b>. It has never been varied, so nothing
+    here separates an effect from an initialisation, and the honest reading of "checked against a
+    different arbitrary choice" is: one of them.`;
+  s.append(varied);
 }
 
 /* ============================================================== 8 · negatives */
 
-function chapterNegatives() {
+function chapterNegatives(M) {
+  const rows = negativeRows(M);
   const s = section(
     'negatives',
     'negatives',
-    'What did not work',
-    'Six corrections, three found by a reviewer',
+    'Corrections',
+    `${Spell(rows.length)} things this page got wrong, and what each one is an instance of`,
     [
-      `Three of these were found by writing the code, and three by three agents reading the finished
-       work. Every one of the second three was <b>a claim that read as checked and was not</b> —
+      `Every row here is the same failure as the thesis wearing different arithmetic: a number that
+       was correct about a question nobody had asked. <b>None of them was a miscalculation</b>, and
+       none of them raised. They are listed with the general shape beside each, because the specific
+       bug is only useful if the shape transfers.`,
+      `Some were found by writing the code and some by reading the finished work. The second kind
+       are the ones worth reading: every one was <b>a claim that read as checked and was not</b>,
        which is the only kind that survives to publication.`,
     ],
-    { short: 'What did not work', sub: 'six corrections' }
+    { short: 'The corrections', sub: 'each one an instance of the same thing' }
   );
 
-  const rows = [
+  s.append(table(['what was wrong', 'the shape, and how it survived'], rows, 'grid prose'));
+}
+
+/** The corrections, as data, so the heading can count them. */
+function negativeRows(M) {
+  return [
+    {
+      cells: [
+        `The boundary count published <b>${int(M.boundary.mask_dropped_including_padding)}</b>
+         crossings where there is <b>${int(M.boundary.boundary_crossings)}</b>`,
+        `<b class="shape">a right number answering an adjacent question</b> The harness computed the right number on one line and returned the mask's total drop on
+         the next — which counts every pair the mask touches, nearly all of them padding pairs
+         already removed. It inverted the finding: dozens of positions nudging a mean is a shrug,
+         and <b>one</b> position scoring ${M.boundary.crossing_loss.toFixed(2)} against a
+         ${M.boundary.loss_unmasked.toFixed(2)} mean is the point.`,
+      ],
+      __mark: 'bad',
+    },
     {
       cells: [
         'The document-boundary mask kept <b>every</b> pair of padding positions',
-        `Padding carries id <code>−1</code>, and <code>−1 == −1</code> is true — so a mask written as
+        `<b class="shape">a guard that agreed with the bug because it shared its expression</b> Padding carries id <code>−1</code>, and <code>−1 == −1</code> is true — so a mask written as
          <code>source == destination</code> reads perfectly and drops nothing but the joins. On the
          published example, 68 of 125 "contributing" positions were padding predicting padding.
          <b>The guard agreed with the bug</b>: it asserted the dropped count equalled a count of
@@ -714,7 +989,7 @@ function chapterNegatives() {
     {
       cells: [
         'The results document claimed every figure was generated, and fifteen were typed',
-        `They were the sensitivity and noise-floor numbers — the two blocks the document leans on
+        `<b class="shape">a check that could not see the thing it was checking</b> They were the sensitivity and noise-floor numbers — the two blocks the document leans on
          hardest to argue it should be believed. One printed <code>4.15</code> where the generated
          table above read <code>4.1447</code>. The byte-equality test could not see them, because
          they lived <i>inside</i> the template it compared against.`,
@@ -724,7 +999,7 @@ function chapterNegatives() {
     {
       cells: [
         'The memory measurement would have shipped a fiction',
-        `The first version used <code>tracemalloc</code>, which is blind to torch: it reported
+        `<b class="shape">an instrument blind to what it was pointed at</b> The first version used <code>tracemalloc</code>, which is blind to torch: it reported
          <b>429 bytes</b> for an <b>81,928,192-byte</b> logits tensor. Both paths would have come
          back as noise and the published ratio would have been the quotient of two noise figures.`,
       ],
@@ -733,7 +1008,7 @@ function chapterNegatives() {
     {
       cells: [
         'Chunked cross-entropy divided by the wrong count',
-        `It used the row count rather than the contributing count, so it disagreed with the unchunked
+        `<b class="shape">the wrong denominator, invisible on the inputs anyone tested</b> It used the row count rather than the contributing count, so it disagreed with the unchunked
          loss on any masked input. Every test written on unmasked input passed either way, which is
          how it ships.`,
       ],
@@ -742,47 +1017,124 @@ function chapterNegatives() {
     {
       cells: [
         'Chunking a softmax is not chunking a projection',
-        `Chunking logits that already exist saves only the intermediates — 1.9×. Projecting inside
-         the loop, so the full tensor never exists, is what the technique is named for. Quoting the
-         first as the second would understate the method fivefold.`,
+        `<b class="shape">one technique's number quoted for another</b> Chunking logits that
+         already exist saves only the intermediates —
+         <b>${M.memory.softmax_only_ratio.toFixed(2)}×</b>. Projecting inside the loop, so the full
+         tensor never exists, is worth ${M.memory.ratio.toFixed(2)}×. Quoting the first as the
+         second understates the method
+         ${(M.memory.ratio / M.memory.softmax_only_ratio).toFixed(1)}-fold. <b>This row itself
+         carried a typed figure for weeks</b> — 1.9×, measured by nothing — under a heading about
+         quoting the wrong number.`,
       ],
     },
     {
       cells: [
         'A test claimed the head was "most" of a narrow model',
-        `It is 44.9%. The test had also inherited whatever the layer count defaulted to, so it
-         silently became a different claim when that default moved.`,
+        `<b class="shape">a claim whose subject moved underneath it</b> It is ${pct(M.heads.head_share)}. The test had also inherited whatever the layer count
+         defaulted to, so it silently became a different claim when that default moved.`,
       ],
     },
+    {
+      cells: [
+        'Every loss was measured against a file that changes weekly',
+        `<b class="shape">a hash that was recorded rather than checked</b> The corpus was this repository's own conventions document, read live at run time, and the
+         run recorded a sixteen-character digest that nothing recomputed. By the time anyone
+         checked, the file had grown well past the
+         <b>${int(M.training.corpus.source_bytes)} bytes</b> these losses were measured on — so
+         re-running would have produced different numbers under unchanged documents, silently. That
+         revision is frozen now and the digest is recomputed by a test.`,
+      ],
+      __mark: 'bad',
+    },
   ];
-  s.append(table(['what was wrong', 'how it survived'], rows));
 }
 
 /* ============================================================== 9 · conclusion */
 
 function chapterConclusion(M) {
   const t = M.training.summary;
+
+  /* One row per opening tile, plus the two the body adds. This is the page's through-line made
+   * literal: every finding here is the same failure wearing different arithmetic. It closes the
+   * tiles rather than leaving them orphaned -- the previous version of this section spoke to one
+   * of four, and a reader who came for the head's share or the memory ratio never learned what
+   * either had to do with the shift. */
+  const closers = [
+    {
+      cells: [
+        `<b>${t.final_broken_shift.toFixed(2)}</b> against ${t.final_correct_shift.toFixed(2)}`,
+        'a better model',
+        'an easier question — the broken run is graded on copying its input',
+      ],
+      __mark: 'bad',
+    },
+    {
+      cells: [
+        `<b>${int(M.boundary.mask_dropped_including_padding)}</b> dropped positions`,
+        'how much the boundary mask changed',
+        `every pair the mask touches. <b>${int(M.boundary.boundary_crossings)}</b> crosses the
+         join — at a loss of ${M.boundary.crossing_loss.toFixed(2)}, against
+         ${M.boundary.loss_unmasked.toFixed(2)} on average`,
+      ],
+      __mark: 'bad',
+    },
+    {
+      cells: [
+        `<b>${M.memory.ratio.toFixed(2)}×</b> memory`,
+        'what chunking the loss saves',
+        `what moving the <i>projection</i> inside the loop saves. The softmax alone:
+         ${M.memory.softmax_only_ratio.toFixed(2)}×`,
+      ],
+    },
+    {
+      cells: [
+        `<b>${pct(M.heads.head_share)}</b> of the parameters`,
+        'how much of this model is the head',
+        `how much of head plus an <i>estimated</i> body. Of the trunk actually built:
+         ${pct(M.heads.untied_params / (M.heads.untied_params + M.shapes.trunk_params))}`,
+      ],
+    },
+    {
+      cells: [
+        `<b>${M.perplexity.ratio_to_vocab.toFixed(3)}×</b> the vocabulary`,
+        'how far above uniform an untrained model sits',
+        `that gap in <i>perplexity</i>. In nats, the unit used everywhere else here:
+         ${pct(M.perplexity.loss / M.perplexity.expected_loss - 1, 1)}`,
+      ],
+    },
+  ];
+
   const s = section(
     'conclusion',
     'conclusion',
-    'What to take away',
-    'Read the tokens, not the number',
+    'The verdict',
+    'Check what the number is counting',
     [
       `The loss is the thing you are optimising, which makes it the worst available evidence that
        the optimisation is set up correctly. A target-alignment bug does not make it worse — it makes
        it <b>${Math.abs(t.broken_shift_advantage).toFixed(1)} nats better</b>.`,
-      `Everything that catches this class of bug is a form of looking at the intermediate state
-       rather than the outcome: the tokens as text, the contributing count beside every loss, the
-       shapes with their dimensions named. None of it is sophisticated. All of it is skipped.`,
+      `<b>Not one of the ${spell(closers.length)} numbers below was miscalculated.</b> Every one of
+       them is arithmetic anyone can check, answering a question nobody asked out loud. That is the
+       failure mode worth carrying out of this page: a wrong number gets caught by a reader, and a
+       <i>right</i> number answering an adjacent question does not.`,
     ],
-    { short: 'What to take away', sub: 'read the tokens' }
+    { short: 'The verdict', sub: 'check what the number counts' }
+  );
+
+  s.append(
+    table(
+      ['the number', 'what it looks like it counts', 'what it counts'],
+      closers.map((r) => ({ cells: r.cells, __mark: r.__mark })),
+      'grid prose'
+    )
   );
 
   const box = el('div', 'takeaway');
   box.innerHTML = `<b>The check that works at step zero.</b> Print the inputs beside the targets as
     <i>strings</i> and read them. Every row should say "this piece is followed by that piece". No
     loss curve can tell you that, because at step zero the broken and correct models score the
-    same — and by the time they differ, the broken one looks better.`;
+    same — and by the time they differ, the broken one looks better. Every other row above has the
+    same shape: read the denominator, read the units, read what was in the set.`;
   s.append(box);
 }
 
@@ -793,21 +1145,21 @@ function chapterLimits(M) {
   const s = section(
     'limits',
     'limits',
-    'What this cannot establish',
-    'Four things this page does not show',
+    'In the open',
+    'What this page cannot tell you',
     [
       `Stated in the open text rather than behind a disclosure, because a limitation a reader has to
        expand is a limitation the page is hiding.`,
     ],
-    { short: 'What it cannot show', sub: 'four limits' }
+    { short: 'The limits', sub: 'what a laptop run cannot settle' }
   );
 
   const ul = el('ul', 'limits');
   for (const item of [
     `<b>Nothing about which loss trains a better model.</b> The runs exist to show two specific
      effects. No result here is a quality comparison.`,
-    `<b>Every loss is a memorisation number.</b> The corpus is ${int(run.corpus.corpus_tokens)}
-     tokens read ${run.corpus.epochs.toFixed(2)} times over. Both findings survive that — each
+    `<b>Every loss is a memorisation number.</b> The corpus is ${int(M.training.corpus.corpus_tokens)}
+     tokens read ${M.training.corpus.epochs.toFixed(2)} times over. Both findings survive that — each
      compares two models trained identically on the same repeated text — but the absolute values do
      not transfer to fresh data.`,
     `<b>${int(run.steps)} steps is not a training curve.</b> Both findings are bounded by that
@@ -829,13 +1181,13 @@ function chapterNext() {
   const s = section(
     'next',
     'next',
-    'Where this goes',
-    'What the next exercise does with it',
+    'The next number to distrust',
+    'What the step around the loss does with this',
     [
       `Everything here stops at the scalar. The next exercise builds the step <i>around</i> it — and
        finds two of its own numbers flattering themselves.`,
     ],
-    { short: 'Where this goes', sub: 'the next exercise' }
+    { short: 'What this opens', sub: 'the step around the loss' }
   );
 
   const ul = el('ul', 'limits');
@@ -857,33 +1209,68 @@ function chapterNext() {
 
 /* ============================================================== 12 · reproduce */
 
-function chapterReproduce() {
+/* This section used to be a shell transcript, and it was wrong in four ways at once: it was headed
+ * "Three commands" over four of them, it promised a regeneration test that did not exist, it said
+ * "the two JSON files" where three are rendered, and it belonged in the README rather than on a
+ * page a stranger reads. What reproduces a result is not the command that produced it -- anybody can
+ * type a command -- it is knowing which code, which text and which machine answered. So the section
+ * shows that instead, and the commands live in the repository where someone who has cloned it is
+ * already standing. */
+function chapterReproduce(M) {
+  const prov = M.sensitivity.provenance;
+  const corpus = M.sensitivity.corpus;
+  const env = prov.environment;
+  const rows = [
+    ['which settings', `<code>${prov.config_fingerprint}</code>`, 'every field of the configuration, hashed'],
+    ['which code', `<code>${prov.code_digest.slice(0, 19)}…</code>`, 'every module the numbers depend on, in name order'],
+    ['which commit', `<code>${prov.git_sha.slice(0, 12)}</code>`, 'the tree it ran from'],
+    [
+      'which text',
+      `<code>${prov.corpus_digest.slice(0, 19)}…</code>`,
+      `${int(corpus.corpus_tokens)} tokens, read ${corpus.epochs.toFixed(2)} times over`,
+    ],
+    ['which vocabulary', `<code>${prov.tokenizer_digest.slice(0, 19)}…</code>`, "exercise 02's frozen BPE"],
+    [
+      'which machine',
+      `${env.platform.split('-').slice(0, 2).join(' ')}`,
+      `python ${env.python} · torch ${env.torch} · ${env.torch_threads} threads · ${env.device}`,
+    ],
+  ];
+
   const s = section(
     'reproduce',
     'reproduce',
-    'Run it yourself',
-    'Three commands',
+    'Every figure and its parent',
+    `${Spell(rows.length)} things that had to be recorded for any of this to be checkable`,
     [
-      `Every figure on this page is generated from the two JSON files those commands write. Nothing
-       here is typed by hand, and a test regenerates the page's data and fails if the tracked copy
-       differs.`,
+      `A number nobody can regenerate is not evidence, it is folklore. Every figure on this page is
+       read from three tracked JSON files, and each of those files carries the block below —
+       ${spell(rows.length)} fields naming what produced it. Writing one without them <b>raises</b>;
+       it does not warn.`,
+      `<b>The corpus is the one worth pausing on.</b> It used to be this repository's own conventions
+       file, read live at run time — a file edited on most changes to the repository. Every loss here
+       was therefore a function of a moving input, the run recorded a sixteen-character digest that
+       nothing recomputed, and by the time anyone looked the file had grown by twelve percent. The
+       exact revision is frozen now, so that hash can be <i>recomputed</i> from a clone rather than
+       taken on trust.`,
     ],
-    { short: 'Run it yourself', sub: 'three commands' }
+    { short: 'The index', sub: 'what produced every number here' }
   );
 
-  const pre = el('pre', 'code');
-  pre.textContent =
-    'uv sync --all-packages --extra train\n' +
-    '\n' +
-    'uv run python -m lossheads.harness     # the seven numbers\n' +
-    'uv run python -m lossheads.training    # the two findings\n' +
-    'uv run python src/exercises/09-loss-functions-output-heads/tools/render_results.py';
-  s.append(pre);
+  s.append(
+    table(
+      ['question', 'answer', 'what it covers'],
+      rows.map((r) => ({ cells: [r[0], r[1], r[2]] })),
+      'grid'
+    )
+  );
 
   const p = el('p', 'say small');
-  p.innerHTML =
-    'The training run takes about 35 seconds on a laptop; the harness about ten. ' +
-    '<a href="https://github.com/pankajkr23/llm-pretraining-exercises/tree/main/src/exercises/09-loss-functions-output-heads">Code, tests and the full write-up</a>.';
+  p.innerHTML = `Digests are shown truncated to fit; the files carry them at full length, which is
+    the point — a prefix cannot be checked. The commands that regenerate all of this are in the
+    repository's own README, beside the code they run.
+    <a href="https://github.com/pankajkr23/llm-pretraining-exercises/tree/main/src/exercises/09-loss-functions-output-heads">Code,
+    tests and the full write-up</a>.`;
   s.append(p);
 }
 
@@ -963,7 +1350,7 @@ export function buildPage(M) {
   chapterConclusion(M);
   chapterLimits(M);
   chapterNext();
-  chapterReproduce();
+  chapterReproduce(M);
   buildRail(main());
   buildFooter();
 }

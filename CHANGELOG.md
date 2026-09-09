@@ -12,6 +12,91 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Every loss exercise 09 publishes was measured against a file the repository edits on most pull
+  requests, and nothing could notice.** The corpus was read from the live `AGENTS.md` at run time
+  and the run recorded a **16-character prefix** of its digest, which no test recomputed. It had
+  already drifted: `results/training.json` was measured on 92,021 bytes and the live file held
+  103,347 — twelve percent more text, a different tokenization, and different numbers under
+  unchanged documents. The exact revision is now frozen in
+  `src/exercises/09-loss-functions-output-heads/corpus/`, recovered from history, so the digest can
+  be **recomputed from a clone** rather than merely recorded. Re-running against it reproduced every
+  published training figure byte for byte, which is what proves the right revision was frozen.
+
+- **Exercise 09 published `37` boundary crossings where there is `1`, and the error inverted the
+  finding.** `harness.py` computed the true count on one line and returned `report.dropped` on the
+  next — the boundary mask's total drop across the padded tensor, which is mostly pad-to-pad pairs
+  item 3 had already removed. Dozens of positions nudging the mean reads as a shrug; the truth is
+  that a **single** crossing position, scoring **9.51** against a mean of **9.34**, moves it that
+  far. The crossing's own loss is now recovered from the two means and published beside the count.
+
+- **`1.9×` was published as a measured figure and measured by nothing** — in the row of exercise
+  09's corrections table headed *"chunking a softmax is not chunking a projection"*, which is a row
+  about quoting one technique's number for another. The comparison is real and now has a third
+  measured path behind it: chunking the softmax over logits that already exist saves **1.80×**,
+  moving the projection inside the loop saves **9.09×**, so quoting the first as the second
+  understates the technique fivefold.
+
+- **A repo-wide guard enrolled a page for explaining why it does not use a component.** The
+  step-strip sweep detected participants by asking whether `_shared/explainer.js` appeared anywhere
+  in a page's JavaScript, so a comment saying *why that skeleton was deliberately not vendored* was
+  enough — and the sweep then failed for having no steps to measure. It matches the import
+  statement now, with a twin that plants both a mention and a multi-line import.
+
+- **Exercise 09's README stated a noise floor of `0.69` where the run measured `0.177`** — and
+  stated the correct range forty-eight lines earlier, so the guard checking those figures passed on
+  the correct copy while the wrong one shipped. The guard now asks the other question too: every
+  ratio the README states must be one the run produced, and every number it offers *as* the spread
+  must be the measured spread. It also no longer claims both head-share figures are in `RESULTS.md`;
+  only one is.
+
+### Changed
+
+- **Exercise 09's page argues instead of enumerating.** It opens by showing two unlabelled loss
+  curves and asking which run you would ship — the reader commits, and only then learns the lower
+  one is the broken model. That is the page's thesis made into an action rather than a claim, and
+  it is the one interaction on the page. Every section is named for an object in the subject rather
+  than for its structural role (twelve eyebrows that read `What happened` · `How it works` ·
+  `What did not work` were the spine translated into English), the conclusion now closes all four
+  opening tiles on one through-line — **check what the number is counting** — and the corrections
+  section leads each row with the transferable shape rather than the local bug.
+
+- **`reproduce` reproduces the evidence, not the build.** It carried four shell commands under a
+  heading reading "Three commands", promised a regeneration test that does not exist, and said "the
+  two JSON files" where three are rendered. It now shows what actually makes a figure checkable —
+  which settings, which code, which commit, which text, which vocabulary, which machine. Commands
+  belong in the README, beside the code they run.
+
+### Added
+
+- **Exercise 09 can say what produced every number it publishes.** A new `lossheads.provenance`
+  records the six fields `AGENTS.md` requires — configuration fingerprint, code digest, commit,
+  corpus digest, tokenizer digest, environment — and `save`, `save_sensitivity` and `harness.run`
+  **refuse** to write without them. `results/harness.json` and `results/sensitivity.json` previously
+  carried none at all: seven published numbers and the whole noise floor, saying nothing about which
+  code, machine or vocabulary produced them.
+
+- **`training.run()` no longer overwrites committed evidence.** It wrote the tracked
+  `results/training.json` by default, and the topic notebook calls it — so reading the notebook
+  republished the run. It writes to `artifacts/` now; `python -m lossheads.training` is the one
+  caller that publishes.
+
+- **Exercise 09's topic notebook is a laboratory rather than a tour.** It was twenty-four cells,
+  ten of them code, with no chart, no assertion and no function of its own — it narrated the page.
+  It now carries a knob cell at the top so a reader varies the run instead of reading about it,
+  eight plots, and **eleven assertions that are the lesson**: the five equivalences the library
+  claims, each written twice — once at the no-op setting where it must agree and once away from it,
+  because a function ignoring its argument would pass the first half. One of them is the shipped
+  defect made runnable: the chunked loss agrees with the plain one only under masking, which is
+  where the wrong denominator would show. And it hands the reader the bug rather than describing
+  it — run the two shifts, see the broken one reach the *lower* loss, then print the token strings.
+  It also sweeps the seed, which the published page called the one thing it never varied.
+
+- **The sensitivity sweep has a tracked entry point.** It was a `python -c` one-liner pasted from a
+  document, which is the shape `AGENTS.md` names as its most expensive failure — a producer of a
+  published number living outside the tracked code. It is `--sensitivity` now. The sweep also
+  records the epoch count **per row**: the three runs read the corpus 1.71, 4.27 and 8.55 times, so
+  the step count was never the only thing that sweep varied.
+
 - **The `PreToolUse` guard could not see a destructive git command, because those commands name no
   path.** Every rule in the policy matches a path, and `bash_write_targets` finds paths — so
   `git clean -fdx`, which deletes every gitignored file in this repository (every notebook, every

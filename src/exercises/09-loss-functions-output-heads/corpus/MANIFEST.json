@@ -1,0 +1,10 @@
+{
+  "file": "agents-md-95c740e.txt",
+  "what": "the text every loss in this exercise is measured on, frozen",
+  "source": "this repository's own AGENTS.md",
+  "git_sha": "95c740e5cde87a76c6572437479d34fa3220331b",
+  "bytes": 92021,
+  "sha256_digest": "sha256:19f24ce7db26e4f3dde1b3663b6edb19019d887f0188bdaca16ffad7087b0261",
+  "why_frozen": "AGENTS.md is edited on most pull requests. Reading it at run time made every published loss a function of a moving file: the run behind results/training.json read 92,021 bytes and the live file is now larger, so re-running today produces different numbers and nothing goes red. Freezing the exact revision the published run read makes the digest recomputable from the repository alone, which is what turns a recorded hash into a check.",
+  "never_edit": "These bytes are a measured input, not prose. Editing a word here changes a published result rather than a document. If a lexical gate ever flags this file, add a path exemption naming it -- never reword it."
+}

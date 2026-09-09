@@ -1,4 +1,4 @@
-/* Page-specific styles for 07.
+/* Page-specific styles for 09.
  *
  * Every colour here is a token from /_shared/tokens.css. Nothing is a literal, because a literal
  * would be correct in one of the six themes and wrong in the other five — and the theme picker
@@ -13,13 +13,6 @@
 }
 
 .say code,
-.lockrow code {
-  font-family: var(--mono);
-  font-size: 0.92em;
-  background: var(--track);
-  border-radius: 5px;
-  padding: 1px 5px;
-}
 
 /* Wide tables scroll inside their own box; the page body must never scroll sideways. */
 .tablewrap {
@@ -76,76 +69,7 @@ table.grid tr.bad td {
   background: color-mix(in srgb, var(--grade-x) 9%, transparent);
 }
 
-.dim {
-  color: var(--muted);
-  font-size: 0.88em;
-}
-
 /* --- the interactive panels ------------------------------------------------------------------ */
-
-.play {
-  margin: 26px 0 30px;
-  max-width: 68ch;
-}
-
-.playtitle {
-  margin: 0 0 14px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
-.btn {
-  font: inherit;
-  font-weight: 500;
-  color: var(--on-accent);
-  background: var(--accent);
-  border: 0;
-  border-radius: 980px;
-  padding: 9px 20px;
-  cursor: pointer;
-  margin: 0 0 16px;
-}
-
-.btn:hover {
-  filter: brightness(1.08);
-}
-
-.btn:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-
-.lockout {
-  display: grid;
-  gap: 7px;
-}
-
-.lockrow {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 8px 13px;
-  border-radius: 9px;
-  background: var(--track);
-}
-
-.lockrow .v {
-  font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
-}
-
-.lockrow.sum {
-  background: var(--accent-soft);
-  font-weight: 600;
-  margin-top: 6px;
-}
-
-.lockrow.sum .v {
-  color: var(--grade-a);
-}
 
 /* --- the limits, in the open, never behind a disclosure --------------------------------------- */
 
@@ -182,10 +106,6 @@ table.grid tr.bad td {
 }
 
 @media (max-width: 620px) {
-  .lockrow {
-    flex-direction: column;
-    gap: 4px;
-  }
 }
 
 /* The shared `section` rule sets bottom spacing only — `padding-bottom` and `margin-bottom`, no
@@ -196,7 +116,6 @@ table.grid tr.bad td {
 main > section:first-child {
   margin-top: 46px;
 }
-
 
 /* ==== storytelling elements: tiles, glossary, figures, expected-vs-found ==== */
 
@@ -296,13 +215,6 @@ figure {
   overflow-x: auto;
 }
 
-.fig-svg {
-  display: block;
-  width: 100%;
-  height: auto;
-  min-width: 460px;
-}
-
 figcaption {
   margin-top: 14px;
   padding-top: 12px;
@@ -319,42 +231,11 @@ figcaption {
   stroke-width: 1;
 }
 
-.cliff {
-  stroke: var(--grade-x);
-  stroke-width: 2;
-  stroke-dasharray: 4 3;
-}
-
 .rect {
   fill: var(--accent-soft);
   stroke: var(--accent);
   stroke-width: 1.5;
   stroke-dasharray: 5 4;
-}
-
-.mk {
-  stroke: var(--panel);
-  stroke-width: 1.5;
-}
-
-.mk.a {
-  fill: var(--accent);
-}
-
-.mk.b {
-  fill: var(--hi);
-}
-
-.mk.x {
-  fill: var(--grade-x);
-}
-
-.bar {
-  fill: var(--muted);
-}
-
-.bar.good {
-  fill: var(--accent);
 }
 
 text.ax {
@@ -371,111 +252,17 @@ text.ax.mid {
   text-anchor: middle;
 }
 
-text.ax.strong {
-  fill: var(--ink);
-  font-weight: 600;
-}
-
 text.ax.warn {
   fill: var(--grade-x);
 }
 
-.legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 20px;
-  align-items: center;
-  margin-top: 12px;
-  font-size: 0.84rem;
-  color: var(--muted);
-}
-
-.legend code {
-  font-family: var(--mono);
-  background: var(--track);
-  border-radius: 4px;
-  padding: 1px 5px;
-}
-
-.sw {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-right: 7px;
-  vertical-align: -1px;
-}
-
-.sw.a {
-  background: var(--accent);
-}
-
-.sw.b {
-  background: var(--hi);
-}
-
-.sw.x {
-  background: var(--grade-x);
-}
-
 /* --- expected vs found ------------------------------------------------------------------------- */
 
-.expects {
-  display: grid;
-  gap: 14px;
-  margin: 22px 0;
-  max-width: 78ch;
-}
-
-.expect {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 6px 16px;
-  padding: 16px 18px;
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--muted);
-  border-radius: 12px;
-  background: var(--panel);
-}
-
-.expect.bad {
-  border-left-color: var(--grade-x);
-}
-
-.expect.part {
-  border-left-color: var(--hi);
-}
-
-.ex-k {
-  font-family: var(--mono);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--faint);
-  padding-top: 3px;
-}
-
-.ex-v {
-  font-size: 0.95rem;
-  line-height: 1.55;
-}
-
 @media (max-width: 640px) {
-  .expect {
-    grid-template-columns: 1fr;
-    gap: 2px;
-  }
-  .ex-v {
-    margin-bottom: 10px;
-  }
 }
 
 /* The region past column 32 — what the codec throws away. Shaded so the loss is visible rather
    than implied, because an earlier draft drew those bytes outside the plot and showed one dot. */
-.dropzone {
-  fill: var(--grade-x);
-  opacity: 0.07;
-}
 
 /* --- section role eyebrow, the requirements quote, and the closing lists ------------------------------ */
 
@@ -489,27 +276,6 @@ text.ax.warn {
   color: var(--faint);
 }
 
-blockquote.preamble {
-  margin: 20px 0 24px;
-  padding: 18px 22px;
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--accent);
-  border-radius: 12px;
-  background: var(--panel);
-  max-width: 72ch;
-  font-size: 1rem;
-  line-height: 1.6;
-}
-
-blockquote.preamble cite {
-  display: block;
-  margin-top: 10px;
-  font-size: 12px;
-  font-style: normal;
-  letter-spacing: 0.04em;
-  color: var(--faint);
-}
-
 section h3 {
   margin: 34px 0 12px;
   font-size: 1.06rem;
@@ -517,71 +283,10 @@ section h3 {
 }
 
 .limitlist,
-.nextlist {
-  max-width: 76ch;
-  margin: 18px 0;
-  padding-left: 22px;
-}
 
 .limitlist li,
-.nextlist li {
-  margin: 0 0 12px;
-  line-height: 1.6;
-}
-
-pre.repro {
-  margin: 18px 0;
-  padding: 18px 20px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--panel);
-  overflow-x: auto;
-  font-family: var(--mono);
-  font-size: 0.86rem;
-  line-height: 1.7;
-  color: var(--ink);
-}
 
 /* --- SVG diagram internals, all token-driven so every theme works --------------------------- */
-
-.nodebox {
-  fill: var(--track);
-  stroke: var(--line);
-  stroke-width: 1;
-}
-
-.nodebox.fixed {
-  fill: var(--track);
-  stroke: var(--muted);
-  stroke-dasharray: 4 3;
-}
-
-.nodebox.learn {
-  fill: var(--accent-soft);
-  stroke: var(--accent);
-}
-
-.nodebox.good {
-  fill: var(--accent-soft);
-  stroke: var(--grade-a);
-  stroke-width: 2;
-}
-
-.nodebox.bad {
-  fill: color-mix(in srgb, var(--grade-x) 10%, transparent);
-  stroke: var(--grade-x);
-  stroke-width: 2;
-}
-
-.flow {
-  stroke: var(--muted);
-  stroke-width: 1.6;
-}
-
-.flow.good {
-  stroke: var(--grade-a);
-  stroke-width: 2;
-}
 
 .ahead {
   fill: var(--muted);
@@ -592,38 +297,12 @@ pre.repro {
   stroke-width: 1.5;
 }
 
-.tether {
-  stroke: var(--accent);
-  stroke-width: 1.5;
-  opacity: 0.45;
-}
-
-.series {
-  stroke-width: 2;
-  fill: none;
-}
-
-.series.a {
-  stroke: var(--accent);
-}
-
-.series.b {
-  stroke: var(--muted);
-}
-
 text.ax.good {
   fill: var(--grade-a);
 }
 
 /* The control series draws its dots in the same colour as its line; an earlier pass left grey
    lines with orange dots, which read as two different series. */
-.mk.c {
-  fill: var(--muted);
-}
-
-.series.c {
-  stroke: var(--muted);
-}
 
 /* ============================================================
  * Exercise 09's own figures.
@@ -798,4 +477,133 @@ pre.code {
 .grid tr.good td {
   border-left: 3px solid var(--grade-a);
   background: color-mix(in srgb, var(--grade-a) 6%, transparent);
+}
+
+/* --- the ship-or-not figure: this page's one interaction ---------------------------------------
+ *
+ * Two unlabelled loss curves and a binary choice. It starts UNANSWERED and stays that way until a
+ * reader acts, which is the only state in which the question is honest — so the curves carry no
+ * legend, no colour semantics and no winner until `show()` runs. Colour is deliberately not the
+ * carrier: A and B are told apart by an end-of-line tag and a dash pattern, because two of the six
+ * themes flatten hue and a reader who cannot see the difference cannot answer the question.
+ */
+.ship {
+  display: grid;
+  gap: 14px;
+}
+.ship-chart {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.ship-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.ship-line {
+  fill: none;
+  stroke-width: 2.25;
+  stroke-linejoin: round;
+}
+.ship-line.a {
+  stroke: var(--fg);
+}
+.ship-line.b {
+  stroke: var(--fg);
+  stroke-dasharray: 6 4;
+  opacity: 0.72;
+}
+.ship .ship-tag {
+  font-size: 13px;
+  font-weight: 650;
+  fill: var(--fg);
+}
+.ship.revealed .ship-line.a {
+  stroke: var(--accent);
+}
+.ship.revealed .ship-tag.a {
+  fill: var(--accent);
+}
+.ship-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+.ship-ask {
+  font-weight: 620;
+}
+.ship-ask.nudge {
+  text-decoration: underline dotted;
+  text-underline-offset: 4px;
+}
+.ship-btns {
+  display: flex;
+  gap: 8px;
+}
+.ship-btn {
+  font: inherit;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--fg);
+  cursor: pointer;
+}
+.ship-btn:hover {
+  border-color: var(--accent);
+}
+.ship-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.ship-btn.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.ship-verdict {
+  color: var(--muted);
+}
+/* A verdict must not be readable by colour alone -- a left rule gives it a second channel, and
+ * high-contrast and neon both flatten the hue this would otherwise rely on. */
+.ship-verdict.good,
+.ship-verdict.bad {
+  color: var(--fg);
+  border-left: 3px solid var(--line);
+  padding-left: 12px;
+}
+.ship-verdict.good {
+  border-left-color: var(--grade-a);
+}
+.ship-verdict.bad {
+  border-left-color: var(--grade-x);
+}
+.ship-read:empty {
+  display: none;
+}
+
+/* The transferable half of a correction, leading its cell. It was a third column and did not fit:
+ * at every width the table pushed it past the right edge behind a horizontal scroll, so the one
+ * part of each row worth carrying away was the one part a reader never saw. */
+.shape {
+  display: block;
+  color: var(--accent);
+  font-weight: 620;
+  margin-bottom: 3px;
+}
+
+/* A prose table wraps; a numeric one does not. `table.grid` sets `white-space: nowrap` on every
+ * cell but the first, which is right for a column of figures -- a wrapped number is unreadable --
+ * and wrong for a column of sentences. The corrections table ran two hundred characters past the
+ * right edge because of it, taking the one part of each row worth carrying away with it, and the
+ * page-level overflow guard could not see it: `.tablewrap` scrolls by design, so a cell hidden
+ * inside that scroll is indistinguishable from a wide table doing what it is supposed to.
+ */
+table.grid.prose td {
+  white-space: normal;
+}
+table.grid.prose td:first-child {
+  width: 24%;
 }

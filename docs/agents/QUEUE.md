@@ -1100,4 +1100,32 @@ predates the harness — so it is logged as what it was.
                           Nothing failed; found by reading the output. References are by id now and
                           a guard asserts every claim is graded exactly once, both directions. Six
                           guards, each watched going red
+2026-09-09  exercise-09   #165 opened: the page argues a case, and every number can be
+                          regenerated. THE CORPUS WAS A MOVING FILE: training.py read the
+                          repository's own AGENTS.md at run time and recorded a 16-character
+                          digest prefix that nothing recomputed, so every published loss was a
+                          function of a file edited on most pull requests -- and it had already
+                          drifted, 92,021 bytes measured against 103,347 live. The revision is
+                          frozen in corpus/ now, recovered from history, and re-running against it
+                          reproduced every published training figure byte for byte, which is what
+                          proves the right revision was frozen. harness.json and sensitivity.json
+                          carried NO provenance at all; all three carry six fields now and every
+                          writer refuses without them. THREE PUBLISHED NUMBERS WERE WRONG: 37
+                          boundary crossings where there is 1 (the harness computed the right
+                          number on one line and returned the mask's total drop on the next, which
+                          inverted the finding -- one position at 9.51 against a 9.34 mean is the
+                          point), 1.9x for chunking a softmax measured by nothing (now 1.80x, from
+                          a third measured path, in the row about quoting one technique's figure
+                          for another), and a README noise floor of 0.69 against 0.44. THE PAGE
+                          opens by asking which of two unlabelled curves you would ship and only
+                          then labels them; twelve sections were named for their spine role in
+                          English and are named for objects now; the conclusion closed one of four
+                          tiles and closes all four; reproduce lost its four shell commands and
+                          shows what makes a figure checkable instead. THE NOTEBOOK went from 24
+                          cells / 10 code / 0 charts / 0 asserts to 45 / 21 / 8 plots / 11
+                          asserts, hands the reader the bug rather than describing it, and sweeps
+                          the seed the page called the one thing it never varied. TWO DEFECTS
+                          FOUND BY LOOKING with the suite green: the page threw and five of twelve
+                          sections never rendered, and the corrections table was 3,594px wide in a
+                          994px container. Both guarded, every guard watched failing
 ```

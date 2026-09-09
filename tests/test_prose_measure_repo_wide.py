@@ -20,6 +20,7 @@ exactly 1180px, and only there, because that is the width at which `page.css` be
 import functools
 import http.server
 import os
+import re
 import socketserver
 import threading
 from pathlib import Path
@@ -286,10 +287,25 @@ STEP_JS = """() => {
 #: and only two ever call `makeExplainer`, which is the same gap `AGENTS.md` records for the rest
 #: of that directory. Detected rather than listed, so a third exercise adopting the component joins
 #: this sweep by adopting it.
+#:
+#: **Matched on the `import`, not on the filename.** The first version asked whether the string
+#: `_shared/explainer.js` appeared anywhere in a page's JavaScript, which enrolled exercise 09 the
+#: moment its source carried a comment saying *why it deliberately does not use that skeleton*. The
+#: page has no steps, so the sweep then failed for having nothing to measure — a guard red because
+#: a file explained itself. A detector keyed on a mention cannot tell a use from a discussion of
+#: one; keyed on the import statement, it can.
+#: Anchored to the start of a line and stopping at the statement's semicolon, so it spans a
+#: multi-line `import { a, b } from '...'` -- how the shared helpers are actually brought in once a
+#: page wants more than one name -- while a block-comment continuation line, which begins with `*`,
+#: can never satisfy the anchor.
+_IMPORTS_EXPLAINER = re.compile(
+    r"""^[ \t]*import\b[^;]*?['"][^'"]*_shared/explainer\.js['"]""", re.M
+)
+
 STEPPED = sorted(
     d.parent.name
     for d in REPO_ROOT.glob("src/exercises/*/web")
-    if any("_shared/explainer.js" in f.read_text() for f in d.glob("*.js"))
+    if any(_IMPORTS_EXPLAINER.search(f.read_text()) for f in d.glob("*.js"))
 )
 
 
@@ -338,4 +354,30 @@ def test_at_least_two_exercises_build_a_step_strip() -> None:
     assert len(STEPPED) >= 2, (
         f"only {len(STEPPED)} exercise(s) were found building a step strip: {STEPPED}. "
         "The detection has probably stopped matching `chapters.js`."
+    )
+
+
+def test_the_step_detector_tells_a_use_from_a_mention() -> None:
+    """The twin for `_IMPORTS_EXPLAINER`, because its first version could not.
+
+    Keyed on the filename, the detector enrolled a page whose only reference to the shared explainer
+    was a comment explaining why it deliberately does not use it — and the sweep then went red for
+    having no steps to measure. A guard that fires on a file discussing itself is measuring prose,
+    not behaviour. Needs no browser: it is a fact about the pattern.
+    """
+    mention = (
+        "/* It does NOT vendor `_shared/explainer.js`: that skeleton is a scrollytelling\n"
+        " * topology, and this is a single binary choice. */\n"
+    )
+    real = "import { makeExplainer } from './_shared/explainer.js';\n"
+    multiline = "import {\n  makeExplainer,\n} from '../_shared/explainer.js';\n"
+
+    assert not _IMPORTS_EXPLAINER.search(mention), (
+        "the detector matches a comment about the explainer, so any page that explains why it does "
+        "not use one joins a sweep it has nothing to offer."
+    )
+    assert _IMPORTS_EXPLAINER.search(real), "the detector no longer matches a real import"
+    assert _IMPORTS_EXPLAINER.search(multiline), (
+        "the detector misses a multi-line import, which is how the shared helpers are usually "
+        "brought in once a page imports more than one name."
     )
