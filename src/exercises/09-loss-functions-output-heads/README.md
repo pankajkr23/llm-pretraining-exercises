@@ -142,8 +142,11 @@ a tied head is exactly a linear map with the embedding's weights. Each is writte
 no-op setting and once away from it, because a function that ignored its argument entirely would
 pass the first half.
 
-**Six corrections came out of building this**, and they are more useful than the successes. Three
-were found by writing the code; three more by three reviewers reading the finished work:
+**Nine corrections came out of building this**, and they are more useful than the successes. Three
+were found by writing the code, three by reviewers reading the finished work, and three more after
+it had shipped — that last batch by opening the deployed page and reading it, with the whole suite
+green. The page carries the same list; if the two ever disagree, this one is stale, because it is
+the hand-written half.
 
 - Chunked cross-entropy divided by the row count rather than the contributing count, so it
   disagreed with the unchunked loss on any masked input. Every test written on unmasked input passed
@@ -165,6 +168,19 @@ were found by writing the code; three more by three reviewers reading the finish
   table above read `4.1447`. They are a run now, in `results/sensitivity.json`.
 - **A test file registered itself as needing an optional dependency it did not need**, which turned
   a repo-wide coverage guard red. I had run the exercise's own directory and not the whole suite.
+- **The boundary count published `37` where there is `1`.** The harness computed the crossings on
+  one line and returned the mask's total drop on the next — which counts every pair the mask
+  touches, nearly all of them padding pairs item 3 had already removed. It inverted the finding:
+  dozens of positions nudging a mean is a shrug, and one position scoring **9.51** against a **9.34**
+  mean is the point.
+- **Every loss was measured against a file this repository edits on most pull requests.** The corpus
+  was `AGENTS.md`, read live at run time, and the run recorded a sixteen-character digest prefix that
+  nothing recomputed. By the time anyone checked it had grown twelve percent. The revision is frozen
+  in `corpus/` now and the digest is recomputed by a test.
+- **The page stated its own precision rule and broke it four times.** It says the memory ratio is
+  quoted "and no finer" than the noise floor allows — and the opening tile, the glossary, the ledger
+  and the corrections table each chose their own `toFixed`, two of them to hundredths. The precision
+  is derived from the measured spread now, so the page cannot quote finer than it has earned.
 
 ## What this cannot establish
 

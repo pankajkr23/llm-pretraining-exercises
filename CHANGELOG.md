@@ -12,6 +12,39 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercise 09's page stated its own precision rule and broke it four times.** The results section
+  says the memory ratio is quoted *"and no finer"* than its noise floor allows — and the opening
+  tile said 9.1×, the glossary said 9.1×, the ledger said 9.09× and the corrections said 9.09×, one
+  of them fourteen lines above the rule. Each was a `toFixed()` chosen at its own call site, so the
+  rule was a sentence and the practice was five independent decisions. The precision is **derived
+  from the measured spread** now: a spread of 0.44 cannot support a tenth, so the digit is not
+  offered anywhere.
+
+- **The page is titled "The three lines that decide what a model learns" and showed two.** The third
+  — the `cross_entropy` call — was never written or named, so the headline count was the one number
+  on the page a reader could not check against anything. All three are shown, with which failure
+  lives in which.
+
+- **The memory figure carried no shape and no baseline**, on a page about what numbers count. It
+  read *"342.0 MiB against 37.6 MiB"* and said nothing about the rows, the vocabulary, or the
+  interpreter baseline subtracted from both — while `memory.py`'s own docstring argues that a report
+  omitting the baseline *"would attribute all of it to the loss"*. This page was that report.
+
+- **A footer still said "three commands away"** one screen below the heading that had been corrected
+  for saying "Three commands" over four of them. Nothing connects a footer to the section it
+  summarises, so it kept the wrong number for as long.
+
+- **Three tiles were coloured green under a paragraph saying all four are the same failure.** A
+  ninety-second reader takes the colour, not the sentence, and leaves believing two of them are good
+  news — the opposite of the section's point. They are marked alike now, with the one figure this
+  page actually published wrong still marked as a defect so a failure leads the section.
+
+- **The glossary promised something no test could check**, and it was false twice — first for
+  `head`, `logits`, `output head` and `tokenizer`, then, after those were added, for `packed` and
+  `projection`. Both are entries now, and the promise is replaced by one a test does keep: every
+  entry carries a figure from the run. That guard immediately found four entries carrying none,
+  two of which predate today.
+
 - **Exercise 09's page used a quarter of a wide display, and the fix was already written down.**
   `docs/DESIGN.md` publishes the repository's fluid type scale — and names *this page's* declaration,
   `.say { font-size: 16px; max-width: 68ch }`, as the canonical example of getting it wrong. Exercise

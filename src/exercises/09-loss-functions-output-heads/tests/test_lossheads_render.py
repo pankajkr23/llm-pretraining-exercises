@@ -327,3 +327,44 @@ def test_no_two_figures_carry_the_same_number(page):
         f"figure numbers are {numbers}, which is not 1..{len(numbers)}. Derive them from the count "
         "of figures already built rather than passing each one in."
     )
+
+
+def test_every_glossary_entry_carries_a_number_from_the_run(page):
+    """The glossary says every entry carries a real figure. That is checkable, so it is checked.
+
+    **This replaces a claim that was not.** The page used to promise that every term the opening
+    tiles used was defined here, and it was false twice — first for `head`, `logits`, `output head`
+    and `tokenizer`, then, after those were added, for `packed` and `projection`. The obvious guard
+    for it does not work: the tiles emphasise words for stress as often as for terminology, so a
+    check keyed on emphasis flags `broken` and `estimated` and cannot tell a term from a raised
+    voice. I tried it, watched it fire on correct prose, and removed the promise instead.
+
+    What is left is a promise the page can keep. A definition carrying a figure from this run is the
+    difference between a glossary and a dictionary — it is what makes `perplexity` mean *12,078
+    here* rather than a paraphrase — and it is the property that decays first when an entry is
+    added in a hurry.
+    """
+    import re as _re
+
+    entries = page.evaluate("""() => {
+      const out = [];
+      const dl = document.querySelector('.gloss');
+      if (!dl) return out;
+      const kids = [...dl.children];
+      for (let i = 0; i < kids.length; i += 1) {
+        if (kids[i].tagName !== 'DT') continue;
+        const dd = kids[i + 1];
+        if (dd && dd.tagName === 'DD') {
+          out.push({term: kids[i].textContent.trim(), body: dd.textContent.trim()});
+        }
+      }
+      return out;
+    }""")
+    assert entries, "no glossary entries found; the selector has gone stale"
+
+    numberless = [e["term"] for e in entries if not _re.search(r"\d", e["body"])]
+    assert not numberless, (
+        f"these glossary entries carry no figure from the run: {numberless}. The section promises "
+        "that every entry does, and a definition without one is a dictionary entry — it tells a "
+        "reader what a word means in general rather than what it is on this page."
+    )

@@ -699,3 +699,31 @@ table.grid.prose td:first-child {
   color: var(--ink);
   line-height: 1.55;
 }
+
+/* Secondary detail inside a table cell — the shape a figure was measured at, the baseline that was
+ * subtracted. Quieter than the figure it qualifies, and never carrying the figure itself: a reader
+ * who skips this must still be left with a true sentence. */
+.dim {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.78em;
+  line-height: 1.45;
+}
+
+/* A tile that is neither a win nor a defect: a number worth a second look.
+ *
+ * **The colour was arguing with the prose.** Three of the four opening tiles were green and one red,
+ * under a paragraph saying all four are the same failure wearing different arithmetic — so a reader
+ * who takes ninety seconds reads the colour, not the sentence, and leaves believing two of them are
+ * good news. `docs/DESIGN.md` asks that no meaning be carried by hue alone; here the hue carried a
+ * meaning the page does not hold. `bad` is kept for the one figure this page actually published
+ * wrong, so a failure still leads the section.
+ */
+.tile.watch {
+  border-top-color: var(--accent);
+}
+
+.tile.watch .tile-v {
+  color: var(--accent);
+}
