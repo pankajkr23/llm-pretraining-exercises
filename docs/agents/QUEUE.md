@@ -1301,3 +1301,21 @@ predates the harness — so it is logged as what it was.
                           entirely because the filesystem answers the question. docs/DESIGN.md now
                           carries the rule and names the misreading that produces it
 ```
+2026-09-10  web           PR opened: the shared explainer is measured. HANDOFF item 11 asked for the
+                          measurement before any deletion and explicitly refused to carry forward
+                          the old "used by one" figure. Measured: of 143 selectors, 03 matches 108,
+                          06 matches 30, 05 matches 4, 04 matches 2, 08/09/10 match ONE each, and
+                          07 matched ZERO while linking all 560 lines. Full-page screenshots with
+                          and without the link hash IDENTICALLY at 2000, 1180 and 390, so 07 no
+                          longer links it. NOTHING WAS DELETED FROM THE STYLESHEET and that is the
+                          finding rather than an omission: 35 selectors match nothing anywhere at
+                          rest, and a resting browser cannot tell a dead rule from one behind a
+                          click -- :focus-visible, .stagerow.missing, .unit.dim are states, not
+                          corpses. Deleting on that evidence is exactly the mistake the entry
+                          warned about. The tool is TRACKED (tools/measure_shared_css.py) because a
+                          producer of published numbers is tracked code or it is a number with no
+                          parent. MY OWN TOOL HAD THE BUG I KEEP FINDING: links() matched the
+                          filename as a substring, and 07's link is now a COMMENT naming the file,
+                          so it reported the page as still linking it. Matched as a <link> element
+                          now, in both the tool and the guard
+

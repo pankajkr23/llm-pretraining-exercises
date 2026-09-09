@@ -10,6 +10,33 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- **Exercise 07 stops downloading a 560-line stylesheet that styles nothing on it.** Of
+  `_shared/explainer.css`'s 143 selectors it matched **zero** — the file styles the scrollytelling
+  strip, the step panels, the derivation badges and the stage lists, and that exercise builds none
+  of them. Full-page screenshots with and without the link hashed **identically** at 2000, 1180 and
+  390px.
+
+### Added
+
+- **`tools/measure_shared_css.py`**, so this is a repeatable measurement rather than a one-off in a
+  scratch file. It reports, per page, how many of a shared stylesheet's selectors match anything:
+  03 → 108, 06 → 30, 05 → 4, 04 → 2, 08/09/10 → 1 each, 07 → 0.
+
+- **`tests/test_shared_css_is_used_where_it_is_linked.py`** asserts the linking, not the deleting,
+  and the distinction is the whole design. 35 of those selectors match nothing on any page — and a
+  resting browser cannot tell a dead rule from one behind a click: `:focus-visible`,
+  `.stagerow.missing` and `.unit.dim` are states, not corpses. `AGENTS.md` records that removing
+  shared CSS here has taken away something a page quietly depended on, so this never claims a rule
+  is unused. It claims a **page** is not using the stylesheet at all, which is the only thing a
+  resting page can prove. Watched red with 07 re-linked, restored in a `finally`.
+
+  Its `_linking_pages` matches a `<link>` element rather than a substring, because 07's link is now
+  a comment explaining why the stylesheet is absent — a comment that names the file. The first
+  version reported the page as still linking it, which would have made the guard demand a page use
+  a stylesheet it had deliberately dropped.
+
 ### Fixed
 
 - **The rail was moved inward on three pages and it pushed the reading column off centre.** The
