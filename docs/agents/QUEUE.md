@@ -1301,3 +1301,23 @@ predates the harness — so it is logged as what it was.
                           entirely because the filesystem answers the question. docs/DESIGN.md now
                           carries the rule and names the misreading that produces it
 ```
+2026-09-10  tooling       PR opened: the queue sync stops claiming work shipped in a release it did
+                          not. HANDOFF item 5 named two defects; RE-CHECKED BOTH RATHER THAN
+                          TRUSTING THE NOTE and one was already fixed -- _reapply replays an edit as
+                          an edit. The other was live and reproduced against the real function
+                          before anything changed: an entry written under [Unreleased] landed inside
+                          ## [0.15.0], ABOVE that section's own ### Fixed, so it was a false claim
+                          about what shipped and malformed too. The only note was "placed by the
+                          following line only", which is true of many correct placements and says
+                          nothing about a version. Relocates to [Unreleased] now, loudly, and
+                          REFUSES in the one case it cannot repair -- no [Unreleased] section at all
+                          -- because inventing one would be this tool deciding what a release
+                          contains. Four tests: the repair, the refusal, the insertion point being
+                          AFTER the section's own heading rather than above it, and the distinction
+                          everything rests on (that [Unreleased] is not matched as a released
+                          version -- if it were, every block would be "relocated" out of the section
+                          it was already in and the first test would still pass). Watched red on the
+                          tree as it shipped, restored in a finally. HANDOFF item 5 rewritten:
+                          THIRD stale entry found in that file today, after item 7's slider
+                          overflow and item 9's count
+
