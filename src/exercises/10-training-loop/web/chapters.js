@@ -125,9 +125,14 @@ function chapterThesis(M) {
     'thesis',
     'Six checks, none of them the loss',
     'Every number here had to be argued with first',
+    /* **The paragraph that stood here repeated the lede and cost the page its first screen.** It
+     * read "Six checks on a real training loop, and not one of them rewards a low loss" — a clause
+     * the lede already carries verbatim, sixty pixels higher. Measured: the lede's 75 words and this
+     * section's 85 filled y=227 to y=790 at 1180px, so the four headline numbers began at 794 and a
+     * 1440x900 laptop's fold is 789. The page opened with the same sentence twice and then nothing.
+     * Deleting it is the one edit that puts the first number on the first screen, and it removes
+     * words rather than adding rules. */
     [
-      `Six checks on a real training loop, and <b>not one of them rewards a low loss</b>. Each is a
-       measurement of the loop or a deliberate breakage of it.`,
       `Three of the numbers below were wrong before they were right, and none of the three was
        caught by a failing test. <b>Two were flattering themselves</b> — one in the denominator of a
        ratio, one in its numerator — and the third was a bug in code whose test passed because it
@@ -195,7 +200,8 @@ function chapterGlossary(M) {
     [
       'a step',
       `One nudge: read a batch of text, score it, work out which direction each number should move,
-       move it. Everything on this page is about a single one of those.`,
+       move it. Everything on this page is about a single one of those — here, ${int(facts.batch_size)}
+       sequences of ${int(facts.seq_len)} tokens at a time.`,
     ],
     [
       'the trunk and the head',
@@ -206,19 +212,23 @@ function chapterGlossary(M) {
     ],
     [
       'a gradient',
-      `How much the loss would move if one number moved. <code>backward()</code> computes them all
-       at once — and a gradient is a <i>claim</i>, so it can be checked by moving the number and
-       looking.`,
+      `How much the loss would move if one number moved. <code>backward()</code> — the machinery
+       usually called <b>autograd</b> — computes all ${int(facts.parameters)} of them at once, and a
+       gradient is a <i>claim</i>, so it can be checked by moving the number and looking.`,
     ],
     [
       'the gradient norm',
-      `All the gradients as one number: how hard the optimiser is pushing right now. Unlike the
-       loss it is not an average over a batch, which is why it moves first.`,
+      `All the gradients as one number: how hard the optimiser is pushing right now — logged at
+       every one of this run's ${int(facts.steps)} steps. Unlike the loss it is not an average over a
+       batch, <b>which is the reason to expect it to move first</b>. That is a hypothesis, not a
+       fact, and <a href="#results">section 7</a> is where this run mostly failed to confirm it.`,
     ],
     [
       'a micro-batch',
-      `When the batch you want will not fit in memory, you split it. Each piece is a micro-batch,
-       and combining their losses correctly is <a href="#mechanism">the whole of section 4</a>.`,
+      `When the batch you want will not fit in memory, you split it. Each piece is a micro-batch.
+       The run charted in <a href="#mechanism">section 4</a> uses
+       ${M.item_3_accumulation.curves.micro_batch_widths.join(', ')} tokens wide, and combining their losses
+       correctly is that whole section.`,
     ],
     [
       'clipping',
@@ -228,14 +238,18 @@ function chapterGlossary(M) {
     ],
     [
       'FLOPs',
-      `Floating-point operations — a count of arithmetic. Used here to ask what fraction of the
-       machine's capability the run actually used.`,
+      `Floating-point operations — a count of arithmetic. This model needs
+       ${int(M.facts.non_embedding_parameters * 6)} of them per token, which is the numerator of the
+       utilisation figure in <a href="#results">section 7</a>.`,
     ],
     [
       'exponent and mantissa',
       `How a float divides its bits: the <b>exponent</b> fixes the magnitude, the <b>mantissa</b>
        picks the value within it. Exponent bits buy range, mantissa bits buy precision, and more of
-       one is always less of the other.`,
+       one is always less of the other. <b>fp8 E4M3</b> is named for its split —
+       ${M.item_6_floats['fp8 E4M3'].exponent_bits} exponent bits and
+       ${M.item_6_floats['fp8 E4M3'].mantissa_bits} mantissa bits — which is why the largest number it holds
+       is ${M.item_6_floats['fp8 E4M3'].largest_normal}.`,
     ],
   ];
   const s = section(
@@ -444,10 +458,17 @@ function chapterMethod(M) {
   );
 
   const note = el('p', 'say');
-  note.innerHTML = `<b>That highlighted row is section 7's whole argument.</b> An embedding lookup
-    reads one stored row per token and performs no arithmetic at all, so counting those parameters
-    inflates the work the step supposedly did — by 45%, in the first version of this page's own
-    figure.`;
+  /* **Two defects in three lines, both found by reading rather than testing.** It pointed at
+   * section 7, and the embedding argument is in section 8 — a reader followed it, found the ledger,
+   * and the ledger says nothing about embedding tables. And the 45% was typed while both of its
+   * inputs sit in `M.facts`, so a change to `d_model`, `vocab_size`, `n_layer` or `seq_len` would
+   * have left it silently stale under a page whose own rule is that no measured number is written
+   * here. */
+  const inflation = pct(M.facts.parameters / M.facts.non_embedding_parameters - 1, 0);
+  note.innerHTML = `<b>That highlighted row is <a href="#negatives">section 8</a>'s whole
+    argument.</b> An embedding lookup reads one stored row per token and performs no arithmetic at
+    all, so counting those parameters inflates the work the step supposedly did — by
+    ${inflation}, in the first version of this page's own figure.`;
   s.append(note);
 }
 
@@ -732,9 +753,11 @@ function auditRows(M) {
             'The same figure, counting every parameter in the model',
             'Which of them actually do arithmetic?',
             `Not the embedding tables — a lookup is a gather. Counting them made the numerator
-             <b>45% larger than it should have been</b>; equivalently, removing them cut it by 31%.
-             Both describe one correction, and quoting the wrong member of that pair is itself a
-             right number answering a different question.`,
+             <b>${pct(M.facts.parameters / M.facts.non_embedding_parameters - 1, 0)} larger than it
+             should have been</b>; equivalently, removing them cut it by
+             ${pct(1 - M.facts.non_embedding_parameters / M.facts.parameters, 0)}. Both describe one
+             correction, and quoting the wrong member of that pair is itself a right number
+             answering a different question.`,
           ],
           __mark: 'bad',
         },

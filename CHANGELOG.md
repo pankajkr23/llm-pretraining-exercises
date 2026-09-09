@@ -12,6 +12,45 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercise 10's stage-14 reviewer pass — four reviewers, and the numbers they found.**
+
+  **The README stated a ratio that was wrong in the flattering direction.** *"0.0759 of a loss of
+  5.2873, so under 1%"* is **1.44%**. Both operands were guarded and the ratio drawn from them was
+  not, in the document whose headline is that a figure was caught flattering itself. Found
+  independently by two reviewers; the mean is quoted beside it now (0.4%), and a guard asserts the
+  arithmetic rather than the digits.
+
+  **The audit table was 3,635px wide inside a 1,156px wrapper**, cells of up to 433 characters on
+  one unwrapped line, on the section whose standfirst reads *"the gap between the two columns is the
+  whole argument"*. Exercise 09 hit this, fixed it, and this page copied the markup without the
+  rule — `.prose` was inert because no stylesheet it links defined it. And that was one table of
+  six: at 390px, **3,154px of text** across five more sat behind horizontal scrollbars. Every cell
+  wraps now; hidden width is **zero** at 2560, 1440, 1180, 900 and 768, and 108px at 390.
+
+  **The `<meta name="description">` still carried the merged `30%`** the page's own audit trail says
+  was retired — the string a search result and a link preview show. It is the measured pair.
+
+  **The notebook's `LITE` profile shortened one training cell of three.** `STEPS` and `SEED` were
+  defined in the configuration cell and read nowhere else, so it printed *"steps 40"* and trained
+  200, under markdown reading *"Nothing below is hard-coded."*
+
+  **Exercise 10 had no provenance test at all**, while adding its own `config_fingerprint` and
+  `code_digest` on top of 09's — and `REQUIRED_FIELDS` was a decoy: defined and exported here while
+  `require` was re-exported from `lossheads` and checked *that* list. `provenance.py` was also named
+  in no document, which is the thing exercise 09's own guard exists to catch and which was not
+  copied over with the module.
+
+  Also: three red status bars per table row instead of one; column heads at **4.15:1** in the
+  default light theme, the page's only pair below AA in any of the six; finding tiles at **18–27**
+  characters a line against a floor of 42; the stale `3.7%`/`30%` folklore still in two docstrings;
+  a test citing *"28 of 120 steps"* against a recorded 18; *"vanish entirely at 5"* above a table
+  showing zero at 4; `45%`/`31%` typed while both inputs sit in `M.facts`; a cross-reference to
+  section 7 for an argument in section 8; a glossary promising every entry carries a figure when
+  three of nine did; and `PROGRESS.md` listing the notebook and page as remaining while its own
+  table twelve lines above marked them done.
+
+### Fixed
+
 - **The rail was moved inward on three pages and it pushed the reading column off centre.** The
   fix for exercise 09's squeezed text was mostly the type scale, but it also added
   `left: max(0px, calc((100vw - 1500px) / 2))` to exercises 07, 09 and 10 — so above 1440px the rail

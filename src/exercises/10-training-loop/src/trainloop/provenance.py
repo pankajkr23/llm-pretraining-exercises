@@ -29,7 +29,6 @@ from lossheads.provenance import (
     digest_bytes,
     environment,
     git_sha,
-    require,
     tokenizer_digest,
 )
 
@@ -50,6 +49,12 @@ __all__ = [
     "tokenizer_digest",
 ]
 
+#: What a result written by THIS exercise must carry.
+#:
+#: **It was a decoy until a reviewer grepped for it.** The constant was defined and exported here
+#: while `require` was re-exported from `lossheads` and read *that* package's list — so adding a
+#: field to this tuple enforced nothing, and the name read like this exercise's enforcement list. A
+#: seventh entry would have been silently optional.
 REQUIRED_FIELDS = (
     "config_fingerprint",
     "code_digest",
@@ -58,6 +63,34 @@ REQUIRED_FIELDS = (
     "tokenizer_digest",
     "environment",
 )
+
+
+def require(bundle: dict[str, Any]) -> None:
+    """Raise unless `bundle["provenance"]` carries every field in `REQUIRED_FIELDS`.
+
+    **Refuse, do not warn**, as `AGENTS.md` requires: a provenance block nothing enforces is the one
+    that gets dropped in the first hurried run.
+
+    This is deliberately not `lossheads.provenance.require`, which was re-exported here for as long
+    as this module existed. The two lists happen to agree today; they are lists belonging to
+    different exercises, and one that reads another's is a constant that cannot enforce its own
+    contents.
+
+    Args:
+        bundle: The result about to be written, with its `provenance` block already built.
+
+    Raises:
+        ValueError: Naming the missing fields, because "provenance is incomplete" sends the reader
+            looking through six of them.
+    """
+    block = bundle.get("provenance") or {}
+    missing = [field for field in REQUIRED_FIELDS if not block.get(field)]
+    if missing:
+        raise ValueError(
+            "refusing to write a result that cannot say where it came from; missing "
+            f"{', '.join(missing)}. Every number in this exercise is rendered by a document, and a "
+            "number nobody can regenerate is not evidence."
+        )
 
 
 def config_fingerprint(config: Config) -> str:

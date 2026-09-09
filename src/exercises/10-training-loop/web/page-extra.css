@@ -1,4 +1,4 @@
-/* Page-specific styles for 07.
+/* Page-specific styles for 10.
  *
  * Every colour here is a token from /_shared/tokens.css. Nothing is a literal, because a literal
  * would be correct in one of the six themes and wrong in the other five — and the theme picker
@@ -56,20 +56,36 @@ table.grid {
   font-size: 0.82em;
 }
 
+/* **`normal`, not `nowrap`, and the `.prose` modifier was only ever half the fix.** `nowrap` is
+ * right for a column of figures and catastrophic for one of sentences, and this page has both in
+ * the same tables. Marking one table `prose` fixed the audit trail and left the other five: at
+ * 390px, 3,154px of text across `method`, `expected`, `results`, `problem` and `reproduce` sat
+ * behind horizontal scrollbars, and the `method` table's second column ran at 104 characters a line
+ * at every width from 390 to 2560.
+ *
+ * Measured with every cell wrapping: total hidden width goes to **zero** at 2560, 1440, 1180, 900
+ * and 768, and the page grows 25px. Nothing was clipped before — every table is in a `.tablewrap`
+ * that scrolls by design — which is exactly why no guard could see it and why a reader met a
+ * sentence that stopped mid-word with no scrollbar to explain it. */
 table.grid th,
 table.grid td {
   text-align: left;
   padding: 11px 16px;
   border-bottom: 1px solid var(--line);
-  white-space: nowrap;
+  white-space: normal;
 }
 
+/* `--ink`, because `--muted` is calibrated against `--bg` and this puts it on the darker `--track`:
+ * measured at **4.15:1** in the default light theme, the only pair on the page below AA in any of
+ * the six. The repo-wide theme guard cannot see it — it reads `body.color` against the body
+ * background, one pair per page, so six green cases sat over a live failure. Column heads carry
+ * meaning in the audit table: "AS FIRST PUBLISHED" against "WHAT IT BECAME" *is* its argument. */
 table.grid th {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--ink);
   background: var(--track);
 }
 
@@ -87,13 +103,10 @@ table.grid tbody tr:last-child td {
   border-bottom: 0;
 }
 
-table.grid tr.good td {
-  background: var(--accent-soft);
-}
-
-table.grid tr.bad td {
-  background: color-mix(in srgb, var(--grade-x) 9%, transparent);
-}
+/* The `table.grid tr.good/bad td` rules that sat here moved no pixels: `.grid tr.good td`
+ * below has the same specificity and is written later, so source order decided and this
+ * block lost every declaration it shared. Editing it would have changed nothing, which is
+ * the failure `AGENTS.md` records under source order. Deleted rather than left to mislead. */
 
 .dim {
   color: var(--muted);
@@ -223,7 +236,13 @@ main > section:first-child {
 
 .tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  /* **340, measured across seven widths rather than chosen.** At 200px four columns held down to
+   * 900px and the tile labels read at 18-27 characters a line, against `docs/DESIGN.md`'s floor of
+   * 42 and exercise 08's 39-61. The sweep: 300px and 340px both give 34-46 everywhere, 380px puts
+   * 768 at 78, 420px puts 900 at 93. 340 is the only value that never exceeds 46 and never falls
+   * below 34. `min(340px, 100%)` and not a bare 340px, because an auto-fit track cannot shrink
+   * below its own minimum and pushes a 320px phone sideways. */
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
   gap: 14px;
   margin: 26px 0 18px;
 }
@@ -810,18 +829,27 @@ pre.code {
 }
 
 .grid tr.warn td {
-  border-left: 3px solid var(--grade-c);
   background: color-mix(in srgb, var(--grade-c) 7%, transparent);
 }
 
+.grid tr.warn td:first-child {
+  border-left: 3px solid var(--grade-c);
+}
+
 .grid tr.bad td {
-  border-left: 3px solid var(--grade-x);
   background: color-mix(in srgb, var(--grade-x) 6%, transparent);
 }
 
+.grid tr.bad td:first-child {
+  border-left: 3px solid var(--grade-x);
+}
+
 .grid tr.good td {
-  border-left: 3px solid var(--grade-a);
   background: color-mix(in srgb, var(--grade-a) 6%, transparent);
+}
+
+.grid tr.good td:first-child {
+  border-left: 3px solid var(--grade-a);
 }
 
 /* --- the rail stays at the page edge, and the reading column centres beside it ------------------
@@ -875,4 +903,30 @@ code {
   font-size: clamp(20px, 1.3vw + 2px, 25px);
   color: var(--ink);
   line-height: 1.55;
+}
+
+/* --- a table of PROSE wraps; a table of figures does not -----------------------------------------
+ *
+ * `table.grid` sets `white-space: nowrap` on every cell but the first, which is right for a table
+ * of numbers and catastrophic for one of sentences. The audit table at `negatives` carries cells of
+ * up to 433 characters, and without this it laid out **3,635px wide inside a 1,156px wrapper** —
+ * every cell a single unwrapped line, the reader given a fragment and a horizontal scrollbar, on the
+ * section whose own standfirst says "the gap between the two columns is the whole argument".
+ *
+ * **Exercise 09 hit this, fixed it, and this page copied the markup without the fix.** Its
+ * `chapters.js` builds the same table with the same `'grid prose'` class list, and no stylesheet
+ * linked here defined `.prose` at all — so the modifier was inert and looked deliberate.
+ *
+ * Neither overflow guard could see it, which is why it survived: the page-level one measures
+ * `documentElement`, and `.tablewrap` absorbs the width by design; the element-level one skips
+ * anything whose computed `overflow-x` is `auto`, which is exactly `.tablewrap`; and the `td`
+ * itself grows to its content, so its own `scrollWidth` equals its `clientWidth`. A browser guard
+ * for it is below in `tests/test_trainloop_render.py`.
+ */
+table.grid.prose td {
+  white-space: normal;
+}
+
+table.grid.prose td:first-child {
+  width: 24%;
 }

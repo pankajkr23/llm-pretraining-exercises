@@ -54,6 +54,7 @@ OPTIONAL_DEPENDENCY_GATES: dict[str, str] = {
     "tests/test_every_page_in_every_theme.py": "playwright",
     "tests/test_every_link_has_a_colour.py": "playwright",
     "tests/test_prose_measure_repo_wide.py": "playwright",
+    "tests/test_prose_tables_wrap.py": "playwright",
     "src/exercises/05-datamixtures-and-curriculum/tests/test_mixture_proxy_run.py": "torch",
     "src/exercises/06-build-training-dataset/tests/test_trainingdata_crash.py": "torch",
     "src/exercises/06-build-training-dataset/tests/test_trainingdata_model.py": "torch",
@@ -64,6 +65,7 @@ OPTIONAL_DEPENDENCY_GATES: dict[str, str] = {
     "src/exercises/09-loss-functions-output-heads/tests/test_lossheads_equivalences.py": "torch",
     "src/exercises/09-loss-functions-output-heads/tests/test_lossheads_harness.py": "torch",
     "src/exercises/10-training-loop/tests/test_trainloop_step.py": "torch",
+    "src/exercises/10-training-loop/tests/test_trainloop_provenance.py": "torch",
 }
 
 #: Which `uv sync --extra <name>` provides which import.
