@@ -1301,3 +1301,24 @@ predates the harness — so it is logged as what it was.
                           entirely because the filesystem answers the question. docs/DESIGN.md now
                           carries the rule and names the misreading that produces it
 ```
+2026-09-09  fix           PR opened: the shared explainer fits at the rail breakpoint, and the
+                          finding recorded an hour ago is fixed rather than carried. Reproduced on
+                          main first, so the attribution is measured: exercises 03 and 06 overflow
+                          12px at 1180 and 0px at every other width in a fifteen-width sweep. THE
+                          ARITHMETIC IS EXACT and worth keeping: page.css reserves the 260px rail
+                          gutter from 1180, so the content box is 896px there and NARROWER than at
+                          1179; explainer.css's .scrolly.wide floor is 48ch + 48px gap + 400px =
+                          931.75px; the tracks run 35.75px past #main and 12px past the window. A
+                          minmax() minimum is a FLOOR, so the grid overflows rather than shrinking
+                          -- which is the part that makes this invisible in source. Fixed by using
+                          340px, the value the narrow variant already uses (871.75 inside 896), and
+                          nothing is lost above the squeeze because the maximum is 1fr. All EIGHT
+                          vendored copies patched together and still byte-identical (md5). NEW
+                          REPO-WIDE GUARD sweeps fifteen widths chosen where the layout changes,
+                          with 1180 and 1179 adjacent, and reports the offending ELEMENTS rather
+                          than just the number -- that is what turned "06 scrolls 12px" into
+                          ".sticky ends at 1192". Watched red on both pages with the rule reverted,
+                          held in memory, restored in a finally, restore verified. Registered in
+                          OPTIONAL_DEPENDENCY_GATES, because a module-level importorskip that is
+                          not ledgered is a file that collects nothing and reports green
+

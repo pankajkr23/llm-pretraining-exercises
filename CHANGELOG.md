@@ -12,6 +12,31 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercises 03 and 06 scrolled sideways at exactly 1180px, and had for as long as the rule that
+  did it has existed.** `_shared/page.css` starts reserving a 260px rail gutter at 1180, so the
+  content box is **narrower at 1180 than at 1179** — the one place in the range where a bigger
+  window means a smaller reading area. `_shared/explainer.css` already names that width as "the
+  tightest squeeze" in a comment, and its wide scrollytelling strip then demanded
+  `48ch + 48px + 400px = 931.75px` inside an **896px** box. A `minmax()` minimum is a floor the grid
+  may not go below, so the tracks ran 35.75px past `#main` and put 12px of the figure past the right
+  edge of the window. The floor is 340px now — the value the narrow variant already uses, fitting
+  with room at `871.75` — and nothing is lost above the squeeze, where the maximum is `1fr` and a
+  wider window still grows the chart. Applied to all eight vendored copies, which remain
+  byte-identical.
+
+### Added
+
+- **A repo-wide sideways-scroll guard, and the width it exists for is the one nobody was testing.**
+  Several exercises assert this about themselves and every one of them drives 1280, 1500, 900 or
+  390. The defect lived at 1180 and survived every green run.
+  `tests/test_no_page_scrolls_sideways.py` sweeps the deployable set across fifteen widths chosen
+  where the layout actually changes — 1180 and 1179 adjacent so a failure at one and not the other
+  reads as the breakpoint rather than as a width — and names the offending elements, which is what
+  turned "06 scrolls 12px" into "`.sticky` ends at 1192 in a 1180 window". Watched red on both pages
+  with the grid rule reverted, held in memory and restored in a `finally`.
+
+### Fixed
+
 - **The rail was moved inward on three pages and it pushed the reading column off centre.** The
   fix for exercise 09's squeezed text was mostly the type scale, but it also added
   `left: max(0px, calc((100vw - 1500px) / 2))` to exercises 07, 09 and 10 — so above 1440px the rail
