@@ -12,6 +12,33 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Twelve canvas colours in exercise 01 could not be moved by any theme, and nothing could see
+  them.** This site has six themes, every colour in them generated against a contrast checker — and
+  a `ctx.strokeStyle = '#fff'` obeys none of that. The guards that enforce the palette read CSS;
+  these lived inside a 2D context. Twelve literals against sixteen theme-aware colour writes in the
+  same three files: a white ring around scatter dots, grey gridlines, and the accent blue written
+  out as `rgba(0,113,227,…)` two lines from code reading `--accent` from the live tokens.
+
+  **Measured before and after, through the site's own theme mechanism**: `s1.html` and `s2.html`
+  each produced **two** distinct canvas renderings across the six themes and now produce **six**.
+  `s4.html` produced six either way — its other colour writes dominated the image while five of its
+  literals were still wrong in the details, which is exactly why the guard below is lexical.
+
+### Added
+
+- **`tests/test_canvas_colours_follow_the_theme.py`**, and the choice of instrument is the point. A
+  rendered guard — "the canvases differ across themes" — is the more direct property and it would
+  have passed `s4.html` while five of its colours were wrong. Asking whether a colour *can* move is
+  the question with teeth. Watched red on all twelve, restored in a `finally`.
+
+  Category colours are deliberately out of scope: the scatter dots encode a data class, and one is
+  interpolated per pixel into an `ImageData` buffer where a CSS variable cannot go without being
+  parsed. The one place that is untidy — `--warm`/`--cool` exist as tokens in the same files and are
+  used for the line charts while the dots use RGB triples — is recorded in the file with a twin that
+  fails if it ever stops being true, so a stale note cannot outlive its subject.
+
+### Fixed
+
 - **The rail was moved inward on three pages and it pushed the reading column off centre.** The
   fix for exercise 09's squeezed text was mostly the type scale, but it also added
   `left: max(0px, calc((100vw - 1500px) / 2))` to exercises 07, 09 and 10 — so above 1440px the rail
