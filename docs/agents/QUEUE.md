@@ -1301,7 +1301,7 @@ predates the harness — so it is logged as what it was.
                           entirely because the filesystem answers the question. docs/DESIGN.md now
                           carries the rule and names the misreading that produces it
 ```
-2026-09-09  guards        PR C opened: two guards that lived in one exercise each now sweep the
+2026-09-09  guards        #171 opened: two guards that lived in one exercise each now sweep the
                           repository, and both found things. NO COMMANDS ON PAGES: 07 has enforced
                           this on itself since its rebuild; promoted, it found EIGHT on 05's page
                           and SIX on 06's, and neither was a clean duplicate of its README. 05's
