@@ -23,6 +23,7 @@ which machine or which text. That is why its losses can be read but not aimed at
 | `parallel_text.json` | `64d953fbf8b6` | `b201f1ec5350` | mps | — |
 | `rerun.json` | `01e963d37d3b` | `8398f0412e8f` | cpu | 500 x 5 |
 | `unk_confound.json` | `de99fd2d2f2f` | `49d599b3e245` | mps | — |
+| `wrap_recovery.json` | `—` | `cb5f514a2272` | cpu | — |
 
 | file | corpus | tokens | `[UNK]` | epochs |
 | --- | --- | ---: | ---: | ---: |
@@ -31,6 +32,7 @@ which machine or which text. That is why its losses can be read but not aimed at
 | `parallel_text.json` | **2 corpora compared** — parallel, ordinary | — | — | — |
 | `rerun.json` | data/corpus (exercise 06's fetched lanes) | 11,781,888 | 0.209% | 0.0217 |
 | `unk_confound.json` | **2 corpora compared** — confounded, clean | — | — | — |
+| `wrap_recovery.json` | — | — | — | — |
 
 ## What these bundles say they do NOT establish
 
@@ -47,6 +49,11 @@ of this index meets the caveat at the same time as the number.
 - The overlap measurement counts shared byte n-grams, which is a proxy for shared content and not a measurement of translation. Two unrelated documents about the same subject would score high on it too.
 - Both sides are cut into the same number of pieces of the same total size, because the share of shared n-grams falls as a corpus grows for reasons unrelated to translation. The first version of this measurement expressed each corpus as one piece and reported 0.00% for the ordinary one -- true by construction, and indistinguishable from a decisive result.
 - The word 'parallel' is loose. These are not translations -- nobody rendered the English article into Telugu sentence by sentence. They are four articles about one subject, written independently in four languages, which is a COMPARABLE corpus rather than a parallel one.
+
+**`wrap_recovery.json`**
+- W is a random Gaussian projection with unit-norm rows at one seed, so a different seed moves these percentages. The ORDERING of the two variants is the claim.
+- The per-wrap byte-permutation variant is NOT measured. It was tried and removed, and two attempts to reimplement it from the published description produced harness artefacts rather than results. Its 14.6% figure is unreproduced.
+- Bands are cut at d_p and 2*d_p, which is where the folding mechanism changes. Any other cut would give different percentages for the same underlying behaviour.
 
 
 ## Where the material is

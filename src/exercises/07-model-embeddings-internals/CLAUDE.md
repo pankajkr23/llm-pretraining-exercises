@@ -183,6 +183,20 @@ reason not to use it, and it is measurable from `codec.atoms` without training a
 there rather than reaching for `trunk.tokens` from here. That attribute lives in a private class and
 exercise 10 already couples to its *name*; one such coupling is enough.
 
+## The open problems are researched in `RESEARCH.md`, and its marks are load-bearing
+
+Three of this exercise's five open problems have been researched and written up there. **Every claim
+carries a mark** — measured here, re-derived by hand, reported and unverified, or an argument — and
+a guard keeps each category in use. The reason is specific: one research pass corrected itself twice
+and named two papers that **do not exist**, so a reader must be able to tell a measurement from a
+lead without asking. Do not repeat anything marked `[reported]` as fact.
+
+The headline: problem 1 (arithmetic in the embedding) is dead as stated on this vocabulary and has a
+narrower survivor; problem 2 (images and audio) needs a compression step this repository does not
+have; **problem 3 (no length limit) is the one worth building** — it beats both shipped position
+schemes at the same code width, needs no training to prove, and explains problem 4's failure as a
+side effect.
+
 ## Rules specific to this exercise
 
 - **`codec.py` is the single definition of what the code is.** `heads.py` builds its sparse code
@@ -223,9 +237,12 @@ they were made; the short version, so nobody reintroduces them:
 - **"Superposition loses nothing recoverable."** No. Folding records a multiset per slot, not a
   sequence, so blind byte recovery past `d_p` is impossible for *any* relabelling scheme.
   `decode.fold_is_order_lossy` proves it by construction.
-- **"Per-wrap byte permutations fix the aliasing."** They make it worse (14.6% vs 19.1%).
-  Permutations make every position swap available; signs at least block the slots whose wrap levels
-  disagree in sign — 15 of 32.
+- **"Per-wrap byte permutations fix the aliasing."** They make it worse. Permutations make every
+  position swap available; signs at least block the slots whose wrap levels disagree in sign — 15
+  of 32. **The 14.6% once quoted for the permutation variant is unreproduced** and no longer
+  appears: it was removed from the code, and two attempts to rebuild it from the description
+  produced harness artefacts. The shipped scheme's curve is measured in
+  `results/wrap_recovery.json` — 100.00% to 32 bytes, 15.05% for 33–64, 0.00% beyond.
 - **"The lock is why v1 loses 0.25 nats."** Overclaimed. The lock constrains a *tied, byte-factored*
   head — ours, and v1's §8.5 Hypothesis A. **v1 as shipped uses an untied head and is unconstrained
   by it.** It also requires the four tokens to be of **equal byte length** (the `1/sqrt(L)` scaling),

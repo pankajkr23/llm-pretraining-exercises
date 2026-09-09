@@ -19,8 +19,8 @@ That sentence is why v1 could not be used fully. On GPT-2 124M (V=50,257, d=768)
 | v1 output head, untied because the paper requires it | 38,597,376 |
 | **v1 total** | **44,888,832 — 1.16× the baseline it was meant to beat** |
 
-v1's 91% saving on the input side is *entirely eaten* by the head it forces you to untie. Fix the
-output side and the saving becomes real.
+v1's **83.7%** saving on the input side (`1 - 6,291,456 / 38,597,376`) is *entirely eaten* by the
+head it forces you to untie. Fix the output side and the saving becomes real.
 
 ---
 
@@ -61,7 +61,9 @@ evidence is:
   including on the runs where it fails, which is what makes it a certificate.
 - **Adversarial checks on our own claims.** Three are corrected in place below; the n-gram term is
   stress-tested against the accusation that it is just memorising, and the answer is *partly yes*.
-- **54 tests**, of which a 20-test browser suite checks what a reader actually sees.
+- **205 tests**, of which a **33-test** browser suite checks what a reader actually sees.
+  Both counts are checked against the test files by `tests/test_embeddings_docs.py`, because this
+  line said *54* and *20* for long enough that neither was close.
 
 **Run it:** [`## Layout
 
@@ -83,6 +85,10 @@ artifacts/        # gitignored run outputs
 The page is built to the repo's design standard in [`docs/DESIGN.md`](../../../docs/DESIGN.md).
 
 **Jump to:** [`Run it`](#run-it) · **the page:** <https://llm-pretraining-demos.vercel.app/07-model-embeddings-internals/>
+
+**Where the open questions live.** This document reports what was built and measured.
+[`RESEARCH.md`](RESEARCH.md) reports what comes next — three unsolved problems researched in plain
+language, each marked with where its evidence came from and what would refute it.
 
 ## How to read this
 
@@ -158,11 +164,39 @@ head. Anything below that spans both is labelled as spanning both.
 
 ---
 
-## The one-sentence result
+## The one-sentence result, and it changed
 
-**Tie the head to the induced embedding `E` and add one hashed byte-n-gram term — and you beat v1 on
-5 of 5 seeds with fewer parameters and no vocabulary-sized parameter anywhere. That is problem #5,
-standalone.** Wrapping the byte positions (problem #3) is a separate, additive improvement.
+**Tie the head to the induced embedding `E` and add one hashed byte-n-gram term, and you need no
+vocabulary-sized parameter anywhere. That part is arithmetic and it holds.** Whether it also *beats*
+the published design on loss turns out to be **a property of the text it was measured on**, and on
+a second corpus it does not.
+
+> ### The correction, in full
+>
+> The table below was measured on four Wikipedia articles — the same article, in four languages.
+> The frozen vocabulary cannot read one of them, so **40.07% of that corpus is `[UNK]`**, and the
+> run's optimiser settings were never recorded, so its losses cannot be aimed at.
+>
+> The comparison was re-run, fully specified, on a licence-manifested six-lane corpus at 0.0217
+> epochs. **The recommendation loses to v1 there** — `+0.158` where it published `−0.141`. Four
+> candidate explanations were tested and all four refuted: the `[UNK]` share (removing it makes the
+> recommendation win by *more*), the step count, the script mix (it does *worst* on the Indic lane),
+> and corpus size and epoch fraction.
+>
+> The tightest comparison available — one article in three scripts against unrelated documents in
+> the same scripts, **both trimmed to 78,800 tokens, both reading 0.9746 epochs** — moves **six of
+> nine arms across zero**. The recommendation goes from `−0.735` to `+0.000`.
+>
+> **So the corpus decides. Which property of the corpus decides is still open**, and the byte-n-gram
+> mechanism that would explain it is not supported: the measurement of shared byte sequences
+> *inverts* depending on the sequence length chosen.
+>
+> Both runs are published. `results/MANIFEST.md` indexes them and names what produced each;
+> `results/rerun.json` is the re-run, `results/measurements.json` the table below.
+
+**What survives without qualification** is the part that never depended on a corpus: the code is
+invertible, so the head can be tied, so the parameter saving is real. That is problem #5, and it is
+arithmetic rather than a loss.
 
 | arm | problem | loss | vs the tied control | vs v1 | parameters | V-free? |
 | --- | --- | ---: | ---: | ---: | ---: | --- |
@@ -178,8 +212,13 @@ standalone.** Wrapping the byte positions (problem #3) is a separate, additive i
 The **#5 row is the submission**: it uses v1's own one-hot positions, changes only the output side,
 and still beats v1. The last row is better but spans two problems, so it is reported as such.
 
-5 seeds × 500 steps, real text, identical data order within each seed. Every arm except Fourier and
-the byte head beats the control on 5/5 seeds.
+5 seeds × 500 steps, identical data order within each seed. Every arm except Fourier and the byte
+head beats the control on 5/5 seeds.
+
+**Read this table as the corpus it was measured on.** The same arms on a six-lane corpus reorder:
+the byte head, worst here by a distance, comes out *ahead* of every tied arm there. The two tables
+sit side by side in `results/` rather than one replacing the other, because the difference between
+them is the finding.
 
 And the parameter count does not move with the vocabulary:
 
@@ -229,27 +268,99 @@ one — is pure numpy, so CI verifies it rather than skipping it.
 
 ## Run it
 
+Every command this exercise has, in the order they cost you something. **The published page carries
+none of them**, deliberately: a page is read far more often than it is executed and cannot be
+tested, so commands live here, beside the code they operate on.
+
+### Nothing installed but the basics
+
 ```bash
-uv sync --all-packages                                    # everything except the trained heads
-uv run pytest src/exercises/07-model-embeddings-internals/tests -q
-
-uv sync --all-packages --extra train                      # adds torch, enables heads.py
-uv run pytest src/exercises/07-model-embeddings-internals/tests -q
-
-# the trained arm comparison, about twelve minutes on a laptop CPU
-uv run python src/exercises/07-model-embeddings-internals/tools/run_experiment.py
-uv run python .../run_experiment.py --steps 50 --seeds 2   # a probe, about a minute
+uv sync --all-packages
+uv run pytest src/exercises/07-model-embeddings-internals/tests -m "not integration"
 ```
 
-**That command is a *specified re-run*, not a reproduction of the tables below, and the difference
-matters.** The numbers in *The evidence* were produced by a driver that lived in an agent's scratch
-directory rather than in this repository. **That code was recovered and its settings are recorded in
-`PROGRESS.md`** — a different transformer, no gradient clipping, a 200,000-token corpus window, and
-a vocabulary of 10,002 — so the earlier run is specified even though its driver is not tracked. What
-it is not is *this* run: two different models trained on differently-sized text are not comparable
-by their absolute losses, only by the sign and ordering of their arms. `RunConfig` records every
-knob it turns for exactly that reason, and the runner writes to `artifacts/`, never to `results/`:
-what gets published is a decision taken after seeing a run, not a side effect of running one.
+Runs the codec, the decoder, the collision analysis and the parameter arithmetic — the load-bearing
+half of this exercise, all pure numpy. **The invertibility result is verified here**, not skipped.
+
+### The trained comparison
+
+```bash
+uv sync --all-packages --extra train        # adds torch
+
+# a probe first, about a minute -- and the device it prints is worth reading
+uv run python src/exercises/07-model-embeddings-internals/tools/run_experiment.py \
+    --steps 50 --seeds 2
+
+# the full grid: 10 arms x 5 seeds x 500 steps
+#   ~16 min on an Apple GPU, ~41 min on the processor
+uv run python .../tools/run_experiment.py --device cpu --repeat 2
+```
+
+`--repeat 2` runs the whole grid twice and reports the **magnitude** of any difference against the
+smallest effect the grid claims — not a boolean, because a yes/no on floating point reports "one
+unit in the last place on a GPU" and "the code is wrong" as the same failure. On the processor the
+two runs are bit-identical; on the GPU they differ by `9.5e-07`, which is why the published grid is
+the processor one.
+
+It writes `artifacts/runs/<date>-<fingerprint>/`: the exact token stream each seed consumed, a
+fingerprint of every model before its first gradient step, a per-step trace of loss and pre-clip
+gradient norm, and the trained weights. **Never to `results/`** — publishing is a separate act.
+
+### The measurements behind the findings
+
+```bash
+# what the unreadable language was worth: the same specification twice, one language swapped
+uv run python .../tools/measure_unk_confound.py
+
+# does the advantage track the script? one lane at a time
+uv run python .../tools/measure_lane_sensitivity.py
+
+# comparable text against ordinary text, matched on size, epochs and script
+uv run python .../tools/measure_parallel_text.py
+
+# what wrapping recovers, by byte-length band -- pure arithmetic, no training, no corpus
+uv run python .../tools/measure_wrap_recovery.py
+```
+
+Each prints **what it does not establish** and writes those limits into its own bundle, so the
+caveat travels with the number rather than living in a document three files away.
+
+### Checking it without trusting us
+
+```bash
+uv run python src/exercises/07-model-embeddings-internals/verify.py     # re-derive a run
+uv run python src/exercises/07-model-embeddings-internals/evidence.py   # grade each claim
+```
+
+`verify.py` recomputes every published figure from the run's own files with its own arithmetic and
+**imports nothing from the package it audits** — a test asserts that closure, because a verifier
+that borrowed the producer's arithmetic would agree with itself however wrong either was. A check
+whose inputs are missing reports `unverifiable`, which is a third outcome and not a pass.
+
+### Publishing, which is a person's decision
+
+```bash
+uv run python .../tools/publish_rerun.py --bundle artifacts/rerun-cpu.json
+uv run python .../tools/publish_rerun.py --measurement artifacts/unk_confound.json
+uv run python .../tools/publish_rerun.py --manifest-only     # rebuild results/MANIFEST.md
+```
+
+### The page
+
+```bash
+uv run python .../tools/build_web_data.py    # regenerate web/data.js from results/
+bash deploy/vercel/build.sh
+uv run pytest src/exercises/07-model-embeddings-internals/tests -m integration
+```
+
+---
+
+**A specified re-run is not a reproduction of the inherited table, and the difference matters.**
+Those numbers came from a driver that lived in a scratch directory rather than in this repository.
+Seven of its files were recovered and are tracked in `prior-run/`; **nine were not**, including the
+one that produced the ten-arm table. So two differently-specified runs are comparable by the *sign
+and ordering* of their arms and never by their absolute losses — which is exactly the comparison
+that changed.
 
 ---
 
@@ -276,8 +387,15 @@ Three things make this stronger than a hit rate:
 - **The decode certifies itself.** The residual is zero exactly when the recovered bytes reproduce
   the vector, so the decoder knows whether it is right **without being told**. Certificate and
   ground truth agreed on **100.0%** of tokens.
-- **It survives training.** With `W` taken from a run trained to loss **2.45** on real text,
-  recovery is still **100.00%** — while `cond(WᵀW)` degraded from 2.4 to 29.5.
+- **It survives training.** With `W` taken from a run trained to loss **2.45**, recovery is still
+  **100.00%** — which is the claim that matters, and it is in `results/measurements.json`.
+
+  > This bullet used to end *"while `cond(WᵀW)` degraded from 2.4 to 29.5"*, and that clause is
+  > **deleted rather than corrected**. No evidence file contains a `cond` field at all, and the only
+  > surviving record of the measurement says 2.4 → **248** with recovery **99.5%** over 3,000 steps
+  > — so two of its three numbers disagreed with the only thing that could have supported them.
+  > Re-measuring it would have answered a question this section does not ask; the conditioning of
+  > the projection was never the point, and recovery surviving training is.
 
 ### 2 · Why tying works, and the scale bug that hides it
 
@@ -374,7 +492,13 @@ already vanishing. The n-gram block injects information the additive code never 
 
 At 8,192 buckets against 10,002 tokens the n-gram signature is nearly a per-token fingerprint, which
 is exactly what a lookup table would give — and a lookup table is what this architecture exists to
-avoid. Sweeping the bucket count separates the two:
+avoid. Sweeping the bucket count separates the two.
+
+**This sweep is three seeds, not the five every other comparison here uses**, and the difference is
+worth stating rather than leaving a reader to carry the framing over from the section above. Three
+seeds is enough to see a monotone trend across five bucket counts and not enough to separate two
+adjacent rows: read the *shape* of this table, and take the size of any single gap from the
+five-seed arm comparison instead.
 
 | buckets `m` | V/m | vs wrap-only | **vs v1** |
 | ---: | ---: | ---: | ---: |
@@ -416,11 +540,24 @@ onto the same 256 atoms — so the code records *which atoms were added, not whi
 them*. A multiset, not a sequence. `decode.fold_is_order_lossy` exhibits two different 40-byte
 strings with identical codes (**1.3e-15**).
 
-> **Correction.** I wrote in `WrapKronecker`'s docstring that superposition "loses nothing
-> recoverable". It is false. Round-trip recovery under wrap is 100% to 32 bytes, **19.1%** for
-> 33–64, and **0%** beyond. I also "fixed" the aliasing with per-wrap byte permutations, which made
-> it **worse** (14.6% vs 19.1%) — permutations make every swap available, where signs at least block
-> the 15 of 32 slots whose levels disagree.
+> **Correction, now measured.** I wrote in `WrapKronecker`'s docstring that superposition "loses
+> nothing recoverable". It is false. `tools/measure_wrap_recovery.py` measures the whole vocabulary:
+> **100.00%** to 32 bytes (9,467 tokens), **15.05%** for 33–64 (465), **0.00%** beyond (68). Those
+> figures are in `results/wrap_recovery.json`; before this they were in no evidence file at all, and
+> the README quoted 19.1% for the middle band.
+>
+> I also "fixed" the aliasing with per-wrap byte permutations, which made it worse — permutations
+> make every swap available, where signs at least block the slots whose two levels disagree. **The
+> figure once quoted for that variant (14.6%) is unreproduced and is no longer stated.** It was
+> tried and removed, and two attempts to rebuild it from the description produced harness artefacts
+> rather than results.
+>
+> **A defect surfaced while measuring this.** `decode.recover` accepted `wrap` and no test had ever
+> driven it that way: its matched filter takes an `argmax` over the projection's raw rows, and under
+> wrap an atom enters as `sign × row` with half the slots negative, which inverts the argmax. It
+> scored **47%** on tokens the documents claim are recovered perfectly. The decoder now folds the
+> signs in, and two tests hold it — one asserting 100% at or below `d_p`, one asserting an unsigned
+> dictionary does much worse, so the first cannot pass for the wrong reason.
 
 **The practical answer is to stop folding and size `d_p` to the vocabulary**, which is affordable
 precisely because `D` does not depend on `V`. The repo's tokenizer tops out at 121 bytes:

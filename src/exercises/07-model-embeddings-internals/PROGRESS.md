@@ -221,8 +221,11 @@ Kept because a quietly amended number is worse than the original error.
   reparameterisation of `h`; the lock survives it. It helps by −0.073 nats, but as optimisation.
 - *"Superposition loses nothing recoverable."* **False.** Folding records a multiset, not a
   sequence; two different 40-byte strings collide at 1.3e-15.
-- *"Per-wrap byte permutations fix the aliasing."* **False.** They make it worse — 14.6% against
-  19.1% — because permutations make every position swap available.
+- *"Per-wrap byte permutations fix the aliasing."* **False.** They make it worse, because
+  permutations make every position swap available. The 14.6% once quoted for that variant is
+  **unreproduced** — it was removed from the code and two attempts to rebuild it from the
+  description produced harness artefacts. The shipped scheme is now measured across the whole
+  vocabulary in `results/wrap_recovery.json`: 100.00% to 32 bytes, 15.05% for 33-64, 0.00% beyond.
 - An earlier recovery table read `exact_full`, which scores every truncated token as a decoder
   failure by construction. It is the vocabulary's truncation rate, not a decoder result.
 - The requirements were worked from a paraphrase for several topics. The requirements text (local

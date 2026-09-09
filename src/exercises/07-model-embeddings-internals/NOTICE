@@ -40,12 +40,20 @@ rates are properties of THAT vocabulary and do not transfer unchanged to another
 
 WHAT IS MEASURED AND WHAT IS NOT
 
-Every training figure published by this exercise is measured on one Apple
-Silicon laptop: a 2-layer transformer, d_model 256, 500 steps, batch 8 x 64,
-over roughly 200,000 tokens of real text. The claims are ABOUT models three to
-four orders of magnitude larger. They were never run at that scale. Nothing here
-establishes that a result holds at 124M parameters or after 100,000 steps, and
-weight tying in particular is known to behave differently late in training.
+Every training figure published by this exercise is measured on one laptop: a
+2-layer transformer, d_model 256, 500 steps, batch 8 x 64, five seeds. The
+claims are ABOUT models three to four orders of magnitude larger. They were
+never run at that scale. Nothing here establishes that a result holds at 124M
+parameters or after 100,000 steps, and weight tying in particular is known to
+behave differently late in training.
+
+Two figures now exist and they disagree, which is the honest state of this work.
+The inherited table was measured on a corpus later found to be 40.07% [UNK] --
+the frozen vocabulary cannot read one of its four languages -- and its
+optimisation settings were never recorded, so its losses cannot be aimed at. The
+re-run is fully specified and reads a licence-manifested corpus at 0.0217
+epochs. On that corpus the recommendation LOSES to the published design. See
+results/MANIFEST.md, which indexes both and names what produced each.
 
 Recovery figures are measured on 2,000 tokens sampled from the frozen
 vocabulary, with both random and trained projection matrices, and the trained

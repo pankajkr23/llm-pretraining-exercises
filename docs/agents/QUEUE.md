@@ -943,6 +943,70 @@ predates the harness — so it is logged as what it was.
                           including a trace rounded to six decimals that could not re-derive the
                           mean it is the material for. CPU is bit-identical; MPS differs by one
                           float32 ULP (9.537e-07), so the publishable grid is the CPU one
+2026-09-09  exercise-07   #157 merged; #158 opened: the documents say what the evidence says.
+                          The results narrative was written when the recommendation won, and on a
+                          second corpus it loses -- README headline, arm table and NOTICE all
+                          corrected to state the finding AND its limit, with both runs published
+                          side by side. DECISIONS.md records eleven decisions including the one
+                          where our own reason for the corpus fix was refuted by measuring it. PK's
+                          two instructions done: no shell commands on the page (the reproduce
+                          section argues instead), every command in the README's Run it, and a
+                          guard for both. A DECODER DEFECT found while sourcing a claim:
+                          decode.recover accepted wrap and could not decode it -- its matched
+                          filter argmaxes over unsigned atoms while half the wrap slots carry -1 --
+                          scoring 47% on tokens four documents call perfectly recovered, with no
+                          test ever driving it that way. Sign-aware it is 100.00%. Two figures the
+                          page stated (14.6% / 19.1%) were in no evidence file; the shipped scheme
+                          is now measured whole-vocabulary (100.00 / 15.05 / 0.00 by band) and the
+                          removed permutation variant is reported UNREPRODUCED after two rebuild
+                          attempts produced harness artefacts rather than results. Three guards
+                          were wrong about their own subject and are fixed: a hand-rolled JS string
+                          parser that desynchronised on an apostrophe and stopped seeing the file,
+                          a regex test-counter that would have accepted the stale number it exists
+                          to catch, and a hardcoded tool list that called a documented script a
+                          deleted module. 1,914 passed, 2 skipped
+2026-09-09  exercise-07   #159 opened, and it is a THIRD pull request against a two-PR plan, so
+                          the reason is recorded rather than assumed: it is a correctness fix in
+                          shipped code, found after #158 was finalised and green, by an agent
+                          auditing the codec for the unbounded-length research rather than by the
+                          documentation work. It reverts independently. codec.atoms merges
+                          duplicate (slot, byte) pairs -- only possible under wrap, where two
+                          folded positions share a slot and a byte -- and encode recorded the
+                          merged non-zero count where the 1/sqrt(L) scale needed the position
+                          count, returning a target multiplied by sqrt(nnz/L). 142 of 10,000
+                          tokens, worst case 14.07%. NO published number moves: every published
+                          recovery figure was measured under onehot, which cannot merge (positive
+                          control: zero), and in the one wrap band where merging is common 105 of
+                          465 tokens were mis-scaled while the band reads 15.05% before and after,
+                          because those tokens were failing anyway. Latent, and it would have
+                          bitten the moment wrapped invertibility mattered -- which is what the
+                          research is about. Two guards, both watched going red; the second
+                          compares the whole round trip against a hand-built target and would have
+                          caught it without knowing the word "merge". 1,908 passed, 2 skipped
+2026-09-09  exercise-07   #160 opened, stacked on #158: RESEARCH.md, the three researched
+                          problems written so several kinds of reader can use them. PK asked that
+                          every experiment carry its literature, hypothesis, approach, rationale,
+                          expected result, outcome and configuration in plain language -- the third
+                          time he has asked for something to be explained plainly, which is a
+                          signal about the writing rather than the reading. EVERY CLAIM CARRIES A
+                          MARK: measured here, re-derived by hand, reported and unverified, or an
+                          argument. The reason is that one research pass corrected itself twice and
+                          named two papers that DO NOT EXIST, so a reader must be able to tell a
+                          measurement from a lead without asking. Findings: problem 1 (arithmetic
+                          in the embedding) dead as stated -- 0.5% of four-digit integers are
+                          single tokens, and z-norm saturates a value coordinate at 90.5152 while
+                          inverting the word's own letters above v=4,730 -- with a right-aligned
+                          place-value survivor and a scramble control that would settle it; problem
+                          2 (images and audio) needs a compression step this repo lacks, since a
+                          768-byte patch would need ~9,216 dimensions to reverse; problem 3 (no
+                          length limit) is the one to build -- 99.74% whole-vocabulary recovery
+                          against today's 94.67% at the SAME code width, provable without training,
+                          and it explains problem 4's failure as a side effect (its neighbouring
+                          positions point 96% the same way, re-derived by hand). Six guards, each
+                          watched going red; one of them counted what it checked after the first
+                          version turned out to pass for every possible document. Two agent numbers
+                          corrected while writing: 58.3x vs 111.6x is which block you count, and
+                          both are true of different things. 1,923 passed, 2 skipped
 2026-09-09  repo          #161 opened: a checklist is reconciled against the repository rather
                           than re-read. Three stale artefacts in one afternoon and they are one
                           failure -- a hand-maintained list duplicating something the repository
