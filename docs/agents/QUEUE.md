@@ -1242,4 +1242,34 @@ predates the harness — so it is logged as what it was.
                           instead, replacing it with one a test does keep: every entry carries a
                           figure from the run. That guard immediately found four entries carrying
                           none, two of which predate today
+2026-09-09  exercise-09   #169 resolved against main, and resolving it found the fix itself broken.
+                          THE PRECISION RULE I DERIVED WAS STILL A CHOSEN ONE: decimalsFor read
+                          `spread >= 0.5 ? 0 : spread >= 0.05 ? 1 : 2`, the recorded spread was
+                          0.44, so the page kept printing 9.1x one paragraph under the sentence
+                          promising the tenth is not offered. I had written the entry above saying
+                          "the digit is not offered anywhere" and it was false when I wrote it.
+                          Found by rendering the page and reading the tiles after the merge, not by
+                          a test -- every precision guard in this exercise reads the README or
+                          results/, and the defect was on the page. The rule is -log10(spread) now:
+                          a digit is offered only when the spread is smaller than that digit is
+                          worth. No threshold, so nothing to tune and nothing to be lucky about.
+                          RE-RAN THE SWEEP, which settled two things. by_steps reproduced BIT FOR
+                          BIT on a different commit, so the training half is exactly deterministic
+                          and the README's "re-running moves the spread" is now evidence rather
+                          than a hedge. The memory spread moved 0.44 -> 0.56, ACROSS the discarded
+                          threshold -- the same code would have printed a different digit
+                          depending on which run happened to be committed, which is this section's
+                          own lesson applied to precision. AND THE SECOND RATIO WAS BEING THROWN
+                          AWAY: compare_paths returns the softmax-only ratio on every repeat and
+                          the sweep kept only the first, so the page quoted a 1.8 value against a
+                          spread of 0.56 measured on a 9. Its own spread is 0.019, thirty times
+                          tighter, and it earns the tenth the memory ratio does not. Both recorded,
+                          each quoted against its own. NEW GUARD READS THE PAGE: for each repeated
+                          ratio, the figure at its earned precision must be present and no finer
+                          rendering may appear anywhere. Watched red against the tree exactly as
+                          #169 shipped it -- old threshold, old spread -- and against the
+                          wrong-spread pairing, mutations held in memory and restored in a finally.
+                          Its first version was red for the WRONG reason: "9.1x" is a substring of
+                          "39.1x", the logits-to-hidden ratio, so it failed on correct prose until
+                          a lookbehind was added
 ```

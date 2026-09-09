@@ -36,6 +36,31 @@ def _load() -> tuple[dict, dict, dict]:
     return harness, training, sensitivity
 
 
+def _decimals_for(spread: float) -> int:
+    """Decimals a spread will support: a digit is offered only when the spread is smaller than it.
+
+    The same rule the page uses, and it is written twice on purpose — the page cannot import Python
+    and this renderer cannot import JavaScript, so the alternative is one of the two documents
+    quoting a precision the other does not. A test asserts they agree.
+
+    A threshold-based version of this shipped first (`spread >= 0.5 ? 0 : ...`), and re-running the
+    sweep moved the measured spread from 0.44 to 0.56 — across that threshold. The same code would
+    have printed a different digit depending on which run happened to be committed, which is the
+    failure this whole section is about.
+
+    Args:
+        spread: The measured spread of the quantity being quoted.
+
+    Returns:
+        Decimal places, 0 to 4.
+    """
+    import math
+
+    if spread <= 0:
+        return 4
+    return min(4, max(0, math.floor(-math.log10(spread))))
+
+
 def render(harness: dict, training: dict, sensitivity: dict) -> str:
     """Build the whole document. Every interpolation is a lookup, never a literal."""
     config = harness["config"]
@@ -62,6 +87,7 @@ def render(harness: dict, training: dict, sensitivity: dict) -> str:
     corpus = training["corpus"]
     memory = sensitivity["memory"]
     memory_mid = (memory["min"] + memory["max"]) / 2
+    spread_factor = memory["spread"] / memory["softmax_only_spread"]
     sensitivity_rows = "\n".join(
         f"| {row['steps']} | {row['gap']:+.4f} | {row['steps_where_further_head_was_higher']}"
         f"/{row['steps']} | {row['final_broken_shift']:.4f} | {row['final_correct_shift']:.4f} |"
@@ -73,6 +99,14 @@ def render(harness: dict, training: dict, sensitivity: dict) -> str:
     memory_ratios = ", ".join(f"**{r:.2f}x**" for r in memory["ratios"])
     memory_repeats = memory["repeats"]
     memory_spread = memory["spread"]
+    # The softmax-only path is measured on every repeat too, and the sweep used to keep only the
+    # first ratio. Publishing both spreads is what lets a reader see why one of them is quoted to a
+    # decimal and the other is not, instead of taking the difference on trust.
+    softmax_only_spread = memory["softmax_only_spread"]
+    softmax_only_ratios = ", ".join(f"**{r:.2f}x**" for r in memory["softmax_only_ratios"])
+    softmax_only_decimals = _decimals_for(softmax_only_spread)
+    softmax_only_places = "decimal" if softmax_only_decimals == 1 else "decimals"
+    memory_decimals = _decimals_for(memory_spread)
     memory_agreed = "yes" if memory["losses_agreed_every_time"] else "NO"
 
     shapes = "\n".join(
@@ -314,6 +348,14 @@ repetition: **{memory_agreed}**.
 
 **So the honest claim is "about {memory_mid:.0f}x", and any comparison finer than that is reading
 noise.**
+
+The softmax-only path is measured on the same repeats and has its own floor:
+{softmax_only_ratios} — a spread of **{softmax_only_spread:.3f}**, roughly
+{spread_factor:.0f} times tighter, because it compares two byte counts taken on one path
+rather than two separate processes. That is why it is quoted to
+**{softmax_only_decimals}** {softmax_only_places} and the memory ratio to
+**{memory_decimals}**: a digit is offered only where the spread is smaller than that
+digit is worth. Both spreads are measured; neither precision is chosen.
 
 ---
 

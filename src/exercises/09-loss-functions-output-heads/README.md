@@ -118,14 +118,27 @@ monotonically, so neither is an artefact of where a run stopped. The three runs 
 1.71, 4.27 and 8.55 times respectively — the step count is not the only thing that sweep varies, and
 the epoch count is now recorded per row rather than for the longest run alone.
 
-**The memory ratio has a noise floor.** Repeating the same measurement five times gave 8.96x to
-9.40x — a spread of 0.44, on a quantity being quoted as a single number. It is peak RSS of a whole
-process, so it moves with whatever else the machine is doing, and five repetitions is a small
-sample: re-running this sweep moves the spread as well as the ratio. That is why the figure is
-reported as "about 9x" and no finer. Every one of those figures is generated into
-`results/sensitivity.json`;
-they used to be typed into the renderer, and one of them disagreed with the table sixty lines above
-it.
+**The memory ratio has a noise floor.** Repeating the same measurement five times gave 8.88x to
+9.44x — a spread of 0.56, on a quantity being quoted as a single number. It is peak RSS of a
+whole process, so it moves with whatever else the machine is doing, and five repetitions is a small
+sample. That is why the figure is reported as "about 9x" and no finer. Every one of those figures is
+generated into `results/sensitivity.json`; they used to be typed into the renderer, and one of them
+disagreed with the table sixty lines above it.
+
+**That caveat used to read "re-running this sweep moves the spread as well as the ratio", and the
+sweep has now been re-run, so it is evidence rather than a hedge.** The earlier run recorded a
+0.44 where this one records 0.56 — five fresh repetitions, no code change to the
+measurement. Two things follow, and they point in opposite directions. **The training half is
+exactly deterministic**: every figure in `by_steps` reproduced bit for bit across the two runs, on
+different commits, so the step sweep is not being quoted through noise. **The memory half is not**,
+which is the entire reason it is repeated and the reason the ratio is quoted to no decimals at all.
+
+**The two ratios have different floors, and quoting them against one number was wrong.** The
+softmax-only path's own 5 repetitions spread 0.019 — it is a ratio of two byte counts
+measured on one path, where the memory ratio compares two processes — so it earns a digit the
+memory ratio does not. `compare_paths` had been returning both on every repeat and the sweep kept
+only the first, so the page quoted the softmax-only ratio against a spread measured on a quantity
+five times its size.
 
 **And every loss here is a memorisation number.** The corpus is this repository's own `AGENTS.md`,
 frozen at the revision the published run read and kept in `corpus/` — it used to be read live, which
@@ -180,7 +193,11 @@ the hand-written half.
 - **The page stated its own precision rule and broke it four times.** It says the memory ratio is
   quoted "and no finer" than the noise floor allows — and the opening tile, the glossary, the ledger
   and the corrections table each chose their own `toFixed`, two of them to hundredths. The precision
-  is derived from the measured spread now, so the page cannot quote finer than it has earned.
+  is derived from the measured spread now, so the page cannot quote finer than it has earned. The
+  first derivation was not enough either: it offered a tenth for any spread under 0.5, a threshold
+  picked because it looked reasonable, and the run committed at the time measured 0.44 — under the
+  threshold, so the page kept offering a tenth beneath the sentence promising it would not. The rule has no threshold in it now.
+  A digit is offered only when the spread is smaller than that digit is worth.
 
 ## What this cannot establish
 
@@ -190,7 +207,7 @@ specific effects, not to produce a good model. Nothing here is a quality compari
 **300 steps is not a training curve.** Both findings are bounded by that number, which is why it is
 stated beside them rather than chosen quietly.
 
-**The memory numbers are CPU peak RSS at laptop shapes**, with a measured spread of 0.44 on a ratio
+**The memory numbers are CPU peak RSS at laptop shapes**, with a measured spread of 0.56 on a ratio
 of about 9. Where a figure describes a tensor too large for any accelerator, that is arithmetic
 carried from a larger configuration and labelled as such — not something this exercise ran.
 

@@ -416,11 +416,18 @@ def sensitivity(
             }
         )
 
+    # Both ratios, because `compare_paths` measures both on every repeat and the second one was
+    # being thrown away. The page quotes each to the precision its own spread earns, and it used to
+    # quote the softmax-only ratio against *this* ratio's spread — an absolute spread of 0.44 on a
+    # value of 9 applied to a value of 1.8, which is a different claim about a different quantity.
+    # The measurement to answer it was already being taken five times and discarded.
     ratios = []
+    softmax_only_ratios = []
     agreed = True
     for _ in range(memory_repeats):
         report = compare_paths(rows=memory_rows, config=config)
         ratios.append(report.ratio)
+        softmax_only_ratios.append(report.softmax_only_ratio)
         agreed = agreed and report.losses_agree
 
     gaps = [row["gap"] for row in by_steps]
@@ -440,6 +447,10 @@ def sensitivity(
             "min": min(ratios),
             "max": max(ratios),
             "spread": max(ratios) - min(ratios),
+            "softmax_only_ratios": softmax_only_ratios,
+            "softmax_only_min": min(softmax_only_ratios),
+            "softmax_only_max": max(softmax_only_ratios),
+            "softmax_only_spread": max(softmax_only_ratios) - min(softmax_only_ratios),
             "losses_agreed_every_time": agreed,
         },
         "corpus": corpus_facts(config, max(step_counts) * config.batch_size),

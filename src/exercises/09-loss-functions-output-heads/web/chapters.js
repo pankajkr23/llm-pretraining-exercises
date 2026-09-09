@@ -132,12 +132,28 @@ const mib = (bytes) => (bytes / (1024 * 1024)).toFixed(1);
  * the rule. Every one of those was a `toFixed()` chosen at the call site, so the rule was a sentence
  * and the practice was five independent decisions.
  *
- * Deriving the precision from the spread makes the page unable to break it. A spread of 0.44 cannot
- * support a tenth, so the digit is not offered.
+ * **Deriving it was not enough, because the first derivation kept the rule broken.** The thresholds
+ * were picked to look reasonable — a tenth for any spread under 0.5 — and the measured spread is
+ * 0.44, so the page went on printing 9.1x one paragraph below a sentence promising that "the digit
+ * after the point is not offered". A hand-chosen threshold is a hand-chosen precision wearing a
+ * function.
+ *
+ * The rule with no threshold in it: **quote a digit only when the spread is smaller than that
+ * digit's place value.** A tenth is worth 0.1; a spread of 0.44 swamps it four times over, so the
+ * tenth is not a measurement and is not offered. The units digit is worth 1, which the spread is
+ * inside, so the ratio is 9x. Nothing here is chosen — `-log10` reads the answer off the spread.
  */
-const decimalsFor = (spread) => (spread >= 0.5 ? 0 : spread >= 0.05 ? 1 : 2);
+const decimalsFor = (spread) =>
+  spread > 0 ? Math.min(4, Math.max(0, Math.floor(-Math.log10(spread)))) : 4;
 
-/** A ratio quoted to the precision its own repeated measurement earns, never finer. */
+/** A ratio quoted to the precision its own repeated measurement earns, never finer.
+ *
+ * **`spread` must be the spread of THIS value, not of a sibling.** The page used to quote the
+ * softmax-only ratio against the memory ratio's spread: an absolute 0.44 measured on a value of 9,
+ * applied to a value of 1.8, where it would mean a quarter of the quantity. `compare_paths` returns
+ * both ratios and the sweep repeats it five times, so the second spread was already being measured
+ * and thrown away — it is recorded now, and each ratio is quoted against its own.
+ */
 const ratio = (value, spread) => `${value.toFixed(decimalsFor(spread))}×`;
 
 /* ============================================================== 1 · thesis */
@@ -191,7 +207,7 @@ function chapterThesis(M) {
       ratio(M.memory.ratio, M.sensitivity.memory.spread),
       `less memory for an identical loss — but only because the projection happens inside the loop.
        Chunking the softmax alone, which is what the name usually means, is worth
-       ${ratio(M.memory.softmax_only_ratio, M.sensitivity.memory.spread)}`,
+       ${ratio(M.memory.softmax_only_ratio, M.sensitivity.memory.softmax_only_spread)}`,
       'watch',
     ],
     [
@@ -987,11 +1003,25 @@ function chapterResults(M) {
     (${sens.gap_grows_monotonically ? 'yes' : 'NO'}), and every run found both effects in the same
     direction. The memory ratio has a floor too: ${sens.memory.repeats} repetitions spread it from
     ${sens.memory.min.toFixed(2)}× to ${sens.memory.max.toFixed(2)}×, a spread of
-    ${sens.memory.spread.toFixed(2)}, so it is quoted as
-    ${ratio(M.memory.ratio, sens.memory.spread)} everywhere on this page and no finer — the digit
-    after the point is not offered, because the spread cannot support it. <b>That was a sentence
+    ${sens.memory.spread.toFixed(2)} — which is
+    ${(sens.memory.spread / 0.1).toFixed(1)} times the tenths digit it would have to fit inside, so
+    the tenth is not a measurement and this page does not print one. It is
+    ${ratio(M.memory.ratio, sens.memory.spread)}, everywhere, and no finer. <b>That was a sentence
     here and not a rule</b>: the tile, the glossary, the ledger and the corrections each chose their
-    own precision and two of them quoted hundredths.`;
+    own precision and two of them quoted hundredths. <b>Deriving it was not enough either, and the
+    way it failed is this section's own subject.</b> The first derivation offered a tenth whenever
+    the spread was under 0.5 — a threshold chosen because it looked reasonable — and the spread
+    recorded at the time was 0.44, so the page went on offering a tenth one paragraph under the
+    promise not to. Re-running these ${sens.memory.repeats} repetitions moved the spread to
+    ${sens.memory.spread.toFixed(2)}, which would have crossed that threshold and hidden the bug:
+    the same code, the same page, a different digit, decided by which run happened to be committed.
+    A digit is offered now only when the spread is smaller than that digit is worth, which has no
+    threshold in it and gives the same answer on both runs. It is why the same rule quotes the
+    softmax-only path to
+    ${decimalsFor(sens.memory.softmax_only_spread)} ${decimalsFor(sens.memory.softmax_only_spread) === 1 ? 'decimal' : 'decimals'}:
+    its own ${sens.memory.repeats} repetitions spread only
+    ${sens.memory.softmax_only_spread.toFixed(3)}, and it had been quoted against this ratio's
+    spread rather than its own.`;
   s.append(noise);
 
   const varied = el('p', 'say small');
@@ -1088,7 +1118,7 @@ function negativeRows(M) {
         'Chunking a softmax is not chunking a projection',
         `<b class="shape">one technique's number quoted for another</b> Chunking logits that
          already exist saves only the intermediates —
-         <b>${ratio(M.memory.softmax_only_ratio, M.sensitivity.memory.spread)}</b>. Projecting inside the loop, so the full
+         <b>${ratio(M.memory.softmax_only_ratio, M.sensitivity.memory.softmax_only_spread)}</b>. Projecting inside the loop, so the full
          tensor never exists, is worth ${ratio(M.memory.ratio, M.sensitivity.memory.spread)}. Quoting the first as the
          second understates the method
          ${(M.memory.ratio / M.memory.softmax_only_ratio).toFixed(1)}-fold. <b>This row itself
@@ -1152,7 +1182,7 @@ function chapterConclusion(M) {
         `<b>${ratio(M.memory.ratio, M.sensitivity.memory.spread)}</b> memory`,
         'what chunking the loss saves',
         `what moving the <i>projection</i> inside the loop saves. The softmax alone:
-         ${ratio(M.memory.softmax_only_ratio, M.sensitivity.memory.spread)}`,
+         ${ratio(M.memory.softmax_only_ratio, M.sensitivity.memory.softmax_only_spread)}`,
       ],
     },
     {

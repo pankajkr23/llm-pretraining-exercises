@@ -33,13 +33,34 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   scale's 19px floor one `<code>` made exercise 07's document scroll horizontally by 19px. Found by
   the existing guard, at the width nobody develops at.
 
-- **Exercise 09's page stated its own precision rule and broke it four times.** The results section
-  says the memory ratio is quoted *"and no finer"* than its noise floor allows — and the opening
-  tile said 9.1×, the glossary said 9.1×, the ledger said 9.09× and the corrections said 9.09×, one
-  of them fourteen lines above the rule. Each was a `toFixed()` chosen at its own call site, so the
-  rule was a sentence and the practice was five independent decisions. The precision is **derived
-  from the measured spread** now: a spread of 0.44 cannot support a tenth, so the digit is not
-  offered anywhere.
+- **Exercise 09's page stated its own precision rule and broke it four times — and the first repair
+  broke it a fifth.** The results section says the memory ratio is quoted *"and no finer"* than its
+  noise floor allows, and the opening tile said 9.1×, the glossary 9.1×, the ledger 9.09× and the
+  corrections 9.09×, one of them fourteen lines above the rule. Each was a `toFixed()` chosen at its
+  own call site. Replacing them with one derived function was not enough, because **the function's
+  thresholds were hand-chosen too** — a tenth for any spread under 0.5, against a recorded spread of
+  0.44 — so the page went on offering the digit one paragraph beneath the promise not to, with every
+  test green. The rule has no threshold in it now: **a digit is offered only when the spread is
+  smaller than that digit is worth**, which is `-log10` of the spread and nothing else. The memory
+  ratio earns none and is 9× everywhere.
+
+- **Re-running the sensitivity sweep proved the caveat the README had only asserted, and separated
+  two things that had been quoted as one.** The sweep was re-run on a later commit: every figure in
+  `by_steps` reproduced **bit for bit**, so the training half is exactly deterministic — while the
+  five memory repetitions moved the spread from 0.44 to **0.56**, which is why that half is repeated
+  at all. It also crosses the discarded threshold, so the same code would have printed a different
+  digit depending on which run happened to be committed. And `compare_paths` had been measuring the
+  softmax-only ratio on every repeat while the sweep kept only the first: its own spread is
+  **0.019**, thirty times tighter, because it compares two byte counts on one path rather than two
+  processes. It had been quoted against a spread measured on a quantity five times its size. Both
+  spreads are recorded and each ratio is quoted against its own — 9× and 1.8×.
+
+- **Nothing read the rendered page, which is why the broken repair shipped.** Every precision guard
+  in exercise 09 checked the README or `results/`; the defect was in the page. A browser guard now
+  asserts, for each ratio drawn from a repeated measurement, that the figure at its earned precision
+  is present **and that no finer rendering of the same value appears anywhere** — the half that
+  fails on a page quoting 9× in one place and 9.09× in another. Watched red against the tree exactly
+  as it shipped, and against the wrong-spread pairing.
 
 - **The page is titled "The three lines that decide what a model learns" and showed two.** The third
   — the `cross_entropy` call — was never written or named, so the headline count was the one number
