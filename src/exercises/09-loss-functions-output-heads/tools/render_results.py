@@ -59,7 +59,7 @@ def render(harness: dict, training: dict, sensitivity: dict) -> str:
     harder = "above" if summary["further_head_is_harder"] else "below"
     lower = "lower" if summary["broken_shift_is_lower"] else "higher"
 
-    corpus = run["corpus"]
+    corpus = training["corpus"]
     memory = sensitivity["memory"]
     memory_mid = (memory["min"] + memory["max"]) / 2
     sensitivity_rows = "\n".join(
@@ -102,7 +102,8 @@ def render(harness: dict, training: dict, sensitivity: dict) -> str:
                 4,
                 "a packed boundary masked",
                 f"**{four['loss_masked']:.6f}** masked against "
-                f"**{four['loss_unmasked']:.6f}** unmasked, {four['positions_dropped']} dropped",
+                f"**{four['loss_unmasked']:.6f}** unmasked, "
+                f"{four['boundary_crossings']} crossing dropped",
             ),
             (
                 5,
@@ -179,12 +180,26 @@ gets worse — the count is what makes that visible.
 ### 4 · The packed boundary
 
 Two documents in one sequence, joining at position {four["join_position"]}.
-**{four["positions_dropped"]}** positions cross a boundary and are dropped, moving the loss from
-{four["loss_unmasked"]:.6f} to {four["loss_masked"]:.6f}.
+**{four["boundary_crossings"]}** of the {four["positions_contributing"]} positions that survive
+padding crosses the boundary. Dropping it moves the loss from {four["loss_unmasked"]:.6f} to
+{four["loss_masked"]:.6f}.
 
-**The difference is small and that is the finding**, not a disappointment: a handful of positions
-barely moves an average, so nothing looks wrong. The gradient still asserts a continuation between
-two texts with nothing to do with one another.
+**Read those two numbers together, because the small one is what makes the large one visible.** The
+mean barely moves — {abs(four["loss_unmasked"] - four["loss_masked"]):.6f} — and the position behind
+that move scored **{four["crossing_loss"]:.2f}**, against a mean of {four["loss_unmasked"]:.2f} over
+all {four["positions_contributing"]} of them. Recovered from the two averages rather than measured
+separately: {four["positions_contributing"]} x unmasked minus {four["positions_kept"]} x masked is
+the summed loss of exactly what the mask removed.
+
+So the effect on the average is negligible and the gradient is not. That position asserts a
+continuation between two texts with nothing to do with one another, at a loss high enough to pull
+hard — and a real run packs every sequence this way, so it happens continuously rather than once.
+
+**This number was wrong here until it was checked.** The published figure was
+**{four["mask_dropped_including_padding"]}**, which is what the boundary mask drops across the whole
+padded tensor — mostly pad-to-pad pairs item 3 had already removed. The harness computed the right
+count on the line above and returned the other one. It made the finding read backwards: dozens of
+positions moving the loss a little is a shrug, and one position moving it that far is the point.
 
 ### 5 · Perplexity
 
@@ -238,7 +253,7 @@ The ratio has a noise floor, measured below rather than assumed.
 {run["seq_len"]} tokens.
 
 **Corpus: {corpus["source"]}** — {corpus["corpus_tokens"]:,} tokens
-(`sha256:{corpus["source_sha256_prefix"]}`), against {corpus["tokens_consumed"]:,} token positions
+(`{corpus["source_digest"]}`), against {corpus["tokens_consumed"]:,} token positions
 consumed. That is **{corpus["epochs"]:.2f} epochs**.
 
 **So every loss below is a memorisation number, and saying so is not a caveat but the correct

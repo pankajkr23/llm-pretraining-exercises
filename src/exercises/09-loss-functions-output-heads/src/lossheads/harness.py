@@ -41,6 +41,7 @@ from .masks import (
 )
 from .memory import compare_paths
 from .model import build_trunk, count_parameters
+from .provenance import provenance, require
 from .shift import shift_for_horizon, shift_for_next_token, shift_table, shift_wrong_way
 from .tokenizer import load_tokenizer
 
@@ -254,6 +255,12 @@ def item_4_boundary(config: Config) -> dict[str, Any]:
     kept_positions = contributing(masked.reshape(-1), config)
     print(f"\n  loss WITHOUT the boundary mask : {unmasked:.6f}  over {all_positions:,} positions")
     print(f"  loss WITH the boundary mask    : {masked_loss:.6f}  over {kept_positions:,} kept")
+    # `report.dropped` is every pair the boundary mask removed across the WHOLE tensor,
+    # padding included -- 37 here, of which 36 are pad-to-pad pairs item 3 had already dropped.
+    # The finding is about the join, so the number beside it has to be the join's: one. Publishing
+    # 37 made the effect read as tiny (37 positions moving the loss by 0.0019) when it is the
+    # opposite -- a SINGLE crossing position, at a loss of 9.51 against a mean of 9.34, moves it
+    # that far. The harness computed the right number here and returned the wrong one.
     crossing = all_positions - kept_positions
     print(
         f"\n  The boundary mask removed {crossing} position(s) of the {all_positions:,} that\n"
@@ -263,11 +270,28 @@ def item_4_boundary(config: Config) -> dict[str, Any]:
         "  asserts a continuation between two texts with nothing to do with one another, and it\n"
         "  does so on every packed sequence in a real run rather than once."
     )
+    # What the dropped position actually scored, recovered from the two means. Both losses are
+    # averages over their own denominators, so `n_all * unmasked - n_kept * masked` is the summed
+    # loss of exactly the positions the mask removed. It is the number that makes the finding
+    # legible: the mean barely moves, and the position behind the move is a bad one.
+    crossing_loss = (
+        (all_positions * unmasked - kept_positions * masked_loss) / crossing if crossing else None
+    )
+    print(
+        f"\n  Recovered from the two means: those {crossing} position(s) scored\n"
+        f"  {crossing_loss:.4f} against a mean of {unmasked:.4f} over all {all_positions:,}."
+    )
     return {
         "join_position": join,
         "loss_unmasked": unmasked,
         "loss_masked": masked_loss,
-        "positions_dropped": report.dropped,
+        "boundary_crossings": crossing,
+        "crossing_loss": crossing_loss,
+        "positions_contributing": all_positions,
+        "positions_kept": kept_positions,
+        # Kept, renamed, and no longer the headline: it is the mask's total drop over the padded
+        # tensor, which is a fact about the mask rather than about the join.
+        "mask_dropped_including_padding": report.dropped,
     }
 
 
@@ -403,10 +427,20 @@ def part_2_horizons(config: Config) -> dict[str, Any]:
 
 
 def run(config: Config | None = None, rows: int = 4096) -> dict[str, Any]:
-    """Run every item in order, print what must be read, and write `results/harness.json`."""
+    """Run every item in order, print what must be read, and write `results/harness.json`.
+
+    **It refuses to write a bundle with no provenance**, and this file carried none — seven
+    published numbers that said nothing about which code, machine or vocabulary produced them. The
+    corpus block is here for the same reason: item 4 tokenizes real text, so the frozen corpus is an
+    input to these numbers exactly as it is to the training ones.
+    """
+    from .training import corpus_facts
+
     config = config or Config()
     results: dict[str, Any] = {
         "config": asdict(config),
+        "corpus": corpus_facts(config, config.batch_size),
+        "provenance": provenance(config),
         "item_1_shapes": item_1_shapes(config),
         "item_2_shift": item_2_shift(config),
         "item_3_padding": item_3_padding(config),
@@ -416,6 +450,7 @@ def run(config: Config | None = None, rows: int = 4096) -> dict[str, Any]:
         "item_7_memory": item_7_memory(config, rows),
         "part_2_at_init": part_2_horizons(config),
     }
+    require(results)
     RESULTS.mkdir(exist_ok=True)
     path = RESULTS / "harness.json"
     path.write_text(json.dumps(results, indent=2, sort_keys=True) + "\n")

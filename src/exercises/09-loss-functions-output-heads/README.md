@@ -57,6 +57,7 @@ collapse into one number.
 | `losses.py` | masked cross-entropy, perplexity, two kinds of chunking, and two knobs |
 | `heads.py` | tied, untied and tying-unavailable heads, plus the multi-token head |
 | `memory.py` | peak memory for both loss paths, measured in isolated child processes |
+| `provenance.py` | the six fields every result carries, and the refusal that keeps them there |
 | `harness.py` | one run producing every number, into `results/harness.json` |
 | `training.py` | the short run the two findings need, into `results/training.json` |
 
@@ -106,14 +107,25 @@ Predicting further out is genuinely harder. It was higher on 297 of 300 steps.
 
 **Both were checked against a different arbitrary choice before being quoted.** The whole run was
 repeated at 60, 150 and 300 steps — separate runs, not truncations — and both effects grow
-monotonically, so neither is an artefact of where a run stopped. The memory ratio has a noise floor
-too: repeating the same measurement five times spread it from 9.09x to 9.27x, so it is reported as
-"about 9x" and no finer. Every one of those figures is generated into `results/sensitivity.json`;
+monotonically, so neither is an artefact of where a run stopped. The three runs read the corpus
+1.71, 4.27 and 8.55 times respectively — the step count is not the only thing that sweep varies, and
+the epoch count is now recorded per row rather than for the longest run alone.
+
+**The memory ratio has a noise floor.** Repeating the same measurement five times gave 8.96x to
+9.40x — a spread of 0.44, on a quantity being quoted as a single number. It is peak RSS of a whole
+process, so it moves with whatever else the machine is doing, and five repetitions is a small
+sample: re-running this sweep moves the spread as well as the ratio. That is why the figure is
+reported as "about 9x" and no finer. Every one of those figures is generated into
+`results/sensitivity.json`;
 they used to be typed into the renderer, and one of them disagreed with the table sixty lines above
 it.
 
-**And every loss here is a memorisation number.** The corpus is this repository's own `AGENTS.md` —
-35,941 tokens against 307,200 consumed, which is **8.55 epochs**. Both findings survive that, because
+**And every loss here is a memorisation number.** The corpus is this repository's own `AGENTS.md`,
+frozen at the revision the published run read and kept in `corpus/` — it used to be read live, which
+made every loss a function of a file this repository edits on most pull requests, and it had already
+moved by 11,326 bytes with nothing going red. See [corpus/README.md](corpus/README.md).
+
+That text is 35,941 tokens against 307,200 consumed, which is **8.55 epochs**. Both findings survive that, because
 each compares two models trained identically on the same repeated text so the repetition cancels.
 The absolute values do not transfer to a run on fresh data.
 
@@ -155,7 +167,7 @@ specific effects, not to produce a good model. Nothing here is a quality compari
 **300 steps is not a training curve.** Both findings are bounded by that number, which is why it is
 stated beside them rather than chosen quietly.
 
-**The memory numbers are CPU peak RSS at laptop shapes**, with a measured spread of 0.69 on a ratio
+**The memory numbers are CPU peak RSS at laptop shapes**, with a measured spread of 0.44 on a ratio
 of about 9. Where a figure describes a tensor too large for any accelerator, that is arithmetic
 carried from a larger configuration and labelled as such — not something this exercise ran.
 
@@ -167,6 +179,7 @@ no better. Any perplexity here is a within-tokenizer signal, never a scoreboard.
 embedding.** `body_params` uses the standard `12 · d_model²` per block, which is approximate by
 construction and leaves out the token embedding table entirely — so "the head is 44.9% of the
 parameters" is 44.9% of *head plus estimated body*, and against the 5,752,576-parameter trunk
-actually built it is 30.8%. Both numbers appear in `RESULTS.md` and the difference is the embedding,
+actually built it is 30.8%. Only the first appears in `RESULTS.md`; this paragraph is where the
+second is stated, and the difference between them is the embedding,
 which is precisely the matrix tying reuses. The tests assert the *direction* the share moves rather
 than a fixed percentage, because a hard-coded figure goes stale — as one already did here.

@@ -909,14 +909,6 @@
   },
   "config": {
     "batch_size": 8,
-    "corpus": {
-      "corpus_tokens": 35941,
-      "epochs": 8.547341476308395,
-      "source": "this repository's own AGENTS.md, tokenized with exercise 02's BPE",
-      "source_bytes": 92021,
-      "source_sha256_prefix": "19f24ce7db26e4f3",
-      "tokens_consumed": 307200
-    },
     "d_model": 256,
     "horizons": [
       1,
@@ -928,6 +920,14 @@
     "seq_len": 128,
     "steps": 300,
     "vocab_size": 10001
+  },
+  "corpus": {
+    "corpus_tokens": 35941,
+    "epochs": 8.547341476308395,
+    "source": "corpus/agents-md-95c740e.txt \u2014 this repository's own AGENTS.md frozen at the revision the published run read, tokenized with exercise 02's BPE",
+    "source_bytes": 92021,
+    "source_digest": "sha256:19f24ce7db26e4f3dde1b3663b6edb19019d887f0188bdaca16ffad7087b0261",
+    "tokens_consumed": 307200
   },
   "correct_shift": [
     9.393484115600586,
@@ -1231,6 +1231,22 @@
     4.3276166915893555,
     4.144702911376953
   ],
+  "provenance": {
+    "code_digest": "sha256:342d7814ad958846346c4fbd9a2a48f1f7de169552cae8caade14761f453714b",
+    "config_fingerprint": "cd2603d4144f",
+    "corpus_digest": "sha256:19f24ce7db26e4f3dde1b3663b6edb19019d887f0188bdaca16ffad7087b0261",
+    "environment": {
+      "device": "cpu",
+      "machine": "arm64",
+      "omp_num_threads": "unset",
+      "platform": "macOS-26.6.2-arm64-arm-64bit",
+      "python": "3.12.13",
+      "torch": "2.13.0",
+      "torch_threads": 12
+    },
+    "git_sha": "214d949291ce8b344eab77f6dedda707e8bda8a2",
+    "tokenizer_digest": "sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae"
+  },
   "steps": [
     1,
     2,

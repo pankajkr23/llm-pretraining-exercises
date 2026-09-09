@@ -138,9 +138,98 @@ def test_every_figure_the_readme_quotes_matches_the_run_it_came_from() -> None:
         ),
         f"{memory['min']:.2f}x": "the lowest memory ratio measured",
         f"{memory['max']:.2f}x": "the highest memory ratio measured",
+        f"{memory['spread']:.2f}": "the memory ratio's measured spread",
     }
     missing = {value: what for value, what in expected.items() if value not in readme}
     assert not missing, (
         "the README quotes figures that no longer match the runs, or has stopped quoting them:\n"
         + "\n".join(f"  {value} — {what}" for value, what in missing.items())
+    )
+
+
+@requires_results
+def test_no_ratio_the_readme_states_is_absent_from_the_run() -> None:
+    """Presence is not agreement, and this is the half the test above cannot do.
+
+    **The hole was live and cost a wrong published number.** The check above asks whether the right
+    value appears *somewhere*. A README can satisfy that and still carry a second, wrong copy of the
+    same quantity — which is exactly what happened: the noise floor was stated correctly in one
+    paragraph and as `0.69` forty-eight lines later, against a measured `0.177`. Both sentences were
+    in the same file, one of them was fiction, and every test was green.
+
+    So this asks the opposite question: of every `N.NNx` the README states, is each one a ratio this
+    run actually produced? A wrong figure fails whether or not the right one is also present.
+    """
+    import re
+
+    _, _, sensitivity = _load()
+    readme = (EXERCISE / "README.md").read_text()
+    memory = sensitivity["memory"]
+
+    known = {round(r, 2) for r in memory["ratios"]}
+    known |= {round(memory["min"], 2), round(memory["max"], 2)}
+    known |= {round((memory["min"] + memory["max"]) / 2, 2)}
+
+    stated = {float(m) for m in re.findall(r"(\d+\.\d\d)x", readme)}
+    unknown = sorted(v for v in stated if v not in known)
+    assert not unknown, (
+        f"the README states {', '.join(f'{v}x' for v in unknown)}, which no measurement in "
+        f"results/sensitivity.json produced. Measured: {sorted(known)}. A ratio quoted to two "
+        "decimals is a claim about a run, so it has to come from one."
+    )
+
+
+@requires_results
+def test_every_spread_the_readme_states_is_the_measured_spread() -> None:
+    """Every number the README calls a spread must be the spread. Scoped, not global.
+
+    The property is *"a figure introduced by a word is the figure that word names"*, and it is
+    checked here for the one quantity this README has already got wrong. Scoping to a keyword is
+    what lets it be exact: a global "every decimal must be real" check would fire on epoch counts,
+    percentages and section numbers, and a guard that noisy gets weakened rather than obeyed.
+    """
+    import re
+
+    _, _, sensitivity = _load()
+    readme = (EXERCISE / "README.md").read_text()
+    measured = round(sensitivity["memory"]["spread"], 2)
+
+    # "spread OF n", not "spread from a to b" -- the second states a bound, not a spread, and a
+    # regex greedy enough to catch both cannot tell which quantity it has. The preposition is the
+    # whole distinction, so the guard uses it rather than pretending to a generality it lacks.
+    stated = [float(m) for m in re.findall(r"spread(?:\s+\w+){0,2}?\s+of\s+(\d+\.\d+)", readme)]
+    wrong = [v for v in stated if round(v, 2) != measured]
+    assert stated, (
+        "the README no longer states the memory ratio's spread. It is the evidence that 'about 9x' "
+        "is the honest precision, so dropping it removes the reason for the hedge."
+    )
+    assert not wrong, (
+        f"the README calls {wrong} a spread; the run measured {measured}. This is the exact "
+        "failure that shipped once — a correct figure in one paragraph and a fictional one in "
+        "another, with the presence check above satisfied by the correct copy."
+    )
+
+
+@pytest.mark.parametrize("document", ["README.md", "CLAUDE.md"])
+def test_every_module_is_named_in_the_documents_that_list_modules(document: str) -> None:
+    """A new module is not done until every list that names modules includes it.
+
+    Copied from exercise 06, which `AGENTS.md` asks any exercise past a handful of modules to copy.
+    This one has eleven. `provenance.py` was the twelfth thing shipped here and the first thing that
+    would have gone unlisted — the README's layout table and this exercise's `CLAUDE.md` both
+    enumerate modules, and neither is generated.
+
+    **Its limit is worth stating, because the guard reads stronger than it is.** It checks the
+    *document*, not the *list*: a module named once anywhere in the prose satisfies it while the
+    table a reader actually follows stays wrong. That gap has already cost exercise 05 a published
+    page whose figures contradicted its own tool.
+    """
+    text = (EXERCISE / document).read_text()
+    modules = sorted(
+        p.name for p in (EXERCISE / "src" / "lossheads").glob("*.py") if p.name != "__init__.py"
+    )
+    missing = [name for name in modules if name not in text]
+    assert not missing, (
+        f"{document} does not mention {missing}. Add it to the table a reader follows, not "
+        "merely to a sentence somewhere — this test cannot tell the difference."
     )

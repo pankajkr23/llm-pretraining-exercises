@@ -13,10 +13,14 @@ export const M = {
     "sum": 18.80300521850586
   },
   "boundary": {
+    "boundary_crossings": 1,
+    "crossing_loss": 9.50886344909668,
     "join_position": 29,
     "loss_masked": 9.339547157287598,
     "loss_unmasked": 9.341407775878906,
-    "positions_dropped": 37
+    "mask_dropped_including_padding": 37,
+    "positions_contributing": 91,
+    "positions_kept": 90
   },
   "config": {
     "batch_size": 8,
@@ -52,15 +56,15 @@ export const M = {
     "vocab_size": 10001
   },
   "memory": {
-    "baseline_bytes": 198246400,
+    "baseline_bytes": 198197248,
     "chunk_size": 128,
-    "chunked_bytes": 39403520,
+    "chunked_bytes": 39600128,
     "chunked_loss": 9.254968643188477,
     "logits_bytes": 163856384,
     "losses_agree": true,
-    "materialised_bytes": 358793216,
+    "materialised_bytes": 357498880,
     "materialised_loss": 9.25496768951416,
-    "ratio": 9.105613305613305,
+    "ratio": 9.027720314439387,
     "rows": 4096,
     "vocab_size": 10001
   },
@@ -80,6 +84,7 @@ export const M = {
     "by_steps": [
       {
         "broken_shift_is_lower": true,
+        "epochs": 1.7094682952616789,
         "final_broken_shift": 3.0484540462493896,
         "final_correct_shift": 6.207566261291504,
         "further_head_is_harder": true,
@@ -89,6 +94,7 @@ export const M = {
       },
       {
         "broken_shift_is_lower": true,
+        "epochs": 4.273670738154197,
         "final_broken_shift": 0.9144216179847717,
         "final_correct_shift": 5.240525245666504,
         "further_head_is_harder": true,
@@ -98,6 +104,7 @@ export const M = {
       },
       {
         "broken_shift_is_lower": true,
+        "epochs": 8.547341476308395,
         "final_broken_shift": 0.17835122346878052,
         "final_correct_shift": 4.144702911376953,
         "further_head_is_harder": true,
@@ -106,23 +113,47 @@ export const M = {
         "steps_where_further_head_was_higher": 297
       }
     ],
+    "corpus": {
+      "corpus_tokens": 35941,
+      "epochs": 8.547341476308395,
+      "source": "corpus/agents-md-95c740e.txt \u2014 this repository's own AGENTS.md frozen at the revision the published run read, tokenized with exercise 02's BPE",
+      "source_bytes": 92021,
+      "source_digest": "sha256:19f24ce7db26e4f3dde1b3663b6edb19019d887f0188bdaca16ffad7087b0261",
+      "tokens_consumed": 307200
+    },
     "every_run_found_the_broken_shift_lower": true,
     "every_run_found_the_further_head_harder": true,
     "gap_grows_monotonically": true,
     "memory": {
       "losses_agreed_every_time": true,
-      "max": 9.271331058020477,
-      "min": 9.094260578131546,
+      "max": 9.402075226977951,
+      "min": 8.958230958230958,
       "ratios": [
-        9.094260578131546,
-        9.101793909052983,
-        9.124634044332915,
-        9.114548494983278,
-        9.271331058020477
+        9.234944868532654,
+        8.958230958230958,
+        9.402075226977951,
+        9.176916596461668,
+        9.26509635974304
       ],
       "repeats": 5,
       "rows": 4096,
-      "spread": 0.17707047988893088
+      "spread": 0.443844268746993
+    },
+    "provenance": {
+      "code_digest": "sha256:9a693ceba89fbfac52ad5f45e5267c1806dc38c4d831e8a122dbd786dbfb365e",
+      "config_fingerprint": "cd2603d4144f",
+      "corpus_digest": "sha256:19f24ce7db26e4f3dde1b3663b6edb19019d887f0188bdaca16ffad7087b0261",
+      "environment": {
+        "device": "cpu",
+        "machine": "arm64",
+        "omp_num_threads": "unset",
+        "platform": "macOS-26.6.2-arm64-arm-64bit",
+        "python": "3.12.13",
+        "torch": "2.13.0",
+        "torch_threads": 12
+      },
+      "git_sha": "214d949291ce8b344eab77f6dedda707e8bda8a2",
+      "tokenizer_digest": "sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae"
     }
   },
   "shapes": {
@@ -1474,14 +1505,6 @@ export const M = {
     ],
     "run": {
       "batch_size": 8,
-      "corpus": {
-        "corpus_tokens": 35941,
-        "epochs": 8.547341476308395,
-        "source": "this repository's own AGENTS.md, tokenized with exercise 02's BPE",
-        "source_bytes": 92021,
-        "source_sha256_prefix": "19f24ce7db26e4f3",
-        "tokens_consumed": 307200
-      },
       "d_model": 256,
       "horizons": [
         1,

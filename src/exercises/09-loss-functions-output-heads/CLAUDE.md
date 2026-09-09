@@ -53,15 +53,23 @@ engineering: the page reaches readers only once production is promoted, which is
 ```bash
 uv sync --all-packages --extra train
 
-uv run python -m lossheads.harness     # the seven numbers  -> results/harness.json
-uv run python -m lossheads.training    # the two findings   -> results/training.json
-uv run python -c "from lossheads.training import sensitivity, save_sensitivity; \
-    save_sensitivity(sensitivity())"   # the noise floors   -> results/sensitivity.json
-uv run python tools/render_results.py  # RESULTS.md, from all three
+uv run python -m lossheads.harness              # the seven numbers -> results/harness.json
+uv run python -m lossheads.training             # the two findings  -> results/training.json
+uv run python -m lossheads.training --sensitivity   # the noise floors -> results/sensitivity.json
+uv run python tools/render_results.py           # RESULTS.md and web/data.js, from all three
 
 uv run pytest src/exercises/09-loss-functions-output-heads
 uv run pytest                          # and the repo-wide guards, which the line above misses
 ```
+
+**The sweep used to have no entry point.** It was the `python -c` one-liner that stood here, which
+is the shape `AGENTS.md` names as its own most expensive failure — a producer of a published number
+living outside the tracked code, in a document, waiting to be retyped correctly. It is
+`--sensitivity` now.
+
+**`training.run()` no longer writes to `results/`.** It writes to `artifacts/`; only
+`python -m lossheads.training` publishes. The topic notebook calls `run`, so before this, reading
+the notebook overwrote committed evidence.
 
 Test modules are prefixed `test_lossheads_*`. pytest imports by **basename**, so a second
 `test_config.py` anywhere in the repo would abort collection rather than fail a test;
@@ -70,7 +78,7 @@ Test modules are prefixed `test_lossheads_*`. pytest imports by **basename**, so
 ## Modules
 
 `config.py` · `model.py` · `tokenizer.py` · `shift.py` · `masks.py` · `losses.py` · `heads.py` ·
-`memory.py` · `harness.py` · `training.py`, plus `tools/render_results.py`.
+`memory.py` · `provenance.py` · `harness.py` · `training.py`, plus `tools/render_results.py`.
 
 **Some of what those modules export is offered and unrun**, and saying so is the rule this
 repository learned from a tested feature with zero callers. `label_smoothed_cross_entropy`,

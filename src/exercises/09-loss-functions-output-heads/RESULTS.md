@@ -15,10 +15,10 @@ Configuration: `d_model` 256, 4 blocks, 4 heads, sequence 128, batch 8, vocabula
 | 1 | shapes, with each dimension named | logits are **39.1x** the hidden states |
 | 2 | the shift, verified in strings | broken shift trains to **0.1784** against **4.1447** correct |
 | 3 | padding masked | **48** of 254 contribute (206 dropped) |
-| 4 | a packed boundary masked | **9.339547** masked against **9.341408** unmasked, 37 dropped |
+| 4 | a packed boundary masked | **9.339547** masked against **9.341408** unmasked, 1 crossing dropped |
 | 5 | perplexity, untrained | **12,078.2** against a vocabulary of 10,001 |
 | 6 | tied against untied head | **2,560,256** against **0** added parameters |
-| 7 | peak memory, plain against chunked | **342.2 MiB** against **37.6 MiB** — **9.11x** |
+| 7 | peak memory, plain against chunked | **340.9 MiB** against **37.8 MiB** — **9.03x** |
 
 ### 1 · Shapes
 
@@ -57,12 +57,26 @@ gets worse — the count is what makes that visible.
 ### 4 · The packed boundary
 
 Two documents in one sequence, joining at position 29.
-**37** positions cross a boundary and are dropped, moving the loss from
-9.341408 to 9.339547.
+**1** of the 91 positions that survive
+padding crosses the boundary. Dropping it moves the loss from 9.341408 to
+9.339547.
 
-**The difference is small and that is the finding**, not a disappointment: a handful of positions
-barely moves an average, so nothing looks wrong. The gradient still asserts a continuation between
-two texts with nothing to do with one another.
+**Read those two numbers together, because the small one is what makes the large one visible.** The
+mean barely moves — 0.001861 — and the position behind
+that move scored **9.51**, against a mean of 9.34 over
+all 91 of them. Recovered from the two averages rather than measured
+separately: 91 x unmasked minus 90 x masked is
+the summed loss of exactly what the mask removed.
+
+So the effect on the average is negligible and the gradient is not. That position asserts a
+continuation between two texts with nothing to do with one another, at a loss high enough to pull
+hard — and a real run packs every sequence this way, so it happens continuously rather than once.
+
+**This number was wrong here until it was checked.** The published figure was
+**37**, which is what the boundary mask drops across the whole
+padded tensor — mostly pad-to-pad pairs item 3 had already removed. The harness computed the right
+count on the line above and returned the other one. It made the finding read backwards: dozens of
+positions moving the loss a little is a shrug, and one position moving it that far is the point.
 
 ### 5 · Perplexity
 
@@ -97,13 +111,13 @@ is the honest price of Part 2.
 
 | path | peak above baseline | loss |
 | --- | --- | --- |
-| materialised | 342.17 MiB | 9.254968 |
-| chunked (128 rows) | 37.58 MiB | 9.254969 |
-| **ratio** | **9.11x** | losses **identical** |
+| materialised | 340.94 MiB | 9.254968 |
+| chunked (128 rows) | 37.77 MiB | 9.254969 |
+| **ratio** | **9.03x** | losses **identical** |
 
 4,096 rows against a 10,001 vocabulary — a logits tensor of
 156.27 MiB in fp32. Baseline (an interpreter with torch loaded, and
-subtracted from both) was 189.06 MiB.
+subtracted from both) was 189.02 MiB.
 
 **The ratio is only meaningful because the losses are identical.** Chunking is not an approximation;
 a difference here would mean the two paths computed different things, not that one was cheaper.
@@ -117,8 +131,8 @@ The ratio has a noise floor, measured below rather than assumed.
 300 steps, Adam at 0.0003, batch 8 x
 128 tokens.
 
-**Corpus: this repository's own AGENTS.md, tokenized with exercise 02's BPE** — 35,941 tokens
-(`sha256:19f24ce7db26e4f3`), against 307,200 token positions
+**Corpus: corpus/agents-md-95c740e.txt — this repository's own AGENTS.md frozen at the revision the published run read, tokenized with exercise 02's BPE** — 35,941 tokens
+(`sha256:19f24ce7db26e4f3dde1b3663b6edb19019d887f0188bdaca16ffad7087b0261`), against 307,200 token positions
 consumed. That is **8.55 epochs**.
 
 **So every loss below is a memorisation number, and saying so is not a caveat but the correct
@@ -162,8 +176,8 @@ is an artefact of where a run happened to stop.
 ### And the memory ratio has a noise floor
 
 Peak resident set size is the operating system's number and it moves between runs. The same
-measurement repeated 5 times gave **9.09x**, **9.10x**, **9.12x**, **9.11x**, **9.27x** — a spread of
-**0.18** on a ratio of about 9. The losses agreed on every
+measurement repeated 5 times gave **9.23x**, **8.96x**, **9.40x**, **9.18x**, **9.27x** — a spread of
+**0.44** on a ratio of about 9. The losses agreed on every
 repetition: **yes**.
 
 **So the honest claim is "about 9x", and any comparison finer than that is reading

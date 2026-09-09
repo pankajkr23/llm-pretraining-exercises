@@ -115,3 +115,60 @@ compared against. They are a run now: `results/sensitivity.json`.
 README quotes is checked against the run only for the five headline values —
 `test_every_figure_the_readme_quotes_matches_the_run_it_came_from` — and the prose around them is
 still hand-verified.
+
+## D8 · The corpus is frozen in `corpus/`, not read from the live `AGENTS.md`
+
+**Decision.** Every loss here is measured on `corpus/agents-md-95c740e.txt` — the repository's own
+`AGENTS.md`, frozen at the commit the published run read — and its full `sha256` is recorded in
+every result file and recomputed by a test.
+
+**Why.** The corpus used to be read from the live `AGENTS.md` at run time. That file is edited on
+most pull requests, so every published loss was a function of a moving input, and the run recorded a
+**16-character prefix** that nothing ever recomputed. It had already drifted:
+
+| | bytes |
+| --- | ---: |
+| what `results/training.json` was measured on | 92,021 |
+| what `AGENTS.md` held when this was found | 103,347 |
+
+Twelve percent more text, and nothing was red. Re-running would have silently produced different
+numbers under the same documents.
+
+**Freezing is what makes the digest a check rather than a record.** A hash over a moving file can
+only be written down; a hash over a file in the repository can be **recomputed from a clone**, which
+is the same argument `.quote-check-receipt.json` makes for the quoting gate one directory up. The
+freeze cost no re-run and no changed figure: the blob was recovered from history, and re-running
+against it reproduced every published training number byte for byte, which is itself the proof that
+the right revision was frozen.
+
+**What it costs.** A 92 KB second copy of a document that also exists at the repository root, which
+is the kind of duplication this repository is otherwise hostile to. It is signposted three ways —
+the directory, the filename's commit, and `corpus/README.md` — and the risk it leaves is that a
+future lexical gate flags the frozen text and someone rewords it, silently invalidating a published
+result. `corpus/README.md` says to add a path exemption instead, the way
+`tests/test_forbidden_vocabulary.py` already exempts exercise 02's tokenizer corpus.
+
+**What would overturn it.** A corpus of real, licensed text fetched by a tracked fetcher, the way
+exercise 05 does it. That would be better on every axis except effort, and would make this decision
+unnecessary rather than wrong.
+
+## D9 · `save` refuses, and defaults to `artifacts/`
+
+**Decision.** `training.save`, `training.save_sensitivity` and `harness.run` raise unless the bundle
+carries all six provenance fields, and `training.save` writes to `artifacts/` unless a caller names
+the tracked path. `python -m lossheads.training` names it; nothing else does.
+
+**Why, for the refusal.** `results/harness.json` and `results/sensitivity.json` carried **no
+provenance at all** — seven published numbers and the entire noise floor, saying nothing about which
+code, machine or vocabulary produced them. A block nothing enforces is one that gets dropped in the
+first hurried run, which is what happened. `AGENTS.md` puts it in three words: refuse, do not warn.
+
+**Why, for `artifacts/`.** `training.run` called `save`, and `save` wrote the tracked file. The
+topic notebook calls `training.run`. So **reading the notebook overwrote committed evidence**, and
+the documents would then render a run nobody had decided to publish. Publishing is a decision a
+person takes after seeing a result, not a side effect of producing one.
+
+**What would overturn it.** Nothing about the refusal. The `artifacts/` default has one cost worth
+naming: a reader following the README's reproduce steps now gets a file in `artifacts/` and must
+compare it themselves rather than seeing `git diff` do it. That is the correct trade while the
+notebook exists, and it would be worth revisiting if the notebook ever stopped training.

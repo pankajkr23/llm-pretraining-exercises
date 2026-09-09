@@ -12,6 +12,50 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Every loss exercise 09 publishes was measured against a file the repository edits on most pull
+  requests, and nothing could notice.** The corpus was read from the live `AGENTS.md` at run time
+  and the run recorded a **16-character prefix** of its digest, which no test recomputed. It had
+  already drifted: `results/training.json` was measured on 92,021 bytes and the live file held
+  103,347 — twelve percent more text, a different tokenization, and different numbers under
+  unchanged documents. The exact revision is now frozen in
+  `src/exercises/09-loss-functions-output-heads/corpus/`, recovered from history, so the digest can
+  be **recomputed from a clone** rather than merely recorded. Re-running against it reproduced every
+  published training figure byte for byte, which is what proves the right revision was frozen.
+
+- **Exercise 09 published `37` boundary crossings where there is `1`, and the error inverted the
+  finding.** `harness.py` computed the true count on one line and returned `report.dropped` on the
+  next — the boundary mask's total drop across the padded tensor, which is mostly pad-to-pad pairs
+  item 3 had already removed. Dozens of positions nudging the mean reads as a shrug; the truth is
+  that a **single** crossing position, scoring **9.51** against a mean of **9.34**, moves it that
+  far. The crossing's own loss is now recovered from the two means and published beside the count.
+
+- **Exercise 09's README stated a noise floor of `0.69` where the run measured `0.177`** — and
+  stated the correct range forty-eight lines earlier, so the guard checking those figures passed on
+  the correct copy while the wrong one shipped. The guard now asks the other question too: every
+  ratio the README states must be one the run produced, and every number it offers *as* the spread
+  must be the measured spread. It also no longer claims both head-share figures are in `RESULTS.md`;
+  only one is.
+
+### Added
+
+- **Exercise 09 can say what produced every number it publishes.** A new `lossheads.provenance`
+  records the six fields `AGENTS.md` requires — configuration fingerprint, code digest, commit,
+  corpus digest, tokenizer digest, environment — and `save`, `save_sensitivity` and `harness.run`
+  **refuse** to write without them. `results/harness.json` and `results/sensitivity.json` previously
+  carried none at all: seven published numbers and the whole noise floor, saying nothing about which
+  code, machine or vocabulary produced them.
+
+- **`training.run()` no longer overwrites committed evidence.** It wrote the tracked
+  `results/training.json` by default, and the topic notebook calls it — so reading the notebook
+  republished the run. It writes to `artifacts/` now; `python -m lossheads.training` is the one
+  caller that publishes.
+
+- **The sensitivity sweep has a tracked entry point.** It was a `python -c` one-liner pasted from a
+  document, which is the shape `AGENTS.md` names as its most expensive failure — a producer of a
+  published number living outside the tracked code. It is `--sensitivity` now. The sweep also
+  records the epoch count **per row**: the three runs read the corpus 1.71, 4.27 and 8.55 times, so
+  the step count was never the only thing that sweep varied.
+
 - **The `PreToolUse` guard could not see a destructive git command, because those commands name no
   path.** Every rule in the policy matches a path, and `bash_write_targets` finds paths — so
   `git clean -fdx`, which deletes every gitignored file in this repository (every notebook, every
