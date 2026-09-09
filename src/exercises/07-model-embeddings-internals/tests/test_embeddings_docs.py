@@ -22,10 +22,15 @@ PACKAGE = EXERCISE / "src" / "embeddings"
 DOCUMENTS = ("README.md", "CLAUDE.md")
 
 TOOL_SCRIPTS = frozenset(
-    {"build_notebook.py", "build_web_data.py", "measure_lock_samples.py", "run_experiment.py"}
+    path.name for path in [*(EXERCISE / "tools").glob("*.py"), *EXERCISE.glob("*.py")]
 )
-"""Scripts under `tools/`. Named in the documents, and correctly so - they are not package
-modules, and the reverse check below must not read them as stale entries."""
+"""Scripts under `tools/` and at the exercise root. Named in the documents, and correctly so - they
+are not package modules, and the reverse check below must not read them as stale entries.
+
+**Read from the filesystem, not written out.** This was a hardcoded list of four names, and it went
+stale the moment the exercise grew `verify.py`, `evidence.py` and four measurement tools - the guard
+then reported a correctly-documented script as a deleted module. A list of files beside the files is
+a second copy, and the second copy is the one that drifts."""
 
 MODULES = sorted(path.name for path in PACKAGE.glob("*.py") if not path.name.startswith("__"))
 
@@ -71,4 +76,74 @@ def test_the_documents_do_not_name_a_module_that_no_longer_exists(document: str)
             f"{document} names {candidate}, which is not in src/embeddings/ and is not one of "
             "this exercise's tool scripts. Either the module was deleted and the document was "
             "not updated, or the name is a typo."
+        )
+
+
+def _collected(path: Path) -> int:
+    """How many cases pytest would collect from one test file, counted with `ast`.
+
+    **`ast` rather than a regex, and the difference is the whole guard.** A regex over
+    `@pytest.mark.parametrize` misses a list of bare values, misses stacked decorators (which
+    MULTIPLY rather than add) and misses anything indented unusually — it counted 19 in the browser
+    file where pytest collects 33, and a bound loose enough to accept that gap also accepted the
+    stale number this guard exists to catch.
+
+    Stacked `parametrize` decorators multiply, which is pytest's own rule and the reason the browser
+    file's count is not simply its function count.
+    """
+    import ast
+
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    total = 0
+    for node in tree.body:
+        if not isinstance(node, ast.FunctionDef) or not node.name.startswith("test_"):
+            continue
+        cases = 1
+        for decorator in node.decorator_list:
+            if not isinstance(decorator, ast.Call):
+                continue
+            name = ast.unparse(decorator.func)
+            if not name.endswith("parametrize"):
+                continue
+            if len(decorator.args) >= 2 and isinstance(decorator.args[1], (ast.List, ast.Tuple)):
+                cases *= max(len(decorator.args[1].elts), 1)
+        total += cases
+    return total
+
+
+def test_the_readmes_test_counts_are_derived_from_the_test_files() -> None:
+    """The README said *54 tests* and a *20-test browser suite*. Both were far out.
+
+    Counted from the files with `ast` rather than by running pytest. A count from a live collection
+    would be a count of whatever happened to be installed — this exercise has two files behind an
+    `importorskip` — so the number would move with the environment rather than with the code. And a
+    guard that must run the suite to check a sentence about the suite cannot run in the fast job.
+
+    **What it cannot see**, so that the band below is a decision rather than a fudge: a
+    `parametrize` whose argument is a NAME rather than a literal — `parametrize("arm", ARMS)` is
+    ten cases and reads as one — plus fixture-generated cases and `pytest_generate_tests`. Measured:
+    `ast` counts 155 where pytest collects 205, and 25 where pytest collects 33. So the count is a
+    LOWER BOUND and the assertion is `floor <= stated <= 1.5 * floor`.
+
+    That band still catches the failure that happened: the README said **54** against a floor of 155
+    and **20** against a floor of 25, and both are refused. A number cannot be stale by a factor of
+    three and survive.
+    """
+    counted = {p.name: _collected(p) for p in sorted((EXERCISE / "tests").glob("test_*.py"))}
+    total = sum(counted.values())
+    browser = counted["test_embeddings_render.py"]
+    readme = (EXERCISE / "README.md").read_text(encoding="utf-8")
+
+    claimed = re.search(r"\*\*(\d+) tests\*\*", readme)
+    claimed_browser = re.search(r"\*\*(\d+)-test\*\* browser suite", readme)
+    assert claimed and claimed_browser, "the README no longer states both counts in the pinned form"
+
+    for label, stated, floor in (
+        ("tests", int(claimed.group(1)), total),
+        ("browser tests", int(claimed_browser.group(1)), browser),
+    ):
+        assert floor <= stated <= floor * 1.5, (
+            f"the README claims {stated} {label}; the files hold {floor} countable cases, so "
+            f"anything outside {floor}-{int(floor * 1.5)} is stale rather than imprecise "
+            f"({counted})"
         )
