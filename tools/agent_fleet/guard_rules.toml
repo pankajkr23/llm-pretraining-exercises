@@ -120,6 +120,68 @@ patterns = [
 ]
 why = "a standard file; changing it mid-unit lowers the bar the unit is being judged against"
 
+[destructive_git]
+# **A git command that destroys work, refused by its FLAG rather than by its name.**
+#
+# Every other section here names paths. This one cannot: the commands below take no path argument
+# in their dangerous form, so `bash_write_targets` sees nothing to check and the call sails past a
+# guard that is working perfectly. `git clean -fdx` in a repository whose notebooks, builders and
+# requirement documents are all gitignored deletes every one of them and names not one of them.
+#
+# **The flag is the whole distinction, and stating the command without it teaches the wrong
+# lesson.** Plain `git clean -fd` is safe here precisely because these files are *ignored* rather
+# than untracked; plain `git stash -u` is safe for the same reason. `AGENTS.md` said the opposite
+# about stash for months.
+#
+# Checked per SEGMENT, so `git checkout main && git clean -xfd` is refused on its second half —
+# bundling is how a destructive command travels next to an innocent one, and it is what the
+# incident behind this section actually looked like.
+#
+# **What it does not catch, said plainly.** `git checkout <tag>` overwrites live gitignored files
+# with stale tagged copies and is listed in `AGENTS.md` as a live hazard, but a tag name is
+# indistinguishable from a branch name without asking git, and refusing every checkout would get
+# this guard uninstalled by lunchtime. A shell is also Turing-complete: `g=clean; git $g -x` builds
+# the flag at runtime and no static reader sees it. This raises the cost of the casual case, which
+# is the one that has actually cost this repository work — twice.
+
+[[destructive_git.rules]]
+subcommand = "clean"
+flags = ["-x", "-X"]
+why = """`-x` and `-X` delete IGNORED files, which here is every notebook, every notebook builder
+and every REQUIREMENTS.md — the files with no second copy anywhere. Plain `git clean -fd` does not
+touch them and is not blocked."""
+
+[[destructive_git.rules]]
+subcommand = "stash"
+flags = ["-a", "--all"]
+why = """`--all` stashes ignored files, which is the same set `clean -x` deletes. Plain
+`git stash -u` is safe here and is not blocked."""
+
+[[destructive_git.rules]]
+subcommand = "reset"
+flags = ["--hard"]
+why = """`--hard` discards every uncommitted change with no reflog entry for the working tree.
+Committing first costs one command and makes the same state recoverable."""
+
+[[destructive_git.rules]]
+subcommand = "push"
+flags = ["-f", "--force", "--force-with-lease"]
+why = """Force-pushing rewrites published history. `main` is protected server-side by a ruleset, so
+this would only ever land on a branch someone else may have pulled — and the repository's standing
+instruction is that history is never rewritten."""
+
+[[destructive_git.rules]]
+subcommand = "tag"
+flags = ["-d", "--delete"]
+why = """A tag is data. Eleven of them carry gitignored files, `snapshot_standards.py` measures
+against the newest one, and deleting one silently breaks the standards archive's own guard."""
+
+[[destructive_git.rules]]
+subcommand = "branch"
+flags = ["-D"]
+why = """`-D` deletes a branch whose work is not merged, which is the only case the flag exists for.
+`-d` refuses that on its own and is not blocked."""
+
 [halt]
 # One `touch` stops the fleet. Checked before anything else, so it stops a run already in flight.
 file = "AGENT_STOP"

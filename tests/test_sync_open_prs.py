@@ -14,29 +14,20 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from sync_open_prs import _placement_floor, _reapply  # noqa: E402
+from sync_open_prs import _placement_floor, _reapply, changed_blocks  # noqa: E402
 
 BASE = "alpha\nbravo\ncharlie\n"
 
 
 def _blocks(base: str, branch: str):
-    """`_own_additions` without git: the same difflib call over two strings."""
-    import difflib
+    """The tool's own diff, not a copy of it.
 
-    before = base.splitlines(keepends=True)
-    after = branch.splitlines(keepends=True)
-    out = []
-    for tag, _i1, _i2, j1, j2 in difflib.SequenceMatcher(
-        None, before, after, autojunk=False
-    ).get_opcodes():
-        if tag in ("insert", "replace"):
-            # The same neighbour PAIR the tool records. A single line is not a position.
-            preceding = after[j1 - 1] if j1 > 0 else ""
-            following = after[j2] if j2 < len(after) else ""
-            # The block's own position travels with it, so a fallback can pick the NEAREST
-            # look-alike rather than the first — which in an append-only log is at the very top.
-            out.append(((preceding, following, j1), after[j1:j2]))
-    return out
+    This used to re-implement `_own_additions` with its own `difflib` call. The two agreed until
+    the tool learned to record what a replacement REMOVED, at which point every test here failed on
+    a tuple width — which is the cheap way for that to go wrong. The expensive way is that they
+    keep agreeing on the wrong thing.
+    """
+    return changed_blocks(base, branch)
 
 
 def test_a_branch_s_own_entry_survives_a_main_that_moved() -> None:
@@ -270,3 +261,58 @@ def test_a_fallback_picks_the_nearest_look_alike_not_the_first() -> None:
     assert any("neighbours have changed" in n for n in notes), (
         f"the degraded placement was not reported: {notes}"
     )
+
+
+def test_a_line_the_branch_edited_replaces_mains_copy_rather_than_joining_it() -> None:
+    """The defect this suite did not have: an edit replayed as an addition ships both versions.
+
+    `difflib` reports an in-place edit as a `replace` — lines out, lines in — and `_own_additions`
+    collected only the "in" half while `_reapply` only ever inserted. So a branch that reworded a
+    line got its new wording added to main's copy while main's original stayed, and both shipped.
+    Nothing failed: the entry was present, so every count of it was right.
+    """
+    base = "alpha\nbravo\ncharlie\n"
+    branch = "alpha\nbravo EDITED\ncharlie\n"
+    out, notes = _reapply(base, _blocks(base, branch))
+
+    assert out == "alpha\nbravo EDITED\ncharlie\n"
+    assert out.count("bravo") == 1, f"both versions shipped:\n{out}"
+    assert not notes
+
+
+def test_an_edit_main_has_since_changed_is_reported_rather_than_resolved() -> None:
+    """When main no longer has the replaced line verbatim, adding is the least-bad option — loudly.
+
+    Deleting a fuzzy match would lose whatever main changed it to, which is somebody else's work.
+    So the replacement is added and the note says a duplicate is possible, because the alternative
+    is a tool that quietly picks one of two people's edits.
+    """
+    base = "alpha\nbravo\ncharlie\n"
+    branch = "alpha\nbravo EDITED BY ME\ncharlie\n"
+    main = "alpha\nbravo EDITED BY SOMEONE ELSE\ncharlie\n"
+    out, notes = _reapply(main, _blocks(base, branch))
+
+    assert "bravo EDITED BY ME" in out, "this branch's work must not be dropped"
+    assert "bravo EDITED BY SOMEONE ELSE" in out, "and neither must main's"
+    assert any("check for a duplicate" in note for note in notes), notes
+
+
+def test_a_pure_addition_still_adds_nothing_extra() -> None:
+    """The twin for the fix: teaching the tool to delete must not make it delete on an insert."""
+    base = "alpha\nbravo\n"
+    branch = "alpha\nNEW\nbravo\n"
+    out, notes = _reapply(base, _blocks(base, branch))
+
+    assert out == "alpha\nNEW\nbravo\n"
+    assert not notes
+
+
+def test_the_run_finder_is_verbatim_and_contiguous() -> None:
+    """A fuzzy match here would delete a line main changed for its own reasons."""
+    from sync_open_prs import _run_index  # noqa: PLC0415
+
+    lines = ["a\n", "b\n", "c\n", "d\n"]
+    assert _run_index(lines, ["b\n", "c\n"]) == 1
+    assert _run_index(lines, ["b\n", "d\n"]) is None, "not contiguous"
+    assert _run_index(lines, ["B\n"]) is None, "not verbatim"
+    assert _run_index(lines, []) is None, "an empty run is not a position"

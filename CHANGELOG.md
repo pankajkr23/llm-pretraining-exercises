@@ -12,6 +12,30 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The `PreToolUse` guard could not see a destructive git command, because those commands name no
+  path.** Every rule in the policy matches a path, and `bash_write_targets` finds paths — so
+  `git clean -fdx`, which deletes every gitignored file in this repository (every notebook, every
+  notebook builder, every requirements document), produced an **empty target list** and a clean
+  pass from a guard working exactly as designed. A new tracked `[destructive_git]` section refuses
+  six command shapes **by their flag**, checked per shell segment so bundling cannot hide one:
+  `clean -x/-X`, `stash -a/--all`, `reset --hard`, `push --force`, `tag -d`, `branch -D`. The flag
+  is the whole distinction and the safe halves stay allowed — plain `clean -fd` and `stash -u` do
+  not touch ignored files, and `branch -d` refuses unmerged work on its own. Clustered short flags
+  are read letter by letter, because `-fdx` is the form anyone actually types and a check comparing
+  arguments to `-x` never fires on it. What it does not catch is stated in the policy: a tag
+  checkout, and a flag built at runtime.
+
+- **`sync_open_prs.py` replayed an EDIT as an addition, so both versions of every reworded line
+  shipped.** `difflib` reports an in-place edit as a `replace` — lines out, lines in — and the tool
+  collected only the "in" half while only ever inserting. Nothing failed: the entry was present, so
+  every count of it was right. An edit is now replayed as an edit, deleting what it replaced when
+  `main` still has it verbatim; where `main` has since changed those lines the replacement is added
+  and the run **reports that a duplicate is possible**, because deleting a fuzzy match would throw
+  away somebody else's work to tidy up.
+
+- **The test suite for that tool carried its own copy of the diff it was testing.** A hand-maintained
+  `difflib` call with the same shape, which agreed with the tool right up until the tool changed.
+  Both now call one `changed_blocks`.
 - **Exercise 07's auditor graded a subset of the evidence and said so nowhere.** `evidence.py` read
   `results/measurements.json` and nothing else, so both published byte-recovery tables —
   `wrap_recovery.json` and `position_schemes.json` — were graded by **nothing**, and a reader
