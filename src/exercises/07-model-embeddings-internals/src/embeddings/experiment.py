@@ -235,7 +235,16 @@ class RunConfig:
         return hashlib.blake2b(payload, digest_size=6).hexdigest()
 
     def kronecker(self, positions: str) -> KroneckerConfig:
-        """The codec configuration for one arm's position scheme."""
+        """The codec configuration for one arm's position scheme.
+
+        **`reach` is deliberately not plumbed through, and that is a live trap if `spc` ever gets an
+        arm.** No `RunConfig` field sets it, so every arm built here takes `KroneckerConfig`'s
+        default — which is correct today, because `reach` is read by `spc` alone and no arm uses
+        `spc`. Adding one means adding the field here as well, or the run will quietly encode at a
+        reach nobody chose and `config_fingerprint` will not move when someone changes it. Plumbing
+        it now would be a field with no caller, which this exercise has already been wrong about
+        once.
+        """
         return KroneckerConfig(
             d_p=self.d_p,
             d_model=self.d_model,
