@@ -18,7 +18,7 @@ Configuration: `d_model` 256, 4 blocks, 4 heads, sequence 128, batch 8, vocabula
 | 4 | a packed boundary masked | **9.339547** masked against **9.341408** unmasked, 1 crossing dropped |
 | 5 | perplexity, untrained | **12,078.2** against a vocabulary of 10,001 |
 | 6 | tied against untied head | **2,560,256** against **0** added parameters |
-| 7 | peak memory, plain against chunked | **340.9 MiB** against **37.8 MiB** — **9.03x** |
+| 7 | peak memory, plain against chunked | **342.0 MiB** against **37.6 MiB** — **9.09x** |
 
 ### 1 · Shapes
 
@@ -111,13 +111,23 @@ is the honest price of Part 2.
 
 | path | peak above baseline | loss |
 | --- | --- | --- |
-| materialised | 340.94 MiB | 9.254968 |
-| chunked (128 rows) | 37.77 MiB | 9.254969 |
-| **ratio** | **9.03x** | losses **identical** |
+| materialised | 341.98 MiB | 9.254968 |
+| chunked (128 rows) | 37.61 MiB | 9.254969 |
+| softmax chunked only | 189.75 MiB | 9.254969 |
+| **ratio** | **9.09x** | losses **identical** |
+| ratio, softmax only | 1.80x | the same name, the wrong loop |
 
 4,096 rows against a 10,001 vocabulary — a logits tensor of
 156.27 MiB in fp32. Baseline (an interpreter with torch loaded, and
-subtracted from both) was 189.02 MiB.
+subtracted from both) was 189.86 MiB.
+
+**Chunking a softmax is not chunking a projection, and the gap is now measured.** Chunk the
+softmax over logits that already exist and the logits still exist, so the saving is only the
+intermediates: **1.80x**. Move the projection inside the loop and the
+full tensor never exists at all: **9.09x**. Quoting the first as the second
+understates the technique **5.0-fold**. Both this
+document and the page asserted that difference for weeks with a figure — 1.9x — that nothing had
+measured, under headings about quoting the wrong number.
 
 **The ratio is only meaningful because the losses are identical.** Chunking is not an approximation;
 a difference here would mean the two paths computed different things, not that one was cheaper.

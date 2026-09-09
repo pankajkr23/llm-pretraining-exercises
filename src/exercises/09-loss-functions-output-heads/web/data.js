@@ -56,16 +56,19 @@ export const M = {
     "vocab_size": 10001
   },
   "memory": {
-    "baseline_bytes": 198197248,
+    "baseline_bytes": 199081984,
     "chunk_size": 128,
-    "chunked_bytes": 39600128,
+    "chunked_bytes": 39436288,
     "chunked_loss": 9.254968643188477,
     "logits_bytes": 163856384,
     "losses_agree": true,
-    "materialised_bytes": 357498880,
+    "materialised_bytes": 358596608,
     "materialised_loss": 9.25496768951416,
-    "ratio": 9.027720314439387,
+    "ratio": 9.093061902783548,
     "rows": 4096,
+    "softmax_only_bytes": 198967296,
+    "softmax_only_loss": 9.254968643188477,
+    "softmax_only_ratio": 1.8022891963109355,
     "vocab_size": 10001
   },
   "padding": {
@@ -1200,6 +1203,14 @@ export const M = {
         5.557929039001465,
         5.495290756225586
       ]
+    },
+    "corpus": {
+      "corpus_tokens": 35941,
+      "epochs": 8.547341476308395,
+      "source": "corpus/agents-md-95c740e.txt \u2014 this repository's own AGENTS.md frozen at the revision the published run read, tokenized with exercise 02's BPE",
+      "source_bytes": 92021,
+      "source_digest": "sha256:19f24ce7db26e4f3dde1b3663b6edb19019d887f0188bdaca16ffad7087b0261",
+      "tokens_consumed": 307200
     },
     "correctShift": [
       9.393484115600586,

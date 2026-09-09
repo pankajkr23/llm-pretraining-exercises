@@ -276,3 +276,34 @@ def test_every_number_on_the_page_came_from_the_run(page):
     text = page.inner_text("main")
     for poison in ("undefined", "NaN", "[object Object]"):
         assert poison not in text, f"the page rendered {poison!r} — a figure came from nowhere"
+
+
+def test_no_prose_table_hides_a_cell_behind_its_own_scrollbar(page):
+    """A table of sentences must fit its container. A table of figures may scroll.
+
+    **The page-level overflow guard is blind to this and cannot be fixed to see it.** Every table
+    sits in a `.tablewrap` with `overflow-x: auto`, which is exactly what `AGENTS.md` asks for —
+    wide content scrolls in its own container rather than pushing the page sideways. So a cell
+    hidden inside that scroll is, to any generic check, indistinguishable from a wide table behaving
+    correctly.
+
+    It was not correct here. `table.grid` sets `white-space: nowrap` on every cell but the first,
+    which is right for a column of numbers and wrong for a column of prose: the corrections table
+    ran roughly two hundred characters past its right edge, and the column it took with it was the
+    one carrying the transferable lesson from each row. Marking a table `prose` says its cells wrap;
+    this asserts that they do.
+    """
+    offenders = page.evaluate("""() => {
+      const bad = [];
+      for (const t of document.querySelectorAll('table.prose')) {
+        const wrap = t.closest('.tablewrap');
+        if (wrap && t.scrollWidth > wrap.clientWidth + 1) {
+          bad.push(`${t.closest('section').id}: ${t.scrollWidth} > ${wrap.clientWidth}`);
+        }
+      }
+      return bad;
+    }""")
+    assert not offenders, (
+        f"a prose table is wider than its container, so part of every row is behind a scrollbar: "
+        f"{offenders}. Prose cells must wrap — check the `prose` class is on the table."
+    )

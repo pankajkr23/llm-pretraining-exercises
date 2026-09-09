@@ -29,12 +29,42 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   that a **single** crossing position, scoring **9.51** against a mean of **9.34**, moves it that
   far. The crossing's own loss is now recovered from the two means and published beside the count.
 
+- **`1.9×` was published as a measured figure and measured by nothing** — in the row of exercise
+  09's corrections table headed *"chunking a softmax is not chunking a projection"*, which is a row
+  about quoting one technique's number for another. The comparison is real and now has a third
+  measured path behind it: chunking the softmax over logits that already exist saves **1.80×**,
+  moving the projection inside the loop saves **9.09×**, so quoting the first as the second
+  understates the technique fivefold.
+
+- **A repo-wide guard enrolled a page for explaining why it does not use a component.** The
+  step-strip sweep detected participants by asking whether `_shared/explainer.js` appeared anywhere
+  in a page's JavaScript, so a comment saying *why that skeleton was deliberately not vendored* was
+  enough — and the sweep then failed for having no steps to measure. It matches the import
+  statement now, with a twin that plants both a mention and a multi-line import.
+
 - **Exercise 09's README stated a noise floor of `0.69` where the run measured `0.177`** — and
   stated the correct range forty-eight lines earlier, so the guard checking those figures passed on
   the correct copy while the wrong one shipped. The guard now asks the other question too: every
   ratio the README states must be one the run produced, and every number it offers *as* the spread
   must be the measured spread. It also no longer claims both head-share figures are in `RESULTS.md`;
   only one is.
+
+### Changed
+
+- **Exercise 09's page argues instead of enumerating.** It opens by showing two unlabelled loss
+  curves and asking which run you would ship — the reader commits, and only then learns the lower
+  one is the broken model. That is the page's thesis made into an action rather than a claim, and
+  it is the one interaction on the page. Every section is named for an object in the subject rather
+  than for its structural role (twelve eyebrows that read `What happened` · `How it works` ·
+  `What did not work` were the spine translated into English), the conclusion now closes all four
+  opening tiles on one through-line — **check what the number is counting** — and the corrections
+  section leads each row with the transferable shape rather than the local bug.
+
+- **`reproduce` reproduces the evidence, not the build.** It carried four shell commands under a
+  heading reading "Three commands", promised a regeneration test that does not exist, and said "the
+  two JSON files" where three are rendered. It now shows what actually makes a figure checkable —
+  which settings, which code, which commit, which text, which vocabulary, which machine. Commands
+  belong in the README, beside the code they run.
 
 ### Added
 

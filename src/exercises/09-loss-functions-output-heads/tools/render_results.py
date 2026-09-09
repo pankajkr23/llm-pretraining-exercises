@@ -129,7 +129,12 @@ def render(harness: dict, training: dict, sensitivity: dict) -> str:
             f"| {seven['materialised_loss']:.6f} |",
             f"| chunked ({seven['chunk_size']} rows) "
             f"| {seven['chunked_bytes'] / MEBIBYTE:.2f} MiB | {seven['chunked_loss']:.6f} |",
+            f"| softmax chunked only "
+            f"| {seven['softmax_only_bytes'] / MEBIBYTE:.2f} MiB "
+            f"| {seven['softmax_only_loss']:.6f} |",
             f"| **ratio** | **{seven['ratio']:.2f}x** | losses **{agree}** |",
+            f"| ratio, softmax only | {seven['softmax_only_ratio']:.2f}x "
+            f"| the same name, the wrong loop |",
         )
     )
 
@@ -239,6 +244,14 @@ is the honest price of Part 2.
 {seven["rows"]:,} rows against a {seven["vocab_size"]:,} vocabulary — a logits tensor of
 {seven["logits_bytes"] / MEBIBYTE:.2f} MiB in fp32. Baseline (an interpreter with torch loaded, and
 subtracted from both) was {seven["baseline_bytes"] / MEBIBYTE:.2f} MiB.
+
+**Chunking a softmax is not chunking a projection, and the gap is now measured.** Chunk the
+softmax over logits that already exist and the logits still exist, so the saving is only the
+intermediates: **{seven["softmax_only_ratio"]:.2f}x**. Move the projection inside the loop and the
+full tensor never exists at all: **{seven["ratio"]:.2f}x**. Quoting the first as the second
+understates the technique **{seven["ratio"] / seven["softmax_only_ratio"]:.1f}-fold**. Both this
+document and the page asserted that difference for weeks with a figure — 1.9x — that nothing had
+measured, under headings about quoting the wrong number.
 
 **The ratio is only meaningful because the losses are {agree}.** Chunking is not an approximation;
 a difference here would mean the two paths computed different things, not that one was cheaper.
@@ -359,6 +372,12 @@ def render_page_data(harness: dict, training: dict, sensitivity: dict) -> str:
             "brokenShift": training["broken_shift"],
             "summary": summary,
             "run": run,
+            # Beside `run`, not inside it. It used to live in `training["config"]` and the page
+            # reached it as `M.training.run.corpus`; moving it to the top of the result file for
+            # consistency across the three of them silently broke three sites on the page, which
+            # threw and stopped building half way down. Nothing failed -- which is why the browser
+            # fixture now fails on any page error.
+            "corpus": training["corpus"],
         },
         "sensitivity": sensitivity,
     }
