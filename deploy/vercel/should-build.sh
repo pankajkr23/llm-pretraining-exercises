@@ -29,11 +29,32 @@ PATHS=(
   ':(glob)src/exercises/*/NOTICE'
 )
 
-BEFORE="${1:-${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}}"
 AFTER="${2:-HEAD}"
+BEFORE="${1:-${VERCEL_GIT_PREVIOUS_SHA:-}}"
 
-# A shallow clone may not have the parent. Build rather than guess: a needless deployment is a
-# small waste, a skipped one is a preview that silently does not reflect the branch.
+# **An empty VERCEL_GIT_PREVIOUS_SHA means "this branch has never deployed", and the only safe
+# answer to that is BUILD.** It used to fall back to `HEAD^`, which asks a different question:
+# "what did the newest commit change?" — and a branch whose tip happens to be a changelog or a
+# queue entry then gets no preview at all, however much of the site the commits underneath it
+# rewrote.
+#
+# It is self-reinforcing, which is what makes it expensive rather than annoying: a skipped build
+# never becomes a successful deployment, so the variable stays empty, so the next push asks the
+# same wrong question. A branch can push all day and never once deploy.
+#
+# That is not hypothetical. Exercise 09's page was rebuilt across two commits, and the two commits
+# after them were documentation; both pushes skipped, and the reviewer opened a cancelled
+# deployment. `AGENTS.md` had this recorded as live and unfixed before it happened again.
+#
+# The reasoning is the same one the shallow-clone branch below already uses, applied to the case it
+# did not cover: a needless deployment is a small waste, a skipped one is a preview that silently
+# does not reflect the branch.
+if [ -z "$BEFORE" ]; then
+  echo "should-build: no previous successful deployment for this branch — building"
+  exit 1
+fi
+
+# A shallow clone may not have the ref. Build rather than guess, for the same reason.
 if ! git rev-parse --verify --quiet "$BEFORE" >/dev/null; then
   echo "should-build: $BEFORE is not available (shallow clone?) — building"
   exit 1
