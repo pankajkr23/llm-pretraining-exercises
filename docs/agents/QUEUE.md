@@ -1301,7 +1301,7 @@ predates the harness — so it is logged as what it was.
                           entirely because the filesystem answers the question. docs/DESIGN.md now
                           carries the rule and names the misreading that produces it
 ```
-2026-09-10  tooling       PR opened: the backup tripwire only cries for files it was protecting.
+2026-09-10  tooling       #178 opened: the backup tripwire only cries for files it was protecting.
                           HANDOFF item 6 is 🤝 because removing paths from an append-only store is
                           PK's call -- but the ALARM is mine, and it was wrong. --verify treated any
                           store file with no counterpart in the checkout as a loss, so every run
