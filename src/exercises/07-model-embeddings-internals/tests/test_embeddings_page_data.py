@@ -69,3 +69,40 @@ def test_the_comparison_would_notice_a_changed_number() -> None:
     broken = json.loads(json.dumps(payload))
     broken["v1_arithmetic"]["v1_total"] += 1
     assert broken != json.loads(MEASUREMENTS.read_text(encoding="utf-8"))
+
+
+def test_a_block_measured_at_a_different_seed_count_says_so_where_it_is_shown() -> None:
+    """The framing "5 seeds, paired" is stated once and read everywhere, so an exception must be
+    stated where the exception is.
+
+    `bucket_sweep` ran **three** seeds while every other comparison here ran five, and that lived
+    only inside a free-text `source` string — `"k2/ng_sweep.py, 3 seeds"` — which no document reads
+    and no reader sees. A table under a five-seed framing is not neutral about how many seeds
+    produced it: it inherits the claim.
+
+    The fix is the one `scale_cost.d_model` already took: promote the value out of the prose string
+    into a real key, so the page can render it instead of a reader assuming it. This asserts the key
+    exists, that it disagrees with `setup.seeds` (or the exception has gone away and this guard
+    should go with it), and that **both** documents state it.
+    """
+    measurements = json.loads(MEASUREMENTS.read_text(encoding="utf-8"))
+    sweep = measurements["bucket_sweep"]
+    assert "seeds" in sweep, (
+        "bucket_sweep records its seed count only inside its free-text `source` string, where no "
+        "document can render it and no reader will see it"
+    )
+    assert sweep["seeds"] != measurements["setup"]["seeds"], (
+        "the sweep now uses the same seed count as everything else, so there is no exception left "
+        "to state -- delete this guard and the sentences it protects rather than leaving a hedge "
+        "that has outlived its reason"
+    )
+
+    page = (EXERCISE / "web" / "chapters.js").read_text(encoding="utf-8")
+    assert "M.bucket_sweep.seeds" in page, (
+        "the page shows the sweep's table without saying how many seeds produced it, under a "
+        "framing that says five -- and it must READ the number, never type it"
+    )
+    readme = (EXERCISE / "README.md").read_text(encoding="utf-8")
+    assert "three seeds" in readme.lower(), (
+        "the README shows the same table and inherits the same framing; say it there too"
+    )

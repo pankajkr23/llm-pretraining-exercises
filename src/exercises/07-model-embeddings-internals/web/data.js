@@ -396,6 +396,7 @@ export const M = Object.freeze({
   },
   "bucket_sweep": {
     "source": "k2/ng_sweep.py, 3 seeds",
+    "seeds": 3,
     "rows": [
       {
         "buckets": 128,

@@ -799,7 +799,10 @@ function chapterResults(M) {
        Shrinking the buckets until memorising is impossible answers it, and the answer is <b>both</b>.
        The gain survives at 128 buckets, where every bucket is shared about
        ${M.bucket_sweep.rows[0].v_over_m.toFixed(0)} ways, so there is real structure — but it also
-       grows with the bucket count, so capacity is doing part of the work.`
+       grows with the bucket count, so capacity is doing part of the work.
+       <b>This sweep ran ${M.bucket_sweep.seeds} seeds</b>, where every other comparison on this page
+       ran ${M.setup.seeds}: enough to see the trend across the five rows, not enough to separate two
+       neighbouring ones.`
     )
   );
   s.append(

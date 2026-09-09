@@ -488,7 +488,13 @@ already vanishing. The n-gram block injects information the additive code never 
 
 At 8,192 buckets against 10,002 tokens the n-gram signature is nearly a per-token fingerprint, which
 is exactly what a lookup table would give — and a lookup table is what this architecture exists to
-avoid. Sweeping the bucket count separates the two:
+avoid. Sweeping the bucket count separates the two.
+
+**This sweep is three seeds, not the five every other comparison here uses**, and the difference is
+worth stating rather than leaving a reader to carry the framing over from the section above. Three
+seeds is enough to see a monotone trend across five bucket counts and not enough to separate two
+adjacent rows: read the *shape* of this table, and take the size of any single gap from the
+five-seed arm comparison instead.
 
 | buckets `m` | V/m | vs wrap-only | **vs v1** |
 | ---: | ---: | ---: | ---: |
