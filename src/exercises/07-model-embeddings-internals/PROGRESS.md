@@ -80,6 +80,25 @@ that said otherwise outlived them by two releases.
 
 ## Done
 
+**A fourth position scheme, `spc`, measured but never trained.** Every byte position gets a
+*direction* in one `d_p`-dimensional space instead of its own 256-slot block, so the reach is
+unlimited while `D = 256 · d_p` does not move and nothing is folded. It is the only scheme here that
+recovers a token longer than `d_p`. Two things to carry forward. **It has no training arm**, so it
+makes no claim against `wrap`'s −0.212 nats, and the codec docstring says so where someone would
+otherwise assume it. And **`reach` is a config field, not a batch property** — the first draft sized
+the frame to the token being encoded and to the batch's longest token, which gave the same token two
+different codes depending on its neighbours, with nothing failing.
+
+**A fair comparison of the position schemes, after an unfair one.** `tools/measure_position_schemes.py`
+asks every scheme the same question — the *complete* token — and reports beside it the different
+question each scheme's own limit invites. The first table I produced mixed the two: `onehot` was
+scored on the bytes it keeps and `spc` on the whole token, so `onehot` read as doing well at a
+length where it cannot represent the token at all.
+
+**The README's byte-recovery numbers are checked against the evidence for the first time.**
+`tests/test_embeddings_recovery_tables.py`. It went red on its first real run: **94.67%**, published
+as the vocabulary-wide recovery rate at `d_p = 32`, is in no evidence file in this exercise.
+
 **The exercise skeleton and package.** Six modules — `config`, `codec`, `decode`, `collisions`,
 `budget` (pure numpy) and `heads` (torch, behind an `importorskip`). 32 tests pass. `ruff` clean.
 Registered in the root README table, the CI `rest` shard, and `OPTIONAL_DEPENDENCY_GATES`.

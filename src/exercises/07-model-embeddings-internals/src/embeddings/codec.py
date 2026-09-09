@@ -1,4 +1,4 @@
-"""The forward code, three position schemes, and the analytic inverse of z-normalisation.
+"""The forward code, four position schemes, and the analytic inverse of z-normalisation.
 
 v1's codec, Eq. 1:
 
@@ -12,7 +12,7 @@ non-zero coordinates out of 8,192, so the code is not merely sparse but BLOCK-on
 `(d_p, 256)` it is a stack of one-hot rows. It *is* the byte string, which is why `decode` can
 invert it exactly rather than approximately.
 
-Three position schemes, and the choice between them is measured rather than argued:
+Four position schemes, and the choice between them is measured rather than argued:
 
     onehot   v1's. Orthogonal, trains well, and DISCARDS every byte past `d_p` -- which makes 407
              of the repo's 10,000 tokens permanently identical (see `collisions`).
@@ -24,9 +24,22 @@ Three position schemes, and the choice between them is measured rather than argu
     fourier  RoPE-style geometric frequencies. Length-free and collision-free, but the position
              vectors are not orthogonal and it trained measurably WORSE than doing nothing. Kept
              because a negative result that is deleted gets re-discovered.
+    spc      a shared position code. Every position gets its own DIRECTION in one `d_p`-dimensional
+             space rather than its own 256-slot block, so the reach is unlimited while `D` stays
+             `256 * d_p` -- and unlike `wrap` nothing is folded, so position is still recoverable
+             past `d_p`. It is the only scheme here that is both length-free and decodable position
+             by position. What it costs is stated in `position_frame` and measured by
+             `tools/measure_position_schemes.py`; do not take the property on the argument alone.
+
+             **It is offered and NEVER TRAINED.** `experiment.ARMS` has no `spc` arm, so every
+             number published about it is a property of the code rather than of a model, and it
+             makes no claim against `wrap`'s measured loss. `heads.py` builds its sparse code matrix
+             through `atoms`, so an arm would need no new head code -- only the patience for a code
+             roughly `d_p` times denser than one-hot's.
 """
 
 from dataclasses import dataclass
+from functools import lru_cache
 
 import numpy as np
 
@@ -96,6 +109,23 @@ def atoms(
         uniq, inv = np.unique(idx, return_inverse=True)
         return uniq, np.bincount(inv, weights=val, minlength=uniq.size)
 
+    if cfg.positions == "spc":
+        if n > cfg.reach:
+            raise ValueError(
+                f"a {n}-byte token does not fit `spc` reach {cfg.reach}. Raise `reach` rather than "
+                "letting the code silently drop the tail: dropping it is what `onehot` does, and "
+                "not dropping it is the entire claim of this scheme."
+            )
+        # The frame is `cfg.reach` rows and is SLICED, never rebuilt at `n`. Rebuilding it per
+        # batch gives the same token two different codes depending on its neighbours, because the
+        # directions are optimised jointly for exactly the number of positions asked for.
+        frame = (position_frame(d_p, cfg.reach) if table is None else table)[:n]
+        grid = np.zeros((BYTE_VALUES, d_p))
+        np.add.at(grid, np.frombuffer(bs, dtype=np.uint8), frame)
+        flat = (grid / np.sqrt(n)).reshape(-1)
+        nz = np.flatnonzero(flat)
+        return nz, flat[nz]
+
     feats = fourier_positions(d_p, n) if table is None else table[:n]
     # Byte-major here: the code is no longer one-hot per slot, so the block layout buys nothing.
     grid = np.zeros((BYTE_VALUES, d_p))
@@ -103,6 +133,78 @@ def atoms(
     flat = (grid / np.sqrt(n)).reshape(-1)
     nz = np.flatnonzero(flat)
     return nz, flat[nz]
+
+
+SPC_SEED = 20260909
+"""Fixed seed for the shared-space position frame. Frozen for the same reason `_WRAP_SEED` is: a
+frame recomputed differently at decode time is a frame that will not match the one that trained."""
+
+_REPULSION_STEPS = 4000
+"""How long the frame is pushed apart. Deterministic, and cheap — the frame is tiny and cached."""
+
+
+@lru_cache(maxsize=8)
+def position_frame(d_p: int, reach: int, seed: int = SPC_SEED) -> np.ndarray:
+    """`(reach, d_p)` unit vectors, one per byte position, pushed as far apart as they will go.
+
+    **This is the whole idea of `spc`.** `onehot` gives position `p` its own private block of 256
+    slots, so `D` grows with the reach and position `d_p + 1` does not exist at all. Here a position
+    gets a *direction* in a shared `d_p`-dimensional space instead: there are unlimited directions,
+    so there is no length limit, and `D = 256 * d_p` does not change.
+
+    The price is that directions cannot be mutually perpendicular once `reach > d_p`, and how well
+    the code tells one position from another is `1 - mu`, where `mu` is the largest similarity
+    between any two of them. `welch_bound` gives the smallest `mu` any set of that many directions
+    could achieve, so the loss of order-discrimination is bounded before anything is measured —
+    which is the reason to believe the scheme in advance rather than only afterwards.
+
+    Repulsion, not sampling: a random frame's `mu` is far above the bound, and pushing the pairs
+    apart closes most of the gap. `tools/measure_position_schemes.py` prints the three numbers side
+    by side — random, repelled, and the bound — because which of them a reader needs depends on
+    `d_p` and `reach`, and a figure written here would be true of one pair of them.
+
+    The optimisation is plain gradient descent on the squared off-diagonal Gram, seeded and
+    deterministic, so the frame is reproducible from the seed alone and never needs storing. That
+    is also why `reach` is a config field rather than a batch property: the directions are optimised
+    JOINTLY for exactly the number asked for, so a frame built for 64 positions is not the first 64
+    rows of one built for 128.
+    """
+    rng = np.random.default_rng(seed)
+    g = rng.standard_normal((max(reach, 1), d_p))
+    g /= np.linalg.norm(g, axis=1, keepdims=True)
+    if reach > 1:
+        eye = np.eye(reach)
+        step = 0.5 / reach
+        for _ in range(_REPULSION_STEPS):
+            gram = g @ g.T
+            off = gram - eye * gram.diagonal()
+            g -= step * 4.0 * (off**3) @ g
+            g /= np.linalg.norm(g, axis=1, keepdims=True)
+    return g
+
+
+def frame_coherence(g: np.ndarray) -> float:
+    """The largest similarity between two different position directions — the `mu` above.
+
+    One number, and it is the one that decides everything: by the pair-confusion argument, two
+    tokens differing by a swap of positions `p` and `q` differ in code by `4(1 - |rho_pq|)`, so the
+    code's worst case is set by the worst pair.
+    """
+    normalised = g / np.linalg.norm(g, axis=1, keepdims=True)
+    gram = np.abs(normalised @ normalised.T)
+    np.fill_diagonal(gram, 0.0)
+    return float(gram.max()) if gram.size > 1 else 0.0
+
+
+def welch_bound(reach: int, d_p: int) -> float:
+    """The smallest coherence any `reach` unit vectors in `d_p` dimensions can achieve.
+
+    Reported beside the measured coherence so a reader can see how much room is left, rather than
+    being told a number is "good".
+    """
+    if reach <= d_p:
+        return 0.0
+    return float(np.sqrt((reach - d_p) / (d_p * (reach - 1))))
 
 
 def code(bs: bytes, cfg: KroneckerConfig) -> np.ndarray:
@@ -138,7 +240,8 @@ class Encoded:
 
     Attributes:
         h: `(V, d_model)` projected embeddings.
-        lengths: Code atoms per token — `min(len(bs), d_p)` for `onehot`, `len(bs)` for `wrap`.
+        lengths: Byte POSITIONS per token — `min(len(bs), d_p)` for `onehot`, `len(bs)` otherwise.
+            Not the atom count: under `spc` they differ by roughly a factor of `d_p`.
         sum_v: Sum of the code's non-zero values, per token.
         sum_v2: Sum of their squares, per token.
     """
@@ -152,9 +255,13 @@ class Encoded:
 def _position_count(bs: bytes, cfg: KroneckerConfig) -> int:
     """How many byte positions the code carries — the `L` in the `1/sqrt(L)` scale.
 
-    `min(len(bs), d_p)` under `onehot`, which truncates; `len(bs)` under `wrap` and `fourier`, which
-    do not. This is the count `Encoded.lengths` documents itself as holding, and it is *not* the
+    `min(len(bs), d_p)` under `onehot`, which truncates; `len(bs)` under every other scheme, none of
+    which does. This is the count `Encoded.lengths` documents itself as holding, and it is *not* the
     number of non-zero atoms: merging can reduce that, and the scale was never applied per atom.
+
+    Under `spc` the gap between the two is enormous rather than incidental — a position writes a
+    whole `d_p`-vector, so a 5-byte token has 5 positions and around 160 non-zeros — which is why
+    the decoder reads `lengths` and never the atom count.
     """
     return min(len(bs), cfg.d_p) if cfg.positions == "onehot" else len(bs)
 
@@ -222,4 +329,6 @@ def _table_for(byte_strings: list[bytes], cfg: KroneckerConfig) -> np.ndarray | 
     max_len = max((len(b) for b in byte_strings), default=1)
     if cfg.positions == "wrap":
         return wrap_signs(max_len // cfg.d_p + 1, cfg.d_p)
+    if cfg.positions == "spc":
+        return position_frame(cfg.d_p, cfg.reach)
     return fourier_positions(cfg.d_p, max(max_len, 1))

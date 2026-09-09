@@ -109,7 +109,7 @@ def test_the_wrap_dictionary_is_signed_and_an_unsigned_one_fails(sample, project
     from embeddings import decode as decode_module
 
     short = [t for t in sample if 1 <= len(t) <= WRAP.d_p]
-    signed = decode_module._dictionary_for(projection, WRAP)
+    _, signed = decode_module._dictionary_for(projection, WRAP)
     assert not np.allclose(signed, projection), "the wrap dictionary is not signed at all"
 
     enc = codec.encode(short, projection, WRAP)
@@ -127,4 +127,99 @@ def test_the_wrap_dictionary_is_signed_and_an_unsigned_one_fails(sample, project
     assert rate < 0.9, (
         f"an unsigned dictionary recovered {rate:.2%} of wrapped tokens, so this test is not "
         "measuring what it claims and the sign-awareness above proves nothing"
+    )
+
+
+# --- spc: decoding from one shared space ------------------------------------------------------
+
+SPC = KroneckerConfig(d_p=32, d_model=384, positions="spc", reach=128, n_buckets=0)
+
+
+def test_spc_recovers_a_token_that_neither_onehot_nor_wrap_can_represent(projection):
+    """The property the scheme exists for, asserted against the two schemes it is compared with.
+
+    A 40-byte token is past `d_p = 32`. `onehot` never encoded bytes 32-39 at all, and `wrap` folded
+    them onto slots 0-7 where they are summed with bytes 0-7 — so neither can return the token, for
+    reasons that are properties of the code rather than of any decoder. `spc` gave each of the 40
+    positions its own direction, so the target is still a sum of 40 identifiable atoms.
+    """
+    token = bytes((b % 251) + 1 for b in range(40))
+    recovered = {}
+    for scheme in ("onehot", "wrap", "spc"):
+        cfg = KroneckerConfig(d_p=32, d_model=384, positions=scheme, reach=128, n_buckets=0)
+        enc = codec.encode([token], projection, cfg)
+        target = codec.targets_from_h(enc, projection, cfg)
+        guess, residual = decode.recover(target, enc.lengths, projection, cfg)
+        recovered[scheme] = guess.shape[1] >= len(token) and bool(
+            (guess[0, : len(token)] == np.frombuffer(token, dtype=np.uint8)).all()
+        )
+
+    assert recovered["spc"], "spc must return all 40 bytes — this is the whole claim"
+    assert not recovered["onehot"], "onehot has no slot for byte 32 and cannot have decoded it"
+    assert not recovered["wrap"], "wrap folded bytes 32-39 onto slots 0-7 and cannot separate them"
+
+
+def test_the_spc_dictionary_is_not_the_projection_and_the_projection_does_not_work(projection):
+    """The twin for the contraction, matching the one that guards the wrap signs.
+
+    Under `spc` a position writes into EVERY coordinate of the shared space, so the atom a decoder
+    must correlate against is the contraction of the position's direction with `W` — not a row of
+    `W`. Correlating against `W` directly is not a near miss; it is a different dictionary, and
+    this asserts it fails rather than merely differing.
+    """
+    tokens = [bytes((i + b) % 251 + 1 for b in range(20)) for i in range(8)]
+    enc = codec.encode(tokens, projection, SPC)
+    target = codec.targets_from_h(enc, projection, SPC)
+    slots, dictionary = decode._dictionary_for(projection, SPC, reach=int(enc.lengths.max()))
+
+    assert slots == int(enc.lengths.max()), "under spc a slot is a byte POSITION, not a coordinate"
+    assert dictionary.shape != projection.shape, "the dictionary is built, not reused"
+
+    right = decode.recover(target, enc.lengths, projection, SPC)[0]
+    truth = np.array([np.frombuffer(t, dtype=np.uint8) for t in tokens])
+    assert (right[:, :20] == truth).all(), "the contracted dictionary must decode"
+
+    wrong = decode.coordinate_descent(
+        target,
+        enc.lengths,
+        projection,
+        SPC.d_p,
+        decode.block_omp(target, enc.lengths, projection, SPC.d_p),
+        sweeps=20,
+    )[0]
+    assert not (wrong[:, :20] == truth).all(), (
+        "decoding against W's own rows must FAIL, or the contraction is buying nothing and this "
+        "guard is watching an implementation detail rather than a property"
+    )
+
+
+def test_the_spc_residual_still_certifies(projection):
+    """A zero residual must mean the bytes are right, and a wrong answer must not get one.
+
+    The certificate is what lets a failure be read as a search failure rather than a code failure,
+    and it is computed from the dictionary — so a dictionary bug would make it certify the wrong
+    answer, silently, in the one place the exercise relies on not needing the ground truth.
+
+    **Agreement alone is not the property.** The first version of this test asserted only that the
+    certificate and the ground truth agree token by token, and it stayed GREEN when the decoder was
+    pointed at the wrong dictionary entirely: every answer was wrong and every residual said so, so
+    they agreed perfectly. A guard that passes when everything works and when nothing does is
+    measuring nothing. Both halves are asserted separately now: the right answers certify, and a
+    deliberately wrong one does not.
+    """
+    tokens = [bytes((i * 7 + b) % 251 + 1 for b in range(30)) for i in range(12)]
+    enc = codec.encode(tokens, projection, SPC)
+    target = codec.targets_from_h(enc, projection, SPC)
+    guess, residual = decode.recover(target, enc.lengths, projection, SPC)
+    truth = np.array([np.frombuffer(t, dtype=np.uint8) for t in tokens])
+
+    exact = (guess[:, :30] == truth).all(axis=1)
+    assert exact.all(), "30-byte tokens are well inside the reach and must decode"
+    assert (residual < 1e-8).all(), "and the certificate must say so without being told"
+
+    slots, dictionary = decode._dictionary_for(projection, SPC, reach=int(enc.lengths.max()))
+    wrong = guess.copy()
+    wrong[:, 0] = (wrong[:, 0] + 1) % 256
+    assert (decode.objective(wrong, target, dictionary, slots) > 1e-8).all(), (
+        "one byte changed must move the residual off zero, or the certificate certifies nothing"
     )

@@ -1,0 +1,131 @@
+{
+ "what": "Round-trip byte recovery for onehot, wrap and spc positions on the frozen vocabulary, by byte-length band, reporting BOTH the complete-token question and the bytes-the-scheme-represents question. Pure arithmetic: no training, no corpus.",
+ "why": "The first comparison asked each scheme a different question -- onehot about the bytes it keeps, spc about the whole token -- and so reported onehot as recovering tokens it cannot represent.",
+ "limits": [
+  "W is a random Gaussian projection with unit-norm rows at one seed. A different seed moves the percentages; the ORDERING and the by-construction zeros are the claim.",
+  "fourier is not measured. Its code is not block-one-hot, decode.recover refuses it by design, and inventing a decoder for it here would compare two harnesses.",
+  "This is a property of the CODE, not of a trained model. It says nothing about which scheme trains to a lower loss -- on that, wrap still has the only measured win.",
+  "Tokens longer than 128 bytes are outside every band. The longest in this vocabulary is 121 bytes.",
+  "spc's reach is a declared constant, so its cost is paid whether or not any token is that long: the decoder's dictionary is reach x 256 x d_model."
+ ],
+ "config": {
+  "d_p": 32,
+  "d_model": 768,
+  "reach": 128,
+  "seed": 0,
+  "sample": 0
+ },
+ "frame": {
+  "reach": 128,
+  "d_p": 32,
+  "coherence": 0.24653391199806735,
+  "coherence_before_repulsion": 0.6456938827485821,
+  "welch_bound": 0.15369465587356798
+ },
+ "vocabulary": {
+  "tokens": 10000,
+  "longest_bytes": 121,
+  "digest": "sha256:ad536a37448b7482a9f699ae52d3e5dae9581292d9b71095aa7c544340a3f6ec"
+ },
+ "rows": [
+  {
+   "band": "1-32",
+   "low": 1,
+   "high": 32,
+   "tokens": 9467,
+   "onehot": {
+    "full": 1.0,
+    "repr": 1.0,
+    "certified": 1.0,
+    "searchable": NaN,
+    "atoms_per_token": 8.16974754410056
+   },
+   "wrap": {
+    "full": 1.0,
+    "repr": 1.0,
+    "certified": 1.0,
+    "searchable": NaN,
+    "atoms_per_token": 8.16974754410056
+   },
+   "spc": {
+    "full": 1.0,
+    "repr": 1.0,
+    "certified": 1.0,
+    "searchable": NaN,
+    "atoms_per_token": 189.40741523185804
+   }
+  },
+  {
+   "band": "33-64",
+   "low": 33,
+   "high": 64,
+   "tokens": 465,
+   "onehot": {
+    "full": 0.0,
+    "repr": 1.0,
+    "certified": 1.0,
+    "searchable": NaN,
+    "atoms_per_token": 32.0
+   },
+   "wrap": {
+    "full": 0.0,
+    "repr": 0.15053763440860216,
+    "certified": 0.0,
+    "searchable": NaN,
+    "atoms_per_token": 44.526881720430104
+   },
+   "spc": {
+    "full": 0.9935483870967742,
+    "repr": 0.9935483870967742,
+    "certified": 0.9935483870967742,
+    "searchable": 1.0,
+    "atoms_per_token": 760.1548387096774
+   }
+  },
+  {
+   "band": "65-128",
+   "low": 65,
+   "high": 128,
+   "tokens": 68,
+   "onehot": {
+    "full": 0.0,
+    "repr": 1.0,
+    "certified": 1.0,
+    "searchable": NaN,
+    "atoms_per_token": 32.0
+   },
+   "wrap": {
+    "full": 0.0,
+    "repr": 0.0,
+    "certified": 0.0,
+    "searchable": NaN,
+    "atoms_per_token": 73.6470588235294
+   },
+   "spc": {
+    "full": 0.8382352941176471,
+    "repr": 0.8382352941176471,
+    "certified": 0.8382352941176471,
+    "searchable": 1.0,
+    "atoms_per_token": 1084.7058823529412
+   }
+  }
+ ],
+ "provenance": {
+  "code_digest": "sha256:c3bee49bca55596390677a1528ee54f00472a726f9c3d74bf69c6c6692ec091e",
+  "git_sha": "4d9fd35482657414b2a95d7bcdae2f0a50e1583e",
+  "environment": {
+   "python": "3.12.13",
+   "torch": "2.13.0",
+   "numpy": "2.5.2",
+   "platform": "macOS-26.6.2-arm64-arm-64bit",
+   "machine": "arm64",
+   "torch_threads": 12,
+   "omp_num_threads": "unset",
+   "device": "cpu",
+   "cuda_available": false,
+   "mps_built": true,
+   "mps_available": false,
+   "mps_unavailable_but_built": true
+  }
+ }
+}

@@ -21,6 +21,7 @@ which machine or which text. That is why its losses can be read but not aimed at
 | `lane_sensitivity.json` | `552874a44e3c` | `8398f0412e8f` | mps | — |
 | `measurements.json` | `—` | `—` | — | — |
 | `parallel_text.json` | `64d953fbf8b6` | `b201f1ec5350` | mps | — |
+| `position_schemes.json` | `—` | `4d9fd3548265` | cpu | — |
 | `rerun.json` | `01e963d37d3b` | `8398f0412e8f` | cpu | 500 x 5 |
 | `unk_confound.json` | `de99fd2d2f2f` | `49d599b3e245` | mps | — |
 | `wrap_recovery.json` | `—` | `cb5f514a2272` | cpu | — |
@@ -30,6 +31,7 @@ which machine or which text. That is why its losses can be read but not aimed at
 | `lane_sensitivity.json` | **3 corpora compared** — indic, web, code | — | — | — |
 | `measurements.json` | — | — | — | — |
 | `parallel_text.json` | **2 corpora compared** — parallel, ordinary | — | — | — |
+| `position_schemes.json` | — | — | — | — |
 | `rerun.json` | data/corpus (exercise 06's fetched lanes) | 11,781,888 | 0.209% | 0.0217 |
 | `unk_confound.json` | **2 corpora compared** — confounded, clean | — | — | — |
 | `wrap_recovery.json` | — | — | — | — |
@@ -49,6 +51,13 @@ of this index meets the caveat at the same time as the number.
 - The overlap measurement counts shared byte n-grams, which is a proxy for shared content and not a measurement of translation. Two unrelated documents about the same subject would score high on it too.
 - Both sides are cut into the same number of pieces of the same total size, because the share of shared n-grams falls as a corpus grows for reasons unrelated to translation. The first version of this measurement expressed each corpus as one piece and reported 0.00% for the ordinary one -- true by construction, and indistinguishable from a decisive result.
 - The word 'parallel' is loose. These are not translations -- nobody rendered the English article into Telugu sentence by sentence. They are four articles about one subject, written independently in four languages, which is a COMPARABLE corpus rather than a parallel one.
+
+**`position_schemes.json`**
+- W is a random Gaussian projection with unit-norm rows at one seed. A different seed moves the percentages; the ORDERING and the by-construction zeros are the claim.
+- fourier is not measured. Its code is not block-one-hot, decode.recover refuses it by design, and inventing a decoder for it here would compare two harnesses.
+- This is a property of the CODE, not of a trained model. It says nothing about which scheme trains to a lower loss -- on that, wrap still has the only measured win.
+- Tokens longer than 128 bytes are outside every band. The longest in this vocabulary is 121 bytes.
+- spc's reach is a declared constant, so its cost is paid whether or not any token is that long: the decoder's dictionary is reach x 256 x d_model.
 
 **`wrap_recovery.json`**
 - W is a random Gaussian projection with unit-norm rows at one seed, so a different seed moves these percentages. The ORDERING of the two variants is the claim.

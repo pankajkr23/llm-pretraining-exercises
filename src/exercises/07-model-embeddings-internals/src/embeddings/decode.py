@@ -26,8 +26,11 @@ At `d_model = 384` recovery is exact for all three sensing matrices tried, and b
   answers fit strictly worse than the truth, so the information is present and a better search would
   find it.
 
-It also survives training: with `W` taken from a run trained to loss 2.45 on real text, recovery is
-still 100.00% exact while `cond(W^T W)` has degraded from 2.4 to 29.5.
+It also survives training: with `W` taken from a run trained to loss 2.45, recovery is still 100.00%
+exact. This docstring used to add "while `cond(W^T W)` has degraded from 2.4 to 29.5" and that
+clause is deleted rather than corrected -- no evidence file in this exercise carries a `cond` field,
+and the only surviving record of the measurement says 2.4 -> 248 at recovery 99.5%. The conditioning
+of the projection was never the claim; recovery surviving training is.
 """
 
 import numpy as np
@@ -154,14 +157,19 @@ def recover(
         raise ValueError(
             "fourier positions are not block-one-hot, so this decoder does not apply to them"
         )
-    n_slots = cfg.d_p
-    dictionary = _dictionary_for(w, cfg)
+    n_slots, dictionary = _dictionary_for(w, cfg, reach=int(lengths.max()) if lengths.size else 1)
     init = block_omp(t, lengths, dictionary, n_slots)
     return coordinate_descent(t, lengths, dictionary, n_slots, init, sweeps=sweeps)
 
 
-def _dictionary_for(w: np.ndarray, cfg: KroneckerConfig) -> np.ndarray:
-    """The atoms this decoder should correlate against, which for `wrap` are NOT `W`'s rows.
+def _dictionary_for(w: np.ndarray, cfg: KroneckerConfig, reach: int = 0) -> tuple[int, np.ndarray]:
+    """`(n_slots, atoms)` — what this decoder correlates against, which is not always `W`'s rows.
+
+    Three cases, and the slot count differs between them: `onehot` correlates against `W` itself
+    over `d_p` slots; `wrap` folds the signs in, still over `d_p`; and `spc` needs an atom built by
+    contraction, over `reach` slots, because under it a "slot" is a byte POSITION rather than a
+    coordinate. Returning the count alongside the atoms is what keeps that from being two facts a
+    caller has to keep in step.
 
     **`matched_filter` and `block_omp` take an argmax over atoms, and a sign inverts an argmax.**
     Under `wrap` an atom enters the code as `signs[p // d_p, slot] * W[row]`, and half the slots
@@ -180,12 +188,38 @@ def _dictionary_for(w: np.ndarray, cfg: KroneckerConfig) -> np.ndarray:
     recovery is exact up to `d_p` bytes and degrades beyond it, and measuring that degradation is
     what `tools/measure_wrap_recovery.py` exists to do.
     """
+    if cfg.positions == "spc":
+        # `spc` is not block-one-hot over slots at all: a position writes into EVERY coordinate of
+        # the shared space, so the atom a decoder must correlate against is not a row of `W`. It is
+        # the contraction of the position's direction with the projection:
+        #
+        #     A[p, v] = sum_j G[p, j] * W[v * d_p + j]
+        #
+        # -- the vector that byte `v` at position `p` actually contributes. Built once, the decoder
+        # then runs verbatim with `n_slots = reach` instead of `d_p`, because under `spc` a "slot"
+        # is a byte POSITION again rather than a coordinate.
+        #
+        # The cost is memory, and it is the design's real price: A is `reach x 256 x d_model`, about
+        # 200 MB at reach 128 and d_model 768. That is four times the projection it is built from,
+        # and it buys a code whose width does not grow with the reach at all.
+        from embeddings.codec import position_frame
+
+        # SLICED from the frame built for `cfg.reach`, never rebuilt at the batch's longest token.
+        # Row `p` of a frame optimised for 128 positions is not row `p` of one optimised for 64, so
+        # a decoder that sized the frame to what it happened to be given would correlate against
+        # directions the encoder never used -- and would report it as a recovery failure.
+        frame = position_frame(cfg.d_p, cfg.reach)[: max(min(reach, cfg.reach), 1)]
+        blocks = w.reshape(BYTE_VALUES, cfg.d_p, w.shape[1])
+        dictionary = np.einsum("pj,vjd->pvd", frame, blocks, optimize=True)
+        return frame.shape[0], dictionary.reshape(-1, w.shape[1])
+
     if cfg.positions != "wrap":
-        return w
+        return cfg.d_p, w
     from embeddings.codec import wrap_signs
 
     signs = wrap_signs(1, cfg.d_p)[0]
-    return (w.reshape(cfg.d_p, BYTE_VALUES, w.shape[1]) * signs[:, None, None]).reshape(w.shape)
+    signed = (w.reshape(cfg.d_p, BYTE_VALUES, w.shape[1]) * signs[:, None, None]).reshape(w.shape)
+    return cfg.d_p, signed
 
 
 def objective(guess: np.ndarray, t: np.ndarray, w: np.ndarray, n_slots: int) -> np.ndarray:

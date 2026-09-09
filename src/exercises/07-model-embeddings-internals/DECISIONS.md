@@ -188,3 +188,46 @@ The corpus must stay multilingual. Exercise 09 trains on this repository's own `
 English, and every claim here is about embeddings computed from **bytes** — a fixed byte window
 costs non-Latin scripts far more than English, so a monolingual corpus would train perfectly well
 and make the effect this exercise exists to measure invisible.
+
+## D12 · A fourth position scheme, and why `reach` is a config field rather than a batch property
+
+**The decision: add `spc`, and keep all three existing schemes.** `onehot` truncates at `d_p` and
+`wrap` folds; both are limits of the *code*, not of any decoder, and the exercise had measured them
+without offering a way out that does not cost more width. The way out the README already proposed
+was to raise `d_p` to 128, which recovers almost every token — and multiplies `D = 256 · d_p` by
+four, so the projection it was supposed to be saving grows with the reach.
+
+`spc` gives each byte position a **direction in one shared `d_p`-dimensional space** instead of its
+own 256-slot block. There are unlimited directions in a space of any dimension, so the reach is
+unlimited while `D` stays `256 · d_p`. Nothing is folded, so unlike `wrap` a position is still
+identifiable at decode time.
+
+**The cost is stated in advance rather than discovered.** Once the reach exceeds `d_p` the
+directions cannot all be perpendicular, and how well the code separates two positions is `1 − μ`
+where `μ` is the largest similarity between any pair. Welch's bound gives the smallest `μ` any set of
+that size can achieve, so the loss of order-discrimination is bounded before a single token is
+encoded. `tools/measure_position_schemes.py` prints the measured `μ`, the bound, and what a random
+frame would have given, because which of the three matters depends on `d_p` and `reach` and a figure
+written into a docstring would be true of one pair of them.
+
+**`reach` is a field on `KroneckerConfig`, and getting this wrong shipped in the first draft.** The
+frame was built at the length of the token being encoded, and again at the longest token in the
+batch — so the same token encoded alone and encoded beside a long one used *different directions*.
+The frame is optimised jointly for exactly the number of positions asked for, so row `p` of a 64-row
+frame is not row `p` of a 128-row one. Nothing fails visibly: the code is well formed either way,
+and the only symptom is a decoder correlating against directions the encoder never used, which
+reads as a recovery failure rather than as a bug. A token longer than `reach` is now **refused**,
+because silently dropping the tail is precisely what `onehot` does and not doing it is the claim.
+
+**What this decision does not settle.** `spc` is measured on the *code*: whether a token's bytes come
+back. It has **not** been trained, so it makes no claim against `wrap`'s −0.212 nats, which is still
+the only measured win among the schemes. Whether a code that separates positions less sharply is a
+better or worse thing to hand a model is a training question, and the honest answer today is that
+nobody here has asked it.
+
+**And it is not graded by `evidence.py`.** That module's `CLAIMS` are the sentences backed by
+`results/measurements.json`, and `assess` reads that one file. Both band-recovery measurements —
+`wrap_recovery.json` and `position_schemes.json` — sit outside it, so a reader running `evidence.py`
+sees nothing about either. That is a gap rather than a decision: closing it means teaching `assess`
+to read more than one evidence file, which is a change to the auditor and belongs with the auditor
+rather than smuggled in beside a new position scheme.
