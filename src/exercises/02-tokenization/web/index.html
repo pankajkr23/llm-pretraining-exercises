@@ -78,11 +78,18 @@
       .tok { display: flex; gap: 10px; padding: 5px 13px; font-family: var(--mono); font-size: 13px; border-bottom: 1px solid var(--line); }
       .tok:last-child { border-bottom: 0; }
       .tok .id { color: var(--faint); min-width: 48px; }
-      .tok .s { color: var(--ink); white-space: pre; word-break: break-all; }
+      /* `pre-wrap`, not `pre`. Both keep the leading spaces that make a token legible as a token,
+         and only `pre-wrap` lets the line break — so with `pre` the `word-break: break-all` beside
+         it could never fire, which is a rule that reads as a fix and moves no pixels. A long token
+         then set the whole page's minimum width and pushed it sideways on a phone. */
+      .tok .s { color: var(--ink); white-space: pre-wrap; word-break: break-all; }
       .tokcount { font-family: var(--mono); font-size: 12px; color: var(--faint); margin-top: 8px; }
 
       .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 14px; max-height: 240px; overflow-y: auto; }
-      .chip { font-family: var(--mono); font-size: 12.5px; padding: 3px 7px; border-radius: 7px; background: var(--track); color: var(--ink); white-space: pre; border: 1px solid transparent; }
+      /* Same reason as `.tok .s` above: `pre-wrap` keeps the spaces and permits a break.
+         `.chips` wraps BETWEEN chips, which does nothing for one chip too wide to fit — and a
+         tokenizer page is exactly where a single very long token turns up. */
+      .chip { font-family: var(--mono); font-size: 12.5px; padding: 3px 7px; border-radius: 7px; background: var(--track); color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid transparent; }
       .chip.unk { background: transparent; border-color: var(--hi); color: var(--hi); font-weight: 600; }
       .btn { appearance: none; cursor: pointer; font-family: var(--sans); font-size: 13.5px; font-weight: 500; color: var(--on-accent); background: var(--accent); border: 0; border-radius: 980px; padding: 9px 18px; transition: opacity 0.18s; }
       .btn:hover { opacity: 0.85; }

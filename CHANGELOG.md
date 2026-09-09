@@ -24,6 +24,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   wider window still grows the chart. Applied to all eight vendored copies, which remain
   byte-identical.
 
+- **Exercise 02's token chips could not wrap, so one long token set the whole page's minimum
+  width.** `.tok .s` carried `white-space: pre` and `word-break: break-all` together — and `pre`
+  forbids the break, so the second declaration could never fire: a rule that reads as a fix and
+  moves no pixels. `.chip` had the same `pre` with no break allowance at all, inside a `.chips`
+  container that wraps *between* chips, which does nothing for one chip too wide to fit. Both are
+  `pre-wrap` now, which keeps the leading spaces that make a token legible as a token and permits
+  the line to break. **Found by the new guard on CI and not locally**, because Linux's default fonts
+  are wider than macOS's — the page had no headroom left at 320px either way.
+
 ### Added
 
 - **A repo-wide sideways-scroll guard, and the width it exists for is the one nobody was testing.**
@@ -34,6 +43,16 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   reads as the breakpoint rather than as a width — and names the offending elements, which is what
   turned "06 scrolls 12px" into "`.sticky` ends at 1192 in a 1180 window". Watched red on both pages
   with the grid rule reverted, held in memory and restored in a `finally`.
+
+  **Its first report named innocent elements and cost a diagnosis.** It listed every element whose
+  right edge passed the viewport — including the contents of a table scrolling correctly inside its
+  own `overflow-x: auto` box, exactly as the conventions ask wide content to. It reported exercise
+  02's failure as "THEAD ends at 332" while that table was fine. An element only pushes the page if
+  nothing between it and the root actually clips, and the check needs both halves: `overflow-y:
+  auto` alone makes `overflow-x` compute to `auto` too, so reading the computed value on its own
+  treats almost everything as contained and reports nothing. A guard's report is part of the guard —
+  one that points at the wrong element is worse than a bare number, because a bare number sends
+  nobody anywhere.
 
 ### Fixed
 

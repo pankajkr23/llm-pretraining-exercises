@@ -50,6 +50,42 @@ WIDTHS = (2560, 1920, 1440, 1280, 1200, 1180, 1179, 1100, 1081, 1080, 900, 800, 
 TOLERANCE_PX = 1
 
 
+#: What is actually pushing the page, as opposed to what merely sticks out.
+#:
+#: **The first version of this named innocent elements and cost a diagnosis.** It reported every
+#: element whose right edge passed the viewport — which includes the contents of a table that is
+#: scrolling correctly inside its own `overflow-x: auto` box, exactly as `AGENTS.md` asks wide
+#: content to. A CI failure on exercise 02 was reported as "THEAD ends at 332", and the table was
+#: fine: `display: block`, `overflow-x: auto`, scrolling internally with its right edge well inside
+#: the window. A guard's report is part of the guard, and one that points at the wrong element is
+#: worse than a bare number, because a bare number does not send anyone anywhere.
+#:
+#: An element only pushes the page if **nothing between it and the root actually clips**.
+#: Note the second half of `clipsX`: `overflow-y: auto` on its own makes `overflow-x` compute to
+#: `auto` as well, so an ancestor check that only reads the computed value treats almost every
+#: element as contained and reports nothing at all.
+_CULPRITS_JS = """() => {
+  const doc = document.documentElement;
+  const clipsX = (n) => {
+    const o = getComputedStyle(n).overflowX;
+    return (o === 'auto' || o === 'scroll' || o === 'hidden') && n.scrollWidth > n.clientWidth + 1;
+  };
+  const pushes = (e) => {
+    for (let n = e.parentElement; n && n !== doc; n = n.parentElement) if (clipsX(n)) return false;
+    return true;
+  };
+  const named = (e) => (e.className || e.tagName).toString().slice(0, 34);
+  const out = [];
+  for (const e of document.querySelectorAll('body *')) {
+    const r = e.getBoundingClientRect();
+    if (r.right > doc.clientWidth + 0.5 && pushes(e)) {
+      out.push(named(e) + ' ends at ' + Math.round(r.right));
+    }
+  }
+  return out.slice(0, 3);
+}"""
+
+
 def _deployable() -> list[str]:
     """From the filesystem, so a new exercise is covered the day it ships."""
     return sorted(p.parent.parent.name for p in REPO_ROOT.glob("src/exercises/*/web/index.html"))
@@ -98,24 +134,17 @@ def test_a_page_never_scrolls_sideways(site, slug: str) -> None:
                 "() => document.documentElement.scrollWidth - document.documentElement.clientWidth"
             )
             if overflow > TOLERANCE_PX:
-                culprits = page.evaluate(
-                    """() => [...document.querySelectorAll('body *')]
-                         .filter(e => e.getBoundingClientRect().right
-                                      > document.documentElement.clientWidth + 0.5)
-                         .slice(0, 3)
-                         .map(e => (e.className || e.tagName).toString().slice(0, 34) + ' ends at '
-                                   + Math.round(e.getBoundingClientRect().right))"""
-                )
+                culprits = page.evaluate(_CULPRITS_JS)
                 failures.append((width, overflow, culprits))
     finally:
         ctx.close()
 
+    # When no single element is past the edge, the width is coming from a scroll container's own
+    # minimum rather than from something sticking out — a different hunt, so the report says so.
+    unknown = "no single element is past the edge; suspect a scroll container's minimum width"
     assert not failures, (
         f"{slug} scrolls sideways at "
-        + "; ".join(
-            f"{w}px by {over}px ({', '.join(who) or 'no element found'})"
-            for w, over, who in failures
-        )
+        + "; ".join(f"{w}px by {over}px ({', '.join(who) or unknown})" for w, over, who in failures)
         + ".\nA page that scrolls sideways is broken for every reader at that width, and the width "
         "worth suspecting first is 1180 — where `page.css` starts reserving the rail gutter, so "
         "the content box is narrower than it is at 1179."

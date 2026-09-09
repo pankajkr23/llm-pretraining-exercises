@@ -1321,4 +1321,20 @@ predates the harness — so it is logged as what it was.
                           held in memory, restored in a finally, restore verified. Registered in
                           OPTIONAL_DEPENDENCY_GATES, because a module-level importorskip that is
                           not ledgered is a file that collects nothing and reports green
+2026-09-10  fix           #173's new guard immediately earned itself: it went RED ON CI for a page
+                          I was not touching. Exercise 02 scrolls 4px at 320px, and it passes
+                          locally at 320 -- Linux's default fonts are wider than macOS's, so the
+                          page's lack of headroom only shows there. Cause: .tok .s had
+                          `white-space: pre` AND `word-break: break-all`, and pre forbids the break,
+                          so the second declaration could never fire -- a rule that reads as a fix
+                          and moves no pixels, which is a pattern AGENTS.md already names. .chip had
+                          the same pre with no break at all, inside .chips which wraps BETWEEN chips
+                          and does nothing for one chip too wide. Both pre-wrap now, which keeps the
+                          leading spaces that make a token legible and permits a break. AND MY
+                          GUARD'S REPORT WAS WRONG: it named THEAD/TR/TH, which were inside a table
+                          scrolling correctly in its own overflow-x box. An element only pushes the
+                          page if nothing between it and the root actually CLIPS, and the check
+                          needs both halves -- overflow-y: auto alone makes overflow-x compute to
+                          auto, so reading the computed value alone reports nothing at all. Fixed;
+                          a report that points at the wrong element is worse than a bare number
 
