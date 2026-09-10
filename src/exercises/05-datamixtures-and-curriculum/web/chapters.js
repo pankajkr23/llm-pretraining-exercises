@@ -346,13 +346,19 @@ function table(head, rows, cls = 'tbl') {
     hr.append(th);
   });
   thead.append(hr);
+  /* Read back off the built cells rather than off `head`, because a header may be a Node or a
+   * `rich()` string and neither is plain text until it has been rendered. Below 640px a `prose`
+   * table hides its `thead` and every cell prints this instead — without it, hiding the head takes
+   * away the only thing that said which column a sentence belonged to. */
+  const labels = [...hr.children].map((th) => th.textContent.trim());
   const tbody = $('tbody');
   rows.forEach((row) => {
     const tr = $('tr');
-    row.forEach((cell) => {
+    row.forEach((cell, i) => {
       const td = $('td');
       if (cell instanceof Node) td.append(cell);
       else td.append(rich(String(cell)));
+      if (labels[i]) td.dataset.head = labels[i];
       tr.append(td);
     });
     tbody.append(tr);
@@ -1474,6 +1480,10 @@ function chapterExpected(data) {
     richP('And the three claims, each with the number it had to beat and the condition that would kill it:'),
     /* Cells go through `rich()`, so markup here is `**bold**` and `*italic*` — never HTML tags,
      * which `rich()` inserts as literal text and the reader sees as `<b>`. That shipped once. */
+    /* `prose`, because all three columns are sentences and `.tbl td` is `nowrap`. Unmarked, this
+     * table laid out 979px wide inside a 342px wrapper on a phone, and rendered its second and
+     * third columns in the monospace face meant for figures. Every other table on this page is
+     * numbers and stays a table — the results table in particular is read *down a column*. */
     table(
       ['the claim', 'supported if', 'refuted if'],
       [
@@ -1496,6 +1506,7 @@ function chapterExpected(data) {
           '**within 3% on Indic, or the other lanes gain more than 1%**',
         ],
       ],
+      'tbl prose',
     ),
     richP(
       '**H3 has two refutation clauses, and that detail decides the result.** A hypothesis with a compound condition has to be checked on both halves; checking only the first is how a claim survives by not being asked the harder question. This one failed on the second clause.',

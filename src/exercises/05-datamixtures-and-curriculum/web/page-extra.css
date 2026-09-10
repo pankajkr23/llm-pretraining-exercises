@@ -598,3 +598,88 @@ main .warn {
 main .blind-list li {
   max-width: 68ch;
 }
+
+/* ------------------------------------------------------------------ a table whose cells wrap
+ *
+ * `.tbl` is built for figures: `nowrap` on every cell but the first, and the monospace face on
+ * every column but the first. That is right for six of this page's seven tables — the results
+ * table is read *down a column*, and a column of numbers that wraps is unreadable.
+ *
+ * The seventh is the three hypotheses, and all three of its columns are sentences. Unmarked it
+ * inherited the figure treatment: 979px wide inside a 342px wrapper on a phone, ten characters to
+ * a line, with "arm A beats arm B by at least 2%" set in the monospace face reserved for measured
+ * values. `prose` is the same modifier exercises 07, 09 and 10 use for the same thing.
+ */
+.tbl.prose td {
+  white-space: normal;
+}
+
+/* Beats `.tbl td:nth-child(n + 2)` — same specificity (0,2,1) vs (0,1,1) is not the point; this is
+ * (0,2,1) and wins on both count and source order. A sentence is not a measurement. */
+.tbl.prose td:nth-child(n + 2) {
+  font-family: inherit;
+  font-variant-numeric: normal;
+}
+
+/* --- below 640px a table of sentences becomes a list of cards -------------------------------
+ *
+ * Wrapping the cells fixes the desktop and leaves the phone worse in a new shape: three columns of
+ * sentences in 342px is ten characters a line whatever the wrapping rule says. Below 640px it
+ * stops being a table — each row a card, each cell a labelled block, the column name printed from
+ * the `data-head` that `table()` writes. Only `prose` tables do this; the numeric ones keep their
+ * columns and scroll, which is what a column of figures is for.
+ */
+@media (max-width: 640px) {
+  .tblwrap:has(.tbl.prose) {
+    /* Nothing overflows any more, so the scroll affordance would be a scrollbar with nothing to
+     * scroll — and on a platform with overlay scrollbars, an invisible one. */
+    overflow-x: visible;
+  }
+
+  .tbl.prose thead {
+    /* Out of sight and out of the accessibility tree together: every cell below repeats the head,
+     * and a screen reader that announced both would read each column name twice. */
+    display: none;
+  }
+
+  .tbl.prose,
+  .tbl.prose tbody,
+  .tbl.prose tr,
+  .tbl.prose td {
+    display: block;
+    width: auto;
+    min-width: 0;
+  }
+
+  .tbl.prose tr {
+    padding: 14px 0 4px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .tbl.prose tr:last-child {
+    border-bottom: 0;
+  }
+
+  .tbl.prose td {
+    padding: 0 0 10px;
+    border-bottom: 0;
+  }
+
+  /* The label the hidden `thead` used to carry, in the `th` type so the two read as one system. */
+  .tbl.prose td::before {
+    content: attr(data-head);
+    display: block;
+    margin-bottom: 3px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  /* A cell with no head must not print an empty line where the label would have been. */
+  .tbl.prose td:not([data-head])::before {
+    content: none;
+  }
+}

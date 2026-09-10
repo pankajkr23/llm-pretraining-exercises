@@ -229,7 +229,6 @@ main > section:first-child {
   margin-top: 46px;
 }
 
-
 /* ==== storytelling elements: tiles, glossary, figures, expected-vs-found ==== */
 
 /* --- headline tiles ---------------------------------------------------------------------------- */
@@ -929,4 +928,116 @@ table.grid.prose td {
 
 table.grid.prose td:first-child {
   width: 24%;
+}
+
+/* --- below 640px a table becomes a list of cards --------------------------------------------------
+ *
+ * **Wrapping every cell fixed the desktop and left the phone worse in a new shape.** A table whose
+ * three columns are sentences cannot be narrow: at 390px this page's six tables measured
+ * **8,455px** of vertical space — ten screens — with prose cells at **12 to 19 characters a line**,
+ * and the audit table alone was 4,959px with a 1,020px row. `vertical-align: middle` then started
+ * that row's first cell 388px down, so a reader met a large empty panel with a coloured bar down it
+ * and scrolled a third of a screen before any text appeared.
+ *
+ * A 3,635px-wide table of 330-character lines and a 4,959px-tall one of 13-character lines are not
+ * better and worse; they are the same content failing in two directions, and neither is a table a
+ * phone can show. So below 640px it stops being one: each row becomes a card, each cell a labelled
+ * block. `.gloss` and `.expect` already collapse at this width, so the breakpoint is the page's own
+ * rather than a new one.
+ *
+ * `data-head` is set by `table()` in `chapters.js`, because hiding the `thead` takes the only thing
+ * that said which column a value belonged to — and in the audit table the two columns ARE the
+ * argument: "as first published" against "what it became" is the figure.
+ */
+@media (max-width: 640px) {
+  .tablewrap {
+    /* Nothing overflows any more, so the scroll affordance is a scrollbar with nothing to scroll —
+     * and on a platform with overlay scrollbars it is an invisible one. */
+    overflow-x: visible;
+  }
+
+  table.grid thead {
+    /* Hidden from sight and from the accessibility tree together: the head is repeated on every
+     * cell below, and a screen reader that announced both would read each column name twice. */
+    display: none;
+  }
+
+  table.grid,
+  table.grid tbody,
+  table.grid tr,
+  table.grid td {
+    display: block;
+    width: auto;
+    min-width: 0;
+  }
+
+  table.grid tr {
+    padding: 14px 0 4px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  table.grid tr:last-child {
+    border-bottom: 0;
+  }
+
+  /* **`white-space` is the half that matters and it is easy to leave out.** `table.grid td` is
+   * `nowrap` — right for a column of figures, meaningless in a card, which has no columns to scroll
+   * between. Left in place it laid one of exercise 07's cells out 3,222px wide in a 337px box: nine
+   * tenths of the sentence past the right edge, no ellipsis, no scrollbar of its own, and the
+   * `overflow-x: auto` on the wrapper above making it read as a wide table behaving correctly. Same
+   * specificity as the `nowrap` rule (0,1,1), so it wins on source order alone — which is why this
+   * block belongs at the end of the file. */
+  table.grid td {
+    padding: 0 14px 10px;
+    border-bottom: 0;
+    white-space: normal;
+  }
+
+  /* **The two rules that pin the first column, reset at a specificity that actually beats them.**
+   * `table.grid td { min-width: 0 }` above is (0,1,1) and lost to `table.grid td:first-child
+   * { min-width: 16ch }` at (0,1,2), so the stacked audit table had two full-width cells and a
+   * 157px one — 16 characters a line under a 36-character sibling, which reads as a broken layout
+   * rather than a narrow column. `table.grid.prose td:first-child { width: 24% }` is (0,2,2) and
+   * needs the `.prose` in the selector to be beaten at all. Both are column geometry, and there are
+   * no columns here. */
+  table.grid td:first-child,
+  table.grid.prose td:first-child {
+    min-width: 0;
+    width: auto;
+  }
+
+  /* The label the hidden `thead` used to carry. Same type as `th` so the two read as one system.
+   * Selected on `[data-head]` rather than on every cell with a `:not([data-head])` rule to undo it:
+   * an empty `attr()` still paints a 3px block, and the undo rule matched nothing on any of the
+   * three pages — a selector that cannot fire reads as coverage exactly the way a dead guard does. */
+  table.grid td[data-head]::before {
+    content: attr(data-head);
+    display: block;
+    margin-bottom: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* The row's status mark runs down the whole card rather than beside one cell of it, because the
+   * card IS the row now. */
+  .grid tr.good td:first-child,
+  .grid tr.bad td:first-child,
+  .grid tr.warn td:first-child {
+    border-left: 0;
+  }
+
+  .grid tr.good {
+    border-left: 3px solid var(--grade-a);
+  }
+
+  .grid tr.bad {
+    border-left: 3px solid var(--grade-x);
+  }
+
+  .grid tr.warn {
+    border-left: 3px solid var(--grade-c);
+  }
 }

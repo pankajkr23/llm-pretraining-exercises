@@ -1324,3 +1324,53 @@ predates the harness — so it is logged as what it was.
                           than making a second copy -- the third single-exercise guard this week to
                           miss the exercise next door
 
+2026-09-10  cross-cutting #180 opened: a table of sentences reads on a phone, everywhere it appears,
+                          and the fix hid a second defect from the guard written to catch the first.
+                          Below 640px such a table stops being one -- each row a card, each cell a
+                          labelled block carrying its column head, written onto the cell by table()
+                          because hiding the thead takes away the only thing that said which column
+                          a line belonged to. 10's six tables: 8,455px -> 6,729px at 390, prose
+                          cells 12-19 -> 35-36 characters. THE SAME MARKUP WAS ON 07 AND 09 and a
+                          different shape of it on 05, whose three hypotheses laid out 979px inside
+                          a 342px wrapper -- ten characters a line -- with their "supported if" and
+                          "refuted if" columns in the monospace face reserved for figures. 05's
+                          other six tables are figures and KEEP their columns: its results table is
+                          read down a column, which is that page's own stated rule. THEN STACKING
+                          CLIPPED THE SENTENCES AND NOTHING COULD SEE IT: white-space nowrap is
+                          right for a column and meaningless in a card, and it laid one of 07's
+                          cells out 3,222px wide in a 337px box -- nine tenths past the right edge,
+                          no ellipsis, no scrollbar, the wrapper's overflow-x auto making it read as
+                          a wide table behaving correctly. Seven such cells on 07 and ten on 09,
+                          live while every assertion was green, because a stacked cell MEASURES 35
+                          characters at 99% of its container. FOUND BY SCREENSHOTTING THE SECTION,
+                          not by a test -- the fourth time this month that looking at the page beat
+                          a green suite. TWO GUARDS WERE ASKING THE WRONG QUESTION. Mine flagged
+                          03's dataset register: 109 rows, 7 columns, ONE prose cell in 763, because
+                          a dataset is called "Internet Archive - Public Library of India". A
+                          register is scanned down a column; stacked it is 109 cards. No threshold
+                          fixes that -- fill compares a cell to its CONTAINER, so a 7-column table
+                          gives every cell a low share by construction. It is a named decision now,
+                          REGISTERS, with a twin failing in both directions. And 05's own
+                          test_wide_tables_scroll_inside_their_own_container demanded overflow-x
+                          auto and so FAILED THE FIX WHILE THE PAGE GOT BETTER: a scroller with
+                          nothing to scroll is, with overlay scrollbars, an invisible one. It asks
+                          the property now. My containment probe was wrong on its first run too --
+                          scrollWidth on a scrolling wrapper is the CONTENT width, so it flagged
+                          five correctly-scrolling tables. Every new and rewritten assertion watched
+                          failing: five deliberate breaks, all in memory, all restored in a finally
+                          with the restore verified. THEN COPYING 10'S BLOCK ONTO 07 AND 09
+                          CARRIED 10'S VISUAL LANGUAGE WITH IT, and only measuring found it. 07
+                          marks row status with a TINT and defines no border anywhere -- the paste
+                          gave every card a 3px bar 07 uses nowhere else. 09 sets its bar on EVERY
+                          td where 10 sets it on td:first-child, so 10's reset left cells 2..n with
+                          their own border and the bar began half way down each card under a
+                          doubled edge. Each block is tailored per page now and every selector in it
+                          matches something -- I removed a counter for a width:24% rule 07 does not
+                          have and a content:none undo that matched no cell on any page. AND A
+                          BLANK HEADER PRINTED A BLANK LABEL: 07 builds key/value tables from
+                          ['',''], data-head="" still matches td[data-head], four cells printed an
+                          empty labelled line. Invisible to every other check -- right width, wraps,
+                          hides nothing, reads as loose spacing. Its own assertion now. SIX new or
+                          rewritten assertions, all watched failing. STACKED ON #179 -- main has not
+                          moved since #169, and stacking a nowrap table would still overflow
+
