@@ -344,32 +344,6 @@
   .stageplain, .stagetools { grid-column: 2; text-align: left; }
 }
 
-/* ------------------------------------------------------------------ single canvas (§17)
- *
- * One coordinate space every unit lives in. Controls change the ENCODING — colour, order — never
- * which units are visible, so moving between licence, caveat and grade views is a re-encoding
- * rather than a page change, and the reader never loses the object they were looking at.
- */
-.canvas { display: flex; flex-wrap: wrap; gap: 1px; margin-top: 4px; }
-.canvas:has(span.unit) { gap: 3px; }
-/* 24x24 hit area with a 14px mark inside it: `background-clip: content-box` paints only the
-   padding box, so the target meets the minimum without the grid growing to match. An interactive
-   13px square is a target most people miss. */
-.unit {
-  width: 24px; height: 24px; padding: 5px; border: 0; border-radius: 8px;
-  background: var(--track); background-clip: content-box; cursor: pointer;
-  transition: background 0.18s, opacity 0.18s;
-}
-/* Non-interactive marks are decoration beside text that says the same thing, so they stay small. */
-span.unit { width: 13px; height: 13px; padding: 0; border-radius: 3px; background-clip: border-box; }
-.unit:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.unit.on { background: var(--accent); }
-.unit.mid { background: var(--grade-b); }
-.unit.ok { background: var(--grade-a); }
-/* The only red: a dataset excluded from a commercial mix. */
-.unit.out { background: var(--grade-x); }
-.unit.dim { opacity: 0.28; }
-.unit.sel { outline: 2px solid var(--ink); outline-offset: 2px; }
 /* Not a figure: an item whose cost was never priced. It must not wear .num, which would make it
    look like a number nobody typed a provenance for. */
 .unpriced { font-family: var(--mono); font-size: 11.5px; color: var(--faint); font-style: italic; }

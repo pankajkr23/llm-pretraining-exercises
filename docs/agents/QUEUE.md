@@ -1840,4 +1840,17 @@ predates the harness — so it is logged as what it was.
                           anywhere is the ImpossibleBench case. The exact UNIT.md is in the unit
                           entry. ALSO: row 7 and unit-10 still said stage 14 was owed; #179
                           shipped it and PROGRESS.md marks it done
+
+2026-09-10  web           #187 opened: exercise 03's retired unit grid stops shipping in eight
+                          stylesheets -- the half of HANDOFF item 11 that was left, and 03's backlog
+                          item 3.1. DRIVEN, NOT GUESSED: tools/measure_shared_css.py --drive scrolls
+                          every step, opens every disclosure, clicks every button, sweeps every
+                          slider, and judges a focus or pseudo-element rule by its element. It now
+                          reports 113 selectors at rest (5 more than a raw querySelector count), 11
+                          only once driven, 8 never -- kept, because each is a descendant today's
+                          content lacks or a value the schema allows. The 11 removed, .canvas and the
+                          .unit family, are set by no code in any exercise: 143 -> 132 selectors in
+                          all eight copies, still byte-identical. 21 screenshots (7 pages x 2000,
+                          1180, 390) hashed identically before and after, and two runs of the
+                          unchanged tree hashed identically first, so the comparison could fail
 ```

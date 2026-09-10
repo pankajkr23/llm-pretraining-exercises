@@ -10,6 +10,27 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Removed
+
+- **Exercise 03's retired unit grid stops shipping in eight stylesheets.** `_shared/explainer.css`
+  still carried its "single canvas" block — `.canvas` and the `.unit` family, 11 selectors, a grid
+  of one square per dataset that 03's one-page rebuild replaced — vendored byte-identically into
+  every exercise. No code in any of the eight exercises sets either class. Removed from all eight
+  copies, still byte-identical: 143 selectors to 132. Screenshots of the seven pages that link it
+  hashed identically before and after at 2000, 1180 and 390px, and two runs of the unchanged tree
+  hashed identically first, so the comparison was able to fail.
+
+### Added
+
+- **`tools/measure_shared_css.py --drive` measures a stylesheet the way a reader uses a page.** It
+  scrolls every step, opens every disclosure, clicks every button and sweeps every slider, and
+  judges a focus or pseudo-element rule by whether its element exists, since `querySelector` sees
+  neither. On `explainer.css` it reports 113 selectors matching at rest, 11 more only once driven —
+  the stage register's states, two derivation badges, a modality key, the guess tick and the
+  arithmetic toggle opened — and 8 never. Those 8 stay: each is a descendant today's content lacks,
+  or a value the data schema allows (`additional_to`, `research_papers`) that the data does not use
+  yet. `base_selector()`, which decides what a state rule is judged by, has its own unit test.
+
 ### Changed
 
 - **A rule that already existed, in two exercises out of five.**
