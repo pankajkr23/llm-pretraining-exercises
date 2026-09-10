@@ -60,6 +60,25 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **`sync_open_prs.py` could land a branch's changelog entry inside a version that had already
+  shipped.** After a release renames `[Unreleased]` and opens a fresh empty one, a block's
+  neighbours are no longer where it was written beside them — so placement falls back to a single
+  line, finds it inside the *released* section (which is where those neighbours now live), and puts
+  the entry there. **Reproduced against the real function before anything was changed**, and it was
+  worse than recorded: the entry landed *above* that section's own `### Fixed`, so it was malformed
+  as well as untrue, and the only note said its neighbours had moved — true of many correct
+  placements and silent about the version.
+
+  It relocates to `[Unreleased]` now and says so at a volume matching what it prevented. The block's
+  correct home is not ambiguous, which is why this repairs rather than stops — with one exception: a
+  file with no `[Unreleased]` section at all is **refused**, because inventing a section would be
+  this tool deciding what a release contains.
+
+  The other defect that entry recorded — a line replacement re-applied as an addition — **was
+  already fixed**; the note had gone stale. Four tests now cover the repair, the refusal, the
+  insertion point, and the distinction the whole thing rests on: that `[Unreleased]` is not read as
+  a released version. All watched failing against the tree as it shipped.
+
 - **The rail was moved inward on three pages and it pushed the reading column off centre.** The
   fix for exercise 09's squeezed text was mostly the type scale, but it also added
   `left: max(0px, calc((100vw - 1500px) / 2))` to exercises 07, 09 and 10 — so above 1440px the rail
