@@ -528,6 +528,11 @@ pre.code {
 .ship {
   display: grid;
   gap: 14px;
+  /* A grid item's default `min-width` is `auto` — its own content — so once the chart inside got a
+   * floor of its design width, this wrapper grew to 720px inside a 678px column and was clipped
+   * rather than scrolled. It holds a drawing, so it scrolls like every other figure holder here. */
+  min-width: 0;
+  overflow-x: auto;
 }
 .ship-chart {
   width: 100%;

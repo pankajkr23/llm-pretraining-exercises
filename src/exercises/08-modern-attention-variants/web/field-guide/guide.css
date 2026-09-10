@@ -227,3 +227,24 @@
     margin-top: 10px;
   }
 }
+
+/* --- a card's diagram keeps its design width ---------------------------------------------------
+ *
+ * The essay page gives any element holding a root svg a scroller, scoped to `#main`; this page's
+ * main is `#fg-grid`, so that rule never reached it and 30 cards each grew to their diagram's
+ * 720-unit design width — 354px of sideways PAGE scroll at 390px. The diagrams are shared with the
+ * essay page and now refuse to be drawn below the width they were designed at, because a `viewBox`
+ * shrinks their labels along with them: in a 536px card at 1440 they were painting at 7px.
+ *
+ * So a card scrolls its own drawing, the same bargain every figure on the essay page makes. The
+ * deeper fix is available and is not taken here: `diagramSvg` accepts `opts.width`, so this page
+ * could draw each diagram at the width its card actually gets rather than at 720 and shrinking —
+ * which would need the scene layouts checked at that width, and is a change to how the field guide
+ * is drawn rather than to how it is contained.
+ */
+/* `:has(> svg)`, not `> svg` — the CARD is what has to scroll, and the first version of this set
+ * `overflow-x` on the drawing instead of on the thing containing it, which moved nothing at all. */
+.fg-card:has(> svg[viewBox]) {
+  overflow-x: auto;
+  min-width: 0;
+}
