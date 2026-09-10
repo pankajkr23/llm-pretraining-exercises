@@ -20,6 +20,41 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Two read-only personas, and a guard that keeps the roster honest.**
+
+  `research` asks whether a source outside this repository actually says a thing, in those words. Its
+  method is exercise 08's, where 80 hyperparameters across 29 papers produced **82 proposed quotes,
+  82 verbatim, zero fabrications** — download every source first, check each quote as a contiguous
+  run of that file's own characters, and leave the field empty where nothing says so. It carries the
+  three ways that gate was itself wrong (arXiv printing every equation twice, `U+200B` inside
+  numbers, `1 M` against `1M`), because **a guard with false negatives is not the safe direction to
+  err in** here: it silently converts sourced numbers into unsourced ones.
+
+  `critique` asks whether there was a smaller thing that would have worked. `reader`, `engineer` and
+  `auditor` all reward *more* — more prose, more guards, more coverage — and nothing in the standard
+  pass ever says *this was too much*. **Neither joins that pass**, because `docs/AGENT_FLEET.md`'s
+  own sourced argument is three reviewers and not five, and its warning is that *"a reviewer prompted
+  to find gaps will usually report some, even when the work is sound."* They are invoked
+  deliberately. The queued unit did not say what question `critique` should ask; this one is derived
+  from what has actually gone wrong here, and the derivation is written down.
+
+  **The first persona that needed a fourth tool broke an existing guard, which is the finding.**
+  `tests/test_agent_guard.py` asserted an *allowlist* — `tools <= {Read, Grep, Glob}` — so `research`
+  fetching its sources failed it. An allowlist forces the choice between a persona that cannot do its
+  job and a guard quietly widened to let it; it asks the property now (**no tool that can write**),
+  with `WebSearch` and `WebFetch` admissible because they reach outward and cannot change anything.
+  `AGENTS.md` already records the general form: a guard that names one implementation of a property
+  will fail every other implementation of it.
+
+  **`tests/test_agent_roster.py` is the part that lasts.** The installer copies
+  `docs/agents/reviewers/*.md` by glob into a gitignored directory, so until now adding a persona was
+  adding a file and **nothing validated it**: a `tools:` line one word away from granting `Edit`
+  would have made a reviewer that edits the work it grades, invisibly to review, to CI and to every
+  other clone. The guard asserts the frontmatter the installer needs and that the roster and the fleet document
+  name each other **in both directions** — which it proved by going red on the two personas in this
+  very change. It deliberately does *not* re-assert read-only: that rule already lives next door, and
+  a second copy of one rule is the copy that drifts.
+
 - **`tools/measure_shared_css.py`**, so this is a repeatable measurement rather than a one-off in a
   scratch file. It reports, per page, how many of a shared stylesheet's selectors match anything:
   03 → 108, 06 → 30, 05 → 4, 04 → 2, 08/09/10 → 1 each, 07 → 0.

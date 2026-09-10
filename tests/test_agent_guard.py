@@ -441,6 +441,20 @@ def test_the_installer_preserves_unrelated_settings_keys(tmp_path, monkeypatch) 
         assert re.search(matcher, tool), f"the installed matcher does not admit {tool!r}"
 
 
+#: Tools that can change the repository, or run something that can. **The property, not a list of
+#: the three tools the personas happened to use.**
+#:
+#: This started as an allowlist — `tools <= {Read, Grep, Glob}` — and the first persona that needed
+#: anything else broke it: `research` fetches sources, which takes `WebSearch` and `WebFetch`. Those
+#: reach outward and **cannot write**, so they do not touch the property this assertion exists for,
+#: and an allowlist would have forced the choice between a persona that cannot do its job and a
+#: guard quietly widened to let it. `AGENTS.md`: a guard that names one implementation of a property
+#: will fail every other implementation, and the pressure is then to reword good work to satisfy it.
+WRITING_TOOLS_IN_A_PERSONA = frozenset(
+    {"Write", "Edit", "MultiEdit", "NotebookEdit", "Bash", "Task", "Agent"}
+)
+
+
 def test_every_reviewer_declares_read_only_tools() -> None:
     """A reviewer that can write is the author grading itself.
 
@@ -450,13 +464,14 @@ def test_every_reviewer_declares_read_only_tools() -> None:
     """
     import install_agent_fleet as installer
 
+    granted = []
     for path in sorted(installer.REVIEWERS.glob("*.md")):
         head = path.read_text(encoding="utf-8").split("---")[1]
         tools = next(line for line in head.splitlines() if line.startswith("tools:"))
-        allowed = {t.strip() for t in tools.split(":", 1)[1].split(",")}
-        assert allowed <= {"Read", "Grep", "Glob"}, f"{path.name} can do more than read: {allowed}"
-        for forbidden in ("Write", "Edit", "Bash", "NotebookEdit"):
-            assert forbidden not in allowed, f"{path.name} declares {forbidden}"
+        allowed = {t.strip() for t in tools.split(":", 1)[1].split(",") if t.strip()}
+        for tool in sorted(allowed & WRITING_TOOLS_IN_A_PERSONA):
+            granted.append(f"{path.name} declares `{tool}`")
+    assert not granted, "a read-only persona can write:\n  " + "\n  ".join(granted)
 
 
 # --- the three bypasses found by auditing the guard against its own claims -----------------------
