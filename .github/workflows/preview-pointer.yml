@@ -1,0 +1,96 @@
+name: Preview pointer
+
+# Tell the pull request where its preview actually is.
+#
+# `deploy/vercel/should-build.sh` skips a push that cannot change the deployed site, and the branch
+# alias goes on serving the last successful build — so the preview is live. GitHub does not show
+# that: Vercel creates no GitHub Deployment for a skipped build, so the tip commit has no
+# environment and the pull request reads "this branch has not been deployed". Every pull request
+# here ends with `docs: record #NNN in the queue`, which touches no deployed path, so this is
+# the normal case rather than the exception.
+#
+# **This job creates no deployment.** It reads the deployments that already exist and writes a
+# comment. The alternative — building the documentation push so the tip has an environment — is
+# the behaviour that exhausted the account's quota and rate-limited the project for 24 hours.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  deployments: read
+  pull-requests: write
+
+concurrency:
+  group: preview-pointer-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  point:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # `preview-pointer.sh` asks the deploy gate itself whether the commits after the deployed
+          # one changed anything, and that is a diff between two commits on the branch. A shallow
+          # checkout cannot answer it.
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Wait for Vercel to decide about this push
+        # Vercel posts a `Vercel` commit status for every push, including the ones the ignore step
+        # cancels — verified on this repository: `c89d282` (skipped) and `5c77de2` (built) both
+        # carry context `Vercel`, state `success`, with descriptions "Canceled by Ignored Build
+        # Step" and "Deployment has completed". So the presence of a non-pending `Vercel` status is
+        # the signal that Vercel has finished, and polling for it is what stops this job from
+        # reporting "no preview" while the build that would produce one is still running.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          for _ in $(seq 1 40); do
+            state="$(gh api "repos/${{ github.repository }}/commits/$SHA/status" \
+                       -q '[.statuses[] | select(.context == "Vercel")] | first | .state' 2>/dev/null || true)"
+            case "$state" in
+              success|failure|error) echo "Vercel settled: $state"; exit 0 ;;
+            esac
+            echo "waiting for Vercel (status: ${state:-none})"
+            sleep 15
+          done
+          echo "Vercel never posted a status; reporting whatever is already deployed."
+
+      - name: Work out where the preview is
+        id: pointer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo 'body<<PREVIEW_POINTER_EOF'
+            bash deploy/vercel/preview-pointer.sh \
+              "${{ github.repository }}" \
+              "${{ github.event.pull_request.number }}" \
+              "${{ github.event.pull_request.head.sha }}"
+            echo 'PREVIEW_POINTER_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Post it, replacing the previous one
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BODY: ${{ steps.pointer.outputs.body }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          # One comment per pull request, edited in place: a new comment per push would bury the
+          # review under pointers to the same preview.
+          existing="$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate \
+                        -q '.[] | select(.body | startswith("<!-- preview-pointer -->")) | .id' \
+                      | head -1)"
+          if [ -n "$existing" ]; then
+            gh api --method PATCH "repos/${{ github.repository }}/issues/comments/$existing" \
+              -f body="$BODY" >/dev/null
+            echo "updated comment $existing"
+          else
+            gh api --method POST "repos/${{ github.repository }}/issues/$PR/comments" \
+              -f body="$BODY" >/dev/null
+            echo "posted a new comment"
+          fi
