@@ -106,9 +106,9 @@ this file does not define, and the answer is the unit name instead.
 | 4 | Live defects on deployed pages | `unit-live-defects` | **done** — exercise 01's 26 unterminated declarations and exercise 04's 7 orphan properties, both now guarded |
 | 5 | The shared `web/_shared/` layer | `unit-shared-layer` | **done** — 2,578 lines of unreferenced vendored code removed and guarded; the theme pickers and control names settled |
 | 6 | Exercise 09 | `unit-09` | **done.** Both blockers cleared; 54 tests, the notebook, the page and its registration all shipped |
-| 7 | Exercise 10 | `unit-10` | **done, bar the reviewer pass** — stage 14, the one piece of engineering still owed on either exercise |
+| 7 | Exercise 10 | `unit-10` | **done.** Stage 14, the reviewer pass, shipped in #179, and the exercise's own `PROGRESS.md` marks it done |
 | 8 | Retro-fix 07 → 01 | `unit-07-retrofit` … `unit-01-retrofit` | **done.** One pull request each, #109-#132; it ran alongside 09 and 10 once row 5 landed |
-| 9 | Grow the agent roster | `unit-agent-roster` | **read-only half done** — `research` and `critique` shipped with a roster guard (#183). The three writers with **disjoint** scopes remain |
+| 9 | Grow the agent roster | `unit-agent-roster` | **read-only half done** (#183). **The writer half is designed and waits on a human**: enforcing disjoint scopes means editing the guard, its policy and the fleet document, and the guard refuses all three until `.claude/UNIT.md` names them — see the unit entry |
 | 10 | The platform plan, for a parallel workstream | `unit-platform-plan` | **drafted** — `~/.claude/plans/agent-platform.md`. Repository-agnostic by construction |
 
 **Read the order as a default, not a rule.** Rows 4 and 5 come before 6 because they are cheap and
@@ -235,8 +235,9 @@ intervention, and that a reader can say what each guard did and why the run stop
   `sed -i` on a guard file is refused, a reviewer cannot write, and `touch AGENT_STOP` halts a run.
 
 ### unit-agent-roster — read-only agents first, writers second
-- status: HALF DONE — the two read-only personas shipped in #183; the three writers remain
-- scope: `docs/agents/reviewers/`, `tools/install_agent_fleet.py`, `tests/test_agent_guard.py`
+- status: HALF DONE — the read-only personas shipped in #183. The writers are designed below and **wait on a human**: the `UNIT.md` that unlocks the guard files is PK's to write
+- scope: the read-only half was `docs/agents/reviewers/`, `tools/install_agent_fleet.py`,
+  `tests/test_agent_guard.py`; the writer half needs the wider `UNIT.md` given below
 - what: add `research` and `critique` as read-only personas alongside the four reviewers, then
   split the writing role into `coding` (implementation paths), `testing` (test paths **only**) and
   `documentation` (docs and changelog).
@@ -252,6 +253,41 @@ intervention, and that a reader can say what each guard did and why the run stop
   Message passing needs a protocol, ordering guarantees and a deadlock story; a shared artefact
   needs none of those and is readable by a human too.
 - explicitly not in scope: an orchestrator that decides which agent runs next. The hub does that.
+- **how the scopes are enforced — checked against the Claude Code documentation, not assumed.** A
+  `PreToolUse` hook wired in settings also fires inside subagents, and there its input carries
+  `agent_type` (the persona's own `name`) and `agent_id`. So the guard that already refuses
+  out-of-scope writes can refuse them *per persona*: a `[personas]` table in `guard_rules.toml` maps
+  `coding`, `testing` and `documentation` to their path prefixes, and `decide()` checks the calling
+  persona's prefixes the same way it checks the unit's. One enforcement path, not two.
+- **rejected: a hook in each persona's own frontmatter.** Subagent frontmatter does accept `hooks`,
+  scoped to that subagent, but the script it runs would sit outside `[guards]` — weakenable by the
+  agents it constrains — and it would be a second enforcement path beside `agent_guard.py`.
+- **where the writers live:** `docs/agents/writers/`, not beside the reviewers.
+  `test_every_reviewer_declares_read_only_tools` rightly refuses a persona that can write, so the
+  installer and `tests/test_agent_roster.py` grow a second directory rather than an exemption.
+- **why it stops here, by "How to work the queue":** the work edits `tools/agent_guard.py` and
+  `tools/agent_fleet/guard_rules.toml` (`[guards]`) and `docs/AGENT_FLEET.md` (`[standards]`), and
+  the live guard refuses every one of them until `.claude/UNIT.md` names it. Writing that file is a
+  human's decision. Shipping the personas without the enforcement was considered and refused: a
+  `testing` agent that can write anywhere is exactly the case the ImpossibleBench number is about.
+- **what unblocks it — write this as `.claude/UNIT.md`, then run the unit:**
+
+  ```
+  - scope: docs/agents/
+  - scope: docs/AGENT_FLEET.md
+  - scope: tools/install_agent_fleet.py
+  - scope: tools/agent_guard.py
+  - scope: tools/agent_fleet/guard_rules.toml
+  - scope: tests/test_agent_guard.py
+  - scope: tests/test_agent_roster.py
+  - scope: CHANGELOG.md
+  - scope: .quote-check-receipt.json
+  Named, to unlock them: tools/agent_guard.py tools/agent_fleet/guard_rules.toml docs/AGENT_FLEET.md
+  ```
+
+  `unit_scope()` reads the `- scope:` lines as path prefixes; `named_in_unit()` accepts a file named
+  anywhere in the text. Acceptance checks belong under them per `AGENT_FLEET.md` §3.2, but nothing
+  parses them today, so they are a checklist rather than a gate.
 
 ### unit-platform-plan — the multi-agent platform, for a parallel workstream
 - status: DRAFTED — `~/.claude/plans/agent-platform.md`, awaiting PK's read
@@ -297,7 +333,7 @@ intervention, and that a reader can say what each guard did and why the run stop
   explainer has no access to the specification it is graded against.
 
 ### unit-10 — the training loop
-- status: DONE, bar its reviewer pass — stage 14 in the exercise's own PROGRESS.md is the one piece of engineering still owed on 09 or 10
+- status: DONE — stage 14, the reviewer pass, shipped in #179
 - what: same scaffold, same contract. Two extra rules for the flagship run: exercise `save()` in a
   two-step run **before** any long one, and print tokens-consumed ÷ corpus-tokens per lane next to
   the mixture table before starting.
@@ -1788,4 +1824,20 @@ predates the harness — so it is logged as what it was.
                           bypasses the guard entirely" into the real, narrower defect. CHECKED AND
                           NOT BROKEN: an agent cannot widen its own scope -- .claude/UNIT.md is
                           refused to both Write and Bash
+
+2026-09-10  agent-roster  #185 opened: row 9's writer half STOPS HERE, on the queue's own rule, and
+                          the design is written down so the stop costs nothing. CHECKED AGAINST THE
+                          CLAUDE CODE DOCS, NOT ASSUMED: a PreToolUse hook wired in settings also
+                          fires inside subagents and then carries agent_type, the persona's own
+                          name, so the existing guard can refuse writes PER PERSONA from a
+                          [personas] table in guard_rules.toml -- one enforcement path. A hook in
+                          each persona's frontmatter also works and was rejected: its script would
+                          sit outside [guards], weakenable by the agents it constrains. WHY IT
+                          STOPS: the work edits agent_guard.py and guard_rules.toml ([guards]) and
+                          AGENT_FLEET.md ([standards]); the live guard refuses all three until
+                          .claude/UNIT.md names them, and writing that is PK's. Shipping the
+                          personas unenforced was refused -- a testing agent that can write
+                          anywhere is the ImpossibleBench case. The exact UNIT.md is in the unit
+                          entry. ALSO: row 7 and unit-10 still said stage 14 was owed; #179
+                          shipped it and PROGRESS.md marks it done
 ```
