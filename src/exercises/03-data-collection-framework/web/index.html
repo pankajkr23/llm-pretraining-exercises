@@ -17,6 +17,9 @@
     <link rel="stylesheet" href="./_shared/components.css" />
     <link rel="stylesheet" href="./_shared/explainer.css" />
     <link rel="stylesheet" href="./_shared/page.css" />
+    <!-- last, so a page rule wins on source order against a shared rule of equal
+         specificity -- the cascade failure AGENTS.md names twice. -->
+    <link rel="stylesheet" href="./page-extra.css" />
     <!--
       Applied before first paint, on purpose. Reading the stored theme from a module would leave
       the page rendering system colours for a frame and then repainting, which is the flash every

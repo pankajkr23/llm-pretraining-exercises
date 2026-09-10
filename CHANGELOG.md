@@ -12,6 +12,48 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Changed
 
+- **The last four pages join the published type scale, and all eight now run it.** Exercises 03, 04,
+  05 and 06 rendered body prose at 16–16.6px in columns of 464–726px, using a fraction of the room a
+  wide display has. They are on `docs/DESIGN.md`'s `clamp(19px, 1.2vw + 1.7px, 22px)` now — **22px
+  in 897–978px at 2560, the same words per line**, because the lever is size and not measure:
+  widening a 16px column instead pushes the line past a hundred characters and makes it worse.
+  Standfirsts go on the ramp with them, at 25px over 22px body: raising the body alone had left each
+  page's opening sentence as the smallest text on it, which is the "reads like a caption" defect a
+  reader reported on exercise 09.
+
+- **Exercise 03's explainer strip is deliberately held back, and that needed measuring rather than
+  assuming.** `_shared/explainer.css` is a self-contained component with its own scale — labels at
+  10.5px, shard text 11.5px, captions 12px — and its step paragraphs carry `max-width: 46ch` with no
+  size of their own. At 16px that is 464px inside a 605px panel; at 22px the cap computes to 620px
+  against a panel still 605px wide, so the text would fill it edge to edge at full body size beside
+  labels half its height. `.steps` is pinned to 16px, **and so is the `.scrolly` grid that sizes
+  it** — a component boundary, not an exception.
+
+### Fixed
+
+- **The boundary around exercise 03's explainer was first drawn one level too low, and a reader
+  caught it before any test did.** It pinned the step *paragraphs* to 16px and left `.scrolly` —
+  the grid that sizes both columns in `ch` — on the page's 19–22px. `ch` resolves against the
+  element that declares it, so the prose column grew to 60ch of 22px (815px) around text still
+  472px wide, and the empty middle between the steps and the figure went from **181px to 391px at
+  1920** (292px at 1440). Measured from the glyphs, not the boxes: a step's box spans its whole
+  track, so a box-based measure reports no gap at all. The grid is pinned with the steps now — 181px
+  at both widths, with the prose outside the strip still on the 19–22px scale. Exercise 06 pinned
+  the grid from the start, which is why it never showed this.
+  `test_the_step_grid_and_its_prose_are_on_one_font` asserts the grid and the paragraphs inside it
+  share one computed size at eight widths — the cause rather than a threshold on the gap — and was
+  watched failing on 03 with the grid's pin removed.
+
+- **My first selector list broke the cascade in exactly the way `AGENTS.md` warns about twice.** It
+  read `#main p, #main li { font-size: inherit }` — specificity (1,0,1), which outranks every
+  component rule of the form `.eyebrow { font-size: 11px }`. Measured against the same pages before
+  the change, that pushed **fourteen component classes** to full body size across the four: exercise
+  06's `.eyebrow` from 12px, exercise 03's `.stagereg-note` from 11.5px inside a box that shrank to
+  400px, exercise 05's `.note`, `.summary-step`, `.warn` and inline `code`. It is narrowed to
+  `.claim` — unclassed paragraphs already inherit — and inline `code` is scoped to the `0.92em` the
+  reference pages use. **Found by diffing every class's computed size against the same page before
+  the change**, not by looking at it; the screenshots showed nothing wrong.
+
 - **Exercise 07 stops downloading a 560-line stylesheet that styles nothing on it.** Of
   `_shared/explainer.css`'s 143 selectors it matched **zero** — the file styles the scrollytelling
   strip, the step panels, the derivation badges and the stage lists, and that exercise builds none

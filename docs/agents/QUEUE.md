@@ -1372,6 +1372,63 @@ predates the harness — so it is logged as what it was.
                           verification had missed it because a skip is green locally -- the gate
                           only fires under CI, which is the whole reason it exists
 
+2026-09-09  design        #172 opened: 03, 04, 05 and 06 join the type scale, so all eight deployable
+                          spine pages now run it. They were 16-16.6px in 464-726px columns; they
+                          are 22px in 897-978px at 2560 with the same words per line. MEASURED
+                          FIRST, per AGENTS.md, and the measurement is what made this correct: my
+                          first selector list was `#main p, #main li { font-size: inherit }`,
+                          specificity (1,0,1), which outranks every component rule like `.eyebrow
+                          { font-size: 11px }`. It pushed FOURTEEN component classes to 22px across
+                          the four pages -- 06's .eyebrow from 12px, 03's .stagereg-note from
+                          11.5px into a box that shrank to 400px, 05's .note, .summary-step, .warn
+                          and inline code. THE SCREENSHOTS SHOWED NOTHING WRONG; it was found by
+                          capturing every class's computed size before the change (blanking the new
+                          blocks, building, measuring, restoring in a finally) and diffing. Narrowed
+                          to `.claim` alone, because unclassed paragraphs already inherit. 03 NEEDED
+                          A page-extra.css AT ALL -- it linked only the three shared sheets, and the
+                          alternative was editing _shared/page.css, which is vendored
+                          byte-identically into eight directories and checked for it. 03's EXPLAINER
+                          IS HELD AT 16px: a component with its own 10.5-12px scale whose step
+                          paragraphs carry a 46ch cap, which at 22px computes to 620px inside a
+                          605px panel. THE STANDFIRSTS had to follow: raising the body alone left
+                          each page's opening sentence at 17px under 22px prose -- the smallest text
+                          on the page, which is the "reads like a caption" defect a reader reported
+                          on 09. All four now carry 09's values, 25px over 22px. The fluid ledger
+                          in test_prose_measure_repo_wide.py names all eight and fails both ways
+
+2026-09-09  finding       FOUND, NOT FIXED: exercise 06's page scrolls 12px sideways at exactly
+                          1180px, and it predates every change in this branch. Measured with the
+                          type scale removed, so the attribution is not a guess. The cause is in
+                          _shared/explainer.css: `.scrolly` is laid out as
+                          `minmax(min(48ch, 100%), 62ch) minmax(min(340px, 100%), 1fr)`, and at
+                          1180 -- where page.css starts reserving the 260px rail gutter, so the
+                          content box is NARROWER than at 1179 -- the tracks compute to
+                          483.75 + 48 + 400 = 931.75px inside an 896px box. That stylesheet's own
+                          comment already names 1180 as "the tightest squeeze" and sets the 48ch
+                          floor to fix a DIFFERENT symptom at the same width. NOT FIXED HERE
+                          because explainer.css is vendored byte-identically into all eight web/
+                          directories (md5 checked), so the honest fix is an eight-copy change and
+                          its own story. The type scale made it 101px and pushed it into 1280, the
+                          width 06's browser fixture drives; pinning the strip to 16px returns it
+                          to the 12px it always was. NOTHING GUARDS 1180 on any page -- the
+                          fixtures drive 1280, 1500, 900 and 390 -- which is why a defect at the
+                          one width the shared stylesheet calls out has never been seen
+
+2026-09-10  design        #172's explainer boundary was drawn one level too low, and PK saw it on
+                          the page before any test did: 03's empty middle between the steps and
+                          the figure went 181px -> 391px at 1920 (292 at 1440). The first version
+                          pinned the step PARAGRAPHS to 16px and left `.scrolly` -- the grid that
+                          sizes both columns in `ch` -- on the page's 22px, so the prose column
+                          became 60ch of 22px (815px) around text still 472px wide. `ch` resolves
+                          against the element that declares it. The grid is pinned with the steps
+                          now: 181px at 1440 and 1920, body prose outside the strip still 19/22px.
+                          06 pinned the grid from the start, which is why it was unaffected. A
+                          BOX-BASED MEASURE REPORTED NO GAP: a step's box spans its whole track, so
+                          the gap only shows in the glyph rects. The new guard asserts the cause,
+                          not a threshold -- grid and step prose share one computed size at eight
+                          widths -- watched red on 03 with the pin removed from the built copy,
+                          restored byte-identical in a finally
+
 2026-09-09  fix           #173 opened: the shared explainer fits at the rail breakpoint, and the
                           finding recorded an hour ago is fixed rather than carried. Reproduced on
                           main first, so the attribution is measured: exercises 03 and 06 overflow
