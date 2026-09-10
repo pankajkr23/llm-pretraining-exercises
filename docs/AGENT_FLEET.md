@@ -130,6 +130,41 @@ no Write, no Edit, no Bash.
 A fourth, `continuity`, runs **only on retro-fix units** — "is this one voice across 01→08?" —
 because that is the retro-fix's purpose and a meaningless question elsewhere.
 
+### 3.3.1 Two more read-only personas, invoked on purpose rather than on every diff
+
+`docs/agents/reviewers/` holds **six** files and the pass above is still three. That is the whole
+point of the distinction, and it is worth stating because the directory looks like a roster of
+reviewers and is not:
+
+| persona | the one question nothing else asks | when |
+|---|---|---|
+| `research` | Does a source outside this repository actually say this, in these words? | a claim needs external backing |
+| `critique` | Is there a smaller thing that would have worked, and would it have been better? | a change looks larger than its problem |
+
+**Neither joins the standard pass, and the reason is the warning above.** *"A reviewer prompted to
+find gaps will usually report some, even when the work is sound."* Adding two more voices to every
+diff is the failure that warning describes, so these are invoked deliberately — by a person or by
+the unit, never by default.
+
+**Why `critique` exists at all.** `reader`, `engineer` and `auditor` all reward *more*: more prose,
+more guards, more coverage. Nothing in the pass ever says **this was too much**, and the repository
+has paid for that twice in ways its own conventions now record — four pull requests opened for four
+guards, three of them carrying a single real file each and paying three files of bookkeeping apiece;
+and `auditor.md`'s own note that chasing every finding leads to over-engineering, *"which is its own
+defect, and one you would be causing rather than catching."* The unit that queued this persona did
+not say what question it should ask; this one is derived from what has actually gone wrong here.
+
+**Why `research` is not a reviewer.** It runs *before* a claim is written rather than after, and it
+is the only persona granted outward-reaching tools (`WebSearch`, `WebFetch`) — which cannot write,
+which is why they do not breach the read-only property. Its method is exercise 08's, where 80
+hyperparameters across 29 papers produced 82 proposed quotes, 82 verbatim and zero fabrications:
+download every source first, check each quote as a contiguous run of that file's own characters, and
+leave the field empty where nothing says so. Twenty-two of thirty ended up empty and that column
+became the most informative one on the page.
+
+`tests/test_agent_roster.py` holds the directory and this table together in both directions, and
+asserts that no persona has been granted a tool that can write.
+
 **Why fresh context and no write tools.** *Large Language Models Cannot Self-Correct Reasoning Yet*
 (ICLR 2024) found that without external feedback, self-review **decreased** accuracy: models flipped
 correct answers to wrong more often than the reverse. The agent that did the work must not grade it.
