@@ -1327,4 +1327,27 @@ predates the harness — so it is logged as what it was.
                           whether Vercel's rate limit counts deployments CREATED or builds RUN --
                           if the former, the gate saves build minutes only and the real fix is to
                           disable git deployments and drive previews from a workflow
+
+2026-09-10  agentic       #184 opened: the PreToolUse guard failed OPEN on a relative path, which is
+                          the one thing its own docstring says it never does. Path(target).resolve()
+                          anchors a RELATIVE file_path to the cwd of whatever runs the hook -- not
+                          guaranteed to be the root, and under claude --worktree reliably not -- so
+                          the resolved path failed relative_to(root) and the except ValueError
+                          branch, written for a path genuinely OUTSIDE the repository, returned None
+                          and allowed the call. Verified against the guard's own entry point: an
+                          absolute out-of-scope path blocked, the identical path sent relative
+                          passed, and so did a protected guard file and .claude/UNIT.md itself.
+                          bash_write_targets has anchored to the root since it was written, so the
+                          two branches of ONE function disagreed -- the same path blocked as a shell
+                          redirect and passed as a Write. THIRD bypass in this file of one shape
+                          (the guard answering its question correctly about a call it never saw),
+                          after taking the root from __file__ and omitting Bash. Watched failing.
+                          FOUND BY PROBING RATHER THAN READING, while checking whether an agent
+                          could widen its own scope for row 9's writer half -- and MY FIRST PROBE
+                          WAS WRONG IN A WAY THAT LOOKED LIKE A MUCH BIGGER FINDING: I sent relative
+                          paths, which resolved against the real repo, so every Write appeared to be
+                          allowed. Confirming the probe before believing it is what turned "Write
+                          bypasses the guard entirely" into the real, narrower defect. CHECKED AND
+                          NOT BROKEN: an agent cannot widen its own scope -- .claude/UNIT.md is
+                          refused to both Write and Bash
 ```

@@ -38,6 +38,28 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The `PreToolUse` guard failed open on a relative path, which is the one thing it says it never
+  does.**
+
+  Its own docstring: *"It fails closed. Malformed stdin, an unreadable rules file, an unparseable
+  payload: all block."* But `Path(target).resolve()` anchors a **relative** `file_path` to the cwd of
+  whatever process runs the hook — not guaranteed to be the repo root, and under `claude --worktree`
+  reliably not. The resolved path then failed `relative_to(root)`, and the `except ValueError`
+  branch written for *a path genuinely outside the repository* returned `None` and **allowed the
+  call**.
+
+  Verified against the guard's own entry point: an absolute out-of-scope path blocked, the identical
+  path sent relative passed. So did a protected guard file, and `.claude/UNIT.md` itself — the file
+  that decides what the unit may write.
+
+  **`bash_write_targets` has anchored to the root since it was written**, so the two branches of one
+  function disagreed: the same protected path blocked as a shell redirect and passed as a `Write`.
+  This is the **third** bypass in this file of one shape — the guard answering its question
+  correctly, about a call it never saw — after taking the root from `__file__` and omitting `Bash`
+  from the writing tools. It joins them as a named regression test.
+
+  What was checked and is **not** broken: an agent cannot widen its own scope. `.claude/UNIT.md` is
+  refused to both `Write` and `Bash`, so the escape hatch stays a human decision.
 - **The rail was moved inward on three pages and it pushed the reading column off centre.** The
   fix for exercise 09's squeezed text was mostly the type scale, but it also added
   `left: max(0px, calc((100vw - 1500px) / 2))` to exercises 07, 09 and 10 — so above 1440px the rail
