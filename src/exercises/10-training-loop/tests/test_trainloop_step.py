@@ -40,7 +40,8 @@ def test_the_hand_built_pattern_matches_what_torch_actually_stores(fmt, dtype) -
     **The first version of this drove `0.1` and nothing else, and a real bug shipped past it.**
     `_round_to_nearest_even` returned an overflow flag computed from the *value's* fraction-field
     width rather than the fixed 23; `decompose` then applied a second exponent increment and
-    returned a number **exactly twice too large** — on 3.7% of bf16 inputs and 30% of E4M3 inputs,
+    returned a number **exactly twice too large** — on 3.12% of bf16 inputs and
+    25.04% of E4M3 ones,
     and raising `ValueError` on others. `0.1` is one of the values where it could not fire.
 
     A test that checks a construction at one point has checked one point.
@@ -221,7 +222,7 @@ def test_the_two_accumulation_curves_diverge_and_the_wrong_one_reads_higher_on_a
     """Item 3's real-run half, asserted on the MEAN rather than on one endpoint.
 
     **The first version asserted `wrong_reads_higher` at six steps, and that was a coin flip.** The
-    gap's sign is not constant: in the shipped 120-step run it is negative at 28 of 120 steps,
+    gap's sign is not constant: in the shipped 120-step run it is negative at 18 of 120 steps,
     including several of the first six. So the assertion tested the sign of one arbitrary step and
     happened to land right — and its docstring claimed six steps were "enough to separate the
     curves", which the run's own data contradicts.

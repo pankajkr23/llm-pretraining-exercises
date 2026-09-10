@@ -190,7 +190,7 @@ def _round_to_nearest_even(mantissa: int, drop: int) -> int:
     negative and the function **raised**; when it did not, the flag fired spuriously and `decompose`
     applied a second exponent increment on top of its own normalisation, returning a value
     **exactly twice** the right one. Measured against an independent reference over 200,000 uniform
-    draws: bf16 wrong on 3.7% of them, fp8 E4M3 on 30%.
+    draws: bf16 wrong on 3.12% and refusing 0.41%; fp8 E4M3 wrong on 25.04% and refusing 6.16%.
 
     It shipped because `0.1` is the only value the tests drove, and `0.1`'s fraction field happens
     to have bit length 23 and to round without carrying — one of the values where the bug cannot

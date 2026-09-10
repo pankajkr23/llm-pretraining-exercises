@@ -1582,6 +1582,29 @@ predates the harness — so it is logged as what it was.
                           snapshot_standards.py was run and 44 archive guards now have something to
                           check instead of skipping
 
+2026-09-10  exercise-10   #179 opened: stage 14, the reviewer pass, and it found a great deal. FOUR
+                          reviewers -- auditor, engineer, first-time reader, UX -- and the two
+                          highest-consequence findings were reached INDEPENDENTLY by two of them
+                          each. THE README'S RATIO WAS WRONG IN THE FLATTERING DIRECTION: "0.0759 of
+                          a loss of 5.2873, so under 1%" is 1.44%, in the document whose headline is
+                          that a figure was caught flattering itself. Both operands were guarded and
+                          the ratio was not. THE AUDIT TABLE WAS 3,635px IN A 1,156px WRAPPER: 09
+                          hit this, fixed it, and 10 copied the markup without the rule, so `.prose`
+                          was inert and looked deliberate. That was one table of six -- 3,154px of
+                          text hidden at 390 across the other five. Now zero at every desktop width
+                          and 108px at 390. THE META DESCRIPTION still served the merged 30% the
+                          page's own audit trail retired. THE NOTEBOOK'S LITE PROFILE printed "steps
+                          40" and trained 200, under markdown reading "Nothing below is hard-coded".
+                          NO PROVENANCE TEST AT ALL, and REQUIRED_FIELDS was a decoy checked by
+                          nobody. MY OWN FIXES WERE WRONG TWICE AND MEASURING CAUGHT BOTH: the knob
+                          guard I wrote came back GREEN on the defect it was written for, because it
+                          counted the print statement that names the knob as a read -- which is
+                          exactly what made the knob look obeyed; and the .prose fix I landed
+                          mid-review covered one table of six, which the UX reviewer measured around
+                          me and reported honestly. Promoted 09's prose-table guard repo-wide rather
+                          than making a second copy -- the third single-exercise guard this week to
+                          miss the exercise next door
+
 2026-09-10  agent-roster  #183 opened: the read-only half of row 9. `research` asks whether a source
                           OUTSIDE this repo actually says a thing in those words -- exercise 08's
                           method, where 80 hyperparameters across 29 papers gave 82 proposed quotes,

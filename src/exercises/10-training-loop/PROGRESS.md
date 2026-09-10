@@ -28,7 +28,7 @@ of the loop or a deliberate breakage of it.
 | **11 · RESULTS.md** | generated from that file; no figure typed | **done** |
 | **12 · Tests** | the no-torch half runs in the ordinary CI job; count is in the suite, not here | **done** |
 | **13 · Documents** | README, DECISIONS, NOTICE, CLAUDE.md | **done** |
-| **14 · Review** | run the reviewers over the finished work, as 09 did | not started |
+| **14 · Review** | run the reviewers over the finished work, as 09 did | **done** |
 | **15 · Notebook** | **tracked**, under a written exception — see `DECISIONS.md` D1 | **done** |
 | **16 · Web page** | the deployable explainer, to the twelve-part spine | **done** |
 | **16b · Register** | `SPINE_ENFORCED` + the landing card — both fail in two directions | **done** |
@@ -101,15 +101,13 @@ spec states and the arithmetic here reproduces.
 
 ## What is left, in order
 
-1. **Run the reviewers** — auditor, engineer and reader, as exercise 09 did. That review found three
-   blockers in work that looked finished, and there is no reason this is different.
-2. **The notebook**, tracked under the written exception in `DECISIONS.md` D1. The exception lands
-   in `AGENTS.md` and `.gitignore`, and **not** in `tools/backup_local_only.py::PATTERNS` — `collect`
-   ends with `found -= _tracked(root)`, so a tracked file leaves the backup set on its own. An
-   earlier draft of this line said otherwise, which would have meant an edit with no effect that
-   read as a safeguard.
-3. **The web page**, to the twelve-part spine, then both registrations.
-4. **Submit** — PK's, once production is live.
+**1. Submission** 🧑 — PK's, once production serves the page. Everything else in the table above is
+done, including the notebook, the page and both registrations.
+
+**This section listed the notebook and the web page as remaining while the table twelve lines above
+marked them done.** That is the working-note decay `AGENTS.md` names, in the file whose whole job is
+to say where the work stands, and two reviewers found it independently. Anything added here is
+checked against the table before it is written.
 
 ## What this exercise cannot establish
 

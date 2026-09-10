@@ -54,7 +54,7 @@ Test modules are prefixed `test_trainloop_*`. pytest imports by **basename**, so
 ## Modules
 
 `config.py` · `step.py` · `gradcheck.py` · `accumulation.py` · `telemetry.py` · `mfu.py` ·
-`floats.py` · `harness.py`, plus `tools/render_results.py`.
+`floats.py` · `provenance.py` · `harness.py`, plus `tools/render_results.py`.
 
 The model itself is **exercise 09's**, imported: its trunk, tokenizer, target shift, masks and
 losses all apply here unchanged, so the two exercises cannot disagree about what a loss is.
