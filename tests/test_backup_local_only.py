@@ -183,7 +183,7 @@ def test_a_snapshot_round_trips_byte_for_byte(fake_repo: Path, tmp_path: Path) -
     files, _ = backup.collect(fake_repo)
     backup.snapshot(fake_repo, dest, files, message="test")
 
-    absent, differing, lost = backup.verify(fake_repo, dest, files)
+    absent, differing, lost, _ = backup.verify(fake_repo, dest, files)
     assert not absent and not differing and not lost
     for relative in files:
         assert (dest / relative).read_bytes() == (fake_repo / relative).read_bytes()
@@ -196,7 +196,7 @@ def test_verify_reports_a_file_the_store_never_received(fake_repo: Path, tmp_pat
     backup.snapshot(fake_repo, dest, files, message="test")
 
     _make(fake_repo, "notebooks/S02-tokenization.ipynb", "new work")
-    absent, _, _ = backup.verify(fake_repo, dest, backup.collect(fake_repo)[0])
+    absent, _, _, _ = backup.verify(fake_repo, dest, backup.collect(fake_repo)[0])
     assert "notebooks/S02-tokenization.ipynb" in absent
 
 
@@ -209,7 +209,7 @@ def test_verify_reports_a_file_that_has_changed_since_the_snapshot(
     backup.snapshot(fake_repo, dest, files, message="test")
 
     (fake_repo / "notebooks/S01-introductions.ipynb").write_text("rebuilt", encoding="utf-8")
-    _, differing, _ = backup.verify(fake_repo, dest, files)
+    _, differing, _, _ = backup.verify(fake_repo, dest, files)
     assert "notebooks/S01-introductions.ipynb" in differing
 
 
@@ -389,7 +389,7 @@ def test_verify_reports_a_file_that_has_been_lost_from_the_checkout(
 
     (fake_repo / "notebooks/S01-introductions.ipynb").unlink()
     remaining, _ = backup.collect(fake_repo)
-    _, _, lost = backup.verify(fake_repo, dest, remaining)
+    _, _, lost, _ = backup.verify(fake_repo, dest, remaining)
 
     assert "notebooks/S01-introductions.ipynb" in lost
 
@@ -411,7 +411,7 @@ def test_a_total_loss_is_reported_rather_than_looking_like_a_clone(
 
     remaining, _ = backup.collect(fake_repo)
     assert remaining == [], "the fixture did not actually empty"
-    _, _, lost = backup.verify(fake_repo, dest, remaining)
+    _, _, lost, _ = backup.verify(fake_repo, dest, remaining)
     assert len(lost) == len(files), f"{len(lost)} of {len(files)} losses reported"
 
 
@@ -452,3 +452,61 @@ def test_a_tracked_file_is_never_backed_up(fake_repo: Path, tmp_path: Path) -> N
 
     files, _ = backup.collect(fake_repo)
     assert Path("TODO.md") not in files, "a tracked file was collected into the store"
+
+
+def test_a_stowaway_in_the_store_is_not_reported_as_a_loss(fake_repo, tmp_path) -> None:
+    """The tripwire's signal has to mean something, and this is what was drowning it.
+
+    The store is a git repository whose snapshot ends with `git add -A`, so anything copied into its
+    directory by hand is committed with everything else. Forty-five files sat in the real store that
+    way — twenty copied in by hand, twenty-five the residue of a `PATTERNS` entry that was
+    deliberately removed — and **every run of `--verify` reported all of them as
+    `LOST FROM THE CHECKOUT`** and told the reader to restore them.
+
+    `AGENTS.md` names that exact failure: *"a tripwire that cries wolf is one people stop reading,
+    and this repo has lost files twice."* This is the command it calls recovery step 1.
+    """
+    dest = tmp_path / "store"
+    files = backup.collect(fake_repo)[0]
+    backup.snapshot(fake_repo, dest, files, message="first")
+
+    stowaway = dest / "agent_sample_files" / "era5-setup" / "install.sh"
+    stowaway.parent.mkdir(parents=True, exist_ok=True)
+    stowaway.write_text("#!/bin/sh\necho staged in by hand\n", encoding="utf-8")
+
+    _, _, lost, unprotected = backup.verify(fake_repo, dest, files)
+    assert "agent_sample_files/era5-setup/install.sh" not in lost, (
+        "a file PATTERNS never named was reported as lost from the checkout, which is the "
+        f"false alarm this exists to remove: {lost}"
+    )
+    assert "agent_sample_files/era5-setup/install.sh" in unprotected, (
+        "it was dropped silently instead. A file sitting in the store for no reason is still worth "
+        f"reporting — just not as an alarm: {unprotected}"
+    )
+
+
+def test_a_protected_file_that_vanished_is_still_a_loss(fake_repo, tmp_path) -> None:
+    """The half that must not be weakened, asserted beside the half that was.
+
+    Every change that quietens a guard risks quietening the thing it was for. A file `PATTERNS`
+    names, present in the store and gone from the checkout, is the failure this whole tool exists to
+    catch — it has happened twice — and it must still fail alone and loudly.
+    """
+    dest = tmp_path / "store"
+    files = backup.collect(fake_repo)[0]
+    backup.snapshot(fake_repo, dest, files, message="first")
+    assert files, "the fixture offers no protected files, so this asserts nothing"
+
+    victim = files[0]
+    (fake_repo / victim).unlink()
+    remaining = backup.collect(fake_repo)[0]
+
+    _, _, lost, unprotected = backup.verify(fake_repo, dest, remaining)
+    assert str(victim) in lost, (
+        f"{victim} is named by PATTERNS, is in the store and is gone from the checkout — that is a "
+        f"loss and has to be reported as one: {lost}"
+    )
+    assert str(victim) not in unprotected, (
+        "a real loss was demoted to the informational list, which is the way this change could "
+        "have gone wrong"
+    )

@@ -1062,38 +1062,30 @@ function chapterNext() {
   ]);
 }
 
-/* 12 · How to check any of this yourself. */
+/* 12 · How to check any of this yourself.
+ *
+ * **This section used to be two blocks of shell commands, and four of them were on this page and
+ * nowhere else** — including `run_demo.py` and `verify.py`, the two most important commands the
+ * exercise has. The one place they were written down was the one place nothing tests. They are in
+ * the README now, beside the scripts they name.
+ *
+ * What belongs here is the answer to *can I believe this?*, not *what do I type?*. The verifier is
+ * the interesting fact about this exercise and it survives the move: a second program that
+ * re-derives every published claim from the bundle alone, importing none of the code that wrote it.
+ */
 function chapterReproduce() {
-  return section('reproduce', 'reproduce', 'Check it yourself', 'Two commands, and the second distrusts the first', [
+  return section('reproduce', 'reproduce', 'Check it yourself', 'Two programs, and the second distrusts the first', [
     para(
-      'The first command runs the pipeline and writes the bundle. The second re-derives every claim on this page from that bundle alone, importing none of the code that produced it. If they ever disagree, the second one is the one to believe.',
+      'The pipeline writes a bundle. A second program then re-derives every claim on this page from that bundle alone, importing none of the code that produced it — so a bug in the pipeline cannot also write the evidence that the pipeline is fine. If the two ever disagree, the second one is the one to believe.',
     ),
-    codeBlock([
-      'uv sync --all-packages',
-      '',
-      '# produce the bundle: one command, no interaction',
-      'uv run python src/exercises/06-build-training-dataset/run_demo.py',
-      '',
-      '# re-derive every published claim from the bundle ONLY',
-      'uv run python src/exercises/06-build-training-dataset/verify.py',
-      '',
-      '# the suite',
-      'uv run pytest src/exercises/06-build-training-dataset',
-    ]),
     para(
-      'The training step needs torch, which is an optional extra so a fresh clone stays small; the browser tests need a one-time ',
-      $('code', '', 'uv run playwright install chromium'),
-      ' and skip without it.',
+      'That is the whole argument for the split, and it is worth being precise about what it does and does not buy. It catches a pipeline that computes the wrong number and reports it consistently, because the verifier reads only what was written down. It cannot catch a bundle that is wrong in a way both programs would agree about — a mis-specified input is still a mis-specified input to both.',
     ),
-    codeBlock([
-      'uv sync --all-packages --extra train',
-      'uv run pytest src/exercises/06-build-training-dataset -m integration',
-      '',
-      '# regenerate the numbers this page renders, and fail if they are stale',
-      'uv run python src/exercises/06-build-training-dataset/tools/build_web_data.py --check',
-    ]),
     para(
-      'Every figure on this page is generated from the run’s own artifacts by that last command. None of them is typed in by hand — a number inside a script block is read far more often than any file in the repository and tested by none of them, which makes it the easiest place for a stale figure to survive.',
+      'Every figure on this page is generated from the run’s own artifacts, and there is a form of the build command that regenerates nothing and fails if what the page renders has gone stale. None of these numbers is typed in by hand: a number inside a script block is read far more often than any file in the repository and tested by none of them, which makes it the easiest place for a stale figure to survive.',
+    ),
+    para(
+      'The commands themselves — the bundle, the verifier, the suite, the staleness check, and the optional torch and browser extras — are in this exercise’s README, beside the scripts they run. They used to be duplicated here, and the two copies had already drifted apart.',
     ),
   ]);
 }
