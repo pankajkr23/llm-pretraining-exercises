@@ -220,3 +220,66 @@ def test_a_previous_deployment_still_narrows_the_comparison(repo: Path) -> None:
         "with a real previous deployment and a commit touching no deployed path, the script built. "
         "The quota this file exists to protect is gone if every push deploys."
     )
+
+
+#: A path `should-build.sh` treats as deployed, used by the cases below.
+PAGE = "src/exercises/07-model-embeddings-internals/web/page.css"
+
+
+def _run(repo: Path, *args: str) -> subprocess.CompletedProcess:
+    """The real script, with an explicit baseline and head — how Vercel calls it."""
+    return subprocess.run(["bash", str(SCRIPT), *args], cwd=repo, capture_output=True, text=True)
+
+
+def test_a_documentation_push_on_a_branch_that_already_deployed_still_skips(repo: Path) -> None:
+    """The reported symptom, pinned as a DECISION rather than left to be re-litigated.
+
+    A branch changes a page (it builds, and the branch alias starts serving that build), then lands
+    `docs: record #NNN in the queue` on top — which every pull request here does, because the entry
+    has to name the pull request number. That push must still skip: the preview is already correct
+    and byte-identical, and building it again spends a deployment to produce the same output.
+
+    What the skip costs is a *report*: Vercel writes no GitHub Deployment for a skipped build, so
+    the tip has no environment and the pull request reads "not deployed". That is fixed by
+    `.github/workflows/preview-pointer.yml`, which spends no deployment. If this test ever has to
+    be changed to expect BUILD, the quota is the thing being spent, and it should be a decision.
+    """
+    deployed = _commit(repo, PAGE, "the page change\n")
+    _commit(repo, "docs/agents/QUEUE.md", "record #999\n")
+    assert _run(repo, deployed, "HEAD").returncode == SKIP
+
+
+def test_the_skip_message_names_the_build_that_is_still_serving_the_branch(repo: Path) -> None:
+    """A build log that says only "skipping" sends its reader nowhere.
+
+    The one fact a reader needs when they find a cancelled deployment is *which* commit's build the
+    branch alias is still serving, because that is the preview they were looking for.
+    """
+    deployed = _commit(repo, PAGE, "the page change\n")
+    _commit(repo, "CHANGELOG.md", "an entry\n")
+    done = _run(repo, deployed, "HEAD")
+    assert done.returncode == SKIP
+    assert deployed in done.stdout, (
+        f"the skip message does not name the commit still serving the branch: {done.stdout!r}"
+    )
+
+
+def test_the_baseline_does_not_have_to_be_an_ancestor(repo: Path) -> None:
+    """`VERCEL_GIT_PREVIOUS_SHA` is the last successful deployment, and a rebase can move it off
+    the branch. `git diff A B` compares two trees, not two histories, so the question it answers —
+    *would the output differ?* — stays the right one. Both directions, because a predicate that
+    only ever says BUILD is not a predicate.
+    """
+    _commit(repo, PAGE, "shared\n")
+    _git(repo, "checkout", "-q", "-b", "other")
+    off_branch_same = _commit(repo, "docs/notes.md", "unrelated\n")
+    off_branch_differs = _commit(repo, PAGE, "a different page\n")
+    _git(repo, "checkout", "-q", "main")
+    _commit(repo, "CHANGELOG.md", "an entry\n")
+
+    assert _run(repo, off_branch_same, "HEAD").returncode == SKIP, (
+        "two commits with identical deployed-path content were reported as needing a build"
+    )
+    assert _run(repo, off_branch_differs, "HEAD").returncode == BUILD, (
+        "an off-branch baseline whose page content differs was reported as needing no build"
+    )
