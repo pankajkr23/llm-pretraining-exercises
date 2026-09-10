@@ -65,6 +65,69 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The `PreToolUse` guard failed open on a relative path, which is the one thing it says it never
+  does.**
+
+  Its own docstring: *"It fails closed. Malformed stdin, an unreadable rules file, an unparseable
+  payload: all block."* But `Path(target).resolve()` anchors a **relative** `file_path` to the cwd of
+  whatever process runs the hook — not guaranteed to be the repo root, and under `claude --worktree`
+  reliably not. The resolved path then failed `relative_to(root)`, and the `except ValueError`
+  branch written for *a path genuinely outside the repository* returned `None` and **allowed the
+  call**.
+
+  Verified against the guard's own entry point: an absolute out-of-scope path blocked, the identical
+  path sent relative passed. So did a protected guard file, and `.claude/UNIT.md` itself — the file
+  that decides what the unit may write.
+
+  **`bash_write_targets` has anchored to the root since it was written**, so the two branches of one
+  function disagreed: the same protected path blocked as a shell redirect and passed as a `Write`.
+  This is the **third** bypass in this file of one shape — the guard answering its question
+  correctly, about a call it never saw — after taking the root from `__file__` and omitting `Bash`
+  from the writing tools. It joins them as a named regression test.
+
+  What was checked and is **not** broken: an agent cannot widen its own scope. `.claude/UNIT.md` is
+  refused to both `Write` and `Bash`, so the escape hatch stays a human decision.
+
+- **The backup tripwire reported forty-five files as lost that were never protected.**
+  `backup_local_only.py --verify` is the command `AGENTS.md` names as recovery step 1 and as the
+  check to run after every checkout, pull, merge and rebase — the operation class that has already
+  destroyed these files twice. It treated **any** file in the store with no counterpart in the
+  checkout as a loss, and the store is a git repository whose snapshot ends with `git add -A`, so
+  anything copied into its directory is committed along with everything else. Every run told the
+  reader to restore files that were never theirs to lose, which is the failure that document names
+  in as many words: *"a tripwire that cries wolf is one people stop reading."*
+
+  A stored path is a loss only if `PATTERNS` names it. Worked out by globbing the **store** with the
+  tool's own patterns, so there is no second matcher to drift from `collect()`. The rest are
+  reported as information, grouped by directory — four lines instead of forty-five — and do not fail
+  the check. **A protected file that vanished still fails, alone and loudly**, and there is a test
+  for each half, because every change that quietens a guard risks quietening what it was for.
+
+  The two kinds that land there are not alike, and the message says so: twenty copied in by hand,
+  and twenty-five the residue of a `PATTERNS` entry that was deliberately removed while the
+  append-only store kept what it had — the store working, not failing. `HANDOFF.md` recorded this as
+  19 files; it is 45.
+
+### Fixed
+
+- **`sync_open_prs.py` could land a branch's changelog entry inside a version that had already
+  shipped.** After a release renames `[Unreleased]` and opens a fresh empty one, a block's
+  neighbours are no longer where it was written beside them — so placement falls back to a single
+  line, finds it inside the *released* section (which is where those neighbours now live), and puts
+  the entry there. **Reproduced against the real function before anything was changed**, and it was
+  worse than recorded: the entry landed *above* that section's own `### Fixed`, so it was malformed
+  as well as untrue, and the only note said its neighbours had moved — true of many correct
+  placements and silent about the version.
+
+  It relocates to `[Unreleased]` now and says so at a volume matching what it prevented. The block's
+  correct home is not ambiguous, which is why this repairs rather than stops — with one exception: a
+  file with no `[Unreleased]` section at all is **refused**, because inventing a section would be
+  this tool deciding what a release contains.
+
+  The other defect that entry recorded — a line replacement re-applied as an addition — **was
+  already fixed**; the note had gone stale. Four tests now cover the repair, the refusal, the
+  insertion point, and the distinction the whole thing rests on: that `[Unreleased]` is not read as
+  a released version. All watched failing against the tree as it shipped.
 - **The rail was moved inward on three pages and it pushed the reading column off centre.** The
   fix for exercise 09's squeezed text was mostly the type scale, but it also added
   `left: max(0px, calc((100vw - 1500px) / 2))` to exercises 07, 09 and 10 — so above 1440px the rail

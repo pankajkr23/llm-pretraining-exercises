@@ -14,7 +14,12 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from sync_open_prs import _placement_floor, _reapply, changed_blocks  # noqa: E402
+from sync_open_prs import (  # noqa: E402
+    _placement_floor,
+    _reapply,
+    _unreleased_body,
+    changed_blocks,
+)
 
 BASE = "alpha\nbravo\ncharlie\n"
 
@@ -316,3 +321,99 @@ def test_the_run_finder_is_verbatim_and_contiguous() -> None:
     assert _run_index(lines, ["b\n", "d\n"]) is None, "not contiguous"
     assert _run_index(lines, ["B\n"]) is None, "not verbatim"
     assert _run_index(lines, []) is None, "an empty run is not a position"
+
+
+# A changelog as it looks on a branch written while `[Unreleased]` was open, and as `main` looks
+# after a release renamed that section and opened a fresh empty one. The pair is the whole setup
+# for the defect below, so it is written once and shared.
+_RELEASED_MAIN = (
+    "# Changelog\n\nPreamble line.\n\n"
+    "## [Unreleased]\n\n"
+    "## [0.15.0] — 2026-09-10\n\n### Fixed\n\n- **Shipped in 0.15.0.**\n\n"
+    "## [0.14.0] — 2026-09-05\n\n- **Old.**\n"
+)
+_BRANCH = (
+    "# Changelog\n\nPreamble line.\n\n"
+    "## [Unreleased]\n\n### Fixed\n\n- **Branch entry.**\n\n"
+    "## [0.14.0] — 2026-09-05\n\n- **Old.**\n"
+)
+_BRANCH_BASE = _BRANCH.replace("- **Branch entry.**\n", "")
+
+
+def test_a_branch_entry_never_lands_in_a_section_that_already_shipped() -> None:
+    """The defect: after a release, an entry claimed to have shipped in a version it did not.
+
+    A release renames `[Unreleased]` and opens a fresh empty one, so a branch's block no longer has
+    the neighbours it was written beside. `_locate` falls back to a single line, finds it inside the
+    *released* section — because that is where those neighbours now live — and the entry lands
+    there. It is then a false claim about what shipped, and in practice it landed ABOVE that
+    section's own `### Fixed`, so it was malformed as well as untrue.
+
+    Nothing failed when this happened. The only note was "placed by the following line only", which
+    is true of many correct placements and says nothing about a version.
+    """
+    out, notes = _reapply(_RELEASED_MAIN, changed_blocks(_BRANCH_BASE, _BRANCH))
+    lines = out.splitlines()
+    at = next(i for i, line in enumerate(lines) if "Branch entry" in line)
+    heading = next((lines[i] for i in range(at - 1, -1, -1) if lines[i].startswith("## ")), None)
+    assert heading == "## [Unreleased]", (
+        f"the branch's entry landed under {heading!r}, claiming it shipped in a release it was "
+        f"not part of:\n{out}"
+    )
+    assert any("released" in note and "Unreleased" in note for note in notes), (
+        f"the relocation happened silently; it has to be reported: {notes}"
+    )
+    assert out.count("Branch entry") == 1, f"the entry was duplicated:\n{out}"
+
+
+def test_it_refuses_rather_than_guessing_when_there_is_nowhere_correct() -> None:
+    """The one case relocation cannot repair, and the one place refusing is right.
+
+    With no `## [Unreleased]` at all there is no correct home, and inventing a section is worse than
+    stopping: it would be this tool deciding what a release contains. So the block is not written
+    and the note says so in words a person can act on.
+    """
+    no_unreleased = _RELEASED_MAIN.replace("## [Unreleased]\n\n", "")
+    out, notes = _reapply(no_unreleased, changed_blocks(_BRANCH_BASE, _BRANCH))
+    assert "Branch entry" not in out, (
+        "the block was written into a file with nowhere correct to put it:\n" + out
+    )
+    assert any(note.startswith("REFUSED") for note in notes), (
+        f"it dropped the block without saying so, which is the worse half of both options: {notes}"
+    )
+
+
+def test_an_entry_joins_the_list_rather_than_displacing_the_heading() -> None:
+    """`### Fixed` introduces the entries under it, so a new one belongs after it, not above it.
+
+    The original defect put the block above a section's own subsection heading. Relocating without
+    this would reproduce that one line lower down.
+    """
+    with_heading = (
+        "# Changelog\n\n## [Unreleased]\n\n### Fixed\n\n- **Already here.**\n\n"
+        "## [0.15.0] — 2026-09-10\n\n- **Shipped.**\n"
+    ).splitlines(keepends=True)
+    at = _unreleased_body(with_heading)
+    assert at is not None
+    assert with_heading[at].startswith("- **Already here."), (
+        f"the insertion point is {with_heading[at]!r}; it should be the first entry under the "
+        "section's own heading, so a new entry joins the list rather than displacing the heading"
+    )
+
+
+def test_a_released_section_is_told_apart_from_the_open_one() -> None:
+    """The distinction the whole repair rests on, asserted directly.
+
+    If `[Unreleased]` ever matched the released pattern, every block would be "relocated" out of the
+    section it already belonged in — and the guard above would still pass, because the entry would
+    end up under `## [Unreleased]` either way.
+    """
+    from sync_open_prs import _RELEASED_SECTION, _UNRELEASED_SECTION
+
+    assert _UNRELEASED_SECTION.match("## [Unreleased]\n")
+    assert not _RELEASED_SECTION.match("## [Unreleased]\n"), (
+        "`[Unreleased]` is being treated as a released version, so every entry would be moved out "
+        "of the section it was already in"
+    )
+    assert _RELEASED_SECTION.match("## [0.15.0] — 2026-09-10\n")
+    assert _RELEASED_SECTION.match("## [1.0.0]\n")
