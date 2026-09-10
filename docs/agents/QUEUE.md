@@ -1328,6 +1328,60 @@ predates the harness — so it is logged as what it was.
                           if the former, the gate saves build minutes only and the real fix is to
                           disable git deployments and drive previews from a workflow
 
+2026-09-09  fix           #173 opened: the shared explainer fits at the rail breakpoint, and the
+                          finding recorded an hour ago is fixed rather than carried. Reproduced on
+                          main first, so the attribution is measured: exercises 03 and 06 overflow
+                          12px at 1180 and 0px at every other width in a fifteen-width sweep. THE
+                          ARITHMETIC IS EXACT and worth keeping: page.css reserves the 260px rail
+                          gutter from 1180, so the content box is 896px there and NARROWER than at
+                          1179; explainer.css's .scrolly.wide floor is 48ch + 48px gap + 400px =
+                          931.75px; the tracks run 35.75px past #main and 12px past the window. A
+                          minmax() minimum is a FLOOR, so the grid overflows rather than shrinking
+                          -- which is the part that makes this invisible in source. Fixed by using
+                          340px, the value the narrow variant already uses (871.75 inside 896), and
+                          nothing is lost above the squeeze because the maximum is 1fr. All EIGHT
+                          vendored copies patched together and still byte-identical (md5). NEW
+                          REPO-WIDE GUARD sweeps fifteen widths chosen where the layout changes,
+                          with 1180 and 1179 adjacent, and reports the offending ELEMENTS rather
+                          than just the number -- that is what turned "06 scrolls 12px" into
+                          ".sticky ends at 1192". Watched red on both pages with the rule reverted,
+                          held in memory, restored in a finally, restore verified. Registered in
+                          OPTIONAL_DEPENDENCY_GATES, because a module-level importorskip that is
+                          not ledgered is a file that collects nothing and reports green
+
+2026-09-10  fix           #173's new guard immediately earned itself: it went RED ON CI for a page
+                          I was not touching. Exercise 02 scrolls 4px at 320px, and it passes
+                          locally at 320 -- Linux's default fonts are wider than macOS's, so the
+                          page's lack of headroom only shows there. Cause: .tok .s had
+                          `white-space: pre` AND `word-break: break-all`, and pre forbids the break,
+                          so the second declaration could never fire -- a rule that reads as a fix
+                          and moves no pixels, which is a pattern AGENTS.md already names. .chip had
+                          the same pre with no break at all, inside .chips which wraps BETWEEN chips
+                          and does nothing for one chip too wide. Both pre-wrap now, which keeps the
+                          leading spaces that make a token legible and permits a break. AND MY
+                          GUARD'S REPORT WAS WRONG: it named THEAD/TR/TH, which were inside a table
+                          scrolling correctly in its own overflow-x box. An element only pushes the
+                          page if nothing between it and the root actually CLIPS, and the check
+                          needs both halves -- overflow-y: auto alone makes overflow-x compute to
+                          auto, so reading the computed value alone reports nothing at all. Fixed;
+                          a report that points at the wrong element is worse than a bare number
+
+2026-09-10  fix           02's sideways scroll was its HEADLINE FIGURE, and it took three rounds to
+                          find because I twice believed a probe over the page. Round one: my guard
+                          named THEAD/TR/TH, which were inside a table scrolling correctly in its
+                          own overflow-x box -- innocent. Round two: I fixed the token chips
+                          (white-space: pre beside an unreachable word-break: break-all, a real
+                          defect and not this one) and CI stayed red. Round three: hid one subtree
+                          at a time until the overflow vanished, which walked straight to
+                          DIV.score. It is eight characters -- "6,502.56" -- at a fixed 3.6rem,
+                          about 222px of tabular digits in a panel whose content box is viewport
+                          minus 80. clamp(2rem, 12vw, 3.6rem) now: the cap is reached at 480px so
+                          nothing above a phone changes, and the page has ZERO overflow down to
+                          220px where it was 28px at 260. THE LESSON IS THE HUNT, not the rule: two
+                          probes reported plausibly and both were wrong, and the one that worked
+                          asked the page a question it could not answer wrongly -- does hiding this
+                          make the overflow go away?
+
 2026-09-10  a11y          #174 opened: every figure announces what it is. HANDOFF item 8, verified by
                           counting before acting rather than trusted: 07 has six svg[role=img] and
                           had two <title> and zero aria-label, so four figures announced as bare

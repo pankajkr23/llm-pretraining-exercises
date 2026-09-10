@@ -65,6 +65,57 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Exercises 03 and 06 scrolled sideways at exactly 1180px, and had for as long as the rule that
+  did it has existed.** `_shared/page.css` starts reserving a 260px rail gutter at 1180, so the
+  content box is **narrower at 1180 than at 1179** — the one place in the range where a bigger
+  window means a smaller reading area. `_shared/explainer.css` already names that width as "the
+  tightest squeeze" in a comment, and its wide scrollytelling strip then demanded
+  `48ch + 48px + 400px = 931.75px` inside an **896px** box. A `minmax()` minimum is a floor the grid
+  may not go below, so the tracks ran 35.75px past `#main` and put 12px of the figure past the right
+  edge of the window. The floor is 340px now — the value the narrow variant already uses, fitting
+  with room at `871.75` — and nothing is lost above the squeeze, where the maximum is `1fr` and a
+  wider window still grows the chart. Applied to all eight vendored copies, which remain
+  byte-identical.
+
+- **Exercise 02's token chips could not wrap, so one long token set the whole page's minimum
+  width.** `.tok .s` carried `white-space: pre` and `word-break: break-all` together — and `pre`
+  forbids the break, so the second declaration could never fire: a rule that reads as a fix and
+  moves no pixels. `.chip` had the same `pre` with no break allowance at all, inside a `.chips`
+  container that wraps *between* chips, which does nothing for one chip too wide to fit. Both are
+  `pre-wrap` now, which keeps the leading spaces that make a token legible as a token and permits
+  the line to break. **Found by the new guard on CI and not locally**, because Linux's default fonts
+  are wider than macOS's — the page had no headroom left at 320px either way.
+
+- **And the thing actually pushing exercise 02 sideways was its headline figure.** `.score` is
+  eight characters — `6,502.56` — set at a fixed `3.6rem`, which is about **222px of tabular digits
+  inside a panel whose content box is `viewport − 80px`**. It stopped fitting around 300px on macOS
+  and at 320 on CI. Found by hiding subtrees one at a time until the overflow disappeared, after two
+  rounds of looking at the wrong elements. It is `clamp(2rem, 12vw, 3.6rem)` now, which reaches the
+  old size at 480px — so every screen above a phone is unchanged and the number keeps the size that
+  makes it a headline — and shrinks to fit below that rather than taking the page with it. The page
+  now has **zero overflow down to 220px**, where it was 28px at 260.
+
+### Added
+
+- **A repo-wide sideways-scroll guard, and the width it exists for is the one nobody was testing.**
+  Several exercises assert this about themselves and every one of them drives 1280, 1500, 900 or
+  390. The defect lived at 1180 and survived every green run.
+  `tests/test_no_page_scrolls_sideways.py` sweeps the deployable set across fifteen widths chosen
+  where the layout actually changes — 1180 and 1179 adjacent so a failure at one and not the other
+  reads as the breakpoint rather than as a width — and names the offending elements, which is what
+  turned "06 scrolls 12px" into "`.sticky` ends at 1192 in a 1180 window". Watched red on both pages
+  with the grid rule reverted, held in memory and restored in a `finally`.
+
+  **Its first report named innocent elements and cost a diagnosis.** It listed every element whose
+  right edge passed the viewport — including the contents of a table scrolling correctly inside its
+  own `overflow-x: auto` box, exactly as the conventions ask wide content to. It reported exercise
+  02's failure as "THEAD ends at 332" while that table was fine. An element only pushes the page if
+  nothing between it and the root actually clips, and the check needs both halves: `overflow-y:
+  auto` alone makes `overflow-x` compute to `auto` too, so reading the computed value on its own
+  treats almost everything as contained and reports nothing. A guard's report is part of the guard —
+  one that points at the wrong element is worse than a bare number, because a bare number sends
+  nobody anywhere.
+
 - **Four of exercise 07's six figures announced as "image" and nothing else.** An
   `<svg role="img">` with no accessible name tells a screen-reader user a figure is there and gives
   them no way to know what it showed — worse than omitting it, because the page has spent their
