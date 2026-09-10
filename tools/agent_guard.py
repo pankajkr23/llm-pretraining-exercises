@@ -393,9 +393,25 @@ def decide(payload: dict, root: Path, rules: dict) -> str | None:
         if not target:
             return None
         try:
-            targets = [Path(target).resolve().relative_to(root).as_posix()]
+            # **Anchored to the repo root, not to this process's cwd.** `Path("x").resolve()`
+            # resolves a RELATIVE path against wherever the hook happens to be running, which is
+            # not guaranteed to be the root -- and under `claude --worktree` reliably is not. The
+            # result then fails `relative_to(root)` and fell through to `return None`, so a
+            # relative `file_path` was allowed whatever it named. Verified against this guard's own
+            # entry point: an absolute out-of-scope path blocked, the same path sent relative
+            # passed. `bash_write_targets` has done it this way since it was written; the two
+            # branches of one function simply disagreed.
+            #
+            # This is the third bypass in this file of the same shape -- the guard answering its
+            # question correctly, about a call it never saw -- after taking the root from `__file__`
+            # and omitting `Bash` from the writing tools.
+            candidate = Path(target)
+            absolute = candidate if candidate.is_absolute() else root / candidate
+            targets = [absolute.resolve().relative_to(root).as_posix()]
         except ValueError:
-            return None  # outside the repo entirely; not this guard's business
+            # A genuinely absolute path outside the repository. That is not this guard's business,
+            # and it is the only case this branch is now reachable for.
+            return None
     else:
         return None
 
