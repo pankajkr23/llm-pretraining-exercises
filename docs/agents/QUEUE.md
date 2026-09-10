@@ -1382,6 +1382,46 @@ predates the harness — so it is logged as what it was.
                           asked the page a question it could not answer wrongly -- does hiding this
                           make the overflow go away?
 
+2026-09-10  a11y          #174 opened: every figure announces what it is. HANDOFF item 8, verified by
+                          counting before acting rather than trusted: 07 has six svg[role=img] and
+                          had two <title> and zero aria-label, so four figures announced as bare
+                          images. 01, 03, 05, 09 and 10 were already clean by three different
+                          mechanisms, which is why the guard asks the BROWSER for the computed
+                          accessible name instead of counting any one of them in source. NAMES
+                          ARGUE RATHER THAN LABEL, per DESIGN.md, and three of the four are derived
+                          from the run so they cannot go stale. TWO OF MY OWN MISTAKES, both found
+                          by listening to the output rather than reading the code: the reusable bar
+                          chart labels its rows by `r.arm` and my guessed fallback printed
+                          "undefined:" before every value; and I had put the `label` argument in
+                          the name, which is an AXIS LEGEND carrying arrow glyphs and runs of
+                          alignment spaces -- read aloud it became "left arrow better worse right
+                          arrow nats against the published design". Watched the guard red on
+                          exactly four with the titles removed, held in memory, restored in a
+                          finally. ALSO CHECKED HANDOFF ITEM 7 and it does NOT reproduce: the 04
+                          and 05 sliders sit inside their parents at 390, 360 and 320 and neither
+                          page overflows. The note says "confirmed present today"; it is stale, and
+                          the class is now covered by #173's sideways sweep at 390 and 320 anyway
+
+2026-09-10  a11y          #175 opened: every canvas colour follows the theme. HANDOFF item 9, counted
+                          before acting: exactly 12 literals against 16 theme-aware colour writes in
+                          s1, s2 and s4. MEASURED BEFORE AND AFTER through the site's real theme
+                          mechanism -- s1 and s2 each rendered TWO distinct canvases across six
+                          themes and now render six. s4 rendered six either way, because its other
+                          colour writes dominate the image while five of its literals were still
+                          wrong in the details, and THAT is why the guard is lexical rather than
+                          rendered: asking whether a colour CAN move has teeth, asking whether the
+                          picture changed is a question a coarse instrument answers yes to. MY
+                          FIRST PROBE WAS WRONG and it is worth recording: I set data-theme="light"
+                          and data-theme="dark", which match no rule -- the picker offers system
+                          plus four named themes, and light/dark come from prefers-color-scheme. So
+                          both fell back to :root and I briefly read that as the site failing to
+                          distinguish them. Re-measured with color_scheme emulation. CATEGORY
+                          COLOURS LEFT ALONE deliberately: they encode a data class, and one is
+                          interpolated per pixel into an ImageData buffer where a CSS variable
+                          cannot go. The untidiness -- --warm/--cool exist as tokens in the same
+                          files and are used for the line charts -- is recorded IN the guard with a
+                          twin that fails if it stops being true
+
 2026-09-10  tooling       #176 opened: the queue sync stops claiming work shipped in a release it did
                           not. HANDOFF item 5 named two defects; RE-CHECKED BOTH RATHER THAN
                           TRUSTING THE NOTE and one was already fixed -- _reapply replays an edit as
@@ -1401,6 +1441,24 @@ predates the harness — so it is logged as what it was.
                           tree as it shipped, restored in a finally. HANDOFF item 5 rewritten:
                           THIRD stale entry found in that file today, after item 7's slider
                           overflow and item 9's count
+
+2026-09-10  web           #177 opened: the shared explainer is measured. HANDOFF item 11 asked for the
+                          measurement before any deletion and explicitly refused to carry forward
+                          the old "used by one" figure. Measured: of 143 selectors, 03 matches 108,
+                          06 matches 30, 05 matches 4, 04 matches 2, 08/09/10 match ONE each, and
+                          07 matched ZERO while linking all 560 lines. Full-page screenshots with
+                          and without the link hash IDENTICALLY at 2000, 1180 and 390, so 07 no
+                          longer links it. NOTHING WAS DELETED FROM THE STYLESHEET and that is the
+                          finding rather than an omission: 35 selectors match nothing anywhere at
+                          rest, and a resting browser cannot tell a dead rule from one behind a
+                          click -- :focus-visible, .stagerow.missing, .unit.dim are states, not
+                          corpses. Deleting on that evidence is exactly the mistake the entry
+                          warned about. The tool is TRACKED (tools/measure_shared_css.py) because a
+                          producer of published numbers is tracked code or it is a number with no
+                          parent. MY OWN TOOL HAD THE BUG I KEEP FINDING: links() matched the
+                          filename as a substring, and 07's link is now a COMMENT naming the file,
+                          so it reported the page as still linking it. Matched as a <link> element
+                          now, in both the tool and the guard
 
 2026-09-10  tooling       #178 opened: the backup tripwire only cries for files it was protecting.
                           HANDOFF item 6 is 🤝 because removing paths from an append-only store is

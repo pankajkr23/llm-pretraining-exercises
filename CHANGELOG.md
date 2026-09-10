@@ -10,6 +10,33 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- **Exercise 07 stops downloading a 560-line stylesheet that styles nothing on it.** Of
+  `_shared/explainer.css`'s 143 selectors it matched **zero** — the file styles the scrollytelling
+  strip, the step panels, the derivation badges and the stage lists, and that exercise builds none
+  of them. Full-page screenshots with and without the link hashed **identically** at 2000, 1180 and
+  390px.
+
+### Added
+
+- **`tools/measure_shared_css.py`**, so this is a repeatable measurement rather than a one-off in a
+  scratch file. It reports, per page, how many of a shared stylesheet's selectors match anything:
+  03 → 108, 06 → 30, 05 → 4, 04 → 2, 08/09/10 → 1 each, 07 → 0.
+
+- **`tests/test_shared_css_is_used_where_it_is_linked.py`** asserts the linking, not the deleting,
+  and the distinction is the whole design. 35 of those selectors match nothing on any page — and a
+  resting browser cannot tell a dead rule from one behind a click: `:focus-visible`,
+  `.stagerow.missing` and `.unit.dim` are states, not corpses. `AGENTS.md` records that removing
+  shared CSS here has taken away something a page quietly depended on, so this never claims a rule
+  is unused. It claims a **page** is not using the stylesheet at all, which is the only thing a
+  resting page can prove. Watched red with 07 re-linked, restored in a `finally`.
+
+  Its `_linking_pages` matches a `<link>` element rather than a substring, because 07's link is now
+  a comment explaining why the stylesheet is absent — a comment that names the file. The first
+  version reported the page as still linking it, which would have made the guard demand a page use
+  a stylesheet it had deliberately dropped.
+
 ### Added
 
 - **A pull request now says where its preview actually is**, and it costs no deployment.
@@ -88,6 +115,52 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   treats almost everything as contained and reports nothing. A guard's report is part of the guard —
   one that points at the wrong element is worse than a bare number, because a bare number sends
   nobody anywhere.
+
+- **Four of exercise 07's six figures announced as "image" and nothing else.** An
+  `<svg role="img">` with no accessible name tells a screen-reader user a figure is there and gives
+  them no way to know what it showed — worse than omitting it, because the page has spent their
+  attention and returned nothing. The three-bar loss chart, the rectangle in byte space, the
+  per-seed pairing and the reusable bar chart have names now, and each says what to conclude rather
+  than naming the axes, the way `docs/DESIGN.md` asks a caption to. Every other exercise was already
+  clean.
+
+### Added
+
+- **A repo-wide guard that asks the browser what a screen reader would be told.** The accessible
+  name is *computed* — `aria-labelledby`, then `aria-label`, then `<title>` — so counting any single
+  mechanism in the source would report a page using a different one as broken.
+  `tests/test_every_figure_has_a_name.py` sweeps every deployed page and asserts the result, with a
+  vacuity half that fails if the selector ever stops matching how figures are built. Watched red on
+  all four with the names removed, held in memory and restored in a `finally`.
+
+  Two things are deliberately not asserted: **length**, because a good name for a two-mark diagram
+  is short and a character rule would push authors to pad it; and **decorative graphics**, because
+  demanding a name for every rule and gradient is how a reader ends up hearing the furniture.
+
+- **Twelve canvas colours in exercise 01 could not be moved by any theme, and nothing could see
+  them.** This site has six themes, every colour in them generated against a contrast checker — and
+  a `ctx.strokeStyle = '#fff'` obeys none of that. The guards that enforce the palette read CSS;
+  these lived inside a 2D context. Twelve literals against sixteen theme-aware colour writes in the
+  same three files: a white ring around scatter dots, grey gridlines, and the accent blue written
+  out as `rgba(0,113,227,…)` two lines from code reading `--accent` from the live tokens.
+
+  **Measured before and after, through the site's own theme mechanism**: `s1.html` and `s2.html`
+  each produced **two** distinct canvas renderings across the six themes and now produce **six**.
+  `s4.html` produced six either way — its other colour writes dominated the image while five of its
+  literals were still wrong in the details, which is exactly why the guard below is lexical.
+
+### Added
+
+- **`tests/test_canvas_colours_follow_the_theme.py`**, and the choice of instrument is the point. A
+  rendered guard — "the canvases differ across themes" — is the more direct property and it would
+  have passed `s4.html` while five of its colours were wrong. Asking whether a colour *can* move is
+  the question with teeth. Watched red on all twelve, restored in a `finally`.
+
+  Category colours are deliberately out of scope: the scatter dots encode a data class, and one is
+  interpolated per pixel into an `ImageData` buffer where a CSS variable cannot go without being
+  parsed. The one place that is untidy — `--warm`/`--cool` exist as tokens in the same files and are
+  used for the line charts while the dots use RGB triples — is recorded in the file with a twin that
+  fails if it ever stops being true, so a stale note cannot outlive its subject.
 
 ### Fixed
 
