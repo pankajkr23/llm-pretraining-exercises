@@ -447,7 +447,7 @@
           }
           octx.putImageData(img, 0, 0); ctx.imageSmoothingEnabled = true; ctx.drawImage(off, 0, 0, w, h);
           const px = (x) => ((x + RR) / (2 * RR)) * w, py = (y) => h - ((y + RR) / (2 * RR)) * h;
-          for (let i = 0; i < NP; i++) { const c = Y[i] ? [178, 88, 46] : [77, 118, 168]; ctx.beginPath(); ctx.arc(px(X[i][0]), py(X[i][1]), 2.6, 0, 7); ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`; ctx.fill(); ctx.lineWidth = 0.8; ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.stroke(); }
+          for (let i = 0; i < NP; i++) { const c = Y[i] ? [178, 88, 46] : [77, 118, 168]; ctx.beginPath(); ctx.arc(px(X[i][0]), py(X[i][1]), 2.6, 0, 7); ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`; ctx.fill(); ctx.lineWidth = 0.8; ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--bg').trim(); ctx.stroke(); }
           document.getElementById(aid).textContent = (accuracy(m) * 100).toFixed(0) + '%';
         }
         function redraw() { drawRing('r1', m1, 'a1'); drawRing('r5', m5, 'a5'); drawRing('rr', mr, 'ar'); document.getElementById('ringStep').textContent = 'step ' + step; }

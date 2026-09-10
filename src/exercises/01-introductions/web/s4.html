@@ -203,7 +203,7 @@
         for (let j = 0; j < GN; j++) for (let i = 0; i < GN; i++) { const p = res.grid[j * GN + i]; const row = GN - 1 - j, o = (row * GN + i) * 4; const lo = [77, 118, 168], hi = [199, 138, 66]; img.data[o] = (lo[0] + (hi[0] - lo[0]) * p) | 0; img.data[o + 1] = (lo[1] + (hi[1] - lo[1]) * p) | 0; img.data[o + 2] = (lo[2] + (hi[2] - lo[2]) * p) | 0; img.data[o + 3] = 100; }
         octx.putImageData(img, 0, 0); ctx.imageSmoothingEnabled = true; ctx.drawImage(off, 0, 0, w, h);
         const px = (x) => ((x - DOM[0]) / (DOM[1] - DOM[0])) * w, py = (y) => h - ((y - DOM[2]) / (DOM[3] - DOM[2])) * h;
-        for (let i = 0; i < res.X.length; i++) { const c = res.Y[i] ? [199, 138, 66] : [77, 118, 168]; ctx.beginPath(); ctx.arc(px(res.X[i][0]), py(res.X[i][1]), res.X.length > 400 ? 2 : 3.4, 0, 7); ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.stroke(); }
+        for (let i = 0; i < res.X.length; i++) { const c = res.Y[i] ? [199, 138, 66] : [77, 118, 168]; ctx.beginPath(); ctx.arc(px(res.X[i][0]), py(res.X[i][1]), res.X.length > 400 ? 2 : 3.4, 0, 7); ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--bg').trim(); ctx.stroke(); }
         document.getElementById('badge').textContent = `N = ${res.N} training points`;
       }
 
@@ -214,16 +214,16 @@
         const cy = (a) => h - 28 - ((a - y0) / (y1 - y0)) * (h - 56);
         ctx.font = '11px ' + getComputedStyle(document.body).getPropertyValue('--mono');
         const fg = getComputedStyle(document.body).getPropertyValue('--ink').trim();
-        [0.8, 0.9, 1.0].forEach((a) => { ctx.strokeStyle = 'rgba(127,127,127,0.2)'; ctx.beginPath(); ctx.moveTo(pad, cy(a)); ctx.lineTo(w - 16, cy(a)); ctx.stroke(); ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--faint'); ctx.fillText((a * 100).toFixed(0) + '%', 6, cy(a) + 4); });
+        [0.8, 0.9, 1.0].forEach((a) => { ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--line').trim(); ctx.beginPath(); ctx.moveTo(pad, cy(a)); ctx.lineTo(w - 16, cy(a)); ctx.stroke(); ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--faint'); ctx.fillText((a * 100).toFixed(0) + '%', 6, cy(a) + 4); });
         if (!results.length) return;
         const warm = getComputedStyle(document.body).getPropertyValue('--warm').trim(), cool = getComputedStyle(document.body).getPropertyValue('--cool').trim();
         // shaded gap
         ctx.beginPath(); results.forEach((r, i) => { const X = cx(i), Y = cy(r.trainAcc); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
-        for (let i = results.length - 1; i >= 0; i--) ctx.lineTo(cx(i), cy(results[i].testAcc)); ctx.closePath(); ctx.fillStyle = 'rgba(127,127,127,0.12)'; ctx.fill();
+        for (let i = results.length - 1; i >= 0; i--) ctx.lineTo(cx(i), cy(results[i].testAcc)); ctx.closePath(); ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--track').trim(); ctx.fill();
         const line = (key, col) => { ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); results.forEach((r, i) => { const X = cx(i), Y = cy(r[key]); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }); ctx.stroke(); results.forEach((r, i) => { ctx.beginPath(); ctx.arc(cx(i), cy(r[key]), 3.5, 0, 7); ctx.fillStyle = col; ctx.fill(); }); };
         line('trainAcc', warm); line('testAcc', cool);
         // current highlight
-        ctx.strokeStyle = 'rgba(0,113,227,0.5)'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(cx(cur), 20); ctx.lineTo(cx(cur), h - 28); ctx.stroke(); ctx.setLineDash([]);
+        ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--accent').trim(); ctx.globalAlpha = 0.5; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(cx(cur), 20); ctx.lineTo(cx(cur), h - 28); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
         ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--faint'); ctx.textAlign = 'center';
         results.forEach((r, i) => ctx.fillText(String(r.N), cx(i), h - 10)); ctx.textAlign = 'left';
       }
