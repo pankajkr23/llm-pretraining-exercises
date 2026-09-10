@@ -77,6 +77,7 @@ follows from one column of the table.
 | `telemetry.py` | per-step traces, and the search for a step where the gradient led |
 | `mfu.py` | utilisation, with every input named and the device peak *measured* |
 | `floats.py` | 0.1 in fp32, bf16 and fp8 E4M3, built from arithmetic |
+| `provenance.py` | what every result records about the run that made it, and the refusal that enforces it |
 | `harness.py` | one run producing every item, into `results/run.json` |
 
 **The model is exercise 09's, imported rather than restated.** Its trunk, tokenizer, target shift,
@@ -122,8 +123,14 @@ when the subtraction becomes rounding noise. A check that agrees at exactly one 
 fitted, not verified.
 
 **The accumulation gap is 15.4% on the worked arithmetic** and much smaller on a real run: 0.0759
-of a loss of 5.2873, so under 1%. That smallness is the point — the wrong curve does not look wrong,
-it looks like the right curve, and you only see the difference by subtracting one from the other.
+of a loss of 5.2873, so **1.4%** — and averaged over the 120 steps rather than read at the end,
+0.0200 of that loss, **0.4%**. That smallness is the point — the wrong curve does not look wrong, it
+looks like the right curve, and you only see the difference by subtracting one from the other.
+
+This sentence said *"so under 1%"* until a reviewer divided the two numbers beside it. 0.0759 over
+5.2873 is 1.4%, not under 1%, and the error made the finding look smaller — the flattering
+direction, in the document whose headline is that a figure was caught flattering itself. Both
+operands were guarded; the ratio drawn from them was not.
 
 **And the gap's sign is not stable across the run**, which the run's own data shows: the wrong curve
 reads higher at the end, and lower at some earlier steps. A single endpoint decides both the

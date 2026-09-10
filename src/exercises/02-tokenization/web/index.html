@@ -53,7 +53,18 @@
       .panel + .panel { margin-top: 18px; }
       .panel h3 { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin: 0 0 16px; }
 
-      .score { font-weight: 600; font-size: 3.6rem; line-height: 1; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; }
+      /* Fluid, because a fixed 3.6rem does not fit a phone. The headline figure is eight
+         characters wide — "6,502.56" — and at 57.6px with tabular digits that is about 222px of
+         text inside a panel whose content box is `viewport - 80px`. It therefore stopped fitting
+         somewhere around 300px, and it was the ONLY thing on the page still pushing it sideways.
+         `12vw` reaches the 3.6rem cap at 480px, so every screen above a phone is unchanged and the
+         number keeps the size that makes it a headline; below that it shrinks to fit rather than
+         taking the page with it. The floor is 2rem so it stays a headline on the narrowest phone.
+
+         Found on CI and not locally: Linux's default fonts are wider than macOS's, so the same
+         layout crossed the edge at 320px there and 280px here. Sized with room for that difference
+         rather than to the pixel — at 320 the text is ~180px in a 240px box. */
+      .score { font-weight: 600; font-size: clamp(2rem, 12vw, 3.6rem); line-height: 1; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; }
       .score-sub { font-family: var(--mono); font-size: 12.5px; color: var(--muted); margin-top: 12px; overflow-wrap: anywhere; }
       .score-sub .n { color: var(--ink); }
       .score-sub div + div { margin-top: 5px; }
@@ -78,11 +89,18 @@
       .tok { display: flex; gap: 10px; padding: 5px 13px; font-family: var(--mono); font-size: 13px; border-bottom: 1px solid var(--line); }
       .tok:last-child { border-bottom: 0; }
       .tok .id { color: var(--faint); min-width: 48px; }
-      .tok .s { color: var(--ink); white-space: pre; word-break: break-all; }
+      /* `pre-wrap`, not `pre`. Both keep the leading spaces that make a token legible as a token,
+         and only `pre-wrap` lets the line break — so with `pre` the `word-break: break-all` beside
+         it could never fire, which is a rule that reads as a fix and moves no pixels. A long token
+         then set the whole page's minimum width and pushed it sideways on a phone. */
+      .tok .s { color: var(--ink); white-space: pre-wrap; word-break: break-all; }
       .tokcount { font-family: var(--mono); font-size: 12px; color: var(--faint); margin-top: 8px; }
 
       .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 14px; max-height: 240px; overflow-y: auto; }
-      .chip { font-family: var(--mono); font-size: 12.5px; padding: 3px 7px; border-radius: 7px; background: var(--track); color: var(--ink); white-space: pre; border: 1px solid transparent; }
+      /* Same reason as `.tok .s` above: `pre-wrap` keeps the spaces and permits a break.
+         `.chips` wraps BETWEEN chips, which does nothing for one chip too wide to fit — and a
+         tokenizer page is exactly where a single very long token turns up. */
+      .chip { font-family: var(--mono); font-size: 12.5px; padding: 3px 7px; border-radius: 7px; background: var(--track); color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid transparent; }
       .chip.unk { background: transparent; border-color: var(--hi); color: var(--hi); font-weight: 600; }
       .btn { appearance: none; cursor: pointer; font-family: var(--sans); font-size: 13.5px; font-weight: 500; color: var(--on-accent); background: var(--accent); border: 0; border-radius: 980px; padding: 9px 18px; transition: opacity 0.18s; }
       .btn:hover { opacity: 0.85; }

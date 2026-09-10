@@ -87,7 +87,6 @@ def test_every_figure_the_readme_quotes_matches_the_run_it_came_from() -> None:
         "the README quotes figures that no longer match the run, or has stopped quoting them:\n"
         + "\n".join(f"  {value} — {what}" for value, what in missing.items())
     )
-
     # **Exact against the record, not within a tolerance of it.** The tolerance used to be a full
     # POINT, on the reasoning that MFU's denominator is a wall clock and moves between runs. That
     # reasoning is about two *runs*; this guard compares a document against the single tracked file
@@ -287,4 +286,81 @@ def test_no_heading_or_rail_label_types_a_count() -> None:
     assert not offenders, (
         "a heading or rail label types a count instead of deriving it: "
         f"{offenders}. Use spell()/Spell() over the list itself, or drop the count."
+    )
+
+
+@requires_results
+def test_every_ratio_the_readme_derives_is_the_ratio_of_the_numbers_beside_it() -> None:
+    """Presence is not agreement, and the guard above can only ask about presence.
+
+    **This is the hole, and it cost a wrong published number.** The README quotes the real-run
+    accumulation gap and the loss it is a fraction of, and the test above checks that both strings
+    appear. It then draws a conclusion from them — and *that* was unguarded, so the sentence read
+    `0.0759 of a loss of 5.2873, so under 1%` for as long as it existed. It is **1.44%**. The error
+    made the finding look smaller, which is the flattering direction, in the document whose headline
+    is that a figure was caught flattering itself.
+
+    So this asserts the arithmetic rather than the digits: whatever percentage the README states for
+    that gap must be the one the two numbers actually produce, to the precision it states it at. A
+    re-run moves all three together and this stays true; a hand-edited conclusion does not.
+    """
+    import re
+
+    run = _run()
+    readme = (EXERCISE / "README.md").read_text()
+    curves = run["item_3_accumulation"]["curves"]
+    final = curves["final_gap"] / curves["final_correct"] * 100
+    mean = curves["mean_absolute_gap"] / curves["final_correct"] * 100
+
+    # The claim in its own words, so the test fails if the sentence is reworded past recognition
+    # rather than passing on a coincidence elsewhere in the file.
+    claim = re.search(
+        r"of a loss of [\d.]+, so \*\*([\d.]+)%\*\*.{0,120}?\*\*([\d.]+)%\*\*",
+        readme,
+        re.S,
+    )
+    assert claim, (
+        "the README no longer states the real-run accumulation gap as a percentage of the loss "
+        "beside it. That percentage is the sentence's whole conclusion; dropping it removes the "
+        "claim this guard exists to check."
+    )
+    stated_final, stated_mean = float(claim.group(1)), float(claim.group(2))
+    assert abs(stated_final - final) < 0.05, (
+        f"the README says the real-run gap is {stated_final}% of the loss; "
+        f"{curves['final_gap']:.4f} over {curves['final_correct']:.4f} is {final:.2f}%. "
+        "The two operands are guarded above "
+        "and the ratio drawn from them was not, which is how 'under 1%' survived."
+    )
+    assert abs(stated_mean - mean) < 0.05, (
+        f"the README says the mean gap is {stated_mean}% of the loss; "
+        f"{curves['mean_absolute_gap']:.4f} over {curves['final_correct']:.4f} is {mean:.2f}%."
+    )
+
+
+@pytest.mark.parametrize("document", ["README.md", "CLAUDE.md"])
+def test_every_module_is_named_in_the_documents_that_list_modules(document: str) -> None:
+    """A new module is not done until every list that names modules includes it.
+
+    `AGENTS.md` asks any exercise past a handful of modules to carry this, and exercise 09 does —
+    where its docstring records that `provenance.py` was "the twelfth thing shipped here and the
+    first thing that would have gone unlisted".
+
+    **The same module went unlisted here, and the guard that says so was not copied with it.** This
+    exercise's README layout table had eight rows for nine modules and its `CLAUDE.md` listed the
+    same eight, so the file computing every fingerprint and digest the results carry was named in no
+    document at all. Neither list is generated.
+
+    Its limit is worth stating, because it reads stronger than it is: it checks the *document*, not
+    the *list*. A module named once anywhere in the prose satisfies it while the table a reader
+    actually follows stays wrong.
+    """
+    text = (EXERCISE / document).read_text()
+    modules = sorted(
+        p.name for p in (EXERCISE / "src" / "trainloop").glob("*.py") if p.name != "__init__.py"
+    )
+    assert modules, "no modules found; the glob has gone stale and this checks nothing"
+    missing = [name for name in modules if name not in text]
+    assert not missing, (
+        f"{document} does not mention {missing}. Add it to the table a reader follows, not merely "
+        "to a sentence somewhere — this test cannot tell the difference."
     )

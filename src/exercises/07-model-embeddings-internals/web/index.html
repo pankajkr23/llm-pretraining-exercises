@@ -15,7 +15,14 @@
     />
     <link rel="stylesheet" href="/_shared/tokens.css" />
     <link rel="stylesheet" href="./_shared/components.css" />
-    <link rel="stylesheet" href="./_shared/explainer.css" />
+    <!-- `_shared/explainer.css` is deliberately NOT linked here. Measured against the built
+         page: of its 143 selectors, this one matches **zero** — the file styles the
+         scrollytelling strip, the step panels, the derivation badges and the stage lists, and
+         this exercise builds none of them. Its only mentions of the word "arithmetic" are prose
+         and a data key. Every other page that links it matches at least one selector.
+         `tests/test_shared_css_is_used_where_it_is_linked.py` holds that, in both directions, so
+         a page that grows an explainer is told to link the stylesheet rather than wondering why
+         it looks wrong. -->
     <link rel="stylesheet" href="./_shared/page.css" />
     <link rel="stylesheet" href="./page-extra.css" />
     <!--

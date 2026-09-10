@@ -258,7 +258,8 @@ jobs:
             src/exercises/07-model-embeddings-internals/tests/test_embeddings_heads.py \
             src/exercises/09-loss-functions-output-heads/tests/test_lossheads_equivalences.py \
             src/exercises/09-loss-functions-output-heads/tests/test_lossheads_harness.py \
-            src/exercises/10-training-loop/tests/test_trainloop_step.py
+            src/exercises/10-training-loop/tests/test_trainloop_step.py \
+            src/exercises/10-training-loop/tests/test_trainloop_provenance.py
 
   security:
     runs-on: ubuntu-latest

@@ -1,0 +1,84 @@
+/* Page-specific styles for 03.
+ *
+ * This file did not exist until the type scale reached this page — 03 linked only the three shared
+ * sheets. Every other deployed exercise has one, and the alternative was editing
+ * `_shared/page.css`, which is vendored byte-identically into eight directories and checked for it.
+ *
+ * Every colour here must be a token from `/_shared/tokens.css`. A literal would be right in one of
+ * the six themes and wrong in the other five.
+ */
+
+/* --- the published type scale, and the one component held back from it --------------------------
+ *
+ * `docs/DESIGN.md`'s standard. This page ran its body prose at 16.6px in a 692px column inside a
+ * 1216px `#main` — the same "16px in two thirds of the room" the other seven pages had. The lever
+ * is SIZE rather than measure: the `ch` caps already on this prose grow with the type, because `ch`
+ * resolves against the element's own computed size. Widening the column at 16px instead would push
+ * the line past a hundred characters and make it worse.
+ *
+ * **The explainer strip is deliberately NOT on the scale, and this is the part that needed
+ * measuring rather than assuming.** Raising everything under `#main` would quietly wreck the one
+ * component that cannot take it. `_shared/explainer.css` is self-contained, with its own internal
+ * scale — labels at 10.5px, shard text at 11.5px, captions at 12px — and its step paragraphs carry
+ * `max-width: 46ch` with no size of their own, so they inherit whatever the page sets. At 16px that
+ * is the 464px measured inside a 605px panel. At 22px the cap computes to 620px against a panel
+ * still 605px wide, so the text would fill the panel edge to edge at full body size, beside labels
+ * half its height, and the strip would stop reading as a figure at all.
+ *
+ * So the strip is pinned back to the root size — the `.scrolly` grid as well as the `.steps` inside
+ * it, for the reason given where the pin is written. That is a component boundary rather than an
+ * exception: the scale is for the page's reading column, and a figure carrying its own type scale
+ * keeps it.
+ */
+#main {
+  font-size: clamp(19px, 1.2vw + 1.7px, 22px);
+}
+
+
+/* **The selector list is narrow on purpose, and the first version of it was not.** It read
+ * `#main p, #main li` — specificity (1,0,1), which outranks every component rule of the form
+ * `.eyebrow` with a size of its own. Measured against the same page before the change, that pushed
+ * five component classes to full body size: `.filter-tally` 12.5px, `.ref` 16.6px, `.resolver-key` 11.5px, `.resolver-note` 12.5px and
+ * `.stagereg-note` 11.5px — the last of these landing at 22px inside a box that shrank to 400px. `AGENTS.md` names this cascade
+ * failure twice and I made it anyway, then found it by diffing every class's computed size rather
+ * than by looking. Only classes that ALREADY carried the reading measure are named below.
+ */
+.claim {
+  font-size: inherit;
+}
+
+/* The component boundary. Anything inside the explainer strip keeps the size its own stylesheet was
+ * designed around — including the step paragraphs, whose 46ch cap is measured against it.
+ *
+ * **The boundary is the GRID, not the steps inside it.** This first pinned `.steps` alone, and
+ * `.scrolly` — the grid that sizes both columns in `ch` — went on inheriting the page's 19-22px. A
+ * `ch` resolves against the element that declares it, so the prose column grew to 60ch of 22px
+ * (815px) while the text in it stayed at 46ch of 16px (472px): the empty middle between the steps
+ * and the figure went from 181px to 391px at 1920, measured from the glyphs rather than the boxes.
+ * Pinning the grid puts both `ch`s back on one font, which is what `docs/DESIGN.md` calls the most
+ * expensive recurring bug in this repository. */
+#main .scrolly,
+#main .steps,
+#main .steps p,
+#main .steps li {
+  font-size: 16px;
+}
+
+/* --- the standfirst goes on the ramp too --------------------------------------------------------
+ *
+ * Raising the body without raising the lede leaves the page's opening sentence as the SMALLEST text
+ * on it — `_shared/components.css` pins `.lede` to `1.06rem` off the 16px root, so it measured 17px
+ * under 22px prose. A first-time reader described exactly that on exercise 09: it reads like a
+ * caption under the title, and they skipped it for the button.
+ *
+ * Set slightly ABOVE the body ramp, because a standfirst that merely matches the paragraphs beneath
+ * it is not a standfirst, and in `--ink` rather than `--muted` because it carries the thesis and
+ * `--muted` belongs on nothing that carries the argument. `62ch` at 25px is ~945px — flush with the
+ * reading column rather than out-denting it. These are exercise 09's values, unchanged.
+ */
+.lede {
+  max-width: 62ch;
+  font-size: clamp(20px, 1.3vw + 2px, 25px);
+  color: var(--ink);
+  line-height: 1.55;
+}

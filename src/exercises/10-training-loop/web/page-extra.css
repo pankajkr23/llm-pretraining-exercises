@@ -1,4 +1,4 @@
-/* Page-specific styles for 07.
+/* Page-specific styles for 10.
  *
  * Every colour here is a token from /_shared/tokens.css. Nothing is a literal, because a literal
  * would be correct in one of the six themes and wrong in the other five — and the theme picker
@@ -56,20 +56,36 @@ table.grid {
   font-size: 0.82em;
 }
 
+/* **`normal`, not `nowrap`, and the `.prose` modifier was only ever half the fix.** `nowrap` is
+ * right for a column of figures and catastrophic for one of sentences, and this page has both in
+ * the same tables. Marking one table `prose` fixed the audit trail and left the other five: at
+ * 390px, 3,154px of text across `method`, `expected`, `results`, `problem` and `reproduce` sat
+ * behind horizontal scrollbars, and the `method` table's second column ran at 104 characters a line
+ * at every width from 390 to 2560.
+ *
+ * Measured with every cell wrapping: total hidden width goes to **zero** at 2560, 1440, 1180, 900
+ * and 768, and the page grows 25px. Nothing was clipped before — every table is in a `.tablewrap`
+ * that scrolls by design — which is exactly why no guard could see it and why a reader met a
+ * sentence that stopped mid-word with no scrollbar to explain it. */
 table.grid th,
 table.grid td {
   text-align: left;
   padding: 11px 16px;
   border-bottom: 1px solid var(--line);
-  white-space: nowrap;
+  white-space: normal;
 }
 
+/* `--ink`, because `--muted` is calibrated against `--bg` and this puts it on the darker `--track`:
+ * measured at **4.15:1** in the default light theme, the only pair on the page below AA in any of
+ * the six. The repo-wide theme guard cannot see it — it reads `body.color` against the body
+ * background, one pair per page, so six green cases sat over a live failure. Column heads carry
+ * meaning in the audit table: "AS FIRST PUBLISHED" against "WHAT IT BECAME" *is* its argument. */
 table.grid th {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--ink);
   background: var(--track);
 }
 
@@ -87,13 +103,10 @@ table.grid tbody tr:last-child td {
   border-bottom: 0;
 }
 
-table.grid tr.good td {
-  background: var(--accent-soft);
-}
-
-table.grid tr.bad td {
-  background: color-mix(in srgb, var(--grade-x) 9%, transparent);
-}
+/* The `table.grid tr.good/bad td` rules that sat here moved no pixels: `.grid tr.good td`
+ * below has the same specificity and is written later, so source order decided and this
+ * block lost every declaration it shared. Editing it would have changed nothing, which is
+ * the failure `AGENTS.md` records under source order. Deleted rather than left to mislead. */
 
 .dim {
   color: var(--muted);
@@ -216,14 +229,19 @@ main > section:first-child {
   margin-top: 46px;
 }
 
-
 /* ==== storytelling elements: tiles, glossary, figures, expected-vs-found ==== */
 
 /* --- headline tiles ---------------------------------------------------------------------------- */
 
 .tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  /* **340, measured across seven widths rather than chosen.** At 200px four columns held down to
+   * 900px and the tile labels read at 18-27 characters a line, against `docs/DESIGN.md`'s floor of
+   * 42 and exercise 08's 39-61. The sweep: 300px and 340px both give 34-46 everywhere, 380px puts
+   * 768 at 78, 420px puts 900 at 93. 340 is the only value that never exceeds 46 and never falls
+   * below 34. `min(340px, 100%)` and not a bare 340px, because an auto-fit track cannot shrink
+   * below its own minimum and pushes a 320px phone sideways. */
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
   gap: 14px;
   margin: 26px 0 18px;
 }
@@ -810,18 +828,27 @@ pre.code {
 }
 
 .grid tr.warn td {
-  border-left: 3px solid var(--grade-c);
   background: color-mix(in srgb, var(--grade-c) 7%, transparent);
 }
 
+.grid tr.warn td:first-child {
+  border-left: 3px solid var(--grade-c);
+}
+
 .grid tr.bad td {
-  border-left: 3px solid var(--grade-x);
   background: color-mix(in srgb, var(--grade-x) 6%, transparent);
 }
 
+.grid tr.bad td:first-child {
+  border-left: 3px solid var(--grade-x);
+}
+
 .grid tr.good td {
-  border-left: 3px solid var(--grade-a);
   background: color-mix(in srgb, var(--grade-a) 6%, transparent);
+}
+
+.grid tr.good td:first-child {
+  border-left: 3px solid var(--grade-a);
 }
 
 /* --- the rail stays at the page edge, and the reading column centres beside it ------------------
@@ -875,4 +902,142 @@ code {
   font-size: clamp(20px, 1.3vw + 2px, 25px);
   color: var(--ink);
   line-height: 1.55;
+}
+
+/* --- a table of PROSE wraps; a table of figures does not -----------------------------------------
+ *
+ * `table.grid` sets `white-space: nowrap` on every cell but the first, which is right for a table
+ * of numbers and catastrophic for one of sentences. The audit table at `negatives` carries cells of
+ * up to 433 characters, and without this it laid out **3,635px wide inside a 1,156px wrapper** —
+ * every cell a single unwrapped line, the reader given a fragment and a horizontal scrollbar, on the
+ * section whose own standfirst says "the gap between the two columns is the whole argument".
+ *
+ * **Exercise 09 hit this, fixed it, and this page copied the markup without the fix.** Its
+ * `chapters.js` builds the same table with the same `'grid prose'` class list, and no stylesheet
+ * linked here defined `.prose` at all — so the modifier was inert and looked deliberate.
+ *
+ * Neither overflow guard could see it, which is why it survived: the page-level one measures
+ * `documentElement`, and `.tablewrap` absorbs the width by design; the element-level one skips
+ * anything whose computed `overflow-x` is `auto`, which is exactly `.tablewrap`; and the `td`
+ * itself grows to its content, so its own `scrollWidth` equals its `clientWidth`. A browser guard
+ * for it is below in `tests/test_trainloop_render.py`.
+ */
+table.grid.prose td {
+  white-space: normal;
+}
+
+table.grid.prose td:first-child {
+  width: 24%;
+}
+
+/* --- below 640px a table becomes a list of cards --------------------------------------------------
+ *
+ * **Wrapping every cell fixed the desktop and left the phone worse in a new shape.** A table whose
+ * three columns are sentences cannot be narrow: at 390px this page's six tables measured
+ * **8,455px** of vertical space — ten screens — with prose cells at **12 to 19 characters a line**,
+ * and the audit table alone was 4,959px with a 1,020px row. `vertical-align: middle` then started
+ * that row's first cell 388px down, so a reader met a large empty panel with a coloured bar down it
+ * and scrolled a third of a screen before any text appeared.
+ *
+ * A 3,635px-wide table of 330-character lines and a 4,959px-tall one of 13-character lines are not
+ * better and worse; they are the same content failing in two directions, and neither is a table a
+ * phone can show. So below 640px it stops being one: each row becomes a card, each cell a labelled
+ * block. `.gloss` and `.expect` already collapse at this width, so the breakpoint is the page's own
+ * rather than a new one.
+ *
+ * `data-head` is set by `table()` in `chapters.js`, because hiding the `thead` takes the only thing
+ * that said which column a value belonged to — and in the audit table the two columns ARE the
+ * argument: "as first published" against "what it became" is the figure.
+ */
+@media (max-width: 640px) {
+  .tablewrap {
+    /* Nothing overflows any more, so the scroll affordance is a scrollbar with nothing to scroll —
+     * and on a platform with overlay scrollbars it is an invisible one. */
+    overflow-x: visible;
+  }
+
+  table.grid thead {
+    /* Hidden from sight and from the accessibility tree together: the head is repeated on every
+     * cell below, and a screen reader that announced both would read each column name twice. */
+    display: none;
+  }
+
+  table.grid,
+  table.grid tbody,
+  table.grid tr,
+  table.grid td {
+    display: block;
+    width: auto;
+    min-width: 0;
+  }
+
+  table.grid tr {
+    padding: 14px 0 4px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  table.grid tr:last-child {
+    border-bottom: 0;
+  }
+
+  /* **`white-space` is the half that matters and it is easy to leave out.** `table.grid td` is
+   * `nowrap` — right for a column of figures, meaningless in a card, which has no columns to scroll
+   * between. Left in place it laid one of exercise 07's cells out 3,222px wide in a 337px box: nine
+   * tenths of the sentence past the right edge, no ellipsis, no scrollbar of its own, and the
+   * `overflow-x: auto` on the wrapper above making it read as a wide table behaving correctly. Same
+   * specificity as the `nowrap` rule (0,1,1), so it wins on source order alone — which is why this
+   * block belongs at the end of the file. */
+  table.grid td {
+    padding: 0 14px 10px;
+    border-bottom: 0;
+    white-space: normal;
+  }
+
+  /* **The two rules that pin the first column, reset at a specificity that actually beats them.**
+   * `table.grid td { min-width: 0 }` above is (0,1,1) and lost to `table.grid td:first-child
+   * { min-width: 16ch }` at (0,1,2), so the stacked audit table had two full-width cells and a
+   * 157px one — 16 characters a line under a 36-character sibling, which reads as a broken layout
+   * rather than a narrow column. `table.grid.prose td:first-child { width: 24% }` is (0,2,2) and
+   * needs the `.prose` in the selector to be beaten at all. Both are column geometry, and there are
+   * no columns here. */
+  table.grid td:first-child,
+  table.grid.prose td:first-child {
+    min-width: 0;
+    width: auto;
+  }
+
+  /* The label the hidden `thead` used to carry. Same type as `th` so the two read as one system.
+   * Selected on `[data-head]` rather than on every cell with a `:not([data-head])` rule to undo it:
+   * an empty `attr()` still paints a 3px block, and the undo rule matched nothing on any of the
+   * three pages — a selector that cannot fire reads as coverage exactly the way a dead guard does. */
+  table.grid td[data-head]::before {
+    content: attr(data-head);
+    display: block;
+    margin-bottom: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* The row's status mark runs down the whole card rather than beside one cell of it, because the
+   * card IS the row now. */
+  .grid tr.good td:first-child,
+  .grid tr.bad td:first-child,
+  .grid tr.warn td:first-child {
+    border-left: 0;
+  }
+
+  .grid tr.good {
+    border-left: 3px solid var(--grade-a);
+  }
+
+  .grid tr.bad {
+    border-left: 3px solid var(--grade-x);
+  }
+
+  .grid tr.warn {
+    border-left: 3px solid var(--grade-c);
+  }
 }

@@ -66,6 +66,18 @@ def render(run: dict) -> str:
             "manufactured example would have been worse than reporting nothing."
         )
     )
+    # **Derived, because it was typed and it was wrong.** The sentence below read "vanish entirely
+    # at 5" while the table directly above it showed the count reaching zero at 4 — a verdict word
+    # in a document whose first line claims every verdict is read from the run. It is the smallest
+    # swept threshold whose count is zero, which is what "vanish entirely" means.
+    _zero = [
+        float(key.split("=")[1])
+        for key, count in sorted(
+            four["robustness"].items(), key=lambda kv: float(kv[0].split("=")[1])
+        )
+        if count == 0
+    ]
+    vanishing_threshold = f"{_zero[0]:g}" if _zero else "no swept threshold"
     robustness_rows = "\n".join(
         f"| {name.split('=')[1]} | {count} |" for name, count in four["robustness"].items()
     )
@@ -213,8 +225,8 @@ promises a lead in time. An earlier version of this section did exactly that.
 {robustness_rows}
 
 **Read that spread before believing the count.** Qualifying steps thin out sharply as the threshold
-rises — and vanish entirely at 5 — so this is one reading of an arbitrary cut rather than a stable
-measurement.
+rises — and vanish entirely at {vanishing_threshold} — so this is one reading of an arbitrary cut
+rather than a stable measurement.
 
 **Why the gradient leads at all.** The loss is an average over a whole batch, so a change in what
 the model is doing has to be large enough to move that average before it is visible. The gradient
