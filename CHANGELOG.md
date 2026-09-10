@@ -30,13 +30,22 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   deliberately. The queued unit did not say what question `critique` should ask; this one is derived
   from what has actually gone wrong here, and the derivation is written down.
 
+  **The first persona that needed a fourth tool broke an existing guard, which is the finding.**
+  `tests/test_agent_guard.py` asserted an *allowlist* — `tools <= {Read, Grep, Glob}` — so `research`
+  fetching its sources failed it. An allowlist forces the choice between a persona that cannot do its
+  job and a guard quietly widened to let it; it asks the property now (**no tool that can write**),
+  with `WebSearch` and `WebFetch` admissible because they reach outward and cannot change anything.
+  `AGENTS.md` already records the general form: a guard that names one implementation of a property
+  will fail every other implementation of it.
+
   **`tests/test_agent_roster.py` is the part that lasts.** The installer copies
   `docs/agents/reviewers/*.md` by glob into a gitignored directory, so until now adding a persona was
   adding a file and **nothing validated it**: a `tools:` line one word away from granting `Edit`
   would have made a reviewer that edits the work it grades, invisibly to review, to CI and to every
-  other clone. The guard asserts the frontmatter the installer needs, that no persona holds a writing
-  tool, and that the roster and the fleet document name each other **in both directions** — which it
-  proved by going red on the two personas in this very change.
+  other clone. The guard asserts the frontmatter the installer needs and that the roster and the fleet document
+  name each other **in both directions** — which it proved by going red on the two personas in this
+  very change. It deliberately does *not* re-assert read-only: that rule already lives next door, and
+  a second copy of one rule is the copy that drifts.
 
 - **A pull request now says where its preview actually is**, and it costs no deployment.
 
