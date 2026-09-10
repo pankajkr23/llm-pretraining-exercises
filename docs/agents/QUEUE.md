@@ -1328,6 +1328,26 @@ predates the harness — so it is logged as what it was.
                           if the former, the gate saves build minutes only and the real fix is to
                           disable git deployments and drive previews from a workflow
 
+2026-09-10  a11y          #175 opened: every canvas colour follows the theme. HANDOFF item 9, counted
+                          before acting: exactly 12 literals against 16 theme-aware colour writes in
+                          s1, s2 and s4. MEASURED BEFORE AND AFTER through the site's real theme
+                          mechanism -- s1 and s2 each rendered TWO distinct canvases across six
+                          themes and now render six. s4 rendered six either way, because its other
+                          colour writes dominate the image while five of its literals were still
+                          wrong in the details, and THAT is why the guard is lexical rather than
+                          rendered: asking whether a colour CAN move has teeth, asking whether the
+                          picture changed is a question a coarse instrument answers yes to. MY
+                          FIRST PROBE WAS WRONG and it is worth recording: I set data-theme="light"
+                          and data-theme="dark", which match no rule -- the picker offers system
+                          plus four named themes, and light/dark come from prefers-color-scheme. So
+                          both fell back to :root and I briefly read that as the site failing to
+                          distinguish them. Re-measured with color_scheme emulation. CATEGORY
+                          COLOURS LEFT ALONE deliberately: they encode a data class, and one is
+                          interpolated per pixel into an ImageData buffer where a CSS variable
+                          cannot go. The untidiness -- --warm/--cool exist as tokens in the same
+                          files and are used for the line charts -- is recorded IN the guard with a
+                          twin that fails if it stops being true
+
 2026-09-10  tooling       #176 opened: the queue sync stops claiming work shipped in a release it did
                           not. HANDOFF item 5 named two defects; RE-CHECKED BOTH RATHER THAN
                           TRUSTING THE NOTE and one was already fixed -- _reapply replays an edit as
