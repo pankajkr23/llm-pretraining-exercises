@@ -1348,3 +1348,24 @@ predates the harness — so it is logged as what it was.
                           THIRD stale entry found in that file today, after item 7's slider
                           overflow and item 9's count
 
+2026-09-10  tooling       #178 opened: the backup tripwire only cries for files it was protecting.
+                          HANDOFF item 6 is 🤝 because removing paths from an append-only store is
+                          PK's call -- but the ALARM is mine, and it was wrong. --verify treated any
+                          store file with no counterpart in the checkout as a loss, so every run
+                          told the reader to restore files PATTERNS never named. Measured: 45, not
+                          the 19 the note recorded. 20 were copied into the store by hand and swept
+                          in by snapshot()'s git add -A; 25 are docs/standards-history, the residue
+                          of a PATTERNS entry that was DELIBERATELY removed while the append-only
+                          store kept what it had -- the store working, not failing. A stored path is
+                          a loss only if PATTERNS names it, worked out by globbing the STORE with
+                          the tool's own patterns so there is no second matcher to drift from
+                          collect(). Grouped by directory: four lines instead of forty-five, exit 0,
+                          and A PROTECTED FILE THAT VANISHED STILL FAILS -- tested in both
+                          directions, because every change that quietens a guard risks quietening
+                          what it was for. NOTHING WAS DELETED FROM THE STORE: that needs PK naming
+                          the path and its own removal commit, and the tool now prints those exact
+                          commands including the read-back check. ALSO: v0.14.0 shipped without its
+                          standards snapshot -- the release ritual's last step was skipped -- so
+                          snapshot_standards.py was run and 44 archive guards now have something to
+                          check instead of skipping
+

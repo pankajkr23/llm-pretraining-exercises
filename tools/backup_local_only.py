@@ -369,7 +369,9 @@ def _git(dest: Path, *args: str, must_succeed: bool = True) -> subprocess.Comple
     return finished
 
 
-def verify(root: Path, dest: Path, files: list[Path]) -> tuple[list[str], list[str], list[str]]:
+def verify(
+    root: Path, dest: Path, files: list[Path]
+) -> tuple[list[str], list[str], list[str], list[str]]:
     """Compare the store against the working tree, **in both directions**.
 
     **The one-directional version reported success at the exact moment a file was lost**, and it is
@@ -386,8 +388,26 @@ def verify(root: Path, dest: Path, files: list[Path]) -> tuple[list[str], list[s
         dest: The store.
         files: What the checkout currently offers.
 
+    **A path the store holds is only a LOSS if it was ever protected**, and the fourth return value
+    is that distinction. The store is a git repository whose snapshot ends with `git add -A`, so
+    anything copied into its directory by hand is committed along with everything else — nineteen
+    files under one such directory have been in this store for months, none of them ever matched by
+    `PATTERNS` and none of them ever in the checkout. Every `--verify` reported all nineteen as
+    `LOST FROM THE CHECKOUT` and told the reader to restore them.
+
+    That is the failure `AGENTS.md` warns about in as many words: *"a tripwire that cries wolf is
+    one people stop reading, and this repo has lost files twice."* This is the command it names as
+    recovery step 1 and as the check to run after every checkout, pull, merge and rebase — so its
+    signal has to mean something. A protected file that vanished still fails, loudly and alone.
+
+    Args:
+        root: The repo root.
+        dest: The store.
+        files: What the checkout currently offers.
+
     Returns:
-        `(absent from the store, differing in content, lost from the checkout)`.
+        `(absent from the store, differing in content, lost from the checkout, in the store but
+        never protected)`.
     """
 
     def _source_of(relative: Path) -> Path | None:
@@ -421,7 +441,13 @@ def verify(root: Path, dest: Path, files: list[Path]) -> tuple[list[str], list[s
             elif _digest(backed) != _digest(path):
                 differing.append(str(relative))
 
-    lost = []
+    # **Which stored paths PATTERNS would protect, worked out by globbing the STORE with them.**
+    # The store mirrors the repo's layout, so the tool's own patterns answer the question directly —
+    # and reusing them means there is no second matcher to drift from `collect()`. A hand-written
+    # `fnmatch` here would be exactly the "second copy" this repository keeps being bitten by.
+    protected = {backed.relative_to(dest) for pattern in PATTERNS for backed in dest.glob(pattern)}
+
+    lost, unprotected = [], []
     if dest.is_dir():
         for backed in dest.rglob("*"):
             if not backed.is_file() or ".git" in backed.parts:
@@ -429,10 +455,17 @@ def verify(root: Path, dest: Path, files: list[Path]) -> tuple[list[str], list[s
             relative = backed.relative_to(dest)
             if relative == Path("README.md"):
                 continue  # the store's own note to a reader, with no counterpart in the repo
+            head = relative.parts[0] if relative.parts else ""
+            if relative not in protected and head not in EXTERNAL_SOURCES:
+                # Never protected, so its absence from the checkout is not a loss. Reported, because
+                # a file sitting in the store for no reason is still worth someone's attention —
+                # just not an alarm.
+                unprotected.append(str(relative))
+                continue
             origin = _source_of(relative)
             if origin is not None and not origin.is_file():
                 lost.append(str(relative))
-    return absent, differing, sorted(lost)
+    return absent, differing, sorted(lost), sorted(unprotected)
 
 
 def snapshot(root: Path, dest: Path, files: list[Path], *, message: str) -> int:
@@ -650,7 +683,7 @@ def main() -> int:
         if not args.dest.is_dir():
             logger.error("no backup store at %s — run without --verify to create one", args.dest)
             return 1
-        absent, differing, lost = verify(args.root, args.dest, files)
+        absent, differing, lost, unprotected = verify(args.root, args.dest, files)
         # Loss first, and loudest. The other two mean "run the tool"; this one means "stop".
         for name in lost:
             logger.error("LOST FROM THE CHECKOUT  %s", name)
@@ -658,6 +691,38 @@ def main() -> int:
             logger.error("NOT BACKED UP  %s", name)
         for name in differing:
             logger.warning("out of date    %s", name)
+        # **Not an alarm, and it must not raise one.** `PATTERNS` does not name these, so their
+        # absence from the checkout is not a loss — and reporting them as one is what made every run
+        # of this command tell the reader to restore files that were never theirs to lose.
+        #
+        # **Grouped by directory: a line per file is the same wolf-cry, one octave down.**
+        # Two things land here and they are not alike. One is a stowaway: copied into the store by
+        # hand and committed by `snapshot()`'s `git add -A`, decided by nobody. The other is
+        # residue: an entry that WAS in `PATTERNS`, was deliberately removed, and whose files the
+        # store keeps because it is append-only — which is the store working, not failing.
+        if unprotected:
+            groups: dict[str, int] = {}
+            for name in unprotected:
+                parts = Path(name).parts
+                key = "/".join(parts[:2]) if len(parts) > 2 else str(Path(name).parent or ".")
+                groups[key] = groups.get(key, 0) + 1
+            for key, count in sorted(groups.items()):
+                logger.info("in the store, not named by PATTERNS  %s/  (%d file(s))", key, count)
+            logger.info(
+                "%d file(s) in %d director(y/ies) are in the store and not named by PATTERNS. They "
+                "are NOT losses and do not fail this check — either they were copied in by hand, "
+                "or a PATTERNS entry that once named them was removed and the append-only store "
+                "kept "
+                "what it had. Removing one is deliberate and needs its own commit:\n"
+                "  git -C %s rm <path>\n"
+                "  git -C %s commit -m 'why this was removed, and who asked'\n"
+                "then confirm it reads back: git -C %s show <removal>^:<path> | wc -c",
+                len(unprotected),
+                len(groups),
+                args.dest,
+                args.dest,
+                args.dest,
+            )
         if lost:
             logger.error(
                 "%d files are in the store and NOT in your checkout. Restore them before doing "

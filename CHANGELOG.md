@@ -38,6 +38,28 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **The backup tripwire reported forty-five files as lost that were never protected.**
+  `backup_local_only.py --verify` is the command `AGENTS.md` names as recovery step 1 and as the
+  check to run after every checkout, pull, merge and rebase — the operation class that has already
+  destroyed these files twice. It treated **any** file in the store with no counterpart in the
+  checkout as a loss, and the store is a git repository whose snapshot ends with `git add -A`, so
+  anything copied into its directory is committed along with everything else. Every run told the
+  reader to restore files that were never theirs to lose, which is the failure that document names
+  in as many words: *"a tripwire that cries wolf is one people stop reading."*
+
+  A stored path is a loss only if `PATTERNS` names it. Worked out by globbing the **store** with the
+  tool's own patterns, so there is no second matcher to drift from `collect()`. The rest are
+  reported as information, grouped by directory — four lines instead of forty-five — and do not fail
+  the check. **A protected file that vanished still fails, alone and loudly**, and there is a test
+  for each half, because every change that quietens a guard risks quietening what it was for.
+
+  The two kinds that land there are not alike, and the message says so: twenty copied in by hand,
+  and twenty-five the residue of a `PATTERNS` entry that was deliberately removed while the
+  append-only store kept what it had — the store working, not failing. `HANDOFF.md` recorded this as
+  19 files; it is 45.
+
+### Fixed
+
 - **`sync_open_prs.py` could land a branch's changelog entry inside a version that had already
   shipped.** After a release renames `[Unreleased]` and opens a fresh empty one, a block's
   neighbours are no longer where it was written beside them — so placement falls back to a single
