@@ -322,6 +322,31 @@ is a limitation the page is hiding. Smaller type, fewer words, always on screen.
 - **Every figure sits in `<figure>` with a `<figcaption>`.** Number them (`Figure 3.`). `figure`
   gets `overflow-x: auto` and the svg a `min-width`, so a wide diagram scrolls inside its own box
   and the page body never does.
+  **This rule was stated here and honoured by two exercises out of five**, and the three that missed
+  it painted 222 labels below the floor — the smallest at **2.4px**, on a page whose every declared
+  `font-size` is inside the 9.5–11px band. A `viewBox` scales text with the drawing, so the size a
+  reader sees is `declared × (rendered ÷ viewBox)` and nothing lexical can see the reduction. Four
+  details decide whether the fix works, each learned by getting it wrong:
+    - **The floor is the viewBox's own width, read from the attribute**, never a number repeated in
+      a stylesheet — a second copy of a number is the copy that drifts.
+    - **It goes wherever the `viewBox` is set, not only in the svg factory.** A figure that measures
+      its own content and calls `setAttribute('viewBox', …)` afterwards never passes through the
+      factory's check; 76 labels stayed at 8.9px that way, with the guard red and nothing saying why.
+    - **The wrapper needs `min-width: 0` as well as `overflow-x: auto`.** A grid or flex item's
+      default `min-width` is `auto` — its content — so without it the svg's floor propagates up and
+      the *page* scrolls: 574px of it at 390px.
+    - **Select the wrapper by what it holds** (`#main *:has(> svg[viewBox])`), not by a list of the
+      containers that hold one today. The list was tried first and was wrong within the hour.
+  Enforced by `tests/test_svg_labels_are_legible.py` at 2560, 1440, 768, 390 and 320 — over
+  **thirteen routes, not ten**. `src/exercises/*/web/index.html` misses 03's `reasoning/` and
+  `report/` and 08's `field-guide/`; `build.sh` does `cp -R`, so a sub-route deploys with no build
+  change and nothing notices it. Glob `*/web/**/index.html` in any repo-wide browser guard.
+- **Scrolling a figure hides whatever is off the right edge, so check what that is.** Exercise 08's
+  chronology gains 368px of scroll at 1440 and none at 1920 or above; the three years that fall
+  outside are 2024–2026, and its caption's two claims — attention three years before the Transformer,
+  and the shaded 680-day band — both sit inside the visible region. That check is the price of the
+  rule above, and `docs/DESIGN.md`'s own pipeline-figure entry records what happens when nobody makes
+  it: 06 put the two stages its caption called out behind a scroll.
 - **Draw the whole object, not the part that fits.** 07's grid figure originally stopped at column
   32, so the discarded bytes landed outside the viewBox and stacked into one dot — a figure whose
   caption said nineteen bytes were thrown away while showing one. Extend the domain and shade the

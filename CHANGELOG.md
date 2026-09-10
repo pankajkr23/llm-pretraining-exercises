@@ -12,6 +12,16 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Changed
 
+- **A rule that already existed, in two exercises out of five.**
+
+  `test_no_svg_label_renders_too_small_to_read` was written twice — once in exercise 05's render
+  test and once in 07's, the same measurement with different plumbing — and both pages are clean:
+  smallest painted label 9.6px and 9.7px. Nobody carried it next door. Exercise 08 had no such
+  guard, and 09 and 10 had only a *position* guard with a similar name. It is one file in `tests/`
+  now, finding its pages on the filesystem, sweeping the union of the widths the two copies covered
+  (2560, 1440, 768, 390, 320), and the two per-exercise copies are gone. The fourth single-exercise
+  guard this month to miss its neighbours.
+
 - **Two guards were asking the wrong question, and one of them failed correct work.**
 
   `tests/test_prose_tables_wrap.py` flagged exercise 03's dataset catalogue — 109 rows, 7 columns,
@@ -184,6 +194,51 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 
 ### Fixed
+
+- **A figure label stays legible, on the three pages where it did not.**
+
+  A `viewBox` scales text along with the drawing, so the size a reader sees is
+  `declared × (rendered ÷ viewBox)` — and **nothing lexical can see it**, because every declared
+  size on all three pages is inside `docs/DESIGN.md`'s 9.5–11px band. At 390px, exercise 08 painted
+  **145 of 175 labels under 9px, the smallest at 2.4px**; 09 painted 48 of 48, smallest 4.6px; 10
+  painted 29 of 29, smallest 5.0px. **08 failed on a desktop too** — its chronology put 86 labels at
+  6.7px and its mechanism plate 79 more at 8.2px, at a 1440px viewport, which no phone breakpoint
+  could have reached.
+
+  `docs/DESIGN.md` already prescribed the remedy — `overflow-x: auto` on the wrapper and a
+  `min-width` on the svg — and the floor is now derived from each drawing's own viewBox rather than
+  typed anywhere. **Three things had to be right and each was wrong first.** The floor has to be set
+  wherever the `viewBox` is set, not only in the svg factory: exercise 08's diagrams measure their
+  own height and call `setAttribute` afterwards, which left 76 labels at 8.9px. The wrapper needs
+  `min-width: 0` as well as the scroller, or the floor propagates up and the *page* scrolls — 574px
+  of it at 390px. And the wrapper has to be selected by what it holds rather than by a list of the
+  containers that hold one today; the list was wrong within the hour.
+
+  **What it costs, stated rather than buried:** exercise 08's chronology gains 368px of horizontal
+  scroll at a 1440px viewport, 308px at 1600 and **none at 1920 or above**. The years that fall
+  outside are 2024–2026; the caption's two claims — attention three years before the Transformer,
+  and the shaded 680-day band — both sit inside the visible region. If the whole chronology should
+  stay on screen on a laptop instead, the alternative is to raise that one plate's declared label
+  sizes about 25% and check for collisions; there are **zero** today at either width.
+
+  Also: exercise 08 had **three** identical `createElementNS` helpers, in `figures.js`,
+  `diagrams.js` and `glyphs.js`, so a rule applied to one silently missed the other two — which is
+  exactly what happened. They share one now. And `.gl-schema` declared 9px, the only svg label class
+  on that page outside the stated band.
+
+  **And the guard had the same blind spot one level up.** It globbed `*/web/index.html`, which finds
+  ten pages and misses three: exercise 03 ships `reasoning/` and `report/`, exercise 08 ships
+  `field-guide/`, and `build.sh` does `cp -R`, so a sub-route deploys without a build change and
+  without anything noticing. The field guide renders the same diagrams from the same module, so
+  giving those diagrams a floor changed it too — **354px of sideways scroll at 390px** — while this
+  file reported every page green, because it had never loaded the page. Two of 08's own tests caught
+  the consequence; the guard now sweeps all thirteen routes. Exercise 09's `.ship` wrapper needed the
+  same `min-width: 0` for the same reason: it is a grid, and its chart was being clipped at 768px
+  rather than scrolled.
+
+  **Not fixed here, and pre-existing:** 03's three routes and 06 each scroll sideways by **12px at
+  exactly 1180px** — the width where the shared stylesheet starts reserving the rail gutter — and by
+  0px at 2560, 1440, 900, 768, 620, 390 and 320. Nothing in this change touches either exercise.
 
 - **Exercise 10's stage-14 reviewer pass — four reviewers, and the numbers they found.**
 

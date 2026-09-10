@@ -145,6 +145,26 @@
   padding-inline: clamp(14px, 3vw, 42px);
 }
 
+/* **A drawing that will not shrink has to be allowed to overflow somewhere.**
+ *
+ * Written as "whatever directly holds a root svg", not as a list of the containers that do today.
+ * The list was tried first and was wrong within the hour: this page puts root svgs under
+ * `.plate-pair`, under an unclassed `div` inside `.plate-body`, under `figure.wide`, under
+ * `figure.sp-diagram` and under a `div` inside `.fam`, and naming three of those left **574px** of
+ * sideways page scroll at 390px from the ones it missed. `:has(> svg[viewBox])` is the property
+ * itself, so a figure that moves house keeps its scroller.
+ *
+ * `min-width: 0` is the half that is easy to miss: a grid or flex item's default `min-width` is
+ * `auto` — its content's size — so without it the svg's floor propagates straight up and the PAGE
+ * scrolls instead of the figure, which is the defect rather than the fix.
+ *
+ * Scoped to `#main` so it can never reach the masthead's decorative field, which is deliberately
+ * `overflow: hidden` and carries no labels at all. */
+#main *:has(> svg[viewBox]) {
+  overflow-x: auto;
+  min-width: 0;
+}
+
 .plate > svg {
   padding-inline: clamp(6px, 1.5vw, 20px);
   box-sizing: border-box;
@@ -1567,7 +1587,10 @@ text.quiet-lab {
 .gl-schema {
   fill: var(--faint);
   font-family: var(--mono);
-  font-size: 9px;
+  /* 9.5px, not 9px: `docs/DESIGN.md` puts mono micro-labels at 9.5-11px and this was the one svg
+   * label class on the page outside that band. At the plate's own scale it is the difference
+   * between clearing the floor and missing it by two tenths of a pixel. */
+  font-size: 9.5px;
 }
 
 /* Two plates, one at a time. The landscape plate is a 1440-unit SVG; scaled into a phone column

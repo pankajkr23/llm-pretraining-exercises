@@ -1655,6 +1655,51 @@ predates the harness — so it is logged as what it was.
                           rewritten assertions, all watched failing. STACKED ON #179 -- main has not
                           moved since #169, and stacking a nowrap table would still overflow
 
+2026-09-10  cross-cutting #181 opened: the svg legibility guard existed in TWO exercises and missed
+                          the other three. test_no_svg_label_renders_too_small_to_read was written
+                          twice -- 05's render test and 07's, same measurement, different plumbing
+                          -- and both pages are clean at 9.6 and 9.7px. 08 had no size guard at all;
+                          09 and 10 had only a POSITION guard with a similar name. At 390: 08 painted
+                          145 of 175 labels under 9px, smallest 2.4px; 09 48 of 48; 10 29 of 29. AND
+                          08 FAILED ON A DESKTOP TOO -- 86 labels at 6.7px and 79 at 8.2px at 1440,
+                          which no phone breakpoint reaches. Nothing lexical can see any of it:
+                          every declared size is inside DESIGN.md's own 9.5-11px band and the
+                          viewBox does the shrinking. DESIGN.md ALREADY PRESCRIBED THE FIX -- the
+                          wrapper scrolls, the svg gets a min-width -- so this is the standard being
+                          applied, not invented. THREE THINGS HAD TO BE RIGHT AND EACH WAS WRONG
+                          FIRST, all found by measuring: the floor must be set wherever the viewBox
+                          is set, not only in the factory (08's diagrams measure their own height
+                          and setAttribute afterwards -- 76 labels stayed at 8.9px, guard red,
+                          nothing saying why); the wrapper needs min-width 0 as well as the
+                          scroller, or the floor propagates up and the PAGE scrolls, 574px of it at
+                          390; and the wrapper must be selected by what it holds, not by a list of
+                          the containers that hold one today -- the list was wrong within the hour.
+                          08 also had THREE identical createElementNS helpers, so a rule applied to
+                          one missed the other two, which is exactly what happened; they share one
+                          now. THE COST IS STATED RATHER THAN BURIED: 08's chronology gains 368px of
+                          scroll at 1440, 308 at 1600, NONE at 1920+; the years that fall outside are
+                          2024-2026 and the caption's two claims both sit inside the visible region.
+                          If the whole chronology should stay on screen on a laptop the alternative
+                          is +25% on that plate's declared sizes, and there are zero label collisions
+                          today to spend. THE GUARD HAD THE SAME BLIND SPOT ONE LEVEL UP: it
+                          globbed */web/index.html, which finds TEN pages and misses THREE -- 03
+                          ships reasoning/ and report/, 08 ships field-guide/, and build.sh does
+                          cp -R so a sub-route deploys with no build change and nothing notices. The
+                          field guide renders the same diagrams from the same module, so the floor
+                          reached it too: 354px of sideways scroll at 390 while my guard called every
+                          page green, because it had never loaded that page. 08's OWN tests caught
+                          it. Now sweeping all thirteen routes. 09's .ship needed the same
+                          min-width 0 -- a grid whose chart was clipped at 768 rather than scrolled.
+                          MY SELECTOR WAS WRONG TWICE IN ONE HOUR, both times by measuring rather
+                          than reading: first a list of containers instead of :has(> svg[viewBox]),
+                          then overflow-x set on the DRAWING instead of on the card containing it,
+                          which moved nothing at all. FOUND AND NOT FIXED, pre-existing: 03's three
+                          routes and 06 each scroll sideways 12px at EXACTLY 1180px -- the rail
+                          gutter boundary -- and 0px at every other width tested. Nothing here
+                          touches either exercise; logged as its own row. Three assertions watched
+                          failing, mutations in memory, restored in a finally with the restore
+                          verified. Branched off main, so it is independent of #180
+
 2026-09-10  agent-roster  #183 opened: the read-only half of row 9. `research` asks whether a source
                           OUTSIDE this repo actually says a thing in those words -- exercise 08's
                           method, where 80 hyperparameters across 29 papers gave 82 proposed quotes,

@@ -28,6 +28,20 @@ function el(tag, cls, text) {
 function svg(tag, attrs = {}) {
   const n = document.createElementNS(NS, tag);
   for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+  /* **A figure is never drawn smaller than it was designed, because its labels shrink with it.**
+   * A `viewBox` scales text along with the drawing, so a label authored at a compliant 11px paints
+   * at `11 × rendered ÷ viewBox` — 5px on a phone, where the figure is a quarter of its design
+   * width. Nothing in the source says so: every declared size on this page is inside
+   * `docs/DESIGN.md`'s 9.5–11px band, and the whole reduction happens in the transform.
+   *
+   * A diagram cannot reflow the way a paragraph can, so the fix is to stop it shrinking: the floor
+   * is the viewBox's own width, and the `figure` around it already scrolls. Set here rather than in
+   * a stylesheet because the value is a property of each drawing, and a stylesheet would have to
+   * repeat every viewBox — a second copy of a number, which is the copy that drifts. */
+  if (tag === 'svg' && attrs.viewBox) {
+    const designed = Number(String(attrs.viewBox).trim().split(/\s+/)[2]);
+    if (Number.isFinite(designed) && designed > 0) n.style.minWidth = `${designed}px`;
+  }
   return n;
 }
 

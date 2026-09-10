@@ -32,7 +32,40 @@ export const el = (tag, cls, text) => {
 export const svg = (tag, attrs) => {
   const n = document.createElementNS(NS, tag);
   for (const [k, v] of Object.entries(attrs || {})) n.setAttribute(k, String(v));
+  /* **A figure is never drawn smaller than it was designed, because its labels shrink with it.**
+   * A `viewBox` scales text along with the drawing, so a label authored at a compliant 9.5px paints
+   * at `9.5 × rendered ÷ viewBox`. Two plates on this page are painted into 1072px from viewBoxes
+   * of 1240 and 1440, which put 165 labels at 8.2px and 6.7px **on a desktop**; at 390px the
+   * timeline's smallest label is 2.4px. Every declared size is inside `docs/DESIGN.md`'s 9.5–11px
+   * band — the whole reduction happens in the transform, so nothing lexical can see it.
+   *
+   * `docs/DESIGN.md` already prescribes the remedy for an svg figure: the wrapper gets
+   * `overflow-x: auto` and the svg a `min-width`. The floor is the viewBox's own width, read from
+   * the attribute rather than repeated in a stylesheet — a second copy of a number is the copy that
+   * drifts. */
+  if (tag === 'svg' && attrs && attrs.viewBox) {
+    const designed = Number(String(attrs.viewBox).trim().split(/\s+/)[2]);
+    if (Number.isFinite(designed) && designed > 0) n.style.minWidth = `${designed}px`;
+  }
   return n;
+};
+
+/**
+ * Give an svg its `viewBox` and, with it, the floor below which it must not be drawn.
+ *
+ * **The floor cannot live only in `svg()`, because not every figure knows its size when it is
+ * created.** `diagrams.js` builds a diagram, measures how tall the scene came out, and only then
+ * calls `setAttribute('viewBox', ...)` — so the check inside the factory never fired for it, and 76
+ * labels on the score matrix stayed at 8.9px while every other figure on the page was fixed and the
+ * guard stayed red with nothing to say why. Anything that sizes an svg after building it uses this.
+ *
+ * @param {SVGSVGElement} el
+ * @param {number} width   design width, in user units
+ * @param {number} height  design height, in user units
+ */
+export const setViewBox = (el, width, height) => {
+  el.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  if (Number.isFinite(width) && width > 0) el.style.minWidth = `${width}px`;
 };
 
 export const svgText = (x, y, cls, text) => {

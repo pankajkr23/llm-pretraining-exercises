@@ -1040,10 +1040,6 @@ def test_the_figure_states_the_count_it_actually_draws(page):
 
 # ---- the page sweep's three findings ----------------------------------------------------------
 
-#: Under this, an SVG label is not readable. Effective size is the authored font-size times the
-#: scale the viewBox is rendered at, so a label can be legible in the source and 6px on a phone.
-LEGIBLE_SVG_TEXT = 9.5
-
 #: The widths that matter here: a phone, a tablet, a laptop, and a display with room to spare.
 SWEEP_WIDTHS = (390, 768, 1440, 2560)
 
@@ -1082,44 +1078,10 @@ def _at_width(page, width: int, js: str):
         page.wait_for_timeout(200)
 
 
-_SVG_TEXT_JS = """() => {
-  const out = [];
-  for (const svg of document.querySelectorAll('svg')) {
-    const vb = svg.viewBox && svg.viewBox.baseVal;
-    if (!vb || !vb.width) continue;
-    const scale = svg.getBoundingClientRect().width / vb.width;
-    for (const t of svg.querySelectorAll('text')) {
-      if (!t.textContent.trim()) continue;
-      out.push({
-        eff: parseFloat(getComputedStyle(t).fontSize) * scale,
-        txt: t.textContent.trim().slice(0, 24),
-      });
-    }
-  }
-  return out;
-}"""
-
 _CODE_JS = """() => [...document.querySelectorAll('pre.code')].map((el) => ({
      over: el.scrollWidth - el.clientWidth,
      head: el.textContent.trim().split('\\n')[0].slice(0, 44),
    }))"""
-
-
-@pytest.mark.parametrize("width", SWEEP_WIDTHS)
-def test_no_svg_label_renders_too_small_to_read(page, width: int) -> None:
-    """A viewBox scales the text with the drawing, so legibility is a property of the RENDER.
-
-    Every label on this page's figures sat between 6.39px and 9.4px at a 390px viewport — the
-    figure legible and the words on it not. Reading the authored `font-size` would have reported
-    10px and been useless, which is why this multiplies by the rendered scale.
-    """
-    rows = _at_width(page, width, _SVG_TEXT_JS)
-    assert len(rows) >= 10, f"only {len(rows)} svg labels measured at {width}px; selector rotted?"
-    tiny = sorted((round(r["eff"], 2), r["txt"]) for r in rows if r["eff"] < LEGIBLE_SVG_TEXT)
-    assert not tiny, (
-        f"at {width}px, {len(tiny)} of {len(rows)} svg labels render under "
-        f"{LEGIBLE_SVG_TEXT}px:\n  " + "\n  ".join(f"{e}px  {t!r}" for e, t in tiny[:6])
-    )
 
 
 @pytest.mark.parametrize("width", SWEEP_WIDTHS)
