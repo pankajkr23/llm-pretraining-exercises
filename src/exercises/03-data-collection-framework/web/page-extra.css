@@ -25,7 +25,8 @@
  * still 605px wide, so the text would fill the panel edge to edge at full body size, beside labels
  * half its height, and the strip would stop reading as a figure at all.
  *
- * So `.steps` is pinned back to the root size. That is a component boundary rather than an
+ * So the strip is pinned back to the root size — the `.scrolly` grid as well as the `.steps` inside
+ * it, for the reason given where the pin is written. That is a component boundary rather than an
  * exception: the scale is for the page's reading column, and a figure carrying its own type scale
  * keeps it.
  */
@@ -47,7 +48,16 @@
 }
 
 /* The component boundary. Anything inside the explainer strip keeps the size its own stylesheet was
- * designed around — including the step paragraphs, whose 46ch cap is measured against it. */
+ * designed around — including the step paragraphs, whose 46ch cap is measured against it.
+ *
+ * **The boundary is the GRID, not the steps inside it.** This first pinned `.steps` alone, and
+ * `.scrolly` — the grid that sizes both columns in `ch` — went on inheriting the page's 19-22px. A
+ * `ch` resolves against the element that declares it, so the prose column grew to 60ch of 22px
+ * (815px) while the text in it stayed at 46ch of 16px (472px): the empty middle between the steps
+ * and the figure went from 181px to 391px at 1920, measured from the glyphs rather than the boxes.
+ * Pinning the grid puts both `ch`s back on one font, which is what `docs/DESIGN.md` calls the most
+ * expensive recurring bug in this repository. */
+#main .scrolly,
 #main .steps,
 #main .steps p,
 #main .steps li {

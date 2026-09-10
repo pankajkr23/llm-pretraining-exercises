@@ -1414,6 +1414,21 @@ predates the harness — so it is logged as what it was.
                           fixtures drive 1280, 1500, 900 and 390 -- which is why a defect at the
                           one width the shared stylesheet calls out has never been seen
 
+2026-09-10  design        #172's explainer boundary was drawn one level too low, and PK saw it on
+                          the page before any test did: 03's empty middle between the steps and
+                          the figure went 181px -> 391px at 1920 (292 at 1440). The first version
+                          pinned the step PARAGRAPHS to 16px and left `.scrolly` -- the grid that
+                          sizes both columns in `ch` -- on the page's 22px, so the prose column
+                          became 60ch of 22px (815px) around text still 472px wide. `ch` resolves
+                          against the element that declares it. The grid is pinned with the steps
+                          now: 181px at 1440 and 1920, body prose outside the strip still 19/22px.
+                          06 pinned the grid from the start, which is why it was unaffected. A
+                          BOX-BASED MEASURE REPORTED NO GAP: a step's box spans its whole track, so
+                          the gap only shows in the glyph rects. The new guard asserts the cause,
+                          not a threshold -- grid and step prose share one computed size at eight
+                          widths -- watched red on 03 with the pin removed from the built copy,
+                          restored byte-identical in a finally
+
 2026-09-09  fix           #173 opened: the shared explainer fits at the rail breakpoint, and the
                           finding recorded an hour ago is fixed rather than carried. Reproduced on
                           main first, so the attribution is measured: exercises 03 and 06 overflow
