@@ -31,13 +31,27 @@
      exactly 1180px, where `page.css` starts reserving a 260px rail gutter and the content box is
      therefore NARROWER than it is at 1179. That one width ran 41 characters a line while every
      other width in the range ran 48. The floor is 48ch to leave room for `.step`'s own 20px of
-     border and padding, which come off the paragraph rather than the track. */
+     border and padding, which come off the paragraph rather than the track.
+
+     **Only `.wide` ever overflowed, and the fix is 36px off its figure floor -- not the floor.**
+     `.scrolly` asks for 48ch of prose, a 44px gap and a 340px figure: 867.75px, which fits the
+     896px box at 1180 with room over. `.scrolly.wide` asks for 48ch, a 48px gap and a **400px**
+     figure: 931.75px, which does not -- and that 36px pushed the document 12px sideways at 1180,
+     staying over until the box reached 932px at about 1232.
+
+     **Dropping both floors to `minmax(0, 1fr)` was tried first and was worse.** With no floor on
+     the figure the prose track takes its full cap and the figure gets the scraps: exercise 03's
+     stage register fell from 340px to 243px and the note inside it from 46 characters to 33, under
+     this repository's own 42-character floor. The figure floor is not decoration -- it is what
+     stops the prose cap from eating the column. So `.wide` keeps a floor and gives up 36px of it:
+     360px leaves 488px of prose at the tightest width, 48.4ch, still above the floor the paragraph
+     above explains. */
   .scrolly {
     grid-template-columns: minmax(min(48ch, 100%), 62ch) minmax(min(340px, 100%), 1fr);
     gap: 44px;
   }
   .scrolly.wide {
-    grid-template-columns: minmax(min(48ch, 100%), 60ch) minmax(min(400px, 100%), 1fr);
+    grid-template-columns: minmax(min(48ch, 100%), 60ch) minmax(min(360px, 100%), 1fr);
     gap: 48px;
   }
 }

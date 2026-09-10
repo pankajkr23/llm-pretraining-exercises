@@ -1300,4 +1300,34 @@ predates the harness — so it is logged as what it was.
                           caught that, and merging into the existing file removed the ledger
                           entirely because the filesystem answers the question. docs/DESIGN.md now
                           carries the rule and names the misreading that produces it
+
+2026-09-10  cross-cutting #182 opened: every deployed route holds its width, and three did not.
+                          03's THREE routes and 06 scrolled the page 12px at EXACTLY 1180 -- the
+                          rail-gutter boundary, where the content box is NARROWER than at 1179.
+                          explainer.css, which only those two exercises vendor, set two grid floors
+                          summing to 931.75px inside an 896px box. minmax(min(400px,100%),1fr) LOOKS
+                          like it yields and does not: the percentage resolves against the grid
+                          container, so min(400px,896px) is 400 again. ONLY THE WIDE VARIANT EVER
+                          OVERFLOWED -- the plain one asks 340px and a 44px gap, 867.75px, which
+                          fits -- so wide's figure floor gives up 36px, to 360px. I TRIED DROPPING
+                          BOTH FLOORS TO minmax(0,1fr) FIRST AND IT WAS WORSE, and the suite caught
+                          it: with no figure floor the prose track takes its full cap and the figure
+                          gets the scraps, so 03's stage register fell 340 -> 243px and its note
+                          from 46 characters to 33, under this repo's own 42 floor. The figure floor
+                          is what stops the prose CAP from eating the column. AND A CONTROL THAT OVERHANGS ITS
+                          CONTAINER DOES NOT SCROLL THE PAGE, which is why nobody found it: the
+                          browser's own stylesheet gives input[type=range] margin 2px, so width 100%
+                          at border-box occupies the parent PLUS 4px. Four rules on 04 and 05 laid a
+                          slider 2px outside the box it was told to fill, at every width, and the
+                          overhang landed inside the page's own padding so every viewport check read
+                          zero. ONE rule in the shared component layer now -- I fixed it twice
+                          per-exercise first and the new guard immediately found the two still
+                          standing, which is the argument for the shared layer. 08 had the third
+                          shape: a button whose longest word is 87px in an 81px box below 640.
+                          overflow-wrap ANYWHERE, not break-word -- only `anywhere` counts the break
+                          when computing min-content, and a shrink-to-fit box is laid out AT its
+                          min-content width. break-word was tried first and measured changing
+                          nothing. The guard sweeps all THIRTEEN routes at eight widths and measures
+                          a control against its PARENT, minus that parent's padding, because the
+                          window is the wrong denominator
 ```
