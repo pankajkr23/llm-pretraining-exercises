@@ -12,6 +12,32 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Two read-only personas, and a guard that keeps the roster honest.**
+
+  `research` asks whether a source outside this repository actually says a thing, in those words. Its
+  method is exercise 08's, where 80 hyperparameters across 29 papers produced **82 proposed quotes,
+  82 verbatim, zero fabrications** — download every source first, check each quote as a contiguous
+  run of that file's own characters, and leave the field empty where nothing says so. It carries the
+  three ways that gate was itself wrong (arXiv printing every equation twice, `U+200B` inside
+  numbers, `1 M` against `1M`), because **a guard with false negatives is not the safe direction to
+  err in** here: it silently converts sourced numbers into unsourced ones.
+
+  `critique` asks whether there was a smaller thing that would have worked. `reader`, `engineer` and
+  `auditor` all reward *more* — more prose, more guards, more coverage — and nothing in the standard
+  pass ever says *this was too much*. **Neither joins that pass**, because `docs/AGENT_FLEET.md`'s
+  own sourced argument is three reviewers and not five, and its warning is that *"a reviewer prompted
+  to find gaps will usually report some, even when the work is sound."* They are invoked
+  deliberately. The queued unit did not say what question `critique` should ask; this one is derived
+  from what has actually gone wrong here, and the derivation is written down.
+
+  **`tests/test_agent_roster.py` is the part that lasts.** The installer copies
+  `docs/agents/reviewers/*.md` by glob into a gitignored directory, so until now adding a persona was
+  adding a file and **nothing validated it**: a `tools:` line one word away from granting `Edit`
+  would have made a reviewer that edits the work it grades, invisibly to review, to CI and to every
+  other clone. The guard asserts the frontmatter the installer needs, that no persona holds a writing
+  tool, and that the roster and the fleet document name each other **in both directions** — which it
+  proved by going red on the two personas in this very change.
+
 - **A pull request now says where its preview actually is**, and it costs no deployment.
 
   Since the build gate landed on 4 September, every pull request here has ended with

@@ -108,7 +108,7 @@ this file does not define, and the answer is the unit name instead.
 | 6 | Exercise 09 | `unit-09` | **done.** Both blockers cleared; 54 tests, the notebook, the page and its registration all shipped |
 | 7 | Exercise 10 | `unit-10` | **done, bar the reviewer pass** — stage 14, the one piece of engineering still owed on either exercise |
 | 8 | Retro-fix 07 → 01 | `unit-07-retrofit` … `unit-01-retrofit` | **done.** One pull request each, #109-#132; it ran alongside 09 and 10 once row 5 landed |
-| 9 | Grow the agent roster | `unit-agent-roster` | not started. Read-only agents first, then three writers with **disjoint** scopes |
+| 9 | Grow the agent roster | `unit-agent-roster` | **read-only half done** — `research` and `critique` shipped with a roster guard (#183). The three writers with **disjoint** scopes remain |
 | 10 | The platform plan, for a parallel workstream | `unit-platform-plan` | **drafted** — `~/.claude/plans/agent-platform.md`. Repository-agnostic by construction |
 
 **Read the order as a default, not a rule.** Rows 4 and 5 come before 6 because they are cheap and
@@ -235,7 +235,7 @@ intervention, and that a reader can say what each guard did and why the run stop
   `sed -i` on a guard file is refused, a reviewer cannot write, and `touch AGENT_STOP` halts a run.
 
 ### unit-agent-roster — read-only agents first, writers second
-- status: QUEUED
+- status: HALF DONE — the two read-only personas shipped in #183; the three writers remain
 - scope: `docs/agents/reviewers/`, `tools/install_agent_fleet.py`, `tests/test_agent_guard.py`
 - what: add `research` and `critique` as read-only personas alongside the four reviewers, then
   split the writing role into `coding` (implementation paths), `testing` (test paths **only**) and
@@ -1327,4 +1327,29 @@ predates the harness — so it is logged as what it was.
                           whether Vercel's rate limit counts deployments CREATED or builds RUN --
                           if the former, the gate saves build minutes only and the real fix is to
                           disable git deployments and drive previews from a workflow
+
+2026-09-10  agent-roster  #183 opened: the read-only half of row 9. `research` asks whether a source
+                          OUTSIDE this repo actually says a thing in those words -- exercise 08's
+                          method, where 80 hyperparameters across 29 papers gave 82 proposed quotes,
+                          82 verbatim, zero fabrications -- and it carries the THREE ways that gate
+                          was itself wrong, because a guard with false negatives silently converts
+                          sourced numbers into unsourced ones. `critique` asks whether a smaller
+                          thing would have worked: reader, engineer and auditor all reward MORE, and
+                          nothing in the pass ever says this was too much. NEITHER JOINS THE
+                          STANDARD PASS -- AGENT_FLEET.md's own sourced argument is three reviewers
+                          and not five, and its warning is that a reviewer prompted to find gaps
+                          will report some even when the work is sound. The unit did not say what
+                          question critique should ask; I derived it from what has gone wrong here
+                          and wrote the derivation down rather than inventing a spec silently.
+                          tests/test_agent_roster.py is the part that lasts: the installer copies
+                          reviewers/*.md by glob into a GITIGNORED directory, so adding a persona
+                          was adding a file and nothing validated it -- a tools: line one word from
+                          granting Edit would have made a reviewer that edits the work it grades,
+                          invisible to review, CI and every clone. It went red on the two personas
+                          in this very change, which is how I know the both-directions half works.
+                          Three assertions watched failing. STILL OWED: the three writers with
+                          disjoint scopes (coding / testing / documentation), which is the half with
+                          the measured argument behind it -- ImpossibleBench found a frontier model
+                          exploited test cases 76% of the time, near zero when test access was made
+                          read-only
 ```
