@@ -36,8 +36,22 @@
     grid-template-columns: minmax(min(48ch, 100%), 62ch) minmax(min(340px, 100%), 1fr);
     gap: 44px;
   }
+  /* **The figure minimum is 340px and not 400px, and the arithmetic is the whole reason.**
+     A `minmax()` minimum is a floor the grid may not go below, so the track total at the squeeze
+     is `48ch + gap + figure-min` whether or not the container can hold it — and when it cannot,
+     the grid overflows its parent rather than shrinking. At 1180px, where the comment above says
+     the content box is at its narrowest, that box is 896px and the wide strip demanded
+     `483.75 + 48 + 400 = 931.75px`. The tracks ran 35.75px past `#main`, which put 12px of the
+     figure past the right edge of the viewport: exercises 03 and 06 — the two pages that build a
+     wide strip — scrolled sideways at exactly 1180 and at no other width, for as long as this rule
+     has existed.
+
+     340px is the value the narrow variant already uses and it fits with room: `483.75 + 48 + 340
+     = 871.75` inside 896. Nothing is lost above the squeeze, because the maximum is `1fr` and the
+     stated intent of this block is that a wider window grows the chart. The floor only decides
+     what happens when there is not enough room, and a 340px chart is what there is room for. */
   .scrolly.wide {
-    grid-template-columns: minmax(min(48ch, 100%), 60ch) minmax(min(400px, 100%), 1fr);
+    grid-template-columns: minmax(min(48ch, 100%), 60ch) minmax(min(340px, 100%), 1fr);
     gap: 48px;
   }
 }

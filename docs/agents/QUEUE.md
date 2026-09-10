@@ -1327,7 +1327,6 @@ predates the harness — so it is logged as what it was.
                           whether Vercel's rate limit counts deployments CREATED or builds RUN --
                           if the former, the gate saves build minutes only and the real fix is to
                           disable git deployments and drive previews from a workflow
-```
 2026-09-09  guards        #171 opened: two guards that lived in one exercise each now sweep the
                           repository, and both found things. NO COMMANDS ON PAGES: 07 has enforced
                           this on itself since its rebuild; promoted, it found EIGHT on 05's page
@@ -1361,6 +1360,7 @@ predates the harness — so it is logged as what it was.
                           rewritten to assert what REPLACED them (no command in the rendered text
                           at all), because deleting it was the easy move and a test that only skips
                           is not a test
+
 2026-09-09  guards        #171 went red in CI and the gate was right. My provenance guard used
                           eleven pytest.skip calls -- two for the by-other-means pair, nine for the
                           ledger -- and the root conftest failed the run with UNDECLARED SKIP IN
@@ -1372,3 +1372,179 @@ predates the harness — so it is logged as what it was.
                           verification had missed it because a skip is green locally -- the gate
                           only fires under CI, which is the whole reason it exists
 
+2026-09-09  fix           #173 opened: the shared explainer fits at the rail breakpoint, and the
+                          finding recorded an hour ago is fixed rather than carried. Reproduced on
+                          main first, so the attribution is measured: exercises 03 and 06 overflow
+                          12px at 1180 and 0px at every other width in a fifteen-width sweep. THE
+                          ARITHMETIC IS EXACT and worth keeping: page.css reserves the 260px rail
+                          gutter from 1180, so the content box is 896px there and NARROWER than at
+                          1179; explainer.css's .scrolly.wide floor is 48ch + 48px gap + 400px =
+                          931.75px; the tracks run 35.75px past #main and 12px past the window. A
+                          minmax() minimum is a FLOOR, so the grid overflows rather than shrinking
+                          -- which is the part that makes this invisible in source. Fixed by using
+                          340px, the value the narrow variant already uses (871.75 inside 896), and
+                          nothing is lost above the squeeze because the maximum is 1fr. All EIGHT
+                          vendored copies patched together and still byte-identical (md5). NEW
+                          REPO-WIDE GUARD sweeps fifteen widths chosen where the layout changes,
+                          with 1180 and 1179 adjacent, and reports the offending ELEMENTS rather
+                          than just the number -- that is what turned "06 scrolls 12px" into
+                          ".sticky ends at 1192". Watched red on both pages with the rule reverted,
+                          held in memory, restored in a finally, restore verified. Registered in
+                          OPTIONAL_DEPENDENCY_GATES, because a module-level importorskip that is
+                          not ledgered is a file that collects nothing and reports green
+
+2026-09-10  fix           #173's new guard immediately earned itself: it went RED ON CI for a page
+                          I was not touching. Exercise 02 scrolls 4px at 320px, and it passes
+                          locally at 320 -- Linux's default fonts are wider than macOS's, so the
+                          page's lack of headroom only shows there. Cause: .tok .s had
+                          `white-space: pre` AND `word-break: break-all`, and pre forbids the break,
+                          so the second declaration could never fire -- a rule that reads as a fix
+                          and moves no pixels, which is a pattern AGENTS.md already names. .chip had
+                          the same pre with no break at all, inside .chips which wraps BETWEEN chips
+                          and does nothing for one chip too wide. Both pre-wrap now, which keeps the
+                          leading spaces that make a token legible and permits a break. AND MY
+                          GUARD'S REPORT WAS WRONG: it named THEAD/TR/TH, which were inside a table
+                          scrolling correctly in its own overflow-x box. An element only pushes the
+                          page if nothing between it and the root actually CLIPS, and the check
+                          needs both halves -- overflow-y: auto alone makes overflow-x compute to
+                          auto, so reading the computed value alone reports nothing at all. Fixed;
+                          a report that points at the wrong element is worse than a bare number
+
+2026-09-10  fix           02's sideways scroll was its HEADLINE FIGURE, and it took three rounds to
+                          find because I twice believed a probe over the page. Round one: my guard
+                          named THEAD/TR/TH, which were inside a table scrolling correctly in its
+                          own overflow-x box -- innocent. Round two: I fixed the token chips
+                          (white-space: pre beside an unreachable word-break: break-all, a real
+                          defect and not this one) and CI stayed red. Round three: hid one subtree
+                          at a time until the overflow vanished, which walked straight to
+                          DIV.score. It is eight characters -- "6,502.56" -- at a fixed 3.6rem,
+                          about 222px of tabular digits in a panel whose content box is viewport
+                          minus 80. clamp(2rem, 12vw, 3.6rem) now: the cap is reached at 480px so
+                          nothing above a phone changes, and the page has ZERO overflow down to
+                          220px where it was 28px at 260. THE LESSON IS THE HUNT, not the rule: two
+                          probes reported plausibly and both were wrong, and the one that worked
+                          asked the page a question it could not answer wrongly -- does hiding this
+                          make the overflow go away?
+
+2026-09-10  a11y          #174 opened: every figure announces what it is. HANDOFF item 8, verified by
+                          counting before acting rather than trusted: 07 has six svg[role=img] and
+                          had two <title> and zero aria-label, so four figures announced as bare
+                          images. 01, 03, 05, 09 and 10 were already clean by three different
+                          mechanisms, which is why the guard asks the BROWSER for the computed
+                          accessible name instead of counting any one of them in source. NAMES
+                          ARGUE RATHER THAN LABEL, per DESIGN.md, and three of the four are derived
+                          from the run so they cannot go stale. TWO OF MY OWN MISTAKES, both found
+                          by listening to the output rather than reading the code: the reusable bar
+                          chart labels its rows by `r.arm` and my guessed fallback printed
+                          "undefined:" before every value; and I had put the `label` argument in
+                          the name, which is an AXIS LEGEND carrying arrow glyphs and runs of
+                          alignment spaces -- read aloud it became "left arrow better worse right
+                          arrow nats against the published design". Watched the guard red on
+                          exactly four with the titles removed, held in memory, restored in a
+                          finally. ALSO CHECKED HANDOFF ITEM 7 and it does NOT reproduce: the 04
+                          and 05 sliders sit inside their parents at 390, 360 and 320 and neither
+                          page overflows. The note says "confirmed present today"; it is stale, and
+                          the class is now covered by #173's sideways sweep at 390 and 320 anyway
+
+2026-09-10  a11y          #175 opened: every canvas colour follows the theme. HANDOFF item 9, counted
+                          before acting: exactly 12 literals against 16 theme-aware colour writes in
+                          s1, s2 and s4. MEASURED BEFORE AND AFTER through the site's real theme
+                          mechanism -- s1 and s2 each rendered TWO distinct canvases across six
+                          themes and now render six. s4 rendered six either way, because its other
+                          colour writes dominate the image while five of its literals were still
+                          wrong in the details, and THAT is why the guard is lexical rather than
+                          rendered: asking whether a colour CAN move has teeth, asking whether the
+                          picture changed is a question a coarse instrument answers yes to. MY
+                          FIRST PROBE WAS WRONG and it is worth recording: I set data-theme="light"
+                          and data-theme="dark", which match no rule -- the picker offers system
+                          plus four named themes, and light/dark come from prefers-color-scheme. So
+                          both fell back to :root and I briefly read that as the site failing to
+                          distinguish them. Re-measured with color_scheme emulation. CATEGORY
+                          COLOURS LEFT ALONE deliberately: they encode a data class, and one is
+                          interpolated per pixel into an ImageData buffer where a CSS variable
+                          cannot go. The untidiness -- --warm/--cool exist as tokens in the same
+                          files and are used for the line charts -- is recorded IN the guard with a
+                          twin that fails if it stops being true
+
+2026-09-10  tooling       #176 opened: the queue sync stops claiming work shipped in a release it did
+                          not. HANDOFF item 5 named two defects; RE-CHECKED BOTH RATHER THAN
+                          TRUSTING THE NOTE and one was already fixed -- _reapply replays an edit as
+                          an edit. The other was live and reproduced against the real function
+                          before anything changed: an entry written under [Unreleased] landed inside
+                          ## [0.15.0], ABOVE that section's own ### Fixed, so it was a false claim
+                          about what shipped and malformed too. The only note was "placed by the
+                          following line only", which is true of many correct placements and says
+                          nothing about a version. Relocates to [Unreleased] now, loudly, and
+                          REFUSES in the one case it cannot repair -- no [Unreleased] section at all
+                          -- because inventing one would be this tool deciding what a release
+                          contains. Four tests: the repair, the refusal, the insertion point being
+                          AFTER the section's own heading rather than above it, and the distinction
+                          everything rests on (that [Unreleased] is not matched as a released
+                          version -- if it were, every block would be "relocated" out of the section
+                          it was already in and the first test would still pass). Watched red on the
+                          tree as it shipped, restored in a finally. HANDOFF item 5 rewritten:
+                          THIRD stale entry found in that file today, after item 7's slider
+                          overflow and item 9's count
+
+2026-09-10  web           #177 opened: the shared explainer is measured. HANDOFF item 11 asked for the
+                          measurement before any deletion and explicitly refused to carry forward
+                          the old "used by one" figure. Measured: of 143 selectors, 03 matches 108,
+                          06 matches 30, 05 matches 4, 04 matches 2, 08/09/10 match ONE each, and
+                          07 matched ZERO while linking all 560 lines. Full-page screenshots with
+                          and without the link hash IDENTICALLY at 2000, 1180 and 390, so 07 no
+                          longer links it. NOTHING WAS DELETED FROM THE STYLESHEET and that is the
+                          finding rather than an omission: 35 selectors match nothing anywhere at
+                          rest, and a resting browser cannot tell a dead rule from one behind a
+                          click -- :focus-visible, .stagerow.missing, .unit.dim are states, not
+                          corpses. Deleting on that evidence is exactly the mistake the entry
+                          warned about. The tool is TRACKED (tools/measure_shared_css.py) because a
+                          producer of published numbers is tracked code or it is a number with no
+                          parent. MY OWN TOOL HAD THE BUG I KEEP FINDING: links() matched the
+                          filename as a substring, and 07's link is now a COMMENT naming the file,
+                          so it reported the page as still linking it. Matched as a <link> element
+                          now, in both the tool and the guard
+
+2026-09-10  tooling       #178 opened: the backup tripwire only cries for files it was protecting.
+                          HANDOFF item 6 is 🤝 because removing paths from an append-only store is
+                          PK's call -- but the ALARM is mine, and it was wrong. --verify treated any
+                          store file with no counterpart in the checkout as a loss, so every run
+                          told the reader to restore files PATTERNS never named. Measured: 45, not
+                          the 19 the note recorded. 20 were copied into the store by hand and swept
+                          in by snapshot()'s git add -A; 25 are docs/standards-history, the residue
+                          of a PATTERNS entry that was DELIBERATELY removed while the append-only
+                          store kept what it had -- the store working, not failing. A stored path is
+                          a loss only if PATTERNS names it, worked out by globbing the STORE with
+                          the tool's own patterns so there is no second matcher to drift from
+                          collect(). Grouped by directory: four lines instead of forty-five, exit 0,
+                          and A PROTECTED FILE THAT VANISHED STILL FAILS -- tested in both
+                          directions, because every change that quietens a guard risks quietening
+                          what it was for. NOTHING WAS DELETED FROM THE STORE: that needs PK naming
+                          the path and its own removal commit, and the tool now prints those exact
+                          commands including the read-back check. ALSO: v0.14.0 shipped without its
+                          standards snapshot -- the release ritual's last step was skipped -- so
+                          snapshot_standards.py was run and 44 archive guards now have something to
+                          check instead of skipping
+
+2026-09-10  agentic       #184 opened: the PreToolUse guard failed OPEN on a relative path, which is
+                          the one thing its own docstring says it never does. Path(target).resolve()
+                          anchors a RELATIVE file_path to the cwd of whatever runs the hook -- not
+                          guaranteed to be the root, and under claude --worktree reliably not -- so
+                          the resolved path failed relative_to(root) and the except ValueError
+                          branch, written for a path genuinely OUTSIDE the repository, returned None
+                          and allowed the call. Verified against the guard's own entry point: an
+                          absolute out-of-scope path blocked, the identical path sent relative
+                          passed, and so did a protected guard file and .claude/UNIT.md itself.
+                          bash_write_targets has anchored to the root since it was written, so the
+                          two branches of ONE function disagreed -- the same path blocked as a shell
+                          redirect and passed as a Write. THIRD bypass in this file of one shape
+                          (the guard answering its question correctly about a call it never saw),
+                          after taking the root from __file__ and omitting Bash. Watched failing.
+                          FOUND BY PROBING RATHER THAN READING, while checking whether an agent
+                          could widen its own scope for row 9's writer half -- and MY FIRST PROBE
+                          WAS WRONG IN A WAY THAT LOOKED LIKE A MUCH BIGGER FINDING: I sent relative
+                          paths, which resolved against the real repo, so every Write appeared to be
+                          allowed. Confirming the probe before believing it is what turned "Write
+                          bypasses the guard entirely" into the real, narrower defect. CHECKED AND
+                          NOT BROKEN: an agent cannot widen its own scope -- .claude/UNIT.md is
+                          refused to both Write and Bash
+```
