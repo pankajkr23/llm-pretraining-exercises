@@ -1300,6 +1300,33 @@ predates the harness — so it is logged as what it was.
                           caught that, and merging into the existing file removed the ledger
                           entirely because the filesystem answers the question. docs/DESIGN.md now
                           carries the rule and names the misreading that produces it
+2026-09-09  ci            #170 opened: a pull request says where its preview actually is, and it
+                          costs nothing. Since the build gate landed on 4 September every pull
+                          request here ends with `docs: record #NNN in the queue` -- an entry that
+                          must name the PR number, so it can only be written after the PR exists,
+                          which makes a documentation commit the tip of nearly every branch. It
+                          touches no deployed path, the gate correctly skips it, and VERCEL THEN
+                          WRITES NO GITHUB DEPLOYMENT for a skipped build -- so the tip has no
+                          environment and the PR reads "this branch has not been deployed". THE
+                          PREVIEW WAS LIVE THE WHOLE TIME: fetching the branch alias after a cancel
+                          returns HTTP 200 serving the earlier READY build, verified against
+                          production. Only the report was wrong. THE GATE CANNOT FIX IT and the
+                          reason is structural: it runs once per push and cannot know whether
+                          another is coming, so it cannot spend one extra deployment on the last
+                          one; building every docs push is what rate-limited the account for 24
+                          hours in #128. So a workflow finds the deployment that ALREADY EXISTS and
+                          comments it -- zero extra deployments in every case, and the comment
+                          quotes should-build.sh's own verdict rather than restating its rule so
+                          the two cannot drift. THREE OUTCOMES, NEVER TWO: the preview, "no preview
+                          exists", and "I could not find out" -- a lookup failure published as an
+                          absent preview sends someone to debug a build that worked, and the first
+                          draft did exactly that until its twin caught it. ALSO a race that loses
+                          the page build entirely: builds take 7 seconds and the two pushes on one
+                          branch were 49 seconds apart, so autoJobCancelation could kill the build
+                          carrying the page while the docs push skipped. Turned off. UNVERIFIED:
+                          whether Vercel's rate limit counts deployments CREATED or builds RUN --
+                          if the former, the gate saves build minutes only and the real fix is to
+                          disable git deployments and drive previews from a workflow
 ```
 2026-09-10  exercise-10   #179 opened: stage 14, the reviewer pass, and it found a great deal. FOUR
                           reviewers -- auditor, engineer, first-time reader, UX -- and the two

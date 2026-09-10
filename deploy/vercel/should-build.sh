@@ -60,8 +60,22 @@ if ! git rev-parse --verify --quiet "$BEFORE" >/dev/null; then
   exit 1
 fi
 
+# **A skip here is content-correct and it still costs a report, so do not "fix" it above.**
+# Vercel writes no GitHub Deployment for a skipped build, so the tip commit gets no environment and
+# the pull request reads "this branch has not been deployed" — while the branch alias goes on
+# serving the last successful build, which is byte-for-byte what this commit would produce. Every
+# pull request here ends with `docs: record #NNN in the queue`, because that entry has to name the
+# pull request number, so the tip is a documentation commit on nearly all of them.
+#
+# This script cannot fix that, and the reason is structural rather than a missing case: it runs
+# once per push and has no way to know whether another push is coming, so it cannot choose to spend
+# one extra deployment on the last one. Building every documentation push is what exhausted the
+# account's quota. The fix is `.github/workflows/preview-pointer.yml`, which finds the deployment
+# that already exists and comments it on the pull request, and spends nothing. The message below
+# names the commit so a reader of a cancelled build log can find it without leaving the log.
 if git diff --quiet "$BEFORE" "$AFTER" -- "${PATHS[@]}"; then
-  echo "should-build: nothing under the deployed paths changed — skipping"
+  echo "should-build: nothing under the deployed paths changed since $BEFORE — skipping"
+  echo "should-build: the branch's preview is the build of $BEFORE, and it is still current"
   exit 0
 fi
 
