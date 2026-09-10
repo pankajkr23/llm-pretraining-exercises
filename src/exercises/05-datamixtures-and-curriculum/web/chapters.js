@@ -346,13 +346,19 @@ function table(head, rows, cls = 'tbl') {
     hr.append(th);
   });
   thead.append(hr);
+  /* Read back off the built cells rather than off `head`, because a header may be a Node or a
+   * `rich()` string and neither is plain text until it has been rendered. Below 640px a `prose`
+   * table hides its `thead` and every cell prints this instead — without it, hiding the head takes
+   * away the only thing that said which column a sentence belonged to. */
+  const labels = [...hr.children].map((th) => th.textContent.trim());
   const tbody = $('tbody');
   rows.forEach((row) => {
     const tr = $('tr');
-    row.forEach((cell) => {
+    row.forEach((cell, i) => {
       const td = $('td');
       if (cell instanceof Node) td.append(cell);
       else td.append(rich(String(cell)));
+      if (labels[i]) td.dataset.head = labels[i];
       tr.append(td);
     });
     tbody.append(tr);
@@ -1474,6 +1480,10 @@ function chapterExpected(data) {
     richP('And the three claims, each with the number it had to beat and the condition that would kill it:'),
     /* Cells go through `rich()`, so markup here is `**bold**` and `*italic*` — never HTML tags,
      * which `rich()` inserts as literal text and the reader sees as `<b>`. That shipped once. */
+    /* `prose`, because all three columns are sentences and `.tbl td` is `nowrap`. Unmarked, this
+     * table laid out 979px wide inside a 342px wrapper on a phone, and rendered its second and
+     * third columns in the monospace face meant for figures. Every other table on this page is
+     * numbers and stays a table — the results table in particular is read *down a column*. */
     table(
       ['the claim', 'supported if', 'refuted if'],
       [
@@ -1496,6 +1506,7 @@ function chapterExpected(data) {
           '**within 3% on Indic, or the other lanes gain more than 1%**',
         ],
       ],
+      'tbl prose',
     ),
     richP(
       '**H3 has two refutation clauses, and that detail decides the result.** A hypothesis with a compound condition has to be checked on both halves; checking only the first is how a claim survives by not being asked the harder question. This one failed on the second clause.',
@@ -1555,47 +1566,31 @@ function chapterNext() {
   ]);
 }
 
-/** How to check any of it. */
+/** How to check any of it.
+ *
+ * **This section used to be two blocks of shell commands and they were the stale copy.** The page
+ * listed eight; the README's block listed nine, and the two sets were not the same nine — the page
+ * had three follow-on experiments the README did not, and the README had `mixture.bench` and the
+ * integration suite the page did not. Two lists of the same commands is one list plus a thing to
+ * forget, and the one nobody runs from is the one that rots.
+ *
+ * A page is read far more often than it is executed, so what belongs here is the answer to *can I
+ * believe this?* rather than *what do I type?* — the chain from module to document, and where the
+ * commands live. `docs/DESIGN.md` said the opposite of this for months ("a reproduce section is
+ * mostly command blocks") and now says what the pages actually do.
+ */
 function chapterReproduce() {
-  const pre = (lines) => {
-    const p = $('pre', 'code');
-    p.append($('code', null, lines.join('\n')));
-    return p;
-  };
-
   return section('reproduce', 'reproduce', 'Check it yourself', [
     richP(
       'Every document in this exercise is generated from the modules, and every number on this page is generated from the run\'s own results file. Nothing here is typed in by hand — which is what stops a figure on the page drifting from the run that produced it.',
       'claim',
     ),
-    pre([
-      'uv sync --all-packages',
-      '',
-      '# rebuild every generated document from the modules',
-      'uv run python -m mixture',
-      '',
-      "# the lane supplies, itemised against the source material's own headline numbers",
-      'uv run python -m mixture.inventory',
-      '',
-      '# the invariants, each paired with a test that proves it can fail',
-      'uv run python -m mixture.checks',
-      '',
-      'uv run pytest src/exercises/05-datamixtures-and-curriculum',
-    ]),
     richP(
-      'The training parts need torch, which is an optional extra deliberately kept out of the default install so CI never pulls a large wheel to run arithmetic:',
+      'So there are three places a claim can be checked, and they are checked against each other rather than against this page. The **modules** are the only thing that computes anything. The **results files** under `results/` are tracked, so a clone has the evidence and not just the conclusion. The **documents** — this page, `SPEC.md`, `EXPERIMENTS.md`, `README.md` — are rendered from those files, which is why a stale figure cannot survive here: regenerating overwrites it.',
     ),
-    pre([
-      'uv sync --all-packages --extra proxy',
-      '',
-      '# the four arms and the three hypotheses',
-      'uv run python -m mixture.experiment',
-      '',
-      '# the follow-on experiments',
-      'uv run python -m mixture.repetition   # what a re-read token is actually worth',
-      'uv run python -m mixture.seam         # does a warmup band calm a stage seam?',
-      'uv run python -m mixture.scale        # does the ranking survive a change of scale?',
-    ]),
+    richP(
+      'The commands that rebuild all of it live in this exercise\'s `README.md`, beside the modules they name. They are deliberately not repeated here: a command block on a page is read constantly and executed rarely, so a rename leaves it confidently wrong while every test stays green — which is exactly what had happened to the two blocks that used to sit in this section.',
+    ),
   ]);
 }
 

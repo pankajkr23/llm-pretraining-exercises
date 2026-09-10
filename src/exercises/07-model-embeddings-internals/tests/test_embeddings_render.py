@@ -316,7 +316,6 @@ SWEEP_THEMES = ("", "soft-light", "tinted-dark", "high-contrast", "neon")
 
 #: Below this an SVG label is not readable. Effective size is the authored size times the scale the
 #: viewBox renders at, so a label can read 11px in the source and 6.49px on a phone.
-LEGIBLE_SVG_TEXT = 9.5
 
 _CONTRAST_JS = """(sel) => {
   const rgb = (s) => {
@@ -381,47 +380,6 @@ def test_text_on_a_token_surface_clears_aa(page, theme: str, sel: str) -> None:
         )
     finally:
         page.evaluate("() => document.documentElement.removeAttribute('data-theme')")
-
-
-@pytest.mark.parametrize("width", (390, 768, 1440))
-def test_no_svg_label_renders_too_small_to_read(page, width: int) -> None:
-    """Legibility of a label inside a viewBox is a property of the render, not of the source.
-
-    All 81 labels across the six figures sat between 6.49px and 9.4px at a 390px viewport. The
-    authored `font-size` says 11px and tells you nothing, which is why this multiplies by the
-    rendered scale.
-    """
-    try:
-        page.set_viewport_size({"width": width, "height": 950})
-        page.wait_for_timeout(400)
-        rows = page.evaluate(
-            """() => {
-                 const out = [];
-                 for (const svg of document.querySelectorAll('svg')) {
-                   const vb = svg.viewBox && svg.viewBox.baseVal;
-                   if (!vb || !vb.width) continue;
-                   const scale = svg.getBoundingClientRect().width / vb.width;
-                   for (const t of svg.querySelectorAll('text')) {
-                     if (!t.textContent.trim()) continue;
-                     out.push({
-                       eff: parseFloat(getComputedStyle(t).fontSize) * scale,
-                       txt: t.textContent.trim().slice(0, 24),
-                     });
-                   }
-                 }
-                 return out;
-               }"""
-        )
-        assert len(rows) >= 20, f"only {len(rows)} svg labels at {width}px; the selector rotted?"
-        tiny = sorted((round(r["eff"], 2), r["txt"]) for r in rows if r["eff"] < LEGIBLE_SVG_TEXT)
-        assert not tiny, (
-            f"at {width}px, {len(tiny)} of {len(rows)} svg labels render under "
-            f"{LEGIBLE_SVG_TEXT}px:\n  " + "\n  ".join(f"{e}px  {t!r}" for e, t in tiny[:6])
-        )
-    finally:
-        # A viewport left behind would silently change every test that runs after this one.
-        page.set_viewport_size({"width": 1280, "height": 900})
-        page.wait_for_timeout(150)
 
 
 def test_the_page_builds_with_no_runtime_error(page):

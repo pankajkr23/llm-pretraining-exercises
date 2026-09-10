@@ -276,3 +276,45 @@ def test_every_number_on_the_page_came_from_the_run(page):
     text = page.inner_text("main")
     for poison in ("undefined", "NaN", "[object Object]"):
         assert poison not in text, f"the page rendered {poison!r} — a figure came from nowhere"
+
+
+def test_every_glossary_entry_carries_a_number_from_the_run(page):
+    """The glossary promises every entry carries a real figure. It is checkable, so it is checked.
+
+    **The promise was false when it was written and stayed false.** Nine entries, and three carried
+    a figure: `a step`, `a gradient`, `the gradient norm`, `a micro-batch`, `FLOPs` and `exponent
+    and mantissa` were textbook glosses under a heading reading *"each carrying a number from this
+    run"*. A reader who checks — and one did — finds a generated count above a hand-written claim
+    that is wrong about the rows beneath it, which is the failure `AGENTS.md` says has cost this
+    repository the most edits.
+
+    The figures existed the whole time. `data.js` held the exponent and mantissa widths, the largest
+    number fp8 E4M3 can hold, the micro-batch shape and the parameter count; the entries simply did
+    not use them. That is what makes this the right guard rather than a reason to soften the claim:
+    a definition carrying a real number is the difference between *"exponent bits buy range"* and
+    *"four exponent bits, three mantissa bits, so the largest number it holds is 448"*.
+    """
+    import re as _re
+
+    entries = page.evaluate("""() => {
+      const out = [];
+      const dl = document.querySelector('.gloss');
+      if (!dl) return out;
+      const kids = [...dl.children];
+      for (let i = 0; i < kids.length; i += 1) {
+        if (kids[i].tagName !== 'DT') continue;
+        const dd = kids[i + 1];
+        if (dd && dd.tagName === 'DD') {
+          out.push({term: kids[i].textContent.trim(), body: dd.textContent.trim()});
+        }
+      }
+      return out;
+    }""")
+    assert entries, "no glossary entries found; the selector has gone stale"
+
+    numberless = [e["term"] for e in entries if not _re.search(r"\d", e["body"])]
+    assert not numberless, (
+        f"these glossary entries carry no figure from the run: {numberless}. The section's own "
+        "heading says every entry does, and a definition without one is a dictionary entry — it "
+        "tells a reader what a word means in general rather than what it is on this page."
+    )

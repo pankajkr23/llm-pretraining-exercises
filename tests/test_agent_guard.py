@@ -441,6 +441,20 @@ def test_the_installer_preserves_unrelated_settings_keys(tmp_path, monkeypatch) 
         assert re.search(matcher, tool), f"the installed matcher does not admit {tool!r}"
 
 
+#: Tools that can change the repository, or run something that can. **The property, not a list of
+#: the three tools the personas happened to use.**
+#:
+#: This started as an allowlist — `tools <= {Read, Grep, Glob}` — and the first persona that needed
+#: anything else broke it: `research` fetches sources, which takes `WebSearch` and `WebFetch`. Those
+#: reach outward and **cannot write**, so they do not touch the property this assertion exists for,
+#: and an allowlist would have forced the choice between a persona that cannot do its job and a
+#: guard quietly widened to let it. `AGENTS.md`: a guard that names one implementation of a property
+#: will fail every other implementation, and the pressure is then to reword good work to satisfy it.
+WRITING_TOOLS_IN_A_PERSONA = frozenset(
+    {"Write", "Edit", "MultiEdit", "NotebookEdit", "Bash", "Task", "Agent"}
+)
+
+
 def test_every_reviewer_declares_read_only_tools() -> None:
     """A reviewer that can write is the author grading itself.
 
@@ -450,20 +464,21 @@ def test_every_reviewer_declares_read_only_tools() -> None:
     """
     import install_agent_fleet as installer
 
+    granted = []
     for path in sorted(installer.REVIEWERS.glob("*.md")):
         head = path.read_text(encoding="utf-8").split("---")[1]
         tools = next(line for line in head.splitlines() if line.startswith("tools:"))
-        allowed = {t.strip() for t in tools.split(":", 1)[1].split(",")}
-        assert allowed <= {"Read", "Grep", "Glob"}, f"{path.name} can do more than read: {allowed}"
-        for forbidden in ("Write", "Edit", "Bash", "NotebookEdit"):
-            assert forbidden not in allowed, f"{path.name} declares {forbidden}"
+        allowed = {t.strip() for t in tools.split(":", 1)[1].split(",") if t.strip()}
+        for tool in sorted(allowed & WRITING_TOOLS_IN_A_PERSONA):
+            granted.append(f"{path.name} declares `{tool}`")
+    assert not granted, "a read-only persona can write:\n  " + "\n  ".join(granted)
 
 
-# --- the two bypasses found by auditing the guard against its own claims -------------------------
+# --- the three bypasses found by auditing the guard against its own claims -----------------------
 #
-# Both were live when this file was first written, and both are the same shape: the guard was asked
-# a question it answered correctly, about a call it never saw. They are regression tests, so they
-# name the bug rather than the fix.
+# All three were live when found, and all three are the same shape: the guard was asked a question
+# it answered correctly, about a call it never saw. They are regression tests, so they name the bug
+# rather than the fix.
 
 
 def test_a_write_inside_a_worktree_is_still_guarded(rules, tmp_path) -> None:
@@ -767,3 +782,38 @@ def test_naming_a_notebook_still_does_not_unlock_it(tmp_path, rules) -> None:
         refusal = decide(payload, root, rules)
         assert refusal is not None, f"{rel} was unlocked by being named, which must never happen"
         assert "irreplaceable" in refusal, refusal
+
+
+def test_a_relative_file_path_is_resolved_against_the_repo_not_the_process(tmp_path) -> None:
+    """The third bypass: a `Write` whose `file_path` was relative went straight through.
+
+    `Path(target).resolve()` anchors a **relative** path to the cwd of whatever process is running
+    the hook, which is not guaranteed to be the repo root and under `claude --worktree` reliably is
+    not. The resolved path then failed `relative_to(root)`, and the `except ValueError` branch —
+    written for a path genuinely outside the repository — returned None and allowed the call.
+
+    `bash_write_targets` has anchored to the root since it was written (`candidate if
+    candidate.is_absolute() else root / candidate`), so the two branches of one function disagreed:
+    the same protected path blocked as a shell redirect and passed as a `Write`.
+
+    The guard's own docstring says it fails closed. This was the one place it did not.
+    """
+    rules = load_rules()
+    (tmp_path / ".claude").mkdir()
+    (tmp_path / ".claude" / "UNIT.md").write_text("- scope: src/allowed/\n", encoding="utf-8")
+
+    relative = {"tool_name": "Write", "tool_input": {"file_path": "src/forbidden/x.py"}}
+    absolute = {
+        "tool_name": "Write",
+        "tool_input": {"file_path": str(tmp_path / "src/forbidden/x.py")},
+    }
+
+    for payload, how in ((absolute, "absolute"), (relative, "relative")):
+        refusal = decide(payload, tmp_path, rules)
+        assert refusal is not None, f"a {how} out-of-scope path was allowed"
+        assert "outside this unit's declared scope" in refusal
+
+    # And the branch that remains: a path genuinely outside the repository is still not this
+    # guard's business, which is what stops the fix from turning into a block on everything.
+    outside = {"tool_name": "Write", "tool_input": {"file_path": "/etc/hosts"}}
+    assert decide(outside, tmp_path, rules) is None

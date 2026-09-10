@@ -221,13 +221,47 @@ def test_the_page_never_scrolls_sideways(page, width, height):
 
 
 def test_wide_tables_scroll_inside_their_own_container(page):
+    """Every table is contained — by scrolling if it is wide, by fitting if it is not.
+
+    **This asked for `overflow-x: auto` and got the mechanism confused with the property.** The
+    rule is that a wide table must not push the page sideways; a scroller is one way to keep that
+    true and not the only one. Below 640px the hypotheses table stops being a table — each row a
+    card, each cell a block — and then nothing overflows, so the scroller is a scrollbar with
+    nothing to scroll and, on a platform with overlay scrollbars, an invisible one. The old
+    assertion failed that fix while the page was more correct than before, which is the shape
+    `AGENTS.md` warns about: a guard that names one implementation of a property fails every other
+    implementation of it. So ask the property. A wrapper whose table is wider than it must scroll;
+    a wrapper must never be wider than what holds it. Both directions of the real question, and
+    `test_the_page_never_scrolls_sideways` above covers the whole page at the same two phone
+    widths.
+    """
     page.set_viewport_size({"width": 390, "height": 844})
     page.wait_for_timeout(150)
-    wrappers = page.query_selector_all(".tblwrap")
-    assert wrappers, "no tables rendered"
-    for wrapper in wrappers:
-        style = page.evaluate("el => getComputedStyle(el).overflowX", wrapper)
-        assert style in ("auto", "scroll"), f"a table wrapper has overflow-x: {style}"
+    findings = page.evaluate("""() => {
+      const bad = [];
+      const wraps = document.querySelectorAll('.tblwrap');
+      for (const w of wraps) {
+        const t = w.querySelector('table');
+        if (!t) continue;
+        const scrolls = ['auto', 'scroll'].includes(getComputedStyle(w).overflowX);
+        if (t.scrollWidth > w.clientWidth + 1 && !scrolls) {
+          bad.push(`a ${t.scrollWidth}px table in a ${w.clientWidth}px wrapper that cannot scroll`);
+        }
+        // The wrapper's own BOX, never its scrollWidth: on a wrapper that is doing its job the
+        // scrollWidth is the wide table inside it, so comparing that to the parent flags every
+        // correctly-scrolling table on the page. Five of them, when this was first written.
+        const parent = w.parentElement;
+        const box = Math.round(w.getBoundingClientRect().width);
+        if (parent && box > parent.clientWidth + 1) {
+          bad.push(`a wrapper ${box}px wide inside a ${parent.clientWidth}px parent`);
+        }
+      }
+      return {count: wraps.length, bad};
+    }""")
+    assert findings["count"], "no tables rendered"
+    assert not findings["bad"], "a table escapes its container at 390px:\n  " + "\n  ".join(
+        findings["bad"]
+    )
 
 
 # ---- the interactions actually do something ---------------------------------------------------
@@ -1006,10 +1040,6 @@ def test_the_figure_states_the_count_it_actually_draws(page):
 
 # ---- the page sweep's three findings ----------------------------------------------------------
 
-#: Under this, an SVG label is not readable. Effective size is the authored font-size times the
-#: scale the viewBox is rendered at, so a label can be legible in the source and 6px on a phone.
-LEGIBLE_SVG_TEXT = 9.5
-
 #: The widths that matter here: a phone, a tablet, a laptop, and a display with room to spare.
 SWEEP_WIDTHS = (390, 768, 1440, 2560)
 
@@ -1048,23 +1078,6 @@ def _at_width(page, width: int, js: str):
         page.wait_for_timeout(200)
 
 
-_SVG_TEXT_JS = """() => {
-  const out = [];
-  for (const svg of document.querySelectorAll('svg')) {
-    const vb = svg.viewBox && svg.viewBox.baseVal;
-    if (!vb || !vb.width) continue;
-    const scale = svg.getBoundingClientRect().width / vb.width;
-    for (const t of svg.querySelectorAll('text')) {
-      if (!t.textContent.trim()) continue;
-      out.push({
-        eff: parseFloat(getComputedStyle(t).fontSize) * scale,
-        txt: t.textContent.trim().slice(0, 24),
-      });
-    }
-  }
-  return out;
-}"""
-
 _CODE_JS = """() => [...document.querySelectorAll('pre.code')].map((el) => ({
      over: el.scrollWidth - el.clientWidth,
      head: el.textContent.trim().split('\\n')[0].slice(0, 44),
@@ -1072,33 +1085,45 @@ _CODE_JS = """() => [...document.querySelectorAll('pre.code')].map((el) => ({
 
 
 @pytest.mark.parametrize("width", SWEEP_WIDTHS)
-def test_no_svg_label_renders_too_small_to_read(page, width: int) -> None:
-    """A viewBox scales the text with the drawing, so legibility is a property of the RENDER.
+def test_no_code_block_is_cut_off_and_no_command_is_rendered(page, width: int) -> None:
+    """Two halves, because this page's command blocks are gone and the check had to follow them.
 
-    Every label on this page's figures sat between 6.39px and 9.4px at a 390px viewport — the
-    figure legible and the words on it not. Reading the authored `font-size` would have reported
-    10px and been useless, which is why this multiplies by the rendered scale.
-    """
-    rows = _at_width(page, width, _SVG_TEXT_JS)
-    assert len(rows) >= 10, f"only {len(rows)} svg labels measured at {width}px; selector rotted?"
-    tiny = sorted((round(r["eff"], 2), r["txt"]) for r in rows if r["eff"] < LEGIBLE_SVG_TEXT)
-    assert not tiny, (
-        f"at {width}px, {len(tiny)} of {len(rows)} svg labels render under "
-        f"{LEGIBLE_SVG_TEXT}px:\n  " + "\n  ".join(f"{e}px  {t!r}" for e, t in tiny[:6])
-    )
+    **The original.** A command a reader cannot read is the one thing a reproduce section has to get
+    right, and these were `overflow-x: auto` inside a 72ch box — so every command longer than 72
+    characters was cut at *every* width, including 2560, where 676px sat empty beside the box. That
+    assertion still applies to any `pre.code` this page renders, which is now a code *listing*
+    rather than an invitation to copy.
 
-
-@pytest.mark.parametrize("width", SWEEP_WIDTHS)
-def test_no_reproduce_command_is_cut_off(page, width: int) -> None:
-    """A command a reader cannot read is the one thing a reproduce section has to get right.
-
-    These were `overflow-x: auto` inside a 72ch box, so every command longer than 72 characters was
-    cut at **every** width — including 2560, where 676px sat empty beside the box.
+    **The half that replaced them.** The two command blocks moved into the README, where they sit
+    beside the modules they name (`tests/test_no_commands_on_pages.py` holds every page to that).
+    Deleting this test with them would have been the easy move and the wrong one: `rows` is now
+    empty, so the old premise assertion — *"no pre.code found; the selector has rotted"* — fires on
+    a correct page, and a test that only skips is not a test. So when there is no code block, this
+    asserts the reason there is none: **no command appears in the rendered text at all.** That is
+    the lexical guard's rendered counterpart, and it catches what the lexical one structurally
+    cannot — a command assembled at run time, or built out of something other than `pre.code`.
     """
     rows = _at_width(page, width, _CODE_JS)
-    assert rows, "no `pre.code` blocks found; the selector has rotted"
     cut = [(r["over"], r["head"]) for r in rows if r["over"] > 1]
     assert not cut, (
-        f"at {width}px, {len(cut)} of {len(rows)} command blocks are cut off sideways:\n  "
+        f"at {width}px, {len(cut)} of {len(rows)} code blocks are cut off sideways:\n  "
         + "\n  ".join(f"+{o}px  {h!r}" for o, h in cut)
+    )
+
+    rendered = page.evaluate("() => document.body.innerText")
+    commands = sorted(
+        {
+            match.group().strip()
+            for match in re.finditer(
+                r"\b(?:uv run|uv sync|bash |pytest |pip install|npm run|python -m)[^\n]{0,60}",
+                rendered,
+            )
+        }
+    )
+    assert not commands, (
+        f"at {width}px the rendered page carries {len(commands)} shell command(s):\n  "
+        + "\n  ".join(repr(c) for c in commands[:8])
+        + "\nCommands belong in the exercise README, beside the code they operate on. A page is "
+        "read far more often than it is executed, so a command on one is the copy that goes stale "
+        "while every test stays green."
     )

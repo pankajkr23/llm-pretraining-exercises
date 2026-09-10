@@ -39,13 +39,13 @@
 
 import { BRANCH, BRANCH_LABEL, support, weight } from './support.js';
 
-const NS = 'http://www.w3.org/2000/svg';
-
-const s = (tag, attrs) => {
-  const n = document.createElementNS(NS, tag);
-  for (const [k, v] of Object.entries(attrs || {})) n.setAttribute(k, String(v));
-  return n;
-};
+/* **One svg factory for the page, imported rather than copied.** This file, `diagrams.js` and
+ * `glyphs.js` each had their own three-line `createElementNS` helper — identical, and therefore a
+ * rule applied to one of them silently missed the other two. That happened: giving a root svg a
+ * `min-width` so its labels stop shrinking fixed `figures.js`'s drawings and left 76 labels on
+ * `diagrams.js`'s score matrix at 8.9px, with the guard still red and nothing to say why. The
+ * reasoning lives in `figures.js`'s `svg`. */
+import { setViewBox, svg as s } from './figures.js';
 const t = (x, y, cls, text) => {
   const n = s('text', { x, y, class: cls });
   n.textContent = text;
@@ -797,7 +797,7 @@ export function diagramSvg(m, opts = {}) {
     /* Never silently blank: an empty figure in a set claiming completeness is a lie by omission. */
     title.textContent = `${m.name}: no diagram for this kind`;
     el.append(title, s('rect', { x: 0, y: 0, width, height: 60, class: 'dg-dropped' }));
-    el.setAttribute('viewBox', `0 0 ${width} 60`);
+    setViewBox(el, width, 60);
     return el;
   }
 
@@ -811,7 +811,7 @@ export function diagramSvg(m, opts = {}) {
   }
   title.textContent = `${m.name}: ${diagramSummary(m)}`;
   el.append(title, node);
-  el.setAttribute('viewBox', `0 0 ${width} ${total}`);
+  setViewBox(el, width, total);
   el.setAttribute('width', '100%');
   el.setAttribute('aria-label', `${m.name} — ${diagramSummary(m)}`);
   return el;

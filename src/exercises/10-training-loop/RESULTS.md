@@ -139,8 +139,8 @@ promises a lead in time. An earlier version of this section did exactly that.
 | 5.0 | 0 |
 
 **Read that spread before believing the count.** Qualifying steps thin out sharply as the threshold
-rises — and vanish entirely at 5 — so this is one reading of an arbitrary cut rather than a stable
-measurement.
+rises — and vanish entirely at 4 — so this is one reading of an arbitrary cut
+rather than a stable measurement.
 
 **Why the gradient leads at all.** The loss is an average over a whole batch, so a change in what
 the model is doing has to be large enough to move that average before it is visible. The gradient

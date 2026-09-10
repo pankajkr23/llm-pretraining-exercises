@@ -322,6 +322,31 @@ is a limitation the page is hiding. Smaller type, fewer words, always on screen.
 - **Every figure sits in `<figure>` with a `<figcaption>`.** Number them (`Figure 3.`). `figure`
   gets `overflow-x: auto` and the svg a `min-width`, so a wide diagram scrolls inside its own box
   and the page body never does.
+  **This rule was stated here and honoured by two exercises out of five**, and the three that missed
+  it painted 222 labels below the floor — the smallest at **2.4px**, on a page whose every declared
+  `font-size` is inside the 9.5–11px band. A `viewBox` scales text with the drawing, so the size a
+  reader sees is `declared × (rendered ÷ viewBox)` and nothing lexical can see the reduction. Four
+  details decide whether the fix works, each learned by getting it wrong:
+    - **The floor is the viewBox's own width, read from the attribute**, never a number repeated in
+      a stylesheet — a second copy of a number is the copy that drifts.
+    - **It goes wherever the `viewBox` is set, not only in the svg factory.** A figure that measures
+      its own content and calls `setAttribute('viewBox', …)` afterwards never passes through the
+      factory's check; 76 labels stayed at 8.9px that way, with the guard red and nothing saying why.
+    - **The wrapper needs `min-width: 0` as well as `overflow-x: auto`.** A grid or flex item's
+      default `min-width` is `auto` — its content — so without it the svg's floor propagates up and
+      the *page* scrolls: 574px of it at 390px.
+    - **Select the wrapper by what it holds** (`#main *:has(> svg[viewBox])`), not by a list of the
+      containers that hold one today. The list was tried first and was wrong within the hour.
+  Enforced by `tests/test_svg_labels_are_legible.py` at 2560, 1440, 768, 390 and 320 — over
+  **thirteen routes, not ten**. `src/exercises/*/web/index.html` misses 03's `reasoning/` and
+  `report/` and 08's `field-guide/`; `build.sh` does `cp -R`, so a sub-route deploys with no build
+  change and nothing notices it. Glob `*/web/**/index.html` in any repo-wide browser guard.
+- **Scrolling a figure hides whatever is off the right edge, so check what that is.** Exercise 08's
+  chronology gains 368px of scroll at 1440 and none at 1920 or above; the three years that fall
+  outside are 2024–2026, and its caption's two claims — attention three years before the Transformer,
+  and the shaded 680-day band — both sit inside the visible region. That check is the price of the
+  rule above, and `docs/DESIGN.md`'s own pipeline-figure entry records what happens when nobody makes
+  it: 06 put the two stages its caption called out behind a scroll.
 - **Draw the whole object, not the part that fits.** 07's grid figure originally stopped at column
   32, so the discarded bytes landed outside the viewBox and stacked into one dot — a figure whose
   caption said nineteen bytes were thrown away while showing one. Extend the domain and shade the
@@ -374,8 +399,26 @@ is a limitation the page is hiding. Smaller type, fewer words, always on screen.
 ### Command blocks
 
 `pre.code`: `--panel` on `--line`, `border-radius: 10px`, `--mono` at 12.5px/1.65, `overflow-x:
-auto`. A `reproduce` section is mostly these, so they have to read as **runnable** rather than as
-decoration.
+auto`. Use it for a code *listing* — the three lines of tensor code an exercise is about, a shard
+manifest, a config block. Something a reader looks at.
+
+**Never for a command a reader is invited to run.** Commands belong in the exercise's README, beside
+the code they operate on, and `tests/test_no_commands_on_pages.py` enforces that on every deployed
+page. A page is read far more often than it is executed, so a command block on one is the copy
+nobody runs from — and the copy nobody runs from is the one that goes stale, silently, while every
+test stays green.
+
+**This section said the opposite until it was measured** — "a `reproduce` section is mostly these" —
+while seven of the nine pages that carry the spine had no command at all and exercise 07's guard
+forbade them outright. The two that did carry them had drifted exactly as predicted: 05's page
+listed three experiments its README did not, and 06's page listed `run_demo.py` and `verify.py`, the
+two commands that exercise turns on, in the one place nothing tests.
+
+**What a `reproduce` section is for** is the answer to *can I believe this?* — the chain from module
+to results file to rendered document, what was recorded about the run that produced each number, and
+a pointer to the README for *what do I type?*. Exercises 08 and 09 are the reference: 08 lays out
+every catalogue entry with its source, 09 tabulates the provenance block each results file carries
+and says which question each field answers.
 
 ### The landing page
 
@@ -399,6 +442,24 @@ decoration.
 - Every row anchored `id="m-<key>"` so it can be linked, and `:target` gets `--accent-soft`.
 - **The catalogue is tabulated exactly once.** A second table of the same rows is duplication however
   differently it is styled — assert it.
+- **Below 640px a table of SENTENCES stops being a table; a table of FIGURES keeps its columns.**
+  Each row becomes a card, each cell a labelled block, and the column head is written onto the cell
+  by the builder — hiding the `thead` otherwise takes away the only thing that said which column a
+  line belonged to. Three details decide whether it works, each learned by shipping the opposite:
+  `white-space: normal` on the stacked cell, or the `nowrap` that was right for a column runs the
+  sentence off the edge of the card with no ellipsis and no scrollbar; the status mark on the row
+  rather than on a cell, because the card *is* the row; and the label attribute set only when the
+  header has text, because `attr()` on an empty one still paints a line. Enforced by
+  `tests/test_prose_tables_wrap.py`, which reads the deployable set from the filesystem.
+- **A wrapper's `overflow-x: auto` is one way to contain a wide table, not the property.** Assert
+  that a table wider than its wrapper scrolls and that the wrapper never exceeds its parent — a
+  guard naming the mechanism fails a stacked table that no longer needs a scroller, and a scroller
+  with nothing to scroll is an invisible one wherever scrollbars overlay.
+- **A register is not a table of sentences.** A catalogue of many rows and many columns is scanned
+  down a column; stacking it makes one card per row. Exercise 03's is 109 rows and 7 columns with a
+  single long proper noun among 763 cells, and it scrolls, correctly. Where a guard has to tell the
+  two apart, name the register in a ledger that fails in both directions rather than moving a
+  threshold — a cell's share of its container falls as the column count rises, by construction.
 
 ### Navigation into a long page
 
@@ -550,6 +611,7 @@ A rule with no guard decays. The repo-wide guards live in `tests/`; per-exercise
 | exercise skeleton present; no `REQUIREMENTS.md` ever tracked | `tests/test_exercise_skeleton.py` |
 | the rail is built and fills the gutter it reserves | `tests/test_rail_centring.py` |
 | the reading column is centred in the space the rail leaves, at every width | `tests/test_rail_centring.py` |
+| no shell command on a deployed page | `tests/test_no_commands_on_pages.py` |
 | every test file is in a CI shard **and collects there** | `tests/test_ci_shards_cover_everything.py` |
 | 42–80 characters a line, ten widths | `test_attention_measures.py` (the pattern to copy) |
 | no count typed into page prose, or into a heading or rail label | `test_attention_docs.py` |

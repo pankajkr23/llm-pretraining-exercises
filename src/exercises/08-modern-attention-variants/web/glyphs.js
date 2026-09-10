@@ -29,13 +29,13 @@
  * shape is faithful; the numbers are illustrative; the page does not pretend otherwise.
  */
 
-const NS = 'http://www.w3.org/2000/svg';
-
-const s = (tag, attrs) => {
-  const n = document.createElementNS(NS, tag);
-  for (const [k, v] of Object.entries(attrs || {})) n.setAttribute(k, String(v));
-  return n;
-};
+/* **One svg factory for the page, imported rather than copied.** This file, `diagrams.js` and
+ * `glyphs.js` each had their own three-line `createElementNS` helper — identical, and therefore a
+ * rule applied to one of them silently missed the other two. That happened: giving a root svg a
+ * `min-width` so its labels stop shrinking fixed `figures.js`'s drawings and left 76 labels on
+ * `diagrams.js`'s score matrix at 8.9px, with the guard still red and nothing to say why. The
+ * reasoning lives in `figures.js`'s `svg`. */
+import { svg as s } from './figures.js';
 
 import { binary, weight } from './support.js';
 

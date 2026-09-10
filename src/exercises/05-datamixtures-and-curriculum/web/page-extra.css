@@ -598,3 +598,159 @@ main .warn {
 main .blind-list li {
   max-width: 68ch;
 }
+
+/* ------------------------------------------------------------------ a table whose cells wrap
+ *
+ * `.tbl` is built for figures: `nowrap` on every cell but the first, and the monospace face on
+ * every column but the first. That is right for six of this page's seven tables — the results
+ * table is read *down a column*, and a column of numbers that wraps is unreadable.
+ *
+ * The seventh is the three hypotheses, and all three of its columns are sentences. Unmarked it
+ * inherited the figure treatment: 979px wide inside a 342px wrapper on a phone, ten characters to
+ * a line, with "arm A beats arm B by at least 2%" set in the monospace face reserved for measured
+ * values. `prose` is the same modifier exercises 07, 09 and 10 use for the same thing.
+ */
+.tbl.prose td {
+  white-space: normal;
+}
+
+/* Beats `.tbl td:nth-child(n + 2)` — same specificity (0,2,1) vs (0,1,1) is not the point; this is
+ * (0,2,1) and wins on both count and source order. A sentence is not a measurement. */
+.tbl.prose td:nth-child(n + 2) {
+  font-family: inherit;
+  font-variant-numeric: normal;
+}
+
+/* --- below 640px a table of sentences becomes a list of cards -------------------------------
+ *
+ * Wrapping the cells fixes the desktop and leaves the phone worse in a new shape: three columns of
+ * sentences in 342px is ten characters a line whatever the wrapping rule says. Below 640px it
+ * stops being a table — each row a card, each cell a labelled block, the column name printed from
+ * the `data-head` that `table()` writes. Only `prose` tables do this; the numeric ones keep their
+ * columns and scroll, which is what a column of figures is for.
+ */
+@media (max-width: 640px) {
+  .tblwrap:has(.tbl.prose) {
+    /* Nothing overflows any more, so the scroll affordance would be a scrollbar with nothing to
+     * scroll — and on a platform with overlay scrollbars, an invisible one. */
+    overflow-x: visible;
+  }
+
+  .tbl.prose thead {
+    /* Out of sight and out of the accessibility tree together: every cell below repeats the head,
+     * and a screen reader that announced both would read each column name twice. */
+    display: none;
+  }
+
+  .tbl.prose,
+  .tbl.prose tbody,
+  .tbl.prose tr,
+  .tbl.prose td {
+    display: block;
+    width: auto;
+    min-width: 0;
+  }
+
+  .tbl.prose tr {
+    padding: 14px 0 4px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .tbl.prose tr:last-child {
+    border-bottom: 0;
+  }
+
+  .tbl.prose td {
+    padding: 0 0 10px;
+    border-bottom: 0;
+  }
+
+  /* The label the hidden `thead` used to carry, in the `th` type so the two read as one system. */
+  .tbl.prose td::before {
+    content: attr(data-head);
+    display: block;
+    margin-bottom: 3px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  /* A cell with no head must not print an empty line where the label would have been. */
+  .tbl.prose td:not([data-head])::before {
+    content: none;
+  }
+}
+
+/* --- the published type scale ---------------------------------------------------------------
+ *
+ * `docs/DESIGN.md`'s standard, and this page ran 16px prose in a 726px column until now —
+ * 74 characters a line, in a fraction of the room a wide display has. Exercises 07, 08, 09 and
+ * 10 have run the scale since each was built or retro-fitted; this is the same block.
+ *
+ * **The lever is SIZE, not measure.** The obvious reading of "the text looks squeezed" is to widen
+ * the column, and at 16px that pushes the line past a hundred characters and makes it worse.
+ * Raising the type instead keeps the words per line exactly where they are and gives the reader
+ * more page: the `ch` caps already on this page's prose grow with the type, because `ch` resolves
+ * against the element's **own** computed size.
+ *
+ * That last point is why `font-size: inherit` is set on the elements that carry the caps rather
+ * than left to the cascade. `docs/DESIGN.md` names a cap on an ancestor at a different size as this
+ * repository's most expensive recurring bug, and it is the reason the measure guard read 68 and 70
+ * on a page whose physical column never moved.
+ */
+#main {
+  font-size: clamp(19px, 1.2vw + 1.7px, 22px);
+}
+
+
+/* **The selector list is narrow on purpose, and the first version of it was not.** It read
+ * `#main p, #main li` — specificity (1,0,1), which outranks every component rule of the form
+ * `.eyebrow` with a size of its own. Measured against the same page before the change, that pushed
+ * eight component classes to full body size: `.note` 13.5px, `.note summary-more` 12.5px, `.summary-step` 13.5px, `.warn` 16px,
+ * `.predict-q` 16px, `.term` 16.6px, inline `code` 13px and list items at 14px. `AGENTS.md` names this cascade
+ * failure twice and I made it anyway, then found it by diffing every class's computed size rather
+ * than by looking. Only classes that ALREADY carried the reading measure are named below.
+ */
+.claim {
+  font-size: inherit;
+}
+
+/* Inline `code` inside the reading column, matching exercises 07-10. It carried no size of its own
+ * here, so it inherited the fluid one and mono at the same pixel size reads larger than the prose
+ * around it. `0.92em` is the reference pages' value and keeps the relationship the design had at
+ * 16px — measured, rather than picked: it is the one class the size diff still showed moving from
+ * a deliberately small 13px to full body size. Scoped to prose, so a component's own `code` rule is
+ * untouched.
+ */
+/* Scoped by the prose that GREW rather than by one container: this page's body paragraphs live in
+ * `section.prose`, in a bare `section`, inside `details.arithmetic` and inside `.predict` — three
+ * of which the first version of this selector missed, so `code` in a `p.warn` stayed at full body
+ * size while `code` in a plain paragraph did not. Found by measuring each `code` over 21px and
+ * printing its ancestors, which is faster than reasoning about the markup. */
+#main p code,
+#main li code,
+.claim code {
+  font-size: 0.92em;
+}
+
+/* --- the standfirst goes on the ramp too --------------------------------------------------------
+ *
+ * Raising the body without raising the lede leaves the page's opening sentence as the SMALLEST text
+ * on it — `_shared/components.css` pins `.lede` to `1.06rem` off the 16px root, so it measured 17px
+ * under 22px prose. A first-time reader described exactly that on exercise 09: it reads like a
+ * caption under the title, and they skipped it for the button.
+ *
+ * Set slightly ABOVE the body ramp, because a standfirst that merely matches the paragraphs beneath
+ * it is not a standfirst, and in `--ink` rather than `--muted` because it carries the thesis and
+ * `--muted` belongs on nothing that carries the argument. `62ch` at 25px is ~945px — flush with the
+ * reading column rather than out-denting it. These are exercise 09's values, unchanged.
+ */
+.lede {
+  max-width: 62ch;
+  font-size: clamp(20px, 1.3vw + 2px, 25px);
+  color: var(--ink);
+  line-height: 1.55;
+}
