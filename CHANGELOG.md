@@ -38,6 +38,31 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   case and a passing case are the same line in every report anyone reads. A ledgered file is simply
   not parametrised now, so the number of cases the file reports is the number of files it checks.
 
+- **A pull request now says where its preview actually is**, and it costs no deployment.
+
+  Since the build gate landed on 4 September, every pull request here has ended with
+  `docs: record #NNN in the queue` — an entry that must name the pull request number, so it can only
+  be written after the PR exists, which makes a documentation commit the tip of nearly every branch.
+  That push touches no deployed path, so the gate correctly skips it. **Vercel then writes no GitHub
+  Deployment for the skipped build**, the tip has no environment, and the pull request reads *"this
+  branch has not been deployed"* — while the branch alias goes on serving the last successful build.
+
+  Verified against production rather than reasoned about: fetching the branch alias *after* a cancel
+  returns HTTP 200 serving the earlier READY build. **The preview was live the whole time; only the
+  report was wrong.**
+
+  The gate cannot fix this, and the reason is structural: it runs once per push and cannot know
+  whether another push is coming, so it cannot choose to spend one extra deployment on the last one.
+  Building every documentation push instead is exactly what rate-limited the account for 24 hours in
+  #128. So `.github/workflows/preview-pointer.yml` finds the deployment that already exists and
+  comments it on the pull request — **zero extra deployments, in every case**.
+
+  It reports three outcomes, never two: the preview, *no preview exists*, and *I could not find
+  out*. A lookup failure published as an absent preview would send someone to debug a build that
+  worked; the first draft did exactly that and its twin caught it. The comment quotes the gate's own
+  verdict on the range rather than restating the rule, so the two cannot drift.
+
+
 ### Fixed
 
 - **`docs/DESIGN.md` told pages to do the thing a guard forbade.** It said a `reproduce` section is
@@ -52,7 +77,6 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   somebody wrote after checking and nobody acted on, while `backup_local_only.py` printed
   `NOT COVERED  HANDOFF.md` on every run. It is in `PATTERNS` now, so every version is kept.
 
-### Fixed
 
 - **The rail was moved inward on three pages and it pushed the reading column off centre.** The
   fix for exercise 09's squeezed text was mostly the type scale, but it also added
@@ -148,6 +172,12 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   `projection`. Both are entries now, and the promise is replaced by one a test does keep: every
   entry carries a figure from the run. That guard immediately found four entries carrying none,
   two of which predate today.
+
+- **Vercel could cancel an in-flight page build when a documentation push landed behind it.** Builds
+  here take **7 seconds** and the two pushes on one branch were **49 seconds** apart — inside that
+  window `autoJobCancelation` kills the build carrying the page, and the documentation push then
+  skips, so the branch gets no deployment of its content at all. Turned off; it creates no extra
+  deployments either way.
 
 - **Exercise 09's page used a quarter of a wide display, and the fix was already written down.**
   `docs/DESIGN.md` publishes the repository's fluid type scale — and names *this page's* declaration,
