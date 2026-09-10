@@ -231,3 +231,20 @@ footer {
     scroll-behavior: auto !important;
   }
 }
+
+/* --- a range input does not overhang the box it is told to fill ---------------------------------
+ *
+ * **The browser's own stylesheet gives `input[type='range']` `margin: 2px`.** With
+ * `width: 100%` and `box-sizing: border-box` — which is what every page here writes — the control
+ * therefore occupies its parent's full content box *plus 4px*, and sits 2px outside the container
+ * it is nominally filling. It was live on exercises 04 and 05 at every width, on four separate
+ * rules, and nothing caught it: the page does not scroll, because the overhang lands inside the
+ * page's own padding, so any check that measures the viewport reads zero.
+ *
+ * It lives here rather than in each exercise because it is a property of the control, not of any
+ * one layout — and it was fixed twice per-exercise first, which left two more instances standing.
+ * `tests/test_every_route_holds_its_width.py` measures a control against its PARENT for this reason.
+ */
+input[type='range'] {
+  margin-inline: 0;
+}

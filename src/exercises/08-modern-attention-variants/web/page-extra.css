@@ -750,6 +750,18 @@ figcaption strong {
   color: inherit;
   cursor: pointer;
   text-align: left;
+  /* A button is `inline-block`, so it cannot lay out narrower than its longest word — and one of
+     these names is *"RoPE (rotary position embedding)"*, whose `embedding)` measures 87px at this
+     weight. Below 640px that row's name box is 81px, so the button hung 6px outside it. A name
+     that can be longer than its column has to be allowed to break inside a word; every other
+     remedy here is a guess about which names exist.
+
+     `anywhere`, not `break-word`, and the difference is the whole fix: both break a long word when
+     it would overflow, but only `anywhere` counts the break when the browser computes the element's
+     **min-content** size. A shrink-to-fit box like this one is laid out *at* its min-content width,
+     so `break-word` changed nothing here and was measured doing so. */
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 .ix-name button:hover {
   color: var(--accent);

@@ -54,6 +54,7 @@ OPTIONAL_DEPENDENCY_GATES: dict[str, str] = {
     "tests/test_every_page_in_every_theme.py": "playwright",
     "tests/test_every_link_has_a_colour.py": "playwright",
     "tests/test_prose_measure_repo_wide.py": "playwright",
+    "tests/test_every_route_holds_its_width.py": "playwright",
     "tests/test_svg_labels_are_legible.py": "playwright",
     "tests/test_prose_tables_wrap.py": "playwright",
     "tests/test_no_page_scrolls_sideways.py": "playwright",
