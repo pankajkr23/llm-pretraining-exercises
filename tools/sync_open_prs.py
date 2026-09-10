@@ -235,6 +235,40 @@ def _locate(
     return None, "nothing"
 
 
+#: A released section heading — `## [0.15.0] — 2026-09-10`. `## [Unreleased]` deliberately does not
+#: match: that is the section a branch's entries belong in, and the whole point of telling the two
+#: apart is that landing in the first kind is a false claim about what shipped.
+_RELEASED_SECTION = re.compile(r"^##\s+\[(?!Unreleased\])[^\]]+\]")
+
+#: The open section every changelog entry on a branch was written under.
+_UNRELEASED_SECTION = re.compile(r"^##\s+\[Unreleased\]")
+
+
+def _section_at(lines: list[str], index: int) -> str | None:
+    """The `## ` heading a line sits under, or None if it is above the first one."""
+    for i in range(min(index, len(lines)) - 1, -1, -1):
+        if lines[i].startswith("## "):
+            return lines[i]
+    return None
+
+
+def _unreleased_body(lines: list[str]) -> int | None:
+    """Where a new entry belongs under `## [Unreleased]`: after it and any `### ` heading it has.
+
+    Returns None when there is no `[Unreleased]` section at all, which is the one case this cannot
+    repair — there is nowhere correct to put the block, and guessing would be inventing a section.
+    """
+    start = next((i for i, line in enumerate(lines) if _UNRELEASED_SECTION.match(line)), None)
+    if start is None:
+        return None
+    at = start + 1
+    # Skip blank lines and a leading `### Fixed`-style heading, so the entry joins the list rather
+    # than displacing the heading that introduces it — which is the shape of the original defect.
+    while at < len(lines) and (not lines[at].strip() or lines[at].startswith("### ")):
+        at += 1
+    return at
+
+
 def _run_index(lines: list[str], run: list[str]) -> int | None:
     """Where `run` appears in `lines` as a contiguous block, or None.
 
@@ -310,6 +344,45 @@ def _reapply(
             notes.append(f"could not place a {len(added)}-line block; appended to the end instead")
             lines.extend(added)
             continue
+
+        # **A branch's entry must never land inside a section that has already shipped.**
+        #
+        # After a release renames `[Unreleased]` and opens a fresh empty one, a block's neighbours
+        # no longer sit where they did — so `_locate` falls back to a single line and finds it
+        # inside the *released* section, which is where those neighbours now live. The entry is then
+        # a claim that this work shipped in a version it did not, and in practice it landed above
+        # that section's own `### Fixed`, which is malformed as well as untrue.
+        #
+        # Nothing failed when this happened: the only note was "placed by the following line only",
+        # which is true of a great many correct placements and says nothing about the version.
+        #
+        # The block's correct home is not ambiguous — it is `[Unreleased]`, which is where it was
+        # written — so this relocates rather than refusing, and says so at a volume that matches
+        # what it prevented. The one case it cannot repair is a file with no `[Unreleased]` at all:
+        # there is nowhere correct, and inventing a section is worse than stopping.
+        landing = _section_at(lines, at)
+        if landing is not None and _RELEASED_SECTION.match(landing):
+            home = _unreleased_body(lines)
+            if home is None:
+                notes.append(
+                    f"REFUSED a {len(added)}-line block: it would land in {landing.strip()!r}, "
+                    "claiming it shipped in a released version, and this file has no "
+                    "'## [Unreleased]' section to move it to. Nothing was written; place it by "
+                    "hand."
+                )
+                continue
+            notes.append(
+                f"a {len(added)}-line block resolved into {landing.strip()!r}, a released "
+                f"section — moved to '## [Unreleased]' at line {home + 1}. Its neighbours moved "
+                "when that release renamed the section it was written under."
+            )
+            at = home
+            # A freshly opened `[Unreleased]` is empty, so the insertion point is the next `## `
+            # heading and the block would sit flush against it. Markdown tolerates that; a reader
+            # scanning for section boundaries does not.
+            if at < len(lines) and lines[at].startswith("## ") and added[-1].strip():
+                added = [*added, "\n"]
+
         lines[at:at] = added
     return "".join(lines), notes
 
