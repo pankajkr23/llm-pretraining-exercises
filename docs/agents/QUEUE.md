@@ -1327,7 +1327,7 @@ predates the harness — so it is logged as what it was.
                           whether Vercel's rate limit counts deployments CREATED or builds RUN --
                           if the former, the gate saves build minutes only and the real fix is to
                           disable git deployments and drive previews from a workflow
-```
+
 2026-09-10  a11y          #175 opened: every canvas colour follows the theme. HANDOFF item 9, counted
                           before acting: exactly 12 literals against 16 theme-aware colour writes in
                           s1, s2 and s4. MEASURED BEFORE AND AFTER through the site's real theme
@@ -1348,3 +1348,67 @@ predates the harness — so it is logged as what it was.
                           files and are used for the line charts -- is recorded IN the guard with a
                           twin that fails if it stops being true
 
+2026-09-10  tooling       #176 opened: the queue sync stops claiming work shipped in a release it did
+                          not. HANDOFF item 5 named two defects; RE-CHECKED BOTH RATHER THAN
+                          TRUSTING THE NOTE and one was already fixed -- _reapply replays an edit as
+                          an edit. The other was live and reproduced against the real function
+                          before anything changed: an entry written under [Unreleased] landed inside
+                          ## [0.15.0], ABOVE that section's own ### Fixed, so it was a false claim
+                          about what shipped and malformed too. The only note was "placed by the
+                          following line only", which is true of many correct placements and says
+                          nothing about a version. Relocates to [Unreleased] now, loudly, and
+                          REFUSES in the one case it cannot repair -- no [Unreleased] section at all
+                          -- because inventing one would be this tool deciding what a release
+                          contains. Four tests: the repair, the refusal, the insertion point being
+                          AFTER the section's own heading rather than above it, and the distinction
+                          everything rests on (that [Unreleased] is not matched as a released
+                          version -- if it were, every block would be "relocated" out of the section
+                          it was already in and the first test would still pass). Watched red on the
+                          tree as it shipped, restored in a finally. HANDOFF item 5 rewritten:
+                          THIRD stale entry found in that file today, after item 7's slider
+                          overflow and item 9's count
+
+2026-09-10  tooling       #178 opened: the backup tripwire only cries for files it was protecting.
+                          HANDOFF item 6 is 🤝 because removing paths from an append-only store is
+                          PK's call -- but the ALARM is mine, and it was wrong. --verify treated any
+                          store file with no counterpart in the checkout as a loss, so every run
+                          told the reader to restore files PATTERNS never named. Measured: 45, not
+                          the 19 the note recorded. 20 were copied into the store by hand and swept
+                          in by snapshot()'s git add -A; 25 are docs/standards-history, the residue
+                          of a PATTERNS entry that was DELIBERATELY removed while the append-only
+                          store kept what it had -- the store working, not failing. A stored path is
+                          a loss only if PATTERNS names it, worked out by globbing the STORE with
+                          the tool's own patterns so there is no second matcher to drift from
+                          collect(). Grouped by directory: four lines instead of forty-five, exit 0,
+                          and A PROTECTED FILE THAT VANISHED STILL FAILS -- tested in both
+                          directions, because every change that quietens a guard risks quietening
+                          what it was for. NOTHING WAS DELETED FROM THE STORE: that needs PK naming
+                          the path and its own removal commit, and the tool now prints those exact
+                          commands including the read-back check. ALSO: v0.14.0 shipped without its
+                          standards snapshot -- the release ritual's last step was skipped -- so
+                          snapshot_standards.py was run and 44 archive guards now have something to
+                          check instead of skipping
+
+2026-09-10  agentic       #184 opened: the PreToolUse guard failed OPEN on a relative path, which is
+                          the one thing its own docstring says it never does. Path(target).resolve()
+                          anchors a RELATIVE file_path to the cwd of whatever runs the hook -- not
+                          guaranteed to be the root, and under claude --worktree reliably not -- so
+                          the resolved path failed relative_to(root) and the except ValueError
+                          branch, written for a path genuinely OUTSIDE the repository, returned None
+                          and allowed the call. Verified against the guard's own entry point: an
+                          absolute out-of-scope path blocked, the identical path sent relative
+                          passed, and so did a protected guard file and .claude/UNIT.md itself.
+                          bash_write_targets has anchored to the root since it was written, so the
+                          two branches of ONE function disagreed -- the same path blocked as a shell
+                          redirect and passed as a Write. THIRD bypass in this file of one shape
+                          (the guard answering its question correctly about a call it never saw),
+                          after taking the root from __file__ and omitting Bash. Watched failing.
+                          FOUND BY PROBING RATHER THAN READING, while checking whether an agent
+                          could widen its own scope for row 9's writer half -- and MY FIRST PROBE
+                          WAS WRONG IN A WAY THAT LOOKED LIKE A MUCH BIGGER FINDING: I sent relative
+                          paths, which resolved against the real repo, so every Write appeared to be
+                          allowed. Confirming the probe before believing it is what turned "Write
+                          bypasses the guard entirely" into the real, narrower defect. CHECKED AND
+                          NOT BROKEN: an agent cannot widen its own scope -- .claude/UNIT.md is
+                          refused to both Write and Bash
+```
