@@ -39,6 +39,32 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Two guards that were enforced one exercise at a time are now enforced everywhere, and both
+  found what a single-exercise guard structurally cannot.**
+
+  `tests/test_no_commands_on_pages.py` — exercise 07 has forbidden shell commands on its own page
+  since it was rebuilt. Swept across the deployable set, **exercise 05 carried eight and exercise 06
+  carried six**, and neither list was a clean duplicate of its README: 05's page had three follow-on
+  experiments (`mixture.repetition`, `.seam`, `.scale`) that appeared in **no tracked file**, and
+  06's page had `run_demo.py` and `verify.py` — the two commands that exercise turns on — which the
+  README did not. Two copies of a list, and the copy nobody runs from is the one that rots.
+  Everything missing was moved into the READMEs first, so the guard cost no content.
+
+  `tests/test_results_carry_provenance.py` — `AGENTS.md` requires every script producing a rendered
+  number to record which settings, which code, which commit and which machine. Swept over all
+  twenty tracked `results/*.json`: **nine carry the full block and eleven do not.** Two of those
+  eleven are covered by assertion rather than exemption — an audit whose `run_id` is resolved to a
+  sibling manifest that must itself be complete, and a hand-curated catalogue where every entry's
+  date must carry the source's own wording — and the remaining nine are ledgered with what each
+  needs. The ledger fails in both directions: an entry that starts passing is a file no longer
+  checked, which is coverage lost the moment it was earned.
+
+  **Nothing in it skips, and that took a red CI run to get right.** The first version used eleven
+  `pytest.skip` calls and the root `conftest.py` refused the run with `UNDECLARED SKIP IN CI`. The
+  easy fix was a `tests/_skips.py` entry; the correct one was to stop skipping, because a skipped
+  case and a passing case are the same line in every report anyone reads. A ledgered file is simply
+  not parametrised now, so the number of cases the file reports is the number of files it checks.
+
 - **A pull request now says where its preview actually is**, and it costs no deployment.
 
   Since the build gate landed on 4 September, every pull request here has ended with
@@ -63,7 +89,20 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   worked; the first draft did exactly that and its twin caught it. The comment quotes the gate's own
   verdict on the range rather than restating the rule, so the two cannot drift.
 
+
 ### Fixed
+
+- **`docs/DESIGN.md` told pages to do the thing a guard forbade.** It said a `reproduce` section is
+  "mostly" command blocks, while seven of the nine pages carrying the spine had none at all and
+  exercise 07's guard refused them outright. `pre.code` is for a code *listing* now, never for a
+  command a reader is invited to run, and the section says what a `reproduce` section is actually
+  for: the chain from module to results file to rendered document, with the README holding the
+  commands.
+
+- **`HANDOFF.md` was gitignored, unprotected and said so.** Its own header read "this file is
+  gitignored and is NOT in the backup set, so it exists in exactly one place on disk" — a note
+  somebody wrote after checking and nobody acted on, while `backup_local_only.py` printed
+  `NOT COVERED  HANDOFF.md` on every run. It is in `PATTERNS` now, so every version is kept.
 
 - **Exercises 03 and 06 scrolled sideways at exactly 1180px, and had for as long as the rule that
   did it has existed.** `_shared/page.css` starts reserving a 260px rail gutter at 1180, so the

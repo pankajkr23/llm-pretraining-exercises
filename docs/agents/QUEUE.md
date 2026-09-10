@@ -1327,6 +1327,50 @@ predates the harness — so it is logged as what it was.
                           whether Vercel's rate limit counts deployments CREATED or builds RUN --
                           if the former, the gate saves build minutes only and the real fix is to
                           disable git deployments and drive previews from a workflow
+2026-09-09  guards        #171 opened: two guards that lived in one exercise each now sweep the
+                          repository, and both found things. NO COMMANDS ON PAGES: 07 has enforced
+                          this on itself since its rebuild; promoted, it found EIGHT on 05's page
+                          and SIX on 06's, and neither was a clean duplicate of its README. 05's
+                          page listed mixture.repetition/.seam/.scale which appeared in NO tracked
+                          file; 06's listed run_demo.py and verify.py, the two commands that
+                          exercise turns on, which its README did not. Moved everything into the
+                          READMEs BEFORE removing the blocks, so nothing was dropped -- and 05's
+                          README is generated, so the edit went into export.py and the document was
+                          regenerated. Both reproduce sections rewritten in 08/09's idiom: what
+                          produced the numbers, and a pointer to the README. PROVENANCE ON EVERY
+                          TRACKED RESULTS FILE: swept all twenty, NINE complete and ELEVEN not.
+                          Two are covered by assertion rather than exemption -- audit.json's
+                          run_id is RESOLVED to the sibling manifest, which must itself be
+                          complete, and 08's catalogue must carry every entry's source wording --
+                          and nine are ledgered with what each needs, failing in both directions.
+                          The sharpest entry is 07's measurements.json: the file its page renders,
+                          and the only one of 07's with no block at all. DESIGN.md CONTRADICTED THE
+                          GUARD and has since before the guard existed: "a reproduce section is
+                          mostly command blocks", while seven of nine spine pages had none.
+                          Settled: pre.code is for a listing, never for a command. HANDOFF.md was
+                          gitignored, unprotected, and its own header said so while the backup tool
+                          printed NOT COVERED on every run -- now in PATTERNS. THREE OF MY OWN
+                          PROBES WERE WRONG and each was caught by measuring rather than reasoning:
+                          I read provenance only under `provenance` and missed 06 writing it at the
+                          top level; I demanded `verified_on` at the top of a catalogue entry where
+                          it lives inside `source`, reporting all thirty sourced entries as
+                          unsourced; and I nearly demanded `shipped_in` on every entry, which
+                          AGENTS.md records as deliberately sparse -- the emptiness is the finding.
+                          05's cut-off-command browser test lost its premise when the blocks went;
+                          rewritten to assert what REPLACED them (no command in the rendered text
+                          at all), because deleting it was the easy move and a test that only skips
+                          is not a test
+
+2026-09-09  guards        #171 went red in CI and the gate was right. My provenance guard used
+                          eleven pytest.skip calls -- two for the by-other-means pair, nine for the
+                          ledger -- and the root conftest failed the run with UNDECLARED SKIP IN
+                          CI. The easy fix was a tests/_skips.py entry and AGENTS.md forbids
+                          exactly that ("never add an entry to clear a red gate"). The right fix is
+                          better than the rule: a ledgered file is not parametrised at all now, so
+                          the case count IS the count of files checked, and there is nothing that
+                          reports as a pass without having run. Zero skips in the file. Local
+                          verification had missed it because a skip is green locally -- the gate
+                          only fires under CI, which is the whole reason it exists
 
 2026-09-09  fix           #173 opened: the shared explainer fits at the rail breakpoint, and the
                           finding recorded an hour ago is fixed rather than carried. Reproduced on

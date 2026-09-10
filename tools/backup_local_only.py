@@ -68,6 +68,12 @@ PATTERNS: tuple[str, ...] = (
     "docs/REQUIREMENTS.md",
     "docs/EXPLAINER_*.md",
     "TODO.md",
+    # The ranked pending list, rewritten by hand against the repository rather than recalled. It is
+    # `TODO.md`'s sibling and was unprotected for as long as it has existed — its own header reads
+    # "This file is gitignored and is NOT in the backup set, so it exists in exactly one place on
+    # disk", which is a note somebody wrote after checking, and then nobody acted on. The tool has
+    # been printing `NOT COVERED  HANDOFF.md` on every run since.
+    "HANDOFF.md",
     # PK's own merge order for the open pull requests. Deliberately NOT tracked: it names
     # unmerged branches and the sequence they go in, which is working state rather than
     # anything a reader of this repository needs. Nothing regenerates it — the reasoning in
