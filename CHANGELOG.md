@@ -195,6 +195,41 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
+- **Every deployed route holds its width, and three of them did not.**
+
+  All three of exercise 03's routes and exercise 06 scrolled the page sideways by **12px at exactly
+  1180px** — the width where `page.css` starts reserving a 260px rail gutter, so the content box is
+  *narrower* at 1180 than at 1179. `explainer.css`, which only those two exercises use, set two grid
+  floors: 48ch of prose and 400px of figure with a 48px gap, a **931.75px** minimum inside an
+  **896px** box. `minmax(min(400px, 100%), 1fr)` looks like it yields and does not — the percentage
+  resolves against the grid container, so `min(400px, 896px)` is 400 again. **Only the `wide`
+  variant ever overflowed**: the plain one asks for 340px and a 44px gap, which is 867.75px and
+  fits. **While this was open, #173 fixed the same overflow on `main` at 340px, and that is the
+  value kept.** This branch had reached 360px, which fits the 896px box with 4.25px to spare where
+  340px leaves 24.25px — and the 48ch prose floor is measured in the font's own digit width, so a
+  wider system font spends a 4px margin first. 340px is also the plain variant's number, so the two
+  floors now agree.
+
+  **Dropping both floors to `minmax(0, 1fr)` was tried first and was worse, which the suite caught.**
+  With no floor on the figure the prose track takes its full cap and the figure gets the scraps:
+  exercise 03's stage register fell from 340px to 243px and the note inside it from 46 characters to
+  **33**, under this repository's own 42-character floor. The figure floor is not decoration — it is
+  what stops the prose cap from eating the column.
+
+  **And a control that overhangs its container does not scroll the page, which is why nobody found
+  it.** A browser's own stylesheet gives `input[type='range']` `margin: 2px`, so `width: 100%` at
+  `box-sizing: border-box` occupies the parent's content box **plus 4px**. Four rules across
+  exercises 04 and 05 were laying a slider 2px outside the box it was told to fill, at every width;
+  the overhang landed inside the page's own padding, so every viewport-level check read zero. One
+  rule in the shared component layer now, not four per-exercise ones — it is a property of the
+  control, and fixing it twice per-exercise first left the other two standing.
+
+  Exercise 08's mechanism index had the third shape of it: `RoPE (rotary position embedding)` in a
+  button, whose longest word measures 87px against an 81px box below 640px. `overflow-wrap:
+  anywhere`, **not** `break-word` — both break a long word that would overflow, but only `anywhere`
+  counts the break when the browser computes min-content width, and a shrink-to-fit box is laid out
+  *at* its min-content width. `break-word` was tried first and measured changing nothing.
+
 - **A figure label stays legible, on the three pages where it did not.**
 
   A `viewBox` scales text along with the drawing, so the size a reader sees is
