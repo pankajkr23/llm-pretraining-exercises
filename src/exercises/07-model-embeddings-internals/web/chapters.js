@@ -83,11 +83,19 @@ function table(head, rows, cls) {
   for (const row of rows) {
     const tr = el('tr');
     if (row.__mark) tr.className = row.__mark;
-    for (const cell of row.cells) {
+    row.cells.forEach((cell, i) => {
       const td = el('td');
       td.innerHTML = cell === null || cell === undefined ? '—' : cell;
+      /* The column head, carried on the cell, so a stacked row on a phone still says which column
+       * each line belongs to. Below 640px the `thead` is hidden and every cell becomes a block, at
+       * which point a bare value has lost the only thing that gave it meaning. */
+      /* Only when there IS one. A blank header — this page has key/value tables built with `['',
+       * '']` — would otherwise set `data-head=""`, which still matches `td[data-head]` and paints
+       * an empty labelled line above the value. */
+      const label = head[i] === undefined ? '' : String(head[i]).replace(/<[^>]*>/g, '').trim();
+      if (label) td.dataset.head = label;
       tr.append(td);
-    }
+    });
     tb.append(tr);
   }
   t.append(tb);

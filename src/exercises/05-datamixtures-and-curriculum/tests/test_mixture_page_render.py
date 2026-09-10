@@ -221,13 +221,47 @@ def test_the_page_never_scrolls_sideways(page, width, height):
 
 
 def test_wide_tables_scroll_inside_their_own_container(page):
+    """Every table is contained — by scrolling if it is wide, by fitting if it is not.
+
+    **This asked for `overflow-x: auto` and got the mechanism confused with the property.** The
+    rule is that a wide table must not push the page sideways; a scroller is one way to keep that
+    true and not the only one. Below 640px the hypotheses table stops being a table — each row a
+    card, each cell a block — and then nothing overflows, so the scroller is a scrollbar with
+    nothing to scroll and, on a platform with overlay scrollbars, an invisible one. The old
+    assertion failed that fix while the page was more correct than before, which is the shape
+    `AGENTS.md` warns about: a guard that names one implementation of a property fails every other
+    implementation of it. So ask the property. A wrapper whose table is wider than it must scroll;
+    a wrapper must never be wider than what holds it. Both directions of the real question, and
+    `test_the_page_never_scrolls_sideways` above covers the whole page at the same two phone
+    widths.
+    """
     page.set_viewport_size({"width": 390, "height": 844})
     page.wait_for_timeout(150)
-    wrappers = page.query_selector_all(".tblwrap")
-    assert wrappers, "no tables rendered"
-    for wrapper in wrappers:
-        style = page.evaluate("el => getComputedStyle(el).overflowX", wrapper)
-        assert style in ("auto", "scroll"), f"a table wrapper has overflow-x: {style}"
+    findings = page.evaluate("""() => {
+      const bad = [];
+      const wraps = document.querySelectorAll('.tblwrap');
+      for (const w of wraps) {
+        const t = w.querySelector('table');
+        if (!t) continue;
+        const scrolls = ['auto', 'scroll'].includes(getComputedStyle(w).overflowX);
+        if (t.scrollWidth > w.clientWidth + 1 && !scrolls) {
+          bad.push(`a ${t.scrollWidth}px table in a ${w.clientWidth}px wrapper that cannot scroll`);
+        }
+        // The wrapper's own BOX, never its scrollWidth: on a wrapper that is doing its job the
+        // scrollWidth is the wide table inside it, so comparing that to the parent flags every
+        // correctly-scrolling table on the page. Five of them, when this was first written.
+        const parent = w.parentElement;
+        const box = Math.round(w.getBoundingClientRect().width);
+        if (parent && box > parent.clientWidth + 1) {
+          bad.push(`a wrapper ${box}px wide inside a ${parent.clientWidth}px parent`);
+        }
+      }
+      return {count: wraps.length, bad};
+    }""")
+    assert findings["count"], "no tables rendered"
+    assert not findings["bad"], "a table escapes its container at 390px:\n  " + "\n  ".join(
+        findings["bad"]
+    )
 
 
 # ---- the interactions actually do something ---------------------------------------------------

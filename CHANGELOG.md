@@ -12,6 +12,22 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Changed
 
+- **Two guards were asking the wrong question, and one of them failed correct work.**
+
+  `tests/test_prose_tables_wrap.py` flagged exercise 03's dataset catalogue — 109 rows, 7 columns,
+  and **one** body cell in 763 long enough to count as prose, because a dataset is called *"Internet
+  Archive - Public Library of India"*. A register is scanned down a column; stacked it is 109 cards.
+  The fill qualifier cannot see that and no threshold fixes it: `fill` compares a cell to its
+  container, so a 7-column table gives every cell a low share by construction. It is a named
+  decision now — `REGISTERS`, with a twin that fails if that table stops being a register **or** if
+  another one becomes one.
+
+  Exercise 05's `test_wide_tables_scroll_inside_their_own_container` demanded `overflow-x: auto` on
+  every table wrapper and so failed the stacking fix while the page was more correct than before —
+  a scroller with nothing to scroll is, on a platform with overlay scrollbars, an invisible one. It
+  asks the property now: a wrapper whose table is wider than it must scroll, and a wrapper must
+  never be wider than what holds it. Both halves watched failing.
+
 - **The last four pages join the published type scale, and all eight now run it.** Exercises 03, 04,
   05 and 06 rendered body prose at 16–16.6px in columns of 464–726px, using a fraction of the room a
   wide display has. They are on `docs/DESIGN.md`'s `clamp(19px, 1.2vw + 1.7px, 22px)` now — **22px
@@ -206,7 +222,48 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   three of nine did; and `PROGRESS.md` listing the notebook and page as remaining while its own
   table twelve lines above marked them done.
 
-### Fixed
+- **A table of sentences reads on a phone, on every page that has one — and the fix hid a second
+  defect from the guard written to catch the first.**
+
+  Exercise 10's six tables measured **8,455px** at 390px — ten screens — with prose cells at **12 to
+  19 characters a line** and the audit table alone 4,959px tall with a 1,020px row. Below 640px a
+  table of sentences now stops being one: each row a card, each cell a labelled block carrying its
+  column head, which `table()` writes onto the cell because hiding the `thead` takes away the only
+  thing that said which column a line belonged to. Exercise 10's six tables are **6,729px**; its
+  prose cells are **35–36 characters**, and no cell hides any width at any tested viewport.
+
+  **The same markup was on exercises 07 and 09, and a different shape of it on 05.** 05's three
+  hypotheses laid out **979px wide inside a 342px wrapper** — ten characters a line — and rendered
+  its *supported if* and *refuted if* columns in the monospace face reserved for measured values.
+  Its other six tables are figures and keep their columns: the results table is read *down a
+  column*, which is that page's own stated rule.
+
+  **Then stacking clipped the sentences and nothing could see it.** `white-space: nowrap` is right
+  for a column of figures and meaningless in a card, and left in place it laid one of exercise 07's
+  cells out **3,222px wide in a 337px box** — nine tenths of the sentence past the right edge, no
+  ellipsis, no scrollbar, and the wrapper's `overflow-x: auto` making it read as a wide table
+  behaving correctly. Seven such cells on 07 and ten on 09, live while every assertion was green,
+  because a stacked cell *measures* 35 characters at 99% of its container. Found by screenshotting
+  the section, not by a test. The guard now asserts it, and `tests/_page_invariants.py` still cannot
+  — it flags only elements that clip themselves, and this one spills into an ancestor that scrolls
+  on purpose.
+
+  **And copying one page's block onto another carried its visual language with it.** Exercise 07
+  marks a row's status with a *tint* and defines no left-border rule anywhere; the copied block gave
+  every stacked card a 3px coloured bar it uses nowhere else — a mark invented by a paste rather
+  than by a decision. Exercise 09 sets its bar on **every** `td` where exercise 10 sets it on
+  `td:first-child`, so 10's reset shape left cells two onward carrying their own border and the bar
+  began half way down each card under a doubled edge. Each page's block is now tailored to what that
+  page emits, and every selector in it matches something: 07's counter for a `width: 24%` rule 07
+  does not have is gone, and so is a `content: none` undo rule that matched no cell on any of the
+  three.
+
+  **A blank column header printed a blank label.** Exercise 07 builds key/value tables from `['',
+  '']`, and writing the head onto every cell set `data-head=""` — which still matches
+  `td[data-head]`, so four cells printed an empty labelled line above their value. Nothing else here
+  could see it: the cell is the right width, wraps correctly and hides nothing. It reads as slightly
+  loose spacing, which is why it gets its own assertion.
+
 
 - **`docs/DESIGN.md` told pages to do the thing a guard forbade.** It said a `reproduce` section is
   "mostly" command blocks, while seven of the nine pages carrying the spine had none at all and

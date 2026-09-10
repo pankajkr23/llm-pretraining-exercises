@@ -417,6 +417,24 @@ and says which question each field answers.
 - Every row anchored `id="m-<key>"` so it can be linked, and `:target` gets `--accent-soft`.
 - **The catalogue is tabulated exactly once.** A second table of the same rows is duplication however
   differently it is styled — assert it.
+- **Below 640px a table of SENTENCES stops being a table; a table of FIGURES keeps its columns.**
+  Each row becomes a card, each cell a labelled block, and the column head is written onto the cell
+  by the builder — hiding the `thead` otherwise takes away the only thing that said which column a
+  line belonged to. Three details decide whether it works, each learned by shipping the opposite:
+  `white-space: normal` on the stacked cell, or the `nowrap` that was right for a column runs the
+  sentence off the edge of the card with no ellipsis and no scrollbar; the status mark on the row
+  rather than on a cell, because the card *is* the row; and the label attribute set only when the
+  header has text, because `attr()` on an empty one still paints a line. Enforced by
+  `tests/test_prose_tables_wrap.py`, which reads the deployable set from the filesystem.
+- **A wrapper's `overflow-x: auto` is one way to contain a wide table, not the property.** Assert
+  that a table wider than its wrapper scrolls and that the wrapper never exceeds its parent — a
+  guard naming the mechanism fails a stacked table that no longer needs a scroller, and a scroller
+  with nothing to scroll is an invisible one wherever scrollbars overlay.
+- **A register is not a table of sentences.** A catalogue of many rows and many columns is scanned
+  down a column; stacking it makes one card per row. Exercise 03's is 109 rows and 7 columns with a
+  single long proper noun among 763 cells, and it scrolls, correctly. Where a guard has to tell the
+  two apart, name the register in a ledger that fails in both directions rather than moving a
+  threshold — a cell's share of its container falls as the column count rises, by construction.
 
 ### Navigation into a long page
 
