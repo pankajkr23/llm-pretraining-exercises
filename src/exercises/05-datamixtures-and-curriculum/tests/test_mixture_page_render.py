@@ -1123,16 +1123,45 @@ def test_no_svg_label_renders_too_small_to_read(page, width: int) -> None:
 
 
 @pytest.mark.parametrize("width", SWEEP_WIDTHS)
-def test_no_reproduce_command_is_cut_off(page, width: int) -> None:
-    """A command a reader cannot read is the one thing a reproduce section has to get right.
+def test_no_code_block_is_cut_off_and_no_command_is_rendered(page, width: int) -> None:
+    """Two halves, because this page's command blocks are gone and the check had to follow them.
 
-    These were `overflow-x: auto` inside a 72ch box, so every command longer than 72 characters was
-    cut at **every** width — including 2560, where 676px sat empty beside the box.
+    **The original.** A command a reader cannot read is the one thing a reproduce section has to get
+    right, and these were `overflow-x: auto` inside a 72ch box — so every command longer than 72
+    characters was cut at *every* width, including 2560, where 676px sat empty beside the box. That
+    assertion still applies to any `pre.code` this page renders, which is now a code *listing*
+    rather than an invitation to copy.
+
+    **The half that replaced them.** The two command blocks moved into the README, where they sit
+    beside the modules they name (`tests/test_no_commands_on_pages.py` holds every page to that).
+    Deleting this test with them would have been the easy move and the wrong one: `rows` is now
+    empty, so the old premise assertion — *"no pre.code found; the selector has rotted"* — fires on
+    a correct page, and a test that only skips is not a test. So when there is no code block, this
+    asserts the reason there is none: **no command appears in the rendered text at all.** That is
+    the lexical guard's rendered counterpart, and it catches what the lexical one structurally
+    cannot — a command assembled at run time, or built out of something other than `pre.code`.
     """
     rows = _at_width(page, width, _CODE_JS)
-    assert rows, "no `pre.code` blocks found; the selector has rotted"
     cut = [(r["over"], r["head"]) for r in rows if r["over"] > 1]
     assert not cut, (
-        f"at {width}px, {len(cut)} of {len(rows)} command blocks are cut off sideways:\n  "
+        f"at {width}px, {len(cut)} of {len(rows)} code blocks are cut off sideways:\n  "
         + "\n  ".join(f"+{o}px  {h!r}" for o, h in cut)
+    )
+
+    rendered = page.evaluate("() => document.body.innerText")
+    commands = sorted(
+        {
+            match.group().strip()
+            for match in re.finditer(
+                r"\b(?:uv run|uv sync|bash |pytest |pip install|npm run|python -m)[^\n]{0,60}",
+                rendered,
+            )
+        }
+    )
+    assert not commands, (
+        f"at {width}px the rendered page carries {len(commands)} shell command(s):\n  "
+        + "\n  ".join(repr(c) for c in commands[:8])
+        + "\nCommands belong in the exercise README, beside the code they operate on. A page is "
+        "read far more often than it is executed, so a command on one is the copy that goes stale "
+        "while every test stays green."
     )

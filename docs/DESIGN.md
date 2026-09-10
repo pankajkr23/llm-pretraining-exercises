@@ -374,8 +374,26 @@ is a limitation the page is hiding. Smaller type, fewer words, always on screen.
 ### Command blocks
 
 `pre.code`: `--panel` on `--line`, `border-radius: 10px`, `--mono` at 12.5px/1.65, `overflow-x:
-auto`. A `reproduce` section is mostly these, so they have to read as **runnable** rather than as
-decoration.
+auto`. Use it for a code *listing* — the three lines of tensor code an exercise is about, a shard
+manifest, a config block. Something a reader looks at.
+
+**Never for a command a reader is invited to run.** Commands belong in the exercise's README, beside
+the code they operate on, and `tests/test_no_commands_on_pages.py` enforces that on every deployed
+page. A page is read far more often than it is executed, so a command block on one is the copy
+nobody runs from — and the copy nobody runs from is the one that goes stale, silently, while every
+test stays green.
+
+**This section said the opposite until it was measured** — "a `reproduce` section is mostly these" —
+while seven of the nine pages that carry the spine had no command at all and exercise 07's guard
+forbade them outright. The two that did carry them had drifted exactly as predicted: 05's page
+listed three experiments its README did not, and 06's page listed `run_demo.py` and `verify.py`, the
+two commands that exercise turns on, in the one place nothing tests.
+
+**What a `reproduce` section is for** is the answer to *can I believe this?* — the chain from module
+to results file to rendered document, what was recorded about the run that produced each number, and
+a pointer to the README for *what do I type?*. Exercises 08 and 09 are the reference: 08 lays out
+every catalogue entry with its source, 09 tabulates the provenance block each results file carries
+and says which question each field answers.
 
 ### The landing page
 
@@ -568,6 +586,7 @@ A rule with no guard decays. The repo-wide guards live in `tests/`; per-exercise
 | exercise skeleton present; no `REQUIREMENTS.md` ever tracked | `tests/test_exercise_skeleton.py` |
 | the rail is built and fills the gutter it reserves | `tests/test_rail_centring.py` |
 | the reading column is centred in the space the rail leaves, at every width | `tests/test_rail_centring.py` |
+| no shell command on a deployed page | `tests/test_no_commands_on_pages.py` |
 | every test file is in a CI shard **and collects there** | `tests/test_ci_shards_cover_everything.py` |
 | 42–80 characters a line, ten widths | `test_attention_measures.py` (the pattern to copy) |
 | no count typed into page prose, or into a heading or rail label | `test_attention_docs.py` |

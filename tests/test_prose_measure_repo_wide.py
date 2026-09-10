@@ -349,6 +349,66 @@ def test_a_step_never_reads_at_a_squeezed_measure(site, slug: str) -> None:
     )
 
 
+#: The step strip's grid and the prose inside it, each with its computed font size.
+GRID_FONT_JS = """() => {
+  const out = [];
+  for (const grid of document.querySelectorAll('.scrolly')) {
+    const p = grid.querySelector('.step p');
+    if (!p) continue;
+    out.push({
+      grid: parseFloat(getComputedStyle(grid).fontSize),
+      prose: parseFloat(getComputedStyle(p).fontSize),
+    });
+  }
+  return out;
+}"""
+
+
+@pytest.mark.parametrize("slug", STEPPED)
+def test_the_step_grid_and_its_prose_are_on_one_font(site, slug: str) -> None:
+    """A grid that sizes its columns in `ch` must share a font size with the text in them.
+
+    `ch` resolves against the element that declares it. The step strip's `.scrolly` sizes its prose
+    column as up to 60ch and caps the paragraphs inside at 46ch, which only agree while both are
+    measured on the same font. Exercise 03 raised its page to a 19-22px scale and pinned the step
+    PARAGRAPHS back to 16px as "the component boundary" — but the boundary was drawn one level too
+    low, and the grid above the steps went on inheriting the page size. The column grew to 60ch of
+    22px (815px) around 472px of text, and the empty middle between the steps and the figure went
+    from 181px to 391px at 1920, measured from the glyphs.
+
+    **Nothing else could see it.** The measure guards above ask whether a line of prose is too wide
+    or too narrow, and this prose was neither — its own measure never moved. The defect was the
+    space *beside* it. Asserting the two font sizes are equal states the cause rather than a
+    threshold on the symptom, so it needs no number that a later layout change could outgrow.
+    """
+    bad, seen = [], 0
+    for width in WIDTHS:
+        browser, base = site
+        ctx = browser.new_context(viewport={"width": width, "height": 950})
+        page = ctx.new_page()
+        try:
+            page.goto(f"{base}/{slug}/index.html", wait_until="networkidle", timeout=25_000)
+            page.wait_for_timeout(500)
+            for row in page.evaluate(GRID_FONT_JS):
+                seen += 1
+                if round(row["grid"], 1) != round(row["prose"], 1):
+                    bad.append((width, row["grid"], row["prose"]))
+        finally:
+            ctx.close()
+
+    assert seen >= len(WIDTHS), (
+        f"only {seen} step grid(s) were measured on {slug} across {len(WIDTHS)} widths. "
+        "`.scrolly .step p` has stopped matching, and this assertion is passing over nothing."
+    )
+    assert not bad, (
+        f"{slug}: the step strip's grid and its prose are on different font sizes, so the column "
+        "is measured in a unit the text is not written in:\n"
+        + "\n".join(f"    at {w:>4}px  grid {g}px, prose {pr}px" for w, g, pr in bad[:8])
+        + "\n\nPin the grid, not only the steps: `#main .scrolly { font-size: 16px }` beside "
+        "whatever already holds the step paragraphs at the component's own size."
+    )
+
+
 def test_at_least_two_exercises_build_a_step_strip() -> None:
     """`STEPPED` is globbed, so an empty one would make the guard above vacuous."""
     assert len(STEPPED) >= 2, (
@@ -397,6 +457,16 @@ ON_THE_FLUID_SCALE = {
         "retro-fitted alongside 09; identical 68ch-at-16px declaration"
     ),
     "10-training-loop": "retro-fitted alongside 09; identical 68ch-at-16px declaration",
+    "06-build-training-dataset": "16px in a 726px column; now 22px in 978px, same words per line",
+    "05-datamixtures-and-curriculum": (
+        "16px in a 726px column; now 22px in 978px, same words per line"
+    ),
+    "04-data-cleaning-dedup": "16px in a 685px column; now 22px in 924px, same words per line",
+    "03-data-collection-framework": (
+        "16.6px in a 692px column; now 22px in 897px. Its explainer strip is deliberately held at "
+        "16px — a component with its own 10.5-12px scale, whose step paragraphs carry a 46ch cap "
+        "measured against it, inside a panel too narrow for the body size"
+    ),
 }
 
 #: The scale itself, from `docs/DESIGN.md`: `clamp(19px, 1.2vw + 1.7px, 22px)`. Checked at the ends

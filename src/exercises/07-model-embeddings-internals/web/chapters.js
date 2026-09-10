@@ -401,6 +401,13 @@ function figScale(M) {
   const padB = 32;
   const padT = 22;
   const g = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'fig-svg', role: 'img' });
+  const ttl = svg('title', {});
+  ttl.textContent =
+    `Three losses as bars. Reusing the input table without a scale costs ${b.loss_naive_tie.toFixed(2)}, ` +
+    `which is worse than guessing at ${b.loss_uniform.toFixed(2)}; one learned scalar brings it to ` +
+    `${b.loss_with_one_scalar.toFixed(2)}. The bar to look at is the first, because it is the one above ` +
+    'random.';
+  g.append(ttl);
   const rows = [
     ['reuse it naively', b.loss_naive_tie, 'bad'],
     ['random guessing', b.loss_uniform, ''],
@@ -495,6 +502,12 @@ function figRectangle() {
   const padX = 92;
   const padY = 62;
   const g = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'fig-svg', role: 'img' });
+  const ttl = svg('title', {});
+  ttl.textContent =
+    'Four tokens at the corners of a rectangle, drawn on two byte axes. Two share a first byte and ' +
+    'two share a last byte, so the fourth corner is fixed once the other three are — which is the ' +
+    'structure a factored table can represent and a free table need not.';
+  g.append(ttl);
   const xs = [0x22, 0x29];
   const ys = [0x0a, 0x2e];
   const X = (i) => padX + i * (W - 2 * padX);
@@ -594,6 +607,12 @@ function figPairing(M) {
   const padB = 40;
   const padT = 28;
   const g = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'fig-svg', role: 'img' });
+  const ttl = svg('title', {});
+  ttl.textContent =
+    `${p.control_per_seed.length} seeds, each drawn as a pair joined by a line: the control above and ` +
+    'the best arm below. Read the tethers rather than the spread — the question is whether every ' +
+    'seed moves the same way, not how far apart the seeds are.';
+  g.append(ttl);
   const all = [...p.control_per_seed, ...p.best_per_seed];
   const lo = Math.min(...all) - 0.15;
   const hi = Math.max(...all) + 0.15;
@@ -699,6 +718,23 @@ function figBars(rows, key, label, fmt) {
   const H = 40 + rows.length * 30;
   const padL = 250;
   const g = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'fig-svg', role: 'img' });
+  /* The name is built from the rows rather than written, because this figure is drawn from data
+   * and a fixed string would describe whichever version of the data was in mind when it was typed.
+   *
+   * **Two things here were wrong on the first attempt and both were found by listening to the
+   * output rather than reading the code.** The row label is `r.arm` — the field the chart itself
+   * draws at line-start — and a guess at `r.name ?? r.label ?? r[0]` produced `undefined:` before
+   * every value. And the `label` argument is an AXIS LEGEND: it carries arrow glyphs and runs of
+   * spaces for alignment, so read aloud it becomes "left arrow better worse right arrow nats
+   * against the published design". A name is a sentence, so it is written as one here and the
+   * legend stays on the axis where it is doing its job. */
+  const ttl = svg('title', {});
+  ttl.textContent =
+    `${rows.length} arms as horizontal bars against the published design, in nats. Left of the ` +
+    'zero line is better. ' +
+    rows.map((r) => `${r.arm}, ${fmt(r[key])}`).join('; ') +
+    '.';
+  g.append(ttl);
   const vals = rows.map((r) => r[key]);
   const lo = Math.min(0, ...vals);
   const hi = Math.max(0, ...vals);

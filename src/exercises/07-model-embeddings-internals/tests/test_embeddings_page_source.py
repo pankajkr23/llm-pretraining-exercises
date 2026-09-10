@@ -37,8 +37,6 @@ sign. Ordinary code numbers — array indices, loop bounds, colour stops — are
 not match. The handful of signed or decimal numbers that are genuinely code live in `ALLOWED`.
 """
 
-COMMAND = re.compile(r"\b(?:uv run|bash |pytest |pip install|npm run|python -m)\b")
-
 ALLOWED = {
     "0.1": "a yardstick for the reader — 'on this page 0.1 nats is a large gap' — not a figure "
     "from any run",
@@ -86,21 +84,12 @@ def test_no_measurement_is_typed_into_the_page() -> None:
     )
 
 
-def test_no_shell_command_is_typed_into_the_page() -> None:
-    """Commands live in the README, beside the code they operate on, where they can be kept right.
-
-    The page carried four — two `uv run pytest`, a `uv run python` and a `bash deploy/...` — in a
-    block a reader was invited to copy. A page is read far more often than it is executed.
-    """
-    offenders = [
-        f"chapters.js:{number}: {line.strip()[:80]!r}"
-        for number, line in _lines()
-        if COMMAND.search(line)
-    ]
-    assert not offenders, (
-        f"{len(offenders)} shell command(s) in the page. They belong in the exercise README:\n  "
-        + "\n  ".join(offenders)
-    )
+# `test_no_shell_command_is_typed_into_the_page` lived here and is now
+# `tests/test_no_commands_on_pages.py`, which sweeps every deployed page instead of this one.
+# Promoting it found eight commands on exercise 05's page and six on 06's, none of them a clean
+# duplicate of its README — the thing a single-exercise guard structurally cannot see. The
+# `COMMAND` pattern moved with it; leaving a copy here would be a second definition of the same
+# rule, and the second copy is the one that drifts.
 
 
 def test_the_allowance_list_is_alive() -> None:
@@ -122,10 +111,11 @@ def test_the_allowance_list_is_alive() -> None:
     ("planted", "guard"),
     [
         ("'the gap was \u22120.404 nats'", "test_no_measurement_is_typed_into_the_page"),
-        # No backticks in the planted text: `STRING` deliberately excludes them from a string
-        # body, so a planted command wrapped in them is invisible to the guard and the twin passes
-        # for the wrong reason -- which is exactly what it did.
-        ("'now run uv run pytest tests/ yourself'", "test_no_shell_command_is_typed_into_the_page"),
+        # The command guard's twin moved with it to `tests/test_no_commands_on_pages.py`, which
+        # plants into a `tmp_path` copy rather than monkeypatching this module. Its note is worth
+        # carrying: **no backticks in planted text** — `STRING` deliberately excludes them from a
+        # string body, so a command wrapped in backticks is invisible to the guard and the twin
+        # passes for the wrong reason, which is exactly what this one did once.
     ],
 )
 def test_each_guard_fails_on_a_deliberately_broken_page(planted, guard, monkeypatch, tmp_path):

@@ -683,3 +683,74 @@ main .blind-list li {
     content: none;
   }
 }
+
+/* --- the published type scale ---------------------------------------------------------------
+ *
+ * `docs/DESIGN.md`'s standard, and this page ran 16px prose in a 726px column until now —
+ * 74 characters a line, in a fraction of the room a wide display has. Exercises 07, 08, 09 and
+ * 10 have run the scale since each was built or retro-fitted; this is the same block.
+ *
+ * **The lever is SIZE, not measure.** The obvious reading of "the text looks squeezed" is to widen
+ * the column, and at 16px that pushes the line past a hundred characters and makes it worse.
+ * Raising the type instead keeps the words per line exactly where they are and gives the reader
+ * more page: the `ch` caps already on this page's prose grow with the type, because `ch` resolves
+ * against the element's **own** computed size.
+ *
+ * That last point is why `font-size: inherit` is set on the elements that carry the caps rather
+ * than left to the cascade. `docs/DESIGN.md` names a cap on an ancestor at a different size as this
+ * repository's most expensive recurring bug, and it is the reason the measure guard read 68 and 70
+ * on a page whose physical column never moved.
+ */
+#main {
+  font-size: clamp(19px, 1.2vw + 1.7px, 22px);
+}
+
+
+/* **The selector list is narrow on purpose, and the first version of it was not.** It read
+ * `#main p, #main li` — specificity (1,0,1), which outranks every component rule of the form
+ * `.eyebrow` with a size of its own. Measured against the same page before the change, that pushed
+ * eight component classes to full body size: `.note` 13.5px, `.note summary-more` 12.5px, `.summary-step` 13.5px, `.warn` 16px,
+ * `.predict-q` 16px, `.term` 16.6px, inline `code` 13px and list items at 14px. `AGENTS.md` names this cascade
+ * failure twice and I made it anyway, then found it by diffing every class's computed size rather
+ * than by looking. Only classes that ALREADY carried the reading measure are named below.
+ */
+.claim {
+  font-size: inherit;
+}
+
+/* Inline `code` inside the reading column, matching exercises 07-10. It carried no size of its own
+ * here, so it inherited the fluid one and mono at the same pixel size reads larger than the prose
+ * around it. `0.92em` is the reference pages' value and keeps the relationship the design had at
+ * 16px — measured, rather than picked: it is the one class the size diff still showed moving from
+ * a deliberately small 13px to full body size. Scoped to prose, so a component's own `code` rule is
+ * untouched.
+ */
+/* Scoped by the prose that GREW rather than by one container: this page's body paragraphs live in
+ * `section.prose`, in a bare `section`, inside `details.arithmetic` and inside `.predict` — three
+ * of which the first version of this selector missed, so `code` in a `p.warn` stayed at full body
+ * size while `code` in a plain paragraph did not. Found by measuring each `code` over 21px and
+ * printing its ancestors, which is faster than reasoning about the markup. */
+#main p code,
+#main li code,
+.claim code {
+  font-size: 0.92em;
+}
+
+/* --- the standfirst goes on the ramp too --------------------------------------------------------
+ *
+ * Raising the body without raising the lede leaves the page's opening sentence as the SMALLEST text
+ * on it — `_shared/components.css` pins `.lede` to `1.06rem` off the 16px root, so it measured 17px
+ * under 22px prose. A first-time reader described exactly that on exercise 09: it reads like a
+ * caption under the title, and they skipped it for the button.
+ *
+ * Set slightly ABOVE the body ramp, because a standfirst that merely matches the paragraphs beneath
+ * it is not a standfirst, and in `--ink` rather than `--muted` because it carries the thesis and
+ * `--muted` belongs on nothing that carries the argument. `62ch` at 25px is ~945px — flush with the
+ * reading column rather than out-denting it. These are exercise 09's values, unchanged.
+ */
+.lede {
+  max-width: 62ch;
+  font-size: clamp(20px, 1.3vw + 2px, 25px);
+  color: var(--ink);
+  line-height: 1.55;
+}

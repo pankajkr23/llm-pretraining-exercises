@@ -144,9 +144,21 @@ submission_artifacts/  # TRACKED — the deliverable: run.log, evidence.json/md,
 
 ```bash
 uv sync --all-packages                                   # install this member
+
+# produce the bundle: one command, no interaction
+uv run python src/exercises/06-build-training-dataset/run_demo.py
+
+# re-derive every published claim from that bundle ALONE, importing none of the code that
+# produced it. If the two ever disagree, this is the one to believe.
+uv run python src/exercises/06-build-training-dataset/verify.py
+
 uv run pytest src/exercises/06-build-training-dataset    # the suite
 uv run python -c "from trainingdata.config import Config; c=Config(); print(c.fingerprint(), c.total_tokens)"
 ```
+
+**`run_demo.py` and `verify.py` used to be listed on the deployed page and nowhere else**, which put
+the exercise's two most important commands in the one place nothing tests. The browser tests also
+need a one-time `uv run playwright install chromium` and skip without it.
 
 The training step needs torch, which is an **optional extra** so CI never pulls a multi-gigabyte
 wheel to run arithmetic. Everything above — shards, manifests, the firewall, the plan, packing, the
@@ -232,8 +244,12 @@ the page quotes:
 
 ```bash
 uv run python src/exercises/06-build-training-dataset/tools/build_web_data.py
+uv run python src/exercises/06-build-training-dataset/tools/build_web_data.py --check
 bash deploy/vercel/build.sh     # assemble the site locally at public/
 ```
+
+`--check` regenerates nothing and fails if what the page renders is stale, which is the form to run
+before opening a pull request.
 
 ## Selection
 
