@@ -1841,6 +1841,17 @@ predates the harness — so it is logged as what it was.
                           entry. ALSO: row 7 and unit-10 still said stage 14 was owed; #179
                           shipped it and PROGRESS.md marks it done
 
+2026-09-10  release       #186 opened: v0.15.0 -- [Unreleased] -> [0.15.0] 2026-09-10, 127
+                          entries in 22 blocks (9 Fixed, 8 Added, 4 Changed, 1 Security): everything
+                          merged since v0.14.0 on 2026-09-05. PRODUCTION IS BEHIND MAIN: the last
+                          deploy was deploy.yml on 2026-09-09 at ce468e2, so every PR merged since is
+                          not live -- 08's width fix, 09's and 10's tables and labels, all of 10's
+                          stage-14 review -- and both submissions link to what production serves.
+                          Pushing the tag deploys the tagged commit through the approval gate.
+                          CHECKED WITH release.yml's OWN awk EXTRACTOR, not by reading the heading:
+                          have_notes=TRUE, 1595 lines, stops before [0.14.0], and v0.14.0's notes
+                          extract byte-identically to main. Root version stays pinned at 0.0.0
+
 2026-09-10  web           #187 opened: exercise 03's retired unit grid stops shipping in eight
                           stylesheets -- the half of HANDOFF item 11 that was left, and 03's backlog
                           item 3.1. DRIVEN, NOT GUESSED: tools/measure_shared_css.py --drive scrolls
