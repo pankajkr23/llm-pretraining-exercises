@@ -71,6 +71,16 @@ OPTIONAL_DEPENDENCY_GATES: dict[str, str] = {
     "src/exercises/09-loss-functions-output-heads/tests/test_lossheads_harness.py": "torch",
     "src/exercises/10-training-loop/tests/test_trainloop_step.py": "torch",
     "src/exercises/10-training-loop/tests/test_trainloop_provenance.py": "torch",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab.py": "torch",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_core.py": "torch",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_delta.py": "torch",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_hybrid.py": "torch",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_linear.py": "torch",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_mla.py": "torch",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_positions.py": "torch",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_runtime.py": "torch",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_sparse.py": "torch",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_ssm.py": "torch",
 }
 
 #: Which `uv sync --extra <name>` provides which import.

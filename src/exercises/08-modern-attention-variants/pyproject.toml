@@ -4,17 +4,29 @@ version = "0.1.0"
 description = "Exercise 08 — modern attention variants, in the order they were launched"
 requires-python = ">=3.12"
 
-# numpy and nothing else, deliberately.
+# The chronology needs numpy and nothing else, and that is still true of every module outside
+# `attention/lab/`: its claims are sourced dates and closed-form arithmetic, so CI verifies them
+# completely with no extras.
 #
-# This exercise trains no model. Its claims are a sourced chronology and closed-form arithmetic --
-# the KV-cache formula, T^2 score growth, the GQA ratio -- so there is nothing here that needs
-# torch. That matters more than it sounds: CI runs `uv sync --all-packages` with no extras, so a
-# torch-free exercise is one CI verifies *completely* rather than skipping. Exercises 05, 06 and 07
-# each put their heaviest claim behind an optional extra and had to add a separate job to reach it.
-# Do not add torch here without a claim that genuinely requires it.
+# The lab is the exception, added on PK's request (DECISIONS.md D16): runnable implementations of
+# every mechanism the catalogue lists, which need torch. It sits behind the same optional `train`
+# extra exercises 05, 06 and 07 use, so the chronology stays torch-free.
+#
+#     uv sync --all-packages --extra train
 dependencies = [
+    # The lab's language-model task reads the frozen corpus and tokenizer through exercise 09,
+    # exactly as exercises 07 and 10 do, rather than keeping a second copy of either.
+    "exercise-09-loss-functions-output-heads",
     "numpy>=2",
 ]
+
+[project.optional-dependencies]
+train = [
+    "torch>=2.6",
+]
+
+[tool.uv.sources]
+exercise-09-loss-functions-output-heads = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]
