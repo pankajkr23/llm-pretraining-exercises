@@ -249,6 +249,10 @@ def test_every_module_is_named_in_the_documents_that_list_modules() -> None:
         p.name for p in (root / "src" / "attention").glob("*.py") if p.stem != "__init__"
     )
     modules += sorted(p.name for p in (root / "web").glob("*.js"))
+    # The lab is a subpackage, so the glob above never saw it; its modules are listed too.
+    modules += sorted(
+        p.name for p in (root / "src" / "attention" / "lab").glob("*.py") if p.stem != "__init__"
+    )
     assert len(modules) > 8, f"only found {modules} — the glob has stopped seeing the code"
 
     missing = {

@@ -257,3 +257,27 @@ def test_a_model_built_around_the_variant_can_memorise_one_batch(spec) -> None:
         optimiser.step()
         losses.append(loss.item())
     assert losses[-1] < 0.5 * losses[0], f"{spec.name}: loss {losses[0]:.3f} -> {losses[-1]:.3f}"
+
+
+# --- the generated documentation ------------------------------------------------------------------
+
+
+def test_the_committed_lab_document_is_what_the_code_renders() -> None:
+    """`docs/ATTENTION_LAB.md` describes the code as it is, or this fails.
+
+    The document is generated from the modules — diffs, shapes, configuration and trust — so a
+    change to any variant that is not followed by `tools/build_lab_docs.py` leaves it describing
+    code that no longer exists.
+    """
+    import importlib.util
+    from pathlib import Path
+
+    tool = Path(__file__).resolve().parents[1] / "tools" / "build_lab_docs.py"
+    spec = importlib.util.spec_from_file_location("build_lab_docs", tool)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    committed = module.OUT.read_text(encoding="utf-8")
+    assert committed == module.render(), (
+        "docs/ATTENTION_LAB.md is stale; run "
+        "`uv run python src/exercises/08-modern-attention-variants/tools/build_lab_docs.py`"
+    )
