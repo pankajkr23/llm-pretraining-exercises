@@ -1879,5 +1879,5 @@ predates the harness — so it is logged as what it was.
                           in OPTIONAL_DEPENDENCY_GATES and in no CI job -- the reachability test is
                           red until PK writes UNIT.md. The builder rewrite (guard change, PR 0) and
                           the reference-code comparison (Docker not running) wait on PK too. Four
-                          security audits over the run: clean
+                          security audits over the run: clean. #188 opened as a draft
 ```
