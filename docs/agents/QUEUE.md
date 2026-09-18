@@ -1864,4 +1864,20 @@ predates the harness — so it is logged as what it was.
                           all eight copies, still byte-identical. 21 screenshots (7 pages x 2000,
                           1180, 390) hashed identically before and after, and two runs of the
                           unchanged tree hashed identically first, so the comparison could fail
+
+2026-09-17  08-notebook   unit-08-notebook, widened by PK: the notebook had become the page again,
+                          so the lab is every catalogue mechanism in PyTorch (34 variants, eight
+                          families, one Mixer interface) plus a bake-off, behind the train extra
+                          (D16). NO NUMBER FROM MEMORY, MADE MECHANICAL: verify_lab_sources.py
+                          downloads each paper from an allowlist and re-finds every quote -- 172
+                          records verified, 19 flagged SPOT-CHECK for PK. The verifier was itself
+                          watched failing: it once accepted any host, could not check a config-file
+                          quote, and its allowlist test passed with the allowlist deleted. FOUND
+                          ONLY ON THE M4: 11 variants failed on MPS (no float64) with every CPU test
+                          green. STOPS HERE, on the queue's own rule: the guard refused ci.yml
+                          ([standards]) with no .claude/UNIT.md, so the ten torch-gated lab files are
+                          in OPTIONAL_DEPENDENCY_GATES and in no CI job -- the reachability test is
+                          red until PK writes UNIT.md. The builder rewrite (guard change, PR 0) and
+                          the reference-code comparison (Docker not running) wait on PK too. Four
+                          security audits over the run: clean. #188 opened as a draft
 ```

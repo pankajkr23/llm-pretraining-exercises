@@ -434,11 +434,60 @@ Put the measure on the element carrying the type, every time.
 only the default, so the 111-character line existed for two commits with the suite green. While a
 harness lives, every guard that can differ between variants has to run against both.
 
+## The attention lab: the mechanisms, runnable
+
+`src/attention/lab/` implements every catalogue mechanism in PyTorch, plus lightning attention and
+three hybrid stacks, behind the `train` extra (`DECISIONS.md` D16). PK asked for it after the
+notebook turned out to be a copy of the page: **the page is for readers; the notebook is for
+learning, and it learns by running code.** Nothing in the lab feeds the page, and nothing on the
+page may cite a lab run.
+
+Modules: `base.py` (the `Mixer` interface, `MixerSpec`, `Param`) · `registry.py` · `hparams.py`
+(numbers from the catalogue or `sources.py`, and their trust) · `sources.py` · `ops.py` (masks,
+attention with weights, RoPE angles) · `describe.py` (one variant's documentation) · `core.py` ·
+`positions.py` · `mla.py` · `sparse.py` · `linear.py` · `delta.py` · `ssm.py` · `hybrid.py` ·
+`model.py` (a small decoder, mixer chosen per layer) · `data.py` (exercise 09's corpus, and
+associative recall) · `experiments.py` (tasks, `ExperimentSpec`, `run`, `compare`) · `runs.py`
+(provenance; `save` refuses an incomplete block and writes only under `artifacts/`).
+`verified.json` is the quote ledger. `docs/ATTENTION_LAB.md` is generated from all of it.
+
+The rules, each of which has already been broken once while building it:
+
+- **No number from memory.** A `Param` is `catalogue:<key>.<size>`, `lab:<id>` from `sources.py`, or
+  `ours` with a note of at least six words. An implementing agent once filled a paper-scale width
+  with a remembered Llama 2 value; it was replaced by the width the RoPE paper states.
+- **A sourced number is not trusted until `tools/verify_lab_sources.py` has re-found it.** The tool
+  downloads each document from an allowlist of hosts (redirects included) into gitignored
+  `artifacts/sources/`, finds the quote as a contiguous run of its characters, and checks the number
+  is written in it as a whole number. It must run **outside the sandbox**: the sandbox proxy
+  truncates large pages and turns real quotes into false "absent" results. Its match modes are
+  `exact`, `whitespace-insensitive` and `typographic` — the last is labelled, never passed off as
+  exact.
+- **Verbatim is not relevant.** Each ledger record also carries `about_the_quantity`,
+  `relevance_note` and `judged_by`. A note starting `SPOT-CHECK:` is a judgement a person should
+  re-read, and the documentation prints it as *flagged for review*.
+- **The document is regenerated, never edited.** After any lab change run `tools/build_lab_docs.py`;
+  `test_the_committed_lab_document_is_what_the_code_renders` fails otherwise.
+- **MPS has no float64.** A float64 buffer makes `.to("mps")` fail, and eleven variants did while
+  every CPU test passed. Keep precise constants as plain CPU attributes, compute on
+  `ops.float64_device(t)`, and move the result per call. A test forbids float64 buffers; the
+  computations themselves are only caught by running on an Apple GPU.
+- **A new variant needs no new generic test**, and must not add one: registering it puts it under
+  causality, stepwise-equals-full, declared state growth and a one-batch overfit. A check that does
+  not apply goes in `MixerSpec.exempt`, never a skip. What the family asserts about itself goes in
+  its own `test_attention_lab_<family>.py`, watched failing once.
+- **Where the paper disagrees with itself, say which reading was implemented.** HD-RoPE's Algorithm 2
+  is not the rotation its Eq 13 prints; Gated DeltaNet's printed chunkwise output line does not
+  reproduce its recurrence. Both are in the variant's *Checked against* line.
+
 ## Running it
 
 ```bash
-uv sync --all-packages                                    # no extras: this exercise needs no torch
+uv sync --all-packages                                    # the chronology and the page need no torch
 uv run pytest src/exercises/08-modern-attention-variants
+
+uv sync --all-packages --extra train                      # the lab needs torch
+uv run python src/exercises/08-modern-attention-variants/tools/build_lab_docs.py --check
 ```
 
 Test modules are prefixed `test_attention_*`. pytest imports by **basename**, so a second

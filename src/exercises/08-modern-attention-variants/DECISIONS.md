@@ -90,7 +90,7 @@ exist, so if that happens somebody has to look rather than let the prose quietly
 
 ---
 
-## D6 · No torch, and no optional extra
+## D6 · No torch, and no optional extra — superseded for `attention/lab/` by D16
 
 **Decision.** `numpy` is the only dependency.
 
@@ -316,3 +316,34 @@ wrong; record the rest here.
 material gets wrong"* as hand-written prose above a generated list of three — one edit from saying
 three above two, with nothing red. It is `Spell(items.length)` now. This is the repo's most
 expensive documented failure and it was one deletion away in the section about being wrong.
+
+---
+
+## D16 — A runnable lab, because the person learning from this asked for one
+
+**Decision.** `attention/lab/` implements every mechanism in the catalogue in PyTorch — thirty
+entries plus lightning attention and the hybrid stacks — behind an optional `train` extra, with a
+generated document (`docs/ATTENTION_LAB.md`) and a notebook that runs them. The rest of the package
+stays torch-free, so D6 still holds for everything the page is built from.
+
+**Why.** PK, 2026-09-17: the notebook had become a copy of the page, and the page is for readers.
+The person learning attention needs code to run and change — a sinusoid to plot, a cache to measure,
+a delta rule to watch succeed where linear attention fails. D6 named exactly this as what would
+overturn it; its alternative, a numpy six-token example, teaches the formula and none of the
+mechanisms that differ by what they keep between tokens.
+
+**How the numbers stay honest.** Every number a variant is built with is a `Param` that names its
+source. A value the catalogue states is read from the catalogue, never retyped. A value it does not
+state is recorded in `lab/sources.py` with its sentence. **Neither is trusted for being written
+down:** `tools/verify_lab_sources.py` downloads each document and re-finds each quote as a
+contiguous run of its characters, and its first run over the catalogue's own 78 quotes found four
+that were typed with ASCII where the paper prints `×`, `’` or `−` — correct in substance, not
+verbatim, and now labelled as such rather than silently accepted. Anything no source states is
+`ours`, with the reason, and the document prints it as our choice.
+
+**What it costs.** One more module family behind an extra, which is the pattern D6 was avoiding, and
+a CI job that has to name the lab's test files. The chronology's tests still need no extra.
+
+**What would overturn it.** A lab that drifts from the papers it cites: if keeping the ledger
+verified costs more than the lab teaches, the lab should shrink to the variants that can be kept
+honest, not relax the check.
