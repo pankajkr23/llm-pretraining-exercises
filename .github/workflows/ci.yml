@@ -256,6 +256,16 @@ jobs:
             src/exercises/06-build-training-dataset/tests/test_trainingdata_opus_score.py \
             src/exercises/07-model-embeddings-internals/tests/test_embeddings_experiment.py \
             src/exercises/07-model-embeddings-internals/tests/test_embeddings_heads.py \
+            src/exercises/08-modern-attention-variants/tests/test_attention_lab.py \
+            src/exercises/08-modern-attention-variants/tests/test_attention_lab_core.py \
+            src/exercises/08-modern-attention-variants/tests/test_attention_lab_delta.py \
+            src/exercises/08-modern-attention-variants/tests/test_attention_lab_hybrid.py \
+            src/exercises/08-modern-attention-variants/tests/test_attention_lab_linear.py \
+            src/exercises/08-modern-attention-variants/tests/test_attention_lab_mla.py \
+            src/exercises/08-modern-attention-variants/tests/test_attention_lab_positions.py \
+            src/exercises/08-modern-attention-variants/tests/test_attention_lab_runtime.py \
+            src/exercises/08-modern-attention-variants/tests/test_attention_lab_sparse.py \
+            src/exercises/08-modern-attention-variants/tests/test_attention_lab_ssm.py \
             src/exercises/09-loss-functions-output-heads/tests/test_lossheads_equivalences.py \
             src/exercises/09-loss-functions-output-heads/tests/test_lossheads_harness.py \
             src/exercises/10-training-loop/tests/test_trainloop_step.py \
