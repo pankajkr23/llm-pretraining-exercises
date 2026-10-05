@@ -1880,4 +1880,20 @@ predates the harness — so it is logged as what it was.
                           red until PK writes UNIT.md. The builder rewrite (guard change, PR 0) and
                           the reference-code comparison (Docker not running) wait on PK too. Four
                           security audits over the run: clean. #188 opened as a draft
+
+2026-10-05  08-notebook   #188 MERGED by PK. The red reachability test above was fixed inside it:
+                          PK wrote a narrow UNIT.md naming ci.yml only, and debd157 added the ten
+                          lab files to the train job (224 -> 744 torch-gated tests in CI). The
+                          builder was copied into tools/ by PK by hand, so the guard opening (PR 0)
+                          was NOT built and the irreplaceable section is unchanged. Docker still off:
+                          no reference-code comparison
+
+2026-10-05  08-submit     Q2's answer gets a tracked generator, tools/build_q2_answer.py, reading
+                          build_web_data.payload() so the answer and the page share one source. The
+                          hand-written file was stale three ways (a fixed 404's banner, a refuted
+                          arc, an old window table). FOUR SENTENCES IN THE FIRST DRAFT OVERREACHED
+                          and were cut before commit -- each checked against the data, not read
+                          for tone. Three mutations of the generator each turned the right test
+                          red. Both live links checked 200 anonymously. Submitting 08 and 10 is PK's.
+                          #189 opened
 ```
