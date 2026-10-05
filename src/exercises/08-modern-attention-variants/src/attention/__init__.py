@@ -7,10 +7,11 @@ existed at that moment.
 
 That framing is what makes the exercise unusual, and it decides the shape of this package:
 
-- **The evidence is a chronology, not a training run.** Nothing here trains a model. The claims are
-  a set of dates, each read from the primary source, plus closed-form arithmetic for the costs the
-  dates are a response to. So there is no torch, and CI verifies the whole exercise rather than
-  skipping its heaviest part.
+- **The evidence is a chronology, not a training run.** Nothing in the chronology trains a model.
+  Its claims are a set of dates, each read from the primary source, plus closed-form arithmetic for
+  the costs the dates are a response to. So these modules need no torch, and CI verifies them
+  without any extra. The runnable implementations live apart, in `attention.lab`, behind the
+  `train` extra (DECISIONS.md D16).
 - **A date with no source is not publishable.** We were warned that an agent asked for a launch
   date will supply a confident one it has half remembered, and that is the failure mode this
   package is built to make impossible. `sources.Source` will not construct a `verified` citation
@@ -25,4 +26,6 @@ Modules:
     `sources`    the citation model — what was read, from where, quoted, and when
     `catalogue`  the mechanisms, their trade-offs, and the coverage list the requirements mandates
     `timeline`   ordering, and the eras the order reveals
+    `story`      the six chapters the page groups the mechanisms into
+    `lab`        runnable PyTorch implementations of every mechanism (needs the train extra)
 """

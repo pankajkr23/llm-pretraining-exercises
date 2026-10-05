@@ -10,6 +10,28 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Exercise 08 has an attention lab: every mechanism on its timeline, runnable.** The chronology
+  said when each mechanism appeared; nothing in the exercise computed one. `attention/lab/`
+  implements all thirty catalogue mechanisms in PyTorch — from Bahdanau's additive attention and
+  sinusoidal positions through sparse attention, DeltaNet and Mamba — plus lightning attention and
+  three hybrid stacks, including the layer pattern Kimi K3's report states. Every variant is held to
+  one contract by tests it never had to write: output never depends on a later token, decoding one
+  token at a time equals the full pass, the state grows as declared, and a small model built around
+  it memorises a batch. A small decoder and four experiments (`lm`, `recall`, `extrapolate`,
+  `cost`) compare them, and every result carries its provenance. Needs `--extra train`; the page and
+  the catalogue are unchanged.
+- **No number in the lab is typed from memory, and a tool checks that.**
+  `tools/verify_lab_sources.py` downloads each cited document from an allowlist of hosts and
+  re-finds every quote as a contiguous run of its characters, with the number written in it — 172
+  records, all verified, each also judged to be about the quantity it is quoted for. It was tested
+  to fail first: it once accepted any host, could not check a quote from a config file, and its
+  allowlist test passed with the allowlist deleted.
+- **`docs/ATTENTION_LAB.md` explains each variant in code**: the diff against the variant it starts
+  from, every parameter with its value at lab and paper scale and how far to trust it, its shapes and
+  the state it keeps. It is generated, and a test fails when it drifts from the code.
+
 ### Removed
 
 - **Exercise 03's retired unit grid stops shipping in eight stylesheets.** `_shared/explainer.css`

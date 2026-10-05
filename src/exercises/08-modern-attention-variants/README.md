@@ -31,6 +31,10 @@ construct.
   at-a-glance table: all thirty on one line each, with *when you would pick it* against every one.
   That field is on all thirty entries in the catalogue and the page used to render it exactly once,
   inside a panel that shows one mechanism at a time and only after a click.
+- **Wanting to run the mechanisms rather than read about them** — go to
+  [The attention lab](#the-attention-lab). Every mechanism on the timeline is implemented there in
+  PyTorch, and [`docs/ATTENTION_LAB.md`](docs/ATTENTION_LAB.md) shows, per variant, the code it
+  changes, every number it is built with and where each number came from.
 
 ## What the two bills are
 
@@ -102,10 +106,56 @@ the catalogue exactly once. `cache.tokens_before_wall()` holds the three crossin
 figure animates towards, as the same arithmetic as the invoice solved for the context instead of the
 bytes — so the figure and the table cannot disagree.
 
+## The attention lab
+
+The chronology says *when* each mechanism appeared and *why*. The lab is where they **run**: every
+catalogue mechanism, plus lightning attention and three hybrid stacks, implemented in PyTorch under
+`src/attention/lab/` so they can be changed, compared and trained on small models. It was added
+because the person learning from this exercise asked for code to try, not a second copy of the page
+(`DECISIONS.md` D16). It needs the `train` extra; the rest of the package still needs no torch.
+
+| module | owns |
+| --- | --- |
+| `base.py` | the `Mixer` interface every variant implements, `MixerSpec`, and `Param` — a number that carries where it came from |
+| `registry.py` | where variants register, and where the notebook, the documentation and the tests find them |
+| `hparams.py` | reading a number from the catalogue or from `sources.py`, never typing it, and saying how far to trust it |
+| `sources.py` | the sourced numbers the catalogue does not carry, each with its quote and location |
+| `ops.py` | the shared pieces: the causal mask, attention with explicit weights, RoPE angles, head splitting |
+| `describe.py` | one variant's documentation: the diff against its parent, its configuration, its shapes, its state |
+| `core.py` | Bahdanau's additive attention, scaled dot-product attention, MQA, GQA, and FlashAttention's tiled pass |
+| `positions.py` | sinusoidal, learned absolute, RoPE, ALiBi, NTK-aware scaling, YaRN, DroPE, HD-RoPE |
+| `mla.py` | multi-head latent attention |
+| `sparse.py` | sliding window, strided and fixed patterns, top-k, Reformer, attention sinks, NSA, DeepSeek CSA, MSA |
+| `linear.py` | linear attention and lightning attention, each in its parallel and recurrent form |
+| `delta.py` | the delta rule, DeltaNet, Gated DeltaNet, Gated DeltaNet-2 and Kimi Delta Attention |
+| `ssm.py` | Mamba's selective scan and Mamba-3 |
+| `hybrid.py` | layer-pattern stacks: the KDA hybrid, the lightning hybrid and the Kimi K3 stack |
+| `model.py` | a small decoder whose token mixer is chosen by name, per layer |
+| `data.py` | exercise 09's corpus and tokenizer, and a synthetic associative-recall task |
+| `experiments.py` | the tasks (`lm`, `recall`, `extrapolate`, `cost`), `ExperimentSpec`, `run` and `compare` |
+| `runs.py` | provenance for every result, and a `save` that refuses an incomplete block and writes only to `artifacts/` |
+
+**Adding a variant** is one `Mixer` subclass and one `register(MixerSpec(...))`. It is then held to
+the lab's contract by `tests/test_attention_lab.py` with no new test — output never depends on a
+later token, decoding one token at a time equals the full pass, the state grows the way the variant
+declares, and a one-layer model built around it memorises a batch — and it appears in the generated
+documentation and in the notebook's comparisons.
+
+**No number in the lab is typed from memory.** A number is either read from the catalogue, read from
+`sources.py`, or marked as our own choice with the reason. Every sourced number is re-found in its
+downloaded paper by `tools/verify_lab_sources.py`, which checks the quote as a contiguous run of the
+document's own characters and that the number is written in it; the results are the ledger
+`src/attention/lab/verified.json`, and a test fails on any sourced number the ledger has not
+verified. Where the quote was judged relevant but a person should look again, the ledger says
+`SPOT-CHECK`, and the documentation marks that number *flagged for review*.
+
+**What the papers themselves got wrong, found while implementing them**, is recorded in
+[`PROGRESS.md`](PROGRESS.md) rather than smoothed over.
+
 ## Run it
 
 ```bash
-uv sync --all-packages                                    # no extras — this exercise needs no torch
+uv sync --all-packages                                    # the chronology and the page need no torch
 uv run pytest src/exercises/08-modern-attention-variants
 
 # the timeline itself, and the pressure in each period
@@ -118,6 +168,11 @@ for m in in_order(load()):
 for p in pressure_by_period(load()):
     print(p.start, p.end, p.dominant or 'no single pressure', p.counts)
 "
+# the attention lab: torch, the lab's tests, and its generated documentation
+uv sync --all-packages --extra train
+uv run pytest src/exercises/08-modern-attention-variants/tests/test_attention_lab*.py
+uv run python src/exercises/08-modern-attention-variants/tools/build_lab_docs.py        # after any lab change
+uv run python src/exercises/08-modern-attention-variants/tools/verify_lab_sources.py    # re-downloads and re-checks every quote
 ```
 
 ## The evidence
@@ -322,9 +377,18 @@ ever makes it robust, so the hedge cannot outlive its reason.
 
 ## What this cannot establish
 
-- **This is a chronology, not an experiment.** Nothing here was trained, and no claim about which
+- **The chronology is not an experiment.** Nothing on the page was trained, and no claim about which
   mechanism is *better* is measured — the trade-offs are read from the papers and from the source material,
   not reproduced. Where a paper reports a number, it is attributed to that paper.
+- **The lab's implementations are references, not the papers' systems.** They are written to be read
+  and checked at toy scale, on a small frozen corpus, with models of a few million parameters. A
+  comparison run there says how these implementations behave on that corpus and nothing about the
+  papers' results; their speeds say nothing about production kernels; and a long run reads the corpus
+  several times over, so it measures memorisation as much as modelling. None of it feeds the page.
+- **Some implementations fill a gap the paper leaves open**, and some follow a paper whose printed
+  equation disagrees with its own algorithm. Each such choice is named in the variant's section of
+  [`docs/ATTENTION_LAB.md`](docs/ATTENTION_LAB.md). Kimi K3's Attention Residuals were not read and
+  are not implemented.
 - **A first-appearance date is not the whole story.** Ideas have precursors, and several entries
   here have contested attributions that the entry records rather than resolves — learned absolute
   positions in particular go back at least to 2016 and arguably to 2015, through a lead we did not

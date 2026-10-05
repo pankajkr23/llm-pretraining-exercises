@@ -23,7 +23,7 @@ pipeline is fine, and the link must resolve for a logged-out stranger.
 | O1 | **The catalogue** | **done** | 30 mechanisms, 2014 to Aug 2026, every date read from the primary source and cross-checked against the source's own wording. 19 required by the coverage list + 5 beyond it. |
 | O2 | **The arithmetic** | **done** | The source material's 6.44 GB / 51.54 GB / 4× GQA all reproduce exactly from `cache.py`. |
 | O3 | **The page** | **done** | Twelve spine sections, the two-object mechanism figure and the timeline, at `/08-modern-attention-variants/`. Registered in the landing card, `SPINE_ENFORCED` and `OPTIONAL_DEPENDENCY_GATES` in the same change. (The browser-test count this row used to carry went stale four times over; `uv run pytest src/exercises/08-modern-attention-variants -m integration` answers it correctly.) |
-| O4 | **Question 2's written answer** | **ready to submit** | `artifacts/q2_answer.txt` (gitignored) is generated from `catalogue.py` and `timeline.py`, so every count, date and citation in it is derived rather than typed — regenerate it rather than editing it. **The link is live**: v0.13.0 was tagged on 2026-09-02, PK approved the production gate, and `https://llm-pretraining-demos.vercel.app/08-modern-attention-variants/` returns **200** to an anonymous request with no redirect and no login wall — `chapters.js`, `data.js`, `page-extra.css` and `/_shared/tokens.css` all 200 as well, which is the check that matters, because a page that loads while its data file 404s renders empty. Submitting is PK's: the platform takes the app link, the GitHub repo, and the written answer. |
+| O4 | **Question 2's written answer** | **stale — regenerate before submitting** | `artifacts/q2_answer.txt` (gitignored) is generated from `catalogue.py` and `timeline.py`, so every count, date and citation in it is derived rather than typed — regenerate it rather than editing it. **The link is live**: v0.13.0 was tagged on 2026-09-02, PK approved the production gate, and `https://llm-pretraining-demos.vercel.app/08-modern-attention-variants/` returns **200** to an anonymous request with no redirect and no login wall — `chapters.js`, `data.js`, `page-extra.css` and `/_shared/tokens.css` all 200 as well, which is the check that matters, because a page that loads while its data file 404s renders empty. Submitting is PK's: the platform takes the app link, the GitHub repo, and the written answer. **Corrected 2026-09-17:** no generator for this file exists in the repository, and its text no longer matches the code — it describes the arc as "compute, then cache, then both" while `test_attention_timeline` asserts cache never dominates, and it still carries a resolved 404 banner. It needs a tracked generator built on `timeline.arc_verdict` before it is submitted. |
 | O5 | **A mechanism figure** | **done** | Figure 1: the causal score triangle beside the KV-cache column, with eight variants as predicates rather than pictures. Three browser tests make it falsifiable — switching must change the drawing, GQA must touch no score, linear attention must leave no per-position square. |
 | O10 | **Sourced sizes for every mechanism** | **done** | 80 sizes, 78 quoted verbatim from the primary paper. Agents proposed, a mechanical substring check against the downloaded text disposed: 82 proposed, 82 verbatim, 0 fabrications. |
 | O11 | **Readability pass to a named benchmark** | **done** | Six-agent audit against Raschka's visual guide and the ladder-of-readers rubric: 75 findings, 37 edits, all applied. Six themes × two widths screenshotted, clean console throughout. |
@@ -38,7 +38,8 @@ pipeline is fine, and the link must resolve for a logged-out stranger.
 | O14 | **Six-persona rebuild for readability** | **done** | A teenager, an engineer, a researcher, a sceptic, a grader and a Raschka reader read the page end to end. Two found factual defects. Five changes applied: the borrowed plate/well vocabulary removed, ~900 words cut and 190 moved to `docs/METHOD.md`, the key split to where the glyphs and the byte figures are first used, an at-a-glance table of all thirty, and an exit line after the chronology. |
 | O15 | **The state chapter held two mechanisms that keep a cache** | **done** | Chapter VI promised "a fixed-size state" and "every one of them pays in the same single way" while holding NSA and DeepSeek CSA, both of which build a score grid and keep a KV cache. Moved to Chapter III; VI is now exactly the eight STATE entries. A guard asserts that property with a broken twin. |
 | O16 | **Five reader-facing defects with a green suite** | **done** | The invoice's cut line truncated mid-word at every width; the masthead's accent bar struck through the opening sentence; the table's column heads survived on phones because `display:none` lost on source order; the key's ~ note rendered at body size; and the page claimed "almost every mechanism" attacks a bill when ten of thirty attack neither. Each found by looking; three new guards, each watched failing. |
-| O6 | **The notebook** | **done** | `notebooks/S08-modern-attention-variants.ipynb`, 24 cells, built by a 314-line builder that imports `attention.*` in six code cells rather than re-implementing anything. Outputs stripped. `tests/test_notebook_builders.py` passes locally — the only place it can, since both files are gitignored. |
+| O6 | **The notebook** | **rebuilt as a laboratory** | The first version was a copy of the page — 28 cells, none of which ran attention on a tensor. PK rejected it: the page is for readers, the notebook is for learning. It now runs every variant in `attention.lab`, draws what the code computes, asserts the identities that define each one, and trains small models to compare them (`LITE` runs top to bottom on an M4 in under three minutes). The builder stays gitignored. |
+| O20 | **The attention lab** | **built** | Every catalogue mechanism, plus lightning attention and three hybrid stacks (Kimi Linear 3:1, MiniMax 7:1, Kimi K3), implemented in PyTorch under `attention/lab/` behind the `train` extra (DECISIONS.md D16). One `Mixer` interface; generic tests hold every variant to causality, stepwise-equals-full, declared state growth and a one-batch overfit; each family asserts its own identities, each watched failing. Every sourced number is re-found in its downloaded paper by `tools/verify_lab_sources.py` — 172 records, all verified, 19 flagged for a human spot-check. `docs/ATTENTION_LAB.md` is generated from the code and a test fails when it drifts. |
 
 ---
 
@@ -95,6 +96,30 @@ which was meant — so neither number is published alone.
 ---
 
 ## Change log
+
+### 2026-09-17 (the attention lab, and the notebook rebuilt around it)
+
+- **Why.** PK: the notebook had become the page again, and the page is for readers. The person
+  learning attention needs code to run — from sinusoidal positions through sparse attention to what
+  Kimi K3 and MiniMax actually did.
+- **What.** `attention/lab/`: 34 variants across eight families, one interface, a registry, a
+  provenance-carrying parameter type, a small decoder, four experiment tasks (`lm`, `recall`,
+  `extrapolate`, `cost`) and a result bundle that refuses to save without its provenance.
+- **How the numbers were kept honest.** Research agents proposed quotes; `tools/verify_lab_sources.py`
+  downloaded every document and re-found each quote as a contiguous run of its characters. Its first
+  run over the catalogue's own 78 quotes found four typed with ASCII where the paper prints `×`,
+  `’` or `−` — labelled `typographic`, not passed as exact. It was itself tested to fail: it once
+  accepted any URL, could not check a quote from a config file, and its allowlist test passed with
+  the allowlist deleted; all three are fixed and guarded.
+- **Findings from the papers, recorded rather than smoothed over.** HD-RoPE's Algorithm 2 is not the
+  `Qᵀ R Q` its Eq 13 prints, and its printed `Q₄` has determinant −1. Gated DeltaNet's printed
+  chunkwise output line does not reproduce its own recurrence. Kimi K3's report states its decay
+  floor formula. MiniMax-M2 returned to full attention in every layer.
+- **Found only by running it on the laptop.** Eleven variants failed on Apple's MPS backend, which has
+  no float64, while every CPU test passed. Precise constants are now kept on the CPU and moved per
+  call, and a test forbids float64 buffers.
+- **Still open.** Attention Residuals (Kimi K3's cross-layer mechanism) were not read and are not
+  implemented. The reference-code comparison needs Docker.
 
 ### 2026-09-02 (the A/B decided, and the harness retired)
 
