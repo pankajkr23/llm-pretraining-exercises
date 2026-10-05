@@ -10,6 +10,8 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+## [0.16.0] — 2026-10-05
+
 ### Added
 
 - **Exercise 08's Question 2 answer is generated, so it can no longer go stale.** It had been
@@ -5812,7 +5814,8 @@ First tagged release: two interactive exercises live on Vercel with a gated depl
 - **Tooling & conventions:** uv workspace (Python 3.12), ruff lint/format, pytest (unit +
   integration split), GitHub Actions CI, and a PR-only workflow documented in `AGENTS.md`.
 
-[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.12.0...v0.13.0
