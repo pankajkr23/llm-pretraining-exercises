@@ -1903,5 +1903,6 @@ predates the harness — so it is logged as what it was.
                           explainer.css cleanup, the attention lab's docs and the Q2 generator are
                           not live. CHECKED WITH release.yml's OWN awk EXTRACTOR: have_notes=TRUE,
                           53 lines, stops before [0.15.0], and v0.15.0's notes extract
-                          byte-identically to main. Root version stays pinned at 0.0.0
+                          byte-identically to main. Root version stays pinned at 0.0.0.
+                          #190 opened
 ```
