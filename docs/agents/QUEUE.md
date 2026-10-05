@@ -1894,5 +1894,6 @@ predates the harness — so it is logged as what it was.
                           arc, an old window table). FOUR SENTENCES IN THE FIRST DRAFT OVERREACHED
                           and were cut before commit -- each checked against the data, not read
                           for tone. Three mutations of the generator each turned the right test
-                          red. Both live links checked 200 anonymously. Submitting 08 and 10 is PK's
+                          red. Both live links checked 200 anonymously. Submitting 08 and 10 is PK's.
+                          #189 opened
 ```
