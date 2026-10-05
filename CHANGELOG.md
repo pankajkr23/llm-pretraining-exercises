@@ -12,6 +12,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 08's Question 2 answer is generated, so it can no longer go stale.** It had been
+  written once by hand and kept a 404 banner weeks after the link was fixed, along with an arc
+  ("compute, then cache, then both") that the timeline's own verdict refutes.
+  `tools/build_q2_answer.py` writes it from the same payload the page is built from: the findings
+  visible only in date order, every mechanism outside the coverage list with its v1 submission line,
+  and three corrections to the source material. Each sentence about the arc is chosen by the verdict
+  it reports; a claim that holds under only one bucketing is printed as one reading, not a finding.
+  A test feeds in a fabricated verdict to prove the text follows the evidence.
+
 - **Exercise 08 has an attention lab: every mechanism on its timeline, runnable.** The chronology
   said when each mechanism appeared; nothing in the exercise computed one. `attention/lab/`
   implements all thirty catalogue mechanisms in PyTorch — from Bahdanau's additive attention and

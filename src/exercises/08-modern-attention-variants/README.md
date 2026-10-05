@@ -168,6 +168,9 @@ for m in in_order(load()):
 for p in pressure_by_period(load()):
     print(p.start, p.end, p.dominant or 'no single pressure', p.counts)
 "
+# Question 2's answer, written from the same data the page renders (gitignored output)
+uv run python src/exercises/08-modern-attention-variants/tools/build_q2_answer.py
+
 # the attention lab: torch, the lab's tests, and its generated documentation
 uv sync --all-packages --extra train
 uv run pytest src/exercises/08-modern-attention-variants/tests/test_attention_lab*.py

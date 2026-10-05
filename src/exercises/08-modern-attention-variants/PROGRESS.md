@@ -23,7 +23,7 @@ pipeline is fine, and the link must resolve for a logged-out stranger.
 | O1 | **The catalogue** | **done** | 30 mechanisms, 2014 to Aug 2026, every date read from the primary source and cross-checked against the source's own wording. 19 required by the coverage list + 5 beyond it. |
 | O2 | **The arithmetic** | **done** | The source material's 6.44 GB / 51.54 GB / 4× GQA all reproduce exactly from `cache.py`. |
 | O3 | **The page** | **done** | Twelve spine sections, the two-object mechanism figure and the timeline, at `/08-modern-attention-variants/`. Registered in the landing card, `SPINE_ENFORCED` and `OPTIONAL_DEPENDENCY_GATES` in the same change. (The browser-test count this row used to carry went stale four times over; `uv run pytest src/exercises/08-modern-attention-variants -m integration` answers it correctly.) |
-| O4 | **Question 2's written answer** | **stale — regenerate before submitting** | `artifacts/q2_answer.txt` (gitignored) is generated from `catalogue.py` and `timeline.py`, so every count, date and citation in it is derived rather than typed — regenerate it rather than editing it. **The link is live**: v0.13.0 was tagged on 2026-09-02, PK approved the production gate, and `https://llm-pretraining-demos.vercel.app/08-modern-attention-variants/` returns **200** to an anonymous request with no redirect and no login wall — `chapters.js`, `data.js`, `page-extra.css` and `/_shared/tokens.css` all 200 as well, which is the check that matters, because a page that loads while its data file 404s renders empty. Submitting is PK's: the platform takes the app link, the GitHub repo, and the written answer. **Corrected 2026-09-17:** no generator for this file exists in the repository, and its text no longer matches the code — it describes the arc as "compute, then cache, then both" while `test_attention_timeline` asserts cache never dominates, and it still carries a resolved 404 banner. It needs a tracked generator built on `timeline.arc_verdict` before it is submitted. |
+| O4 | **Question 2's written answer** | **ready — PK submits** | `artifacts/q2_answer.txt` (gitignored) is written by `tools/build_q2_answer.py`, which reads the same `build_web_data.payload()` the page is built from, so the answer and the live page cannot disagree. Regenerate it, never edit it; `--check` says whether the written copy is current. **Corrected 2026-10-05:** the hand-written version had no generator and had gone stale three ways — a banner about a 404 fixed weeks earlier, an arc described as "compute, then cache, then both" that `arc_verdict` refutes, and a window table that no longer matched the catalogue. Each sentence about the arc is now chosen by the verdict it reports, and `tests/test_attention_q2_answer.py` feeds in a fabricated verdict to prove the text follows it. **The link is live:** `https://llm-pretraining-demos.vercel.app/08-modern-attention-variants/` and its `data.js` both returned 200 to an anonymous request on 2026-10-05. The platform takes the app link, the repo, and this answer. |
 | O5 | **A mechanism figure** | **done** | Figure 1: the causal score triangle beside the KV-cache column, with eight variants as predicates rather than pictures. Three browser tests make it falsifiable — switching must change the drawing, GQA must touch no score, linear attention must leave no per-position square. |
 | O10 | **Sourced sizes for every mechanism** | **done** | 80 sizes, 78 quoted verbatim from the primary paper. Agents proposed, a mechanical substring check against the downloaded text disposed: 82 proposed, 82 verbatim, 0 fabrications. |
 | O11 | **Readability pass to a named benchmark** | **done** | Six-agent audit against Raschka's visual guide and the ladder-of-readers rubric: 75 findings, 37 edits, all applied. Six themes × two widths screenshotted, clean console throughout. |
@@ -96,6 +96,22 @@ which was meant — so neither number is published alone.
 ---
 
 ## Change log
+
+### 2026-10-05 (Question 2's answer gets a generator)
+
+- **Why.** O4 called the answer generated; nothing generated it. It had been written once and edited,
+  and it went stale while the code it described moved on: it still warned of a 404 fixed on
+  2026-09-02, still called the arc "compute, then cache, then both" after `arc_verdict` showed the
+  cache bill never wins a window, and its window table predated the 2026 entries.
+- **What.** `tools/build_q2_answer.py` renders the answer from `build_web_data.payload()`: five
+  findings, the eleven mechanisms outside the coverage list with their v1 submission lines, and
+  three corrections to the source material. A claim survives only if the data supports it under both
+  bucket edges; the one that holds under a single slicing is printed as "one reading, not a finding".
+- **Caught while writing it.** Four sentences in the first draft overreached and were fixed before
+  anything was committed: one said every cache-cutting mechanism sat in a window another bill won
+  (one of those windows is a tie), one said every window from 2020 went to both bills (2022-2023 is
+  undecided), one made a claim about the whole field where the catalogue supports only this timeline,
+  and two counts were typed.
 
 ### 2026-09-17 (the attention lab, and the notebook rebuilt around it)
 
