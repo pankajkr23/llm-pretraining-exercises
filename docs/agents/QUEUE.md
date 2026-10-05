@@ -1896,4 +1896,13 @@ predates the harness — so it is logged as what it was.
                           for tone. Three mutations of the generator each turned the right test
                           red. Both live links checked 200 anonymously. Submitting 08 and 10 is PK's.
                           #189 opened
+
+2026-10-05  release       v0.16.0 -- [Unreleased] -> [0.16.0] 2026-10-05, 6 entries in 3 blocks
+                          (Added, Removed, Added): #187, #188 and #189, all merged since v0.15.0.
+                          PRODUCTION IS BEHIND MAIN: it serves v0.15.0, deployed 2026-09-11, so the
+                          explainer.css cleanup, the attention lab's docs and the Q2 generator are
+                          not live. CHECKED WITH release.yml's OWN awk EXTRACTOR: have_notes=TRUE,
+                          53 lines, stops before [0.15.0], and v0.15.0's notes extract
+                          byte-identically to main. Root version stays pinned at 0.0.0.
+                          #190 opened
 ```
