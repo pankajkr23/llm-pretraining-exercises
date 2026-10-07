@@ -230,6 +230,28 @@ def test_it_adds_a_root_readme_row_with_the_prefix_the_doc_guard_matches(generat
     )
 
 
+def test_the_new_row_is_inside_the_table_not_below_it(tmp_path, monkeypatch) -> None:
+    """A blank line ends a Markdown table, so a row after one renders as a stray paragraph.
+
+    The generator once inserted the row directly above the sentence that follows the table, which
+    kept the blank lines between the table and the row. The row was present, carried the right
+    prefix, and passed the test above — and GitHub drew it as text under the table. Four exercises
+    were scaffolded that way before `test_doc_counts_match.py` caught it on the real README.
+    """
+    readme = tmp_path / "README.md"
+    readme.write_text(
+        "| # | Exercise | Summary |\n| --- | --- | --- |\n| 01 | [One](x/) | First. |\n"
+        "\n\nMore exercises are added each week.\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(new_exercise, "ROOT_README", readme)
+    new_exercise.register_readme_row(_spec("02"))
+    lines = readme.read_text(encoding="utf-8").splitlines()
+    table_end = next(i for i, line in enumerate(lines) if not line.startswith("|"))
+    rows = [line for line in lines[:table_end] if line.startswith("| 02 |")]
+    assert rows, "the new row is not inside the table:\n" + "\n".join(lines)
+
+
 def test_it_does_not_register_the_web_gated_things(generated) -> None:
     """**The rule most easily got wrong, and the reason it is a test.**
 

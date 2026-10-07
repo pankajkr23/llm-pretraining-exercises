@@ -522,8 +522,16 @@ def register_readme_row(spec: Spec, apply: bool = True) -> str:
         raise SystemExit(
             "could not find the exercise table in the root README; add the row by hand"
         )
+    # Insert after the table's last row, not above the anchor: a blank line ends a Markdown table,
+    # and the README keeps blank lines between the table and the anchor, so a row placed above the
+    # anchor rendered as a stray paragraph under the table.
+    before = text[: text.index(anchor)]
+    last_row = before.rstrip("\n").rfind("\n|")
+    if last_row == -1:
+        raise SystemExit("could not find the exercise table's last row; add the row by hand")
+    cut = before.index("\n", last_row + 1) + 1
     if apply:
-        ROOT_README.write_text(text.replace(anchor, f"\n{row}{anchor}", 1), encoding="utf-8")
+        ROOT_README.write_text(text[:cut] + row + text[cut:], encoding="utf-8")
     return "added a row to the root README table"
 
 
