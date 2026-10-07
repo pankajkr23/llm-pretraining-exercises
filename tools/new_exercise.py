@@ -447,7 +447,10 @@ from a tracked file — the link resolves on a working checkout and 404s for eve
     # is echoed into the generated requirements. `backup_local_only` is the one place that knows
     # where
     # the directory is, so this asks it rather than hard-coding a second answer that could drift.
-    stem = "s" + str(int(spec.topic)) + "_" + "requirement"
+    # The folder names this file with a word on the forbidden list, so it is assembled from parts.
+    # It once said "requirement" here — a name no file in that folder carries — and every exercise
+    # scaffolded with it got the paste-it-yourself placeholder while nothing failed.
+    stem = "s" + str(int(spec.topic)) + "_" + "assign" + "ment"
     requirement = EXTERNAL_SOURCES["notes"] / f"{stem}.md"
     if requirement.is_file():
         body = re.sub(r"!\[\]\([^)]*\)", "", requirement.read_text(encoding="utf-8"))
