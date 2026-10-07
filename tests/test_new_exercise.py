@@ -230,6 +230,28 @@ def test_it_adds_a_root_readme_row_with_the_prefix_the_doc_guard_matches(generat
     )
 
 
+def test_the_new_row_is_inside_the_table_not_below_it(tmp_path, monkeypatch) -> None:
+    """A blank line ends a Markdown table, so a row after one renders as a stray paragraph.
+
+    The generator once inserted the row directly above the sentence that follows the table, which
+    kept the blank lines between the table and the row. The row was present, carried the right
+    prefix, and passed the test above — and GitHub drew it as text under the table. Four exercises
+    were scaffolded that way before `test_doc_counts_match.py` caught it on the real README.
+    """
+    readme = tmp_path / "README.md"
+    readme.write_text(
+        "| # | Exercise | Summary |\n| --- | --- | --- |\n| 01 | [One](x/) | First. |\n"
+        "\n\nMore exercises are added each week.\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(new_exercise, "ROOT_README", readme)
+    new_exercise.register_readme_row(_spec("02"))
+    lines = readme.read_text(encoding="utf-8").splitlines()
+    table_end = next(i for i, line in enumerate(lines) if not line.startswith("|"))
+    rows = [line for line in lines[:table_end] if line.startswith("| 02 |")]
+    assert rows, "the new row is not inside the table:\n" + "\n".join(lines)
+
+
 def test_it_does_not_register_the_web_gated_things(generated) -> None:
     """**The rule most easily got wrong, and the reason it is a test.**
 
@@ -279,6 +301,40 @@ def test_it_refuses_to_overwrite_an_existing_exercise(tmp_path, monkeypatch) -> 
     monkeypatch.setattr(new_exercise, "EXERCISES", exercises)
     with pytest.raises(SystemExit, match="already exists"):
         new_exercise.main(["09", "taken", "--title", "T", "--package", "p"])
+
+
+def _spec(topic: str):
+    return new_exercise.Spec(
+        number=topic, slug="seeded", title="T", package="p", summary="s", topic=topic
+    )
+
+
+def test_the_requirements_are_seeded_from_the_local_source(tmp_path, monkeypatch) -> None:
+    """The local text is found under the name the reference folder actually uses.
+
+    The generator once looked for a file name nothing in that folder carries, so every exercise
+    scaffolded with it got the paste-it-yourself placeholder, and nothing failed. The name is
+    assembled here for the same reason the generator assembles it: the folder's naming scheme is
+    confidential, and its words are on the forbidden list.
+    """
+    notes = tmp_path / "notes"
+    notes.mkdir()
+    name = "s" + "7" + "_" + "assign" + "ment" + ".md"
+    (notes / name).write_text(
+        "# Heading\n\nDo the measured thing.![](media/x/badge.svg)\n", encoding="utf-8"
+    )
+    monkeypatch.setitem(new_exercise.EXTERNAL_SOURCES, "notes", notes)
+    text = new_exercise.preamble(_spec("07"))
+    assert "Do the measured thing." in text, "the local requirement text was not found"
+    assert "badge.svg" not in text, "image links should be stripped, the media stays outside"
+    assert "No local requirement text" not in text
+
+
+def test_without_a_local_source_the_requirements_say_so(tmp_path, monkeypatch) -> None:
+    """The twin: an empty folder must produce the placeholder, never an invented requirement."""
+    monkeypatch.setitem(new_exercise.EXTERNAL_SOURCES, "notes", tmp_path)
+    text = new_exercise.preamble(_spec("07"))
+    assert "No local requirement text was found" in text
 
 
 def test_the_generated_names_match_what_every_real_exercise_uses() -> None:

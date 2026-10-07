@@ -18,6 +18,10 @@ members = [
     "exercise-08-modern-attention-variants",
     "exercise-09-loss-functions-output-heads",
     "exercise-10-training-loop",
+    "exercise-11-optimizers-lr-schedules",
+    "exercise-12-distributed-training",
+    "exercise-13-reversibility",
+    "exercise-14-moe",
     "llm-pretraining-exercises",
 ]
 
@@ -590,6 +594,50 @@ requires-dist = [
     { name = "exercise-09-loss-functions-output-heads", editable = "src/exercises/09-loss-functions-output-heads" },
     { name = "numpy", specifier = ">=2" },
 ]
+
+[[package]]
+name = "exercise-11-optimizers-lr-schedules"
+version = "0.1.0"
+source = { editable = "src/exercises/11-optimizers-lr-schedules" }
+dependencies = [
+    { name = "numpy" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "numpy", specifier = ">=2" }]
+
+[[package]]
+name = "exercise-12-distributed-training"
+version = "0.1.0"
+source = { editable = "src/exercises/12-distributed-training" }
+dependencies = [
+    { name = "numpy" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "numpy", specifier = ">=2" }]
+
+[[package]]
+name = "exercise-13-reversibility"
+version = "0.1.0"
+source = { editable = "src/exercises/13-reversibility" }
+dependencies = [
+    { name = "numpy" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "numpy", specifier = ">=2" }]
+
+[[package]]
+name = "exercise-14-moe"
+version = "0.1.0"
+source = { editable = "src/exercises/14-moe" }
+dependencies = [
+    { name = "numpy" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "numpy", specifier = ">=2" }]
 
 [[package]]
 name = "fastjsonschema"

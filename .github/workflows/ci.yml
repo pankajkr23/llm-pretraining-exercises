@@ -116,6 +116,10 @@ jobs:
               src/exercises/08-modern-attention-variants
               src/exercises/09-loss-functions-output-heads
               src/exercises/10-training-loop
+              src/exercises/11-optimizers-lr-schedules
+              src/exercises/12-distributed-training
+              src/exercises/13-reversibility
+              src/exercises/14-moe
               tests
     steps:
       - uses: actions/checkout@v5

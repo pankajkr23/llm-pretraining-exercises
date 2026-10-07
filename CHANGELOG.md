@@ -10,6 +10,24 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- **Exercises 11 to 14 are scaffolded**: optimizers and learning-rate schedules, ZeRO on simulated
+  devices, reversible training, and turning a dense model into a mixture of experts. Each has the
+  standard skeleton, a smoke test, a CI shard entry, a root README row, and — locally only — a
+  notebook builder, its notebook, and a requirements document copied from the local reference
+  material. Nothing is implemented yet.
+
+### Fixed
+
+- **The exercise generator never found the requirement text it was built to copy.** It looked for a
+  file name the reference folder does not use, so every exercise it scaffolded got the
+  paste-it-yourself placeholder, and no test checked that the copy happened. It reads the right file
+  now, and a test feeds it one.
+- **The exercise generator put new rows below the root README's table instead of inside it.** A
+  blank line ends a Markdown table, so each row rendered on GitHub as a stray paragraph. Its test
+  checked the row's prefix and passed. A new test asserts the row lands inside the table.
+
 ## [0.16.0] — 2026-10-05
 
 ### Added
