@@ -1905,4 +1905,15 @@ predates the harness — so it is logged as what it was.
                           53 lines, stops before [0.15.0], and v0.15.0's notes extract
                           byte-identically to main. Root version stays pinned at 0.0.0.
                           #190 opened
+
+2026-10-07  scaffold      Exercises 11-14 scaffolded with tools/new_exercise.py after PK supplied the
+                          s11-s14 reference material; it was copied into the notes folder outside
+                          the repo, verified byte for byte, and versioned in the backup store. ALL
+                          FOUR ARE PAST DUE (Sep 12, 19, 26, Oct 3). THE GENERATOR HAD TWO SILENT
+                          DEFECTS, both with green tests: it looked for a requirement file name the
+                          notes folder never used, so it had never seeded one; and it put the root
+                          README row below the table, where GitHub renders it as a paragraph. Both
+                          fixed, each with a test watched failing. A third trap, not a defect: the
+                          commit hooks run ruff through `uv run`, which re-locks, so a commit made
+                          while new pyproject files sit untracked fails with "files were modified"
 ```
