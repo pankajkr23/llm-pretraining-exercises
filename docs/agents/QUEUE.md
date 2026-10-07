@@ -1915,5 +1915,6 @@ predates the harness — so it is logged as what it was.
                           README row below the table, where GitHub renders it as a paragraph. Both
                           fixed, each with a test watched failing. A third trap, not a defect: the
                           commit hooks run ruff through `uv run`, which re-locks, so a commit made
-                          while new pyproject files sit untracked fails with "files were modified"
+                          while new pyproject files sit untracked fails with "files were modified".
+                          #191 opened
 ```
