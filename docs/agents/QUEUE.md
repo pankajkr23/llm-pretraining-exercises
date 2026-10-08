@@ -1940,5 +1940,6 @@ predates the harness — so it is logged as what it was.
                           each carry it once) and its Colab cell installs only its own exercise, not
                           its workspace dependencies -- S10 fixed both by hand, and 12 and 13 must
                           track their notebooks, where test_tracked_notebooks_are_portable will catch
-                          it. 11-14: scaffolded only, all past due; design is being settled with PK
+                          it. 11-14: scaffolded only, all past due; design is being settled with PK.
+                          #192 opened
 ```
