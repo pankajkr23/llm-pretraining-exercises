@@ -11,7 +11,7 @@ through `torch.distributed`. Collectives are ring algorithms written here and ru
 objects.
 
 **Why.** What this exercise has to show is *where the bytes are* and *how many move*, exactly. In
-one process every tensor a device holds is a Python object whose `nbytes` the ledger can add up, and
+one process every tensor a device holds has a storage whose bytes the ledger can add up, and
 every send is a function call a counter can see. Real process groups would add a transport whose
 memory and traffic we could only estimate, would need 32 processes on a laptop or a free Colab
 runtime, and would make the run non-deterministic in ways that hide the bit-identical result. The
@@ -147,6 +147,13 @@ place, or the ring's in-flight chunks.
 **Why.** The claims are about the training state. Activations are a separate bill that ZeRO does not
 shard, and the unrecorded temporaries are at most one unit or one chunk and would make the persistent
 figures harder to compare with the formulas.
+
+**It charges storage, not views.** Each held tensor costs its `untyped_storage().nbytes()`, counted
+once per device however many held tensors share it. The first version charged
+`numel × element_size`, and a shard taken as a view of a full buffer then cost 1/N while keeping
+N/N alive: removing a `.clone()` from a sharded placement went unnoticed by every test. Charging
+storage makes that mistake show up as a ledger that disagrees with the formula, and a test asserts
+that every held tensor owns exactly its storage.
 
 **What would overturn it.** A question about peak device memory in total. That needs activations,
 and a real device's allocator.

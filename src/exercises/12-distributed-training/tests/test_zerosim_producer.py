@@ -37,16 +37,19 @@ def test_save_refuses_an_incomplete_bundle_and_writes_nothing(tmp_path: Path) ->
 @pytest.mark.integration
 def test_the_producer_writes_a_complete_bundle_that_renders(tmp_path: Path) -> None:
     out = tmp_path / "zero.json"
-    assert _tool("run_zero.py").main(["--out", str(out), "--steps", "1"]) == 0
+    # Two steps, not one: with a single step "every step sent the same" cannot be false.
+    assert _tool("run_zero.py").main(["--out", str(out), "--steps", "2"]) == 0
     bundle = json.loads(out.read_text())
 
     assert all(bundle["provenance"].get(field) for field in REQUIRED_FIELDS)
-    assert bundle["config"]["steps"] == 1
+    assert bundle["config"]["steps"] == 2
     for mode, stages in bundle["modes"].items():
         for key, block in stages.items():
             memory, comm = block["memory"], block["communication"]
             assert memory["measured"] == memory["predicted"], (mode, key)
             assert comm["per_step_sent"]["total"] == comm["predicted"]["total"], (mode, key)
+            assert comm["sent_by_step"] == [comm["predicted"]["total"]] * 2, (mode, key)
+            assert comm["every_step_identical"], (mode, key)
             assert block["max_abs_vs_dp"] == 0.0, (mode, key)
 
     text = _tool("render_results.py").render(bundle)

@@ -113,8 +113,12 @@ def _communication(trainer: Trainer) -> dict[str, Any]:
     config, comm, steps = trainer.config, trainer.world.comm, trainer.steps_taken
     padded = sum(spec.padded for spec in trainer.layouts)
     payload = padded * trainer.recipe.grad_bytes
-    per_step = {op: sent[0] // steps for op, sent in comm.sent_by_op.items()}
-    per_step["total"] = comm.sent[0] // steps
+    # Read from the per-step record, and compare every step with the first. The earlier version
+    # divided the run's total by the step count and called the run "identical" when that division
+    # was exact — which is divisibility, not equality.
+    by_step = trainer.comm_by_step
+    per_step = {key: values[0] for key, values in by_step[0].items()}
+    every_step_identical = all(step == by_step[0] for step in by_step)
     predicted = formulas.comm_bytes_per_step(trainer.stage, trainer.n, payload)
     links = {"intra": 0, "inter": 0}
     for (src, dst), nbytes in comm.link_bytes.items():
@@ -123,7 +127,8 @@ def _communication(trainer: Trainer) -> dict[str, Any]:
         "payload_bytes": payload,
         "per_step_sent": per_step,
         "predicted": {op: float(value) for op, value in predicted.items()},
-        "every_step_identical": comm.sent[0] % steps == 0,
+        "sent_by_step": [step["total"][0] for step in by_step],
+        "every_step_identical": every_step_identical,
         "ranks_identical": len(set(comm.sent)) == 1 and comm.sent == comm.received,
         "per_step_link_bytes": links,
         "collectives_per_step": len(comm.calls) // steps,

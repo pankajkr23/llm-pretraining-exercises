@@ -94,6 +94,10 @@ class Trainer:
         }
         self.optimizer_elements = [0] * n
         self.losses: list[list[float]] = []
+        #: Bytes each rank sent during each step, by collective and in total — recorded per step so
+        #: "every step sends the same" is a comparison, not an inference from a divisible total.
+        self.comm_by_step: list[dict[str, list[int]]] = []
+        self._traffic_so_far: dict[str, list[int]] = {}
         self._place_state()
 
     # --- layout ---------------------------------------------------------------------------------
@@ -167,7 +171,21 @@ class Trainer:
 
         self._finish_gradients()
         self._update()
+        self._record_step_traffic()
         return losses
+
+    def _record_step_traffic(self) -> None:
+        """Append what each rank sent during this step: the counters' growth since the last one."""
+        comm = self.world.comm
+        now = {"total": list(comm.sent), **{op: list(v) for op, v in comm.sent_by_op.items()}}
+        before = self._traffic_so_far
+        self.comm_by_step.append(
+            {
+                key: [a - b for a, b in zip(values, before.get(key, [0] * self.n), strict=True)]
+                for key, values in now.items()
+            }
+        )
+        self._traffic_so_far = now
 
     # --- forward and backward on one rank --------------------------------------------------------
 

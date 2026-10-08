@@ -34,6 +34,19 @@ deployed — this exercise has no `web/`.
   property under test — and so it failed. It now keeps a strong reference from inside the
   intercepted all-gather.
 
+- **A view costs its whole storage.** The ledger first charged `numel × element_size`, so a shard
+  sliced out of a full buffer without `.clone()` cost 1/N in the ledger while keeping the full
+  buffer alive — and every test stayed green. It now charges storage bytes, once per device.
+  Do not "save a copy" by putting a view; `test_every_held_tensor_owns_exactly_its_storage` exists
+  for exactly that.
+
+- **`current == peak` does not catch a leak.** A buffer added every step raises both together.
+  The no-growth test compares the held total step by step, and against the formula.
+
+- **The committed bundle must be fresh.** `test_the_bundle_is_from_todays_code` and
+  `..._config` go red after any edit to `zerosim` or `lossheads`, or to `config.py`, until
+  `tools/run_zero.py` and `tools/render_results.py` are re-run. That is the intended workflow.
+
 - **The corpus is shuffled by its total length.** `batches` calls exercise 09's `_corpus` with
   `steps × global_batch` sequences and that function permutes by count, so a one-step config and a
   four-step config start from different first batches. Any comparison between two runs must build

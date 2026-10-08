@@ -1,8 +1,11 @@
 # 12 · Distributed training: ZeRO on 32 simulated GPUs
 
 **Thirty-two simulated devices train one small model four ways — plain data parallelism and ZeRO
-stages 1, 2 and 3 — and every byte of memory and every byte of communication is measured and found
-equal to a formula worked out by hand, while all four train to bit-identical weights.**
+stages 1, 2 and 3. On every device, the bytes of every persistent buffer each stage keeps (weights,
+gradients, master copy, Adam moments) and every byte the ring collectives send are counted, and
+both equal a formula worked out by hand; all four stages train to bit-identical weights.**
+Activations and allocator memory are not counted — see
+[What this cannot establish](#what-this-cannot-establish).
 
 ## How to read this
 
@@ -38,8 +41,8 @@ replicating one more kind of state:
 This exercise builds 32 devices inside one Python process, gives each its own memory and a ledger
 of every tensor it holds, connects them with real ring collectives that count every byte they send,
 and trains exercise 09's transformer on them under each stage. Then it checks three things: that
-the memory each device holds is what the arithmetic below predicts, that the communication is what
-it predicts, and that the stage never changes the result.
+the training state each device keeps is what the arithmetic below predicts, that the communication
+is what it predicts, and that the stage never changes the result.
 
 ## The sixteen bytes
 
@@ -159,9 +162,16 @@ increase in communication for the ability to fit on a quarter of the hardware.
 
 ## Does the stage change the answer?
 
-**No, and here that is shown bit for bit.** After four steps, the weights trained under ZeRO-1, -2
-and -3 are bit-identical to data parallelism's, in both bf16-mixed and fp32. ZeRO changes where
-numbers are stored and how they travel, never what is computed.
+**No, and here that is shown bit for bit.** After the published run's four steps, the weights
+trained under ZeRO-1, -2 and -3 are bit-identical to data parallelism's, in both bf16-mixed and
+fp32 (the tests re-check this on a three-step run of their own). ZeRO changes where numbers are
+stored and how they travel, not what is computed.
+
+**Bit-identical is a property of this simulator, not of ZeRO in general.** Here data parallelism's
+all-reduce *is* a ring reduce-scatter followed by an all-gather, so DP and ZeRO-1/2 add the same
+numbers in the same order by construction, and every stage's optimiser update is elementwise. A
+real library may all-reduce with a different algorithm — a tree, say — which sums in a different
+order; then DP and ZeRO agree only to rounding, as the single-device comparison below shows.
 
 **Against one device trained on the whole global batch** with `torch.optim.AdamW` in fp32, the
 losses agree to a relative 5.7e-08 and the step-one gradients to within rounding. The weights agree
@@ -227,11 +237,14 @@ ledger.
 
 [`RESULTS.md`](RESULTS.md) is generated from `results/zero.json` and is re-checked against it on
 every test run. Every row in it puts a **measured** number beside a **predicted** one. The
-measurements are the real `nbytes` of every tensor each simulated device allocated, the bytes every
-ring hop sent, torch's own FLOP counter, and the trained weights. The predictions are
-`formulas.py`. In the published run, every memory category, every communication count and every
-bytes-per-weight figure at N = 1, 2, 3, 4, 8, 16 and 32 matches its prediction exactly. N = 3 is
-there on purpose, because it is the one size where padding is not zero.
+measurements are the storage bytes of every persistent and transient buffer a stage puts on each
+simulated device (counted once per storage, so a slice of a larger buffer is charged the whole
+buffer), the bytes every ring hop sent, torch's own FLOP counter, and the trained weights. The
+predictions are `formulas.py`. In the published run, every persistent memory category, every
+communication count and every bytes-per-weight figure at N = 1, 2, 3, 4, 8, 16 and 32 matches its
+prediction exactly. N = 3 is there on purpose, because it is the one size where padding is not
+zero. Activations, temporaries inside one operation and the allocator's own overhead are not
+counted; [What this cannot establish](#what-this-cannot-establish) lists what that leaves out.
 
 ## What this cannot establish
 
@@ -244,8 +257,9 @@ flat ring with no overlap of compute and communication; real libraries use hiera
 and overlap heavily, so its absolute times are pessimistic and only its ratios carry meaning.
 
 **Activations are excluded** from every memory figure, and they are often the larger bill. The
-ledger records the training state ZeRO shards, plus the transient buffers it creates; it does not
-record the temporaries inside one optimiser update or the ring's in-flight chunks.
+ledger records the storage bytes of the training state ZeRO shards, plus the transient buffers it
+creates; it does not record the temporaries inside one optimiser update, the ring's in-flight
+chunks, or anything a real device's allocator adds — caching, fragmentation, alignment.
 
 **The model is tiny** — 666,560 weights, two blocks — chosen so 32 devices finish in seconds. The
 memory and communication formulas are exact at any size and the ladder applies them to 30 billion

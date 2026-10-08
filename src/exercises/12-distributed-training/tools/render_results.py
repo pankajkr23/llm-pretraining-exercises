@@ -295,9 +295,10 @@ reads {_n(corpus["tokens_consumed"])} ({corpus["epochs"]:.3f} epochs — {epochs
 
 ## 1 · Memory per device, measured by the ledger ({main})
 
-Peak bytes held by **one** device in each persistent category, read from its ledger — the sum of
-the real `nbytes` of every tensor the stage allocated. Activations are excluded. The last column
-compares every category against `formulas.bytes_per_device`.
+Peak bytes held by **one** device in each persistent category, read from its ledger — the storage
+bytes behind every tensor the stage put there, each storage counted once (a slice of a larger
+buffer is charged the whole buffer). Activations and allocator overhead are not counted. The last
+column compares every category against `formulas.bytes_per_device`.
 
 {_memory_table(stages)}
 

@@ -2,8 +2,9 @@
 
 **A `Rank` is a device.** It owns its tensors, filed under a *category* — the weights, the
 gradients, the fp32 master copy, the two Adam moments, and the transient buffers ZeRO creates and
-frees. Every `put` and `drop` goes through the rank's `MemoryLedger`, which records the tensor's
-real `nbytes` (`numel × element_size`) and keeps the high-water mark per category and in total.
+frees. Every `put` and `drop` goes through the rank's `MemoryLedger`, which records the bytes of
+the **storage** behind each tensor — not of the view — and keeps the high-water mark per category
+and in total.
 
 **The ledger measures; it never computes.** It has no idea what ZeRO is or what a formula says a
 stage should hold. It adds up the byte sizes of the tensors the stages actually allocate. That is
@@ -138,9 +139,22 @@ class Rank:
         self.node = node
         self.ledger = MemoryLedger()
         self._tensors: dict[tuple[str, str], torch.Tensor] = {}
+        # storage key -> [bytes, how many held tensors share it, category charged]; see `put`.
+        self._storages: dict[int, list] = {}
+        self._storage_of: dict[tuple[str, str], int] = {}
 
     def put(self, category: str, name: str, tensor: "torch.Tensor") -> "torch.Tensor":
-        """Store `tensor` on this device and charge its bytes to `category`.
+        """Store `tensor` on this device and charge **its storage's** bytes to `category`.
+
+        **Storage, not view.** A shard taken as a view of a full buffer looks like 1/N of the bytes
+        and keeps all N/N alive. Charging `numel × element_size` would report the view; this charges
+        `untyped_storage().nbytes()`, the memory actually held. It was the view for the first
+        version, and removing a `.clone()` from a shard's placement then left the full fp32 buffer
+        alive while the ledger reported 1/N of it — with every test green.
+
+        **Counted once per device.** If a second held tensor shares a storage already on this
+        device, it is charged nothing more: the bytes exist once. They are credited back — to the
+        category that was charged for them — when the last tensor sharing them is dropped.
 
         Raises:
             KeyError: If something is already stored under that name — a silent overwrite would
@@ -149,8 +163,17 @@ class Rank:
         key = (category, name)
         if key in self._tensors:
             raise KeyError(f"rank {self.index} already holds {category}/{name}")
+        storage, nbytes = _footprint(tensor)
+        entry = self._storages.get(storage)
+        if entry is None:
+            self._storages[storage] = [nbytes, 1, category]
+            charged = nbytes
+        else:
+            entry[1] += 1
+            charged = 0
         self._tensors[key] = tensor
-        self.ledger.allocate(category, name, tensor.numel() * tensor.element_size())
+        self._storage_of[key] = storage
+        self.ledger.allocate(category, name, charged)
         return tensor
 
     def get(self, category: str, name: str) -> "torch.Tensor":
@@ -164,12 +187,37 @@ class Rank:
         either, Python frees it. `tests/test_zerosim_stages.py` checks that with a weak reference
         — a ledger that said "freed" while the tensor stayed alive would be a ledger that lies.
         """
-        tensor = self._tensors.pop((category, name))
-        self.ledger.free(category, name, tensor.numel() * tensor.element_size())
+        key = (category, name)
+        del self._tensors[key]
+        storage = self._storage_of.pop(key)
+        entry = self._storages[storage]
+        entry[1] -= 1
+        if entry[1] > 0:
+            self.ledger.free(category, name, 0)  # the storage lives on in another held tensor
+            return
+        del self._storages[storage]
+        self.ledger.free(entry[2], name, entry[0])
 
     def holds(self, category: str, name: str) -> bool:
         """Whether `category/name` is currently stored here."""
         return (category, name) in self._tensors
+
+    def held(self) -> list[tuple[str, str, "torch.Tensor"]]:
+        """Everything this device holds now, as `(category, name, tensor)`."""
+        return [(cat, name, tensor) for (cat, name), tensor in self._tensors.items()]
+
+
+def _footprint(tensor) -> tuple[int, int]:
+    """`(storage identity, storage bytes)` — what holding `tensor` actually keeps alive.
+
+    A torch tensor answers with its untyped storage's address and size. Anything else (the tests'
+    torch-free stand-ins) answers with its own identity and `numel × element_size`.
+    """
+    storage = getattr(tensor, "untyped_storage", None)
+    if storage is None:
+        return id(tensor), tensor.numel() * tensor.element_size()
+    held = storage()
+    return held.data_ptr(), held.nbytes()
 
 
 class World:

@@ -13,8 +13,8 @@ figures applied to measured counts — not a measurement of anything).
 | field | value |
 | --- | --- |
 | config fingerprint | `e3eb27cdbbc0` |
-| code digest (zerosim + lossheads) | `sha256:cf55f8b40222257e728c0580dcfb86b8712ec0c0e67ed826670c014b7a3f4baa` |
-| git commit | `a98bb7823fba84e9615a6ff5163f290e6a71e700` |
+| code digest (zerosim + lossheads) | `sha256:c38e0377ef8cf92117a81d1a9c328f660529d0dbf14e1f1785018ddd00704cc0` |
+| git commit | `2b5834228056d7c1adceb5a4c77af28cd425ed50` |
 | corpus digest | `sha256:19f24ce7db26e4f3dde1b3663b6edb19019d887f0188bdaca16ffad7087b0261` |
 | tokenizer digest | `sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae` |
 | environment | python 3.12.13 · torch 2.13.0 · arm64 · 12 threads · cpu |
@@ -46,9 +46,10 @@ reads 4,096 (0.114 epochs — every sequence is read at most once).
 
 ## 1 · Memory per device, measured by the ledger (bf16-mixed)
 
-Peak bytes held by **one** device in each persistent category, read from its ledger — the sum of
-the real `nbytes` of every tensor the stage allocated. Activations are excluded. The last column
-compares every category against `formulas.bytes_per_device`.
+Peak bytes held by **one** device in each persistent category, read from its ledger — the storage
+bytes behind every tensor the stage put there, each storage counted once (a slice of a larger
+buffer is charged the whole buffer). Activations and allocator overhead are not counted. The last
+column compares every category against `formulas.bytes_per_device`.
 
 | stage | weights | gradients | fp32 master | Adam m | Adam v | total | formula |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |

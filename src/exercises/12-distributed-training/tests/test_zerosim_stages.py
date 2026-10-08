@@ -41,15 +41,36 @@ def _padded(trainer: Trainer) -> int:
 # --- memory ------------------------------------------------------------------------------------
 
 
+def _persistent(rank) -> dict[str, int]:
+    return {c: rank.ledger.peak[c] for c in PERSISTENT}
+
+
 @pytest.mark.parametrize("mode", MODES)
-@pytest.mark.parametrize("n", [3, 8])
+@pytest.mark.parametrize("n", [3, 8, 32])
 @pytest.mark.parametrize("stage", STAGES)
 def test_every_ranks_measured_peak_equals_the_formula(stage: int, n: int, mode: str) -> None:
+    """One step at each N, straight from the ledger — N = 32 included, so the published world
+    size is checked here and not only through the committed bundle."""
     trainer = train(_small(n, mode), stage)
     predicted = formulas.bytes_per_device(stage, n, mode, _padded(trainer))
     for rank in trainer.world.ranks:
-        measured = {c: rank.ledger.peak[c] for c in PERSISTENT}
-        assert measured == {c: predicted[c] for c in PERSISTENT}, f"rank {rank.index}"
+        assert _persistent(rank) == {c: predicted[c] for c in PERSISTENT}, f"rank {rank.index}"
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_the_memory_check_can_fail(mode: str) -> None:
+    """The twin: each stage's ledger set against every OTHER stage's formula must disagree.
+
+    A comparison that also matched the wrong formula would prove nothing about the right one.
+    """
+    trainers = {s: train(_small(8, mode), s) for s in STAGES}
+    for measured_stage, trainer in trainers.items():
+        measured = _persistent(trainer.world.ranks[0])
+        for formula_stage in STAGES:
+            if formula_stage == measured_stage:
+                continue
+            wrong = formulas.bytes_per_device(formula_stage, 8, mode, _padded(trainer))
+            assert measured != {c: wrong[c] for c in PERSISTENT}, (measured_stage, formula_stage)
 
 
 def test_padding_is_really_exercised_at_three_devices() -> None:
@@ -58,12 +79,60 @@ def test_padding_is_really_exercised_at_three_devices() -> None:
     assert any(spec.padding for spec in trainer.layouts)
 
 
+def test_the_ledger_charges_the_storage_behind_a_view_not_the_view() -> None:
+    """A 10-element view of a 100-element fp32 buffer keeps 400 bytes alive, not 40."""
+    from zerosim.world import Rank
+
+    rank = Rank(0, 0)
+    whole = torch.zeros(100)
+    rank.put("master", "a", whole[:10])
+    assert rank.ledger.current["master"] == 400
+
+
+def test_a_storage_shared_by_two_held_tensors_is_charged_once() -> None:
+    from zerosim.world import Rank
+
+    rank = Rank(0, 0)
+    whole = torch.zeros(100)
+    rank.put("master", "a", whole[:50])
+    rank.put("adam_m", "b", whole[50:])
+    assert rank.ledger.held == 400
+    rank.drop("master", "a")
+    assert rank.ledger.held == 400, "credited while another tensor still holds the storage"
+    rank.drop("adam_m", "b")
+    assert rank.ledger.held == 0
+    assert all(value == 0 for value in rank.ledger.current.values()), rank.ledger.current
+
+
+@pytest.mark.parametrize("mode", MODES)
+@pytest.mark.parametrize("stage", STAGES)
+def test_every_held_tensor_owns_exactly_its_storage(stage: int, mode: str) -> None:
+    """No rank keeps a view of something larger — the shape of the bug the ledger used to miss."""
+    trainer = train(_small(4, mode), stage)
+    for rank in trainer.world.ranks:
+        for category, name, tensor in rank.held():
+            view = tensor.numel() * tensor.element_size()
+            assert tensor.untyped_storage().nbytes() == view, (rank.index, category, name)
+
+
 @pytest.mark.parametrize("stage", STAGES)
 def test_persistent_memory_does_not_grow_across_steps(stage: int) -> None:
-    trainer = train(_small(4, steps=3), stage)
-    for rank in trainer.world.ranks:
-        for category in PERSISTENT:
-            assert rank.ledger.current[category] == rank.ledger.peak[category]
+    """The held total is the SAME after every step, and equals the formula.
+
+    The first version asserted `current == peak` per category, which a leak satisfies: a buffer
+    added every step raises both together. Comparing step k with step k + 1 is what catches it.
+    """
+    config = _small(4, steps=4)
+    trainer = Trainer(config, stage)
+    predicted = formulas.bytes_per_device(stage, 4, config.mode, _padded(trainer))["total"]
+    data = batches(config)
+    held, peaks = [], []
+    for step in range(config.steps):
+        trainer.step(data[step])
+        held.append([rank.ledger.held for rank in trainer.world.ranks])
+        peaks.append([rank.ledger.peak_total for rank in trainer.world.ranks])
+    assert all(h == [predicted] * 4 for h in held), held
+    assert all(p == peaks[0] for p in peaks), "the peak including transients grew after step 1"
 
 
 @pytest.mark.parametrize("stage", STAGES)
@@ -166,6 +235,23 @@ def test_bytes_sent_per_step_equal_the_formula(stage: int, mode: str) -> None:
     assert comm.sent == [int(predicted["total"]) * 2] * 8
     assert comm.sent_by_op["reduce_scatter"][0] == int(predicted["reduce_scatter"]) * 2
     assert comm.sent_by_op["all_gather"][0] == int(predicted["all_gather"]) * 2
+    # Step by step, not just in total: each step on its own equals the formula.
+    for step in trainer.comm_by_step:
+        assert step["total"] == [int(predicted["total"])] * 8
+        assert step["reduce_scatter"] == [int(predicted["reduce_scatter"])] * 8
+
+
+def test_the_communication_check_can_fail() -> None:
+    """The twin: ZeRO-3's traffic against the 2·P formula, and DP's against 3·P, must disagree."""
+    sent = {}
+    for stage in (0, 3):
+        trainer = train(replace(Config(), world_size=8, nodes=2, steps=1), stage)
+        payload = _padded(trainer) * trainer.recipe.grad_bytes
+        sent[stage] = (trainer.comm_by_step[0]["total"][0], payload)
+    zero3, payload = sent[3]
+    assert zero3 != formulas.comm_bytes_per_step(2, 8, payload)["total"]
+    dp, payload = sent[0]
+    assert dp != formulas.comm_bytes_per_step(3, 8, payload)["total"]
 
 
 # --- compute -------------------------------------------------------------------------------------
