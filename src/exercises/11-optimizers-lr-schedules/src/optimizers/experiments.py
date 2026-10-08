@@ -6,7 +6,8 @@
    the correction, set against the gap between two seeds of the same run.
 3. `update_ratio` — every matrix's update-to-weight ratio, with and without warmup.
 4. `schedules` — cosine against WSD, both shaped for `schedule_total` steps and stopped at
-   `schedule_stop`, each at its own best peak rate; plus the decay WSD can branch from there.
+   `schedule_stop`, each at its own best peak rate; plus the two ways to hold a finished model at
+   the stop point — a decay branched from WSD so that it ends there, and a cosine planned for it.
 5. `width_sweep` — the learning-rate sweep at each width, in SP and muP, and the prediction at
    `predict_width`.
 
@@ -209,16 +210,26 @@ def schedules(preset: Preset, corpus: Corpus, device: str = "cpu") -> dict:
     """Cosine against WSD, each tuned, both stopped where the exercise stops them.
 
     Stage 1 tunes: every peak in `schedule_peaks`, for each schedule and seed, trained to
-    `schedule_stop`. Stage 2 takes each schedule's best peak (mean over seeds) and runs it to
+    `schedule_stop` — cosine and WSD shaped for `schedule_total`, and a cosine shaped for
+    `schedule_stop` itself. Stage 2 takes each schedule's best peak (mean over seeds) and runs it to
     `schedule_total`, recording validation loss at the stop point and at the planned end. Stage 3
-    branches a decay of `branch_decay` steps from WSD's checkpoint at the stop point, and trains a
-    cosine planned for `schedule_stop` steps from the start — the two honest ways to have a finished
-    model at that budget.
+    holds the two finished models at the stop point's budget: a decay of `branch_decay` steps
+    branched from WSD's checkpoint `branch_decay` steps *before* the stop point, so that it ends
+    there, and the cosine planned for the stop point at its own best peak. Both see exactly
+    `schedule_stop` steps of data, so they are compared at an equal budget.
     """
+    if preset.branch_decay >= preset.schedule_stop - preset.schedule_warmup:
+        raise ValueError("branch_decay must leave the branch starting after the warmup")
     config = model_config(preset)
     stop, total = preset.schedule_stop - 1, preset.schedule_total
+    branch_from = stop - preset.branch_decay  # the checkpoint's step; the branch ends at `stop`
+    shaped = {
+        "cosine": ("cosine", total),
+        "wsd": ("wsd", total),
+        "cosine_planned": ("cosine", stop + 1),
+    }
     tuning: dict[str, dict[str, list[float]]] = {}
-    for kind in ("cosine", "wsd"):
+    for kind, (schedule, length) in shaped.items():
         tuning[kind] = {}
         for peak in preset.schedule_peaks:
             losses = []
@@ -226,7 +237,7 @@ def schedules(preset: Preset, corpus: Corpus, device: str = "cpu") -> dict:
                 batches, windows = _inputs(preset, corpus, seed)
                 log = train(
                     config,
-                    _schedule(kind, preset, peak, total),
+                    _schedule(schedule, preset, peak, length),
                     preset.schedule_stop,
                     batches,
                     seed=seed,
@@ -259,7 +270,7 @@ def schedules(preset: Preset, corpus: Corpus, device: str = "cpu") -> dict:
                 device=device,
                 val_windows=windows,
                 val_at=(stop, total - 1),
-                checkpoint_at=stop if kind == "wsd" else None,
+                checkpoint_at=branch_from if kind == "wsd" else None,
             )
             final[kind].append(
                 {"at_stop": log.val[stop], "at_end": log.val[total - 1], "lrs": log.lrs}
@@ -267,7 +278,7 @@ def schedules(preset: Preset, corpus: Corpus, device: str = "cpu") -> dict:
             if kind == "wsd":
 
                 def branch_lr(step):
-                    return wsd_branch(step, stop + 1, preset.branch_decay, best["wsd"])
+                    return wsd_branch(step, branch_from + 1, preset.branch_decay, best["wsd"])
 
                 branch = train(
                     config,
@@ -276,14 +287,14 @@ def schedules(preset: Preset, corpus: Corpus, device: str = "cpu") -> dict:
                     batches,
                     device=device,
                     val_windows=windows,
-                    val_at=(stop + preset.branch_decay,),
+                    val_at=(stop,),
                     resume=log.checkpoint,
-                    start_step=stop + 1,
+                    start_step=branch_from + 1,
                 )
-                final["wsd_branch"].append({"at_end": branch.val[stop + preset.branch_decay]})
+                final["wsd_branch"].append({"at_end": branch.val[stop]})
         planned = train(
             config,
-            _schedule("cosine", preset, best["cosine"], preset.schedule_stop),
+            _schedule("cosine", preset, best["cosine_planned"], preset.schedule_stop),
             preset.schedule_stop,
             batches,
             seed=seed,
@@ -298,6 +309,7 @@ def schedules(preset: Preset, corpus: Corpus, device: str = "cpu") -> dict:
         "warmup": preset.schedule_warmup,
         "wsd_decay_fraction": preset.wsd_decay_fraction,
         "branch_decay": preset.branch_decay,
+        "branch_at": branch_from + 1,
         "tuning": tuning,
         "best_peak": best,
         "final": final,

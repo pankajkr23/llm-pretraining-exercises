@@ -125,13 +125,18 @@ measure is too sensitive to its parameter.
 ## D10 · Each schedule is tuned before cosine and WSD are compared
 
 **Decision.** Every peak in `schedule_peaks`, for both schedules and both seeds, trained to the stop
-point; each schedule then runs at its own best peak. The comparison also includes WSD's branch from
-its checkpoint and a cosine planned for the stop point from the start.
+point; each schedule then runs at its own best peak. The comparison also includes two finished
+models at the stop point's budget: a decay branched from WSD's checkpoint 30 steps *before* the stop
+point, so it ends there, and a cosine planned for the stop point from the start, tuned over the same
+peaks.
 
 **Why.** A schedule comparison run at one shared learning rate measures which schedule suits that rate.
 And stopping both at step 200 compares two unfinished models; the branch and the planned cosine are
 the two ways to actually hold a finished model at that budget, which is the question a practitioner
-faces.
+faces. Both see exactly the stop point's steps of data. A branch taken *at* the stop point and
+decayed after it would train longer than the model it is compared with — the first version did
+that, and borrowed cosine's 300-step peak for the planned cosine; both were caught reading the code
+against its published claim, and fixed before publishing.
 
 **What would overturn it.** The best peak landing at the edge of the grid for either schedule, which
 would mean the grid was too narrow — the document prints the whole tuning table so that is visible.

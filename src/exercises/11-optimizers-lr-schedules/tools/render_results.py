@@ -183,15 +183,17 @@ def schedule_section(b: dict) -> list[str]:
     r = b["result"]
     peaks = sorted({float(p) for k in r["tuning"] for p in r["tuning"][k]})
     rows = [
-        "| peak η | cosine at step {s} | WSD at step {s} |".format(s=r["stop"]),
-        "| ---: | ---: | ---: |",
+        "| peak η | cosine at step {s} | WSD at step {s} | cosine planned for {s} |".format(
+            s=r["stop"]
+        ),
+        "| ---: | ---: | ---: | ---: |",
     ]
     for p in peaks:
-        c = r["tuning"]["cosine"][str(p)]
-        w = r["tuning"]["wsd"][str(p)]
+        cells = [r["tuning"][k][str(p)] for k in ("cosine", "wsd", "cosine_planned")]
         rows.append(
-            f"| {p:g} | {_mean(c):.4f} ± {_spread(c) / 2:.4f} "
-            f"| {_mean(w):.4f} ± {_spread(w) / 2:.4f} |"
+            f"| {p:g} | "
+            + " | ".join(f"{_mean(c):.4f} ± {_spread(c) / 2:.4f}" for c in cells)
+            + " |"
         )
     f = r["final"]
     cos_stop = [x["at_stop"] for x in f["cosine"]]
@@ -219,7 +221,8 @@ def schedule_section(b: dict) -> list[str]:
         _row(f"cosine run to {r['total']}", cos_end),
         _row(f"WSD run to {r['total']}", wsd_end),
         _row(
-            f"WSD from its step-{r['stop']} checkpoint, decayed over {r['branch_decay']} steps",
+            f"WSD branched at step {r['branch_at']}, decayed over {r['branch_decay']} steps "
+            f"to step {r['stop']}",
             branch,
         ),
         _row(f"cosine planned for {r['stop']} from the start", planned),
@@ -234,7 +237,8 @@ def schedule_section(b: dict) -> list[str]:
         "",
         *rows,
         "",
-        f"Best peak: cosine {r['best_peak']['cosine']:g}, WSD {r['best_peak']['wsd']:g}. At those:",
+        f"Best peak: cosine {r['best_peak']['cosine']:g}, WSD {r['best_peak']['wsd']:g}, cosine "
+        f"planned for {r['stop']} {r['best_peak']['cosine_planned']:g}. At those:",
         "",
         *table,
         "",
@@ -247,8 +251,14 @@ def schedule_section(b: dict) -> list[str]:
         ),
         f"- Stopped at step {r['stop']}, WSD has not decayed at all and cosine is part-way down "
         "its curve. Neither is a finished model at that budget.",
-        f"- The two finished models at that budget are WSD's branch and a cosine planned for "
-        f"{r['stop']}; the lower of the two is **{best_finished[0]}** ({best_finished[1]:.4f}).",
+        f"- The two finished models at that budget — each trained on exactly {r['stop']} steps of "
+        f"data — are WSD's branch and a cosine planned for {r['stop']}; the lower of the two is "
+        f"**{best_finished[0]}** ({best_finished[1]:.4f}), "
+        + (
+            "a difference larger than the seed spread."
+            if abs(_mean(branch) - _mean(planned)) > max(_spread(branch), _spread(planned))
+            else "**within the seed spread**, so this does not rank them."
+        ),
         "",
     ]
 
@@ -305,7 +315,76 @@ def sweep_section(b: dict) -> list[str]:
             + ".",
             "",
         ]
-    return out
+    return out + sweep_findings(r)
+
+
+def _fold(a: float, b: float) -> float:
+    """How many times larger the larger of two positive numbers is."""
+    return max(a, b) / min(a, b)
+
+
+def sweep_findings(r: dict) -> list[str]:
+    """What the sweep shows, computed: the drift of each optimum, set against two noise floors.
+
+    At the base width muP and SP are the same model bit for bit (the tests require it), so any
+    difference between those two runs is the device's run-to-run nondeterminism — a floor no
+    comparison here can see beneath. The seed spread is the second floor.
+    """
+    res, widths, base = r["results"], r["widths"], str(r["base_width"])
+
+    def minima(name: str, width: int) -> list[float]:
+        return [m["lr"] for m in res[name]["minima"][str(width)].values()]
+
+    def drift(name: str) -> float:
+        return _fold(_mean(minima(name, widths[0])), _mean(minima(name, widths[-1])))
+
+    seed_floor = max(_fold(*minima(n, w)[:2]) for n in res for w in widths)
+    out = ["### What the sweep shows", ""]
+    floor = None
+    if base in res["sp"]["losses"] and set(res) == {"sp", "mup"}:
+        sp, mup = res["sp"]["losses"][base], res["mup"]["losses"][base]
+        loss_gap = max(abs(a - b) for s in sp for a, b in zip(sp[s], mup[s], strict=True))
+        floor = max(
+            _fold(a, b)
+            for a, b in zip(
+                minima("sp", r["base_width"]), minima("mup", r["base_width"]), strict=True
+            )
+        )
+        out += [
+            f"- **The run-to-run floor.** At width {base} the two parametrizations are the same "
+            "model bit for bit — same initial weights, same learning rate in every group — yet the "
+            f"two runs differ by up to **{loss_gap:.4f}** in final loss and **{floor:.2f}×** in "
+            "the fitted minimum. The device does not reproduce a run bit for bit, and this is the "
+            "size of that. No difference in a minimum smaller than it is evidence of anything.",
+        ]
+    out.append(
+        f"- **The seed floor.** Two seeds of one setting put a minimum up to {seed_floor:.2f}× "
+        "apart."
+    )
+    noise = max(seed_floor, floor or 1.0)
+    for name, label in (("sp", "SP"), ("mup", "muP")):
+        d = drift(name)
+        verdict = "above the noise" if d > noise else "within the noise"
+        out.append(
+            f"- **{label}:** the optimum moves **{d:.2f}×** from width {widths[0]} to "
+            f"{widths[-1]} ({verdict}), exponent {res[name]['prediction']['exponent']:.2f}."
+        )
+    sp_d, mup_d = drift("sp"), drift("mup")
+    if mup_d < sp_d and mup_d > noise:
+        out.append(
+            f"- **So muP narrows the drift from {sp_d:.2f}× to {mup_d:.2f}× without removing "
+            f"it** at this scale ({r['steps']} steps per run). Its prediction for width "
+            f"{r['predict_width']} rests on that residual exponent, extrapolated "
+            f"{_fold(r['predict_width'], widths[-1]):.0f}× past the widest width measured."
+        )
+    elif mup_d < sp_d:
+        out.append(
+            f"- **So muP holds the optimum still within the noise**, against SP's {sp_d:.2f}× "
+            "drift: under muP the rate tuned at the smallest width transfers."
+        )
+    else:
+        out.append("- **muP does not narrow the drift here**, against what the paper predicts.")
+    return out + [""]
 
 
 SECTIONS = {

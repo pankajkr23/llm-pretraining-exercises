@@ -32,7 +32,8 @@ asks one question about that machinery and answers it by measurement:
    for every matrix at every step, with warmup and without.
 4. **Cosine or WSD, if you have to stop at step 200 of a 300-step plan?** Each schedule tuned first,
    then both stopped where the exercise stops them, plus the two ways of having a *finished* model at
-   that budget: decaying WSD from its checkpoint, or a cosine planned for 200 from the start.
+   that budget, both ending at step 200: a decay branched from WSD 30 steps earlier, or a cosine
+   planned for 200 from the start.
 5. **What learning rate should a wider model use?** A sweep at widths 256, 512 and 1,024, the minimum
    at each, and a power-law prediction for width 4,096 with the seed spread as its error bar — in the
    standard parametrization (SP), where the best rate drifts with width, and in muP, where it should not.

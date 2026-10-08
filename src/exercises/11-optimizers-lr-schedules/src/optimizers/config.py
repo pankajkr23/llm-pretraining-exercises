@@ -47,7 +47,7 @@ class Preset:
         schedule_warmup: Warmup steps for both schedules.
         wsd_decay_fraction: Share of the run WSD spends decaying.
         schedule_peaks: Peak η values tried for EACH schedule before comparing them.
-        branch_decay: Steps of the decay branched from WSD's step-200 checkpoint.
+        branch_decay: Steps of the decay branched from WSD so that it ends at `schedule_stop`.
         widths: Widths swept (the exercise: 256, 512, 1,024).
         sweep_lrs: Learning rates tried at every width, doubling.
         sweep_steps: Steps per sweep run.

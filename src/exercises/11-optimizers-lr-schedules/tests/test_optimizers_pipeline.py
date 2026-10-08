@@ -151,3 +151,29 @@ def test_the_presets_keep_the_values_the_exercise_fixes() -> None:
     for preset in (FULL, LITE, SMOKE):
         assert preset.ratio_warmup < preset.ratio_steps
         assert list(preset.sweep_lrs) == sorted(preset.sweep_lrs)
+
+
+def test_the_two_finished_models_see_exactly_the_stop_points_budget(
+    corpus_root: Path, monkeypatch
+) -> None:
+    """The branch and the planned cosine both end at the stop step, and no later.
+
+    The first version branched *at* the stop point and decayed past it, so the model it was compared
+    with had trained fewer steps. Each call to `train` records where it starts and how far it goes.
+    """
+    calls: list[dict] = []
+    real_train = experiments.train
+
+    def recording_train(config, lr, steps, batches, **kwargs):
+        log = real_train(config, lr, steps, batches, **kwargs)
+        calls.append({"end": kwargs.get("start_step", 0) + steps, "resumed": "resume" in kwargs})
+        return log
+
+    monkeypatch.setattr(experiments, "train", recording_train)
+    result = experiments.schedules(SMOKE, open_corpus(corpus_root), "cpu")
+    branches = [c for c in calls if c["resumed"]]
+    assert len(branches) == len(SMOKE.seeds)
+    assert all(c["end"] == SMOKE.schedule_stop for c in branches)
+    assert result["branch_at"] + SMOKE.branch_decay == SMOKE.schedule_stop
+    assert set(result["tuning"]) == {"cosine", "wsd", "cosine_planned"}
+    assert result["best_peak"]["cosine_planned"] in SMOKE.schedule_peaks

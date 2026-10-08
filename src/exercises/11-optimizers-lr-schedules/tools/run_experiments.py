@@ -43,14 +43,13 @@ def tokens_per_run(preset: Preset, task: str) -> tuple[int, int]:
         "update_ratio": [p.ratio_steps] * 2,
         "schedules": [p.schedule_stop] * (2 * len(p.schedule_peaks) * len(p.seeds))
         + [p.schedule_total] * (2 * len(p.seeds))
+        + [p.schedule_stop] * (len(p.schedule_peaks) * len(p.seeds))
         + [p.branch_decay] * len(p.seeds)
         + [p.schedule_stop] * len(p.seeds),
         "width_sweep": [p.sweep_steps]
         * (len(p.parametrizations) * len(p.widths) * len(p.seeds) * len(p.sweep_lrs)),
     }[task]
-    longest = max(runs)
-    if task == "schedules":  # a WSD run plus its branch is one model's whole history
-        longest = p.schedule_total + p.branch_decay
+    longest = max(runs)  # a branch ends at the stop point, inside its WSD run's own history
     return longest * window, sum(runs) * window
 
 
