@@ -1,0 +1,1133 @@
+{
+  "config": {
+    "beta1": 0.9,
+    "beta2": 0.95,
+    "card_bytes": 80000000000,
+    "device_flops": 400000000000000.0,
+    "eps": 1e-08,
+    "inter_node_bandwidth": 50000000000.0,
+    "intra_node_bandwidth": 450000000000.0,
+    "ladder_params": 30000000000,
+    "ladder_world_sizes": [
+      8,
+      16,
+      32,
+      64
+    ],
+    "learning_rate": 0.001,
+    "mode": "bf16-mixed",
+    "model": {
+      "batch_size": 1,
+      "chunk_size": 128,
+      "d_model": 32,
+      "horizons": [
+        1,
+        2
+      ],
+      "ignore_index": -100,
+      "label_smoothing": 0.0,
+      "n_head": 2,
+      "n_layer": 2,
+      "pad_id": 10000,
+      "reference_d_model": 4096,
+      "reference_vocab_size": 131072,
+      "seq_len": 32,
+      "source": "vocab_size is exercise 02's shipped 10,000-entry BPE vocabulary plus one [PAD] row this exercise adds, because that tokenizer has none; the model shape is this exercise's own, chosen small enough to train on a laptop; reference_* are the course model's dimensions, carried only so the memory table can be quoted at that scale",
+      "vocab_size": 10001,
+      "z_loss_weight": 0.0
+    },
+    "nodes": 4,
+    "seed": 12,
+    "source": "the world, model and optimiser are this exercise's own choices, sized so 32 simulated ranks run in seconds on a CPU; the model is exercise 09's trunk and head; the two link bandwidths, the device throughput and the card capacity are ASSUMED round figures for the time model and the memory ladder, never measurements",
+    "steps": 4,
+    "weight_decay": 0.1,
+    "world_size": 32
+  },
+  "corpus": {
+    "corpus_tokens": 35941,
+    "epochs": 0.11396455301744526,
+    "source": "corpus/agents-md-95c740e.txt \u2014 this repository's own AGENTS.md frozen at the revision the published run read, tokenized with exercise 02's BPE",
+    "source_bytes": 92021,
+    "source_digest": "sha256:19f24ce7db26e4f3dde1b3663b6edb19019d887f0188bdaca16ffad7087b0261",
+    "tokens_consumed": 4096
+  },
+  "equivalence": {
+    "fp32_grad_step1_max_abs": 1.210719347000122e-08,
+    "fp32_grad_step1_scale": 0.0269184373319149,
+    "fp32_loss_max_rel": 5.73753076463996e-08,
+    "fp32_weights_max_abs_except_key_bias": 6.0051679611206055e-06,
+    "fp32_weights_max_abs_key_bias": 2.0398572814883664e-05,
+    "key_bias_elements": 64,
+    "key_bias_grad_step1_max_abs": 1.1459633242338896e-10,
+    "mixed_loss_max_rel": 5.3845497589247885e-05,
+    "mixed_update_cosine": 0.9998611211776733,
+    "mixed_weights_max_abs": 0.003894335590302944,
+    "reference_losses": [
+      9.344925880432129,
+      9.373157501220703,
+      9.335187911987305,
+      9.349698066711426
+    ],
+    "update_rms": 0.002597557147964835
+  },
+  "generated_by": "src/exercises/12-distributed-training/tools/run_zero.py",
+  "ladder": {
+    "card_bytes": 80000000000,
+    "card_gib": 74.50580596923828,
+    "params": 30000000000,
+    "payload_bytes": 60000000000,
+    "rows": [
+      {
+        "bytes": 480000000000.0,
+        "bytes_per_weight": 16.0,
+        "comm_bytes_per_step": 105000000000.0,
+        "comm_seconds_per_step": 0.23333333333333334,
+        "fits": false,
+        "floor_bytes": 480000000000.0,
+        "gib": 447.0348358154297,
+        "never_fits": true,
+        "stage": 0,
+        "world_size": 8
+      },
+      {
+        "bytes": 480000000000.0,
+        "bytes_per_weight": 16.0,
+        "comm_bytes_per_step": 112500000000.0,
+        "comm_seconds_per_step": 2.25,
+        "fits": false,
+        "floor_bytes": 480000000000.0,
+        "gib": 447.0348358154297,
+        "never_fits": true,
+        "stage": 0,
+        "world_size": 16
+      },
+      {
+        "bytes": 480000000000.0,
+        "bytes_per_weight": 16.0,
+        "comm_bytes_per_step": 116250000000.0,
+        "comm_seconds_per_step": 2.325,
+        "fits": false,
+        "floor_bytes": 480000000000.0,
+        "gib": 447.0348358154297,
+        "never_fits": true,
+        "stage": 0,
+        "world_size": 32
+      },
+      {
+        "bytes": 480000000000.0,
+        "bytes_per_weight": 16.0,
+        "comm_bytes_per_step": 118125000000.0,
+        "comm_seconds_per_step": 2.3625,
+        "fits": false,
+        "floor_bytes": 480000000000.0,
+        "gib": 447.0348358154297,
+        "never_fits": true,
+        "stage": 0,
+        "world_size": 64
+      },
+      {
+        "bytes": 165000000000.0,
+        "bytes_per_weight": 5.5,
+        "comm_bytes_per_step": 105000000000.0,
+        "comm_seconds_per_step": 0.23333333333333334,
+        "fits": false,
+        "floor_bytes": 120000000000.0,
+        "gib": 153.66822481155396,
+        "never_fits": true,
+        "stage": 1,
+        "world_size": 8
+      },
+      {
+        "bytes": 142500000000.0,
+        "bytes_per_weight": 4.75,
+        "comm_bytes_per_step": 112500000000.0,
+        "comm_seconds_per_step": 2.25,
+        "fits": false,
+        "floor_bytes": 120000000000.0,
+        "gib": 132.7134668827057,
+        "never_fits": true,
+        "stage": 1,
+        "world_size": 16
+      },
+      {
+        "bytes": 131250000000.0,
+        "bytes_per_weight": 4.375,
+        "comm_bytes_per_step": 116250000000.0,
+        "comm_seconds_per_step": 2.325,
+        "fits": false,
+        "floor_bytes": 120000000000.0,
+        "gib": 122.23608791828156,
+        "never_fits": true,
+        "stage": 1,
+        "world_size": 32
+      },
+      {
+        "bytes": 125625000000.0,
+        "bytes_per_weight": 4.1875,
+        "comm_bytes_per_step": 118125000000.0,
+        "comm_seconds_per_step": 2.3625,
+        "fits": false,
+        "floor_bytes": 120000000000.0,
+        "gib": 116.99739843606949,
+        "never_fits": true,
+        "stage": 1,
+        "world_size": 64
+      },
+      {
+        "bytes": 112500000000.0,
+        "bytes_per_weight": 3.75,
+        "comm_bytes_per_step": 105000000000.0,
+        "comm_seconds_per_step": 0.23333333333333334,
+        "fits": false,
+        "floor_bytes": 60000000000.0,
+        "gib": 104.77378964424133,
+        "never_fits": false,
+        "stage": 2,
+        "world_size": 8
+      },
+      {
+        "bytes": 86250000000.0,
+        "bytes_per_weight": 2.875,
+        "comm_bytes_per_step": 112500000000.0,
+        "comm_seconds_per_step": 2.25,
+        "fits": false,
+        "floor_bytes": 60000000000.0,
+        "gib": 80.32657206058502,
+        "never_fits": false,
+        "stage": 2,
+        "world_size": 16
+      },
+      {
+        "bytes": 73125000000.0,
+        "bytes_per_weight": 2.4375,
+        "comm_bytes_per_step": 116250000000.0,
+        "comm_seconds_per_step": 2.325,
+        "fits": true,
+        "floor_bytes": 60000000000.0,
+        "gib": 68.10296326875687,
+        "never_fits": false,
+        "stage": 2,
+        "world_size": 32
+      },
+      {
+        "bytes": 66562500000.0,
+        "bytes_per_weight": 2.21875,
+        "comm_bytes_per_step": 118125000000.0,
+        "comm_seconds_per_step": 2.3625,
+        "fits": true,
+        "floor_bytes": 60000000000.0,
+        "gib": 61.99115887284279,
+        "never_fits": false,
+        "stage": 2,
+        "world_size": 64
+      },
+      {
+        "bytes": 60000000000.0,
+        "bytes_per_weight": 2.0,
+        "comm_bytes_per_step": 157500000000.0,
+        "comm_seconds_per_step": 0.35,
+        "fits": true,
+        "floor_bytes": 0.0,
+        "gib": 55.87935447692871,
+        "never_fits": false,
+        "stage": 3,
+        "world_size": 8
+      },
+      {
+        "bytes": 30000000000.0,
+        "bytes_per_weight": 1.0,
+        "comm_bytes_per_step": 168750000000.0,
+        "comm_seconds_per_step": 3.375,
+        "fits": true,
+        "floor_bytes": 0.0,
+        "gib": 27.939677238464355,
+        "never_fits": false,
+        "stage": 3,
+        "world_size": 16
+      },
+      {
+        "bytes": 15000000000.0,
+        "bytes_per_weight": 0.5,
+        "comm_bytes_per_step": 174375000000.0,
+        "comm_seconds_per_step": 3.4875000000000003,
+        "fits": true,
+        "floor_bytes": 0.0,
+        "gib": 13.969838619232178,
+        "never_fits": false,
+        "stage": 3,
+        "world_size": 32
+      },
+      {
+        "bytes": 7500000000.0,
+        "bytes_per_weight": 0.25,
+        "comm_bytes_per_step": 177187500000.0,
+        "comm_seconds_per_step": 3.5437499999999997,
+        "fits": true,
+        "floor_bytes": 0.0,
+        "gib": 6.984919309616089,
+        "never_fits": false,
+        "stage": 3,
+        "world_size": 64
+      }
+    ]
+  },
+  "main_mode": "bf16-mixed",
+  "model": {
+    "padded": 666560,
+    "params": 666560,
+    "units": [
+      {
+        "name": "embed",
+        "numel": 321056,
+        "padded": 321056,
+        "padding": 0,
+        "shard": 10033
+      },
+      {
+        "name": "block0",
+        "numel": 12704,
+        "padded": 12704,
+        "padding": 0,
+        "shard": 397
+      },
+      {
+        "name": "block1",
+        "numel": 12704,
+        "padded": 12704,
+        "padding": 0,
+        "shard": 397
+      },
+      {
+        "name": "head",
+        "numel": 320096,
+        "padded": 320096,
+        "padding": 0,
+        "shard": 10003
+      }
+    ]
+  },
+  "modes": {
+    "bf16-mixed": {
+      "0": {
+        "communication": {
+          "collectives_per_step": 8,
+          "comm_seconds_per_step": 5.16584e-05,
+          "every_step_identical": true,
+          "payload_bytes": 1333120,
+          "per_step_link_bytes": {
+            "inter": 10331680,
+            "intra": 72321760
+          },
+          "per_step_sent": {
+            "all_gather": 1291460,
+            "reduce_scatter": 1291460,
+            "total": 2582920
+          },
+          "predicted": {
+            "all_gather": 1291460.0,
+            "reduce_scatter": 1291460.0,
+            "total": 2582920.0
+          },
+          "ranks_identical": true
+        },
+        "compute": {
+          "backward_flops": 42731392,
+          "compute_seconds_per_step": 2.3865296e-07,
+          "flops_ranks_identical": true,
+          "forward_flops": 21365696,
+          "model_flops": 85462784,
+          "optimizer_elements": 666560,
+          "optimizer_elements_ranks_identical": true,
+          "optimizer_flops": 9998400,
+          "recompute_flops": 21365696
+        },
+        "compute_weights_vs_dp": 0.0,
+        "losses": [
+          9.34492713212967,
+          9.373662203550339,
+          9.33479768037796,
+          9.349654167890549
+        ],
+        "max_abs_vs_dp": 0.0,
+        "memory": {
+          "bytes_per_weight": {
+            "measured_padded": 16.0,
+            "measured_real": 16.0,
+            "predicted": 16.0
+          },
+          "largest_unit_bytes": {
+            "grads": 642112,
+            "params": 642112
+          },
+          "measured": {
+            "adam_m": 2666240,
+            "adam_v": 2666240,
+            "grads": 1333120,
+            "master": 2666240,
+            "params": 1333120,
+            "total": 10664960
+          },
+          "peak_total": 10664960,
+          "predicted": {
+            "adam_m": 2666240,
+            "adam_v": 2666240,
+            "grads": 1333120,
+            "master": 2666240,
+            "params": 1333120,
+            "total": 10664960
+          },
+          "ranks_identical": true,
+          "transient_peak": {
+            "gathered_params": 0,
+            "grad_bucket": 0
+          }
+        },
+        "name": "DP (stage 0)",
+        "time_model": {
+          "comm_seconds": 5.16584e-05,
+          "compute_seconds": 2.3865296e-07,
+          "total_seconds": 5.189705296e-05
+        }
+      },
+      "1": {
+        "communication": {
+          "collectives_per_step": 8,
+          "comm_seconds_per_step": 5.16584e-05,
+          "every_step_identical": true,
+          "payload_bytes": 1333120,
+          "per_step_link_bytes": {
+            "inter": 10331680,
+            "intra": 72321760
+          },
+          "per_step_sent": {
+            "all_gather": 1291460,
+            "reduce_scatter": 1291460,
+            "total": 2582920
+          },
+          "predicted": {
+            "all_gather": 1291460.0,
+            "reduce_scatter": 1291460.0,
+            "total": 2582920.0
+          },
+          "ranks_identical": true
+        },
+        "compute": {
+          "backward_flops": 42731392,
+          "compute_seconds_per_step": 2.14438085e-07,
+          "flops_ranks_identical": true,
+          "forward_flops": 21365696,
+          "model_flops": 85462784,
+          "optimizer_elements": 20830,
+          "optimizer_elements_ranks_identical": true,
+          "optimizer_flops": 312450,
+          "recompute_flops": 21365696
+        },
+        "compute_weights_vs_dp": 0.0,
+        "losses": [
+          9.34492713212967,
+          9.373662203550339,
+          9.33479768037796,
+          9.349654167890549
+        ],
+        "max_abs_vs_dp": 0.0,
+        "memory": {
+          "bytes_per_weight": {
+            "measured_padded": 4.375,
+            "measured_real": 4.375,
+            "predicted": 4.375
+          },
+          "largest_unit_bytes": {
+            "grads": 642112,
+            "params": 642112
+          },
+          "measured": {
+            "adam_m": 83320,
+            "adam_v": 83320,
+            "grads": 1333120,
+            "master": 83320,
+            "params": 1333120,
+            "total": 2916200
+          },
+          "peak_total": 2916200,
+          "predicted": {
+            "adam_m": 83320,
+            "adam_v": 83320,
+            "grads": 1333120,
+            "master": 83320,
+            "params": 1333120,
+            "total": 2916200
+          },
+          "ranks_identical": true,
+          "transient_peak": {
+            "gathered_params": 0,
+            "grad_bucket": 0
+          }
+        },
+        "name": "ZeRO-1",
+        "time_model": {
+          "comm_seconds": 5.16584e-05,
+          "compute_seconds": 2.14438085e-07,
+          "total_seconds": 5.1872838085e-05
+        }
+      },
+      "2": {
+        "communication": {
+          "collectives_per_step": 8,
+          "comm_seconds_per_step": 5.16584e-05,
+          "every_step_identical": true,
+          "payload_bytes": 1333120,
+          "per_step_link_bytes": {
+            "inter": 10331680,
+            "intra": 72321760
+          },
+          "per_step_sent": {
+            "all_gather": 1291460,
+            "reduce_scatter": 1291460,
+            "total": 2582920
+          },
+          "predicted": {
+            "all_gather": 1291460.0,
+            "reduce_scatter": 1291460.0,
+            "total": 2582920.0
+          },
+          "ranks_identical": true
+        },
+        "compute": {
+          "backward_flops": 42731392,
+          "compute_seconds_per_step": 2.14438085e-07,
+          "flops_ranks_identical": true,
+          "forward_flops": 21365696,
+          "model_flops": 85462784,
+          "optimizer_elements": 20830,
+          "optimizer_elements_ranks_identical": true,
+          "optimizer_flops": 312450,
+          "recompute_flops": 21365696
+        },
+        "compute_weights_vs_dp": 0.0,
+        "losses": [
+          9.34492713212967,
+          9.373662203550339,
+          9.33479768037796,
+          9.349654167890549
+        ],
+        "max_abs_vs_dp": 0.0,
+        "memory": {
+          "bytes_per_weight": {
+            "measured_padded": 2.4375,
+            "measured_real": 2.4375,
+            "predicted": 2.4375
+          },
+          "largest_unit_bytes": {
+            "grads": 642112,
+            "params": 642112
+          },
+          "measured": {
+            "adam_m": 83320,
+            "adam_v": 83320,
+            "grads": 41660,
+            "master": 83320,
+            "params": 1333120,
+            "total": 1624740
+          },
+          "peak_total": 2266852,
+          "predicted": {
+            "adam_m": 83320,
+            "adam_v": 83320,
+            "grads": 41660,
+            "master": 83320,
+            "params": 1333120,
+            "total": 1624740
+          },
+          "ranks_identical": true,
+          "transient_peak": {
+            "gathered_params": 0,
+            "grad_bucket": 642112
+          }
+        },
+        "name": "ZeRO-2",
+        "time_model": {
+          "comm_seconds": 5.16584e-05,
+          "compute_seconds": 2.14438085e-07,
+          "total_seconds": 5.1872838085e-05
+        }
+      },
+      "3": {
+        "communication": {
+          "collectives_per_step": 12,
+          "comm_seconds_per_step": 7.74876e-05,
+          "every_step_identical": true,
+          "payload_bytes": 1333120,
+          "per_step_link_bytes": {
+            "inter": 15497520,
+            "intra": 108482640
+          },
+          "per_step_sent": {
+            "all_gather": 2582920,
+            "reduce_scatter": 1291460,
+            "total": 3874380
+          },
+          "predicted": {
+            "all_gather": 2582920.0,
+            "reduce_scatter": 1291460.0,
+            "total": 3874380.0
+          },
+          "ranks_identical": true
+        },
+        "compute": {
+          "backward_flops": 42731392,
+          "compute_seconds_per_step": 2.14438085e-07,
+          "flops_ranks_identical": true,
+          "forward_flops": 21365696,
+          "model_flops": 85462784,
+          "optimizer_elements": 20830,
+          "optimizer_elements_ranks_identical": true,
+          "optimizer_flops": 312450,
+          "recompute_flops": 21365696
+        },
+        "compute_weights_vs_dp": 0.0,
+        "losses": [
+          9.34492713212967,
+          9.373662203550339,
+          9.33479768037796,
+          9.349654167890549
+        ],
+        "max_abs_vs_dp": 0.0,
+        "memory": {
+          "bytes_per_weight": {
+            "measured_padded": 0.5,
+            "measured_real": 0.5,
+            "predicted": 0.5
+          },
+          "largest_unit_bytes": {
+            "grads": 642112,
+            "params": 642112
+          },
+          "measured": {
+            "adam_m": 83320,
+            "adam_v": 83320,
+            "grads": 41660,
+            "master": 83320,
+            "params": 41660,
+            "total": 333280
+          },
+          "peak_total": 975392,
+          "predicted": {
+            "adam_m": 83320,
+            "adam_v": 83320,
+            "grads": 41660,
+            "master": 83320,
+            "params": 41660,
+            "total": 333280
+          },
+          "ranks_identical": true,
+          "transient_peak": {
+            "gathered_params": 642112,
+            "grad_bucket": 642112
+          }
+        },
+        "name": "ZeRO-3",
+        "time_model": {
+          "comm_seconds": 7.74876e-05,
+          "compute_seconds": 2.14438085e-07,
+          "total_seconds": 7.770203808499999e-05
+        }
+      }
+    },
+    "fp32": {
+      "0": {
+        "communication": {
+          "collectives_per_step": 8,
+          "comm_seconds_per_step": 0.0001033168,
+          "every_step_identical": true,
+          "payload_bytes": 2666240,
+          "per_step_link_bytes": {
+            "inter": 20663360,
+            "intra": 144643520
+          },
+          "per_step_sent": {
+            "all_gather": 2582920,
+            "reduce_scatter": 2582920,
+            "total": 5165840
+          },
+          "predicted": {
+            "all_gather": 2582920.0,
+            "reduce_scatter": 2582920.0,
+            "total": 5165840.0
+          },
+          "ranks_identical": true
+        },
+        "compute_weights_vs_dp": 0.0,
+        "losses": [
+          9.344925940036774,
+          9.373157232999802,
+          9.335187792778015,
+          9.349697530269623
+        ],
+        "max_abs_vs_dp": 0.0,
+        "memory": {
+          "bytes_per_weight": {
+            "measured_padded": 16.0,
+            "measured_real": 16.0,
+            "predicted": 16.0
+          },
+          "largest_unit_bytes": {
+            "grads": 1284224,
+            "params": 1284224
+          },
+          "measured": {
+            "adam_m": 2666240,
+            "adam_v": 2666240,
+            "grads": 2666240,
+            "master": 0,
+            "params": 2666240,
+            "total": 10664960
+          },
+          "peak_total": 10664960,
+          "predicted": {
+            "adam_m": 2666240,
+            "adam_v": 2666240,
+            "grads": 2666240,
+            "master": 0,
+            "params": 2666240,
+            "total": 10664960
+          },
+          "ranks_identical": true,
+          "transient_peak": {
+            "gathered_params": 0,
+            "grad_bucket": 0
+          }
+        },
+        "name": "DP (stage 0)"
+      },
+      "1": {
+        "communication": {
+          "collectives_per_step": 8,
+          "comm_seconds_per_step": 0.0001033168,
+          "every_step_identical": true,
+          "payload_bytes": 2666240,
+          "per_step_link_bytes": {
+            "inter": 20663360,
+            "intra": 144643520
+          },
+          "per_step_sent": {
+            "all_gather": 2582920,
+            "reduce_scatter": 2582920,
+            "total": 5165840
+          },
+          "predicted": {
+            "all_gather": 2582920.0,
+            "reduce_scatter": 2582920.0,
+            "total": 5165840.0
+          },
+          "ranks_identical": true
+        },
+        "compute_weights_vs_dp": 0.0,
+        "losses": [
+          9.344925940036774,
+          9.373157232999802,
+          9.335187792778015,
+          9.349697530269623
+        ],
+        "max_abs_vs_dp": 0.0,
+        "memory": {
+          "bytes_per_weight": {
+            "measured_padded": 8.25,
+            "measured_real": 8.25,
+            "predicted": 8.25
+          },
+          "largest_unit_bytes": {
+            "grads": 1284224,
+            "params": 1284224
+          },
+          "measured": {
+            "adam_m": 83320,
+            "adam_v": 83320,
+            "grads": 2666240,
+            "master": 0,
+            "params": 2666240,
+            "total": 5499120
+          },
+          "peak_total": 5499120,
+          "predicted": {
+            "adam_m": 83320,
+            "adam_v": 83320,
+            "grads": 2666240,
+            "master": 0,
+            "params": 2666240,
+            "total": 5499120
+          },
+          "ranks_identical": true,
+          "transient_peak": {
+            "gathered_params": 0,
+            "grad_bucket": 0
+          }
+        },
+        "name": "ZeRO-1"
+      },
+      "2": {
+        "communication": {
+          "collectives_per_step": 8,
+          "comm_seconds_per_step": 0.0001033168,
+          "every_step_identical": true,
+          "payload_bytes": 2666240,
+          "per_step_link_bytes": {
+            "inter": 20663360,
+            "intra": 144643520
+          },
+          "per_step_sent": {
+            "all_gather": 2582920,
+            "reduce_scatter": 2582920,
+            "total": 5165840
+          },
+          "predicted": {
+            "all_gather": 2582920.0,
+            "reduce_scatter": 2582920.0,
+            "total": 5165840.0
+          },
+          "ranks_identical": true
+        },
+        "compute_weights_vs_dp": 0.0,
+        "losses": [
+          9.344925940036774,
+          9.373157232999802,
+          9.335187792778015,
+          9.349697530269623
+        ],
+        "max_abs_vs_dp": 0.0,
+        "memory": {
+          "bytes_per_weight": {
+            "measured_padded": 4.375,
+            "measured_real": 4.375,
+            "predicted": 4.375
+          },
+          "largest_unit_bytes": {
+            "grads": 1284224,
+            "params": 1284224
+          },
+          "measured": {
+            "adam_m": 83320,
+            "adam_v": 83320,
+            "grads": 83320,
+            "master": 0,
+            "params": 2666240,
+            "total": 2916200
+          },
+          "peak_total": 4200424,
+          "predicted": {
+            "adam_m": 83320,
+            "adam_v": 83320,
+            "grads": 83320,
+            "master": 0,
+            "params": 2666240,
+            "total": 2916200
+          },
+          "ranks_identical": true,
+          "transient_peak": {
+            "gathered_params": 0,
+            "grad_bucket": 1284224
+          }
+        },
+        "name": "ZeRO-2"
+      },
+      "3": {
+        "communication": {
+          "collectives_per_step": 12,
+          "comm_seconds_per_step": 0.0001549752,
+          "every_step_identical": true,
+          "payload_bytes": 2666240,
+          "per_step_link_bytes": {
+            "inter": 30995040,
+            "intra": 216965280
+          },
+          "per_step_sent": {
+            "all_gather": 5165840,
+            "reduce_scatter": 2582920,
+            "total": 7748760
+          },
+          "predicted": {
+            "all_gather": 5165840.0,
+            "reduce_scatter": 2582920.0,
+            "total": 7748760.0
+          },
+          "ranks_identical": true
+        },
+        "compute_weights_vs_dp": 0.0,
+        "losses": [
+          9.344925940036774,
+          9.373157232999802,
+          9.335187792778015,
+          9.349697530269623
+        ],
+        "max_abs_vs_dp": 0.0,
+        "memory": {
+          "bytes_per_weight": {
+            "measured_padded": 0.5,
+            "measured_real": 0.5,
+            "predicted": 0.5
+          },
+          "largest_unit_bytes": {
+            "grads": 1284224,
+            "params": 1284224
+          },
+          "measured": {
+            "adam_m": 83320,
+            "adam_v": 83320,
+            "grads": 83320,
+            "master": 0,
+            "params": 83320,
+            "total": 333280
+          },
+          "peak_total": 1617504,
+          "predicted": {
+            "adam_m": 83320,
+            "adam_v": 83320,
+            "grads": 83320,
+            "master": 0,
+            "params": 83320,
+            "total": 333280
+          },
+          "ranks_identical": true,
+          "transient_peak": {
+            "gathered_params": 1284224,
+            "grad_bucket": 1284224
+          }
+        },
+        "name": "ZeRO-3"
+      }
+    }
+  },
+  "provenance": {
+    "code_digest": "sha256:cf55f8b40222257e728c0580dcfb86b8712ec0c0e67ed826670c014b7a3f4baa",
+    "config_fingerprint": "e3eb27cdbbc0",
+    "corpus_digest": "sha256:19f24ce7db26e4f3dde1b3663b6edb19019d887f0188bdaca16ffad7087b0261",
+    "environment": {
+      "device": "cpu",
+      "machine": "arm64",
+      "omp_num_threads": "unset",
+      "platform": "macOS-26.6.2-arm64-arm-64bit",
+      "python": "3.12.13",
+      "torch": "2.13.0",
+      "torch_threads": 12
+    },
+    "git_sha": "a98bb7823fba84e9615a6ff5163f290e6a71e700",
+    "tokenizer_digest": "sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae"
+  },
+  "scaling": {
+    "rows": [
+      {
+        "measured": 16.0,
+        "measured_real": 16.0,
+        "predicted": 16.0,
+        "stage": 0,
+        "world_size": 1
+      },
+      {
+        "measured": 16.0,
+        "measured_real": 16.0,
+        "predicted": 16.0,
+        "stage": 1,
+        "world_size": 1
+      },
+      {
+        "measured": 16.0,
+        "measured_real": 16.0,
+        "predicted": 16.0,
+        "stage": 2,
+        "world_size": 1
+      },
+      {
+        "measured": 16.0,
+        "measured_real": 16.0,
+        "predicted": 16.0,
+        "stage": 3,
+        "world_size": 1
+      },
+      {
+        "measured": 16.0,
+        "measured_real": 16.0,
+        "predicted": 16.0,
+        "stage": 0,
+        "world_size": 2
+      },
+      {
+        "measured": 10.0,
+        "measured_real": 10.0,
+        "predicted": 10.0,
+        "stage": 1,
+        "world_size": 2
+      },
+      {
+        "measured": 9.0,
+        "measured_real": 9.0,
+        "predicted": 9.0,
+        "stage": 2,
+        "world_size": 2
+      },
+      {
+        "measured": 8.0,
+        "measured_real": 8.0,
+        "predicted": 8.0,
+        "stage": 3,
+        "world_size": 2
+      },
+      {
+        "measured": 16.0,
+        "measured_real": 16.00009601536246,
+        "predicted": 16.0,
+        "stage": 0,
+        "world_size": 3
+      },
+      {
+        "measured": 8.0,
+        "measured_real": 8.00004800768123,
+        "predicted": 8.0,
+        "stage": 1,
+        "world_size": 3
+      },
+      {
+        "measured": 6.666666666666667,
+        "measured_real": 6.666706673067691,
+        "predicted": 6.666666666666667,
+        "stage": 2,
+        "world_size": 3
+      },
+      {
+        "measured": 5.333333333333333,
+        "measured_real": 5.333365338454152,
+        "predicted": 5.333333333333333,
+        "stage": 3,
+        "world_size": 3
+      },
+      {
+        "measured": 16.0,
+        "measured_real": 16.0,
+        "predicted": 16.0,
+        "stage": 0,
+        "world_size": 4
+      },
+      {
+        "measured": 7.0,
+        "measured_real": 7.0,
+        "predicted": 7.0,
+        "stage": 1,
+        "world_size": 4
+      },
+      {
+        "measured": 5.5,
+        "measured_real": 5.5,
+        "predicted": 5.5,
+        "stage": 2,
+        "world_size": 4
+      },
+      {
+        "measured": 4.0,
+        "measured_real": 4.0,
+        "predicted": 4.0,
+        "stage": 3,
+        "world_size": 4
+      },
+      {
+        "measured": 16.0,
+        "measured_real": 16.0,
+        "predicted": 16.0,
+        "stage": 0,
+        "world_size": 8
+      },
+      {
+        "measured": 5.5,
+        "measured_real": 5.5,
+        "predicted": 5.5,
+        "stage": 1,
+        "world_size": 8
+      },
+      {
+        "measured": 3.75,
+        "measured_real": 3.75,
+        "predicted": 3.75,
+        "stage": 2,
+        "world_size": 8
+      },
+      {
+        "measured": 2.0,
+        "measured_real": 2.0,
+        "predicted": 2.0,
+        "stage": 3,
+        "world_size": 8
+      },
+      {
+        "measured": 16.0,
+        "measured_real": 16.0,
+        "predicted": 16.0,
+        "stage": 0,
+        "world_size": 16
+      },
+      {
+        "measured": 4.75,
+        "measured_real": 4.75,
+        "predicted": 4.75,
+        "stage": 1,
+        "world_size": 16
+      },
+      {
+        "measured": 2.875,
+        "measured_real": 2.875,
+        "predicted": 2.875,
+        "stage": 2,
+        "world_size": 16
+      },
+      {
+        "measured": 1.0,
+        "measured_real": 1.0,
+        "predicted": 1.0,
+        "stage": 3,
+        "world_size": 16
+      },
+      {
+        "measured": 16.0,
+        "measured_real": 16.0,
+        "predicted": 16.0,
+        "stage": 0,
+        "world_size": 32
+      },
+      {
+        "measured": 4.375,
+        "measured_real": 4.375,
+        "predicted": 4.375,
+        "stage": 1,
+        "world_size": 32
+      },
+      {
+        "measured": 2.4375,
+        "measured_real": 2.4375,
+        "predicted": 2.4375,
+        "stage": 2,
+        "world_size": 32
+      },
+      {
+        "measured": 0.5,
+        "measured_real": 0.5,
+        "predicted": 0.5,
+        "stage": 3,
+        "world_size": 32
+      }
+    ],
+    "world_sizes": [
+      1,
+      2,
+      3,
+      4,
+      8,
+      16,
+      32
+    ]
+  },
+  "topology": {
+    "devices_per_node": 8,
+    "nodes": 4,
+    "ring_links": {
+      "inter": 4,
+      "intra": 28
+    },
+    "world_size": 32
+  }
+}

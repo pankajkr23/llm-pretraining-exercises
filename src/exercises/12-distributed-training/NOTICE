@@ -14,6 +14,18 @@ the evidence being examined. Naming them is citation, not association.
 
 WHAT IS MEASURED AND WHAT IS NOT
 
-Replace this section. State plainly which numbers were measured here, at what
-scale, and which are read from a source and attributed to it. The distinction
-is the whole point of this file.
+Measured, on a simulator running in one process on a laptop CPU: the bytes each
+of 32 simulated devices holds per category (from the real size of every tensor
+allocated), the bytes every ring collective sends per device and per link, the
+forward and backward FLOPs torch's counter records, the number of weights each
+device's optimiser updates, and the trained weights. Scale: a 666,560-weight
+model, four training steps.
+
+Not measured: any time. The times in RESULTS.md come from ASSUMED link
+bandwidths and an ASSUMED device throughput set in config.py. The memory ladder
+for a 30-billion-weight model is arithmetic from the formulas, not a run, and
+its 80 GB card capacity is an assumed figure. Activations are excluded from
+every memory number.
+
+ZeRO itself is the published design of its authors; this exercise reimplements
+its storage arrangement to measure it and claims no part of the design.
