@@ -1917,4 +1917,16 @@ predates the harness — so it is logged as what it was.
                           commit hooks run ruff through `uv run`, which re-locks, so a commit made
                           while new pyproject files sit untracked fails with "files were modified".
                           #191 opened
+
+2026-10-09  exercise-12   12 built: thirty-two simulated ranks in one process, explicit ring
+                          collectives, data parallelism and ZeRO 1-3 in bf16-mixed and fp32. Kept
+                          buffers and bytes sent per device equal the hand formulas exactly at seven
+                          world sizes; all four stages reach bit-identical weights and agree with one
+                          device on torch.optim.AdamW to 5.7e-08 in loss. 200 exercise tests; thirty
+                          deliberate breaks, each turned a named test red. A FUSED addcmul_ ROUNDS
+                          DIFFERENTLY ON UNALIGNED SLICES (arm64, torch 2.13), so the sharded AdamW
+                          is built from single-rounding operations. A STALE .pyc CAN MAKE A MUTATION
+                          LOOK SURVIVED when two same-size edits land in one second: use a fresh
+                          PYTHONPYCACHEPREFIX per break. Notebook staged for PK; tracking it needs a
+                          .gitignore exemption, which is PK's.
 ```
