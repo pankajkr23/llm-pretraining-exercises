@@ -30,6 +30,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   found that a fused `addcmul_` rounds differently when a buffer is cut at unaligned offsets, which
   is why the sharded optimiser is written from operations that each round once. Results in
   `results/zero.json`, rendered into `RESULTS.md`, with a local notebook.
+- **Exercise 13 — reversible residual stacks, measured.** Three reversible update rules chain the
+  same 21M-parameter model, with a custom autograd function that rebuilds every layer's input in the
+  backward pass instead of storing it. Against the standard model on the same 50M tokens, the chosen
+  rule (leapfrog) kept 58.7× fewer bytes for backward and fitted a 6.1× larger batch in an 8 GiB
+  cap, with rebuilt gradients within 4e-5 of stored ones on the GPU. A rule whose rebuilt gradients
+  drift more than 1% is never chosen, which excluded all three blend settings. Speed is ranked only
+  outside the machine's own measured spread. Reaching the published run took five attempts, each
+  failure fixed with a guard: float64 on the GPU, a memory probe that skipped clipping, a weak
+  charger, and a reference cycle in the memory measurement that leaked one forward graph per run.
 - **Exercises 11 to 14 are scaffolded**: optimizers and learning-rate schedules, ZeRO on simulated
   devices, reversible training, and turning a dense model into a mixture of experts. Each has the
   standard skeleton, a smoke test, a CI shard entry, a root README row, and — locally only — a

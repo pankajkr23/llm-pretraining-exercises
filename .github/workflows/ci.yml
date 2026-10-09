@@ -281,7 +281,9 @@ jobs:
             src/exercises/12-distributed-training/tests/test_zerosim_model.py \
             src/exercises/12-distributed-training/tests/test_zerosim_precision.py \
             src/exercises/12-distributed-training/tests/test_zerosim_producer.py \
-            src/exercises/12-distributed-training/tests/test_zerosim_stages.py
+            src/exercises/12-distributed-training/tests/test_zerosim_stages.py \
+            src/exercises/13-reversibility/tests/test_reversible_stack.py \
+            src/exercises/13-reversibility/tests/test_reversible_pipeline.py
 
   security:
     runs-on: ubuntu-latest

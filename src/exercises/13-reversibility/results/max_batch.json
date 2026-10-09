@@ -1,0 +1,103 @@
+{
+  "task": "max_batch",
+  "preset": {
+    "name": "full",
+    "width": 320,
+    "depth": 12,
+    "seq_len": 256,
+    "batch": 32,
+    "tokens": 50000000,
+    "lr": null,
+    "warmup_fraction": 0.02,
+    "floor_ratio": 0.1,
+    "grad_clip": 1.0,
+    "loss_chunk": 2048,
+    "val_windows": 256,
+    "val_every": 500,
+    "trial_tokens": 2500000,
+    "trial_lrs": [
+      0.0005,
+      0.001,
+      0.002
+    ],
+    "trial_rules": [
+      "midpoint",
+      "blend",
+      "leapfrog"
+    ],
+    "trial_h": [
+      0.25,
+      0.5,
+      1.0
+    ],
+    "blend_a": 0.5,
+    "gradient_tolerance": 0.01,
+    "memory_budget_gib": 8.0,
+    "max_batch_ceiling": 4096,
+    "max_batch_lrs": [
+      1.0,
+      2.0,
+      4.0
+    ],
+    "max_batch_check_steps": 40,
+    "max_batch_run_fraction": 0.85,
+    "seed": 0
+  },
+  "device": "mps",
+  "seconds": 74.2078842080009,
+  "corpus": {
+    "dataset": "HuggingFaceFW/fineweb-edu",
+    "train_tokens": 66000000,
+    "longest_run_tokens": 0,
+    "longest_run_epochs": 0.0
+  },
+  "result": {
+    "budget_gib": 8.0,
+    "capped": true,
+    "device": "mps",
+    "device_limit_bytes": 55662788608,
+    "ceiling": 4096,
+    "baseline": {
+      "variant": "standard",
+      "h": 1.0,
+      "saved_bytes_batch1": 159065864,
+      "saved_bytes_per_sample": 71491592,
+      "backward_working_bytes_per_sample": 0,
+      "derived_bytes_per_sample": 71491592,
+      "state_bytes": 340459520,
+      "derived_max_batch": 115,
+      "derived_at_ceiling": false,
+      "measured_max_batch": 81,
+      "measured_at_ceiling": false
+    },
+    "reversible": {
+      "variant": "leapfrog",
+      "h": 0.25,
+      "saved_bytes_batch1": 13793032,
+      "saved_bytes_per_sample": 991240,
+      "backward_working_bytes_per_sample": 5902336,
+      "derived_bytes_per_sample": 6893576,
+      "state_bytes": 340459520,
+      "derived_max_batch": 1196,
+      "derived_at_ceiling": false,
+      "measured_max_batch": 496,
+      "measured_at_ceiling": false
+    }
+  },
+  "provenance": {
+    "config_fingerprint": "8099e72ebe0b",
+    "code_digest": "sha256:d8ec476494a7ce8b1f43222b938991b41813a143bb3beca33554e1aa8d37108d",
+    "git_sha": "eb74fb6cf1a993f73d9222fd089b388be957228d",
+    "environment": {
+      "python": "3.12.13",
+      "torch": "2.13.0",
+      "platform": "macOS-26.6.2-arm64-arm-64bit",
+      "machine": "arm64",
+      "torch_threads": 12,
+      "omp_num_threads": "unset",
+      "device": "mps"
+    },
+    "corpus_digest": "sha256:aa61b4cd144500faea147176b38d3e1da1f5a639154ef83acf97ab86975d8451",
+    "tokenizer_digest": "sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae"
+  }
+}
