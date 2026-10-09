@@ -60,14 +60,41 @@ def _ratio_words(numerator: float, denominator: float, more: str, less: str) -> 
     return f"{ratio:.1f}× {more}" if ratio > 1 else f"{1 / ratio:.1f}× {less}"
 
 
-def speed_words(base_tps: float, rev_tps: float) -> str:
-    """How the reversible model's throughput compares with the baseline's, in words."""
+def speed_words(base_tps: float, rev_tps: float, floor: float | None = None) -> str:
+    """How the reversible model's throughput compares with the baseline's, in words.
+
+    `floor` is the machine's own throughput spread (see `throughput_floor`): a gap inside it is
+    reported as such rather than as a difference between the models.
+    """
     if base_tps <= 0 or rev_tps <= 0:
         return "speed could not be compared (a run had no timed steps)"
     change = rev_tps / base_tps - 1
     if abs(change) < SAME:
         return "the same tokens per second (within 0.5%)"
-    return f"{abs(change):.0%} {'more' if change > 0 else 'fewer'} tokens per second"
+    words = f"{abs(change):.0%} {'more' if change > 0 else 'fewer'} tokens per second"
+    if floor is not None and max(rev_tps, base_tps) / min(rev_tps, base_tps) <= floor:
+        return (
+            f"{words} — inside the machine's own throughput spread of {floor:.2f}×, so this does "
+            "not rank their speed"
+        )
+    return words
+
+
+def throughput_floor(trials: dict | None) -> float | None:
+    """How much the same model's throughput varied on this machine: the baseline trials.
+
+    The baseline trials train one model at several learning rates, which changes nothing a GPU
+    does per token, so any spread in their tokens per second is the machine's — power, heat, other
+    load — and no speed gap smaller than it is evidence about the models.
+    """
+    if trials is None:
+        return None
+    speeds = [
+        run["tokens_per_second"]
+        for run in trials["result"]["baseline"].values()
+        if run["tokens_per_second"] > 0
+    ]
+    return max(speeds) / min(speeds) if len(speeds) >= 2 else None
 
 
 def agreement_words(agreement: dict | None) -> str:
@@ -171,7 +198,7 @@ def trials_section(b: dict) -> list[str]:
     ]
 
 
-def fixed_section(b: dict) -> list[str]:
+def fixed_section(b: dict, floor: float | None = None) -> list[str]:
     """The two full runs at the same batch, side by side."""
     r = b["result"]
     base, rev = r["baseline"], r["reversible"]
@@ -200,7 +227,7 @@ def fixed_section(b: dict) -> list[str]:
     kept_words = (
         "as many bytes as the baseline" if kept == "the same" else f"{kept} bytes than the baseline"
     )
-    speed = speed_words(base["tokens_per_second"], rev["tokens_per_second"])
+    speed = speed_words(base["tokens_per_second"], rev["tokens_per_second"], floor)
     return [
         f"## 2 · The same batch ({r['batch']}), the full budget",
         "",
@@ -285,7 +312,7 @@ def max_section(b: dict) -> list[str]:
     return [*out, ""]
 
 
-def max_run_section(b: dict, fixed: dict | None) -> list[str]:
+def max_run_section(b: dict, fixed: dict | None, floor: float | None = None) -> list[str]:
     """The reversible model at its largest batch."""
     r = b["result"]
     run = r["run"]
@@ -294,7 +321,16 @@ def max_run_section(b: dict, fixed: dict | None) -> list[str]:
         loss = "diverged" if c["diverged"] else f"{c['final_val']:.4f}"
         checks.append(f"| {float(m):g} | {loss} |")
     out = [
-        f"## 4 · Reversible at its largest batch ({r['batch']})",
+        f"## 4 · Reversible near its largest batch ({r['batch']})",
+        "",
+        (
+            f"The search found {r['largest_found']:,}; the run uses "
+            f"{r['run_fraction']:.0%} of it, because a sustained run at the exact edge of the "
+            "memory cap is not reliable — memory outside PyTorch's own tensors varies between "
+            "processes, and the first attempt at the edge ran out of memory in its first steps."
+            if "largest_found" in r
+            else "The run uses the largest batch the search found."
+        ),
         "",
         "A larger batch takes fewer, larger steps, so the learning rate is checked first: each "
         f"multiple of the fixed-batch rate trains for {r['check_steps']:,} steps at this batch and "
@@ -321,7 +357,7 @@ def max_run_section(b: dict, fixed: dict | None) -> list[str]:
         out += [
             f"- Against the baseline at its fixed batch of {fixed['result']['batch']} (not at the "
             f"baseline's own largest batch): "
-            f"**{speed_words(base['tokens_per_second'], run['tokens_per_second'])}**, final "
+            f"**{speed_words(base['tokens_per_second'], run['tokens_per_second'], floor)}**, final "
             f"validation loss {run['final_val'] - base['final_val']:+.4f}.",
             "",
         ]
@@ -364,12 +400,13 @@ def render(results: Path = RESULTS) -> str:
         ]
     if "trials" in bundles:
         parts += trials_section(bundles["trials"])
+    floor = throughput_floor(bundles.get("trials"))
     if "fixed_batch" in bundles:
-        parts += fixed_section(bundles["fixed_batch"])
+        parts += fixed_section(bundles["fixed_batch"], floor)
     if "max_batch" in bundles:
         parts += max_section(bundles["max_batch"])
     if "max_batch_run" in bundles:
-        parts += max_run_section(bundles["max_batch_run"], bundles.get("fixed_batch"))
+        parts += max_run_section(bundles["max_batch_run"], bundles.get("fixed_batch"), floor)
     return "\n".join(parts).rstrip() + "\n"
 
 

@@ -180,3 +180,19 @@ def test_results_md_is_the_render_of_the_committed_bundles_or_both_are_absent() 
         return
     committed = document.read_text(encoding="utf-8")
     assert committed == R.render(results), "RESULTS.md is stale; re-run tools/render_results.py"
+
+
+def test_a_speed_gap_inside_the_machines_own_spread_is_not_a_ranking() -> None:
+    """The same baseline model ran 1.4x apart across its trials: a 7% gap cannot rank speeds."""
+    trials = {
+        "result": {
+            "baseline": {"a": {"tokens_per_second": 43000.0}, "b": {"tokens_per_second": 30700.0}}
+        }
+    }
+    floor = R.throughput_floor(trials)
+    assert floor == 43000.0 / 30700.0
+    inside = R.speed_words(23600, 22000, floor)
+    assert "does not rank" in inside
+    outside = R.speed_words(40000, 20000, floor)
+    assert "does not rank" not in outside and "fewer tokens per second" in outside
+    assert R.throughput_floor(None) is None

@@ -212,19 +212,28 @@ def fixed_batch(
 
 
 def _step_at(preset: Preset, corpus: Corpus, device: str, variant: str, h: float):
-    """`batch -> None`: one full training step at that batch on a fresh model, or an OOM error."""
+    """`batch -> None`: two training steps at that batch on a fresh model, or an OOM error.
+
+    The same operations `train` performs — clipping included — and two of them, so the optimiser's
+    state already exists when the second runs. One bare step was what this probed at first, and a
+    run at the batch it passed ran out of memory in its first steps.
+    """
     model = build(preset, variant, h, device)
     optimizer = torch.optim.AdamW(param_groups(model, 1e-4, 0.0))
     tokens = corpus.split("train")
 
     def step(batch: int) -> None:
-        x = Batches(tokens, batch, preset.seq_len, seed=preset.seed)(0).to(device)
+        batches = Batches(tokens, batch, preset.seq_len, seed=preset.seed)
+        for index in range(2):
+            x = batches(index).to(device)
+            optimizer.zero_grad(set_to_none=True)
+            model.loss(x).backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), preset.grad_clip)
+            optimizer.step()
+            if device in ("mps", "cuda"):
+                getattr(torch, device).synchronize()
+            del x
         optimizer.zero_grad(set_to_none=True)
-        model.loss(x).backward()
-        optimizer.step()
-        if device in ("mps", "cuda"):
-            getattr(torch, device).synchronize()
-        del x
 
     return model, step
 

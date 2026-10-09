@@ -45,6 +45,11 @@ class Preset:
             reproducible and does not depend on what else the machine is running.
         max_batch_ceiling: Never search beyond this batch.
         max_batch_lrs: Learning-rate multipliers tried at the maximum batch before its full run.
+        max_batch_run_fraction: The training run at the largest batch uses this fraction of the
+            largest batch the search found. The search finds the edge of the memory cap, and a
+            long run at exactly the edge failed: memory outside PyTorch's own tensors varies
+            between processes (1.24 GiB of the 8 GiB cap in the failed run). The search's answer
+            is still what is reported as the largest batch.
         max_batch_check_steps: Optimiser steps each of those checks takes. Fixed in steps, not
             tokens, because at a batch of several hundred sequences a token budget sized for the
             fixed batch is only a handful of steps — too few to tell one rate from another.
@@ -74,6 +79,7 @@ class Preset:
     max_batch_ceiling: int = 4096
     max_batch_lrs: tuple[float, ...] = (1.0, 2.0, 4.0)
     max_batch_check_steps: int = 40
+    max_batch_run_fraction: float = 0.85
     seed: int = 0
 
     @property

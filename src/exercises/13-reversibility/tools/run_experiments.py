@@ -108,12 +108,16 @@ def max_stage(preset: Preset, device: str, out: Path, corpus_root: Path) -> None
         out / "max_batch.json",
     )
     rev = found["reversible"]
-    batch = rev["measured_max_batch"] or rev["derived_max_batch"]
+    largest = rev["measured_max_batch"] or rev["derived_max_batch"]
+    batch = max(1, int(largest * preset.max_batch_run_fraction))
     print(
-        f"max_batch: baseline {found['baseline']}, reversible {rev} -> run at {batch}", flush=True
+        f"max_batch: baseline {found['baseline']}, reversible {rev} -> run at {batch} "
+        f"({preset.max_batch_run_fraction:.0%} of {largest})",
+        flush=True,
     )
     began = time.perf_counter()
     run = experiments.max_batch_run(preset, corpus, device, choice, batch)
+    run = {**run, "largest_found": largest, "run_fraction": preset.max_batch_run_fraction}
     save(
         _bundle(
             "max_batch_run", preset, device, corpus, run, time.perf_counter() - began, preset.tokens
