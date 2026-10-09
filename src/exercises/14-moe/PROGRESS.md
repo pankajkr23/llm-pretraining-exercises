@@ -36,6 +36,7 @@ Times are IST, 2026-10-09; GPU means the Apple M4 through MPS, outside the sandb
 | 19:28–19:54 | full run (GPU, `caffeinate`) | publish | completed in 1,592 s |
 | 19:28–19:54 | vitals watchdog (CPU, one sample a minute) | thermal state, memory pressure, swap, GPU, power; pause if stressed | no pause |
 | ~19:58 | notebook at `LITE` (CPU, 33 s) | check it runs end to end against the published results | 9 of 9 code cells, 0 errors; its FULL section reads the published numbers |
+| 10-10, ~00:00 | `render_results.py`, the site build, and chromium for the page's tests and screenshots (CPU, no torch) | build and check the page | no training re-run; `RESULTS.md` renders byte-identical |
 
 ## The full record — ablations, with the published numbers
 
@@ -50,6 +51,20 @@ From the published run (commit `6b222e4`). `RESULTS.md` is the authority.
 | Cost | — | — | 90.3M parameters in total, 31.2M active per token, against 21.3M dense; 14,719 against 35,932 tokens per second in a reference implementation that runs experts in a Python loop |
 
 ## Change log
+
+### 2026-10-10 — the page
+
+- `web/` built on exercise 10's template: the conversion as a figure the reader can try to break,
+  the router's balance stepped through training, validation against the dense control, and the
+  parameters a token pays for against what the model stores.
+- `render_results.py` gained `numbers()`, the comparisons `RESULTS.md` states, computed once and
+  read by both outputs, and `page_data()`, which writes `web/data.js`. The first block's per-expert
+  loads exist only in the training log, so each row is checked against the bundle before use —
+  `n_experts` values, summing to `top_k`, the bundle's violation and dead count at that step, and no
+  more imbalance than the maximum over every block — with a twin test that breaks each check.
+- **Found while building:** the most experts idle at once (3) happened at steps the log does not
+  record, where at most 1 shows. The page therefore draws imbalance and idle counts from the bundle
+  at every step, and only the loads from the log.
 
 ### 2026-10-09 — published
 

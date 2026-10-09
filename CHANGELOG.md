@@ -12,6 +12,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 14's page — one layer, copied into experts that then drift apart.** The conversion
+  drawn as a figure the reader can try to break (any two experts give the dense output once the kept
+  weights are rescaled; used as scored, the output shrinks), the router's balance stepped through
+  training with a guess before the idle count is revealed, the converted model against its dense
+  control on validation and on paired training batches, and what a token pays against what the
+  model stores. Every number is generated into `web/data.js` by `tools/render_results.py`, the
+  first block's per-expert loads parsed from the training log only after each row is checked
+  against the results file; `RESULTS.md` renders byte-identical.
 - **Exercise 11 — optimizers and learning-rate schedules, measured.** Adam written out by hand
   and checked against PyTorch; what switching off bias correction does, in closed form and on a real
   model; the update-to-weight ratio of every layer with and without warmup; cosine against WSD, each
