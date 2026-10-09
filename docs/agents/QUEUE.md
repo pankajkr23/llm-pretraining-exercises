@@ -1992,4 +1992,14 @@ predates the harness — so it is logged as what it was.
                           GPU smoke run. Stacked on #195. Merge order: #194, #195, #196; #193 and
                           #192 are independent.
                           #196 opened
+
+2026-10-10  web-12        12's page: the stages drawn by hand, the ring at four devices, bytes per
+                          device measured beside the formula, the 30B ladder, the adversary table.
+                          TWO AUDITS BEFORE THE PR found typed verdicts (now flags from
+                          page_numbers(), with a reversed-bundle test), a stages figure that could
+                          not be refuted (it divided the ledger by itself), ZeRO-1's gradient drawn
+                          wrong, and a predict step whose caption gave the answer. OPEN FOR PK (O5
+                          in PROGRESS): the shared-layer orphan check counts a vendored stylesheet
+                          as used when an HTML comment mentions it.
+                          #200 opened
 ```
