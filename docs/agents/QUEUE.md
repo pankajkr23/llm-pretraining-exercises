@@ -1955,4 +1955,16 @@ predates the harness — so it is logged as what it was.
                           PYTHONPYCACHEPREFIX per break. Notebook staged for PK; tracking it needs a
                           .gitignore exemption, which is PK's.
                           #193 opened
+
+2026-10-09  exercise-11   11 published: five experiments on a 66M-token FineWeb-Edu slice (licence read
+                          from the card at fetch time; shared with 13 and 14), all five bundles from
+                          one commit with full provenance and a freshness test on code and settings.
+                          Every finding is computed and set against a measured floor. TWO METHOD
+                          FLAWS CAUGHT BY READING CODE AGAINST ITS OWN SENTENCE, before publishing:
+                          WSD's branch trained 30 steps past the budget it was compared at, and the
+                          planned cosine was never tuned. A FREE NOISE FLOOR: SP and muP are bit-
+                          identical at the base width, so their GPU runs' gap is the device's own
+                          nondeterminism. THE MAC HIBERNATED AT 1% BATTERY (02:40-08:39); the sweep
+                          was re-run alone under caffeinate. Long GPU runs need AC power.
+                          #194 opened
 ```

@@ -274,6 +274,8 @@ jobs:
             src/exercises/09-loss-functions-output-heads/tests/test_lossheads_harness.py \
             src/exercises/10-training-loop/tests/test_trainloop_step.py \
             src/exercises/10-training-loop/tests/test_trainloop_provenance.py \
+            src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_torch.py \
+            src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_pipeline.py \
             src/exercises/12-distributed-training/tests/test_zerosim_adamw.py \
             src/exercises/12-distributed-training/tests/test_zerosim_collectives.py \
             src/exercises/12-distributed-training/tests/test_zerosim_model.py \

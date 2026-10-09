@@ -5,7 +5,18 @@ description = "Exercise 11 — Optimizers and learning-rate schedules"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=2",
+    # The frozen tokenizer and the provenance helpers. Exercise 09 owns both; reusing them keeps
+    # every token count and digest in this repository measured against one vocabulary.
+    "exercise-09-loss-functions-output-heads",
 ]
+
+[project.optional-dependencies]
+# Everything that trains needs torch. The schedules, the hand-computed Adam and the corpus reader
+# do not, so `uv sync --all-packages` alone still imports the package.
+train = ["torch>=2.6"]
+
+[tool.uv.sources]
+exercise-09-loss-functions-output-heads = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

@@ -12,6 +12,16 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 11 — optimizers and learning-rate schedules, measured.** Adam written out by hand
+  and checked against PyTorch; what switching off bias correction does, in closed form and on a real
+  model; the update-to-weight ratio of every layer with and without warmup; cosine against WSD, each
+  tuned, stopped part-way, and the two ways to hold a finished model at that budget; and a
+  learning-rate sweep across three widths in the standard parametrization and in muP, with a
+  prediction for a fourth. Every finding sentence in `RESULTS.md` is computed from the results and
+  set against a measured noise floor — including one found for free: at the base width SP and muP
+  are the same model bit for bit, so the gap between their runs is the GPU's own run-to-run
+  nondeterminism. Also the FineWeb-Edu corpus exercises 11, 13 and 14 train on, with its licence
+  read from the dataset card at fetch time.
 - **Exercise 12 — ZeRO on thirty-two simulated devices.** One process holds thirty-two ranks with
   explicit ring collectives, and trains exercise 09's model under data parallelism and ZeRO stages 1
   to 3, in bf16-mixed and fp32. The buffers each device keeps and the bytes it sends per step are
