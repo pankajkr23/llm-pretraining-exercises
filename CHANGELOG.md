@@ -22,6 +22,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   are the same model bit for bit, so the gap between their runs is the GPU's own run-to-run
   nondeterminism. Also the FineWeb-Edu corpus exercises 11, 13 and 14 train on, with its licence
   read from the dataset card at fetch time.
+- **Exercise 12 — ZeRO on thirty-two simulated devices.** One process holds thirty-two ranks with
+  explicit ring collectives, and trains exercise 09's model under data parallelism and ZeRO stages 1
+  to 3, in bf16-mixed and fp32. The buffers each device keeps and the bytes it sends per step are
+  counted for every rank and equal the hand formulas exactly, at seven world sizes; all four stages
+  reach bit-identical weights, and agree with one device running `torch.optim.AdamW`. Building it
+  found that a fused `addcmul_` rounds differently when a buffer is cut at unaligned offsets, which
+  is why the sharded optimiser is written from operations that each round once. Results in
+  `results/zero.json`, rendered into `RESULTS.md`, with a local notebook.
 - **Exercises 11 to 14 are scaffolded**: optimizers and learning-rate schedules, ZeRO on simulated
   devices, reversible training, and turning a dense model into a mixture of experts. Each has the
   standard skeleton, a smoke test, a CI shard entry, a root README row, and — locally only — a

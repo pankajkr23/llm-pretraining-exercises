@@ -275,7 +275,13 @@ jobs:
             src/exercises/10-training-loop/tests/test_trainloop_step.py \
             src/exercises/10-training-loop/tests/test_trainloop_provenance.py \
             src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_torch.py \
-            src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_pipeline.py
+            src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_pipeline.py \
+            src/exercises/12-distributed-training/tests/test_zerosim_adamw.py \
+            src/exercises/12-distributed-training/tests/test_zerosim_collectives.py \
+            src/exercises/12-distributed-training/tests/test_zerosim_model.py \
+            src/exercises/12-distributed-training/tests/test_zerosim_precision.py \
+            src/exercises/12-distributed-training/tests/test_zerosim_producer.py \
+            src/exercises/12-distributed-training/tests/test_zerosim_stages.py
 
   security:
     runs-on: ubuntu-latest
