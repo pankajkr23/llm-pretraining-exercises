@@ -541,10 +541,11 @@ function conversionFigure(M) {
    *
    * Stacked, dense block above converted block, rather than side by side: side by side the drawing
    * was 680 units wide, so on a phone the converted block — the half the figure is about — sat
-   * behind a horizontal scroll. Stacked it is 300, which a 390px screen shows whole. */
-  const W = 300;
-  const LEFT = 4;
-  const UNIT = 280; // the width the dense output is drawn at; a scale, not a datum
+   * behind a horizontal scroll. Stacked it is 228, which a 320px screen shows whole, and the
+   * mixing weights sit on one line rather than under boxes too narrow to hold them. */
+  const W = 228;
+  const LEFT = 2;
+  const UNIT = 224; // the width the dense output is drawn at; a scale, not a datum
   const GAP = 5;
   const BOXW = (W - 2 * LEFT - (n - 1) * GAP) / n;
   const boxX = (i) => LEFT + i * (BOXW + GAP);
@@ -582,22 +583,21 @@ function conversionFigure(M) {
   );
 
   const boxes = [];
-  const weights = [];
   for (let i = 0; i < n; i += 1) {
     const r = svg('rect', { x: boxX(i), y: TOP2 + 46, width: BOXW, height: 34, rx: 6, class: 'dx-ex' });
     const t = svgText(boxX(i) + BOXW / 2, TOP2 + 67, 'dx-t mid', `E${i + 1}`);
-    const w = svgText(boxX(i) + BOXW / 2, TOP2 + 96, 'dx-w mid', '');
     boxes.push(r);
-    weights.push(w);
-    node.append(r, t, w);
+    node.append(r, t);
   }
+  const weightLine = svgText(LEFT, TOP2 + 96, 'dx-w', '');
   const sumText = svgText(LEFT, TOP2 + 132, 'dx-lab', '');
   const ghost = svg('rect', { x: LEFT, y: TOP2 + 142, width: UNIT, height: 22, rx: 5, class: 'dx-ghost' });
   const out = svg('rect', { x: LEFT, y: TOP2 + 142, width: UNIT, height: 22, rx: 5, class: 'dx-out conv' });
   const outText = svgText(LEFT, TOP2 + 182, 'dx-lab', '');
   const verdictText = svgText(LEFT, TOP2 + 206, 'dx-verdict', '');
   node.append(
-    svgText(LEFT, TOP2 + 112, 'dx-note', `illustrative mixing weights: all ${n} scored alike`),
+    weightLine,
+    svgText(LEFT, TOP2 + 112, 'dx-note', `illustrative: all ${n} scored alike`),
     sumText,
     ghost,
     out,
@@ -677,21 +677,24 @@ function conversionFigure(M) {
     boxes.forEach((r, i) => r.classList.toggle('on', set.has(i)));
     const refused = guard(set);
     if (refused) {
-      weights.forEach((w) => (w.textContent = ''));
+      weightLine.textContent = '';
       sumText.textContent = '';
       out.setAttribute('width', 0);
-      outText.textContent = 'no output: a token is never routed like this';
+      outText.textContent = 'no output: not a real routing';
       verdictText.textContent = '';
       read.innerHTML = refused.note;
       wrap.dataset.state = 'refused';
       return;
     }
     const st = stateFor(set, m);
-    weights.forEach((w, i) => (w.textContent = set.has(i) ? st.each.toFixed(3) : ''));
+    weightLine.textContent = `mixing weights: ${[...set]
+      .sort((a, b) => a - b)
+      .map((i) => `E${i + 1} ${st.each.toFixed(3)}`)
+      .join(' · ')}`;
     sumText.textContent = `mixing weights add up to ${st.sum.toFixed(3)}`;
     out.setAttribute('width', (UNIT * st.sum).toFixed(1));
     outText.textContent = `output = ${st.sum.toFixed(3)} × dense(x)`;
-    verdictText.textContent = st.same ? 'the same output as the dense block' : 'not the dense block';
+    verdictText.textContent = st.same ? 'same as the dense block' : 'not the dense block';
     verdictText.setAttribute('class', `dx-verdict ${st.same ? 'good' : 'bad'}`);
     wrap.dataset.state = st.same ? 'same' : 'different';
     read.innerHTML = st.same
@@ -1171,87 +1174,112 @@ function balanceFigure(M, W) {
   return fig;
 }
 
-/* -------------------------------------------------------- Figure: validation, MoE against dense */
-
+/* -------------------------------------------------------- Figure: validation, MoE against dense
+ *
+ * Three small drawings, 228 units wide, each under its own HTML label, with the series named in an
+ * HTML key rather than at the ends of the lines. The single 480-unit drawing it replaces put its end
+ * labels and panel titles behind a sideways scroll on every phone.
+ */
 function validationFigure(M) {
   const cont = M.continuation;
   const cv = M.curves;
   const total = cont.steps;
-  const W = 480;
-  const H = 438;
-  const X0 = 50;
-  const X1 = 360;
+  const WD = 228;
+  const X0 = 40;
+  const X1 = WD - 4;
   const xs = (s) => X0 + (s / total) * (X1 - X0);
 
-  const node = svg('svg', {
-    viewBox: `0 0 ${W} ${H}`,
-    class: 'chart valfig',
-    role: 'img',
-    'aria-label':
-      'Validation loss of the converted model and the dense control over training; below, their ' +
-      'training-loss difference on identical batches; below that, the learning rate both followed.',
-  });
+  const wrap = el('div', 'valwrap');
+  const panel = (label, node) => {
+    const box = el('div', 'acc-panel');
+    const lab = el('p', 'acc-lab');
+    lab.innerHTML = label;
+    box.append(lab, scroller(node));
+    return box;
+  };
 
   /* Panel A — validation. */
-  const A = { top: 30, base: 200 };
+  const A = { top: 8, base: 128 };
   const all = cont.val.flatMap((p) => [p.moe, p.dense]);
   const lo = Math.min(...all);
   const hi = Math.max(...all);
   const pad = (hi - lo) * 0.08;
   const ya = (v) => A.base - ((v - (lo - pad)) / (hi - lo + 2 * pad)) * (A.base - A.top);
-  node.append(svgText(X0, 16, 'fig-lab', 'validation loss, measured on held-out text'));
+  const svgA = svg('svg', {
+    viewBox: `0 0 ${WD} ${A.base + 8}`,
+    class: 'chart valfig',
+    role: 'img',
+    'aria-label': 'Validation loss of the converted model and the dense control over training.',
+  });
   for (const v of [lo, (lo + hi) / 2, hi]) {
-    node.append(
+    svgA.append(
       svg('line', { x1: X0, x2: X1, y1: ya(v), y2: ya(v), class: 'gridline' }),
-      svgText(X0 - 6, ya(v) + 4, 'ax end', v.toFixed(3))
+      svgText(X0 - 4, ya(v) + 4, 'ax end', v.toFixed(3))
     );
   }
   const line = (key) => cont.val.map((p, i) => `${i ? 'L' : 'M'}${xs(p.step).toFixed(1)},${ya(p[key]).toFixed(1)}`).join(' ');
-  node.append(svg('path', { d: line('dense'), class: 'series dense' }), svg('path', { d: line('moe'), class: 'series moe' }));
+  svgA.append(svg('path', { d: line('dense'), class: 'series dense' }), svg('path', { d: line('moe'), class: 'series moe' }));
   for (const p of cont.val) {
-    node.append(
-      svg('rect', { x: xs(p.step) - 3.5, y: ya(p.dense) - 3.5, width: 7, height: 7, class: 'mk dense' }),
-      svg('circle', { cx: xs(p.step), cy: ya(p.moe), r: 4, class: 'mk moe' })
+    svgA.append(
+      svg('rect', { x: xs(p.step) - 3, y: ya(p.dense) - 3, width: 6, height: 6, class: 'mk dense' }),
+      svg('circle', { cx: xs(p.step), cy: ya(p.moe), r: 3.5, class: 'mk moe' })
     );
   }
+  svgA.append(svgText(X0 + 6, ya(cont.start) + 14, 'ax', `both start ${cont.start.toFixed(4)}`));
   const endM = cont.val.at(-1);
-  /* End labels placed apart from each other by at least a line, whichever ends higher. */
-  const yM = ya(endM.moe);
-  const yD = ya(endM.dense);
-  const sep = 13;
-  const [lm, ld] = yM > yD ? [Math.max(yM, yD + sep), yD] : [yM, Math.max(yD, yM + sep)];
-  node.append(
-    svgText(X1 + 10, lm + 4, 'ser-lab moe', `converted ${endM.moe.toFixed(4)}`),
-    svgText(X1 + 10, ld + 4, 'ser-lab dense', `dense ${endM.dense.toFixed(4)}`),
-    svgText(xs(0) + 8, ya(cont.start) + 16, 'ax', `both start at ${cont.start.toFixed(4)}`)
-  );
+  const key = el('p', 'acc-lab val-key');
+  key.innerHTML = `<span class="key moe">●</span> converted, ending ${endM.moe.toFixed(4)} ·
+    <span class="key dense">■</span> dense control, ending ${endM.dense.toFixed(4)}`;
 
   /* Panel B — the paired difference on training batches. */
-  const B = { top: 252, base: 330 };
+  const B = { top: 6, base: 76 };
   const span = Math.max(...cv.paired.map(Math.abs));
   const yb = (v) => (B.top + B.base) / 2 - (v / span) * ((B.base - B.top) / 2);
-  node.append(svgText(X0, B.top - 14, 'fig-lab', `converted minus dense, training loss, ${M.config.log_every}-step means`));
-  node.append(
+  const svgB = svg('svg', {
+    viewBox: `0 0 ${WD} ${B.base + 6}`,
+    class: 'chart valfig',
+    role: 'img',
+    'aria-label': 'The converted model minus the dense control on identical training batches.',
+  });
+  svgB.append(
     svg('rect', { x: X0, y: B.top, width: X1 - X0, height: (B.base - B.top) / 2, class: 'acc-behind' }),
     svg('line', { x1: X0, x2: X1, y1: yb(0), y2: yb(0), class: 'zero' }),
-    svgText(X0 - 6, yb(0) + 4, 'ax end', '0'),
-    svgText(X1 + 10, B.top + 12, 'ax', 'converted behind'),
-    svgText(X1 + 10, B.base - 2, 'ax', 'converted ahead')
+    svgText(X0 - 4, yb(0) + 4, 'ax end', '0')
   );
   const pd = cv.paired.map((v, i) => `${i ? 'L' : 'M'}${xs(cv.step[i]).toFixed(1)},${yb(v).toFixed(1)}`).join(' ');
-  node.append(svg('path', { d: pd, class: 'series paired' }));
+  svgB.append(svg('path', { d: pd, class: 'series paired' }));
 
   /* Panel C — the learning rate both arms followed, from the log. */
-  const C = { top: 376, base: 410 };
+  const C = { top: 6, base: 40 };
   const peak = Math.max(...cv.lr.map((r) => r.lr));
   const yc = (v) => C.base - (v / peak) * (C.base - C.top);
-  node.append(svgText(X0, C.top - 10, 'fig-lab', `learning rate, both models · peak ${cont.lr}`));
+  const svgC = svg('svg', {
+    viewBox: `0 0 ${WD} ${C.base + 20}`,
+    class: 'chart valfig',
+    role: 'img',
+    'aria-label': 'The learning rate both models followed: re-warmed, then a cosine decay.',
+  });
   const area =
     `M${xs(0).toFixed(1)},${C.base} ` +
     cv.lr.map((r) => `L${xs(r.step).toFixed(1)},${yc(r.lr).toFixed(1)}`).join(' ') +
     ` L${xs(total).toFixed(1)},${C.base} Z`;
-  node.append(svg('path', { d: area, class: 'lr-area' }), svg('line', { x1: X0, x2: X1, y1: C.base, y2: C.base, class: 'gridline' }));
-  node.append(svgText(X0, H - 6, 'ax', 'start'), svgText(X1, H - 6, 'ax end', `step ${int(total)}`));
+  svgC.append(
+    svg('path', { d: area, class: 'lr-area' }),
+    svg('line', { x1: X0, x2: X1, y1: C.base, y2: C.base, class: 'gridline' }),
+    svgText(X0, C.base + 16, 'ax', 'start'),
+    svgText(X1, C.base + 16, 'ax end', `step ${int(total)}`)
+  );
+
+  wrap.append(
+    panel('<b>Validation loss</b>, measured on held-out text', svgA),
+    key,
+    panel(
+      `<b>Converted minus dense</b> on the training batches, ${M.config.log_every}-step means; the
+       shaded half is the converted model behind, the clear half ahead`,
+      svgB
+    ),
+    panel(`<b>Learning rate</b>, both models · peak ${cont.lr}`, svgC)
+  );
 
   const rise = cont.both_rise
     ? `<b>Both models get worse before they get better, so the rise belongs to the schedule and not
@@ -1269,7 +1297,7 @@ function validationFigure(M) {
          ${int(cont.ahead_from)}, ending ${signed(cont.end_gap)}.${level}`
       : `The converted model ends ${signed(cont.end_gap)} against the control.${level}`;
   const fig = figure(
-    node,
+    wrap,
     `${rise} ${middle} The middle panel shows the same comparison on the training batches, where both
      models read identical text, so the batch-to-batch noise cancels. <b>What would refute the
      gain:</b> a spread between seeds as large as the gap itself — which a single run cannot

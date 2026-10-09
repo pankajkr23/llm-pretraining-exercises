@@ -416,8 +416,11 @@ PHONE_JS = """(ids) => {
 
 
 @pytest.mark.parametrize("width", [390, 320])
-def test_the_balance_and_cost_figures_fit_a_phone_whole(site, width):
-    """Every label of figures 2 and 4 inside its drawing, and nothing in them scrolling sideways."""
+def test_every_figure_fits_a_phone_whole(site, width):
+    """Every label of every figure inside its drawing, and nothing in any figure scrolling sideways.
+
+    Every figure, not a list of them: a list is what let the validation figure keep a hidden
+    sideways scroll after the two it named were fixed."""
     browser, url = site
     view = browser.new_page(viewport={"width": width, "height": 900})
     try:
@@ -426,7 +429,9 @@ def test_the_balance_and_cost_figures_fit_a_phone_whole(site, width):
         for k in ("1", "8"):  # the cost figure's longest labels appear at either end of k
             view.fill("#fig-cost input#bud-k", k)
             view.dispatch_event("#fig-cost input#bud-k", "input")
-            problems = view.evaluate(PHONE_JS, ["fig-balance", "fig-cost"])
+            ids = view.eval_on_selector_all("main figure", "els => els.map(e => e.id)")
+            assert all(ids) and len(ids) >= 4, f"every figure needs an id to be checked: {ids}"
+            problems = view.evaluate(PHONE_JS, ids)
             assert not problems, f"at {width}px, k={k}: " + "; ".join(problems)
     finally:
         view.close()

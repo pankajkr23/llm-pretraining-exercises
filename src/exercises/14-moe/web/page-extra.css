@@ -302,7 +302,7 @@ text.ax.mid,
 
 /* Drawn narrow so a phone shows it whole; capped on a desktop so its labels stay label-sized. */
 figure svg.chart.dxfig {
-  max-width: 460px;
+  max-width: 420px;
 }
 
 .dx-box {
@@ -639,8 +639,21 @@ figure svg.chart.dxfig {
 /* Figures 2 and 4 are drawn 228 units wide so a 320px phone shows them whole at their own label
  * size; on a wide screen they grow, but no further than reads as a figure rather than a poster. */
 figure svg.chart.accfig,
-figure svg.chart.budfig {
+figure svg.chart.budfig,
+figure svg.chart.valfig {
   max-width: 420px;
+}
+
+.val-key .key {
+  font-family: var(--mono);
+}
+
+.val-key .key.moe {
+  color: var(--accent);
+}
+
+.val-key .key.dense {
+  color: var(--part-k);
 }
 
 .acc-panel {
